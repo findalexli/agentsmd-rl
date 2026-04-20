@@ -1,0 +1,112 @@
+version: '2.0'
+source:
+  repo: wasp-lang/wasp
+  pr: 3853
+  base_commit: 0ea59a851ef61e08184adc018e9b20801243ed8d
+  merge_commit: 0ca68c6be69d142aac369a11c29d3f34a6dcedc3
+checks:
+# Pass-to-pass tests (existing repo_tests)
+- id: test_repo_git_index_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git index is valid and lists Haskell source files
+- id: test_package_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: package.json is valid JSON with scripts section
+- id: test_package_lock_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: package-lock.json is valid JSON
+- id: test_waspc_package_json_files_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: All waspc data package.json files are valid JSON
+- id: test_run_script_syntax_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: waspc/run script parses without bash syntax errors
+
+# Pass-to-pass tests - p2p enrichment (verify base commit state)
+- id: test_run_script_executes
+  type: pass_to_pass
+  origin: repo_tests
+  description: waspc/run script executes and shows usage
+- id: test_run_script_has_ormolu_commands
+  type: pass_to_pass
+  origin: repo_tests
+  description: waspc/run contains ormolu formatting commands (ormolu:check, ormolu:format on base commit)
+- id: test_run_script_has_prettier_commands
+  type: pass_to_pass
+  origin: repo_tests
+  description: waspc/run contains prettier formatting commands (prettier:check, prettier:format on base commit)
+- id: test_run_script_has_cabal_gild_commands
+  type: pass_to_pass
+  origin: repo_tests
+  description: waspc/run contains cabal-gild formatting commands (cabal-gild:check, cabal-gild:format on base commit)
+- id: test_package_json_has_prettier_scripts
+  type: pass_to_pass
+  origin: repo_tests
+  description: package.json has prettier npm scripts
+- id: test_run_script_preserves_build_command
+  type: pass_to_pass
+  origin: repo_tests
+  description: Non-renamed commands (build) remain in the run script
+- id: test_run_script_preserves_test_commands
+  type: pass_to_pass
+  origin: repo_tests
+  description: Non-renamed commands (test:*, etc.) remain in the run script
+
+# Fail-to-pass tests (from PR diff)
+- id: test_run_script_case_branches_renamed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Case branches renamed from tool:action to action:tool format (check:ormolu, format:ormolu, etc.)
+- id: test_run_script_has_top_level_format_command
+  type: fail_to_pass
+  origin: pr_diff
+  description: New top-level 'format' command runs all formatters
+- id: test_run_script_has_top_level_check_command
+  type: fail_to_pass
+  origin: pr_diff
+  description: New top-level 'check' command runs all checkers
+- id: test_run_script_prettier_vars_use_new_npm_names
+  type: fail_to_pass
+  origin: pr_diff
+  description: PRETTIER_*_CMD variables reference new npm script names (check:prettier, format:prettier)
+- id: test_package_json_scripts_renamed
+  type: fail_to_pass
+  origin: pr_diff
+  description: npm scripts renamed from prettier:* to check/format:prettier
+- id: test_ci_formatting_uses_new_script_name
+  type: fail_to_pass
+  origin: pr_diff
+  description: CI workflow uses check:prettier instead of prettier:check
+- id: test_run_script_help_text_uses_new_names
+  type: fail_to_pass
+  origin: pr_diff
+  description: print_usage section documents all renamed commands (action:tool format)
+rubric:
+- rule: Command renaming should be consistent across all files — the run script, package.json,
+    CI config, and documentation should all use the same new naming convention.
+  source:
+    path: waspc/README.md
+    lines: 1-10
+    commit: 0ea59a851ef61e08184adc018e9b20801243ed8d
+- rule: waspc/README.md updated to show action:tool command format
+  source:
+    path: waspc/README.md
+    lines: 334-343
+    commit: 0ca68c6be69d142aac369a11c29d3f34a6dcedc3
+  reference: './run check:ormolu
+
+    ./run format:ormolu'
+config_edits:
+- path: waspc/README.md
+  tier: 2
+  gold_added: './run check:ormolu
+
+    ./run format:ormolu'
+  gold_removed: './run ormolu:check
+
+    ./run ormolu:format'

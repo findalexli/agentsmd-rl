@@ -1,0 +1,197 @@
+version: '2.0'
+source:
+  repo: vercel/next.js
+  pr: 92450
+  base_commit: fea754747872122d167dd8bf1fc5581044e50521
+  merge_commit: 6d572c27e01cbdb19dfbdf5bce94604229478088
+checks:
+- id: test_repo_node_available
+  type: pass_to_pass
+  origin: repo_tests
+  description: Node.js is available in the container
+- id: test_repo_prettier_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's prettier formatting passes on pr-status.js
+- id: test_repo_prettier_check_skill_md
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's prettier formatting passes on SKILL.md
+- id: test_repo_prettier_check_workflow_md
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's prettier formatting passes on workflow.md
+- id: test_repo_prettier_check_local_repro
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's prettier formatting passes on local-repro.md
+- id: test_repo_prettier_check_workflow
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's prettier formatting passes on workflow.md
+- id: test_repo_node_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: scripts/pr-status.js has valid Node.js syntax
+- id: test_repo_module_loads
+  type: pass_to_pass
+  origin: repo_tests
+  description: scripts/pr-status.js loads as a module without syntax errors
+- id: test_repo_markdown_files_valid
+  type: pass_to_pass
+  origin: static
+  description: SKILL.md and workflow.md are valid UTF-8 markdown files
+- id: test_repo_pr_status_exports
+  type: pass_to_pass
+  origin: static
+  description: pr-status.js exports key functions (replyToThread, resolveThread, generateThreadMd,
+    main)
+- id: test_repo_prettier_check_agents_dir
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's prettier formatting passes on .agents/skills/pr-status-triage/
+- id: test_repo_node_acorn_parse
+  type: pass_to_pass
+  origin: static
+  description: pr-status.js is parseable by Node.js parser
+- id: test_repo_markdown_links_skill
+  type: pass_to_pass
+  origin: repo_tests
+  description: SKILL.md has valid markdown links
+- id: test_repo_markdown_links_workflow
+  type: pass_to_pass
+  origin: repo_tests
+  description: workflow.md has valid markdown links
+- id: test_repo_markdown_links_local_repro
+  type: pass_to_pass
+  origin: repo_tests
+  description: local-repro.md has valid markdown links
+- id: test_repo_alex_lint_skill
+  type: pass_to_pass
+  origin: repo_tests
+  description: SKILL.md passes alex linting for insensitive language
+- id: test_repo_alex_lint_workflow
+  type: pass_to_pass
+  origin: repo_tests
+  description: workflow.md passes alex linting for insensitive language
+- id: test_repo_alex_lint_local_repro
+  type: pass_to_pass
+  origin: repo_tests
+  description: local-repro.md passes alex linting for insensitive language
+- id: syntax_valid
+  type: pass_to_pass
+  origin: static
+  description: scripts/pr-status.js parses without errors
+- id: test_skill_md_exists
+  type: pass_to_pass
+  origin: static
+  description: SKILL.md file exists
+- id: test_workflow_md_exists
+  type: pass_to_pass
+  origin: static
+  description: workflow.md file exists
+- id: test_pr_status_js_exists
+  type: pass_to_pass
+  origin: static
+  description: pr-status.js file exists
+- id: reply_and_resolve_subcommand_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: reply-and-resolve-thread subcommand is handled in main() and shows
+    usage on missing args
+- id: reply_to_thread_uses_rest_api
+  type: fail_to_pass
+  origin: pr_diff
+  description: replyToThread uses REST /comments/<id>/replies endpoint, not GraphQL
+    mutation
+- id: generate_thread_md_includes_combined
+  type: fail_to_pass
+  origin: pr_diff
+  description: generateThreadMd includes the reply-and-resolve one-step command in
+    thread MD files
+- id: reply_to_thread_logs_html_url
+  type: fail_to_pass
+  origin: pr_diff
+  description: replyToThread logs html_url from REST JSON response
+- id: skill_md_documents_combined_command
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md updated with Thread interaction section and reply-and-resolve-thread
+    command
+- id: skill_md_workflow_step_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md step 6 mentions the one-step reply-and-resolve option
+- id: workflow_md_documents_one_step
+  type: fail_to_pass
+  origin: pr_diff
+  description: workflow.md shows the one-step reply-and-resolve alternative
+rubric:
+- rule: Documentation updates are consistent with the existing style in SKILL.md and
+    workflow.md
+  source:
+    path: .agents/skills/pr-status-triage/SKILL.md
+    lines: 31-38
+    commit: fea754747872122d167dd8bf1fc5581044e50521
+- rule: When modifying skill documentation, update both SKILL.md (quick commands reference)
+    and workflow.md (detailed procedures) consistently
+  source:
+    path: .agents/skills/pr-status-triage/workflow.md
+    lines: 29-46
+    commit: fea754747872122d167dd8bf1fc5581044e50521
+- rule: When adding a new CLI subcommand for skill tools, the documentation must include
+    ready-to-use command templates with correct arguments in SKILL.md quick commands
+    section
+  source:
+    path: .agents/skills/pr-status-triage/SKILL.md
+    lines: 34-40
+    commit: fea754747872122d167dd8bf1fc5581044e50521
+- rule: GitHub API calls in scripts should prefer REST endpoints over GraphQL mutations
+    when the REST endpoint has more predictable behavior (e.g. always publishes immediately
+    vs attaching to pending reviews)
+  source:
+    path: scripts/pr-status.js
+    lines: 253-285
+    commit: fea754747872122d167dd8bf1fc5581044e50521
+- rule: Build and maintenance scripts are located in the `scripts/` directory.
+  source:
+    path: scripts/pr-status.js
+    lines: 1-50
+  evidence: The gold solution modifies `scripts/pr-status.js` to add the new command,
+    aligning with the documented codebase structure that designates the `scripts/`
+    directory for maintenance scripts.
+  category: architecture
+- rule: scripts/ directory is used for build and maintenance scripts
+  source:
+    path: AGENTS.md
+    lines: 17-18
+  evidence: The gold solution correctly locates and modifies the pr-status script
+    in the scripts/ directory, aligning with the documented codebase structure.
+  category: architecture
+distractors:
+- rule: If you are changing Next.js source or integration tests, start `pnpm --filter=next
+    dev` in a separate terminal session before making edits
+  collision_type: scope_ambiguity
+  why_distracting: The rule mandates starting the Next.js dev server when changing
+    source code. An agent might mistakenly apply this to `scripts/pr-status.js`,
+    wasting time starting a dev server that is irrelevant to a standalone Node script.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 60-62
+- rule: 'Always run a full bootstrap build after switching branches: git checkout
+    <branch> \n pnpm build-all'
+  collision_type: scope_ambiguity
+  why_distracting: The rule requires running a full bootstrap build (`pnpm build-all`)
+    after switching branches. An agent might run this heavy command before editing
+    the script, which is unnecessary since the script doesn't depend on the compiled
+    Next.js packages.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 82-85
+hierarchy_analysis: The root AGENTS.md provides instructions for Next.js core development.
+  However, the task involves modifying a standalone script (`scripts/pr-status.js`)
+  and agent skill documentation (`.agents/skills/`). The agent must recognize that
+  the scope of the root config (Next.js source) does not apply here, and avoid running
+  heavy build commands or dev servers.

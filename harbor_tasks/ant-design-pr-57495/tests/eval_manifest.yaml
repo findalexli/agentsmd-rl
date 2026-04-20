@@ -1,0 +1,62 @@
+source:
+  repo: ant-design/ant-design
+  pr_number: 57495
+  merge_commit: 8e10c284f1780a5caa0e646bd0bba9875da63573
+  base_commit: df5547f2ade5fe0bd9906bb9a386e7865afa4835
+  title: "feat(Button,Tag): support default colors for solid variants"
+
+checks:
+  - id: test_button_solid_variant_has_primary_color
+    type: fail_to_pass
+    origin: pr_behavior
+    description: Button with variant='solid' should automatically get 'ant-btn-color-primary' class
+
+  - id: test_button_configprovider_solid_variant_has_primary_color
+    type: fail_to_pass
+    origin: pr_behavior
+    description: Button inside ConfigProvider with button.variant='solid' should get primary color
+
+  - id: test_tag_solid_variant_has_default_color
+    type: fail_to_pass
+    origin: pr_behavior
+    description: Tag with variant='solid' should automatically get 'ant-tag-default' class
+
+  - id: test_tag_configprovider_solid_variant_has_default_color
+    type: fail_to_pass
+    origin: pr_behavior
+    description: Tag inside ConfigProvider with tag.variant='solid' should get default color
+
+  - id: test_tag_non_solid_variant_no_default_color
+    type: pass_to_pass
+    origin: pr_behavior
+    description: Tag with non-solid variant should not get default color class
+
+  - id: test_button_explicit_color_overrides_default
+    type: pass_to_pass
+    origin: pr_behavior
+    description: Explicit color prop should override the default color for solid variant
+
+  - id: test_repo_biome_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's biome linter passes
+
+  - id: test_repo_button_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's existing Button component tests pass
+
+  - id: test_repo_tag_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's existing Tag component tests pass
+
+rubric:
+  # Note: This PR is a code-only change adding default colors for solid variants.
+  # No documentation changes are required since it's an internal behavior enhancement
+  # that doesn't change the public API or require user-facing documentation updates.
+  - id: no_doc_changes_needed
+    rule: "This feature enhancement does not require CLAUDE.md documentation changes as it only affects internal component behavior"
+    source:
+      path: CLAUDE.md
+      commit: df5547f2ade5fe0bd9906bb9a386e7865afa4835

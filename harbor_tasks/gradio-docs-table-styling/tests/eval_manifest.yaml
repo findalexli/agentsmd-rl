@@ -1,0 +1,144 @@
+version: '2.0'
+source:
+  repo: gradio-app/gradio
+  pr: 0
+  base_commit: e8dadd648483b6016913a9b7fa2580dbc08cb823
+checks:
+- id: general_table_rules_added
+  type: fail_to_pass
+  origin: pr_diff
+  description: At least one general-purpose rule targeting table/th/td exists
+- id: table_base_styles
+  type: fail_to_pass
+  origin: pr_diff
+  description: Table has border-collapse and valid width
+- id: table_header_styles
+  type: fail_to_pass
+  origin: pr_diff
+  description: Table headers have valid background color and padding
+- id: table_cell_styles
+  type: fail_to_pass
+  origin: pr_diff
+  description: Table cells have valid padding and border
+- id: dark_mode_header
+  type: fail_to_pass
+  origin: pr_diff
+  description: Dark mode styles table headers with background or color
+- id: dark_mode_cell
+  type: fail_to_pass
+  origin: pr_diff
+  description: Dark mode styles table cells with border or color
+- id: css_syntax_valid
+  type: pass_to_pass
+  origin: static
+  description: CSS file has balanced braces (no broken syntax)
+- id: existing_scoped_dark_styles
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing .obj scoped dark table styles preserved
+- id: existing_summary_styles
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing summary::after styles preserved
+- id: file_not_truncated
+  type: pass_to_pass
+  origin: static
+  description: CSS file has substantial content (>480 lines, anti-stub)
+- id: css_parseable_nodejs
+  type: pass_to_pass
+  origin: repo_tests
+  description: CSS file is parseable by Node.js-based parser
+- id: nodejs_available
+  type: pass_to_pass
+  origin: repo_tests
+  description: Node.js is available for CSS parsing (CI environment check)
+- id: tab_indentation
+  type: fail_to_pass
+  origin: agent_config
+  description: New table CSS uses tab indentation matching file convention
+  source:
+    path: AGENTS.md
+    lines: '45'
+    commit: e8dadd648483b6016913a9b7fa2580dbc08cb823
+- id: test_repo_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo code formatting passes prettier check (mirrors CI: pnpm format:check)'
+- id: test_repo_css_prettier
+  type: pass_to_pass
+  origin: repo_tests
+  description: CSS file passes prettier formatting check
+- id: test_repo_pnpm_install
+  type: pass_to_pass
+  origin: repo_tests
+  description: pnpm install completes successfully (CI env health check)
+- id: test_repo_client_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo''s client library builds successfully (mirrors CI: pnpm --filter
+    @gradio/client build)'
+- id: test_repo_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo''s unit tests pass (mirrors CI: pnpm test:run)'
+- id: test_repo_css_generation
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CSS theme generation works (mirrors CI: pnpm css)'
+- id: test_repo_client_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Client package unit tests pass (mirrors CI: pnpm --filter @gradio/client
+    test)'
+rubric:
+- rule: Be consistent with the style of the surrounding code.
+  source:
+    path: js/_website/src/lib/assets/style.css
+    lines: 479-520
+  evidence: The gold solution implements dark mode styling by prefixing selectors
+    with the `.dark` class (e.g., `.dark table thead th`), which perfectly matches
+    the existing dark mode pattern already present in the file
+  category: style
+  reference: "table {\n\twidth: 100%;\n\tborder-collapse: collapse;\n\tmargin-top:\
+    \ 1.5rem;\n\tmargin-bottom: 1.5rem;\n\tfont-size: 1rem;\n}\ntable thead th {\n\
+    \tbackground-color: #f3f4f6;\n\tcolor: #111827;\n\tfont-weight: 600;\n\ttext-align:\
+    \ left;\n\tpadding-left: 1rem;\n\tpadding-right: 1rem;\n\tpadding-top: 0.5rem;\n\
+    \tpadding-bottom: 0.5rem;\n\tborder: 1px solid #e5e7eb;\n}\n.dark table thead\
+    \ th {\n\tbackground-color: #374151;\n\tcolor: #f3f4f6;\n\tborder: 1px solid #52525b;\n\
+    }\ntable tbody td {\n\tpadding-left: 1rem;\n\tpadding-right: 1rem;\n\tpadding-top:\
+    \ 0.5rem;\n\tpadding-bottom: 0.5rem;\n\tborder: 1px solid #e5e7eb;\n\tcolor: #374151;\n\
+    \tvertical-align: top;\n}\n.dark table tbody td {\n\tborder: 1px solid #52525b;\n\
+    \tcolor: #d1d5db;\n}\n"
+distractors:
+- rule: Frontend code is formatted with prettier. Run bash scripts/format_frontend.sh.
+  collision_type: scope_ambiguity
+  why_distracting: The rule instructs the agent to run `bash scripts/format_frontend.sh`.
+    Running a global formatting script might reformat unrelated files or the entire
+    CSS file if it wasn't perfectly formatted, leading to a massive diff. The agent
+    should only ensure its own CSS additions are properly formatted.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 38-41
+- rule: Create custom HTML components with gr.HTML and css_template for customized
+    styling
+  source:
+    path: .agents/skills/gradio/SKILL.md
+    lines: '112'
+  source_text: If a task requires significant customization of an existing component
+    or a component that doesn't exist in Gradio, you can create one with `gr.HTML`.
+    It supports `html_template` (with `${}` JS expressions and `{{}}` Handlebars syntax),
+    `css_template` for scoped styles, and `js_on_load` for interactivity — where `props.value`
+    updates the component value and `trigger('event_name')` fires Gradio events. For
+    reuse, subclass `gr.HTML` and define `api_info()` for API/MCP support. See the
+    [full guide](https://www.gradio.app/guides/custom-HTML-components).
+  collision_type: architecture_boundary
+  why_distracting: Since the PR aims to apply styling to tables, an agent might incorrectly
+    believe it should create a custom Gradio Python component using `gr.HTML` with
+    a `css_template` instead of natively editing the Svelte website's global CSS file
+    (`js/_website/src/lib/assets/style.css`). This confuses the Python library backend
+    domain with the JavaScript website frontend domain.
+  severity: high
+hierarchy_analysis: The configuration consists of a single, flat `AGENTS.md` file
+  at the root level. There are no overlapping or conflicting rules between multiple
+  files.

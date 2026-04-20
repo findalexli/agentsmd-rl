@@ -1,0 +1,145 @@
+version: '2.0'
+source:
+  repo: pytorch/pytorch
+  pr: 177291
+  base_commit: 8401fdeb9abd665b36465c52b7aefd591cc3dbcb
+  merge_commit: ''
+checks:
+- id: header_balanced_braces
+  type: pass_to_pass
+  origin: static
+  description: FakeProcessGroup.hpp must have balanced braces
+- id: syntax_valid
+  type: pass_to_pass
+  origin: static
+  description: C++ code must be syntactically valid (clang -fsyntax-only)
+- id: allgather_size_guard_present
+  type: fail_to_pass
+  origin: pr_diff
+  description: allgather must have a size(0) comparison guard before copy_
+- id: allgather_continue_present
+  type: fail_to_pass
+  origin: pr_diff
+  description: Mismatched tensors must be skipped via continue statement
+- id: allgather_uneven_behavior_simulation
+  type: fail_to_pass
+  origin: pr_diff
+  description: Simulated loop behavior shows uneven tensors are skipped without crash
+- id: original_broken_behavior
+  type: pass_to_pass
+  origin: pr_diff
+  description: Confirmed original code would crash on uneven tensors (anti-regression)
+- id: allgather_copy_present
+  type: pass_to_pass
+  origin: pr_diff
+  description: copy_ must still be present in the allgather loop (regression check)
+- id: allgather_loop_structure
+  type: pass_to_pass
+  origin: pr_diff
+  description: allgather must have a for-loop over outputTensors[0]
+- id: no_over_engineering
+  type: pass_to_pass
+  origin: agent_config
+  description: Change should be minimal per CLAUDE.md guidelines
+  source:
+    path: CLAUDE.md
+    lines: '51'
+    commit: 8401fdeb9abd665b36465c52b7aefd591cc3dbcb
+- id: repo_fake_pg_python_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: FakeProcessGroup test file must have valid Python syntax (py_compile)
+- id: repo_clang_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: FakeProcessGroup.hpp must pass clang-format check per PyTorch CI
+- id: repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: test_fake_pg.py must pass ruff check per PyTorch CI
+- id: repo_internal_fake_pg_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Internal fake_pg.py module must have valid Python syntax (py_compile)
+- id: repo_header_file_exists
+  type: pass_to_pass
+  origin: static
+  description: FakeProcessGroup.hpp must exist and be readable
+- id: repo_test_fake_pg_ast_valid
+  type: pass_to_pass
+  origin: static
+  description: test_fake_pg.py must have valid Python AST
+- id: repo_header_utf8_valid
+  type: pass_to_pass
+  origin: static
+  description: FakeProcessGroup.hpp must be valid UTF-8 encoded
+- id: repo_header_no_tabs
+  type: pass_to_pass
+  origin: static
+  description: FakeProcessGroup.hpp must use spaces, not tabs
+rubric:
+- rule: For code-only tasks, the agent's code changes should follow CLAUDE.md style
+    guidelines (minimal comments, matching existing patterns, no over-engineering).
+  source:
+    path: torch/csrc/distributed/c10d/FakeProcessGroup.hpp
+    lines: 99-102
+    commit: 8401fdeb9abd665b36465c52b7aefd591cc3dbcb
+  reference: 'Code changes follow CLAUDE.md rules: minimal 3-line fix, no comments
+    (self-documenting), uses if/continue pattern matching existing code style.'
+  category: style
+- rule: Minimize comments; be concise; code should be self-explanatory and self-documenting.
+  source:
+    path: torch/csrc/distributed/c10d/FakeProcessGroup.hpp
+    lines: 99-102
+  reference: The gold solution adds the size check without any explanatory comments,
+    relying on the code itself to be self-explanatory.
+  category: style
+- rule: If uncertain, choose the simpler, more concise implementation.
+  source:
+    path: torch/csrc/distributed/c10d/FakeProcessGroup.hpp
+    lines: 99-102
+  reference: The gold solution uses a simple continue statement to skip the copy operation,
+    avoiding complex conditional branching or helper functions.
+  category: style
+distractors:
+- rule: Once the change is passing, find an appropriate test file to add the test
+    to and make sure to follow local conventions on the test file.
+  collision_type: scope_ambiguity
+  why_distracting: Instructs the agent to find an appropriate test file and add a
+    test, but the gold solution only modifies the C++ header file without adding any
+    tests. An agent might waste significant time searching for or writing a test.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 4-7
+- rule: To run lint, run 'lintrunner -a' (which will autoapply changes)
+  collision_type: rule_conflict
+  why_distracting: Instructs the agent to use 'lintrunner -a' for linting, which directly
+    conflicts with CLAUDE.md's instruction to 'Only use commands provided via spin
+    for linting'.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 11-11
+- rule: All build (both codegen, C++ and python) is done via `pip install -e . -v
+    --no-build-isolation`.
+  collision_type: rule_conflict
+  why_distracting: Instructs the agent to build via `pip install -e .`, which conflicts
+    with AGENTS.md's explicit warning that there is no working build environment.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 11-13
+- rule: Convert PyTorch AT_DISPATCH macros to AT_DISPATCH_V2 format in ATen C++ code.
+  source:
+    path: .claude/skills/at-dispatch-v2/SKILL.md
+    lines: 1-3
+  collision_type: scope_ambiguity
+  why_distracting: The agent might see it is modifying C++ code and attempt to apply
+    AT_DISPATCH_V2 rules, but FakeProcessGroup is a distributed backend component,
+    not an ATen kernel, making this skill out of scope.
+  severity: medium
+hierarchy_analysis: Both AGENTS.md and CLAUDE.md are at Level 0, creating direct contradictions
+  regarding linting (`lintrunner` vs `spin`) and building (`pip install` vs no build
+  environment). The agent must navigate these conflicting instructions while fixing
+  a C++ bug, as well as decide whether to follow the instruction to add a test.

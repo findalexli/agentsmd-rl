@@ -1,0 +1,99 @@
+version: "2.0"
+
+source:
+  repo: "vercel/next.js"
+  pr: 90304
+  base_commit: "cfd5f533b08df3038476dcd54f1d6d660d85f069"
+  merge_commit: "962e5b166cea3fdb6589837a8fd3ea62031be17d"
+
+checks:
+  - id: string_render_result_enables_headers
+    type: pass_to_pass
+    origin: pr_diff
+    description: "RenderResult with string arg has isDynamic=false, enabling Content-Length and ETag headers"
+
+  - id: data_response_path_no_buffer
+    type: fail_to_pass
+    origin: pr_diff
+    description: "No Buffer.from(JSON.stringify(result.value.pageData)) in handler — data response uses string directly"
+
+  - id: isr_fallback_path_no_buffer
+    type: fail_to_pass
+    origin: pr_diff
+    description: "No Buffer.from(previousCacheEntry.value.html) in handler — ISR fallback uses string directly"
+
+  - id: send_payload_header_chain
+    type: pass_to_pass
+    origin: pr_diff
+    description: "sendRenderResult retains isDynamic -> Content-Length + ETag header chain"
+
+  - id: handler_not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Handler retains core code paths and has substantial content"
+
+  - id: handler_structure
+    type: pass_to_pass
+    origin: static
+    description: "Handler file structure and exports are intact"
+
+  - id: send_payload_structure
+    type: pass_to_pass
+    origin: static
+    description: "send-payload.ts retains isDynamic -> Content-Length + ETag chain"
+
+  - id: render_result_structure
+    type: pass_to_pass
+    origin: static
+    description: "RenderResult class structure and isDynamic mechanism are intact"
+
+  - id: test_repo_prettier_pages_handler
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: pages-handler.ts follows Prettier formatting"
+
+  - id: test_repo_prettier_send_payload
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: send-payload.ts follows Prettier formatting"
+
+  - id: test_repo_prettier_render_result
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: render-result.ts follows Prettier formatting"
+
+  - id: test_repo_render_result_mechanism
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: RenderResult isDynamic mechanism is preserved and functional via Node.js"
+
+  - id: test_repo_send_payload_header_chain
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: send-payload.ts retains isDynamic -> Content-Length + ETag chain via Node.js"
+
+  - id: test_repo_package_json_scripts
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: package.json maintains required npm scripts for CI/CD via Node.js"
+
+  - id: test_repo_render_result_source_mechanism
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: RenderResult source code contains correct isDynamic mechanism via Node.js"
+
+  - id: test_repo_pages_handler_source_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: pages-handler.ts source contains expected structure for data responses via Node.js"
+
+  - id: test_repo_typescript_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: Modified TypeScript files have valid syntax via Node.js"
+
+rubric:
+  - rule: "When passing data to RenderResult, prefer string payloads over Buffer.from() for static content to enable Content-Length and ETag headers."
+    source:
+      path: "CLAUDE.md"
+    reference: "When passing data to RenderResult, prefer string payloads over Buffer.from() for static content to enable Content-Length and ETag headers."

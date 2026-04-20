@@ -1,60 +1,58 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the exact file paths (both task-item.tsx files, the new SVG icon path), the icon names (CheckCircleHalfIcon, LoadingIcon, CircleIcon, CheckCircleIcon), the import path pattern, the animate-spin class, and the build/lint/typecheck commands. The test for translation completeness (check-translation-completeness) is not mentioned in instruction.md, but that's a pass-to-pass test checking existing behavior. All fail-to-pass test specifics (file paths, icon names, class names, ca"
+      "reason": "Instruction names both file paths, the new SVG path, CheckCircleHalfIcon identifier, CircleIcon/CheckCircleIcon, the classes w-4 h-4 and animate-spin, and the status strings todo/in_progress/done."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix: import CheckCircleHalfIcon from a specific path, replace LoadingIcon with CheckCircleHalfIcon in the in_progress case, remove animate-spin class. It specifies the exact new icon name, import path, and className. This is a direct description of the solution, not just the problem."
+      "reason": "Instruction specifies exact imports ('CheckCircleHalfIcon from #/icons/u-check-circle-half.svg?react'), exact filename, and exact behavior per case - this is essentially dictating the fix rather than describing the bug."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests use regex like r'case \"in_progress\":\\s*return\\s*<([^>]+)' to assert exact code patterns. An alternative correct fix using a different component structure (e.g., wrapping in a span, using a variable, or different JSX formatting) would fail these regex-based tests. The tests also assert exact string 'CheckCircleHalfIcon' must appear in the matched JSX element, constraining the implementation to one specific approach."
+      "outcome": "pass",
+      "reason": "Tests check for CheckCircleHalfIcon name and absence of animate-spin/LoadingIcon; any correct alternative matching the instruction would pass."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_new_icon_file_exists, test_v1_component_imports_correct_icon, test_features_component_imports_correct_icon, test_v1_in_progress_no_animation, test_features_in_progress_no_animation, test_v1_icon_usage_consistency, test_features_icon_usage_consistency) are ALL text-based assertions using string matching and regex on file contents. None import or execute the components. The build/lint/typecheck tests do execute subprocesses but are pass-to-pass tests."
+      "outcome": "pass",
+      "reason": "Tests include subprocess calls to npm run build, lint, tsc --noEmit, and translation completeness check."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub/no-op implementation would not pass the fail-to-pass tests because the original files contain 'LoadingIcon' (which must be absent) and lack 'CheckCircleHalfIcon' (which must be present), and the SVG file doesn't exist yet. The tests check for specific content changes from the baseline state."
+      "reason": "Tests require actual import statements, case branches, and a successful build which would fail with a stub."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction specifies: new SVG file creation (tested), both component imports changed (tested), in_progress state uses new icon without animate-spin (tested), todo/done states unchanged (tested), build/lint/typecheck pass (tested). All explicitly required behaviors are covered."
+      "reason": "All criteria (icon file, imports, no animate-spin, other cases unchanged, build/lint/typecheck) are tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names and docstrings (e.g., 'Fail-to-pass: New SVG icon file must exist', 'Pass-to-pass: Frontend should build successfully'). Tests are logically grouped by component and concern."
+      "reason": "Tests are individually named and documented with fail-to-pass/pass-to-pass labels."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves SVG file creation and component code changes, not structured data output like JSON/CSV/API/DB."
+      "reason": "No structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, commands, variable names, and icon names are consistent between instruction.md, tests, and solution. No typos detected."
+      "reason": "Paths and names are consistent across instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact files to modify, the exact icon component name to use (CheckCircleHalfIcon), the exact import path (#/icons/u-check-circle-half.svg?react), and the exact class to remove (animate-spin). This goes well beyond describing what's broken and specifies the exact implementation."
+      "reason": "Instruction explicitly names affected files, exact import paths ('#/icons/u-check-circle-half.svg?react'), class names to use/remove, and specific icon identifiers - essentially a step-by-step recipe."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task involving component files and an SVG icon, not configuration edits."
+      "reason": "Code-only task."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "no_solution_leakage"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 4
+  "pass_count": 7,
+  "fail_count": 2
 }

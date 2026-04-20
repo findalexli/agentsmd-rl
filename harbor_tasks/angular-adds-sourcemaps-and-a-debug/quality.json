@@ -3,52 +3,52 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "All file paths, flag names (debug, debug_build), parameter names (minify, sourcemap), script names, and the --//devtools:debug flag are explicitly named in instruction.md."
+      "reason": "All file paths, flag names (debug, debug_build), script names (devtools:build:chrome:debug, devtools:build:firefox:debug), and command-line flag (--//devtools:debug) are explicitly named in instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "Instruction describes requirements (flag names, behaviors) without providing code snippets or line-level fixes."
+      "reason": "Instruction describes required behavior without providing exact code or diffs; agent must still figure out bool_flag, config_setting, and esbuild wrapper implementation."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "Tests check for structural properties (select() with debug_build/False and default/True, **kwargs delegation, flag_values matching True) which correspond to the natural Bazel pattern rather than specific variable names."
+      "reason": "Tests check for bazel query results, behavioral build success, and presence of sourcemap='inline' and absence of minify=True \u2014 alternative valid implementations would pass."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests parse the Bazel files, extract function signatures, and validate select() structure rather than mere substring matching; package.json is parsed as JSON."
+      "reason": "Tests execute bazel query and bazel build --nobuild commands, not just text grep."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "Tests require actual bool_flag, config_setting, function signature changes, and package.json script additions \u2014 stubs cannot satisfy these assertions."
+      "reason": "Tests require actual bazel flag registration, working build configuration, and specific JSON scripts \u2014 stubs would not satisfy them."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "Debug flag, config_setting, esbuild parameters, package.json scripts, and inline sourcemaps are all covered (visible assertions for each requirement)."
+      "reason": "All 5 requirements from instruction.md are covered by test functions."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are grouped with section header comments (Gates / Fail-to-pass) and have descriptive names and docstrings."
+      "reason": "Test functions are individually named by purpose (test_debug_flag_exists, test_sourcemap_inline_for_injected_scripts, etc.)."
     },
     "structured_data_schema": {
-      "outcome": "not_applicable",
-      "reason": "Task is build configuration, not structured data output."
+      "outcome": "pass",
+      "reason": "package.json script keys required are explicitly named in instruction.md."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "Filenames and flags are consistent between instruction and tests."
+      "reason": "Filenames and flag names are consistent across instruction and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "Instruction names files to edit at the requirement level consistent with the task's scope; no line-level leakage."
+      "reason": "Instruction names files to edit but does not pinpoint buggy lines; file locations are inherent to the task."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "Gold diff is localized to targeted sections of BUILD.bazel, defaults.bzl, and package.json scripts."
+      "reason": "Gold patch makes localized edits to BUILD.bazel files and package.json, not full rewrites."
     }
   },
   "tier_a_fails": [],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 10,
+  "pass_count": 11,
   "fail_count": 0
 }

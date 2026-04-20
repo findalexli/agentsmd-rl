@@ -1,0 +1,162 @@
+version: '2.0'
+source:
+  repo: openclaw/openclaw
+  pr: 55960
+  base_commit: 0d0d46f5e95f6f003861be33b4b9c6e3b493ea15
+  merge_commit: f652d9fd81a626e1aac1f33382a5c078bfe284ab
+checks:
+- id: indentation_preserved_plain_text
+  type: fail_to_pass
+  origin: pr_diff
+  description: Leading indentation on plain text after a reply tag must survive stripping
+- id: code_block_indentation_preserved
+  type: fail_to_pass
+  origin: pr_diff
+  description: Fenced code block indentation must survive reply-tag stripping
+- id: yaml_indentation_preserved
+  type: fail_to_pass
+  origin: pr_diff
+  description: YAML-style nested indentation must survive reply-tag stripping
+- id: basic_reply_tag_detection
+  type: pass_to_pass
+  origin: pr_diff
+  description: parseInlineDirectives must still detect and strip reply tags
+- id: word_boundary_space_insertion
+  type: pass_to_pass
+  origin: pr_diff
+  description: When a reply tag sits between two non-whitespace chars, a space is
+    inserted
+- id: leading_blank_lines_stripped
+  type: pass_to_pass
+  origin: pr_diff
+  description: Leading blank lines introduced by tag removal are stripped
+- id: file_not_stub
+  type: pass_to_pass
+  origin: static
+  description: directive-tags.ts has real logic, not a stub
+- id: no_ts_nocheck
+  type: pass_to_pass
+  origin: agent_config
+  description: Modified files must not contain @ts-nocheck or @ts-ignore
+  source:
+    path: AGENTS.md
+    lines: '104'
+    commit: 0d0d46f5e95f6f003861be33b4b9c6e3b493ea15
+- id: no_inline_lint_suppression
+  type: pass_to_pass
+  origin: agent_config
+  description: Modified files must not contain inline lint suppression comments
+  source:
+    path: AGENTS.md
+    lines: '104'
+    commit: 0d0d46f5e95f6f003861be33b4b9c6e3b493ea15
+- id: no_any_type
+  type: pass_to_pass
+  origin: agent_config
+  description: Prefer strict typing; avoid `any` as a type annotation
+  source:
+    path: AGENTS.md
+    lines: '102'
+    commit: 0d0d46f5e95f6f003861be33b4b9c6e3b493ea15
+- id: no_prototype_mutation
+  type: pass_to_pass
+  origin: agent_config
+  description: Never share class behavior via prototype mutation
+  source:
+    path: AGENTS.md
+    lines: '111'
+    commit: 0d0d46f5e95f6f003861be33b4b9c6e3b493ea15
+- id: no_dynamic_import
+  type: pass_to_pass
+  origin: agent_config
+  description: Production utility files must not use dynamic await import() — use
+    static imports only
+  source:
+    path: AGENTS.md
+    lines: '106'
+    commit: 0d0d46f5e95f6f003861be33b4b9c6e3b493ea15
+- id: test_repo_lint_directive_tags
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's oxlint passes on directive-tags.ts
+- id: test_repo_format_directive_tags
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's oxfmt format check passes on directive-tags.ts
+- id: test_repo_unit_tests_directive_tags
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's unit tests for directive-tags pass
+- id: test_repo_tsgo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TypeScript typecheck (tsgo) runs without crashing and directive-tags.ts
+    has no type errors
+- id: test_repo_extension_boundary_src
+  type: pass_to_pass
+  origin: repo_tests
+  description: Extensions must not import from src/ outside src/plugin-sdk
+- id: test_repo_extension_boundary_internal
+  type: pass_to_pass
+  origin: repo_tests
+  description: Extensions must not import from src/plugin-sdk-internal
+- id: test_repo_extension_boundary_relative
+  type: pass_to_pass
+  origin: repo_tests
+  description: Extensions must not use relative imports escaping their package
+rubric:
+- rule: Prefer strict typing; avoid `any`.
+  source:
+    path: AGENTS.md
+    lines: '102'
+    commit: 0d0d46f5e95f6f003861be33b4b9c6e3b493ea15
+- rule: Do not disable `no-explicit-any`; prefer real types, `unknown`, or a narrow
+    adapter/helper instead.
+  source:
+    path: AGENTS.md
+    lines: '105'
+    commit: 0d0d46f5e95f6f003861be33b4b9c6e3b493ea15
+- rule: Add brief code comments for tricky or non-obvious logic.
+  source:
+    path: AGENTS.md
+    lines: '114'
+    commit: 0d0d46f5e95f6f003861be33b4b9c6e3b493ea15
+- rule: Keep files concise; extract helpers instead of V2 copies.
+  source:
+    path: AGENTS.md
+    lines: '115'
+    commit: 0d0d46f5e95f6f003861be33b4b9c6e3b493ea15
+- rule: Aim to keep files under ~700 LOC (guideline, not a hard guardrail); split/refactor
+    when it improves clarity or testability.
+  source:
+    path: AGENTS.md
+    lines: '116'
+    commit: 0d0d46f5e95f6f003861be33b4b9c6e3b493ea15
+- rule: Use American spelling and grammar in code, comments, docs, and UI strings
+    (e.g. 'color' not 'colour', 'behavior' not 'behaviour').
+  source:
+    path: AGENTS.md
+    lines: '118'
+    commit: 0d0d46f5e95f6f003861be33b4b9c6e3b493ea15
+- rule: 'Source code: `src/`'
+  source:
+    path: CLAUDE.md
+    lines: 10-10
+  evidence: The gold solution correctly modifies `src/utils/directive-tags.ts` as
+    the core utility for directive tags, rather than placing the fix in a channel-specific
+    directory.
+  category: architecture
+distractors:
+- rule: 'Messaging channels: always consider all built-in + extension channels when
+    refactoring shared logic'
+  collision_type: architecture_boundary
+  why_distracting: The issue mentions the bug affects the 'Discord outbound layer'.
+    The agent might be tempted to apply a Discord-specific fix in `src/discord` or
+    audit all channels based on this rule, but the root cause and proper fix are entirely
+    contained within the shared `directive-tags.ts` parser.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 18-21
+hierarchy_analysis: The config hierarchy is flat, consisting of identical AGENTS.md
+  and CLAUDE.md files at the root level. There are no conflicting rules between files.

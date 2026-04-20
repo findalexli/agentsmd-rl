@@ -1,59 +1,58 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert exact literal strings like 'const originalCss = useRef<string | null>(null)', 'const cssDebounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)', 'const handleCustomCssChange = useCallback', 'dispatch(dashboardInfoChanged({ css }))' etc. The instruction.md never specifies these exact variable names (originalCss, cssDebounceTimer), exact type annotations (ReturnType<typeof setTimeout>), or the exact Redux action name (dashboardInfoChanged). A developer could not discover t"
+      "reason": "Tests assert on exact literals like 'const originalCss = useRef<string | null>(null)', 'const cssDebounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)', 'dispatch(dashboardInfoChanged({ css }))', and 'onCustomCssChange={handleCustomCssChange}', none of which are named in instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the desired behavior (live CSS preview, debounce, cancel reverts, cleanup on unmount) without specifying exact code changes, variable names, or line numbers. It tells what to build, not how."
+      "reason": "Instruction describes requirements (debounce, cancel revert, cleanup, capture-once) without dictating specific variable names or code."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact variable names and patterns like 'const originalCss = useRef<string | null>(null)', 'const cssDebounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)', 'cssDebounceTimer.current = setTimeout', 'dispatch(dashboardInfoChanged({ css }))', 'onCustomCssChange={handleCustomCssChange}'. An alternative correct implementation using different variable names (e.g., 'savedCss', 'debounceRef'), lodash debounce, or different spacing in dispatch calls would fail these string-match"
+      "reason": "Tests require exact names like 'originalCss', 'cssDebounceTimer', 'handleCustomCssChange', 'useCallback', and the exact Redux action 'dashboardInfoChanged' \u2014 alternative correct implementations (different naming, useMemo, a custom hook, different action) would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_original_css_ref_exists, test_handle_custom_css_change_exists, test_cancel_handler_restores_css, test_unmount_cleanup_exists, test_original_css_capture_on_open, test_props_use_handler_not_setter, test_no_explicit_any_types, test_dashboard_info_changed_imported) all use `assert 'string' in open(file).read()` or regex on file content. They do not import, call, or execute the code. Only the pass-to-pass tests (jest, lint, typescript) actually execute code."
+      "reason": "The fail-to-pass tests (test_original_css_ref_exists, test_handle_custom_css_change_exists, test_cancel_handler_restores_css, test_unmount_cleanup_exists, test_original_css_capture_on_open) are all string-matching on file content; no test executes the component or observes debounce/dispatch behavior."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "Since all fail-to-pass tests are pure string matching on file content, an agent could satisfy them by inserting dead/unreachable code blocks containing the expected strings without implementing actual functionality. For example, adding commented or unreachable code with 'const originalCss = useRef<string | null>(null)' and other patterns would pass the f2p tests."
+      "outcome": "pass",
+      "reason": "A stub couldn't pass since tests require specific substrings including setTimeout, clearTimeout, dispatch of restored CSS, and handler wiring."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All five requirements from instruction.md (live preview with debounce, cancel reverts, cleanup on unmount, capture original CSS once, no any types) have corresponding tests, plus existing tests/lint/type checks are verified."
+      "reason": "Each requirement (debounce, cancel revert, unmount cleanup, capture-once, no any) maps to a corresponding test."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_original_css_ref_exists, test_handle_custom_css_change_exists, etc.), grouped logically, and have docstrings explaining what each verifies. The file header also lists the key behaviors being tested."
+      "reason": "Tests are individually named by behavior with docstrings indicating f2p vs p2p."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves modifying a React component, not producing structured data output."
+      "reason": "No structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "Paths and names consistent between instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction specifies only the single file to modify (PropertiesModal/index.tsx) which is appropriate for a single-file task. It doesn't mention specific line numbers or exact code changes."
+      "reason": "Instruction names the file to modify, which is appropriate for the scope."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying a single TypeScript component file, not a config edit task."
+      "reason": "Code-only task."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 5,
-  "fail_count": 4
+  "pass_count": 6,
+  "fail_count": 3
 }

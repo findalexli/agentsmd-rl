@@ -4,10 +4,10 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-16T02:34:17.981728",
-  "total_time": 3684.31,
-  "sandbox_id": "i02ksbqjp2sykbzazng53",
-  "backend": "fireworks",
+  "validated_at": "2026-04-16T11:44:34.164059",
+  "total_time": 119.36,
+  "sandbox_id": "ix8oi9xlefdc2r3fgc1rw",
+  "backend": "anthropic",
   "pipeline": "pipeline",
   "start_at": "judge",
   "nodes": {
@@ -44,23 +44,26 @@
     },
     "quality_gate": {
       "status": "passed",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 0.62,
+      "model": "claude-opus-4-7",
+      "backend": "anthropic",
+      "time": 0.26,
       "notes": "flags=['lint_tier_b:2', 'B:[B] no_network_during_tests @ tests/test.sh:5: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 22.73,
+      "time": 13.01,
       "tier_a_fails": [
-        "behavior_in_task_description",
-        "solution_uniqueness_guard",
-        "tests_verify_behavior_not_text",
-        "test_not_tautological"
+        "no_solution_leakage",
+        "solution_uniqueness_guard"
       ],
       "tier_b_fails": [],
-      "pass_count": 4,
-      "fail_count": 5
+      "pass_count": 6,
+      "fail_count": 3
+    },
+    "tests_rewrite": {
+      "status": "error",
+      "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":639,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 400 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"invalid_request_error\\\",\\\"message\\\":\\\"\\\\\\\"thinking.type.enabled\\\\\\\" is not supported for this model. Use \\\\\\\"thinking.type.adapt",
+      "time": 1.96
     }
   },
   "history": [
@@ -95,6 +98,14 @@
       "backend": "fireworks",
       "time": 3684.31,
       "at": "2026-04-16T02:34:17.981728"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "anthropic",
+      "time": 119.36,
+      "at": "2026-04-16T11:44:34.164059"
     }
   ]
 }

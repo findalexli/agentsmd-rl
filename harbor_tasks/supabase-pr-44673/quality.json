@@ -1,0 +1,57 @@
+{
+  "model": "claude-opus-4-7",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "The tests assert specific test case names must exist in the test file: 'appends a cache-busting param to dynamic OG function URLs' and 'does not append a cache-busting param to static image URLs', but instruction.md never mentions these exact literal strings that the agent must add."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction describes the problem (stale cache) and what to achieve (unique query param per build) without specifying the fix implementation."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_cache_bust_dynamic_og and test_no_cache_bust_static_image require specific test case titles ('appends a cache-busting param to dynamic OG function URLs', 'does not append a cache-busting param to static image URLs') to exist verbatim; an alternative correct fix with different test names would fail."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests run vitest via subprocess which executes the actual function behavior, even though they also check for test-name presence."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The cache-bust test requires the URL to match a regex with a '&v=.+' suffix after running the real function, so a stub returning the input unchanged would fail."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "Dynamic OG cache-busting and static image pass-through are both tested."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are clearly named and include docstrings distinguishing f2p vs p2p."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "No structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "Paths and commands appear correct."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction names the function to modify which is appropriate given the scope guidance, without leaking the exact diff."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "Not a config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 2
+}

@@ -1,0 +1,108 @@
+version: '2.0'
+source:
+  repo: vercel/next.js
+  pr: 91742
+  base_commit: b5cb015c5f94088cf0211613051fb696b67cddda
+  merge_commit: 78f162568634798de281a27889fa313bae8513d6
+checks:
+- id: test_source_files_exist
+  type: pass_to_pass
+  origin: static
+  description: Required source files exist and mod.rs is not stubbed
+- id: test_deadlock_pattern_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: self.get_task_name removed from stats.entry() calls and cfg blocks;
+    stats code preserved
+- id: test_task_name_from_storage
+  type: fail_to_pass
+  origin: pr_diff
+  description: Task name derived from storage reference (inner), not self (which re-locks)
+- id: test_cargo_feature_split
+  type: fail_to_pass
+  origin: pr_diff
+  description: print_cache_item_size decoupled from lzzzz; separate feature for compressed
+    reporting
+- id: test_add_counts_covers_data
+  type: fail_to_pass
+  origin: pr_diff
+  description: add_counts triggered on data OR meta modified, not meta-only
+- id: test_formatsizes_struct_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: FormatSizes helper struct exists for DRY size formatting with conditional
+    compressed reporting
+- id: test_persist_snapshot_and_stats_struct_intact
+  type: pass_to_pass
+  origin: pr_diff
+  description: snapshot_and_persist method and TaskCacheStats struct with core fields
+    still exist
+- id: test_cfg_blocks_not_stubbed
+  type: pass_to_pass
+  origin: static
+  description: cfg(print_cache_item_size) blocks have meaningful code, stats infrastructure
+    intact
+- id: test_repo_check_is_release
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI check-is-release script runs without errors
+- id: test_repo_check_unused_turbo_tasks
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI check-unused-turbo-tasks script runs without errors
+- id: test_repo_cargo_toml_valid
+  type: pass_to_pass
+  origin: static
+  description: Repo's Cargo.toml for turbo-tasks-backend is valid TOML with required
+    sections
+- id: test_repo_source_compiles_basic
+  type: pass_to_pass
+  origin: static
+  description: Basic Rust syntax validation of mod.rs (balanced braces, valid structure)
+- id: test_repo_print_cache_feature_structure
+  type: pass_to_pass
+  origin: static
+  description: print_cache_item_size feature has correct Cargo.toml structure
+- id: test_repo_backend_mod_structure
+  type: pass_to_pass
+  origin: static
+  description: Backend mod.rs has expected impl blocks and function definitions
+- id: test_repo_lzzzz_dependency_correct
+  type: pass_to_pass
+  origin: static
+  description: lzzzz dependency is correctly declared as optional for feature split
+rubric:
+- rule: Follow all README.md files in the directory path from repo root to target
+    directory to identify local patterns and conventions.
+  source:
+    path: CLAUDE.md
+    lines: 46-53
+    commit: b5cb015c5f94088cf0211613051fb696b67cddda
+- rule: Use `cargo fmt` for Rust formatting (uses ASCII order - uppercase before lowercase).
+  source:
+    path: CLAUDE.md
+    lines: '414'
+    commit: b5cb015c5f94088cf0211613051fb696b67cddda
+- rule: Split work into smaller, individually verifiable tasks and verify each task
+    before moving on to the next.
+  source:
+    path: CLAUDE.md
+    lines: 353-358
+    commit: b5cb015c5f94088cf0211613051fb696b67cddda
+distractors:
+- rule: 'Default agent rule: If you are changing Next.js source or integration tests,
+    start `pnpm --filter=next dev` in a separate terminal session before making edits'
+  collision_type: scope_ambiguity
+  why_distracting: The rule mandates starting `pnpm --filter=next dev` for Next.js
+    source changes. An agent might try to run this to test the Turbopack Rust changes,
+    but the bug only occurs when a specific Cargo feature (`print_cache_item_size`)
+    is enabled, which `pnpm dev` won't enable by default. The agent needs to use `cargo`
+    directly in the crate to reproduce and verify the fix.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 65-70
+hierarchy_analysis: The hierarchy is flat (Level 0 only). `AGENTS.md` and `CLAUDE.md`
+  are symlinks to the same file. The instructions are heavily skewed towards the TypeScript/Next.js
+  parts of the monorepo, providing little to no guidance for the Rust (`turbopack/crates/*`)
+  workspace other than a generic `pnpm build-all` command.

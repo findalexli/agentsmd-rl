@@ -1,0 +1,70 @@
+version: "2.0"
+
+source:
+  repo: "apache/beam"
+  pr: 38103
+  base_commit: "8044fcb3e6e394db4be60a7883eb9572ebd41eac"
+  merge_commit: "739caf78b672defd67ffb57eba005e2f424c9015"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified file must parse without errors"
+
+  - id: expand_returns_tagged_output_type
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CreateCatalogItem.expand() must return tagged outputs with created_catalog_items and failed_catalog_items attributes"
+
+  - id: success_items_routed_to_created_output
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Successfully created catalog items must appear in the created_catalog_items PCollection output"
+
+  - id: failure_items_routed_to_failed_output
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Failed catalog items must appear in the failed_catalog_items PCollection output"
+
+  - id: pipeline_runs_successfully
+    type: pass_to_pass
+    origin: static
+    description: "CreateCatalogItem completes pipeline execution without error"
+
+  - id: test_repo_unit_tests_relevant
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's unit tests for recommendations_ai module pass"
+
+  - id: test_repo_pylint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's pylint check on modified file passes"
+
+  - id: test_repo_yapf
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's yapf formatting check on modified file passes"
+
+  - id: test_repo_flake8
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's flake8 syntax check on modified file passes"
+
+  - id: test_repo_isort
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's isort import ordering check on modified file passes"
+
+  - id: test_repo_ml_gcp_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All ml/gcp unit tests pass - covers entire modified module"
+
+rubric:
+  - rule: "PTransforms that have success/failure paths should use the Dead Letter Queue pattern with tagged outputs (with_outputs in Python) to properly route elements"
+    source:
+      path: ".agent/skills/beam-concepts/SKILL.md"
+      lines: "205-224"
+      commit: "8044fcb3e6e394db4be60a7883eb9572ebd41eac"

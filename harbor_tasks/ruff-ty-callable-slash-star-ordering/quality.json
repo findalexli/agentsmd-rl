@@ -1,60 +1,56 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "test_display_ordering_structure asserts that 'parameter.is_positional_only()' appears before 'parameter.is_keyword_only()' in the loop body and checks for the string 'for parameter in parameters'. While instruction.md mentions these method names and the loop concept, it doesn't mention the exact loop iteration variable pattern 'for parameter in parameters'. More critically, test_slash_star_display injects specific snapshot assertions with exact strings like '@\"(a, /, *, x, y) -> None\"' and '@\"(p"
+      "outcome": "pass",
+      "reason": "Instruction names the exact expected output strings '(a, /, *, x, y) -> None' and '(p, q, /, *, k) -> None', references the loop pattern 'for parameter in parameters', and the methods is_positional_only()/is_keyword_only(). AGENTS.md rules are cited with line numbers."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md explicitly states: 'the logic checking parameter.is_positional_only() must appear at an earlier source position than the logic checking parameter.is_keyword_only()' \u2014 this is effectively stating the exact fix (reorder two code blocks), not just describing what's broken. It tells the agent precisely WHAT to change in the source ordering."
+      "outcome": "pass",
+      "reason": "Instruction describes the bug (keyword-only check happens too early) but doesn't give the exact code change; agent must figure out how to reorder."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_display_ordering_structure explicitly checks that 'parameter.is_positional_only()' appears at an earlier character offset than 'parameter.is_keyword_only()' within the loop body. An alternative correct fix that uses different method names, restructures the logic differently (e.g., collecting separators into a list and sorting), or checks conditions in a different structural way would fail this test even if it produces correct output. The test enforces the gold patch's specific implementatio"
+      "reason": "test_display_ordering_structure asserts the literal substring 'parameter.is_positional_only()' must appear before 'parameter.is_keyword_only()' in the loop; an alternative fix that uses different method names, restructures with match, or hoists the star emission outside this exact pattern would fail despite producing correct output."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests include cargo check compilation (test_compiles), cargo test execution (test_repo_display_tests, test_slash_star_display), cargo clippy (test_repo_clippy), and cargo fmt (test_repo_fmt). The key behavioral test test_slash_star_display actually runs the Rust test suite which executes snapshot assertions. While test_display_ordering_structure is text-based, it's supplementary to execution-based tests."
+      "reason": "Tests run cargo check/clippy/fmt/test as subprocesses to actually exercise the behavior via snapshot assertions."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "test_slash_star_display injects and runs Rust snapshot assertions that check the actual rendered output of callable types. A stub or no-op implementation would produce wrong output (e.g., '(a, *, /, x, y) -> None' instead of '(a, /, *, x, y) -> None') and fail the snapshot comparison. The bug fix is required to pass."
+      "reason": "test_slash_star_display injects real snapshot assertions that require the actual output strings; a stub couldn't satisfy them."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "instruction.md requires '/' before '*' in callable display, gives examples like '(a, /, *, x, y) -> None' and '(p, q, /, *, k) -> None', and mentions AGENTS.md guidelines. All these are tested: snapshot tests for the display ordering, and dedicated tests for panic/unwrap, local imports, and allow vs expect."
+      "reason": "Both example outputs from instruction.md are asserted as snapshots, plus AGENTS.md rules are checked."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with section headers (Gates, Repo CI/CD, Fail-to-pass, Config-derived), descriptive function names, docstrings, and comments indicating their category (static, repo_tests, pr_diff, agent_config)."
+      "reason": "Tests are grouped with section comment headers (Gates, Repo CI/CD, Fail-to-pass, Config-derived) and named clearly."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data like JSON/CSV/API/DB."
+      "reason": "No structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "Paths and commands look correct."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md names the exact file (display.rs), the exact impl block (FmtDetailed for DisplayParameters), and specifies 'within the loop body that iterates over parameters... the logic checking parameter.is_positional_only() must appear at an earlier source position than the logic checking parameter.is_keyword_only()'. This is precise localization of the bug down to the specific code structure, going well beyond naming the relevant module."
+      "outcome": "pass",
+      "reason": "Instruction names the conceptual area (display loop, methods) but not exact line numbers or file paths; localization is implicit but reasonable."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits task."
+      "reason": "Code-only task, no config edits."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
-    "no_solution_leakage",
     "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 5,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 1
 }

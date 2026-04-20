@@ -1,60 +1,59 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file path `app/controllers/shared/api.php`, the exact guard pattern `if ($route === null)`, the exception `AppwriteException::GENERAL_ROUTE_NOT_FOUND`, the two locations (Http::init action and shutdown action), `$route = $utopia->getRoute()`, and PHP syntax validation. All test-asserted specifics (file path, string patterns, exception constant name, PHP lint check, composer validate) are discoverable from the instruction or are standard project infrastructure."
+      "reason": "Instruction names the file path app/controllers/shared/api.php, the exception code GENERAL_ROUTE_NOT_FOUND, and the two locations (Http::init and shutdown action)."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction provides the exact code pattern to insert (`if ($route === null) { throw new AppwriteException(AppwriteException::GENERAL_ROUTE_NOT_FOUND); }`), specifies both exact locations, and even gives the complete code block under 'Error Handling Pattern'. A developer doesn't need to reason about what to change \u2014 the fix is fully spelled out."
+      "reason": "Instruction essentially dictates the fix: 'add a null check', throw AppwriteException with GENERAL_ROUTE_NOT_FOUND, in both specified locations \u2014 leaving nearly no reasoning about WHAT to change."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on exact string patterns like `if ($route === null)` and `GENERAL_ROUTE_NOT_FOUND` via text search. An alternative correct fix using `if (is_null($route))` or `if (!$route)` or `if (null === $route)` would fail test_null_route_guard_in_init_action and test_null_route_guard_in_shutdown_action since they search for the literal string `if ($route === null)`."
+      "reason": "Tests assert the literal pattern 'if ($route === null)' \u2014 an equivalent fix like 'if (is_null($route))' or 'if (!$route)' would fail test_null_route_guard_in_init_action and test_null_route_guard_in_shutdown_action."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The F2P tests (test_null_route_guard_in_init_action, test_null_route_guard_in_shutdown_action) are purely text-matching: they read the file content and check for string patterns like `if ($route === null)` and `GENERAL_ROUTE_NOT_FOUND`. They never execute the PHP code or test actual behavior. While some P2P tests run `php -l` and phpstan, the core behavioral tests are text-only."
+      "outcome": "pass",
+      "reason": "Tests include subprocess execution of php -l, composer validate, pint, and phpstan, not purely string checks."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The F2P tests check for the presence of specific guard patterns that do not exist in the original file. A stub/no-op implementation that doesn't modify the file would fail since the original file lacks `if ($route === null)` checks."
+      "reason": "A stub cannot pass; the tests require the specific guard and exception constant to be present and PHP to lint."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: (1) null guard in init action, (2) null guard in shutdown action, (3) GENERAL_ROUTE_NOT_FOUND exception, (4) valid PHP syntax. All of these are tested by the test suite."
+      "reason": "Both guards, exception constant, and syntax validity requirements from instruction.md are tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_null_route_guard_in_init_action, test_null_route_guard_in_shutdown_action, etc.), have docstrings with F2P/P2P labels, and are logically grouped by concern."
+      "reason": "Tests have descriptive names and docstrings labeling F2P/P2P and noting approximate line locations."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "Task is a code fix, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or tests."
+      "reason": "Paths, constants, and commands appear correct and consistent."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact locations ('Around line 98-100', 'Around line 492-495' are in test comments), names both specific code patterns to insert, and provides the complete solution code block. This goes well beyond describing what's broken."
+      "reason": "Instruction names the exact file, exact two insertion sites ('after $route = $utopia->getRoute();'), exact exception constant, and exact behavior \u2014 localization is handed to the agent."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "Code-only task."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 4
+  "pass_count": 6,
+  "fail_count": 3
 }

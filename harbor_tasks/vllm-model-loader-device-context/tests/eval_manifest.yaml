@@ -1,0 +1,134 @@
+version: '2.0'
+source:
+  repo: vllm-project/vllm
+  pr: 38426
+  base_commit: af89140efc06c462ae531999b9f2db6ba0c7a528
+  merge_commit: aa4eb0db78ec469438a7a18147b0372fe2eb7cf4
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: base_loader.py must parse without syntax errors
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff linter passes on base_loader.py
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff format check passes on base_loader.py
+- id: test_repo_typos
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's typos spell checker passes on base_loader.py
+- id: test_repo_actionlint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo actionlint validation passes on GitHub workflow files
+- id: test_repo_forbidden_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo forbidden imports check passes on base_loader.py
+- id: test_repo_boolean_context_manager
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo boolean context manager check passes on base_loader.py
+- id: log_inspection_outside_device_context
+  type: fail_to_pass
+  origin: pr_diff
+  description: log_model_inspection must NOT run inside the target_device context
+    manager
+- id: device_context_narrower_than_dtype
+  type: fail_to_pass
+  origin: pr_diff
+  description: Device context must be a strict subset of dtype context (nested, not
+    combined)
+- id: initialize_model_inside_device_context
+  type: pass_to_pass
+  origin: pr_diff
+  description: initialize_model must still run inside the target_device context manager
+- id: log_inspection_inside_dtype_context
+  type: pass_to_pass
+  origin: pr_diff
+  description: log_model_inspection must remain inside the set_default_torch_dtype
+    context
+- id: key_structure_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: BaseModelLoader class, load_model, load_weights, and key calls preserved
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: base_loader.py has real content — not a gutted stub
+- id: no_bare_pip_install
+  type: pass_to_pass
+  origin: agent_config
+  description: Changed files must not introduce bare pip install (must use uv)
+  source:
+    path: AGENTS.md
+    lines: '42'
+    commit: af89140efc06c462ae531999b9f2db6ba0c7a528
+rubric: []
+distractors:
+- rule: 'No low-value busywork PRs: Do not open one-off PRs for tiny edits (single
+    typo, isolated style change, one mutable default, etc.).'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might misclassify splitting a context manager as an 'isolated
+    style change' or 'tiny edit' and refuse to fix the bug, even though it is a critical
+    functional fix for memory allocation.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 18-19
+- rule: 'Accountability: Pure code-agent PRs are not allowed. A human submitter must
+    understand and defend the change end-to-end.'
+  collision_type: meta_confusion
+  why_distracting: The agent might refuse to generate the patch entirely because it
+    is an AI, and the rule explicitly forbids 'pure code-agent PRs'.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 22-23
+- rule: 'Fail-closed behavior: If work is duplicate/trivial busywork, do not proceed.
+    Return a short explanation of what is missing.'
+  collision_type: meta_confusion
+  why_distracting: Combined with the 'tiny edits' rule, the agent might output a short
+    explanation refusing the task instead of actually fixing the bug.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 30-31
+- rule: No low-value busywork PRs
+  source:
+    path: AGENTS.md
+    lines: 21-24
+  source_text: '### No low-value busywork PRs
+
+
+    Do not open one-off PRs for tiny edits (single typo, isolated style change, one
+    mutable default, etc.). Mechanical cleanups are acceptable only when bundled with
+    substantive work.'
+  collision_type: rule_conflict
+  why_distracting: An agent asked to perform this specific change might mistakenly
+    refuse to do so, incorrectly categorizing the splitting of the context manager
+    as an 'isolated style change' or 'tiny edit' and thus violating this rule.
+  severity: high
+- rule: Fail-closed behavior
+  source:
+    path: AGENTS.md
+    lines: 34-36
+  source_text: '### Fail-closed behavior
+
+
+    If work is duplicate/trivial busywork, **do not proceed**. Return a short explanation
+    of what is missing.'
+  collision_type: rule_conflict
+  why_distracting: An agent might evaluate the context manager restructuring as 'trivial
+    busywork' and prematurely abort the execution instead of implementing the required
+    fix.
+  severity: high
+hierarchy_analysis: The config hierarchy is shallow. `CLAUDE.md` simply includes `@AGENTS.md`.
+  The rules in `AGENTS.md` are mostly project policies and workflow instructions rather
+  than coding conventions. The main challenge is avoiding false-positive refusals
+  triggered by the project's strict policies against AI-generated PRs and trivial
+  edits.

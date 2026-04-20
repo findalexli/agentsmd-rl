@@ -1,61 +1,58 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "The instruction names the file path (airflow-core/src/airflow/jobs/scheduler_job_runner.py), the function/utility (with_row_locks from airflow.utils.sqlalchemy), all parameter names and values (of=Deadline, session=session, skip_locked=True, key_share=False), the variable name (deadline_query), and the comment requirements. Every assert'd specific in the tests (e.g., 'deadline_query', 'skip_locked=True', 'key_share=False', 'of=Deadline', 'session=session', comment mentioning locking/HA/concurren"
+      "outcome": "fail",
+      "reason": "Tests assert specific variable naming patterns (must contain both 'deadline' and 'query' in the name, per get_deadline_query_variable_name), but instruction.md only says to 'extract the query into a named variable' without specifying the naming convention."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix: extract query into 'deadline_query', wrap with with_row_locks(deadline_query, of=Deadline, session=session, skip_locked=True, key_share=False), and add a specific comment. This is not describing what's broken \u2014 it's prescribing the exact code changes with specific variable names and parameter values. A developer reading instruction.md needs zero reasoning about WHAT to change."
+      "reason": "Instruction.md explicitly names the fix: 'Use row-level database locking', 'Skip locked rows rather than blocking', 'A stronger lock like FOR UPDATE is needed', and 'Target the Deadline model specifically' \u2014 effectively dictating with_row_locks(of=Deadline, skip_locked=True, key_share=False)."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: the exact variable name 'deadline_query' (test_deadline_query_extracted_to_variable), specific parameter formatting like 'of=Deadline' and 'session=session' as string matches (test_deadline_row_locks_specifies_model, test_deadline_session_passed_to_row_locks), and test_deadline_query_not_inline uses a regex for the specific buggy pattern. An alternative correct fix using a different variable name (e.g., 'stmt' or 'query') or different code st"
+      "reason": "test_deadline_query_extracted_to_variable requires the variable name to contain both 'deadline' and 'query' substrings; valid alternatives like 'stmt' or 'expired_deadlines' would fail."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Almost all fail_to_pass tests are pure text/string matching: checking for substrings like 'with_row_locks', 'skip_locked=True', 'deadline_query', 'of=Deadline' in file contents. The only tests that execute code are syntax checks (py_compile) and ruff linting. No test imports the module, calls deadline handling functions, or verifies actual locking behavior."
+      "outcome": "pass",
+      "reason": "Tests parse code via AST, compile via py_compile, and run ruff \u2014 going beyond string grepping."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "A stub implementation that simply adds comment text containing the required keywords and wraps the query with the exact string patterns (without any functional correctness) would pass all f2p tests. The tests only check for string presence in source code, not actual behavior. For example, adding a dead-code comment with 'deadline_query = ...; with_row_locks(..., skip_locked=True, key_share=False, of=Deadline, session=session)' anywhere near the deadline section would pass all tests."
+      "outcome": "pass",
+      "reason": "Tests require specific AST structure (with_row_locks call with of=Deadline, skip_locked=True, key_share=False, session=session) that a stub cannot trivially satisfy."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors specified in instruction.md are tested: with_row_locks usage, skip_locked=True, key_share=False, of=Deadline, session=session, deadline_query variable extraction, explanatory comment, and the query not being inline."
+      "reason": "Tests cover all 5 requirements: row locking, skip_locked, key_share=False (FOR UPDATE), of=Deadline, variable extraction."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings indicating what each tests and whether it's pass_to_pass or fail_to_pass. There's a logical grouping from basic syntax to specific fix parameters."
+      "reason": "Tests are grouped with section comments for Pass-to-Pass and Fail-to-Pass, with descriptive docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "Task is a code fix, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "File paths and names appear consistent."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction specifies the exact file, the exact variable name to use ('deadline_query'), exact function to call (with_row_locks), exact parameters with exact values, and even what the comment should mention. This goes far beyond identifying the buggy location \u2014 it's a complete implementation specification."
+      "outcome": "pass",
+      "reason": "Instruction describes the scheduler HA domain without naming the specific file/line to edit."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "This is a code-only task, not agentmd-edits."
     }
   },
   "tier_a_fails": [
+    "behavior_in_task_description",
     "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 4,
-  "fail_count": 5
+  "tier_c_fails": [],
+  "pass_count": 6,
+  "fail_count": 3
 }

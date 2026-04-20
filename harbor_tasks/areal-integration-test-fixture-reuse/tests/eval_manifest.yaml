@@ -1,0 +1,210 @@
+version: '2.0'
+source:
+  repo: inclusionAI/AReaL
+  pr: 1068
+  base_commit: dfeab6396380f27be96ccb7cb642b57a5a25ef58
+  merge_commit: 3bf10c9c56eeae846b3de52dde8db42918f80690
+checks:
+- id: syntax_valid
+  type: pass_to_pass
+  origin: static
+  description: All three test files must be valid Python
+- id: fixtures_module_scoped
+  type: fail_to_pass
+  origin: pr_diff
+  description: local_scheduler, gateway_controller, gateway_controller_full_init must
+    be scoped module or session
+- id: pytestmark_sglang_present
+  type: fail_to_pass
+  origin: pr_diff
+  description: All 3 test files must have module-level pytestmark containing pytest.mark.sglang
+- id: slow_marker_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: No test class should have @pytest.mark.slow decorator
+- id: should_accept_fn_tests_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Tests referencing should_accept_fn removed from controller tests (incompatible
+    with module-scoped fixtures)
+- id: controller_settings_loosened
+  type: fail_to_pass
+  origin: pr_diff
+  description: gateway_controller and gateway_controller_full_init must have max_head_offpolicyness
+    >= 100
+- id: consumer_batch_size_increased
+  type: fail_to_pass
+  origin: pr_diff
+  description: gateway_controller consumer_batch_size increased to >= 3 for module-scoped
+    fixture reuse
+- id: fixture_no_tmp_path
+  type: fail_to_pass
+  origin: agent_config
+  description: Module-scoped local_scheduler must not use function-scoped tmp_path
+  source:
+    path: .claude/rules/testing.md
+    lines: '55'
+    commit: dfeab6396380f27be96ccb7cb642b57a5a25ef58
+- id: core_test_classes_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: All non-removed test classes still exist in their respective files
+- id: fake_dataloader_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: _FakeDataLoader helper class still present in controller tests
+- id: files_not_stubbed
+  type: pass_to_pass
+  origin: static
+  description: Test files have substantial content with real test methods (not stubbed)
+- id: no_wildcard_imports
+  type: pass_to_pass
+  origin: agent_config
+  description: No wildcard imports (from x import *) in any test file
+  source:
+    path: AGENTS.md
+    lines: '30'
+    commit: dfeab6396380f27be96ccb7cb642b57a5a25ef58
+- id: gpu_skipif_has_reason
+  type: pass_to_pass
+  origin: agent_config
+  description: All @pytest.mark.skipif decorators checking GPU availability must have
+    an explicit reason= argument
+  source:
+    path: AGENTS.md
+    lines: '202'
+    commit: dfeab6396380f27be96ccb7cb642b57a5a25ef58
+- id: test_repo_test_classes_follow_naming
+  type: pass_to_pass
+  origin: static
+  description: All test classes follow Test* naming convention (matches ruff/pre-commit)
+- id: test_repo_no_bare_excepts
+  type: pass_to_pass
+  origin: static
+  description: No bare 'except:' clauses in test files (matches ruff E722)
+- id: test_repo_yaml_files_valid
+  type: pass_to_pass
+  origin: static
+  description: All YAML files in the repo are valid (matches pre-commit check-yaml
+    hook)
+- id: test_repo_pyproject_toml_valid
+  type: pass_to_pass
+  origin: static
+  description: pyproject.toml is valid TOML (basic syntax check for repo's main config)
+- id: test_repo_trailing_whitespace
+  type: pass_to_pass
+  origin: static
+  description: No trailing whitespace in test files (matches pre-commit trailing-whitespace
+    hook)
+- id: test_repo_end_of_file_newline
+  type: pass_to_pass
+  origin: static
+  description: Test files end with single newline (matches pre-commit end-of-file-fixer
+    hook)
+- id: test_repo_no_tabs
+  type: pass_to_pass
+  origin: static
+  description: No tab characters in test files (matches ruff W191)
+- id: test_repo_py_compile
+  type: pass_to_pass
+  origin: static
+  description: All test files compile to valid Python bytecode (matches py_compile
+    pre-commit check)
+- id: test_repo_no_merge_conflict_markers
+  type: pass_to_pass
+  origin: static
+  description: No merge conflict markers in test files (standard pre-commit check)
+- id: test_repo_no_unused_imports
+  type: pass_to_pass
+  origin: static
+  description: No obviously unused standard library imports in test files (AST analysis)
+rubric:
+- rule: Follow existing code patterns in the same module
+  source:
+    path: CLAUDE.md
+    lines: '76'
+    commit: dfeab6396380f27be96ccb7cb642b57a5a25ef58
+- rule: Composition over inheritance -- keep hierarchies <= 2 levels; prefer delegation.
+  source:
+    path: AGENTS.md
+    lines: '80'
+    commit: dfeab6396380f27be96ccb7cb642b57a5a25ef58
+- rule: test_<what>_<condition>_<expected>() with Arrange/Act/Assert
+  source:
+    path: .claude/rules/testing.md
+    lines: '22'
+    commit: dfeab6396380f27be96ccb7cb642b57a5a25ef58
+- rule: 'Never Do: Hardcode secrets, paths, or endpoints'
+  source:
+    path: CLAUDE.md
+    lines: 57-58
+  evidence: When changing the `local_scheduler` fixture to module scope, the gold
+    solution uses `tmp_path_factory.mktemp('local_scheduler')` to dynamically generate
+    a temporary directory instead of hardcoding a p
+  category: testing
+- rule: Integration tests require multi-node hardware; explain skips when unavailable
+  source:
+    path: CLAUDE.md
+    lines: 40-41
+  evidence: The gold solution preserves the explicit skip explanations like `pytest.skip("GPU
+    required for LocalScheduler")` and `@pytest.mark.skipif(not has_gpu(), reason="GPU
+    required")` when modifying the fixt
+  category: testing
+- rule: Integration tests require multi-node hardware -- explain skips explicitly.
+  source:
+    path: AGENTS.md
+    lines: 27-27
+  evidence: When rewriting the `local_scheduler` and `gateway_controller` fixtures
+    to be module-scoped, the gold solution preserves the explicit `pytest.skip("GPU
+    required...")` calls, adhering to the rule to exp
+  category: testing
+- rule: Scope expensive fixtures appropriately (`session` > `module` > `function`)
+  source:
+    path: .claude/rules/testing.md
+    lines: 55-55
+  source_text: '- Scope expensive fixtures appropriately (`session` > `module` > `function`)'
+  evidence: The diff changes the scope of the `local_scheduler` and `gateway_controller`
+    fixtures from the default function scope to module scope using `@pytest.fixture(scope="module")`.
+  category: testing
+  verification: llm_judge
+distractors:
+- rule: Follow existing code patterns in the same module.
+  collision_type: rule_conflict
+  why_distracting: The rule instructs the agent to 'Follow existing code patterns
+    in the same module'. The existing pattern uses `@pytest.mark.slow` on every class
+    and function-scoped fixtures. Following this rule would cause the agent to maintain
+    the redundant boilerplate, directly conflicting with the instruction to use a
+    module-level `pytestmark` and module-scoped fixtures.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 39-39
+- rule: Add tests for new functionality.
+  collision_type: rule_conflict
+  why_distracting: The rule says to 'Add tests for new functionality'. An agent might
+    try to rewrite the `should_accept_fn` tests to work with the new module-scoped
+    fixture to preserve test coverage, rather than following the explicit instruction
+    to remove them.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 40-40
+- rule: Process Group Management
+  source:
+    path: .claude/rules/distributed.md
+    lines: 10-13
+  source_text: '## Process Group Management
+
+
+    - **Never create global process group** in module-level code
+
+    - Always pass `process_group` explicitly, don''t rely on default'
+  collision_type: scope_ambiguity
+  why_distracting: The diff changes the pytest fixture scope to `module` for `local_scheduler`
+    and `gateway_controller`. An agent might confuse pytest's `scope="module"` with
+    "module-level code" and incorrectly block the change, thinking it violates the
+    rule against module-level process groups.
+  severity: high
+hierarchy_analysis: Both `AGENTS.md` and `CLAUDE.md` contain similar high-level rules.
+  The task relies heavily on the explicit prompt instructions overriding the general
+  repository rules found in the config files.

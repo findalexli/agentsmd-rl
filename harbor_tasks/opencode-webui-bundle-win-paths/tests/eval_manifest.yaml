@@ -1,0 +1,193 @@
+version: '2.0'
+source:
+  repo: anomalyco/opencode
+  pr: 19337
+  base_commit: b7a06e193952a66a8efa07feb4e105f44bf7ea8b
+  merge_commit: ef7d1f7efa2e682cf0e3e322009fe84b577bbe02
+checks:
+- id: import_specifiers_relative
+  type: fail_to_pass
+  origin: pr_diff
+  description: Import specifiers must be relative paths (./... or ../...), not absolute
+- id: export_keys_sorted
+  type: fail_to_pass
+  origin: pr_diff
+  description: Export keys must be sorted alphabetically for deterministic output
+- id: backslash_normalization
+  type: fail_to_pass
+  origin: pr_diff
+  description: Source must handle backslash-to-forward-slash normalization for Windows
+- id: all_dist_files_present
+  type: pass_to_pass
+  origin: pr_diff
+  description: All scanned dist files appear in the generated module output
+- id: valid_module_structure
+  type: pass_to_pass
+  origin: pr_diff
+  description: 'Generated module has import statements, export default, and type:
+    file'
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: Function body has >= 5 meaningful statements
+- id: const_only
+  type: pass_to_pass
+  origin: agent_config
+  description: Function uses const only, no let/var
+  source:
+    path: AGENTS.md
+    lines: '70'
+    commit: b7a06e193952a66a8efa07feb4e105f44bf7ea8b
+- id: no_imperative_loops
+  type: pass_to_pass
+  origin: agent_config
+  description: No for/while loops — use functional array methods
+  source:
+    path: AGENTS.md
+    lines: '17'
+    commit: b7a06e193952a66a8efa07feb4e105f44bf7ea8b
+- id: no_any_type
+  type: pass_to_pass
+  origin: agent_config
+  description: No use of the 'any' type
+  source:
+    path: AGENTS.md
+    lines: '13'
+    commit: b7a06e193952a66a8efa07feb4e105f44bf7ea8b
+- id: no_try_catch
+  type: pass_to_pass
+  origin: agent_config
+  description: No try/catch blocks — handle errors via returns or throws
+  source:
+    path: AGENTS.md
+    lines: '12'
+    commit: b7a06e193952a66a8efa07feb4e105f44bf7ea8b
+- id: no_else_statements
+  type: pass_to_pass
+  origin: agent_config
+  description: No else statements — prefer early returns
+  source:
+    path: AGENTS.md
+    lines: '84'
+    commit: b7a06e193952a66a8efa07feb4e105f44bf7ea8b
+- id: uses_bun_glob_api
+  type: pass_to_pass
+  origin: agent_config
+  description: Function uses Bun.Glob for file scanning (prefer Bun APIs over native
+    fs)
+  source:
+    path: AGENTS.md
+    lines: '15'
+    commit: b7a06e193952a66a8efa07feb4e105f44bf7ea8b
+- id: test_repo_typescript_syntax_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TypeScript files must have valid syntax (bun build can parse
+    them)
+- id: test_repo_bun_lockfile_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's bun.lock must be valid and parseable by bun
+- id: test_repo_prettier_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's code must be formatted with prettier
+- id: test_repo_bun_parse_build_ts
+  type: pass_to_pass
+  origin: repo_tests
+  description: Bun must be able to parse the build.ts file syntax
+- id: test_repo_import_syntax_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: All imports in build.ts must use valid syntax
+rubric:
+- rule: 'The solution modifies build.ts to fix Windows path issues: uses relative
+    import specifiers, sorts export keys, and normalizes backslashes.'
+  source:
+    path: packages/opencode/script/build.ts
+    lines: 68-90
+    commit: b7a06e193952a66a8efa07feb4e105f44bf7ea8b
+  reference: "const dist = path.join(appDir, \"dist\")\nconst files = (await Array.fromAsync(new\
+    \ Bun.Glob(\"**/*\").scan({ cwd: dist })))\n  .map((file) => file.replaceAll(\"\
+    \\\\\", \"/\"))\n  .sort()\n"
+- rule: Use single word names by default for new locals, params, and helper functions.
+  source:
+    path: AGENTS.md
+    lines: 21-32
+  evidence: The gold solution introduces new variables `dist`, `files`, `imports`,
+    `entries`, and `spec`, all of which are single words.
+  category: naming
+- rule: Prefer functional array methods (flatMap, filter, map) over for loops
+  source:
+    path: AGENTS.md
+    lines: 17-18
+  evidence: The gold solution uses `.map()` to transform the `files` array into `imports`
+    and `entries` arrays instead of using a `for` loop.
+  category: style
+- rule: Prefer `const` over `let`.
+  source:
+    path: AGENTS.md
+    lines: 60-61
+  evidence: The gold solution uses `const` for all new variables (`dist`, `files`,
+    `imports`, `entries`, `spec`) and avoids reassignment.
+  category: style
+- rule: Prefer single word names for variables and functions.
+  source:
+    path: AGENTS.md
+    lines: 25-33
+  evidence: The gold solution introduces new variables using single-word names (`files`,
+    `imports`, `entries`, `spec`) instead of multi-word alternatives like `fileList`,
+    `importStatements`, or `importSpecifier`.
+  category: naming
+- rule: Prefer `const` over `let`. Use ternaries or early returns instead of reassignment.
+  source:
+    path: AGENTS.md
+    lines: 62-63
+  evidence: 'The gold solution uses `const` for all variable declarations and employs
+    a ternary operator (`spec.startsWith(".") ? spec : ...`) instead of an `if/else`
+    block with a `let` reassignment.'
+  category: style
+- rule: Prefer single word variable names where possible. Use single word names by
+    default for new locals.
+  source:
+    path: AGENTS.md
+    lines: 20-32
+  evidence: The gold solution introduces new variables with single-word names like
+    `dist`, `files`, `imports`, `entries`, and `spec`, adhering to the strict naming
+    enforcement.
+  category: naming
+distractors:
+- rule: Prefer `Path.Path`, `Config`, `Clock`, and `DateTime` when those concerns
+    are already inside Effect code.
+  collision_type: architecture_boundary
+  why_distracting: The agent might try to import and use Effect's `Path.Path` service
+    instead of Node's built-in `path` module. However, this is a plain Node/Bun build
+    script, not an Effect service, so introducing Effect dependencies here is incorrect.
+  severity: high
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: 38-40
+- rule: Use `Effect.gen(function* () { ... })` for composition.
+  collision_type: architecture_boundary
+  why_distracting: The agent might attempt to refactor the `createEmbeddedWebUIBundle`
+    async function into an `Effect.gen` generator. This would unnecessarily complicate
+    a simple build script that doesn't use the Effect runtime.
+  severity: medium
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: 16-17
+- rule: Reduce total variable count by inlining when a value is only used once.
+  collision_type: rule_conflict
+  why_distracting: The agent might try to inline the `imports` and `entries` arrays
+    directly into the final returned array since they are only used once. This would
+    make the template literal logic overly dense and harder to read, conflicting with
+    general readability.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 45-46
+hierarchy_analysis: The agent must navigate from the root `AGENTS.md` to the package-level
+  `packages/opencode/AGENTS.md`. The package-level rules are heavily focused on Effect
+  and Drizzle, which are irrelevant for a build script. The agent must recognize the
+  architectural boundary and apply the general style rules from the root config while
+  ignoring the domain-specific rules from the package config.

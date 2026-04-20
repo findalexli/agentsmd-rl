@@ -1,0 +1,75 @@
+{
+  "schema_version": 2,
+  "valid": true,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-18T07:16:11.666767",
+  "total_time": 9004.47,
+  "sandbox_id": "imkra4h2de9jsxtpo9zyp",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "scaffold",
+  "nodes": {
+    "scaffold": {
+      "status": "ok",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 1514.98,
+      "notes": ""
+    },
+    "quality_gate": {
+      "status": "passed",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.26,
+      "notes": "flags=[]"
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 2154.63,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "docker_build": "pass",
+      "attempts": 1,
+      "notes": "Docker build: pass. NOP test (base code): reward=0 (5 failed, 4 passed) \u2014 correct. Gold test (fix applied): reward=1 (all 9 passed) \u2014 correct. Rubric judge: ICR=0.0/5 \u2014 the rubric judge (call_judge function) uses extract_config_hunks() which only matches config/documentation files (CLAUDE.md, AGENTS.md, SKILL.md etc.), NOT Rust source code files. Since the gold solution only modified .rs files (metastore.rs and metadata.rs), the rubric judge finds 0 config hunks and incorrectly fails all rules. This is a fundamental mismatch between the rubric judge's design (config file changes) and this task's nature (Rust code fix). All three practical checks (Docker build, NOP test, gold test) pass. The rubric judge limitation is inherent to judge.py's design.",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 2091.08
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 13.23,
+      "tier_a_fails": [
+        "no_solution_leakage",
+        "solution_uniqueness_guard"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 6,
+      "fail_count": 3
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 9004.47,
+      "at": "2026-04-18T07:16:11.666767"
+    }
+  ]
+}

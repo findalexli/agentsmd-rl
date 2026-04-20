@@ -1,62 +1,57 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "The instruction says label constants should be 'ai-reproduction-confirmed' and 'ai-reproduction-failed', but the solution/tests for SKILL.md check for these exact strings while the gold patch actually uses 's/ai-reproduction-confirmed' and 's/ai-reproduction-failed' (with 's/' prefix). The tests in test_skill_md_labels_section check for 'ai-reproduction-confirmed' (without prefix) which matches both. However, more critically, the instruction says nothing about the script needing to start with '#"
+      "outcome": "pass",
+      "reason": "Instruction names all required identifiers: Update-VerificationLabels, $LabelConfirmed, $LabelFailed, label strings 'ai-reproduction-confirmed'/'ai-reproduction-failed', $labelToAdd, $labelToRemove, $LASTEXITCODE, $foundPR, gh pr view, gh pr list --head, '## PR Labels' section, and the two file paths."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly specifies exact variable names ($labelToAdd, $labelToRemove, $foundPR, $LabelConfirmed, $LabelFailed), exact function name (Update-VerificationLabels), exact parameter name (-ReproductionConfirmed), exact API methods (DELETE/POST), exact error handling mechanism ($LASTEXITCODE), and exact number of call paths (4). This is essentially a detailed implementation specification, not a problem description."
+      "outcome": "pass",
+      "reason": "Instruction describes required function name, variables, and API methods but doesn't provide full code implementation; agent must still write the toggle logic and REST calls."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact variable names '$labelToAdd' and '$labelToRemove' (test_update_labels_function_logic), exact function name 'Update-VerificationLabels', exact variable '$foundPR' (test_pr_detection_fallback), exact parameter name '-ReproductionConfirmed' (test_labels_called_on_all_paths). An alternative correct implementation using different variable names (e.g., $addLabel/$removeLabel) or a different function name would fail."
+      "reason": "Tests assert specific variable names ($labelToAdd, $labelToRemove, $foundPR) and exact label constants ($LabelConfirmed='ai-reproduction-confirmed', $LabelFailed='ai-reproduction-failed'), but gold solution uses 's/ai-reproduction-confirmed' prefix \u2014 tests use substring match ('ai-reproduction-confirmed' in c) so gold passes, but this still constrains naming heavily. However, the instruction itself mandates these exact names, so alternatives would violate the spec. Still, the test_update_labels_"
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every fail-to-pass test is purely text/pattern matching via regex on file contents (e.g., checking for string 'DELETE' in body, checking '$labelToAdd' in body, checking 'gh pr list' in content). No test actually executes the PowerShell script, calls any function, or verifies runtime behavior. All tests are variations of 'assert string in open(path).read()'."
+      "reason": "All f2p tests are static text/regex inspection of PS1 and SKILL.md files (e.g., 'gh pr list' in content, '$foundPR' in content, '## PR Labels' in content). No test actually executes the PowerShell function or verifies runtime behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "While tests are text-based, they do check for non-trivial content that wouldn't exist in a stub: a function body with specific variables, REST API methods, multiple call sites with specific parameters. A stub/empty file would not pass these checks."
+      "reason": "Tests require specific string tokens, counts (>=2 true/false calls), and structural elements that a stub can't satisfy without real edits."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The tests cover all major requirements from the instruction: label management function with toggle logic, label constants, function calls on all paths, PR detection fallback, and SKILL.md updates. The instruction's requirements are well-represented in tests."
+      "reason": "Each behavior in instruction (function logic, constants, 4 path calls, PR fallback, SKILL.md section) maps to a test."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive names (test_update_labels_function_logic, test_label_names_and_constants, etc.), grouped by category (Gates, Fail-to-pass, Pass-to-pass) with comments, and each has a docstring."
+      "reason": "Tests are grouped with section comments (Gates, Fail-to-pass, Pass-to-pass) and have descriptive names."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "Task does not produce structured data output."
     },
     "no_typos": {
-      "outcome": "fail",
-      "reason": "The instruction specifies label values as 'ai-reproduction-confirmed' and 'ai-reproduction-failed' but the gold solution uses 's/ai-reproduction-confirmed' and 's/ai-reproduction-failed' (with 's/' prefix). This is a discrepancy between instruction and solution that would mislead agents."
+      "outcome": "pass",
+      "reason": "Paths and variable names appear consistent between instruction and tests."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction specifies exact implementation details: exact variable names ($labelToAdd, $labelToRemove, $foundPR), exact function signature, exact API methods (DELETE/POST), exact error handling ($LASTEXITCODE), and exact number of code paths (4). This goes far beyond describing the problem and prescribes the exact solution structure."
+      "outcome": "pass",
+      "reason": "Instruction identifies files to modify which is appropriate; does not cite specific line numbers."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is primarily a code/documentation editing task, not a config-edit task."
+      "reason": "Not an agentmd-edits task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
-    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "no_typos",
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 3,
-  "fail_count": 6
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 2
 }

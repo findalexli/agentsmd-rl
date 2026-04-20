@@ -3,12 +3,27 @@
 import subprocess
 import sys
 import os
-import ast
-import re
+import tempfile
+import shutil
 
 # Constants
 REPO = "/workspace/lancedb"
 QUERY_FILE = f"{REPO}/python/python/lancedb/query.py"
+SITE_PACKAGES = "/usr/local/lib/python3.12/site-packages"
+
+
+def _apply_patch_to_site_packages():
+    """Copy the repo's query.py to site-packages for testing."""
+    src = f"{REPO}/python/python/lancedb/query.py"
+    dst = f"{SITE_PACKAGES}/lancedb/query.py"
+    if os.path.exists(src):
+        shutil.copy2(src, dst)
+
+
+def _get_query_file_content():
+    """Read the query.py file content from the repo."""
+    with open(QUERY_FILE, 'r') as f:
+        return f.read()
 
 
 def test_repo_ruff_lint():
@@ -70,98 +85,11 @@ def test_repo_git_trackable():
     # Git status should succeed (repo is properly cloned)
     assert r.returncode == 0, f"Git status failed: {r.stderr}"
 
-def _read_query_file():
-    """Read the query.py file content."""
-    with open(QUERY_FILE, 'r') as f:
-        return f.read()
-
-
-def test_empty_results_early_return_exists():
-    """F2P: Check that early return for empty results exists in _combine_hybrid_results.
-
-    The fix should add a check for empty vector and FTS results before reranking.
-    """
-    content = _read_query_file()
-
-    # Find the _combine_hybrid_results method
-    tree = ast.parse(content)
-
-    found_method = False
-    found_early_return = False
-
-    for node in ast.walk(tree):
-        if isinstance(node, ast.FunctionDef) and node.name == '_combine_hybrid_results':
-            found_method = True
-            # Look for the early return check: vector_results.num_rows == 0 and fts_results.num_rows == 0
-            source_segment = ast.unparse(node) if hasattr(ast, 'unparse') else content[node.col_offset:node.end_col_offset]
-
-            # Check for the empty results check pattern
-            if 'num_rows == 0' in source_segment and 'vector_results' in source_segment and 'fts_results' in source_segment:
-                found_early_return = True
-            break
-
-    assert found_method, "_combine_hybrid_results method not found"
-    assert found_early_return, "Early return for empty results not found - should check num_rows == 0 for both results"
-
-
-def test_relevance_score_column_added():
-    """F2P: Check that _relevance_score column is added to empty results.
-
-    The fix should append a _relevance_score column to the empty table.
-    """
-    content = _read_query_file()
-
-    # Check for _relevance_score column being added
-    assert '_relevance_score' in content, "_relevance_score column handling not found"
-
-    # Look for append_column with _relevance_score
-    pattern = r'append_column\s*\(\s*["\']_relevance_score["\']'
-    matches = re.findall(pattern, content)
-    assert len(matches) > 0, "_relevance_score column not being appended to empty results"
-
-
-def test_with_row_ids_handling():
-    """F2P: Check that with_row_ids flag is respected in empty results.
-
-    The fix should drop _rowid column when with_row_ids=False.
-    """
-    content = _read_query_file()
-
-    # Find the _combine_hybrid_results method
-    tree = ast.parse(content)
-
-    found_method = False
-    found_rowid_handling = False
-
-    for node in ast.walk(tree):
-        if isinstance(node, ast.FunctionDef) and node.name == '_combine_hybrid_results':
-            found_method = True
-            # Check for with_row_ids handling
-            source = ast.unparse(node) if hasattr(ast, 'unparse') else content
-
-            # Look for the pattern: if not with_row_ids and "_rowid" in empty.column_names
-            if 'with_row_ids' in source and '_rowid' in source and 'drop' in source:
-                found_rowid_handling = True
-            break
-
-    assert found_method, "_combine_hybrid_results method not found"
-    assert found_rowid_handling, "with_row_ids handling not found - should drop _rowid when with_row_ids=False"
-
-
-def test_pa_unify_schemas_usage():
-    """F2P: Check that pa.unify_schemas is used to merge schemas.
-
-    The fix should use pa.unify_schemas to properly combine vector and FTS schemas.
-    """
-    content = _read_query_file()
-
-    # Check for pa.unify_schemas call
-    assert 'pa.unify_schemas' in content, "pa.unify_schemas not used for schema merging"
-
 
 def test_python_syntax_valid():
     """P2P: Python code should have valid syntax."""
-    content = _read_query_file()
+    import ast
+    content = _get_query_file_content()
 
     try:
         ast.parse(content)
@@ -169,85 +97,244 @@ def test_python_syntax_valid():
         assert False, f"Syntax error in query.py: {e}"
 
 
-def test_patch_code_structure():
-    """F2P: The specific patch structure should be present.
+def test_empty_results_no_crash():
+    """F2P: Empty results should not crash with IndexError.
 
-    Check for the distinctive lines from the gold patch:
-    - Early return comment about empty results
-    - vector_results.num_rows == 0 check
-    - pa.unify_schemas call
-    - empty.append_column for _relevance_score
+    The original bug was that _combine_hybrid_results crashed with IndexError
+    when both vector_results and fts_results were empty. The fix should handle
+    this case gracefully and return an empty table.
     """
-    content = _read_query_file()
+    # Apply the repo's query.py to site-packages for testing
+    _apply_patch_to_site_packages()
 
-    # Check for key lines from the patch
-    checks = [
-        ('early return comment', 'return early to avoid errors in reranking' in content.lower() or
-                                'return early' in content.lower()),
-        ('empty results check', 'num_rows == 0' in content),
-        ('schema unification', 'pa.unify_schemas' in content),
-        ('relevance score column', '_relevance_score' in content),
-        ('with_row_ids check', 'with_row_ids' in content and '_rowid' in content),
-    ]
+    # Now import and test
+    import pyarrow as pa
+    from lancedb.query import LanceHybridQueryBuilder
 
-    failed = []
-    for name, check in checks:
-        if not check:
-            failed.append(name)
+    # Create empty tables like the bug scenario
+    vector_results = pa.table({
+        "_rowid": pa.array([], type=pa.int64()),
+        "_distance": pa.array([], type=pa.float32()),
+    })
+    fts_results = pa.table({
+        "_rowid": pa.array([], type=pa.int64()),
+        "_score": pa.array([], type=pa.float32()),
+    })
 
-    assert len(failed) == 0, f"Missing patch elements: {failed}"
+    class MockReranker:
+        def rerank_hybrid(self, query, vector_results, fts_results):
+            return vector_results
+
+    # This should not raise IndexError
+    result = LanceHybridQueryBuilder._combine_hybrid_results(
+        fts_results=fts_results,
+        vector_results=vector_results,
+        norm="score",
+        fts_query="test",
+        reranker=MockReranker(),
+        limit=10,
+        with_row_ids=False,
+    )
+
+    # Should return an empty table
+    assert result.num_rows == 0, f"Expected 0 rows, got {result.num_rows}"
 
 
-def test_no_index_error_on_empty_results():
-    """F2P: Verify the code handles empty results without IndexError.
+def test_empty_results_has_relevance_score():
+    """F2P: Empty results table should have _relevance_score column.
 
-    The original bug was that empty results passed to rerankers caused IndexError.
-    The fix adds an early return before reranking.
+    When handling empty results, the fix should return a table with the
+    _relevance_score column (required by downstream code), even if empty.
     """
-    content = _read_query_file()
+    _apply_patch_to_site_packages()
 
-    # Parse and find the _combine_hybrid_results method
-    tree = ast.parse(content)
+    import pyarrow as pa
+    from lancedb.query import LanceHybridQueryBuilder
 
-    for node in ast.walk(tree):
-        if isinstance(node, ast.FunctionDef) and node.name == '_combine_hybrid_results':
-            # Get method source
-            method_start = node.lineno - 1
-            method_end = node.end_lineno
+    vector_results = pa.table({
+        "_rowid": pa.array([], type=pa.int64()),
+        "_distance": pa.array([], type=pa.float32()),
+    })
+    fts_results = pa.table({
+        "_rowid": pa.array([], type=pa.int64()),
+        "_score": pa.array([], type=pa.float32()),
+    })
 
-            lines = content.split('\n')[method_start:method_end]
-            method_source = '\n'.join(lines)
+    class MockReranker:
+        def rerank_hybrid(self, query, vector_results, fts_results):
+            return vector_results
 
-            # Check that early return comes before reranker.rerank_hybrid call
-            early_return_idx = -1
-            rerank_idx = -1
+    result = LanceHybridQueryBuilder._combine_hybrid_results(
+        fts_results=fts_results,
+        vector_results=vector_results,
+        norm="score",
+        fts_query="test",
+        reranker=MockReranker(),
+        limit=10,
+        with_row_ids=False,
+    )
 
-            for i, line in enumerate(lines):
-                if 'num_rows == 0' in line and 'return' in method_source[i:]:
-                    early_return_idx = i
-                if 'rerank_hybrid' in line or 'reranker' in line and 'rerank' in line:
-                    rerank_idx = i
+    # Should have _relevance_score column
+    assert "_relevance_score" in result.column_names, \
+        f"Missing _relevance_score column. Got: {result.column_names}"
 
-            if early_return_idx >= 0 and rerank_idx >= 0:
-                assert early_return_idx < rerank_idx, \
-                    "Early return should come before reranker call"
-            elif early_return_idx >= 0:
-                # Early return exists, which is what we want
-                pass
-            else:
-                assert False, "Early return for empty results not found"
+    # _relevance_score should be float type
+    rel_score_field = result.schema.field("_relevance_score")
+    assert pa.types.is_floating(rel_score_field.type), \
+        f"_relevance_score should be float type, got {rel_score_field.type}"
 
 
-def test_combined_schema_includes_both():
-    """F2P: Check that combined schema includes fields from both input tables.
+def test_empty_results_respects_with_row_ids():
+    """F2P: with_row_ids=False should drop _rowid column from empty results.
 
-    The fix should create an empty table with unified schema from vector_results and fts_results.
+    When handling empty results with with_row_ids=False, the fix should
+    drop the _rowid column from the returned table.
     """
-    content = _read_query_file()
+    _apply_patch_to_site_packages()
 
-    # Check for the pattern that creates combined schema from both tables
-    assert 'vector_results.schema' in content, "vector_results.schema not used"
-    assert 'fts_results.schema' in content, "fts_results.schema not used"
+    import pyarrow as pa
+    from lancedb.query import LanceHybridQueryBuilder
+
+    vector_results = pa.table({
+        "_rowid": pa.array([], type=pa.int64()),
+        "_distance": pa.array([], type=pa.float32()),
+    })
+    fts_results = pa.table({
+        "_rowid": pa.array([], type=pa.int64()),
+        "_score": pa.array([], type=pa.float32()),
+    })
+
+    class MockReranker:
+        def rerank_hybrid(self, query, vector_results, fts_results):
+            return vector_results
+
+    # Test with with_row_ids=False
+    result_no_rowid = LanceHybridQueryBuilder._combine_hybrid_results(
+        fts_results=fts_results,
+        vector_results=vector_results,
+        norm="score",
+        fts_query="test",
+        reranker=MockReranker(),
+        limit=10,
+        with_row_ids=False,
+    )
+
+    # _rowid should be dropped when with_row_ids=False
+    assert "_rowid" not in result_no_rowid.column_names, \
+        f"_rowid should be dropped when with_row_ids=False. Got: {result_no_rowid.column_names}"
+
+    # Test with with_row_ids=True
+    result_with_rowid = LanceHybridQueryBuilder._combine_hybrid_results(
+        fts_results=fts_results,
+        vector_results=vector_results,
+        norm="score",
+        fts_query="test",
+        reranker=MockReranker(),
+        limit=10,
+        with_row_ids=True,
+    )
+
+    # _rowid should be present when with_row_ids=True
+    assert "_rowid" in result_with_rowid.column_names, \
+        f"_rowid should be present when with_row_ids=True. Got: {result_with_rowid.column_names}"
+
+
+def test_empty_results_merges_schemas():
+    """F2P: Empty results table should have merged schema from both inputs.
+
+    When handling empty results, the fix should merge schemas from both
+    vector_results and fts_results to create a proper empty table.
+    """
+    _apply_patch_to_site_packages()
+
+    import pyarrow as pa
+    from lancedb.query import LanceHybridQueryBuilder
+
+    # Create tables with distinct columns
+    vector_results = pa.table({
+        "_rowid": pa.array([], type=pa.int64()),
+        "_distance": pa.array([], type=pa.float32()),
+        "custom_vec_col": pa.array([], type=pa.float64()),
+    })
+    fts_results = pa.table({
+        "_rowid": pa.array([], type=pa.int64()),
+        "_score": pa.array([], type=pa.float32()),
+        "custom_fts_col": pa.array([], type=pa.utf8()),
+    })
+
+    class MockReranker:
+        def rerank_hybrid(self, query, vector_results, fts_results):
+            return vector_results
+
+    result = LanceHybridQueryBuilder._combine_hybrid_results(
+        fts_results=fts_results,
+        vector_results=vector_results,
+        norm="score",
+        fts_query="test",
+        reranker=MockReranker(),
+        limit=10,
+        with_row_ids=False,
+    )
+
+    # Result should have columns from both schemas (minus _rowid if dropped)
+    column_names = result.column_names
+
+    # Should have _distance from vector_results
+    assert "_distance" in column_names, f"Missing _distance. Got: {column_names}"
+
+    # Should have _score from fts_results
+    assert "_score" in column_names, f"Missing _score. Got: {column_names}"
+
+    # Should have custom columns from both
+    assert "custom_vec_col" in column_names, f"Missing custom_vec_col. Got: {column_names}"
+    assert "custom_fts_col" in column_names, f"Missing custom_fts_col. Got: {column_names}"
+
+
+def test_nonempty_results_still_work():
+    """F2P: Non-empty results should still work correctly.
+
+    The fix should not break the normal case where results are non-empty.
+    """
+    _apply_patch_to_site_packages()
+
+    import pyarrow as pa
+    from lancedb.query import LanceHybridQueryBuilder
+
+    # Create non-empty tables
+    vector_results = pa.table({
+        "_rowid": pa.array([1, 2, 3], type=pa.int64()),
+        "_distance": pa.array([0.1, 0.2, 0.3], type=pa.float32()),
+    })
+    fts_results = pa.table({
+        "_rowid": pa.array([2, 3, 4], type=pa.int64()),
+        "_score": pa.array([1.5, 2.0, 0.5], type=pa.float32()),
+    })
+
+    class MockReranker:
+        def rerank_hybrid(self, query, vector_results, fts_results):
+            # Return a simple combination
+            return pa.table({
+                "_rowid": pa.array([1, 2, 3], type=pa.int64()),
+                "_distance": pa.array([0.1, 0.2, 0.3], type=pa.float32()),
+                "_score": pa.array([0.0, 1.5, 2.0], type=pa.float32()),
+                "_relevance_score": pa.array([0.5, 0.6, 0.7], type=pa.float32()),
+            })
+
+    result = LanceHybridQueryBuilder._combine_hybrid_results(
+        fts_results=fts_results,
+        vector_results=vector_results,
+        norm="score",
+        fts_query="test",
+        reranker=MockReranker(),
+        limit=10,
+        with_row_ids=False,
+    )
+
+    # Should return results (not crash)
+    assert result.num_rows > 0, f"Expected non-empty results, got {result.num_rows} rows"
+
+    # Should have _relevance_score
+    assert "_relevance_score" in result.column_names
 
 
 if __name__ == "__main__":

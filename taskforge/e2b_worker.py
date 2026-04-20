@@ -39,6 +39,7 @@ import json
 import logging
 import atexit
 import os
+import random
 import re
 import signal
 import sys
@@ -357,16 +358,19 @@ async def create_worker_sandbox(
                     timeout=15,
                 )
                 status_code = probe_out.strip()
-                if status_code == "403":
+                # Reject both 403 (IP blocked) and 400/429 (rate limited).
+                # Fireworks returns rate limits as HTTP 400 with "rate limit"
+                # in the body (via LiteLLM proxy), not always as 429.
+                if status_code in ("403", "400", "429"):
                     logger.warning(
-                        "Sandbox %s blocked by Fireworks (403), retrying (%d/%d)...",
-                        sandbox.sandbox_id, ip_attempt + 1, max_ip_retries,
+                        "Sandbox %s rejected by Fireworks (%s), rotating IP (%d/%d)...",
+                        sandbox.sandbox_id, status_code, ip_attempt + 1, max_ip_retries,
                     )
                     try:
                         await sandbox.kill()
                     except Exception:
                         pass
-                    await asyncio.sleep(1)
+                    await asyncio.sleep(2)
                     continue
                 logger.info("Sandbox %s Fireworks IP check OK (status %s)", sandbox.sandbox_id, status_code)
 
@@ -638,37 +642,25 @@ async def node_scaffold(
 
     await sandbox.files.write("/workspace/scaffold_prompt.md", prompt.encode())
 
-    # Inner retry loop: preserve sandbox across transient 429 bursts when many
-    # concurrent workers drain Claude Code's 10-retry budget simultaneously.
-    inner_retries = 3
-    base_backoff = 45.0
-    last_err = ""
-    code, stdout, stderr = 0, "", ""
-    for attempt in range(inner_retries + 1):
-        code, stdout, stderr = await run_cmd(
-            sandbox,
-            "cat /workspace/scaffold_prompt.md | claude -p "
-            "--dangerously-skip-permissions --model opus "
-            "--output-format json",
-            user="worker",
-        )
-        if code == 0:
-            break
+    # Single-shot: let claude -p handle its own internal retries (up to 10).
+    # If it fails, report back immediately — the pool's cooldown + batch
+    # re-enqueue handle retry scheduling. Previous design had 3 inner retries
+    # with 45s/135s/405s backoff ON TOP of claude -p's own 10 retries, creating
+    # a 120-API-call retry storm per task that made rate limits worse.
+    code, stdout, stderr = await run_cmd(
+        sandbox,
+        "cat /workspace/scaffold_prompt.md | claude -p "
+        "--dangerously-skip-permissions --model opus "
+        "--output-format json",
+        user="worker",
+    )
 
+    if code != 0:
         combined = stdout + stderr
         last_err = combined[:500]
-
-        if not _is_rate_limit(combined):
-            return "error", "", last_err
-
-        if attempt < inner_retries:
-            delay = base_backoff * (3 ** attempt)
-            logger.warning("node_scaffold rate-limited (attempt %d/%d); sleeping %.0fs",
-                           attempt + 1, inner_retries + 1, delay)
-            await asyncio.sleep(delay)
-            continue
-
-        return "rate_limited", "", last_err
+        if _is_rate_limit(combined):
+            return "rate_limited", "", last_err
+        return "error", "", last_err
 
     # Check if scaffold agent abandoned the task
     try:
@@ -1500,18 +1492,18 @@ async def _run_agent(
     sandbox: AsyncSandbox,
     prompt_name: str,
     *,
-    inner_retries: int = 3,
+    inner_retries: int = 0,
     base_backoff: float = 45.0,
 ) -> tuple[str, str]:
     """Run a claude -p agent with a prompt file. Returns (status, error).
 
-    Claude Code has built-in 10-retry exponential backoff per HTTP call that
-    preserves multi-turn conversation state. But when 60+ concurrent workers
-    hammer the same backend, those 10 retries can exhaust. This outer wrapper
-    adds *sandbox-level* backoff: sleep, re-run claude -p (fresh conversation).
-    Empirically smoother than relying on Claude Code's retries alone.
+    Single-shot by default: claude -p has its own internal 10-retry backoff.
+    Adding outer retries on top creates retry storms (10 internal × N outer
+    × M workers = thousands of redundant API calls).
 
-    Backoff schedule (base=45s): 45s, 135s, 405s — total ~10 min max wait.
+    If inner_retries > 0, will retry with sandbox-level backoff (fresh
+    conversation each time). Only use this for critical nodes where a
+    fresh conversation might help (not for rate limit recovery).
     """
     prompt_file = ROOT / "taskforge" / "prompts" / prompt_name
     if not prompt_file.exists():
@@ -2320,7 +2312,7 @@ async def run_batch(
     start_at: StartAt = StartAt.SCAFFOLD,
     agentmd: bool = True,
     force: bool = False,
-    max_retries: int = 2,
+    max_retries: int = 4,
     failed_log_path: Path | None = None,
     claim_dir: Path | None = None,
 ) -> list[WorkerResult]:
@@ -2426,6 +2418,14 @@ async def run_batch(
 
     async def worker(worker_id: int):
         nonlocal done_count
+
+        # Stagger startup: each worker waits worker_id * 5s before its
+        # first task. Prevents all workers from hitting the LLM backend
+        # simultaneously on launch, which triggers rate-limit bursts.
+        if worker_id > 0:
+            stagger = worker_id * 5 + random.uniform(0, 3)
+            await asyncio.sleep(stagger)
+
         while True:
             # Blocking get — workers park here when queue is empty, rather
             # than exiting. Re-enqueued (rate-limited) items always get picked
@@ -2464,9 +2464,16 @@ async def run_batch(
                 else:
                     raise ValueError(f"Unknown mode: {mode}")
 
-                # Re-enqueue on rate limit
+                # Re-enqueue on rate limit with backoff delay.
+                # Previous design re-enqueued immediately, which meant the task
+                # grabbed a backend right away and hammered a still-cooling
+                # endpoint. Now we sleep before re-enqueue so the pool cooldown
+                # has time to take effect.
                 if "rate limited" in (r.error or "").lower() and retries < max_retries:
-                    logger.info("Re-enqueueing %s (retry %d/%d)", item, retries + 1, max_retries)
+                    delay = 30 * (2 ** retries) + random.uniform(0, 15)
+                    logger.info("Re-enqueueing %s (retry %d/%d) after %.0fs backoff",
+                                item, retries + 1, max_retries, delay)
+                    await asyncio.sleep(delay)
                     await queue.put((item, retries + 1))
                 else:
                     async with results_lock:

@@ -1,0 +1,199 @@
+version: '2.0'
+source:
+  repo: inclusionAI/AReaL
+  pr: 726
+  base_commit: d64f8688833cd73648a1b06932f1fbec542694e3
+  merge_commit: 2710fd08c476f99659d7c13822d5eb5cc88bac03
+checks:
+- id: grpo_parametrized_with_megatron
+  type: fail_to_pass
+  origin: pr_diff
+  description: test_grpo is parametrized with @pytest.mark.parametrize for fsdp and
+    megatron backends
+- id: sft_parametrized_with_megatron
+  type: fail_to_pass
+  origin: pr_diff
+  description: test_sft is parametrized with @pytest.mark.parametrize for fsdp and
+    megatron backends
+- id: megatron_grpo_config_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: config_megatron.yaml exists for GRPO tests with megatron allocation_mode
+- id: megatron_sft_config_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: config_megatron.yaml exists for SFT tests with megatron allocation_mode
+- id: megatron_sft_ref_losses
+  type: fail_to_pass
+  origin: pr_diff
+  description: ref_losses_megatron.json exists with 16 float reference loss values
+- id: grpo_uses_backend_config_path
+  type: fail_to_pass
+  origin: pr_diff
+  description: test_grpo.py loads config via config_{backend}.yaml pattern, not hardcoded
+    config.yaml
+- id: python_files_parse
+  type: pass_to_pass
+  origin: static
+  description: Modified test Python files parse without syntax errors
+- id: config_uses_parametrize
+  type: fail_to_pass
+  origin: agent_config
+  description: Tests use pytest.mark.parametrize for backend variants per AGENTS.md
+    rule
+  source:
+    path: AGENTS.md
+    lines: '261'
+    commit: d64f8688833cd73648a1b06932f1fbec542694e3
+- id: repo_ruff_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Python linting passes on modified files (ruff check)
+- id: repo_python_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified Python files have valid syntax (py_compile)
+- id: repo_yaml_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: YAML configs are syntactically valid
+- id: repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Python formatting passes on modified files (ruff format --check)
+- id: repo_clang_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: C++ source files are properly formatted (clang-format)
+- id: repo_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: JSON reference files are syntactically valid
+- id: repo_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified test files can be parsed and have test functions
+- id: precommit_check_yaml
+  type: pass_to_pass
+  origin: repo_tests
+  description: Pre-commit check-yaml hook passes on config files
+- id: precommit_check_json
+  type: pass_to_pass
+  origin: repo_tests
+  description: Pre-commit check-json hook passes on JSON files
+- id: precommit_trailing_whitespace
+  type: pass_to_pass
+  origin: repo_tests
+  description: Pre-commit trailing-whitespace hook passes on modified files
+- id: precommit_end_of_file
+  type: pass_to_pass
+  origin: repo_tests
+  description: Pre-commit end-of-file-fixer hook passes on modified files
+rubric:
+- rule: Tests parametrized for multiple backends (fsdp/megatron) must use @pytest.mark.parametrize
+    decorator, not ad-hoc loops
+  source:
+    path: AGENTS.md
+    lines: '261'
+    commit: d64f8688833cd73648a1b06932f1fbec542694e3
+- rule: New YAML configs must use Hydra-friendly dotted names (e.g., ${experiment_name})
+    for variable substitution; model/dataset paths may be hardcoded as in existing
+    configs
+  source:
+    path: AGENTS.md
+    lines: 130-131
+    commit: d64f8688833cd73648a1b06932f1fbec542694e3
+- rule: Run pre-commit hooks (which include mdformat and CLI doc generation) before
+    submitting patches.
+  source:
+    path: AGENTS.md
+    lines: 11-13
+  evidence: The gold solution includes formatting updates to `docs/cli_reference.md`,
+    which aligns with the rule that pre-commit runs CLI doc generation and mdformat.
+  category: tooling
+- rule: Run pre-commit hooks (which include CLI doc generation and formatting) before
+    submitting patches.
+  source:
+    path: AGENTS.md
+    lines: 11-13
+  evidence: The gold solution includes edits to `docs/cli_reference.md`, which aligns
+    with the instruction to run pre-commit hooks that automatically handle CLI doc
+    generation and formatting.
+  category: tooling
+- rule: 'Tooling: `.pre-commit-config.yaml` runs Ruff (lint+format), mdformat, clang-format,
+    nbstripout, and CLI doc generation; install with `pre-commit install` before submitting
+    patches.'
+  source:
+    path: AGENTS.md
+    lines: 10-12
+  evidence: The gold solution includes updates to `docs/cli_reference.md`, aligning
+    with the instruction to include formatting updates from pre-commit and the config
+    rule about CLI doc generation.
+  category: tooling
+- rule: Use `.pre-commit-config.yaml` to run formatting and CLI doc generation before
+    submitting patches.
+  source:
+    path: AGENTS.md
+    lines: 11-13
+  evidence: The gold solution includes updates to `docs/cli_reference.md` as a result
+    of running the pre-commit hooks, which handle CLI doc generation and formatting.
+  category: tooling
+config_edits:
+- path: examples/experimental/proxy/README.md
+  tier: 2
+  gold_added: "agent_module_path to `gsm8k_multi_turn_agent`, `gsm8k_openai_agent`,\n\
+    `math_with_python_tool` or `multi_agent_math` to run other example agents.\n1.\
+    \ Write an Agent that calls OpenAI-compatible APIs (e.g. chat completions, responses)\n\
+    \   using a framework that you are familiar with, such as\n1. Write an AReaL interface\
+    \ function named `run_agent_return_reward`, where the input\n3. Wraps `run_agent_return_reward`\
+    \ function into a `run_and_submit` function, you can\n   use the `run_and_submit_rewards`\
+    \ function in `areal.utils.proxy_utils` to do this.\n\nThe `config.yaml` file\
+    \ is identical to `examples/multi-turn-math/gsm8k_grpo_mt.yaml` and\ncan be used\
+    \ by any examples here. You may modify the configuration file to fit your\nneeds,\
+    \ or override configuration values in the command line (see quick start above\
+    \ as an\nexample)."
+  gold_removed: 'agent_module_path to `gsm8k_multi_turn_agent`, `gsm8k_openai_agent`,
+    `math_with_python_tool` or `multi_agent_math` to run other example agents.
+
+    1. Write an Agent that calls OpenAI-compatible APIs (e.g. chat completions, responses)
+    using a framework that you are familiar with, such as
+
+    2. Write an AReaL interface function named `run_agent_return_reward`, where the
+    input
+
+    3. Wraps `run_agent_return_reward` function into a `run_and_submit` function,
+    you can use the `run_and_submit_rewards` function in `areal.utils.proxy_utils`
+    to do this.
+
+    The `config.yaml` file is identical to `examples/multi-turn-math/gsm8k_grpo_mt.yaml`
+    and can be used by any examples here.
+
+    You may modify the configuration file to fit your needs, or override configuration
+    values in the command line (see quick start above as an example).'
+distractors:
+- rule: Integration and performance tests require multi-node hardware. Explain skips
+    explicitly when you cannot access the cluster.
+  collision_type: scope_ambiguity
+  why_distracting: The rule states that integration tests require multi-node hardware
+    and instructs the agent to 'explain skips explicitly when you cannot access the
+    cluster'. An agent might misinterpret this as an instruction to add `@pytest.mark.skip`
+    decorators to the new Megatron tests, whereas the goal is to parametrize the
+    tests so they can be executed by the CI/CD pipeline.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 8-10
+- rule: Coordinate doc edits with the docs build pipeline.
+  collision_type: meta_confusion
+  why_distracting: The rule says to 'Coordinate doc edits with the docs build pipeline'.
+    An agent might avoid committing the changes to `docs/cli_reference.md` or try
+    to trigger a complex external build pipeline, not realizing that the CLI doc generation
+    is handled automatically by the local pre-commit hook.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 16-17
+hierarchy_analysis: The repository uses a flat, single-file config (`AGENTS.md`) that
+  provides high-level operational guidelines. The agent must synthesize the instruction
+  to update `docs/cli_reference.md` with the `AGENTS.md` rule about pre-commit hooks
+  generating CLI docs.

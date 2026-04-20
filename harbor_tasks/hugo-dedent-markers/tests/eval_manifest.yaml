@@ -1,0 +1,147 @@
+source:
+  repo: gohugoio/hugo
+  pr: 14734
+  base_commit: 45e4596630b1372ab02634e4536d2b5a89452e0b
+  merge_commit: 161d0d475773c5251ec00cc8848f1a174393155c
+checks:
+- id: dedent_markers_function_exists
+  description: DedentMarkers function exists and is exported
+  origin: pr_diff
+  type: fail_to_pass
+- id: dedent_markers_strips_leading_spaces
+  description: DedentMarkers strips leading spaces from context markers
+  origin: pr_diff
+  type: fail_to_pass
+- id: dedent_markers_strips_leading_tabs
+  description: DedentMarkers strips leading tabs from context markers
+  origin: pr_diff
+  type: fail_to_pass
+- id: dedent_markers_preserves_non_markers
+  description: DedentMarkers preserves content without context markers
+  origin: pr_diff
+  type: fail_to_pass
+- id: dedent_markers_handles_multiple_markers
+  description: DedentMarkers handles multiple markers in same content
+  origin: pr_diff
+  type: fail_to_pass
+- id: hugolib_rendershortcodes_test
+  description: TestRenderShortcodesCodeBlock upstream test passes
+  origin: pr_diff
+  type: fail_to_pass
+- id: assert_no_render_shortcodes_artifacts_exists
+  description: AssertNoRenderShortcodesArtifacts helper exists (baseline)
+  origin: pr_diff
+  type: fail_to_pass
+- id: dedent_called_in_content_toC
+  description: DedentMarkers is called in contentToC function
+  origin: pr_diff
+  type: fail_to_pass
+- id: test_repo_hugocontext_package
+  description: Hugo's hugocontext package tests pass
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_hugolib_rendershortcodes
+  description: Hugo's RenderShortcodes related tests pass
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_go_build
+  description: Hugo repo builds successfully
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_go_vet
+  description: Hugo repo passes go vet
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_go_fmt
+  description: Hugo's hugocontext package passes gofmt check
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_goldmark_package
+  description: Hugo's goldmark package tests pass
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_hugolib_package_build
+  description: Hugo's hugolib package builds successfully
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_go_mod_verify
+  description: Hugo's go.mod dependencies are consistent
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_staticcheck_hugocontext
+  description: Hugo's hugocontext package passes staticcheck
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_check_hugocontext
+  description: Hugo's hugocontext package passes gofmt check via check.sh
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_hugolib_content_tests
+  description: Hugo's hugolib content-related tests pass
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_markup_goldmark_internal
+  description: Hugo's goldmark internal package tests pass
+  type: pass_to_pass
+  origin: repo_tests
+rubric:
+- rule: Brevity is good. This applies to code, comments and commit messages. Don't
+    write a novel.
+  source:
+    path: AGENTS.md
+    lines: 1,12
+    commit: 45e4596630b1372ab02634e4536d2b5a89452e0b
+- rule: Don't use comments to explain the obvious. Assume maintainers are Go experts.
+  source:
+    path: AGENTS.md
+    lines: 2-4
+    commit: 45e4596630b1372ab02634e4536d2b5a89452e0b
+- rule: Use self-explanatory variable and function names. Use short variable names
+    when the context is clear.
+  source:
+    path: AGENTS.md
+    lines: 4-5
+    commit: 45e4596630b1372ab02634e4536d2b5a89452e0b
+- rule: Assume that a similar problem has been solved before; look hard for helper
+    functions before creating new ones.
+  source:
+    path: AGENTS.md
+    lines: '9'
+    commit: 45e4596630b1372ab02634e4536d2b5a89452e0b
+- rule: Avoid global state at (almost) all cost.
+  source:
+    path: AGENTS.md
+    lines: '8'
+    commit: 45e4596630b1372ab02634e4536d2b5a89452e0b
+- rule: Brevity is good.
+  source:
+    path: AGENTS.md
+    lines: 1-1
+  evidence: The solve.sh script is extremely concise, containing only a simple idempotency
+    check and the commands to copy and run the python script without any unnecessary
+    boilerplate.
+  category: style
+distractors:
+- rule: Use `./check.sh` when you're done.
+  collision_type: would_cause_bug
+  why_distracting: The agent might append `./check.sh` to the end of `solve.sh`. Since
+    `solve.sh` is used to apply the fix in the evaluation environment, running the
+    entire test suite here could lead to timeouts or unintended test failures blocking
+    the application of the fix.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 12-12
+- rule: In tests, use `qt` matchers instead of raw `if`/`t.Fatal` checks.
+  collision_type: meta_confusion
+  why_distracting: The agent might attempt to write Go tests using `qt` matchers,
+    but the gold solution relies on a Python script to apply the fix and does not
+    include any Go test files in its execution path.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 8-8
+hierarchy_analysis: The hierarchy consists of `CLAUDE.md` which simply includes `AGENTS.md`.
+  All actionable rules are located in `AGENTS.md`, so there are no conflicts between
+  different levels of the configuration hierarchy.
+version: '2.0'

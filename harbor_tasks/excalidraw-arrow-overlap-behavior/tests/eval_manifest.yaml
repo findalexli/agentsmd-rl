@@ -1,0 +1,154 @@
+task_id: excalidraw-arrow-overlap-behavior
+source_pr:
+  repo: excalidraw/excalidraw
+  number: 10732
+  title: "fix: Arrow overlap arrow behavior"
+  merge_commit: 5852d0d41005e67ca00124079b9eee91e4ab716d
+  base_commit: c1e00c44f57841b18ea14bde30b8d1f5aff95c7e
+
+checks:
+  # Fail-to-pass tests (behavioral checks)
+  - id: test_base_arrow_min_length_constant_exists
+    type: fail_to_pass
+    origin: code_structure
+    description: BASE_ARROW_MIN_LENGTH constant is exported from binding.ts
+
+  - id: test_extract_binding_function_exists
+    type: fail_to_pass
+    origin: code_structure
+    description: extractBinding helper function exists in binding.ts
+
+  - id: test_element_area_function_exists
+    type: fail_to_pass
+    origin: code_structure
+    description: elementArea helper function exists in binding.ts
+
+  - id: test_update_bound_point_signature_changed
+    type: fail_to_pass
+    origin: code_structure
+    description: updateBoundPoint signature uses dragging parameter instead of opts object
+
+  - id: test_indirect_arrow_update_removed
+    type: fail_to_pass
+    origin: code_structure
+    description: indirectArrowUpdate option removed from updateBoundElements
+
+  - id: test_align_elements_indirect_update_removed
+    type: fail_to_pass
+    origin: code_structure
+    description: align.ts no longer passes indirectArrowUpdate option
+
+  - id: test_app_indirect_update_removed
+    type: fail_to_pass
+    origin: code_structure
+    description: App.tsx no longer passes indirectArrowUpdate option
+
+  - id: test_focus_point_update_passes_dragging
+    type: fail_to_pass
+    origin: code_structure
+    description: focus.ts passes dragging flag to updateBoundPoint
+
+  - id: test_linear_element_editor_dragging_passed
+    type: fail_to_pass
+    origin: code_structure
+    description: linearElementEditor.ts passes dragging flags to updateBoundPoint
+
+  - id: test_linear_element_editor_no_custom_intersector
+    type: fail_to_pass
+    origin: code_structure
+    description: linearElementEditor.ts no longer uses customIntersector
+
+  - id: test_utils_imports_binding_functions
+    type: fail_to_pass
+    origin: code_structure
+    description: utils.ts imports required functions from binding.ts
+
+  - id: test_utils_uses_other_focus_point
+    type: fail_to_pass
+    origin: code_structure
+    description: utils.ts uses opposite focus point for two-point arrows
+
+  - id: test_binding_bounds_imports_cleaned
+    type: fail_to_pass
+    origin: code_structure
+    description: binding.ts imports are cleaned up (no unused bounds functions)
+
+  - id: test_point_is_close_to_other_element_check
+    type: fail_to_pass
+    origin: code_structure
+    description: binding.ts checks if point is close to other element
+
+  # Pass-to-pass tests (regression checks)
+  - id: test_repo_typecheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's TypeScript type checking passes
+
+  - id: test_repo_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's ESLint checks pass
+
+  - id: test_repo_tests_binding
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's binding tests pass (arrow binding behavior)
+
+  - id: test_repo_tests_elbow_arrow
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's elbow arrow tests pass (arrow routing behavior)
+
+  - id: test_repo_tests_linear_element_editor
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's linear element editor tests pass (arrow editing)
+
+  - id: test_repo_tests_align
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's alignment tests pass (uses updateBoundPoint)
+
+  - id: test_repo_tests_history
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's history tests pass (binding undo/redo)
+
+  - id: test_repo_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's test suite passes (history tests)
+
+# Rubric for soft/subjective rules from agent configs
+rubric:
+  - rule: "Use TypeScript for all new code"
+    source: .github/copilot-instructions.md
+    description: "All code changes must be in TypeScript with proper typing"
+
+  - rule: "Prefer immutable data (const, readonly)"
+    source: .github/copilot-instructions.md
+    description: "Use const and readonly for immutable data where applicable"
+
+  - rule: "Use optional chaining (?.) and nullish coalescing (??) operators"
+    source: .github/copilot-instructions.md
+    description: "Prefer modern TypeScript operators for null checking"
+
+  - rule: "Always run `yarn test:update` before committing"
+    source: CLAUDE.md
+    description: "Tests should be run and updated as needed"
+
+  - rule: "Use `yarn test:typecheck` to verify TypeScript"
+    source: CLAUDE.md
+    description: "TypeScript type checking must pass"
+
+  - rule: "Work in `packages/*` for editor features"
+    source: CLAUDE.md
+    description: "Changes should be in the correct package location"
+
+  - rule: "Where possible, prefer implementations without allocation"
+    source: .github/copilot-instructions.md
+    description: "Performance-conscious code preferred"
+
+  - rule: "When there is an option, opt for more performant solutions and trade RAM usage for less CPU cycles"
+    source: .github/copilot-instructions.md
+    description: "Performance optimizations preferred"

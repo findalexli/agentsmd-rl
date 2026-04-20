@@ -1,0 +1,27 @@
+name = "prefect-filter-files-negation-parent-dirs"
+description = "Fix filter_files to include parent directories for .prefectignore negation patterns"
+owner = "prefecthq"
+repo = "prefect"
+base_commit = "45186a33d5e3f0f66383f27b984c25e3a29e6302"
+merge_commit = "f3cc0fe39881bbc356040940287effc733671357"
+pr_number = 21352
+
+# Task metadata
+difficulty = "medium"
+estimated_time = "30-45 minutes"
+tags = ["python", "file-system", "pathspec", "prefect"]
+
+# Target files modified by the PR
+target_files = [
+    "src/prefect/utilities/filesystem.py",
+]
+
+# Files the agent should read to understand context
+context_files = [
+    "src/prefect/utilities/filesystem.py",
+    "tests/utilities/test_filesystem.py",
+    "src/prefect/utilities/AGENTS.md",
+]
+
+[verifier]
+env = { GEMINI_API_KEY = "${GEMINI_API_KEY:-}", ANTHROPIC_API_KEY = "${ANTHROPIC_API_KEY:-}" }

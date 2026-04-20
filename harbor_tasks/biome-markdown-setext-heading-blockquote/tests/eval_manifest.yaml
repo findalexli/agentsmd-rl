@@ -1,0 +1,128 @@
+version: 1
+repository: biomejs/biome
+pr_number: 9782
+title: "fix(markdown_parser): recognize setext heading inside blockquote"
+base_commit: e021c4a308ee89f6009f200de5056435080c7179
+merge_commit: b897832ad3a5a6720297735fe1a819b18f9f5851
+
+description: |
+  Fixes setext heading detection inside blockquotes. After consuming a blockquote
+  prefix (`> `), the lexer no longer considered the following token to be at line
+  start, so `---` was lexed as `MINUS` instead of `MD_THEMATIC_BREAK_LITERAL`. As a
+  result, input like `> Foo\n> ---` was parsed as a paragraph instead of a setext
+  heading. Per CommonMark §5.1 and §4.3, blockquote content should still participate
+  in setext heading parsing after the quote prefix is removed.
+
+checks:
+  - id: test_force_relex_at_line_start_lexer
+    type: fail_to_pass
+    origin: repo_tests
+    description: New lexer unit test force_relex_at_line_start_produces_thematic_break was added by the fix. On base commit the test doesn't exist.
+    file: crates/biome_markdown_parser/src/lexer/tests.rs
+
+  - id: test_setext_heading_in_blockquote_spec
+    type: fail_to_pass
+    origin: repo_tests
+    description: New spec test setext_heading_in_blockquote was added by the fix. On base commit the test doesn't exist.
+    file: crates/biome_markdown_parser/tests/spec_test.rs
+
+  - id: test_markdown_parser_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Existing markdown parser unit tests pass on base commit and after fix.
+    file: crates/biome_markdown_parser/src
+
+  - id: test_markdown_parser_integration_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Existing markdown parser integration tests pass on base commit and after fix.
+    file: crates/biome_markdown_parser/tests
+
+  - id: test_biome_parser_crate_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Biome parser crate tests pass (lexer infrastructure used by markdown parser).
+    file: crates/biome_parser/src
+
+  - id: test_clippy_no_warnings
+    type: pass_to_pass
+    origin: repo_tests
+    description: Clippy passes on the modified crates with no warnings.
+    files:
+      - crates/biome_markdown_parser
+      - crates/biome_parser
+
+  - id: test_cargo_fmt_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: All Rust files are formatted correctly according to cargo fmt.
+    file: crates/biome_markdown_parser
+
+  - id: test_cargo_check_markdown_parser
+    type: pass_to_pass
+    origin: repo_tests
+    description: biome_markdown_parser crate compiles without errors (cargo check).
+    file: crates/biome_markdown_parser
+
+  - id: test_cargo_check_parser_crate
+    type: pass_to_pass
+    origin: repo_tests
+    description: biome_parser crate compiles without errors (cargo check).
+    file: crates/biome_parser
+
+rubric:
+  - source: AGENTS.md
+    rule: |
+      All code changes MUST include tests. For bug fixes: test that reproduces
+      the bug and validates the fix.
+    description: |
+      The biome AGENTS.md testing requirements state that all code changes MUST
+      include tests. For bug fixes, tests should reproduce the bug and validate
+      the fix. This fix adds spec tests and unit tests for the setext heading
+      in blockquote parsing.
+    reference: |
+      ## Testing Requirements
+
+      All code changes MUST include tests:
+      - Bug fixes: Test that reproduces the bug and validates the fix
+
+      The gold solution adds:
+      - lexer/tests.rs: unit test force_relex_at_line_start_produces_thematic_break
+      - spec_test.rs: integration test setext_heading_in_blockquote
+      - md_test_suite: test files setext_heading_in_blockquote.md
+
+  - source: AGENTS.md
+    rule: |
+      Bug fixes should follow the recommended workflow: reproduce, implement fix,
+      verify, and create changeset if user-facing.
+    description: |
+      The biome AGENTS.md bug fixing workflow recommends: reproduce the bug with
+      a test, implement fix, verify with tests, create changeset if user-facing.
+      This fix addresses a parser bug affecting setext heading parsing in blockquotes.
+    reference: |
+      ### Fixing a Bug
+
+      1. Reproduce the bug with a test
+      2. Implement fix
+      3. Verify fix: cargo test, cargo insta review
+      4. Ask user: "Is this bug fix user-facing?" (Usually YES)
+      5. If user-facing, create changeset
+
+      This fix is user-facing (parser improvement that handles new syntax per
+      AGENTS.md §2 User-Facing Changes) and follows the workflow with tests
+      that reproduce the bug.
+
+  - source: AGENTS.md
+    rule: |
+      Code changes should include comments that explain why, not just what.
+      Comments exist for the next developer who reads this code.
+    description: |
+      The biome project values code comments that explain rationale and edge
+      case handling for future maintainers. This is especially important for
+      parser fixes involving CommonMark spec compliance.
+    reference: |
+      Comments exist for the next developer who reads this code, not for the
+      developer currently writing it. The fix includes detailed comments explaining:
+      - Why force_relex_at_line_start is needed after consuming a quote prefix
+      - What constitutes a thematic break candidate (same character, per CommonMark §4.1)
+      - Edge cases: mixed break characters do NOT form thematic breaks

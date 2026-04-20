@@ -1,0 +1,52 @@
+source:
+  repo: TanStack/router
+  pr_number: 7030
+  pr_title: "fix: dedupe repeated css assets in the start manifest"
+  base_commit: 7640f6e3f5d946ca1fd32729050d12642cf38502
+  merge_commit: ed9c43df7ab8c679f6e6833d94651a0a091b9880
+
+checks:
+  - id: test_repo_eslint
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's eslint passes on start-plugin-core
+
+  - id: test_repo_typecheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: TypeScript type checking passes on start-plugin-core
+
+  - id: test_repo_manifestbuilder_unit
+    type: pass_to_pass
+    origin: repo_tests
+    description: Existing manifestBuilder unit tests pass
+
+  - id: test_typescript_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: TypeScript code compiles without errors
+
+  - id: test_chunk_css_dedupes_shared_imports
+    type: fail_to_pass
+    origin: spec
+    description: CSS from shared imported chunks is deduplicated (diamond dependency case)
+
+  - id: test_route_manifest_dedupes_ancestor_css
+    type: fail_to_pass
+    origin: spec
+    description: CSS already in ancestor routes is not repeated in child routes
+
+  - id: test_sibling_routes_preserve_shared_css
+    type: pass_to_pass
+    origin: spec
+    description: Sibling (cousin) routes correctly preserve shared CSS that's not in common ancestors (regression guard)
+
+rubric:
+  - id: follows_typescript_strict_mode
+    rule: Solution uses TypeScript strict mode patterns (non-null assertions like ! operator, proper typing)
+
+  - id: changes_in_correct_package
+    rule: Code changes are in packages/start-plugin-core (the framework-agnostic manifest builder)
+
+  - id: deduplication_logic_correct
+    rule: Solution correctly deduplicates CSS assets both within chunks (diamond imports) and across route hierarchy (parent-child)

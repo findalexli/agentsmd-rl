@@ -1,0 +1,126 @@
+version: '2.0'
+source:
+  repo: astral-sh/uv
+  pr: 18625
+  base_commit: d0f2f3babc7c892958e93419ad6065df0deb2112
+  merge_commit: 2175e2ffba0bae50e566252a62d37c4477129f79
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Script must be valid Python
+- id: patches_checksums_into_manifest
+  type: fail_to_pass
+  origin: pr_diff
+  description: Script injects sha256 checksums into matching artifact entries and
+    preserves existing fields
+- id: idempotent_rerun
+  type: fail_to_pass
+  origin: pr_diff
+  description: Running the script twice on the same manifest yields identical output
+- id: exits_error_no_matches
+  type: fail_to_pass
+  origin: pr_diff
+  description: Script returns non-zero exit code when no sidecar files match any artifact
+- id: rejects_invalid_checksum_length
+  type: fail_to_pass
+  origin: pr_diff
+  description: Script rejects checksums that aren't exactly 64 characters (too short,
+    too long)
+- id: rejects_empty_checksum_file
+  type: fail_to_pass
+  origin: pr_diff
+  description: Script rejects empty .sha256 sidecar files
+- id: warns_unmatched_sidecar
+  type: fail_to_pass
+  origin: pr_diff
+  description: Script warns on stderr about .sha256 files that don't match any manifest
+    artifact
+- id: existing_scripts_parse
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing Python scripts in scripts/ remain valid Python
+- id: repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Python scripts pass ruff linting
+- id: repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Python scripts pass ruff format check
+- id: repo_typos
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo passes typos spell check
+- id: repo_shellcheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's shell scripts pass shellcheck
+- id: repo_validate_pyproject
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's pyproject.toml passes validation
+- id: repo_transform_readme
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's README transform script works
+- id: top_level_imports_only
+  type: fail_to_pass
+  origin: agent_config
+  description: PREFER top-level imports over local imports or fully qualified names
+  source:
+    path: CLAUDE.md
+    lines: '16'
+    commit: d0f2f3babc7c892958e93419ad6065df0deb2112
+rubric:
+- rule: Variable names in Python scripts should not be shortened; use full descriptive
+    names like 'version' instead of 'ver'
+  source:
+    path: CLAUDE.md
+    lines: 17-18
+    commit: d0f2f3babc7c892958e93419ad6065df0deb2112
+- rule: Python scripts should avoid bare exception handling patterns; use specific
+    exception types and proper error handling
+  source:
+    path: CLAUDE.md
+    lines: 7-8
+    commit: d0f2f3babc7c892958e93419ad6065df0deb2112
+- rule: Python scripts should include a proper module-level docstring explaining the
+    script's purpose and usage
+  source:
+    path: CLAUDE.md
+    lines: '1'
+    commit: d0f2f3babc7c892958e93419ad6065df0deb2112
+- rule: AVOID shortening variable names, e.g., use `version` instead of `ver`
+  source:
+    path: CLAUDE.md
+    lines: 17-18
+  evidence: In the release workflow, the bash script uses the descriptive variable
+    name `temp_manifest` rather than a shortened name like `tmp` or `man`.
+  category: naming
+distractors:
+- rule: ALWAYS attempt to add a test case for changed behavior / PREFER integration
+    tests, e.g., at `it/...` over unit tests
+  collision_type: scope_ambiguity
+  why_distracting: The task involves modifying GitHub Actions workflows and adding
+    a Python release script. Attempting to add a test case for this in the Rust test
+    suite (`it/...`) would be out of scope, architecturally incorrect, and likely
+    fail.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 2-3
+- rule: NEVER perform builds with the release profile, unless asked or reproducing
+    performance issues
+  collision_type: rule_conflict
+  why_distracting: The task is explicitly about modifying the release workflow which
+    builds release binaries. The agent might be confused by the instruction to never
+    perform builds with the release profile, potentially avoiding testing its workflow
+    changes properly.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 5-5
+hierarchy_analysis: The configuration consists of a single flat `CLAUDE.md` file at
+  the root. The rules are heavily focused on Rust development, whereas the task requires
+  Python and YAML edits.

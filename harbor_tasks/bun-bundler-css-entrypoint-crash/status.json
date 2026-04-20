@@ -1,13 +1,13 @@
 {
   "schema_version": 2,
-  "valid": false,
-  "verdict": "fail",
+  "valid": true,
+  "verdict": "pass",
   "nop_reward": 0.0,
-  "gold_reward": 0.0,
-  "validated_at": "2026-04-15T22:15:43.136186",
-  "total_time": 2292.47,
-  "sandbox_id": "ih5ds8o4vkclv7d3w3kfe",
-  "backend": "minimax",
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-16T12:48:30.238127",
+  "total_time": 56.72,
+  "sandbox_id": "iaj2fiqiieu6yw1jdzo85",
+  "backend": "anthropic",
   "pipeline": "pipeline",
   "start_at": "judge",
   "nodes": {
@@ -60,34 +60,29 @@
     },
     "quality_gate": {
       "status": "DELETE",
-      "model": "MiniMax-M2.7",
-      "backend": "minimax",
-      "time": 0.37,
+      "model": "claude-opus-4-7",
+      "backend": "anthropic",
+      "time": 0.54,
       "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:2', 'A:[A] test_not_tautological @ tests/test_outputs.py:323: test `test_repo_json_valid` has 1 assert(s), all pass on a stub i', 'A:[A] test_not_tautological @ tests/test_outputs.py:379: test `test_prettierrc_valid` has 1 assert(s), all pass on a stub ']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 22.54,
+      "time": 14.63,
       "tier_a_fails": [
-        "behavior_in_task_description",
         "solution_uniqueness_guard",
-        "tests_verify_behavior_not_text",
-        "test_not_tautological"
+        "tests_verify_behavior_not_text"
       ],
       "tier_b_fails": [],
-      "pass_count": 3,
-      "fail_count": 6
+      "pass_count": 7,
+      "fail_count": 2
+    },
+    "tests_rewrite": {
+      "status": "error",
+      "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":494,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 400 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"invalid_request_error\\\",\\\"message\\\":\\\"\\\\\\\"thinking.type.enabled\\\\\\\" is not supported for this model. Use \\\\\\\"thinking.type.adapt",
+      "time": 2.47
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "glm",
-      "time": 3787.9,
-      "at": "2026-04-15T11:17:31.815168"
-    },
     {
       "verdict": "fail",
       "nop": 0.0,
@@ -119,6 +114,14 @@
       "backend": "minimax",
       "time": 2292.47,
       "at": "2026-04-15T22:15:43.136186"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "anthropic",
+      "time": 56.72,
+      "at": "2026-04-16T12:48:30.238127"
     }
   ]
 }

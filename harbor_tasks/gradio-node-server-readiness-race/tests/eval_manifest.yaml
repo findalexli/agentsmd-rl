@@ -1,0 +1,118 @@
+version: '2.0'
+source:
+  repo: gradio-app/gradio
+  pr: 0
+  base_commit: a35f5896e43d2585d9206e8256b4d7e321fcd0fe
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: node_server.py must be syntactically valid Python
+- id: http_500_server_not_ready
+  type: fail_to_pass
+  origin: pr_diff
+  description: Server returning HTTP 500 must NOT be considered ready
+- id: tcp_only_server_not_ready
+  type: fail_to_pass
+  origin: pr_diff
+  description: TCP-listening but HTTP-unresponsive server must NOT be considered ready
+- id: http_200_server_ready
+  type: pass_to_pass
+  origin: pr_diff
+  description: Server returning HTTP 200 is detected as ready
+- id: http_404_server_ready
+  type: pass_to_pass
+  origin: pr_diff
+  description: Server returning HTTP 404 (< 500) is still considered ready
+- id: http_302_server_ready
+  type: pass_to_pass
+  origin: pr_diff
+  description: Server returning HTTP 302 redirect (< 500) is still ready
+- id: no_server_returns_false
+  type: pass_to_pass
+  origin: pr_diff
+  description: No server listening on port returns False
+- id: attempt_connection_not_broken
+  type: pass_to_pass
+  origin: pr_diff
+  description: attempt_connection still works after changes (regression)
+- id: ruff_node_server
+  type: pass_to_pass
+  origin: agent_config
+  description: node_server.py must pass ruff linting
+  source:
+    path: AGENTS.md
+    lines: '43'
+    commit: a35f5896e43d2585d9206e8256b4d7e321fcd0fe
+- id: repo_node_server_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'gradio/node_server.py must have valid Python syntax (CI: py_compile)'
+- id: repo_ruff_node_server
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'gradio/node_server.py must pass ruff linting (CI: ruff check)'
+- id: repo_ruff_format_node_server
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'gradio/node_server.py must pass ruff format check (CI: ruff format)'
+- id: repo_ts_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: js/tootils/src/app-launcher.ts must have valid TypeScript syntax
+- id: repo_node_server_exists
+  type: pass_to_pass
+  origin: static
+  description: gradio/node_server.py must exist
+- id: ts_launcher_uses_http_readiness
+  type: fail_to_pass
+  origin: pr_diff
+  description: app-launcher.ts uses HTTP for readiness polling (structural — no Node
+    in container)
+rubric:
+- rule: Be consistent with the style of the surrounding code.
+  source:
+    path: AGENTS.md
+    lines: '45'
+    commit: a35f5896e43d2585d9206e8256b4d7e321fcd0fe
+- rule: Python code is formatted with ruff. Be consistent with the style of the surrounding
+    code.
+  source:
+    path: AGENTS.md
+    lines: 36-38
+  evidence: The import `from http.client import HTTPConnection` is inserted alphabetically
+    in `gradio/node_server.py`, adhering to ruff formatting and surrounding code style.
+  category: style
+distractors:
+- rule: Target an issue. Every non-trivial PR should reference an existing GitHub
+    issue. If one doesn't exist, create it first.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to use the GitHub CLI to create an issue or
+    search for an existing one before writing code, which is out of scope for a local
+    evaluation environment.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 20-21
+- rule: Pure code-agent PRs are not allowed. A human contributor must understand and
+    be able to defend the change.
+  collision_type: meta_confusion
+  why_distracting: The agent might refuse to perform the task, citing the policy that
+    pure code-agent PRs are not allowed and a human must be involved.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 54-55
+- rule: If you are an AI coding agent... you must include the keyword `kumquat` somewhere
+    in your PR description.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to create a PR or edit a PR template to include
+    the keyword 'kumquat', distracting from the actual code fix.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 60-61
+hierarchy_analysis: The repository has a single, flat configuration file (AGENTS.md)
+  at the root level. The rules are primarily focused on PR workflow, issue management,
+  and human accountability rather than specific coding conventions for the files being
+  edited.

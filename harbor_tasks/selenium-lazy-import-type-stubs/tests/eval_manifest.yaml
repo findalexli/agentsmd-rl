@@ -1,0 +1,102 @@
+checks:
+- id: test_selenium_package_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: Basic selenium package is importable
+- id: test_webdriver_package_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: selenium.webdriver package is importable
+- id: test_stub_syntax_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: All .pyi stub files have valid Python syntax
+- id: test_repo_validate_pyproject
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo pyproject.toml passes validation
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo Python code passes ruff linting
+- id: test_repo_python_compileall
+  type: pass_to_pass
+  origin: repo_tests
+  description: All Python files in repo have valid syntax
+- id: test_repo_remote_connection_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Unit tests for remote_connection module pass
+- id: test_repo_chrome_edge_options_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Unit tests for Chrome and Edge options pass
+- id: test_repo_import_modified_modules
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified chrome/edge remote_connection modules are importable
+rubric:
+- rule: Every file must include the Apache License 2.0 header boilerplate
+  source:
+    path: CONTRIBUTING.md
+    lines: 124-150
+    commit: 39436b0c1eabbed5489148b98a36302d77feed9e
+- rule: Use union notation (|) instead of Optional for type hints
+  source:
+    path: py/AGENTS.md
+    lines: 42-57
+    commit: 39436b0c1eabbed5489148b98a36302d77feed9e
+- rule: Follow existing code style in the repository; check neighboring files for
+    patterns
+  source:
+    path: AGENTS.md
+    lines: 69-71
+    commit: 39436b0c1eabbed5489148b98a36302d77feed9e
+- rule: Comments should explain *why*, not *what*
+  source:
+    path: AGENTS.md
+    lines: 42-43
+  evidence: The docstring in the generated `__init__.pyi` file explains the reasoning
+    behind the file's existence ('This stub file is necessary for type checkers and
+    IDEs to automatically have visibility into laz
+  category: documentation
+- rule: Type hints are used throughout; add type annotations to new code
+  source:
+    path: py/AGENTS.md
+    lines: 33-35
+  evidence: The entire solution revolves around creating `.pyi` stub files to provide
+    type annotations and visibility for modules that are lazy-loaded at runtime.
+  category: style
+distractors:
+- rule: When implementing solutions prefer writing a test for it first
+  collision_type: scope_ambiguity
+  why_distracting: The rule instructs the agent to write a test first. However, `.pyi`
+    stub files are used exclusively for static type checking (e.g., by mypy) and do
+    not contain runtime logic, making runtime unit tests inapplicable and a waste
+    of effort.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 45-46
+- rule: Use Google-style docstrings
+  collision_type: scope_ambiguity
+  why_distracting: The rule mandates Google-style docstrings with 'Args:', 'Returns:',
+    and 'Raises:' sections. An agent might try to apply this format to the module-level
+    docstrings in the new `.pyi` files, which is inappropriate for module docstrings
+    that just explain the stub's purpose.
+  severity: low
+  source:
+    path: py/AGENTS.md
+    lines: 62-74
+hierarchy_analysis: The agent must navigate a two-level hierarchy from the root `AGENTS.md`
+  to the Python-specific `py/AGENTS.md`. The root provides general guidance (explain
+  why in comments, write tests), while the child provides Python-specific rules (type
+  hints, Google docstrings). The agent must synthesize these while recognizing that
+  type stubs (.pyi) have different testing and documentation scopes than standard
+  Python runtime code.
+version: '2.0'
+source:
+  repo: SeleniumHQ/selenium
+  pr: 17165
+  base_commit: 39436b0c1eabbed5489148b98a36302d77feed9e
+  merge_commit: ''

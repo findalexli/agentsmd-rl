@@ -1,0 +1,124 @@
+version: '2.0'
+source:
+  repo: sgl-project/sglang
+  pr: 21582
+  base_commit: 5ef56682b800c3905973c86beeddf1318cedb2a9
+  merge_commit: 8edd4fa802f7
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: runners.py must parse without syntax errors
+- id: dead_process_raises_runtime_error
+  type: fail_to_pass
+  origin: pr_diff
+  description: forward() raises RuntimeError with exit code info when subprocess dies
+    (exitcodes 1, 42, 137)
+- id: dead_process_negative_exitcode
+  type: fail_to_pass
+  origin: pr_diff
+  description: forward() raises RuntimeError when subprocess killed by signal (exitcodes
+    -9, -15, -11)
+- id: no_hang_on_dead_process
+  type: fail_to_pass
+  origin: pr_diff
+  description: forward() completes within 15s when subprocess is dead instead of hanging
+    forever
+- id: forward_returns_when_alive
+  type: pass_to_pass
+  origin: pr_diff
+  description: forward() returns queued result when subprocess is healthy (normal
+    operation unchanged)
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: 'runners.py is not gutted: has expected classes, functions, and line
+    count'
+- id: repo_precommit_basic
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo pre-commit basic checks pass (symlinks, yaml, toml, ast, merge
+    conflicts, private keys, debug statements)
+- id: repo_ruff_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo ruff lint checks pass (F401 unused imports, F821 undefined names)
+    for runners.py
+- id: repo_python_compileall
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo Python files compile without syntax errors
+- id: repo_codespell
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo codespell passes on runners.py (no common typos)
+- id: repo_isort
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo isort check passes on runners.py (imports are sorted)
+- id: repo_pyflakes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo pyflakes check passes on runners.py (no undefined names)
+- id: repo_yamllint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo yamllint check passes on CI workflow files (valid YAML syntax)
+rubric:
+- rule: Code must handle subprocess lifecycle properly. Check if processes are alive
+    before blocking operations and report meaningful exit codes on failure.
+  source:
+    path: .claude/skills/write-sglang-test/SKILL.md
+    lines: 19,85-86
+    commit: 5ef56682b800c3905973c86beeddf1318cedb2a9
+- rule: Test infrastructure must use defensive patterns. Use timeouts on blocking
+    operations and validate preconditions before accessing resources.
+  source:
+    path: .claude/skills/write-sglang-test/SKILL.md
+    lines: '19'
+    commit: 5ef56682b800c3905973c86beeddf1318cedb2a9
+- rule: Error handling must include diagnostic information. Include exit codes, process
+    status, and context when raising errors about subprocess failures.
+  source:
+    path: .claude/skills/ci-workflow-guide/SKILL.md
+    lines: 1-10
+    commit: 5ef56682b800c3905973c86beeddf1318cedb2a9
+distractors:
+- rule: Always use CustomTestCase for tests
+  source:
+    path: .claude/skills/write-sglang-test/SKILL.md
+    lines: '12'
+  source_text: 1. **Always use `CustomTestCase`** — never raw `unittest.TestCase`.
+    It ensures `tearDownClass` runs even when `setUpClass` fails, preventing resource
+    leaks in CI.
+  collision_type: scope_ambiguity
+  why_distracting: The diff is in a file under `test/` (`python/sglang/test/runners.py`),
+    so an agent might assume it's a test case and try to refactor it to use `CustomTestCase`.
+    However, `runners.py` is a utility class for test execution, not a test suite
+    itself.
+  severity: medium
+- rule: tearDownClass must be defensive when checking process resources
+  source:
+    path: .claude/skills/write-sglang-test/SKILL.md
+    lines: '13'
+  source_text: 2. **`tearDownClass` must be defensive** — use `hasattr`/null checks
+    before accessing resources (e.g. `cls.process`) that `setUpClass` may not have
+    finished allocating.
+  collision_type: scope_ambiguity
+  why_distracting: The diff checks the status of a process (`self.model_proc.is_alive()`).
+    An agent might confuse this process state monitoring during execution with the
+    `tearDownClass` resource cleanup rules, incorrectly thinking this change needs
+    `hasattr` checks or is part of a test cleanup phase.
+  severity: low
+- rule: Place tests in test/registered/<category>/
+  source:
+    path: .claude/skills/write-sglang-test/SKILL.md
+    lines: '14'
+  source_text: 3. **Place tests in `test/registered/<category>/`** — except JIT kernel
+    tests and benchmarks, which live in `python/sglang/jit_kernel/tests/` and `python/sglang/jit_kernel/benchmark/`
+    (nested subfolders are allowed)
+  collision_type: scope_ambiguity
+  why_distracting: Since the modified file is in `python/sglang/test/`, an agent might
+    think this test-related file is in the wrong location and suggest moving it to
+    `test/registered/`. However, it's a test runner utility, not a test case.
+  severity: medium

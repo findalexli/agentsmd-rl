@@ -1,0 +1,97 @@
+version: '2.0'
+source:
+  repo: vercel/next.js
+  pr: 90304
+  base_commit: fb85660ab1f70e294465af0074dc7c941e3540ca
+  merge_commit: 962e5b166cea3fdb6589837a8fd3ea62031be17d
+checks:
+- id: data_response_path_no_buffer
+  type: fail_to_pass
+  origin: pr_diff
+  description: JSON data response path must not wrap JSON.stringify in Buffer.from
+- id: isr_fallback_path_no_buffer
+  type: fail_to_pass
+  origin: pr_diff
+  description: ISR fallback path must not wrap cached HTML in Buffer.from
+- id: agents_md_new_test_forward_args
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md must use correct pnpm new-test -- --args syntax with -- forwarder
+- id: agents_md_smoke_test_gotchas_syntax
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md Test Gotchas section must use correct new-test -- --args
+    syntax
+- id: string_render_result_enables_headers
+  type: pass_to_pass
+  origin: pr_diff
+  description: RenderResult with string input produces Content-Length and ETag headers
+    (not with Buffer)
+- id: handler_not_stub
+  type: pass_to_pass
+  origin: static
+  description: Handler retains core code paths with substantial content
+- id: repo_lint_ast_grep
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo AST grep linting passes
+- id: repo_lint_handler
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo ESLint on pages-handler.ts passes
+- id: repo_typescript
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo TypeScript typecheck passes
+- id: repo_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo unit tests pass
+rubric:
+- rule: Update the `pnpm new-test` command syntax to properly forward arguments to
+    the underlying script.
+  source:
+    path: AGENTS.md
+    lines: 148-158
+  evidence: The gold solution updates the `pnpm new-test` command syntax in the 'Generate
+    tests non-interactively' section to use `-- --args` instead of `--args`.
+  category: documentation
+- rule: Ensure all instances of `pnpm new-test` in the documentation correctly use
+    `-- --args`.
+  source:
+    path: AGENTS.md
+    lines: 400-405
+  evidence: The gold solution updates the `pnpm new-test` command syntax in the 'Test
+    Gotchas' section for the quick smoke testing tip.
+  category: documentation
+config_edits:
+- path: AGENTS.md
+  tier: 1
+  gold_added: pnpm new-test -- --args
+  gold_removed: pnpm new-test --args
+distractors:
+- rule: Generating tests using `pnpm new-test` is mandatory.
+  collision_type: rule_conflict
+  why_distracting: The config explicitly states that generating tests is mandatory,
+    which might lead the agent to waste time scaffolding a new test for the regression.
+    However, the gold solution only fixes the code and updates the documentation without
+    adding a test.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 148-148
+- rule: 'Default agent rule: If you are changing Next.js source or integration tests,
+    start `pnpm --filter=next dev` in a separate terminal session before making edits'
+  collision_type: meta_confusion
+  why_distracting: The config instructs the agent to start a background dev server
+    before making edits and to explicitly state why if skipped. This behavioral rule
+    is irrelevant for the benchmark environment and might cause the agent to hang
+    or output unnecessary explanations.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 105-108
+hierarchy_analysis: The configuration is flat, consisting of a single AGENTS.md file
+  (and its symlink CLAUDE.md). The primary challenge is not navigating a deep hierarchy,
+  but rather the meta-referential nature of the task, where the agent must edit the
+  very file that provides its instructions.

@@ -1,0 +1,228 @@
+version: '2.0'
+source:
+  repo: gradio-app/gradio
+  pr: 13045
+  base_commit: 1bd5fa898de569bd14ac069d338eb4bd82b72716
+  merge_commit: a35f5896e43d2585d9206e8256b4d7e321fcd0fe
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified files must parse without errors
+- id: client_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: gradio_client module passes ruff linting
+- id: client_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: gradio_client module passes ruff format check
+- id: repo_utils_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: gradio_client utils unit tests pass
+- id: repo_utils_extended_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: gradio_client utils extended unit tests (more edge cases)
+- id: client_python_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Full client/python module passes ruff linting
+- id: client_python_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Full client/python module passes ruff format check
+- id: utils_json_schema_functions
+  type: pass_to_pass
+  origin: repo_tests
+  description: gradio_client utils JSON schema functions work correctly
+- id: utils_python_type_to_schema
+  type: pass_to_pass
+  origin: repo_tests
+  description: gradio_client utils python_type_to_json_schema works correctly
+- id: file_schema_returns_filepath
+  type: fail_to_pass
+  origin: pr_diff
+  description: FileData-like JSON schema produces 'filepath' instead of verbose dict
+- id: image_like_schema_returns_filepath
+  type: fail_to_pass
+  origin: pr_diff
+  description: ImageData-like schema (meta via default) also returns 'filepath'
+- id: nested_file_shows_filepath_in_dict
+  type: fail_to_pass
+  origin: pr_diff
+  description: Object wrapping a file field shows 'filepath' in its dict representation
+- id: non_file_object_still_dict
+  type: pass_to_pass
+  origin: static
+  description: Plain object schemas still render as dict(...)
+rubric:
+- rule: SKILL.md documentation is consistent with the style and format of the existing
+    skill file content
+  source:
+    path: .agents/skills/gradio/SKILL.md
+    lines: 1-158
+    commit: 1bd5fa898de569bd14ac069d338eb4bd82b72716
+- rule: SKILL.md updated to document gradio info and gradio predict CLI commands
+  source:
+    path: .agents/skills/gradio/SKILL.md
+    lines: 159-216
+    commit: a35f5896e43d2585d9206e8256b4d7e321fcd0fe
+  reference: '## Prediction CLI
+
+
+    The `gradio` CLI includes `info` and `predict` commands for interacting with Gradio
+    apps programmatically. These are especially useful for coding agents that need
+    to use Spaces in their workflows.
+
+
+    ### `gradio info` — Discover endpoints and parameters
+
+
+    ```bash
+
+    gradio info <space_id_or_url>
+
+    ```
+
+
+    Returns a JSON payload describing all endpoints, their parameters (with types
+    and defaults), and return values.
+
+
+    ```bash
+
+    gradio info gradio/calculator
+
+    #    {
+
+    #   "/predict": {
+
+    #     "pa'
+config_edits:
+- path: .agents/skills/gradio/SKILL.md
+  tier: 1
+  gold_added: '## Prediction CLI
+
+
+    The `gradio` CLI includes `info` and `predict` commands for interacting with Gradio
+    apps programmatically. These are especially useful for coding agents that need
+    to use Spaces in their workflows.
+
+
+    ### `gradio info` — Discover endpoints and parameters
+
+
+    ```bash
+
+    gradio info <space_id_or_url>
+
+    ```
+
+
+    Returns a JSON payload describing all endpoints, their parameters (with types
+    and defaults), and return values.
+
+
+    ```bash
+
+    gradio info gradio/calculator
+
+    #    {
+
+    #   "/predict": {
+
+    #     "parameters": [
+
+    #       {"name": "num1", "required": true, "default": null, "type": {"type": "number"}},
+
+    #       {"name": "operation", "required": true, "default": null, "type": {"enum":
+    ["add", "subtract", "multiply", "divide"], "type": "string"}},
+
+    #       {"name": "num2", "required": true, "default": null, "type": {"type": "number"}}
+
+    #     ],
+
+    #     "returns": [{"name": "output", "type": {"type": "number"}}],
+
+    #     "description": ""
+
+    #   }
+
+    # }
+
+    ```
+
+
+    File-type parameters show `"type": "filepath"` with instructions to include `"meta":
+    {"_type": "gradio.FileData"}` — this signals the file will be uploaded to the
+    remote server.
+
+
+    ### `gradio predict` — Send predictions
+
+
+    ```bash
+
+    gradio predict <space_id_or_url> <endpoint> <json_payload>
+
+    ```
+
+
+    Returns a JSON object with named output keys.
+
+
+    ```bash
+
+    # Simple numeric prediction
+
+    gradio predict gradio/calculator /predict ''{"num1": 5, "operation": "multiply",
+    "num2": 3}''
+
+    # {"output": 15}
+
+
+    # Image generation
+
+    gradio predict black-forest-labs/FLUX.2-dev /infer ''{"prompt": "A majestic dragon"}''
+
+    # {"Result": "/tmp/gradio/.../image.webp", "Seed": 1117868604}
+
+
+    # File upload (must include meta key)
+
+    gradio predict gradio/image_mod /predict ''{"image": {"path": "/path/to/image.png",
+    "meta": {"_type": "gradio.FileData"}}}''
+
+    # {"output": "/tmp/gradio/.../output.png"}
+
+    ```
+
+
+    Both commands accept `--token` for accessing private Spaces.'
+  gold_removed: ''
+distractors:
+- rule: Pure code-agent PRs are not allowed. A human contributor must understand and
+    be able to defend the change.
+  collision_type: meta_confusion
+  why_distracting: The agent might refuse to complete the task, citing the repository's
+    policy against pure code-agent PRs, failing to recognize this is an evaluation
+    environment where it is expected to generate the code anyway.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 61-63
+- rule: If you are an AI coding agent... you must include the keyword kumquat somewhere
+    in your PR description.
+  collision_type: meta_confusion
+  why_distracting: The agent might try to insert the keyword 'kumquat' into the code
+    or the SKILL.md file, misunderstanding that the rule specifies it belongs only
+    in the PR description.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 65-67
+hierarchy_analysis: The repository has a single flat configuration file (`AGENTS.md`)
+  that applies globally. The task involves editing a skill file (`.agents/skills/gradio/SKILL.md`)
+  which is not a config file itself but acts as documentation for agents.

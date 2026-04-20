@@ -1,61 +1,59 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file (Matches.tsx in @tanstack/solid-router), the specific patterns to implement (e.g., 'const renderedChild = Solid.createMemo(', 'const child = props.children', 'return <>{renderedChild()}</>'), the functions useMatchRoute and MatchRoute, and mentions type checking, build, ESLint, and unit tests. All assert'd specifics in the tests (file path, variable names, patterns) are discoverable from instruction.md."
+      "reason": "Instruction explicitly names the required patterns: 'const renderedChild = Solid.createMemo(', 'const child = props.children', 'return <>{renderedChild()}</>', and the destructuring pattern inside createMemo."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly states the exact fix: 'The options parameter destructuring pattern must be moved so it happens inside the Solid.createMemo() callback', provides the exact code pattern, and specifies 'const renderedChild = Solid.createMemo(', 'const child = props.children (inside the memo callback)', and 'return <>{renderedChild()}</>'. This leaves no reasoning for the agent \u2014 it's a direct specification of the solution."
+      "reason": "Instruction dictates exact code patterns (e.g., 'const renderedChild = Solid.createMemo(', 'return <>{renderedChild()}</>'), leaving no reasoning about what to change."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact string patterns like 'const renderedChild = Solid.createMemo(' and 'return <>{renderedChild()}</>' and 'const child = props.children' inside createMemo. An alternative correct fix (e.g., using a different variable name like 'memoChild', or using createEffect, or restructuring differently while still fixing reactivity) would fail these text-matching tests."
+      "reason": "Tests assert literal strings like 'const renderedChild = Solid.createMemo(' and 'return <>{renderedChild()}</>'; an alternative valid fix using a different variable name or wrapping approach (e.g., Solid.children, or returning renderedChild() without fragment) would fail."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The first 4 fail_to_pass tests (test_usematchroute_reactive_opts, test_matchroute_uses_creatememo, test_matchroute_child_inside_memo, test_matchroute_returns_fragment) are purely text-matching with regex/string assertions on file content (e.g., 'assert \"const renderedChild = Solid.createMemo(\" in content'). They never import, call, or execute the code. The pass_to_pass tests do run subprocesses, but the core fail_to_pass tests are all text-based."
+      "outcome": "pass",
+      "reason": "While several tests grep source, test_solid_router_unit_matches, test_solid_router_types, test_solid_router_builds, test_solid_router_eslint, and test_solid_router_test_build execute subprocesses that verify behavior."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "The fail_to_pass tests only check for string patterns in the source file. Writing exactly the specified strings into the file (without any actual logic) would pass tests like test_matchroute_uses_creatememo and test_matchroute_returns_fragment. A stub that contains the literal text 'const renderedChild = Solid.createMemo(' and 'return <>{renderedChild()}</>' would pass those tests."
+      "outcome": "pass",
+      "reason": "The unit test test_solid_router_unit_matches runs Matches.test.tsx which tests actual reactivity behavior; a stub would not pass."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires reactivity fixes, type checking, build, ESLint, and unit tests passing. The tests cover all of these: text-based checks for the reactivity patterns, plus subprocess tests for types, build, ESLint, unit tests, and build validation."
+      "reason": "Tests cover types, build, eslint, unit tests for Matches, and the specific code patterns required."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_usematchroute_reactive_opts, test_matchroute_uses_creatememo, etc.), each has a detailed docstring explaining the buggy vs fixed pattern, and they are logically grouped by concern."
+      "reason": "Tests are individually named with docstrings describing f2p/p2p status and purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task produces code changes, not structured data like JSON/CSV/API/DB."
+      "reason": "Not a structured data task."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "Paths and commands appear correct."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names the exact file (Matches.tsx), the exact functions (useMatchRoute, MatchRoute), and provides the exact code patterns including variable names and line-level restructuring details. This goes far beyond describing what's broken \u2014 it specifies exactly where and how to fix it."
+      "reason": "Instruction specifies exact code patterns including variable names ('renderedChild'), specific API ('Solid.createMemo'), and exact return statement, which is beyond describing what's broken."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "Code-only task."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 5
+  "pass_count": 6,
+  "fail_count": 3
 }

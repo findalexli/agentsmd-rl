@@ -1,61 +1,56 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "The instruction mentions 'marginTop set to -8' and 'flex' on the same line, which matches test_independent_filter_container's assertion. However, test_claude_md_documents_package_json asserts for the exact string 'Miscellaneous' as a section header and 'npm run compile' \u2014 while these are mentioned in the instruction, the instruction also leaks these specifics. More critically, test_sort_options_in_radio_group checks that 'Newest', 'Oldest', 'Most Relevant' strings are inside VSCodeRadioGroup \u2014 t"
+      "outcome": "pass",
+      "reason": "Instruction names HistoryView.tsx, CLAUDE.md, the marginTop:-8 requirement, the 5+ VSCodeRadio count, the Miscellaneous section, the 'npm run compile' string, and the package.json mention."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly states: 'the file should contain a line with both marginTop and flex properties set, with marginTop set to -8', 'Both showCurrentWorkspaceOnly and showFavoritesOnly filter controls must appear after the closing </VSCodeRadioGroup> tag', and 'Add a Miscellaneous section' with exact content. These are implementation-specific directives telling the agent exactly what to change, not just describing what's broken."
+      "outcome": "pass",
+      "reason": "Instruction describes required end-state properties (filters outside RadioGroup, marginTop -8 with flex) but doesn't dictate specific code edits."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "test_independent_filter_container checks for a line containing both 'marginTop' and 'flex' \u2014 an alternative correct fix could use different CSS properties (e.g., padding-top with display:block, or a CSS class) to achieve the same visual result. test_claude_md_documents_package_json requires the exact string 'Miscellaneous' as a section name. These are gold-specific implementation details that correct alternatives wouldn't necessarily share."
+      "outcome": "pass",
+      "reason": "Tests check structural properties (filters after </VSCodeRadioGroup>, marginTop+flex line exists, sort options inside group) rather than exact variable names or line numbers, allowing alternative correct fixes."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The core fail-to-pass tests (test_filters_outside_radio_group, test_independent_filter_container, test_claude_md_documents_package_json) are all pure text/string matching: they read file contents and check for string presence or line ordering. No tests import, render, or execute the React component to verify actual toggle behavior. The pass-to-pass tests do run subprocess commands (biome lint/format, compile), but the behavioral tests are purely textual."
+      "reason": "The f2p tests (test_filters_outside_radio_group, test_independent_filter_container, test_claude_md_documents_package_json) are all string/line scans of file contents; no rendering/behavioral execution of the React component is performed."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check structural properties that wouldn't be satisfied by the unmodified code: test_filters_outside_radio_group verifies workspace/favorites lines appear after </VSCodeRadioGroup> (they're inside it before the fix), test_independent_filter_container checks for a marginTop/-8/flex container that doesn't exist in the original, and test_claude_md_documents_package_json checks for content that must be added. A stub/no-op wouldn't pass."
+      "reason": "The f2p tests require meaningful structural change (filters relocated outside VSCodeRadioGroup, new container with marginTop/-8+flex, CLAUDE.md updated) \u2014 a stub cannot satisfy these."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md are tested: independent filters outside VSCodeRadioGroup, sort options inside VSCodeRadioGroup, at least 5 VSCodeRadio elements, marginTop/-8 with flex, filters after closing tag, and CLAUDE.md documentation updates."
+      "reason": "All instruction requirements (5+ radios, marginTop/-8 line, filters after radio group close, CLAUDE.md section with package.json and npm run compile) are tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass, Regression checks), descriptive function names, and detailed docstrings explaining the purpose of each test."
+      "reason": "Tests are grouped with section-comment headers (Gates, Fail-to-pass, Pass-to-pass) and descriptive function names."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task involves fixing UI component code and documentation, not producing structured data output."
+      "reason": "No structured data output produced."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "Paths and commands appear correct (webview-ui/src/components/history/HistoryView.tsx, CLAUDE.md, npm run compile)."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction specifies exact implementation details: 'marginTop set to -8', 'flex' property, 'at least 5 VSCodeRadio elements', 'after the closing </VSCodeRadioGroup> tag'. These are precise structural hints about the gold solution, not just descriptions of the bug. The file to edit (HistoryView.tsx) is reasonable to name, but the exact CSS values and structural placement leak the solution."
+      "outcome": "pass",
+      "reason": "Instruction names the file but does not pinpoint line numbers or buggy code; localization reasoning is still required."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is primarily a code editing task, not an agentmd/config-edits task."
+      "reason": "This is a code+docs task, not an agentmd config task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 4,
-  "fail_count": 5
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 1
 }

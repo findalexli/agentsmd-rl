@@ -1,0 +1,101 @@
+version: '2.0'
+source:
+  repo: oven-sh/bun
+  pr: 28982
+  base_commit: 770893d28ff94013abed5520482848609a6872f9
+  merge_commit: 479d29f770c934d89af3182c5c0b11103d624d3b
+checks:
+- id: zig_syntax_check
+  type: pass_to_pass
+  origin: static
+  description: FetchTasklet.zig must have valid Zig syntax
+- id: empty_chunk_guard_present
+  type: fail_to_pass
+  origin: pr_diff
+  description: The empty non-terminal chunk guard must be present in onBodyReceived
+- id: guard_placement_correct
+  type: fail_to_pass
+  origin: pr_diff
+  description: The guard must be placed before onBodyReceived() inside is_waiting_body
+    block
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: FetchTasklet implementation must have substantial logic
+- id: zig_compiles
+  type: pass_to_pass
+  origin: static
+  description: Zig code must pass fmt --check validation
+- id: stream_api_not_broken
+  type: pass_to_pass
+  origin: repo_tests
+  description: Basic streaming must still work after the fix (no regression)
+- id: test_repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's JavaScript lint passes (bun x oxlint src/js)
+- id: test_repo_banned_words
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's banned words check passes
+- id: test_repo_zig_fmt
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Zig fmt check passes on FetchTasklet.zig
+- id: test_repo_prettier
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TypeScript prettier check passes on scripts/
+- id: test_repo_fetch_body_stream
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's fetch body stream tests pass (validates FetchTasklet body streaming)
+- id: test_repo_fetch_response
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's fetch response tests pass (validates Response body handling)
+- id: test_repo_fetch_body
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's fetch body tests pass (validates Request/Response body mixin)
+- id: test_repo_fetch_body_clone
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's fetch body clone tests pass (validates body cloning with streaming)
+- id: test_repo_fetch_stream_fast_path
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's stream fast path tests pass (validates byte blob streaming)
+distractors:
+- rule: If no valid issue number is provided, find the best existing file to modify
+    instead, such as; test/js/web/ - Web API tests
+  collision_type: scope_ambiguity
+  why_distracting: The testing guidelines suggest adding tests for Web APIs in test/js/web/.
+    An agent might waste significant time trying to write a reliable test for this
+    multi-threaded race condition, which is notoriously difficult to reproduce deterministically
+    in JS. The gold solution correctly focuses only on the Zig fix.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 48-55
+hierarchy_analysis: The config hierarchy provides general Zig and testing guidelines,
+  but none are directly applicable to fixing this specific logical race condition.
+  The agent must rely entirely on the task instructions rather than the config files.
+rubric:
+- rule: Always use `bun.*` APIs instead of `std.*`.
+  source:
+    path: src/CLAUDE.md
+    lines: 16-17
+  evidence: The gold solution implements the guard using only internal struct fields
+    (`this.scheduled_response_buffer`, `this.result`) without falling back to any
+    `std.*` library functions.
+  category: architecture
+  verification: llm_judge
+- rule: Never use `@import()` inline inside of functions.
+  source:
+    path: src/CLAUDE.md
+    lines: 11-12
+  evidence: The gold solution adds logic inside `FetchTasklet.zig` without adding
+    any inline imports.
+  category: style
+  verification: llm_judge

@@ -1,0 +1,171 @@
+version: '2.0'
+source:
+  repo: anomalyco/opencode
+  pr: 19364
+  base_commit: 21023337fa8011568b2570a3bd49fffed842ce86
+  merge_commit: decb5e68eea8ac3090e870deaba243cf30d203fc
+checks:
+- id: loadskills_is_effect_generator
+  type: fail_to_pass
+  origin: pr_diff
+  description: loadSkills must be a native Effect generator, not an async function
+- id: add_helper_is_effect_generator
+  type: fail_to_pass
+  origin: pr_diff
+  description: add helper must be a native Effect generator, not async
+- id: scan_helper_is_effect_generator
+  type: fail_to_pass
+  origin: pr_diff
+  description: scan helper must be a native Effect generator, not async
+- id: static_config_facades_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Config.get() and Config.directories() static facades removed in favor
+    of yielded instance
+- id: effect_run_promise_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Effect.runPromise bridge removed -- discovery.pull() yielded natively
+- id: monolithic_promise_wrapper_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Monolithic Effect.promise(() => loadSkills(...)) wrapper removed
+- id: layer_declares_config_and_bus_deps
+  type: fail_to_pass
+  origin: pr_diff
+  description: Layer type declares Config.Service and Bus.Service as dependencies
+- id: default_layer_provides_config_and_bus
+  type: fail_to_pass
+  origin: pr_diff
+  description: defaultLayer provides Config and Bus layers alongside Discovery
+- id: no_promise_then_chains
+  type: fail_to_pass
+  origin: pr_diff
+  description: Promise .then() chains replaced with Effect combinators
+- id: no_promise_all
+  type: fail_to_pass
+  origin: pr_diff
+  description: Promise.all replaced with Effect.forEach or Effect.all
+- id: core_patterns_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: Core skill discovery patterns preserved (SKILL.md, InstanceState, Skill.state)
+- id: error_reporting_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: Session.Event.Error reporting preserved in error handling path
+- id: no_try_catch
+  type: pass_to_pass
+  origin: agent_config
+  description: No try/catch blocks (prefer Effect.tryPromise/Effect.catch)
+  source:
+    path: AGENTS.md
+    lines: '12'
+    commit: 21023337fa8011568b2570a3bd49fffed842ce86
+- id: no_any_type
+  type: pass_to_pass
+  origin: agent_config
+  description: No 'any' type annotations
+  source:
+    path: AGENTS.md
+    lines: '13'
+    commit: 21023337fa8011568b2570a3bd49fffed842ce86
+- id: no_raw_fs_imports
+  type: pass_to_pass
+  origin: agent_config
+  description: No raw 'fs/promises' imports (prefer FileSystem.FileSystem service)
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: '46'
+    commit: 21023337fa8011568b2570a3bd49fffed842ce86
+- id: no_raw_fetch_calls
+  type: pass_to_pass
+  origin: agent_config
+  description: No raw fetch() calls (prefer HttpClient.HttpClient service)
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: '48'
+    commit: 21023337fa8011568b2570a3bd49fffed842ce86
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: Modified file retains substantial logic, not a stub
+- id: test_repo_syntax_skill_index
+  type: pass_to_pass
+  origin: repo_tests
+  description: Syntax check skill/index.ts using Node.js
+- id: test_repo_syntax_discovery_test
+  type: pass_to_pass
+  origin: repo_tests
+  description: Syntax check test/skill/discovery.test.ts using Node.js
+- id: test_repo_syntax_skill_test
+  type: pass_to_pass
+  origin: repo_tests
+  description: Syntax check test/skill/skill.test.ts using Node.js
+- id: test_repo_syntax_tool_skill_test
+  type: pass_to_pass
+  origin: repo_tests
+  description: Syntax check test/tool/skill.test.ts using Node.js
+- id: test_repo_syntax_skill_discovery
+  type: pass_to_pass
+  origin: repo_tests
+  description: Syntax check skill/discovery.ts using Node.js — dependency of skill/index.ts
+rubric:
+- rule: Use `Effect.fnUntraced` for internal helpers.
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: 16-17
+  evidence: The helper functions `add`, `scan`, and `loadSkills` are wrapped in `Effect.fnUntraced(function*
+    (...) { ... })` instead of using `Effect.gen` or plain async functions.
+  category: architecture
+- rule: Avoid `try`/`catch` where possible
+  source:
+    path: AGENTS.md
+    lines: 11-12
+  evidence: 'The gold solution uses `Effect.tryPromise({ try: ..., catch: ... })`
+    and `Effect.catch` instead of native `try`/`catch` blocks for error handling.'
+  category: style
+- rule: Prefer single word names for variables and functions.
+  source:
+    path: AGENTS.md
+    lines: 21-22
+  evidence: The gold solution introduces single-word variable names like `bus`, `config`,
+    `err`, and `md` when refactoring the functions.
+  category: naming
+distractors:
+- rule: Use `Effect.gen(function* () { ... })` for composition.
+  collision_type: rule_conflict
+  why_distracting: The rule suggests using `Effect.gen(function* () { ... })` for
+    composition. An agent might wrap the helper functions in `Effect.gen` instead
+    of `Effect.fnUntraced`, which violates the specific instruction for internal helpers.
+  severity: high
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: 15-16
+- rule: Prefer `FileSystem.FileSystem` instead of raw `fs/promises` for effectful
+    file I/O.
+  collision_type: architecture_boundary
+  why_distracting: The rule says to prefer `FileSystem.FileSystem` instead of raw
+    `fs/promises`. The existing code uses `Glob.scan` and `Filesystem.isDir`. An agent
+    might attempt to rewrite these using Effect's `FileSystem` module, which is out
+    of scope and crosses an architecture boundary for this specific dependency injection
+    fix.
+  severity: medium
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: 38-39
+- rule: Prefer functional array methods (flatMap, filter, map) over for loops
+  collision_type: rule_conflict
+  why_distracting: The rule says to prefer functional array methods (flatMap, filter,
+    map) over for loops. The original code uses `Promise.all(matches.map(...))`. An
+    agent might try to keep `.map()` inside an Effect context, but the correct Effect
+    pattern is to use `Effect.forEach` with concurrency options.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 15-16
+hierarchy_analysis: The agent must synthesize rules from both `AGENTS.md` and `packages/opencode/AGENTS.md`.
+  The root config provides general style guidelines (avoid try/catch, single-word
+  naming), while the package-level config provides highly specific Effect migration
+  patterns. The agent must prioritize the package-level `Effect.fnUntraced` rule over
+  the general `Effect.gen` rule for internal helpers.

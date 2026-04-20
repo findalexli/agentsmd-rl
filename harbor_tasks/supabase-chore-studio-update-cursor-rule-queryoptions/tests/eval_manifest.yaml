@@ -1,0 +1,160 @@
+version: '2.0'
+source:
+  repo: supabase/supabase
+  pr: 42446
+  base_commit: 11d4da6c4b6d282c1d829a4786a342468472a698
+  merge_commit: 7e9f243f51d5c522f1f8482fbb5b71c9eb3a3f1d
+checks:
+- id: query_file_exports_query_options
+  type: fail_to_pass
+  origin: pr_diff
+  description: integrations-query.ts exports thirdPartyAuthIntegrationsQueryOptions
+    using queryOptions
+- id: get_function_is_private
+  type: fail_to_pass
+  origin: pr_diff
+  description: getThirdPartyAuthIntegrations is private (not exported)
+- id: component_uses_query_options_pattern
+  type: fail_to_pass
+  origin: pr_diff
+  description: ThirdPartyAuthForm uses queryOptions pattern with useQuery, not custom
+    hook
+- id: deprecated_custom_mutation_type
+  type: fail_to_pass
+  origin: pr_diff
+  description: UseCustomMutationOptions type annotated with @deprecated
+- id: rule_md_recommends_query_options
+  type: fail_to_pass
+  origin: pr_diff
+  description: Cursor rule RULE.md recommends queryOptions pattern instead of useXQuery
+    hooks
+- id: rule_md_documents_imperative_fetching
+  type: fail_to_pass
+  origin: pr_diff
+  description: Cursor rule documents imperative fetching with queryClient.fetchQuery()
+- id: rule_md_documents_component_usage_with_query_options
+  type: fail_to_pass
+  origin: pr_diff
+  description: Cursor rule shows how to use query options in components with useQuery
+- id: query_gates_with_enabled
+  type: pass_to_pass
+  origin: agent_config
+  description: Query function gates with enabled property per existing Cursor rule
+  source:
+    path: .cursor/rules/studio/queries/RULE.md
+    lines: '46'
+    commit: 11d4da6c4b6d282c1d829a4786a342468472a698
+- id: test_repo_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Studio unit tests pass (vitest)
+- id: test_repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Studio ESLint passes
+- id: test_repo_lint_ratchet
+  type: pass_to_pass
+  origin: repo_tests
+  description: Studio ESLint ratchet check passes
+- id: test_repo_prettier
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo Prettier formatting check passes
+rubric:
+- rule: Config update is consistent with the style and structure of existing cursor
+    rules in .cursor/rules/studio/
+  source:
+    path: .cursor/rules/studio/queries/RULE.md
+    lines: 1-10
+    commit: 11d4da6c4b6d282c1d829a4786a342468472a698
+- rule: Gate queries with `enabled` so they don't run until required variables exist
+  source:
+    path: ./repo/.cursor/rules/studio/queries/RULE.md
+    lines: 42-42
+  source_text: '- Gate with `enabled` so the query doesn’t run until required variables
+    exist (and platform-only queries should include `IS_PLATFORM`).'
+  evidence: 'In the refactored `thirdPartyAuthIntegrationsQueryOptions` inside `integrations-query.ts`,
+    the developer correctly retains `enabled: enabled && typeof projectRef !== ''undefined''`
+    to gate the query based on the existence of the required parameter.'
+  category: Architecture
+  verification: llm_judge
+config_edits:
+- path: .cursor/rules/studio/queries/RULE.md
+  tier: 1
+  gold_added: "Follow the `apps/studio/data/` patterns:\n- Query options: `apps/studio/data/table-editor/table-editor-query.ts`\n\
+    - Page usage: `apps/studio/pages/project/[ref]/database/tables/[id].tsx`\n## Write\
+    \ query options (preferred pattern)\nUse `queryOptions` from `@tanstack/react-query`\
+    \ to define reusable query configurations. This pattern:\n\n- Provides type safety\
+    \ for query keys and data\n- Can be used with `useQuery()` in components\n- Can\
+    \ be used with `queryClient.fetchQuery()` for imperative fetching\n\nGuidelines:\n\
+    \n- Export `XVariables`, `XData`, and `XError` types from the file (prefixed with\
+    \ the domain name).\n- Implement a private `getX(variables, signal?)` function\
+    \ that:\n  - calls `handleError(error)` on failure (which throws) — the function\
+    \ returns `data` on success\n  - this function should NOT be exported. For imperative\
+    \ fetching, use `queryClient.fetchQuery(xQueryOptions(...))`\n- Export `xQueryOptions()`\
+    \ using `queryOptions` from `@tanstack/react-query`.\n- Gate with `enabled` so\
+    \ the query doesn't run until required variables exist (and platform-only queries\
+    \ should include `IS_PLATFORM` from `lib/constants`).\n- When migrating away from\
+    \ exporting `useQuery`, move all options into the `xQueryOptions` as default values.\n\
+    - No extra options should be added as params, if the user wants to overwrite the\
+    \ options, they can do by destructuring the query options. For example, `{ ...xQueryOptions(vars),\
+    \ enabled: true }`.\nimport { queryOptions } from '@tanstack/react-query'\n\n\
+    import { xKeys } from './keys'\nimport { get, handleError } from '@/data/fetchers'\n\
+    import { IS_PLATFORM } from '@/lib/constants'\nimport { ResponseError } from '@/types'\n\
+    \nasync function getX({ projectRef }: XVariables, signal?: AbortSignal) {\nexport\
+    \ const xQueryOptions = ({ projectRef }: XVariables) => {\n  return queryOptions({\n\
+    \    enabled: IS_PLATFORM && typeof projectRef !== 'undefined',\n}\n```\n\n##\
+    \ Using query options in components\n\nUse `useQuery` directly with the query\
+    \ options:\n\n```ts\nimport { useQuery } from '@tanstack/react-query'\n\nimport\
+    \ { xQueryOptions } from '@/data/x/x-query'\n\n// In component:\nconst { data,\
+    \ isPending, isError } = useQuery(\n  xQueryOptions({\n    projectRef: project?.ref,\n\
+    \    connectionString: project?.connectionString,\n  })\n)\n```\n\n## Imperative\
+    \ fetching (outside React or in callbacks)\n\nUse `queryClient.fetchQuery()` with\
+    \ the query options:\n\n```ts\nimport { useQueryClient } from '@tanstack/react-query'\n\
+    \nimport { xQueryOptions } from '@/data/x/x-query'\n\n// In component:\nconst\
+    \ queryClient = useQueryClient()\n\nconst handleClick = useCallback(\n  async\
+    \ (id: number) => {\n    const data = await queryClient.fetchQuery(\n      xQueryOptions({\n\
+    \        id,\n        projectRef,\n        connectionString: project?.connectionString,\n\
+    \      })\n    )\n    // use data...\n  },\n  [project?.connectionString, projectRef,\
+    \ queryClient]\n)\n  - defaults to a `toast.error(...)` when `onError` isn't provided\n\
+    import { useMutation, UseMutationOptions, useQueryClient } from '@tanstack/react-query'\n\
+    import toast "
+  gold_removed: "Follow the `apps/studio/data/` patterns used by edge functions:\n\
+    - Query hook: `apps/studio/data/edge-functions/edge-functions-query.ts`\n- Page\
+    \ usage: `apps/studio/pages/project/[ref]/functions/index.tsx`\n## Write a query\
+    \ hook\n- Export `Variables`, `Data`, and `Error` types from the file.\n- Implement\
+    \ a `getX(variables, signal?)` function that:\n  - calls `handleError(error)`\
+    \ and returns `data`\n- Wrap it in `useXQuery()` using `useQuery`, `UseCustomQueryOptions`,\
+    \ and a domain key helper.\n- Gate with `enabled` so the query doesn't run until\
+    \ required variables exist (and platform-only queries should include `IS_PLATFORM`).\n\
+    export async function getX({ projectRef }: XVariables, signal?: AbortSignal) {\n\
+    export const useXQuery = <TData = XData>(\n  { projectRef }: XVariables,\n  {\
+    \ enabled = true, ...options }: UseCustomQueryOptions<XData, XError, TData> =\
+    \ {}\n) =>\n  useQuery<XData, XError, TData>({\n    enabled: IS_PLATFORM && enabled\
+    \ && typeof projectRef !== 'undefined',\n    ...options,\n  - defaul"
+distractors:
+- rule: Wrap queries in useXQuery() using UseCustomQueryOptions
+  source:
+    path: ./repo/.cursor/rules/studio/queries/RULE.md
+    lines: 41-41
+  source_text: '- Wrap it in `useXQuery()` using `useQuery`, `UseCustomQueryOptions`,
+    and a domain key helper.'
+  collision_type: rule_conflict
+  why_distracting: The old codebase rule explicitly dictates wrapping queries into
+    custom hooks (e.g., `useXQuery()`) using `UseCustomQueryOptions`. However, the
+    PR's core purpose is to migrate *away* from this pattern to TanStack React Query
+    v5's `queryOptions` pattern. If an agent followed the rule verbatim, it would
+    revert the intended architecture of the PR.
+  severity: high
+- rule: Accept UseCustomMutationOptions in mutation hooks
+  source:
+    path: ./repo/.cursor/rules/studio/queries/RULE.md
+    lines: 78-79
+  source_text: "- Prefer a `useXMutation()` wrapper that:\n  - accepts `UseCustomMutationOptions`\
+    \ (omit `mutationFn`)"
+  collision_type: rule_conflict
+  why_distracting: The rule guides developers to use the `UseCustomMutationOptions`
+    helper type. The PR deprecates `UseCustomMutationOptions` entirely in `apps/studio/types/react-query.ts`
+    in favor of importing `UseMutationOptions` directly from `@tanstack/react-query`.
+    Following this rule would perpetuate usage of a newly deprecated type.
+  severity: medium

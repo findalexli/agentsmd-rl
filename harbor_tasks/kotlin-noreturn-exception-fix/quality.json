@@ -1,61 +1,56 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "The tests assert very specific patterns like `|void HandleCurrentExceptionWhenLeavingKotlinCode() RUNTIME_NORETURN;` with a pipe prefix in the regex for the Kotlin file (test_c_adapter_exporter_generates_correct_output and test_all_three_locations_consistent). The instruction.md never mentions that RUNTIME_NORETURN should go AFTER the function declaration in the Kotlin-generated code vs BEFORE it in the .h/.cpp files. It also doesn't mention the pipe-prefixed template syntax used in the Kotlin f"
+      "outcome": "pass",
+      "reason": "instruction.md names all three file paths and the function HandleCurrentExceptionWhenLeavingKotlinCode and the RUNTIME_NORETURN macro that tests check."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly states 'Your fix should ensure that HandleCurrentExceptionWhenLeavingKotlinCode is marked with RUNTIME_NORETURN consistently across all three locations where it appears' and names the exact macro (RUNTIME_NORETURN), the exact function, and the exact three files. This essentially tells the agent exactly what to change."
+      "outcome": "pass",
+      "reason": "Instruction describes the problem and says to use RUNTIME_NORETURN consistently, but doesn't specify exact placement (before/after function name) or exact edits."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests use exact regex patterns like `r'void\\s+RUNTIME_NORETURN\\s+HandleCurrentExceptionWhenLeavingKotlinCode\\s*\\('` requiring RUNTIME_NORETURN between void and the function name, and `r'\\|void\\s+HandleCurrentExceptionWhenLeavingKotlinCode\\s*\\(\\s*\\)\\s+RUNTIME_NORETURN'` requiring it after. An alternative correct fix using `[[noreturn]]` C++11 attribute or `__attribute__((noreturn))` directly would fail. Even placing RUNTIME_NORETURN before `void` (which is valid C/C++) would fail."
+      "reason": "test_all_three_locations_consistent and test_exceptions_cpp_has_noreturn require 'void RUNTIME_NORETURN HandleCurrentExceptionWhenLeavingKotlinCode' (macro before name) for .h/.cpp, but 'RUNTIME_NORETURN void ...' (before void) is equally correct C++ and would fail; similarly kt_has requires RUNTIME_NORETURN after the parens, rejecting valid alternatives."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "While test_exceptions_h_has_noreturn uses Clang AST inspection and test_c_adapter_exporter_generates_correct_output compiles mock code, the key tests for Exceptions.cpp (test_exceptions_cpp_has_noreturn) and CAdapterApiExporter.kt (test_c_adapter_exporter_generates_correct_output, test_all_three_locations_consistent) primarily use regex text matching on source files. test_exceptions_cpp_has_noreturn's main assertion is `re.search(pattern, content)` on the file text."
+      "outcome": "pass",
+      "reason": "Tests invoke clang to dump AST and compile code, verifying actual noreturn attribute behavior, not just text matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for RUNTIME_NORETURN which is not present in the original code. A stub or no-op would not pass since the original files lack the RUNTIME_NORETURN annotation."
+      "reason": "Tests require the noreturn attribute to actually appear in Clang AST and the compile to not warn; a stub wouldn't pass."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires RUNTIME_NORETURN on HandleCurrentExceptionWhenLeavingKotlinCode in all three files, and the tests check all three files plus verify the noreturn attribute works to suppress warnings."
+      "reason": "Tests cover all three files and the suppression of -Wreturn-type warnings as described in instruction."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_exceptions_h_has_noreturn, test_exceptions_cpp_has_noreturn, etc.), have docstrings explaining what they verify, and are logically grouped by the file/aspect they test."
+      "reason": "Tests have docstrings and are separated with section comment headers like 'FAIL-TO-PASS TESTS - Behavioral'."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing C++/Kotlin source code, not producing structured data like JSON/CSV/API/DB."
+      "reason": "Task is code-only, no structured data produced."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, function names, macro names, and commands in the instruction and tests appear correct and consistent."
+      "reason": "Paths and function names are consistent between instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction names the exact three files, the exact function name, and the exact macro to use (RUNTIME_NORETURN), effectively telling the agent exactly what to do. The 'Validation' section explicitly states the fix: 'marked with RUNTIME_NORETURN consistently across all three locations.'"
+      "outcome": "pass",
+      "reason": "Instruction names the three files but localization is explicitly part of the task setup; no exact line/edit given."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task involving C++/Kotlin source files, not configuration edits."
+      "reason": "Code-only task, no config edits."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 4,
-  "fail_count": 5
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 1
 }

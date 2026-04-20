@@ -1,0 +1,158 @@
+checks:
+- id: test_user_model_has_disabled_skills_column
+  type: fail_to_pass
+  origin: pr_diff
+  description: User model must have disabled_skills column that is accessible and
+    typed as Column(JSON, nullable=True)
+- id: test_user_model_imports_json_type
+  type: fail_to_pass
+  origin: pr_diff
+  description: User model must successfully import and load with JSON type from sqlalchemy
+- id: test_migration_file_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: Migration 104 must exist and be a valid loadable Python module
+- id: test_migration_has_upgrade_downgrade
+  type: fail_to_pass
+  origin: pr_diff
+  description: Migration 104 must have callable upgrade() and downgrade() functions
+- id: test_migration_upgrade_adds_column
+  type: fail_to_pass
+  origin: pr_diff
+  description: Migration upgrade function must add disabled_skills column to user
+    table via op.add_column
+- id: test_repo_structure
+  type: pass_to_pass
+  origin: static
+  description: Enterprise storage directory structure is correct
+- id: test_user_model_basic_columns
+  type: pass_to_pass
+  origin: static
+  description: User model has expected basic columns (id, email, current_org_id, sandbox_grouping_strategy)
+- id: test_repo_python_syntax
+  type: pass_to_pass
+  origin: static
+  description: All enterprise/storage Python files have valid syntax (AST parsing)
+- id: test_repo_migration_syntax
+  type: pass_to_pass
+  origin: static
+  description: All Alembic migration files have valid Python syntax (AST parsing)
+- id: test_repo_alembic_latest_migration
+  type: pass_to_pass
+  origin: static
+  description: Latest Alembic migration is properly formatted with revision and down_revision
+- id: test_repo_sqlalchemy_model_conventions
+  type: pass_to_pass
+  origin: static
+  description: SQLAlchemy models follow enterprise conventions (__tablename__ attribute
+    present)
+- id: test_repo_migration_conventions
+  type: pass_to_pass
+  origin: static
+  description: Migration files follow naming and structure conventions (upgrade/downgrade
+    functions)
+- id: test_storage_user_column_order
+  type: pass_to_pass
+  origin: static
+  description: User model column ordering follows enterprise conventions
+- id: test_repo_migration_chain_integrity
+  type: pass_to_pass
+  origin: static
+  description: Alembic migration chain has consecutive numbering without gaps
+- id: test_repo_enterprise_imports_consistency
+  type: pass_to_pass
+  origin: static
+  description: Enterprise storage SQLAlchemy models have consistent imports (Column
+    present)
+- id: test_repo_no_bare_excepts_in_migrations
+  type: pass_to_pass
+  origin: static
+  description: Migration files do not use bare except clauses (AST parsing)
+- id: test_repo_py_compile_enterprise_storage
+  type: pass_to_pass
+  origin: repo_tests
+  description: All enterprise/storage Python files compile without errors (py_compile)
+- id: test_repo_py_compile_migrations
+  type: pass_to_pass
+  origin: repo_tests
+  description: All migration files compile without errors (py_compile)
+- id: test_repo_enterprise_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Enterprise storage files pass ruff lint check with enterprise config
+- id: test_repo_enterprise_ruff_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Enterprise storage files pass ruff format check with enterprise config
+- id: test_repo_migrations_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Migration files pass ruff lint check with enterprise config
+- id: test_repo_migrations_ruff_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Migration files pass ruff format check with enterprise config
+- id: test_repo_pre_commit_hooks
+  type: pass_to_pass
+  origin: repo_tests
+  description: Enterprise files pass all pre-commit hooks (trailing-whitespace, end-of-file-fixer,
+    check-yaml, debug-statements, ruff, ruff-format, mypy)
+rubric:
+- rule: Add disabled_skills column to User model with JSON type
+- rule: Import JSON type from sqlalchemy in user.py
+- rule: Create Alembic migration 104
+- rule: Follow enterprise code conventions
+- rule: Ensure no lint errors such as trailing whitespace or missing newlines at the
+    end of files are introduced.
+  source:
+    path: AGENTS.md
+    lines: 31-35
+  evidence: The gold solution creates the migration file `104_add_disabled_skills_to_user.py`
+    and modifies `user.py` ensuring proper formatting without trailing whitespace
+    and with a newline at the end of the fil
+  category: style
+- rule: Ensure any lint errors or simple test errors have been fixed before pushing
+    changes.
+  source:
+    path: AGENTS.md
+    lines: 18-21
+  evidence: The generated Alembic migration file uses standard Python formatting and
+    typing (e.g., `from typing import Sequence, Union`), avoiding lint errors.
+  category: style
+distractors:
+- rule: Store design documents, scripts meant for development-only, or other temporary
+    artifacts in a `.pr/` directory.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might mistakenly classify the new Alembic migration script
+    as a 'script meant for development-only' or temporary artifact and place it in
+    the `.pr/` directory instead of `enterprise/migrations/versions/`.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 68-82
+- rule: Write the SDK-side changes... implement the client code
+  source:
+    path: .agents/skills/cross-repo-testing/SKILL.md
+    lines: 38-45
+  collision_type: scope_ambiguity
+  why_distracting: The agent might think that adding a new column to the SaaS settings
+    store requires updating the SDK client to handle the new field, but this is purely
+    a backend persistence fix.
+  severity: medium
+- rule: Bump SDK packages... pin them to unreleased commits for testing
+  source:
+    path: .agents/skills/update-sdk/SKILL.md
+    lines: 14-23
+  collision_type: scope_ambiguity
+  why_distracting: The agent might think that modifying the enterprise backend requires
+    bumping the SDK version to test the changes, but this is a standalone backend
+    fix.
+  severity: low
+hierarchy_analysis: The config hierarchy consists of a single root-level AGENTS.md
+  file with generic repository instructions. There are no deep or conflicting rules.
+version: '2.0'
+source:
+  repo: All-Hands-AI/OpenHands
+  pr: 13658
+  base_commit: 73ba66faeae1520fc2671b07677db4b5e3e235d3
+  merge_commit: 9c0f5d785ee71c7d16d157333994245cb242a885

@@ -1,0 +1,93 @@
+# Evaluation manifest for civitai/civitai#2059
+# Prevent Civitai staff impersonation via username blocklist
+
+metadata:
+  pr_url: "https://github.com/civitai/civitai/pull/2059"
+  pr_number: 2059
+  owner: civitai
+  repo: civitai
+  base_commit: "91f7bf0cd37ff0418bcc7fd48cb02fa3202faa31"
+  merge_commit: "6f25fe1f0e09e30225586f1fc389722aac9f64be"
+  task_name: "civitai-username-blocklist"
+  title: "Prevent Civitai staff impersonation"
+  author: "manuelurenah"
+
+checks:
+  # Fail-to-pass tests (f2p) - should FAIL at base, PASS after fix
+  - id: test_blocklist_rejects_civit_variants
+    description: "Username blocklist rejects 'civit' and variants (civitmod, the_civit_team, CIVITADMIN)"
+    type: fail_to_pass
+    origin: behavioral
+    test_file: tests/test_outputs.py
+    test_class: TestUsernameBlocklist
+    test_method: test_blocklist_rejects_civit_variants
+
+  - id: test_blocklist_rejects_leet_speak_civit
+    description: "Username blocklist rejects leet-speak civit variants (c1vitai, civ1tai, c1v1tai)"
+    type: fail_to_pass
+    origin: behavioral
+    test_file: tests/test_outputs.py
+    test_class: TestUsernameBlocklist
+    test_method: test_blocklist_rejects_leet_speak_civit
+
+  # Pass-to-pass tests (p2p) - should PASS both before and after
+  - id: test_blocklist_exact_still_blocks
+    description: "Existing exact blocklist entries (civitai, admin, support) still blocked"
+    type: pass_to_pass
+    origin: behavioral
+    test_file: tests/test_outputs.py
+    test_class: TestUsernameBlocklist
+    test_method: test_blocklist_exact_still_blocks
+
+  - id: test_blocklist_allows_normal_usernames
+    description: "Normal usernames (alice, bob_123, ModelMaker99) are allowed"
+    type: pass_to_pass
+    origin: behavioral
+    test_file: tests/test_outputs.py
+    test_class: TestUsernameBlocklist
+    test_method: test_blocklist_allows_normal_usernames
+
+  - id: test_blocklist_allows_non_matching_substrings
+    description: "Non-matching substrings (civic, civil) are not incorrectly blocked"
+    type: pass_to_pass
+    origin: behavioral
+    test_file: tests/test_outputs.py
+    test_class: TestUsernameBlocklist
+    test_method: test_blocklist_allows_non_matching_substrings
+
+  - id: test_blocklist_json_structure
+    description: "Blocklist JSON has correct structure (partial and exact keys)"
+    type: pass_to_pass
+    origin: repo_tests
+    test_file: tests/test_outputs.py
+    test_class: TestBlocklistJsonStructure
+    test_method: test_blocklist_has_partial_key
+
+  # Repo CI tests (via vitest) - pass_to_pass
+  - id: test_repo_vitest_unit_tests
+    description: "Repo's vitest unit tests pass for daily-challenge helpers"
+    type: pass_to_pass
+    origin: repo_tests
+    test_file: tests/test_outputs.py
+    test_class: TestRepoCI
+    test_method: test_repo_vitest_unit_tests
+
+  - id: test_repo_vitest_multiple_pass
+    description: "Repo's vitest unit tests pass for multiple test files"
+    type: pass_to_pass
+    origin: repo_tests
+    test_file: tests/test_outputs.py
+    test_class: TestRepoCI
+    test_method: test_repo_vitest_multiple_pass
+
+rubric: []
+
+# Agent config files at base commit
+agent_configs:
+  - path: CLAUDE.md
+    url: "https://github.com/civitai/civitai/blob/91f7bf0cd37ff0418bcc7fd48cb02fa3202faa31/CLAUDE.md"
+    relevance: Root-level agent config, applies to entire repo
+
+# Distinctive line from patch for idempotency check
+idempotency_grep: "c1vit"
+patch_file: solution/solve.sh

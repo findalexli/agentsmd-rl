@@ -1,0 +1,133 @@
+version: '2.0'
+source:
+  repo: gradio-app/gradio
+  pr: 12941
+  base_commit: 380d35ae1164289c85c253eefefda6d8511e614e
+  merge_commit: 50e9c84749aff9da985a79c8a88292fac62fa1d6
+checks:
+- id: utils_file_exists
+  type: pass_to_pass
+  origin: static
+  description: utils.ts must exist (gate for behavioral tests)
+- id: test_repo_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Prettier format check passes
+- id: test_repo_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's unit tests pass (vitest)
+- id: test_repo_client_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's client package tests pass
+- id: needs_iframe_detects_fixed_css
+  type: fail_to_pass
+  origin: pr_diff
+  description: needs_iframe returns true for position:fixed CSS with varied spacing/casing
+- id: needs_iframe_rejects_non_fixed_css
+  type: fail_to_pass
+  origin: pr_diff
+  description: needs_iframe returns false for non-fixed CSS (bidirectional check)
+- id: needs_iframe_handles_falsy_input
+  type: fail_to_pass
+  origin: pr_diff
+  description: needs_iframe returns false for undefined/null/empty without crashing
+- id: build_srcdoc_produces_valid_html
+  type: fail_to_pass
+  origin: pr_diff
+  description: build_srcdoc returns complete HTML documents with rendered props (varied
+    inputs)
+- id: build_srcdoc_dark_mode
+  type: fail_to_pass
+  origin: pr_diff
+  description: build_srcdoc adds dark class when dark=true, omits for light
+- id: build_srcdoc_escapes_script_tags
+  type: fail_to_pass
+  origin: pr_diff
+  description: build_srcdoc escapes </script in JS content without dropping code
+- id: build_srcdoc_includes_head_and_css
+  type: fail_to_pass
+  origin: pr_diff
+  description: build_srcdoc includes component CSS and head content in output
+- id: click_outside_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: clickOutside Svelte action returns {update, destroy} interface
+- id: svelte_components_use_iframe
+  type: fail_to_pass
+  origin: pr_diff
+  description: Both +page.svelte and ComponentEntry.svelte have iframe rendering paths
+- id: svelte_components_handle_children_slot
+  type: fail_to_pass
+  origin: pr_diff
+  description: Both Svelte files handle @children slot for components that use it
+- id: guide_documents_push_to_hub
+  type: fail_to_pass
+  origin: pr_diff
+  description: Guide documents push_to_hub method for sharing components
+- id: guide_documents_authentication
+  type: fail_to_pass
+  origin: pr_diff
+  description: Guide documents authentication requirements for push_to_hub
+rubric:
+- rule: Be consistent with the style of the surrounding code.
+  source:
+    path: AGENTS.md
+    lines: '45'
+    commit: 380d35ae1164289c85c253eefefda6d8511e614e
+  reference: The gold solution uses tab indentation for Svelte files (matching existing code style in +page.svelte and ComponentEntry.svelte), consistent trailing whitespace handling, and follows existing import/export patterns in utils.ts.
+- rule: Frontend code is formatted with prettier.
+  source:
+    path: AGENTS.md
+    lines: '44'
+    commit: 380d35ae1164289c85c253eefefda6d8511e614e
+  reference: The gold solution adds properly formatted Svelte and TypeScript code with correct indentation, semicolons, and spacing that would pass prettier checks.
+- rule: '`guides/` — written guides and tutorials for the website'
+  source:
+    path: AGENTS.md
+    lines: 16-16
+  evidence: The gold solution adds documentation about the `push_to_hub` method to
+    `guides/03_building-with-blocks/06_custom-HTML-components.md`, following the convention
+    that guides and tutorials belong in the `
+  category: documentation
+  reference: Added documentation to guides/03_building-with-blocks/06_custom-HTML-components.md covering push_to_hub method and authentication.
+- rule: '`js/` — frontend code (Svelte/TypeScript)'
+  source:
+    path: AGENTS.md
+    lines: 12-12
+  evidence: The gold solution modifies `.svelte` and `.ts` files within `js/_website/src/routes/custom-components/html-gallery/`
+    to fix the gallery layout, adhering to the rule that frontend code is Svelte/TypeSc
+  category: architecture
+  reference: Modified js/_website/src/routes/custom-components/html-gallery/+page.svelte, ComponentEntry.svelte, and utils.ts to add iframe support and component rendering fixes.
+- rule: '`guides/` is for written guides and tutorials for the website.'
+  source:
+    path: AGENTS.md
+    lines: 14-14
+  evidence: The gold solution adds documentation about `push_to_hub` to `guides/03_building-with-blocks/06_custom-HTML-components.md`,
+    aligning with the directory's designated purpose for written guides.
+  category: documentation
+  reference: Added push_to_hub documentation to guides/03_building-with-blocks/06_custom-HTML-components.md, following the guides directory convention.
+distractors:
+- rule: Target an issue. Every non-trivial PR should reference an existing GitHub
+    issue. If one doesn't exist, create it first.
+  collision_type: meta_confusion
+  why_distracting: The agent might attempt to use the GitHub CLI (`gh`) to create
+    an issue or search for one, wasting time and potentially failing if it lacks credentials,
+    as this is a local coding evaluation environment.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 19-20
+- rule: Use the PR template. Fill out every section of `.github/PULL_REQUEST_TEMPLATE.md`
+  collision_type: meta_confusion
+  why_distracting: The agent might try to edit `.github/PULL_REQUEST_TEMPLATE.md`
+    to fill it out with the PR description, misunderstanding that it should only fix
+    the code and not simulate the PR creation process.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 22-25
+hierarchy_analysis: Only one config file (`AGENTS.md`) is present at the root level.
+  It contains generic repository structure and PR guidelines. No hierarchy conflicts
+  exist.

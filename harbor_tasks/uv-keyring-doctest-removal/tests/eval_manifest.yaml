@@ -1,0 +1,89 @@
+version: '2.0'
+source:
+  repo: astral-sh/uv
+  pr: 18919
+  base_commit: 84a854c169ef8acdcc90692e40f6f540be74b956
+  merge_commit: 6eb5fe09cc9999fc9c42f780ca8bdf56d7e30624
+checks:
+- id: uv_keyring_cargo_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: uv-keyring crate compiles with cargo check
+- id: uv_keyring_cargo_clippy
+  type: pass_to_pass
+  origin: repo_tests
+  description: uv-keyring crate passes clippy linting
+- id: cargo_fmt_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Workspace code is formatted correctly
+- id: cargo_toml_valid
+  type: pass_to_pass
+  origin: static
+  description: Workspace Cargo.toml must remain valid TOML
+- id: uv_keyring_cargo_toml_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: uv-keyring Cargo.toml must remain valid TOML
+- id: cargo_lock_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Cargo.lock must remain valid TOML
+- id: uv_keyring_mock_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: uv-keyring mock tests pass
+- id: cargo_check_locked
+  type: pass_to_pass
+  origin: repo_tests
+  description: Cargo check --locked passes (verifies Cargo.lock is up to date)
+- id: readme_exists_with_docs
+  type: pass_to_pass
+  origin: static
+  description: README.md must still exist and contain usage documentation
+- id: readme_no_wrong_crate_imports
+  type: fail_to_pass
+  origin: pr_diff
+  description: README code blocks must not import from non-existent 'keyring' crate
+- id: readme_no_await_in_sync_fn
+  type: fail_to_pass
+  origin: pr_diff
+  description: README code blocks must not use .await in a non-async fn main
+- id: mock_no_wrong_crate_refs
+  type: fail_to_pass
+  origin: pr_diff
+  description: mock.rs doc code examples must not reference non-existent 'keyring'
+    crate
+rubric:
+- rule: PREFER [`TypeName`] references when writing Rust doc comments
+  source:
+    path: AGENTS.md
+    lines: 19-20
+  evidence: In `crates/uv-keyring/src/mock.rs`, the gold solution replaces a broken
+    code block with prose that uses `[`TypeName`]` references like `[`set_default_credential_builder`](crate::set_default_credential_builder)`
+    and `[`default_credential_builder`]`.
+  category: documentation
+  verification: llm_judge
+distractors:
+- rule: ALWAYS attempt to add a test case for changed behavior
+  collision_type: scope_ambiguity
+  why_distracting: The task is to fix broken doctests. The agent might think it needs
+    to add new tests to cover the `mock.rs` functionality since it removed the doctest,
+    but the task is strictly about fixing compilation errors.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 2-3
+- rule: NEVER update all dependencies in the lockfile and ALWAYS use `cargo update
+    --precise` to make lockfile changes
+  collision_type: meta_confusion
+  why_distracting: The agent needs to remove `doc-comment` from `Cargo.toml` and `Cargo.lock`.
+    The rule about `cargo update --precise` applies to updating dependencies, not
+    removing them, but the agent might misinterpret this as a restriction on modifying
+    `Cargo.lock` directly or running `cargo remove`.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 13-14
+hierarchy_analysis: The configuration is a flat single file (`AGENTS.md` included
+  via `CLAUDE.md`). The task is to fix broken doctests and documentation.

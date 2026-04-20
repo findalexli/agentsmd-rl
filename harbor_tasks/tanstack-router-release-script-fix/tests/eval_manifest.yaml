@@ -1,0 +1,173 @@
+rubric:
+- rule: Code should follow the project's style and include helpful comments
+checks:
+- id: release_logs_uses_array_parsing
+  description: releaseLogs parsed as array with split and filter
+  type: fail_to_pass
+  origin: agent_config
+  source:
+    path: AGENTS.md - Code style
+    lines: ''
+- id: range_from_logic
+  description: rangeFrom uses currentRelease/previousRelease variables
+  type: fail_to_pass
+  origin: pr_diff
+- id: commit_range_uses_current_release
+  description: Git log range uses currentRelease instead of HEAD~1
+  type: fail_to_pass
+  origin: pr_diff
+- id: non_conventional_commit_uses_split
+  description: Non-conventional commits use split() not indexOf()
+  type: fail_to_pass
+  origin: pr_diff
+- id: latest_flag_conditional
+  description: --latest flag is conditional on isPrerelease
+  type: fail_to_pass
+  origin: pr_diff
+- id: prerelease_flag_unchanged
+  description: prereleaseFlag logic is preserved
+  type: fail_to_pass
+  origin: pr_diff
+- id: script_syntax_valid
+  description: Script has valid JavaScript syntax
+  type: fail_to_pass
+  origin: agent_config
+  source:
+    path: AGENTS.md - Testing instructions
+    lines: ''
+- id: comments_explain_changes
+  description: Comments explain git range and commit parsing logic
+  type: fail_to_pass
+  origin: agent_config
+  source:
+    path: AGENTS.md - Code style
+    lines: ''
+- id: conventional_commit_regex_comment
+  description: Comment explains conventional commit format pattern
+  type: fail_to_pass
+  origin: agent_config
+  source:
+    path: AGENTS.md - Code style
+    lines: ''
+- id: test_repo_script_syntax
+  description: Repo's release script has valid JavaScript syntax
+  type: pass_to_pass
+  origin: repo_tests
+  source:
+    path: node --check scripts/create-github-release.mjs
+    lines: ''
+- id: test_repo_script_formatting
+  description: Repo's release script follows Prettier formatting
+  type: pass_to_pass
+  origin: repo_tests
+  source:
+    path: npx prettier --check scripts/create-github-release.mjs
+    lines: ''
+- id: test_repo_all_mjs_scripts_syntax
+  description: All .mjs scripts have valid JavaScript syntax
+  type: pass_to_pass
+  origin: repo_tests
+  source:
+    path: node --check scripts/*.mjs
+    lines: ''
+- id: test_repo_all_scripts_formatting
+  description: All scripts follow Prettier formatting
+  type: pass_to_pass
+  origin: repo_tests
+  source:
+    path: npx prettier --check scripts/
+    lines: ''
+- id: test_repo_markdown_formatting
+  description: Markdown files follow Prettier formatting
+  type: pass_to_pass
+  origin: repo_tests
+  source:
+    path: npx prettier --check *.md
+    lines: ''
+- id: test_repo_package_json_formatting
+  description: package.json follows Prettier formatting
+  type: pass_to_pass
+  origin: repo_tests
+  source:
+    path: npx prettier --check package.json
+    lines: ''
+- id: test_repo_git_valid
+  description: Repo has a valid git repository with commits
+  type: pass_to_pass
+  origin: repo_tests
+  source:
+    path: git log --oneline -1
+    lines: ''
+- id: test_repo_workspace_config_formatting
+  description: Workspace config files follow Prettier formatting
+  type: pass_to_pass
+  origin: repo_tests
+  source:
+    path: npx prettier --check pnpm-workspace.yaml nx.json
+    lines: ''
+- id: test_repo_all_scripts_syntax
+  description: All scripts (.mjs, .js, .ts) have valid JavaScript/TypeScript syntax
+  type: pass_to_pass
+  origin: repo_tests
+  source:
+    path: node --check scripts/*
+    lines: ''
+- id: test_repo_all_scripts_individual_formatting
+  description: Each script file follows Prettier formatting
+  type: pass_to_pass
+  origin: repo_tests
+  source:
+    path: npx prettier --check scripts/*.mjs scripts/*.js scripts/*.ts
+    lines: ''
+- id: test_repo_git_status_clean
+  description: Repo has clean working tree
+  type: pass_to_pass
+  origin: repo_tests
+  source:
+    path: git status --porcelain
+    lines: ''
+- id: test_repo_npmrc_exists
+  description: Repo has required .npmrc configuration
+  type: pass_to_pass
+  origin: repo_tests
+  source:
+    path: test -f .npmrc
+    lines: ''
+- id: test_repo_node_version_specified
+  description: Repo has .nvmrc specifying Node version
+  type: pass_to_pass
+  origin: repo_tests
+  source:
+    path: cat .nvmrc
+    lines: ''
+distractors:
+- rule: TypeScript strict mode with extensive type safety
+  collision_type: architecture_boundary
+  why_distracting: The file being edited is a plain JavaScript module (.mjs). Attempting
+    to enforce TypeScript strict mode or convert the file to TypeScript would violate
+    the existing architecture of the scripts directory.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 18-18
+- rule: 'Critical: Always run unit and type tests during development - do not proceed
+    if they fail'
+  collision_type: scope_ambiguity
+  why_distracting: The instruction mandates running unit and type tests, but the release
+    script is a standalone utility without dedicated unit tests. An agent might waste
+    time trying to test it or fail the task if it strictly refuses to proceed without
+    test coverage.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 43-43
+hierarchy_analysis: The config hierarchy consists of a single root-level AGENTS.md
+  file containing generic repository guidelines. These guidelines are primarily focused
+  on the TypeScript packages and Nx workspace, which are largely irrelevant to the
+  standalone Node.js release script being modified.
+version: '2.0'
+source:
+  repo: TanStack/router
+  pr: 6895
+  base_commit: ab46b5ec42296c60dc46d97481f038b8df68ed84
+  merge_commit: 986776cd27dbab6d032d764933242936f68103f5

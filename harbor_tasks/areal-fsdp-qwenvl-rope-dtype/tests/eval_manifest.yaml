@@ -1,0 +1,161 @@
+version: '2.0'
+source:
+  repo: inclusionAI/AReaL
+  pr: 1094
+  base_commit: f6556e88582e82b747ab1ac4038af2e106a464ee
+  merge_commit: 45e805ba8d274ec2c3cbb0699658449c2c6e163a
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: fsdp_engine.py must parse without errors
+- id: dtype_cast_int32_to_int64
+  type: fail_to_pass
+  origin: pr_diff
+  description: Non-long input_ids (int32, float16, bfloat16) must be cast to int64/long
+- id: dict_updated_with_cast_tensor
+  type: fail_to_pass
+  origin: pr_diff
+  description: Cast tensor must be written back to input_ dict, not just local var
+- id: keyword_args_in_get_rope_index
+  type: fail_to_pass
+  origin: pr_diff
+  description: get_rope_index must use all 4 keyword args (input_ids, image_grid_thw,
+    video_grid_thw, attention_mask)
+- id: keyword_args_with_int64_input
+  type: fail_to_pass
+  origin: pr_diff
+  description: get_rope_index uses keyword args even when input_ids is already int64
+- id: noop_int64_input
+  type: pass_to_pass
+  origin: pr_diff
+  description: int64 input_ids must be preserved without crash or dtype change
+- id: noop_long_input
+  type: pass_to_pass
+  origin: pr_diff
+  description: torch.long input_ids must be preserved without crash or dtype change
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: _prepare_mb_list has substantial implementation (>=10 meaningful stmts)
+- id: no_wildcard_imports
+  type: pass_to_pass
+  origin: agent_config
+  description: No wildcard imports (from x import *) in fsdp_engine.py
+  source:
+    path: AGENTS.md
+    lines: '30'
+    commit: f6556e88582e82b747ab1ac4038af2e106a464ee
+- id: no_global_process_groups
+  type: pass_to_pass
+  origin: agent_config
+  description: No global process group creation at module level in fsdp_engine.py
+  source:
+    path: AGENTS.md
+    lines: '189'
+    commit: f6556e88582e82b747ab1ac4038af2e106a464ee
+- id: repo_ruff_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: All areal files must pass ruff linting (E, W, I rules)
+- id: no_print_statements
+  type: pass_to_pass
+  origin: agent_config
+  description: No bare print() calls in fsdp_engine.py — use areal.utils.logging logger
+    instead
+  source:
+    path: AGENTS.md
+    lines: 90-92
+    commit: f6556e88582e82b747ab1ac4038af2e106a464ee
+- id: repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: All areal files must be formatted according to ruff standards
+- id: repo_yaml_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: All YAML files must have valid syntax
+- id: repo_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: All JSON files in repo must have valid syntax
+- id: repo_trailing_whitespace
+  type: pass_to_pass
+  origin: repo_tests
+  description: All tracked files must not have trailing whitespace
+- id: repo_end_of_file
+  type: pass_to_pass
+  origin: repo_tests
+  description: All tracked files must have proper end-of-file
+- id: repo_no_large_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo must not contain large files (>1000KB)
+- id: repo_no_private_keys
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo must not contain private keys
+rubric:
+- rule: Use explicit dtype/device for tensors - prefer explicit conversion over implicit
+  source:
+    path: areal/engine/fsdp_engine.py
+    lines: 1317-1320
+    commit: f6556e88582e82b747ab1ac4038af2e106a464ee
+  evidence: The gold solution explicitly checks input_ids.dtype != torch.long and
+    casts using input_ids.to(torch.long)
+  category: style
+- rule: Use keyword arguments for clarity when calling functions with multiple optional
+    parameters
+  source:
+    path: areal/engine/fsdp_engine.py
+    lines: 1341-1345
+    commit: f6556e88582e82b747ab1ac4038af2e106a464ee
+  evidence: The gold solution uses keyword arguments (input_ids=input_ids, image_grid_thw=image_grid_thw,
+    etc.) when calling get_rope_index
+  category: style
+- rule: Follow existing code patterns in the same module for dictionary updates
+  source:
+    path: areal/engine/fsdp_engine.py
+    lines: 1319-1320
+    commit: f6556e88582e82b747ab1ac4038af2e106a464ee
+  evidence: The gold solution updates the input_ dictionary with the modified tensor
+    using input_["input_ids"] = input_ids
+  category: style
+- rule: No GPU-CPU sync in hot paths - avoid .item(), .tolist(), print(tensor)
+  source:
+    path: areal/engine/fsdp_engine.py
+    lines: 1317-1320
+    commit: f6556e88582e82b747ab1ac4038af2e106a464ee
+  evidence: The gold solution performs async dtype checks and tensor.to() operations
+    without any .item(), .tolist(), or print() calls
+  category: architecture
+- rule: 'Performance: No GPU-CPU sync in hot paths'
+  source:
+    path: AGENTS.md
+    lines: 65-67
+  evidence: The gold solution checks the tensor dtype and casts it using `input_ids.dtype
+    != torch.long` and `.to(torch.long)`, avoiding any CPU-GPU synchronization methods
+    like `.item()`.
+  category: style
+distractors:
+- rule: Add tests for new functionality.
+  collision_type: scope_ambiguity
+  why_distracting: The instruction is to fix a bug in an existing FSDP engine method,
+    not to add new functionality. Attempting to write unit tests for this would require
+    complex mocking of distributed training state and Qwen-VL models, wasting effort.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 30-30
+- rule: Integration tests require multi-node hardware -- explain skips explicitly.
+  collision_type: meta_confusion
+  why_distracting: The agent might try to run integration tests to verify the FSDP
+    engine fix, but these require multi-node hardware. The agent might get stuck trying
+    to run them or writing explanations for skipping them.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 24-24
+hierarchy_analysis: The config hierarchy is flat (Level 0 files AGENTS.md and CLAUDE.md).
+  Both files share similar rules, with AGENTS.md providing more specific operational
+  constraints.

@@ -1,0 +1,158 @@
+version: '2.0'
+source:
+  repo: vercel/next.js
+  pr: 92205
+  base_commit: 3421858b5bef076965d99fd88fedc483193a496e
+  merge_commit: e464ca398c5992c4ec9fb23192fc60ef7b1b5f94
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: scripts/pr-status.js must parse without syntax errors
+- id: test_pr_status_functions_parseable
+  type: pass_to_pass
+  origin: repo_tests
+  description: Key functions in pr-status.js must be parseable JavaScript
+- id: test_pr_status_js_no_undefined_variables
+  type: pass_to_pass
+  origin: repo_tests
+  description: pr-status.js must not reference obviously undefined variables
+- id: test_pr_status_js_no_syntax_errors_strict_mode
+  type: pass_to_pass
+  origin: repo_tests
+  description: pr-status.js must parse without errors in strict mode
+- id: test_repo_pr_status_script_structure
+  type: pass_to_pass
+  origin: static
+  description: pr-status.js must have expected structure and exports
+- id: test_repo_pr_status_no_banned_patterns
+  type: pass_to_pass
+  origin: static
+  description: pr-status.js must not contain banned/unsafe patterns
+- id: test_repo_pr_status_has_required_helpers
+  type: pass_to_pass
+  origin: static
+  description: pr-status.js must have all required helper functions
+- id: test_repo_pr_status_uses_strict_mode_compatible_syntax
+  type: pass_to_pass
+  origin: static
+  description: pr-status.js must use syntax compatible with strict mode
+- id: test_repo_node_syntax_check_pr_status
+  type: pass_to_pass
+  origin: repo_tests
+  description: JavaScript syntax check on pr-status.js via node --check must pass
+- id: test_repo_prettier_check_pr_status
+  type: pass_to_pass
+  origin: repo_tests
+  description: Prettier formatting check on pr-status.js must pass
+- id: test_repo_pr_status_alex_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Alex language linting on pr-status.js must pass
+- id: test_repo_pr_status_node_parse
+  type: pass_to_pass
+  origin: repo_tests
+  description: Node.js must be able to parse pr-status.js without errors
+- id: test_repo_scripts_check_manifests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo check-manifests.js must run without errors
+- id: test_repo_scripts_validate_externals_doc
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo validate-externals-doc.js must run without runtime errors
+- id: categorize_timed_out_as_failed
+  type: fail_to_pass
+  origin: pr_diff
+  description: categorizeJobs must classify timed_out and startup_failure conclusions
+    as failed
+- id: get_all_jobs_throws_on_persistent_failure
+  type: fail_to_pass
+  origin: pr_diff
+  description: getAllJobs must throw on persistent first-page API failure instead
+    of silently returning empty array
+- id: get_failed_jobs_includes_conclusion
+  type: fail_to_pass
+  origin: pr_diff
+  description: getFailedJobs must include conclusion field in returned job objects
+- id: conclusion_annotation_in_report
+  type: fail_to_pass
+  origin: pr_diff
+  description: Report table must annotate non-failure conclusions like (timed_out)
+- id: flaky_detection_includes_timed_out
+  type: fail_to_pass
+  origin: pr_diff
+  description: Flaky test detection must consider timed_out and startup_failure conclusions
+- id: categorize_failure_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: categorizeJobs must still correctly classify failure and success conclusions
+rubric:
+- rule: Split work into smaller, individually verifiable tasks. Before starting, break
+    the overall goal into incremental steps where each step produces a result that
+    can be checked independently. Verify each task before moving on to the next.
+  source:
+    path: CLAUDE.md
+    lines: 340-350
+    commit: 3421858b5bef076965d99fd88fedc483193a496e
+- rule: Use context-efficient workflows for external API calls. Save responses to
+    variables or files, then analyze without re-fetching. Do not re-fetch the same
+    API data to analyze from different angles.
+  source:
+    path: CLAUDE.md
+    lines: 290-295
+    commit: 3421858b5bef076965d99fd88fedc483193a496e
+- rule: Always treat environment variable values as sensitive unless they are known
+    test-mode flags. Never print or paste secret values (tokens, API keys, cookies)
+    in responses, commits, or shared logs.
+  source:
+    path: CLAUDE.md
+    lines: 265-270
+    commit: 3421858b5bef076965d99fd88fedc483193a496e
+- rule: Do NOT add 'Generated with Claude Code' or co-author footers to commits or
+    PRs. Keep commit messages concise and descriptive.
+  source:
+    path: CLAUDE.md
+    lines: 305-310
+    commit: 3421858b5bef076965d99fd88fedc483193a496e
+- rule: 'Monorepo Overview: scripts/ - Build and maintenance scripts'
+  source:
+    path: CLAUDE.md
+    lines: 13-22
+  evidence: The gold solution correctly targets `scripts/pr-status.js` to fix the
+    CI analysis bug, aligning with the documented monorepo structure where build and
+    maintenance scripts reside in the `scripts/` dire
+  category: architecture
+- rule: scripts/ directory contains Build and maintenance scripts
+  source:
+    path: AGENTS.md
+    lines: 25-26
+  evidence: The gold solution modifies `scripts/pr-status.js` to fix the CI analysis
+    script, aligning with the directory structure documentation that designates `scripts/`
+    for build and maintenance scripts.
+  category: architecture
+distractors:
+- rule: Start `pnpm --filter=next dev` in a separate terminal session before making
+    edits to Next.js source or integration tests.
+  collision_type: scope_ambiguity
+  why_distracting: The rule instructs to start the Next.js dev server before making
+    edits. However, the target file `scripts/pr-status.js` is a standalone CI analysis
+    script, not part of the Next.js core framework. Running the dev server is unnecessary
+    and the rule explicitly allows skipping for 'CI-only analysis'.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 65-68
+- rule: 'Always run a full bootstrap build after switching branches: pnpm build-all'
+  collision_type: scope_ambiguity
+  why_distracting: The rule instructs to run a full bootstrap build (`pnpm build-all`)
+    after switching branches. For a simple edit to a standalone Node.js script in
+    the `scripts/` directory, running a full monorepo build (including Rust crates)
+    is a massive waste of time and resources.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 88-91
+hierarchy_analysis: The configuration is flat, with `CLAUDE.md` being a symlink to
+  `AGENTS.md`. The agent must rely on the scope definitions within the single file
+  to determine which rules apply.

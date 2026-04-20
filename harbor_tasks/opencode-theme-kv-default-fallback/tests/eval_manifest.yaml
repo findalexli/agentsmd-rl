@@ -1,0 +1,156 @@
+version: '2.0'
+source:
+  repo: anomalyco/opencode
+  pr: 506
+  base_commit: 26382c6216797e65a1b43dea8646725332f62e07
+checks:
+- id: file_exists_and_not_stub
+  type: pass_to_pass
+  origin: static
+  description: Target file exists and has substantial content (not stubbed)
+- id: syntax_balanced_braces
+  type: pass_to_pass
+  origin: static
+  description: File has balanced curly braces
+- id: memo_block_exists
+  type: pass_to_pass
+  origin: static
+  description: const values = createMemo block exists and is non-trivial
+- id: kv_fallback_when_active_missing
+  type: fail_to_pass
+  origin: pr_diff
+  description: When active theme is missing, KV-saved theme is used as fallback
+- id: kv_fallback_varied_themes
+  type: fail_to_pass
+  origin: pr_diff
+  description: KV fallback works with multiple different saved theme names
+- id: buggy_direct_fallback_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Buggy store.themes[store.active] ?? store.themes.opencode pattern removed
+- id: active_theme_used_when_present
+  type: pass_to_pass
+  origin: pr_diff
+  description: When active theme exists in map, it is used directly (KV ignored)
+- id: opencode_fallback_when_kv_invalid
+  type: pass_to_pass
+  origin: pr_diff
+  description: Falls back to opencode when active missing and KV names nonexistent
+    theme
+- id: opencode_fallback_when_kv_not_string
+  type: pass_to_pass
+  origin: pr_diff
+  description: Falls back to opencode when KV value is null, number, or boolean
+- id: resolve_theme_exported
+  type: pass_to_pass
+  origin: repo_tests
+  description: resolveTheme function export preserved
+- id: use_theme_provider_exported
+  type: pass_to_pass
+  origin: repo_tests
+  description: useTheme and ThemeProvider exports preserved
+- id: default_themes_exported
+  type: pass_to_pass
+  origin: repo_tests
+  description: DEFAULT_THEMES export preserved
+- id: no_any_type_in_memo
+  type: pass_to_pass
+  origin: agent_config
+  description: No 'any' type used in the values memo
+  source:
+    path: AGENTS.md
+    lines: '13'
+    commit: 26382c6216797e65a1b43dea8646725332f62e07
+- id: no_try_catch_in_memo
+  type: pass_to_pass
+  origin: agent_config
+  description: No try/catch in the values memo
+  source:
+    path: AGENTS.md
+    lines: '12'
+    commit: 26382c6216797e65a1b43dea8646725332f62e07
+- id: prefer_const_in_memo
+  type: pass_to_pass
+  origin: agent_config
+  description: No let declarations in the values memo — prefer const with early returns
+  source:
+    path: AGENTS.md
+    lines: '70'
+    commit: 26382c6216797e65a1b43dea8646725332f62e07
+- id: no_for_loops_in_memo
+  type: pass_to_pass
+  origin: agent_config
+  description: No for/while loops in the values memo — prefer functional array methods
+  source:
+    path: AGENTS.md
+    lines: '17'
+    commit: 26382c6216797e65a1b43dea8646725332f62e07
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TypeScript typecheck passes on packages/opencode
+- id: test_repo_turbo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Root turbo typecheck passes (CI command: bun turbo typecheck)'
+- id: test_repo_theme_store_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Theme store unit tests pass (covers theme.tsx context)
+- id: test_repo_tui_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: All TUI unit tests pass (stable subset covering TUI components)
+- id: test_repo_prettier_theme
+  type: pass_to_pass
+  origin: repo_tests
+  description: Prettier formatting check passes on theme.tsx
+rubric:
+- rule: Code uses early returns instead of else statements where possible
+  source:
+    path: packages/opencode/src/cli/cmd/tui/context/theme.tsx
+    lines: 399-413
+  category: style
+- rule: Code prefers const over let with early returns instead of reassignment
+  source:
+    path: packages/opencode/src/cli/cmd/tui/context/theme.tsx
+    lines: 399-413
+  category: style
+- rule: Code keeps logic in one function unless composable or reusable
+  source:
+    path: packages/opencode/src/cli/cmd/tui/context/theme.tsx
+    lines: 399-413
+  category: style
+- rule: Code relies on type inference and avoids explicit type annotations unless necessary
+  source:
+    path: packages/opencode/src/cli/cmd/tui/context/theme.tsx
+    lines: 399-413
+  category: style
+distractors:
+- rule: Use Effect.gen(function* () { ... }) for composition and Effect.fn for named/traced
+    effects.
+  collision_type: architecture_boundary
+  why_distracting: The file being edited (`theme.tsx`) is a SolidJS/React TUI component,
+    not an Effect service. An agent might try to wrap the KV lookup or memo logic
+    in `Effect.gen` or `Effect.fn`, which would break the synchronous reactivity expected
+    by the UI framework.
+  severity: high
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: 14-21
+- rule: Reduce total variable count by inlining when a value is only used once.
+  collision_type: would_cause_bug
+  why_distracting: An agent might try to inline `kv.get("theme")` directly into the
+    theme lookup (e.g., `store.themes[kv.get("theme")]`) to reduce variable count.
+    This would bypass the safe `typeof saved === "string"` type guard, potentially
+    causing a TypeScript error or runtime bug if the KV store returns undefined or
+    a non-string value.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 44-53
+hierarchy_analysis: The root `AGENTS.md` provides strict stylistic rules (single-word
+  naming, early returns, no `let`) that directly apply to this UI component. The package-level
+  `packages/opencode/AGENTS.md` introduces Effect-specific rules that act as a distractor
+  here, as the agent must recognize that `theme.tsx` falls outside the Effect architecture
+  boundary despite being in the `opencode` package.

@@ -1,0 +1,103 @@
+version: '2.0'
+source:
+  repo: microsoft/playwright
+  pr: 38971
+  base_commit: 71e5079b735eda08a72b0fac58a3dd02fde6bb9f
+  merge_commit: fe5b234f4e2a0607d4d000ee3886d5b44291cc55
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files have balanced braces and are non-empty
+- id: test_repo_lint_packages
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo workspace packages are consistent
+- id: test_repo_ts_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified TypeScript files have valid syntax via Node.js validation
+- id: test_repo_package_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: package.json files are valid JSON
+- id: test_repo_workspace_packages_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: All workspace package.json files are valid JSON
+- id: test_repo_npm_ci_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: npm ci dry-run exits successfully
+- id: test_repo_mcp_terminal_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: MCP terminal module has consistent exports and structure
+- id: test_repo_modified_files_are_typescript
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files from PR are valid TypeScript files
+- id: test_repo_browser_config_exports
+  type: pass_to_pass
+  origin: repo_tests
+  description: Browser config module has expected exports
+- id: test_repo_commands_has_session_commands
+  type: pass_to_pass
+  origin: repo_tests
+  description: Commands module has session management commands
+- id: test_repo_program_has_session_manager
+  type: pass_to_pass
+  origin: repo_tests
+  description: Program module has SessionManager class
+- id: config_category_in_type
+  type: fail_to_pass
+  origin: pr_diff
+  description: command.ts Category union type includes 'config'
+- id: config_command_declared
+  type: fail_to_pass
+  origin: pr_diff
+  description: commands.ts declares a config command with category 'config' in commandsArray
+- id: help_has_configuration_category
+  type: fail_to_pass
+  origin: pr_diff
+  description: helpGenerator.ts includes a Configuration category entry
+- id: configure_method_logic
+  type: fail_to_pass
+  origin: pr_diff
+  description: program.ts has configure() method that stops existing session and reconnects
+    with new config
+- id: config_command_routing
+  type: fail_to_pass
+  origin: pr_diff
+  description: program.ts routes 'config' command to handleSessionCommand
+- id: skill_md_documents_config
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md documents the config command with usage examples and session
+    flags
+- id: daemon_config_has_viewport
+  type: fail_to_pass
+  origin: pr_diff
+  description: browser/config.ts daemon config sets contextOptions with default viewport
+    1280x720
+rubric:
+- rule: New command categories must be documented in SKILL.md with usage examples
+    and session flag examples
+  source:
+    path: packages/playwright/src/mcp/terminal/SKILL.md
+    lines: 108-118
+    commit: 71e5079b735eda08a72b0fac58a3dd02fde6bb9f
+  reference: '### Configuration
+    ```bash
+    # configure the session
+    playwright-cli config my-config.json
+    # Configure named session
+    playwright-cli --session=mysession config my-config.json
+    # Start with configured session
+    playwright-cli open --config=my-config.json
+    ```'
+config_edits:
+- path: packages/playwright/src/mcp/terminal/SKILL.md
+  tier: 1
+  gold_added: "### Configuration\n```bash\n# configure the session\nplaywright-cli config my-config.json\n# Configure named session\nplaywright-cli --session=mysession config my-config.json\n# Start with configured session\nplaywright-cli open --config=my-config.json\n```"
+  gold_removed: ''

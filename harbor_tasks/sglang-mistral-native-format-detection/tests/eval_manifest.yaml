@@ -1,0 +1,169 @@
+version: '2.0'
+source:
+  repo: sgl-project/sglang
+  pr: 21620
+  base_commit: b2462694441412ad209c361dfa87f3f37a3d29f3
+  merge_commit: 1d6424d5ad2dd1edb5ce9bb477be81dcf2b06eef
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: server_args.py must parse without syntax errors
+- id: mistral_small_4_both_files_returns_true
+  type: fail_to_pass
+  origin: pr_diff
+  description: Mistral-Small-4 with both params.json and config.json returns native=True
+- id: mistral_large_3_both_files_returns_true
+  type: fail_to_pass
+  origin: pr_diff
+  description: Mistral-Large-3 with both params.json and config.json returns native=True
+- id: leanstral_both_files_returns_true
+  type: fail_to_pass
+  origin: pr_diff
+  description: Leanstral with both params.json and config.json returns native=True
+- id: mistral_small_4_variant_both_files_returns_true
+  type: fail_to_pass
+  origin: pr_diff
+  description: Mistral-Small-4 variant name with both files returns native=True
+- id: params_only_returns_true
+  type: pass_to_pass
+  origin: pr_diff
+  description: Any model with only params.json (no config.json) returns native=True
+- id: mistral_7b_params_only_returns_true
+  type: pass_to_pass
+  origin: pr_diff
+  description: Mistral-7B with only params.json returns True (regression)
+- id: mistral_7b_both_files_returns_false
+  type: pass_to_pass
+  origin: pr_diff
+  description: Mistral-7B-Instruct with both files returns False (not native)
+- id: codestral_mamba_both_files_returns_false
+  type: pass_to_pass
+  origin: pr_diff
+  description: Codestral-Mamba with both files returns False
+- id: pixtral_both_files_returns_false
+  type: pass_to_pass
+  origin: pr_diff
+  description: Pixtral with both files returns False
+- id: mistral_small_3_both_files_returns_false
+  type: pass_to_pass
+  origin: pr_diff
+  description: Mistral-Small-3 (not 4) with both files returns False
+- id: mistral_nemo_both_files_returns_false
+  type: pass_to_pass
+  origin: pr_diff
+  description: Mistral-Nemo with both files returns False
+- id: no_params_json_returns_false
+  type: pass_to_pass
+  origin: pr_diff
+  description: Model with config.json only (no params.json) returns False
+- id: neither_file_returns_false
+  type: pass_to_pass
+  origin: pr_diff
+  description: Model with neither file returns False
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: _is_mistral_native_format has real logic, not just pass/return
+- id: no_debug_statements
+  type: pass_to_pass
+  origin: static
+  description: server_args.py has no debug statements (pdb, breakpoint, etc.)
+- id: no_trailing_whitespace
+  type: pass_to_pass
+  origin: static
+  description: server_args.py has no trailing whitespace
+- id: ends_with_newline
+  type: pass_to_pass
+  origin: static
+  description: server_args.py ends with newline
+- id: test_repo_py_compile
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's server_args.py compiles with Python py_compile
+- id: test_repo_ast_parse
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's server_args.py parses as valid Python AST
+- id: test_repo_file_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's server_args.py file exists at expected path
+- id: test_repo_precommit_check_ast
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's server_args.py passes pre-commit check-ast hook
+- id: test_repo_precommit_debug_statements
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's server_args.py has no debug statements (pre-commit hook)
+- id: test_repo_precommit_trailing_whitespace
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's server_args.py has no trailing whitespace (pre-commit hook)
+- id: test_repo_precommit_end_of_file
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's server_args.py ends with newline (pre-commit hook)
+- id: test_repo_check_yaml
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's CI workflow YAML passes pre-commit check-yaml
+- id: test_repo_check_toml
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's pyproject.toml passes pre-commit check-toml
+- id: test_repo_unit_test_ast_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's unit test file for server_args parses as valid AST
+- id: test_repo_unit_test_py_compile
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's unit test file for server_args.py compiles
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's server_args.py passes ruff linter
+- id: test_repo_black_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's server_args.py passes black format check
+- id: test_repo_isort_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's server_args.py passes isort import sorting check
+rubric: []
+distractors:
+- rule: ServerArgs location and configuration path
+  source:
+    path: python/sglang/multimodal_gen/.claude/CLAUDE.md
+    lines: 60-60
+  source_text: '| `ServerArgs` | `runtime/server_args.py` | All config params |'
+  collision_type: scope_ambiguity
+  why_distracting: The PR modifies `python/sglang/srt/server_args.py`, which is the
+    LLM runtime configuration. This rule applies specifically to the `multimodal_gen`
+    (diffusion) subsystem's `server_args.py`. An agent might mistakenly modify the
+    diffusion subsystem's configuration instead of the LLM runtime's, thinking the
+    rule applies globally.
+  severity: high
+- rule: Steps for Adding a New Model
+  source:
+    path: python/sglang/multimodal_gen/.claude/CLAUDE.md
+    lines: 72-77
+  source_text: '## Adding a New Model
+
+
+    1. Create pipeline in `runtime/pipelines/` extending `ComposedPipelineBase`
+
+    2. Define stages via `create_pipeline_stages()` (TextEncoding → Denoising → Decoding)
+
+    3. Add config in `configs/pipeline_configs/`
+
+    4. Register in `registry.py` via `register_configs()`'
+  collision_type: scope_ambiguity
+  why_distracting: The PR adds model-specific handling for `mistral-large-3` and others
+    to `server_args.py`. An agent might see this guide for 'Adding a New Model' and
+    attempt to implement these LLMs as diffusion pipelines extending `ComposedPipelineBase`
+    rather than simply configuring argument checks.
+  severity: medium

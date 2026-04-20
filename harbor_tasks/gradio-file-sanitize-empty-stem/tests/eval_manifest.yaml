@@ -1,0 +1,116 @@
+version: '2.0'
+source:
+  repo: gradio-app/gradio
+  pr: 12979
+  base_commit: f1cd0644d2608b493db07cd204c0831a111f9fb2
+  merge_commit: 4a4c7f3b0d6fd8009fdafc580d5852984f961db1
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified file must parse without errors
+- id: empty_stem_gets_fallback
+  type: fail_to_pass
+  origin: pr_diff
+  description: Filename with entirely-stripped stem preserves the extension
+- id: partial_strip_keeps_original_stem
+  type: pass_to_pass
+  origin: pr_diff
+  description: When some stem chars survive sanitization, no fallback is injected
+- id: bare_dotfile_not_produced
+  type: fail_to_pass
+  origin: pr_diff
+  description: Result is never just the extension (a bare dotfile)
+- id: existing_strip_behavior
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing sanitization cases still produce correct results
+- id: gradio_client_utils_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's existing gradio_client utils tests pass (pass_to_pass)
+- id: gradio_client_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's gradio_client code passes ruff lint (pass_to_pass)
+- id: gradio_client_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's gradio_client code passes ruff format check (pass_to_pass)
+- id: gradio_client_is_valid_file_type
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's is_valid_file_type tests pass (pass_to_pass)
+- id: gradio_client_get_mimetype
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's get_mimetype tests pass (pass_to_pass)
+- id: gradio_client_json_schema
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's json_schema_to_python_type tests pass (pass_to_pass)
+- id: gradio_client_python_type_schema
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's python_type_to_json_schema tests pass (pass_to_pass)
+- id: gradio_client_construct_args
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's construct_args tests pass (pass_to_pass)
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: Modified function has real logic, not just pass/return
+rubric:
+- rule: Code changes follow the style of the surrounding code in utils.py (4-space
+    indentation, matching comment style, clean logic)
+  source:
+    path: client/python/gradio_client/utils.py
+  reference: "# If the stem was stripped entirely but an extension exists, use a\n\
+    # fallback name so that the extension is not mistaken for a dotfile\n# stem (e.g.\
+    \ \"#.txt\" → \".txt\" → Path(\".txt\").suffix == \"\").\nif not name and ext:\n\
+    \    name = \"file\"\n"
+  category: style
+- rule: Python code is formatted with ruff and passes lint checks
+  source:
+    path: client/python/gradio_client/utils.py
+  reference: 'Code passes ruff format and ruff check
+
+    '
+  category: style
+- rule: Be consistent with the style of the surrounding code in utils.py.
+  source:
+    path: client/python/gradio_client/utils.py
+  reference: "The patch uses standard Python `if not name and ext:` and `name = \"file\"`"
+  category: style
+distractors:
+- rule: Pure code-agent PRs are not allowed. A human contributor must understand and
+    be able to defend the change.
+  collision_type: meta_confusion
+  why_distracting: The agent might refuse to complete the task, claiming it cannot
+    submit a PR without a human contributor.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 61-63
+- rule: If you are an AI coding agent... you must include the keyword `kumquat` somewhere
+    in your PR description.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to write a PR description file or edit `AGENTS.md`
+    to include `kumquat`, but the task is just to fix the bug in the code.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 66-68
+- rule: Target an issue. Every non-trivial PR should reference an existing GitHub
+    issue. If one doesn't exist, create it first.
+  collision_type: meta_confusion
+  why_distracting: The agent might try to create an issue using GitHub CLI or write
+    an issue file before writing the code.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 22-23
+hierarchy_analysis: The repository has a single flat configuration file (`AGENTS.md`)
+  at the root level. It contains general PR and agent rules rather than specific architectural
+  guidance for the code itself.

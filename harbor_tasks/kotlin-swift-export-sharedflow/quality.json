@@ -1,53 +1,52 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert on exact file paths like KOTLIN_RUNTIME_MODULE, SIR_PROTOCOL_FROM_KT, SIR_TYPE_PROVIDER, TYPE_BRIDGING, TYPE_NAMER, SWIFT_SUPPORT \u2014 none of these file paths are mentioned in instruction.md. Tests also check exact string patterns like 'kotlinSharedFlow: SirProtocol', 'SHARED_FLOW_CLASS_ID = ClassId.fromString', etc. that require knowing exact file locations and syntax. The instruction describes concepts but not the specific files to modify."
+      "outcome": "pass",
+      "reason": "Instruction names all the required file paths, ClassId strings, protocol/struct names, type mappings, and Swift protocol hierarchy that the tests assert on."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly specifies exact variable names (e.g., 'kotlinSharedFlow', 'kotlinTypedSharedFlowImpl'), exact string values (e.g., '\"KotlinSharedFlow\"', '\"_KotlinTypedSharedFlowImpl\"'), exact mappings (e.g., 'SHARED_FLOW_CLASS_ID \u2192 KotlinCoroutineSupportModule.kotlinSharedFlow'), and exact protocol hierarchies. This is essentially the complete solution specification, not just a problem description."
+      "reason": "Instruction dictates exact names like 'kotlinTypedSharedFlowImpl', protocol hierarchies ('KotlinStateFlow extends KotlinSharedFlow'), method signatures (emit, resetReplayCache, tryEmit, compareAndSet), and 'nonmutating set' - these are the implementation specifics rather than just describing the broken behavior."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests use exact string matching like 'assert \"kotlinSharedFlow: SirProtocol\" in content' and 'assert \"SHARED_FLOW_CLASS_ID, MUTABLE_SHARED_FLOW_CLASS_ID\" in content'. These assert on gold-specific formatting details \u2014 e.g., the comma-separated order 'SHARED_FLOW_CLASS_ID, MUTABLE_SHARED_FLOW_CLASS_ID' would fail if someone put them on separate lines or in different order. An alternative correct implementation with different whitespace or ordering would fail."
+      "reason": "Tests assert on very specific variable names like 'kotlinTypedSharedFlow: SirProtocol', 'SHARED_FLOW_CLASS_ID, MUTABLE_SHARED_FLOW_CLASS_ID' in exact order, and literal substrings like 'kotlinTypedSharedFlow -> KotlinCoroutineSupportModule.kotlinTypedSharedFlowImpl' - alternative correct fixes with different naming would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every single test function uses only `assert '...' in open(path).read()` pattern \u2014 pure text matching on source files. No test imports, compiles, or executes any code. No subprocess runs the actual Swift export. The only subprocess tests are git status checks (pass_to_pass), not behavioral tests."
+      "reason": "All test functions (test_kotlin_runtime_module_has_shared_flow_protocols, etc.) use `open(path).read()` and `assert 'foo' in content` - no compilation, execution, or behavioral verification of the Swift Export functionality."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The tests check for specific strings that don't exist in the base commit files (e.g., 'kotlinSharedFlow: SirProtocol', 'SHARED_FLOW_CLASS_ID'). A stub or no-op would not pass since these strings must be added to the actual source files."
+      "reason": "Tests check for presence of specific code strings; a stub returning defaults wouldn't satisfy 'kotlinTypedSharedFlow: SirProtocol' being in the source file."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The tests cover all major areas described in instruction.md: class IDs, protocol declarations, protocol mappings, type provider mappings, type bridging, type naming, Swift protocol definitions, nonmutating setter, and compareAndSet."
+      "reason": "Tests cover each numbered requirement in instruction.md - class IDs, protocol declarations, type mappings, bridging, naming, Swift protocols, nonmutating setter, compareAndSet."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (e.g., test_kotlin_runtime_module_has_shared_flow_protocols, test_sir_protocol_has_shared_flow_class_ids), have docstrings, and are logically grouped by the component they test."
+      "reason": "Tests are well-named by concern (test_kotlin_runtime_module_has_shared_flow_protocols, test_swift_support_has_nonmutating_setter, etc.) with docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data like JSON/CSV/API/DB."
+      "reason": "Task is code modification, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No apparent typos in filenames, paths, variable names, or commands across instruction.md and test files."
+      "reason": "File paths and identifiers appear consistent between instruction, tests, and gold patch."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "While instruction.md doesn't name exact file paths, it specifies exact variable names, exact string constants, exact mapping syntax (e.g., 'SHARED_FLOW_CLASS_ID \u2192 KotlinCoroutineSupportModule.kotlinSharedFlow'), and exact protocol hierarchies that constitute the complete implementation specification rather than just describing the problem."
+      "reason": "Instruction explicitly lists the 6 exact files to modify, removing any need for the agent to localize the fix - this is hint leakage given localization should be part of the task."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-editing task across multiple source files, not a config-edit task."
+      "reason": "This is a code-only task, not a config edit task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
@@ -56,6 +55,6 @@
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 5
+  "pass_count": 5,
+  "fail_count": 4
 }

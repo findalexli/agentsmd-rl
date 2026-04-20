@@ -4,13 +4,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-16T01:45:59.728955",
-  "total_time": 5153.74,
-  "sandbox_id": "ics54aec7luqf5rvai26i",
-  "backend": "minimax",
+  "validated_at": "2026-04-16T12:53:06.347781",
+  "total_time": 83.76,
+  "sandbox_id": "ismk2aiw6yf2vtimed7rp",
+  "backend": "anthropic",
   "pipeline": "pipeline",
   "start_at": "judge",
-  "error": "The sandbox was not found: This error is likely due to sandbox timeout. You can modify the sandbox timeout by passing 'timeout' when starting the sandbox or calling '.set_timeout' on the sandbox with the desired timeout.",
   "nodes": {
     "scaffold": {
       "status": "ok",
@@ -46,25 +45,27 @@
     },
     "quality_gate": {
       "status": "passed",
-      "model": "claude-sonnet-4-6",
-      "backend": "oauth",
-      "time": 0.49,
+      "model": "claude-opus-4-7",
+      "backend": "anthropic",
+      "time": 0.3,
       "notes": "flags=['lint_tier_b:2', 'B:[B] no_network_during_tests @ tests/test.sh:5: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 25.36,
+      "time": 14.59,
       "tier_a_fails": [
-        "behavior_in_task_description",
-        "no_solution_leakage",
         "solution_uniqueness_guard",
         "tests_verify_behavior_not_text",
-        "test_not_tautological",
-        "anti_cheating_measures"
+        "test_not_tautological"
       ],
       "tier_b_fails": [],
-      "pass_count": 3,
-      "fail_count": 7
+      "pass_count": 5,
+      "fail_count": 4
+    },
+    "tests_rewrite": {
+      "status": "error",
+      "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":520,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 400 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"invalid_request_error\\\",\\\"message\\\":\\\"\\\\\\\"thinking.type.enabled\\\\\\\" is not supported for this model. Use \\\\\\\"thinking.type.adapt",
+      "time": 2.49
     }
   },
   "history": [
@@ -99,6 +100,14 @@
       "backend": "minimax",
       "time": 5153.74,
       "at": "2026-04-16T01:45:59.728955"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "anthropic",
+      "time": 83.76,
+      "at": "2026-04-16T12:53:06.347781"
     }
   ]
 }

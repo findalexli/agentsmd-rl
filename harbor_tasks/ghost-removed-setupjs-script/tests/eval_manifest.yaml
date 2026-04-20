@@ -1,0 +1,156 @@
+version: '2.0'
+source:
+  repo: TryGhost/Ghost
+  pr: 26507
+  base_commit: c1e86e6dd150e7ab1a226cfce8f73bc4ee441787
+  merge_commit: 18d19b4124ab54f507b977c82d8424dbeba20fee
+checks:
+- id: test_repo_git_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo has valid git structure and HEAD commit
+- id: test_repo_gitmodules_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: .gitmodules file exists and is valid
+- id: test_repo_submodules_initialized
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git submodules are properly initialized
+- id: test_repo_git_log_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git log is accessible and has expected structure
+- id: test_repo_install_deps_script_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: The install-deps.sh script is valid bash
+- id: test_repo_bump_version_script_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: The bump-version.js script is valid Node.js JavaScript
+- id: test_package_json_valid
+  type: pass_to_pass
+  origin: static
+  description: package.json must be valid JSON with scripts.setup
+- id: test_repo_package_json_schema
+  type: pass_to_pass
+  origin: static
+  description: package.json has valid schema with required fields
+- id: test_repo_docs_valid
+  type: pass_to_pass
+  origin: static
+  description: docs/README.md exists and has required content
+- id: test_repo_core_package_valid
+  type: pass_to_pass
+  origin: static
+  description: ghost/core/package.json has valid schema
+- id: test_repo_github_workflows_exist
+  type: pass_to_pass
+  origin: static
+  description: CI workflow files exist and are valid
+- id: test_repo_git_hooks_exist
+  type: pass_to_pass
+  origin: static
+  description: Git hooks directory exists with required hooks
+- id: test_repo_dockerfile_valid
+  type: pass_to_pass
+  origin: static
+  description: Dockerfile exists and has required content
+- id: test_repo_workspaces_valid
+  type: pass_to_pass
+  origin: static
+  description: Workspace directories have valid package.json files
+- id: test_repo_shell_scripts_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: All shell scripts have valid bash syntax
+- id: test_repo_git_hooks_executable
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git hooks are executable files
+- id: test_repo_gitmodules_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: .gitmodules file has valid syntax
+- id: test_repo_clean_script_valid
+  type: pass_to_pass
+  origin: static
+  description: The clean.js script is valid Node.js JavaScript
+- id: test_repo_dependency_inspector_valid
+  type: pass_to_pass
+  origin: static
+  description: The dependency-inspector.js script is valid Node.js JavaScript
+- id: test_repo_ci_workflow_lint
+  type: pass_to_pass
+  origin: static
+  description: CI workflow YAML has valid structure
+- id: test_setup_script_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: .github/scripts/setup.js must be deleted
+- id: test_setup_script_simplified
+  type: fail_to_pass
+  origin: pr_diff
+  description: package.json setup script must not invoke setup.js and must use --recursive
+- id: test_docs_setup_section
+  type: fail_to_pass
+  origin: pr_diff
+  description: docs/README.md setup section must not mention database initialization
+- id: test_docs_dev_description
+  type: fail_to_pass
+  origin: pr_diff
+  description: docs/README.md yarn dev description must mention frontend dev servers
+- id: test_docs_reset_command
+  type: fail_to_pass
+  origin: pr_diff
+  description: docs/README.md must use yarn reset:data instead of knex-migrator
+rubric:
+- rule: docs/README.md setup section must use concise description "Install dependencies
+    and initialize submodules" instead of the verbose multi-line comment
+  source:
+    path: docs/README.md
+    lines: 30-35
+    commit: c1e86e6dd150e7ab1a226cfce8f73bc4ee441787
+  evidence: The gold solution updates docs/README.md to replace the verbose setup
+    description with "Install dependencies and initialize submodules"
+- rule: docs/README.md yarn dev description must mention frontend dev servers in addition
+    to Docker backend services
+  source:
+    path: docs/README.md
+    lines: 38-42
+    commit: c1e86e6dd150e7ab1a226cfce8f73bc4ee441787
+  evidence: The gold solution updates docs/README.md to describe yarn dev as "Start
+    development (runs Docker backend services + frontend dev servers)"
+- rule: docs/README.md troubleshooting section must use "yarn reset:data" instead
+    of "yarn knex-migrator reset" and "yarn knex-migrator init"
+  source:
+    path: docs/README.md
+    lines: 53-62
+    commit: c1e86e6dd150e7ab1a226cfce8f73bc4ee441787
+  evidence: The gold solution replaces the obsolete knex-migrator commands with "yarn
+    reset:data" in docs/README.md
+distractors:
+- rule: '`yarn knex-migrator migrate` runs database migrations.'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might see `yarn knex-migrator migrate` and assume it
+    should replace the old `knex-migrator` commands with this one, but the prompt
+    specifically asks for the database reset command, which is `yarn reset:data`.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: '64'
+- rule: Create a database migration to add a table, add columns to an existing table,
+    add a setting, or otherwise change the schema of Ghost's MySQL database.
+  source:
+    path: .claude/skills/create-database-migration/SKILL.md
+    lines: 1-5
+  collision_type: scope_ambiguity
+  why_distracting: The task mentions that the old setup initialized the database and
+    used manual knex-migrator commands. An agent might mistakenly activate this skill
+    and attempt to modify database schemas or migration files instead of just updating
+    the documentation and removing the obsolete script.
+  severity: low
+hierarchy_analysis: The repository contains identical `AGENTS.md` and `CLAUDE.md`
+  files at the root level. They serve as the source of truth for the current development
+  workflow commands, which the agent must reference to correctly update the documentation.

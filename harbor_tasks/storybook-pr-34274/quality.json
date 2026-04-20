@@ -1,0 +1,56 @@
+{
+  "model": "claude-opus-4-7",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "instruction.md names the target file codegen-project-annotations.ts, references the djb2 algorithm via the cse.yorku.ca URL, and gives reference hash values (5381, 177670, 193485963) for empty, 'a', and 'abc'."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction describes properties (position-sensitivity, no collisions, reference values) and cites external algorithm reference, but doesn't show the exact djb2 code."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_hash_function_exists only checks 'function hash' exists, but test_typescript_compiles and other tests would pass with any collision-free position-sensitive hash (FNV, etc.); however the hidden test file (truncated) may check reference values 5381/177670/193485963 which would force djb2 specifically\u2014though instruction also specifies those values, so it's consistent. Tests shown accept any collision-free hash, which is fine."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests extract the hash function body and execute it via Node.js with new Function(), checking behavioral properties."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "Tests require actual position-sensitive, collision-free hash behavior across diverse strings; a stub returning a constant would fail ALL_UNIQUE check."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "Tests cover position-sensitivity, anagram distinction, pnpm-path collisions, and compilation \u2014 matching the instruction's stated requirements."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are separately named with docstrings explaining each property being verified."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "No structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "Paths and filenames appear consistent across instruction, tests, and solution."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction names the file but localization is the task itself; the specific fix/line is not revealed."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "Code-only task."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 1
+}

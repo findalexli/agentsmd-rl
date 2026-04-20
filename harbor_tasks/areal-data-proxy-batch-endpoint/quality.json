@@ -1,56 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction describes the endpoint path (`/data/batch`), method (`POST`), request/response schema (shard_ids as list of strings, JSON list response), error codes (400/422 for invalid input, 400/404/422/500 for missing shards), empty input behavior, and the requirement to place the route before the parametric route. All test assertions (status codes, response shapes, error conditions) are discoverable from the instruction."
+      "reason": "Instruction names the file path, endpoint path /data/batch, request schema {shard_ids: [...]}, response formats, status codes, and ordering requirement \u2014 all matching test assertions."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the bug (missing endpoint) and the expected behavior/contract but does not give the exact code, line numbers to change, or the specific implementation. A developer must still reason about how to implement the handler, validation, error handling, and serialization."
+      "reason": "Instruction describes what's broken and contract requirements but doesn't provide the actual code to write."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "Tests use AST extraction to find any function decorated with `@app.post('/data/batch')` and test its HTTP behavior via real requests. They don't assert specific variable names, function names, or internal implementation details. Alternative implementations (e.g., using Pydantic models, different error handling approaches, different response classes) would all pass as long as they produce correct HTTP behavior."
+      "reason": "Tests accept flexible status codes (400/404/422/500 for missing, 400/422 for invalid) and use AST extraction of the handler, allowing multiple correct implementations."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests AST-extract the handler, mount it on a real FastAPI app, and make actual HTTP requests via httpx AsyncClient. They check status codes and response bodies from real HTTP interactions, not just text patterns in source code."
+      "reason": "Tests extract handler via AST, mount on FastAPI app, and execute real HTTP requests via httpx AsyncClient."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub returning None/empty/default would fail: test_batch_valid_request checks that body[0] == [1,2,3] and body[1] == [4,5,6]; test_batch_missing_shard_error checks status != 200; test_batch_invalid_input_rejected checks status in (400,422). No trivial stub satisfies all these."
+      "reason": "Stub implementations can't satisfy both the valid-payload assertions (body[0]==[1,2,3]) and the error-status assertions for missing/invalid input."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction specifies: valid batch retrieval, empty input, invalid input (non-list, non-string items), missing shard errors, and route ordering. Tests cover all of these: test_batch_valid_request, test_batch_empty_shard_ids, test_batch_invalid_input_rejected, test_batch_missing_shard_error, and test_batch_route_ordering."
+      "reason": "Tests cover valid batch, single shard, missing shard errors, invalid input rejection, and empty list \u2014 all behaviors described in instruction.md."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_batch_valid_request, test_batch_single_shard, etc.), each has a docstring explaining what it checks, and they are logically grouped into 'Gates (pass_to_pass, static)' and 'Fail-to-pass (pr_diff)' sections."
+      "reason": "Tests are grouped with section comments (Gates, Fail-to-pass) and have descriptive names and docstrings."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The instruction documents the exact JSON schema for both request (`{\"shard_ids\": [\"shard_a\", \"shard_b\"]}`) and response (`[[1, 2, 3], [4, 5, 6]]`), including examples and error response status codes."
+      "reason": "Request/response JSON schema is explicitly documented in instruction.md with examples."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths (areal/experimental/inference_service/data_proxy/app.py, areal/infra/rpc/rpc_server.py), endpoint paths (/data/batch, /data/{shard_id}), and technical terms are all correctly spelled."
+      "reason": "Paths and names are consistent between instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly states 'The endpoint must be registered with @app.post(\"/data/batch\")' and 'The route must be declared before the parametric /data/{shard_id} route in the source file.' This gives away exact implementation details including decorator syntax and placement requirements, reducing the localization and design reasoning the agent must do."
+      "outcome": "pass",
+      "reason": "The buggy file is named but localization is part of the stated contract; no specific line numbers or exact code given."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task (adding a FastAPI endpoint), not a config edit task."
+      "reason": "Code-only task, no config edits."
     }
   },
   "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 9,
-  "fail_count": 1
+  "tier_c_fails": [],
+  "pass_count": 10,
+  "fail_count": 0
 }

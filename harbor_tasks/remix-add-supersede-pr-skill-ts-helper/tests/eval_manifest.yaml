@@ -1,0 +1,284 @@
+version: '2.0'
+source:
+  repo: remix-run/remix
+  pr: 11088
+  base_commit: 64b3a160dc25bbb082b96673e12bb55935f3528d
+  merge_commit: 27765d6ff3fc9671802defcc69693cebd554ce6d
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: TypeScript script parses without errors
+- id: script_help_flag
+  type: fail_to_pass
+  origin: pr_diff
+  description: close_superseded_pr.ts --help prints usage and exits 0
+- id: script_rejects_same_pr
+  type: fail_to_pass
+  origin: pr_diff
+  description: Script rejects when old_pr equals new_pr
+- id: script_rejects_non_numeric
+  type: fail_to_pass
+  origin: pr_diff
+  description: Script rejects non-numeric PR numbers
+- id: supersede_pr_skill_md
+  type: fail_to_pass
+  origin: pr_diff
+  description: supersede-pr SKILL.md exists with correct frontmatter and content
+- id: make_pr_skill_md
+  type: fail_to_pass
+  origin: pr_diff
+  description: make-pr SKILL.md exists with correct frontmatter and content
+- id: agents_md_scripts_rule
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md documents one-off scripts as TypeScript convention
+- id: agents_md_skills_section
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md has Skills section listing both supersede-pr and make-pr
+- id: agents_md_preserves_let_rule
+  type: pass_to_pass
+  origin: agent_config
+  description: AGENTS.md still has the let/const variable convention
+  source:
+    path: AGENTS.md
+    lines: '26'
+    commit: 64b3a160dc25bbb082b96673e12bb55935f3528d
+- id: script_uses_let_not_var
+  type: pass_to_pass
+  origin: agent_config
+  description: TS script follows AGENTS.md let/const convention (no var)
+  source:
+    path: AGENTS.md
+    lines: '26'
+    commit: 64b3a160dc25bbb082b96673e12bb55935f3528d
+- id: test_repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo ESLint passes
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo TypeScript typecheck passes
+- id: test_repo_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo Prettier format check passes
+- id: test_repo_changes_validate
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo change files validation passes
+- id: test_repo_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo build passes
+rubric:
+- rule: 'TypeScript: Strict mode, ESNext target, NodeNext modules, NodeNext resolution,
+    verbatimModuleSyntax'
+  source:
+    path: skills/supersede-pr/tsconfig.json
+  reference: '{"compilerOptions": {"allowJs": false, "module": "NodeNext", "moduleResolution":
+    "NodeNext", "noEmit": true, "strict": true, "target": "ESNext", "verbatimModuleSyntax":
+    true}, "include": ["scripts/**/*.ts"]}'
+  category: tooling
+- rule: 'Variables: Prefer `let` for locals, `const` only at module scope; never use
+    `var`'
+  source:
+    path: skills/supersede-pr/scripts/close_superseded_pr.ts
+  reference: The script uses `let` for local variables like `let parsed = parseArgs(...)`,
+    `let repo = ...`, and reserves `const` for module-level declarations. No `var`
+    declarations are used.
+  category: style
+config_edits:
+- path: AGENTS.md
+  tier: 1
+  gold_added: '- **One-off scripts**: Write one-off scripts in this repo as TypeScript
+    and make them executable natively with modern Node.js (for example, executable
+    `.ts` files)
+
+
+    ## Skills
+
+
+    A skill is a reusable local instruction set stored in a `SKILL.md` file.
+
+
+    ### Available skills
+
+
+    - **supersede-pr**: Replace one GitHub PR with another and explicitly close the
+    superseded PR (instead of relying on `Closes #...` keywords). (file: `./skills/supersede-pr/SKILL.md`)
+
+    - **make-pr**: Create GitHub pull requests with clear context, issue/feature bullets,
+    and required usage examples for new or changed APIs. (file: `./skills/make-pr/SKILL.md`)'
+  gold_removed: ''
+- path: skills/make-pr/SKILL.md
+  tier: 1
+  gold_added: "---\nname: make-pr\ndescription: Create GitHub pull requests with clear,\
+    \ reviewer-friendly descriptions. Use when asked to open or prepare a PR, especially\
+    \ when the PR needs strong context, related links, and feature usage examples.\
+    \ This skill enforces concise PR structure, avoids redundant sections like validation/testing,\
+    \ and creates the PR with gh CLI.\n---\n\n# Make PR\n\n## Overview\n\nUse this\
+    \ skill to draft and open a PR with consistent, high-signal writing.\nKeep headings\
+    \ sparse and focus on the problem/feature explanation, context links, and practical\
+    \ code examples.\n\n## Workflow\n\n1. Gather context from branch diff and related\
+    \ work.\n- Capture what changed, why it changed, and who it affects.\n- Find related\
+    \ issues/PRs and include links when relevant.\n\n1. Draft the PR body with minimal\
+    \ structure.\n- Start with 1-2 short introductory paragraphs.\n- In those intro\
+    \ paragraphs, include clear bullets describing:\n  - the feature and/or issue\
+    \ addressed\n  - key behavior/API changes\n  - expected impact\n- If the change\
+    \ is extensive, expand to up to 3-4 paragraphs and include background context\
+    \ with related links.\n\n1. Add required usage examples for feature work.\n- If\
+    \ the PR introduces a new feature, include a comprehensive usage snippet.\n- If\
+    \ it replaces or improves an older approach, include before/after examples.\n\n\
+    1. Exclude redundant sections.\n- Do not include `Validation`, `Testing`, or other\
+    \ process sections that are already implicit in PR workflow.\n- Do not add boilerplate\
+    \ sections that do not help review.\n\n1. Create the PR.\n- Save the body to a\
+    \ temporary file and run:\n```bash\ngh pr create --base main --head <branch> --title\
+    \ \"<title>\" --body-file <file>\n```\n\n## Body Template\n\nUse this as a base\
+    \ and fill with concrete repo-specific details:\n\n```md\n<One or two short intro\
+    \ paragraphs explaining the change and why it matters.>\n\n- <Feature/issue addressed>\n\
+    - <What changed in behavior or API>\n- <Why this is needed now>\n\n<Optional additional\
+    \ context paragraph(s), up to 3-4 total for large changes, including links to\
+    \ related PRs/issues.>\n\n```ts\n// New feature usage example\n```\n\n```ts\n\
+    // Before\n```\n\n```ts\n// After\n```\n```"
+  gold_removed: ''
+- path: skills/supersede-pr/SKILL.md
+  tier: 1
+  gold_added: '---
+
+    name: supersede-pr
+
+    description: Safely replace one GitHub pull request with another. Use when a user
+    says a PR supersedes/replaces an older PR, asks to auto-close a superseded PR,
+    or needs guaranteed closure behavior after merge. This skill explicitly closes
+    the superseded PR with gh CLI and verifies final PR states instead of relying
+    on closing keywords.
+
+    ---
+
+
+    # Supersede PR
+
+
+    ## Overview
+
+
+    Use this skill to handle PR supersession end-to-end.
+
+    Do not rely on `Closes #<number>` to close another PR. GitHub closing keywords
+    close issues, not pull requests.
+
+
+    ## Workflow
+
+
+    1. Identify PR numbers and target repo.
+
+    - Capture `old_pr` (the superseded PR) and `new_pr` (the replacement PR).
+
+    - Resolve the repo with `gh repo view --json nameWithOwner -q .nameWithOwner`
+    when not provided.
+
+
+    1. Create or update the replacement PR first.
+
+    - Open/push the replacement branch.
+
+    - Open the new PR.
+
+    - Include a traceable link in the PR body such as `Supersedes #<old_pr>`.
+
+
+    1. Close the superseded PR explicitly.
+
+    - Run:
+
+    ```bash
+
+    ./skills/supersede-pr/scripts/close_superseded_pr.ts <old_pr> <new_pr>
+
+    ```
+
+    - This adds a comment (`Superseded by #<new_pr>.`) and closes the old PR.
+
+
+    1. Verify states.
+
+    - Confirm the superseded PR is closed:
+
+    ```bash
+
+    gh pr view <old_pr> --json state,url
+
+    ```
+
+    - Confirm the replacement PR status/checks:
+
+    ```bash
+
+    gh pr checks <new_pr>
+
+    ```
+
+
+    ## Rules
+
+
+    1. Do not use `Closes #<old_pr>` when `<old_pr>` is a pull request.
+
+    - Use `Closes/Fixes` only for issues.
+
+    - Use `Supersedes #<old_pr>` or `Refs #<old_pr>` for PR-to-PR linkage.
+
+
+    1. Prefer explicit closure over implied automation.
+
+    - Always run the close command when the user asks to supersede a PR.
+
+    - Treat closure as incomplete until `gh pr view <old_pr>` returns `CLOSED`.
+
+
+    ## Script
+
+
+    Use the bundled script for deterministic closure:
+
+    - `scripts/close_superseded_pr.ts`'
+  gold_removed: ''
+distractors:
+- rule: 'Philosophy: Web standards-first, runtime-agnostic (Node.js, Bun, Deno, Cloudflare
+    Workers). Use Web Streams API, Uint8Array, Web Crypto API, Blob/File instead of
+    Node.js APIs'
+  collision_type: scope_ambiguity
+  why_distracting: The rule forbids Node.js APIs in favor of Web standards, but the
+    requested script is a repo tooling script that needs to execute the `gh` CLI (likely
+    via `child_process`). Applying this framework-level rule to a tooling script would
+    make it impossible to build.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 20-21
+- rule: 'Adding changes: Create `packages/*/.changes/[major|minor|patch]`'
+  collision_type: scope_ambiguity
+  why_distracting: The rule requires creating a changeset for changes, but this PR
+    only adds repo-level tooling and skills, not package updates. Creating a changeset
+    would be incorrect.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 43-44
+- rule: 'Monorepo: pnpm workspace with packages in `packages/` directory'
+  collision_type: architecture_boundary
+  why_distracting: The rule states packages are in the `packages/` directory, which
+    might lead the agent to create the `supersede-pr` skill inside `packages/` instead
+    of the requested root `skills/` directory.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 16-17
+hierarchy_analysis: 'The task is meta-referential: the agent must modify the root
+  `AGENTS.md` file to add new instructions. It must also avoid applying framework-specific
+  architecture rules (like avoiding Node.js APIs) to the repo tooling scripts it is
+  creating.'

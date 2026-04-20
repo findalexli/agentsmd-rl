@@ -1,0 +1,160 @@
+version: '2.0'
+source:
+  repo: inclusionAI/AReaL
+  pr: 1077
+  base_commit: 3142b88a5e93e991df727c81892d6cb8bd65d06e
+  merge_commit: f6556e88582e82b747ab1ac4038af2e106a464ee
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified files (rpc_server.py, rtensor.py) must parse without errors
+- id: repo_ruff_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff linter passes on modified files (pass_to_pass)
+- id: repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff format check passes on modified files (pass_to_pass)
+- id: repo_pre_commit_trailing_whitespace
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's trailing-whitespace pre-commit hook passes on modified files
+- id: repo_pre_commit_end_of_file
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's end-of-file-fixer pre-commit hook passes on modified files
+- id: repo_serialization_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's serialization module tests pass (primitives, tensors, numpy)
+- id: batch_endpoint_returns_data
+  type: fail_to_pass
+  origin: pr_diff
+  description: POST /data/batch returns stored tensor data for valid shard IDs
+- id: batch_endpoint_preserves_order
+  type: fail_to_pass
+  origin: pr_diff
+  description: Batch fetch returns shards in the exact order requested
+- id: batch_endpoint_missing_shards
+  type: fail_to_pass
+  origin: pr_diff
+  description: Batch endpoint returns 400 with missing_shard_ids for absent shards
+- id: batch_endpoint_empty_request
+  type: fail_to_pass
+  origin: pr_diff
+  description: Batch endpoint handles empty shard_ids list gracefully (returns 200
+    with empty list)
+- id: single_shard_retrieval
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing single-shard GET /data/<shard_id> endpoint still works
+- id: backend_max_shards_configurable
+  type: fail_to_pass
+  origin: pr_diff
+  description: HttpRTensorBackend accepts and validates max_shards_per_request parameter
+- id: backend_groups_by_node
+  type: fail_to_pass
+  origin: pr_diff
+  description: fetch() groups shards by node_addr into batch requests
+- id: backend_chunks_large_requests
+  type: fail_to_pass
+  origin: pr_diff
+  description: Same-node shards exceeding max_shards_per_request are chunked
+- id: backend_preserves_original_order
+  type: fail_to_pass
+  origin: pr_diff
+  description: Results maintain original request order across grouped/chunked fetches
+- id: no_wildcard_imports
+  type: pass_to_pass
+  origin: agent_config
+  description: No wildcard imports (from x import *) in modified files
+  source:
+    path: AGENTS.md
+    lines: '30'
+    commit: 3142b88a5e93e991df727c81892d6cb8bd65d06e
+- id: no_bare_print
+  type: pass_to_pass
+  origin: agent_config
+  description: No bare print() calls in production code (must use logger)
+  source:
+    path: AGENTS.md
+    lines: 90-92
+    commit: 3142b88a5e93e991df727c81892d6cb8bd65d06e
+- id: no_hardcoded_endpoints
+  type: pass_to_pass
+  origin: agent_config
+  description: No hardcoded IP addresses or static URL strings in modified files
+  source:
+    path: AGENTS.md
+    lines: '31'
+    commit: 3142b88a5e93e991df727c81892d6cb8bd65d06e
+rubric:
+- rule: Follow existing code patterns in the same module.
+  source:
+    path: AGENTS.md
+    lines: '40'
+    commit: 3142b88a5e93e991df727c81892d6cb8bd65d06e
+- rule: Use `areal.utils.logging.getLogger(name)` with PascalCase names; never `print`
+    or `logging.__name__`.
+  source:
+    path: AGENTS.md
+    lines: 90-92
+    commit: 3142b88a5e93e991df727c81892d6cb8bd65d06e
+- rule: Prefer composition over inheritance -- keep class hierarchies <= 2 levels;
+    prefer delegation.
+  source:
+    path: AGENTS.md
+    lines: '81'
+    commit: 3142b88a5e93e991df727c81892d6cb8bd65d06e
+- rule: 'Logging: never print'
+  source:
+    path: AGENTS.md
+    lines: 65-66
+  evidence: The gold solution uses `logger.debug` and `logger.error` in `rpc_server.py`
+    to log batch retrieval details and errors, avoiding the use of `print`.
+  category: style
+- rule: No wildcard imports (`from x import *`).
+  source:
+    path: AGENTS.md
+    lines: 23-23
+  evidence: The gold solution explicitly imports `cast` from `typing` in `rtensor.py`
+    rather than using a wildcard import.
+  category: style
+distractors:
+- rule: Add tests for new functionality.
+  collision_type: scope_ambiguity
+  why_distracting: The rule mandates adding tests for new functionality, but the task
+    instruction explicitly restricts the 'Files to Modify' to just `rpc_server.py`
+    and `rtensor.py`. Attempting to add tests would violate the explicit file scope
+    of the prompt.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 35-35
+- rule: No hardcoded secrets, paths, or endpoints.
+  collision_type: rule_conflict
+  why_distracting: The rule forbids hardcoded endpoints. An agent might interpret
+    this as a requirement to make the new `/data/batch` route path configurable via
+    `cli_args.py` or environment variables. However, internal RPC routes in this module
+    are conventionally hardcoded, and making it configurable would overcomplicate
+    the PR and potentially violate the 'Ask first before modifying config structures'
+    rule.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 24-24
+- rule: Register new loggers with color in `areal/utils/logging.py`.
+  collision_type: scope_ambiguity
+  why_distracting: The rule requires registering new loggers with color in `areal/utils/logging.py`.
+    An agent might try to create a new logger specifically for the batch endpoint,
+    but the file already has an initialized logger that should be reused.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 58-59
+hierarchy_analysis: The config hierarchy is flat, consisting of two Level 0 files
+  (`AGENTS.md` and `CLAUDE.md`) that share mostly identical rules. The primary tension
+  is between the general repository rules (e.g., 'Add tests', 'No hardcoded endpoints')
+  and the strict boundaries set by the task instruction ('Files to Modify').

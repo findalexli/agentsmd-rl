@@ -1,0 +1,105 @@
+source:
+  repo: gohugoio/hugo
+  pr_number: 14671
+  base_commit: 0c013c2326be1bbebba9a9f89d27072074fc6cc4
+  merge_commit: 42289d76f9ccac052c22b84d7024e64cfb0a683b
+  task_name: hugo-minify-svg-namespaces
+
+# Checks define the tests and their types
+checks:
+  # Fail-to-pass tests (verify the fix works)
+  - id: test_go_mod_dependencies_updated
+    type: fail_to_pass
+    origin: agent_config
+    description: tdewolff/minify dependency updated to v2.24.11
+    source:
+      file: go.mod
+      lines: "68-69"
+      commit: 42289d76f9ccac052c22b84d7024e64cfb0a683b
+
+  - id: test_config_has_keep_namespaces
+    type: fail_to_pass
+    origin: agent_config
+    description: KeepNamespaces configured with empty string and x-bind in SVG minifier
+    source:
+      file: minifiers/config.go
+      lines: "51"
+      commit: 42289d76f9ccac052c22b84d7024e64cfb0a683b
+
+  - id: test_minifiers_test_has_alpine_cases
+    type: fail_to_pass
+    origin: regression
+    description: Issue #14669 test cases for Alpine.js directives added to minifiers_test.go
+    source:
+      file: minifiers/minifiers_test.go
+      lines: "90-91"
+      commit: 42289d76f9ccac052c22b84d7024e64cfb0a683b
+
+  # Pass-to-pass tests (verify no regressions)
+  - id: test_repo_minifiers_test
+    type: pass_to_pass
+    origin: repo_tests
+    description: Minifiers package tests pass
+
+  - id: test_repo_go_build
+    type: pass_to_pass
+    origin: repo_tests
+    description: Hugo builds successfully
+
+  - id: test_repo_go_vet
+    type: pass_to_pass
+    origin: repo_tests
+    description: go vet passes for minifiers package
+
+  - id: test_repo_minifiers_race
+    type: pass_to_pass
+    origin: repo_tests
+    description: Race detector passes for minifiers package
+
+  - id: test_repo_gofmt
+    type: pass_to_pass
+    origin: repo_tests
+    description: gofmt finds no formatting issues in minifiers package
+
+  - id: test_repo_config_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Minifiers configuration tests pass
+
+# Rubric for evaluating agent behavior
+rubric:
+  - rule: "Brevity is good. Don't write novels in code, comments, or commit messages."
+    weight: optional
+    source:
+      file: AGENTS.md
+      commit: 0c013c2326be1bbebba9a9f89d27072074fc6cc4
+
+  - rule: "Never export symbols that are not needed outside of the package."
+    weight: optional
+    source:
+      file: AGENTS.md
+      commit: 0c013c2326be1bbebba9a9f89d27072074fc6cc4
+
+  - rule: "Avoid global state at (almost) all cost."
+    weight: optional
+    source:
+      file: AGENTS.md
+      commit: 0c013c2326be1bbebba9a9f89d27072074fc6cc4
+
+  - rule: "In tests, use qt matchers (e.g., b.Assert(err, qt.ErrorMatches, ...)) instead of raw if/t.Fatal checks."
+    weight: optional
+    source:
+      file: AGENTS.md
+      commit: 0c013c2326be1bbebba9a9f89d27072074fc6cc4
+
+  - rule: "In tests, always use the latest Hugo specification, e.g., for layouts, it's layouts/page.html and not layouts/_default/single.html."
+    weight: optional
+    source:
+      file: AGENTS.md
+      commit: 0c013c2326be1bbebba9a9f89d27072074fc6cc4
+
+  - rule: "When adding tests, place them in the appropriate test function (e.g., TestBugs for regression tests) rather than creating new test functions."
+    weight: optional
+    source:
+      file: minifiers/minifiers_test.go
+      commit: 0c013c2326be1bbebba9a9f89d27072074fc6cc4

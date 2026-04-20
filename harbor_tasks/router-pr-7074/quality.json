@@ -1,45 +1,45 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the exact file path (packages/router-plugin/src/core/code-splitter/plugins/react-stable-hmr-split-route-components.ts), the exact literal string 'import.meta.hot.data ??= {}', the function name buildStableSplitComponentStatements, and the test command. All asserted specifics in tests are discoverable from the instruction."
+      "reason": "instruction.md names the exact file path and the literal string 'import.meta.hot.data ??= {}' that tests assert on."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix: add 'import.meta.hot.data ??= {}' inside the if block before assignments. It specifies the exact initialization statement, its placement, and the resulting code structure. This is a direct specification of the solution, not just a description of the bug."
+      "reason": "instruction.md explicitly provides the exact fixed code structure including 'import.meta.hot.data ??= {}' inside the if block, leaving no reasoning required."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "test_hmr_data_initialization_in_template asserts the exact literal string 'import.meta.hot.data ??= {}' via substring match, and test_initialization_inside_if_block uses a regex requiring that exact syntax inside the if block. An alternative correct fix like 'if (!import.meta.hot.data) import.meta.hot.data = {}' or 'import.meta.hot.data = import.meta.hot.data || {}' would fail these tests despite being functionally correct."
+      "outcome": "pass",
+      "reason": "Tests check for the specific required pattern which is the only reasonable fix, and also run the full test/build/lint suite."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The two fail_to_pass tests (test_hmr_data_initialization_in_template and test_initialization_inside_if_block) are purely text-matching: they read the source file and check for literal strings/regex patterns. They do not import, call, or execute the code. While pass_to_pass tests do run subprocesses, the critical f2p tests are text-only."
+      "outcome": "pass",
+      "reason": "Tests run pnpm nx subprocesses for unit tests, type checks, build, eslint, and publint validation."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "test_hmr_data_initialization_in_template just checks 'import.meta.hot.data ??= {}' in file content. Adding that exact string as a comment anywhere in the file would pass this test without implementing the actual fix. The regex test is slightly harder to game but still just checks text patterns."
+      "outcome": "pass",
+      "reason": "The f2p tests check for the specific template change and the unit tests execute actual code generation; a stub cannot satisfy them."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: (1) exact initialization statement present, (2) placement inside the if block before assignments, (3) existing tests still pass. All three are tested by the test suite."
+      "reason": "Tests verify the initialization exists, is in the correct if-block location, and that all unit tests pass."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_hmr_data_initialization_in_template, test_initialization_inside_if_block, etc.), have docstrings explaining fail_to_pass vs pass_to_pass, and are logically grouped."
+      "reason": "Each test has a descriptive docstring and clear name indicating f2p vs p2p."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task produces code changes, not structured data like JSON/CSV/API/DB."
+      "reason": "Task does not produce structured data."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, commands, variable names, and operator syntax are correct and consistent between instruction and tests."
+      "reason": "File paths and commands appear correct."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact file, the exact function (buildStableSplitComponentStatements), and provides the exact code to add ('import.meta.hot.data ??= {}') with exact placement requirements. This goes far beyond naming the buggy module."
+      "reason": "instruction.md names the exact file 'packages/router-plugin/src/core/code-splitter/plugins/react-stable-hmr-split-route-components.ts' and provides the exact fix code 'import.meta.hot.data ??= {}', eliminating localization and implementation reasoning."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
@@ -47,15 +47,12 @@
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "no_solution_leakage"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 5
+  "pass_count": 7,
+  "fail_count": 2
 }

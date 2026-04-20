@@ -1,0 +1,54 @@
+{
+  "model": "claude-opus-4-7",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "Instruction names both files (src/pages/api/download/attachments/[fileId].ts and src/utils/delivery-worker.ts) and describes the two functions and the expected call signature (file URL and filename, not fileId)."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction describes the broken behavior and which approach to use, but doesn't give the exact code or function name \u2014 the agent must find getDownloadUrl vs resolveDownloadUrl in delivery-worker.ts."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests assert on import of getDownloadUrl and call signature getDownloadUrl(file.url, file.name), which is the natural API dictated by delivery-worker.ts signatures; alternative correct fixes would share these."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests include subprocess invocations of eslint, prettier, and TypeScript parser in addition to source text assertions."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "f2p tests require actual import changes and call-site rewrite; a stub can't satisfy them without performing the fix."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "Tests verify the import change, call signature change, and preservation of other module exports as described in instruction.md."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are grouped with section comments for f2p, p2p, and repo CI checks."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task is a code fix, no structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths and function names are consistent across instruction, tests, and solution."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction names the files to investigate but doesn't specify the exact line or exact function name to use; localization within files is required."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "Not a config edits task."
+    }
+  },
+  "tier_a_fails": [],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
+}

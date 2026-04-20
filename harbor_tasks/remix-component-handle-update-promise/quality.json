@@ -1,60 +1,56 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all file paths (component.ts, scheduler.ts, AGENTS.md, README.md, docs/handle.md), the specific identifiers (MAX_CASCADING_UPDATES, cascadingUpdateCount, 'infinite loop detected'), the function remove(), the renderCtrl abort requirement, the Promise<AbortSignal> return type, the old signature 'handle.update(task?)', and the 'await handle.update()' pattern. All test assertions reference items discoverable from the instruction."
+      "reason": "Instruction names all required files (component.ts, scheduler.ts, AGENTS.md, README.md, docs/handle.md), the 'infinite loop detected' literal, the Promise<AbortSignal> return type, and the remove() cleanup behavior."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly names implementation details like 'Define a module-level constant specifying the maximum threshold of cascading updates', 'Track a counter that increments each time a cascading update occurs', 'report an error with the message \"infinite loop detected\"', and 'The remove() function in component.ts must call abort() on renderCtrl'. These are specific implementation steps, not just descriptions of what's broken."
+      "outcome": "pass",
+      "reason": "Instruction describes expected behavior without dictating specific variable names or line changes; the agent must still design the implementation."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_cascading_update_guard asserts exact variable names 'MAX_CASCADING_UPDATES' and 'cascadingUpdateCount' as string literals in source. An alternative correct fix using e.g. 'maxCascadingUpdates' or 'cascadeCount' would fail. test_render_ctrl_cleanup also searches for exact string 'renderCtrl' in the remove() body. These are gold-specific implementation detail checks."
+      "reason": "Tests assert on gold-specific internal names like 'MAX_CASCADING_UPDATES', 'cascadingUpdateCount', and 'renderCtrl' \u2014 a correct alternative implementation using different identifiers (e.g., MAX_FLUSH_DEPTH, depthCounter, renderController) would fail despite matching the required behavior."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "test_cascading_update_guard is purely text-based: it reads scheduler.ts and asserts string presence of 'MAX_CASCADING_UPDATES', 'cascadingUpdateCount', 'infinite loop detected'. test_render_ctrl_cleanup reads component.ts source and searches for string 'renderCtrl' and 'abort'. test_agents_md_promise_api, test_readme_md_promise_api, test_handle_md_promise_api are all pure text grep checks. Only test_handle_update_returns_promise and the pass-to-pass tests execute code. The majority of fail-to-pa"
+      "outcome": "pass",
+      "reason": "Tests execute subprocesses (tsc, pnpm build/lint) and use a TypeScript compile check for the Promise<AbortSignal> signature, though several are text grep checks."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub implementation would not pass: test_handle_update_returns_promise requires actual TypeScript type changes that compile; test_cascading_update_guard requires specific strings in scheduler.ts; test_render_ctrl_cleanup requires code in remove(); doc tests require specific content. None are satisfiable by default/empty implementations."
+      "reason": "The typecheck test requires actual API signature change; structural checks require specific implementation markers; build/lint tests require working code."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction specifies: Promise<AbortSignal> return (tested by type check), cascading update guard with threshold/counter/error message (tested by text check), renderCtrl abort in remove() (tested by text check), and doc updates (tested by text checks). All required behaviors have corresponding tests."
+      "reason": "Promise API, cascading guard, renderCtrl cleanup, and documentation updates are all tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are grouped with clear section comments (pass-to-pass repo_tests, fail-to-pass behavioral type check, fail-to-pass structural code checks, fail-to-pass documentation checks) and each has a descriptive docstring."
+      "reason": "Tests are grouped with header comments separating pass-to-pass, fail-to-pass behavioral, structural, and documentation checks."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "No structured data output produced."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, variable names, and commands in instruction.md and tests match correctly (component.ts, scheduler.ts, AGENTS.md, README.md, docs/handle.md, MAX_CASCADING_UPDATES, cascadingUpdateCount, renderCtrl, etc.)."
+      "reason": "Paths and names appear consistent between instruction and tests."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction specifies exact implementation details: 'Define a module-level constant specifying the maximum threshold', 'Track a counter that increments each time', exact error message 'infinite loop detected', 'The remove() function in component.ts must call abort() on renderCtrl'. This goes beyond describing the bug to prescribing the exact fix structure."
+      "outcome": "pass",
+      "reason": "Instruction points to files but doesn't name specific buggy lines; file localization is the stated scope."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is not an agentmd-edits task; it involves code and documentation changes, not config files."
+      "reason": "Not an agentmd-edits-only task; code changes are primary."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 5,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 1
 }

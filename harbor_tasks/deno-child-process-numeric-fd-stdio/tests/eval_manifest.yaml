@@ -1,0 +1,163 @@
+version: '2.0'
+source:
+  repo: denoland/deno
+  pr: 33140
+  base_commit: d198cda44b7fddb56d892a8ef2349d1630adfa37
+  merge_commit: ff775b28644c15915919b0d64cc5010cd3eef87d
+checks:
+- id: stdio_or_fd_enum
+  type: fail_to_pass
+  origin: pr_diff
+  description: StdioOrRid enum renamed to StdioOrFd in ext/process/lib.rs
+- id: fd_variant_with_i32
+  type: fail_to_pass
+  origin: pr_diff
+  description: Fd(i32) variant replaces Rid(ResourceId) in the enum
+- id: as_stdio_fd_duplication
+  type: fail_to_pass
+  origin: pr_diff
+  description: as_stdio duplicates fd using libc::dup on Unix
+- id: child_process_stdio_struct
+  type: fail_to_pass
+  origin: pr_diff
+  description: ChildProcessStdio struct added to ext/io/lib.rs for handle inheritance
+- id: extra_stdio_accepts_stdio_or_fd
+  type: fail_to_pass
+  origin: pr_diff
+  description: extra_stdio field accepts StdioOrFd for numeric fd passthrough
+- id: inherit_uses_child_process_stdio
+  type: fail_to_pass
+  origin: pr_diff
+  description: Inherit mode borrows ChildProcessStdio from OpState instead of hardcoded
+    Rid
+- id: file_resource_import_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: FileResource import removed, ChildProcessStdio imported instead
+- id: numeric_fd_deserialization
+  type: fail_to_pass
+  origin: pr_diff
+  description: Numeric values deserialized as Fd with i64/i32 validation
+- id: stdio_string_deserialization_preserved
+  type: pass_to_pass
+  origin: static
+  description: String variants (inherit, piped, null) still handled in Deserialize
+- id: child_stdio_struct_fields
+  type: pass_to_pass
+  origin: static
+  description: ChildStdio struct retains stdin/stdout/stderr fields
+- id: cargo_check_deno_io
+  type: pass_to_pass
+  origin: repo_tests
+  description: Cargo check deno_io package compiles
+- id: cargo_check_deno_process
+  type: pass_to_pass
+  origin: repo_tests
+  description: Cargo check deno_process package compiles
+- id: cargo_clippy_process_io
+  type: pass_to_pass
+  origin: repo_tests
+  description: Cargo clippy passes for process and io packages
+- id: cargo_fmt_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Cargo fmt check passes on modified files
+- id: cargo_test_deno_io
+  type: pass_to_pass
+  origin: repo_tests
+  description: Unit tests for deno_io package pass
+- id: cargo_test_deno_process
+  type: pass_to_pass
+  origin: repo_tests
+  description: Unit tests for deno_process package pass
+rubric:
+- rule: Node.js compatibility code is in ext/node/polyfills/. When reviewing these
+    files, check behavior against Node.js docs, not just Deno conventions.
+  source:
+    path: .github/copilot-instructions.md
+    lines: 322-325
+    commit: d198cda44b7fddb56d892a8ef2349d1630adfa37
+- rule: Keep your changes minimal, don't do drive-by changes in a PR.
+  source:
+    path: CLAUDE.md
+    lines: 39-41
+    commit: d198cda44b7fddb56d892a8ef2349d1630adfa37
+- rule: Extensions providing native functionality to JS (fs, net, etc.) belong in
+    the `ext/` directory.
+  source:
+    path: CLAUDE.md
+    lines: 61-62
+  evidence: The gold solution implements the native OS file descriptor handling and
+    stdio inheritance within the `ext/io/lib.rs` and `ext/process/lib.rs` files, correctly
+    placing native system access logic in the
+  category: architecture
+- rule: Extensions providing native functionality to JS (like filesystem operations)
+    are located in the `ext/` directory.
+  source:
+    path: CLAUDE.md
+    lines: 54-58
+  evidence: 'The gold solution modifies files in the `ext/` directory (`ext/io/lib.rs`,
+    `ext/process/lib.rs`, `ext/node/polyfills/internal/child_process.ts`) to implement
+    the native file descriptor functionality, '
+  category: architecture
+- rule: Extensions providing native functionality to JS are located in the ext/ directory.
+  source:
+    path: CLAUDE.md
+    lines: '58'
+  evidence: The gold solution modifies ext/io/lib.rs and ext/process/lib.rs to implement
+    the native file descriptor handling for child processes, aligning with the architectural
+    guideline that native extensions l
+  category: architecture
+- rule: The `ext/` directory contains extensions providing native functionality to
+    JavaScript (e.g., system access, filesystem operations).
+  source:
+    path: CLAUDE.md
+    lines: 54-56
+  evidence: The gold solution implements the native file descriptor handling and OS-level
+    duplication logic within the `ext/` directory (`ext/io/lib.rs`, `ext/process/lib.rs`),
+    aligning with the architectural gui
+  category: architecture
+- rule: Implement native runtime and system-access behavior inside `ext/` extensions.
+  source:
+    path: CLAUDE.md
+    lines: 51-54
+  source_text: 'The `deno_runtime` crate (`./runtime`) assembles the JavaScript runtime,
+
+    including all "extensions" (native functionality exposed to JavaScript). The
+
+    extensions themselves are in the `ext/` directory, and provide system access to
+
+    JavaScript – for instance filesystem operations and networking.'
+  evidence: The diff puts the child-process stdio fix in `ext/io/lib.rs`, `ext/process/lib.rs`,
+    and `ext/node/polyfills/internal/child_process.ts` rather than `cli/`. Concrete
+    examples are the new `ChildProcessStdio` struct in `ext/io/lib.rs` and the new
+    `StdioOrFd` fd-handling logic in `ext/process/lib.rs`.
+  category: architecture
+  verification: llm_judge
+distractors:
+- rule: Unit tests should be placed in the `tests/unit/` directory.
+  collision_type: scope_ambiguity
+  why_distracting: The config states that unit tests belong in `tests/unit/`. An agent
+    might try to create a new test file there, but the problem description explicitly
+    requires adding the test to `tests/unit_node/child_process_test.ts` because it
+    specifically tests Node.js compatibility polyfills.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 61-61
+- rule: When adding an op, look at ops in the relevant `ext/` directory.
+  source:
+    path: CLAUDE.md
+    lines: 338-339
+  source_text: "- Need to add an op? Look at ops in relevant `ext/` directory (e.g.,\n\
+    \  `ext/fs/lib.rs`)"
+  collision_type: meta_confusion
+  why_distracting: Because the patch changes extension behavior, this could push an
+    agent toward inventing a new JS-exposed op. The gold diff correctly avoids that
+    and extends existing stdio plumbing (`StdioOrFd`, `ChildProcessStdio`, extra stdio
+    fd handling) instead of adding a new op surface.
+  severity: low
+hierarchy_analysis: The configuration is a flat, single file (`CLAUDE.md`) containing
+  high-level repository guidelines. The primary interaction is a slight scope ambiguity
+  where the general directory structure documented in the config (`tests/unit/`) conflicts
+  with the specific instructions in the prompt (`tests/unit_node/`).

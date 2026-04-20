@@ -1,0 +1,162 @@
+version: '2.0'
+source:
+  repo: oven-sh/bun
+  pr: 28205
+  base_commit: a04817ce2b7f1a1e8b7cbf8af8f2c027ab072f1d
+  merge_commit: 256bba7b0cc7ac17faf3708eecddfac68985fef8
+checks:
+- id: file_parses
+  type: pass_to_pass
+  origin: static
+  description: Test file exists, is substantive, and has balanced braces
+- id: repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo oxlint check passes on test file (npx oxlint@0.16.0 --config=oxlint.json)
+- id: repo_typescript_syntax
+  type: pass_to_pass
+  origin: static
+  description: TypeScript test file has valid syntax and structure (Node.js file content
+    analysis)
+- id: repo_prettier
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo Prettier formatting check passes on test file (npx prettier --check)
+- id: repo_editorconfig
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo EditorConfig check passes on test file (npx editorconfig-checker)
+- id: loop_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Sequential for-loop over invalidVersions with Bun.spawn is removed
+- id: versions_parameterized
+  type: fail_to_pass
+  origin: pr_diff
+  description: Each invalid version gets its own test case via test.each or similar
+- id: substantive_bodies
+  type: pass_to_pass
+  origin: pr_diff
+  description: Invalid-version test bodies contain Bun.spawn + await exited + expect
+    (not stubs)
+- id: all_invalid_versions_present
+  type: pass_to_pass
+  origin: pr_diff
+  description: All 5 invalid version strings still present in the test file
+- id: exit_code_assertion
+  type: pass_to_pass
+  origin: pr_diff
+  description: Non-zero exit code assertion preserved
+- id: valid_version_tests_intact
+  type: pass_to_pass
+  origin: pr_diff
+  description: Valid version parsing tests (1.0.0.0, 2.0.0.0, 3.0.0.0) still present
+- id: describe_structure_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: Main describe blocks (Windows/compile/metadata + CLI flags) preserved
+- id: other_tests_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: Other test blocks (all metadata flags, partial metadata flags) intact
+- id: no_flaky_patterns
+  type: pass_to_pass
+  origin: agent_config
+  description: No setTimeout or sleep calls added
+  source:
+    path: test/AGENTS.md
+    lines: '4265'
+    commit: a04817ce2b7f1a1e8b7cbf8af8f2c027ab072f1d
+- id: concurrent_pattern_preserved
+  type: pass_to_pass
+  origin: agent_config
+  description: describe.concurrent pattern must remain
+  source:
+    path: test/AGENTS.md
+    lines: '4266'
+    commit: a04817ce2b7f1a1e8b7cbf8af8f2c027ab072f1d
+- id: no_test_timeout
+  type: pass_to_pass
+  origin: agent_config
+  description: No explicit test timeout set — Bun already has timeouts
+  source:
+    path: test/AGENTS.md
+    lines: '4364'
+    commit: a04817ce2b7f1a1e8b7cbf8af8f2c027ab072f1d
+- id: uses_harness_helpers
+  type: pass_to_pass
+  origin: agent_config
+  description: Must use bunExe(), bunEnv, and tempDir from harness
+  source:
+    path: test/AGENTS.md
+    lines: '4272'
+    commit: a04817ce2b7f1a1e8b7cbf8af8f2c027ab072f1d
+- id: uses_await_using_for_proc
+  type: pass_to_pass
+  origin: agent_config
+  description: Bun.spawn calls must use 'await using' for automatic resource cleanup
+  source:
+    path: test/AGENTS.md
+    lines: '100'
+    commit: a04817ce2b7f1a1e8b7cbf8af8f2c027ab072f1d
+rubric:
+- rule: Replace sequential for-loops over test data with test.each() or describe.each()
+    for parameterized tests to enable concurrent execution
+  source:
+    path: test/AGENTS.md
+    lines: '4488'
+    commit: a04817ce2b7f1a1e8b7cbf8af8f2c027ab072f1d
+  reference: "The gold solution replaces:\n  for (const version of invalidVersions)\
+    \ { await using proc = Bun.spawn(...); }\nwith:\n  test.each([...])(\"name\",\
+    \ async ({ version }) => { await using proc = Bun.spawn(...); })\nThis removes\
+    \ the flaky sequential loop pattern and enables concurrent test execution.\n"
+- rule: Prefer concurrent tests over sequential tests when spawning processes.
+  source:
+    path: test/AGENTS.md
+    lines: 18-20
+  evidence: The gold solution replaces a sequential `for` loop with `test.each`, which
+    allows the tests to run concurrently because the parent `describe` block is already
+    marked with `.concurrent`.
+  category: testing
+- rule: When spawning Bun processes, use bunExe and bunEnv from harness.
+  source:
+    path: test/AGENTS.md
+    lines: 24-25
+  evidence: The gold solution continues to use `bunExe()` and `bunEnv` from the harness
+    when calling `Bun.spawn` for the individual test cases.
+  category: testing
+- rule: 'CRITICAL: Do not set a timeout on tests.'
+  source:
+    path: test/AGENTS.md
+    lines: 102-103
+  evidence: The gold solution fixes the timeout issue by splitting the test cases
+    to utilize individual timeout budgets, rather than adding a custom timeout parameter
+    to the test function.
+  category: testing
+distractors:
+- rule: test/bundler/ - Bundler and transpiler tests. Use itBundled helper.
+  collision_type: scope_ambiguity
+  why_distracting: The rule states to use the `itBundled` helper for tests in `test/bundler/`.
+    Since this file is in `test/bundler/`, an agent might try to refactor the test
+    to use `itBundled`. However, this test is specifically for the `--compile` CLI
+    flag (which generates an executable), so `Bun.spawn` is required and `itBundled`
+    is inappropriate.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 46-47
+- rule: When a test file spawns a Bun process, we like for that file to end in *-fixture.ts.
+  collision_type: scope_ambiguity
+  why_distracting: The rule suggests that files spawned by Bun in tests should end
+    in `*-fixture.ts`. The test creates an inline `app.js` file using `tempDir`. An
+    agent might unnecessarily rename this to `app-fixture.ts` or extract it, adding
+    noise to the PR.
+  severity: low
+  source:
+    path: test/AGENTS.md
+    lines: 82-83
+hierarchy_analysis: The config hierarchy is moderate, with `AGENTS.md` at the root
+  and `test/AGENTS.md` providing specific testing overrides. The root config suggests
+  using `itBundled` for the bundler directory, but the agent must recognize that this
+  specific test's nature (CLI compilation) overrides that general directory-based
+  rule.

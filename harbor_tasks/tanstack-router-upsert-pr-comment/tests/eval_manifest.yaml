@@ -1,0 +1,98 @@
+checks:
+- id: file_exists
+  type: fail_to_pass
+  description: upsert-pr-comment.mjs file is created
+  origin: pr_diff
+- id: node_syntax_valid
+  type: fail_to_pass
+  description: Script has valid Node.js syntax and can be parsed
+  origin: pr_diff
+- id: parseArgs_function_works
+  type: fail_to_pass
+  description: parseArgs function correctly parses CLI arguments
+  origin: pr_diff
+- id: required_args_validated
+  type: fail_to_pass
+  description: Required arguments (--pr, --body-file) are validated
+  origin: pr_diff
+- id: env_fallback_works
+  type: fail_to_pass
+  description: Environment variables are used as fallback for repo, token, apiUrl
+  origin: pr_diff
+- id: githubRequest_structure
+  type: fail_to_pass
+  description: githubRequest function makes proper API calls with correct headers
+  origin: pr_diff
+- id: marker_logic_works
+  type: fail_to_pass
+  description: Marker is added to body content when not present
+  origin: pr_diff
+- id: listIssueComments_pagination
+  type: fail_to_pass
+  description: listIssueComments handles pagination correctly
+  origin: pr_diff
+- id: repo_benchmarks_node_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's benchmark scripts have valid Node.js syntax
+- id: repo_scripts_node_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's utility scripts have valid Node.js syntax
+- id: repo_prettier_formatting
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's scripts follow Prettier formatting rules
+- id: repo_all_scripts_node_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: All .mjs files in scripts/ directory have valid Node.js syntax
+rubric:
+- rule: Use Node.js built-in modules with the 'node:' prefix (e.g., 'node:fs', 'node:path',
+    'node:util').
+  source:
+    path: AGENTS.md
+    lines: 18-24
+    commit: 13ef4c2e7c92e276185c112d486248b7447535de
+- rule: Include the shebang '#!/usr/bin/env node' at the top of executable scripts.
+  source:
+    path: AGENTS.md
+    lines: 18-24
+    commit: 13ef4c2e7c92e276185c112d486248b7447535de
+- rule: Validate required CLI arguments and environment variables with clear error
+    messages.
+  source:
+    path: AGENTS.md
+    lines: 18-24
+    commit: 13ef4c2e7c92e276185c112d486248b7447535de
+distractors:
+- rule: TypeScript strict mode with extensive type safety
+  collision_type: rule_conflict
+  why_distracting: The task explicitly requires creating a `.mjs` (JavaScript) file.
+    An agent following the 'TypeScript strict mode' rule might erroneously create
+    a `.ts` file or attempt to add complex JSDoc typings, conflicting with the simple
+    ES module script requirement.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 14-15
+- rule: 'Critical: Always run unit and type tests during development - do not proceed
+    if they fail'
+  collision_type: scope_ambiguity
+  why_distracting: This is a standalone utility script for CI benchmarks. An agent
+    strictly following the testing instructions might waste time trying to write Nx-compatible
+    unit tests for this script or get stuck running the entire monorepo test suite.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 45-46
+hierarchy_analysis: The repository has a single root-level AGENTS.md file. The rules
+  within it are heavily tailored towards the main TanStack Router packages (TypeScript,
+  Nx, React/Solid). The agent must recognize that these global application-level rules
+  do not apply to standalone utility scripts in the `scripts/` directory.
+version: '2.0'
+source:
+  repo: TanStack/router
+  pr: 6948
+  base_commit: 13ef4c2e7c92e276185c112d486248b7447535de
+  merge_commit: 97dc9f66f3a0e48719f9a167d7e707e432371506

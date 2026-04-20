@@ -1,0 +1,65 @@
+source:
+  pr: "dagster-io/dagster#33620"
+  title: "fix(dlt): drop local state before run"
+  base_commit: "be55f8c00c583e070f8a0cb0518f7b49a85ab2d9"
+  merge_commit: "b776602f1381cd661d3328ed7835ac0120f33111"
+  target_file: "python_modules/libraries/dagster-dlt/dagster_dlt/resource.py"
+
+checks:
+  # Fail-to-pass tests (functional behavior)
+  - id: test_drop_pipeline_state_code_exists
+    type: fail_to_pass
+    origin: gold_patch
+    description: "Verify the fix code (drop/drop_pending_packages) exists in resource.py"
+
+  - id: test_drop_behavior_with_restore_enabled
+    type: fail_to_pass
+    origin: gold_patch
+    description: "Verify drop() is called when restore_from_destination is enabled"
+
+  - id: test_comment_documentation_present
+    type: fail_to_pass
+    origin: gold_patch
+    description: "Verify explanatory comment about the fix is present"
+
+  - id: test_drop_called_before_run
+    type: fail_to_pass
+    origin: gold_patch
+    description: "Verify drop() is called BEFORE dlt_pipeline.run()"
+
+  # Pass-to-pass tests (regression/sanity checks using actual CI commands)
+  - id: test_repo_ruff_dagster_dlt
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Run ruff check on dagster-dlt package (repo CI command)"
+
+  - id: test_dagster_dlt_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Run dagster-dlt unit tests for modified module (repo CI command)"
+
+  - id: test_repo_make_check_ruff
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Run make check_ruff on the repo (repo CI command from Makefile)"
+
+  - id: test_dagster_dlt_import
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Verify dagster_dlt module imports correctly (smoke test)"
+
+rubric:
+  # Code fix quality rules (observable in the actual code changes)
+  # Note: The rubric judge framework requires these entries. The actual validation
+  # of code quality is done through the pass/fail tests above.
+  - id: fix_includes_proper_comment
+    description: "The fix includes an explanatory comment about why local state is dropped"
+    weight: 1.0
+
+  - id: fix_handles_both_cases
+    description: "The fix handles both restore_from_destination enabled and disabled cases"
+    weight: 0.5
+
+  - id: fix_has_proper_indentation
+    description: "The fix code is properly indented and follows Python conventions"
+    weight: 0.5

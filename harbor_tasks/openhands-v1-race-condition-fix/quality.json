@@ -1,61 +1,59 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all three files (settings.ts, use-settings.ts, use-create-conversation.ts), the specific changes (v1_enabled: true, export getSettingsQueryFn, ensureQueryData, DEFAULT_SETTINGS fallback, organizationId in query key), and the concepts tested. All assert'd specifics like 'ensureQueryData', 'DEFAULT_SETTINGS', 'getSettingsQueryFn', 'useSelectedOrganizationId', and 'organizationId' are mentioned in the instruction."
+      "reason": "Instruction.md names all three file paths, the function getSettingsQueryFn to export, DEFAULT_SETTINGS, ensureQueryData, organizationId in query key, and v1_enabled values that tests assert on."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fixes: 'DEFAULT_SETTINGS object contains a v1_enabled property that must be true', 'getSettingsQueryFn function must be exported', 'Use a query-key pattern that includes the organization ID', 'Fall back to DEFAULT_SETTINGS when settings cannot be fetched', and 'ensureQueryData helper can be used to wait for a query to complete'. These are not descriptions of what's broken but prescriptions of exactly what to change."
+      "reason": "Instruction explicitly states 'must be `true` (not `false`)', 'getSettingsQueryFn function must be exported', and names ensureQueryData and DEFAULT_SETTINGS fallback \u2014 these are direct fix prescriptions matching tests like test_default_settings_v1_enabled and test_use_create_conversation_uses_ensureQueryData."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: test_use_create_conversation_uses_ensureQueryData checks for 'await queryClient.ensureQueryData' literally, test_use_create_conversation_has_fallback checks for 'settings = DEFAULT_SETTINGS' literally, test_use_create_conversation_uses_organizationId checks for exact queryKey pattern via regex. An alternative correct fix (e.g., using fetchQuery, or a different variable name like 'userSettings', or a different fallback pattern) would fail thes"
+      "reason": "Tests assert exact patterns like `queryKey: [\"settings\", organizationId]` regex, `settings = DEFAULT_SETTINGS` literal in catch, and exact import strings \u2014 alternative correct fixes (e.g., using a different fallback variable name, or using useQuery with enabled gating instead of ensureQueryData) would fail."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_default_settings_v1_enabled, test_getSettingsQueryFn_exported, test_use_create_conversation_uses_ensureQueryData, test_use_create_conversation_has_fallback, test_use_create_conversation_uses_organizationId, test_use_create_conversation_imports, test_typescript_no_new_errors) are ALL text-matching tests using regex/string searches on file contents. While there are pass-to-pass tests that run builds/tests, the f2p tests that verify the fix are purely textual pattern ma"
+      "outcome": "pass",
+      "reason": "Tests run npm typecheck/lint/build/test subprocesses that execute the code, in addition to text inspection."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "The f2p tests are text-matching only. A stub that simply contains the right string patterns (e.g., inserting dead-code comments with 'ensureQueryData', 'DEFAULT_SETTINGS', 'settings = DEFAULT_SETTINGS', etc.) without actually fixing the race condition would pass all f2p tests. The text checks don't verify runtime behavior."
+      "outcome": "pass",
+      "reason": "The npm test invocations actually run vitest tests (e.g., use-create-conversation.test.tsx) which would fail if behavior wasn't fixed."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in the instruction (v1_enabled default to true, export getSettingsQueryFn, use ensureQueryData, fallback to DEFAULT_SETTINGS, use organizationId in query key) are tested, plus pass-to-pass tests verify the build/typecheck/lint still work."
+      "reason": "All required changes (v1_enabled true, export getSettingsQueryFn, ensureQueryData, fallback, organizationId key) are tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are clearly grouped into 'Pass-to-Pass Tests' and 'Fail-to-Pass Tests' sections with comments, and each test has a descriptive name and docstring."
+      "reason": "Tests are organized with section comments separating pass-to-pass and fail-to-pass groups with descriptive names."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a race condition in frontend code, not producing structured data output."
+      "reason": "Task is code modification, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, function names, and commands in the instruction and tests are consistent and correct."
+      "reason": "Paths and function names appear consistent across instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names exact files and exact changes: 'frontend/src/services/settings.ts \u2014 v1_enabled property that must be true', 'frontend/src/hooks/query/use-settings.ts \u2014 getSettingsQueryFn function must be exported', 'frontend/src/hooks/mutation/use-create-conversation.ts \u2014 must use ensureQueryData'. This goes beyond describing the bug to specifying implementation-level details of the fix."
+      "reason": "Instruction names exact files, exact property values to set (v1_enabled true), exact function to export (getSettingsQueryFn), and exact API to use (ensureQueryData), removing the localization/discovery aspect of the task."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config/agentmd-edits task."
+      "reason": "Code-only task."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 5
+  "pass_count": 6,
+  "fail_count": 3
 }

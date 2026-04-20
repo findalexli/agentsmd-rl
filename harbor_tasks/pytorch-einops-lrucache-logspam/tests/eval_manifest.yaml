@@ -1,0 +1,175 @@
+version: '2.0'
+source:
+  repo: pytorch/pytorch
+  pr: 175442
+  base_commit: 98e35020c7423c304778a7044f6baa3c8a98ba6d
+  merge_commit: ef5c69dec13056e58810a59663db7f8a6b8bebbd
+checks:
+- id: test_allow_in_graph_wraps_core_ops
+  type: fail_to_pass
+  origin: pr_diff
+  description: allow_in_graph must be called for rearrange and reduce (version check
+    must not skip)
+- id: test_multiple_einops_functions_wrapped
+  type: fail_to_pass
+  origin: pr_diff
+  description: At least 4 of 6 einops functions must be registered with allow_in_graph
+- id: test_version_check_does_not_skip_wrapping
+  type: fail_to_pass
+  origin: pr_diff
+  description: Version check must not cause early return that skips allow_in_graph
+    calls
+- id: test_version_check_is_commented_out
+  type: fail_to_pass
+  origin: pr_diff
+  description: The version check comparing einops.__version__ must be commented out
+    in the function body
+- id: test_syntax_check
+  type: pass_to_pass
+  origin: static
+  description: torch/_dynamo/decorators.py must parse without syntax errors
+- id: test_repo_python_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Python syntax check passes via py_compile
+- id: test_repo_flake8_errors
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's flake8 error check passes (E9, F63, F7, F82)
+- id: test_repo_tools_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's tools tests pass (test_docstring_linter.py)
+- id: test_repo_github_scripts_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's .github/scripts tests pass (test_gitutils.py)
+- id: test_function_imports_einops
+  type: pass_to_pass
+  origin: static
+  description: _allow_in_graph_einops must exist and contain 'import einops'
+- id: test_not_stub
+  type: pass_to_pass
+  origin: static
+  description: Function has substantive body (>=4 AST statements), not just pass/return
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff check passes on modified file (E9, F63, F7, F82)
+- id: test_repo_label_utils_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's label_utils tests pass from .github/scripts/
+- id: test_repo_delete_old_branches_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's delete_old_branches tests pass from .github/scripts/
+- id: test_repo_trymerge_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's trymerge tests pass from .github/scripts/
+- id: test_repo_tryrebase_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's tryrebase tests pass from .github/scripts/
+- id: test_repo_filter_test_configs_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's filter_test_configs tests pass from .github/scripts/
+- id: test_repo_collect_env
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's collect_env.py runs without errors
+- id: test_repo_no_nonbreaking_spaces
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo has no non-breaking spaces in source files
+- id: test_repo_codegen_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's codegen tests pass from tools/test/
+- id: test_repo_test_selections_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's test_selections tests pass from tools/test/
+rubric:
+- rule: Minimize comments; be concise; code should be self-explanatory. Comments explaining
+    why code is TEMPORARILY DISABLED are acceptable and necessary.
+  source:
+    path: CLAUDE.md
+    lines: '48'
+    commit: 98e35020c7423c304778a7044f6baa3c8a98ba6d
+- rule: Comments should be useful, for example, comments that remind the reader about
+    some global context that is non-obvious and can't be inferred locally.
+  source:
+    path: CLAUDE.md
+    lines: 49-50
+    commit: 98e35020c7423c304778a7044f6baa3c8a98ba6d
+- rule: Match existing code style and architectural patterns. Temporarily commenting
+    out code with explanatory comments is acceptable for hotfixes.
+  source:
+    path: CLAUDE.md
+    lines: '57'
+    commit: 98e35020c7423c304778a7044f6baa3c8a98ba6d
+- rule: If uncertain, choose the simpler, more concise implementation. Commenting
+    out problematic code is simpler than complex refactoring.
+  source:
+    path: CLAUDE.md
+    lines: '62'
+    commit: 98e35020c7423c304778a7044f6baa3c8a98ba6d
+distractors:
+- rule: Only use commands provided via `spin` for linting.
+  collision_type: rule_conflict
+  why_distracting: CLAUDE.md instructs the agent to use `spin lint` and `spin fixlint`,
+    which directly conflicts with AGENTS.md's instruction to use `lintrunner -a`.
+    The agent must choose which linting tool to use.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 23-27
+- rule: All build (both codegen, C++ and python) is done via `pip install -e . -v
+    --no-build-isolation`.
+  collision_type: rule_conflict
+  why_distracting: CLAUDE.md provides instructions for building PyTorch via `pip install
+    -e .`, but AGENTS.md explicitly warns that there is no working build environment.
+    Attempting to build will waste time and likely fail.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 7-9
+- rule: Once the change is passing, find an appropriate test file to add the test
+    to and make sure to follow local conventions on the test file.
+  collision_type: scope_ambiguity
+  why_distracting: The instruction requires finding an appropriate test file to add
+    a test once the change is passing. However, this bug involves a third-party library
+    (einops) integration, making it ambiguous and difficult to find a suitable test
+    file without expanding the scope unnecessarily.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 2-6
+- rule: Minimize comments; be concise; code should be self-explanatory and self-documenting.
+  collision_type: rule_conflict
+  why_distracting: The agent might interpret 'Minimize comments; be concise' as an
+    instruction to simply delete the version check block without leaving an explanatory
+    comment, which would violate the need to document the temporary workaround for
+    the lru_cache issue.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 41-41
+- rule: Debug AOTInductor (AOTI) errors and crashes.
+  source:
+    path: .claude/skills/aoti-debug/SKILL.md
+    lines: 1-5
+  collision_type: scope_ambiguity
+  why_distracting: The issue mentions `torch.compile`, which uses AOTInductor under
+    the hood. The agent might activate this skill to debug the `lru_cache` warnings,
+    but this is a Dynamo frontend tracing issue, not an AOTI backend issue.
+  severity: low
+hierarchy_analysis: The configuration consists of two root-level files (AGENTS.md
+  and CLAUDE.md) that contain direct contradictions. AGENTS.md provides restrictive
+  environment warnings ('Do NOT run setup.py', 'run lintrunner -a'), while CLAUDE.md
+  provides standard repository workflows ('pip install -e .', 'spin lint'). The agent
+  must synthesize these flat but conflicting instructions, ideally prioritizing the
+  explicit negative constraints in AGENTS.md over the general guidelines in CLAUDE.md.

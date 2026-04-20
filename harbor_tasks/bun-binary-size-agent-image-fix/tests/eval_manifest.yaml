@@ -1,0 +1,77 @@
+version: '2.0'
+source:
+  repo: oven-sh/bun
+  pr: 28993
+  base_commit: b6a45f9f50c71afe1102bb4396dd304ce1c57b30
+  merge_commit: 1afabdde2eb7fe609933b770364611854f8e8dda
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified file must be valid JavaScript/Node.js syntax
+- id: uses_buildplatforms_find
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'getBinarySizeStep should use buildPlatforms.find() to get the correct
+    agent config with features: [''docker'']'
+- id: no_handbuilt_platform_object
+  type: fail_to_pass
+  origin: pr_diff
+  description: Should not use hand-built platform object that omits features field,
+    causing Image not found error
+- id: test_repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo JavaScript linting passes via bunx oxlint on src/js (CI command:
+    bun lint)'
+- id: test_repo_prettier
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Modified .buildkite/ci.mjs passes Prettier formatting check (CI command:
+    npx prettier --check)'
+- id: test_repo_banned_words
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Banned words check passes (CI command: bun run banned)'
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo TypeScript typecheck passes via tsc --noEmit
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: getBinarySizeStep function has real implementation with key, label,
+    agents, and depends_on
+- id: binary_size_step_structure
+  type: pass_to_pass
+  origin: static
+  description: getBinarySizeStep returns properly structured step object with all
+    required Buildkite step properties
+rubric:
+- rule: Follow existing code style. Check neighboring files for patterns.
+  source:
+    path: CLAUDE.md
+    lines: '119'
+    commit: b6a45f9f50c71afe1102bb4396dd304ce1c57b30
+distractors:
+- rule: If a test is for a specific numbered GitHub Issue, it should be placed in
+    test/regression/issue/${issueNumber}.test.ts.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to create a regression test for this CI
+    fix, but CI configuration changes cannot be tested via the standard Bun test runner.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 45-46
+- rule: 'Run tests with your debug build: bun bd test <test-file>'
+  collision_type: meta_confusion
+  why_distracting: The agent might try to use the Bun test runner to validate the
+    .buildkite/ci.mjs changes, which is a meta-confusion since CI scripts are evaluated
+    by Buildkite, not the local test runner.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 10-11
+hierarchy_analysis: The provided config files (CLAUDE.md and AGENTS.md) are identical
+  and focus entirely on building the Bun runtime and writing JavaScript/Zig tests.
+  They do not contain any guidelines for modifying CI configuration files like .buildkite/ci.mjs.

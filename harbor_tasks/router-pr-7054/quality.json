@@ -1,61 +1,56 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: test_onrendered_returns_null_on_server checks for the exact pattern 'if (isServer ?? router.isServer) { return null }'; test_onrendered_uses_layout_effect checks for 'useLayoutEffect' usage; test_onrendered_no_script_tag_rendering searches for the OnRendered function by regex. The instruction mentions the OnRendered component only indirectly ('The component responsible for tracking render completion') and never me"
+      "outcome": "pass",
+      "reason": "Instruction names the test 'should inject scripts in order' in packages/react-router/tests/Scripts.test.tsx, the solid-router Match.tsx file and the 'renders a dummy dom element' phrase, and references builds/types/eslint generally."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md says 'The component responsible for tracking render completion and firing onRendered events should not render any DOM elements that would appear in the SSR output' \u2014 this effectively tells the agent to make OnRendered return null on server. Combined with mentioning the specific file packages/solid-router/src/Match.tsx and the exact comment text 'renders a dummy dom element' to remove, this significantly narrows the solution space."
+      "outcome": "pass",
+      "reason": "Instruction describes what's broken (extra empty script tag in SSR) without prescribing the exact code change like useLayoutEffect or isServer check."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_onrendered_returns_null_on_server asserts the exact regex pattern 'if\\s*\\(\\s*isServer\\s*\\?\\?\\s*router\\.isServer\\s*\\)\\s*\\{\\s*return\\s+null'. An alternative correct fix using e.g. 'if (typeof window === \"undefined\") { return null }' or 'if (router.isServer) { return null }' would fail this test despite being functionally correct."
+      "reason": "test_onrendered_returns_null_on_server asserts a specific pattern 'if (isServer ?? router.isServer) { return null }' and test_onrendered_uses_layout_effect requires useLayoutEffect import \u2014 alternative correct fixes (e.g., using useEffect, checking typeof window, or conditional rendering) would fail despite fixing the bug."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Tests test_onrendered_returns_null_on_server, test_onrendered_uses_layout_effect, test_onrendered_no_script_tag_rendering, and test_solid_router_onrendered_comment_updated are purely text-matching via regex/string search on source files with no execution. While test_ssr_scripts_test_passes and the pass_to_pass tests do execute code, multiple f2p tests are pure text assertions."
+      "outcome": "pass",
+      "reason": "Tests run subprocess pnpm nx unit tests, type checks, builds, and eslint in addition to file content checks."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests cannot be satisfied by stub implementations \u2014 they require specific code patterns in Match.tsx (useLayoutEffect, server null return, no script tag) and the SSR test executes actual rendering code that would fail without the fix."
+      "reason": "The f2p test_ssr_scripts_test_passes actually runs the real unit test verifying SSR HTML output, which a stub cannot satisfy."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors from instruction.md are tested: no extra script tag in SSR output (test_ssr_scripts_test_passes), no 'renders a dummy dom element' comment in solid-router (test_solid_router_onrendered_comment_updated), unit tests/type checks/builds/eslint for both packages pass."
+      "reason": "Tests cover SSR script behavior, solid-router comment update, and builds/type/eslint checks as required by instruction."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named, each has a docstring explaining what it verifies and whether it's fail_to_pass or pass_to_pass, and they're logically grouped by package and concern."
+      "reason": "Each test has a descriptive name and docstring explaining its purpose and f2p/p2p classification."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data like JSON/CSV/API/DB."
+      "reason": "Task is a code bug fix, no structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names across all task files."
+      "reason": "No typos in paths, commands, or identifiers."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md explicitly names 'packages/solid-router/src/Match.tsx' and specifies the exact comment text to change ('renders a dummy dom element'), and names the specific test file 'packages/react-router/tests/Scripts.test.tsx'. It also identifies 'the component responsible for tracking render completion and firing onRendered events' which strongly points to the OnRendered function."
+      "outcome": "pass",
+      "reason": "Instruction points to the relevant files (Scripts.test.tsx, solid-router/src/Match.tsx) but the exact buggy line in react-router Match.tsx is not revealed; localization of the OnRendered component is part of the task."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "Code-only task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 4,
-  "fail_count": 5
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 1
 }

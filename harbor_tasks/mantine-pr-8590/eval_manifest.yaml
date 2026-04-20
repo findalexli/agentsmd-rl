@@ -1,0 +1,45 @@
+version: 1
+
+source:
+  owner: mantinedev
+  repo: mantine
+  pr_number: 8590
+  base_commit: 5cda4fb4a2dcd36f518a91f5f45a50ebaada8ee2
+  merge_commit: 5af539d10431463f9c77826cf4c10dc786a83622
+  title: "[@mantine/core] use-popover: reorder middlewares to apply flip before shift"
+  description: "Reorder floating-ui middlewares from shift-before-flip to flip-before-shift in use-popover. When a Menu is at screen edge, SubMenu overlaps parent instead of flipping because shift runs first and pushes element into viewport, preventing flip from triggering. The fix ensures flip repositions element to opposite side before shift adjusts it within viewport bounds."
+  target_file: "packages/@mantine/core/src/components/Popover/use-popover.ts"
+  distinctive_line: "typeof middlewaresOptions.flip === 'boolean' ? flip() : flip(middlewaresOptions.flip)"
+
+checks:
+  - id: test_flip_before_shift_when_both_enabled
+    type: fail_to_pass
+    origin: behavioral
+    description: "flip middleware appears before shift in the middleware array when both are enabled"
+
+  - id: test_middleware_order_is_consistent
+    type: fail_to_pass
+    origin: behavioral
+    description: "flip and shift middleware push order in source matches flip-first ordering"
+
+  - id: test_repo_jest_popovertest
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Jest Popover tests pass"
+
+  - id: test_repo_eslint_popover
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ESLint passes for the Popover directory"
+
+  - id: test_repo_prettier_popover
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Prettier check passes for the Popover directory"
+
+  - id: test_repo_stylelint_popover_css
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Stylelint passes for Popover CSS files"
+
+rubric: []

@@ -1,0 +1,134 @@
+version: '2.0'
+source:
+  repo: openclaw/openclaw
+  pr: 57769
+  base_commit: c6f2db1506873e053bda30f99dea736a1b0e3ba2
+  merge_commit: f011d0be28afbc7868f5e55c1117c779bd0a9f10
+checks:
+- id: ts_syntax
+  type: pass_to_pass
+  origin: static
+  description: openai-http.ts must parse without syntax errors
+- id: sender_is_owner_false
+  type: fail_to_pass
+  origin: pr_diff
+  description: buildAgentCommandInput must set senderIsOwner to false for HTTP ingress
+    - verified via vitest execution
+- id: sender_is_owner_in_source
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Source code must contain senderIsOwner: false (not true) in buildAgentCommandInput
+    function'
+- id: build_agent_command_input_exists
+  type: pass_to_pass
+  origin: pr_diff
+  description: buildAgentCommandInput function must not be deleted or renamed
+- id: handle_openai_http_request_exported
+  type: pass_to_pass
+  origin: pr_diff
+  description: handleOpenAiHttpRequest must still be exported
+- id: adjacent_fields_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: deliver, bestEffortDeliver, and allowModelOverride retain original
+    values
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: buildAgentCommandInput must have a non-trivial function body
+- id: no_any_in_function
+  type: pass_to_pass
+  origin: agent_config
+  description: buildAgentCommandInput must not use any type annotation
+  source:
+    path: CLAUDE.md
+    lines: '144'
+    commit: c6f2db1506873e053bda30f99dea736a1b0e3ba2
+- id: no_ts_nocheck
+  type: pass_to_pass
+  origin: agent_config
+  description: openai-http.ts must not contain @ts-nocheck, @ts-ignore, or eslint-disable
+  source:
+    path: CLAUDE.md
+    lines: '146'
+    commit: c6f2db1506873e053bda30f99dea736a1b0e3ba2
+- id: params_pass_through
+  type: pass_to_pass
+  origin: pr_diff
+  description: buildAgentCommandInput must correctly pass through prompt, model, session,
+    and run fields
+- id: repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - pnpm check passes (tsgo typecheck + oxlint + architecture
+    checks)
+- id: repo_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - pnpm build succeeds
+- id: repo_gateway_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - openai-http gateway vitest tests pass
+rubric:
+- rule: Treat schema changes as protocol changes, not local refactors.
+  source:
+    path: src/gateway/protocol/CLAUDE.md
+    lines: '19'
+    commit: c6f2db1506873e053bda30f99dea736a1b0e3ba2
+- rule: Add brief code comments for tricky or non-obvious logic.
+  source:
+    path: CLAUDE.md
+    lines: '163'
+    commit: c6f2db1506873e053bda30f99dea736a1b0e3ba2
+- rule: File references must be repo-root relative only.
+  source:
+    path: CLAUDE.md
+    lines: '4'
+  evidence: The patch and script reference the file strictly as `src/gateway/openai-http.ts`,
+    avoiding absolute paths.
+  category: style
+- rule: 'Source code: `src/`'
+  source:
+    path: AGENTS.md
+    lines: 9-9
+  evidence: The gold solution modifies `src/gateway/openai-http.ts`, adhering to the
+    rule that core source code lives in the `src/` directory.
+  category: architecture
+distractors:
+- rule: Do not edit files covered by security-focused CODEOWNERS rules unless a listed
+    owner explicitly asked for the change or is already reviewing it with you.
+  collision_type: meta_confusion
+  why_distracting: The prompt explicitly flags the bug as a 'security concern' involving
+    'owner-level privileges'. An overly cautious agent might read the rule restricting
+    edits to security-focused files and refuse to make the change, waiting for a CODEOWNERS
+    approval instead of recognizing the prompt as the explicit request.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 6-6
+- rule: 'Tests: colocated `*.test.ts`.'
+  collision_type: scope_ambiguity
+  why_distracting: The prompt lists `src/gateway/openai-http.test.ts` as a relevant
+    file. The agent might feel compelled to heavily modify or add tests to comply
+    with the 'colocated tests' rule, wasting effort when the gold solution only requires
+    a single-line boolean toggle in the source file.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 10-10
+- id: repo_ingress_owner_guard
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - lint:agent:ingress-owner passes (validates ingress owner context)
+- id: repo_openai_http_image_budget
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - openai-http image budget tests pass
+- id: repo_openai_http_message_channel
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - openai-http message channel tests pass
+hierarchy_analysis: The repository contains identical `AGENTS.md` and `CLAUDE.md`
+  files at the root level. No deep hierarchy traversal or conflict resolution between
+  config files is required.

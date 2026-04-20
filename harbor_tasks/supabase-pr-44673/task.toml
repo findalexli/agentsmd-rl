@@ -1,0 +1,27 @@
+name = "supabase-www-og-cache-bust"
+description = "Fix social-media crawlers caching stale dynamic OG images by appending cache-busting timestamp to generate-og URLs"
+difficulty = "medium"
+tags = ["typescript", "www", "og-image", "cache-busting", "vitest"]
+
+build_timeout = 600
+test_timeout = 300
+
+repo_owner = "supabase"
+repo_name = "supabase"
+pr_number = 44673
+base_commit = "ebf9bc495530156f091e458ef12d86acd7c6646b"
+merge_commit = "2ab1083b21ae21dbdc15eea711c3604052fd332e"
+
+target_file = "apps/www/lib/blog-images.ts"
+test_file = "apps/www/lib/blog-images.test.ts"
+
+agent_config_rules = [
+    "p2p tests should be included from repo CI/CD",
+    "Extract logic into .utils.ts pure functions and test exhaustively",
+    "Test every permutation—happy paths, malformed input, empty values, edge cases",
+    "Prioritize logic errors, security vulnerabilities, race conditions, data loss risks, and API contract violations",
+    "Comment only when >85% confident an issue is a real bug, security vulnerability, or logic error",
+]
+
+[verifier]
+env = { GEMINI_API_KEY = "${GEMINI_API_KEY:-}", ANTHROPIC_API_KEY = "${ANTHROPIC_API_KEY:-}" }

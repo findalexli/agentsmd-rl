@@ -4,10 +4,10 @@
   "verdict": "pass",
   "nop_reward": 0,
   "gold_reward": 1,
-  "validated_at": "2026-04-16T02:56:31.924295",
-  "total_time": 2453.96,
-  "sandbox_id": "i5a38w6nn3af30ipay4bb",
-  "backend": "minimax",
+  "validated_at": "2026-04-16T12:49:56.849152",
+  "total_time": 84.14,
+  "sandbox_id": "i3dokwnpvvg2zsynz4osj",
+  "backend": "anthropic",
   "pipeline": "pipeline",
   "start_at": "judge",
   "nodes": {
@@ -44,24 +44,26 @@
     },
     "quality_gate": {
       "status": "passed",
-      "model": "MiniMax-M2.7",
-      "backend": "minimax",
-      "time": 0.36,
+      "model": "claude-opus-4-7",
+      "backend": "anthropic",
+      "time": 0.62,
       "notes": "flags=['lint_tier_b:2', 'B:[B] pinned_dependencies @ environment/Dockerfile:30: unpinned pip deps: fastmcp, 2>/dev/null', 'B:[B] no_network_during_tests @ tests/test.sh:5: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 21.32,
+      "time": 13.06,
       "tier_a_fails": [
-        "behavior_in_task_description",
-        "no_solution_leakage",
         "solution_uniqueness_guard",
-        "tests_verify_behavior_not_text",
-        "test_not_tautological"
+        "tests_verify_behavior_not_text"
       ],
       "tier_b_fails": [],
-      "pass_count": 2,
-      "fail_count": 7
+      "pass_count": 7,
+      "fail_count": 2
+    },
+    "tests_rewrite": {
+      "status": "error",
+      "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":515,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 400 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"invalid_request_error\\\",\\\"message\\\":\\\"\\\\\\\"thinking.type.enabled\\\\\\\" is not supported for this model. Use \\\\\\\"thinking.type.adapt",
+      "time": 2.26
     }
   },
   "history": [
@@ -96,6 +98,14 @@
       "backend": "minimax",
       "time": 2453.96,
       "at": "2026-04-16T02:56:31.924295"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0,
+      "gold": 1,
+      "backend": "anthropic",
+      "time": 84.14,
+      "at": "2026-04-16T12:49:56.849152"
     }
   ]
 }

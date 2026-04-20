@@ -1,60 +1,57 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all file paths (constants.php, api.php, Log.php, users.php, messaging.php, all 5 XList.php paths), all constant names and values (ACTIVITY_TYPE_USER='user', ACTIVITY_TYPE_ADMIN='admin', etc.), the description string for userType, the API key type mappings (API_KEY_STANDARD, API_KEY_ACCOUNT, API_KEY_ORGANIZATION), APP_MODE_ADMIN, the requirement to preserve existing type, mode injection, and removal of ACTIVITY_TYPE_APP. All specifics asserted in tests are discoverable from "
+      "reason": "All file paths, constant names, values, field names, and descriptions asserted by tests are explicitly listed in instruction.md."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction is extremely prescriptive, telling the agent exactly what to do: 'Replace the single coarse-grained type system with granular constants', exact constant names/values in a table, 'API_KEY_STANDARD \u2192 ACTIVITY_TYPE_KEY_PROJECT', 'User type values that are already set on the user object should not be overwritten', specific mode parameter injection. It goes well beyond describing what's broken and essentially dictates the implementation."
+      "outcome": "pass",
+      "reason": "Instruction describes required behavior and constants but does not dictate exact code (e.g., match expression, clone pattern) to use."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert very specific implementation details like exact string matches: `'$mode === APP_MODE_ADMIN'` (test_api_controller_mode_based_user_type), `empty($user->getAttribute('type'))` (test_api_controller_preserves_existing_type), `'type' => ACTIVITY_TYPE_KEY_PROJECT` (test_key_project_replaces_app_type), `$log['data']['userType']` (test_xlist_endpoints_include_usertype). Alternative correct implementations using different guard expressions, different variable names, or different data access "
+      "reason": "test_api_controller_preserves_existing_type asserts the literal string \"empty($user->getAttribute('type'))\" which forces a specific implementation; an equivalent check like `$user->getAttribute('type') === null` or `!$user->getAttribute('type')` would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Nearly every f2p test (test_constants_defined, test_log_model_has_usertype_field, test_api_controller_mode_based_user_type, test_api_controller_key_type_mapping, test_api_controller_uses_mode_injection, test_api_controller_preserves_existing_type, test_users_api_includes_usertype_and_mode, test_messaging_api_includes_usertype, test_xlist_endpoints_include_usertype, test_key_project_replaces_app_type) uses only `assert 'string' in content` pattern on file reads. Only test_php_syntax_valid, test_r"
+      "reason": "Most f2p tests only do substring checks on file contents (e.g., `\"'userType' =>\" in content`, `\"const ACTIVITY_TYPE_USER\" in content`); no tests execute the changed code paths."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "While tests are text-based, they do check for specific strings that would not be present in the unmodified codebase. For example, ACTIVITY_TYPE_ADMIN, ACTIVITY_TYPE_KEY_PROJECT, 'userType' fields in XList files, and the absence of ACTIVITY_TYPE_APP all require actual code changes. A stub or no-op would not pass these tests."
+      "reason": "Tests check for specific constants, field names, and mappings that a stub couldn't satisfy without making the required edits."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in the instruction are tested: new constants defined (test_constants_defined), Log model field (test_log_model_has_usertype_field), mode-based assignment (test_api_controller_mode_based_user_type), key mapping (test_api_controller_key_type_mapping), mode injection (test_api_controller_uses_mode_injection), type preservation (test_api_controller_preserves_existing_type), users/messaging/XList endpoints (respective tests), and removal of ACTIVITY_TYPE_APP."
+      "reason": "Tests cover constants, Log model field, mode-based assignment, key mapping, mode injection, existing-type preservation, and all listed response builders."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (e.g., test_constants_defined, test_api_controller_mode_based_user_type), have docstrings with F2P/P2P annotations, and are logically grouped by concern."
+      "reason": "Tests are individually named functions with docstrings describing each assertion's purpose."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The instruction provides a table of constants with their values and descriptions, specifies the userType field description text, and lists the possible values. The schema for the Log model field is adequately documented."
+      "reason": "The userType field schema and possible values are documented in instruction.md."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, constant names, variable names, and commands in the instruction match what's expected in the codebase and tests. No typos detected."
+      "reason": "Paths and names in instruction.md match test expectations."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction names exact files, specific code patterns like 'mode parameter access', 'existing type preservation', exact constant-to-constant mappings, and the precise locations (4 locations in messaging.php, 5 XList.php files). This goes beyond task-domain-obvious file naming and essentially localizes the exact changes needed."
+      "outcome": "pass",
+      "reason": "Instruction names the files to modify but does not identify specific buggy lines; file localization is appropriate given the task scope."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "Code-only task, no config edits."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 6,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 2
 }

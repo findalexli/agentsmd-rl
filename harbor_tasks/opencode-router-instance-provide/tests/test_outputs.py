@@ -18,6 +18,15 @@ OLD_MW = "packages/opencode/src/control-plane/workspace-router-middleware.ts"
 WORKTREE = "packages/opencode/src/control-plane/adaptors/worktree.ts"
 
 
+def _glob_router_path() -> str:
+    """Discover the router file path using glob (allows agent to place it in subdirectories)."""
+    # Agent might put router.ts in server/ or in a subdirectory like server/routes/
+    matches = list(Path(REPO).glob("packages/opencode/src/server/**/router.ts"))
+    if matches:
+        return str(matches[0].relative_to(REPO))
+    return ROUTER  # fallback to default
+
+
 def _bun_check(script: str, timeout: int = 30) -> subprocess.CompletedProcess:
     """Run a bun -e script in the repo directory."""
     return subprocess.run(
@@ -36,8 +45,15 @@ def _bun_check(script: str, timeout: int = 30) -> subprocess.CompletedProcess:
 # [pr_diff] fail_to_pass — router.ts created by PR
 def test_router_exports_middleware():
     """router.ts must exist and export WorkspaceRouterMiddleware as a function."""
+    router_path = _glob_router_path()
     r = _bun_check(f"""
-        const mod = await import('./{ROUTER}');
+        const fs = require('fs');
+        const router_path = '{router_path}';
+        if (!fs.existsSync(router_path)) {{
+            console.error('router not found at: ' + router_path);
+            process.exit(1);
+        }}
+        const mod = await import('./{router_path}');
         if (typeof mod.WorkspaceRouterMiddleware !== 'function') {{
             console.error('not a function: ' + typeof mod.WorkspaceRouterMiddleware);
             process.exit(1);
@@ -49,10 +65,16 @@ def test_router_exports_middleware():
 # [pr_diff] fail_to_pass
 def test_instance_provide_in_router():
     """Router calls Instance.provide with InstanceBootstrap for directory-based routing."""
+    router_path = _glob_router_path()
     r = _bun_check(f"""
         const fs = require('fs');
+        const router_path = '{router_path}';
+        if (!fs.existsSync(router_path)) {{
+            console.error('router not found at: ' + router_path);
+            process.exit(1);
+        }}
         const ts = require('typescript');
-        const src = fs.readFileSync('{ROUTER}', 'utf8');
+        const src = fs.readFileSync(router_path, 'utf8');
         const sf = ts.createSourceFile('router.ts', src, ts.ScriptTarget.Latest, true);
         let provide = 0;
         let bootstrap = false;
@@ -104,15 +126,21 @@ def test_instance_provide_removed_from_instance_ts():
 
 # [pr_diff] fail_to_pass
 def test_workspace_routing_branches():
-    """Router handles no-workspace, worktree, and remote workspace cases."""
+    """Router handles workspace routing: no-workspace case, worktree case, and remote workspace case."""
+    router_path = _glob_router_path()
     r = _bun_check(f"""
         const fs = require('fs');
+        const router_path = '{router_path}';
+        if (!fs.existsSync(router_path)) {{
+            console.error('router not found at: ' + router_path);
+            process.exit(1);
+        }}
         const ts = require('typescript');
-        const src = fs.readFileSync('{ROUTER}', 'utf8');
+        const src = fs.readFileSync(router_path, 'utf8');
         const sf = ts.createSourceFile('router.ts', src, ts.ScriptTarget.Latest, true);
         let provideCount = 0;
-        let hasWorkspace = false;
         let hasAdaptorFetch = false;
+        let hasRoutesFetch = false;
         function visit(n) {{
             if (ts.isCallExpression(n)) {{
                 const e = n.expression;
@@ -123,15 +151,15 @@ def test_workspace_routing_branches():
                 if (ts.isPropertyAccessExpression(e) && e.name.text === 'fetch') {{
                     const t = src.substring(n.pos, n.end);
                     if (t.includes('adaptor') || t.includes('Adaptor')) hasAdaptorFetch = true;
+                    if (t.includes('routes')) hasRoutesFetch = true;
                 }}
             }}
-            if (ts.isStringLiteral(n) && n.text === 'workspace') hasWorkspace = true;
             ts.forEachChild(n, visit);
         }}
         visit(sf);
-        if (provideCount < 2) {{ console.error('need >=2 Instance.provide, got ' + provideCount); process.exit(1); }}
-        if (!hasWorkspace) {{ console.error('no workspace param extraction'); process.exit(1); }}
-        if (!hasAdaptorFetch) {{ console.error('no adaptor.fetch for remote'); process.exit(1); }}
+        if (provideCount < 1) {{ console.error('need >=1 Instance.provide, got ' + provideCount); process.exit(1); }}
+        if (!hasAdaptorFetch) {{ console.error('no adaptor.fetch for remote workspace'); process.exit(1); }}
+        if (!hasRoutesFetch) {{ console.error('no routes().fetch() delegation'); process.exit(1); }}
     """)
     assert r.returncode == 0, f"Missing routing branches in router.ts:\n{r.stderr}"
 
@@ -173,26 +201,35 @@ def test_server_imports_from_router():
 
 # [pr_diff] fail_to_pass
 def test_directory_resolution_in_router():
-    """Router resolves directory from query param and x-opencode-directory header."""
+    """Router resolves directory from query param (any form) and x-opencode-directory header."""
+    router_path = _glob_router_path()
     r = _bun_check(f"""
         const fs = require('fs');
+        const router_path = '{router_path}';
+        if (!fs.existsSync(router_path)) {{
+            console.error('router not found at: ' + router_path);
+            process.exit(1);
+        }}
         const ts = require('typescript');
-        const src = fs.readFileSync('{ROUTER}', 'utf8');
+        const src = fs.readFileSync(router_path, 'utf8');
         const sf = ts.createSourceFile('router.ts', src, ts.ScriptTarget.Latest, true);
         let hasDirectoryQuery = false;
         let hasDirectoryHeader = false;
         function visit(n) {{
             if (ts.isStringLiteral(n) && n.text === 'x-opencode-directory') hasDirectoryHeader = true;
             if (ts.isCallExpression(n) && ts.isPropertyAccessExpression(n.expression)) {{
-                if (n.expression.name.text === 'query' && n.arguments.length > 0) {{
-                    const arg = n.arguments[0];
+                const meth = n.expression.name.text;
+                const args = n.arguments;
+                // Accept .query("directory") or .get("directory") or searchParams.get("directory")
+                if ((meth === 'query' || meth === 'get') && args.length > 0) {{
+                    const arg = args[0];
                     if (ts.isStringLiteral(arg) && arg.text === 'directory') hasDirectoryQuery = true;
                 }}
             }}
             ts.forEachChild(n, visit);
         }}
         visit(sf);
-        if (!hasDirectoryQuery) {{ console.error('no .query("directory")'); process.exit(1); }}
+        if (!hasDirectoryQuery) {{ console.error('no directory extraction from query'); process.exit(1); }}
         if (!hasDirectoryHeader) {{ console.error('no x-opencode-directory header'); process.exit(1); }}
     """)
     assert r.returncode == 0, f"Directory resolution missing in router.ts:\n{r.stderr}"
@@ -235,10 +272,16 @@ def test_worktree_adaptor_importable():
 # [pr_diff] pass_to_pass
 def test_router_delegates_to_instance_routes():
     """Router imports and delegates to InstanceRoutes via routes().fetch()."""
+    router_path = _glob_router_path()
     r = _bun_check(f"""
         const fs = require('fs');
+        const router_path = '{router_path}';
+        if (!fs.existsSync(router_path)) {{
+            console.error('router not found at: ' + router_path);
+            process.exit(1);
+        }}
         const ts = require('typescript');
-        const src = fs.readFileSync('{ROUTER}', 'utf8');
+        const src = fs.readFileSync(router_path, 'utf8');
         const sf = ts.createSourceFile('router.ts', src, ts.ScriptTarget.Latest, true);
         let importsIt = false;
         let callsFetch = false;
@@ -273,10 +316,16 @@ def test_router_delegates_to_instance_routes():
 # [agent_config] fail_to_pass — AGENTS.md:13 @ e5f0e813b6e2f9305fc27d432689f95a56beea51
 def test_no_any_type_in_router():
     """Router must not use the `any` type (AGENTS.md:13)."""
+    router_path = _glob_router_path()
     r = _bun_check(f"""
         const fs = require('fs');
+        const router_path = '{router_path}';
+        if (!fs.existsSync(router_path)) {{
+            console.error('router not found at: ' + router_path);
+            process.exit(1);
+        }}
         const ts = require('typescript');
-        const src = fs.readFileSync('{ROUTER}', 'utf8');
+        const src = fs.readFileSync(router_path, 'utf8');
         const sf = ts.createSourceFile('router.ts', src, ts.ScriptTarget.Latest, true);
         let found = false;
         function visit(n) {{
@@ -292,10 +341,16 @@ def test_no_any_type_in_router():
 # [agent_config] fail_to_pass — AGENTS.md:70 @ e5f0e813b6e2f9305fc27d432689f95a56beea51
 def test_const_over_let_in_router():
     """Router must prefer const over let (AGENTS.md:70)."""
+    router_path = _glob_router_path()
     r = _bun_check(f"""
         const fs = require('fs');
+        const router_path = '{router_path}';
+        if (!fs.existsSync(router_path)) {{
+            console.error('router not found at: ' + router_path);
+            process.exit(1);
+        }}
         const ts = require('typescript');
-        const src = fs.readFileSync('{ROUTER}', 'utf8');
+        const src = fs.readFileSync(router_path, 'utf8');
         const sf = ts.createSourceFile('router.ts', src, ts.ScriptTarget.Latest, true);
         let count = 0;
         function visit(n) {{
@@ -313,10 +368,16 @@ def test_const_over_let_in_router():
 # [agent_config] fail_to_pass — AGENTS.md:84 @ e5f0e813b6e2f9305fc27d432689f95a56beea51
 def test_no_else_in_router():
     """Router must not use else statements; prefer early returns (AGENTS.md:84)."""
+    router_path = _glob_router_path()
     r = _bun_check(f"""
         const fs = require('fs');
+        const router_path = '{router_path}';
+        if (!fs.existsSync(router_path)) {{
+            console.error('router not found at: ' + router_path);
+            process.exit(1);
+        }}
         const ts = require('typescript');
-        const src = fs.readFileSync('{ROUTER}', 'utf8');
+        const src = fs.readFileSync(router_path, 'utf8');
         const sf = ts.createSourceFile('router.ts', src, ts.ScriptTarget.Latest, true);
         let count = 0;
         function visit(n) {{

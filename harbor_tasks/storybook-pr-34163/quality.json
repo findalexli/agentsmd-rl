@@ -1,61 +1,57 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction describes all key specifics tested: the exact file path, `as={href ? 'a' : 'button'}` pattern (conditional element rendering), `href={href}`, `&:focus-visible` with `outline` using `theme.color.secondary` and `zIndex`, `deprecate` import from `storybook/internal/client-logger`, `isButton = undefined` default, `if (isButton !== undefined)` check, and the compilation/formatting commands. All asserted strings and patterns are discoverable from the instruction."
+      "reason": "File path, import source 'storybook/internal/client-logger', deprecate function, isButton default of undefined, focus-visible selector, theme.color.secondary, and zIndex are all named in instruction.md."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly states the exact implementation: 'use styled-components `as` prop', render as `<a>` or `<button>` based on `href`, add `&:focus-visible` with `outline` using `theme.color.secondary` and `zIndex`, `isButton` should default to `undefined`, detect when `isButton` is explicitly provided via `!== undefined`. This goes far beyond describing what's broken \u2014 it prescribes the exact solution mechanism and implementation details."
+      "outcome": "pass",
+      "reason": "Instruction describes required behavior (conditional rendering, focus styles, deprecation) without giving exact code or line numbers."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact literal strings like `as={href ? 'a' : 'button'}` (test_link_renders_as_button_without_href), `href={href}` (test_link_renders_as_anchor_with_href), `isButton = undefined` (test_isbutton_default_changed), and regex `if\\s*\\(\\s*isButton\\s*!==?\\s*undefined\\s*\\)` (test_isbutton_prop_deprecated). An alternative correct fix using e.g. a variable like `const ElementType = href ? 'a' : 'button'` with `as={ElementType}` would fail. These are gold-specific implementation details."
+      "reason": "Tests assert the exact literal string \"as={href ? 'a' : 'button'}\" and \"href={href}\" and \"isButton = undefined\"; an equivalent fix using e.g. as={href ? 'a' : 'button' as const} or destructuring differently, or using a ternary with double quotes vs single, would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The F2P tests (test_link_renders_as_button_without_href, test_link_renders_as_anchor_with_href, test_button_focus_styles_applied, test_isbutton_prop_deprecated, test_isbutton_default_changed) are ALL purely text-matching via `assert 'string' in content` or regex on file contents. None import/render the component, call functions, or test actual DOM behavior. The P2P tests do run compilation but the core behavioral tests are purely textual."
+      "reason": "5 of 8 f2p tests are pure string-in-file checks (test_link_renders_as_button_without_href, test_link_renders_as_anchor_with_href, test_button_focus_styles_applied, test_isbutton_prop_deprecated, test_isbutton_default_changed); only compile/typecheck/prettier run subprocesses and none actually render the component."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "Since all F2P tests are string-matching on file contents, a developer could satisfy them by inserting dead code comments or unused variables containing the exact strings being checked (e.g., `// as={href ? 'a' : 'button'}`) without actually implementing the fix. The tests don't verify runtime behavior."
+      "outcome": "pass",
+      "reason": "Each f2p asserts a distinct required behavior artifact (conditional as, href pass-through, focus-visible with outline+zIndex, deprecate call, undefined default); a stub couldn't satisfy all."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All four required behaviors from the instruction (conditional element rendering, focus indicator styles, deprecation warning, isButton default) are tested, plus compilation, TypeScript checking, and formatting."
+      "reason": "Conditional element, focus styles, deprecation warning, and default change are all covered."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (e.g., test_link_renders_as_button_without_href), have docstrings explaining purpose, and are logically grouped by feature area."
+      "reason": "Tests are individually named with docstrings marking F2P/P2P and grouped by concern."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task modifies a React component, not structured data output."
+      "reason": "No structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, commands, variable names, and function names are all correct and consistent across instruction, tests, and solution."
+      "reason": "Paths and commands look correct."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction specifies the exact file to modify, the exact `as` prop mechanism, exact CSS selectors (`&:focus-visible`), exact theme property (`theme.color.secondary`), exact import source (`storybook/internal/client-logger`), and exact default value change (`isButton = undefined`). This is excessive implementation detail leakage beyond just naming the buggy file."
+      "outcome": "pass",
+      "reason": "Instruction names the file to modify, which is reasonable since the task is specifically to fix that component; no line-level leakage."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying a single component file, not a config edit task."
+      "reason": "Code-only task."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 4,
-  "fail_count": 5
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 2
 }

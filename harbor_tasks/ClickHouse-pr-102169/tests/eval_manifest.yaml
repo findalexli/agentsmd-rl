@@ -1,0 +1,116 @@
+checks:
+- id: test_session_renewal_in_retry_loop
+  type: fail_to_pass
+  origin: pr_diff
+  description: Session renewal check (isRetry + getZooKeeper) exists inside retry
+    loop
+- id: test_getobjectnames_inside_retry_loop
+  type: fail_to_pass
+  origin: pr_diff
+  description: getObjectNamesAndSetWatch is called inside retry loop, not before
+- id: test_current_zookeeper_variable_used
+  type: fail_to_pass
+  origin: pr_diff
+  description: current_zookeeper variable is declared and used instead of stale parameter
+- id: test_session_renewal_pattern_complete
+  type: fail_to_pass
+  origin: pr_diff
+  description: Complete session renewal pattern exists (isRetry check + assignment)
+- id: test_clang_syntax_only
+  type: pass_to_pass
+  origin: repo_tests
+  description: Basic clang syntax-only validation on target file
+- id: test_libclang_parses
+  type: pass_to_pass
+  origin: repo_tests
+  description: C++ file syntax validation via libclang (actual CI tool)
+- id: test_check_cpp_style
+  type: pass_to_pass
+  origin: repo_tests
+  description: ClickHouse C++ style check script (actual CI check from check_cpp.sh)
+- id: test_codespell_typos
+  type: pass_to_pass
+  origin: repo_tests
+  description: codespell typos check on modified file (actual CI tool)
+- id: test_no_conflict_markers
+  type: pass_to_pass
+  origin: repo_tests
+  description: Check for git conflict markers using grep (CI hygiene check)
+- id: test_no_dos_newlines
+  type: pass_to_pass
+  origin: repo_tests
+  description: Check for DOS/Windows newlines using grep (CI style check)
+- id: test_clang_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: clang-format style validation (actual CI formatting check)
+- id: test_various_checks_bom
+  type: pass_to_pass
+  origin: repo_tests
+  description: Check for UTF-8 BOM markers (various_checks.sh from CI)
+- id: test_various_checks_executable_bit
+  type: pass_to_pass
+  origin: repo_tests
+  description: Check file permissions are not executable (various_checks.sh from CI)
+- id: test_no_trailing_whitespace
+  type: pass_to_pass
+  origin: static
+  description: No trailing whitespace in modified files (ClickHouse style)
+- id: test_file_naming_convention
+  type: pass_to_pass
+  origin: static
+  description: C++ files follow PascalCase naming convention (ClickHouse style)
+- id: test_no_tabs_in_source
+  type: pass_to_pass
+  origin: static
+  description: No tab characters in source files, use 4 spaces (ClickHouse style)
+- id: test_code_line_length
+  type: pass_to_pass
+  origin: static
+  description: Code lines don't exceed 140 character limit (ClickHouse .clang-format)
+- id: test_claude_md_terminology
+  type: pass_to_pass
+  origin: agent_config
+  source:
+    lines: 7-9
+    commit: 6d03f28ada8b3c521b504f43e04d05c915be3d75
+    path: .claude/CLAUDE.md
+  description: 'CLAUDE.md rule: say ''exception'' not ''crash'' for logical errors'
+rubric:
+- rule: Ensure session renewal happens before using the ZooKeeper handle by checking
+    retries_ctl.isRetry() inside the retry loop
+- rule: Use current_zookeeper variable inside the retry loop instead of the stale
+    zookeeper parameter
+- rule: When mentioning logical errors in comments, say 'exception' instead of 'crash'
+- rule: When writing text such as documentation, comments, or commit messages, write
+    names of functions and methods as `f` instead of `f()`
+  source:
+    path: AGENTS.md
+    lines: 10-10
+  evidence: The updated C++ comments refer to functions like `tryLoadObject` and `setAllObjects`
+    without trailing parentheses, adhering to the mathematical purity style rule.
+  category: style
+version: '2.0'
+source:
+  repo: ClickHouse/ClickHouse
+  pr: 102169
+  base_commit: 6d03f28ada8b3c521b504f43e04d05c915be3d75
+  merge_commit: bcbca752faf0e9774a6b2f40fa558e363d786016
+distractors:
+- rule: When writing text such as documentation, comments, or commit messages, wrap
+    literal names from ClickHouse SQL language, classes and functions... inside inline
+    code blocks
+  collision_type: scope_ambiguity
+  why_distracting: The rule instructs wrapping class and function names in markdown
+    backticks for 'comments'. An agent might misinterpret this as applying to C++
+    source code comments, which would lead to inserting markdown backticks (e.g.,
+    `` `tryLoadObject` ``) into C++ files, violating the existing plain-text comment
+    style.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 6-6
+hierarchy_analysis: The configuration is a flat, single-file structure (`AGENTS.md`).
+  The primary challenge is interpreting the scope of the word 'comments' in the style
+  rules—distinguishing between GitHub PR comments (where markdown applies) and C++
+  source comments (where plain text is expected).

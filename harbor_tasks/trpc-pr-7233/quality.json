@@ -1,0 +1,54 @@
+{
+  "model": "claude-opus-4-7",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "Instruction names the file paths, function names (jsonlStreamConsumer, createStreamsManager), expected error message literal 'Stream closed before head was received', and expected values [0,1,2,3,4]."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction describes the bug (controller.error discards chunks) and expected behavior, but doesn't dictate the specific code fix; the developer must figure out how to restructure handlers."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests only check behavior (values received and error message/type), not internal function names like handleClose/closeAll; alternative implementations would pass."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests spawn tsx subprocesses that import and call actual jsonl functions, asserting on runtime behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "Tests require actual stream plumbing to work \u2014 a stub couldn't deliver [0,1,2,3,4] through jsonlStreamProducer/Consumer nor throw the specific error message."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "Both symptoms (data loss on normal completion, non-descriptive error on premature close) are covered by the two f2p tests."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests have descriptive names and docstrings explaining F2P/P2P classification."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Not a structured-data-output task."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "Paths and names are consistent between instruction and tests."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction points to the module file but not the exact line; localization within the file remains part of the task."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "Code-only task, no config edits."
+    }
+  },
+  "tier_a_fails": [],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
+}

@@ -1,61 +1,58 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "All file paths, function names, literal strings, and patterns asserted in tests (e.g., 'error.routeId ??= matchState.routeId', 'getNotFound', '(error as any)?.cause', 'Solid wraps non-Error throws', 'error.routeId ??= matchData.value?.routeId as any') are explicitly named in instruction.md's Required Changes section."
+      "outcome": "fail",
+      "reason": "Tests assert on specific string patterns like 'error.routeId ??= matchState.routeId', 'const notFoundError = getNotFound(error)', 'export function getNotFound', and '(error as any)?.cause' that are not named in instruction.md."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md explicitly states the exact code to write: 'error.routeId ??= matchState.routeId', 'export a function named getNotFound', 'Check for (error as any)?.cause', 'error.routeId ??= matchData.value?.routeId as any'. This is not describing what's broken but prescribing the exact fix implementation."
+      "outcome": "pass",
+      "reason": "Instruction describes the problem (routeId lost when propagating) and points to files, but doesn't specify the exact code changes like '??=' operator or 'getNotFound' helper name."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Fail-to-pass tests like test_react_match_assigns_routeId_onCatch assert exact string 'error.routeId ??= matchState.routeId' via _file_contains. An alternative correct fix using e.g. 'if (!error.routeId) error.routeId = matchState.routeId' would fail. test_solid_notFound_exports_getNotFound checks for exact strings like '(error as any)?.cause' and 'Solid wraps non-Error throws'. These are implementation-specific checks that reject valid alternatives."
+      "reason": "Tests assert exact strings like 'error.routeId ??= matchState.routeId' (requiring specific ??= operator and variable name), 'const notFoundError = getNotFound(error)' (exact variable name and helper name), and 'export function getNotFound' \u2014 alternative correct fixes using different names or syntax (e.g., 'if (!error.routeId) error.routeId = ...') would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_react_match_assigns_routeId_onCatch, test_react_match_assigns_routeId_in_fallback, test_solid_match_uses_getNotFound_helper, test_solid_notFound_exports_getNotFound, test_vue_match_assigns_routeId) are entirely string-matching via _file_contains. They do `assert 'pattern' in open(path).read()` with no behavioral execution. The pass-to-pass tests do run subprocesses but the f2p tests are purely textual."
+      "reason": "Half the f2p tests (test_react_match_assigns_routeId_onCatch, test_react_match_assigns_routeId_in_fallback, test_solid_match_uses_getNotFound_helper, test_solid_notFound_exports_getNotFound, test_vue_match_assigns_routeId) are pure string grep checks against source files with no execution."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "The f2p tests only check for string presence in files. A stub that simply appends the expected strings as comments to the files (e.g., '// error.routeId ??= matchState.routeId') would pass these tests without implementing the actual bug fix."
+      "outcome": "pass",
+      "reason": "The p2p tests run actual not-found test suites and type checks which would fail with stub implementations."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md (React routeId assignment in onCatch and fallback, Solid getNotFound helper with cause unwrapping, Vue routeId assignment) are tested, plus pass-to-pass tests cover unit tests, types, and eslint for all three frameworks."
+      "reason": "Instruction's core behavior (routeId preservation across React/Solid/Vue) is tested via the repo's existing not-found test suites."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are clearly grouped into 'Fail-to-pass' and 'Pass-to-pass' sections with comments, descriptive function names, and detailed docstrings explaining what each test verifies."
+      "reason": "Tests are grouped with clear section headers 'Fail-to-pass tests' and 'Pass-to-pass tests' and descriptive docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data like JSON/CSV/API/DB."
+      "reason": "Task is a code fix, not producing structured data."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, commands, variable names, and patterns in instruction.md and tests appear correct and consistent with the codebase."
+      "reason": "File paths and commands appear correct and match the repo structure."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md names exact files (Match.tsx, not-found.tsx), exact code patterns ('error.routeId ??= matchState.routeId'), exact handler names ('onCatch handler of ResolvedNotFoundBoundary'), and exact function signatures ('export function getNotFound'). This goes far beyond describing the bug and prescribes the exact implementation."
+      "outcome": "pass",
+      "reason": "Instruction names the files to modify but the task explicitly scopes to those files; it doesn't point to specific lines."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "Code-only task, not an agentmd-edits task."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
+    "behavior_in_task_description",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 4,
-  "fail_count": 5
+  "tier_c_fails": [],
+  "pass_count": 6,
+  "fail_count": 3
 }

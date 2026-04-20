@@ -1,0 +1,93 @@
+version: 1
+
+task:
+  name: supabase-www-og-cache-bust
+  description: >
+    Fix social-media crawlers caching stale dynamic OG images from the generate-og
+    Edge Function by appending a deploy-time timestamp to the URL's query string.
+
+checks:
+  - id: test_cache_bust_dynamic_og
+    description: >
+      Dynamic OG function URLs (containing /functions/v1/generate-og) must get
+      a cache-busting ?v=<timestamp> param appended on each deploy.
+    type: fail_to_pass
+    origin: behavior_test
+    test_function: test_cache_bust_dynamic_og
+
+  - id: test_no_cache_bust_static_image
+    description: >
+      Static image URLs must pass through getAbsoluteBlogSocialImage unchanged
+      (no cache-busting param added).
+    type: pass_to_pass
+    origin: behavior_test
+    test_function: test_no_cache_bust_static_image
+
+  - id: test_existing_social_image_test
+    description: >
+      Existing test 'builds absolute social image URLs' must still pass after fix
+      (regression check).
+    type: pass_to_pass
+    origin: repo_tests
+    test_function: test_existing_social_image_test
+
+  - id: test_repo_tests_pass
+    description: >
+      All blog-images tests in the www app must pass (full test file regression).
+    type: pass_to_pass
+    origin: repo_tests
+    test_function: test_repo_tests_pass
+
+  - id: test_repo_all_tests_pass
+    description: >
+      Full www app test suite (all test files) must pass. This is the actual
+      CI command from .github/workflows/www-tests.yml.
+    type: pass_to_pass
+    origin: repo_tests
+    test_function: test_repo_all_tests_pass
+
+  - id: test_repo_lint
+    description: >
+      The www app's linter must pass. This is the lint command from CI.
+    type: pass_to_pass
+    origin: repo_tests
+    test_function: test_repo_lint
+
+  - id: test_repo_typecheck
+    description: >
+      The www app's typecheck must pass. This is the typecheck command from CI.
+    type: pass_to_pass
+    origin: repo_tests
+    test_function: test_repo_typecheck
+
+rubric:
+  - source: >
+      .claude/skills/studio-testing/SKILL.md: "Extract logic into .utils.ts pure
+      functions and test exhaustively. Test every permutation—happy paths, malformed
+      input, empty values, edge cases."
+    description: >
+      Tests cover both the cache-busting case (dynamic OG URLs) and the unchanged
+      case (static images), which aligns with testing every permutation.
+
+  - source: >
+      .claude/skills/studio-testing/SKILL.md: "Utility functions follow the
+      pattern: arguments in, return value out."
+    description: >
+      The getAbsoluteBlogSocialImage function follows the arguments-in-return-value-out
+      pattern and the tests verify actual return values.
+
+  - source: >
+      .github/copilot-instructions.md: "Prioritize: logic errors, security
+      vulnerabilities, race conditions, data loss risks, and API contract violations."
+    description: >
+      This fix addresses a logic error where social-media crawlers would cache
+      stale OG images indefinitely due to unchanged URLs between deploys.
+
+metadata:
+  pr_url: "https://github.com/supabase/supabase/pull/44673"
+  pr_title: "fix(www): bust social-media cache for dynamic OG images"
+  files_changed:
+    - "apps/www/lib/blog-images.ts"
+    - "apps/www/lib/blog-images.test.ts"
+  lines_added: 37
+  lines_deleted: 1

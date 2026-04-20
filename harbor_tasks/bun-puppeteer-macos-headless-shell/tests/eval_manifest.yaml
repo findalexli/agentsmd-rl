@@ -1,0 +1,190 @@
+version: '2.0'
+source:
+  repo: oven-sh/bun
+  pr: 28200
+  base_commit: 5693fc1a98116743f16a7db2952d6e436bf9ec98
+  merge_commit: 1d50d640f8fec6ce2d144f0cfd204e30da373c64
+checks:
+- id: macos_headless_shell_mode
+  type: fail_to_pass
+  origin: pr_diff
+  description: On macOS, headless mode must be 'shell' (not true) to avoid Gatekeeper
+    blocking Chrome .app bundle
+- id: executable_path_excluded_on_macos
+  type: fail_to_pass
+  origin: pr_diff
+  description: On macOS with shell mode, executablePath must not be set (it would
+    point to full Chrome, not headless-shell)
+- id: finite_timeouts
+  type: fail_to_pass
+  origin: pr_diff
+  description: Launch timeout and protocolTimeout must be finite (>0), not 0/infinite
+- id: retry_delay_increased
+  type: fail_to_pass
+  origin: pr_diff
+  description: Retry delay between browser launch attempts must be > 1000ms
+- id: chmod_cached_binaries
+  type: fail_to_pass
+  origin: pr_diff
+  description: Downloaded browser binaries in Puppeteer cache must be chmod'd executable
+- id: retry_loop_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: Browser retry loop (for/while + catch + launch) must still exist
+- id: core_launch_args_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: Core Puppeteer launch args (--no-sandbox, --disable-setuid-sandbox,
+    --disable-dev-shm-usage) preserved
+- id: puppeteer_launch_with_options
+  type: pass_to_pass
+  origin: pr_diff
+  description: File has Puppeteer import, launch() call with headless and args config
+- id: xattr_quarantine_removal
+  type: pass_to_pass
+  origin: pr_diff
+  description: xattr quarantine removal for macOS Gatekeeper must be preserved
+- id: test_repo_typescript_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript file must have valid syntax
+- id: test_repo_oxlint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo oxlint check passes on target file
+- id: test_repo_oxlint_config
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo oxlint config file is valid JSONC
+- id: test_repo_prettier_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo Prettier formatting check passes on target file
+- id: test_repo_prettier_config
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo Prettier config file is valid JSON
+- id: test_repo_gitattributes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo .gitattributes file exists and has basic patterns
+rubric:
+- rule: Prefer async/await over callbacks.
+  source:
+    path: test/CLAUDE.md
+    lines: 100-101
+  evidence: The gold solution uses `await new Promise(r => setTimeout(r, 3000));`
+    for the retry delay, adhering to the preference for async/await over callbacks.
+  category: style
+  verification: llm_judge
+- rule: Always use absolute paths in file operations
+  source:
+    path: CLAUDE.md
+    lines: '230'
+  source_text: 6. **Use absolute paths** - Always use absolute paths in file operations
+  evidence: The gold diff constructs an absolute path for `cachePath` using `join(process.env.HOME
+    || "~", ".cache", "puppeteer")` before performing file operations.
+  category: architecture
+  verification: llm_judge
+distractors:
+- rule: Unless explicitly asked, never wait for time to pass in tests. Always wait
+    for the condition to be met instead of waiting for an arbitrary amount of time.
+  collision_type: rule_conflict
+  why_distracting: The rule forbids waiting for time to pass in tests, but the PR
+    instruction explicitly requires increasing the retry delay (using setTimeout)
+    to handle transient macOS launch issues.
+  severity: high
+  source:
+    path: test/AGENTS.md
+    lines: 16-18
+- rule: 'CRITICAL: Do not set a timeout on tests. Bun already has timeouts.'
+  collision_type: rule_conflict
+  why_distracting: The rule explicitly forbids setting timeouts on tests, marking
+    it as CRITICAL. However, the PR instruction specifically identifies infinite timeouts
+    (0) in Puppeteer launch options as a bug that causes indefinite hangs, requiring
+    the agent to set explicit timeouts.
+  severity: high
+  source:
+    path: test/AGENTS.md
+    lines: 108-110
+- rule: Avoid shell commands in tests
+  source:
+    path: CLAUDE.md
+    lines: '231'
+  source_text: 7. **Avoid shell commands** - Don't use `find` or `grep` in tests;
+    use Bun's Glob and built-in tools
+  collision_type: would_cause_bug
+  why_distracting: The gold diff explicitly uses `execSync` with `find` to fix permissions
+    on the Puppeteer cache binaries on macOS. This rule is a distractor because modifying
+    system binaries in the Puppeteer cache is a system-level setup operation on CI,
+    which is easier and more robustly done with shell commands like `find` and `xattr`.
+    Trying to follow this rule would overcomplicate or break the system administration
+    logic.
+  severity: high
+- rule: Do not use setTimeout in tests / never wait for time to pass
+  source:
+    path: test/CLAUDE.md
+    lines: '21'
+  source_text: '- **Do not write flaky tests**. Unless explicitly asked, **never wait
+    for time to pass in tests**. Always wait for the condition to be met instead of
+    waiting for an arbitrary amount of time.'
+  collision_type: rule_conflict
+  why_distracting: The gold diff uses `setTimeout(r, 3000)` to implement a retry delay
+    for launching the Chrome browser. The rule is meant to prevent flaky assertions
+    that wait for state changes, but here the delay is necessary to allow transient
+    macOS Gatekeeper issues to resolve between browser launch attempts.
+  severity: medium
+- rule: Do not set a timeout on tests
+  source:
+    path: test/CLAUDE.md
+    lines: '120'
+  source_text: '**CRITICAL**: Do not set a timeout on tests. Bun already has timeouts.'
+  collision_type: scope_ambiguity
+  why_distracting: 'The gold diff configures `timeout: 30_000` and `protocolTimeout:
+    60_000`. An agent might think this violates the rule against setting test timeouts,
+    but these are configurations for the Puppeteer browser launch and protocol connection,
+    not the Bun test runner itself.'
+  severity: high
+- rule: Use isMacOS from harness
+  source:
+    path: test/CLAUDE.md
+    lines: 186-196
+  source_text: "### Common Imports from `harness`\n\n```ts\nimport {\n  bunExe, //\
+    \ Path to Bun executable\n  bunEnv, // Environment variables for Bun\n  tempDirWithFiles,\
+    \ // Create temporary test directories with files\n  tmpdirSync, // Create empty\
+    \ temporary directory\n  isMacOS, // Platform checks\n  isWindows,\n  isPosix,\n\
+    \  gcTick, // Trigger garbage collection\n  withoutAggressiveGC, // Disable aggressive\
+    \ GC for performance tests\n} from \"harness\";"
+  collision_type: architecture_boundary
+  why_distracting: The gold diff defines `const isMacOS = process.platform === "darwin";`
+    manually. An agent might try to import `isMacOS` from the `harness` module, but
+    this Next.js integration test likely runs in a different context where `harness`
+    is not directly accessible or appropriate.
+  severity: medium
+- rule: Use devTest and dev.write/patch/delete for dev server tests
+  source:
+    path: .claude/skills/writing-dev-server-tests/SKILL.md
+    lines: 28-66
+  source_text: '## devTest Basics
+
+
+    ```ts
+
+    import { devTest, emptyHtmlFile } from "../bake-harness";
+
+    ...
+
+    **Important**: Use `dev.write/patch/delete` instead of `node:fs` - they wait for
+    hot-reload.'
+  collision_type: architecture_boundary
+  why_distracting: The file being modified is `dev-server-puppeteer.ts`, which might
+    make an agent think it should use the `devTest` harness described in this skill.
+    However, this file is an integration test for Next.js (puppeteer setup), which
+    is in `test/integration/next-pages`, a completely different domain than the `test/bake`
+    framework.
+  severity: medium
+hierarchy_analysis: The repository contains strict testing guidelines in `test/AGENTS.md`
+  that forbid setting timeouts and waiting for time to pass. However, this specific
+  PR is about fixing a Puppeteer browser launch issue where infinite timeouts cause
+  hangs and short retry delays cause flakiness. The agent must recognize that the
+  specific PR instructions override the general 'CRITICAL' testing rules.

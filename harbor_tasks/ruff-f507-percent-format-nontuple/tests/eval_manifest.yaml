@@ -1,0 +1,214 @@
+version: '2.0'
+source:
+  repo: astral-sh/ruff
+  pr: 24142
+  base_commit: b8fad8312fde560943653811ae3e16e22b99dfc7
+  merge_commit: 6cff03427e386e38dc2ead0cc7718a71bfa288f8
+checks:
+- id: compiles
+  type: pass_to_pass
+  origin: static
+  description: Modified ruff crate compiles successfully
+- id: f507_literal_int
+  type: fail_to_pass
+  origin: pr_diff
+  description: F507 fires when RHS is an int literal with multiple placeholders
+- id: f507_literal_string
+  type: fail_to_pass
+  origin: pr_diff
+  description: F507 fires when RHS is a string literal with multiple placeholders
+- id: f507_literal_bool_and_none
+  type: fail_to_pass
+  origin: pr_diff
+  description: F507 fires for bool and None literals with multiple placeholders
+- id: f507_compound_expression
+  type: fail_to_pass
+  origin: pr_diff
+  description: F507 fires for unary/binary ops with known non-tuple result types
+- id: no_f507_variable_rhs
+  type: pass_to_pass
+  origin: pr_diff
+  description: Variables/calls do NOT trigger F507 — could be tuples at runtime
+- id: no_f507_single_placeholder
+  type: pass_to_pass
+  origin: pr_diff
+  description: Single placeholder with literal RHS is valid — no F507
+- id: existing_tuple_f507
+  type: pass_to_pass
+  origin: pr_diff
+  description: 'Pre-existing behavior: tuple with wrong count still triggers F507'
+- id: no_panic_unwrap_in_target_function
+  type: pass_to_pass
+  origin: agent_config
+  description: No panic!/unwrap in the target function
+  source:
+    path: AGENTS.md
+    lines: '79'
+    commit: b8fad8312fde560943653811ae3e16e22b99dfc7
+- id: no_local_imports_in_target_function
+  type: pass_to_pass
+  origin: agent_config
+  description: No local use statements inside functions
+  source:
+    path: AGENTS.md
+    lines: '76'
+    commit: b8fad8312fde560943653811ae3e16e22b99dfc7
+- id: no_allow_lint_suppression
+  type: pass_to_pass
+  origin: agent_config
+  description: 'Prefer #[expect()] over #[allow()] for lint suppression'
+  source:
+    path: AGENTS.md
+    lines: '81'
+    commit: b8fad8312fde560943653811ae3e16e22b99dfc7
+- id: no_unreachable_in_target_function
+  type: pass_to_pass
+  origin: agent_config
+  description: No unreachable! macro in the target function
+  source:
+    path: AGENTS.md
+    lines: '79'
+    commit: b8fad8312fde560943653811ae3e16e22b99dfc7
+- id: repo_fmt
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo code formatting passes cargo fmt check
+- id: repo_clippy
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo lints pass cargo clippy check on ruff_linter crate
+- id: repo_pyflakes_percent_format_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo percent format (F50x) tests pass - highly relevant to F507 changes
+- id: repo_cargo_check_ruff_linter
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo ruff_linter package compiles without errors
+- id: repo_ruff_python_semantic_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo ruff_python_semantic tests pass - contains ResolvedPythonType
+    used by F507 fix
+rubric:
+- rule: Follow existing code style. Check neighboring files for patterns.
+  source:
+    path: AGENTS.md
+    lines: '75'
+    commit: b8fad8312fde560943653811ae3e16e22b99dfc7
+- rule: Use comments purposefully. Don't use comments to narrate code, but do use
+    them to explain invariants and why something unusual was done a particular way.
+  source:
+    path: AGENTS.md
+    lines: '82'
+    commit: b8fad8312fde560943653811ae3e16e22b99dfc7
+- rule: Prefer let chains (if let combined with &&) over nested if let statements
+    to reduce indentation and improve readability.
+  source:
+    path: AGENTS.md
+    lines: '80'
+    commit: b8fad8312fde560943653811ae3e16e22b99dfc7
+- rule: Look to see if your tests could go in an existing file before adding a new
+    file for your tests.
+  source:
+    path: AGENTS.md
+    lines: 51-52
+  evidence: The gold solution appends test cases to the existing `crates/ruff_linter/resources/test/fixtures/pyflakes/F50x.py`
+    file rather than creating a new fixture file for this specific bug.
+  category: testing
+- rule: Rust imports should always go at the top of the file, never locally in functions.
+  source:
+    path: AGENTS.md
+    lines: 55-56
+  evidence: The gold solution adds `use ruff_python_semantic::analyze::type_inference::{PythonType,
+    ResolvedPythonType};` at the top of `crates/ruff_linter/src/rules/pyflakes/rules/strings.rs`
+    instead of importin
+  category: style
+- rule: Avoid writing significant amounts of new code. Look for existing utilities
+    first.
+  source:
+    path: AGENTS.md
+    lines: 58-59
+  evidence: The gold solution leverages the existing `ResolvedPythonType::from(right)`
+    utility to infer the type of the RHS instead of writing custom AST traversal or
+    type checking logic.
+  category: architecture
+- rule: Prefer let chains (`if let` combined with...)
+  source:
+    path: AGENTS.md
+    lines: 66-66
+  evidence: The gold solution uses `} else if let ResolvedPythonType::Atom(resolved_type)
+    = ResolvedPythonType::from(right) {` to safely extract the resolved type without
+    panicking or unwrapping.
+  category: style
+- rule: Add tests to an existing test file when possible instead of creating a new
+    one.
+  source:
+    path: AGENTS.md
+    lines: '73'
+  source_text: '- Look to see if your tests could go in an existing file before adding
+    a new file for your tests.'
+  evidence: The patch extends the existing fixture file `crates/ruff_linter/resources/test/fixtures/pyflakes/F50x.py`
+    with new F507 cases (`gold_diff.patch:1-35`) rather than creating a new test fixture.
+  category: testing_pattern
+  verification: llm_judge
+- rule: Keep Rust imports at the top of the file, not inside functions.
+  source:
+    path: AGENTS.md
+    lines: '76'
+  source_text: '- Rust imports should always go at the top of the file, never locally
+    in functions.'
+  evidence: The new `use ruff_python_semantic::analyze::type_inference::{PythonType,
+    ResolvedPythonType};` import is added in the top import block of `strings.rs`
+    (`gold_diff.patch:40-45`), and no local import is introduced inside `percent_format_positional_count_mismatch`.
+  category: imports
+  verification: llm_judge
+- rule: Prefer a small change that reuses existing mechanisms over writing new bespoke
+    logic.
+  source:
+    path: AGENTS.md
+    lines: '78'
+  source_text: '- Avoid writing significant amounts of new code. This is often a sign
+    that we''re missing an existing method or mechanism that could help solve the
+    problem. Look for existing utilities first.'
+  evidence: Instead of adding custom RHS-shape inference, the patch reuses `ResolvedPythonType::from(right)`
+    and compares against `PythonType::Tuple` (`gold_diff.patch:44,52-57`). That is
+    a targeted extension built on existing type-inference utilities.
+  category: reuse_existing_utilities
+  verification: llm_judge
+- rule: Use comments to explain invariants or unusual behavior, not to narrate obvious
+    code.
+  source:
+    path: AGENTS.md
+    lines: '82'
+  source_text: '- Use comments purposefully. Don''t use comments to narrate code,
+    but do use them to explain invariants and why something unusual was done a particular
+    way.'
+  evidence: 'The added comment in `strings.rs` explains the invariant behind the new
+    branch: known non-tuple RHS values count as a single positional argument, while
+    `Unknown` values are left alone because they may be tuples at runtime (`gold_diff.patch:53-56`).'
+  category: comments
+  verification: llm_judge
+distractors:
+- rule: When working on ty, PR titles should start with `[ty]` and be tagged with
+    the `ty` GitHub label.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to apply `ty` PR guidelines (like prefixing
+    with `[ty]`) to this task, but the task is explicitly about fixing a bug in `ruff_linter`,
+    not the `ty` type checker.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 54-55
+- rule: 'Run tests for a specific crate: cargo nextest run -p ty_python_semantic'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to run tests specifically for `ty_python_semantic`
+    as suggested by the example command, which would fail to verify the fix made in
+    `ruff_linter`.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 15-17
+hierarchy_analysis: The config hierarchy is flat (CLAUDE.md just includes AGENTS.md).
+  The main challenge is distinguishing between rules that apply to the `ruff` crates
+  versus the `ty` crates within the same repository.

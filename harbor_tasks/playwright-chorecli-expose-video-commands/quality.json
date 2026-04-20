@@ -1,61 +1,60 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all file paths (video.ts, tracing.ts, tools.ts, config.d.ts, program.ts, commands.ts, SKILL.md), variable names (videoStart, videoStop, startVideo, stopVideo), tool names (browser_start_video, browser_stop_video), capability names (devtools, tracing), command names (video-start, video-stop), the commandsArray export, declareCommand pattern, toolName mappings, .includes('tracing') backward compat check, and --caps help text requirements. All specifics asserted in tests are d"
+      "reason": "All asserted paths, tool names (browser_start_video, browser_stop_video), command names (video-start, video-stop), variable names (videoStart, videoStop), capability name 'devtools', and the .includes('tracing') pattern are explicitly named in instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states exact implementation details like 'program.ts must contain a check that looks for tracing in the capabilities list (using .includes(\"tracing\")) and maps it to devtools', specifies exact variable names (videoStart, videoStop), exact patterns (declareCommand({ name: 'video-start', ... toolName: 'browser_start_video' ... })), and exact spread syntax (...video). This goes beyond describing what's broken and prescribes the exact fix."
+      "reason": "Instruction prescribes exact implementation details: 'must contain a check that looks for 'tracing' in the capabilities list (using `.includes('tracing')`)', exact variable names `videoStart`/`videoStop`, exact declareCommand pattern, and exact toolName strings \u2014 this dictates the fix rather than describing the problem."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: test_video_commands_registered checks for exact string 'toolName: \\'browser_start_video\\'' with single quotes and specific formatting, checks variable names 'videoStart'/'videoStop' in commandsArray, and test_tracing_to_devtools_backward_compat checks for exact string includes('tracing'). An alternative correct implementation using double quotes, different variable names, or a different backward-compat mechanism (e.g., a mapping object) would"
+      "reason": "Tests assert on gold-specific internals: `toolName: 'browser_start_video'` literal string (test_video_commands_registered), variable names `videoStart`/`videoStop` in commandsArray, and `.includes('tracing')` \u2014 alternative valid implementations (e.g., using ===, a switch, or different variable names) would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "All fail-to-pass tests are purely text/pattern matching: test_video_tool_module_exists reads file content and checks strings, test_video_commands_registered uses regex on source text, test_devtools_capability_replaces_tracing reads file content for string patterns, test_caps_cli_help_includes_devtools reads file text, test_tracing_to_devtools_backward_compat reads file text. No test actually imports modules, instantiates tools, calls commands, or executes the CLI. The pass_to_pass tests (eslint,"
+      "reason": "F2p tests (test_video_tool_module_exists, test_video_commands_registered, test_devtools_capability_replaces_tracing, test_caps_cli_help_includes_devtools, test_tracing_to_devtools_backward_compat) are all regex/substring checks on source files; no test imports or executes the video tools or CLI commands."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "A stub video.ts file containing only comments with the strings 'browser_start_video', 'browser_stop_video', 'devtools', 'startVideo', 'stopVideo' would pass test_video_tool_module_exists since it only checks for string presence in file content. Similarly, adding comment lines with the right strings to commands.ts could potentially pass the regex checks. The tests don't verify actual tool registration or command execution."
+      "outcome": "pass",
+      "reason": "Each f2p requires the specific strings/patterns from the fix; a stub implementation returning defaults cannot satisfy them."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All major requirements from the instruction are tested: video.ts creation, command declarations, capability rename, CLI help text, backward compatibility, SKILL.md documentation, and the tools.ts import/spread."
+      "reason": "Each required behavior (video.ts module, tracing\u2192devtools rename, backward compat, CLI help, SKILL.md, terminal commands) has a corresponding test."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive function names and docstrings, grouped into sections (Gates/pass_to_pass vs Fail-to-pass/pr_diff) with clear comments explaining each test's purpose."
+      "reason": "Tests are grouped with section comments (Gates, Fail-to-pass) and tagged with [pr_diff]/[repo_tests]/[static] markers."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task involves TypeScript source code modifications, not structured data output like JSON/CSV/API/DB."
+      "reason": "Task modifies TypeScript source; no structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, variable names, command names, and capability names in the instruction are consistent and correct with no apparent typos."
+      "reason": "Paths and identifiers appear consistent between instruction and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names exact files to modify (e.g., 'packages/playwright/src/mcp/browser/tools/tracing.ts \u2014 capability rename'), exact code patterns ('using .includes(\\'tracing\\')'), exact variable names to use in exports ('videoStart' and 'videoStop'), and exact spread syntax ('...video'). This over-specifies the solution rather than describing behavior."
+      "reason": "Instruction names exact strings to include (e.g., `.includes('tracing')`, variable names `videoStart`/`videoStop`, exact declareCommand literal pattern), going beyond domain-obvious hints."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-editing task, not a config-edit (agentmd-edits) task."
+      "reason": "Code-only task, not an agentmd-edits task."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 5
+  "pass_count": 5,
+  "fail_count": 4
 }

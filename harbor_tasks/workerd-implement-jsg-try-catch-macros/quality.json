@@ -1,61 +1,56 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert specific implementation details not mentioned in instruction.md: test_jsg_catch_scope_class_declared checks for 'class JsgCatchScope', 'getCaughtException', and 'catchException' method names. test_jsg_catch_scope_implementation checks for 'JsgCatchScope::catchException' in jsg.c++. The instruction never mentions the class name 'JsgCatchScope' or the method names 'getCaughtException'/'catchException'. Also test_readme_documents_exception_handling_update checks for literal strings 'js"
+      "outcome": "pass",
+      "reason": "Instruction names JSG_TRY, JSG_CATCH, JsgCatchScope, catchException, getCaughtException, the 7 migration files, and README.md documentation requirements including js.error/js.throwException."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what to build (macros JSG_TRY/JSG_CATCH, migration of call sites, documentation updates) but does not specify exact implementation code, line numbers, or the specific class/method structure needed. The agent must design the supporting infrastructure."
+      "reason": "Instruction describes required behavior and API surface but does not provide exact implementation code."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests assert gold-specific implementation details: test_jsg_catch_scope_class_declared requires exactly 'class JsgCatchScope', 'getCaughtException', and 'catchException' as identifiers. test_jsg_catch_scope_implementation requires 'JsgCatchScope::catchException' in jsg.c++. An alternative correct implementation could use different class/method names (e.g., 'JsgTryCatchHelper', 'getException', 'handleException') and would fail these tests."
+      "outcome": "pass",
+      "reason": "Tests check for macro definitions, class names, method names, and documentation content that any correct solution would necessarily include, as these are explicitly specified in the instruction."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "All fail-to-pass tests are text/grep-based checks: grep for '#define JSG_TRY', grep for 'JsgCatchScope::catchException', string presence checks in files. No test compiles the code, runs it, or checks behavioral correctness. Every test is essentially 'assert string in file_content' or subprocess grep."
+      "reason": "All f2p tests use grep/string-matching (e.g., test_jsg_try_macro_defined greps for '#define JSG_TRY', test_callers_migrated greps for 'JSG_TRY', README tests check string presence); no tests compile or execute the code."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "A stub implementation that merely adds '#define JSG_TRY(js)' and '#define JSG_CATCH(exception)' to jsg.h, adds a class declaration with the right method names, puts a stub in jsg.c++, adds JSG_TRY text to migrated files and README would pass all tests without implementing any actual exception handling functionality. No test verifies compilation or runtime behavior."
+      "outcome": "pass",
+      "reason": "Tests require actual macro definitions, class declarations, migration of 4+ files, and documentation updates \u2014 a stub cannot satisfy these."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "Instruction requires: automatic conversion of JsExceptionThrown and kj::Exception to jsg::Value, setup of try/catch infrastructure on construction, nested usage support, ExceptionToJsOptions support, if-else friendliness. None of these behavioral requirements are tested - only string presence checks are performed."
+      "outcome": "pass",
+      "reason": "Tests cover macro definition, class declaration, implementation, migration count, and README documentation as required by instruction."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and docstrings explaining what each test checks."
+      "reason": "Tests are grouped with section headers like 'Gates', 'Fail-to-pass (pr_diff)', 'Pass-to-pass' with descriptive docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task produces C++ macros, class implementations, and documentation - not structured data like JSON/CSV/API/DB."
+      "reason": "Task is code changes, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, function names, macro names, and commands appear correct and consistent across instruction.md and tests."
+      "reason": "Paths and identifiers match consistently between instruction and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction specifies which files to modify (jsg.h, jsg.c++, README.md, and migration targets) which is appropriate for the task scope. It doesn't leak specific line numbers or exact code changes."
+      "reason": "Instruction names files that need changes, but those files are part of the migration scope requirement, not hidden localization."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code implementation task, not an agentmd-edits or config-only task."
+      "reason": "This is a code task, not an agentmd-edits config task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "behavior_in_tests"
-  ],
-  "pass_count": 4,
-  "fail_count": 5
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 1
 }

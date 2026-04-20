@@ -1,0 +1,54 @@
+{
+  "model": "claude-opus-4-7",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "Instruction names the exact expected output 'Ancestors: 2|section|home|' via the description 'exactly 2 ancestors (section|home)' and specifies the config and file path."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction describes the symptom and where to fix (alldecoders.go) but does not dictate exact code changes."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests only verify rendered output and package-level tests; any correct filter of empty taxonomy keys/values would pass."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests build Hugo, run subprocess, and check rendered HTML output plus run go test suites."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "Test requires actual Hugo rendering to produce 'Ancestors: 2|section|home|'; a stub cannot satisfy this."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "Tests cover the ancestor count behavior, build success, and relevant package tests as described in instruction."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests have clear docstrings labeling fail-to-pass and pass-to-pass groups."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "No structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "Paths and commands look correct."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction names the file (alldecoders.go) but not the specific line; localization within file still required."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "Code-only task."
+    }
+  },
+  "tier_a_fails": [],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
+}

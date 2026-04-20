@@ -1,0 +1,139 @@
+version: '2.0'
+source:
+  repo: PostHog/posthog
+  pr: 51937
+  base_commit: 2f7a8ee722e5d451dd2c242c722ea818cc325485
+  merge_commit: 6fe1d5dafe2218c2e35121466285017ecadaed60
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files have balanced braces
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: MCP package TypeScript typecheck passes
+- id: test_repo_lint_tool_names
+  type: pass_to_pass
+  origin: repo_tests
+  description: MCP tool name linting passes
+- id: test_repo_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: MCP unit tests pass
+- id: test_repo_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: MCP package build passes
+- id: test_repo_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: MCP package formatting and linting passes
+- id: tool_name_pattern_validation
+  type: fail_to_pass
+  origin: pr_diff
+  description: TOOL_NAME_PATTERN regex accepts valid kebab-case and rejects invalid
+    names
+- id: feature_name_pattern_validation
+  type: fail_to_pass
+  origin: pr_diff
+  description: FEATURE_NAME_PATTERN regex accepts valid snake_case and rejects invalid
+    names
+- id: zod_schema_validates_tool_name_keys
+  type: fail_to_pass
+  origin: pr_diff
+  description: CategoryConfigSchema uses regex validation on tool name record keys
+- id: zod_schema_validates_feature_field
+  type: fail_to_pass
+  origin: pr_diff
+  description: CategoryConfigSchema uses regex validation on the feature field
+- id: lint_validates_json_definitions
+  type: fail_to_pass
+  origin: pr_diff
+  description: lint-tool-names.ts validates JSON definition files, not just YAML
+- id: lint_uses_pattern_validation
+  type: fail_to_pass
+  origin: pr_diff
+  description: lint-tool-names.ts imports and uses TOOL_NAME_PATTERN for pattern checks
+- id: vitest_file_created
+  type: fail_to_pass
+  origin: pr_diff
+  description: A vitest test file validates runtime TOOL_MAP entries against name
+    constraints
+- id: skill_md_documents_naming
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md documents tool naming constraints including format, length,
+    and client compatibility
+- id: handbook_documents_feature_naming
+  type: fail_to_pass
+  origin: pr_diff
+  description: Handbook page documents feature identifier naming and pattern validation
+rubric:
+- rule: Config updates are consistent with the style and level of detail in the existing
+    SKILL.md documentation
+  source:
+    path: .agents/skills/implementing-mcp-tools/SKILL.md
+    lines: 1-67
+    commit: 2f7a8ee722e5d451dd2c242c722ea818cc325485
+- rule: SKILL.md documents tool naming constraints (format, length, client compatibility,
+    and CI enforcement with pnpm --filter commands)
+  source:
+    path: .agents/skills/implementing-mcp-tools/SKILL.md
+    lines: 70-108
+    commit: 6fe1d5dafe2218c2e35121466285017ecadaed60
+  reference: "## Tool naming constraints\n\nTool names and feature identifiers are\n\
+    \  validated at build time and in CI.\nViolations fail the build.\n\n### Tool\
+    \ names\n\n- **Format**: lowercase kebab-case — only `[a-z0-9-]`, no leading/trailing\
+    \ hyphens\n- **Length**: 52 characters or fewer\n- **Convention**: `domain-action`,\
+    \ e.g. `cohorts-create`, `dashboard-get`, `feature-flags-list`\n\n### Feature\
+    \ identifiers\n\n- **Format**: lowercase snake*case — only `[a-z0-9*]`, must*start\
+    \ with a letter\n- **Convention**: should match the product folder name, e.g.\
+    \ `error_tracking`, `feature_flags`\n\n### Why 52 characters?\n\nMCP clients enforce\
+    \ different limits on tool names. The 52-char limit is the safe zone\nthat works\
+    \ across all known clients:\n\n| Client           | Limit                    \
+    \             | Notes                                                        \
+    \      |\n| ---------------- | ------------------------------ | --------------------------------------------------------------\
+    \   |\n| MCP spec (draft) | 1–128 chars, `[A-Za-z0-9_-.]` | Official recommendation,\
+    \ not enforced                            |\n| Claude Code      | 64 chars   \
+    \                    | Hard limit; prefixes tool names with `mcp____`        \
+    \           |\n| Cursor           | 60 chars combined              | `server_name\
+    \ + tool_name`; tools over this are silently filtered |\n| OpenAI API       |\
+    \ `^[a-zA-Z0-9_-]+$`, 64 chars   | No dots allowed                           \
+    \                         |\n\nWith the server name \"posthog\" (7 chars) plus\
+    \ a separator, tool names must stay at\nor below 52 characters to fit within Cursor's\
+    \ 60-char combined limit.\n\n\n### CI enforcement\n\n- `pnpm --filter=@posthog/mcp\
+    \ lint-tool-names` — validates length and pattern for YAML and JSON definitions\n\
+    - A vitest test validates all runtime `TOOL_MAP` and `GENERATED_TOOL_MAP` entries\n"
+- rule: 'chore: Non-production changes (docs, tests, config, CI, refactoring agents
+    instructions, etc.)'
+  source:
+    path: AGENTS.md
+    lines: 42-43
+  evidence: The gold solution updates the agent instructions in `.agents/skills/implementing-mcp-tools/SKILL.md`
+    and the handbook docs, treating them as standard codebase files that require maintenance.
+  category: documentation
+distractors:
+- rule: 'All tests: `pytest`'
+  collision_type: rule_conflict
+  why_distracting: The task explicitly asks for a `vitest` test for the MCP tool names.
+    The global rule mandates `pytest`, which would cause the agent to write the test
+    in Python or use the wrong test runner for a TypeScript service.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 13-15
+- rule: 'Single frontend test: `pnpm --filter=@posthog/frontend jest <test_file>`'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might assume the TypeScript test should be run with `jest`
+    in the frontend package, but the test belongs in `services/mcp/tests/unit/` and
+    uses `vitest`.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 18-19
+hierarchy_analysis: The config hierarchy is relatively flat, but the task involves
+  editing a skill file (`.agents/skills/implementing-mcp-tools/SKILL.md`) which acts
+  as an agent instruction for future tasks. The agent must navigate the conflict between
+  the global testing instructions in `AGENTS.md` (which mandate `pytest` and `jest`)
+  and the explicit task instruction to use `vitest` for the MCP service.

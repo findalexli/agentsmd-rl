@@ -1,60 +1,57 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert very specific details not mentioned in instruction.md: exact version comment format '# Airflow 3.2+' (test_partition_fields_have_version_comments), exact ordering relative to 'logical_date' and 'run_after' (test_partition_fields_ordering), and exact comment strings like '\"partition_key\",  # Airflow 3.2+'. The instruction says 'study the existing entries to determine the correct format' but doesn't specify the exact comment convention or placement between logical_date and run_after."
+      "outcome": "pass",
+      "reason": "Instruction names DagRunInfo class, includes list, partition_key/partition_date fields, and references the version-comment convention which the agent can discover by reading the file."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what's broken (partition_key and partition_date missing from DagRunInfo includes list) and asks the agent to figure out the correct format and placement by studying existing entries. It doesn't specify exact line numbers or the exact text to add."
+      "reason": "Instruction describes what's broken (missing fields) without giving exact line numbers or the literal '# Airflow 3.2+' string."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on exact formatting like '\"partition_key\",  # Airflow 3.2+' (test_partition_fields_have_version_comments) and exact ordering between logical_date and run_after (test_partition_fields_ordering). A correct alternative using '# Airflow 3.2' instead of '# Airflow 3.2+', or placing fields after run_after but still in the includes list, would fail these tests despite being functionally correct."
+      "reason": "test_partition_fields_have_version_comments asserts the exact literal '\"partition_key\",  # Airflow 3.2+' with specific whitespace and wording, and test_partition_fields_ordering mandates partition_key before partition_date specifically, rejecting valid alternatives like '# Airflow 3.2', '# Added in 3.2', or reverse ordering."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_dagrun_info_includes_partition_fields, test_partition_fields_in_dagrun_info_includes_list, test_partition_fields_have_version_comments, test_partition_fields_ordering) all use string matching on file content with patterns like 'assert '\"partition_key\"' in content'. While there are pass-to-pass tests that run unit tests and linting, the core fail-to-pass tests are purely text-based assertions on file content rather than behavioral tests."
+      "reason": "The f2p tests (test_dagrun_info_includes_partition_fields, test_partition_fields_in_dagrun_info_includes_list, test_partition_fields_have_version_comments, test_partition_fields_ordering, test_no_duplicate_partition_fields) all use _read_utils_file and string/regex matching; only the pass-to-pass tests execute code."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check for the presence of 'partition_key' and 'partition_date' in the DagRunInfo includes list, which are not present in the base commit. A stub or no-op implementation would not pass these tests since the strings must actually be added to the source file."
+      "reason": "The f2p tests require the specific strings to be present, which cannot be satisfied by a stub."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: (1) adding partition_key and partition_date to DagRunInfo includes, (2) correct version annotation, (3) appropriate position, (4) each field exactly once, (5) existing tests and linting pass. All of these are tested."
+      "reason": "Instruction-required behaviors (fields present, version comments, correct position, no duplicates) are each tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named and organized: test_dagrun_info_includes_partition_fields, test_partition_fields_have_version_comments, test_partition_fields_ordering, etc. Each test has a clear docstring explaining its purpose and whether it's fail-to-pass or pass-to-pass."
+      "reason": "Tests have descriptive names and docstrings indicating f2p vs p2p purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task involves modifying a Python class attribute list, not producing structured data output like JSON/CSV/API/DB."
+      "reason": "Task is a source code edit, not a structured data producer."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in instruction.md or test files."
+      "reason": "Paths and names appear correct and consistent."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly names 'DagRunInfo' class and its 'includes' list, which is quite specific. It also names the exact file path via the test command (providers/openlineage/.../utils/utils.py). While this is somewhat domain-appropriate, combined with naming the exact class and attribute, it significantly narrows the localization task."
+      "outcome": "pass",
+      "reason": "Instruction names the class and list but not the exact line or exact comment text."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-edit task, not an agentmd-edits/config task."
+      "reason": "Code-only task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 5,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 2
 }

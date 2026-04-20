@@ -13,20 +13,25 @@ In high-availability (HA) deployments with multiple scheduler replicas, deadline
 
 ## Analysis
 
-The scheduler processes expired deadlines by iterating over unhandled `Deadline` rows from the database. In the file `airflow-core/src/airflow/jobs/scheduler_job_runner.py`, the deadline query does not employ any form of row-level locking. When multiple scheduler replicas run simultaneously, each replica's query returns the same set of unhandled rows, and each replica independently invokes `handle_miss()`, producing duplicate callbacks.
+The scheduler processes expired deadlines by iterating over unhandled `Deadline` rows from the database. When multiple scheduler replicas run simultaneously, each replica's query returns the same set of unhandled rows, and each replica independently processes the deadline, producing duplicate callbacks.
+
+This is a classic race condition where multiple concurrent database transactions read the same rows before any of them marks those rows as processed.
 
 ## Requirements
 
-The fix must ensure that each expired deadline row is processed by exactly one scheduler replica by adding row-level locking to the deadline query.
+Fix the race condition so that each expired deadline is processed by exactly one scheduler replica.
 
-Airflow provides a `with_row_locks` utility in `airflow.utils.sqlalchemy` for applying database-appropriate row-level locking. The deadline query must be wrapped with this utility, configured with the following parameters:
+The fix must:
 
-- **`of=Deadline`** — the lock must target the Deadline model specifically for proper row-level granularity
-- **`session=session`** — the current database session must be passed so the utility can detect the database dialect and apply the appropriate locking strategy
-- **`skip_locked=True`** — rows already locked by another transaction must be skipped rather than causing the query to block, so scheduler replicas do not wait on each other
-- **`key_share=False`** — the weaker `FOR KEY SHARE` lock mode must not be used, as it does not conflict with itself and would still permit concurrent replicas to process the same row
+1. **Use row-level database locking** when querying for expired deadlines, ensuring that once one scheduler replica locks a row, other replicas cannot access that same row until the lock is released.
 
-The `select(Deadline)` query must be assigned to a variable named `deadline_query` rather than being written inline within `session.scalars()`. A comment should be placed near the locking code that mentions row locking and explains it prevents concurrent HA scheduler replicas from creating duplicate callbacks.
+2. **Skip locked rows rather than blocking** - scheduler replicas should not wait on each other; if a row is already locked by another replica, the query should skip it and move on.
+
+3. **Use a sufficiently strong lock mode** - weaker lock modes like `FOR KEY SHARE` do not conflict with themselves and would still permit concurrent replicas to process the same row. A stronger lock like `FOR UPDATE` is needed.
+
+4. **Target the Deadline model specifically** - the locking must be applied to the `Deadline` table/entity to ensure proper row-level granularity.
+
+5. **Preserve code clarity** - extract the query into a named variable (rather than inline) and add an explanatory comment describing why the locking is necessary (mentioning HA schedulers and prevention of duplicate callbacks).
 
 ## Expected Behavior
 

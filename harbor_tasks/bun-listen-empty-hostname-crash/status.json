@@ -4,10 +4,10 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-15T13:19:14.952071",
-  "total_time": 2609.92,
-  "sandbox_id": "i2sw4zlw9rme1l3hm2oj3",
-  "backend": "minimax",
+  "validated_at": "2026-04-16T12:12:14.445734",
+  "total_time": 64.57,
+  "sandbox_id": "i2uzyv2ptwyzsa3bjttbs",
+  "backend": "anthropic",
   "pipeline": "pipeline",
   "start_at": "judge",
   "nodes": {
@@ -61,35 +61,29 @@
     },
     "quality_gate": {
       "status": "DELETE",
-      "model": "MiniMax-M2.7",
-      "backend": "minimax",
-      "time": 0.32,
-      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:168: test `test_hostname_unix_branches_preserved` has 2 assert(s), all', 'lint_tier_b:1']"
+      "model": "claude-opus-4-7",
+      "backend": "anthropic",
+      "time": 0.2,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:209: test `test_hostname_unix_branches_preserved` has 2 assert(s), all', 'lint_tier_b:1']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 31.12,
+      "time": 11.4,
       "tier_a_fails": [
         "behavior_in_task_description",
-        "no_solution_leakage",
-        "tests_verify_behavior_not_text",
-        "test_not_tautological",
-        "anti_cheating_measures"
+        "solution_uniqueness_guard"
       ],
       "tier_b_fails": [],
-      "pass_count": 4,
-      "fail_count": 6
+      "pass_count": 7,
+      "fail_count": 2
+    },
+    "tests_rewrite": {
+      "status": "error",
+      "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":646,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 400 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"invalid_request_error\\\",\\\"message\\\":\\\"\\\\\\\"thinking.type.enabled\\\\\\\" is not supported for this model. Use \\\\\\\"thinking.type.adapt",
+      "time": 1.85
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 749.94,
-      "at": "2026-04-11T18:56:21.313405"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -121,6 +115,14 @@
       "backend": "minimax",
       "time": 2609.92,
       "at": "2026-04-15T13:19:14.952071"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "anthropic",
+      "time": 64.57,
+      "at": "2026-04-16T12:12:14.445734"
     }
   ]
 }

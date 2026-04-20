@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "Instruction names the constant, function name, flag string, file path, error message, class name, method name, and feature_enabled parameters that tests assert on."
+      "reason": "Instruction names the constant LEGACY_INSIGHT_FILTERS_BLOCKED_FLAG, value 'legacy-insight-filters-disabled', function is_legacy_insight_filters_blocked, file posthog/api/insight.py, exact error message, HTTP 403, and all kwargs (groups, group_properties, send_feature_flag_events=False)."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "Instruction describes requirements and behaviors but doesn't provide literal code; agent must write the implementation."
+      "reason": "Instruction describes required behavior and API shape but does not provide the literal code diff; the agent must still write the implementation."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "Tests check for named constant, function, and method with documented API contract; alternative correct implementations meeting the spec should pass."
+      "reason": "Tests check the constant, function name, and method name which are all explicitly required by the instruction; alternative implementations matching the spec would still pass."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests extract and exec function source, mock posthoganalytics, and assert call arguments and return values."
+      "reason": "Tests extract function source and exec it with mocked posthoganalytics, asserting call args and return values \u2014 actual execution, not text matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "Tests verify actual behavior: return values, feature_enabled call args (groups, group_properties, send_feature_flag_events), and specific flag string."
+      "reason": "Tests verify feature_enabled is called with specific args and returns propagate correctly; a stub returning False would fail test_filters_blocked_delegates_to_feature_flag which expects True."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "Tests cover the constant, function behavior with/without distinct_id, feature flag delegation, and validator class method."
+      "reason": "Tests cover flag constant, no-distinct-id bypass, feature flag delegation with correct kwargs, and the 403 error behavior for legacy filter payloads."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are organized with comment section headers (Gates, Fail-to-pass) and descriptive docstrings."
+      "reason": "Tests are grouped with section comment headers (Gates, Fail-to-pass) and named descriptively."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "No structured data output schema; error message is explicitly documented."
+      "reason": "Task is code behavior, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "Filenames, flag string, and function names are consistent across instruction and tests."
+      "reason": "Filenames, flag name, and function names are consistent between instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "Instruction points to file paths required for implementation (posthog/api/insight.py, InsightSerializer) which is scope definition, not buggy-line leakage."
+      "reason": "Instruction names posthog/api/insight.py which is the natural file for Insights API work; no line numbers leaked."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "Code-only task, no config edits."
+      "reason": "Code-only task, not config edits."
     }
   },
   "tier_a_fails": [],

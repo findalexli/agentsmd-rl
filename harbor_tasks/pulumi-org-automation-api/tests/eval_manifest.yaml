@@ -1,0 +1,181 @@
+task:
+  name: pulumi-org-automation-api
+  source_pr: pulumi/pulumi#22436
+  base_commit: 40fd96368b6bab557b45747a4e4cb5a9082a7340
+  merge_commit: 4a1e067a15f35e64a220b2a49cb684f0df1b19fd
+
+checks:
+  # Fail-to-pass: Interface definitions
+  - id: test_go_workspace_interface_has_org_methods
+    type: fail_to_pass
+    origin: agent_config
+    description: Go Workspace interface has OrgGetDefault and OrgSetDefault methods
+    source:
+      file: sdk/go/auto/workspace.go
+      lines: "124-130"
+
+  - id: test_python_workspace_has_abstract_org_methods
+    type: fail_to_pass
+    origin: agent_config
+    description: Python Workspace abstract class has org_get_default and org_set_default
+    source:
+      file: sdk/python/lib/pulumi/automation/_workspace.py
+      lines: "392-410"
+
+  # Fail-to-pass: Implementation
+  - id: test_go_local_workspace_has_org_methods
+    type: fail_to_pass
+    origin: agent_config
+    description: Go LocalWorkspace implements OrgGetDefault and OrgSetDefault
+    source:
+      file: sdk/go/auto/local_workspace.go
+      lines: "562-580"
+
+  - id: test_python_local_workspace_has_org_methods
+    type: fail_to_pass
+    origin: agent_config
+    description: Python LocalWorkspace implements org_get_default and org_set_default
+    source:
+      file: sdk/python/lib/pulumi/automation/_local_workspace.py
+      lines: "436-445"
+
+  # Fail-to-pass: Proper error handling and patterns
+  - id: test_go_org_methods_have_proper_error_handling
+    type: fail_to_pass
+    origin: agent_config
+    description: Go org methods use proper error handling with newAutoError
+
+  - id: test_go_methods_follow_existing_patterns
+    type: fail_to_pass
+    origin: agent_config
+    description: Go org methods follow patterns of existing similar methods
+
+  - id: test_python_methods_follow_existing_patterns
+    type: fail_to_pass
+    origin: agent_config
+    description: Python org methods follow patterns of existing similar methods
+
+  # Fail-to-pass: Syntax validation
+  - id: test_go_syntax_valid
+    type: fail_to_pass
+    origin: repo_tests
+    description: Go code compiles without syntax errors
+
+  - id: test_python_syntax_valid
+    type: fail_to_pass
+    origin: repo_tests
+    description: Python code has valid syntax
+
+  # Pass-to-pass: Test files exist
+  - id: test_go_auto_api_tests_exist
+    type: pass_to_pass
+    origin: repo_tests
+    description: Go auto API tests for org commands exist
+
+  - id: test_python_auto_api_tests_exist
+    type: pass_to_pass
+    origin: repo_tests
+    description: Python auto API tests for org commands exist
+
+  # Pass-to-pass: Interface correctness
+  - id: test_go_interface_signature_correct
+    type: pass_to_pass
+    origin: agent_config
+    description: Go interface methods have correct signatures
+
+  - id: test_python_docstrings_present
+    type: pass_to_pass
+    origin: agent_config
+    description: Python methods have proper docstrings
+
+  # Pass-to-pass: Repo CI checks
+  - id: test_go_auto_build_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: Go automation API compiles without errors
+
+  - id: test_go_auto_vet_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: Go automation API passes go vet static analysis
+
+  - id: test_go_auto_fmt_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: Go automation API passes gofmt formatting check
+
+  - id: test_go_auto_tests_compile
+    type: pass_to_pass
+    origin: repo_tests
+    description: Go automation API tests compile without errors
+
+  - id: test_python_auto_syntax_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: Python automation API has valid syntax
+
+  - id: test_go_sdk_module_tidy
+    type: pass_to_pass
+    origin: repo_tests
+    description: Go SDK module is properly tidied
+
+rubric:
+  - rule: "Add OrgGetDefault and OrgSetDefault methods to Go Workspace interface"
+    weight: 10
+    source:
+      file: AGENTS.md
+      context: "If you change any .go file, run mise exec -- make format && mise exec -- make lint && mise exec -- make test_fast"
+
+  - rule: "Add org_get_default and org_set_default methods to Python Workspace abstract class"
+    weight: 10
+    source:
+      file: sdk/python/AGENTS.md
+      context: "After altering source code in Go or Python, execute mise exec -- make lint && mise exec -- make test_fast"
+
+  - rule: "Implement OrgGetDefault in Go LocalWorkspace using pulumi org get-default command"
+    weight: 10
+    source:
+      file: sdk/go/AGENTS.md
+      context: "Go SDK automation API conventions"
+
+  - rule: "Implement OrgSetDefault in Go LocalWorkspace using pulumi org set-default command"
+    weight: 10
+    source:
+      file: sdk/go/AGENTS.md
+      context: "Go SDK automation API conventions"
+
+  - rule: "Implement org_get_default in Python LocalWorkspace using pulumi org get-default command"
+    weight: 10
+    source:
+      file: sdk/python/AGENTS.md
+      context: "Python SDK automation API conventions"
+
+  - rule: "Implement org_set_default in Python LocalWorkspace using pulumi org set-default command"
+    weight: 10
+    source:
+      file: sdk/python/AGENTS.md
+      context: "Python SDK automation API conventions"
+
+  - rule: "Add proper error handling to Go implementations using newAutoError"
+    weight: 5
+    source:
+      file: sdk/go/auto/local_workspace.go
+      context: "Existing error handling patterns in WhoAmI and similar methods"
+
+  - rule: "Add docstrings to Python abstract methods explaining purpose"
+    weight: 5
+    source:
+      file: sdk/python/lib/pulumi/automation/_workspace.py
+      context: "Existing docstring patterns for who_am_i method"
+
+  - rule: "Follow existing code style and patterns in both languages"
+    weight: 10
+    source:
+      file: AGENTS.md
+      context: "All commands assume you're at the repo root. Follow command canon for builds."
+
+  - rule: "Run lint and tests to verify changes per AGENTS.md instructions"
+    weight: 5
+    source:
+      file: AGENTS.md
+      context: "If you change any .go file -> mise exec -- make format && mise exec -- make lint && mise exec -- make test_fast"

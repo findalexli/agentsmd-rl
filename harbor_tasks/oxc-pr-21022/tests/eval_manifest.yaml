@@ -1,0 +1,126 @@
+source_pr:
+  owner: oxc-project
+  repo: oxc
+  number: 21022
+  title: "perf(napi/parser, linter/plugins): use utf8Slice for decoding UTF-8 strings"
+  merge_commit: 3b7dec4dbb93c12d4d33048c7d2726a7789b2dd9
+  base_commit: 012c924a046b2dc14c0f381b188743fc24226b79
+
+source_changes:
+  primary_modified:
+    - tasks/ast_tools/src/generators/raw_transfer.rs
+  generated_modified:
+    - napi/parser/src-js/generated/deserialize/js.js
+    - napi/parser/src-js/generated/deserialize/js_parent.js
+    - napi/parser/src-js/generated/deserialize/js_range.js
+    - napi/parser/src-js/generated/deserialize/js_range_parent.js
+    - napi/parser/src-js/generated/deserialize/ts.js
+    - napi/parser/src-js/generated/deserialize/ts_parent.js
+    - napi/parser/src-js/generated/deserialize/ts_range.js
+    - napi/parser/src-js/generated/deserialize/ts_range_parent.js
+    - apps/oxlint/src-js/generated/deserialize.js
+    - apps/oxlint/src-js/plugins/source_code.ts
+
+agent_config_sources:
+  - source: CLAUDE.md
+    url: https://github.com/oxc-project/oxc/blob/012c924a046b2dc14c0f381b188743fc24226b79/CLAUDE.md
+    relevant_rules:
+      - "Avoid editing `generated` subdirectories"
+      - "Edit `tasks/ast_tools/src/generators/raw_transfer.rs` to modify generated files"
+  - source: AGENTS.md
+    url: https://github.com/oxc-project/oxc/blob/012c924a046b2dc14c0f381b188743fc24226b79/AGENTS.md
+    relevant_rules:
+      - "Run `just ast` to update generated files after AST changes"
+      - "Avoid editing `generated` subdirectories"
+
+rubric:
+  - rule: "Modify the Rust code generator (raw_transfer.rs) not just generated JS files"
+    weight: 2
+    source: agent_config
+  - rule: "Update all generated JS deserializer files with utf8Slice"
+    weight: 2
+  - rule: "Update source_code.ts to use utf8Slice"
+    weight: 1
+  - rule: "Remove TextDecoder and decodeStr from all files"
+    weight: 2
+  - rule: "Update comments to reference utf8Slice not TextDecoder"
+    weight: 1
+  - rule: "Use proper destructuring pattern: { utf8Slice, latin1Slice } = Buffer.prototype"
+    weight: 1
+
+checks:
+  # Fail-to-pass checks
+  - id: test_rust_generator_uses_utf8slice
+    type: fail_to_pass
+    origin: agent_config
+    description: "Rust code generator uses utf8Slice instead of decodeStr/TextDecoder"
+    points: 2
+
+  - id: test_rust_generator_comments_updated
+    type: fail_to_pass
+    origin: agent_config
+    description: "Comments in Rust generator reference utf8Slice not TextDecoder"
+    points: 1
+
+  - id: test_generated_js_use_utf8slice
+    type: fail_to_pass
+    description: "All generated JS files use utf8Slice instead of TextDecoder"
+    points: 2
+
+  - id: test_no_textdecoder_in_generated_js
+    type: fail_to_pass
+    description: "No TextDecoder or decodeStr usage in generated JS files"
+    points: 2
+
+  - id: test_source_code_ts_uses_utf8slice
+    type: fail_to_pass
+    description: "source_code.ts uses utf8Slice for decoding source text"
+    points: 1
+
+  - id: test_comments_reference_utf8slice
+    type: fail_to_pass
+    description: "Comments in generated files reference utf8Slice not TextDecoder"
+    points: 1
+
+  # Pass-to-pass checks (repo CI/CD)
+  - id: test_rust_ast_tools_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Rust oxc_ast_tools compiles with cargo check"
+
+  - id: test_rust_ast_tools_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Rust oxc_ast_tools unit tests pass"
+
+  - id: test_rust_parser_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Rust oxc_parser compiles with cargo check"
+
+  - id: test_rust_parser_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Rust oxc_parser tests pass"
+
+  - id: test_rust_ast_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Rust oxc_ast tests pass"
+
+  - id: test_rust_fmt_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Rust code formatting passes cargo fmt --check"
+
+  # Integration test
+  - id: test_utf8slice_functionally_correct
+    type: pass_to_pass
+    origin: agent_config
+    description: "utf8Slice is functionally correct in Node.js"
+    points: 1
+
+scoring:
+  max_score: 13
+  passing_threshold: 9
+  bonus_for_perfect: 2

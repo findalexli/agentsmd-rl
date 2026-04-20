@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "All file paths (registry.ts, plugin/index.ts), required exports (defaultLayer), APIs (Effect.fn, Effect.fnUntraced, Effect.forEach/all, Config.Service, Plugin.Service), and commands (bunx turbo typecheck, bun test test/tool/registry.test.ts) are named in instruction.md."
+      "reason": "All tested items (file paths, defaultLayer exports, Effect.fn/fnUntraced counts, Promise.all removal, yield* Config.Service/Plugin.Service, InstanceState.make, typecheck, test path) are named explicitly in instruction.md requirements 1-11."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "Instruction describes what's broken and requirements (e.g., 'must yield services via Effect protocol') without prescribing specific line changes or code."
+      "reason": "Instruction describes what's broken and requirements, but doesn't show the exact code changes; agent must still figure out how to yield services and restructure generators."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "Tests check for general patterns (yield* Config.Service, Effect.fn/gen for all, Effect.forEach/all) rather than specific variable names; multiple valid refactorings would satisfy them."
+      "reason": "Tests check for structural patterns (Effect.fn/gen, yield* Service, defaultLayer export, no Promise.all) that any correct refactor would have; don't assert specific variable names or line positions."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests run typecheck and bun test via subprocess, plus static checks on source code structure."
+      "reason": "Tests include repo typecheck and registry test suite execution, plus structural regex checks; behavior is verified via bun test and tsc."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "Tests require actual refactoring (Effect.fn >= 3 uses, no Promise.all, yield* Service patterns) that a stub couldn't produce while passing repo_typecheck and registry tests."
+      "reason": "f2p tests require actual Effect refactoring (yield* Config.Service, Effect.forEach, defaultLayer exports) and running tests/typecheck \u2014 stubs cannot satisfy these."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "Each of the 11 requirements in instruction.md has a corresponding test."
+      "reason": "Each of the 11 numbered requirements in instruction.md has corresponding test(s) covering it."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are grouped by section headers (Fail-to-pass, Pass-to-pass, Config-derived, Anti-stub, Repo CI/CD) with tag comments."
+      "reason": "Tests are grouped with section comments (fail-to-pass, pass-to-pass, config-derived, anti-stub, repo CI/CD) and tagged with [pr_diff]/[agent_config]/[static]/[repo_tests]."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task is code refactoring, not structured data production."
+      "reason": "Task is code refactoring, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "Filenames and commands (bunx turbo typecheck, Effect.fnUntraced) are consistent and spelled correctly."
+      "reason": "Filenames and commands (registry.ts, plugin/index.ts, bunx turbo typecheck, bun test test/tool/registry.test.ts) match actual paths."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "Instruction names the files being refactored (which is appropriate as the task is refactoring, not localization) without pointing to specific buggy lines."
+      "reason": "Instruction names the modules (registry.ts, plugin/index.ts) which is appropriate since localization is not the task; does not cite exact lines."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code refactoring task, not an agentmd-edit task."
+      "reason": "Code-only refactoring task, not an AGENTS.md config edit task."
     }
   },
   "tier_a_fails": [],

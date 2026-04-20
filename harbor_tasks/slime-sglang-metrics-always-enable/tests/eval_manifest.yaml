@@ -1,0 +1,238 @@
+version: '2.0'
+source:
+  repo: THUDM/slime
+  pr: 1747
+  base_commit: a9614431b35e9c54b88a42f9d565ef81075172a1
+  merge_commit: 051e91a33093cf3201acbbf96ca6748193a7eb1b
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: All four modified files must parse without syntax errors
+- id: enable_metrics_in_server_kwargs
+  type: fail_to_pass
+  origin: pr_diff
+  description: _compute_server_args must set enable_metrics=True in the kwargs dict
+- id: enable_metrics_in_passthrough_args
+  type: fail_to_pass
+  origin: pr_diff
+  description: enable_metrics must be in the _EXTERNAL_ENGINE_SKIP_CHECK_FIELDS allowlist
+- id: metrics_router_not_gated_on_flag
+  type: fail_to_pass
+  origin: pr_diff
+  description: _get_metrics_router_addr must not early-return when sglang_enable_metrics
+    is unset
+- id: wandb_forwarding_not_gated_on_flag
+  type: fail_to_pass
+  origin: pr_diff
+  description: init_wandb_secondary must forward metrics when router_addr is set,
+    without checking sglang_enable_metrics
+- id: prefill_load_balance_method
+  type: fail_to_pass
+  origin: pr_diff
+  description: Prefill workers must use follow_bootstrap_room, not round_robin
+- id: dp_rank_context_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: dp_rank_context method and dp bookkeeping attrs must be removed from
+    GenerateState
+- id: generate_and_rm_no_dp_rank_context
+  type: fail_to_pass
+  origin: pr_diff
+  description: generate_and_rm must not use dp_rank_context
+- id: contextmanager_import_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: contextmanager import should be removed since dp_rank_context (its
+    only user) is gone
+- id: key_functions_exist
+  type: pass_to_pass
+  origin: static
+  description: All key functions and classes must still be present after changes
+- id: files_not_truncated
+  type: pass_to_pass
+  origin: static
+  description: Changed files must not be truncated stubs
+- id: changes_contained
+  type: pass_to_pass
+  origin: agent_config
+  description: Fix touches at most 5 files
+  source:
+    path: .claude/skills/add-tests-and-ci/SKILL.md
+    lines: '25'
+    commit: a9614431b35e9c54b88a42f9d565ef81075172a1
+- id: rollout_train_eval_branches
+  type: pass_to_pass
+  origin: agent_config
+  description: Rollout must preserve both train and eval branches (RolloutFnTrainOutput
+    / RolloutFnEvalOutput)
+  source:
+    path: .claude/skills/add-rollout-function/SKILL.md
+    lines: 44-46
+    commit: a9614431b35e9c54b88a42f9d565ef81075172a1
+- id: repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo linting with ruff passes
+- id: repo_chunked_gae
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo GAE tests pass
+- id: repo_python_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Python syntax check passes for modified files
+- id: repo_pytest_version
+  type: pass_to_pass
+  origin: repo_tests
+  description: Pytest is available and working
+- id: repo_mtp_bridge_mapping
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo MTP bridge mapping unit tests pass
+- id: repo_sglang_config_import
+  type: pass_to_pass
+  origin: repo_tests
+  description: SglangConfig module can be imported and parsed
+- id: repo_sglang_engine_syntax_and_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: Sglang engine module syntax and key structure is valid
+- id: repo_rollout_syntax_and_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: Rollout module syntax and key structure is valid
+- id: repo_wandb_utils_syntax_and_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: Wandb utils module syntax and key structure is valid
+- id: repo_isort_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo import ordering check with isort passes
+- id: repo_black_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo code formatting check with black passes
+rubric: []
+distractors:
+- rule: 'Start from one of these references: - Async RL-style rollout: `slime/rollout/sglang_rollout.py`
+    [...] If the task needs engine-based async generation and rewards, use the sglang
+    path as base.'
+  source:
+    path: .claude/skills/add-rollout-function/SKILL.md
+    lines: 22-27
+  source_text: 'Start from one of these references:
+
+
+    - Async RL-style rollout: `slime/rollout/sglang_rollout.py`
+
+    - Simple SFT-style rollout: `slime/rollout/sft_rollout.py`
+
+
+    If the task needs engine-based async generation and rewards, use the sglang path
+    as base.'
+  collision_type: architecture_boundary
+  why_distracting: The user is refactoring load balancing and metrics directly inside
+    the default async rollout backend. An agent reading this rule might mistakenly
+    assume they should not edit the core engine file but instead create a separate
+    custom rollout module.
+  severity: high
+- rule: 'For each generated sample, ensure required training fields are populated
+    consistently with your objective: - tokens - response_length - reward - status'
+  source:
+    path: .claude/skills/add-rollout-function/SKILL.md
+    lines: 72-77
+  source_text: 'For each generated sample, ensure required training fields are populated
+    consistently with your objective:
+
+
+    - `tokens`
+
+    - `response_length`
+
+    - `reward` (or reward dict if your setup uses keyed rewards)
+
+    - `status`'
+  collision_type: scope_ambiguity
+  why_distracting: Since the PR directly edits the main generation loop inside `sglang_rollout.py`,
+    an agent might encounter this rule and incorrectly think they need to alter how
+    the sample fields are populated, even though this rule only applies to implementing
+    brand-new custom rollout functions.
+  severity: low
+- rule: When creating CI-discoverable tests, ensure top-level constants and conventions
+    match repository patterns (including `NUM_GPUS = <N>` where expected).
+  source:
+    path: .claude/skills/add-tests-and-ci/SKILL.md
+    lines: '29'
+  source_text: When creating CI-discoverable tests, ensure top-level constants and
+    conventions match repository patterns (including `NUM_GPUS = <N>` where expected).
+  collision_type: scope_ambiguity
+  why_distracting: Agents are usually instructed to write tests when modifying code.
+    Because the PR touches backend routing, an agent might see this skill and mistakenly
+    try to implement new CI-discoverable integration tests using these conventions,
+    wasting effort on tests not needed for this change.
+  severity: medium
+- rule: Implement Train and Eval Branches Explicitly
+  source:
+    path: .claude/skills/add-rollout-function/SKILL.md
+    lines: 45-46
+  source_text: '- For training (`evaluation=False`), return `RolloutFnTrainOutput(samples=...,
+    metrics=...)`
+
+    - For evaluation (`evaluation=True`), return `RolloutFnEvalOutput(data=..., metrics=...)`'
+  collision_type: would_cause_bug
+  why_distracting: The PR modifies `slime/rollout/sglang_rollout.py`, which is mentioned
+    in this skill. An agent might think they need to enforce these return types in
+    the modified functions, but the bug fix occurs inside `generate_and_rm`, an inner
+    helper where these return types do not apply.
+  severity: high
+- rule: Keep Data Contract Compatible
+  source:
+    path: .claude/skills/add-rollout-function/SKILL.md
+    lines: 72-77
+  source_text: 'For each generated sample, ensure required training fields are populated
+    consistently with your objective:
+
+
+    - `tokens`
+
+    - `response_length`
+
+    - `reward` (or reward dict if your setup uses keyed rewards)
+
+    - `status`'
+  collision_type: scope_ambiguity
+  why_distracting: Since the agent is editing `sglang_rollout.py`, they might believe
+    they need to add or enforce data contract fields on the generated samples. However,
+    this PR just removes dead data-parallel code and updates metrics infrastructure,
+    without altering the sample data structure.
+  severity: medium
+- rule: Preserve Group Structure
+  source:
+    path: .claude/skills/add-dynamic-filter/SKILL.md
+    lines: 68-70
+  source_text: '- Keep `list[list[Sample]]` structure intact where required.
+
+    - Do not flatten sample groups unless downstream path expects flattened samples.
+
+    - For sample removal, prefer `sample.remove_sample=True` over deleting objects.'
+  collision_type: scope_ambiguity
+  why_distracting: The PR modifies `slime/rollout/sglang_rollout.py`, which is the
+    generation hook point mentioned in this skill. An agent might think they need
+    to enforce these sample grouping and removal rules, but this PR merely removes
+    dead code and has nothing to do with dynamic filtering or sample removal.
+  severity: low
+- rule: Keep CI Compatibility
+  source:
+    path: .claude/skills/add-tests-and-ci/SKILL.md
+    lines: 29-29
+  source_text: When creating CI-discoverable tests, ensure top-level constants and
+    conventions match repository patterns (including `NUM_GPUS = <N>` where expected).
+  collision_type: scope_ambiguity
+  why_distracting: AI agents are frequently instructed to add tests for bug fixes.
+    Since this PR fixes a bug regarding W&B metrics, an agent might read this skill
+    and attempt to create a new test file in `tests/` with `NUM_GPUS` constants. However,
+    this specific fix modifies server config and endpoint logic where adding a new
+    test file is not part of the gold diff.
+  severity: medium

@@ -1,0 +1,162 @@
+checks:
+- id: test_conversation_starting_priority_with_disconnected_websocket
+  type: fail_to_pass
+  origin: pr_diff
+  description: When conversation is STARTING with DISCONNECTED WebSocket, should show
+    'Starting' not 'Disconnected'
+- id: test_conversation_starting_priority_with_connected_websocket
+  type: fail_to_pass
+  origin: pr_diff
+  description: When conversation is STARTING with CONNECTED WebSocket, should show
+    'Starting' not runtime status
+- id: test_conversation_starting_check_in_code
+  type: fail_to_pass
+  origin: pr_diff
+  description: The conversationStatus === 'STARTING' check must exist in status.ts
+- id: test_priority_comment_in_code
+  type: fail_to_pass
+  origin: pr_diff
+  description: The PRIORITY 2.5 comment explaining the fix must exist
+- id: test_new_test_case_added
+  type: fail_to_pass
+  origin: pr_diff
+  description: The test file must include the new test case for STARTING with disconnected
+    websocket
+- id: test_status_utility_file_exists
+  type: pass_to_pass
+  origin: static
+  description: The status.ts utility file exists
+- id: test_test_file_exists
+  type: pass_to_pass
+  origin: static
+  description: The status.test.ts test file exists
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo TypeScript typecheck passes (npm run typecheck)
+- id: test_repo_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo unit tests pass (npm test -- --run)
+- id: test_repo_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo frontend build passes (npm run build)
+- id: test_repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo lint checks pass (npm run lint)
+- id: test_repo_status_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Status utility-specific tests pass (npm test -- --run status.test.ts)
+- id: test_repo_translation_completeness
+  type: pass_to_pass
+  origin: repo_tests
+  description: Translation completeness check passes (npm run check-translation-completeness)
+rubric:
+- rule: If you've made changes to the frontend, you should run `cd frontend && npm
+    run lint:fix && npm run build ; cd ..`
+  source:
+    path: AGENTS.md
+    lines: 18-19
+  evidence: The gold solution modifies frontend files (`frontend/src/utils/status.ts`
+    and `frontend/__tests__/utils/status.test.ts`), which implies the agent should
+    follow the frontend-specific tooling instructions to lint and build.
+  category: tooling
+  verification: llm_judge
+- rule: Use Vitest as the testing framework for frontend tests.
+  source:
+    path: /workspace/repo/AGENTS.md
+    lines: '90'
+  source_text: '    - Our test framework is vitest'
+  evidence: The gold diff utilizes vitest test syntax blocks such as `describe` and
+    `it`, along with `expect` assertions in `frontend/__tests__/utils/status.test.ts`.
+  category: testing patterns
+  verification: llm_judge
+version: '2.0'
+source:
+  repo: All-Hands-AI/OpenHands
+  pr: 13580
+  base_commit: 0b935669f35dff09303f42daf3e39c4cbb2678ed
+  merge_commit: 3cd85a07b78a2d9d2e28b2904e1b42096d47a802
+distractors:
+- rule: 'To run the full application to debug issues: export INSTALL_DOCKER=0 ...
+    make build && make run ...'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to build and run the full application (frontend
+    and backend) to debug the issue, which is unnecessary and time-consuming since
+    the task provides specific instructions to run the frontend tests.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 10-14
+- rule: When working on a PR that requires design documents, scripts meant for development-only,
+    or other temporary artifacts... store them in a `.pr/` directory.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might think it needs to create a `.pr/analysis.md` or
+    `.pr/notes.md` to document its debugging process for this simple bug fix, wasting
+    effort on temporary artifacts.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 38-40
+- rule: Write all tests in tests/unit/test_*.py using pytest
+  source:
+    path: /workspace/repo/AGENTS.md
+    lines: 79-81
+  source_text: "    - All tests are in `tests/unit/test_*.py`\n    - To test new code,\
+    \ run `poetry run pytest tests/unit/test_xxx.py` where `xxx` is the appropriate\
+    \ file for the current functionality\n    - Write all tests with pytest"
+  collision_type: architecture_boundary
+  why_distracting: This testing rule applies exclusively to the Python backend. An
+    agent working on the frontend status utility might mistakenly attempt to write
+    a python pytest file or place frontend tests in the backend tests/unit directory.
+  severity: high
+- rule: Format translation keys as ACTION_MESSAGE$ACTION_NAME
+  source:
+    path: /workspace/repo/AGENTS.md
+    lines: '271'
+  source_text: '    3. Add a translation key in the format `ACTION_MESSAGE$ACTION_NAME`
+    to the i18n files'
+  collision_type: scope_ambiguity
+  why_distracting: The diff adds a UI status code using an I18n translation key `I18nKey.COMMON$STARTING`.
+    An agent might mistakenly apply this Action-specific format convention to a status
+    translation key.
+  severity: medium
+- rule: Wrap API calls in TanStack Query and follow custom hook naming patterns
+  source:
+    path: /workspace/repo/AGENTS.md
+    lines: 100-104
+  source_text: "    - Data Access Layer: API client methods are located in `frontend/src/api`\
+    \ and should never be called directly from UI components - they must always be\
+    \ wrapped with TanStack Query\n    - Custom hooks are located in `frontend/src/hooks/query/`\
+    \ and `frontend/src/hooks/mutation/`\n    - Query hooks should follow the pattern\
+    \ use[Resource] (e.g., `useConversationSkills`)\n    - Mutation hooks should follow\
+    \ the pattern use[Action] (e.g., `useDeleteConversation`)\n    - Architecture\
+    \ rule: UI components → TanStack Query hooks → Data Access Layer (`frontend/src/api`)\
+    \ → API endpoints"
+  collision_type: scope_ambiguity
+  why_distracting: The diff modifies a simple utility function (`status.ts`). An agent
+    might mistakenly think it needs to overcomplicate the logic by creating TanStack
+    Query hooks to access frontend statuses.
+  severity: medium
+- rule: Use relative imports without enterprise prefix in enterprise code
+  source:
+    path: /workspace/repo/AGENTS.md
+    lines: 203-205
+  source_text: '- Use relative imports without `enterprise.` prefix in enterprise
+    code
+
+    - Example: `from storage.database import a_session_maker` not `from enterprise.storage.database
+    import a_session_maker`
+
+    - This ensures code works in both OpenHands and enterprise contexts'
+  collision_type: architecture_boundary
+  why_distracting: This rule applies to the Python enterprise backend code. An agent
+    might see this rule and apply relative enterprise imports to the frontend TypeScript
+    files.
+  severity: low
+hierarchy_analysis: The configuration consists of a single root-level `AGENTS.md`
+  file containing generic repository guidelines. There is no deep hierarchy or complex
+  rule inheritance to navigate.

@@ -1,0 +1,112 @@
+version: '2.0'
+source:
+  repo: astral-sh/uv
+  pr: 18601
+  base_commit: 635a76cad321b1fe3593a71dc7533cabbca244aa
+  merge_commit: bced7d57ea32b7fb2de52c72cc276341aa3c1275
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: fetch-download-metadata.py must parse without syntax errors
+- id: test_repo_ruff
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Python linting passes on fetch-download-metadata.py
+- id: test_repo_ty
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Python type checking passes on fetch-download-metadata.py
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Python code is formatted correctly
+- id: test_repo_python_import
+  type: pass_to_pass
+  origin: repo_tests
+  description: fetch-download-metadata.py can be imported as a module
+- id: test_repo_validate_pyproject
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo pyproject.toml is valid
+- id: test_repo_help_runs
+  type: pass_to_pass
+  origin: repo_tests
+  description: Script --help runs without errors
+- id: freethreaded_suffix_stripped
+  type: fail_to_pass
+  origin: pr_diff
+  description: Freethreaded suffix on macOS is stripped and promoted to build option
+    across architectures and versions
+- id: freethreaded_variant_set
+  type: fail_to_pass
+  origin: pr_diff
+  description: Variant is FREETHREADED for macOS freethreaded artifacts across versions
+- id: freethreaded_triple_matches_normal
+  type: fail_to_pass
+  origin: pr_diff
+  description: Platform triple for freethreaded build matches the normal build
+- id: debug_suffix_still_works
+  type: pass_to_pass
+  origin: pr_diff
+  description: Debug suffix on macOS is still stripped and promoted correctly
+- id: linux_platform_unaffected
+  type: pass_to_pass
+  origin: pr_diff
+  description: Non-macOS platforms are parsed correctly and unaffected
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: The _parse_ndjson_artifact method has real logic, not a stub
+- id: no_local_imports
+  type: pass_to_pass
+  origin: agent_config
+  description: fetch-download-metadata.py has no import statements inside function
+    or method bodies
+  source:
+    path: CLAUDE.md
+    lines: '16'
+    commit: 635a76cad321b1fe3593a71dc7533cabbca244aa
+rubric:
+- rule: AVOID shortening variable names, e.g., use `version` instead of `ver`, and
+    `requires_python` instead of `rp`
+  source:
+    path: CLAUDE.md
+    lines: '17'
+    commit: 635a76cad321b1fe3593a71dc7533cabbca244aa
+- rule: ALWAYS read and copy the style of similar tests when adding new cases
+  source:
+    path: CLAUDE.md
+    lines: '15'
+    commit: 635a76cad321b1fe3593a71dc7533cabbca244aa
+- rule: PREFER top-level imports over local imports or fully qualified names
+  source:
+    path: CLAUDE.md
+    lines: '16'
+    commit: 635a76cad321b1fe3593a71dc7533cabbca244aa
+distractors:
+- rule: ALWAYS attempt to add a test case for changed behavior
+  collision_type: scope_ambiguity
+  why_distracting: The modified file (`fetch-download-metadata.py`) is a standalone
+    Python tooling script used for generating metadata, not part of the core Rust
+    application. Attempting to add a test case for this script would waste effort,
+    as the test suite is designed for the Rust codebase.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 2-2
+- rule: PREFER let chains (`if let` combined with `&&`) over nested `if let` statements
+  collision_type: meta_confusion
+  why_distracting: This rule is specific to Rust (`if let`), but the file being modified
+    is a Python script. An agent might get confused about the language context and
+    attempt to apply Rust idioms or syntax to the Python code.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 11-11
+hierarchy_analysis: The repository has a single `CLAUDE.md` configuration file at
+  the root. The primary challenge is that the rules are heavily tailored towards a
+  Rust codebase (mentioning `cargo`, `clippy`, `panic!`, `if let`), but the bug and
+  gold solution are entirely within a Python tooling script. This creates a significant
+  scope ambiguity where the agent must recognize that commands and tests that don't
+  apply to this specific file.

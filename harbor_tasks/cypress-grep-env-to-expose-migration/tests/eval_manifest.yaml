@@ -1,0 +1,232 @@
+version: '2.0'
+source:
+  repo: cypress-io/cypress
+  pr: 33242
+  base_commit: eb60ddcec6d92dad8ba1a1d776b249171384aa5e
+  merge_commit: 49aa0bbab1af77be3f6431d2252c4d7cac6bff26
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files must be valid
+- id: test_repo_utils_module
+  type: pass_to_pass
+  origin: repo_tests
+  description: Utils module functions work correctly
+- id: test_repo_typescript_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified TypeScript files have valid syntax
+- id: test_repo_package_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: package.json is valid JSON with required fields
+- id: plugin_reads_from_expose
+  type: fail_to_pass
+  origin: pr_diff
+  description: plugin.ts must read config from config.expose instead of config.env
+- id: register_calls_expose
+  type: fail_to_pass
+  origin: pr_diff
+  description: register.ts must use Cypress.expose() instead of Cypress.env()
+- id: peer_dep_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: package.json peerDependencies.cypress must require >=15.10.0
+- id: package_json_scripts_use_expose
+  type: fail_to_pass
+  origin: pr_diff
+  description: package.json npm scripts must use --expose instead of --env
+- id: plugin_has_real_logic
+  type: pass_to_pass
+  origin: static
+  description: plugin.ts must contain real filtering logic
+- id: register_has_real_logic
+  type: pass_to_pass
+  origin: static
+  description: register.ts must contain real registration logic
+rubric:
+- rule: README migration guide clearly explains the env() to expose() transition with
+    before/after examples
+  source:
+    path: npm/grep/README.md
+    lines: 422-436
+    commit: 49aa0bbab1af77be3f6431d2252c4d7cac6bff26
+- rule: Code changes are consistent — all env references replaced with expose, no
+    partial migration
+  source:
+    path: npm/grep/src/plugin.ts
+    lines: 1-130
+    commit: 49aa0bbab1af77be3f6431d2252c4d7cac6bff26
+- rule: README.md must include v5-to-v6 migration section for env->expose change
+  source:
+    path: npm/grep/README.md
+    lines: 422-436
+    commit: 49aa0bbab1af77be3f6431d2252c4d7cac6bff26
+  reference: 'npx cypress run --expose grep="login"
+
+    npx cypress run --expose grep="user authentication"
+
+    npx cypress run --expose grep="login; logout; signup"
+
+    npx cypress run --expose grepTags="@smoke"
+
+    npx cypress run --expose grepTags="@smoke @critical"
+
+    npx cypress run --expose grepTags="@smoke+@critical"
+
+    npx cypress run --expose grepTags="@smoke+-@slow"
+
+    npx cypress run --expose grep="login",grepTags="@smoke"
+
+    npx cypress run --expose grep="user",grepTags="@critical @smoke"
+
+    npx cypress run --expose grep="login'
+- rule: README CLI usage examples must use --expose instead of --env
+  source:
+    path: npm/grep/README.md
+    lines: 91-240
+    commit: 49aa0bbab1af77be3f6431d2252c4d7cac6bff26
+  reference: 'npx cypress run --expose grep="login"
+
+    npx cypress run --expose grep="user authentication"
+
+    npx cypress run --expose grep="login; logout; signup"
+
+    npx cypress run --expose grepTags="@smoke"
+
+    npx cypress run --expose grepTags="@smoke @critical"
+
+    npx cypress run --expose grepTags="@smoke+@critical"
+
+    npx cypress run --expose grepTags="@smoke+-@slow"
+
+    npx cypress run --expose grep="login",grepTags="@smoke"
+
+    npx cypress run --expose grep="user",grepTags="@critical @smoke"
+
+    npx cypress run --expose grep="login'
+- rule: 'README cypress.config example must use expose: key instead of env:'
+  source:
+    path: npm/grep/README.md
+    lines: 248-260
+    commit: 49aa0bbab1af77be3f6431d2252c4d7cac6bff26
+  reference: 'npx cypress run --expose grep="login"
+
+    npx cypress run --expose grep="user authentication"
+
+    npx cypress run --expose grep="login; logout; signup"
+
+    npx cypress run --expose grepTags="@smoke"
+
+    npx cypress run --expose grepTags="@smoke @critical"
+
+    npx cypress run --expose grepTags="@smoke+@critical"
+
+    npx cypress run --expose grepTags="@smoke+-@slow"
+
+    npx cypress run --expose grep="login",grepTags="@smoke"
+
+    npx cypress run --expose grep="user",grepTags="@critical @smoke"
+
+    npx cypress run --expose grep="login'
+- rule: Documentation for published @cypress/* packages
+  source:
+    path: repo/.cursor/BUGBOT.md
+    lines: 68-69
+  source_text: "- **@cypress/* packages**: Published to npm - breaking changes critical\n\
+    \  - Focus: Backward compatibility, documentation, comprehensive testing, API\
+    \ stability"
+  evidence: The PR thoroughly updates `npm/grep/README.md` to document the API migration
+    from v5 to v6. It updates all CLI usage examples to reflect the new `--expose`
+    flag and adds a dedicated 'Migration' section explaining the deprecation of `Cypress.env()`
+    in favor of `Cypress.expose()`, directly fulfilling the mandate for documentation
+    on critical breaking changes.
+  category: documentation
+  verification: llm_judge
+config_edits:
+- path: npm/grep/README.md
+  tier: 2
+  gold_added: "npx cypress run --expose grep=\"login\"\nnpx cypress run --expose grep=\"\
+    user authentication\"\nnpx cypress run --expose grep=\"login; logout; signup\"\
+    \nnpx cypress run --expose grepTags=\"@smoke\"\nnpx cypress run --expose grepTags=\"\
+    @smoke @critical\"\nnpx cypress run --expose grepTags=\"@smoke+@critical\"\nnpx\
+    \ cypress run --expose grepTags=\"@smoke+-@slow\"\nnpx cypress run --expose grep=\"\
+    login\",grepTags=\"@smoke\"\nnpx cypress run --expose grep=\"user\",grepTags=\"\
+    @critical @smoke\"\nnpx cypress run --expose grep=\"login\",grepFilterSpecs=true\n\
+    npx cypress run --expose grepTags=\"@smoke\",grepFilterSpecs=true\nnpx cypress\
+    \ run --expose grep=\"login\",grepOmitFiltered=true\nnpx cypress run --expose\
+    \ grep=\"login\",burn=5\nnpx cypress run --expose burn=10\nnpx cypress run --expose\
+    \ grep=\"-slow\"\nnpx cypress run --expose grepTags=\"-@slow\"\nnpx cypress run\
+    \ --expose grep=\"login; -slow\",grepTags=\"@smoke+-@regression\"\nnpx cypress\
+    \ run --expose grepUntagged=true\n  expose: {\n    \"cy:smoke\": \"cypress run\
+    \ --expose grepTags=@smoke\",\n    \"cy:critical\": \"cypress run --expose grepTags=@critical\"\
+    ,\n    \"cy:fast\": \"cypress run --expose grepTags=@fast\",\n    \"cy:burn\"\
+    : \"cypress run --expose grepTags=@smoke,burn=5\"\n3. **Runtime Changes**: Cannot\
+    \ change grep filters at runtime using `Cypress.expose()`\nnpx cypress run --expose\
+    \ grepTags=\"@smoke\"\nnpx cypress run --expose grep=\"user management\"\nnpx\
+    \ cypress run --expose grepTags=\"@critical\"\nDEBUG=@cypress/grep npx cypress\
+    \ run --expose grep=\"login\"\n### From v5 to v6\n\n`Cypress.env()` is deprecated\
+    \ in Cypress 15.10.0. For public configuration, the API has been replaced with\
+    \ `Cypress.expose()`\n\nTo migrate, change your `--env`/`-e` CLI arguments from\n\
+    ```sh\nnpx cypress run --env grepTags=\"tag1 tag2\"\n```\n\nto the following to\
+    \ use `--expose`/`-x`\n```sh\nnpx cypress run --expose grepTags=\"tag1 tag2\"\n\
+    ```"
+  gold_removed: "npx cypress run --env grep=\"login\"\nnpx cypress run --env grep=\"\
+    user authentication\"\nnpx cypress run --env grep=\"login; logout; signup\"\n\
+    npx cypress run --env grepTags=\"@smoke\"\nnpx cypress run --env grepTags=\"@smoke\
+    \ @critical\"\nnpx cypress run --env grepTags=\"@smoke+@critical\"\nnpx cypress\
+    \ run --env grepTags=\"@smoke+-@slow\"\nnpx cypress run --env grep=\"login\",grepTags=\"\
+    @smoke\"\nnpx cypress run --env grep=\"user\",grepTags=\"@critical @smoke\"\n\
+    npx cypress run --env grep=\"login\",grepFilterSpecs=true\nnpx cypress run --env\
+    \ grepTags=\"@smoke\",grepFilterSpecs=true\nnpx cypress run --env grep=\"login\"\
+    ,grepOmitFiltered=true\nnpx cypress run --env grep=\"login\",burn=5\nnpx cypress\
+    \ run --env burn=10\nnpx cypress run --env grep=\"-slow\"\nnpx cypress run --env\
+    \ grepTags=\"-@slow\"\nnpx cypress run --env grep=\"login; -slow\",grepTags=\"\
+    @smoke+-@regression\"\nnpx cypress run --env grepUntagged=true\n  env: {\n   \
+    \ \"cy:smoke\": \"cypress run --env grepTags=@smoke\",\n    \"cy:critical\": \"\
+    cypress run --env grepTags=@critical\",\n    \"cy:"
+distractors:
+- rule: Backward compatibility for published @cypress/* packages
+  source:
+    path: repo/.cursor/BUGBOT.md
+    lines: 68-69
+  source_text: "- **@cypress/* packages**: Published to npm - breaking changes critical\n\
+    \  - Focus: Backward compatibility, documentation, comprehensive testing, API\
+    \ stability"
+  collision_type: rule_conflict
+  why_distracting: This rule mandates backward compatibility for npm-published packages.
+    However, this specific PR is executing a planned breaking change (migrating from
+    v5 to v6) by removing support for `Cypress.env` and replacing it with `Cypress.expose`.
+    An agent strictly following this rule would incorrectly try to implement a fallback
+    mechanism to preserve `Cypress.env` compatibility, which contradicts the goal
+    of the migration.
+  severity: high
+- rule: Command-line argument parsing in cli package
+  source:
+    path: repo/.cursor/BUGBOT.md
+    lines: 56-57
+  source_text: "- **cli**: Main command-line interface - user-facing entry point\n\
+    \  - Focus: Command-line argument parsing, user experience, error handling, cross-platform\
+    \ compatibility"
+  collision_type: architecture_boundary
+  why_distracting: The PR updates README examples and `package.json` scripts to use
+    the new `--expose` CLI argument instead of `--env`. An agent might mistakenly
+    think it needs to implement the parsing for `--expose` in the core `cli` package
+    due to this rule. However, the PR is strictly scoped to the `npm/grep` plugin
+    consuming the already-parsed `expose` object from the Cypress config, without
+    modifying the core CLI parser.
+  severity: medium
+- rule: Configuration schema changes in @packages/config
+  source:
+    path: repo/.cursor/BUGBOT.md
+    lines: 80-81
+  source_text: "- **@packages/config**: Configuration management\n  - Focus: Configuration\
+    \ schema changes, validation logic, backward compatibility"
+  collision_type: scope_ambiguity
+  why_distracting: The PR changes configuration property names (from `env` to `expose`)
+    and updates `cypress.config.ts` within the `npm/grep` test configuration. An agent
+    might mistakenly interpret this as a global configuration schema change and attempt
+    to modify the core `@packages/config` package to support the new `expose` property,
+    overstepping the scope of merely updating the grep plugin.
+  severity: medium

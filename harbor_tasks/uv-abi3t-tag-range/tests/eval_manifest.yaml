@@ -1,0 +1,85 @@
+version: '2.0'
+source:
+  repo: astral-sh/uv
+  pr: 18777
+  base_commit: b7d5faf568b30c86daf7503f8518e11cbfeeaa81
+  merge_commit: 3e6c46e3775ab44d20cb5855a6b6f033c42173a8
+checks:
+- id: crate_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: The uv-platform-tags crate must compile without errors
+- id: abi3t_tags_for_lower_versions
+  type: fail_to_pass
+  origin: pr_diff
+  description: Free-threaded CPython 3.15 must emit abi3t tags for versions 3.2-3.14
+- id: abi3t_tags_with_python313
+  type: fail_to_pass
+  origin: pr_diff
+  description: Free-threaded CPython 3.13 must also emit abi3t tags (3.2-3.13)
+- id: existing_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Upstream snapshot test for free-threaded tags still passes
+- id: uv_platform_tags_cargo_test
+  type: pass_to_pass
+  origin: repo_tests
+  description: All tests in uv-platform-tags crate pass
+- id: uv_platform_tags_clippy
+  type: pass_to_pass
+  origin: repo_tests
+  description: Clippy lints pass for uv-platform-tags crate
+- id: uv_platform_tags_cargo_fmt
+  type: pass_to_pass
+  origin: repo_tests
+  description: Rustfmt check passes for uv-platform-tags crate
+- id: doc_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Documentation builds successfully for uv-platform-tags crate
+rubric:
+- rule: ALWAYS attempt to add a test case for changed behavior
+  source:
+    path: CLAUDE.md
+    lines: '2'
+    commit: b7d5faf568b30c86daf7503f8518e11cbfeeaa81
+- rule: AVOID using `panic!`, `unreachable!`, `.unwrap()`, unsafe code, and clippy
+    rule ignores
+  source:
+    path: CLAUDE.md
+    lines: '7'
+    commit: b7d5faf568b30c86daf7503f8518e11cbfeeaa81
+- rule: ALWAYS read and copy the style of similar tests when adding new cases
+  source:
+    path: CLAUDE.md
+    lines: '15'
+    commit: b7d5faf568b30c86daf7503f8518e11cbfeeaa81
+distractors:
+- rule: PREFER integration tests, e.g., at `it/...` over unit tests
+  collision_type: rule_conflict
+  why_distracting: The rule instructs the agent to prefer integration tests in `it/...`
+    over unit tests. However, platform tag generation is already comprehensively tested
+    via inline snapshot unit tests in `tags.rs`. Attempting to create a new integration
+    test for this specific tag generation logic would be misplaced and ignore the
+    existing testing architecture.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 3-3
+- rule: Prefer let chains (`if let` combined with `&&`) over nested `if let` statements.
+  source:
+    path: CLAUDE.md
+    lines: '11'
+  source_text: '- PREFER let chains (`if let` combined with `&&`) over nested `if
+    let` statements'
+  collision_type: scope_ambiguity
+  why_distracting: The diff edits a conditional block, so this style rule can look
+    relevant at a glance. But the changed code does not contain nested `if let` statements;
+    it changes a loop bound and keeps the existing `if variant.contains(...)` branch
+    structure. Applying this rule here would create stylistic churn without addressing
+    the abi3t behavior change.
+  severity: low
+hierarchy_analysis: 'The config hierarchy is a flat single file (`CLAUDE.md`). The
+  primary conflict is internal to this file: the agent must balance the instruction
+  to add tests and prefer integration tests against the existing codebase pattern
+  of using inline snapshot unit tests for platform tags.'

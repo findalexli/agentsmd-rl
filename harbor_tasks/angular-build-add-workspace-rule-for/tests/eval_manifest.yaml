@@ -1,0 +1,88 @@
+version: '2.0'
+source:
+  repo: angular/angular
+  pr: 67018
+  base_commit: d75046bc091699bbadcb5f2032be627e983ee6fa
+  merge_commit: 62453330f56dbfb65711692097189e13c528d522
+checks:
+- id: symlink_exists_and_resolves
+  type: fail_to_pass
+  origin: pr_diff
+  description: .agent/rules/agents.md symlink exists and resolves to AGENTS.md content
+- id: agents_md_has_frontmatter
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'AGENTS.md has YAML frontmatter with trigger: always_on'
+- id: prettierignore_has_agent_entry
+  type: fail_to_pass
+  origin: pr_diff
+  description: .prettierignore includes .agent/rules/agents.md entry
+- id: pullapprove_has_agent_glob
+  type: fail_to_pass
+  origin: pr_diff
+  description: .pullapprove.yml includes .agent/**/{*,.*} glob pattern
+- id: agents_md_has_environment_section
+  type: pass_to_pass
+  origin: static
+  description: AGENTS.md retains core environment documentation
+- id: prettierignore_exists
+  type: pass_to_pass
+  origin: static
+  description: .prettierignore file exists and has content
+- id: test_repo_tslint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TSLint passes
+- id: test_repo_check_tooling_setup
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TypeScript tooling setup compiles
+- id: test_repo_ts_circular_deps_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo has no circular TypeScript dependencies
+- id: test_repo_pullapprove_verify
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's PullApprove config is valid
+- id: test_repo_ngbot_verify
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's NgBot config is valid
+rubric:
+- rule: 'AGENTS.md MUST have YAML frontmatter with ''trigger: always_on'' at the beginning'
+  source:
+    path: AGENTS.md
+  reference: '---
+
+    trigger: always_on
+
+    ---'
+- rule: .agent/rules/agents.md symlink MUST exist pointing to AGENTS.md
+  source:
+    path: .agent/rules/agents.md
+  reference: ../../AGENTS.md
+distractors:
+- rule: Use `pnpm bazel test //target` to run tests.
+  collision_type: meta_confusion
+  why_distracting: The agent is editing its own instruction file. It might read the
+    instruction to run bazel tests and think it needs to execute them to verify its
+    edits, confusing the content of the file it's editing with instructions for its
+    current session.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 6-7
+- rule: Use the `gh` CLI (GitHub CLI) for creating and managing pull requests.
+  collision_type: meta_confusion
+  why_distracting: The agent might read the instruction to use the `gh` CLI to create
+    a PR and attempt to execute it, confusing the text it is supposed to modify with
+    instructions it should follow for the current task.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 14-15
+hierarchy_analysis: The agent must edit the very file (`AGENTS.md`) that provides
+  its instructions. There is no deep hierarchy, but the meta-referential nature of
+  the task requires the agent to distinguish between instructions for the current
+  task and instructions contained within the file it is editing.

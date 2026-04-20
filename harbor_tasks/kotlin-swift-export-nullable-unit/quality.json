@@ -1,61 +1,60 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction.md explicitly names every exact string, object name, function name, file path, and literal expression that the tests check for, including AsOptionalVoid, all conversion expressions, bridge selection logic patterns, NS collection bridging patterns, and error messages."
+      "reason": "Instruction names the file TypeBridging.kt and all literal strings the tests check for (AsOptionalVoid, swift type expression, conversion expressions, error messages)."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction.md gives the complete solution: exact object name 'AsOptionalVoid', exact field values (KotlinType.Boolean, CType.Bool), exact Swift type expression, exact conversion expressions for all four methods, exact bridge selection logic ('is AsVoid -> AsOptionalVoid'), exact NS collection handling, and exact error messages. A developer doesn't need to reason about what to change \u2014 they just transcribe the instruction."
+      "reason": "Instruction dictates exact literal strings to include, e.g., 'swiftToKotlin must return: (if ($valueExpression) Unit else null)' and 'is AsVoid -> AsOptionalVoid' - essentially spelling out the patch."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests are pure text-matching (e.g., checking 'object AsOptionalVoid' in content, exact string matches for conversion expressions). Any alternative correct implementation that used different naming, different conversion logic, or different structure would fail. For example, using a class instead of object, or naming it 'OptionalVoidBridge', or using a different but functionally equivalent conversion expression would all fail."
+      "reason": "Tests assert exact string matches like 'object AsOptionalVoid', 'is AsVoid -> AsOptionalVoid', and specific conversion expressions; alternative valid implementations (e.g., using class instead of object, different whitespace, semantically equivalent expressions) would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every test ultimately checks for exact string presence in the file content (e.g., '\"object AsOptionalVoid\" in content', '\"(if ($valueExpression) Unit else null)\" in content'). The subprocess calls just re-invoke the same string-matching functions. No code is compiled, executed, or behaviorally tested."
+      "reason": "All tests call _parse_type_bridging which does read_text() and substring checks; no code execution or import of the Kotlin functionality."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "A stub that simply appends the required strings to TypeBridging.kt (without any functional code) would pass all tests, since tests only check for string presence in the file content, not compilation or execution."
+      "outcome": "pass",
+      "reason": "Tests require actual specific strings present that correspond to the fix; a stub/pass implementation wouldn't satisfy them."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md (bridge definition, value conversions, bridge selection logic, NS collection bridging, error messages, TODO list removal) are covered by corresponding test functions."
+      "reason": "Tests cover each explicit requirement in instruction.md (bridge definition, conversions, bridgeNominalType, NS collection, error messages, TODO removal)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-structured with descriptive function names (test_asoptional_void_bridge_exists, test_asoptional_void_value_conversions, etc.), docstrings, and helper functions organized by validation concern."
+      "reason": "Tests are grouped with section comments (F2P TESTS), helper validators, and descriptive docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task involves modifying Kotlin source code, not producing structured data like JSON/CSV/API/DB."
+      "reason": "No structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and string literals in instruction.md and tests are consistent and free of typos."
+      "reason": "Paths and identifiers appear consistent between instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact file (TypeBridging.kt), exact function names (bridgeNominalType, bridgeAsNSCollectionElement), exact object name (AsOptionalVoid), exact field values, and exact code patterns to insert. This goes far beyond describing what's broken \u2014 it specifies the complete implementation."
+      "reason": "Instruction prescribes exact identifiers, patterns and error strings ('is AsVoid -> AsOptionalVoid', 'AsOptionalVoid must be used for AsVoid'), leaving no localization/design work for the agent."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "Code-only task, not agentmd-edits."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 5
+  "pass_count": 5,
+  "fail_count": 4
 }

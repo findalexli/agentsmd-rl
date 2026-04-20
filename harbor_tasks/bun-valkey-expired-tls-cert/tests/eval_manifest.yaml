@@ -1,0 +1,200 @@
+version: '2.0'
+source:
+  repo: oven-sh/bun
+  pr: 28974
+  base_commit: c99fd9d1e17ec73ce4c0edd1c49f34be8e8edc25
+  merge_commit: 7e142ca82492a23c1e9bb2e0422ceccf69dbf7c4
+checks:
+- id: cert_not_expired
+  type: fail_to_pass
+  origin: pr_diff
+  description: TLS certificate notAfter must be in the future
+- id: cert_long_validity
+  type: fail_to_pass
+  origin: pr_diff
+  description: Certificate must be valid for at least 5 years (not just 1 year)
+- id: cert_cn_localhost
+  type: pass_to_pass
+  origin: static
+  description: Certificate CN must be 'localhost'
+- id: cert_san_localhost
+  type: pass_to_pass
+  origin: static
+  description: Certificate SAN must include DNS:localhost
+- id: key_matches_cert
+  type: pass_to_pass
+  origin: static
+  description: Private key modulus must match certificate modulus
+- id: cert_self_signed
+  type: pass_to_pass
+  origin: static
+  description: Certificate must be self-signed (issuer == subject)
+- id: test_cert_file_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: TLS certificate file must exist in expected location
+- id: test_key_file_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: TLS private key file must exist in expected location
+- id: test_cert_valid_pem_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Certificate must be a valid PEM format file
+- id: test_key_valid_pem_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Private key must be a valid PEM format file
+- id: test_cert_has_rsa_2048
+  type: pass_to_pass
+  origin: repo_tests
+  description: Certificate must use RSA 2048-bit key
+- id: test_cert_sig_sha256
+  type: pass_to_pass
+  origin: repo_tests
+  description: Certificate must use sha256WithRSAEncryption signature algorithm
+- id: test_repo_files_unchanged
+  type: pass_to_pass
+  origin: repo_tests
+  description: Other repo files (Dockerfile, redis.conf) remain unchanged
+- id: test_cert_not_empty
+  type: pass_to_pass
+  origin: repo_tests
+  description: Certificate file must not be empty
+- id: test_key_not_empty
+  type: pass_to_pass
+  origin: repo_tests
+  description: Private key file must not be empty
+- id: test_redis_conf_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Redis configuration file must exist and reference TLS files
+- id: test_valkey_dockerfile_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Valkey Dockerfile must exist and reference certificate files
+- id: test_cert_tls_version_compatible
+  type: pass_to_pass
+  origin: repo_tests
+  description: Certificate must use RSA key for TLS version compatibility
+- id: test_cert_valid_for_tls_server
+  type: pass_to_pass
+  origin: repo_tests
+  description: Certificate must have required extensions for TLS server use
+- id: test_cert_and_key_pair_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Certificate and key must form a valid cryptographic pair for TLS
+- id: test_redis_tls_config_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Redis TLS configuration must have valid syntax with all required settings
+- id: test_cert_no_weak_algorithms
+  type: pass_to_pass
+  origin: repo_tests
+  description: Certificate must not use weak/insecure algorithms (SHA1, MD5, DSA)
+- id: test_cert_chain_depth
+  type: pass_to_pass
+  origin: repo_tests
+  description: Self-signed certificate must have localhost as issuer and subject
+- id: test_cert_tracked_by_git
+  type: pass_to_pass
+  origin: repo_tests
+  description: Certificate file must be tracked by git
+- id: test_key_tracked_by_git
+  type: pass_to_pass
+  origin: repo_tests
+  description: Private key file must be tracked by git
+- id: test_init_redis_script_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Redis init script must have valid bash syntax
+- id: test_cert_valid_for_ssl_server
+  type: pass_to_pass
+  origin: repo_tests
+  description: Certificate must be valid for SSL server use per openssl purpose check
+- id: test_private_key_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Private key must pass openssl validation check
+rubric:
+- rule: If no valid issue number is provided, find the best existing file to modify
+    instead
+  source:
+    path: CLAUDE.md
+    lines: 43-44
+  evidence: The gold solution modifies the existing `test/js/valkey/docker-unified/server.crt`
+    and `server.key` files rather than creating new test files or directories.
+  category: testing
+distractors:
+- rule: 'Never use hardcoded port numbers. Always use `port: 0` to get a random port.'
+  collision_type: would_cause_bug
+  why_distracting: 'The agent might see the docker-unified setup (which likely uses
+    hardcoded ports for the Valkey/Redis containers) and try to change them to `port:
+    0` to follow this rule, which would break the docker container port mapping and
+    the test setup.'
+  severity: high
+  source:
+    path: test/CLAUDE.md
+    lines: 17-18
+- rule: If a test is for a specific numbered GitHub Issue, it should be placed in
+    `test/regression/issue/${issueNumber}.test.ts`.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to create a new regression test file in `test/regression/issue/`
+    to verify the certificate expiration fix, which is unnecessary and out of scope
+    since the fix simply requires updating the existing static certificate files.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 40-41
+- rule: Use `bun:test` with files that end in `*.test.{ts,js,jsx,tsx,mjs,cjs}`.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to write a new `bun:test` script to validate
+    the new certificates, overcomplicating a PR that only needs to replace the expired
+    `.crt` and `.key` files.
+  severity: low
+  source:
+    path: test/CLAUDE.md
+    lines: 14-15
+- rule: Never use hardcoded port numbers in tests.
+  source:
+    path: repo/test/CLAUDE.md
+    lines: '21'
+  source_text: '- **Do not write flaky tests**. Unless explicitly asked, **never wait
+    for time to pass in tests**. Always wait for the condition to be met instead of
+    waiting for an arbitrary amount of time. **Never use hardcoded port numbers**.
+    Always use `port: 0` to get a random port.'
+  collision_type: scope_ambiguity
+  why_distracting: Since the PR modifies files within the test/ directory, an agent
+    might assume testing conventions apply. However, this PR simply updates static
+    certificate (.crt) and key (.key) files without changing any test logic.
+  severity: medium
+- rule: 'Always use port: 0. Do not hardcode ports.'
+  source:
+    path: repo/CLAUDE.md
+    lines: '114'
+  source_text: '- Always use `port: 0`. Do not hardcode ports. Do not use your own
+    random port number function.'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might believe it should validate or enforce test port
+    usage due to the 'test/' path, but the PR is entirely data/configuration changes
+    (TLS certificates).
+  severity: low
+- rule: Prefer concurrent tests over sequential tests.
+  source:
+    path: repo/test/CLAUDE.md
+    lines: '22'
+  source_text: '- **Prefer concurrent tests over sequential tests**: When multiple
+    tests in the same file spawn processes or write files, make them concurrent with
+    `test.concurrent` or `describe.concurrent` unless it''s very difficult to make
+    them concurrent.'
+  collision_type: scope_ambiguity
+  why_distracting: The file is located in test/js/, which might lead an agent to attempt
+    to verify or enforce test concurrency rules, when no tests are actually being
+    modified.
+  severity: low
+hierarchy_analysis: 'The config hierarchy provides extensive guidance on writing JS/TS
+  tests and building Bun. However, the target files are static certificate and key
+  files used for a docker-based test environment. The agent must recognize that the
+  test infrastructure rules (like `port: 0` or using `bun:test`) do not apply to updating
+  static fixture files.'

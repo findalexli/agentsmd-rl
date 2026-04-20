@@ -1,61 +1,60 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file path (src/bun.js/api/bun/dns.zig), all specific patterns tested (stackFallback(1024, bun.default_allocator), name_allocator.dupeZ(u8, query.name), defer name_allocator.free(name_z), var name_buf: [1024]u8 = undefined), and the verification criteria. The banned patterns test checks standard Bun repo-wide bans (std.debug.assert, std.debug.print, etc.) which are discoverable from the repo's ban-words.test.ts. The zig fmt and ast-check tests use standard tooling on the"
+      "reason": "instruction.md explicitly names the file src/bun.js/api/bun/dns.zig and the exact patterns the tests check for: 'std.heap.stackFallback(1024, bun.default_allocator)', 'name_allocator.dupeZ(u8, query.name)', 'defer name_allocator.free(name_z)', and the banned 'var name_buf: [1024]u8 = undefined'."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix: use 'std.heap.stackFallback(1024, bun.default_allocator)', 'name_allocator.dupeZ(u8, query.name)', and 'defer name_allocator.free(name_z)'. These are the precise code patterns from the gold patch, leaving no reasoning for the agent about WHAT to change \u2014 it's a direct recipe."
+      "reason": "The instruction dictates the exact literal patterns that must appear (e.g. 'std.heap.stackFallback(1024, bun.default_allocator)', 'name_allocator.dupeZ(u8, query.name)', 'defer name_allocator.free(name_z)'), which essentially spells out the fix including variable name 'name_allocator' and 'name_z'."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific variable names and exact patterns: test_dynamic_string_duplication checks for 'dupeZ(u8, query.name)', test_proper_memory_deallocation checks for 'defer' and 'free(name_z)' with the exact variable name 'name_z', test_stack_fallback_allocator_used checks for exact 'stackFallback(1024,'. An alternative correct fix using e.g. a std.ArrayList, bun.default_allocator.alloc directly, or different variable names would fail these tests."
+      "reason": "Tests require literal strings like 'defer name_allocator.free(name_z)' and 'name_allocator.dupeZ(u8, query.name)' \u2014 a correct alternative fix using different variable names (e.g. 'allocator.dupeZ' or 'defer alloc.free(name)') would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_no_fixed_buffer_used, test_stack_fallback_allocator_used, test_dynamic_string_duplication, test_proper_memory_deallocation, test_coherent_fix_pattern) are all text-matching with regex on file content. While test_zig_fmt_check and test_zig_ast_check execute subprocesses, the core behavioral tests that verify the bug fix are purely text-based pattern matching, not execution of the DNS code."
+      "reason": "Most fail-to-pass tests are regex text checks on dns.zig (e.g. test_no_fixed_buffer_used, test_stack_fallback_allocator_used, test_dynamic_string_duplication); subprocess calls only run 'zig fmt --check' and 'zig ast-check', not behavioral DNS tests."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "A stub that simply inserts the three required text patterns as comments or dead code (e.g., adding lines with stackFallback, dupeZ, and defer free while removing the old buffer line) would pass all f2p tests since they only check regex patterns in file text, not actual execution behavior. The comment-stripping logic helps somewhat but inserting real code lines that aren't in the right function scope could still pass."
+      "outcome": "pass",
+      "reason": "Tests require specific patterns to be present and absent in the real code (non-comment), so a stub wouldn't pass \u2014 though they're text-based, they do require the actual change."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md's Verification section are tested: presence of stackFallback, dupeZ, defer free patterns, and absence of the fixed buffer pattern. The expected behavior points (no fixed buffer, dynamic allocation, proper deallocation) are all covered."
+      "reason": "All three required patterns from the instruction (stackFallback, dupeZ, defer free) and the banned fixed buffer pattern are tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear naming conventions, docstrings explaining each test's purpose, and explicit section comments separating pass-to-pass static checks, pass-to-pass repo tests, and fail-to-pass PR diff tests."
+      "reason": "Tests are grouped by comment banners into pass-to-pass static, repo_tests, and fail-to-pass sections with descriptive docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves modifying source code, not producing structured data output."
+      "reason": "Task does not produce structured data."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, function names, and commands are all consistent and correctly spelled throughout the instruction and test files."
+      "reason": "Filenames and patterns in instruction.md match those used in tests and solution."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies the exact file (src/bun.js/api/bun/dns.zig) AND the exact patterns to add/remove, including specific variable names like 'name_allocator', 'name_z', and the exact function calls. This goes well beyond identifying the buggy module \u2014 it provides the complete solution code patterns."
+      "reason": "instruction.md names the exact file 'src/bun.js/api/bun/dns.zig' and the exact literal patterns to insert, leaving nothing to localize or design."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "Not a config-edit task."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 5
+  "pass_count": 5,
+  "fail_count": 4
 }

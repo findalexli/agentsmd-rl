@@ -1,0 +1,148 @@
+checks:
+- id: test_active_tab_panel_close_fix_present
+  type: fail_to_pass
+  origin: pr_diff
+  description: Fix closes right panel when unpinning the currently active tab
+- id: test_conversation_store_imported
+  type: fail_to_pass
+  origin: pr_diff
+  description: Conversation store is imported to access selectedTab and isRightPanelShown
+- id: test_setrightpanelshown_destructured
+  type: fail_to_pass
+  origin: pr_diff
+  description: setRightPanelShown is destructured from localStorage hook
+- id: test_new_tests_for_active_tab_unpin
+  type: fail_to_pass
+  origin: pr_diff
+  description: New tests verify panel closes when unpinning active tab but not inactive
+    tab
+- id: test_store_initialization_in_tests
+  type: fail_to_pass
+  origin: pr_diff
+  description: Tests properly initialize conversation store state in beforeEach
+- id: test_repo_vitest_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's vitest tests for ConversationTabsContextMenu pass
+- id: test_repo_lint_passes
+  type: pass_to_pass
+  origin: repo_tests
+  source:
+    path: .github/workflows/lint.yml
+    lines: ''
+  description: Frontend linting passes (required by AGENTS.md before pushing)
+- id: test_repo_typecheck_passes
+  type: pass_to_pass
+  origin: repo_tests
+  source:
+    path: .github/workflows/lint.yml
+    lines: ''
+  description: Frontend typecheck passes (required by AGENTS.md before pushing)
+- id: test_repo_translation_completeness
+  type: pass_to_pass
+  origin: repo_tests
+  source:
+    path: .github/workflows/lint.yml
+    lines: ''
+  description: Translation completeness check passes (all translation keys have complete
+    language coverage)
+- id: test_repo_build
+  type: pass_to_pass
+  origin: repo_tests
+  source:
+    path: .github/workflows/fe-unit-tests.yml
+    lines: ''
+  description: Frontend build succeeds (TypeScript compilation and bundling)
+- id: test_repo_prettier_passes
+  type: pass_to_pass
+  origin: repo_tests
+  source:
+    path: .github/workflows/lint.yml
+    lines: ''
+  description: Frontend code formatting passes Prettier checks
+- id: test_repo_eslint_passes
+  type: pass_to_pass
+  origin: repo_tests
+  source:
+    path: .github/workflows/lint.yml
+    lines: ''
+  description: Frontend ESLint checks pass (catches potential bugs and enforces code
+    quality)
+- id: test_repo_vitest_all_conversation_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  source:
+    path: .github/workflows/fe-unit-tests.yml
+    lines: ''
+  description: All conversation-related vitest tests pass (broader conversation feature
+    coverage)
+rubric:
+- rule: 'Import useConversationStore from #/stores/conversation-store'
+  source:
+    path: frontend/src/components/features/conversation/conversation-tabs/conversation-tabs-context-menu.tsx
+- rule: Use conversation store to access selectedTab and isRightPanelShown state
+  source:
+    path: frontend/src/components/features/conversation/conversation-tabs/conversation-tabs-context-menu.tsx
+- rule: Destructured setRightPanelShown from useConversationLocalStorageState hook
+  source:
+    path: frontend/src/components/features/conversation/conversation-tabs/conversation-tabs-context-menu.tsx
+- rule: Only closes right panel when selectedTab === tab && isRightPanelShown
+  source:
+    path: frontend/src/components/features/conversation/conversation-tabs/conversation-tabs-context-menu.tsx
+- rule: Ensure test errors are fixed before pushing changes.
+  source:
+    path: AGENTS.md
+    lines: 16-17
+  evidence: The gold solution adds specific tests (`it("should close the right panel
+    when unpinning the currently active tab"...`)`) to verify the new behavior and
+    ensure tests pass.
+  category: testing
+- rule: If you've made changes to the frontend, you should run `cd frontend && npm
+    run lint:fix && npm run build ; cd ..`
+  source:
+    path: AGENTS.md
+    lines: 22-23
+  evidence: The gold solution modifies files exclusively in the `frontend` directory
+    (`src/components/...` and `__tests__/...`), which aligns with the condition to
+    run the frontend-specific lint and build command
+  category: tooling
+distractors:
+- rule: When working on a PR that requires design documents, scripts meant for development-only,
+    or other temporary artifacts... store them in a `.pr/` directory
+  collision_type: scope_ambiguity
+  why_distracting: The agent might create a `.pr/` directory to store temporary files
+    (like the test patch) or write a design document for this simple bug fix, which
+    is unnecessary and overcomplicates the PR.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 41-43
+- rule: To set up the entire repo, including frontend and backend, run `make build`.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might run `make build` to set up the entire repository
+    including the backend, which is a waste of time and resources since only frontend
+    changes are required.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 5-7
+- rule: This skill should be used when the user asks to 'test a cross-repo feature',
+    'deploy a feature branch to staging', 'test SDK against OH Cloud', 'e2e test a
+    cloud workspace feature'...
+  source:
+    path: .agents/skills/cross-repo-testing/SKILL.md
+    lines: 1-3
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to write or run cross-repo e2e tests to
+    verify the right panel visibility across the full stack, but the task only requires
+    frontend unit tests.
+  severity: medium
+hierarchy_analysis: The repository uses a single, flat `AGENTS.md` file at the root
+  level containing generic boilerplate instructions. There is no complex hierarchy
+  or overriding of rules.
+version: '2.0'
+source:
+  repo: All-Hands-AI/OpenHands
+  pr: 13648
+  base_commit: 6dd9046ba29f5d22b045a28d7a34c9ecfc981eab
+  merge_commit: e1afc95b6c76b7493deb5d7f7dd4ecc2a8cb719b

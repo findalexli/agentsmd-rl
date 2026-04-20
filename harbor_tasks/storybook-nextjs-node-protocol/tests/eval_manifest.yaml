@@ -1,0 +1,108 @@
+source_pr:
+  owner: storybookjs
+  repo: storybook
+  number: 34494
+  title: "Nextjs: Handle node builtin webpack imports"
+  merge_commit: ad5c2a9b66a1d09e3c09f52a0da16e34508bc0bb
+  base_commit: 370524faae96a30d27e36efcaa2fc39cd65fab29
+
+task:
+  name: storybook-nextjs-node-protocol
+  description: |
+    Fix webpack handling of node: protocol imports in @storybook/nextjs.
+    Newer Next.js versions import Node.js builtins using the node: scheme
+    (e.g., node:stream), which causes webpack's UnhandledSchemeError.
+    The fix adds a NormalModuleReplacementPlugin to strip the node: prefix
+    before webpack's polyfill handling kicks in.
+
+  agent_configs:
+    - path: CLAUDE.md
+      ref: 370524faae96a30d27e36efcaa2fc39cd65fab29
+    - path: AGENTS.md
+      ref: 370524faae96a30d27e36efcaa2fc39cd65fab29
+    - path: .cursorrules
+      ref: 370524faae96a30d27e36efcaa2fc39cd65fab29
+
+checks:
+  # Fail-to-pass tests (behavioral tests for the fix)
+  - id: test_webpack_imported
+    type: fail_to_pass
+    origin: behavior
+    description: "webpack must be imported as a value for NormalModuleReplacementPlugin"
+
+  - id: test_node_protocol_regex_defined
+    type: fail_to_pass
+    origin: behavior
+    description: "NODE_PROTOCOL_REGEX constant must be defined to match node: prefix"
+
+  - id: test_normal_module_replacement_plugin_used
+    type: fail_to_pass
+    origin: behavior
+    description: "NormalModuleReplacementPlugin must be configured to strip node: prefix"
+
+  - id: test_fallback_preserved
+    type: fail_to_pass
+    origin: behavior
+    description: "Existing resolve.fallback configuration must be preserved with spread"
+
+  - id: test_plugins_array_structure
+    type: fail_to_pass
+    origin: behavior
+    description: "Plugins array must spread existing plugins before adding new ones"
+
+  - id: test_plugin_order_correct
+    type: fail_to_pass
+    origin: behavior
+    description: "NormalModuleReplacementPlugin must come before NodePolyfillPlugin"
+
+  - id: test_functional_node_protocol_handling
+    type: fail_to_pass
+    origin: behavior
+    description: "Functional test validating node: protocol transformation behavior"
+
+  # Pass-to-pass tests (repo CI/CD tests)
+  - id: test_nx_compile
+    type: pass_to_pass
+    origin: repo_tests
+    description: "NX compile for nextjs package passes"
+
+  - id: test_nx_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "NX type check for nextjs package passes"
+
+  - id: test_format_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Format check with oxfmt passes"
+
+  # Idempotency/quality tests
+  - id: test_file_exists
+    type: pass_to_pass
+    origin: infrastructure
+    description: "Target file exists at expected path"
+
+  - id: test_no_duplicate_webpack_import
+    type: pass_to_pass
+    origin: quality
+    description: "No duplicate webpack imports in the file"
+
+rubric:
+  # The gold solution for this task only modifies webpack.ts to fix node: protocol
+  # handling. No agent config files are modified. These rules validate the
+  # actual code changes made.
+  - id: webpack_import_added
+    description: "webpack must be imported as a value for NormalModuleReplacementPlugin"
+    reference: "import webpack from 'webpack'"
+
+  - id: node_protocol_regex_defined
+    description: "NODE_PROTOCOL_REGEX must be defined with correct pattern"
+    reference: "const NODE_PROTOCOL_REGEX = /^node:/"
+
+  - id: normal_module_replacement_plugin_used
+    description: "NormalModuleReplacementPlugin must be configured to strip node: prefix"
+    reference: "new webpack.NormalModuleReplacementPlugin(NODE_PROTOCOL_REGEX, (resource) => { resource.request = resource.request.replace(NODE_PROTOCOL_REGEX, ''); })"
+
+  - id: fallback_preserved
+    description: "Existing resolve.fallback configuration must be preserved with spread"
+    reference: "...baseConfig.resolve?.fallback"

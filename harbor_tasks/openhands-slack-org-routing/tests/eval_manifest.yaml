@@ -1,0 +1,154 @@
+rubric:
+- rule: 'Code changes use relative imports without ''enterprise.'' prefix in enterprise
+    code. Example: ''from storage.database import a_session_maker'' not ''from enterprise.storage.database
+    import a_session_maker''.'
+  source:
+    path: AGENTS.md
+    lines: 238-241
+    commit: 732a1c19911a182653556c18c4fd1c19a38ff44a
+- rule: Run `pre-commit run --config ./dev_config/python/.pre-commit-config.yaml`
+    after making changes to the backend.
+  source:
+    path: AGENTS.md
+    lines: 18-19
+  evidence: The gold solution modifies `enterprise/integrations/slack/slack_view.py`,
+    which is a backend Python file, meaning the backend pre-commit hook rule applies.
+  category: tooling
+checks:
+- id: test_slack_view_imports_resolve_org_for_repo
+  description: slack_view.py imports resolve_org_for_repo from integrations.resolver_org_router
+  type: fail_to_pass
+  origin: pr_diff
+- id: test_slack_view_imports_saas_conversation_store
+  description: slack_view.py imports SaasConversationStore from storage.saas_conversation_store
+  type: fail_to_pass
+  origin: pr_diff
+- id: test_slack_view_imports_start_conversation
+  description: slack_view.py imports start_conversation (replaces create_new_conversation)
+  type: fail_to_pass
+  origin: pr_diff
+- id: test_slack_view_has_resolved_org_id_attribute
+  description: Slack view sets self.resolved_org_id and calls resolve_org_for_repo
+  type: fail_to_pass
+  origin: pr_diff
+- id: test_v0_path_uses_saas_conversation_store
+  description: V0 conversation creation uses SaasConversationStore.get_resolver_instance
+    with resolver_org_id
+  type: fail_to_pass
+  origin: pr_diff
+- id: test_v0_path_uses_start_conversation
+  description: V0 path calls start_conversation instead of create_new_conversation
+  type: fail_to_pass
+  origin: pr_diff
+- id: test_v0_path_saves_conversation_metadata
+  description: V0 path creates and saves ConversationMetadata via store.save_metadata
+  type: fail_to_pass
+  origin: pr_diff
+- id: test_v1_path_passes_resolver_org_id_to_context
+  description: V1 path passes resolver_org_id to ResolverUserContext
+  type: fail_to_pass
+  origin: pr_diff
+- id: test_v1_path_uses_resolved_git_provider
+  description: V1 path uses self._resolved_git_provider instead of computing locally
+  type: fail_to_pass
+  origin: pr_diff
+- id: test_git_provider_resolved_early
+  description: Git provider is resolved early in create_or_update_conversation and
+    stored in _resolved_git_provider
+  type: fail_to_pass
+  origin: pr_diff
+- id: test_enterprise_unit_tests_pass
+  description: All enterprise unit tests in test_slack_view.py pass
+  type: fail_to_pass
+  origin: pr_diff
+- id: test_repo_poetry_check
+  description: Repo's poetry configuration passes validation (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_enterprise_poetry_check
+  description: Enterprise poetry configuration passes validation (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_syntax_valid
+  description: Key Python files have valid syntax via py_compile (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_enterprise_syntax_valid
+  description: Enterprise key Python files have valid syntax (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_imports_resolve
+  description: Key package imports can be resolved after installation (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_unit_tests_utils
+  description: Unit tests in tests/unit/utils pass after package installation (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_unit_tests_agent_server
+  description: Agent server env override tests pass (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_unit_tests_utils_circular_imports
+  description: Utils circular imports test passes (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_unit_tests_utils_git
+  description: Utils git tests pass (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_unit_tests_utils_import
+  description: Utils import tests pass (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_unit_tests_conversation_stats
+  description: Conversation stats unit tests pass (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_unit_tests_conversation_summary
+  description: Conversation summary unit tests pass (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_unit_tests_azure_devops
+  description: Azure DevOps service unit tests pass (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_unit_tests_forgejo
+  description: Forgejo service unit tests pass (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_unit_tests_llm_registry
+  description: LLM registry unit tests pass (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+distractors:
+- rule: Store PR-specific artifacts like design documents or analysis notes in a `.pr/`
+    directory.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might interpret the instruction to modify complex routing
+    logic as requiring a design document or analysis notes, leading it to create unnecessary
+    files in a `.pr/` directory instead of just implementing the code changes.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 65-80
+- rule: Use cross-repo-testing skill when testing a cross-repo feature, deploying
+    to staging, or testing SDK against OH Cloud.
+  source:
+    path: .agents/skills/cross-repo-testing/SKILL.md
+    lines: 1-5
+  collision_type: scope_ambiguity
+  why_distracting: The task involves Slack integration, OpenHands organizations, and
+    SaaS conversation stores, which might sound like a cloud or cross-repo feature
+    requiring the cross-repo-testing skill. However, this is a purely local backend
+    logic change in `slack_view.py`.
+  severity: medium
+hierarchy_analysis: There is only a single, flat config file (`AGENTS.md`) at the
+  root level. No hierarchy traversal or conflict resolution between multiple config
+  files is required.
+version: '2.0'
+source:
+  repo: All-Hands-AI/OpenHands.git
+  pr: 0
+  base_commit: 732a1c19911a182653556c18c4fd1c19a38ff44a
+  merge_commit: ''

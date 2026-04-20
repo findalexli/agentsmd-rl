@@ -1,0 +1,115 @@
+rubric:
+- rule: This is a frontend code change task that follows existing conventions from
+    AGENTS.md. No config file modifications are required - only implementation of
+    the /new slash command feature using existing TanStack Query patterns and passing
+    all tests.
+  source:
+    path: AGENTS.md
+    lines: 1-5
+    commit: c7190ddb308de5a8c00b790049c5027d122159f7
+  reference: Gold solution implements /new command using useActiveConversation hook
+    from frontend/src/hooks/query/
+  category: code
+- rule: If you've made changes to the frontend, you should run `cd frontend && npm
+    run lint:fix && npm run build ; cd ..`
+  source:
+    path: AGENTS.md
+    lines: 18-19
+  evidence: The gold solution modifies frontend files (`frontend/src/hooks/chat/use-slash-command.ts`,
+    `frontend/__tests__/hooks/chat/use-slash-command.test.ts`), which aligns with
+    the rule to run frontend-specif
+  category: tooling
+- rule: Ensure that any lint errors or simple test errors have been fixed before pushing
+    changes.
+  source:
+    path: AGENTS.md
+    lines: 18-19
+  evidence: The gold solution includes a new test file `frontend/__tests__/hooks/chat/use-slash-command.test.ts`
+    to verify the `/new` command logic and ensure no test errors are introduced.
+  category: testing
+checks:
+- id: test_test_file_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: Test file use-slash-command.test.ts exists
+- id: test_v1_conversation_has_new_command
+  type: fail_to_pass
+  origin: pr_diff
+  description: /new command appears for V1 conversations
+- id: test_v0_conversation_no_new_command
+  type: fail_to_pass
+  origin: pr_diff
+  description: /new command does NOT appear for V0 conversations
+- id: test_empty_items_while_loading
+  type: fail_to_pass
+  origin: pr_diff
+  description: Returns empty items while skills are loading (prevents staggered menu
+    bug)
+- id: test_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript type checking passes
+- id: test_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Linting passes (npm run lint)
+- id: test_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Production build compiles successfully
+- id: test_translation_completeness
+  type: pass_to_pass
+  origin: repo_tests
+  description: All translation keys have complete language coverage
+- id: test_repo_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Frontend slash-command unit tests pass (vitest run)
+- id: test_new_conversation_command
+  type: pass_to_pass
+  origin: repo_tests
+  description: useNewConversationCommand hook tests pass (related /new command)
+- id: test_hooks_mutation
+  type: pass_to_pass
+  origin: repo_tests
+  description: TanStack Query mutation hooks tests pass
+- id: test_hooks_query
+  type: pass_to_pass
+  origin: repo_tests
+  description: TanStack Query hooks tests pass (includes useActiveConversation)
+distractors:
+- rule: The current V1 application server lives in openhands/app_server/.
+  collision_type: architecture_boundary
+  why_distracting: The task mentions 'V1 conversations only', which might lead the
+    agent to investigate or modify the backend V1 application server instead of restricting
+    changes to the frontend.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 62-64
+- rule: Store design documents and temporary artifacts in a .pr/ directory.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might create a .pr/ directory to document its design
+    for the new slash command, wasting time on temporary artifacts for a simple feature.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 35-37
+- rule: Use cross-repo-testing skill for testing features that span SDK and OpenHands
+    server repos.
+  source:
+    path: .agents/skills/cross-repo-testing/SKILL.md
+    lines: 1-5
+  collision_type: scope_ambiguity
+  why_distracting: The agent might think adding a new command requires cross-repo
+    testing since it interacts with the backend, but this is purely a frontend UI
+    change.
+  severity: low
+hierarchy_analysis: The repository has a flat, single-file configuration (AGENTS.md)
+  at the root level. There are no conflicting rules or deep hierarchies to navigate.
+version: '2.0'
+source:
+  repo: All-Hands-AI/OpenHands
+  pr: 13599
+  base_commit: c7190ddb308de5a8c00b790049c5027d122159f7
+  merge_commit: c210d5294fa82459443e6163b9b1c9c9f55073fc

@@ -1,0 +1,73 @@
+version: "2.0"
+
+source:
+  repo: "THUDM/slime"
+  pr: 1734
+  base_commit: "73a1f4d935baf1619bf764eadd199a77cecf55cf"
+  merge_commit: "d2698386cb4c299de4dae0df6c6fe5e743cf4d01"
+
+checks:
+  - id: syntax_valid
+    type: pass_to_pass
+    origin: static
+    description: "Target file parses without syntax errors"
+
+  - id: rope_theta_from_parameters
+    type: fail_to_pass
+    origin: pr_diff
+    description: "rope_theta resolved from rope_parameters dict when top-level absent (transformers 5.x)"
+
+  - id: rope_theta_default_when_missing
+    type: fail_to_pass
+    origin: pr_diff
+    description: "rope_theta defaults to 1000000 when neither rope_theta nor rope_parameters exists"
+
+  - id: rope_theta_empty_rope_parameters
+    type: fail_to_pass
+    origin: pr_diff
+    description: "rope_theta defaults to 1000000 when rope_parameters is an empty dict"
+
+  - id: rope_theta_none_rope_parameters
+    type: fail_to_pass
+    origin: pr_diff
+    description: "rope_theta defaults to 1000000 when rope_parameters is None"
+
+  - id: rope_theta_preserved_when_present
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Existing rope_theta not overwritten (transformers 4.x backward compat)"
+
+  - id: super_init_called
+    type: pass_to_pass
+    origin: pr_diff
+    description: "super().__init__ is called, preserving parent initialization"
+
+  - id: class_members_preserved
+    type: pass_to_pass
+    origin: static
+    description: "Original class attributes (_DSA_ATTENTION_MAPPING) and methods not removed"
+
+  - id: test_repo_syntax_valid_mbridge
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: slime_plugins/mbridge module files have valid Python syntax"
+
+  - id: test_repo_ruff_check_mbridge
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: ruff linting passes on modified mbridge files"
+
+  - id: test_repo_black_format_mbridge
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: black format check passes on modified mbridge files"
+
+  - id: test_repo_isort_check_mbridge
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo CI: isort import order check passes on modified mbridge files"
+
+rubric:
+  - rule: "Python code in slime_plugins/mbridge/ must be formatted with black (line-length: 119)"
+  - rule: "Python code in slime_plugins/mbridge/ must pass ruff linting (E,F,B,UP rules; ignore E402,E501)"
+  - rule: "Python code in slime_plugins/mbridge/ must have imports sorted with isort (profile: black)"

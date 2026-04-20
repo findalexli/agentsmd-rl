@@ -1,0 +1,145 @@
+source:
+  repo: ant-design/ant-design
+  pr: 0
+  base_commit: a120c05faf259ef45d23ab689bde5e9e5f7630fb
+  merge_commit: 9702dbb57d3cb8ce4346b96c895e6fd6f43e56d3
+rubric:
+- rule: Keep demo code concise and copy-pasteable
+  source:
+    path: CLAUDE.md
+    lines: '153'
+    commit: a120c05faf259ef45d23ab689bde5e9e5f7630fb
+- rule: 'Follow import order: React → dependencies → antd components → custom components
+    → types → styles'
+  source:
+    path: CLAUDE.md
+    lines: 144-145
+    commit: a120c05faf259ef45d23ab689bde5e9e5f7630fb
+- rule: Focus each demo on a single feature
+  source:
+    path: .github/copilot-instructions.md
+    lines: '93'
+    commit: a120c05faf259ef45d23ab689bde5e9e5f7630fb
+- rule: 如果需要复用少量逻辑，优先内联 (If you need to reuse a small amount of logic, prefer inlining)
+  source:
+    path: CLAUDE.md
+    lines: 42-42
+  evidence: The gold solution duplicates the `const currentYear = new Date().getFullYear();`
+    line inside each of the 6 demo components instead of extracting it to a shared
+    utility file.
+  category: architecture
+- rule: demo 与 .dumi 文件之间不要互相相对引用；如果需要复用少量逻辑，优先内联 (No relative imports between demos
+    and .dumi files; prefer inlining for small reused logic)
+  source:
+    path: AGENTS.md
+    lines: 27-28
+  evidence: The gold solution keeps the `currentYear` variable initialization duplicated
+    across all 6 demo files rather than extracting it into a shared utility file,
+    adhering to the rule to prefer inlining for small amounts of reused logic.
+  category: architecture
+checks:
+- id: repo_tsc
+  description: Repository TypeScript typecheck passes (tsc --noEmit)
+  type: pass_to_pass
+  origin: repo_tests
+  source:
+    path: test_outputs.py
+    lines: ''
+- id: repo_eslint_layout
+  description: Repository ESLint passes on layout demo files
+  type: pass_to_pass
+  origin: repo_tests
+  source:
+    path: test_outputs.py
+    lines: ''
+- id: repo_biome_lint_layout
+  description: Repository Biome lint passes on layout demo files
+  type: pass_to_pass
+  origin: repo_tests
+  source:
+    path: test_outputs.py
+    lines: ''
+- id: repo_layout_demo_tests
+  description: Repository Jest tests for layout component pass
+  type: pass_to_pass
+  origin: repo_tests
+  source:
+    path: test_outputs.py
+    lines: ''
+- id: typescript_compiles
+  description: All layout demo files must have valid TypeScript/React syntax and proper
+    imports/exports
+  type: fail_to_pass
+  source:
+    path: test_outputs.py
+    lines: ''
+  origin: pr_diff
+- id: no_module_level_current_year
+  description: currentYear should not be declared at module level outside the App
+    component
+  type: fail_to_pass
+  source:
+    path: test_outputs.py
+    lines: ''
+  origin: pr_diff
+- id: current_year_inside_component
+  description: currentYear must be declared inside the App component, after theme.useToken()
+  type: fail_to_pass
+  source:
+    path: test_outputs.py
+    lines: ''
+  origin: pr_diff
+- id: consistent_component_structure
+  description: All demos should follow the same pattern with theme.useToken() followed
+    by currentYear
+  type: fail_to_pass
+  source:
+    path: test_outputs.py
+    lines: ''
+  origin: pr_diff
+- id: footer_uses_current_year
+  description: The Footer component must reference the currentYear variable
+  type: fail_to_pass
+  source:
+    path: test_outputs.py
+    lines: ''
+  origin: pr_diff
+- id: test_repo_prettier_layout
+  description: Repo Prettier formatting check passes on layout demo files
+  type: pass_to_pass
+  origin: repo_tests
+  source:
+    path: test_outputs.py
+    lines: ''
+- id: test_repo_node_tests
+  description: Repo Node.js environment tests pass
+  type: pass_to_pass
+  origin: repo_tests
+  source:
+    path: test_outputs.py
+    lines: ''
+distractors:
+- rule: 'Changelog 规范: 必须同时提供中英文两个版本 / 忽略用户无感知的改动'
+  collision_type: scope_ambiguity
+  why_distracting: An agent might attempt to document this refactoring in the changelog
+    files because it modifies component demo files. However, this is an internal consistency
+    fix (user unperceivable), so adding a changelog entry would violate the rule to
+    ignore internal refactoring.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 106-108
+- rule: Help maintainers reply to Ant Design GitHub issues following official guidelines.
+  source:
+    path: .claude/skills/issue-reply/SKILL.md
+    lines: 1-5
+  collision_type: scope_ambiguity
+  why_distracting: The skill is for replying to GitHub issues, which is irrelevant
+    to fixing code consistency in demo files. An agent might get confused by the 'issue'
+    terminology if it misinterprets the task as resolving an issue ticket rather than
+    writing code.
+  severity: low
+hierarchy_analysis: The repository contains identical `AGENTS.md` and `CLAUDE.md`
+  files at the root level. There is no complex hierarchy or overriding required, as
+  the rules are flat and consistent across both files.
+version: '2.0'

@@ -1,0 +1,150 @@
+version: '2.0'
+source:
+  repo: oven-sh/bun
+  pr: 28457
+  base_commit: 9ead1e121d5cca2eaddad66d439ab3c0a74225f2
+  merge_commit: 2e610b1402f5cc17f11803b01b87cbc59f563fab
+checks:
+- id: source_files_exist
+  type: pass_to_pass
+  origin: static
+  description: Core source files (ReadableStream.ts, ReadableStreamInternals.ts, ReadableStream.cpp)
+    must exist
+- id: null_excluded_from_direct_stream_path
+  type: fail_to_pass
+  origin: pr_diff
+  description: readableStreamTo* functions must exclude null underlyingSource from
+    the direct-stream path
+- id: close_direct_stream_sink_guard
+  type: fail_to_pass
+  origin: pr_diff
+  description: onCloseDirectStream must guard against null/undefined sink before sink.end()
+- id: flush_direct_stream_sink_guard
+  type: fail_to_pass
+  origin: pr_diff
+  description: onFlushDirectStream must guard against null/undefined sink before sink.flush()
+- id: stream_locked_on_direct_consumption
+  type: fail_to_pass
+  origin: pr_diff
+  description: readableStreamToArrayBufferDirect must lock the stream to prevent double-consumption
+- id: cpp_exception_handling_after_call
+  type: fail_to_pass
+  origin: pr_diff
+  description: C++ readableStreamTo* wrappers must handle exceptions after call()
+    to JS builtins
+- id: core_functions_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: Key ReadableStream functions still exist with substantial content
+- id: no_bare_call_apply
+  type: pass_to_pass
+  origin: agent_config
+  description: No bare .call/.apply in JS builtins — must use .$call/.$apply
+  source:
+    path: src/js/CLAUDE.md
+    lines: '56'
+    commit: 9ead1e121d5cca2eaddad66d439ab3c0a74225f2
+- id: no_dynamic_require
+  type: pass_to_pass
+  origin: agent_config
+  description: require() calls in JS builtins must use string literals only
+  source:
+    path: src/js/CLAUDE.md
+    lines: '103'
+    commit: 9ead1e121d5cca2eaddad66d439ab3c0a74225f2
+- id: no_undefined_equality_comparison
+  type: pass_to_pass
+  origin: repo_tests
+  description: No undefined equality comparisons (== undefined, != undefined) in builtins
+  source:
+    path: test/internal/ban-words.test.ts
+- id: no_bare_jsboolean
+  type: pass_to_pass
+  origin: repo_tests
+  description: No bare .jsBoolean(true/false) calls in builtins — use .true/.false
+  source:
+    path: test/internal/ban-words.test.ts
+- id: no_std_debug_in_builtins
+  type: pass_to_pass
+  origin: repo_tests
+  description: No std.debug.assert, std.debug.print in builtins
+  source:
+    path: test/internal/ban-words.test.ts
+- id: typescript_braces_balance
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript files must have balanced braces (basic syntax check)
+- id: repo_ban_words_test
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ban-words test passes - no banned patterns in Zig source files
+  source:
+    path: test/internal/ban-words.test.ts
+- id: repo_typescript_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript typecheck passes (tsc --noEmit)
+  source:
+    path: tsconfig.base.json
+- id: repo_js_builtins_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: JS builtins files have valid syntax - verified by parsing with Bun
+  source:
+    path: src/js/builtins/ReadableStream.ts
+- id: repo_streams_readablestream_test
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Web Streams test file runs successfully
+  source:
+    path: test/js/web/streams/streams.test.js
+rubric:
+- rule: Use JSC intrinsics for performance
+  source:
+    path: src/js/CLAUDE.md
+    lines: '105'
+    commit: 9ead1e121d5cca2eaddad66d439ab3c0a74225f2
+  reference: Updated CLAUDE.md to emphasize using JSC intrinsics for performance.
+- rule: Use `$` prefix for private APIs and properties in JS builtins.
+  source:
+    path: src/js/CLAUDE.md
+    lines: 41-46
+  evidence: The gold solution accesses internal stream state using the `$` prefix
+    (e.g., `this.$sink`, `stream.$state`) in `ReadableStreamInternals.ts`.
+  category: naming
+- rule: Ensure JavaScript exception scopes are properly validated and handled in C++
+    bindings.
+  source:
+    path: CLAUDE.md
+    lines: 13-14
+  evidence: The gold solution adds `DECLARE_THROW_SCOPE` and `RETURN_IF_EXCEPTION(throwScope,
+    {});` after `call(...)` in `ReadableStream.cpp` to properly handle JS exceptions,
+    which prevents crashes that the exce
+  category: architecture
+distractors:
+- rule: Export via `export default {}`
+  collision_type: scope_ambiguity
+  why_distracting: The 'Key Rules' section states to 'Export via `export default {}`',
+    but this only applies to Node/Bun modules. Builtin functions in `src/js/builtins/`
+    must use `export function` so the C++ code generator can find them. Changing them
+    to `export default` would break the build.
+  severity: high
+  source:
+    path: src/js/CLAUDE.md
+    lines: 71-76
+- rule: Modules are NOT ES modules, use string literal `require()` only.
+  collision_type: scope_ambiguity
+  why_distracting: The rule states 'Modules are NOT ES modules' and mandates 'String
+    literal require() only'. An agent might try to refactor the imports in `ReadableStream.ts`
+    or `ReadableStreamInternals.ts` to use `require()`, but builtins use ES module
+    syntax for internal imports.
+  severity: medium
+  source:
+    path: src/js/CLAUDE.md
+    lines: 15-24
+hierarchy_analysis: 'The config hierarchy correctly separates concerns: Level 0 (`CLAUDE.md`)
+  handles global build/test commands and C++ JSC exception rules, while Level 2 (`src/js/CLAUDE.md`)
+  handles JS builtin specifics. However, Level 2''s ''Key Rules'' section is overly
+  broad, presenting module-specific rules (like `export default {}` and `require()`)
+  as global rules for the entire `src/js/` directory, which conflicts with the `builtins/`
+  directory requirements.'

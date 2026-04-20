@@ -1,63 +1,59 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert very specific paths like 'packages/turbo-codemod/src/commands/migrate/steps/update-catalog.ts', 'packages/turbo-codemod/__tests__/update-catalog.test.ts', fixture paths like 'pnpm-catalog-default' and 'yarn-catalog-default', exact file 'get-turbo-upgrade-command.ts' containing 'catalogInfo', 'get-latest-version.ts' containing 'tags[to]', and yaml dependency version '2.' in package.json. The instruction mentions some of these indirectly (e.g., 'detectCatalog', 'updateCatalogVersion',"
+      "outcome": "pass",
+      "reason": "All asserted paths, function names (detectCatalog, updateCatalogVersion, CatalogInfo), fixture names, and yaml dep are named in instruction.md."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly states implementation details: 'functions should be named descriptively, such that a test checking for names like detectCatalog, updateCatalogVersion, and a type like CatalogInfo would pass', 'a test checking for tags[to] pattern would verify this', 'The yaml library should be imported where needed (version 2.x)', and 'There should be a test file for the catalog update functionality'. These are not just descriptions of what's broken but specific implementation instruct"
+      "outcome": "pass",
+      "reason": "Instruction describes what's broken and required changes at a high level without giving exact code or line numbers."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific implementation details: exact function names ('detectCatalog', 'updateCatalogVersion'), exact type name ('CatalogInfo'), exact file path ('update-catalog.ts'), exact pattern ('tags[to]'), exact parameter name ('catalogInfo' in get-turbo-upgrade-command.ts), and exact fixture directory names. An alternative correct fix could use different function names (e.g., 'checkCatalogUsage', 'writeCatalogVersion'), different file organization, or different internal patterns and wo"
+      "reason": "Tests assert specific internal names like 'detectCatalog', 'updateCatalogVersion', 'CatalogInfo', 'catalogInfo', and literal 'tags[to]' \u2014 an alternative correct fix using different names would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Almost every test is purely textual grep: 'assert \"detectCatalog\" in content', 'assert \"tags[to]\" in content', 'assert \"yaml\" in content.lower()', etc. The only behavioral tests are test_repo_typescript_builds (which runs pnpm build and check-types), test_repo_lint, and test_repo_format. No test actually imports/calls the catalog functions, creates a mock project with catalog references, or verifies that the migration produces correct output. The core f2p tests are all string-in-file checks."
+      "reason": "Most tests are `assert 'X' in open(path).read()` string checks; only build/lint/format subprocesses run, no behavioral execution of the catalog update logic."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "A stub implementation that creates the expected files with the right string tokens (e.g., a file containing 'detectCatalog', 'updateCatalogVersion', 'CatalogInfo', 'catalog:', 'yaml' as comments or dead code) would pass all the f2p tests since they only check for string presence in files, not actual functionality. No test executes the catalog detection/update logic against real inputs."
+      "outcome": "pass",
+      "reason": "Tests require actual file creation, yaml dep, and specific code patterns that a stub can't satisfy without implementing the changes."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "Instruction says catalogs should be 'updated directly with the new version, preserving any version prefix (^, ~, etc.)' and 'When a catalog is already updated, the command returned should use install instead of add'. No test verifies actual version preservation behavior or that install vs add commands are correctly returned. Tests only check for string presence in source files."
+      "reason": "Instruction says catalog version should be updated in pnpm-workspace.yaml preserving prefixes, but no test actually invokes updateCatalogVersion to verify this behavior."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names and docstrings, grouped logically (source file checks, fixture checks, repo integration tests in a class). Structure is clear and readable."
+      "reason": "Tests are named descriptively and the repo-level tests are grouped in a TestRepoTests class."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data output like JSON/CSV/API responses; it modifies source code files."
+      "reason": "Task is code-only; no structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "Paths and names in instruction match those in tests."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "Instruction explicitly names exact function names (detectCatalog, updateCatalogVersion), exact type name (CatalogInfo), exact pattern (tags[to]), and specifies yaml version 2.x. It also hints at exact file locations ('a new source file') and test file existence. This goes beyond describing the bug domain and leaks implementation specifics."
+      "outcome": "pass",
+      "reason": "Instruction names the files to create/modify which is appropriate given the task requires creating them; no line-level hints."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-creation/modification task, not primarily a config-edit task."
+      "reason": "Not an agentmd-edits task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
-    "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests",
-    "instruction_no_hint_leakage"
+    "behavior_in_tests"
   ],
-  "pass_count": 2,
-  "fail_count": 7
+  "pass_count": 6,
+  "fail_count": 3
 }

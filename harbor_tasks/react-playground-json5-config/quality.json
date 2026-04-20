@@ -1,61 +1,57 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific details not mentioned in instruction.md: exact file paths like 'lib/compilation.ts', 'lib/defaultStore.ts', 'components/Editor/ConfigEditor.tsx'; exact string 'export function parseConfigOverrides' in compilation.ts; exact string 'JSON5.parse' in compilation.ts; exact string \"import JSON5 from\" in compilation.ts; exact string \"language={'json'}\" or 'language=\"json\"' in ConfigEditor.tsx; the json5 package name specifically. The instruction mentions 'safe alternative' and 'JS"
+      "reason": "Tests assert on specific literal strings like 'JSON5.parse', 'import JSON5 from', 'export function parseConfigOverrides', and require the json5 library by name, but instruction.md never names JSON5 as the required library or specifies the exact function name 'parseConfigOverrides' or the export string format."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction essentially prescribes the fix: replace new Function() with a safe parser supporting comments/trailing commas, export parseConfigOverrides, create a specific test file at a specific path, use JSON-compatible language mode in Monaco. While it doesn't say 'use JSON5', it narrows the solution space dramatically. Combined with requirement 5 ('Any parsing library required... must be added as a dependency'), this effectively tells the agent what to do rather than just describing what's"
+      "outcome": "pass",
+      "reason": "Instruction describes requirements (safe parsing, support comments/trailing commas, reject JS) without prescribing JSON5 specifically or giving exact code changes."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific implementation details: test_xss_vulnerability_removed checks for exact strings 'import JSON5 from', 'export function parseConfigOverrides', 'JSON5.parse' in compilation.ts. test_json5_parses_playground_configs runs 'const JSON5 = require(\"json5\")' directly. An alternative correct fix using e.g. a custom parser, or JSON5 imported differently (e.g. 'import * as JSON5'), or a differently-named export function, would fail these tests despite being correct."
+      "reason": "test_xss_vulnerability_removed asserts 'import JSON5 from' and 'JSON5.parse' literally, and test_json5_parses_playground_configs requires JSON5 specifically \u2014 a valid alternative like JSONC or a hand-rolled safe parser would fail despite meeting instruction requirements."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Several key tests are purely textual: test_xss_vulnerability_removed only does string matching ('import JSON5 from' in src, 'export function parseConfigOverrides' in src, 'new Function' not in src). test_config_format_migrated_to_json5 checks for string presence like \"language={'json'}\" in file text. While test_json5_parses_playground_configs and test_json5_blocks_code_injection do execute code, the core 'vulnerability removed' test is entirely text-based."
+      "outcome": "pass",
+      "reason": "Tests execute node --test, run subprocesses parsing configs, and invoke eslint/jest/tsc, not just text grep (though some text gates exist alongside behavioral checks)."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests cannot be satisfied by stubs. test_parseConfigOverrides_test_suite requires an actual test file that passes node --test with real JSON5 parsing logic. test_json5_parses_playground_configs executes JSON5.parse with real inputs. test_json5_blocks_code_injection verifies throws on malicious input. These require actual implementation."
+      "reason": "The parseConfigOverrides test file must exist and pass node --test with assertions on parsing behavior and rejection of injections \u2014 a stub would fail."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors mentioned in instruction.md are tested: safe parsing (test_json5_parses_playground_configs, test_json5_blocks_code_injection), testable export (test_xss_vulnerability_removed), simplified config format (test_config_format_migrated_to_json5), editor language mode (test_config_format_migrated_to_json5), dependency addition (test_json5_dependency_installed), and the test file requirement (test_parseConfigOverrides_test_suite)."
+      "reason": "Tests cover safe parsing, comment support, trailing commas, XSS rejection, JSON language mode, removal of TS wrappers, and dependency presence."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments ('Pass-to-pass (repo_tests)', 'Fail-to-pass (pr_diff) \u2014 core behavioral tests', 'Fail-to-pass (pr_diff) \u2014 source-level checks'), descriptive function names, and docstrings explaining each test's purpose."
+      "reason": "Tests are grouped by pass-to-pass vs fail-to-pass with clear comments and descriptive function names."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task does not produce structured data like JSON/CSV/API/DB output; it's a code refactoring/security fix task."
+      "reason": "Task is code fix, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "Filenames and paths appear consistent."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction names specific files and locations: 'parseConfigOverrides.test.mjs must exist in the playground's __tests__ directory', 'Monaco editor instance used for config editing must use a JSON-compatible language mode', 'named exported function'. While it doesn't say 'line 42', it provides very specific implementation guidance that goes beyond describing what's broken."
+      "outcome": "pass",
+      "reason": "Instruction points to the playground config parsing domain without naming specific lines."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-change task, not an agentmd-edits/config-only task."
+      "reason": "Not an agentmd-edits task."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 4,
-  "fail_count": 5
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 2
 }

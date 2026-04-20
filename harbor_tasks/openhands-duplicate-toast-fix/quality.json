@@ -1,61 +1,59 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert specific variable names like 'amount' and 'sessionId' (test_useeffect_has_primitive_dependencies, test_searchparams_extracted_outside_effect), exact extraction patterns like 'const amount = searchParams.get(\"amount\")' and 'const sessionId = searchParams.get(\"session_id\")', and the exact file path 'frontend/src/routes/billing.tsx'. While the file path is mentioned in instruction.md, the specific variable names 'sessionId' (as opposed to 'session_id' or 'stripeSessionId') and the exac"
+      "outcome": "pass",
+      "reason": "instruction.md names billing.tsx, useSearchParams, trackCreditsPurchased, amountUsd/stripeSessionId, and the verification commands; test-asserted variable names 'amount'/'sessionId' are derivable from the requirement to use primitive dependencies."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "Requirement #4 in instruction.md essentially prescribes the fix: 'objects with unstable references (like the searchParams object returned by useSearchParams()) must NOT appear in the dependency array' \u2014 this tells the agent exactly what to change (remove searchParams from deps, extract primitives). This goes beyond describing what's broken and into specifying the implementation approach."
+      "reason": "Requirement #4 explicitly states 'objects with unstable references (like the `searchParams` object returned by `useSearchParams()`) must NOT appear in the dependency array', which essentially dictates the fix approach."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests enforce gold-specific variable names and patterns. test_useeffect_has_primitive_dependencies asserts 'amount' in deps_str and 'sessionId' in deps_str. test_searchparams_extracted_outside_effect uses regex for exact patterns like 'const sessionId = searchParams.get(...)'. An alternative correct fix using different variable names (e.g., 'purchaseAmount', 'stripeSession') or using useMemo, or extracting via a custom hook, would fail these tests despite being functionally correct."
+      "reason": "Tests require exact variable names via regex: `const amount = searchParams.get(\"amount\")` and `const sessionId = searchParams.get(\"session_id\")`; valid alternatives like `const amt`, destructuring, or `useMemo` would fail test_searchparams_extracted_outside_effect."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The fail_to_pass tests (test_useeffect_has_primitive_dependencies, test_searchparams_extracted_outside_effect, test_no_searchparams_get_inside_effect, test_checkout_status_extraction) are ALL pure text/regex inspection of the source file \u2014 they open billing.tsx and assert on string patterns. They do not execute the code or test behavior. The pass_to_pass tests (vitest, lint, build etc.) do execute but those aren't the fail_to_pass tests that verify the bug fix."
+      "outcome": "pass",
+      "reason": "Tests run vitest, lint, typecheck, and build via subprocess in addition to the text-based regex checks."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check specific code patterns (variable extraction, dependency arrays) and the vitest billing tests include behavioral assertions (mockDisplaySuccessToast called exactly once). A stub/no-op implementation would not pass these regex-based source inspection tests since the original buggy code has searchParams in the dependency array."
+      "reason": "The vitest billing tests (checkout success/cancel flow) assert toast called exactly once, which a stub cannot satisfy."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All four requirements from instruction.md are tested: (1) success toast once (vitest), (2) error toast once (vitest), (3) analytics tracking once with correct params (vitest), (4) primitive dependencies (test_useeffect_has_primitive_dependencies)."
+      "reason": "Success toast once, error toast once, tracking once with correct args, and primitive dependencies are all tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names and docstrings explaining the purpose, grouped logically between pass_to_pass and fail_to_pass categories."
+      "reason": "Tests have descriptive names and docstrings indicating pass_to_pass vs fail_to_pass."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a React component bug, not producing structured data output."
+      "reason": "No structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "Paths and commands appear consistent."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "Instruction.md requirement #4 explicitly names the exact buggy pattern: 'objects with unstable references (like the searchParams object returned by useSearchParams()) must NOT appear in the dependency array.' This identifies the exact bug location (the useEffect dependency array) and the exact problematic variable (searchParams), removing the need for the agent to diagnose the issue."
+      "reason": "Instruction explicitly identifies `searchParams` object from `useSearchParams()` as the unstable reference that must not appear in the dep array \u2014 effectively pointing at the buggy line."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "Code-only task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
     "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 5
+  "pass_count": 6,
+  "fail_count": 3
 }

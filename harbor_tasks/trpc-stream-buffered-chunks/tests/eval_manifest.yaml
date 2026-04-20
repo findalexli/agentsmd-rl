@@ -1,0 +1,173 @@
+manifest_version: "1.0"
+
+task:
+  name: "trpc-stream-buffered-chunks"
+  description: "Fix httpBatchStreamLink to preserve buffered chunks on stream close"
+  source:
+    repo: "trpc/trpc"
+    pr_number: 7233
+    base_commit: "5b0a4378f4bc5613ffc499c4781c549570799fbd"
+    merge_commit: "6ccaf04b0af4e06936e640bc45173fab5c8a2b0a"
+    files_changed:
+      - "packages/server/src/unstable-core-do-not-import/stream/jsonl.ts"
+      - "packages/server/src/unstable-core-do-not-import/stream/jsonl.test.ts"
+
+checks:
+  # Fail-to-pass tests (core behavioral fixes)
+  - id: test_gold_patch_applied
+    type: fail_to_pass
+    origin: gold_patch
+    description: "The gold patch fix has been applied - handleClose exists with proper error message"
+    file: "packages/server/src/unstable-core-do-not-import/stream/jsonl.ts"
+
+  - id: test_closeAll_closes_controllers
+    type: fail_to_pass
+    origin: gold_patch
+    description: "closeAll() function iterates over controllers and calls .close() (not .error())"
+    file: "packages/server/src/unstable-core-do-not-import/stream/jsonl.ts"
+
+  - id: test_handleClose_vs_handleAbort_separation
+    type: fail_to_pass
+    origin: gold_patch
+    description: "handleClose and handleAbort are separate functions with different behaviors"
+    file: "packages/server/src/unstable-core-do-not-import/stream/jsonl.ts"
+
+  - id: test_handleAbort_cancels_all
+    type: fail_to_pass
+    origin: gold_patch
+    description: "handleAbort properly calls cancelAll for error propagation"
+    file: "packages/server/src/unstable-core-do-not-import/stream/jsonl.ts"
+
+  - id: test_stream_hooks_use_correct_handlers
+    type: fail_to_pass
+    origin: gold_patch
+    description: "Stream close hook uses handleClose, abort hook uses handleAbort"
+    file: "packages/server/src/unstable-core-do-not-import/stream/jsonl.ts"
+
+  - id: test_headDeferred_null_after_reject
+    type: fail_to_pass
+    origin: gold_patch
+    description: "headDeferred is set to null after rejection to prevent double-rejection"
+    file: "packages/server/src/unstable-core-do-not-import/stream/jsonl.ts"
+
+  - id: test_catch_block_uses_handleAbort
+    type: fail_to_pass
+    origin: gold_patch
+    description: "Catch block uses handleAbort for error scenarios (not handleClose)"
+    file: "packages/server/src/unstable-core-do-not-import/stream/jsonl.ts"
+
+  # Pass-to-pass tests (repo's own CI tests)
+  - id: test_repo_vitest_jsonl_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's jsonl stream unit tests pass - tests the modified stream/jsonl.ts file"
+    command: "pnpm vitest run jsonl.test.ts"
+
+  - id: test_repo_vitest_server_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's @trpc/server package unit tests pass (including all stream tests)"
+    command: "pnpm vitest run --project=@trpc/server"
+
+  - id: test_repo_vitest_streaming_integration_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's streaming integration tests pass (httpBatchStreamLink, etc.)"
+    command: "pnpm vitest run streaming.test.ts"
+
+  - id: test_repo_server_typecheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's @trpc/server package TypeScript typecheck passes"
+    command: "pnpm --filter=@trpc/server run typecheck"
+
+  - id: test_repo_server_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's @trpc/server package ESLint passes"
+    command: "pnpm run lint --filter=@trpc/server"
+
+  # Legacy pass-to-pass tests (kept for backwards compatibility)
+  - id: test_repo_vitest_stream_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "[Legacy] Repo Vitest stream tests"
+    command: "pnpm vitest run jsonl.test.ts"
+
+  - id: test_typescript_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: "[Legacy] TypeScript typecheck for @trpc/server"
+    command: "pnpm --filter=@trpc/server run typecheck"
+
+  # Agent config compliance tests
+  - id: test_import_type_usage
+    type: pass_to_pass
+    origin: agent_config
+    description: "Uses import type for type-only imports (coding-guidelines.mdc)"
+    source: ".cursor/rules/coding-guidelines.mdc"
+
+  - id: test_no_function_destructuring
+    type: pass_to_pass
+    origin: agent_config
+    description: "Avoids destructuring in function parameter declarations (coding-guidelines.mdc)"
+    source: ".cursor/rules/coding-guidelines.mdc"
+
+  - id: test_max_3_parameters
+    type: pass_to_pass
+    origin: agent_config
+    description: "Functions have at most 3 parameters (coding-guidelines.mdc)"
+    source: ".cursor/rules/coding-guidelines.mdc"
+
+  - id: test_pnpm_used
+    type: pass_to_pass
+    origin: agent_config
+    description: "Uses pnpm as package manager (pnpm.mdc)"
+    source: ".cursor/rules/pnpm.mdc"
+
+  - id: test_no_src_imports
+    type: pass_to_pass
+    origin: agent_config
+    description: "Never imports from @trpc/*/src paths (coding-guidelines.mdc)"
+    source: ".cursor/rules/coding-guidelines.mdc"
+
+rubric:
+  - rule: "Use `import type` for type-only imports"
+    weight: 1
+    source: ".cursor/rules/coding-guidelines.mdc"
+    description: "Type imports should use `import type` syntax and be separate from value imports"
+
+  - rule: "Avoid destructuring in function parameters"
+    weight: 1
+    source: ".cursor/rules/coding-guidelines.mdc"
+    description: "Never use destructuring in function parameter declarations"
+
+  - rule: "Maximum 3 function parameters"
+    weight: 1
+    source: ".cursor/rules/coding-guidelines.mdc"
+    description: "Functions should have at most 3 parameters"
+
+  - rule: "Use pnpm as package manager"
+    weight: 1
+    source: ".cursor/rules/pnpm.mdc"
+    description: "Always use pnpm instead of yarn, bun, or npm"
+
+  - rule: "Run tests without watch mode"
+    weight: 1
+    source: ".cursor/rules/test-running.mdc"
+    description: "When running tests, use --watch false flag to avoid watch mode"
+
+  - rule: "Always use await using for resource cleanup"
+    weight: 1
+    source: ".cursor/rules/coding-guidelines.mdc"
+    description: "Resource management should use `await using` pattern"
+
+  - rule: "Never import from @trpc/*/src"
+    weight: 1
+    source: ".cursor/rules/coding-guidelines.mdc"
+    description: "Avoid importing from internal src paths, use public exports instead"
+
+  - rule: "Prefer vi.waitFor over Testing Library waitFor"
+    weight: 0.5
+    source: ".cursor/rules/coding-guidelines.mdc"
+    description: "Use vi.waitFor from Vitest instead of waitFor from Testing Library"

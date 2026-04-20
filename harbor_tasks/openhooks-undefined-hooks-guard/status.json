@@ -4,10 +4,10 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-16T01:16:35.047844",
-  "total_time": 3531.93,
-  "sandbox_id": "ipav16f6sddrgi2ldp4mt",
-  "backend": "glm",
+  "validated_at": "2026-04-16T11:16:46.985135",
+  "total_time": 62.8,
+  "sandbox_id": "izclza971c289ae8ri6fh",
+  "backend": "anthropic",
   "pipeline": "pipeline",
   "start_at": "judge",
   "nodes": {
@@ -84,33 +84,30 @@
     },
     "quality_gate": {
       "status": "DELETE",
-      "model": "glm-5.1",
-      "backend": "glm",
-      "time": 0.39,
+      "model": "claude-opus-4-7",
+      "backend": "anthropic",
+      "time": 0.23,
       "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] tests_verify_behavior_not_text @ tests/test_outputs.py:101: test `test_typescript_type_updated` only reads file text', 'lint_tier_b:2', 'B:[B] pinned_dependencies @ environment/Dockerfile:30: unpinned pip deps: pytest', 'B:[B] no_network_during_tests @ tests/test.sh:5: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 24.96,
+      "time": 13.84,
       "tier_a_fails": [
+        "behavior_in_task_description",
         "solution_uniqueness_guard",
-        "tests_verify_behavior_not_text",
-        "test_not_tautological"
+        "tests_verify_behavior_not_text"
       ],
       "tier_b_fails": [],
-      "pass_count": 4,
-      "fail_count": 5
+      "pass_count": 6,
+      "fail_count": 3
+    },
+    "tests_rewrite": {
+      "status": "error",
+      "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":456,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 400 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"invalid_request_error\\\",\\\"message\\\":\\\"\\\\\\\"thinking.type.enabled\\\\\\\" is not supported for this model. Use \\\\\\\"thinking.type.adapt",
+      "time": 1.68
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 2332.21,
-      "at": "2026-04-12T00:46:20.773150"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -142,6 +139,14 @@
       "backend": "glm",
       "time": 3531.93,
       "at": "2026-04-16T01:16:35.047844"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "anthropic",
+      "time": 62.8,
+      "at": "2026-04-16T11:16:46.985135"
     }
   ]
 }

@@ -1,60 +1,59 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: exact string 'let stopped = false', 'if (stopped) return', 'stopped = true', 'async function target(', 'async function input(', specific variable names to remove like 'baseCwd', 'shouldStartServer', 'networkOpts', replacements like 'file' for 'workerPath' and 'root' for 'baseCwd', exact import syntax 'import { withTimeout }' from '@/util/timeout', 'Instance.disposeAll()' without 'Promise.race', and AGENTS.md must "
+      "outcome": "pass",
+      "reason": "Instruction names thread.ts, worker.ts, AGENTS.md, the 'Naming Enforcement' header, 'THIS RULE IS MANDATORY' string, and the short name examples (pid, cfg, err, opts, dir, root) and examples to avoid (workerPath etc.)."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "Instruction.md explicitly states the fix: 'use the existing withTimeout utility', 'extract into standalone helper functions', 'try/finally around the TUI invocation', idempotent with guard against double-invocation. It also specifies exact AGENTS.md content including 'THIS RULE IS MANDATORY' and specific example names. This goes beyond describing what's broken and prescribes the solution."
+      "outcome": "pass",
+      "reason": "Instruction describes desired properties (idempotent, timeout-bounded, try/finally, extract helpers) but doesn't dictate specific code or variable names beyond the AGENTS.md required strings."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific implementation details: exact function names 'async function target(' and 'async function input(', exact variable name 'file' (not 'workerPath'), 'root' (not 'baseCwd'), exact string 'let stopped = false', 'if (stopped) return', 'stopped = true'. An alternative correct fix using e.g. 'resolveWorker' instead of 'target', 'getPrompt' instead of 'input', 'isShutdown' instead of 'stopped', or 'path' instead of 'file' would fail these tests despite being equally correct."
+      "reason": "Tests assert on specific implementation details: 'let stopped = false', 'if (stopped) return', 'async function target(', 'async function input('. A valid alternative fix (e.g., using a different flag name like 'done', or helper names like 'resolveWorker'/'readPrompt') would fail test_thread_idempotent_stop and test_thread_helpers_extracted."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_thread_imports_with_timeout, test_thread_idempotent_stop, test_thread_helpers_extracted, test_worker_shutdown_simplified, test_short_variable_names, test_agents_md_naming_enforcement) are ALL purely text-matching assertions like 'assert X in content' on file reads. None of them import, call, or execute the modified code. Only the pass-to-pass tests (typecheck, unit tests, prettier) actually execute code."
+      "reason": "Most f2p tests (test_thread_imports_with_timeout, test_thread_idempotent_stop, test_thread_helpers_extracted, test_short_variable_names, test_agents_md_naming_enforcement) are pure `assert string in file.read_text()` checks with no execution of the shutdown behavior."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "The f2p tests only check for string presence in source files. A developer could satisfy all f2p tests by inserting dead code comments or unused functions containing the required strings (e.g., adding '// let stopped = false' or an unused 'async function target()') without actually implementing the bug fix. The tests don't verify runtime behavior."
+      "outcome": "pass",
+      "reason": "Each f2p test asserts specific strings that a no-op stub would not produce; they require actual code changes to pass."
     },
     "behavior_in_tests": {
-      "outcome": "pass",
-      "reason": "All four behavioral requirements from instruction.md (idempotent shutdown, timeout-bounded via withTimeout, try/finally cleanup, extracted helpers) plus the AGENTS.md naming enforcement are tested, though only via text matching."
+      "outcome": "fail",
+      "reason": "Instruction requires the shutdown to unregister process listeners (uncaughtException, unhandledRejection, SIGUSR2) and use try/finally around the TUI invocation and timeout-bounded worker shutdown \u2014 none of these behaviors are actually tested (only the withTimeout import is checked)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with section headers (Gates pass_to_pass, static, fail_to_pass, config-derived), descriptive function names, and docstrings explaining each test's purpose."
+      "reason": "Tests are grouped with section comment headers (Gates, Fail-to-pass, Config-derived) and each has a docstring."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task modifies TypeScript source code and a markdown file; it does not produce structured data output."
+      "reason": "Task does not produce structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "Filenames and identifiers appear consistent between instruction and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "Instruction.md names the files to modify (thread.ts, worker.ts, AGENTS.md) which is appropriate for the task domain, and doesn't specify exact line numbers or exact code to write (though it is prescriptive about the approach)."
+      "reason": "Instruction names the files under 'Files to Look At' which is standard scoping; does not point to specific lines."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The AGENTS.md gold diff is a localized addition of a new section, not a full-file rewrite, and doesn't contradict other files."
+      "reason": "The AGENTS.md diff is a localized addition of a new section, not a full-file rewrite."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
-    "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [],
-  "pass_count": 5,
-  "fail_count": 5
+  "tier_c_fails": [
+    "behavior_in_tests"
+  ],
+  "pass_count": 7,
+  "fail_count": 3
 }

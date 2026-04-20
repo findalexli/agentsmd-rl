@@ -1,0 +1,132 @@
+version: '2.0'
+source:
+  repo: vercel/next.js
+  pr: 90304
+  base_commit: fb85660ab1f70e294465af0074dc7c941e3540ca
+  merge_commit: 962e5b166cea3fdb6589837a8fd3ea62031be17d
+checks:
+- id: typescript_syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified pages-handler.ts must parse without TypeScript errors
+- id: repo_eslint_pages_handler
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint passes on pages-handler.ts
+- id: repo_prettier_pages_handler
+  type: pass_to_pass
+  origin: repo_tests
+  description: Prettier formatting passes on pages-handler.ts
+- id: repo_eslint_render_result
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint passes on render-result.ts
+- id: repo_node_syntax_check_pages_handler
+  type: pass_to_pass
+  origin: repo_tests
+  description: Node.js syntax check passes on pages-handler.ts
+- id: repo_alex_linting
+  type: pass_to_pass
+  origin: repo_tests
+  description: Language linting (alex) passes on repo docs
+- id: repo_ast_grep_pages_handler
+  type: pass_to_pass
+  origin: repo_tests
+  description: ast-grep scan passes on pages-handler.ts
+- id: repo_ast_grep_render_result
+  type: pass_to_pass
+  origin: repo_tests
+  description: ast-grep scan passes on render-result.ts
+- id: repo_eslint_cli_config_pages_handler
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint with CLI config passes on pages-handler.ts
+- id: repo_eslint_cli_config_render_result
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint with CLI config passes on render-result.ts
+- id: repo_prettier_render_result
+  type: pass_to_pass
+  origin: repo_tests
+  description: Prettier formatting passes on render-result.ts
+- id: repo_tsc_pages_handler
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript compilation check on pages-handler.ts
+- id: repo_tsc_render_result
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript compilation check on render-result.ts
+- id: repo_node_syntax_render_result
+  type: pass_to_pass
+  origin: repo_tests
+  description: Node.js syntax check passes on render-result.ts
+- id: no_buffer_from_in_data_request
+  type: fail_to_pass
+  origin: pr_diff
+  description: Data request handler should NOT wrap JSON.stringify with Buffer.from
+- id: no_buffer_from_in_cached_html
+  type: fail_to_pass
+  origin: pr_diff
+  description: Cached HTML handler should NOT wrap html with Buffer.from
+- id: render_result_accepts_string
+  type: fail_to_pass
+  origin: pr_diff
+  description: Verify RenderResult accepts string (isDynamic=false) vs Buffer (isDynamic=true)
+- id: handler_has_real_logic
+  type: pass_to_pass
+  origin: static
+  description: Handler file has meaningful implementation, not a stub
+- id: agents_md_new_test_syntax_fixed
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md must show correct pnpm new-test syntax with '-- --args' separator
+- id: agents_md_no_bare_args_flag
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md should NOT show incorrect bare '--args' without separator
+rubric:
+- rule: When using pnpm new-test in non-interactive mode, use --args with the --
+    separator to forward arguments correctly.
+  source:
+    path: AGENTS.md
+    lines: 152-157
+  reference: "The correct syntax is pnpm new-test -- --args <appDir> <name> <type> with
+    the -- separator forwarding arguments to the script."
+- rule: The AGENTS.md file should document correct pnpm new-test non-interactive usage
+    with the -- separator syntax.
+  source:
+    path: AGENTS.md
+    lines: 403
+  reference: "Documentation shows the correct command: pnpm new-test -- --args true <name> e2e"
+  category: documentation
+config_edits:
+- path: AGENTS.md
+  tier: 1
+  gold_added: "--args"
+  gold_removed: "--args true"
+distractors:
+- rule: 'Default agent rule: If you are changing Next.js source or integration tests,
+    start  in a separate terminal session before making edits'
+  collision_type: meta_confusion
+  why_distracting: The rule instructs the agent to start a background dev server (pnpm
+    --filter=next dev) before making edits. In an automated evaluation environment,
+    starting a long-running background process might hang the evaluation or consume
+    unnecessary resources, especially since the code fix is a simple string replacement.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 58-62
+- rule: 'CLAUDE.md is a symlink to AGENTS.md. They are the same file.'
+  collision_type: scope_ambiguity
+  why_distracting: The file states that CLAUDE.md is a symlink to AGENTS.md. Since
+    the task explicitly asks to update AGENTS.md, the agent might get confused and
+    try to edit CLAUDE.md directly (breaking the symlink) or attempt to edit both
+    files redundantly.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 3-5
+hierarchy_analysis: The config hierarchy is flat, consisting primarily of AGENTS.md
+  (and its symlink CLAUDE.md). The complexity arises not from depth, but from the fact
+  that the agent is instructed to modify this very file.

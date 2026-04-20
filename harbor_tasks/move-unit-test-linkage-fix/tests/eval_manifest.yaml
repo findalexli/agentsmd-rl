@@ -1,0 +1,180 @@
+source:
+  repo: MystenLabs/sui.git
+  pr: 0
+  base_commit: 89286c8e52b8b358b3bd895e40ec4ee2f991c742
+  merge_commit: ''
+checks:
+- id: linkage_import
+  description: Verify linkage_context is imported in the use statement
+  type: fail_to_pass
+  origin: pr_diff
+- id: linkage_table
+  description: Verify linkage_table is constructed from package keys with identity
+    mapping
+  type: fail_to_pass
+  origin: pr_diff
+- id: linkage_context
+  description: Verify LinkageContext is created from the linkage table
+  type: fail_to_pass
+  origin: pr_diff
+- id: stored_package_with_linkage
+  description: Verify StoredPackage uses from_module_for_testing_with_linkage instead
+    of old method
+  type: fail_to_pass
+  origin: pr_diff
+- id: linkage_passed
+  description: Verify linkage_context is passed as parameter to StoredPackage
+  type: fail_to_pass
+  origin: pr_diff
+- id: function_structure
+  description: Verify overall structure of the fixed function
+  type: fail_to_pass
+  origin: pr_diff
+- id: compilation
+  description: Verify modified code compiles successfully
+  type: fail_to_pass
+  origin: repo_tests
+- id: unit_tests
+  description: Verify move-unit-test crate unit tests pass
+  type: fail_to_pass
+  origin: repo_tests
+- id: clippy
+  description: Verify move-unit-test crate passes clippy lints
+  type: fail_to_pass
+  origin: repo_tests
+- id: fmt
+  description: Verify move-unit-test crate follows formatting standards
+  type: fail_to_pass
+  origin: repo_tests
+- id: integration_tests
+  description: Verify move-unit-test integration tests pass
+  type: fail_to_pass
+  origin: repo_tests
+- id: vm_runtime_tests
+  description: Verify move-vm-runtime unit tests pass - ensures core runtime functionality
+    intact
+  type: fail_to_pass
+  origin: repo_tests
+- id: move_package_compiles
+  description: Verify move-package crate compiles - used by unit test runner for package
+    resolution
+  type: fail_to_pass
+  origin: repo_tests
+- id: move_cli_tests
+  description: Verify move-cli unit tests pass - ensures CLI test runner works correctly
+  type: fail_to_pass
+  origin: repo_tests
+- id: no_old_method
+  description: Verify old from_modules_for_testing is no longer used in setup_test_storage
+  type: fail_to_pass
+  origin: pr_diff
+- id: p2p_compilation
+  description: cargo check -p move-unit-test passes (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+- id: p2p_fmt
+  description: cargo fmt --check -p move-unit-test passes (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+- id: p2p_clippy
+  description: cargo clippy -p move-unit-test passes (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+- id: p2p_unit_tests
+  description: cargo test -p move-unit-test --lib passes (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+- id: p2p_vm_runtime_unit_tests
+  description: cargo test -p move-vm-runtime --lib passes (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+- id: p2p_move_package_compiles
+  description: cargo check -p move-package --all-targets passes (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+- id: p2p_move_cli_unit_tests
+  description: cargo test -p move-cli --lib passes (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+- id: p2p_integration_tests
+  description: cargo test -p move-unit-test --test move_unit_test_testsuite passes
+    (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+rubric:
+- rule: external-crates/ contains the Move compiler and VM
+  source:
+    path: CLAUDE.md
+    lines: 65-66
+  evidence: The fix correctly targets `external-crates/move/crates/move-unit-test/src/test_runner.rs`,
+    aligning with the architectural definition that the Move compiler and VM reside
+    in `external-crates/`.
+  category: architecture
+- rule: 'Do not comment the obvious: simple variable assignments, standard library
+    usage, or self-descriptive function calls.'
+  source:
+    path: CLAUDE.md
+    lines: 118, 126-129
+  source_text: '**Do NOT comment the obvious** - comments should not simply repeat
+    what the code does.
+
+    **When NOT to comment**:
+
+    - Simple variable assignments
+
+    - Standard library usage
+
+    - Self-descriptive function calls'
+  evidence: The diff adds un-commented standard library iterations (`.copied().map(...).collect()`)
+    and simple variable assignments (`linkage_table`, `linkage_context`) which are
+    self-descriptive, adhering to the standard by avoiding redundant comments.
+  category: style
+  verification: llm_judge
+distractors:
+- rule: All new files must start with the following license in comments at the top
+    of the file
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to add a license header to test_runner.rs,
+    but the rule explicitly states it only applies to new files.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 19-22
+- rule: Always consult CLAUDE.md files in sub-crates.
+  collision_type: meta_confusion
+  why_distracting: The agent might waste time trying to find or read a local CLAUDE.md
+    file in the move-unit-test sub-crate, which is not provided or necessary for this
+    task.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 6-8
+- rule: All unit tests must work properly - use `#[tokio::test]` for async tests,
+    not `#[test]`
+  source:
+    path: CLAUDE.md
+    lines: '114'
+  source_text: '**All unit tests must work properly** - use `#[tokio::test]` for async
+    tests, not `#[test]`'
+  collision_type: scope_ambiguity
+  why_distracting: The modified file is `move-unit-test/src/test_runner.rs`. Its path
+    and naming could cause an agent to erroneously interpret the task as editing a
+    unit test and thus mistakenly apply `#[tokio::test]` to regular functions or test
+    runner components.
+  severity: medium
+- rule: Never make functional changes to the code. Only add logging statements.
+  source:
+    path: .claude/skills/simtest-debug/SKILL.md
+    lines: '38'
+  source_text: While executing the skill, never make functional changes to the code.  Only
+    add logging statements as described below.  The goal is to find the root cause,
+    not fix the issue.
+  collision_type: meta_confusion
+  why_distracting: An agent reading skill configurations might think it's operating
+    under a debugging mandate because it is modifying files in a test directory (`move-unit-test`),
+    mistakenly restricting itself from making the necessary functional logic updates
+    (linkage functionality).
+  severity: medium
+hierarchy_analysis: The hierarchy consists of root-level AGENTS.md and CLAUDE.md files
+  with generic repository guidelines. No sub-crate specific config files are provided.
+version: '2.0'

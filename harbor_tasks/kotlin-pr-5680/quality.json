@@ -1,49 +1,49 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction.md explicitly names the cache field ('cache'), its type (MutableMap<SymbolForAnalysis, Stability>), the cache lookup pattern, cache storage pattern, the private stabilityOf method signature, cycle detection logic, and execution order \u2014 all of which correspond to what the tests check for."
+      "reason": "Instruction names the class StabilityInferencer, field name 'cache', type signatures, and the exact lookup/store patterns the tests check for."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix: add a field named 'cache' with exact type, exact cache lookup code ('if (fullSymbol in cache) return cache[fullSymbol]!!'), exact cache storage code ('cache[fullSymbol] = result'), the exact private method signature, and exact cycle detection code ('currentlyAnalyzing.contains(symbol)'). This is not describing what's broken \u2014 it's prescribing the exact implementation."
+      "reason": "Instruction dictates the exact code: 'if (fullSymbol in cache) return cache[fullSymbol]!!', 'cache[fullSymbol] = result', field name 'cache', and the full private method signature \u2014 essentially specifying the solution verbatim."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "The tests (truncated but visible) check for exact string patterns like 'private val cache = mutableMapOf<SymbolForAnalysis, Stability>()', specific variable names like 'cache' and 'fullSymbol', and exact code patterns. An alternative correct fix using e.g. a HashMap, a different field name, or a different caching strategy would fail these text-matching tests."
+      "reason": "Tests likely check for literal strings like 'private val cache = mutableMapOf<SymbolForAnalysis, Stability>()' (per solve.sh grep) and specific patterns from instruction; alternative valid caching implementations (e.g., using HashMap, different method name, ConcurrentHashMap) would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The visible tests (test_syntax_valid, test_kotlin_syntax_structure, test_api_compatibility_structure, etc.) all read the file content and check for string patterns. None compile or execute the Kotlin code. The f2p tests checking for the cache implementation will similarly be string-matching tests (e.g., checking 'private val cache' appears in the file)."
+      "reason": "Tests only read the file and do string/regex checks (e.g., 'if element not in content', brace counting); no test actually compiles or executes the Kotlin code to verify caching behavior."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "The f2p tests appear to be text-matching tests that check whether specific strings like 'private val cache = mutableMapOf<SymbolForAnalysis, Stability>()' exist in the file. A stub that simply inserts the required text strings without actual functional correctness would pass. No behavioral execution validates the caching actually prevents exponential explosion."
+      "reason": "f2p tests (test_syntax_valid, test_api_compatibility_structure, etc.) pass on the unmodified base file since they only check pre-existing structure like 'class StabilityInferencer(' and brace balance."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All six requirements listed in the instruction (cache field, cache lookup, cache storage, private stabilityOf method, cycle detection, execution order) appear to be tested based on the visible test structure and the gold patch."
+      "reason": "The required cache field, lookup pattern, and private method signature from instruction are likely checked by the text-matching tests (truncated but pattern visible)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_syntax_valid, test_kotlin_syntax_structure, test_api_compatibility_structure, etc.), have docstrings explaining what they check, and are grouped into pass-to-pass categories with clear comments."
+      "reason": "Tests are grouped with section headers like '# PASS-TO-PASS TESTS' and have descriptive docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task involves fixing a Kotlin source file, not producing structured data output like JSON/CSV/API/DB."
+      "reason": "Task modifies Kotlin source code, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, variable names, or commands in the instruction or test files."
+      "reason": "File paths, class names, and identifiers appear consistent across instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact class (StabilityInferencer), exact field name ('cache'), exact type signature, exact code patterns for lookup and storage, and the exact private method signature. This goes far beyond identifying the buggy module \u2014 it specifies the exact implementation details of the fix."
+      "reason": "Instruction specifies exact code patterns 'if (fullSymbol in cache) return cache[fullSymbol]!!' and the exact private method signature, removing nearly all localization/design work."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying a Kotlin source file, not a config-edit task."
+      "reason": "This is a code-only task, not a config edit."
     }
   },
   "tier_a_fails": [

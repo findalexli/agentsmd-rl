@@ -1,0 +1,113 @@
+source:
+  repo: All-Hands-AI/OpenHands
+  pr: 0
+  base_commit: 024f4d3326363616f2303e1fafb93224c8bb7ddb
+  merge_commit: eba1f60c1d34ae68d34171a753d5e6b3ab5ad0be
+checks:
+- id: test_uses_app_conversation_info_service
+  type: fail_to_pass
+  origin: pr_diff
+  description: Code uses AppConversationInfoService instead of AppConversationService
+- id: test_has_get_v1_conversation_info_function
+  type: fail_to_pass
+  origin: pr_diff
+  description: Has new _get_v1_conversation_info function with correct return type
+- id: test_no_is_v1_conversation_function
+  type: fail_to_pass
+  origin: pr_diff
+  description: Old _is_v1_conversation function removed
+- id: test_no_get_v1_conversation_config_function
+  type: fail_to_pass
+  origin: pr_diff
+  description: Old _get_v1_conversation_config function removed
+- id: test_service_called_only_once_per_request
+  type: fail_to_pass
+  origin: pr_diff
+  description: Service is called only once per request (no thrashing)
+- id: test_endpoint_returns_json_response_directly_for_v1
+  type: fail_to_pass
+  origin: pr_diff
+  description: V1 conversations return JSONResponse directly without extra calls
+- id: test_imports_app_conversation_info_model
+  type: fail_to_pass
+  origin: pr_diff
+  description: Imports AppConversationInfo model
+- id: test_syntax_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Python syntax is valid
+- id: test_unit_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing unit tests pass
+- id: test_repo_precommit_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's pre-commit lint checks pass
+- id: test_repo_unit_tests_conversation
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's conversation routes unit tests pass
+- id: test_repo_unit_tests_app_conversation_service
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's app conversation info service unit tests pass
+- id: test_repo_unit_tests_conversation_id_validation
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's conversation ID validation unit tests pass
+distractors:
+- rule: The current V1 application server lives in `openhands/app_server/`.
+  collision_type: architecture_boundary
+  why_distracting: The config states that the V1 application server lives in `openhands/app_server/`.
+    Since the task is about refactoring V1 conversation logic, an agent might incorrectly
+    attempt to move `openhands/server/routes/conversation.py` into `openhands/app_server/`
+    or look for the routing logic there, despite the explicit file path provided in
+    the instructions.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 55-57
+- rule: Store design documents, analysis, or temporary artifacts in a `.pr/` directory.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might unnecessarily create a `.pr/analysis.md` or `.pr/design.md`
+    file to document the refactoring of the 3 queries down to 1, wasting time on artifacts
+    that are not requested for this straightforward code change.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 34-36
+- rule: Use cross-repo-testing when changes span the SDK and OpenHands server repos
+    and need e2e testing.
+  source:
+    path: .agents/skills/cross-repo-testing/SKILL.md
+    lines: 1-5
+  collision_type: scope_ambiguity
+  why_distracting: The task mentions reducing queries to the 'sandbox service', which
+    might lead an agent to incorrectly assume it needs to perform cross-repo testing
+    or e2e testing of a cloud workspace feature. However, this is purely a local backend
+    refactor.
+  severity: low
+- rule: Use update-sdk when updating the SDK or agent-server image.
+  source:
+    path: .agents/skills/update-sdk/SKILL.md
+    lines: 1-5
+  collision_type: scope_ambiguity
+  why_distracting: The task involves updating how the server interacts with the sandbox
+    service, which an agent might confuse with needing to update the SDK or agent-server
+    image.
+  severity: low
+hierarchy_analysis: The configuration is a flat, single-file structure (`AGENTS.md`)
+  containing general repository guidelines. There is no complex hierarchy or overriding
+  required.
+version: '2.0'
+rubric:
+- rule: Run `pre-commit run --config ./dev_config/python/.pre-commit-config.yaml`
+    after making changes to the backend.
+  source:
+    path: AGENTS.md
+    lines: 16-18
+  evidence: The agent must ensure that the modified Python file passes linting and
+    formatting checks, which is typically achieved by running the specified pre-commit
+    command for backend changes.
+  category: tooling

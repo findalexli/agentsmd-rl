@@ -1,62 +1,60 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "The tests check for very specific implementation details not mentioned in instruction.md: test_cleanup_gated_on_offload requires cleanup to be inside an ast.If block, test_load_state_dict_not_stub requires >= 5 substantive statements, and test_gc_imported checks that 'gc' is a top-level import. While 'What the Tests Check' section mentions some of these, test_cleanup_gated_on_offload specifically checks AST If-node structure (not just 'gating on CPUOffloadOptimizer'), and the instruction doesn't"
+      "outcome": "pass",
+      "reason": "Instruction names src/prime_rl/trainer/ckpt.py, AppState class, load_state_dict method, gc import, gc.collect(), torch.cuda.empty_cache(), CPUOffloadOptimizer, state_dict.clear(), and the 5-statement minimum."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md section 'What the Tests Check' explicitly states the exact fix: 'Calls gc.collect() and torch.cuda.empty_cache()', 'Gates this cleanup on the presence of CPUOffloadOptimizer', 'Calls state_dict.clear() as part of the cleanup', and 'Imports the gc module'. This is not just describing what's broken \u2014 it prescribes the exact solution steps."
+      "reason": "Instruction's 'What the Tests Check' section enumerates the exact required calls: 'Imports the gc module', 'Calls gc.collect() and torch.cuda.empty_cache()', 'Gates this cleanup on the presence of CPUOffloadOptimizer', 'Calls state_dict.clear()' \u2014 this is the fix spelled out."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests use AST analysis requiring gc.collect() and empty_cache() to appear literally inside an ast.If node within AppState.load_state_dict. Alternative correct fixes like using 'del state_dict' instead of 'state_dict.clear()', or using a context manager, or putting cleanup in a helper method called from load_state_dict, or using weakref-based cleanup would all fail. The tests enforce one specific implementation pattern."
+      "reason": "test_outputs requires state_dict.clear() (check #4) and specific CPUOffloadOptimizer reference string; alternative valid fixes (e.g., deleting local variables, setting state_dict=None, or detecting offload via a different attribute) would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_gc_imported, test_memory_reclamation_on_cpu_offload, test_cleanup_gated_on_offload) are entirely AST/text-based checks \u2014 they parse source code and check for string patterns like 'gc.collect()' and 'empty_cache()' in source text, and AST node types. No test actually imports, instantiates, or calls the code. The pass-to-pass tests only do py_compile and ruff checks. While there's a stated justification (CPU-only Docker), the tests are fundamentally text-matching."
+      "reason": "All f2p tests are AST/substring checks (e.g., '\"gc.collect()\" in method_source', '\"CPUOffloadOptimizer\" in method_source'); no test actually executes load_state_dict or measures memory behavior."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "test_load_state_dict_not_stub checks for >= 5 substantive AST statements, but the original unpatched load_state_dict method already has substantial logic (it loads optimizer states, handles CPU offloading, etc.). A stub wouldn't pass, but the original unpatched code already passes this test. More importantly, the f2p tests check for specific strings \u2014 one could add 'gc.collect()' and 'empty_cache()' as dead code inside an if-block mentioning CPUOffloadOptimizer without actually fixing the OOM bu"
+      "outcome": "pass",
+      "reason": "A stub load_state_dict would fail test_load_state_dict_not_stub (>=5 stmts), test_memory_reclamation_on_cpu_offload, and test_cleanup_gated_on_offload."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md (gc import, gc.collect(), torch.cuda.empty_cache(), conditional on CPUOffloadOptimizer, state_dict.clear(), non-stub method) are covered by corresponding tests."
+      "reason": "Instruction's listed requirements (gc import, gc.collect/empty_cache, CPUOffload gating, state_dict.clear, non-stub) each map to a test function."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments ('Gates', 'Fail-to-pass', 'Pass-to-pass'), descriptive function names, and docstrings explaining each test's purpose."
+      "reason": "Tests are grouped with section comments 'Gates (pass_to_pass, static)', 'Fail-to-pass (pr_diff)', 'Pass-to-pass (static) \u2014 anti-stub'."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task involves code editing, not structured data output."
+      "reason": "Task modifies Python code, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos observed in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "Paths and names consistent across instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly names the file (src/prime_rl/trainer/ckpt.py), class (AppState), and method (load_state_dict), plus the exact solution steps (import gc, call gc.collect(), call torch.cuda.empty_cache(), call state_dict.clear(), gate on CPUOffloadOptimizer). This goes well beyond describing the bug \u2014 it specifies exactly where and what to change."
+      "reason": "Instruction names the exact file (src/prime_rl/trainer/ckpt.py), class (AppState), and method (load_state_dict), eliminating any localization challenge."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "Code-only task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 3,
-  "fail_count": 6
+  "pass_count": 5,
+  "fail_count": 4
 }

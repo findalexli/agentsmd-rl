@@ -1,61 +1,57 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "test_deprecation_tests_run asserts that tests named 'TestHugoDataDeprecation|TestSiteDeprecations' exist and pass, but instruction.md never mentions these specific test function names. The agent must create Go tests with these exact names to pass, yet the instruction gives no indication of what to name them. Also test_hugo_data_works checks for 'Data: myvalue' in output from a template using 'hugo.Data.mydata.v1' \u2014 the exact template syntax and data file structure are not specified in instructio"
+      "reason": "Tests require specific Go test functions named TestHugoDataDeprecation and TestSiteDeprecations to exist (test_deprecation_tests_run asserts 'no tests to run' not in output), but instruction.md never names these test functions."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md specifies exact code to write: e.g., 'hugo.Deprecate(\".Site.Data\", \"Use hugo.Data instead.\", \"v0.156.0\")' and 'The Data identity constant in the siteidentities package should reference \"hugo.Data\" instead of \"site.Data\"'. It tells the agent exactly what string to change to what, and exact function calls to add, which is stating the fix rather than describing what's broken."
+      "outcome": "pass",
+      "reason": "Instruction describes what to change (methods, warning strings, version) but does not show exact code diffs."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_deprecation_tests_run requires Go test functions named exactly 'TestHugoDataDeprecation' or 'TestSiteDeprecations' to exist (checked via -run flag and 'no tests to run' assertion). An alternative correct implementation that names its tests differently (e.g., 'TestDeprecatedSiteMethods') would fail this test."
+      "reason": "test_deprecation_tests_run and test_repo_hugolib_tests specifically require tests named TestHugoDataDeprecation or TestSiteDeprecations, forcing the agent to write tests with exact gold-specific names rather than just implementing correct behavior."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests compile and build Hugo, run it as a subprocess on a real test site, check generated output files, and run Go test suites. They verify behavior through execution rather than just grepping source code."
+      "reason": "Tests build Hugo, run it with temp sites, and execute go test subprocesses to verify behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "test_hugo_data_works builds Hugo, creates a site using hugo.Data in templates, runs Hugo, and checks that 'Data: myvalue' appears in output \u2014 this cannot be satisfied without implementing the hugo.Data feature. test_deprecation_tests_run requires actual Go tests to exist and pass."
+      "reason": "test_hugo_data_works checks rendered HTML contains 'Data: myvalue', which requires the feature to actually work."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "Instruction requires deprecation warnings for .Site.AllPages, .Site.BuildDrafts, and .Site.Languages, but no test verifies these deprecations actually work. test_site_data_deprecation_logged even comments 'This test is covered by test_deprecation_tests_run' but that test only checks if named Go tests exist, not that specific deprecation methods are implemented."
+      "outcome": "pass",
+      "reason": "Tests cover hugo.Data access, compilation, and deprecation test runs, matching instruction requirements."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_compilation, test_hugo_data_works, test_deprecation_tests_run, etc.) with docstrings indicating whether they are fail_to_pass or pass_to_pass, and comments explaining the logic."
+      "reason": "Each test function has a clear name and docstring describing its purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data output like JSON/CSV/API/DB."
+      "reason": "Task is code changes, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No apparent typos in filenames, paths, commands, or variable names across instruction.md and tests."
+      "reason": "Paths and identifiers appear correct; 'sitdir' is an intentional local variable."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md names exact files (hugolib/site.go, hugolib/hugo_sites.go, resources/page/hugoinfo.go, resources/page/page.go, resources/page/siteidentities/identities.go) and exact changes like 'The Data identity constant in the siteidentities package should reference \"hugo.Data\" instead of \"site.Data\"' and exact deprecation call strings. This goes well beyond naming the domain."
+      "outcome": "pass",
+      "reason": "Instruction names files/methods to change but that's appropriate scope guidance, not line-level leakage."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "Code-only task."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
-    "no_solution_leakage",
     "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "behavior_in_tests",
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 4,
-  "fail_count": 5
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 2
 }

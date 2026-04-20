@@ -1,0 +1,106 @@
+version: '2.0'
+source:
+  repo: THUDM/slime
+  pr: 1741
+  base_commit: 6f70479966749e258ba0b20341e2c4b88ea094f1
+  merge_commit: f96b71f18da8b8bdb6892ae75a82425c1927fb06
+checks:
+- id: syntax_valid
+  type: pass_to_pass
+  origin: static
+  description: Modified file must parse without syntax errors
+- id: no_crash_missing_encoder_only
+  type: fail_to_pass
+  origin: pr_diff
+  description: launch_server_process must not raise AttributeError when encoder_only
+    attribute is absent from server_args
+- id: missing_attr_defaults_to_http
+  type: fail_to_pass
+  origin: pr_diff
+  description: When encoder_only is absent, must fall back to http_server import path
+- id: encoder_only_true_uses_encode_server
+  type: pass_to_pass
+  origin: pr_diff
+  description: When encoder_only=True, must use encode_server import path
+- id: encoder_only_false_uses_http_server
+  type: pass_to_pass
+  origin: pr_diff
+  description: When encoder_only=False, must use http_server import path
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: launch_server_process must create a process with a real callable target
+- id: test_repo_ruff
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff linting passes on slime and slime_plugins directories
+- id: test_repo_isort
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's isort import sorting check passes on slime and slime_plugins
+    directories
+- id: test_repo_py_compile
+  type: pass_to_pass
+  origin: repo_tests
+  description: All Python files in the repo compile without syntax errors
+- id: test_repo_package_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: The slime package can be imported without errors
+- id: test_repo_precommit_check_yaml
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo pre-commit check-yaml hook passes
+- id: test_repo_precommit_check_added_large_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo pre-commit check-added-large-files hook passes
+- id: test_repo_precommit_detect_private_key
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo pre-commit detect-private-key hook passes
+- id: test_repo_precommit_isort
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo pre-commit isort hook passes
+- id: test_repo_precommit_autoflake
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo pre-commit autoflake hook passes
+- id: test_repo_precommit_black
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo pre-commit black hook passes
+- id: test_repo_sglang_config_update_weights_explicit
+  type: pass_to_pass
+  origin: repo_tests
+  description: SglangConfig correctly parses explicit update_weights values from YAML
+- id: test_repo_sglang_config_multi_model_gpus
+  type: pass_to_pass
+  origin: repo_tests
+  description: SglangConfig correctly sums GPUs across multiple models in config
+rubric:
+- rule: Use defensive attribute checking (e.g., hasattr) when accessing optional attributes
+    that may not exist on all object types.
+  source:
+    path: slime/backends/sglang_utils/sglang_engine.py
+    lines: '54'
+    commit: 6f70479966749e258ba0b20341e2c4b88ea094f1
+  reference: Changed 'if server_args.encoder_only:' to 'if hasattr(server_args, "encoder_only")
+    and server_args.encoder_only:' to safely check for optional attribute before accessing
+    it.
+distractors:
+- rule: Keep exceptions explicit for invalid metadata instead of silently returning
+    zeros.
+  source:
+    path: .claude/skills/add-reward-function/SKILL.md
+    lines: '51'
+  source_text: '- Keep exceptions explicit for invalid metadata instead of silently
+    returning zeros.'
+  collision_type: rule_conflict
+  why_distracting: An agent reading this might believe it shouldn't use `hasattr`
+    to silently handle a missing `encoder_only` attribute on `ServerArgs`, and instead
+    should allow the `AttributeError` to be raised explicitly. However, the rule is
+    meant for reward functions handling metadata, not engine initialization backwards
+    compatibility.
+  severity: high

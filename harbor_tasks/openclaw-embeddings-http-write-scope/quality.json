@@ -1,60 +1,58 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "instruction.md names the file (src/gateway/embeddings-http.ts), function (handleOpenAiEmbeddingsHttpRequest), helper (handleGatewayPostJsonEndpoint), the option key (requiredOperatorMethod), value ('chat.send'), pathname ('/v1/embeddings'), and references method-scopes.ts. All assert'd literals in tests (file path, function name, requiredOperatorMethod, 'chat.send', pathname '/v1/embeddings') are explicitly mentioned in the instruction."
+      "reason": "instruction.md names src/gateway/embeddings-http.ts, handleOpenAiEmbeddingsHttpRequest, handleGatewayPostJsonEndpoint, requiredOperatorMethod, 'chat.send', and pathname '/v1/embeddings' \u2014 all literals asserted in tests."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md under 'Required Fix' and 'Verification' explicitly states: 'This call must pass requiredOperatorMethod: \"chat.send\"' and 'the handleGatewayPostJsonEndpoint call in handleOpenAiEmbeddingsHttpRequest must include requiredOperatorMethod: \"chat.send\" alongside the existing pathname: \"/v1/embeddings\" option.' This is the exact fix, leaving no reasoning for the agent."
+      "reason": "The 'Required Fix' and 'Verification' sections explicitly state to pass requiredOperatorMethod: \"chat.send\" in the handleGatewayPostJsonEndpoint options object, which is the exact fix."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "test_scope_method_is_chat_send asserts the exact regex requiredOperatorMethod:\\s*:\\s*[\"']chat\\.send[\"']. An alternative correct fix might use a different method string (e.g., 'embeddings.create') or a different authorization mechanism entirely, but the tests require this specific key-value pair. The tests lock in the gold solution's implementation details."
+      "outcome": "pass",
+      "reason": "Tests assert the canonical literal 'chat.send' and presence of requiredOperatorMethod in the handler; any correct fix enforcing the write scope via this documented mechanism would pass."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The core fail-to-pass tests (test_embeddings_handler_enforces_scope, test_scope_method_is_chat_send) are purely text/regex checks on source code ('assert \"requiredOperatorMethod\" in content', regex match on string). While there are repo CI tests (test_repo_embeddings_tests, test_repo_typecheck, test_repo_lint) that execute code, the f2p tests themselves never import, call, or execute the function \u2014 they only grep source text."
+      "outcome": "pass",
+      "reason": "Beyond regex checks, tests run pnpm lint, vitest on embeddings-http.test.ts, and tsgo typecheck \u2014 executing code."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub implementation (empty function, pass, etc.) would fail test_handler_not_stub (requires >20 lines, await, return, multiple calls) and test_handler_is_exported. The f2p tests require the specific string 'requiredOperatorMethod' with value 'chat.send' to be present in the handler body, which wouldn't appear in a default/stub."
+      "reason": "test_scope_method_is_chat_send requires the literal 'chat.send' inside the handler, and repo_embeddings_tests runs actual vitest tests; a stub wouldn't pass."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires adding requiredOperatorMethod: 'chat.send' to the handleGatewayPostJsonEndpoint call, and the tests verify this (test_embeddings_handler_enforces_scope, test_scope_method_is_chat_send). The instruction also mentions preserving existing functionality, which is tested by pass_to_pass tests."
+      "reason": "Tests cover requiredOperatorMethod presence, 'chat.send' value, pathname preservation, export, and repo-level lint/test/typecheck."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are clearly grouped with section comments (Gate, Fail-to-pass, Pass-to-pass, Config-derived, Repo CI/CD), each function has a descriptive name and docstring, and tags like [static], [pr_diff], [agent_config], [repo_tests] are provided."
+      "reason": "Tests are grouped by section headers (Gate, Fail-to-pass, Pass-to-pass, Config-derived, Repo CI/CD) with clear docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task involves a code fix to add an authorization option, not producing structured data output."
+      "reason": "Task is a code change, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames (src/gateway/embeddings-http.ts), function names (handleOpenAiEmbeddingsHttpRequest, handleGatewayPostJsonEndpoint), paths, or variable names across instruction.md and tests."
+      "reason": "Paths and identifiers match consistently between instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names the exact file (src/gateway/embeddings-http.ts), the exact function (handleOpenAiEmbeddingsHttpRequest), the exact call site (handleGatewayPostJsonEndpoint), and the exact property+value to add (requiredOperatorMethod: 'chat.send'). This is full localization leakage \u2014 the agent needs zero reasoning about where or what to change."
+      "reason": "instruction.md names the exact function (handleOpenAiEmbeddingsHttpRequest), file (src/gateway/embeddings-http.ts), and the exact option key and value to add ('requiredOperatorMethod: \"chat.send\"'), removing all localization/reasoning."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits task."
+      "reason": "Code-only task."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "no_solution_leakage"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 4
+  "pass_count": 7,
+  "fail_count": 2
 }

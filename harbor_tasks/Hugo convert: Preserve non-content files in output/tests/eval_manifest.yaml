@@ -1,0 +1,177 @@
+checks:
+- id: bundle_resource_preserved
+  type: fail_to_pass
+  description: Bundle resources (data.txt) preserved in convert output
+  origin: pr_diff
+- id: nested_resource_preserved
+  type: fail_to_pass
+  description: Nested resources (nested/asset.dat) preserved in convert output
+  origin: pr_diff
+- id: multiple_content_files
+  type: fail_to_pass
+  description: Multiple content files converted, all resources preserved
+  origin: pr_diff
+- id: convert_compiles
+  type: fail_to_pass
+  description: Hugo compiles successfully with fix applied
+  origin: pr_diff
+- id: convert_command_help
+  type: fail_to_pass
+  description: Convert command help works correctly
+  origin: pr_diff
+- id: convert_format_variations
+  type: fail_to_pass
+  description: All format conversions (JSON/TOML/YAML) work with resource preservation
+  origin: pr_diff
+- id: test_repo_go_vet
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Go vet passes (go vet ./commands/...)
+- id: test_repo_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo builds successfully (go build .)
+- id: test_repo_gofmt
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo code is properly formatted (gofmt -l .)
+- id: test_repo_go_mod_verify
+  type: pass_to_pass
+  origin: repo_tests
+  description: Go modules are verified (go mod verify)
+- id: test_repo_command_convert
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's convert command test passes (go test -run TestCommands/convert)
+rubric:
+- rule: Be brief. Don't over-comment code or explain the obvious - assume Go expertise.
+  source:
+    path: AGENTS.md
+    lines: 1-4
+    commit: d88a29e002ebc31bf9b4e1e024f141cc0b39a657
+- rule: Use short variable names when context is clear (e.g., 'p' for page, 'c' for
+    config).
+  source:
+    path: AGENTS.md
+    lines: '6'
+    commit: d88a29e002ebc31bf9b4e1e024f141cc0b39a657
+- rule: Never export symbols not needed outside the package - use unexported functions/methods.
+  source:
+    path: AGENTS.md
+    lines: '8'
+    commit: d88a29e002ebc31bf9b4e1e024f141cc0b39a657
+- rule: Never export symbols that's not needed outside of the package.
+  source:
+    path: AGENTS.md
+    lines: 6-6
+  evidence: The new method `copyContentDirsForOutput` is unexported (starts with a
+    lowercase 'c'), keeping it internal to the package.
+  category: architecture
+- rule: Look hard for helper functions before creating new ones.
+  source:
+    path: AGENTS.md
+    lines: 8-8
+  evidence: Instead of writing a custom recursive directory copying function, the
+    solution uses the existing `hugio.CopyDir` helper function.
+  category: architecture
+- rule: 'Assume that the maintainers and readers of the code you write are Go experts:
+    Don''t use comments to explain the obvious.'
+  source:
+    path: AGENTS.md
+    lines: 3-4
+  evidence: The 48-line `copyContentDirsForOutput` function contains zero comments,
+    relying entirely on standard Go idioms and clear variable names to explain its
+    logic.
+  category: documentation
+- rule: This is a project with a long history; assume that a similiar problem has
+    been solved before, look hard for helper functions before creating new ones.
+  source:
+    path: AGENTS.md
+    lines: 8-8
+  evidence: The solution leverages the existing `hugio.CopyDir` function to handle
+    the recursive directory copying instead of implementing a custom file tree traversal.
+  category: tooling
+- rule: Use self-explanatory variable and function names.
+  source:
+    path: AGENTS.md
+    lines: 4-4
+  source_text: '   * Use self-explanatory variable and function names.'
+  evidence: The diff introduces the function `copyContentDirsForOutput` and variables
+    like `contentDirs`, `outputDirAbs`, and `skipDirs` which clearly describe their
+    purpose.
+  category: naming
+  verification: llm_judge
+- rule: Use short variable names when the context is clear.
+  source:
+    path: AGENTS.md
+    lines: 5-5
+  source_text: '   * Use short variable names when the context is clear.'
+  evidence: The diff uses short variable names like `p` for `page.Page` and `c` for
+    the `convertCommand` receiver.
+  category: naming
+  verification: llm_judge
+- rule: Don't use comments to explain the obvious.
+  source:
+    path: AGENTS.md
+    lines: 3-3
+  source_text: '   * Don''t use comments to explain the obvious.'
+  evidence: The diff adds a new function and logic without adding any unnecessary
+    comments to explain the straightforward Go code.
+  category: style
+  verification: llm_judge
+distractors:
+- rule: Use short variable names when the context is clear.
+  collision_type: rule_conflict
+  why_distracting: The agent might try to use overly short variable names (e.g., `cd`,
+    `od`, `r`) for the complex path manipulation logic. This would make the code unreadable
+    and conflict with the adjacent rule to use self-explanatory names, as the context
+    of absolute vs. relative paths requires descriptive naming.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: '5'
+- rule: '- `content/`: Directory for markdown content files.'
+  source:
+    path: docs/AGENTS.md
+    lines: 19-19
+  source_text: '   - `content/`: Directory for markdown content files.'
+  collision_type: scope_ambiguity
+  why_distracting: The code change involves copying content directories (`copyContentDirsForOutput`).
+    An AI might read this project knowledge and attempt to hardcode the string `"content/"`
+    or filter specifically for markdown files. However, the Go code correctly determines
+    the content directory dynamically using `p.File().Path()` and `p.File().Filename()`
+    to support custom configurations and various content formats.
+  severity: high
+- rule: You are an expert front-end and Tailwind CSS developer.
+  source:
+    path: docs/AGENTS.md
+    lines: 4-9
+  source_text: 'You are an expert front-end and Tailwind CSS developer. Your primary
+    goal is to build reliable, readable, and scalable user interfaces using the existing
+    project structure and design system.
+
+
+    ### Directives
+
+    *   **ALWAYS** use existing Tailwind utility classes for styling.
+
+    *   **NEVER** write raw CSS in `.css` files unless absolutely necessary for a
+    non-utility-based global reset.
+
+    *   **NEVER** use inline styles (e.g., `<div style="...">`).'
+  collision_type: meta_confusion
+  why_distracting: This role definition and its directives are strictly for frontend/theme
+    development. An agent might get confused by this global persona and hesitate to
+    write or modify the core backend Go code (`commands/convert.go`), or mistakenly
+    look for frontend files to apply the conversion logic.
+  severity: low
+hierarchy_analysis: The configuration is flat, with `CLAUDE.md` simply referencing
+  `AGENTS.md`. The rules are straightforward Go conventions, but there is a slight
+  internal tension between using short variable names and self-explanatory names in
+  complex logic.
+version: '2.0'
+source:
+  repo: gohugoio/hugo
+  pr: 14657
+  base_commit: d88a29e002ebc31bf9b4e1e024f141cc0b39a657
+  merge_commit: c4fb61d9dfb7a2a638ef69ef8ba4e4dc3ecd93ef

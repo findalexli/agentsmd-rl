@@ -1,0 +1,187 @@
+rubric:
+- rule: The agent must add a note to AGENTS.md indicating that turbopack_use_loaders
+    was updated to webpack_loaders.
+  source:
+    path: AGENTS.md
+  reference: 'Note: turbopack_use_loaders is now webpack_loaders.'
+- rule: turbopack/ - Turbopack bundler (Rust) - git subtree
+  source:
+    path: AGENTS.md
+    lines: 14-15
+  evidence: The gold solution correctly targets the Rust implementation in turbopack/
+    to fix the bundler issue, aligning with the documented architectural boundaries.
+  category: architecture
+checks:
+- id: test_layer_name_fixed
+  type: fail_to_pass
+  origin: pr_diff
+  description: process_default_internal must use Layer::new with webpack_loaders
+- id: test_buggy_name_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: The old buggy layer name turbopack_use_loaders must not appear in lib.rs
+- id: test_cross_file_consistency
+  type: fail_to_pass
+  origin: pr_diff
+  description: Both lib.rs and module_options/mod.rs must use the same webpack_loaders
+    layer name
+- id: test_not_stub
+  type: pass_to_pass
+  origin: static
+  description: lib.rs must be substantial — not gutted or replaced with a stub
+- id: test_loader_pipeline_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: Key loader pipeline constructs must still exist in lib.rs
+- id: test_other_layers_untouched
+  type: pass_to_pass
+  origin: pr_diff
+  description: Other Layer::new calls (e.g. externals-tracing) must not be removed
+- id: test_layer_new_call_syntax
+  type: pass_to_pass
+  origin: pr_diff
+  description: Layer::new call must use rcstr! macro with the layer name string
+- id: test_repo_git_status
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git repository status check
+- id: test_repo_git_ls_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git can list tracked files
+- id: test_repo_git_log
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git log shows expected commit
+- id: test_repo_git_diff_empty
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git diff shows no uncommitted changes
+- id: test_repo_git_show_commit
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git show --stat HEAD works and shows commit details
+- id: test_repo_git_rev_parse
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git rev-parse returns valid short SHA for HEAD
+- id: test_repo_git_config
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git config user.email is properly set
+- id: test_repo_turbopack_dir_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: Turbopack source directory exists in git tracked files
+- id: test_repo_agents_md_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: AGENTS.md documentation exists in git tracked files
+- id: test_repo_ci_workflows_exist
+  type: pass_to_pass
+  origin: repo_tests
+  description: CI workflow files exist in git tracked files
+- id: test_repo_git_grep_webpack_loaders
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git grep finds webpack_loaders references in turbopack
+- id: test_repo_git_grep_layer_new
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git grep finds Layer::new calls in turbopack
+- id: test_repo_git_show_turbopack_lib
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git can show turbopack lib.rs content
+- id: test_repo_git_ls_tree_turbopack
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git can list turbopack directory structure
+- id: test_repo_git_cat_file_turbopack_cargo
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git can cat turbopack Cargo.toml blob
+- id: test_repo_git_check_attr
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git check-attr works for files
+- id: test_repo_git_verify_pack
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git objects are valid
+- id: test_repo_git_turbopack_src_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git tracks turbopack source files
+- id: test_repo_process_default_internal_fn_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: The process_default_internal function exists in lib.rs
+- id: test_repo_lib_rs_has_layer_calls
+  type: pass_to_pass
+  origin: repo_tests
+  description: The turbopack lib.rs uses Layer::new calls
+- id: test_repo_turbopack_cargo_toml_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: The turbopack Cargo.toml exists and is valid
+- id: test_repo_turbopack_use_loaders_in_base
+  type: pass_to_pass
+  origin: repo_tests
+  description: The old turbopack_use_loaders layer name exists at base commit
+- id: test_repo_rustfmt_toml_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: Rustfmt configuration exists and is tracked
+- id: test_repo_rust_toolchain_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: Rust toolchain configuration exists
+- id: test_repo_cargo_toml_valid_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Root Cargo.toml has valid structure
+- id: test_repo_turbopack_module_options_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: Turbopack module_options directory exists
+- id: test_repo_lib_rs_no_syntax_error_python
+  type: pass_to_pass
+  origin: repo_tests
+  description: lib.rs has no obvious Python-detectable syntax issues
+- id: test_repo_webpack_loaders_in_base
+  type: pass_to_pass
+  origin: repo_tests
+  description: The webpack_loaders string exists in base commit
+distractors:
+- rule: If you are changing Next.js source or integration tests, start `pnpm --filter=next
+    dev` in a separate terminal session before making edits
+  collision_type: would_cause_bug
+  why_distracting: The rule instructs the agent to start the dev server before making
+    edits. However, the bug description explicitly states that running `next dev`
+    with the given reproduction causes an infinite loop and hangs. Following this
+    rule would cause the agent's workspace to hang.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 66-68
+- rule: prefer `pnpm --filter=next build` when edits are limited to core Next.js files
+  collision_type: architecture_boundary
+  why_distracting: The rule suggests using `pnpm --filter=next build` for core Next.js
+    files. An agent might mistakenly apply this to Turbopack, but this command only
+    builds the JS packages, not the Rust binaries, leading to uncompiled changes and
+    confusion during testing.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 88-89
+hierarchy_analysis: The hierarchy is flat (Level 0 only) with identical symlinked
+  files (`AGENTS.md` and `CLAUDE.md`). The rules are globally applied but are heavily
+  biased towards the TypeScript/JS parts of the monorepo, requiring the agent to discern
+  architecture boundaries when working in the Rust (`turbopack/crates/`) subsystem.
+version: '2.0'
+source:
+  repo: vercel/next.js.git
+  pr: 0
+  base_commit: ''
+  merge_commit: ''

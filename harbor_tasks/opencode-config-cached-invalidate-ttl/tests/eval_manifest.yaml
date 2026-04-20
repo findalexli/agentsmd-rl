@@ -1,0 +1,197 @@
+version: '2.0'
+source:
+  repo: anomalyco/opencode
+  pr: 19322
+  base_commit: 9f94bdb49634bda90a2804585b8d739228dde876
+  merge_commit: 1ebc92fd36837b1e31e7dbab52f378cd62aa7157
+checks:
+- id: cache_uses_cached_invalidate_with_ttl
+  type: fail_to_pass
+  origin: pr_diff
+  description: Cache uses Effect.cachedInvalidateWithTTL with const destructured binding
+- id: invalidate_uses_handle_not_cache_recreation
+  type: fail_to_pass
+  origin: pr_diff
+  description: invalidate() uses invalidation handle instead of recreating the cache
+- id: error_logging_before_fallback
+  type: fail_to_pass
+  origin: pr_diff
+  description: Errors during global config loading are logged before falling back
+    to defaults
+- id: duration_imported_and_used_as_ttl
+  type: fail_to_pass
+  origin: pr_diff
+  description: Duration imported from effect and used as TTL argument
+- id: const_over_let_for_cache
+  type: fail_to_pass
+  origin: agent_config
+  description: Cache binding uses const, not let
+  source:
+    path: AGENTS.md
+    lines: '70'
+    commit: 9f94bdb49634bda90a2804585b8d739228dde876
+- id: get_global_still_uses_cached_global
+  type: pass_to_pass
+  origin: pr_diff
+  description: getGlobal function still exists and yields cachedGlobal
+- id: invalidate_dispatches_dispose_all
+  type: pass_to_pass
+  origin: pr_diff
+  description: invalidate function still calls Instance.disposeAll
+- id: load_global_exists
+  type: pass_to_pass
+  origin: pr_diff
+  description: loadGlobal function still exists
+- id: no_any_type_near_cache_code
+  type: pass_to_pass
+  origin: agent_config
+  description: No 'any' type near cache-related code
+  source:
+    path: AGENTS.md
+    lines: '13'
+    commit: 9f94bdb49634bda90a2804585b8d739228dde876
+- id: no_try_catch_in_changed_code
+  type: pass_to_pass
+  origin: agent_config
+  description: No try/catch added near cache-related code
+  source:
+    path: AGENTS.md
+    lines: '12'
+    commit: 9f94bdb49634bda90a2804585b8d739228dde876
+- id: effect_fn_domain_naming_retained
+  type: pass_to_pass
+  origin: agent_config
+  description: getGlobal and invalidate retain Effect.fn('Config.*') named/traced
+    effect wrappers
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: '21'
+    commit: 9f94bdb49634bda90a2804585b8d739228dde876
+- id: no_else_statements_near_cache_code
+  type: pass_to_pass
+  origin: agent_config
+  description: No else statements added near cache-related code (prefer early returns)
+  source:
+    path: AGENTS.md
+    lines: '84'
+    commit: 9f94bdb49634bda90a2804585b8d739228dde876
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: config.ts retains original structure (not gutted)
+- id: repo_git_clean
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo has clean working tree (no uncommitted changes)
+- id: repo_config_file_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: Config file exists and has substantial content
+- id: repo_config_has_required_functions
+  type: pass_to_pass
+  origin: repo_tests
+  description: Config file contains required functions (loadGlobal, getGlobal, invalidate,
+    etc.)
+- id: repo_commit_correct
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo is at a valid git commit
+- id: repo_config_valid_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Config file has valid TypeScript syntax (no obvious errors)
+- id: repo_no_merge_conflicts
+  type: pass_to_pass
+  origin: repo_tests
+  description: Config file has no merge conflict markers
+- id: repo_config_imports_exports_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Config file has valid import/export statements from effect module
+- id: repo_config_no_obvious_formatting_issues
+  type: pass_to_pass
+  origin: repo_tests
+  description: Config file has no tabs or carriage returns (proper formatting)
+- id: repo_effect_namespace_intact
+  type: pass_to_pass
+  origin: repo_tests
+  description: Config namespace structure is preserved with required methods
+- id: test_repo_config_balanced_parens
+  type: pass_to_pass
+  origin: repo_tests
+  description: Config file has balanced parentheses in function calls
+- id: test_repo_config_no_invalid_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Config file has no obvious syntax errors like double keywords
+- id: test_repo_config_balanced_brackets
+  type: pass_to_pass
+  origin: repo_tests
+  description: Config file has balanced square brackets
+- id: test_repo_config_balanced_parens
+  type: pass_to_pass
+  origin: repo_tests
+  description: Config file has balanced parentheses in function calls
+- id: test_repo_config_no_invalid_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Config file has no obvious syntax errors like double keywords
+- id: test_repo_config_balanced_brackets
+  type: pass_to_pass
+  origin: repo_tests
+  description: Config file has balanced square brackets
+- id: repo_prettier_formatting
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo config file passes Prettier formatting check
+- id: repo_node_syntax_validation
+  type: pass_to_pass
+  origin: repo_tests
+  description: Config file passes Node.js-based syntax validation
+
+rubric:
+- rule: The solution should use cachedInvalidateWithTTL instead of manual reassignment
+    for cache invalidation.
+  source:
+    path: packages/opencode/src/config/config.ts
+    commit: 9f94bdb49634bda90a2804585b8d739228dde876
+- rule: The solution should import Duration from effect.
+  source:
+    path: packages/opencode/src/config/config.ts
+    commit: 9f94bdb49634bda90a2804585b8d739228dde876
+- rule: The solution should use const destructuring for the cache and invalidate handle.
+  source:
+    path: packages/opencode/src/config/config.ts
+    commit: 9f94bdb49634bda90a2804585b8d739228dde876
+distractors:
+- rule: Use `Effect.cached` when multiple concurrent callers should share a single
+    in-flight computation rather than storing `Fiber | undefined` or `Promise | undefined`
+    manually.
+  collision_type: rule_conflict
+  why_distracting: The existing rule explicitly prescribes using `Effect.cached` for
+    deduplication. However, the PR instructions require using an idiomatic Effect
+    cache invalidation primitive, which conflicts with this rule. The agent must realize
+    the rule is outdated for this specific use case (and the gold solution actually
+    updates the rule file to reflect the new pattern).
+  severity: high
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: 44-46
+- rule: Prefer single word names for variables and functions. Only use multiple words
+    if necessary.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to rename `cachedGlobal` or `invalidateGlobal`
+    to single words like `cache` or `inv` to satisfy the strict single-word naming
+    rule. However, `cachedGlobal` is already established and `invalidateGlobal` pairs
+    with it clearly; renaming them would cause unnecessary churn or conflict with
+    the outer `invalidate` function.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 23-35
+hierarchy_analysis: The root `AGENTS.md` provides general style guidelines (like `const`
+  over `let` and single-word naming), while `packages/opencode/AGENTS.md` provides
+  specific Effect patterns. The agent must navigate the conflict between the PR instruction
+  (use cache invalidation primitive) and the local `AGENTS.md` rule (use `Effect.cached`).
+  The gold solution resolves this by updating the local `AGENTS.md` rule to recommend
+  `Effect.cachedInvalidateWithTTL`.

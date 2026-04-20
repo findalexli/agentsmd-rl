@@ -4,12 +4,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-16T10:21:20.810357",
-  "total_time": 649.75,
-  "sandbox_id": "ih5euge82kyteiy0go8b2",
-  "backend": "anthropic",
+  "validated_at": "2026-04-16T18:36:48.928784",
+  "total_time": 466.1,
+  "sandbox_id": "i9xsb3k0whzvda9ekylku",
+  "backend": "minimax",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "validate",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -39,9 +39,9 @@
       "icr": 0.5,
       "attempts": 1,
       "notes": "All core validation checks passed: Docker build successful, NOP test reward=0 (5 fail-to-pass tests correctly fail on buggy base), Gold test reward=1 (all 15 tests pass after gold fix). Rubric judge returns ICR=0.5 without API keys - this is expected fallback behavior.",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 250.64
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 446.25
     },
     "rubric_judge": {
       "status": "pass",
@@ -62,14 +62,14 @@
     },
     "quality_gate": {
       "status": "DELETE",
-      "model": "claude-opus-4-7",
-      "backend": "anthropic",
-      "time": 0.53,
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.7,
       "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:167: test `test_settings_toggle_handles_session_and_directory` has 2 a']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 13.26,
+      "time": 14.18,
       "tier_a_fails": [],
       "tier_b_fails": [],
       "pass_count": 9,
@@ -77,14 +77,6 @@
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 2154.16,
-      "at": "2026-04-12T01:57:25.840970"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -116,6 +108,14 @@
       "backend": "anthropic",
       "time": 649.75,
       "at": "2026-04-16T10:21:20.810357"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 466.1,
+      "at": "2026-04-16T18:36:48.928784"
     }
   ]
 }

@@ -1,0 +1,136 @@
+version: '2.0'
+source:
+  repo: oven-sh/bun
+  pr: 28543
+  base_commit: 39094877abb3e74557d3975dd015ee677220eb35
+  merge_commit: abe02ab2fa0ddf1635d55cc9582c31b6767c1824
+checks:
+- id: source_file_exists_balanced_braces
+  type: pass_to_pass
+  origin: static
+  description: GlobWalker.zig exists and has roughly balanced braces
+- id: buggy_component_idx_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: The broken computeNtFilter(component_idx) call is removed
+- id: fix_uses_active_bitset
+  type: fail_to_pass
+  origin: pr_diff
+  description: Fix derives component index from the active BitSet near setNameFilter
+- id: multi_active_conditional
+  type: fail_to_pass
+  origin: pr_diff
+  description: Fix checks active.count() and uses null when multiple components active
+- id: set_name_filter_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: setNameFilter call still exists in the Windows block
+- id: compute_nt_filter_function_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: computeNtFilter function still exists with u32 parameter
+- id: compute_nt_filter_still_called
+  type: pass_to_pass
+  origin: pr_diff
+  description: computeNtFilter is called (not just defined) near setNameFilter
+- id: no_std_usage_near_fix
+  type: pass_to_pass
+  origin: agent_config
+  description: No std.* API usage near the fix — use bun.* instead
+  source:
+    path: src/CLAUDE.md
+    lines: '16'
+    commit: 39094877abb3e74557d3975dd015ee677220eb35
+- id: no_inline_import_near_fix
+  type: pass_to_pass
+  origin: agent_config
+  description: No inline @import near the fix
+  source:
+    path: src/CLAUDE.md
+    lines: '11'
+    commit: 39094877abb3e74557d3975dd015ee677220eb35
+- id: test_repo_oxlint_js
+  type: pass_to_pass
+  origin: repo_tests
+  description: JavaScript/TypeScript linting passes with oxlint (mirrors 'bun lint'
+    CI check)
+- id: test_repo_prettier_check_scripts
+  type: pass_to_pass
+  origin: repo_tests
+  description: Scripts directory formatting check passes with prettier (mirrors CI
+    'bun run prettier')
+- id: test_repo_git_status_clean
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git repository is in a clean state with no uncommitted source changes
+- id: test_repo_prettier_check_docs
+  type: pass_to_pass
+  origin: repo_tests
+  description: Docs directory formatting check passes with prettier (mirrors CI 'bun
+    run prettier')
+- id: test_repo_prettier_check_glob_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Glob-related test files formatting check passes with prettier (tests
+    for GlobWalker code)
+rubric:
+- rule: Never use @import() inline inside of functions. Always put imports at the
+    bottom of the file or containing struct.
+  source:
+    path: src/CLAUDE.md
+    lines: 10-11
+    commit: 39094877abb3e74557d3975dd015ee677220eb35
+- rule: Use comments to explain invariants and reasoning, not just narrate code. Explain
+    WHY, not WHAT.
+  source:
+    path: src/CLAUDE.md
+    lines: 10-11
+    commit: 39094877abb3e74557d3975dd015ee677220eb35
+- rule: Never use `@import()` inline inside of functions.
+  source:
+    path: src/CLAUDE.md
+    lines: 10-11
+  evidence: The gold solution uses `active.count()` and `active.findFirstSet()` to
+    compute the filter without adding any inline `@import()` statements inside the
+    `GlobWalker_` function.
+  category: style
+distractors:
+- rule: 'Build Bun: `bun bd` and Run tests with your debug build'
+  collision_type: meta_confusion
+  why_distracting: The bug is inside an `if (comptime isWindows)` block. On a Linux
+    workspace, Zig discards this block during semantic analysis, so `bun bd` will
+    compile successfully even with the broken code. The agent might rely on `bun bd`
+    to verify the bug or the fix, leading to confusion when it compiles regardless
+    of their changes.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 7-10
+- rule: Always use `bun.*` APIs instead of `std.*`
+  collision_type: architecture_boundary
+  why_distracting: The agent might see directory iteration and file descriptor usage
+    (`Accessor.DirIter.iterate(fd)`) and try to refactor it to use `bun.sys.File`
+    or `bun.sys.read` as mandated by the config. However, `Accessor.DirIter` is the
+    correct internal abstraction here, and refactoring it would break the glob walker's
+    architecture.
+  severity: medium
+  source:
+    path: src/CLAUDE.md
+    lines: 16-26
+- rule: If no valid issue number is provided, find the best existing file to modify
+    instead, such as; test/js/bun/...
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to write a test to verify the glob walker
+    fix. However, because the fix is specifically for an NT kernel-level filename
+    filter optimization on Windows, a test run on a Linux environment would not exercise
+    this code path at all, resulting in wasted effort.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 26-35
+hierarchy_analysis: The root `CLAUDE.md` provides general build and test instructions,
+  while `src/CLAUDE.md` provides Zig-specific coding conventions. The primary conflict
+  arises because the root config encourages building and testing to verify changes,
+  but Zig's `comptime` behavior means the Windows-specific bug won't manifest on Linux
+  during a standard `bun bd` build. The agent must rely on static analysis and logical
+  reasoning rather than the build/test loop encouraged by the root config.

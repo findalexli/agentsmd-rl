@@ -1,0 +1,128 @@
+checks:
+- id: nested_try_catch_for_create
+  description: Verify nested try-catch structure exists around dbForDatabases->create()
+  type: fail_to_pass
+  origin: pr_diff
+- id: catch_block_is_empty_or_has_comment
+  description: Verify the catch block for DuplicateException is properly structured
+  type: fail_to_pass
+  origin: pr_diff
+- id: comment_removed
+  description: Verify the outdated comment about 'passing null' is removed
+  type: fail_to_pass
+  origin: pr_diff
+- id: duplicate_exception_imported
+  description: Verify DuplicateException is imported or referenced in the file (already
+    present in base)
+  type: pass_to_pass
+  origin: pr_diff
+- id: php_syntax_valid
+  description: Verify the modified PHP file has valid syntax
+  type: pass_to_pass
+  origin: pr_diff
+- id: outer_try_block_preserved
+  description: Verify the outer try block wrapping createCollection is preserved
+  type: pass_to_pass
+  origin: pr_diff
+- id: test_repo_lint
+  description: Repo's PHP linting (Pint) passes on the codebase
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_check
+  description: Repo's PHP static analysis (PHPStan) passes on the codebase
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_validate
+  description: Repo's composer.json and composer.lock pass validation
+  type: pass_to_pass
+  origin: repo_tests
+rubric:
+- rule: Follow PSR-12 formatting standards enforced by Pint. All PHP code must comply
+    with PSR-12.
+  source:
+    path: AGENTS.md
+    lines: '55'
+    commit: a5b0378138a6097e256a8d9553a18b892b6ba9ea
+- rule: HTTP endpoint file names can only be Get.php, Update.php, Create.php, Delete.php,
+    or XList.php. Never use other file names in Http directories.
+  source:
+    path: src/Appwrite/Platform/AGENTS.md
+    lines: 28-30
+    commit: a5b0378138a6097e256a8d9553a18b892b6ba9ea
+- rule: Use sparse Document objects when updating documents - pass only changed attributes,
+    not full documents.
+  source:
+    path: AGENTS.md
+    lines: 56-64
+    commit: a5b0378138a6097e256a8d9553a18b892b6ba9ea
+- rule: Action pattern (HTTP endpoints) must be followed, with business logic placed
+    in the  method.
+  source:
+    path: AGENTS.md
+    lines: 55-74
+  evidence: The gold solution implements the fix directly inside the  method of the  class,
+    preserving the required Action pattern structure and method signature without
+    altering how the endpoin
+  category: architecture
+- rule: File names in Http directories must only be Get.php, Update.php, Create.php,
+    Delete.php or XList.php.
+  source:
+    path: src/Appwrite/Platform/AGENTS.md
+    lines: 31-35
+  evidence: The gold solution keeps the metadata initialization logic inline within
+    rather than creating a custom-named file like  or to handle the metadata creation.
+  category: naming
+- rule: 'Stack: PHP 8.3+'
+  source:
+    path: AGENTS.md
+    lines: 14-15
+  evidence: The gold solution uses a non-capturing catch block  which is a modern
+    PHP feature, aligning with the repository's PHP 8.3+ requirement.
+  category: style
+- rule: Action pattern (HTTP endpoints) where endpoint logic resides in the method
+  source:
+    path: AGENTS.md
+    lines: 53-73
+  evidence: The gold solution correctly applies the fix inside the  method of the  class,
+    preserving the Action pattern structure for HTTP endpoints.
+  category: architecture
+- rule: Inside `Http` directories for services, file names can only be `Get.php`,
+    `Update.php`, `Create.php`, `Delete.php` or `XList.php`.
+  source:
+    path: src/Appwrite/Platform/AGENTS.md
+    lines: 37-37
+  source_text: 3. Inside `Http` directories for services, file names can only be `Get.php`,
+    `Update.php`, `Create.php`, `Delete.php` or `XList.php`. We call it `XList`, because
+    `List` is a reserved keyword and PHP would not like that. Never use any other
+    words! Let's say you want a method to be `blockUser`, tempting to add `Users/Block.php`,
+    instead, think of the resource and property it affec
+  evidence: The modified file is named `Create.php` and is located in `src/Appwrite/Platform/Modules/Databases/Http/VectorsDB/Collections/`,
+    adhering to the strict naming convention for HTTP endpoint actions.
+  category: naming
+  verification: llm_judge
+distractors:
+- rule: Think of the resource and property it affects... both resources and properties
+    can be nested, and have separate directories.
+  collision_type: scope_ambiguity
+  why_distracting: The rule suggests creating nested directories for specific properties/resources
+    (e.g., `Users/Status/Update.php`). An agent might over-engineer the solution by
+    trying to extract the metadata initialization into a separate `Metadata/Create.php`
+    endpoint to separate concerns. However, the metadata bootstrap is designed to
+    happen transparently during the main collection creation, and ensuring it happens
+    transparently during the main collection creation, and extracting it would break
+    the API contract.
+  severity: medium
+  source:
+    path: src/Appwrite/Platform/AGENTS.md
+    lines: 31-35
+hierarchy_analysis: The hierarchy consists of a root `AGENTS.md` defining the global
+  stack and architecture, and a module-specific `src/Appwrite/Platform/AGENTS.md`
+  detailing directory structures. The rules are complementary, but the agent must
+  recognize that the module-specific nesting rules apply to new endpoint creation,
+  not to internal transparent bootstrapping logic within an existing endpoint.
+version: '2.0'
+source:
+  repo: appwrite/appwrite
+  pr: 11757
+  base_commit: a5b0378138a6097e256a8d9553a18b892b6ba9ea
+  merge_commit: ''

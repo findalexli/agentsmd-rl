@@ -1,0 +1,135 @@
+source:
+  repo: appwrite/appwrite
+  pr: 11614
+  base_commit: 1ab05acc93a9f3c9b1e4dfb55dded2597f06a838
+  merge_commit: 9353fbfb7426863140eca023967b2bf923d7066d
+checks:
+- id: test_rust_sdk_config_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: Rust SDK configuration exists in sdks.php with key, name, platform,
+    and prism
+- id: test_rust_sdk_config_values
+  type: fail_to_pass
+  origin: pr_diff
+  description: Rust SDK has correct version (0.1.0), enabled/beta/dev flags, and URLs
+- id: test_rust_language_import
+  type: fail_to_pass
+  origin: pr_diff
+  description: Rust language class is imported in SDKs.php task
+- id: test_rust_switch_case
+  type: fail_to_pass
+  origin: pr_diff
+  description: Rust case exists in SDK generation switch statement with config instantiation
+- id: test_rust_sdk_array_structure
+  type: fail_to_pass
+  origin: pr_diff
+  description: Rust SDK array has all required configuration fields
+- id: test_switch_case_order
+  type: fail_to_pass
+  origin: pr_diff
+  description: Rust case is positioned correctly between Kotlin and GraphQL
+- id: test_php_syntax_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: PHP syntax check passes for modified files
+- id: test_composer_autoload_works
+  type: pass_to_pass
+  origin: repo_tests
+  description: Composer autoload works correctly
+- id: test_composer_validate
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: composer.json validates successfully'
+- id: test_pint_linter
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: PSR-12 code style check via Laravel Pint passes'
+- id: test_phpstan_analysis
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: Static analysis via PHPStan passes for modified files'
+- id: test_composer_audit
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: Composer security audit passes with no new vulnerabilities
+    (CVE-2026-40194 pre-existing)'
+- id: test_code_style_psr12
+  type: fail_to_pass
+  origin: agent_config
+  source:
+    lines: 25-30
+    path: AGENTS.md
+  description: Code follows PSR-12 standard and PSR-4 autoloading
+version: '2.0'
+rubric:
+- rule: Use PSR-12 formatting and PSR-4 autoloading.
+  source:
+    path: AGENTS.md
+    lines: '101'
+  source_text: '- PSR-12 formatting enforced by Pint. PSR-4 autoloading.'
+  evidence: The gold diff adheres to PSR-12 formatting rules by correctly indenting
+    the new SDK array configuration in app/config/sdks.php and placing the `use Appwrite\SDK\Language\Rust;`
+    import statement in strict alphabetical order in src/Appwrite/Platform/Tasks/SDKs.php.
+  category: style
+  verification: llm_judge
+- rule: Place CLI tasks in the src/Appwrite/Platform/Tasks/ directory.
+  source:
+    path: AGENTS.md
+    lines: '32'
+  source_text: '- **src/Appwrite/Platform/Tasks/** -- CLI tasks'
+  evidence: The gold diff correctly locates the SDK generation logic by editing `src/Appwrite/Platform/Tasks/SDKs.php`,
+    keeping task logic confined to the architecturally designated Tasks folder.
+  category: architecture
+  verification: llm_judge
+distractors:
+- rule: Restrict file names in Http directories to Get.php, Create.php, Update.php,
+    Delete.php, or XList.php.
+  source:
+    path: AGENTS.md
+    lines: '57'
+  source_text: File names in Http directories must only be `Get.php`, `Create.php`,
+    `Update.php`, `Delete.php`, or `XList.php`. For non-CRUD operations, model the
+    endpoint as a property update. For example, updating a team membership status
+    lives at `Teams/Http/Memberships/Status/Update.php` (`PATCH /v1/teams/:teamId/memberships/:membershipId/status`).
+  collision_type: scope_ambiguity
+  why_distracting: An agent seeing changes made to `SDKs.php` might mistakenly complain
+    that the file name violates the naming convention. However, this rule applies
+    exclusively to HTTP endpoint directories (`Http`), not CLI tasks (`Tasks`).
+  severity: high
+- rule: Never hardcode credentials, use environment variables.
+  source:
+    path: AGENTS.md
+    lines: '115'
+  source_text: '- Never hardcode credentials -- use environment variables.'
+  collision_type: meta_confusion
+  why_distracting: The gold diff introduces hardcoded GitHub repository URLs and git
+    usernames (e.g., `gitUrl => 'git@github.com:appwrite/sdk-for-rust.git'`). An agent
+    might mistakenly classify these hardcoded public metadata strings as sensitive
+    'credentials' and attempt to refactor them to use environment variables.
+  severity: medium
+- rule: Add a new directory under src/Appwrite/Platform/Modules when adding a module.
+  source:
+    path: src/Appwrite/Platform/AGENTS.md
+    lines: '11'
+  source_text: When adding a module, always add a new directory under `src/Appwrite/Platform/Modules`.
+    The directory name should be PascalCase, and if possible, use only one word. For
+    example, `User`, `Database`, `Storage`, etc. Avoid using shorthands, unless they
+    are standardized, such as `DB`, `JWT`, or `SMTP`.
+  collision_type: scope_ambiguity
+  why_distracting: An agent tasked with adding the 'Rust' SDK feature might misinterpret
+    this as adding a whole new platform capability/module and wrongly create a new
+    module directory structure (e.g., `src/Appwrite/Platform/Modules/Rust`) instead
+    of just adding a config record and switch statement.
+  severity: high
+- rule: Place configs in the app/init/ directory.
+  source:
+    path: AGENTS.md
+    lines: '34'
+  source_text: '- **app/init/** -- configs, constants, locales, models, registers,
+    resources, span, database filters/formats'
+  collision_type: architecture_boundary
+  why_distracting: The diff correctly edits `app/config/sdks.php`. An agent reading
+    that `app/init/` is explicitly meant for 'configs' might try to incorrectly relocate
+    the `sdks.php` file from `app/config/` to `app/init/`.
+  severity: medium

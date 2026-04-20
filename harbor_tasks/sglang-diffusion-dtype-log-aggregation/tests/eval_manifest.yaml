@@ -1,0 +1,170 @@
+version: '2.0'
+source:
+  repo: sgl-project/sglang
+  pr: 21552
+  base_commit: 7160b6cb76d3619468b219ea066fcb6358a8000e
+  merge_commit: f0c68fbefd394f767980abcad10d071502cf0af0
+checks:
+- id: syntax
+  type: pass_to_pass
+  origin: static
+  description: Target file must parse without syntax errors
+- id: summary_formatter_multiple_types
+  type: fail_to_pass
+  origin: pr_diff
+  description: Summary function aggregates multiple dtype mismatch pairs with counts
+    and examples
+- id: summary_formatter_empty_examples
+  type: fail_to_pass
+  origin: pr_diff
+  description: Summary function handles pairs with no example parameter names
+- id: summary_formatter_single_pair
+  type: fail_to_pass
+  origin: pr_diff
+  description: Summary function works correctly with a single mismatch type
+- id: summary_formatter_no_raw_repr
+  type: fail_to_pass
+  origin: pr_diff
+  description: Summary output is human-readable, not raw Counter/defaultdict repr
+- id: no_per_param_warnings_in_loop
+  type: fail_to_pass
+  origin: pr_diff
+  description: Loading loop must not emit per-parameter logger.warning for dtype mismatches
+- id: quantized_dtypes_not_redefined_in_loop
+  type: fail_to_pass
+  origin: pr_diff
+  description: Quantized dtype tuple/set must not be re-created inside the loading
+    loop
+- id: aggregated_summary_after_loop
+  type: fail_to_pass
+  origin: pr_diff
+  description: Aggregated dtype summary log must exist after the main loading loop
+- id: function_signatures_preserved
+  type: pass_to_pass
+  origin: repo_tests
+  description: Core function signatures (load_model_from_full_model_state_dict, _make_param_like,
+    shard_model) unchanged
+- id: test_repo_ruff
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff lint (F401, F821) passes on target file
+- id: test_repo_black
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's black formatting check passes on target file
+- id: test_repo_codespell
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's codespell check passes on target file
+- id: test_repo_isort
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's isort import ordering check passes on target file
+- id: test_repo_precommit_ast
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's pre-commit check-ast hook passes on target file
+- id: test_repo_precommit_debug_statements
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's pre-commit debug-statements hook passes on target file
+- id: test_repo_precommit_trailing_whitespace
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's pre-commit trailing-whitespace hook passes on target file
+- id: test_repo_precommit_eof_fixer
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's pre-commit end-of-file-fixer hook passes on target file
+- id: test_repo_precommit_merge_conflict
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's pre-commit check-merge-conflict hook passes on target file
+- id: logger_uses_init_logger
+  type: pass_to_pass
+  origin: agent_config
+  description: Logger must be initialized via init_logger(__name__) from logging_utils
+  source:
+    path: python/sglang/multimodal_gen/.claude/skills/sglang-diffusion-add-model/SKILL.md
+    lines: 333-335
+    commit: 7160b6cb76d3619468b219ea066fcb6358a8000e
+rubric:
+- rule: Use init_logger(__name__) to create a module-level logger.
+  source:
+    path: python/sglang/multimodal_gen/.claude/skills/sglang-diffusion-add-model/SKILL.md
+    lines: 333-335
+  source_text: 'from sglang.multimodal_gen.runtime.utils.logging_utils import init_logger
+
+
+    logger = init_logger(__name__)'
+  evidence: The diff consistently uses the module-level `logger` created via `init_logger(__name__)`
+    (defined at line 40) for calling `logger.debug` and `logger.warning` to report
+    dtype mismatches.
+  category: style
+  verification: llm_judge
+- rule: 'Component Precision Override: Support on-the-fly dtype conversion for individual
+    components at load time.'
+  source:
+    path: python/sglang/multimodal_gen/.claude/skills/sglang-diffusion-performance/SKILL.md
+    lines: '51'
+  source_text: '| **Component Precision Override** | `--dit-precision fp16`, `--vae-precision
+    fp16\|bf16` | On-the-fly dtype conversion for individual components. E.g. convert
+    a BF16 model to FP16 at load time, or run VAE in BF16 instead of FP32. | Reduces
+    memory; FP16 can be faster on some GPUs | May affect numerical stability. VAE
+    is FP32 by default for accuracy; lowering it is lossy. DiT defaults to BF16. |'
+  evidence: The checkpoint loader explicitly handles `full_tensor.dtype != target_dtype`,
+    logs it (e.g. 'Casting checkpoint tensors to target dtype during load'), and performs
+    the casting, which is the foundational mechanism that enables this performance
+    feature.
+  category: architecture
+  verification: llm_judge
+distractors:
+- rule: 'Supported dtypes: FP16, BF16, FP32'
+  source:
+    path: .claude/skills/add-jit-kernel/SKILL.md
+    lines: '16'
+  source_text: '- Supported dtypes: **FP16 (`torch.float16`), BF16 (`torch.bfloat16`),
+    FP32 (`torch.float32`)**'
+  collision_type: scope_ambiguity
+  why_distracting: An agent might mistakenly think SGLang only supports FP16, BF16,
+    and FP32 globally and remove the loader's explicit support for quantized dtypes
+    (`torch.uint8`, `torch.float8_e4m3fn`, etc.). This rule specifically applies to
+    JIT/SGL kernels, not checkpoint loading.
+  severity: high
+- rule: Validate CUDA placement and shape/dtype before launching using assert
+  source:
+    path: python/sglang/multimodal_gen/.claude/skills/sglang-diffusion-triton-kernel/SKILL.md
+    lines: '182'
+  source_text: '- Validate CUDA placement and shape/dtype **before** launching — use
+    `assert` with a helpful message.'
+  collision_type: architecture_boundary
+  why_distracting: An agent might attempt to use `assert full_tensor.dtype == target_dtype`
+    instead of permitting the mismatch and logging a warning. The assert rule is strictly
+    for Triton kernels, whereas the checkpoint loader is designed to allow casting
+    mismatched dtypes on-the-fly.
+  severity: high
+- rule: Keep Python wrappers thin; do validation in C++
+  source:
+    path: .claude/skills/add-sgl-kernel/SKILL.md
+    lines: '109'
+  source_text: '- Keep Python wrappers thin; do shape/dtype/device validation in C++
+    right around the launch path'
+  collision_type: architecture_boundary
+  why_distracting: An agent might mistakenly assume dtype checking and logging shouldn't
+    be done in Python at all, potentially stripping out the `_QUANTIZED_DTYPES` and
+    mismatch logic entirely. However, this logic is in `fsdp_load.py`, a pure Python
+    checkpoint loader where such validation and logging are required.
+  severity: medium
+- rule: Use logger.warning_once(...) only for known hardware limitations
+  source:
+    path: python/sglang/multimodal_gen/.claude/skills/sglang-diffusion-triton-kernel/SKILL.md
+    lines: '229'
+  source_text: '- Add `logger.warning_once(...)` only when falling back due to a **known
+    hardware limitation** (e.g., unsupported SM compute capability), not for wrong-input
+    errors.'
+  collision_type: scope_ambiguity
+  why_distracting: An agent might interpret a dtype mismatch as a 'wrong-input error'
+    and completely remove the warning, or try to use `logger.warning_once(...)` inappropriately
+    instead of manually aggregating warnings as the diff does. This rule is for kernel
+    fallback, not checkpoint loading.
+  severity: medium

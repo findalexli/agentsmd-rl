@@ -1,0 +1,123 @@
+checks:
+- id: test_button_solid_default_code
+  type: fail_to_pass
+  origin: pr_diff
+  description: Button.tsx contains logic for variant='solid' default color
+- id: test_button_context_solid_default_code
+  type: fail_to_pass
+  origin: pr_diff
+  description: Button.tsx contains logic for contextVariant='solid' default color
+- id: test_tag_solid_default_code
+  type: fail_to_pass
+  origin: pr_diff
+  description: useColor.ts contains logic for nextVariant='solid' and nextColor=undefined
+- id: test_tag_uses_nextcolor_for_preset
+  type: fail_to_pass
+  origin: pr_diff
+  description: useColor.ts uses nextColor for isPresetColor check
+- id: test_tag_uses_nextcolor_for_status
+  type: fail_to_pass
+  origin: pr_diff
+  description: useColor.ts uses nextColor for isPresetStatusColor check
+- id: test_button_returns_primary_for_solid
+  type: fail_to_pass
+  origin: pr_diff
+  description: Button.tsx returns 'primary' as default color for solid variant
+- id: test_tag_returns_default_for_solid
+  type: fail_to_pass
+  origin: pr_diff
+  description: useColor.ts sets nextColor='default' for solid variant
+- id: test_repo_typescript_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TypeScript typecheck passes
+- id: test_button_structure_preserved
+  type: pass_to_pass
+  origin: repo_tests
+  description: Button component structure is preserved
+- id: test_repo_lint_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ESLint checks pass
+- id: test_repo_biome_lint_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Biome lint checks pass
+- id: test_repo_button_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Button component tests pass
+- id: test_repo_tag_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Tag component tests pass
+- id: test_repo_node_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Node.js-specific tests pass
+- id: test_repo_button_demo_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Button component demo tests pass
+- id: test_repo_tag_demo_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Tag component demo tests pass
+rubric:
+- rule: 使用 TypeScript 和 React 开发
+  source:
+    path: CLAUDE.md
+    lines: 9-10
+  evidence: The gold solution implements the fix using TypeScript in the existing
+    .tsx and .ts files, adhering to the project's language and framework choices.
+  category: architecture
+  verification: llm_judge
+- rule: Develop components using TypeScript and React.
+  source:
+    path: AGENTS.md
+    lines: 8-8
+  source_text: '- 使用 TypeScript 和 React 开发'
+  evidence: The diff modifies TypeScript files (`.tsx` and `.ts`) such as `Button.tsx`
+    and `useColor.ts`, and works within a React component (`React.forwardRef`) and
+    a React hook.
+  category: architecture
+  verification: llm_judge
+distractors:
+- rule: 'Changelog 规范: 必须同时提供中英文两个版本，描述对开发者的影响'
+  collision_type: scope_ambiguity
+  why_distracting: The config mandates updating CHANGELOG.en-US.md and CHANGELOG.zh-CN.md
+    for changes, which might prompt the agent to document the new default colors.
+    However, the task explicitly restricts modifications to just the component source
+    files.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 120-135
+- rule: '文档规范: API 表格格式需包含默认值，且中英文需保持一致'
+  collision_type: scope_ambiguity
+  why_distracting: The config provides strict rules for updating API documentation
+    tables (including default values). The agent might try to update the Button and
+    Tag docs to reflect the new default colors for solid variants, violating the 'Files
+    to Modify' constraint.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 55-75
+- rule: Help maintainers reply to Ant Design GitHub issues following official guidelines.
+  source:
+    path: .claude/skills/issue-reply/SKILL.md
+    lines: 1-5
+  collision_type: scope_ambiguity
+  why_distracting: The agent might activate the issue-reply skill because the prompt
+    describes a 'Problem' and 'Expected Behavior' similar to a GitHub issue, leading
+    it to generate a reply instead of or in addition to the code fix.
+  severity: low
+hierarchy_analysis: The config files (AGENTS.md and CLAUDE.md) are identical and flat.
+  They provide repository-wide guidelines for meta-files (docs, changelog, tests)
+  but lack specific coding style rules for the components themselves.
+version: '2.0'
+source:
+  repo: ant-design/ant-design.git
+  pr: 0
+  base_commit: df5547f2ade5fe0bd9906bb9a386e7865afa4835
+  merge_commit: ''

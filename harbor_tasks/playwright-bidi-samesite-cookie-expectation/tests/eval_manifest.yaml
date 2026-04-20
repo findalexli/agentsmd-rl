@@ -1,0 +1,129 @@
+version: '2.0'
+source:
+  repo: microsoft/playwright
+  pr: 40091
+  base_commit: 5435c64f6d14293b2ce0dcdbfaa237b015bfd63e
+  merge_commit: ab4f133c0690f0de47fc983867624fa3908d5544
+checks:
+- id: spec_file_valid
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript spec file is non-empty with balanced braces
+- id: isBidi_in_test_signature
+  type: fail_to_pass
+  origin: pr_diff
+  description: The SameSite set-cookie test must include isBidi in its fixture destructuring
+- id: bidi_cookie_rejection_condition
+  type: fail_to_pass
+  origin: pr_diff
+  description: Cookie rejection condition for SameSite=None must OR-combine isBidi
+    with chromium
+- id: bidi_expectation_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: BiDi expectations file must not list this test as failing
+- id: condition_is_not_narrowed
+  type: pass_to_pass
+  origin: static
+  description: Existing Chromium and webkit cookie conditions must remain intact
+- id: test_repo_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's build step completes successfully
+- id: test_repo_eslint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ESLint linting passes
+- id: test_repo_tsc
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TypeScript type check passes
+- id: test_repo_check_deps
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's dependency check passes
+- id: test_repo_lint_packages
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's package linting passes
+- id: test_repo_test_types
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's test types check passes
+- id: test_repo_lint_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's test file linting passes
+- id: test_repo_generate_channels
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's protocol channel generation passes
+- id: test_repo_generate_types
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's type generation passes
+rubric:
+- rule: Code changes must pass the repository's lint checks (eslint, tsc, check-deps,
+    lint-packages, test-types) without errors.
+  source:
+    path: CLAUDE.md
+    lines: 52-58, 108
+    commit: 5435c64f6d14293b2ce0dcdbfaa237b015bfd63e
+  reference: isBidi parameter added to test signature; (browserName === 'chromium'
+    || isBidi) && value === 'None' condition added
+- rule: Tests using browser/context/browserType fixtures must be placed in tests/library/
+    (not tests/page/).
+  source:
+    path: CLAUDE.md
+    lines: 83-88
+    commit: 5435c64f6d14293b2ce0dcdbfaa237b015bfd63e
+  reference: browsercontext-fetch.spec.ts in tests/library/ modified; expectation
+    removed from tests/bidi/expectations/
+- rule: Place tests dealing with cookies and browser-specific features in `tests/library/`.
+  source:
+    path: CLAUDE.md
+    lines: 65-72
+  evidence: 'The modified test is located in `tests/library/browsercontext-fetch.spec.ts`
+    and tests `set-cookie` behavior across different browsers, which perfectly aligns
+    with the directive that `tests/library/` '
+  category: architecture
+- rule: Tests involving cookies, permissions, and browser-specific features belong
+    in `tests/library/`.
+  source:
+    path: CLAUDE.md
+    lines: 61-68
+  evidence: 'The gold solution modifies a test dealing with `set-cookie` and `SameSite`
+    within `tests/library/browsercontext-fetch.spec.ts`, adhering to the guideline
+    that `tests/library/` is the correct location '
+  category: testing
+- rule: tests/library/ is used for tests involving Browser/context lifecycle, cookies,
+    permissions, and browser-specific features.
+  source:
+    path: CLAUDE.md
+    lines: 76-83
+  evidence: The test deals with cookies and browser-specific behavior (isBidi, browserName),
+    so it correctly remains in `tests/library/` as per the directory purpose guidelines.
+  category: architecture
+- rule: Tests that need browser/browserType/context belong in tests/library/
+  source:
+    path: CLAUDE.md
+    lines: 68-75
+  evidence: The test remains in `tests/library/browsercontext-fetch.spec.ts` because
+    it tests browser context behavior (accessing `page.context().cookies()`), adhering
+    to the architectural boundary for library te
+  category: architecture
+distractors:
+- rule: 'Decision rule: Just needs page + server → tests/page/'
+  collision_type: scope_ambiguity
+  why_distracting: The test signature destructures `page` and `server` (along with
+    primitive fixtures like `browserName` and `isBidi`), but not `context` or `browser`
+    directly. An agent reading the simplified decision rule might attempt to move
+    the test to `tests/page/`, which is out of scope and incorrect since the test
+    explicitly tests context-level cookie behavior.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 68-75
+hierarchy_analysis: The configuration consists of a single, flat `CLAUDE.md` file
+  at the repository root containing generic boilerplate guidelines for the Playwright
+  monorepo.

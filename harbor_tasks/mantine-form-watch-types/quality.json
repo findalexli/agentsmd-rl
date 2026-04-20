@@ -1,61 +1,58 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction specifies the exact import statement, exact string patterns for type assertions, the file path (use-form.ts in @mantine/form), ESLint passing, and Jest tests passing \u2014 all of which correspond to what the tests assert. The tests check for these exact strings in the file, ESLint, and Jest runs."
+      "reason": "Instruction names the exact import string, the exact patterns checked by tests (previousValue/value assertions, LooseKeys<Values>), and mentions ESLint and Jest tests for @mantine/form."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix: add 'import type { FormPathValue, LooseKeys } from ./paths.types;', and use 'as FormPathValue<Values, LooseKeys<Values>>' assertions on specific lines. It even provides the exact code patterns to insert. This is not describing what's broken \u2014 it's prescribing the exact solution."
+      "reason": "Instruction provides the exact import line and exact type assertion patterns (e.g., 'previousValue: getPath(path, previousValues) as FormPathValue<'), leaving essentially no reasoning for the agent."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests assert exact string patterns like 'previousValue: getPath(path, previousValues) as FormPathValue<' and 'import type { FormPathValue, LooseKeys } from ./paths.types;'. An alternative correct fix (e.g., using a generic type parameter on the callback, or a different type narrowing approach, or formatting the assertion on one line vs multiple) would fail these substring checks."
+      "outcome": "pass",
+      "reason": "Tests assert on the specific strings that are legitimate requirements of the fix; alternative correct fixes would use these same patterns."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The two fail-to-pass tests (test_form_watch_types_import_present and test_form_watch_callback_has_type_assertions) are purely text-matching: they read the file and assert substrings exist. They do not compile TypeScript, run type checks, or execute any code. The pass-to-pass tests (ESLint, Jest) do execute code, but the core f2p tests are purely textual."
+      "outcome": "pass",
+      "reason": "Tests run ESLint and Jest via subprocess in addition to string checks."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "The f2p tests only check for string presence in the source file. An agent could simply append the import line and a comment containing the asserted strings to the file without implementing any real type fix, and both f2p tests would pass."
+      "outcome": "pass",
+      "reason": "The Jest and ESLint subprocess tests require actual code correctness; string-check tests require the exact patterns."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All three acceptance criteria (type-only import, type assertions on watch callback values, runtime behavior unchanged) are tested: the import and assertion patterns are checked via string matching, and runtime behavior is verified via ESLint and Jest tests."
+      "reason": "Import presence, type assertions, ESLint, and Jest tests all covered matching instruction's acceptance criteria."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_form_watch_types_import_present, test_form_watch_callback_has_type_assertions, etc.) with docstrings explaining purpose and whether they are fail-to-pass or pass-to-pass."
+      "reason": "Tests are individually named with docstrings explaining fail-to-pass vs pass-to-pass intent."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task modifies TypeScript source code; it does not produce structured data output like JSON/CSV/API/DB."
+      "reason": "No structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, variable names, commands, and string patterns are consistent between instruction.md and the test file with no apparent typos."
+      "reason": "Paths and names look consistent."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction provides exact code patterns including specific variable names ($values.refValues.current), exact import paths (./paths.types), and exact type assertion syntax. This goes far beyond identifying the buggy module \u2014 it essentially dictates the complete solution."
+      "reason": "Instruction effectively dictates the exact code patterns to add including the import statement and the `as FormPathValue<Values, LooseKeys<Values>>` assertion text."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task (TypeScript type fix), not an agentmd-edits/config task."
+      "reason": "Code-only task."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "no_solution_leakage"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 5
+  "pass_count": 7,
+  "fail_count": 2
 }

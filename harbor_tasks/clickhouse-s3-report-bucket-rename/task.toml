@@ -2,15 +2,13 @@ name = "clickhouse-s3-report-bucket-rename"
 description = "Rename HTML_S3_PATH to S3_REPORT_BUCKET and add upstream catalog merge functionality"
 type = "code_change"
 
+source_pr_label = "CI Fix or Improvement"
 [repository]
 owner = "ClickHouse"
 name = "ClickHouse"
 base_commit = "d0432097aed783bd35054dce2edcefe0c4e5122c"
 merge_commit = "47a1d36eb5723869b8a32c2dcf441aa5386f280c"
 pr_number = 102032
-
-[source]
-pr_label = "CI Fix or Improvement"
 
 [expectations]
 # Estimated difficulty for an agent to complete this task
@@ -26,3 +24,6 @@ frameworks = []
 # - deterministic: behavior is deterministic with mocked S3
 # - hermetic: no network calls made in tests
 properties = ["self-contained", "deterministic", "hermetic"]
+
+[verifier]
+env = { GEMINI_API_KEY = "${GEMINI_API_KEY:-}", ANTHROPIC_API_KEY = "${ANTHROPIC_API_KEY:-}" }

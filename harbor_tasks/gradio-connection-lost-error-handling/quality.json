@@ -1,61 +1,60 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all file paths (submit.ts, dependency.ts, Blocks.svelte, constants.ts), variable names (is_connection_error, connection_lost, BROKEN_CONNECTION_MSG, on_connection_lost_cb, handle_connection_lost, reconnect_interval), method names (dispatch, reconnect), and behavioral requirements (broken flag, early return, setInterval, clearInterval, location.reload) that the tests assert on."
+      "reason": "instruction.md names all files (submit.ts, dependency.ts, Blocks.svelte, constants.ts), variable names (is_connection_error, connection_lost, on_connection_lost_cb, reconnect_interval, handle_connection_lost), and constants (BROKEN_CONNECTION_MSG, LOST_CONNECTION_MESSAGE) tested."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly dictates the exact implementation: 'Track connection state using a property named connection_lost initialized to false', 'Check for result.broken in error handlers', 'Set this.connection_lost = true', 'Accept a callback parameter named on_connection_lost_cb', 'short-circuit the dispatch() method', 'Define a function named handle_connection_lost', etc. This is not describing what's broken \u2014 it's prescribing exactly what code to write, including variable names, method mo"
+      "reason": "instruction.md explicitly specifies variable names like 'is_connection_error', 'connection_lost', 'on_connection_lost_cb', 'reconnect_interval', and 'handle_connection_lost' rather than describing the bug behaviorally; this essentially names the fix's implementation details."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific variable names (is_connection_error, connection_lost, on_connection_lost_cb, handle_connection_lost, reconnect_interval), exact patterns like 'const|let|var is_connection_error =', 'broken : is_connection_error', 'this.connection_lost', regex for dispatch early return pattern. An alternative correct fix using different variable names (e.g., is_broken, server_disconnected, onDisconnect) would fail all tests."
+      "reason": "Tests assert exact identifier names (is_connection_error, connection_lost, on_connection_lost_cb, reconnect_interval, handle_connection_lost) via regex, so alternative correct fixes using different names would fail even though behavior is equivalent."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Almost all tests are pure text/regex matching on source files: test_submit_broken_flag_logic checks regex patterns like /const|let|var is_connection_error/, test_dispatch_short_circuits_on_connection_lost checks regex in source text, test_dependency_connection_lost_tracking checks regex patterns. The one behavioral simulation (comparing strings to BROKEN_CONNECTION_MSG) tests JavaScript string equality, not the actual code. No test imports, compiles, or executes the modified code."
+      "reason": "Tests run Node.js subprocesses but only readFileSync and regex-match source code patterns (e.g., /connection_lost\\s*[=:]\\s*false/, /setInterval\\s*\\(/); no code is imported/executed behaviorally."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "A stub that merely adds the text patterns the regex looks for (e.g., adding 'const is_connection_error = x === BROKEN_CONNECTION_MSG' as a comment or dead code, adding 'connection_lost = false' as a property) would pass the tests since they only do regex matching on source text without executing the code."
+      "outcome": "pass",
+      "reason": "A stub that doesn't implement the fix would fail the regex checks for connection_lost=false init, result.broken handling, dispatch early return, setInterval, reconnect(), and location.reload()."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors listed in instruction.md (broken flag, connection_lost tracking, dispatch short-circuit, handle_connection_lost, setInterval/reconnect/reload, callback wiring, cleanup) are covered by the test functions."
+      "reason": "Each listed Verification Criteria item (is_connection_error, broken flag, connection_lost init, dispatch short-circuit, result.broken check, callback, handle_connection_lost, setInterval/reconnect/reload, reconnect_interval, clearInterval) has a corresponding test assertion."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_submit_broken_flag_logic, test_dispatch_short_circuits_on_connection_lost, etc.), each has a docstring, and they are logically grouped by the component they verify."
+      "reason": "Tests are named descriptively (test_submit_broken_flag_logic, test_dispatch_short_circuits_on_connection_lost, etc.) with a 'Fail-to-pass' section header comment."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data like JSON/CSV/API/DB outputs."
+      "reason": "Task is a code fix, not a structured data producer."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, variable names, or commands in the instruction."
+      "reason": "Filenames and identifiers in instruction.md match those referenced in tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names exact files, exact variable names, exact method modifications, and exact implementation patterns (e.g., 'short-circuit the dispatch() method', 'Accept a callback parameter named on_connection_lost_cb'). This goes far beyond identifying the buggy area \u2014 it prescribes the exact code structure."
+      "reason": "instruction.md prescribes exact variable/function names ('named connection_lost', 'named on_connection_lost_cb', 'function named handle_connection_lost', 'variable named reconnect_interval'), eliminating localization/naming decisions that should be part of the fix."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "Code-only task, no config edits involved."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 5
+  "pass_count": 5,
+  "fail_count": 4
 }

@@ -1,0 +1,176 @@
+version: 1
+
+title: "TanStack Router #7066: preserve scroll position after SSR hash hydration"
+description: |
+  After SSR hydration completes in non-SPA mode, resolvedLocation is left undefined.
+  When later preload or invalidate cycles run, the router detects a false location
+  change (resolvedLocation=undefined vs location=current) and re-runs hash scrolling,
+  disrupting the user's scroll position even though the URL hash hasn't actually changed.
+
+  The fix sets `router.stores.resolvedLocation` to the current location state before
+  returning from `hydrate()` in the non-SPA SSR path, preventing subsequent load cycles
+  from mistakenly triggering hash scroll behavior.
+
+repo: TanStack/router
+repo_short: router
+pr_number: 7066
+base_commit: a556afa0f07c551cc0edaf17fa7d0de7014a1c68
+merge_commit: 6ee0e795b085651beb2f1ac6503cdbd7eaffedd1
+
+target_file: packages/router-core/src/ssr/ssr-client.ts
+
+distinctive_line: "router.stores.resolvedLocation.setState(() => router.stores.location.state)"
+
+patch_content: |
+  diff --git a/packages/router-core/src/ssr/ssr-client.ts b/packages/router-core/src/ssr/ssr-client.ts
+  index b2ea33e92bf..678aa869a99 100644
+  --- a/packages/router-core/src/ssr/ssr-client.ts
+  +++ b/packages/router-core/src/ssr/ssr-client.ts
+  @@ -254,6 +254,11 @@ export async function hydrate(router: AnyRouter): Promise<any> {
+         // remove the dehydrated flag since we won't run router.load() which would remove it
+         match._nonReactive.dehydrated = undefined
+       })
+  +    // Mark the current location as resolved so that later load cycles
+  +    // (e.g. preloads, invalidations) don't mistakenly detect a href change
+  +    // (resolvedLocation defaults to undefined and router.load() is skipped
+  +    // in the normal SSR hydration path).
+  +    router.stores.resolvedLocation.setState(() => router.stores.location.state)
+       return routeChunkPromise
+     }
+
+agent_config_files:
+  - path: AGENTS.md
+    commit: a556afa0f07c551cc0edaf17fa7d0de7014a1c68
+    lines: "1-260"
+  - path: packages/router-core/skills/router-core/ssr/SKILL.md
+    commit: a556afa0f07c551cc0edaf17fa7d0de7014a1c68
+    lines: "1-250"
+
+checks:
+  - id: test_typescript_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: Router-core passes TypeScript type checking
+    timeout: 300
+
+  - id: test_build_succeeds
+    type: pass_to_pass
+    origin: repo_tests
+    description: Router-core package builds without errors
+    timeout: 300
+
+  - id: test_unit_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: Existing router-core unit tests pass
+    timeout: 300
+
+  - id: test_resolvedlocation_fix_in_source
+    type: fail_to_pass
+    origin: agent_config
+    source:
+      - AGENTS.md: "Always run unit and type tests during development"
+      - AGENTS.md: "Use nx for targeted testing"
+      - packages/router-core/skills/router-core/ssr/SKILL.md: "SSR APIs are experimental"
+    description: |
+      The non-SPA SSR hydration path (all matches ssr:true, not SPA mode) must set
+      resolvedLocation to the current location state before the early return. Without
+      this, later preload/invalidation cycles detect a false location change and
+      re-trigger hash scrolling.
+    timeout: 60
+
+  - id: test_e2e_tests_exist
+    type: pass_to_pass
+    origin: repo_tests
+    description: Scroll-restoration e2e tests exist and are valid Playwright tests
+    timeout: 60
+
+  - id: test_route_tree_gen_updated
+    type: pass_to_pass
+    origin: repo_tests
+    description: Generated routeTree.gen.ts includes the new test routes
+    timeout: 30
+
+  - id: test_changeset_entry
+    type: pass_to_pass
+    origin: repo_tests
+    description: Changeset entry exists for the router-core patch release
+    timeout: 30
+
+  - id: test_scroll_restoration_preserved
+    type: pass_to_pass
+    origin: repo_tests
+    description: Scroll restoration code (hash-scroll.ts, scroll-restoration.ts) is intact
+    timeout: 30
+
+  - id: test_spa_mode_path_unchanged
+    type: pass_to_pass
+    origin: repo_tests
+    description: SPA mode hydration path is preserved
+    timeout: 30
+
+  - id: test_repo_eslint
+    type: pass_to_pass
+    origin: repo_tests
+    description: Router-core ESLint passes (pass_to_pass)
+    timeout: 300
+
+  - id: test_repo_build_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: Router-core publint/attw build check passes (pass_to_pass)
+    timeout: 300
+
+  - id: test_ssr_client_file_has_no_tabs
+    type: pass_to_pass
+    origin: static
+    description: SSR client source uses spaces not tabs (pass_to_pass)
+    timeout: 30
+
+rubric:
+  - source:
+      - AGENTS.md: "Always run unit and type tests during development - do not proceed if they fail"
+    description: |
+      Code changes must pass the repo's full test suite. Running `pnpm test:unit`, `pnpm test:types`,
+      and `pnpm test:eslint` is required before committing.
+    weight: 2
+
+  - source:
+      - AGENTS.md: "Use Nx targets over direct test runners so task dependencies (including required builds) remain in the graph"
+    description: |
+      Use `pnpm nx run @tanstack/router-core:test:unit` instead of `pnpm vitest` directly
+      to ensure build dependencies are properly tracked.
+    weight: 1
+
+  - source:
+      - AGENTS.md: "Agent execution guardrails: Always prefer pnpm nx over npx nx"
+    description: |
+      Execute Nx commands via `pnpm nx` not `npx nx`. Use `CI=1 NX_DAEMON=false pnpm nx run ...`
+      in sandboxed/CI environments.
+    weight: 1
+
+  - source:
+      - packages/router-core/skills/router-core/ssr/SKILL.md: "TanStack Router is CLIENT-FIRST. Loaders run on the client by default. With SSR enabled, loaders run on BOTH client AND server."
+    description: |
+      The SSR hydration path must correctly handle the client-first nature of TanStack Router
+      loaders. resolvedLocation must be set appropriately so subsequent load cycles don't
+      mistakenly re-trigger side effects like hash scrolling.
+    weight: 2
+
+  - source:
+      - packages/router-core/skills/router-core/ssr/SKILL.md: "Do not generate Next.js patterns (getServerSideProps, App Router, server components) or Remix patterns (server-only loader exports)"
+    description: |
+      The fix must not introduce Next.js or Remix patterns. The change should stay within
+      TanStack Router's SSR hydration flow using the existing store API.
+    weight: 1
+
+  - source:
+      - AGENTS.md: "Test changes in relevant example apps"
+    description: |
+      When fixing SSR behavior, test in the scroll-restoration e2e example to verify
+      the fix works end-to-end.
+    weight: 1
+
+defaults:
+  timeout: 600
+  retry: 2

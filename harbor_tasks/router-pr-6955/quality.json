@@ -1,61 +1,59 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all key specifics tested: `isRolldown`, `bundlerOptionsKey`, `getBundlerOptions`, `rolldownOptions`, `rollupOptions`, `rolldownVersion`, the three file paths (`utils.ts`, `plugin.ts`, `preview-server-plugin/plugin.ts`), and the vite import for detection. The exact export names and function names are discoverable from the instruction's description of required changes."
+      "reason": "instruction.md names all three files, mentions isRolldown detection via vite module property, bundlerOptionsKey, getBundlerOptions, and the keys rolldownOptions/rollupOptions that tests assert on."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction essentially dictates the exact implementation: export a constant `isRolldown`, export `bundlerOptionsKey` that resolves between rolldownOptions/rollupOptions, export a function `getBundlerOptions`, import vite and check for `rolldownVersion`, use `[bundlerOptionsKey]` as computed property. This is a near-complete specification of the solution, not just a description of what's broken."
+      "reason": "instruction.md effectively dictates exact export names by requiring 'Export a constant' and tests check for 'isRolldown', 'bundlerOptionsKey', 'getBundlerOptions' \u2014 the instruction uses these exact semantics, and combined with 'rolldownVersion' property hint, the fix is largely prescribed."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact export names like `export const isRolldown`, `export const bundlerOptionsKey`, `export function getBundlerOptions`, exact string `import * as vite from 'vite'`, exact property name `rolldownVersion`, and `[bundlerOptionsKey]` in plugin.ts. An alternative correct fix using different variable names (e.g., `isVite8`, `bundlerKey`, `getOptions`) or a different detection mechanism would fail."
+      "reason": "Tests assert specific identifier names like 'export const isRolldown', 'export const bundlerOptionsKey', 'export function getBundlerOptions' \u2014 alternative valid fixes using different names (e.g., 'isVite8', 'getBuildOptions', or a class-based approach) would fail."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The fail_to_pass tests (TestBundlerDetectionUtilities, TestPluginIntegration, TestPreviewServerPluginIntegration) are ALL text-matching: every single one reads a file and does `assert 'string' in content`. While TestPackageBuildAndQuality runs subprocesses (build, lint, types), the core behavioral tests never import, call, or execute the code."
+      "outcome": "pass",
+      "reason": "While many tests are string-in-file checks, TestPackageBuildAndQuality runs actual subprocess builds, typecheck, eslint, unit tests, and build validation."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "A stub that simply adds the required export declarations (e.g., `export const isRolldown = false; export const bundlerOptionsKey = 'rollupOptions'; export function getBundlerOptions() {}`) with the right string literals would pass all f2p text-matching tests without implementing actual detection logic. The pass_to_pass build/type tests might catch some issues, but the f2p tests themselves are trivially satisfiable."
+      "outcome": "pass",
+      "reason": "The pass_to_pass subprocess tests (build, typecheck, unit tests) require the code to actually work, not just contain strings; stubs would fail TypeScript compilation and unit tests."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in the instruction (version detection via rolldownVersion, bundlerOptionsKey selection, getBundlerOptions function, plugin.ts using dynamic key, preview-server-plugin using getBundlerOptions) are covered by tests."
+      "reason": "Tests cover utils.ts exports, plugin.ts integration, preview-server-plugin integration, and backward-compatibility via build/unit test execution."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized into classes (TestBundlerDetectionUtilities, TestPluginIntegration, TestPreviewServerPluginIntegration, TestPackageBuildAndQuality) with descriptive names and docstrings indicating fail_to_pass vs pass_to_pass."
+      "reason": "Tests are organized into four named classes (TestBundlerDetectionUtilities, TestPluginIntegration, TestPreviewServerPluginIntegration, TestPackageBuildAndQuality) with docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "Task is code refactor, not structured data production."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, variable names, or commands across all task files."
+      "reason": "File paths and identifiers appear consistent between instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact export names (isRolldown, bundlerOptionsKey, getBundlerOptions), the exact detection property (rolldownVersion), the exact import pattern, and that plugin.ts should use computed property syntax. This goes well beyond naming the buggy files and describes the exact solution structure."
+      "reason": "instruction.md names exact files ('packages/start-plugin-core/src/utils.ts', 'plugin.ts', 'preview-server-plugin/plugin.ts') and also dictates export names by description ('Export a constant that resolves to the correct key', 'Export a function that reads from the appropriate bundler options') which matches the exact test assertions."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "Not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 5
+  "pass_count": 6,
+  "fail_count": 3
 }

@@ -1,60 +1,58 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "The instruction names all relevant file paths (src/rust/jsg-macros/lib.rs, src/rust/jsg/v8.rs, src/rust/jsg/ffi.h, src/rust/jsg/ffi.c++, src/rust/AGENTS.md, src/rust/jsg-macros/README.md, docs/reference/rust-review-checklist.md), mentions the key concepts tested (static vs instance methods, receiver detection, Member::StaticMethod, Function type, function_template_get_function, has_self, FnArg::Receiver), and describes the expected behavior. The specific string literals like 'Member::StaticMetho"
+      "outcome": "fail",
+      "reason": "Tests assert specific literals like 'has_self', 'Member::StaticMethod', 'Member::Method', 'pub struct Function;', 'as_local_function', 'function_template_get_function', 'From<Local<'a, Function>>', 'FnArg::Receiver', and 'GetFunction' \u2014 none of these exact identifiers are mentioned in instruction.md, making them undiscoverable without reading the hidden tests or source."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the problem (macro assumes instance methods) and the expected behavior (detect receiver, register static methods on constructor) but does not specify exact code changes, line numbers, or variable names to use. A developer must still reason about implementation."
+      "reason": "Instruction describes what's broken and what behavior is expected without prescribing specific variable names, line edits, or internal helper names."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on very specific implementation details: 'has_self' variable name (test_jsg_method_static_detection), 'if has_self' exact string (same test), 'Member::StaticMethod' exact enum variant name (test_static_member_variant), 'pub struct Function;' exact declaration (test_function_type_and_ffi), 'as_local_function' exact method name, 'function_template_get_function' exact FFI function name. An alternative correct implementation using different variable names (e.g., 'is_instance_method', 'i"
+      "reason": "Tests assert specific identifiers like 'has_self', 'Member::StaticMethod', 'as_local_function', 'function_template_get_function', and 'pub struct Function;' \u2014 valid alternative implementations using different names (e.g., 'is_static', 'Member::Static', 'get_function') would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Nearly every test is a string-in-file check: `assert 'has_self' in lib_rs`, `assert 'Member::StaticMethod' in lib_rs`, `assert 'pub struct Function;' in v8_rs`, etc. Only test_rustfmt_jsg_macros_syntax and test_rustfmt_jsg_v8_syntax actually execute code (rustfmt). No test compiles the macro, runs it, or verifies behavior. The majority of tests are pure text-matching."
+      "reason": "Most tests are substring checks on source files (e.g., assert 'Member::StaticMethod' in lib_rs); only rustfmt --check is executed, and it only verifies parseability, not behavior."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "Many tests check for strings that could be satisfied by inserting comments or dead code. For example, test_jsg_method_static_detection just checks 'has_self' and 'if has_self' appear in the file \u2014 adding a comment '// has_self' and '// if has_self' would pass. test_static_member_variant checks 'Member::StaticMethod' appears \u2014 a comment would suffice. test_agents_md_documents_static_methods checks 'static' appears in the file (case-insensitive), which is trivially satisfiable."
+      "outcome": "pass",
+      "reason": "Tests require specific code markers that a stub wouldn't include; a pass-through stub wouldn't have 'Member::StaticMethod' or 'function_template_get_function'."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "The instruction says the macro should 'automatically detect whether a method has a receiver' and generate appropriate code, but no test actually compiles the macro or verifies that annotating a function without &self produces static method registration. The actual behavioral requirement (correct code generation) is untested."
+      "outcome": "pass",
+      "reason": "The instruction's required behaviors (macro detection, FFI function, documentation in three files) all have corresponding tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_jsg_method_static_detection, test_static_member_variant, etc.), each has a docstring explaining what it checks, and they are logically grouped by concern (syntax, macro logic, FFI, documentation)."
+      "reason": "Tests have descriptive names and docstrings grouping them by concern (syntax, macro detection, FFI, docs)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "Task is code/doc editing, not structured data production."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and commands in the instruction and tests are consistent and correctly spelled."
+      "reason": "File paths and identifiers appear consistent between instruction and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names the files to modify (which is appropriate for the task scope) but does not specify exact line numbers or exact code to write. The file listing is reasonable given the task description."
+      "reason": "Instruction names the files to modify, which is appropriate given the task scope; no exact line/diff is leaked."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code and documentation change task, not a config-edit-only task."
+      "reason": "This is primarily a code task, not an agentmd-edits config task."
     }
   },
   "tier_a_fails": [
+    "behavior_in_task_description",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "behavior_in_tests"
-  ],
-  "pass_count": 5,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 6,
+  "fail_count": 3
 }

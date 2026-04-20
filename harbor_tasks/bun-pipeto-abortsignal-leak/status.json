@@ -4,10 +4,10 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-15T22:56:34.434364",
-  "total_time": 4741.28,
-  "sandbox_id": "i9oyc774i2q20379ihzq6",
-  "backend": "minimax",
+  "validated_at": "2026-04-16T12:55:34.039424",
+  "total_time": 69.85,
+  "sandbox_id": "i2oyg7a0skjlw7qleb7jc",
+  "backend": "anthropic",
   "pipeline": "pipeline",
   "start_at": "judge",
   "nodes": {
@@ -60,35 +60,30 @@
       "abandoned": false
     },
     "quality_gate": {
-      "status": "passed",
-      "model": "MiniMax-M2.7",
-      "backend": "minimax",
+      "status": "DELETE",
+      "model": "claude-opus-4-7",
+      "backend": "anthropic",
       "time": 0.32,
-      "notes": "flags=['lint_tier_b:4', 'B:[B] no_network_during_tests @ tests/test.sh:5: network call at test time: `curl`', 'B:[B] no_network_during_tests @ tests/test.sh:6: network call at test time: `apt-get install`', 'B:[B] no_network_during_tests @ tests/test.sh:6: network call at test time: `curl`']"
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:279: test `test_cpp_pattern_compiles` has 1 assert(s), all pass on a s', 'lint_tier_b:4', 'B:[B] no_network_during_tests @ tests/test.sh:5: network call at test time: `curl`', 'B:[B] no_network_during_tests @ tests/test.sh:6: network call at test time: `apt-get install`', 'B:[B] no_network_during_tests @ tests/test.sh:6: network call at test time: `curl`']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 27.3,
+      "time": 12.3,
       "tier_a_fails": [
-        "behavior_in_task_description",
         "no_solution_leakage",
-        "solution_uniqueness_guard",
-        "tests_verify_behavior_not_text"
+        "solution_uniqueness_guard"
       ],
       "tier_b_fails": [],
-      "pass_count": 4,
-      "fail_count": 5
+      "pass_count": 6,
+      "fail_count": 3
+    },
+    "tests_rewrite": {
+      "status": "error",
+      "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":463,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 400 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"invalid_request_error\\\",\\\"message\\\":\\\"\\\\\\\"thinking.type.enabled\\\\\\\" is not supported for this model. Use \\\\\\\"thinking.type.adapt",
+      "time": 1.75
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "minimax",
-      "time": 3048.86,
-      "at": "2026-04-15T11:17:26.425566"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -120,6 +115,14 @@
       "backend": "minimax",
       "time": 4741.28,
       "at": "2026-04-15T22:56:34.434364"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "anthropic",
+      "time": 69.85,
+      "at": "2026-04-16T12:55:34.039424"
     }
   ]
 }

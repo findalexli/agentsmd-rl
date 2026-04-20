@@ -1,67 +1,178 @@
 checks:
-  # Fail-to-pass checks (tests that verify the fix works)
-  - id: test_transform_enum_no_default
-    type: fail_to_pass
-    origin: gold_patch
-    description: Transform enum no longer has #[default] on Str variant
+- id: test_transform_enum_no_default
+  type: fail_to_pass
+  origin: pr_diff
+  description: Transform enum no longer has
+- id: test_strand_value_has_optional_transform
+  type: fail_to_pass
+  origin: pr_diff
+  description: Strand::Value has Option<Transform> instead of Transform
+- id: test_writer_handles_none_transform
+  type: fail_to_pass
+  origin: pr_diff
+  description: Writer handles None transform by checking if atom can be formatted
+    as str
+- id: test_interpreter_passes_transform_directly
+  type: fail_to_pass
+  origin: pr_diff
+  description: Interpreter passes transform directly without unwrapping
+- id: test_format_as_str_is_pub_crate
+  type: fail_to_pass
+  origin: pr_diff
+  description: format_as_str method is pub(crate) for use by writer
+- id: test_unit_test_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: Unit test for implicit JSON formatting exists
+- id: test_bare_struct_formatting
+  type: fail_to_pass
+  origin: pr_diff
+  description: Bare struct expression implicitly uses JSON formatting (behavioral)
+- id: test_cargo_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: sui-display crate compiles without errors
+- id: test_cargo_clippy
+  type: pass_to_pass
+  origin: repo_tests
+  description: sui-display crate passes clippy lints
+- id: test_cargo_fmt
+  type: pass_to_pass
+  origin: repo_tests
+  description: sui-display crate code is properly formatted
+- id: test_cargo_doc
+  type: pass_to_pass
+  origin: repo_tests
+  description: sui-display documentation builds without errors
+- id: test_cargo_xlint
+  type: pass_to_pass
+  origin: repo_tests
+  description: License headers check passes
+- id: test_display_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: All sui-display library tests pass
+distractors:
+- rule: All new files must start with the following license in comments at the top
+    of the file
+  collision_type: scope_ambiguity
+  why_distracting: The rule specifies adding a license header to 'All new files'.
+    An agent might misinterpret this and prepend the license header to the existing
+    files it modifies (e.g., interpreter.rs or mod.rs), creating unnecessary diffs
+    and potential linting issues.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 16-19
+- rule: simtests must be run with `cargo simtest` to avoid false negatives
+  collision_type: scope_ambiguity
+  why_distracting: The config emphasizes running simtests to avoid false negatives.
+    An agent might waste time trying to run `cargo simtest` for the `sui-display`
+    crate, which is a standard library crate where `cargo nextest` is sufficient and
+    faster.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 30-31
+- rule: Use simtest for testing blockchain interactions and debugging.
+  source:
+    path: .claude/skills/simtest-debug/SKILL.md
+    lines: 1-10
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to write a simtest for this display formatting
+    feature, but sui-display is a local utility that only requires standard tokio
+    tests.
+  severity: medium
+- rule: Update protocol config when introducing new features or changing behavior.
+  source:
+    path: .claude/skills/protocol-config/SKILL.md
+    lines: 1-10
+  collision_type: scope_ambiguity
+  why_distracting: The agent might think changing how values are displayed requires
+    a protocol config update, but this is purely a client-side/display change.
+  severity: low
+- rule: Never make functional changes to the code; only add logging statements to
+    debug tests.
+  source:
+    path: .claude/skills/simtest-debug/SKILL.md
+    lines: 38-40
+  source_text: 'While executing the skill, never make functional changes to the code.  Only
+    add logging statements as described below.  The goal is to find the root cause,
+    not fix the issue.
 
-  - id: test_strand_value_has_optional_transform
-    type: fail_to_pass
-    origin: gold_patch
-    description: Strand::Value has Option<Transform> instead of Transform
+    If at any point the reproduction command stops failing, or fails in a different
+    way, this indicates that functional changes have been made. The test is deterministic
+    and cannot
 
-  - id: test_writer_handles_none_transform
-    type: fail_to_pass
-    origin: gold_patch
-    description: Writer handles None transform by checking if atom can be formatted as str
+    be affected by emitting logs, doing expensive computations, etc.'
+  collision_type: meta_confusion
+  why_distracting: An agent tasked with fixing a bug might read this rule and incorrectly
+    conclude they are strictly forbidden from modifying source files functionally,
+    failing to realize this constraint applies exclusively to the simtest-debug debugging
+    workflow.
+  severity: high
+- rule: Add a new constant (which is None in prior versions) and add the field to
+    the ProtocolConfig struct with type Option<T>.
+  source:
+    path: .claude/skills/protocol-config/SKILL.md
+    lines: 99-103
+  source_text: '**Add a new constant (which is None in prior versions):**
 
-  - id: test_interpreter_passes_transform_directly
-    type: fail_to_pass
-    origin: gold_patch
-    description: Interpreter passes transform directly without unwrapping
+    ```rust
 
-  - id: test_format_as_str_is_pub_crate
-    type: fail_to_pass
-    origin: gold_patch
-    description: format_as_str method is pub(crate) for use by writer
+    cfg.new_constant = Some(new_value);
 
-  - id: test_unit_test_exists
-    type: fail_to_pass
-    origin: gold_patch
-    description: Unit test for implicit JSON formatting exists
+    ```
 
-  - id: test_bare_struct_formatting
-    type: fail_to_pass
-    origin: gold_patch
-    description: Bare struct expression implicitly uses JSON formatting (behavioral)
+    Note: You must also add the field to the `ProtocolConfig` struct with type `Option<T>`.
+    The `ProtocolConfigAccessors` derive macro automatically generates accessor methods
+    (`new_constant()` and `new_constant_as_option()`).'
+  collision_type: scope_ambiguity
+  why_distracting: 'The diff refactors `transform: Transform` to `transform: Option<Transform>`.
+    An agent might wrongly associate this local change in `sui-display` with the ProtocolConfig
+    rule, assuming that the use of `Option<T>` must be linked to protocol backward
+    compatibility or attempting to modify the core `ProtocolConfig` struct instead.'
+  severity: medium
+hierarchy_analysis: The hierarchy consists of two root-level files (`AGENTS.md` and
+  `CLAUDE.md`). `AGENTS.md` simply points to `CLAUDE.md` and suggests looking for
+  crate-specific files, but none exist for `sui-display` in this context. The guidance
+  is entirely generic repository defaults.
+version: '2.0'
+source:
+  repo: MystenLabs/sui.git
+  pr: 0
+  base_commit: 2a6083bafec7a791806866cea60f03fd2e1beb65
+  merge_commit: ''
+rubric:
+- rule: 'Use #[tokio::test] for async tests (not #[test]) and avoid using linting
+    suppressions.'
+  source:
+    path: CLAUDE.md
+    lines: 113-114
+  source_text: "   - **NEVER use `#[allow(dead_code)]`, `#[allow(unused)]`, or any\
+    \ other linting suppressions** - fix the underlying issues instead\n   - **All\
+    \ unit tests must work properly** - use `#[tokio::test]` for async tests, not\
+    \ `#[test]`"
+  evidence: 'The gold diff correctly defines a new async test function test_format_single_bare_expression_falls_back_to_json
+    using the #[tokio::test] attribute without adding any linting suppressions.'
+  category: testing
+  verification: llm_judge
+- rule: Do not comment obvious constructs such as simple variable assignments, standard
+    library usage, self-descriptive function calls, and basic control flow.
+  source:
+    path: CLAUDE.md
+    lines: 126-130
+  source_text: '**When NOT to comment**:
 
-  # Pass-to-pass checks (repo CI/CD tests that should pass on both base and fixed)
-  - id: test_cargo_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: sui-display crate compiles without errors
+    - Simple variable assignments
 
-  - id: test_cargo_clippy
-    type: pass_to_pass
-    origin: repo_tests
-    description: sui-display crate passes clippy lints
+    - Standard library usage
 
-  - id: test_cargo_fmt
-    type: pass_to_pass
-    origin: repo_tests
-    description: sui-display crate code is properly formatted
+    - Self-descriptive function calls
 
-  - id: test_cargo_doc
-    type: pass_to_pass
-    origin: repo_tests
-    description: Documentation builds without errors
-
-  - id: test_cargo_xlint
-    type: pass_to_pass
-    origin: repo_tests
-    description: License headers are present on all source files
-
-  - id: test_display_tests_pass
-    type: pass_to_pass
-    origin: repo_tests
-    description: All sui-display library tests pass
+    - Basic control flow (if/for/while)'
+  evidence: The gold diff refactors parsing and formatting logic in `crates/sui-display/src/v2/writer.rs`
+    using basic control flow (`if matches!`) and self-descriptive function calls without
+    adding any redundant comments.
+  category: documentation
+  verification: llm_judge

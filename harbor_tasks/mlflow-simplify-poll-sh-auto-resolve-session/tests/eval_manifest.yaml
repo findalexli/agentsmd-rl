@@ -1,0 +1,125 @@
+version: '2.0'
+source:
+  repo: mlflow/mlflow
+  pr: 21901
+  base_commit: cd2cea0d7acf7d47f4fbd8f94e7da0844a89e76a
+  merge_commit: 84f85d4c6a894023e618150d6a4efda1e25d6623
+checks:
+- id: poll_sh_syntax
+  type: pass_to_pass
+  origin: static
+  description: poll.sh parses without bash syntax errors
+- id: test_skill_yaml_frontmatter
+  type: pass_to_pass
+  origin: static
+  description: SKILL.md has valid YAML frontmatter with required fields
+- id: poll_retains_core_loop
+  type: pass_to_pass
+  origin: static
+  description: poll.sh retains polling loop and mark-ready-for-review logic
+- id: poll_two_arg_interface
+  type: fail_to_pass
+  origin: pr_diff
+  description: poll.sh accepts 2 args (repo, pr_number) instead of 3
+- id: poll_auto_resolves_session
+  type: fail_to_pass
+  origin: pr_diff
+  description: poll.sh uses 'gh agent-task list' to auto-resolve the latest session
+    ID
+- id: skill_allowed_tools_has_agent_task_list
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md allowed-tools includes 'gh agent-task list'
+- id: skill_polling_simplified
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md polling section simplified, no session_url extraction boilerplate
+- id: copilot_skill_ruff
+  type: pass_to_pass
+  origin: repo_tests
+  description: Copilot skill passes ruff linting
+- id: copilot_files_exist
+  type: pass_to_pass
+  origin: repo_tests
+  description: Copilot skill required files exist and have proper structure
+- id: poll_sh_shellcheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: poll.sh passes shellcheck linting
+rubric:
+- rule: Assume the authors are referencing newer, valid resources (don't flag unfamiliar
+    names as speculative or non-existent)
+  source:
+    path: CLAUDE.md
+    lines: 7-9
+  category: tooling
+  evidence: The gold solution directly uses the `gh agent-task list` command as instructed,
+    even though it is an internal/newer GitHub CLI extension, without attempting to
+    work around it or flag it as invalid.
+- rule: Only add comments that explain non-obvious logic or provide additional context
+  source:
+    path: CLAUDE.md
+    lines: 13-13
+  category: documentation
+  evidence: The gold solution adds a concise comment `# Find the latest session for
+    this PR` right above the complex `gh agent-task list` and `jq` pipeline, explaining
+    the non-obvious logic of the command.
+- rule: Tools in the `allowed-tools` list must follow the specific format `- Bash(<command>:*)`.
+  source:
+    path: .claude/skills/copilot/SKILL.md
+    lines: 4-10
+  evidence: The gold solution adds `- Bash(gh agent-task list:*)` to the `allowed-tools`
+    list, perfectly matching the existing syntax format for Bash commands.
+  category: tooling
+  verification: llm_judge
+config_edits:
+- path: .claude/skills/copilot/SKILL.md
+  tier: 1
+  gold_added: '- Bash(gh agent-task list:*)
+
+    Once Copilot starts working, poll in the background until Copilot finishes. The
+    script automatically finds the latest session for the PR:
+
+    bash .claude/skills/copilot/poll.sh "<owner>/<repo>" <pr_number>'
+  gold_removed: 'Once Copilot starts working, extract the session ID from the output
+    URL and poll in the background until Copilot finishes:
+
+    # gh agent-task create returns a URL like:
+
+    # https://github.com/mlflow/mlflow/pull/21887/agent-sessions/523bb0e1-...
+
+    session_url=
+
+    session_id="${session_url##*/}"
+
+
+    # Poll using session ID
+
+    bash .claude/skills/copilot/poll.sh "$session_id" "<owner>/<repo>" <pr_number>'
+distractors:
+- rule: 'copilot: Hand off a task to GitHub Copilot.'
+  source:
+    path: CLAUDE.md
+    lines: 88-89
+  collision_type: meta_confusion
+  why_distracting: The agent is tasked with modifying the copilot skill's internal
+    scripts and documentation. Seeing the skill listed as available might confuse
+    the agent into trying to invoke the skill to solve the task, rather than directly
+    editing the skill's implementation files.
+  severity: medium
+- rule: 'Post-creation: Print both the session URL and the PR URL (strip `/agent-sessions/...`
+    from the session URL).'
+  source:
+    path: .claude/skills/copilot/SKILL.md
+    lines: 18-23
+  collision_type: scope_ambiguity
+  why_distracting: The existing skill documentation explains how to strip `/agent-sessions/...`
+    from the session URL. An agent might mistakenly try to implement this URL parsing
+    logic inside `poll.sh`, even though the new `gh agent-task list` approach returns
+    the ID directly and makes URL parsing obsolete.
+  severity: medium
+hierarchy_analysis: The repository has a single `CLAUDE.md` file at the root level
+  providing general guidelines. Since the task involves modifying bash scripts and
+  markdown documentation rather than Python code, most of the MLflow-specific Python
+  rules do not apply. The agent must rely primarily on the explicit task instructions
+  while adhering to the general documentation and tooling principles in `CLAUDE.md`.

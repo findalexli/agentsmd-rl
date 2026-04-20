@@ -1,0 +1,120 @@
+version: '2.0'
+source:
+  repo: denoland/deno
+  pr: 33073
+  base_commit: 7c57830506e4ded88a7bfee2a03a5e0530787fbe
+  merge_commit: 2bb06663c1d7ee6532f6737d721ea1adb89fd884
+checks:
+- id: comparison_path_function
+  type: fail_to_pass
+  origin: pr_diff
+  description: comparison_path() function exists with cfg!(windows) branch and non-Windows
+    fallback
+- id: cmp_path_field_in_path_query_descriptor
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'PathQueryDescriptor struct has a cmp_path: PathBuf field'
+- id: cmp_path_field_in_path_descriptor
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'PathDescriptor struct has a cmp_path: PathBuf field'
+- id: equality_uses_cmp_path
+  type: fail_to_pass
+  origin: pr_diff
+  description: All 3 PartialEq impls compare cmp_path instead of path
+- id: hash_uses_cmp_path
+  type: fail_to_pass
+  origin: pr_diff
+  description: Hash impl for PathDescriptor hashes cmp_path, not path
+- id: starts_with_uses_cmp_path
+  type: fail_to_pass
+  origin: pr_diff
+  description: Both starts_with methods use cmp_path for prefix checking
+- id: ordering_uses_cmp_path
+  type: fail_to_pass
+  origin: pr_diff
+  description: cmp_allow_allow and cmp_allow_deny use cmp_path for ordering
+- id: not_stub_comparison_path
+  type: pass_to_pass
+  origin: static
+  description: comparison_path function has real logic (not a stub)
+- id: test_repo_cargo_check_permissions
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's cargo check passes for deno_permissions package
+- id: test_repo_cargo_clippy_permissions
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's cargo clippy passes for deno_permissions package
+- id: test_repo_cargo_fmt_permissions
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's cargo fmt check passes for deno_permissions package
+- id: test_repo_cargo_test_permissions_lib
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's cargo test --lib passes for deno_permissions package
+- id: test_repo_rustfmt_permissions
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's rustfmt check passes for permissions lib.rs
+- id: test_repo_cargo_check_locked_permissions
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's cargo check --locked passes for deno_permissions package (ensures
+    Cargo.lock is up to date)
+- id: test_repo_cargo_doc_permissions
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's cargo doc builds for deno_permissions package (catches doc errors)
+- id: test_repo_cargo_test_locked_permissions
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's cargo test --locked --lib passes for deno_permissions package
+    (matches actual CI)
+rubric:
+- rule: Keep your changes minimal - only modify runtime/permissions/lib.rs without
+    touching unrelated files like cli/args/flags.rs.
+  source:
+    path: runtime/permissions/lib.rs
+  reference: The gold solution modifies only runtime/permissions/lib.rs (130 lines
+    changed) with 113 insertions and 17 deletions, without touching unrelated files.
+- rule: Match existing patterns - add comparison_path() function adjacent to the PathDescriptor
+    and PathQueryDescriptor structs, following the existing pattern.
+  source:
+    path: runtime/permissions/lib.rs
+  reference: The gold solution adds comparison_path() function as a module-level helper
+    function in runtime/permissions/lib.rs, placed between the PathQueryDescriptor
+    impl block and the PathDescriptor struct, following the existing pattern of helper
+    functions located near the types that use them.
+- rule: Place integration tests (spec tests) in the `tests/specs/` directory.
+  source:
+    path: tests/specs/permission/path_case_insensitive/__test__.jsonc
+  reference: 'The gold solution creates __test__.jsonc with {"if": "windows", "args":
+    "run -A main.ts"} in tests/specs/permission/path_case_insensitive/ directory.'
+  category: testing
+- rule: Modify runtime/permissions/lib.rs for filesystem permission path comparison,
+    following the architectural guidance that the deno_runtime crate handles system
+    access.
+  source:
+    path: runtime/permissions/lib.rs
+  reference: The gold solution modifies only runtime/permissions/lib.rs in the deno_runtime
+    crate to implement case-insensitive path comparison for Windows, adding cmp_path
+    fields to PathDescriptor and PathQueryDescriptor structs, and updating all comparison
+    logic (PartialEq, Hash, starts_with, cmp_allow_allow, cmp_allow_deny) to use cmp_path
+    instead of path. This aligns with the architectural guidance that the runtime
+    crate handles system-level access control.
+  category: architecture
+distractors:
+- rule: Flag parsing is in `cli/args/flags.rs`.
+  collision_type: architecture_boundary
+  why_distracting: The issue explicitly mentions `--allow-read` and `--deny-read`
+    flags, which might lead the agent to modify `cli/args/flags.rs` based on this
+    rule. However, the core path comparison logic resides in the runtime permissions
+    module, not the CLI flag parser.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 53-54
+hierarchy_analysis: The configuration consists of a single root-level CLAUDE.md file
+  providing high-level architectural guidance and standard development workflows.

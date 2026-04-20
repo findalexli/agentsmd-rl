@@ -1,61 +1,59 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "The test `test_without_root_bound_applied` asserts the literal string 'scope.without_root_bound()' exists in display.rs, but instruction.md never mentions `without_root_bound()` as a method name. The instruction describes the bug conceptually but does not name this specific method, making it undiscoverable from the instruction alone. Similarly, the test `test_fix_has_proper_comment` asserts the exact string 'Display registry objects are global objects' \u2014 while instruction.md requirement #2 does "
+      "outcome": "pass",
+      "reason": "Instruction names the file display.rs, the required comment phrase 'Display registry objects are global objects', and the compile/lint commands; test assertions check these specifics."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "Instruction.md requirement #2 states 'The fix must include a comment containing the exact phrase \"Display registry objects are global objects\"' which strongly hints at the nature of the fix. Combined with the note about Scope controlling version bounding and the prohibition on modifying scope.rs, a developer is essentially told to use an existing Scope method to remove the version bound. The instruction practically spells out the fix approach rather than just describing the bug."
+      "reason": "Instruction says 'Do NOT modify crates/sui-indexer-alt-graphql/src/scope.rs' and notes that Scope controls version bounding with root_bound \u2014 combined with 'root version bound from the rendered object is incorrectly applied', this strongly hints the fix is to call without_root_bound() which is exactly what the test checks."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_without_root_bound_applied asserts the exact string 'scope.without_root_bound()' must appear in display.rs. An alternative correct fix (e.g., creating a new scope with `Scope::new(...)` without a root bound, or using a different method/approach to achieve the same result) would fail this test. The test locks in one specific implementation detail."
+      "reason": "test_without_root_bound_applied hardcodes the literal 'scope.without_root_bound()' \u2014 an equally valid fix (e.g., constructing a new Scope, passing a different scope, or using a different method name) would fail even if semantically correct."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The F2P tests are: test_code_compiles (runs cargo check \u2014 behavioral), test_without_root_bound_applied (pure text search for 'scope.without_root_bound()' and comment strings in source file), and test_fix_has_proper_comment (pure text search for 'Display registry objects are global objects'). Two of the three F2P tests are purely textual assertions with no behavioral execution of the fixed code."
+      "outcome": "pass",
+      "reason": "Tests run cargo check, cargo clippy, cargo xlint, cargo doc, and git-checks.sh subprocesses in addition to text assertions."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub/no-op implementation would not pass: test_without_root_bound_applied requires the specific string 'scope.without_root_bound()' to exist in the file, and test_code_compiles requires the code to actually compile. A default/empty implementation wouldn't add these strings or necessarily compile."
+      "reason": "The f2p tests require the actual code change (without_root_bound call and specific comment) plus successful compilation; a stub cannot satisfy cargo check with the required call added."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "Instruction.md requirement #4 mentions 'cargo clippy -p sui-indexer-alt-graphql' \u2014 this is tested. But the core behavioral requirement (Display v2 formats should render for older versioned objects) is never tested with actual GraphQL queries or unit tests exercising the display rendering logic. Only text pattern matching and compilation are checked."
+      "outcome": "pass",
+      "reason": "Compile, lint, the required comment phrase, and the scope fix location are all tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_code_compiles, test_without_root_bound_applied, etc.), have docstrings explaining F2P vs P2P classification, and the module docstring explains the bug and fix."
+      "reason": "Tests have descriptive names, docstrings labeling F2P/P2P, and are logically grouped."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task is about fixing a bug in Rust source code, not producing structured data output."
+      "reason": "Task is a code fix, no structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, commands, variable names, and function names in instruction.md and tests are consistent and correctly spelled."
+      "reason": "Paths and commands appear correct and consistent."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction names the file to modify (display.rs) which is appropriate since it's a single-file fix task. It doesn't specify exact line numbers or the exact method to call (without_root_bound), though the Scope note does provide a mild hint."
+      "outcome": "fail",
+      "reason": "Instruction explicitly identifies the file to modify ('crates/sui-indexer-alt-graphql/src/api/types/display.rs') and narrows behavior to 'root version bound' with a pointer to Scope's root_bound field, heavily localizing the fix."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "Code-only task, no config edits."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
     "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests"
+    "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 5
+  "pass_count": 6,
+  "fail_count": 3
 }

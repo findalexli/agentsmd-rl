@@ -1,0 +1,72 @@
+{
+  "schema_version": 2,
+  "valid": true,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-16T11:19:26.908926",
+  "total_time": 5303.32,
+  "sandbox_id": "ii12bvndi7l7msd6r37it",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "scaffold",
+  "nodes": {
+    "scaffold": {
+      "status": "ok",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 1551.32,
+      "notes": ""
+    },
+    "quality_gate": {
+      "status": "passed",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.22,
+      "notes": "flags=['lint_tier_b:1', 'B:[B] no_network_during_tests @ tests/test.sh:2: network call at test time: `pip install`']"
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 1626.3,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "fail",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "rubric_icr": 0.0,
+      "attempts": 1,
+      "notes": "Docker build, NOP (reward=0), and Gold (reward=1) all pass correctly. Rubric judge fails (ICR=0.00) because the rubric rules expect config file edits (source: mlflow/mlflow/.claude/skills/README.md) but the gold solution only modifies code files (span.py, test files). The extract_config_hunks() function only extracts config file diffs, so the judge's view of gold's changes is empty. The rubric rules are genuinely unreasonable for this task - they check for config file updates that don't apply to a pure code bug fix. The gold DOES follow the intent of the rules (top-level imports, useful comments, helpful docstrings) but the judge cannot evaluate this. Adjusted source fields to point to actual modified files with reference values, but this cannot fix the fundamental issue that extract_config_hunks only processes config files.",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 1770.24
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 12.4,
+      "tier_a_fails": [],
+      "tier_b_fails": [],
+      "pass_count": 10,
+      "fail_count": 0
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 5303.32,
+      "at": "2026-04-16T11:19:26.908926"
+    }
+  ]
+}

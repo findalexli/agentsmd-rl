@@ -1,0 +1,152 @@
+version: '2.0'
+source:
+  repo: denoland/deno
+  pr: 32022
+  base_commit: 0b38d25ba7c1893757e15fbb2a68537b0191321f
+  merge_commit: c006bba8061e2d96004823c64287515937b0897d
+checks:
+- id: cargo_toml_valid
+  type: pass_to_pass
+  origin: static
+  description: Cargo.toml must be valid TOML with tests/bench_util in workspace members
+- id: bench_util_moved
+  type: pass_to_pass
+  origin: static
+  description: bench_util directory exists at new location tests/bench_util
+- id: docs_tsgo_moved
+  type: pass_to_pass
+  origin: static
+  description: docs/tsgo.md content moved to cli/tsc/README.md
+- id: cargo_check_passes
+  type: fail_to_pass
+  origin: pr_diff
+  description: Cargo workspace compiles after bench_util move to tests/bench_util
+- id: lint_js_detects_top_level_directories
+  type: fail_to_pass
+  origin: pr_diff
+  description: lint.js listTopLevelEntries correctly detects directories (not just
+    files)
+- id: lint_js_blocks_unauthorized_top_level
+  type: fail_to_pass
+  origin: pr_diff
+  description: lint.js ensureNoNewTopLevelEntries validates against allowed set of
+    entries
+- id: bench_util_compiles
+  type: fail_to_pass
+  origin: pr_diff
+  description: deno_bench_util crate compiles at new tests/bench_util location
+- id: cargo_lock_updated
+  type: pass_to_pass
+  origin: repo_tests
+  description: Cargo.lock is consistent with Cargo.toml workspace changes
+- id: repo_cargo_metadata
+  type: pass_to_pass
+  origin: repo_tests
+  description: Cargo metadata is valid and parseable on base commit
+- id: repo_cargo_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Cargo check passes on deno_bench_util at base commit
+- id: repo_rustfmt
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo code follows rustfmt formatting
+- id: repo_clippy
+  type: pass_to_pass
+  origin: repo_tests
+  description: deno_bench_util passes clippy lints
+- id: repo_cargo_tree
+  type: pass_to_pass
+  origin: repo_tests
+  description: Cargo dependency tree resolves correctly for deno_bench_util
+- id: repo_cargo_lock_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Cargo.lock is valid and consistent with workspace
+- id: repo_git_ls_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git repository has expected top-level entries
+- id: repo_cargo_test_bench_util
+  type: pass_to_pass
+  origin: repo_tests
+  description: deno_bench_util unit tests pass on base commit
+rubric:
+- rule: Keep the root of the repository clean. When adding anything to top-level,
+    it must be discussed.
+  source:
+    path: CLAUDE.md
+    lines: 1-50
+    commit: 0b38d25ba7c1893757e15fbb2a68537b0191321f
+- rule: The user visible interface and high level integration is in the `deno` crate
+    (located in `./cli`).
+  source:
+    path: CLAUDE.md
+    lines: 16-17
+  evidence: The gold solution moves the `tsgo.md` documentation (which discusses the
+    CLI's tsc backend abstraction and typescript-go integration) into `cli/tsc/README.md`,
+    aligning with the rule that high-level i
+  category: architecture
+- rule: High level integration and CLI implementation belong in the `cli/` directory.
+  source:
+    path: CLAUDE.md
+    lines: 14-22
+  evidence: The gold solution moves the TypeScript compiler documentation (`tsgo.md`)
+    into the `cli/tsc/` directory, aligning with the rule that high-level integration
+    and CLI implementation live in the `cli/` di
+  category: architecture
+- rule: The lint script is executed via `./tools/lint.js`.
+  source:
+    path: CLAUDE.md
+    lines: 64-65
+  evidence: The gold solution updates `tools/lint.js` in place (and the instructions
+    specify adding `tools` to the allowed top-level directories list), respecting
+    the documented command path for the linter.
+  category: tooling
+config_edits:
+- path: cli/tsc/README.md
+  tier: 2
+  gold_added: "## Typescript-Go Integration\n\nCurrently only integrated with deno\
+    \ check, though in the future it will also be\nintegrated with our LSP implementation.\n\
+    \nIn the CLI, we have a small abstraction over the tsc backend in\n[cli/tsc/mod.rs](./mod.rs).\
+    \ Along with some shared types and functionality, the\nmain piece is the `exec`\
+    \ function, which takes a \"request\" to be served by the\ntypescript compiler\
+    \ and returns the result. This now has two different \"backend\"\nwhich can serve\
+    \ the request – the current tsc, which runs in an isolate and\ncommunicates via\
+    \ ops, and typescript-go which runs in a subprocess and uses IPC.\n\nFrom a high\
+    \ level, the way the tsgo backend works is that we download a\ntypescript-go binary\
+    \ from\n[github releases](https://github.com/denoland/typescript-go/releases)\
+    \ into the\ndeno cache dir. To actually interface with tsgo, we spawn it in a\
+    \ subprocess and\nwrite messages over stdin/stdout (similar to the Language Server\
+    \ Protocol). The\nformat is a mixture of binary data (for the header and other\
+    \ protocol level\ndetails) followed by json encoded values for RPC calls. The\
+    \ rust implementation\nof the IPC protocol is in the\n[deno_typescript_go_client_rust\
+    \ crate](../libs/typescript_go_client/src/lib.rs).\n\nWe currently maintain a\n\
+    [fork of typescript-go](https://github.com/denoland/typescript-go) with the\n\
+    following changes:\n\n- Special handling of the global symbol tables to account\
+    \ for the fact that we\n  have two slightly different sets of globals: one for\
+    \ node contexts (in npm\n  packages), and one for deno contexts. At this point,\
+    \ the main difference is\n  the type returned by `setTimeout`. With node globals\
+    \ `setTimeout` returns an\n  object, and with deno globals it returns a number\
+    \ (just like the web\n  standard).\n- Symbol table logic to prevent @types/node\
+    \ from creating type errors by\n  introducing incompatible definitions for globals\n\
+    - Additional hooks to allow us to provide our own resolution, determine whether\n\
+    \  a file is esm/cjs, etc.\n- Additional APIs exposed from the IPC server\n- Support\
+    \ for deno's custom libs (`deno.window`, `deno.worker`, etc)"
+  gold_removed: ''
+distractors:
+- rule: Tools are in `cli/tools/<tool>`.
+  collision_type: scope_ambiguity
+  why_distracting: The PR's main objective is to declutter the repository root by
+    removing top-level entries. The config states 'Tools are in cli/tools/<tool>'.
+    An agent might over-eagerly attempt to move the top-level `tools/` directory into
+    `cli/tools/` to further declutter the root, but the instructions explicitly require
+    updating `tools/lint.js` and adding `tools` to the allowed top-level list.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 17-18
+hierarchy_analysis: The configuration is a single flat file (`CLAUDE.md`). The primary
+  challenge is distinguishing between general architectural descriptions (e.g., 'Tools
+  are in cli/tools') and explicit operational paths (e.g., './tools/lint.js') when
+  the PR's goal is to reorganize top-level directories.

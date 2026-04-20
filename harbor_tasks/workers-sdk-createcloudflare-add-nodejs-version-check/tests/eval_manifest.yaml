@@ -1,0 +1,158 @@
+version: '2.0'
+source:
+  repo: cloudflare/workers-sdk
+  pr: 13243
+  base_commit: 0de69890c8503bb67e391e7ad5578c7001b7798e
+  merge_commit: 448fec88a19cad5a3ab7a4d7ff99e166cd485ea2
+checks:
+- id: bin_shim_rejects_old_node
+  type: fail_to_pass
+  origin: pr_diff
+  description: bin/c3.js exits with error when Node.js version is too old
+- id: bin_shim_error_mentions_user_version
+  type: fail_to_pass
+  origin: pr_diff
+  description: Error message tells the user which Node version they are running
+- id: bin_shim_suggests_version_manager
+  type: fail_to_pass
+  origin: pr_diff
+  description: Error message suggests a Node version manager (volta/nvm)
+- id: bin_shim_passes_current_node
+  type: fail_to_pass
+  origin: pr_diff
+  description: bin/c3.js does not show version error when Node >= 20
+- id: test_c3_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: C3 package TypeScript typecheck passes
+- id: test_c3_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: C3 package unit tests pass
+- id: test_repo_catalog_validation
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo catalog usage validation passes
+- id: test_repo_package_deps_validation
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo package dependencies validation passes
+- id: test_c3_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: C3 package linting passes
+- id: test_c3_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: C3 package formatting passes
+- id: test_repo_fixtures_validation
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo fixtures validation passes
+- id: test_repo_private_packages_validation
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo private packages validation passes
+- id: test_repo_workflow_action_pinning
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo GitHub workflow action pinning validation passes
+- id: test_repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo-wide linting passes
+rubric:
+- rule: AGENTS.md is updated and maintains consistent style
+  source:
+    path: packages/create-cloudflare/AGENTS.md
+    lines: 1-25
+    commit: 0de69890c8503bb67e391e7ad5578c7001b7798e
+- rule: AGENTS.md documents Node.js version requirements
+  reference: packages/create-cloudflare/AGENTS.md documents the Node.js version requirement
+    from engines.node
+- rule: AGENTS.md documents the bin/c3.js entry point
+  source:
+    path: packages/create-cloudflare/AGENTS.md
+    lines: 5-11
+    commit: 448fec88a19cad5a3ab7a4d7ff99e166cd485ea2
+  reference: AGENTS.md documents bin/c3.js as the bin entry point
+- rule: AGENTS.md documents the Node.js version gate
+  source:
+    path: packages/create-cloudflare/AGENTS.md
+    lines: 4-18
+    commit: 448fec88a19cad5a3ab7a4d7ff99e166cd485ea2
+  reference: AGENTS.md mentions the Node.js version gate/check in bin/c3.js
+- rule: AGENTS.md removes the no separate bin shim language
+  source:
+    path: packages/create-cloudflare/AGENTS.md
+    lines: 15-16
+    commit: 0de69890c8503bb67e391e7ad5578c7001b7798e
+  reference: AGENTS.md no longer states there is no separate bin shim
+- rule: AGENTS.md documents the package.json bin field change
+  reference: AGENTS.md documents that package.json bin points to bin/c3.js
+- rule: AGENTS.md documents the bin shim implementation
+  source:
+    path: AGENTS.md
+    lines: 112-115
+    commit: 0de69890c8503bb67e391e7ad5578c7001b7798e
+- rule: esbuild bundles `src/cli.ts` as CJS → `dist/cli.js` and it serves as the main
+    export
+  source:
+    path: packages/create-cloudflare/AGENTS.md
+    lines: 15-16
+  evidence: The gold solution creates a shim that requires `dist/cli.js` and updates
+    the documentation to clarify that `main` and `exports["."]` still point to `dist/cli.js`,
+    preserving it as the bundled CJS entr
+  category: architecture
+- rule: esbuild bundles src/cli.ts as CJS → dist/cli.js
+  source:
+    path: packages/create-cloudflare/AGENTS.md
+    lines: 10-10
+  evidence: The gold solution creates bin/c3.js as a CommonJS script (using require)
+    to load the CJS bundle dist/cli.js, respecting the existing CJS build architecture.
+  category: architecture
+- rule: packages/create-cloudflare/ - Project scaffolding CLI (C3)
+  source:
+    path: AGENTS.md
+    lines: 26-26
+  evidence: The agent names the new bin shim `bin/c3.js`, utilizing the C3 abbreviation
+    established in the root architecture overview.
+  category: naming
+distractors:
+- rule: 'no-console: error — use project''s logging utilities'
+  collision_type: would_cause_bug
+  why_distracting: The agent might try to import the project's logging utilities to
+    print the version error. However, importing those utilities would load the CLI
+    bundle containing Node 20+ syntax, causing the exact syntax error the shim is
+    meant to prevent.
+  severity: high
+  source:
+    path: packages/create-cloudflare/AGENTS.md
+    lines: 16-16
+- rule: No separate bin shim — the built output IS the bin
+  collision_type: meta_confusion
+  why_distracting: The config explicitly forbids a separate bin shim, which directly
+    conflicts with the PR instruction. The agent must realize the instruction represents
+    an architectural change and override this rule by updating the AGENTS.md file
+    itself.
+  severity: high
+  source:
+    path: packages/create-cloudflare/AGENTS.md
+    lines: 13-13
+- rule: 'Single entry: src/cli.ts serves as CLI, library export, and bin target.'
+  collision_type: architecture_boundary
+  why_distracting: The agent might attempt to place the version check inside `src/cli.ts`
+    to maintain the single entry point architecture. This would fail because `src/cli.ts`
+    is bundled and its modern syntax would crash older Node versions before the check
+    could execute.
+  severity: high
+  source:
+    path: packages/create-cloudflare/AGENTS.md
+    lines: 4-4
+hierarchy_analysis: This task features a profound meta-referential conflict. The local
+  `packages/create-cloudflare/AGENTS.md` explicitly documents an architecture (single
+  entry point, no bin shim) that the PR instruction asks to change. The agent must
+  not only ignore the existing architectural constraints but also actively rewrite
+  the `AGENTS.md` file to document the new architecture. Furthermore, the agent must
+  selectively ignore the `no-console` rule because the new bin shim sits outside the
+  main architecture boundary and cannot safely import project utilities.

@@ -1,0 +1,99 @@
+source_pr:
+  repo: OpenHands/OpenHands
+  number: 13592
+  title: "APP-1135 Fix for issue where messages is null and error occurs"
+  merge_commit: 8a61fc824b7a18935f3b10c1a96c0156dc362494
+  base_commit: 679460396315ee10ad7384c5a97d441b2844db1b
+
+checks:
+  # Fail-to-pass tests (core behavioral fixes)
+  - id: test_calculateToastDuration_null_handling
+    type: fail_to_pass
+    origin: gold_patch
+    description: "calculateToastDuration handles null/undefined messages without throwing TypeError"
+    weight: 3
+
+  - id: test_calculateToastDuration_normal_operation
+    type: fail_to_pass
+    origin: gold_patch
+    description: "calculateToastDuration still works correctly with normal string messages"
+    weight: 2
+
+  - id: test_displayErrorToast_type_signature
+    type: fail_to_pass
+    origin: gold_patch
+    description: "displayErrorToast accepts null/undefined and uses i18n fallback"
+    weight: 3
+
+  - id: test_calculateToastDuration_type_signature
+    type: fail_to_pass
+    origin: gold_patch
+    description: "calculateToastDuration TypeScript signature updated to accept null/undefined"
+    weight: 2
+
+  # Pass-to-pass tests (repo CI/CD compliance)
+  - id: test_frontend_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Frontend linting passes (npm run lint with typecheck, eslint, prettier)"
+    weight: 2
+
+  - id: test_frontend_typecheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Frontend TypeScript typecheck passes (react-router typegen && tsc)"
+    weight: 2
+
+  - id: test_frontend_translation_completeness
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Frontend translation completeness check passes"
+    weight: 1
+
+  - id: test_frontend_build
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Frontend production build succeeds"
+    weight: 1
+
+  - id: test_frontend_toast_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Frontend toast-related unit tests pass (toast-duration and custom-toast-handlers)"
+    weight: 2
+
+  - id: test_frontend_hook_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Frontend hook unit tests pass (use-handle-plan-click and use-sandbox-recovery)"
+    weight: 2
+
+# Agent configuration rules extracted from AGENTS.md and related config files
+# NOTE: These rules describe coding conventions, but this task is a CODE fix, not
+# a documentation/config update. The gold solution modifies source code files, not
+# AGENTS.md or other config files. These rules are NOT applicable for rubric judging.
+rubric:
+  - rule: "Run pre-commit hooks before pushing changes"
+    source: "AGENTS.md"
+    description: "Must run 'make install-pre-commit-hooks' before making changes and ensure pre-commit passes"
+    applicable: false  # Code fix task, not config/documentation update
+
+  - rule: "Frontend lint fixes required before push"
+    source: "AGENTS.md"
+    description: "For frontend changes, must run 'npm run lint:fix && npm run build' in frontend directory"
+    applicable: false  # Code fix task, not config/documentation update
+
+  - rule: "Use TanStack Query for data fetching"
+    source: "AGENTS.md"
+    description: "API client methods in frontend/src/api must be wrapped with TanStack Query, not called directly from components"
+    applicable: false  # Not relevant to this bug fix
+
+  - rule: "Frontend uses vitest for testing"
+    source: "AGENTS.md"
+    description: "Write tests with vitest framework, run with 'npm run test'"
+    applicable: false  # Code fix task, not config/documentation update
+
+  - rule: "Internationalization with react-i18next"
+    source: "PR context"
+    description: "Error messages should use i18n.t() for translation keys like STATUS$ERROR"
+    applicable: false  # Code fix task, tested separately in test_displayErrorToast_type_signature

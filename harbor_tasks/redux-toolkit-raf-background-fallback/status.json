@@ -4,10 +4,10 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-16T02:12:35.700136",
-  "total_time": 3374.62,
-  "sandbox_id": "i3s5tf51f9l7nb2156yqw",
-  "backend": "minimax",
+  "validated_at": "2026-04-16T12:42:09.933360",
+  "total_time": 531.34,
+  "sandbox_id": "it1kz2e4vckxpadl25wfz",
+  "backend": "anthropic",
   "pipeline": "pipeline",
   "start_at": "judge",
   "nodes": {
@@ -44,23 +44,26 @@
     },
     "quality_gate": {
       "status": "passed",
-      "model": "MiniMax-M2.7",
-      "backend": "minimax",
-      "time": 1.21,
+      "model": "claude-opus-4-7",
+      "backend": "anthropic",
+      "time": 0.27,
       "notes": "flags=['lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:12: unpinned pip deps: pytest']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 17.77,
+      "time": 12.16,
       "tier_a_fails": [
-        "no_solution_leakage",
-        "solution_uniqueness_guard",
-        "tests_verify_behavior_not_text",
-        "test_not_tautological"
+        "behavior_in_task_description",
+        "solution_uniqueness_guard"
       ],
       "tier_b_fails": [],
-      "pass_count": 3,
-      "fail_count": 6
+      "pass_count": 7,
+      "fail_count": 2
+    },
+    "tests_rewrite": {
+      "status": "error",
+      "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":391,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 400 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"invalid_request_error\\\",\\\"message\\\":\\\"\\\\\\\"thinking.type.enabled\\\\\\\" is not supported for this model. Use \\\\\\\"thinking.type.adapt",
+      "time": 1.58
     }
   },
   "history": [
@@ -95,6 +98,14 @@
       "backend": "minimax",
       "time": 3374.62,
       "at": "2026-04-16T02:12:35.700136"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "anthropic",
+      "time": 531.34,
+      "at": "2026-04-16T12:42:09.933360"
     }
   ]
 }

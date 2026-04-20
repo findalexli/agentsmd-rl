@@ -20,15 +20,14 @@ The rendered content stays stuck on the initial value even after:
 
 Both function-based children (render props) and plain element children have this issue.
 
-## Expected Implementation Requirements
+## Required Code Patterns
 
-To fix this reactivity issue, the following specific changes are required in the `@tanstack/solid-router` package:
+The fix must ensure the following specific patterns are present in `/workspace/router/packages/solid-router/src/Matches.tsx`:
 
-### 1. In the `useMatchRoute` hook:
+### useMatchRoute hook
 
-The options parameter destructuring pattern must be moved so it happens inside the `Solid.createMemo()` callback, not before it. This ensures that accesses to the options object (which may contain reactive getters) are tracked by Solid's reactivity system.
+The `opts` parameter must be destructured **inside** the `Solid.createMemo()` callback to ensure reactive tracking. The code must contain:
 
-The pattern must be:
 ```
 return Solid.createMemo(() => {
   const { pending, caseSensitive, fuzzy, includeSearch, ...rest } = opts
@@ -36,18 +35,13 @@ return Solid.createMemo(() => {
 })
 ```
 
-### 2. In the `MatchRoute` component:
+### MatchRoute component
 
-The component must be restructured with these specific requirements:
+The component must contain these specific patterns:
 
-- Create a variable named `renderedChild` using `Solid.createMemo(() => { ... })`
-- Inside that memo callback, read `props.children` to ensure it's accessed within a tracked scope
-- The component's return statement must be: `return <>{renderedChild()}</>`
-
-These specific patterns must appear in the code:
-- `const renderedChild = Solid.createMemo(`
-- `const child = props.children` (inside the memo callback)
-- `return <>{renderedChild()}</>`
+1. `const renderedChild = Solid.createMemo(` - The rendered output must be wrapped in `Solid.createMemo()`
+2. `const child = props.children` - This must appear **inside** the `Solid.createMemo()` callback (not before it)
+3. `return <>{renderedChild()}</>` - The component must return `renderedChild()` wrapped in a JSX fragment
 
 ## Expected Behavior
 
@@ -55,3 +49,8 @@ These specific patterns must appear in the code:
 - When reactive props (like params from signals) change, `MatchRoute` should re-evaluate and re-render
 - Both function children and plain element children should respond to these changes
 - The type checking, build, ESLint, and unit tests for `Matches.test.tsx` should all pass
+
+## Files to Modify
+
+The changes must be made in:
+- `/workspace/router/packages/solid-router/src/Matches.tsx`

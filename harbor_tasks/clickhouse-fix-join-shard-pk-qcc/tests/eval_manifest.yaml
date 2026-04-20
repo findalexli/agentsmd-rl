@@ -1,0 +1,174 @@
+source:
+  repo: ClickHouse/ClickHouse.git
+  pr: 0
+  base_commit: ac01e7e5223a05f2a77ba74cdd949232d9648918
+  merge_commit: ''
+checks:
+- id: test_fix_comment_present
+  type: fail_to_pass
+  origin: pr_diff
+  description: Explanatory comment about contiguous part_index_in_query renumbering
+    is present
+- id: test_contiguous_index_assignment
+  type: fail_to_pass
+  origin: pr_diff
+  description: part_index_in_query is assigned contiguously using local_idx, not +=
+    added_parts
+- id: test_file_syntax_valid
+  type: pass_to_pass
+  origin: static
+  description: C++ file has valid syntax (balanced braces, parentheses, quotes)
+- id: test_analysis_results_usage
+  type: pass_to_pass
+  origin: static
+  description: analysis_results is properly used after the processing loop
+- id: test_code_structure_intact
+  type: pass_to_pass
+  origin: static
+  description: Overall code structure is intact with key variables and functions present
+- id: test_repo_git_status
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository git status is clean (CI check)
+- id: test_repo_file_type
+  type: pass_to_pass
+  origin: repo_tests
+  description: Target file is a valid C++ source file recognized by file command
+- id: test_repo_git_log
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git log is accessible and shows expected commit (CI check)
+- id: test_no_trailing_whitespace
+  type: pass_to_pass
+  origin: repo_tests
+  description: No trailing whitespace in modified file (ClickHouse style check)
+- id: test_no_tabs_for_indentation
+  type: pass_to_pass
+  origin: repo_tests
+  description: No tabs used for indentation (ClickHouse uses 4 spaces)
+- id: test_file_has_pragma_once_in_headers
+  type: pass_to_pass
+  origin: repo_tests
+  description: Header files have
+- id: test_no_duplicate_includes
+  type: pass_to_pass
+  origin: repo_tests
+  description: No duplicate
+- id: test_repo_no_bom
+  type: pass_to_pass
+  origin: repo_tests
+  description: No UTF-8 BOM markers in source files (ClickHouse CI check)
+- id: test_repo_no_conflict_markers
+  type: pass_to_pass
+  origin: repo_tests
+  description: No git conflict markers (ClickHouse CI check)
+- id: test_repo_no_dos_newlines
+  type: pass_to_pass
+  origin: repo_tests
+  description: No DOS/Windows newlines - Unix LF only (ClickHouse CI check)
+- id: test_repo_brace_balance
+  type: pass_to_pass
+  origin: repo_tests
+  description: C++ file has balanced braces (ClickHouse style check)
+- id: test_repo_paren_balance
+  type: pass_to_pass
+  origin: repo_tests
+  description: C++ file has balanced parentheses (ClickHouse style check)
+- id: test_repo_no_std_stringstream
+  type: pass_to_pass
+  origin: repo_tests
+  description: No std::stringstream usage - use WriteBufferFromOwnString instead (ClickHouse
+    CI check)
+- id: test_repo_clang_syntax_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: C++ file has valid syntax according to clang -fsyntax-only (CI check)
+- id: test_repo_header_pragma_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: All header files have
+- id: test_repo_include_style_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Source file uses angle brackets for includes not quotes (ClickHouse
+    style check)
+- id: test_repo_no_cyrillic_chars
+  type: pass_to_pass
+  origin: repo_tests
+  description: No Cyrillic characters mixed with Latin in source code (ClickHouse
+    style check)
+rubric:
+- rule: Use comments to explain WHY a code change is needed, especially for subtle
+    invariants or non-obvious bugs.
+  source:
+    path: .github/copilot-instructions.md
+    lines: '148'
+    commit: ac01e7e5223a05f2a77ba74cdd949232d9648918
+  reference: '/// Renumber part_index_in_query to be contiguous starting from added_parts.
+
+    /// filterPartsByQueryConditionCache may drop parts from selectRangesToRead(),
+
+    /// leaving non-contiguous part_index_in_query values. The distribution logic
+
+    /// below assumes contiguous indices to assign parts back to their sources.
+
+    '
+- rule: When writing comments, wrap literal names from ClickHouse classes, functions,
+    and variables inside inline code blocks.
+  source:
+    path: .claude/CLAUDE.md
+    lines: '3'
+    commit: ac01e7e5223a05f2a77ba74cdd949232d9648918
+- rule: When writing comments, write names of functions and methods as `f` instead
+    of `f()` - prefer mathematical purity when referring to the function itself rather
+    than its application.
+  source:
+    path: .claude/CLAUDE.md
+    lines: '5'
+    commit: ac01e7e5223a05f2a77ba74cdd949232d9648918
+- rule: Write names of functions and methods as `f` instead of `f()` when referring
+    to the function itself rather than its application.
+  source:
+    path: .claude/CLAUDE.md
+    lines: '5'
+  source_text: When writing text such as documentation, comments, or commit messages,
+    write names of functions and methods as `f` instead of `f()` - we prefer it for
+    mathematical purity when it refers a function itself rather than its application.
+  evidence: 'The gold diff adds a source code comment that perfectly follows this
+    distinction: it refers to the function ''filterPartsByQueryConditionCache'' (the
+    entity doing the dropping) without parentheses, while ''selectRangesToRead()''
+    (referring to the application/result of the function) is written with parentheses.'
+  category: documentation
+  verification: llm_judge
+version: '2.0'
+distractors:
+- rule: Wrap literal names from classes and functions inside inline code blocks in
+    comments.
+  source:
+    path: .claude/CLAUDE.md
+    lines: '3'
+  source_text: 'When writing text such as documentation, comments, or commit messages,
+    wrap literal names from ClickHouse SQL language, classes and functions, or literal
+    excerpts from log messages inside inline code blocks, such as: `MergeTree`.'
+  collision_type: scope_ambiguity
+  why_distracting: The rule explicitly asks to wrap function and class names in inline
+    code blocks for "comments". An agent might mistakenly apply this to C++ source
+    code comments (`///`), wrapping names like `filterPartsByQueryConditionCache`
+    in backticks. The gold diff correctly ignores this, as markdown backticks are
+    typically reserved for PR comments or standalone documentation rather than raw
+    C++ source files.
+  severity: low
+- rule: Log all data deletion events (files, parts, metadata).
+  source:
+    path: .github/copilot-instructions.md
+    lines: 113-114
+  source_text: "- **Deletion logging**  \n  All data deletion events (files, parts,\
+    \ metadata, ZooKeeper/Keeper entries, etc.) must be logged at an appropriate level."
+  collision_type: scope_ambiguity
+  why_distracting: The diff's new comment explicitly states that a function may "drop
+    parts" (`filterPartsByQueryConditionCache may drop parts`). An AI agent might
+    textually match "drop parts" to "data deletion events... parts" and incorrectly
+    insert logging code in the loop. However, this rule only applies to actual persistent
+    data deletion on disk or ZooKeeper, not filtering out/dropping parts in-memory
+    during query planning.
+  severity: high

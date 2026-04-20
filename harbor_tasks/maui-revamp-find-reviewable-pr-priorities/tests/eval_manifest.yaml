@@ -1,0 +1,256 @@
+version: '2.0'
+source:
+  repo: dotnet/maui
+  pr: 34160
+  base_commit: 48dae02e3e04dce551396f747f234bf3e30801ec
+  merge_commit: dea56cb4078346ca5983f4b431bae6501f4f114f
+checks:
+- id: script_file_exists
+  type: pass_to_pass
+  origin: static
+  description: PowerShell script and SKILL.md files exist
+- id: repo_powershell_script_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: PowerShell script has valid structure with param block and required
+    functions
+- id: repo_skill_md_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: SKILL.md has valid documentation structure with required sections
+- id: repo_powershell_no_syntax_errors
+  type: pass_to_pass
+  origin: repo_tests
+  description: PowerShell script has no obvious syntax errors (balanced braces, comments)
+- id: repo_files_encoding_and_size
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo files are valid UTF-8, non-empty, and have reasonable size
+- id: script_param_defaults
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Script param defaults: Category=''default'' (was ''all''), Limit=100
+    (was 10)'
+- id: script_validate_set_has_new_categories
+  type: fail_to_pass
+  origin: pr_diff
+  description: Script ValidateSet includes default, approved, ready-to-review, agent-reviewed
+- id: script_new_functions_and_fields
+  type: fail_to_pass
+  origin: pr_diff
+  description: Script defines Write-PREntry and Get-ReadyToReviewPRNumbers, includes
+    Assignees field and agent label handling
+- id: script_default_mode_logic
+  type: fail_to_pass
+  origin: pr_diff
+  description: Script implements 'default' mode showing P/0 + milestoned, filtering
+    CHANGES_REQUESTED
+- id: skill_md_priority_categories
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md lists 9 priority categories including Approved, Agent Reviewed,
+    Ready To Review
+- id: skill_md_param_table_defaults
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md parameter table shows Category='default' and Limit=100
+- id: skill_md_new_category_docs
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md documents Approved (Not Merged), Agent Reviewed, Ready To
+    Review, and Assignees column
+rubric:
+- rule: SKILL.md documentation file is modified with substantial additions (new priority
+    categories, parameter table updates, and usage examples)
+  source:
+    path: .github/skills/find-reviewable-pr/SKILL.md
+    lines: 1-20
+    commit: 48dae02e3e04dce551396f747f234bf3e30801ec
+  reference: Documentation was updated with 9 priority categories including Approved,
+    Ready To Review, and Agent Reviewed, plus new parameter defaults and usage examples
+config_edits:
+- path: .github/skills/find-reviewable-pr/SKILL.md
+  tier: 1
+  gold_added: '1. **Priority (P/0)** - Critical priority PRs that need immediate attention
+    (always on top)
+
+    2. **Approved (Not Merged)** - PRs with human approval that haven''t been merged
+    yet
+
+    3. **Ready To Review (Project Board)** - PRs in "Ready To Review" column of the
+    MAUI SDK Ongoing project board (requires `read:project` scope)
+
+    4. **Milestoned** - PRs assigned to current milestone(s), sorted by lowest SR
+    number first (e.g., SR5 before SR6), then Servicing
+
+    5. **Agent Reviewed** - PRs reviewed by AI agent workflow (detected via labels)
+
+    6. **Partner** - PRs from Syncfusion and other partners
+
+    7. **Community** - External contributions needing review
+
+    8. **Recent Waiting for Review** - PRs created in last 2 weeks that need review
+    (minimum 5)
+
+    9. **docs-maui Waiting for Review** - Documentation PRs needing review (minimum
+    5)
+
+    # Find P/0 and milestoned PRs (default behavior, excludes changes-requested)
+
+    # Find all reviewable PRs across all categories
+
+    pwsh .github/skills/find-reviewable-pr/scripts/query-reviewable-prs.ps1 -Category
+    all
+
+
+    # Find approved PRs waiting to be merged
+
+    pwsh .github/skills/find-reviewable-pr/scripts/query-reviewable-prs.ps1 -Category
+    approved
+
+
+    # Find PRs in "Ready To Review" on the project board
+
+    pwsh .github/skills/find-reviewable-pr/scripts/query-reviewable-prs.ps1 -Category
+    ready-to-review
+
+
+    # Find agent-reviewed PRs with merge summaries
+
+    pwsh .github/skills/find-reviewable-pr/scripts/query-reviewable-prs.ps1 -Category
+    agent-reviewed
+
+
+    | `-Category` | default, milestoned, priority, recent, partner, community, docs-maui,
+    approved, ready-to-review, agent-reviewed, all | default | Filter by category.
+    `default` shows only P/0 + milestoned, excluding changes-requested PRs. |
+
+    | `-Limit` | 1-100 | 100 | Max PRs per category (maui repo) |
+
+    **CRITICAL**: You MUST use the PowerShell script below. Do NOT attempt to query
+    GitHub directly with `gh` commands or `jq` if the script fails. The script contains
+    important prioritization logic (SR5 before SR6, P/0 first, etc.) that cannot be
+    replicated with ad-hoc queries.
+
+    pwsh .github/skills/find-reviewable-pr/scripts/query-reviewable-prs.ps1
+
+    1. 🔴 **Priority (P/0)** - Always include if present (always first)
+
+    2. 🟢 **Approved (Not Merged)** - Always include if present
+
+    3. 📋 **Ready To Review (Board)** - Always include if present
+
+    4. 📅 **Milestoned** - Always include if present
+
+    5. 🤖 **Agent Reviewed** - Always include if present
+
+    6. 🤝 **Partner** - Always include if present
+
+    7. ✨ **Community** - Always include if present
+
+    8. 🕐 **Recent** - Always include if present
+
+    9. 📖 **docs-maui** - Always include if present
+
+    **DO NOT** omit any category. Each category table should include columns for:
+    PR, Title, Author, Assignees, Platform/Repo, Status, Agent Review, Age, Updated.
+
+    - **P/0 PRs** should always be reviewed first - they''re blocking releases
+
+    - **Approved PRs** are ready to merge - verify CI is green and merge
+
+    - **Ready To Review PRs** are in the project board pipeline and need timely review
+
+    - **Agent Reviewed PRs** have been an'
+  gold_removed: '1. **Priority (P/0)** - Critical priority PRs that need immediate
+    attention
+
+    2. **Milestoned** - PRs assigned to current milestone(s), sorted by lowest SR
+    number first (e.g., SR5 before SR6), then Servicing
+
+    3. **Partner** - PRs from Syncfusion and other partners
+
+    4. **Community** - External contributions needing review
+
+    5. **Recent Waiting for Review** - PRs created in last 2 weeks that need review
+    (minimum 5)
+
+    6. **docs-maui Waiting for Review** - Documentation PRs needing review (minimum
+    5)
+
+    # Find all reviewable PRs (shows top from each category including docs-maui)
+
+    | `-Category` | milestoned, priority, recent, partner, community, docs-maui, all
+    | all | Filter by category |
+
+    | `-Limit` | 1-100 | 10 | Max PRs per category (maui repo) |
+
+    **CRITICAL**: You MUST use the PowerShell script below. Do NOT attempt to query
+    GitHub directly with `gh` commands or `jq` if the script fails. The script contains
+    important prioritization logic (SR3 before SR4, P/0 first, etc.) that cannot be
+    replicated wit'
+distractors:
+- rule: When performing a code review on PRs that change functional code, run the
+    pr-finalize skill to verify that the PR title and description accurately match
+    the actual implementation.
+  source:
+    path: .github/copilot-instructions.md
+    lines: 11-12
+  collision_type: meta_confusion
+  why_distracting: The task is to modify a skill that finds reviewable PRs. The agent
+    might get confused by the mention of 'code review on PRs' and try to integrate
+    the pr-finalize skill into the find-reviewable-pr script, or run it unnecessarily
+    on the PRs it fetches.
+  severity: medium
+- rule: 'Testing frameworks: xUnit - Unit tests (*.UnitTests.csproj), NUnit - UI tests'
+  source:
+    path: .github/copilot-instructions.md
+    lines: 24-27
+  collision_type: architecture_boundary
+  why_distracting: The agent might attempt to write xUnit or NUnit tests for the new
+    PowerShell functions (like Get-ReadyToReviewPRNumbers), which is inappropriate
+    since those frameworks are for the C# codebase, not PowerShell scripts.
+  severity: low
+- rule: Do NOT attempt to query GitHub directly with `gh` commands
+  source:
+    path: .github/skills/find-reviewable-pr/SKILL.md
+    lines: '74'
+  source_text: '**CRITICAL**: You MUST use the PowerShell script below. Do NOT attempt
+    to query GitHub directly with `gh` commands or `jq` if the script fails. The script
+    contains important prioritization logic (SR3 before SR4, P/0 first, etc.) that
+    cannot be replicated with ad-hoc queries.'
+  collision_type: meta_confusion
+  why_distracting: This rule applies to the AI agent *using* the skill during a review
+    session, preventing it from making raw API calls instead of using the wrapper
+    script. However, when an agent is *developing* or extending the script itself
+    (as in the gold diff), it must use `gh` commands internally to implement new features
+    like fetching approved or agent-reviewed PRs.
+  severity: high
+- rule: Strict column definition for category tables
+  source:
+    path: .github/skills/find-reviewable-pr/SKILL.md
+    lines: '107'
+  source_text: '**DO NOT** omit any category. Each category table should include columns
+    for: PR, Title, Author, Platform/Repo, Status, Age, Updated.'
+  collision_type: rule_conflict
+  why_distracting: The rule explicitly lists the required columns. The PR needs to
+    add new columns ('Assignees' and 'Agent Review') to the script output and documentation.
+    An agent might rigidly follow the old column list and resist adding the new columns
+    required by the change.
+  severity: medium
+- rule: List of Supported Categories in Copilot Instructions
+  source:
+    path: .github/copilot-instructions.md
+    lines: '238'
+  source_text: '- **Categories**: P/0, milestoned, partner, community, recent, docs-maui'
+  collision_type: scope_ambiguity
+  why_distracting: This file documents the existing categories supported by the skill.
+    The PR aims to add new categories (approved, ready-to-review, agent-reviewed).
+    An agent might think the categories are strictly limited to this global list and
+    either refuse to add new ones or incorrectly modify this unrelated context file.
+  severity: medium
+hierarchy_analysis: The repository has a single root-level copilot-instructions.md
+  file. However, its contents are heavily focused on the C#/.NET MAUI core framework
+  development (xUnit, platform-specific files, etc.) and do not provide specific guidance
+  for PowerShell script development or GitHub skills. The agent must rely on the task
+  instructions and existing script patterns rather than the C# guidelines.

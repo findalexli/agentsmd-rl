@@ -1,0 +1,98 @@
+version: '2.0'
+source:
+  repo: microsoft/playwright
+  pr: 39979
+  base_commit: cec7b21afa00c0f48e46859c683680a2c6e9e029
+  merge_commit: 9c069597ff7c822052832c0e46eda76f37f9c1ef
+checks:
+- id: expressions_with_arrow_not_wrapped
+  type: fail_to_pass
+  origin: pr_diff
+  description: Expressions containing '=>' should not be incorrectly wrapped as functions
+- id: proper_function_detection
+  type: fail_to_pass
+  origin: pr_diff
+  description: Fix uses proper function detection with typeof === 'function' instead
+    of includes('=>')
+- id: nullish_coalescing_for_undefined
+  type: fail_to_pass
+  origin: pr_diff
+  description: Uses nullish coalescing operator (??) for undefined result handling
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: Modified function has real logic, not just pass/return
+- id: test_repo_tsc
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TypeScript compilation passes
+- id: test_repo_check_deps
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's dependency check passes
+- id: test_repo_lint_packages
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's package consistency check passes
+- id: test_repo_lint_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's test linting passes
+- id: test_repo_test_types
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's type tests pass
+- id: test_repo_eslint_backend
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's eslint check passes on modified backend directory
+rubric:
+- rule: Follow DEPS system boundaries - client code never imports server code, server
+    code never imports client code
+  source:
+    path: CLAUDE.md
+    lines: 63-65
+    commit: cec7b21afa00c0f48e46859c683680a2c6e9e029
+  reference: The gold solution implements the function detection logic entirely inline
+    within evaluate.ts without adding any new imports. It uses only existing imports
+    (zodBundle, stringUtils, tool, tab types) that were already in the file.
+  category: architecture
+- rule: Import boundaries are enforced via DEPS.list files
+  source:
+    path: CLAUDE.md
+    lines: 73-75
+  reference: The gold solution implements the function detection logic (`eval` and
+    `typeof`) entirely inline within the `evaluate.ts` file without importing external
+    utilities, respecting the strict import boundaries defined in DEPS.list files.
+  category: architecture
+- rule: '`playwright-core` is the package for the browser automation engine, including
+    server, dispatchers, and protocol.'
+  source:
+    path: CLAUDE.md
+    lines: 4-5
+  evidence: The fix for the MCP backend tool is correctly implemented in `packages/playwright-core/src/tools/backend/evaluate.ts`,
+    aligning with the package's defined purpose as the server and protocol engine.
+  category: architecture
+- rule: Linting is strictly enforced via `npm run flint` which includes eslint.
+  source:
+    path: CLAUDE.md
+    lines: 68-71
+  evidence: 'The gold solution removes the `// eslint-disable-next-line no-restricted-syntax`
+    comment by replacing the restricted `new Function()` call with an `eval()` executed
+    safely within the browser context, '
+  category: style
+distractors:
+- rule: 'Decision rule: Does the test need browser/browserType/context -> tests/library/.
+    Just needs page + server -> tests/page/.'
+  collision_type: scope_ambiguity
+  why_distracting: The rule states that tests needing `page` + `server` should go
+    to `tests/page/`. Since the `browser_evaluate` tool operates on a `page`, an agent
+    might mistakenly try to add or move tests to `tests/page/`, ignoring that MCP
+    tools have their own dedicated test directory (`tests/mcp/`).
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 84-85
+hierarchy_analysis: The configuration consists of a single root-level CLAUDE.md file
+  containing generic monorepo guidelines. There is no complex hierarchy or overriding
+  required.

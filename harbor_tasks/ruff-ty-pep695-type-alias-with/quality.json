@@ -1,62 +1,58 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert specific structural details like the function name 'member_lookup_with_policy', the identifier 'no_instance_fallback()', and exact file paths like 'crates/ty_python_semantic/src/types.rs' and 'crates/ty_python_semantic/resources/mdtest/with/sync.md'. While instruction.md does mention these paths and function names, the tests also check for specific patterns like 'Type::TypeAlias(alias) => alias' and 'value_type' delegation within the function body (test_typealias_unwraps_to_value_ty"
+      "outcome": "pass",
+      "reason": "instruction.md names the file paths (crates/ty_python_semantic/src/types.rs, crates/ty_python_semantic/resources/mdtest/with/sync.md), the function (member_lookup_with_policy), the section header, the three alias forms, and the reveal_type assertions that tests check for."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly states: 'Member lookup dispatch for type system variants must handle Type::TypeAlias(alias) before the descriptor protocol fallback (identified by no_instance_fallback())' and 'the implementation must unwrap the alias by accessing its value_type(db) and recursively perform member lookup via member_lookup_with_policy()'. This is essentially the complete fix \u2014 move the TypeAlias arm before no_instance_fallback and call value_type(db).member_lookup_with_policy(). No reason"
+      "reason": "Instruction explicitly states the fix: 'must call value_type(db) on the alias and recursively invoke member_lookup_with_policy' and 'The match arm for Type::TypeAlias(alias) must execute before the descriptor protocol fallback (identified by policy.no_instance_fallback())' \u2014 this directly dictates the code change."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "test_typealias_before_no_instance_fallback checks that a 'Type::TypeAlias' match arm with '=>' appears before 'no_instance_fallback()' in the function body. test_typealias_unwraps_to_value_type checks for 'value_type' and 'member_lookup_with_policy' in the arm body. These assert on gold-specific implementation details \u2014 an alternative correct fix (e.g., modifying the no_instance_fallback logic itself to check for TypeAlias, or handling it in a different function) would fail these tests."
+      "outcome": "pass",
+      "reason": "Tests check that TypeAlias arm appears before no_instance_fallback and delegates to value_type().member_lookup_with_policy(), which any correct fix for this specific bug would share; the mdtest verifies behavior via reveal_type."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The fail_to_pass tests (test_typealias_before_no_instance_fallback, test_typealias_unwraps_to_value_type) are purely text-inspection tests that read the source file and check for string patterns. They do not execute the code. However, the pass_to_pass tests (test_mdtest_with_sync, test_cargo_check_ty_python_semantic, etc.) do compile and run the code. The f2p tests themselves are text-based assertions."
+      "outcome": "pass",
+      "reason": "Tests execute cargo check, cargo clippy, cargo test mdtest with/sync, cargo fmt, cargo doc, and cargo test --lib as subprocesses, which actually run the type checker on the test cases."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "The f2p test test_typealias_before_no_instance_fallback only checks line ordering of text patterns in the source file. A stub that simply moves the existing TypeAlias arm text above no_instance_fallback without any functional implementation would pass this test. Similarly, test_typealias_unwraps_to_value_type just checks for the presence of 'value_type' and 'member_lookup_with_policy' strings. However, test_mdtest_with_sync (pass_to_pass) does execute cargo test which would verify behavior. But "
+      "outcome": "pass",
+      "reason": "The mdtest test requires reveal_type(y) to be 'A | B' for all three alias forms, which cannot pass without the actual fix to member_lookup_with_policy."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md are tested: the structural code change (TypeAlias before no_instance_fallback), the delegation to value_type, the mdtest file with all three alias forms, and the cargo test execution."
+      "reason": "Tests verify all three alias forms, the ordering requirement, value_type delegation, cargo check, clippy, and mdtest \u2014 matching the instruction's requirements."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-grouped with comments separating 'pass_to_pass (repo_tests)', 'Gates (pass_to_pass, static)', and 'Fail-to-pass (pr_diff)' sections, with descriptive docstrings for each test function."
+      "reason": "Tests are grouped by section comments (pass_to_pass, static, pr_diff fail_to_pass) with descriptive names and docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data like JSON/CSV/API/DB."
+      "reason": "Task is a code fix, not structured data production."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "Paths and identifiers (member_lookup_with_policy, no_instance_fallback, Type::TypeAlias, value_type) are consistent between instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names the exact file ('crates/ty_python_semantic/src/types.rs'), the exact function ('member_lookup_with_policy'), the exact guard ('no_instance_fallback()'), and the exact fix pattern ('handle Type::TypeAlias before the descriptor protocol fallback'). This is extreme localization leakage."
+      "reason": "Instruction cites the exact function 'member_lookup_with_policy', the exact helper 'no_instance_fallback()', the exact method 'value_type(db)', and tells the agent to place the TypeAlias arm before the fallback \u2014 full localization is given."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "Not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "no_solution_leakage"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 3,
-  "fail_count": 6
+  "pass_count": 7,
+  "fail_count": 2
 }

@@ -1,0 +1,155 @@
+version: '2.0'
+source:
+  repo: inclusionAI/AReaL
+  pr: 1019
+  base_commit: a3e36d4af66ac6fa88e723675060cde591ca133e
+  merge_commit: 7cad4dac2d1f230891f201dbbfa91403e621cec1
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified files (rpc_server.py, local.py, slurm.py) parse without syntax
+    errors
+- id: server_configure_uses_error_key
+  type: fail_to_pass
+  origin: pr_diff
+  description: rpc_server /configure error responses use 'error' key, not 'detail'
+- id: local_scheduler_reads_error_key
+  type: fail_to_pass
+  origin: pr_diff
+  description: local.py scheduler reads 'error' key from RPC JSON responses
+- id: slurm_scheduler_reads_error_key
+  type: fail_to_pass
+  origin: pr_diff
+  description: slurm.py scheduler reads 'error' key from RPC JSON responses
+- id: server_client_key_consistency
+  type: fail_to_pass
+  origin: pr_diff
+  description: Server and schedulers use the same JSON key for error responses
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: Modified files retain substantial logic (not stubbed out)
+- id: no_wildcard_imports
+  type: pass_to_pass
+  origin: agent_config
+  description: No wildcard imports in modified files
+  source:
+    path: AGENTS.md
+    lines: '30'
+    commit: a3e36d4af66ac6fa88e723675060cde591ca133e
+- id: no_print_statements
+  type: pass_to_pass
+  origin: agent_config
+  description: No bare print() calls — must use areal logger
+  source:
+    path: AGENTS.md
+    lines: 89-91
+    commit: a3e36d4af66ac6fa88e723675060cde591ca133e
+- id: no_hardcoded_secrets
+  type: pass_to_pass
+  origin: agent_config
+  description: No hardcoded secrets (passwords, tokens, API keys) in modified files
+  source:
+    path: AGENTS.md
+    lines: '31'
+    commit: a3e36d4af66ac6fa88e723675060cde591ca133e
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff linter passes on modified files
+  source:
+    path: .github/workflows/pre-commit.yml
+    commit: a3e36d4af66ac6fa88e723675060cde591ca133e
+- id: test_repo_precommit_hooks
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's pre-commit hooks pass on modified files (skips network-dependent
+    hooks)
+  source:
+    path: .github/workflows/pre-commit.yml
+    commit: a3e36d4af66ac6fa88e723675060cde591ca133e
+- id: test_repo_yaml_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's YAML workflow files have valid syntax
+  source:
+    path: .github/workflows/pre-commit.yml
+    commit: a3e36d4af66ac6fa88e723675060cde591ca133e
+- id: test_repo_eof_newlines
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files end with exactly one newline (pre-commit end-of-file-fixer)
+  source:
+    path: .pre-commit-config.yaml
+    commit: a3e36d4af66ac6fa88e723675060cde591ca133e
+- id: test_repo_no_private_keys
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files contain no private keys (pre-commit detect-private-key)
+  source:
+    path: .pre-commit-config.yaml
+    commit: a3e36d4af66ac6fa88e723675060cde591ca133e
+- id: test_repo_module_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified infrastructure modules (rpc_server, local, slurm) compile
+    without errors
+  source:
+    path: pyproject.toml
+    commit: a3e36d4af66ac6fa88e723675060cde591ca133e
+rubric:
+- rule: When modifying RPC error response handling, ensure the error response key
+    matches the dominant convention in the module (42 other endpoints use "error",
+    not "detail").
+  source:
+    path: areal/infra/rpc/rpc_server.py
+    lines: variable
+    commit: a3e36d4af66ac6fa88e723675060cde591ca133e
+  reference: rpc_server.py configure() uses "error" key (changed from "detail"), matching
+    the other 42 error responses in the file. Schedulers read "error" key from JSON
+    responses (changed from "detail").
+  category: style
+- rule: Server and scheduler error handling should use consistent JSON keys for error
+    responses.
+  source:
+    path: areal/infra/scheduler/local.py
+    lines: variable
+    commit: a3e36d4af66ac6fa88e723675060cde591ca133e
+  reference: All response.json().get() calls use "error" key instead of "detail" to
+    match server-side error responses. Consistent error key usage across local.py
+    (14 occurrences) and slurm.py (7 occurrences).
+  category: style
+- rule: Follow existing code patterns in the same module.
+  source:
+    path: AGENTS.md
+    lines: 33-34
+  evidence: The gold solution changes the 3 anomalous 'detail' keys to 'error' to
+    match the other 42 uses in rpc_server.py, adhering to the existing pattern in
+    the module.
+  category: style
+distractors:
+- rule: 'Ask first before: Changing launcher or scheduler logic.'
+  collision_type: meta_confusion
+  why_distracting: The agent is explicitly instructed to fix a bug in local.py and
+    slurm.py (which are schedulers). The rule says to ask first before changing scheduler
+    logic. An overly compliant agent might halt and ask, or leave a TODO(agent) comment,
+    instead of applying the requested fix.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 38-40
+- rule: Add tests for new functionality.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to add tests for the error handling, but this
+    is a bug fix, not new functionality. Furthermore, testing distributed RPC/schedulers
+    might require multi-node hardware which is unavailable, leading to wasted effort
+    or broken test runs.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 35-35
+hierarchy_analysis: AGENTS.md and CLAUDE.md contain overlapping rules. The agent must
+  navigate the explicit user instruction to fix the bug while ignoring the 'Ask first'
+  rule for scheduler logic, recognizing that the direct prompt overrides the general
+  cautionary rule.

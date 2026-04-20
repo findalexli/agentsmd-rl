@@ -4,13 +4,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-16T01:32:47.996658",
-  "total_time": 4911.79,
-  "sandbox_id": "irbini6ume7ieu34afsbp",
-  "backend": "minimax",
+  "validated_at": "2026-04-16T12:57:47.627684",
+  "total_time": 51.11,
+  "sandbox_id": "i7jculao6ui42tb4y15xe",
+  "backend": "anthropic",
   "pipeline": "pipeline",
   "start_at": "judge",
-  "error": "The sandbox was not found: This error is likely due to sandbox timeout. You can modify the sandbox timeout by passing 'timeout' when starting the sandbox or calling '.set_timeout' on the sandbox with the desired timeout.",
   "nodes": {
     "scaffold": {
       "status": "ok",
@@ -45,25 +44,27 @@
     },
     "quality_gate": {
       "status": "DELETE",
-      "model": "claude-sonnet-4-6",
-      "backend": "oauth",
-      "time": 0.34,
+      "model": "claude-opus-4-7",
+      "backend": "anthropic",
+      "time": 0.19,
       "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:3', 'A:[A] test_not_tautological @ tests/test_outputs.py:136: test `test_verify_repo_provider_exception_handled` has 1 assert(s', 'A:[A] test_not_tautological @ tests/test_outputs.py:171: test `test_fallback_to_personal_workspace` has 1 assert(s), all p', 'A:[A] test_not_tautological @ tests/test_outputs.py:272: test `test_file_syntax_valid` has 1 assert(s), all pass on a stub', 'lint_tier_b:2', 'B:[B] pinned_dependencies @ environment/Dockerfile:15: unpinned pip deps: poetry, uv', 'B:[B] no_network_during_tests @ tests/test.sh:5: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 22.17,
+      "time": 13.43,
       "tier_a_fails": [
-        "behavior_in_task_description",
         "no_solution_leakage",
         "solution_uniqueness_guard",
-        "tests_verify_behavior_not_text",
-        "test_not_tautological",
-        "anti_cheating_measures"
+        "tests_verify_behavior_not_text"
       ],
       "tier_b_fails": [],
-      "pass_count": 3,
-      "fail_count": 7
+      "pass_count": 5,
+      "fail_count": 4
+    },
+    "tests_rewrite": {
+      "status": "error",
+      "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":459,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 400 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"invalid_request_error\\\",\\\"message\\\":\\\"\\\\\\\"thinking.type.enabled\\\\\\\" is not supported for this model. Use \\\\\\\"thinking.type.adapt",
+      "time": 1.69
     }
   },
   "history": [
@@ -98,6 +99,14 @@
       "backend": "minimax",
       "time": 4911.79,
       "at": "2026-04-16T01:32:47.996658"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "anthropic",
+      "time": 51.11,
+      "at": "2026-04-16T12:57:47.627684"
     }
   ]
 }

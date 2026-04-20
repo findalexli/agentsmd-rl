@@ -1,0 +1,155 @@
+source:
+  repo: SeleniumHQ/selenium.git
+  pr: 0
+  base_commit: e78c3900fdef5d729cc3a24cfc7e2e7ea3421de4
+  merge_commit: 1d58a30530101d6ff84ecabb4422ac3078f8e40d
+checks:
+- id: test_v143domains_has_lazy_fields
+  type: fail_to_pass
+  description: V143Domains has Lazy<T> fields for network, javaScript, target, log
+  origin: pr_diff
+- id: test_v143domains_lazy_initialized_in_constructor
+  type: fail_to_pass
+  description: V143Domains constructor initializes Lazy fields with correct factory
+    lambdas
+  origin: pr_diff
+- id: test_v143domains_properties_return_lazy_value
+  type: fail_to_pass
+  description: V143Domains properties return cached Lazy value instead of new instances
+  origin: pr_diff
+- id: test_v144domains_has_lazy_fields
+  type: fail_to_pass
+  description: V144Domains has Lazy<T> fields for network, javaScript, target, log
+  origin: pr_diff
+- id: test_v144domains_lazy_initialized_in_constructor
+  type: fail_to_pass
+  description: V144Domains constructor initializes Lazy fields with correct factory
+    lambdas
+  origin: pr_diff
+- id: test_v144domains_properties_return_lazy_value
+  type: fail_to_pass
+  description: V144Domains properties return cached Lazy value instead of new instances
+  origin: pr_diff
+- id: test_v145domains_has_lazy_fields
+  type: fail_to_pass
+  description: V145Domains has Lazy<T> fields for network, javaScript, target, log
+  origin: pr_diff
+- id: test_v145domains_lazy_initialized_in_constructor
+  type: fail_to_pass
+  description: V145Domains constructor initializes Lazy fields with correct factory
+    lambdas
+  origin: pr_diff
+- id: test_v145domains_properties_return_lazy_value
+  type: fail_to_pass
+  description: V145Domains properties return cached Lazy value instead of new instances
+  origin: pr_diff
+- id: test_devtools_domains_tests_file_exists
+  type: fail_to_pass
+  description: DevToolsDomainsTests.cs test file exists with proper content
+  origin: pr_diff
+- id: test_repo_bazel_build_webdriver
+  type: pass_to_pass
+  origin: repo_tests
+  description: Bazel build of dotnet webdriver passes
+- id: test_repo_bazel_build_devtools
+  type: pass_to_pass
+  origin: repo_tests
+  description: Bazel build of DevTools module passes
+- id: test_repo_bazel_test_command_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Bazel CommandTests (unit tests) pass
+- id: test_repo_dotnet_format_style
+  type: pass_to_pass
+  origin: repo_tests
+  description: Dotnet format style check passes
+- id: test_cs_files_balanced_braces
+  type: pass_to_pass
+  origin: static
+  description: C# source files have balanced braces
+- id: test_cs_files_valid_identifiers
+  type: pass_to_pass
+  origin: static
+  description: C# source files use valid C# identifiers
+- id: test_cs_files_no_syntax_errors
+  type: pass_to_pass
+  origin: static
+  description: C# source files have no obvious syntax errors
+rubric:
+- rule: Comments should explain *why*, not *what* - prefer well-named methods over
+    comments that narrate code
+  source:
+    path: AGENTS.md
+    lines: '70'
+    commit: e78c3900fdef5d729cc3a24cfc7e2e7ea3421de4
+- rule: Use NUnit constraint-style assertions (Assert.That(x, Is.SameAs(y))) in test
+    code
+  source:
+    path: dotnet/AGENTS.md
+    lines: '12'
+    commit: e78c3900fdef5d729cc3a24cfc7e2e7ea3421de4
+- rule: 'Follow existing field naming conventions: use ''this.'' prefix for instance
+    fields and camelCase naming'
+  source:
+    path: dotnet/src/webdriver/DevTools/v143/V143Domains.cs
+    lines: 22-25
+    commit: e78c3900fdef5d729cc3a24cfc7e2e7ea3421de4
+- rule: Maintain API/ABI compatibility - users upgrade by changing only version number
+  source:
+    path: AGENTS.md
+    lines: 12-12
+  evidence: The gold solution keeps the exact same public property signatures (e.g.,
+    `public override DevTools.Network Network`) and only changes the internal getter
+    implementation to use `Lazy<T>`, ensuring user
+  category: architecture
+- rule: Avoid repo-wide refactors/formatting; prefer small, reversible diffs
+  source:
+    path: AGENTS.md
+    lines: 13-13
+  evidence: The gold solution only modifies the specific `V*Domains.cs` files to implement
+    the `Lazy<T>` pattern without reformatting the rest of the file or changing unrelated
+    classes.
+  category: style
+- rule: Prefer writing a test for it first / Prefer small (unit) tests over browser
+    tests
+  source:
+    path: AGENTS.md
+    lines: 43-44
+  evidence: The gold solution creates `dotnet/test/webdriver/DevTools/DevToolsDomainsTests.cs`
+    to verify the reference equality of the domain properties, fulfilling the requirement
+    for small unit tests.
+  category: testing
+- rule: When implementing solutions prefer writing a test for it first
+  source:
+    path: AGENTS.md
+    lines: 46-47
+  evidence: The gold solution includes a new test file `dotnet/test/webdriver/DevTools/DevToolsDomainsTests.cs`
+    to verify the reference equality behavior.
+  category: testing
+distractors:
+- rule: The codebase is migrating to async
+  collision_type: rule_conflict
+  why_distracting: The agent might try to change the properties to async methods (e.g.,
+    `GetNetworkAsync()`) or use an async lazy initialization pattern, which would
+    break the public API and violate the explicit instruction to use standard `Lazy<T>`.
+  severity: high
+  source:
+    path: dotnet/AGENTS.md
+    lines: 25-26
+- rule: Comments should explain *why*, not *what* - prefer well-named methods over
+    comments
+  collision_type: scope_ambiguity
+  why_distracting: The agent might delete the existing XML documentation comments
+    on the properties (e.g., `/// Gets the object used for manipulating network information...`)
+    because they describe 'what' the property does rather than 'why', but doing so
+    would violate documentation standards and create unnecessary diffs.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 63-64
+hierarchy_analysis: The hierarchy is moderate (root `AGENTS.md` -> `dotnet/AGENTS.md`).
+  The root file emphasizes API compatibility and small diffs, while the .NET specific
+  file mentions migrating to async. The root rule 'Maintain API/ABI compatibility'
+  must override the .NET rule 'migrating to async' to prevent breaking the public
+  properties.
+version: '2.0'

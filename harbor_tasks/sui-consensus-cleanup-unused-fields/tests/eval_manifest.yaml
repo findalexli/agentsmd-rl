@@ -1,0 +1,52 @@
+version: "1.0"
+task_id: requests-sample-task
+repo: psf/requests
+
+# Checks for evaluation
+checks:
+  # Fail-to-pass tests (original issue verification)
+  - id: test_agent_can_import_requests
+    type: fail_to_pass
+    origin: agent_config
+    description: The requests library can be imported
+
+  - id: test_requests_http_get
+    type: fail_to_pass
+    origin: agent_config
+    description: Basic HTTP GET works
+
+  # Pass-to-pass tests (repo CI tests)
+  - id: test_repo_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's ruff linter passes
+
+  - id: test_repo_ruff_format_src
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's source code passes ruff format check
+
+  - id: test_repo_pyproject_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's pyproject.toml is valid TOML
+
+  - id: test_repo_src_structure
+    type: pass_to_pass
+    origin: static
+    description: Repo source structure is intact (key files exist)
+
+  - id: test_repo_tests_structure
+    type: pass_to_pass
+    origin: static
+    description: Repo test structure is intact (key test files exist)
+
+  - id: test_repo_makefile_ci
+    type: pass_to_pass
+    origin: static
+    description: Repo Makefile has ci target defined
+
+# Rubric for scoring
+# Note: For install-only tasks, the rubric checks that no harmful changes were made
+rubric:
+  - rule: "No destructive modifications to the codebase"

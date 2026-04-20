@@ -1,0 +1,82 @@
+version: '2.0'
+source:
+  repo: microsoft/playwright
+  pr: 39978
+  base_commit: 9c069597ff7c822052832c0e46eda76f37f9c1ef
+  merge_commit: 367517dd29df3fb0e89b13a47b5cddff6aa1f6c4
+checks:
+- id: typescript_valid_syntax
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript file must have valid syntax (parsable)
+- id: env_var_check_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD env var check exists with correct
+    import
+- id: resolve_and_install_helper_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: resolveAndInstall() helper function exists and uses resolveBrowsers()
+- id: ffmpeg_dependency_installation
+  type: fail_to_pass
+  origin: pr_diff
+  description: ffmpeg is resolved and installed as a dependency in findOrInstallDefaultBrowser
+- id: chromium_uses_resolve_and_install
+  type: fail_to_pass
+  origin: pr_diff
+  description: Chromium installation uses resolveAndInstall() helper instead of manual
+    executable check
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: Modified functions have real logic, not just pass/return
+- id: test_repo_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo builds successfully
+- id: test_repo_eslint
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint passes on modified cli-daemon directory
+- id: test_repo_lint_packages
+  type: pass_to_pass
+  origin: repo_tests
+  description: Workspace packages are consistent
+- id: test_repo_check_deps
+  type: pass_to_pass
+  origin: repo_tests
+  description: Dependency structure is valid
+- id: test_repo_eslint_env_utils
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint passes on env utils module (imported by solution)
+- id: test_repo_eslint_registry
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint passes on browser registry (used by solution)
+- id: test_repo_eslint_tools
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint passes on all tools directory
+rubric:
+- rule: Code changes only - no documentation or config file updates required
+  category: code_only_task
+- rule: Import boundaries must respect the DEPS.list system - check-deps passes
+  evidence: The gold solution imports from `../../server/utils/env` and passes `npm run check-deps`
+  category: architecture
+distractors:
+- rule: 'Decision rule: Does the test need browser/browserType/context → tests/library/.
+    Just needs page + server → tests/page/.'
+  collision_type: scope_ambiguity
+  why_distracting: The rule provides a decision matrix for where to place tests (tests/library
+    vs tests/page). This might prompt the agent to write tests for this CLI daemon
+    change, even though the gold solution does not include tests and CLI daemon tests
+    might not fit neatly into either of these specific categories.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 66-67
+hierarchy_analysis: The configuration consists of a single, flat CLAUDE.md file at
+  the root level containing generic monorepo guidelines. There is no complex hierarchy
+  or overriding of rules.

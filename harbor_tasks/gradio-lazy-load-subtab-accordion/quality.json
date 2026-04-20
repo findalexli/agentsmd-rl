@@ -1,49 +1,49 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the exact file paths (js/core/src/init.svelte.ts, js/core/src/_init.ts), function names (make_visible_if_not_rendered, determine_visible_components), parameter names (is_target_node), variable names (selectedId), type checks (node.type === 'tabs', node.type === 'accordion', child.type === 'tabitem'), property paths (node.props.props.selected, node.props.props.initial_tabs, node.props.props.open, child.props.props.id, child.id), and operators (??) that the tests assert on."
+      "reason": "Instruction names both files (js/core/src/init.svelte.ts, js/core/src/_init.ts), both functions (make_visible_if_not_rendered, determine_visible_components), and the literal strings checked by tests (is_target_node, node.type === 'tabs', 'accordion', open === false, initial_tabs, selectedId)."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly tells the agent the exact implementation: 'Accept an is_target_node parameter', 'Determine the selected tab ID using node.props.props.selected ?? node.props.props.initial_tabs?.[0]?.id', 'only recurse into tabitem children whose ID matches the selected ID', etc. This is a complete specification of the fix, not just a description of what's broken."
+      "reason": "Instruction dictates near-exact implementation details: variable name 'selectedId', exact expression 'node.props.props.selected ?? node.props.props.initial_tabs?.[0]?.id', conditions 'child.type === \"tabitem\"', 'child.props.props.id === selectedId or child.id === selectedId', and 'node.children.forEach' \u2014 leaving little for the agent to reason about."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact variable name 'selectedId' (test_tabs_selective_visibility), exact parameter name 'is_target_node' (test_closed_accordion_lazy_load, test_tabs_selective_visibility), exact string 'child.type === \"tabitem\"', exact string 'child.props.props.id === selectedId'. An alternative correct fix using different variable names (e.g., 'activeTabId', 'isDirectTarget') would fail these tests."
+      "reason": "Tests grep for specific tokens like 'selectedId' or 'selected ??', 'node.children.forEach', 'open === false', 'is_target_node' \u2014 a correct alternative that uses different variable names (e.g., 'selected_id') or different iteration (for..of) would fail test_open_accordion_children_visible and test_tabs_selective_visibility."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_tabs_selective_visibility, test_closed_accordion_lazy_load, test_tab_initial_tabs_fallback, test_open_accordion_children_visible, test_not_stub) are ALL string-matching tests using `assert 'X' in content` on file contents. None import, call, or execute the modified functions. The pass-to-pass tests do run subprocesses (vitest, format:check, build), but those test pre-existing behavior, not the new fix."
+      "reason": "Fail-to-pass tests (test_tabs_selective_visibility, test_closed_accordion_lazy_load, test_tab_initial_tabs_fallback, test_open_accordion_children_visible) are all string-grep assertions on init.svelte.ts content rather than executing the modified function."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "A stub implementation that simply adds the required string patterns to the file (e.g., adding comments containing 'is_target_node', 'selectedId', 'node.type === \"tabs\"', 'initial_tabs', 'open === false', 'node.children.forEach', 'child.type === \"tabitem\"') without any real logic would pass all fail-to-pass tests since they only check for string presence in file content."
+      "reason": "Since f2p tests are pure string matching, a stub that contains the required substrings (e.g., comments with 'is_target_node', 'open === false', 'selectedId', 'node.children.forEach') but no real behavior could pass; no behavioral assertion exists."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "The instruction requires changes to js/core/src/_init.ts (determine_visible_components function with accordion handling), but no test verifies any changes to that file. The _init.ts modifications for accordion visibility at initial page load are completely untested."
+      "reason": "The _init.ts accordion behavior required in instruction ('Add accordion components to visible_components at initial page load', 'Only call process_children_visibility when open !== false') is not tested at all \u2014 no test inspects _init.ts."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_tabs_selective_visibility, test_closed_accordion_lazy_load, etc.), have docstrings explaining purpose, and are clearly separated into pass-to-pass and fail-to-pass categories with comments."
+      "reason": "Tests are grouped with comment '# Fail-to-pass tests' separating p2p from f2p, have descriptive names and docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves modifying JavaScript/TypeScript code for UI component lazy loading, not producing structured data output."
+      "reason": "Task modifies TypeScript logic, no structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, commands, and property paths in the instruction all match what the tests expect and what exists in the codebase."
+      "reason": "File paths (js/core/src/init.svelte.ts, js/core/src/_init.ts) and function names match across instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names exact files, exact functions, exact parameter names to add ('is_target_node'), exact variable names ('selectedId'), exact property access chains, and exact conditional logic. This goes far beyond naming the buggy module \u2014 it's a complete implementation specification."
+      "reason": "Instruction names the exact function to modify and prescribes the fix logic step-by-step (e.g., 'Determine the selected tab ID using node.props.props.selected ?? node.props.props.initial_tabs?.[0]?.id'), eliminating localization as part of the task."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying TypeScript source files, not configuration files."
+      "reason": "Code-only task."
     }
   },
   "tier_a_fails": [

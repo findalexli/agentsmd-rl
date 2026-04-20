@@ -1,0 +1,73 @@
+source_pr:
+  owner: ant-design
+  repo: ant-design
+  number: 57488
+  title: "type: improve slider"
+  base_commit: 5e6a263cfe58b7bbe428a80bf4fd0de0e359d6b7
+  merge_commit: 61877c831805779958bf78bc300d166f4340dee5
+
+task:
+  name: ant-design-slider-types
+  title: "Ant Design Slider TypeScript type improvements"
+  description: |
+    Improve TypeScript types in the Slider component by removing @ts-ignore
+    and using proper type assertions instead of 'as any'.
+
+checks:
+  - id: test_no_ts_ignore_comment
+    type: fail_to_pass
+    origin: behavior
+    description: "The @ts-ignore comment should be removed from the RcSlider component"
+
+  - id: test_onchangecomplete_type_cast
+    type: fail_to_pass
+    origin: behavior
+    description: "The onChangeComplete callback should use proper type casting on the function"
+
+  - id: test_restprops_type_cast
+    type: fail_to_pass
+    origin: behavior
+    description: "The restProps spread should have proper type casting"
+
+  - id: test_no_explicit_any
+    type: pass_to_pass
+    origin: agent_config
+    description: "The code should not use explicit 'as any' type assertions (per copilot-instructions.md)"
+
+  - id: test_repo_tsc
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's TypeScript compilation passes"
+
+  - id: test_repo_eslint_slider
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ESLint passes on slider file"
+
+  - id: test_repo_biome_lint_slider
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Biome lint passes on slider file"
+
+  - id: test_repo_slider_type_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's slider TypeScript type tests pass"
+
+  - id: test_repo_slider_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's slider unit tests pass"
+
+rubric:
+  - id: no_any_type
+    text: "Never use `any` type - define precise types instead"
+    source: ".github/copilot-instructions.md"
+
+  - id: strict_typescript
+    text: "Always use TypeScript with strict type checking"
+    source: ".github/copilot-instructions.md"
+
+  - id: export_public_types
+    text: "Export all public interface types"
+    source: ".github/copilot-instructions.md"

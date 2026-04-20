@@ -1,61 +1,57 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file path (packages/opencode/src/config/config.ts), all relevant function names (loadGlobal, getGlobal, invalidate), the specific API (Effect.cachedInvalidateWithTTL), Duration.infinity, the exact error message string ('failed to load global config, using defaults'), Effect.fn wrapper names ('Config.getGlobal', 'Config.invalidate'), tapError before orElseSucceed ordering, and destructuring pattern. All test-asserted specifics are discoverable from the instruction."
+      "reason": "Instruction names the file path, function names (getGlobal, invalidate, loadGlobal), the API (Effect.cachedInvalidateWithTTL, Duration.infinity, tapError, orElseSucceed), the Effect.fn labels ('Config.getGlobal', 'Config.invalidate'), and the exact error string 'failed to load global config, using defaults'."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix: use Effect.cachedInvalidateWithTTL with destructuring, use Duration.infinity as TTL, use Effect.tapError before orElseSucceed with a specific error message, yield the invalidation handle, wrap with Effect.fn('Config.getGlobal') and Effect.fn('Config.invalidate'). This is a complete implementation specification, not a problem description. A developer reading this needs zero reasoning about what to change."
+      "reason": "Instruction prescribes the exact implementation: 'Effect.cachedInvalidateWithTTL' with destructuring, 'Duration.infinity', tapError before orElseSucceed, exact log string, and exact Effect.fn wrapper names \u2014 leaving no reasoning about what to change."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests assert gold-specific implementation details: test_cached_invalidate_with_ttl_used requires exact destructuring pattern 'const [x, y] = yield* Effect.cachedInvalidateWithTTL', test_invalidate_uses_handle_not_recreation checks for absence of specific variable reassignment patterns, test_const_over_let_for_cache checks for 'let cachedGlobal' specifically. An alternative correct fix (e.g., using a different variable name, or wrapping the cache differently) would fail these regex-based tests."
+      "outcome": "pass",
+      "reason": "Tests check structural patterns (destructured names are generic regex \\w+, Duration.\\w+ for TTL), not gold-specific variable names like 'invalidateGlobal'; alternative correct fixes would pass."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every single test reads the file as text and uses regex/string matching (e.g., 'assert \"cachedInvalidateWithTTL\" in stripped', regex for destructuring patterns, checking string positions). No test imports, compiles, or executes the TypeScript code. The only 'execution' is git status. These are purely textual/structural assertions."
+      "reason": "All shown tests are regex/substring checks on FILE.read_text() plus one git status subprocess; no test imports or executes the TypeScript code's behavior."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "Since tests only check text patterns, a stub that contains the right strings/patterns without actual functional implementation would pass. For example, adding dead-code comments or unused variable declarations matching the regex patterns (like 'const [x, y] = yield* Effect.cachedInvalidateWithTTL(...)') in the file without functional correctness would satisfy the text-matching tests."
+      "outcome": "pass",
+      "reason": "The f2p tests require multiple coordinated structural changes (destructuring, tapError ordering, Duration usage, yield in invalidate) that a stub cannot satisfy without actually applying the refactor."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors specified in the instruction are tested: Duration import, cachedInvalidateWithTTL with destructuring, tapError before orElseSucceed with error message, invalidation handle usage, Duration.* as TTL, Effect.fn wrappers, const over let, and preservation of existing functions."
+      "reason": "Each requirement in the instruction (Duration import, cachedInvalidateWithTTL destructuring, Duration.infinity, tapError before orElseSucceed, error message, invalidate yields handle, Effect.fn wrappers) has a corresponding test."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized into clearly labeled sections (Fail-to-pass pr_diff, Fail-to-pass agent_config, Pass-to-pass pr_diff, Pass-to-pass agent_config, Pass-to-pass static, Pass-to-pass repo_tests) with descriptive function names and docstrings."
+      "reason": "Tests are grouped under comment banners: 'Fail-to-pass (pr_diff)', 'Fail-to-pass (agent_config)', 'Pass-to-pass' sections."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves modifying TypeScript source code, not producing structured data output like JSON/CSV/API/DB."
+      "reason": "Task modifies TypeScript source code; no structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, function names, or variable names in the instruction or test files."
+      "reason": "Filenames and API names (cachedInvalidateWithTTL, Duration.infinity, tapError, orElseSucceed, Effect.fn) are spelled consistently between instruction and tests."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction names the exact file (packages/opencode/src/config/config.ts), the exact functions to modify (getGlobal, invalidate), and provides a complete specification of the implementation including exact API calls, parameter values, error messages, and function wrapper names. This goes well beyond identifying the buggy module."
+      "outcome": "pass",
+      "reason": "Instruction names the module file (config/config.ts) as the location, which is appropriate-scope, not a line number or hidden location."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying TypeScript source, not an agentmd-edits/config task."
+      "reason": "Code-only task; AGENTS.md append in solution is minor but instruction is not an agentmd-edits task."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 4,
-  "fail_count": 5
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 2
 }

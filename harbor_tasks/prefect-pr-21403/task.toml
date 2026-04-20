@@ -1,0 +1,25 @@
+[task]
+name = "prefect-processpool-duplicate-fix"
+title = "Handle missing _subprocess_message_processor_factories in ProcessPoolTaskRunner.duplicate()"
+difficulty = "medium"
+tags = ["prefect", "task-runner", "process-pool", "serialization", "bug-fix"]
+time_estimate = "10-15 minutes"
+
+[environment]
+image = "task-env"
+setup = "docker build -t task-env /workspace/task/environment"
+
+[[checks]]
+id = "test_duplicate_handles_missing_subprocess_message_processor_factories"
+type = "fail_to_pass"
+description = "duplicate() handles missing _subprocess_message_processor_factories gracefully"
+
+[[checks]]
+id = "test_duplicate_preserves_existing_factories"
+type = "pass_to_pass"
+description = "duplicate() preserves existing subprocess_message_processor_factories"
+
+[[checks]]
+id = "test_property_getter_returns_empty_tuple_when_missing"
+type = "fail_to_pass"
+description = "Property getter returns empty tuple when attribute is missing"

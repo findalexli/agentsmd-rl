@@ -1,60 +1,59 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file path (packages/router-core/src/scroll-restoration.ts), the exported functions/constants (setupScrollRestoration, scrollRestorationCache, defaultGetScrollRestorationKey), the event subscriptions (onBeforeLoad, onRendered, scroll, pagehide), the cache initialization pattern (cache.set with state[cacheKey] ||=), and describes the buggy pattern (toIndex > fromIndex clearing cache). All assert'd specifics in tests are discoverable from the instruction."
+      "reason": "Instruction names the file path, required exports, and event subscription strings that tests assert on."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states: 'The scroll restoration cache should NOT be cleared when toIndex > fromIndex (forward navigation). The cache clearing logic that checks for forward navigation and deletes state[cacheKey] should be removed.' This directly tells the agent exactly what code to remove, leaving no reasoning required."
+      "reason": "Instruction explicitly states 'The onRendered event handler should not contain any logic that clears the scroll restoration cache based on navigation direction' which directly describes the fix rather than just the bug."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: test_forward_navigation_does_not_clear_cache checks for the exact pattern 'const shouldClearCache' with 'toIndex > fromIndex', and test_ignore_scroll_flag_handling checks that 'shouldClearCache' string doesn't appear in the onRendered section. An alternative fix that renames the variable or changes the condition logic (e.g., keeping shouldClearCache but setting it to false for forward nav) would fail these regex-based tests."
+      "reason": "test_ignore_scroll_flag_handling asserts the literal token 'shouldClearCache' is absent \u2014 an alternative fix that renamed the variable but kept some conditional logic would fail, and conversely fixes not matching exact naming patterns are constrained."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_forward_navigation_does_not_clear_cache, test_scroll_restoration_preserves_cache_structure, test_ignore_scroll_flag_handling, test_scroll_restoration_module_imports) are all purely text-matching via regex or string search on file contents. They never import, call, or execute the scroll restoration code. While pass-to-pass tests do run builds/linting, the core behavioral verification is entirely text-based."
+      "outcome": "pass",
+      "reason": "Tests run subprocess builds, type checks, eslint, and unit tests (e.g., test_typescript_compiles, test_repo_unit_tests)."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for the absence of specific buggy code patterns (shouldClearCache with toIndex > fromIndex) and presence of required exports/patterns. A stub or no-op implementation would fail these tests because the buggy code exists in the repo at the checked-out commit and must be actively removed."
+      "reason": "F2P tests require removal of specific buggy patterns that would not be absent in a stub; the patterns check actual file content changes."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: (1) cache should not be cleared on forward navigation - tested by test_forward_navigation_does_not_clear_cache and test_ignore_scroll_flag_handling; (2) module exports preserved - tested by test_scroll_restoration_module_imports; (3) cache initialization preserved - tested by test_scroll_restoration_preserves_cache_structure. All described behaviors are covered."
+      "reason": "Tests cover the described removal of cache clearing and preservation of module structure/events."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (e.g., test_forward_navigation_does_not_clear_cache), have docstrings explaining fail-to-pass vs pass-to-pass, and are grouped logically by concern (bug fix verification, module structure, compilation, linting)."
+      "reason": "Tests have descriptive names and docstrings explaining fail-to-pass vs pass-to-pass."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a scroll restoration bug in TypeScript code, not producing structured data output."
+      "reason": "Task is a code fix, no structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, function names, and commands in the instruction and tests are consistent and correctly spelled."
+      "reason": "Paths and commands look correct."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names the exact buggy pattern: 'The cache clearing logic that checks for forward navigation and deletes state[cacheKey] should be removed' and 'The scroll restoration cache should NOT be cleared when toIndex > fromIndex'. This goes far beyond identifying the buggy file/module and specifies exactly what lines to remove."
+      "reason": "Instruction specifies exact file 'packages/router-core/src/scroll-restoration.ts' and tells the agent exactly which handler ('onRendered') should not clear the cache, leaving no localization work."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "Code-only task."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 4
+  "pass_count": 6,
+  "fail_count": 3
 }

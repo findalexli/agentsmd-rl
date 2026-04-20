@@ -1,0 +1,207 @@
+source_pr: electron/electron#50799
+base_commit: 7bd5de006e7a3a5eb5db0e66d79a31815abdd58d
+merge_commit: 4604c78c88fcdebd9d450bf62c3053b517f0a7db
+files_changed:
+  - shell/browser/api/electron_api_session.cc
+  - shell/browser/api/electron_api_session.h
+  - shell/browser/api/electron_api_web_contents.cc
+  - shell/browser/electron_browser_main_parts.cc
+  - shell/common/api/electron_api_url_loader.cc
+  - spec/cpp-heap-spec.ts
+
+checks:
+  # ==========================================================================
+  # FAIL TO PASS CHECKS - These verify the actual bug fix
+  # ==========================================================================
+
+  - id: test_raw_ref_removed_from_session_header
+    type: fail_to_pass
+    origin: agent_config
+    source: CLAUDE.md - Code Style: Follows Chromium style
+    description: raw_ref.h header include removed from electron_api_session.h
+    file: shell/browser/api/electron_api_session.h
+
+  - id: test_raw_ptr_used_for_browser_context
+    type: fail_to_pass
+    origin: agent_config
+    source: CLAUDE.md - Code Style: Follows Chromium style
+    description: browser_context_ uses raw_ptr instead of raw_ref
+    file: shell/browser/api/electron_api_session.h
+
+  - id: test_session_constructor_uses_raw_ptr
+    type: fail_to_pass
+    origin: agent_config
+    source: CLAUDE.md - Code Style: Follows Chromium style
+    description: Session constructor initializes browser_context_ as raw_ptr directly
+    file: shell/browser/api/electron_api_session.cc
+
+  - id: test_browser_context_accessor_returns_raw_ptr
+    type: fail_to_pass
+    origin: agent_config
+    source: CLAUDE.md - Code Style: Follows Chromium style
+    description: browser_context() accessor returns browser_context_ directly
+    file: shell/browser/api/electron_api_session.h
+
+  - id: test_dispose_has_null_check
+    type: fail_to_pass
+    origin: code_analysis
+    description: Session::Dispose() checks browser_context for null before use
+    file: shell/browser/api/electron_api_session.cc
+
+  - id: test_dispose_returns_early_if_browser_context_null
+    type: fail_to_pass
+    origin: code_analysis
+    description: Session::Dispose() returns early after browser_context null check
+    file: shell/browser/api/electron_api_session.cc
+
+  - id: test_onbefore_microtasks_dispose_nullifies_browser_context
+    type: fail_to_pass
+    origin: code_analysis
+    description: OnBeforeMicrotasksRunnerDispose sets browser_context_ to nullptr
+    file: shell/browser/api/electron_api_session.cc
+
+  - id: test_dispose_uses_captured_browser_context
+    type: fail_to_pass
+    origin: code_analysis
+    description: Dispose() captures browser_context locally before null check
+    file: shell/browser/api/electron_api_session.cc
+
+  - id: test_web_contents_has_dcheck_for_browser_context
+    type: fail_to_pass
+    origin: code_analysis
+    description: WebContents constructor has DCHECK for browser_context
+    file: shell/browser/api/electron_api_web_contents.cc
+
+  - id: test_web_contents_uses_local_browser_context
+    type: fail_to_pass
+    origin: code_analysis
+    description: WebContents uses local browser_context variable consistently
+    file: shell/browser/api/electron_api_web_contents.cc
+
+  - id: test_url_loader_has_dcheck_for_browser_context
+    type: fail_to_pass
+    origin: code_analysis
+    description: URL loader has DCHECK for browser_context after getting from session
+    file: shell/common/api/electron_api_url_loader.cc
+
+  - id: test_browser_main_parts_resets_browser_and_js_env
+    type: fail_to_pass
+    origin: code_analysis
+    description: ElectronBrowserMainParts resets browser_ and js_env_ during shutdown
+    file: shell/browser/electron_browser_main_parts.cc
+
+  - id: test_cpp_heap_spec_has_shutdown_test
+    type: fail_to_pass
+    origin: code_analysis
+    description: cpp-heap-spec.ts has the new crash-on-exit regression test
+    file: spec/cpp-heap-spec.ts
+
+  - id: test_cpp_heap_spec_imports_once
+    type: fail_to_pass
+    origin: code_analysis
+    description: cpp-heap-spec.ts imports 'once' from node:events
+    file: spec/cpp-heap-spec.ts
+
+  # ==========================================================================
+  # PASS TO PASS CHECKS - These verify code quality
+  # ==========================================================================
+
+  - id: test_typescript_compiles
+    type: pass_to_pass
+    origin: static
+    source: structural analysis
+    description: TypeScript files have valid structure and imports
+
+  - id: test_session_header_parseable
+    type: pass_to_pass
+    origin: static
+    source: structural analysis
+    description: electron_api_session.h has valid header structure
+
+  - id: test_session_cc_parseable
+    type: pass_to_pass
+    origin: static
+    source: structural analysis
+    description: electron_api_session.cc has valid C++ structure
+
+  - id: test_session_header_structure
+    type: pass_to_pass
+    origin: static
+    source: structural analysis
+    description: electron_api_session.h has valid C++ class structure with header guards
+
+  - id: test_session_cc_structure
+    type: pass_to_pass
+    origin: static
+    source: structural analysis
+    description: electron_api_session.cc has expected includes and method implementations
+
+  - id: test_cpp_heap_spec_structure
+    type: pass_to_pass
+    origin: static
+    source: structural analysis
+    description: cpp-heap-spec.ts has valid TypeScript test structure
+
+  - id: test_web_contents_cc_structure
+    type: pass_to_pass
+    origin: static
+    source: structural analysis
+    description: electron_api_web_contents.cc has valid C++ structure
+
+  - id: test_url_loader_cc_structure
+    type: pass_to_pass
+    origin: static
+    source: structural analysis
+    description: electron_api_url_loader.cc has valid C++ structure
+
+  - id: test_browser_main_parts_cc_structure
+    type: pass_to_pass
+    origin: static
+    source: structural analysis
+    description: electron_browser_main_parts.cc has valid C++ structure
+
+# ==========================================================================
+# RUBRIC - Soft/subjective rules from agent configs
+# ==========================================================================
+
+rubric:
+  - rule: C++ code follows Chromium style (header guards, naming, formatting)
+    source: CLAUDE.md - Code Style section
+    description: |
+      C++ code should follow Chromium coding style:
+      - Header guards: ELECTRON_SHELL_BROWSER_API_ELECTRON_API_{NAME}_H_
+      - Uses Chromium abstractions (base::, content::, etc.)
+      - Follows clang-format and clang-tidy rules
+    files: ["*.cc", "*.h"]
+
+  - rule: Header includes follow proper ordering and minimal dependencies
+    source: CLAUDE.md - Code Style section
+    description: |
+      Remove unused includes (like raw_ref.h). Use raw_ptr from base/memory/raw_ptr.h.
+      Group includes properly: system headers, Chromium headers, Electron headers.
+    files: ["*.h"]
+
+  - rule: Memory management follows Chromium base:: patterns
+    source: CLAUDE.md - Code Style section + .github/copilot-instructions.md
+    description: |
+      Use Chromium smart pointers correctly:
+      - raw_ptr for non-owning pointers that can be null
+      - raw_ref for non-owning references that should never be null
+      - Always nullify raw_ptr when the pointed-to object is destroyed
+    files: ["*.cc", "*.h"]
+
+  - rule: TypeScript/JavaScript files use proper import ordering
+    source: .github/copilot-instructions.md - Conventions section
+    description: |
+      Import order: @electron/internal → @electron → electron → external → builtin → relative.
+      The regression test should follow existing test file patterns.
+    files: ["spec/*.ts"]
+
+  - rule: Test files follow Mocha/Chai patterns
+    source: CLAUDE.md - Testing section
+    description: |
+      Tests should use existing test helpers and patterns:
+      - Use startRemoteControlApp() for integration tests
+      - Properly clean up resources after tests
+      - Follow existing describe/it structure
+    files: ["spec/*.ts"]

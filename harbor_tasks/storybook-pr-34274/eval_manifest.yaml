@@ -1,0 +1,90 @@
+version: 1
+
+source:
+  owner: storybookjs
+  repo: storybook
+  pr_number: 34274
+  base_commit: db1ddc8e390e80df62a3cf2a92d0b92faab2c3f4
+  merge_commit: 1c38a364f36ed149a33ddbc61e8e545a4898d8ff
+  title: "Builder-Vite: Use djb2 hash to prevent variable name collisions in builder-vite"
+  description: |
+    Replaced the naive character-code-sum hash function in codegen-project-annotations.ts
+    with the djb2 hash algorithm. The old function produced identical hashes for anagrams,
+    causing variable name collisions ("preview_XXXX") when pnpm's peer dependency paths
+    include hex suffixes.
+
+checks:
+  - id: test_hash_function_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: The hash function is defined in the target file
+
+  - id: test_hash_anagrams_distinct_djb2
+    type: fail_to_pass
+    origin: agent_config
+    description: djb2 hash produces different values for anagrams
+    source:
+      - file: AGENTS.md
+        lines: "Testing Expectations: Test real behavior, not just syntax patterns"
+      - file: AGENTS.md
+        lines: "Testing: Export functions that need direct tests"
+
+  - id: test_hash_string_with_position_sensitivity
+    type: fail_to_pass
+    origin: agent_config
+    description: Hash function is position-sensitive (not just char-code sum)
+    source:
+      - file: AGENTS.md
+        lines: "Test real behavior, not just syntax patterns"
+
+  - id: test_djb2_specific_values
+    type: fail_to_pass
+    origin: agent_config
+    description: Hash produces specific djb2 reference values
+    source:
+      - file: AGENTS.md
+        lines: "Use coverage when useful"
+
+  - id: test_hash_no_collision_with_pnpm_paths
+    type: fail_to_pass
+    origin: agent_config
+    description: No hash collisions with pnpm-style paths with hex suffixes
+    source:
+      - file: AGENTS.md
+        lines: "Test real behavior, not just syntax patterns"
+
+  - id: test_typescript_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: Modified TypeScript file compiles without errors
+    source:
+      - file: AGENTS.md
+        lines: "Validate there are no TypeScript errors with yarn nx run-many -t check"
+
+  - id: test_vitest_builder_vite
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo vitest tests for builder-vite pass
+    source:
+      - file: code/builders/builder-vite/vitest.config.ts
+        lines: "Vitest configuration for builder-vite"
+
+  - id: test_nx_check_builder_vite
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo typecheck for builder-vite passes
+    source:
+      - file: AGENTS.md
+        lines: "yarn nx run-many -t check"
+
+rubric:
+  - source:
+      file: code/builders/builder-vite/src/codegen-project-annotations.ts
+      commit: db1ddc8e390e80df62a3cf2a92d0b92faab2c3f4
+      lines: "function hash(value: string)"
+    description: |
+      The hash function must use the djb2 algorithm with seed 5381 and
+      position-sensitive hashing to prevent anagram collisions. The algorithm
+      uses: acc = ((acc << 5) + acc + charCode) >>> 0 for each character.
+    reference: "let acc = 5381;\\n  for (let i = 0; i < value.length; i++) {\\n    acc = ((acc << 5) + acc + value.charCodeAt(i)) >>> 0;\\n  }\\n  return acc;"
+    weight: 1

@@ -1,61 +1,57 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file path (dagster_dlt/resource.py), the exact comment strings ('Dlt keeps some local state that interferes with next runs', 'restore_from_destination is enabled (default)', 'restore_from_destination is disabled'), the method names (drop(), drop_pending_packages(), restore_from_destination), and the requirement that clearing happens before run(). All asserted specifics in tests are discoverable from the instruction."
+      "reason": "Instruction names the required literal comment strings, the drop()/drop_pending_packages() API, and the restore_from_destination config; file path is discoverable as the dagster-dlt resource module."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly states the exact implementation: check restore_from_destination, call drop() when enabled, call drop_pending_packages() when disabled, and specifies exact comment strings. Requirements 1-7 essentially dictate the complete code to write, leaving no reasoning about WHAT to change."
+      "outcome": "pass",
+      "reason": "Instruction describes the bug and required behavior but does not specify exact line numbers or the exact code to insert beyond required comment strings."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_drop_behavior_with_restore_enabled asserts the exact pattern 'if dlt_pipeline.config.restore_from_destination:' followed by 'dlt_pipeline.drop()' in an if branch and 'dlt_pipeline.drop_pending_packages()' in an else branch within _run method. An alternative correct fix (e.g., using a helper function, different variable names, or different control flow structure) would fail these rigid structural checks."
+      "reason": "test_drop_behavior_with_restore_enabled asserts the exact literal 'if dlt_pipeline.config.restore_from_destination:' \u2014 an alternative like checking pipeline.restore_from_destination attribute or using a negated condition (if not ...) would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The F2P tests (test_drop_pipeline_state_code_exists, test_drop_behavior_with_restore_enabled, test_comment_documentation_present, test_drop_called_before_run) are ALL text-matching tests using 'assert X in content' on file contents. While P2P tests do run subprocesses (ruff, unit tests, imports), the core F2P tests that verify the bug fix never import or call the code to check behavior."
+      "reason": "F2P tests (test_drop_pipeline_state_code_exists, test_drop_behavior_with_restore_enabled, test_comment_documentation_present, test_drop_called_before_run) all do text inspection of resource.py; only P2P tests execute code."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "All F2P tests are pure text-matching on file contents. A stub that simply inserts the expected comments and method call strings as dead code (never executed) into resource.py would pass all F2P tests without actually fixing the bug."
+      "outcome": "pass",
+      "reason": "F2P tests require specific code structure (conditional, drop calls in correct branches, ordering before run) that a stub cannot satisfy without implementing the fix."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All 7 requirements from instruction.md are covered: restore_from_destination check (tests 1-2), drop() for enabled case (test 2), drop_pending_packages() for disabled case (tests 1-2), before run() ordering (test 4), and all three exact comment strings (test 3)."
+      "reason": "Tests verify the conditional state clearing, ordering before run, and required comments as specified in instruction."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear docstrings, labeled as F2P (fail-to-pass) vs P2P (pass-to-pass) with section comments, and descriptive function names like test_drop_behavior_with_restore_enabled."
+      "reason": "Tests are named with F2P/P2P prefixes, grouped by section headers, and have docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves modifying Python source code, not producing structured data like JSON/CSV/API/DB."
+      "reason": "No structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "Paths and names are consistent."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction names the exact file (resource.py), specifies exact method names to call (drop(), drop_pending_packages()), exact attribute to check (dlt_pipeline.config.restore_from_destination), and exact comment strings to include. This goes far beyond describing what's broken."
+      "outcome": "pass",
+      "reason": "Instruction references the dagster-dlt integration generally without naming exact file/line."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "Code-only task."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 4,
-  "fail_count": 5
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 2
 }

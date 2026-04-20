@@ -1,0 +1,91 @@
+version: "2.0"
+
+source:
+  repo: "THUDM/slime"
+  pr: 1751
+  base_commit: "10f21d86514bcd26ca813590a7d22072325d36df"
+  merge_commit: "8a83f94449098205524170ab74260465317e8864"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified files (data_source.py, rollout.py) must parse without errors"
+
+  - id: test_repo_ruff
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ruff lint check passes on modified files"
+
+  - id: test_repo_black
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's black format check passes on modified files"
+
+  - id: test_repo_isort
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's isort import order check passes on modified files"
+
+  - id: test_repo_chunked_gae
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's chunked GAE unit tests pass"
+
+  - id: test_repo_autoflake
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's autoflake unused import check passes on modified files"
+
+  - id: test_repo_plugin_contracts
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's plugin contract tests pass"
+
+  - id: constructor_none_prompt_data
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Constructor doesn't crash when prompt_data is None with global_dataset=True"
+
+  - id: len_returns_zero_when_dataset_none
+    type: fail_to_pass
+    origin: pr_diff
+    description: "__len__ returns 0 when dataset is None instead of TypeError"
+
+  - id: load_no_crash_when_dataset_none_shuffle_true
+    type: fail_to_pass
+    origin: pr_diff
+    description: "load() skips shuffle when dataset is None instead of AttributeError"
+
+  - id: router_disables_health_check
+    type: fail_to_pass
+    origin: pr_diff
+    description: "_start_router sets router_args.disable_health_check = True"
+
+  - id: len_returns_correct_count_with_dataset
+    type: pass_to_pass
+    origin: pr_diff
+    description: "__len__ returns actual dataset length when dataset exists (varied sizes, anti-stub)"
+
+  - id: constructor_with_prompt_data_creates_dataset
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Constructor with valid prompt_data still creates dataset normally (multiple paths)"
+
+  - id: load_calls_shuffle_when_dataset_exists
+    type: pass_to_pass
+    origin: pr_diff
+    description: "load() still calls dataset.shuffle when dataset IS present and shuffle is on"
+
+  - id: get_samples_when_dataset_none
+    type: pass_to_pass
+    origin: pr_diff
+    description: "get_samples returns correctly structured list[list[Sample]] when dataset is None"
+
+rubric:
+  - rule: "Disable router health check in rollout.py _start_router function to prevent unnecessary health probes."
+    source:
+      path: "slime/ray/rollout.py"
+      lines: "950-960"
+      commit: "10f21d86514bcd26ca813590a7d22072325d36df"
+    reference: "router_args.disable_health_check = True"

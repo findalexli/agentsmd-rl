@@ -1,0 +1,163 @@
+version: '2.0'
+source:
+  repo: sgl-project/sglang
+  pr: 22131
+  base_commit: 20ee59bcfc2956cb2aef2c1a4ae1e8bbda4ba52d
+  merge_commit: 30ba1f78b0982f1fcd1d87d3b58713c11a422ee5
+checks:
+- id: syntax_check_python
+  type: pass_to_pass
+  origin: static
+  description: Modified Python files must parse without errors
+- id: syntax_check_cuda
+  type: pass_to_pass
+  origin: static
+  description: Modified CUDA files must have valid syntax
+- id: hisparse_coordinator_retract_in_release_req
+  type: fail_to_pass
+  origin: pr_diff
+  description: hisparse_coordinator.retract_req must be called in release_req method
+- id: batch_is_full_reset_after_hisparse
+  type: fail_to_pass
+  origin: pr_diff
+  description: batch_is_full must be reset to False after hisparse_coordinator assignment
+- id: retract_req_removed_from_scheduler
+  type: fail_to_pass
+  origin: pr_diff
+  description: retract_req call must be removed from scheduler's update_running_batch
+    method
+- id: transfer_item_warp_128bit_alignment
+  type: fail_to_pass
+  origin: pr_diff
+  description: transfer_item_warp must use 128-bit (16-byte) paired transfers with
+    tail handling
+- id: not_stub_schedule_batch
+  type: pass_to_pass
+  origin: static
+  description: release_req in schedule_batch.py has real logic
+- id: not_stub_scheduler
+  type: pass_to_pass
+  origin: static
+  description: get_next_batch_to_run in scheduler.py has real logic
+- id: not_stub_hisparse_cuh
+  type: pass_to_pass
+  origin: static
+  description: transfer_item_warp in hisparse.cuh has real logic
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Python files pass ruff linting (F401, F821)
+- id: test_repo_black_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Python files pass black format check
+- id: test_repo_isort_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Python files pass isort check
+- id: test_repo_codespell_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Python files pass codespell check
+- id: test_repo_py_compile
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified Python files compile without syntax errors
+- id: test_repo_clang_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: CUDA/C++ files pass clang-format check
+- id: test_repo_pre_commit_ast
+  type: pass_to_pass
+  origin: repo_tests
+  description: Python files pass AST check
+- id: test_repo_pre_commit_trailing_whitespace
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified Python files have no trailing whitespace
+- id: test_repo_pre_commit_end_of_file_fixer
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified Python files end with exactly one newline
+- id: test_repo_pre_commit_check_yaml
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository YAML files are valid
+- id: test_repo_pre_commit_check_toml
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository pyproject.toml is valid
+- id: test_repo_pre_commit_debug_statements
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified Python files have no debug statements
+- id: test_repo_hisparse_cuh_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: hisparse.cuh has valid CUDA syntax - braces balanced
+rubric: []
+distractors:
+- rule: Always prefer abstractions over raw CUDA primitives
+  source:
+    path: .claude/skills/add-jit-kernel/SKILL.md
+    lines: '28'
+  source_text: '**Always prefer these abstractions over raw CUDA primitives.** They
+    provide safety, readability, and consistency with the rest of the codebase.'
+  collision_type: rule_conflict
+  why_distracting: An agent might try to rewrite the inline PTX assembly (`asm volatile`)
+    in `hisparse.cuh` using higher-level abstractions as mandated. However, the gold
+    diff explicitly relies on raw assembly (`ld.global.nc.v2.b64` and `st.global.cg.v2.b64`)
+    to force paired 64-bit loads and avoid alignment issues that standard abstractions
+    would trigger.
+  severity: medium
+- rule: Use AlignedVector for vectorized 128-bit loads/stores
+  source:
+    path: .claude/skills/add-jit-kernel/SKILL.md
+    lines: '299'
+  source_text: '- Use `AlignedVector` for vectorised 128-bit loads/stores — significant
+    bandwidth win'
+  collision_type: would_cause_bug
+  why_distracting: An agent might attempt to use `device::AlignedVector` for the 128-bit
+    memory transfers, which ultimately compiles down to `uint4` memory operations.
+    The gold diff correctly ignores this rule and uses paired 64-bit loads specifically
+    to circumvent the memory alignment requirements of `uint4`.
+  severity: high
+- rule: Use `AlignedVector` for vectorised 128-bit loads/stores
+  source:
+    path: .claude/skills/add-jit-kernel/SKILL.md
+    lines: 114, 299
+  source_text: '- **`device::AlignedVector<T, N>`** — Aligned storage for N elements
+    of type T. N must be a power of two, `sizeof(T)*N <= 32`. Enables vectorized loads/stores
+    for bandwidth efficiency. In terms of API/codegen constraints, the upper bound
+    is 256-bit; in practice, 128-bit is the portable default, while 256-bit vectorization
+    is typically only viable on `SM100+` and should be gated by an architecture check
+    when needed.
+
+    - Use `AlignedVector` for vectorised 128-bit loads/stores — significant bandwidth
+    win'
+  collision_type: would_cause_bug
+  why_distracting: The PR implements a 128-bit bulk transfer but specifically avoids
+    using standard 128-bit vector types (which `AlignedVector` uses under the hood)
+    because of alignment issues on the input pointer. The gold diff uses paired 64-bit
+    loads via PTX `ld.global.nc.v2.b64` (`avoids alignment issues with uint4`). Blindly
+    applying the rule to use `AlignedVector` would lead to misaligned memory access
+    crashes.
+  severity: high
+- rule: Scheduler maps to multimodal ZMQ event loop and ScheduleBatch maps to multimodal
+    pipelines core.
+  source:
+    path: python/sglang/multimodal_gen/.claude/CLAUDE.md
+    lines: 57, 59
+  source_text: '| `Scheduler` | `runtime/managers/scheduler.py` | ZMQ event loop,
+    request dispatch |
+
+    | `Req` / `OutputBatch` | `runtime/pipelines_core/schedule_batch.py` | Request/output
+    containers |'
+  collision_type: scope_ambiguity
+  why_distracting: The gold diff modifies `python/sglang/srt/managers/scheduler.py`
+    and `python/sglang/srt/managers/schedule_batch.py`, which are part of the LLM
+    runtime (`srt`). The `multimodal_gen` subsystem maps its own files with identical
+    names (e.g. `runtime/managers/scheduler.py` relative to its folder). An agent
+    might mistakenly apply the multimodal architecture definitions (like ZMQ event
+    loop or ComposedPipeline) when editing the LLM runtime files.
+  severity: medium

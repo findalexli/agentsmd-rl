@@ -1,0 +1,130 @@
+version: '2.0'
+source:
+  repo: huggingface/transformers
+  pr: 45109
+  base_commit: 38593c2e83964079576eb646fe9b68cce16114dc
+  merge_commit: d55f0350a25333406daeafb7c250bb4ba3bf43a1
+checks:
+- id: test_syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified files must parse without errors
+- id: test_t5attention_tp_compatible
+  type: fail_to_pass
+  origin: pr_diff
+  description: T5Attention correctly infers n_heads from tensor shape when inner_dim
+    is sharded
+- id: test_kv_attention_shape_correct
+  type: fail_to_pass
+  origin: pr_diff
+  description: Key/value attention uses dynamic shape from current_states instead
+    of config n_heads
+- id: test_position_bias_dynamic
+  type: fail_to_pass
+  origin: pr_diff
+  description: position_bias shape uses query_states.shape[1] instead of config n_heads
+- id: test_attn_output_reshape
+  type: fail_to_pass
+  origin: pr_diff
+  description: attn_output.view uses seq_length as fixed dim and -1 for heads dimension
+- id: test_view_operations_runtime_semantics
+  type: fail_to_pass
+  origin: pr_diff
+  description: View operations produce correct shapes under TP-like conditions
+- id: test_copied_files_updated
+  type: fail_to_pass
+  origin: agent_config
+  description: T5-family model copies (mt5, longt5, etc.) have been updated with the
+    same fix
+  source:
+    path: CLAUDE.md
+    lines: 45-55
+    commit: 38593c2e83964079576eb646fe9b68cce16114dc
+- id: test_not_stub
+  type: pass_to_pass
+  origin: static
+  description: T5Attention.forward has real logic, not just pass/return
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff linter passes on modified T5-family model files
+- id: test_repo_py_compile
+  type: pass_to_pass
+  origin: repo_tests
+  description: All modified Python files compile without errors (py_compile check)
+- id: test_repo_t5_classes_exist
+  type: pass_to_pass
+  origin: repo_tests
+  description: T5-family model files contain required Attention classes
+- id: test_repo_forward_methods_parse
+  type: pass_to_pass
+  origin: repo_tests
+  description: All T5-family Attention.forward() methods have valid AST structure
+- id: test_repo_ruff_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff format check passes on modified T5-family model files
+- id: test_repo_modeling_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's modeling structure check passes
+- id: test_repo_inits_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's init file consistency check passes
+- id: test_repo_config_docstrings
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's config docstrings check passes
+- id: test_repo_dummies_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's dummy files check passes
+rubric:
+- rule: When fixing code that is copied across model files, ensure all copies are
+    updated or the copy link is properly broken.
+  source:
+    path: CLAUDE.md
+    lines: 45-55
+    commit: 38593c2e83964079576eb646fe9b68cce16114dc
+- rule: Ideally you should edit the code it's copying from and propagate the change
+  source:
+    path: CLAUDE.md
+    lines: '64'
+  evidence: The gold solution correctly targets the source model `src/transformers/models/t5/modeling_t5.py`
+    for the initial fix, which is the canonical source that other T5-family models
+    copy their attention imp
+  category: architecture
+- rule: Avoid direct inheritance between model-specific files in `src/transformers/models/`.
+  source:
+    path: AGENTS.md
+    lines: 61-62
+  evidence: The gold solution patches `modeling_t5.py` and `modeling_mt5.py` independently
+    rather than refactoring them to use direct inheritance to share the fixed attention
+    logic.
+  category: architecture
+- rule: Run `make fix-repo` to auto-fix copies and propagate changes before opening
+    a PR
+  source:
+    path: AGENTS.md
+    lines: 4-8
+  evidence: The gold solution includes identical changes across multiple T5-family
+    model files, which is the expected outcome of running `make fix-repo` to auto-fix
+    copies after modifying the source.
+  category: tooling
+distractors:
+- rule: Do not edit a `# Copied from` block, as it will be reverted by `make fix-repo`.
+  collision_type: rule_conflict
+  why_distracting: The user instruction explicitly tells the agent to 'apply the same
+    changes to other T5-family models that have copied code'. An agent might interpret
+    this as a directive to manually edit those files, which directly violates the repository
+    rule against manually editing `# Copied from` blocks.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 61-65
+hierarchy_analysis: The configuration files (`AGENTS.md` and `CLAUDE.md`) contain
+  identical rules at the root level. The primary conflict is between the user's prompt
+  (which implies manual edits to copied files) and the repository's config (which mandates
+  using `make fix-repo` to sync copies). The agent must prioritize the repository's
+  structural integrity rules over a literal interpretation of the user's instruction.

@@ -1,0 +1,136 @@
+version: '2.0'
+source:
+  repo: astral-sh/uv
+  pr: 18569
+  base_commit: d7da792648a6e8bc2e56162f5890f44333df9ab8
+  merge_commit: b03b033924e5733ecd7fdeaca5e6928c51138d8d
+checks:
+- id: is_explicit_method_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: PythonSource has an is_explicit method returning bool
+- id: is_explicit_variant_mapping
+  type: fail_to_pass
+  origin: pr_diff
+  description: is_explicit returns true for explicit variants, false for non-explicit
+- id: allows_installation_delegates
+  type: fail_to_pass
+  origin: pr_diff
+  description: allows_installation calls source.is_explicit() instead of inline match
+- id: allows_installation_no_inline_variant_match
+  type: fail_to_pass
+  origin: pr_diff
+  description: allows_installation no longer contains PythonSource variant arms for
+    the explicit check
+- id: is_maybe_system_preserved
+  type: pass_to_pass
+  origin: repo_tests
+  description: is_maybe_system method still exists (regression guard)
+- id: allows_installation_preserved
+  type: pass_to_pass
+  origin: repo_tests
+  description: allows_installation method still exists
+- id: python_source_enum_preserved
+  type: pass_to_pass
+  origin: repo_tests
+  description: PythonSource enum retains all expected variants
+- id: is_explicit_not_stub
+  type: fail_to_pass
+  origin: static
+  description: is_explicit has match/matches! with >=4 variant refs, not a stub
+- id: repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo Python files pass ruff format check
+- id: repo_validate_pyproject
+  type: pass_to_pass
+  origin: repo_tests
+  description: pyproject.toml passes validation
+- id: repo_shellcheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Shell scripts pass shellcheck
+- id: allows_installation_has_debug_logging
+  type: pass_to_pass
+  origin: static
+  description: allows_installation retains debug! logging statements
+- id: python_source_impl_methods_complete
+  type: fail_to_pass
+  origin: static
+  description: PythonSource impl block has is_explicit method
+- id: is_explicit_has_doc_comment
+  type: fail_to_pass
+  origin: static
+  description: is_explicit method has documentation comments
+- id: no_panic_unwrap_in_is_explicit
+  type: fail_to_pass
+  origin: agent_config
+  description: No panic!/unreachable!/.unwrap()/unsafe in is_explicit
+  source:
+    path: CLAUDE.md
+    lines: '7'
+    commit: d7da792648a6e8bc2e56162f5890f44333df9ab8
+- id: no_clippy_allow_in_is_explicit
+  type: fail_to_pass
+  origin: agent_config
+  description: 'No #[allow(clippy::...)] — prefer #[expect()] if needed'
+  source:
+    path: CLAUDE.md
+    lines: 7,10
+    commit: d7da792648a6e8bc2e56162f5890f44333df9ab8
+rubric:
+- rule: PREFER patterns like `if let` to handle fallibility
+  source:
+    path: CLAUDE.md
+    lines: '8'
+    commit: d7da792648a6e8bc2e56162f5890f44333df9ab8
+- rule: AVOID shortening variable names, e.g., use `version` instead of `ver`, and
+    `requires_python` instead of `rp`
+  source:
+    path: CLAUDE.md
+    lines: 15,17-18
+    commit: d7da792648a6e8bc2e56162f5890f44333df9ab8
+- rule: PREFER let chains (`if let` combined with `&&`) over nested `if let` statements
+  source:
+    path: CLAUDE.md
+    lines: '11'
+    commit: d7da792648a6e8bc2e56162f5890f44333df9ab8
+- rule: PREFER top-level imports over local imports or fully qualified names
+  source:
+    path: CLAUDE.md
+    lines: '16'
+    commit: d7da792648a6e8bc2e56162f5890f44333df9ab8
+- rule: Repo Python files pass ruff linting
+- rule: uv-python crate has no typos
+- rule: discovery.rs has no typos
+- rule: Repo Python files pass ruff via uvx (authentic CI)
+- rule: AVOID using `panic!`, `unreachable!`, `.unwrap()`, unsafe code, and clippy
+    rule ignores
+  source:
+    path: CLAUDE.md
+    lines: 8-8
+  evidence: The gold solution implements the refactoring safely without using any
+    of the forbidden macros (panic!, unreachable!, unwrap()) or unsafe code.
+  category: style
+distractors:
+- rule: ALWAYS attempt to add a test case for changed behavior
+  collision_type: scope_ambiguity
+  why_distracting: The PR is a pure refactoring of existing logic (moving an inline
+    match to a method) without changing any behavior. Attempting to add a test case
+    would be a waste of effort and might lead to hallucinated tests.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 3-3
+- rule: PREFER integration tests, e.g., at `it/...` over unit tests
+  collision_type: scope_ambiguity
+  why_distracting: Similar to the test case rule, this instructs the agent to prefer
+    integration tests. Since no behavior is changed, trying to write integration tests
+    for this internal refactoring is unnecessary and distracting.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 4-4
+hierarchy_analysis: The configuration consists of a single, flat `CLAUDE.md` file
+  at the root level. There are no hierarchical overrides or complex rule interactions
+  to navigate.

@@ -1,0 +1,212 @@
+version: '2.0'
+source:
+  repo: effect-ts/effect
+  pr: 6030
+  base_commit: 5487cfb65a69a308e7c0b29ae666c8a9ddcab159
+  merge_commit: 33712058e2655dd50f9b2b511ab8d38c2bd5268a
+checks:
+- id: agentsmd_test_run_command
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md specifies 'pnpm test run' (with required 'run' subcommand)
+    for running tests
+- id: agentsmd_tsx_scratchpad
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md uses 'tsx' (not 'node') to run scratchpad TypeScript files
+- id: agentsmd_v4_learning_section
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md includes section about learning effect v4 with .repos/effect-v4
+    path
+- id: eslint_ignores_repos
+  type: fail_to_pass
+  origin: pr_diff
+  description: eslint.config.mjs includes .repos/ and .lalph/ in its ignore patterns
+- id: eslint_formatted_correctly
+  type: fail_to_pass
+  origin: pr_diff
+  description: eslint.config.mjs has proper formatting (selector on its own line,
+    single-line packageNames)
+- id: sql_tsconfig_outdir
+  type: fail_to_pass
+  origin: pr_diff
+  description: packages/sql/tsconfig.test.json specifies outDir for test build output
+- id: schema_jsdoc_example_reference
+  type: fail_to_pass
+  origin: pr_diff
+  description: Schema.ts JSDoc example uses Schema.JsonNumber (not S.JsonNumber)
+- id: ai_chat_jsdoc_import_pattern
+  type: fail_to_pass
+  origin: pr_diff
+  description: Chat.ts JSDoc uses 'effect/Effect' import and Chat.Chat service access
+- id: ai_aierror_jsdoc_import_patterns
+  type: fail_to_pass
+  origin: pr_diff
+  description: AiError.ts JSDoc uses 'effect/Effect' and 'effect/Option' imports with
+    proper return types
+- id: ai_embeddingmodel_jsdoc_import_pattern
+  type: fail_to_pass
+  origin: pr_diff
+  description: EmbeddingModel.ts JSDoc uses 'effect/Effect' import and EmbeddingModel.EmbeddingModel
+    service access
+- id: ai_languagemodel_jsdoc_import_pattern
+  type: fail_to_pass
+  origin: pr_diff
+  description: LanguageModel.ts JSDoc uses 'effect/Effect' import and LanguageModel.LanguageModel
+    service access
+- id: ai_telemetry_jsdoc_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: Telemetry.ts JSDoc uses 'effect/Effect' import and options.response.length
+    (not options.model)
+- id: agentsmd_core_sections_intact
+  type: pass_to_pass
+  origin: static
+  description: AGENTS.md retains core Development Workflow, Code Style, and Testing
+    sections
+- id: eslint_standard_ignores
+  type: pass_to_pass
+  origin: static
+  description: eslint.config.mjs still includes standard ignore patterns (dist, build,
+    docs, md)
+- id: gitignore_repos_added
+  type: pass_to_pass
+  origin: static
+  description: .gitignore includes .repos/ directory
+- id: test_repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI lint check passes (pnpm lint)
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo TypeScript type checking passes (pnpm check)
+- id: test_repo_circular
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo circular dependency check passes (pnpm circular)
+- id: test_repo_type_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo type tests pass (pnpm test-types --target 5.8)
+- id: test_repo_ai_chat_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: AI Chat package unit tests pass (pnpm vitest run packages/ai/ai/test/Chat.test.ts)
+- id: test_repo_ai_languagemodel_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: AI LanguageModel package unit tests pass (pnpm vitest run packages/ai/ai/test/LanguageModel.test.ts)
+- id: test_repo_ai_tool_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: AI Tool package unit tests pass (pnpm vitest run packages/ai/ai/test/Tool.test.ts)
+- id: test_repo_ai_prompt_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: AI Prompt package unit tests pass (pnpm vitest run packages/ai/ai/test/Prompt.test.ts)
+- id: test_repo_sql_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: SQL package unit tests pass (pnpm vitest run packages/sql/test/)
+- id: test_repo_schema_userland_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Schema userland tests pass (pnpm vitest run packages/effect/test/Schema/SchemaUserland.test.ts)
+- id: test_repo_docgen
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo docgen command runs without errors (pnpm docgen)
+- id: test_repo_platform_node_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Platform-node package tests pass (pnpm vitest run packages/platform-node/test/)
+- id: test_repo_schema_arbitrary_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Schema Arbitrary tests pass (pnpm vitest run packages/effect/test/Schema/Arbitrary/Arbitrary.test.ts)
+- id: test_repo_codegen
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo codegen command passes (pnpm codegen)
+rubric:
+- rule: Code must not import from barrel packages ('effect', '@effect/platform', '@effect/sql');
+    use specific module paths like 'effect/Effect' instead
+  source:
+    path: eslint.config.mjs
+    lines: 144-155
+    commit: 5487cfb65a69a308e7c0b29ae666c8a9ddcab159
+- rule: Agents must verify JSDoc examples compile by running `pnpm docgen`
+  source:
+    path: AGENTS.md
+    lines: '24'
+    commit: 5487cfb65a69a308e7c0b29ae666c8a9ddcab159
+- rule: Run `pnpm lint-fix` after editing files
+  source:
+    path: AGENTS.md
+    lines: 19-19
+  evidence: 'The gold solution includes formatting changes in `eslint.config.mjs`
+    (such as collapsing the `packageNames` array into a single line and wrapping the
+    `selector` string), which demonstrates that `pnpm '
+  category: tooling
+- rule: 'Conciseness: Keep code and any wording concise and to the point.'
+  source:
+    path: AGENTS.md
+    lines: '14'
+  evidence: The added documentation for effect v4 in `AGENTS.md` is extremely brief
+    and direct, without unnecessary elaboration.
+  category: documentation
+- rule: 'Reduce comments: Avoid comments unless absolutely required... Comments in
+    jsdocs are acceptable.'
+  source:
+    path: AGENTS.md
+    lines: 15-16
+  evidence: The gold solution updates the `@example` blocks in `packages/ai/ai/src/AiError.ts`
+    to fix import paths rather than deleting the comments entirely.
+  category: documentation
+config_edits:
+- path: AGENTS.md
+  tier: 1
+  gold_added: '- Always run tests after making changes: `pnpm test run <test_file.ts>`
+
+    run the file with `tsx scratchpad/your-file.ts`.
+
+
+    ## Learning about "effect" v4
+
+
+    If you need to learn more about the new version of effect (version 4), you can
+
+    access the repository here:
+
+
+    `.repos/effect-v4`'
+  gold_removed: '- Always run tests after making changes: `pnpm test <test_file.ts>`
+
+    run the file with `node scratchpad/your-file.ts`.'
+distractors:
+- rule: 'Always run tests after making changes: `pnpm test <test_file.ts>`'
+  collision_type: meta_confusion
+  why_distracting: The agent's own instruction file tells it to use `pnpm test <test_file.ts>`
+    to run tests. However, the PR prompt explicitly states this command is broken.
+    The agent must ignore its loaded instruction and fix the instruction itself rather
+    than trying to use it.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 19-20
+- rule: run the file with `node scratchpad/your-file.ts`
+  collision_type: meta_confusion
+  why_distracting: The agent is instructed by its config to use `node scratchpad/your-file.ts`
+    for testing code. If the agent tries to use this to verify its changes, it will
+    fail because `node` cannot run TypeScript files. The agent must recognize this
+    rule as the bug to be fixed.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 41-43
+hierarchy_analysis: The config file `AGENTS.md` is both the source of agent instructions
+  and the target file to be edited. The agent must navigate the meta-level conflict
+  of having its own operational instructions be the subject of the bug report, requiring
+  it to selectively ignore and rewrite the rules it is supposed to follow.

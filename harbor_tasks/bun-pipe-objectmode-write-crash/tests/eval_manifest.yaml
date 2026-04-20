@@ -1,0 +1,146 @@
+version: '2.0'
+source:
+  repo: oven-sh/bun
+  pr: 28432
+  base_commit: 2d4c2beb23085873380840c9bd18eeca29645843
+  merge_commit: 2920fac5f712c2714e3a0a97c2d6e8e8ad47cc1e
+checks:
+- id: target_file_exists
+  type: pass_to_pass
+  origin: static
+  description: Target file exists and contains Readable.prototype.pipe
+- id: write_error_caught_and_forwarded
+  type: fail_to_pass
+  origin: pr_diff
+  description: dest.write() throwing TypeError is caught; error forwarded via dest.destroy()
+- id: exact_error_object_propagated
+  type: fail_to_pass
+  origin: pr_diff
+  description: The exact error object thrown by write() is passed to dest.destroy()
+- id: different_error_types_caught
+  type: fail_to_pass
+  origin: pr_diff
+  description: RangeError from write() is also caught, not just TypeError
+- id: normal_write_still_works
+  type: pass_to_pass
+  origin: pr_diff
+  description: Non-throwing dest.write() still passes data through
+- id: backpressure_pause
+  type: pass_to_pass
+  origin: pr_diff
+  description: dest.write() returning false still triggers pause()
+- id: ondata_not_stub
+  type: pass_to_pass
+  origin: static
+  description: ondata function has real logic, not a stub
+- id: no_bare_call_apply_in_ondata
+  type: pass_to_pass
+  origin: agent_config
+  description: Use .$call/$apply, not .call/.apply in ondata
+  source:
+    path: src/js/CLAUDE.md
+    lines: 56-65
+    commit: 2d4c2beb23085873380840c9bd18eeca29645843
+- id: no_console_log_in_ondata
+  type: pass_to_pass
+  origin: agent_config
+  description: Debug logging must use $debug(), not console.log
+  source:
+    path: src/js/CLAUDE.md
+    lines: '71'
+    commit: 2d4c2beb23085873380840c9bd18eeca29645843
+- id: target_file_syntax_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Target file has valid JavaScript/TypeScript syntax (Node.js vm module
+    validates)
+- id: claude_md_conventions
+  type: pass_to_pass
+  origin: static
+  description: Target file follows src/js/CLAUDE.md conventions (no console.log, has
+    required structure)
+- id: repo_prettier_target
+  type: pass_to_pass
+  origin: repo_tests
+  description: Target file passes prettier format check (from CI)
+- id: repo_oxlint_target
+  type: pass_to_pass
+  origin: repo_tests
+  description: Target file passes oxlint (from CI)
+- id: repo_oxlint_streams_dir
+  type: pass_to_pass
+  origin: repo_tests
+  description: Streams directory passes oxlint (from CI)
+- id: repo_bun_stream_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo Bun stream tests pass (from CI, tests the modified readable.ts module)
+rubric:
+- rule: Agent must not modify the documentation file, as no new documentation is required
+    for this bug fix.
+  reference: No changes to this file.
+  source:
+    path: src/js/CLAUDE.md
+    lines: '71'
+    commit: 2d4c2beb23085873380840c9bd18eeca29645843
+- rule: $ prefix for private APIs ... $debug("Module loaded:", name); // Debug (stripped
+    in release)
+  source:
+    path: src/js/CLAUDE.md
+    lines: 46-52
+    commit: 2d4c2beb23085873380840c9bd18eeca29645843
+  evidence: The gold solution correctly preserves the `$debug("dest.write", ret);`
+    call inside the new `try` block, maintaining the use of Bun's internal debug intrinsic
+    for stripped-in-release logging.
+  category: style
+- rule: $ prefix for private APIs (e.g., $debug)
+  source:
+    path: src/js/AGENTS.md
+    lines: 42-50
+  evidence: The gold solution correctly preserves the `$debug("dest.write", ret);`
+    call when wrapping the block in a try-catch, recognizing it as a valid private
+    API macro that will be stripped in release.
+  category: naming
+- rule: '$ prefix for private APIs: $debug("Module loaded:", name);'
+  source:
+    path: src/js/AGENTS.md
+    lines: 41-47
+  evidence: The gold solution correctly preserves the `$debug("dest.write", ret);`
+    call inside the new `try` block, respecting the special `$` prefix syntax used
+    for private APIs and intrinsics in Bun's JS builti
+  category: style
+- rule: $ prefix for private APIs ... $debug(...) // Debug (stripped in release)
+  source:
+    path: src/js/AGENTS.md
+    lines: 40-45
+  evidence: The gold solution carefully preserves the `$debug("dest.write", ret);`
+    macro call, moving it inside the `try` block rather than replacing it with standard
+    `console.log` or removing it.
+  category: tooling
+distractors:
+- rule: NEVER write tests that check for no 'panic' or 'uncaught exception' or similar
+    in the test output.
+  collision_type: rule_conflict
+  why_distracting: The bug report explicitly mentions an 'Uncatchable crash' and 'process
+    crashes'. An agent would naturally want to write a test that asserts the process
+    does not crash or throw an uncaught exception, but the config explicitly forbids
+    this pattern because it won't fail in CI.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 63-64
+- rule: 'Validation and Errors: throw $ERR_INVALID_ARG_TYPE(...)'
+  collision_type: architecture_boundary
+  why_distracting: The bug is caused by `ERR_INVALID_ARG_TYPE` being thrown by the
+    destination stream. An agent might try to use Bun's internal validation helpers
+    (like `$ERR_INVALID_ARG_TYPE`) to check the chunk type before writing, rather
+    than correctly catching the error thrown by the destination stream as Node.js
+    does.
+  severity: medium
+  source:
+    path: src/js/AGENTS.md
+    lines: 48-54
+hierarchy_analysis: The config hierarchy is deep. The agent must navigate from the
+  root `AGENTS.md` (testing rules) past `src/AGENTS.md` (Zig rules, which are irrelevant
+  distractors for this JS file) down to `src/js/AGENTS.md` (JS builtins rules). The
+  agent must apply the JS-specific rules while still respecting the root testing constraints.

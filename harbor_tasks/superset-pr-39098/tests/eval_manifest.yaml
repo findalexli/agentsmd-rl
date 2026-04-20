@@ -1,0 +1,73 @@
+source:
+  type: github_pr
+  owner: apache
+  repo: superset
+  pr_number: 39098
+  title: "fix(security_manager): custom auth_view issue"
+  base_commit: 7c79b9ab6184cf42571f316e81e52767e044fa8d
+  merge_commit: e56f8cc4fb143cc470293471b5c290194b9a38db
+
+checks:
+  - id: test_register_superset_auth_view_attribute_exists
+    type: fail_to_pass
+    origin: pr_behavior
+    description: SupersetSecurityManager has register_superset_auth_view attribute defaulting to True
+
+  - id: test_register_superset_registeruser_view_attribute_exists
+    type: fail_to_pass
+    origin: pr_behavior
+    description: SupersetSecurityManager has register_superset_registeruser_view attribute defaulting to True
+
+  - id: test_register_views_conditionally_registers_auth_view
+    type: fail_to_pass
+    origin: pr_behavior
+    description: register_views checks register_superset_auth_view before registering auth view
+
+  - id: test_register_views_conditionally_registers_registeruser_view
+    type: fail_to_pass
+    origin: pr_behavior
+    description: register_views checks register_superset_registeruser_view before registering registeruser view
+
+  - id: test_both_attributes_default_true
+    type: fail_to_pass
+    origin: pr_behavior
+    description: Both new attributes default to True for backwards compatibility
+
+  - id: test_auth_view_registration_is_indented_under_conditional
+    type: fail_to_pass
+    origin: pr_behavior
+    description: auth_view assignment is properly nested under the register_superset_auth_view conditional
+
+  - id: test_registeruser_view_registration_is_indented_under_conditional
+    type: fail_to_pass
+    origin: pr_behavior
+    description: registeruser_view assignment is properly nested under the register_superset_registeruser_view conditional
+
+  - id: test_python_syntax_valid
+    type: pass_to_pass
+    origin: static
+    description: Security manager file has valid Python syntax
+
+  - id: test_repo_ruff_security_manager
+    type: pass_to_pass
+    origin: repo_tests
+    description: Ruff linter passes on security manager file
+
+  - id: test_repo_ruff_auth_views
+    type: pass_to_pass
+    origin: repo_tests
+    description: Ruff linter passes on auth views file
+
+  - id: test_repo_python_compile_security_module
+    type: pass_to_pass
+    origin: repo_tests
+    description: Python compiles all files in security module
+
+rubric:
+  - id: code_only_change
+    rule: This is a Python-only code change that correctly does NOT modify any documentation or config files (CLAUDE.md, AGENTS.md, README.md). The fix adds optional flags to SupersetSecurityManager without requiring documentation updates since it maintains backwards compatibility.
+    reference: |
+      This PR adds internal implementation flags that are backwards-compatible (defaulting to True).
+      No documentation changes are required because the API remains unchanged.
+      Pass if the agent also made no config/documentation file changes.
+    weight: 1.0

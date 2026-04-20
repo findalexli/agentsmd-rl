@@ -1,0 +1,130 @@
+version: '2.0'
+source:
+  repo: mlflow/mlflow
+  pr: 21331
+  base_commit: 6469b26207d525615816a9498e849bcf4a8da75e
+  merge_commit: b27d3d1cfab1c1f65ec0547135ae65b9c8568383
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: analyze_ci.py parses without syntax errors
+- id: run_url_pattern_matches_run_urls
+  type: fail_to_pass
+  origin: pr_diff
+  description: RUN_URL_PATTERN matches bare workflow run URLs
+- id: run_url_pattern_excludes_job_urls
+  type: fail_to_pass
+  origin: pr_diff
+  description: RUN_URL_PATTERN does not false-positive on job URLs
+- id: resolve_urls_dispatches_run_pattern
+  type: fail_to_pass
+  origin: pr_diff
+  description: resolve_urls function dispatches on RUN_URL_PATTERN
+- id: help_text_mentions_run_url
+  type: fail_to_pass
+  origin: pr_diff
+  description: Help text or error messages mention run URL as a valid format
+- id: skill_md_documents_run_urls
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md documents workflow run URL as supported input
+- id: existing_patterns_intact
+  type: pass_to_pass
+  origin: static
+  description: PR_URL_PATTERN and JOB_URL_PATTERN still exist and match
+- id: analyze_ci_module_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: analyze_ci.py has expected structure (register func, run func, resolve_urls)
+- id: skill_md_valid_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: SKILL.md has valid markdown structure with Usage and Examples sections
+- id: repo_ruff_check_analyze_ci
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff linting passes on analyze_ci.py
+- id: repo_ruff_check_all_commands
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff linting passes on all command files
+- id: repo_ruff_check_github_module
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff linting passes on github module
+- id: repo_ruff_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff format check passes on all skills files
+- id: repo_clint_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Clint linter tests pass
+- id: repo_mlflow_typo_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: MLflow typo checker passes on modified files
+- id: repo_syntax_check_all_commands
+  type: pass_to_pass
+  origin: repo_tests
+  description: All command files parse without syntax errors
+- id: repo_syntax_check_github_module
+  type: pass_to_pass
+  origin: repo_tests
+  description: All github module files parse without syntax errors
+- id: repo_analyze_ci_patterns_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Regex patterns in analyze_ci.py are valid and compile
+- id: repo_skill_md_frontmatter_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: SKILL.md has valid YAML frontmatter with required fields
+rubric:
+- rule: SKILL.md update follows the style of existing usage and examples sections
+  source:
+    path: .claude/skills/analyze-ci/SKILL.md
+    lines: 1-42
+    commit: 6469b26207d525615816a9498e849bcf4a8da75e
+  reference: '# Analyze all failed jobs in a workflow run
+
+    uv run skills analyze-ci <run_url>
+
+
+    # Analyze a specific workflow run
+
+    uv run skills analyze-ci https://github.com/mlflow/mlflow/actions/runs/22626454465'
+- rule: Only add comments that explain non-obvious logic or provide additional context
+  source:
+    path: CLAUDE.md
+    lines: 14-14
+  reference: The gold solution adds the RUN_URL_PATTERN regex and the elif block for
+    run URLs without adding any inline comments, treating the regex and standard GitHub
+    API logic as obvious.
+  category: style
+config_edits:
+- path: .claude/skills/analyze-ci/SKILL.md
+  tier: 1
+  gold_added: '# Analyze all failed jobs in a workflow run
+
+    uv run skills analyze-ci <run_url>
+
+
+    # Analyze a specific workflow run
+
+    uv run skills analyze-ci https://github.com/mlflow/mlflow/actions/runs/22626454465'
+  gold_removed: ''
+distractors:
+- rule: Only add comments that explain non-obvious logic or provide additional context
+  collision_type: scope_ambiguity
+  why_distracting: The agent might incorrectly apply the 'only add comments' rule
+    to SKILL.md, avoiding adding the required markdown headers (which use the '#'
+    comment syntax in bash/markdown examples) to document the new URL format.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 11-12
+hierarchy_analysis: The hierarchy is flat with only CLAUDE.md at the root. The rules
+  in CLAUDE.md are mostly irrelevant to the specific task of updating the analyze-ci
+  skill.

@@ -1,0 +1,126 @@
+source:
+  repo: apache/superset
+  pr_number: 39017
+  pr_url: https://github.com/apache/superset/pull/39017
+  title: "fix(mcp): add description and certification fields to default list tool columns"
+  base_commit: 83ad1eca26bec5de6e6d908ebf3ba6aa8eea0c21
+  merge_commit: 7be2acb2f3ce44d02a3bd1bc6ccf0f539fadf09f
+
+checks:
+  - id: test_chart_default_columns_include_certification
+    type: fail_to_pass
+    origin: behavioral
+    description: CHART_DEFAULT_COLUMNS includes certified_by and certification_details
+
+  - id: test_dataset_default_columns_include_certification
+    type: fail_to_pass
+    origin: behavioral
+    description: DATASET_DEFAULT_COLUMNS includes certified_by and certification_details
+
+  - id: test_dashboard_default_columns_include_certification
+    type: fail_to_pass
+    origin: behavioral
+    description: DASHBOARD_DEFAULT_COLUMNS includes certified_by and certification_details
+
+  - id: test_chartinfo_schema_has_certification_fields
+    type: fail_to_pass
+    origin: behavioral
+    description: ChartInfo Pydantic model has certified_by and certification_details fields
+
+  - id: test_datasetinfo_schema_has_certification_fields
+    type: fail_to_pass
+    origin: behavioral
+    description: DatasetInfo Pydantic model has certified_by and certification_details fields
+
+  - id: test_list_charts_default_columns_constant
+    type: fail_to_pass
+    origin: behavioral
+    description: list_charts.py DEFAULT_COLUMNS includes certification fields
+
+  - id: test_list_datasets_default_columns_constant
+    type: fail_to_pass
+    origin: behavioral
+    description: list_datasets.py DEFAULT_COLUMNS includes certification fields
+
+  - id: test_list_dashboards_default_columns_constant
+    type: fail_to_pass
+    origin: behavioral
+    description: list_dashboards.py DEFAULT_COLUMNS includes certification fields
+
+  - id: test_chart_extra_columns_has_certification
+    type: fail_to_pass
+    origin: behavioral
+    description: CHART_EXTRA_COLUMNS includes certified_by with is_default=True metadata
+
+  - id: test_dataset_extra_columns_has_certification
+    type: fail_to_pass
+    origin: behavioral
+    description: DATASET_EXTRA_COLUMNS includes certified_by with is_default=True metadata
+
+  - id: test_chart_serializer_includes_certification
+    type: fail_to_pass
+    origin: behavioral
+    description: serialize_chart_object extracts certified_by and certification_details
+
+  - id: test_dataset_serializer_includes_certification
+    type: fail_to_pass
+    origin: behavioral
+    description: serialize_dataset_object extracts certified_by and certification_details
+
+  - id: test_python_syntax_mcp_service
+    type: pass_to_pass
+    origin: repo_tests
+    description: Python syntax check for modified MCP service files
+
+  - id: test_schema_discovery_parses
+    type: pass_to_pass
+    origin: static
+    description: schema_discovery.py parses as valid Python AST
+
+  - id: test_chart_default_columns_has_required_fields
+    type: pass_to_pass
+    origin: static
+    description: CHART_DEFAULT_COLUMNS includes core fields (id, slice_name, viz_type)
+
+  - id: test_dataset_default_columns_has_required_fields
+    type: pass_to_pass
+    origin: static
+    description: DATASET_DEFAULT_COLUMNS includes core fields (id, table_name, schema)
+
+  - id: test_chartinfo_has_core_fields
+    type: pass_to_pass
+    origin: static
+    description: ChartInfo Pydantic model has core fields
+
+  - id: test_datasetinfo_has_core_fields
+    type: pass_to_pass
+    origin: static
+    description: DatasetInfo Pydantic model has core fields
+
+  - id: test_chartlike_protocol_exists
+    type: pass_to_pass
+    origin: static
+    description: ChartLike Protocol exists in chart/schemas.py
+
+  - id: test_ruff_check_mcp_service
+    type: pass_to_pass
+    origin: repo_tests
+    description: Ruff linter passes on MCP service directory
+
+  - id: test_ruff_format_check_mcp_service
+    type: pass_to_pass
+    origin: repo_tests
+    description: Ruff format check passes on MCP service directory
+
+  - id: test_ruff_check_modified_files
+    type: pass_to_pass
+    origin: repo_tests
+    description: Ruff linter passes on files modified by this PR
+
+rubric:
+  # Note: This PR only modifies Python code files, not documentation/config files.
+  # Code conventions are verified through the test suite (ruff, syntax checks).
+  # The rubric judge is designed for PRs with config file changes, which this PR doesn't have.
+  - id: code_conventions_verified_by_tests
+    rule: "This PR is code-only (no documentation changes required). Conventions verified by test suite."
+    reference: "N/A - code-only PR. Test suite verifies: ruff check, ruff format, Python syntax."

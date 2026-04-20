@@ -1,59 +1,57 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert on specific implementation details not mentioned in instruction.md: test_empty_chunk_guard_present checks for `.list.items.len == 0`, `result.has_more`, and `result.isSuccess()` patterns; test_guard_placement_correct checks for `this.is_waiting_body` and `try this.onBodyReceived()` patterns; test_terminal_zero_length_chunk_not_affected checks for 'and' keyword in guard. The instruction mentions 'has_more' and 'onBodyReceived()' but never mentions `.list.items.len`, `isSuccess()`, or"
+      "outcome": "pass",
+      "reason": "Instruction names FetchTasklet.zig, onProgressUpdate, onBodyReceived, has_more, is_waiting_body - all symbols the tests check for."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md explicitly states the fix: 'When onProgressUpdate runs and the buffer has been drained by the streaming callback while the response indicates more data is coming, the code should skip processing that empty chunk and return early, rather than calling onBodyReceived() with empty data.' This describes exactly WHAT to change (add an early return guard before onBodyReceived when buffer is empty and has_more is true), not just what's broken."
+      "outcome": "pass",
+      "reason": "Instruction describes the race and desired behavior but doesn't give the exact code or line numbers for the guard."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests use rigid regex patterns like `r'if\\s*\\([^)]*\\.list\\.items\\.len\\s*==\\s*0[^}]*return\\s*;'` which require the exact field access pattern `.list.items.len == 0`. An alternative correct fix could check `scheduled_response_buffer.len() == 0` or use a different buffer emptiness check, or restructure the logic differently (e.g., checking in onBodyReceived itself), and would fail these regex-based tests."
+      "reason": "test_empty_chunk_guard_present requires exact pattern `.list.items.len == 0` and test_terminal_zero_length_chunk_not_affected requires literal 'and'/'&&' in guard - an alternative fix using e.g. `scheduled_response_buffer.list.items.len < 1` or nested ifs instead of a single combined condition would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The core f2p tests (test_empty_chunk_guard_present, test_guard_placement_correct, test_terminal_zero_length_chunk_not_affected) are purely text-matching via regex on source code. They do `Path(TARGET_FILE).read_text()` and run regex searches \u2014 no execution or behavioral verification of the actual fix. test_stream_api_not_broken and test_zig_compiles do execute code, but these are p2p tests. The f2p tests are all textual assertions."
+      "reason": "The f2p tests (test_empty_chunk_guard_present, test_guard_placement_correct, test_terminal_zero_length_chunk_not_affected) are all regex text-matching on source; only test_stream_api_not_broken executes code and it's a p2p sanity check not a behavioral race test."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for specific guard conditions (buffer empty check, has_more check, success check, early return, correct placement before onBodyReceived) that wouldn't be present in the original unmodified file. A stub or no-op wouldn't have the `.list.items.len == 0` guard pattern."
+      "reason": "A stub couldn't pass the regex-based guard requirements; the tests check for specific semantic conditions (buffer empty + has_more + success + return)."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: (1) skip empty non-terminal chunks with early return \u2014 tested by test_empty_chunk_guard_present; (2) terminal branch unaffected \u2014 tested by test_terminal_zero_length_chunk_not_affected; (3) comment explaining race \u2014 tested implicitly by test_not_stub checking comments count. All key behaviors from instruction.md are covered."
+      "reason": "Instruction's required behaviors (guard with has_more, terminal chunk unaffected, comment about race) are all tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and detailed docstrings explaining what each test verifies."
+      "reason": "Tests are grouped with comment headers (Gates, Fail-to-pass, Pass-to-pass) and named descriptively."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task involves fixing a race condition in Zig source code, not producing structured data output."
+      "reason": "No structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "Paths and identifiers are consistent between instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names only `FetchTasklet.zig` which is the single relevant file for the task domain. It describes the bug mechanism but the file is already obvious from the task context. It doesn't specify exact line numbers."
+      "reason": "The instruction points to FetchTasklet.zig which is the domain file; doesn't give exact line numbers."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying a Zig source file, not a config edit task."
+      "reason": "Code-only task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
-    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 5,
-  "fail_count": 4
+  "pass_count": 7,
+  "fail_count": 2
 }

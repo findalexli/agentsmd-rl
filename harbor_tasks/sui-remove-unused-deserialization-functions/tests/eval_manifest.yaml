@@ -1,0 +1,123 @@
+source_pr:
+  owner: MystenLabs
+  repo: sui
+  number: 26160
+  merge_commit: 3a3ac018177cf71cef28be3f21957b74c6bc45be
+  base_commit: 53de0108098a9c041edc28ce4083f8dc9436a4d3
+
+task:
+  name: sui-remove-unused-deserialization-functions
+  title: "[move][cleanup] Remove some unused deserialization functions"
+  description: |
+    Remove unused `simple_deserialize` methods from Move core types:
+    - MoveValue::simple_deserialize (annotated_value.rs)
+    - MoveStruct::simple_deserialize (annotated_value.rs)
+    - MoveVariant::simple_deserialize (annotated_value.rs)
+    - MoveStruct::simple_deserialize (runtime_value.rs)
+    - MoveVariant::simple_deserialize (runtime_value.rs)
+
+    Update call sites:
+    - event.rs: Use BoundedVisitor::deserialize_value instead
+    - value_test.rs: Add helper function and use it instead
+
+  difficulty: medium
+  tags: ["rust", "cleanup", "refactoring", "move"]
+
+  estimates:
+    time_seconds: 900  # 15 minutes
+
+  target_files:
+    - external-crates/move/crates/move-core-types/src/annotated_value.rs
+    - external-crates/move/crates/move-core-types/src/runtime_value.rs
+    - external-crates/move/crates/move-core-types/src/unit_tests/value_test.rs
+    - crates/sui-analytics-indexer/src/handlers/tables/event.rs
+
+checks:
+  # Fail-to-pass tests (F2P) - verify the fix
+  - id: test_annotated_value_movevalue_simple_deserialize_removed
+    type: fail_to_pass
+    origin: behavioral
+    description: MoveValue::simple_deserialize is removed from annotated_value.rs
+
+  - id: test_annotated_value_movestruct_simple_deserialize_removed
+    type: fail_to_pass
+    origin: behavioral
+    description: MoveStruct::simple_deserialize is removed from annotated_value.rs
+
+  - id: test_annotated_value_movevariant_simple_deserialize_removed
+    type: fail_to_pass
+    origin: behavioral
+    description: MoveVariant::simple_deserialize is removed from annotated_value.rs
+
+  - id: test_runtime_value_movestruct_simple_deserialize_removed
+    type: fail_to_pass
+    origin: behavioral
+    description: MoveStruct::simple_deserialize is removed from runtime_value.rs
+
+  - id: test_runtime_value_movevariant_simple_deserialize_removed
+    type: fail_to_pass
+    origin: behavioral
+    description: MoveVariant::simple_deserialize is removed from runtime_value.rs
+
+  - id: test_event_uses_bounded_visitor
+    type: fail_to_pass
+    origin: behavioral
+    description: event.rs uses BoundedVisitor::deserialize_value instead of MoveValue::simple_deserialize
+
+  - id: test_value_test_has_helper_function
+    type: fail_to_pass
+    origin: behavioral
+    description: value_test.rs has deser_annotated_value helper function
+
+  - id: test_annotated_value_anyhow_import_removed
+    type: fail_to_pass
+    origin: behavioral
+    description: Unused anyhow import is removed from annotated_value.rs
+
+  - id: test_event_imports_bounded_visitor
+    type: fail_to_pass
+    origin: behavioral
+    description: event.rs imports BoundedVisitor from sui_types
+
+  # Pass-to-pass tests (P2P) - verify no regressions
+  - id: test_move_core_types_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: move-core-types crate compiles successfully
+
+  - id: test_move_core_types_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: move-core-types tests pass
+
+  - id: test_move_fmt
+    type: pass_to_pass
+    origin: repo_tests
+    description: External move crates code formatting passes
+
+  - id: test_move_clippy
+    type: pass_to_pass
+    origin: repo_tests
+    description: External move crates clippy passes
+
+  - id: test_move_core_types_value_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: move-core-types value_test unit tests pass
+
+rubric:
+  - rule: "All new files must start with the Apache-2.0 license header"
+    source: "CLAUDE.md - License comments section"
+    weight: 1
+
+  - rule: "Never use #[allow(dead_code)], #[allow(unused)], or other linting suppressions - fix the underlying issues instead"
+    source: "CLAUDE.md - Critical Development Notes"
+    weight: 2
+
+  - rule: "Always run cargo xclippy after finishing development to ensure code passes all linting checks"
+    source: "CLAUDE.md - Critical Development Notes"
+    weight: 1
+
+  - rule: "Do NOT comment the obvious - comments should not simply repeat what the code does"
+    source: "CLAUDE.md - Comment Writing Guidelines"
+    weight: 1

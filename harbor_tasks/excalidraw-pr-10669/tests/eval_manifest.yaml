@@ -1,0 +1,118 @@
+source:
+  pr: "https://github.com/excalidraw/excalidraw/pull/10669"
+  merge_commit: "9d760336d195b13d4a237a1408743a38f7c0ca9a"
+  base_commit: "0443511954a8a557866a98a939e2a506acb4858b"
+  title: "feat: reduce max tablet MQ size"
+
+rubric:
+  - id: "prefer_functions_with_hooks"
+    text: "Use functional components with hooks"
+    reference:
+      file: ".github/copilot-instructions.md"
+      line_range: [23, 25]
+  - id: "prefer_immutable_data"
+    text: "Prefer immutable data (const, readonly)"
+    reference:
+      file: ".github/copilot-instructions.md"
+      line_range: [15, 17]
+  - id: "use_optional_chaining"
+    text: "Use optional chaining (?.) and nullish coalescing (??) operators"
+    reference:
+      file: ".github/copilot-instructions.md"
+      line_range: [17, 18]
+  - id: "use_typescript"
+    text: "Use TypeScript for all new code"
+    reference:
+      file: ".github/copilot-instructions.md"
+      line_range: [10, 11]
+  - id: "test_before_commit"
+    text: "Always run `yarn test:update` before committing"
+    reference:
+      file: "CLAUDE.md"
+      line_range: [11, 12]
+  - id: "typecheck_before_commit"
+    text: "Use `yarn test:typecheck` to verify TypeScript"
+    reference:
+      file: "CLAUDE.md"
+      line_range: [12, 13]
+  - id: "prefer_performant_solutions"
+    text: "When there is an option, opt for more performant solutions and trade RAM usage for less CPU cycles"
+    reference:
+      file: ".github/copilot-instructions.md"
+      line_range: [13, 15]
+  - id: "pascal_case_components"
+    text: "Use PascalCase for component names, interfaces, and type aliases"
+    reference:
+      file: ".github/copilot-instructions.md"
+      line_range: [26, 27]
+
+checks:
+  - id: "test_mq_max_tablet_value"
+    type: fail_to_pass
+    origin: behavioral
+    description: "MQ_MAX_TABLET constant should be 1180 (iPad Air size), not 1400"
+
+  - id: "test_mq_max_tablet_has_ipad_comment"
+    type: fail_to_pass
+    origin: behavioral
+    description: "MQ_MAX_TABLET should have iPad Air comment indicating new breakpoint value"
+
+  - id: "test_uioptions_has_getformfactor"
+    type: fail_to_pass
+    origin: behavioral
+    description: "UIOptions type should define getFormFactor as a function property with (editorWidth, editorHeight) parameters"
+
+  - id: "test_uioptions_removed_formfactor"
+    type: fail_to_pass
+    origin: behavioral
+    description: "UIOptions type should not have the old formFactor direct property (replaced by function)"
+
+  - id: "test_uioptions_removed_desktopuimode"
+    type: fail_to_pass
+    origin: behavioral
+    description: "UIOptions type should not have desktopUIMode property (removed as unused)"
+
+  - id: "test_app_uses_getformfactor"
+    type: fail_to_pass
+    origin: behavioral
+    description: "App.tsx should call getFormFactor as a function with (editorWidth, editorHeight) arguments"
+
+  - id: "test_app_removed_uioptions_desktopuimode"
+    type: fail_to_pass
+    origin: behavioral
+    description: "App.tsx should not reference UIOptions.desktopUIMode (removed from API)"
+
+  - id: "test_index_handles_getformfactor"
+    type: fail_to_pass
+    origin: behavioral
+    description: "index.tsx should handle getFormFactor specially in areEqual comparison to avoid unnecessary re-renders"
+
+  - id: "test_desktop_ui_mode_comment"
+    type: fail_to_pass
+    origin: behavioral
+    description: "Should have comment noting desktop/laptop MQ is not used for form factor detection"
+
+  - id: "test_typescript_compiles"
+    type: pass_to_pass
+    origin: repo_tests
+    description: "TypeScript type checking passes (yarn test:typecheck)"
+
+  - id: "test_formfactor_function_signature"
+    type: fail_to_pass
+    origin: behavioral
+    description: "getFormFactor function signature should have correct parameter and return types"
+
+  - id: "test_mq_constants_valid"
+    type: pass_to_pass
+    origin: static
+    description: "Media query constants should have valid relationships (MQ_MIN_TABLET = MQ_MAX_MOBILE + 1)"
+
+  - id: "test_repo_lint"
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ESLint passes on the codebase (yarn test:code)"
+
+  - id: "test_repo_format"
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Prettier formatting check passes (yarn test:other)"

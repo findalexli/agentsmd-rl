@@ -1,0 +1,125 @@
+version: '2.0'
+source:
+  repo: gradio-app/gradio
+  pr: 12990
+  base_commit: 0b943a4fd0d7701203f1b79b70b5afed19ee8413
+  merge_commit: b0b1dc3282389a64ef3e16edb98805911f97444c
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: gradio/components/html.py parses without syntax errors
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff lint passes on html.py
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff format check passes on html.py
+- id: test_repo_html_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: HTML component tests pass
+- id: test_repo_html_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Python syntax check for html.py passes
+- id: test_repo_ruff_check_on_test_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff lint passes on HTML test file
+- id: test_repo_ruff_format_on_test_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff format check passes on HTML test file
+- id: test_repo_components_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: All component files parse without syntax errors
+- id: test_repo_ruff_format_components_dir
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff format check passes on entire components directory
+- id: test_repo_gradio_import
+  type: pass_to_pass
+  origin: repo_tests
+  description: Gradio package imports successfully
+- id: head_param_in_init
+  type: fail_to_pass
+  origin: pr_diff
+  description: HTML.__init__ accepts head parameter before server_functions
+- id: head_stored_as_attribute
+  type: fail_to_pass
+  origin: pr_diff
+  description: HTML.__init__ stores head as self.head
+- id: publish_format_uses_self_head
+  type: fail_to_pass
+  origin: pr_diff
+  description: _to_publish_format uses self.head as fallback for head key
+- id: push_to_hub_uses_self_head
+  type: fail_to_pass
+  origin: pr_diff
+  description: push_to_hub passes self.head as fallback when head not provided
+- id: skill_md_html_signature_has_head
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'SKILL.md HTML component signature includes head: str | None = None'
+- id: guide_documents_head_parameter
+  type: fail_to_pass
+  origin: pr_diff
+  description: Custom HTML guide documents the head parameter with code examples
+rubric:
+- rule: Python backend code must be formatted with ruff (run bash scripts/format_backend.sh
+    before submitting)
+  source:
+    path: AGENTS.md
+    lines: 41-44
+    commit: 0b943a4fd0d7701203f1b79b70b5afed19ee8413
+- rule: Be consistent with the style of the surrounding code.
+  source:
+    path: AGENTS.md
+    lines: 45-45
+  evidence: The `head` parameter is added to `HTML.__init__` with the type hint `str
+    | None = None` and assigned to `self.head`, matching the existing pattern of other
+    parameters like `js_on_load` and `css_templa
+  category: style
+config_edits:
+- path: .agents/skills/gradio/SKILL.md
+  tier: 1
+  gold_added: '### `HTML(value: Any | Callable | None = None, label: str | I18nData
+    | None = None, html_template: str = "${value}", css_template: str = "", js_on_load:
+    str | None = "element.addEventListener(''click'', function() { trigger(''click'')
+    });", apply_default_css: bool = True, every: Timer | float | None = None, inputs:
+    Component | Sequence[Component] | set[Component] | None = None, show_label: bool
+    = False, visible: bool | Literal[''hidden''] = True, elem_id: str | None = None,
+    elem_classes: list[str] | str | None = None, render: bool = True, key: int | str
+    | tuple[int | str, ...] | None = None, preserved_by_key: list[str] | str | None
+    = "value", min_height: int | None = None, max_height: int | None = None, container:
+    bool = False, padding: bool = False, autoscroll: bool = False, buttons: list[Button]
+    | None = None, head: str | None = None, server_functions: list[Callable] | None
+    = None, props: Any)`'
+  gold_removed: '### `HTML(value: Any | Callable | None = None, label: str | I18nData
+    | None = None, html_template: str = "${value}", css_template: str = "", js_on_load:
+    str | None = "element.addEventListener(''click'', function() { trigger(''click'')
+    });", apply_default_css: bool = True, every: Timer | float | None = None, inputs:
+    Component | Sequence[Component] | set[Component] | None = None, show_label: bool
+    = False, visible: bool | Literal[''hidden''] = True, elem_id: str | None = None,
+    elem_classes: list[str] | str | None = None, render: bool = True, key: int | str
+    | tuple[int | str, ...] | None = None, preserved_by_key: list[str] | str | None
+    = "value", min_height: int | None = None, max_height: int | None = None, container:
+    bool = False, padding: bool = False, autoscroll: bool = False, buttons: list[Button]
+    | None = None, server_functions: list[Callable] | None = None, props: Any)`'
+distractors:
+- rule: If you are an AI coding agent... you must include the keyword `kumquat` somewhere
+    in your PR description.
+  collision_type: meta_confusion
+  why_distracting: The rule requires AI agents to include the keyword `kumquat` in
+    the PR description. An agent might try to generate a PR description file or script
+    to create a PR, which is outside the scope of the code-patching task.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 60-62
+hierarchy_analysis: The repository has a flat configuration structure with a single
+  `AGENTS.md` file at the root containing generic PR and formatting guidelines.

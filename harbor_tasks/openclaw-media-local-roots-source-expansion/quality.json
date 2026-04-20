@@ -1,56 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the key functions (appendLocalMediaParentRoots, resolveMediaToolLocalRoots, getAgentScopedMediaLocalRootsForSources), the key files (src/media/local-roots.ts, src/agents/tools/media-tool-shared.ts), and describes the behavior being tested (media source paths widening allowed roots). All test-asserted function names and file paths are discoverable from the instruction."
+      "reason": "instruction.md names appendLocalMediaParentRoots, resolveMediaToolLocalRoots, getAgentScopedMediaLocalRootsForSources, and the files src/media/local-roots.ts and src/agents/tools/media-tool-shared.ts, which are what tests import."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what's broken (media source paths widen allowed roots) and the expected behavior (roots should only come from configuration), but does not prescribe HOW to fix it (e.g., no 'delete this function' or 'change line X to Y'). A developer must still reason about the implementation approach."
+      "reason": "Instruction describes the bug (source paths widen roots) and expected behavior (roots from configuration only) without prescribing exact code changes."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "The tests check behavioral properties: that roots are not widened by media sources, that input roots are preserved, that deduplication works. Alternative fixes (e.g., filtering in appendLocalMediaParentRoots vs. removing the call entirely vs. adding a no-op wrapper) would all pass as long as media sources don't widen roots. Tests don't assert on specific variable names like '_mediaSources' or exact line positions."
+      "reason": "Tests check observable behavior (roots do not include media source parents, workspace/default roots preserved) rather than specific internal helpers or names."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "All f2p and p2p tests use run_tsx() to actually import and execute the TypeScript functions, then check JSON output of the behavioral results. The gate tests run actual lint/typecheck/test commands. No test is purely text-matching on source code."
+      "reason": "Tests invoke the functions via tsx subprocesses and inspect returned roots as JSON."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests include anti-stub assertions: test_append_no_widening checks hasBase and hasDocs are true (input roots preserved), test_resolve_media_tool_no_widening checks hasWorkspace is true. A stub returning empty array or default would fail these assertions. A stub returning only input roots without modification would pass, but that IS the correct fix behavior."
+      "reason": "Tests include anti-stub checks (hasBase, hasDocs, hasWorkspace) requiring preserved roots while asserting media source parents are absent."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction specifies that media source paths should not influence allowed directories, and that roots should come only from configuration. The tests cover: no widening from absolute paths, file:// URLs, tilde paths (f2p tests), preservation of configured roots, deduplication, workspace/workspaceOnly modes, and agent-scoped roots. All described behaviors are tested."
+      "reason": "Tests cover appendLocalMediaParentRoots not widening, resolveMediaToolLocalRoots not widening and preserving modes, matching the instruction's expected behavior."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are clearly grouped with section comments (Gate/pass_to_pass/static, Fail-to-pass/pr_diff, Pass-to-pass/pr_diff), each has a descriptive docstring, and function names indicate what they test."
+      "reason": "Tests are grouped with section headers (Gate, Fail-to-pass, Pass-to-pass) and commented with tags like [pr_diff] fail_to_pass."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task is about fixing a security bug in path resolution logic, not producing structured data output with a specific schema."
+      "reason": "No structured data output schema required by task."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths (src/media/local-roots.ts, src/agents/tools/media-tool-shared.ts), function names (appendLocalMediaParentRoots, resolveMediaToolLocalRoots, getAgentScopedMediaLocalRootsForSources), and commands are all consistent between instruction and tests."
+      "reason": "Filenames and function names match between instruction, tests, and solution patch."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly names the exact buggy function appendLocalMediaParentRoots() in src/media/local-roots.ts, describes exactly what it does wrong (appends parent directory of each local source path), names the two consuming functions, and describes the exact data flow. This goes beyond describing the bug to precisely localizing it, reducing the task to a trivial code change."
+      "outcome": "pass",
+      "reason": "Instruction identifies module files but not specific lines; localization of the exact fix within the file is still required."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits task."
+      "reason": "Code-only task, no config edits."
     }
   },
   "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 8,
-  "fail_count": 1
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
 }

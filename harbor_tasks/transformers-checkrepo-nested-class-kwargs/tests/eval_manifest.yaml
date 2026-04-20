@@ -1,0 +1,148 @@
+version: '2.0'
+source:
+  repo: huggingface/transformers
+  pr: 0
+  base_commit: 9a9997fd73c5eb29fb3677d3c489f5d3cd0765f6
+  merge_commit: ''
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: utils/check_repo.py must parse without syntax errors
+- id: nested_class_in_container_ignored
+  type: fail_to_pass
+  origin: pr_diff
+  description: Nested class inside another class is not flagged for missing **kwargs
+- id: nested_class_in_function_ignored
+  type: fail_to_pass
+  origin: pr_diff
+  description: Nested class inside a function is not flagged for missing **kwargs
+- id: nested_only_file_no_error
+  type: fail_to_pass
+  origin: pr_diff
+  description: File with only nested classes (no top-level models) produces no error
+- id: get_model_modules_cached
+  type: fail_to_pass
+  origin: pr_diff
+  description: get_model_modules() returns same cached object on repeated calls
+- id: toplevel_missing_kwargs_caught
+  type: pass_to_pass
+  origin: pr_diff
+  description: Top-level PreTrainedModel subclass without **kwargs is still flagged
+- id: toplevel_with_kwargs_passes
+  type: pass_to_pass
+  origin: pr_diff
+  description: Top-level PreTrainedModel subclass with **kwargs passes check
+- id: ruff_lint
+  type: pass_to_pass
+  origin: agent_config
+  description: Modified file passes ruff linting
+  source:
+    path: CLAUDE.md
+    lines: '2'
+    commit: 9a9997fd73c5eb29fb3677d3c489f5d3cd0765f6
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: check_repo.py has real code (>1000 lines), not stubbed out
+- id: test_repo_py_compile
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's check_repo.py compiles without syntax errors
+- id: test_repo_module_importable
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's check_repo module can be imported
+- id: test_repo_check_model_list
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's check_model_list() passes
+- id: test_repo_check_models_have_kwargs
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's check_models_have_kwargs() passes (tests the fixed function)
+- id: test_repo_ast_parse
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified file utils/check_repo.py parses as valid Python AST
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified file utils/check_repo.py follows ruff formatting
+- id: test_repo_check_models_are_in_init
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's check_models_are_in_init() passes
+- id: test_repo_check_all_auto_mappings_importable
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's check_all_auto_mappings_importable() passes
+- id: test_repo_check_all_models_are_tested
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's check_all_models_are_tested() passes
+- id: test_repo_init_isort
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's init file isort check passes
+- id: test_repo_sort_auto_mappings
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's auto mappings sort check passes
+rubric:
+- rule: Do not edit a `# Copied from` block, as it will be reverted by `make fix-repo`.
+  source:
+    path: CLAUDE.md
+    lines: '66'
+    commit: 9a9997fd73c5eb29fb3677d3c489f5d3cd0765f6
+- rule: PRs should be as brief as possible. Bugfix PRs in particular can often be
+    only one or two lines long, and do not need large comments, docstrings or new
+    functions in this case. Aim to minimize the size of the diff.
+  source:
+    path: .github/copilot-instructions.md
+    lines: '15'
+    commit: 9a9997fd73c5eb29fb3677d3c489f5d3cd0765f6
+- rule: '`make check-repo` runs consistency checks.'
+  source:
+    path: CLAUDE.md
+    lines: 6-6
+  evidence: The gold solution fixes the AST parsing logic in `utils/check_repo.py`,
+    which is the script responsible for the consistency checks executed by the `make
+    check-repo` command.
+  category: tooling
+distractors:
+- rule: 'Fail-closed behavior for agents: If coordination evidence cannot be found,
+    do not proceed to PR-ready output.'
+  collision_type: meta_confusion
+  why_distracting: The rule explicitly commands the agent to 'fail-closed' and 'not
+    proceed to PR-ready output' if coordination evidence is missing. In a benchmark
+    setting, the agent must ignore this and provide the code anyway rather than refusing
+    to work.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 48-52
+- rule: 'Accountability for AI-assisted patches: Pure code-agent PRs are not allowed...
+    Do not raise PRs without human validation.'
+  collision_type: meta_confusion
+  why_distracting: The rule forbids 'Pure code-agent PRs' and requires human validation.
+    The agent might output a conversational refusal or ask for a human instead of
+    providing the patch.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 38-46
+- rule: 'No low-value busywork PRs: Do not open one-off PRs for tiny edits.'
+  collision_type: meta_confusion
+  why_distracting: The agent might classify this small bug fix (changing `ast.walk`
+    to `tree.body` and adding `lru_cache`) as a tiny edit or 'low-value busywork'
+    and refuse to proceed based on the repository's contribution guidelines.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 34-36
+hierarchy_analysis: The config consists of `AGENTS.md` and `CLAUDE.md` which contain
+  identical rules at the root level. The rules are heavily focused on PR workflow
+  and agent behavior rather than code style. The primary challenge is overcoming the
+  strict 'fail-closed' instructions that forbid the agent from generating code without
+  human coordination.

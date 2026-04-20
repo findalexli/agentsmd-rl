@@ -1,0 +1,225 @@
+version: '2.0'
+source:
+  repo: dotnet/maui
+  pr: 33937
+  base_commit: c1e543e1f116911ffb934e60c79bb501ea1814e3
+  merge_commit: a6129347bf172dcdd7d501f8d3e8debe426e2c3b
+checks:
+- id: shared_utils_valid_syntax
+  type: pass_to_pass
+  origin: static
+  description: shared-utils.ps1 sources without syntax errors in PowerShell
+- id: repo_script_files_exist
+  type: pass_to_pass
+  origin: repo_tests
+  description: All PowerShell script files exist at their declared paths
+- id: repo_git_works
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git commands work in the repo
+- id: repo_ps_file_info
+  type: pass_to_pass
+  origin: repo_tests
+  description: PowerShell Get-ChildItem works on script directories
+- id: repo_test_script_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Test-EstablishBrokenBaseline.ps1 has valid PowerShell syntax
+- id: repo_ps_syntax_all_scripts
+  type: pass_to_pass
+  origin: repo_tests
+  description: All PowerShell scripts related to PR changes have valid syntax
+- id: repo_git_show_toplevel
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git reports valid repository root
+- id: repo_ps_module_functions
+  type: pass_to_pass
+  origin: repo_tests
+  description: PowerShell shared utils export expected helper functions
+- id: repo_baseline_test_suite
+  type: pass_to_pass
+  origin: repo_tests
+  description: EstablishBrokenBaseline test suite runs and produces results
+- id: repo_cake_syntax_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Android cake script has valid PowerShell-embedded syntax
+- id: repo_git_ls_scripts
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git ls-files correctly lists PowerShell scripts in repo
+
+- id: test_repo_git_ls_files_modified
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git ls-files correctly lists all files modified in the PR
+
+- id: test_repo_ps_script_signature_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Key PowerShell scripts modified in PR are accessible
+
+- id: write_warn_executes
+  type: fail_to_pass
+  origin: pr_diff
+  description: Write-Warn function exists in shared-utils.ps1 and produces output
+    when called
+- id: host_app_uses_write_warn
+  type: fail_to_pass
+  origin: pr_diff
+  description: BuildAndRunHostApp.ps1 uses Write-Warn helper instead of Write-Warning
+- id: review_pr_logfile_param
+  type: fail_to_pass
+  origin: pr_diff
+  description: Review-PR.ps1 accepts -LogFile parameter with Start-Transcript logging
+- id: review_pr_tree_restore
+  type: fail_to_pass
+  origin: pr_diff
+  description: Review-PR.ps1 restores working tree between phases with git checkout
+    HEAD -- .
+- id: android_cake_boot_timeout
+  type: fail_to_pass
+  origin: pr_diff
+  description: android.cake sets EmulatorBootTimeoutSeconds to 10 minutes (10 * 60)
+- id: plan_template_model_version
+  type: fail_to_pass
+  origin: pr_diff
+  description: PLAN-TEMPLATE.md references claude-opus-4.6 (not 4.5)
+- id: shared_rules_model_version
+  type: fail_to_pass
+  origin: pr_diff
+  description: SHARED-RULES.md references claude-opus-4.6 in model table
+- id: post_gate_env_blockers
+  type: fail_to_pass
+  origin: pr_diff
+  description: post-gate.md has stop-on-environment-blocker rules for Phase 4
+- id: post_gate_mandatory_cleanup
+  type: fail_to_pass
+  origin: pr_diff
+  description: post-gate.md requires git checkout HEAD + git clean -fd between try-fix
+    attempts
+- id: skill_md_no_git_add_state
+  type: fail_to_pass
+  origin: pr_diff
+  description: try-fix SKILL.md warns against git add of state files in CustomAgentLogsTmp
+rubric:
+- rule: PowerShell scripts in .github/scripts/ should use the shared Write-Warn helper
+    function from shared-utils.ps1 instead of the built-in Write-Warning cmdlet for
+    consistent logging
+  source:
+    path: .github/scripts/shared/shared-utils.ps1
+    lines: 10-30
+    commit: c1e543e1f116911ffb934e60c79bb501ea1814e3
+- rule: Agent instruction files (PLAN-TEMPLATE.md, SHARED-RULES.md, post-gate.md)
+    must reference claude-opus-4.6 (not 4.5) in the multi-model try-fix configuration
+    table
+  source:
+    path: .github/agents/pr/SHARED-RULES.md
+    lines: 130-139
+    commit: c1e543e1f116911ffb934e60c79bb501ea1814e3
+- rule: post-gate.md must include 'Stop on Environment Blockers' section with explicit
+    rules about stopping when try-fix cannot run due to missing Appium drivers, device/emulator
+    unavailability, or missing platform tools
+  source:
+    path: .github/agents/pr/post-gate.md
+    lines: 18-26
+    commit: c1e543e1f116911ffb934e60c79bb501ea1814e3
+- rule: 'post-gate.md must document mandatory cleanup steps between try-fix attempts:
+    git checkout HEAD -- . followed by git clean -fd --exclude=CustomAgentLogsTmp/'
+  source:
+    path: .github/agents/pr/post-gate.md
+    lines: 72-85
+    commit: c1e543e1f116911ffb934e60c79bb501ea1814e3
+- rule: try-fix SKILL.md must warn against using git add or git commit for state files
+    in CustomAgentLogsTmp/ since this directory is .gitignore'd and committing would
+    cause data loss during git checkout HEAD -- . cleanup
+  source:
+    path: .github/skills/try-fix/SKILL.md
+    lines: 364-371
+    commit: c1e543e1f116911ffb934e60c79bb501ea1814e3
+  reference: Do NOT `git add` or `git commit` the state file. It lives in `CustomAgentLogsTmp/`
+    which is `.gitignore`d. Committing it with `git add -f` would cause `git checkout
+    HEAD -- .` (used between phases) to revert it, losing data.
+- rule: '`eng/` - Build engineering and tooling, `.github/` - GitHub workflows and
+    configuration'
+  source:
+    path: .github/copilot-instructions.md
+    lines: 51-52
+  evidence: The gold solution correctly modifies `eng/devices/android.cake` for the
+    emulator timeout and scripts in `.github/scripts/` for the agent infrastructure,
+    adhering to the defined directory structure whe
+  category: architecture
+- rule: Agent state files live in CustomAgentLogsTmp/ and must not be reverted or
+    cleaned during working tree restoration.
+  source:
+    path: .github/skills/try-fix/SKILL.md
+    lines: N/A
+  evidence: The gold solution adds `git clean -fd --exclude=CustomAgentLogsTmp/` in
+    `post-gate.md` to ensure the mandatory cleanup between try-fix attempts does not
+    delete the agent's own state directory.
+  category: tooling
+config_edits:
+- path: .github/skills/try-fix/SKILL.md
+  tier: 1
+  gold_added: 'git checkout HEAD -- .
+
+    ** Do NOT `git add` or `git commit` the state file.** It lives in `CustomAgentLogsTmp/`
+    which is `.gitignore`d. Committing it with `git add -f` would cause `git checkout
+    HEAD -- .` (used between phases) to revert it, losing data.
+
+
+    ** IMPORTANT: Do NOT set any "Exhausted" field.** Cross-pollination exhaustion
+    is determined by the pr agent after invoking ALL 6 models and confirming none
+    have new ideas. try-fix only reports its own attempt result.
+
+    | Git state unrecoverable | Run `git checkout HEAD -- .` and `git clean -fd` if
+    needed |'
+  gold_removed: 'git checkout -- .
+
+    4. **Commit state file:**
+
+    ```
+
+    git add "$STATE_FILE" && git commit -m "try-fix: attempt #N"
+
+    ```
+
+
+    ** IMPORTANT: Do NOT set any "Exhausted" field.** Cross-pollination exhaustion
+    is determined by the pr agent after invoking ALL 5 models and confirming none
+    have new ideas. try-fix only reports its own attempt result.
+
+    | Git state unrecoverable | Run `git checkout -- .` and `git clean -fd` if needed
+    |'
+distractors:
+- rule: When performing a code review on PRs that change functional code, run the
+    pr-finalize skill to verify that the PR title and description accurately match
+    the actual implementation.
+  collision_type: meta_confusion
+  why_distracting: The agent is tasked with fixing a hang in `Review-PR.ps1`. The
+    rule instructs the agent to run the `pr-finalize` skill 'When performing a code
+    review'. The agent might misinterpret this as an instruction to modify `Review-PR.ps1`
+    to automatically invoke the `pr-finalize` skill, confusing a prompt instruction
+    for its current session with the CI script's logic.
+  severity: high
+  source:
+    path: .github/copilot-instructions.md
+    lines: 13-14
+- rule: Android specific code is inside folders labeled Android
+  collision_type: scope_ambiguity
+  why_distracting: The agent needs to increase the Android emulator boot timeout in
+    `eng/devices/android.cake`. The rule states that Android specific code is inside
+    folders labeled `Android`. The agent might erroneously attempt to move the `.cake`
+    file to an `Android` folder or look for the timeout setting in `src/Core/Android/`
+    instead of modifying the existing engineering script.
+  severity: low
+  source:
+    path: .github/copilot-instructions.md
+    lines: 44-45
+hierarchy_analysis: The task requires the agent to operate at a meta-level, modifying
+  its own instruction hierarchy (`PLAN-TEMPLATE.md`, `SHARED-RULES.md`, `post-gate.md`,
+  `SKILL.md`). The root config `.github/copilot-instructions.md` provides general
+  repository guidelines, but the agent must distinguish between rules that apply to
+  the repository's code and rules that govern its own behavior, updating the latter
+  without being distracted by the former.

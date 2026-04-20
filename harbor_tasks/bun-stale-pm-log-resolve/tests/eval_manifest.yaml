@@ -1,0 +1,183 @@
+version: '2.0'
+source:
+  repo: oven-sh/bun
+  pr: 28511
+  base_commit: 9ce5b052840cecea4aa1977aeb063c47d0137a22
+  merge_commit: 6034bd82b1a0d9b3635560405354e931b7e0e192
+checks:
+- id: pm_log_set_before_defer
+  type: fail_to_pass
+  origin: pr_diff
+  description: package_manager .log set to &log before the defer block
+- id: pm_log_restored_in_defer
+  type: fail_to_pass
+  origin: pr_diff
+  description: package_manager .log restored to old_log in the defer block
+- id: pm_log_set_before_resolve_call
+  type: fail_to_pass
+  origin: pr_diff
+  description: pm.log is set before _resolve is called (ordering)
+- id: resolver_linker_log_intact
+  type: pass_to_pass
+  origin: pr_diff
+  description: Existing resolver and linker log save/restore still intact
+- id: jsc_vm_log_intact
+  type: pass_to_pass
+  origin: pr_diff
+  description: jsc_vm.log save/restore still intact
+- id: resolve_call_present
+  type: pass_to_pass
+  origin: pr_diff
+  description: _resolve() call is still present in the function
+- id: function_not_stubbed
+  type: pass_to_pass
+  origin: static
+  description: Function has sufficient substantive lines (not gutted)
+- id: no_inline_import
+  type: pass_to_pass
+  origin: agent_config
+  description: No @import() inline inside functions
+  source:
+    path: src/CLAUDE.md
+    lines: '11'
+    commit: 9ce5b052840cecea4aa1977aeb063c47d0137a22
+- id: no_std_api_in_diff
+  type: pass_to_pass
+  origin: agent_config
+  description: No std.* API usage in changed lines
+  source:
+    path: src/CLAUDE.md
+    lines: '16'
+    commit: 9ce5b052840cecea4aa1977aeb063c47d0137a22
+- id: no_non_default_allocator
+  type: pass_to_pass
+  origin: agent_config
+  description: No std.heap allocators in changed lines
+  source:
+    path: src/CLAUDE.md
+    lines: '232'
+    commit: 9ce5b052840cecea4aa1977aeb063c47d0137a22
+- id: no_catch_outofmemory
+  type: pass_to_pass
+  origin: agent_config
+  description: No catch bun.outOfMemory() pattern in changed lines
+  source:
+    path: src/CLAUDE.md
+    lines: 234-238
+    commit: 9ce5b052840cecea4aa1977aeb063c47d0137a22
+- id: test_no_banned_words_in_diff
+  type: pass_to_pass
+  origin: repo_tests
+  description: No banned words/patterns in changed lines (CI banned words check)
+  source:
+    path: test/internal/ban-words.test.ts
+    equivalent: bun run banned
+- id: test_repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's JavaScript linting passes using oxlint (via npx)
+  source:
+    path: package.json
+    equivalent: npx oxlint --quiet src/js
+- id: test_repo_prettier_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's JS/TS files are properly formatted (prettier --check via npx)
+  source:
+    path: package.json
+    equivalent: npx prettier --check src/js/*.ts
+- id: test_repo_package_json_valid
+  type: pass_to_pass
+  origin: static
+  description: package.json is valid JSON with required CI scripts
+  source:
+    path: package.json
+    equivalent: json.parse and key existence check
+- id: test_repo_claude_md_exists
+  type: pass_to_pass
+  origin: static
+  description: CLAUDE.md documentation exists and has content
+  source:
+    path: src/CLAUDE.md
+    equivalent: file existence check
+- id: test_repo_zig_file_exists
+  type: pass_to_pass
+  origin: static
+  description: VirtualMachine.zig exists and contains target function
+  source:
+    path: src/bun.js/VirtualMachine.zig
+    equivalent: file structure check
+- id: test_repo_oxlint_config
+  type: pass_to_pass
+  origin: static
+  description: oxlint configuration file exists and is valid JSON
+  source:
+    path: oxlint.json
+    equivalent: config existence check
+- id: test_repo_prettier_config
+  type: pass_to_pass
+  origin: static
+  description: Prettier configuration file exists
+  source:
+    path: .prettierrc
+    equivalent: config existence check
+- id: test_repo_git_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git repository is valid and functional
+  source:
+    path: .git
+    equivalent: git status
+rubric:
+- rule: Never use @import() inline inside of functions. Always put them at the bottom
+    of the file or containing struct.
+  source:
+    path: src/CLAUDE.md
+    lines: '11'
+    commit: 9ce5b052840cecea4aa1977aeb063c47d0137a22
+- rule: Always use bun.* APIs instead of std.*.
+  source:
+    path: src/CLAUDE.md
+    lines: '16'
+    commit: 9ce5b052840cecea4aa1977aeb063c47d0137a22
+- rule: Be careful with allocators and use defer for cleanup.
+  source:
+    path: src/CLAUDE.md
+    lines: 230-232
+    commit: 9ce5b052840cecea4aa1977aeb063c47d0137a22
+- rule: NEVER write tests that check for no "panic" or "uncaught exception" or similar
+    in the test output. These tests will never fail in CI.
+  source:
+    path: CLAUDE.md
+    lines: 55-56
+  evidence: The gold solution correctly omits adding a test for this stack-buffer-overflow.
+    A test that merely executes `mock.module()` to check if it crashes would not fail
+    in standard (non-ASAN) CI environments
+  category: testing
+distractors:
+- rule: NEVER write tests that check for no 'panic' or 'uncaught exception' or similar
+    in the test output. These tests will never fail in CI.
+  collision_type: scope_ambiguity
+  why_distracting: The bug is a stack-buffer-overflow that causes a crash. An agent
+    might naturally try to write a test that triggers the bug and verifies the process
+    doesn't crash or panic. However, the config explicitly forbids tests that check
+    for 'no panic', as they won't reliably fail in standard CI without ASAN. The gold
+    solution correctly omits a test.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 68-69
+- rule: Always use `bun.*` APIs instead of `std.*`.
+  collision_type: rule_conflict
+  why_distracting: The agent might try to use `std.log` or `std.debug.print` to fix
+    or debug the logging pointer issue, but the codebase strictly requires using Bun's
+    internal wrappers and custom `logger.Log`.
+  severity: low
+  source:
+    path: src/AGENTS.md
+    lines: 14-15
+hierarchy_analysis: The hierarchy separates root-level testing/build instructions
+  (`AGENTS.md`) from `src/`-level Zig conventions (`src/AGENTS.md`). The agent must
+  synthesize the root-level testing constraints (no panic tests) with the nature of
+  the bug (a memory corruption crash) to correctly conclude that a test should not
+  be added.

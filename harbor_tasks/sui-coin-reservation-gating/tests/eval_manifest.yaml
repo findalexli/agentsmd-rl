@@ -1,0 +1,111 @@
+source:
+  repo: MystenLabs/sui
+  pr: 0
+  base_commit: 08740a5fd4f46df33dc6dda8b34056ce9a54e3fd
+  merge_commit: 896d11b841c6fec62221954dde1084a7277ccbe2
+checks:
+- id: test_cargo_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: sui-json-rpc compiles successfully
+- id: test_get_object_read_has_protocol_gating
+  type: fail_to_pass
+  origin: agent_config
+  description: get_object_read checks enable_coin_reservation_obj_refs() before returning
+    fake coins
+  source:
+    lines: Protocol Config Changes
+    path: CLAUDE.md
+- id: test_get_owned_coins_has_protocol_gating
+  type: fail_to_pass
+  origin: agent_config
+  description: get_owned_coins checks enable_coin_reservation_obj_refs() before building
+    fake coins
+  source:
+    lines: Protocol Config Changes
+    path: CLAUDE.md
+- id: test_clippy_passes
+  type: pass_to_pass
+  origin: agent_config
+  description: Code passes cargo xclippy linting
+  source:
+    lines: ALWAYS run `cargo xclippy` after finishing development
+    path: CLAUDE.md
+- id: test_git_checks
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo git checks pass
+- id: test_cargo_fmt
+  type: pass_to_pass
+  origin: repo_tests
+  description: Code formatting passes cargo fmt check
+- id: test_cargo_clippy_package
+  type: pass_to_pass
+  origin: repo_tests
+  description: Clippy passes on sui-json-rpc package with warnings as errors
+rubric:
+- rule: Use `#[sim_test]` and `cargo simtest` for e2e tests to avoid false negatives.
+  source:
+    path: crates/sui-e2e-tests/tests/address_balance_rpc_tests.rs
+    lines: 688-770
+  reference: '#[sim_test]
+
+    async fn test_no_fake_coins_when_coin_reservations_disabled() {
+
+    '
+  category: testing
+- rule: Use simtests (and the `#[sim_test]` macro) for e2e tests to avoid false negatives.
+  source:
+    path: crates/sui-e2e-tests/tests/address_balance_rpc_tests.rs
+    lines: 733-770
+  reference: "#[sim_test]\nasync fn test_get_object_no_fake_coin_when_coin_reservations_disabled()\
+    \ {\n    // Enable address balances but explicitly disable coin reservations.\n\
+    \    // Verify that sui_getObject does not return a fake coin for a masked object\
+    \ ID.\n"
+  category: testing
+- rule: simtests must be run with `cargo simtest` to avoid false negatives (implies
+    using `#[sim_test]` macro for such tests)
+  source:
+    path: CLAUDE.md
+    lines: 30-31
+  evidence: The gold solution uses the `#[sim_test]` macro for the new tests `test_no_fake_coins_when_coin_reservations_disabled`
+    and `test_get_object_no_fake_coin_when_coin_reservations_disabled` in `address_bal
+  category: testing
+distractors:
+- rule: '`cargo xclippy does not recognize -p option` - This is a known issue with
+    some clippy command variations'
+  collision_type: rule_conflict
+  why_distracting: The task instruction explicitly tells the agent to run `cargo xclippy
+    -p sui-json-rpc`, but the config file warns that `cargo xclippy does not recognize
+    -p option`. The agent must decide whether to follow the instruction's command
+    or heed the config's warning.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 50-51
+- rule: All new files must start with the following license in comments at the top
+    of the file
+  collision_type: scope_ambiguity
+  why_distracting: The config mandates a specific license header for all new files.
+    An agent might be tempted to create a new test file to house the new tests and
+    apply this license, but the task instruction explicitly states 'Do NOT add new
+    test files - just fix the implementation'.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 18-21
+- rule: Guidelines for adding or modifying protocol configuration flags
+  source:
+    path: .claude/skills/protocol-config/SKILL.md
+    lines: 1-10
+  collision_type: scope_ambiguity
+  why_distracting: The task mentions 'protocol config gating' and checking a specific
+    protocol config flag. An agent might activate the protocol-config skill thinking
+    it needs to define or register a new protocol config, which would lead to unnecessary
+    modifications of the protocol config definitions instead of just using the existing
+    flag.
+  severity: medium
+hierarchy_analysis: The hierarchy is flat, consisting of root-level `AGENTS.md` and
+  `CLAUDE.md`. The primary interaction is between the task instructions and the root
+  `CLAUDE.md` file, specifically regarding testing macros and linting commands.
+version: '2.0'

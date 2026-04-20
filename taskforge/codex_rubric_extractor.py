@@ -210,7 +210,8 @@ def get_repo_info(task_path: Path) -> tuple[str, str]:
     text = df.read_text()
 
     repo = ""
-    match = re.search(r"github\.com/([^/]+/[^\s.]+?)(?:\.git|[\s]|$)", text)
+    # Allow dots in repo names (e.g. vercel/next.js)
+    match = re.search(r"github\.com/([^/\s]+/[^\s]+?)(?:\.git|[\s]|$)", text)
     if match:
         repo = match.group(1)
 

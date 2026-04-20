@@ -1,54 +1,52 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert very specific implementation details not fully discoverable from instruction.md alone. For example: test_validation_handles_immutable_capture checks for exact string 'case \\'ImmutableCapture\\':' and requires 'identifier.id' near the ImmutableCapture handler, and 'Freeze' within 1200 chars. test_panresponder_type_has_freeze_aliasing checks for exact strings like \"kind: 'Freeze'\", \"kind: 'ImmutableCapture'\", \"kind: 'Create'\". test_mutate_ref_fixture_uses_mutate checks exact regex patt"
+      "outcome": "pass",
+      "reason": "All file paths, required literal strings (ImmutableCapture, visitedEffects, hookKind == null, isRefLValue, interpolatedAsJsx, Freeze, Create, Frozen, mutate(ref.current), PanResponder.create, yarn workspace babel-plugin-react-compiler lint, yarn prettier-all) are explicitly listed in the instruction."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly states implementation details like 'A switch/case handling for effect kinds including an ImmutableCapture case', 'A visitedEffects set for deduplicating validation errors', 'Logic that checks for hookKind == null and instr.effects', 'Handlers for effect kinds including at least Mutate, MutateTransitive, and MutateConditionally', 'An isRefLValue check for the mergeRefs pattern', 'An interpolatedAsJsx check for JSX child ref handling'. These are specific implementation i"
+      "outcome": "pass",
+      "reason": "Instruction describes what patterns must be present but doesn't give specific line-by-line replacements; the agent still has to architect the switch-case logic."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific implementation details: exact string 'case \\'ImmutableCapture\\':' (must be a switch/case, not if/else), exact variable name 'visitedEffects', exact strings 'hookKind == null' and 'instr.effects', exact function names 'validateNoDirectRefValueAccess'/'validateNoRefPassedToFunction'/'validateNoRefValueAccess', and exact type property syntax like \"kind: 'Freeze'\". An alternative correct implementation using different variable names, if/else instead of switch, or different"
+      "reason": "Tests assert on specific internal identifiers like 'visitedEffects' (line 'Missing visitedEffects dedup tracking'), exact case string \"case 'ImmutableCapture':\", and specific variable names 'hookKind == null' and 'instr.effects'\u2014alternative correct implementations using different naming would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Nearly all tests are text-matching: they read source files and check for string patterns using includes() or regex. test_panresponder_runtime_works does eval the PanResponder code, test_repo_compiler_lint and test_repo_compiler_jest run actual commands, but the majority (test_validation_handles_immutable_capture, test_panresponder_type_has_freeze_aliasing, test_mutate_ref_fixture_uses_mutate, test_panresponder_fixture_exists, test_validation_preserves_ref_lvalue_branch, test_shared_runtime_expor"
+      "reason": "Most tests are file content string checks (src.includes('case ImmutableCapture'), fixture.includes('mutate(ref.current)')) rather than executing the compiler; only test_panresponder_runtime_works and the lint/jest tests actually execute code, and the jest test runs unrelated tests (DisjointSet|Result|envConfig)."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The tests do require meaningful implementation: PanResponder.create must return its input, the validation file must contain specific constructs, fixtures must exist with specific content, and lint/jest must pass. A stub/empty implementation would not satisfy these."
+      "reason": "A stub wouldn't pass: tests require specific file content patterns and the PanResponder runtime test requires returning the input argument."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md's Verification Criteria section are covered by corresponding tests: ImmutableCapture handling, visitedEffects, hookKind/effects logic, PanResponder runtime/type, fixture updates, and CLAUDE.md documentation (implied by lint test passing)."
+      "reason": "Each verification criterion in instruction.md (ImmutableCapture, visitedEffects, fixture updates, PanResponder export, type provider, CLAUDE.md) has a corresponding test."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names and docstrings explaining what each test checks (e.g., test_panresponder_runtime_works, test_validation_handles_immutable_capture)."
+      "reason": "Tests are clearly named with descriptive function names and docstrings (test_panresponder_runtime_works, test_validation_handles_immutable_capture, etc.)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data like JSON/CSV/API/DB."
+      "reason": "No structured data output is produced."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No apparent typos in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "File paths and commands appear correct and consistent between instruction and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names exact implementation details: 'A switch/case handling for effect kinds including an ImmutableCapture case', 'A visitedEffects set', 'hookKind == null and instr.effects', specific effect kinds 'Mutate, MutateTransitive, MutateConditionally', 'isRefLValue', 'interpolatedAsJsx'. These are precise code-level hints that make localization and implementation trivial."
+      "reason": "Instruction lists near-exact implementation details: 'visitedEffects set', 'ImmutableCapture case', 'hookKind == null and instr.effects', 'Mutate, MutateTransitive, MutateConditionally' \u2014 this essentially specifies the internal implementation structure rather than describing the bug."
     },
     "config_edit_scope_bounded": {
-      "outcome": "not_applicable",
-      "reason": "This is primarily a code-editing task, not a config-edit task."
+      "outcome": "pass",
+      "reason": "CLAUDE.md diff is a small localized addition of two sections."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
-    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
   ],
@@ -56,6 +54,6 @@
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 5
+  "pass_count": 7,
+  "fail_count": 3
 }

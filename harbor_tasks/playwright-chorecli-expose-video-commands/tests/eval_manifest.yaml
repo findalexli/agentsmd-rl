@@ -1,0 +1,81 @@
+version: '2.0'
+source:
+  repo: microsoft/playwright
+  pr: 39006
+  base_commit: 8c99ff19b8e03ab21cec344d8b2f1d149d4040c7
+  merge_commit: bb03b6c12704f594236c583b8dd9aec417cbf121
+checks:
+- id: test_repo_eslint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo ESLint passes on modified MCP files
+- id: test_repo_lint_packages
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo workspace packages are consistent
+- id: test_repo_generate_channels
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo generate_channels script runs without error
+- id: typescript_syntax
+  type: pass_to_pass
+  origin: static
+  description: Key modified TypeScript files have balanced braces/parens/brackets
+- id: video_tool_module_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: video.ts browser tool module exists with start/stop video tools under
+    devtools capability
+- id: video_commands_registered
+  type: fail_to_pass
+  origin: pr_diff
+  description: Terminal commands.ts declares video-start and video-stop commands mapping
+    to browser tools
+- id: devtools_capability_replaces_tracing
+  type: fail_to_pass
+  origin: pr_diff
+  description: tracing capability renamed to devtools in config.d.ts and tracing.ts
+- id: caps_cli_help_includes_devtools
+  type: fail_to_pass
+  origin: pr_diff
+  description: program.ts --caps help text lists devtools as a possible value
+- id: tracing_to_devtools_backward_compat
+  type: fail_to_pass
+  origin: pr_diff
+  description: program.ts maps legacy tracing cap to devtools for backward compatibility
+- id: video_tools_imported_in_browser_tools
+  type: fail_to_pass
+  origin: pr_diff
+  description: browser/tools.ts imports and spreads video tools into browserTools
+    array
+- id: skill_md_documents_video_commands
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md documents video-start and video-stop CLI commands in DevTools
+    section
+- id: existing_tracing_commands_intact
+  type: pass_to_pass
+  origin: static
+  description: Existing tracing-start and tracing-stop commands still declared
+- id: skill_md_preserves_existing_commands
+  type: pass_to_pass
+  origin: static
+  description: SKILL.md still documents tracing-start and tracing-stop
+rubric:
+- rule: When adding new CLI commands in the 'devtools' category, the SKILL.md documentation
+    must include examples of the new commands in the DevTools section
+  source:
+    path: packages/playwright/src/mcp/terminal/SKILL.md
+    lines: 97-106
+    commit: 8c99ff19b8e03ab21cec344d8b2f1d149d4040c7
+  reference: 'playwright-cli video-start
+
+
+    playwright-cli video-stop video.webm'
+config_edits:
+- path: packages/playwright/src/mcp/terminal/SKILL.md
+  tier: 1
+  gold_added: 'playwright-cli video-start
+
+    playwright-cli video-stop video.webm'
+  gold_removed: ''

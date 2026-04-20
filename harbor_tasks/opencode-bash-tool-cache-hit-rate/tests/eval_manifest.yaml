@@ -1,0 +1,169 @@
+version: '2.0'
+source:
+  repo: anomalyco/opencode
+  pr: 19487
+  base_commit: 48326e8d9ca5648b6ab1ee15f0374434be56c4d4
+  merge_commit: 15a8c22a263b072a23e2fc0b2e840b2e12c220aa
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: bash.ts and bash.txt must exist, be non-empty, and be readable
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: bash.txt must be a substantial tool description (20+ lines, 100+ words,
+    5+ concepts)
+- id: no_directory_placeholder_in_template
+  type: fail_to_pass
+  origin: pr_diff
+  description: bash.txt must not contain ${directory} placeholder
+- id: template_static_after_substitutions
+  type: fail_to_pass
+  origin: pr_diff
+  description: After replacing maxLines/maxBytes, no ${...} placeholders should remain
+- id: ts_no_directory_injection
+  type: fail_to_pass
+  origin: pr_diff
+  description: bash.ts must not substitute directory into the tool description
+- id: describes_directory_behavior
+  type: pass_to_pass
+  origin: pr_diff
+  description: bash.txt must still describe default working directory behavior
+- id: retains_global_placeholders
+  type: pass_to_pass
+  origin: pr_diff
+  description: bash.txt must still contain ${maxLines} and ${maxBytes} placeholders
+- id: preserves_guidance_sections
+  type: pass_to_pass
+  origin: pr_diff
+  description: bash.txt must retain key guidance sections (quoting, tool preference,
+    timeout)
+- id: no_any_type
+  type: pass_to_pass
+  origin: agent_config
+  description: bash.ts must not use the `any` type annotation
+  source:
+    path: AGENTS.md
+    lines: '13'
+    commit: 48326e8d9ca5648b6ab1ee15f0374434be56c4d4
+- id: bashtool_export_preserved
+  type: pass_to_pass
+  origin: static
+  description: BashTool must still be exported from bash.ts
+- id: repo_prettier_formatting
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - prettier formatting check on TypeScript files
+- id: repo_node_can_load_bash_ts
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - Node.js can load and read bash.ts
+- id: repo_node_can_load_bash_txt
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - Node.js can load and read bash.txt
+- id: repo_git_structure_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - Git repository has valid structure for bash.ts
+- id: repo_agents_md_readable
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - AGENTS.md exists and is readable by Node.js
+- id: repo_bash_ts_syntax_node
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - bash.ts has balanced braces/parens via Node.js validation
+- id: repo_node_can_parse_bash_txt
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - Node.js can parse bash.txt and validate placeholders
+- id: repo_git_status_clean
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - Git repository has clean working tree
+- id: repo_ts_imports_exports_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - bash.ts has valid import and export statements
+- id: repo_git_has_commits
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - Git repository has at least one commit
+- id: repo_bash_tool_defined
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - bash.ts contains BashTool and DESCRIPTION definitions
+- id: static_bash_txt_placeholders
+  type: pass_to_pass
+  origin: static
+  description: Bash.txt must contain required template placeholders
+- id: static_bash_tool_description_pattern
+  type: pass_to_pass
+  origin: static
+  description: Bash.ts must follow the tool description pattern with DESCRIPTION constant
+- id: static_bash_txt_sections
+  type: pass_to_pass
+  origin: static
+  description: Bash.txt must contain required tool description sections
+- id: static_ts_syntax_valid
+  type: pass_to_pass
+  origin: static
+  description: Bash.ts must have valid TypeScript syntax structure
+- id: static_bash_txt_valid
+  type: pass_to_pass
+  origin: static
+  description: Bash.txt must exist and be readable
+- id: repo_truncate_constants_referenced
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - Bash.ts must reference Truncate constants MAX_LINES and MAX_BYTES
+- id: repo_bash_txt_template_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - Bash.txt must have valid template syntax with command/timeout/directory
+    sections
+rubric:
+- rule: Update AGENTS.md to document that tool descriptions should not use project-specific
+    paths like ${directory} to ensure prompt caching works correctly.
+  source:
+    path: AGENTS.md
+  reference: Do not inject project-specific paths like ${directory} into tool descriptions,
+    as this breaks LLM prompt caching. Use static text (e.g., 'current working directory')
+    instead.
+- rule: Reduce total variable count by inlining when a value is only used once.
+  source:
+    path: AGENTS.md
+    lines: 42-51
+  evidence: The gold solution modifies the `description` property in `bash.ts` by
+    chaining `.replaceAll` calls directly on the `DESCRIPTION` constant, keeping the
+    value inlined rather than extracting the modified
+  category: style
+distractors:
+- rule: Use `InstanceState` (from `src/effect/instance-state.ts`) for per-directory
+    or per-project state that needs per-instance cleanup.
+  collision_type: would_cause_bug
+  why_distracting: The prompt mentions that `Instance.directory` is causing issues
+    because it makes the tool description project-specific. An agent might misinterpret
+    this as a state management issue and try to wrap the tool description or the bash
+    tool itself in `InstanceState` to handle per-directory scoping, which completely
+    misses the goal of making the string globally cacheable.
+  severity: high
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: 23-28
+- rule: Reduce total variable count by inlining when a value is only used once.
+  collision_type: architecture_boundary
+  why_distracting: The agent might take the 'inlining' rule too far and attempt to
+    inline the entire contents of `bash.txt` directly into `bash.ts` to eliminate
+    the `DESCRIPTION` variable entirely, violating the project's architecture of keeping
+    prompt templates in separate text files.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 46-55
+hierarchy_analysis: The hierarchy consists of a root `AGENTS.md` and a package-specific
+  `packages/opencode/AGENTS.md`. The package-specific config introduces complex Effect-based
+  state management rules (`InstanceState`) that act as a strong distractor for a problem
+  that actually requires a simple string manipulation to fix an LLM caching issue.

@@ -1,11 +1,12 @@
 """Test outputs for SetTitleCallbackProcessor polling fix.
 
-This validates that the PR changes have been applied:
-1. New constants _POLL_DELAY_S and _NUM_POLL_ATTEMPTS exist
-2. New _poll_for_title async function exists
-3. Log level changed from debug to warning for failed polls
-4. Old _TITLE_POLL_DELAYS_S constant is removed
-5. Polling logic is extracted to the new function
+This validates that the PR changes have been applied behaviorally:
+1. Old constant _TITLE_POLL_DELAYS_S is removed
+2. A constant with value 3 (delay) exists and is used for polling sleep
+3. A constant with value 4 (attempts) exists and is used for polling loop
+4. New async helper function exists with correct signature
+5. Log level changed from debug to warning for failed polls
+6. Polling logic is extracted to the new function
 """
 
 import ast
@@ -26,166 +27,312 @@ def _get_ast():
     return ast.parse(content)
 
 
-def test_new_poll_constants_exist():
-    """FAIL-TO-PASS: _POLL_DELAY_S and _NUM_POLL_ATTEMPTS constants must exist.
+def _find_constant_with_value(tree, value):
+    """Find all constant names that have the given value."""
+    names = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Assign):
+            for target in node.targets:
+                if isinstance(target, ast.Name):
+                    if isinstance(node.value, ast.Constant) and node.value.value == value:
+                        names.append(target.id)
+    return names
+
+
+def test_old_constant_removed():
+    """FAIL-TO-PASS: Old _TITLE_POLL_DELAYS_S constant must be removed.
 
     The old code had: _TITLE_POLL_DELAYS_S = (0.25, 0.5, 1.0, 2.0)
-    The new code should have:
-      _POLL_DELAY_S = 3
-      _NUM_POLL_ATTEMPTS = 4
-    """
-    content = TARGET_FILE.read_text()
-
-    # Check for new constants with exact values
-    assert '_POLL_DELAY_S = 3' in content, \
-        "Missing _POLL_DELAY_S constant with value 3"
-    assert '_NUM_POLL_ATTEMPTS = 4' in content, \
-        "Missing _NUM_POLL_ATTEMPTS constant with value 4"
-
-    # Verify old constant is removed
-    assert '_TITLE_POLL_DELAYS_S' not in content, \
-        "Old _TITLE_POLL_DELAYS_S constant should be removed"
-
-
-def test_poll_for_title_function_exists():
-    """FAIL-TO-PASS: _poll_for_title async function must exist.
-
-    The polling logic should be extracted to a separate async function
-    that takes httpx_client, url, and session_api_key parameters.
+    This tuple-based approach should be replaced with new constants.
     """
     tree = _get_ast()
 
-    found_function = False
     for node in ast.walk(tree):
-        if isinstance(node, ast.AsyncFunctionDef) and node.name == '_poll_for_title':
-            found_function = True
-            # Check it has the expected parameters
-            args = [arg.arg for arg in node.args.args]
-            assert 'httpx_client' in args, \
-                "_poll_for_title missing httpx_client parameter"
-            assert 'url' in args, \
-                "_poll_for_title missing url parameter"
-            assert 'session_api_key' in args, \
-                "_poll_for_title missing session_api_key parameter"
+        if isinstance(node, ast.Assign):
+            for target in node.targets:
+                if isinstance(target, ast.Name):
+                    if target.id == '_TITLE_POLL_DELAYS_S':
+                        raise AssertionError(
+                            "Old _TITLE_POLL_DELAYS_S constant should be removed"
+                        )
 
-            # Check return annotation is str | None
-            if node.returns:
-                return_str = ast.unparse(node.returns)
-                assert 'str' in return_str and 'None' in return_str, \
-                    f"_poll_for_title return type should be str | None, got {return_str}"
+
+def test_delay_constant_exists_and_is_three():
+    """FAIL-TO-PASS: A constant with value 3 must exist (for delay seconds).
+
+    The new code should have a constant set to 3 for the polling delay.
+    We don't check the name - we check the value and its usage.
+    """
+    tree = _get_ast()
+    delay_constants = _find_constant_with_value(tree, 3)
+
+    assert len(delay_constants) > 0, \
+        "No constant with value 3 found (needed for polling delay)"
+
+
+def test_attempts_constant_exists_and_is_four():
+    """FAIL-TO-PASS: A constant with value 4 must exist (for number of attempts).
+
+    The new code should have a constant set to 4 for the number of polling attempts.
+    We don't check the name - we check the value and its usage.
+    """
+    tree = _get_ast()
+    attempts_constants = _find_constant_with_value(tree, 4)
+
+    assert len(attempts_constants) > 0, \
+        "No constant with value 4 found (needed for polling attempts)"
+
+
+def test_async_polling_function_exists():
+    """FAIL-TO-PASS: An async helper function for polling must exist.
+
+    The polling logic should be extracted to a dedicated async function
+    that takes appropriate parameters (httpx client, url, session API key)
+    and returns str | None.
+    """
+    tree = _get_ast()
+
+    # Find all async functions
+    async_funcs = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.AsyncFunctionDef):
+            async_funcs.append(node)
+
+    # Find one that looks like a polling function:
+    # - Takes httpx_client, url, session_api_key (or similar)
+    # - Returns str | None
+    polling_func = None
+    for func in async_funcs:
+        args = [arg.arg for arg in func.args.args]
+        arg_names_lower = [a.lower() for a in args]
+
+        # Check for required parameter types (flexible naming)
+        has_client = any('client' in a or 'httpx' in a for a in arg_names_lower)
+        has_url = 'url' in arg_names_lower
+        has_api_key = any('api' in a or 'key' in a or 'session' in a for a in arg_names_lower)
+
+        # Check return type is str | None or Optional[str]
+        has_str_none_return = False
+        if func.returns:
+            return_str = ast.unparse(func.returns)
+            if 'str' in return_str and 'None' in return_str:
+                has_str_none_return = True
+
+        if has_client and has_url and has_api_key and has_str_none_return:
+            polling_func = func
             break
 
-    assert found_function, \
-        "_poll_for_title must be defined as an async function"
+    assert polling_func is not None, \
+        "No async polling function found with required parameters (client, url, api_key) " \
+        "and return type str | None"
 
 
-def test_poll_delay_is_3_seconds():
-    """FAIL-TO-PASS: _POLL_DELAY_S constant must be set to 3."""
+def test_polling_function_uses_delay_constant():
+    """FAIL-TO-PASS: The polling function must sleep using the delay constant.
+
+    The async helper should call asyncio.sleep with the delay constant (value 3).
+    """
     tree = _get_ast()
 
+    # Find the delay constant name
+    delay_constants = _find_constant_with_value(tree, 3)
+    assert len(delay_constants) > 0, "No constant with value 3 found"
+    delay_const_name = delay_constants[0]
+
+    # Find the polling function (async function with appropriate signature)
+    polling_func = None
     for node in ast.walk(tree):
-        if isinstance(node, ast.Assign):
-            for target in node.targets:
-                if isinstance(target, ast.Name) and target.id == '_POLL_DELAY_S':
-                    if isinstance(node.value, ast.Constant):
-                        assert node.value.value == 3, \
-                            f"_POLL_DELAY_S must be 3, got {node.value.value}"
-                        return
+        if isinstance(node, ast.AsyncFunctionDef):
+            args = [arg.arg for arg in node.args.args]
+            arg_names_lower = [a.lower() for a in args]
+            has_client = any('client' in a or 'httpx' in a for a in arg_names_lower)
+            has_url = 'url' in arg_names_lower
+            has_api_key = any('api' in a or 'key' in a or 'session' in a for a in arg_names_lower)
 
-    raise AssertionError("Could not find _POLL_DELAY_S constant with value 3")
+            if has_client and has_url and has_api_key:
+                if node.returns:
+                    return_str = ast.unparse(node.returns)
+                    if 'str' in return_str and 'None' in return_str:
+                        polling_func = node
+                        break
+
+    assert polling_func is not None, "Could not find polling function"
+
+    # Check that the function uses the delay constant in an asyncio.sleep call
+    func_source = ast.unparse(polling_func)
+
+    # Look for asyncio.sleep or sleep being called with the delay constant
+    assert 'asyncio.sleep' in func_source or 'sleep(' in func_source, \
+        "Polling function must call asyncio.sleep for delays"
+
+    # The delay constant should be used in the function
+    assert delay_const_name in func_source, \
+        f"Polling function must use the delay constant ({delay_const_name})"
 
 
-def test_num_poll_attempts_is_4():
-    """FAIL-TO-PASS: _NUM_POLL_ATTEMPTS constant must be set to 4."""
+def test_polling_function_uses_attempts_constant():
+    """FAIL-TO-PASS: The polling function must use the attempts constant.
+
+    The async helper should use the attempts constant (value 4) for loop count.
+    """
     tree = _get_ast()
 
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Assign):
-            for target in node.targets:
-                if isinstance(target, ast.Name) and target.id == '_NUM_POLL_ATTEMPTS':
-                    if isinstance(node.value, ast.Constant):
-                        assert node.value.value == 4, \
-                            f"_NUM_POLL_ATTEMPTS must be 4, got {node.value.value}"
-                        return
+    # Find the attempts constant name
+    attempts_constants = _find_constant_with_value(tree, 4)
+    assert len(attempts_constants) > 0, "No constant with value 4 found"
+    attempts_const_name = attempts_constants[0]
 
-    raise AssertionError("Could not find _NUM_POLL_ATTEMPTS constant with value 4")
+    # Find the polling function
+    polling_func = None
+    for node in ast.walk(tree):
+        if isinstance(node, ast.AsyncFunctionDef):
+            args = [arg.arg for arg in node.args.args]
+            arg_names_lower = [a.lower() for a in args]
+            has_client = any('client' in a or 'httpx' in a for a in arg_names_lower)
+            has_url = 'url' in arg_names_lower
+            has_api_key = any('api' in a or 'key' in a or 'session' in a for a in arg_names_lower)
+
+            if has_client and has_url and has_api_key:
+                if node.returns:
+                    return_str = ast.unparse(node.returns)
+                    if 'str' in return_str and 'None' in return_str:
+                        polling_func = node
+                        break
+
+    assert polling_func is not None, "Could not find polling function"
+
+    # Check that the function uses the attempts constant
+    func_source = ast.unparse(polling_func)
+    assert attempts_const_name in func_source, \
+        f"Polling function must use the attempts constant ({attempts_const_name})"
+
+    # Should be used in a range() or similar loop construct
+    assert 'range' in func_source or 'for ' in func_source, \
+        "Polling function should loop using the attempts constant"
 
 
 def test_warning_log_level_for_failed_polls():
-    """FAIL-TO-PASS: Failed polls must log at warning level, not debug.
+    """FAIL-TO-PASS: Failed polls must use warning log level, not debug.
 
-    The old code used _logger.debug() for failed polls.
-    The new code should use _logger.warning() for better visibility.
-    """
-    content = TARGET_FILE.read_text()
-
-    # Should use _logger.warning for failed polls
-    assert '_logger.warning(' in content, \
-        "Failed polls must use _logger.warning() for visibility"
-
-    # Should NOT use _logger.debug in the error handling path
-    # (unless it's used elsewhere for non-error purposes)
-    # We check that debug is not used in the poll failure context
-    lines = content.split('\n')
-    in_poll_func = False
-    debug_in_poll = False
-    brace_depth = 0
-
-    for i, line in enumerate(lines):
-        if 'async def _poll_for_title' in line:
-            in_poll_func = True
-            brace_depth = 0
-        elif in_poll_func:
-            if 'def ' in line and 'async def' not in line:
-                in_poll_func = False
-            elif '_logger.debug(' in line:
-                debug_in_poll = True
-                break
-
-    # Note: We don't assert this because debug might still be used elsewhere
-    # But in a proper fix, the poll function shouldn't use debug for errors
-
-
-def test_poll_for_title_uses_constants():
-    """FAIL-TO-PASS: _poll_for_title must use the new constants.
-
-    The extracted function should use _NUM_POLL_ATTEMPTS for the loop
-    and _POLL_DELAY_S for the sleep duration.
+    The polling function should use _logger.warning() for failed HTTP requests,
+    not _logger.debug() which was used in the old code.
     """
     tree = _get_ast()
 
-    func_node = None
+    # Find the polling function
+    polling_func = None
     for node in ast.walk(tree):
-        if isinstance(node, ast.AsyncFunctionDef) and node.name == '_poll_for_title':
-            func_node = node
-            break
+        if isinstance(node, ast.AsyncFunctionDef):
+            args = [arg.arg for arg in node.args.args]
+            arg_names_lower = [a.lower() for a in args]
+            has_client = any('client' in a or 'httpx' in a for a in arg_names_lower)
+            has_url = 'url' in arg_names_lower
+            has_api_key = any('api' in a or 'key' in a or 'session' in a for a in arg_names_lower)
 
-    assert func_node is not None, \
-        "_poll_for_title function not found"
+            if has_client and has_url and has_api_key:
+                if node.returns:
+                    return_str = ast.unparse(node.returns)
+                    if 'str' in return_str and 'None' in return_str:
+                        polling_func = node
+                        break
 
-    func_source = ast.unparse(func_node)
+    assert polling_func is not None, "Could not find polling function"
 
-    assert '_NUM_POLL_ATTEMPTS' in func_source, \
-        "_poll_for_title must use _NUM_POLL_ATTEMPTS for loop count"
-    assert '_POLL_DELAY_S' in func_source, \
-        "_poll_for_title must use _POLL_DELAY_S for sleep duration"
+    func_source = ast.unparse(polling_func)
+
+    # Should use warning, not debug, for failures
+    assert '_logger.warning(' in func_source or 'logger.warning(' in func_source, \
+        "Polling function must use _logger.warning() for failed polls"
+
+    # Should NOT use debug for the error handling path
+    assert '_logger.debug(' not in func_source, \
+        "Polling function should not use _logger.debug() - use warning instead"
 
 
-def test_call_method_uses_poll_for_title():
-    """FAIL-TO-PASS: __call__ method must use _poll_for_title.
+def test_call_method_uses_polling_helper():
+    """FAIL-TO-PASS: __call__ method must await the polling helper.
 
-    The __call__ method should be refactored to call the new
-    _poll_for_title function instead of having inline polling logic.
+    The __call__ method should delegate to the new async polling function
+    instead of having inline retry logic.
     """
-    content = TARGET_FILE.read_text()
+    tree = _get_ast()
 
-    # The __call__ method should call _poll_for_title
-    assert '_poll_for_title(' in content, \
-        "__call__ method must call _poll_for_title()"
+    # Find the polling function name
+    polling_func_name = None
+    for node in ast.walk(tree):
+        if isinstance(node, ast.AsyncFunctionDef):
+            args = [arg.arg for arg in node.args.args]
+            arg_names_lower = [a.lower() for a in args]
+            has_client = any('client' in a or 'httpx' in a for a in arg_names_lower)
+            has_url = 'url' in arg_names_lower
+            has_api_key = any('api' in a or 'key' in a or 'session' in a for a in arg_names_lower)
 
-    # It should pass the expected arguments
-    assert 'await _poll_for_title(' in content, \
-        "__call__ must await _poll_for_title()"
+            if has_client and has_url and has_api_key:
+                if node.returns:
+                    return_str = ast.unparse(node.returns)
+                    if 'str' in return_str and 'None' in return_str:
+                        polling_func_name = node.name
+                        break
+
+    assert polling_func_name is not None, "Could not find polling function"
+
+    # Find the SetTitleCallbackProcessor class and its __call__ method
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef):
+            if node.name == 'SetTitleCallbackProcessor':
+                for item in node.body:
+                    if isinstance(item, ast.AsyncFunctionDef) and item.name == '__call__':
+                        call_source = ast.unparse(item)
+
+                        # Should await the polling function
+                        assert f'await {polling_func_name}(' in call_source or \
+                               f'await {polling_func_name}' in call_source, \
+                            f"__call__ method must await the polling helper ({polling_func_name})"
+                        return
+
+    raise AssertionError("Could not find __call__ method in SetTitleCallbackProcessor")
+
+
+def test_constants_via_import():
+    """FAIL-TO-PASS: Module constants must be importable with correct values.
+
+    Import the module and verify the constants for delay (3) and attempts (4)
+    are accessible with correct values.
+    """
+    sys.path.insert(0, str(REPO))
+
+    try:
+        from openhands.app_server.event_callback import set_title_callback_processor
+
+        # Find constants with values 3 and 4 by checking module attributes
+        delay_found = False
+        attempts_found = False
+
+        for attr_name in dir(set_title_callback_processor):
+            attr_value = getattr(set_title_callback_processor, attr_name)
+            if isinstance(attr_value, int):
+                if attr_value == 3:
+                    delay_found = True
+                elif attr_value == 4:
+                    attempts_found = True
+
+        assert delay_found, \
+            "Module should have an integer constant with value 3 (delay)"
+        assert attempts_found, \
+            "Module should have an integer constant with value 4 (attempts)"
+
+    except ImportError as e:
+        # If import fails due to missing dependencies, skip
+        if 'pydantic' in str(e) or 'openhands' in str(e):
+            pytest.skip(f"Skipping due to missing dependencies: {e}")
+        else:
+            raise AssertionError(f"Import failed: {e}")
+
+
+# =============================================================================
+# PASS-TO-PASS: Repo CI Tests
+# These tests run actual CI commands from the repo's test suite.
+# =============================================================================
 
 
 def test_file_is_valid_python():
@@ -196,43 +343,6 @@ def test_file_is_valid_python():
         compile(content, str(TARGET_FILE), 'exec')
     except SyntaxError as e:
         raise AssertionError(f"File has Python syntax error: {e}")
-
-
-def test_imports_work():
-    """PASS-TO-PASS: The modified module must be importable."""
-    sys.path.insert(0, str(REPO))
-
-    try:
-        # This will fail on base commit because of missing deps,
-        # but we check that the import structure is valid
-        from openhands.app_server.event_callback import set_title_callback_processor
-
-        # Verify the expected attributes exist
-        assert hasattr(set_title_callback_processor, '_POLL_DELAY_S'), \
-            "Module missing _POLL_DELAY_S after fix"
-        assert hasattr(set_title_callback_processor, '_NUM_POLL_ATTEMPTS'), \
-            "Module missing _NUM_POLL_ATTEMPTS after fix"
-
-        # Check constant values via module attributes
-        assert set_title_callback_processor._POLL_DELAY_S == 3, \
-            f"_POLL_DELAY_S should be 3, got {set_title_callback_processor._POLL_DELAY_S}"
-        assert set_title_callback_processor._NUM_POLL_ATTEMPTS == 4, \
-            f"_NUM_POLL_ATTEMPTS should be 4, got {set_title_callback_processor._NUM_POLL_ATTEMPTS}"
-
-    except ImportError as e:
-        # If import fails due to missing dependencies (like full openhands deps),
-        # that's OK - we just need to verify the code structure is correct
-        if 'pydantic' in str(e) or 'openhands' in str(e) and 'app_server' not in str(e):
-            # Skip this test - we don't have all deps installed
-            pytest.skip(f"Skipping due to missing dependencies: {e}")
-        else:
-            raise AssertionError(f"Import failed: {e}")
-
-
-# =============================================================================
-# PASS-TO-PASS: Repo CI Tests
-# These tests run actual CI commands from the repo's test suite.
-# =============================================================================
 
 
 def test_repo_ruff_check_modified_file():

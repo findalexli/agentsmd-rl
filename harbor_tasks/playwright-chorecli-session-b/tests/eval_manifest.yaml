@@ -1,0 +1,228 @@
+version: '2.0'
+source:
+  repo: microsoft/playwright
+  pr: 39156
+  base_commit: 605d93d732c5ab752ae314ac47fdd6ad3abc11de
+  merge_commit: fead0d342f112d51d7c6ba749a5da768c6e73269
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files have balanced braces
+- id: command_names_renamed
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Session commands renamed: session-list -> list, session-close-all
+    -> close-all, session-kill-all -> kill-all'
+- id: category_renamed_to_browsers
+  type: fail_to_pass
+  origin: pr_diff
+  description: Category 'session' renamed to 'browsers' in command.ts and commands.ts
+- id: program_switch_uses_new_names
+  type: fail_to_pass
+  origin: pr_diff
+  description: program.ts switch dispatches list, close-all, kill-all
+- id: b_flag_alias
+  type: fail_to_pass
+  origin: pr_diff
+  description: program.ts normalizes -b flag to --session
+- id: user_messages_say_browser
+  type: fail_to_pass
+  origin: pr_diff
+  description: User-facing messages say Browser instead of Session
+- id: status_markers_open_closed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Status markers use [open]/[closed] instead of [running]/[stopped]
+- id: session_mgmt_md_heading_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: session-management.md heading mentions Browser
+- id: skill_md_uses_new_commands
+  type: fail_to_pass
+  origin: agent_config
+  description: SKILL.md documents -b flag and new command names
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: 28-29
+    commit: 605d93d732c5ab752ae314ac47fdd6ad3abc11de
+- id: session_mgmt_md_uses_b_flag
+  type: fail_to_pass
+  origin: agent_config
+  description: session-management.md uses -b flag and new command names
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: 28-29
+    commit: 605d93d732c5ab752ae314ac47fdd6ad3abc11de
+- id: program_still_handles_open_close
+  type: pass_to_pass
+  origin: static
+  description: program.ts still handles open, close, and delete-data commands
+- id: test_modified_typescript_files_have_balanced_braces
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files have balanced braces
+- id: test_modified_typescript_files_have_balanced_parentheses
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files have balanced parentheses
+- id: test_skill_documentation_files_exist
+  type: pass_to_pass
+  origin: static
+  description: SKILL.md and session-management.md exist and are non-empty
+- id: test_command_ts_has_category_type
+  type: pass_to_pass
+  origin: static
+  description: command.ts defines Category type
+- id: test_commands_ts_has_declare_command
+  type: pass_to_pass
+  origin: static
+  description: commands.ts uses declareCommand
+- id: test_program_ts_has_switch_structure
+  type: pass_to_pass
+  origin: static
+  description: program.ts has command dispatch switch
+- id: test_help_generator_has_categories
+  type: pass_to_pass
+  origin: static
+  description: helpGenerator.ts defines categories
+- id: test_repo_npm_run_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI check: npm run build succeeds'
+- id: test_repo_npm_run_eslint
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI check: npm run eslint passes on terminal files'
+- id: test_repo_npm_run_check_deps
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI check: npm run check-deps passes'
+- id: test_repo_npm_run_lint_packages
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI check: npm run lint-packages passes'
+- id: test_repo_npx_eslint_modified_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI check: npx eslint passes on modified terminal files'
+rubric:
+- rule: Documentation updates are consistent with the style of existing SKILL.md content
+  source:
+    path: packages/playwright/src/skill/SKILL.md
+    lines: 1-10
+    commit: 605d93d732c5ab752ae314ac47fdd6ad3abc11de
+- rule: Update skill file and references when commands change
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: 28-29
+    commit: 605d93d732c5ab752ae314ac47fdd6ad3abc11de
+- rule: User-facing messages say Browser instead of Session in program.ts stop() and
+    related methods
+  source:
+    path: packages/playwright/src/mcp/terminal/program.ts
+    lines: 90-400
+    commit: 605d93d732c5ab752ae314ac47fdd6ad3abc11de
+  reference: console.log(`Browser '${this.name}' is not open.`); console.log(`Browser
+    '${this.name}' closed.`);
+- rule: Status markers use [open]/[closed] instead of [running]/[stopped]
+  source:
+    path: packages/playwright/src/mcp/terminal/program.ts
+    lines: 740-760
+    commit: 605d93d732c5ab752ae314ac47fdd6ad3abc11de
+  reference: 'const statusMarker = canConnect ? ''[open]'' : ''[closed]'';`'
+- rule: When modifying CLI commands, update the category in command.ts and helpGenerator.ts,
+    register the command in commands.ts, and update the SKILL.md docs and references.
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: 25-30
+  source_text: "- Add new CLI category for tool if needed:\n  - Add Category in `packages/playwright/src/mcp/terminal/command.ts`\n\
+    \  - Update doc generator `packages/playwright/src/mcp/terminal/helpGenerator.ts`\n\
+    - Register command in `packages/playwright/src/mcp/terminal/commands.ts`\n- Update\
+    \ skill file at `packages/playwright/src/skill/SKILL.md` and references if necessary\n\
+    \  in `packages/playwright/src/skill/references/`"
+  evidence: The diff renames the 'session' category to 'browsers' in command.ts, updates
+    categories in helpGenerator.ts, updates command registrations in commands.ts,
+    and modifies both packages/playwright/src/skill/SKILL.md and packages/playwright/src/skill/references/session-management.md
+    to match the new CLI semantics.
+  category: Architecture / File Locations
+  verification: llm_judge
+- rule: Update the SKILL.md documentation file whenever adding or modifying commands
+    or tools.
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: 45-45
+  source_text: The skill file is located at `packages/playwright/src/skill/SKILL.md`.
+    It contains documentation for all available CLI commands and MCP tools. Update
+    it whenever you add new commands or tools.
+  evidence: The gold diff correctly updates packages/playwright/src/skill/SKILL.md
+    to reflect the renamed commands (list, close-all, kill-all) and the new '-b' flag
+    instead of '--session'.
+  category: Documentation / Conventions
+  verification: llm_judge
+config_edits:
+- path: packages/playwright/src/skill/SKILL.md
+  tier: 1
+  gold_added: '### Browser Sessions
+
+    playwright-cli -b mysession open example.com
+
+    playwright-cli -b mysession click e6
+
+    playwright-cli -b mysession close  # stop a named browser
+
+    playwright-cli -b mysession delete-data  # delete user data for named browser
+
+    playwright-cli list
+
+    playwright-cli close-all
+
+    playwright-cli kill-all
+
+    * **Browser session management** [references/session-management.md](references/session-management.md)'
+  gold_removed: '### Sessions
+
+    playwright-cli --session=mysession open example.com
+
+    playwright-cli --session=mysession click e6
+
+    playwright-cli --session=mysession close  # stop a named session
+
+    playwright-cli --session=mysession delete-data  # delete user data for named session
+
+    playwright-cli session-list
+
+    playwright-cli session-close-all
+
+    playwright-cli session-kill-all
+
+    * **Session management** [references/session-management.md](references/session-management.md)'
+distractors:
+- rule: CLI commands require implementing a corresponding MCP tool.
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: 24-24
+  source_text: '- CLI commands are based on MCP tools. Implement the corresponding
+    MCP tool as per `Adding MCP Tools` section above, if needed.'
+  collision_type: architecture_boundary
+  why_distracting: The diff modifies CLI lifecycle commands for managing browser sessions.
+    An agent might see this rule and assume it needs to build corresponding MCP tools
+    for these commands. However, these specific daemon management commands are CLI-only
+    operations, and creating MCP tools for them would violate architectural boundaries.
+  severity: medium
+- rule: Create new tools in browser/tools/, register them in tools.ts, and add ToolCapability
+    in config.d.ts.
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: 9-11
+  source_text: '- Create a new tool in `packages/playwright/src/mcp/browser/tools/your-tool.ts`
+
+    - Register the tool in `packages/playwright/src/mcp/browser/tools.ts`
+
+    - Add ToolCapability in `packages/playwright/src/mcp/config.d.ts`'
+  collision_type: scope_ambiguity
+  why_distracting: Because the block 'Adding MCP Tools' is referenced in 'Adding commands',
+    an agent modifying CLI commands might wrongly think it should also interact with
+    the MCP tool registry files. This change is entirely contained within the CLI
+    terminal layer and does not involve MCP tool capabilities.
+  severity: high

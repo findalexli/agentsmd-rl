@@ -1,0 +1,92 @@
+version: '2.0'
+source:
+  repo: microsoft/playwright
+  pr: 40002
+  base_commit: 1bebb2d175a9df0c676eb0708451abf90973fcc
+  merge_commit: fbdb1eb859b52a9ce30f0936983f71047932dff7
+checks:
+- id: typescript_syntax
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files must parse without errors
+- id: repo_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's npm run build passes
+- id: repo_lint_packages
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's package consistency check passes
+- id: repo_check_deps
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's DEPS check passes
+- id: repo_lint_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's test lint (forbid-only) passes
+- id: repo_generate_channels
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's channel generation script passes
+- id: repo_eslint_modified
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint passes on modified testCaseView.tsx
+- id: repeat_index_in_types
+  type: fail_to_pass
+  origin: pr_diff
+  description: TestCaseSummary type must include repeatEachIndex field
+- id: repeat_index_in_html_reporter
+  type: fail_to_pass
+  origin: pr_diff
+  description: HTML reporter must pass repeatEachIndex to test case data
+- id: append_function_in_view
+  type: fail_to_pass
+  origin: pr_diff
+  description: TestCaseView must have appendRepeatEachIndexAnnotation function
+- id: annotation_calls_in_view
+  type: fail_to_pass
+  origin: pr_diff
+  description: TestCaseView must call appendRepeatEachIndexAnnotation for both test
+    and result annotations
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: appendRepeatEachIndexAnnotation must have real logic, not pass/return
+- id: zero_index_not_shown
+  type: fail_to_pass
+  origin: pr_diff
+  description: Zero repeatEachIndex should not create annotation (falsy check)
+distractors:
+- rule: docs/src/ API documentation — source of truth for public TypeScript types
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to document the new `repeatEachIndex` property
+    in `docs/src/` thinking it is a public API type, but `TestCaseSummary` is an internal
+    type for the HTML reporter.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 31-32
+- rule: Generated files (types, channels, validators) are produced by watch automatically.
+  collision_type: meta_confusion
+  why_distracting: The agent might avoid manually editing `packages/html-reporter/src/types.d.ts`
+    because the instructions state that 'types' are generated automatically by the
+    watch script. However, this specific file is a source file that requires manual
+    modification.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 43-43
+hierarchy_analysis: The configuration is a flat, single-file `CLAUDE.md` at the root.
+  It provides repository-wide architectural definitions and tooling commands.
+rubric:
+- rule: 'Tooling Packages: `html-reporter` is the HTML test report viewer.'
+  source:
+    path: CLAUDE.md
+    lines: 18-24
+  evidence: The gold solution correctly targets `packages/html-reporter/src/testCaseView.tsx`
+    and `packages/html-reporter/src/types.d.ts` to implement the UI changes, aligning
+    with the architectural definition of `html-reporter` as the HTML test report viewer.
+  category: architecture
+  verification: llm_judge

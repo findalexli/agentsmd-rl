@@ -4,10 +4,10 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-16T02:43:26.358781",
-  "total_time": 3880.32,
-  "sandbox_id": "iuvw2hy0eh7f0tclfzqxo",
-  "backend": "fireworks",
+  "validated_at": "2026-04-16T12:50:34.817827",
+  "total_time": 83.56,
+  "sandbox_id": "itlc1rgfisonqv9dmpidv",
+  "backend": "anthropic",
   "pipeline": "pipeline",
   "start_at": "judge",
   "nodes": {
@@ -80,34 +80,30 @@
     },
     "quality_gate": {
       "status": "DELETE",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 0.3,
+      "model": "claude-opus-4-7",
+      "backend": "anthropic",
+      "time": 0.35,
       "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:359: test `test_not_stub` has 2 assert(s), all pass on a stub impl (is', 'lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:23: unpinned pip deps: pydantic, dataclasses, numpy']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 17.93,
+      "time": 12.26,
       "tier_a_fails": [
-        "behavior_in_task_description",
+        "no_solution_leakage",
         "solution_uniqueness_guard",
-        "tests_verify_behavior_not_text",
-        "test_not_tautological"
+        "tests_verify_behavior_not_text"
       ],
       "tier_b_fails": [],
-      "pass_count": 4,
-      "fail_count": 5
+      "pass_count": 5,
+      "fail_count": 4
+    },
+    "tests_rewrite": {
+      "status": "error",
+      "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":523,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 400 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"invalid_request_error\\\",\\\"message\\\":\\\"\\\\\\\"thinking.type.enabled\\\\\\\" is not supported for this model. Use \\\\\\\"thinking.type.adapt",
+      "time": 1.79
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 2148.4,
-      "at": "2026-04-12T02:39:02.195130"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -139,6 +135,14 @@
       "backend": "fireworks",
       "time": 3880.32,
       "at": "2026-04-16T02:43:26.358781"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "anthropic",
+      "time": 83.56,
+      "at": "2026-04-16T12:50:34.817827"
     }
   ]
 }

@@ -1,0 +1,107 @@
+source_pr:
+  owner: electric-sql
+  repo: electric
+  number: 3961
+  merge_commit: 0031e81777c0a93ab90161be5e6d0e9c999e00d2
+  base_commit: deb2a61614678fac029773a56b618382fe5b70f2
+  title: "fix(typescript-client): prevent handle -next suffix accumulation on repeated 409s"
+
+description: |
+  Fix unbounded URL growth on 409 retries when a proxy strips the handle header.
+  Previously, the client appended '-next' to the handle when a 409 response lacked
+  the electric-handle header, causing handle-next-next-next... accumulation and
+  414 URI Too Long errors.
+
+  The fix introduces a random cache-buster query param instead of mutating the
+  handle, ensuring unique retry URLs without unbounded growth.
+
+checks:
+  # Fail-to-pass tests (behavioral changes)
+  - id: test_no_next_suffix_in_client_code
+    type: fail_to_pass
+    origin: behavioral
+    description: Code must not use '-next' suffix hack on handles
+
+  - id: test_createCacheBuster_function_exists
+    type: fail_to_pass
+    origin: behavioral
+    description: Code must have createCacheBuster() helper function
+
+  - id: test_refetchCacheBuster_private_field_exists
+    type: fail_to_pass
+    origin: behavioral
+    description: ShapeStream must have #refetchCacheBuster private field
+
+  - id: test_cache_buster_query_param_usage
+    type: fail_to_pass
+    origin: behavioral
+    description: Code must set CACHE_BUSTER_QUERY_PARAM and clear it after use
+
+  - id: test_warning_on_missing_handle_header
+    type: fail_to_pass
+    origin: behavioral
+    description: Code must warn when 409 lacks handle header (proxy/CDN issue)
+
+  - id: test_markMustRefetch_handles_undefined
+    type: fail_to_pass
+    origin: behavioral
+    description: Code must reset with undefined handle when 409 lacks header
+
+  # Pass-to-pass tests (repo's own tests)
+  - id: test_vitest_unit_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: All vitest unit tests pass (packages/typescript-client)
+
+  - id: test_shape_stream_state_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: Shape stream state machine tests pass
+
+  - id: test_expired_shapes_cache_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: Expired shapes cache regression tests pass
+
+  - id: test_typescript_typecheck_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: TypeScript type checking passes (pnpm run typecheck)
+
+  - id: test_eslint_stylecheck_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: ESLint style checking passes (pnpm run stylecheck)
+
+rubric:
+  - rule: "Before making changes to packages/typescript-client, read packages/typescript-client/SPEC.md first"
+    weight: 2
+    source: "AGENTS.md @ deb2a61614678fac029773a56b618382fe5b70f2"
+
+  - rule: "State machine contract must be preserved: markMustRefetch(handle?) produces InitialState per SPEC.md I10"
+    weight: 3
+    source: "packages/typescript-client/SPEC.md I10 @ deb2a61614678fac029773a56b618382fe5b70f2"
+
+  - rule: "Handles are identities, not cache busters - never fabricate handles with suffixes"
+    weight: 3
+    source: "PR description behavioral invariant"
+
+  - rule: "Every retry URL must be unique (use random cache-buster param)"
+    weight: 3
+    source: "PR description behavioral invariant"
+
+  - rule: "Transitions must never mutate existing state objects (immutability per SPEC.md I2)"
+    weight: 1
+    source: "packages/typescript-client/SPEC.md I2 @ deb2a61614678fac029773a56b618382fe5b70f2"
+
+  - rule: "Use pnpm for package management in this monorepo"
+    weight: 1
+    source: "AGENTS.md @ deb2a61614678fac029773a56b618382fe5b70f2"
+
+  - rule: "Run unit tests with: pnpm exec vitest run --config vitest.unit.config.ts"
+    weight: 1
+    source: "AGENTS.md @ deb2a61614678fac029773a56b618382fe5b70f2"
+
+  - rule: "Console warnings should be informative and indicate likely proxy/CDN issues"
+    weight: 1
+    source: "Agent code review"

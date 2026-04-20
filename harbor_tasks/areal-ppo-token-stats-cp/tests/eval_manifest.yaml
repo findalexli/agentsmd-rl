@@ -1,0 +1,132 @@
+version: '2.0'
+source:
+  repo: inclusionAI/AReaL
+  pr: 990
+  base_commit: d1cdac3442585565f902f1e69b9d7399c50b9b34
+  merge_commit: 412d22411ce6cc48c2f776a0910c6fb2834bd1e0
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: actor.py and critic.py parse without syntax errors
+- id: attention_mask_preferred
+  type: fail_to_pass
+  origin: pr_diff
+  description: infer_token_denominator prefers attention_mask over other metadata
+- id: cu_seqlens_fallback
+  type: fail_to_pass
+  origin: pr_diff
+  description: cu_seqlens used for packed sequences when attention_mask absent
+- id: input_ids_shape_match
+  type: fail_to_pass
+  origin: pr_diff
+  description: input_ids used when shape matches fallback; ignored otherwise
+- id: final_fallback
+  type: fail_to_pass
+  origin: pr_diff
+  description: Falls back to ones_like(fallback) when no usable metadata
+- id: actor_critic_use_helper
+  type: fail_to_pass
+  origin: pr_diff
+  description: Actor and critic import infer_token_denominator, old buggy pattern
+    removed
+- id: not_stub
+  type: fail_to_pass
+  origin: static
+  description: stats.py infer_token_denominator has real conditional fallback logic
+- id: no_wildcard_imports
+  type: fail_to_pass
+  origin: agent_config
+  description: No wildcard imports in modified PPO files
+  source:
+    path: AGENTS.md
+    lines: '25'
+    commit: d1cdac3442585565f902f1e69b9d7399c50b9b34
+- id: no_print_in_ppo_files
+  type: fail_to_pass
+  origin: agent_config
+  description: No bare print() calls in modified PPO files; use areal.utils.logging
+  source:
+    path: AGENTS.md
+    lines: '84'
+    commit: d1cdac3442585565f902f1e69b9d7399c50b9b34
+- id: type_hints_on_helper
+  type: fail_to_pass
+  origin: agent_config
+  description: infer_token_denominator has type annotations on parameters and return
+  source:
+    path: AGENTS.md
+    lines: '94'
+    commit: d1cdac3442585565f902f1e69b9d7399c50b9b34
+- id: no_hardcoded_paths
+  type: fail_to_pass
+  origin: agent_config
+  description: No hardcoded absolute paths or http(s) endpoints in modified PPO files
+  source:
+    path: AGENTS.md
+    lines: '26'
+    commit: d1cdac3442585565f902f1e69b9d7399c50b9b34
+- id: test_repo_ruff_lint_ppo
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff linting passes on PPO files
+- id: test_repo_ruff_format_ppo
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff format check passes on PPO files
+- id: test_repo_syntax_areal
+  type: pass_to_pass
+  origin: repo_tests
+  description: All areal Python files parse without syntax errors
+- id: test_repo_syntax_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: All test files parse without syntax errors
+- id: test_repo_actor_critic_compile
+  type: pass_to_pass
+  origin: repo_tests
+  description: actor.py and critic.py compile without errors
+distractors:
+- rule: No GPU-CPU sync in hot paths (`.item()`, `.tolist()`, `print(tensor)`).
+  collision_type: would_cause_bug
+  why_distracting: The rule forbids `.item()` to prevent GPU-CPU syncs in hot paths.
+    However, to create a new tensor of a specific size using `torch.ones()`, the size
+    argument must be an integer. The gold solution correctly uses `int(cu_seqlens[-1].item())`.
+    An agent strictly following this rule might try to pass the tensor directly as
+    a size (causing a crash) or devise an overly complex workaround.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: '75'
+- rule: Add tests for new functionality.
+  collision_type: scope_ambiguity
+  why_distracting: The rule mandates adding tests for new functionality. An agent
+    might waste time trying to write unit tests for `infer_token_denominator` in a
+    new or existing test file, which is out of scope for this specific bug fix PR
+    and not present in the gold solution.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: '28'
+hierarchy_analysis: Both `AGENTS.md` and `CLAUDE.md` apply to the repository. `AGENTS.md`
+  provides more specific coding guidelines (like the `.item()` prohibition and explicit
+  typing), while `CLAUDE.md` provides higher-level project context. The agent must
+  prioritize the specific technical requirements of the bug fix over the blanket prohibition
+  against `.item()` in `AGENTS.md`.
+rubric:
+- rule: Explicit `dtype`/`device` for tensors
+  source:
+    path: AGENTS.md
+    lines: 60-62
+  evidence: 'The gold solution explicitly defines `common_kwargs = {"dtype": torch.bool,
+    "device": fallback.device}` when creating new tensors in `infer_token_denominator`.'
+  category: style
+  verification: llm_judge
+- rule: No wildcard imports (`from x import *`)
+  source:
+    path: AGENTS.md
+    lines: 16-16
+  evidence: The gold solution uses explicit imports (`from typing import Any`, `import
+    torch`) in the newly created `stats.py` file.
+  category: style
+  verification: llm_judge

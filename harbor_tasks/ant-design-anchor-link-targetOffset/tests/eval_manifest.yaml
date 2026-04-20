@@ -1,0 +1,144 @@
+source:
+  repo: ant-design/ant-design.git
+  pr: 0
+  base_commit: b836ec3cc69a6ed64eb8d9e469790b424e5100cf
+  merge_commit: 611be598bdba1665aebd09bfedebb7001926a5c1
+checks:
+- id: test_anchor_link_interface_has_targetOffset
+  type: fail_to_pass
+  origin: pr_diff
+  description: AnchorLinkBaseProps interface has targetOffset property
+- id: test_registerLink_signature_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: AntAnchor.registerLink accepts optional targetOffset parameter
+- id: test_scrollTo_signature_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: AntAnchor.scrollTo accepts optional targetOffset parameter
+- id: test_linkTargetOffsetRef_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: Anchor component uses linkTargetOffsetRef to store per-link offsets
+- id: test_registerLink_stores_targetOffset
+  type: fail_to_pass
+  origin: pr_diff
+  description: registerLink stores targetOffset in linkTargetOffsetRef when provided
+- id: test_unregisterLink_cleans_targetOffset
+  type: fail_to_pass
+  origin: pr_diff
+  description: unregisterLink cleans up targetOffset when unregistering
+- id: test_getInternalCurrentAnchor_uses_link_offset
+  type: fail_to_pass
+  origin: pr_diff
+  description: getInternalCurrentAnchor accepts and uses _linkTargetOffset parameter
+- id: test_handleScrollTo_uses_link_targetOffset
+  type: fail_to_pass
+  origin: pr_diff
+  description: handleScrollTo uses link-level targetOffset with proper precedence
+- id: test_anchorLink_passes_targetOffset_to_registerLink
+  type: fail_to_pass
+  origin: pr_diff
+  description: AnchorLink passes targetOffset to registerLink in useEffect
+- id: test_anchorLink_passes_targetOffset_to_scrollTo
+  type: fail_to_pass
+  origin: pr_diff
+  description: AnchorLink passes targetOffset to scrollTo on click
+- id: test_anchorLink_useEffect_depends_on_targetOffset
+  type: fail_to_pass
+  origin: pr_diff
+  description: AnchorLink useEffect has targetOffset in dependency array
+- id: test_getInternalCurrentAnchor_called_with_linkTargetOffset
+  type: fail_to_pass
+  origin: pr_diff
+  description: getInternalCurrentAnchor called with linkTargetOffsetRef.current
+- id: test_repo_typescript_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript compiles without errors (repo CI)
+- id: test_repo_anchor_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Anchor component tests pass (repo CI)
+- id: test_repo_lint_biome
+  type: pass_to_pass
+  origin: repo_tests
+  description: Biome lint check passes (repo CI)
+- id: test_repo_lint_eslint_anchor
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint check on anchor files passes (repo CI)
+rubric:
+- rule: Never use `any` type - define precise types instead.
+  source:
+    path: .github/copilot-instructions.md
+    lines: '18'
+    commit: b836ec3cc69a6ed64eb8d9e469790b424e5100cf
+- rule: Use functional components with hooks exclusively (no class components).
+  source:
+    path: .github/copilot-instructions.md
+    lines: '27'
+    commit: b836ec3cc69a6ed64eb8d9e469790b424e5100cf
+- rule: Maintain backward compatibility - avoid breaking changes.
+  source:
+    path: .github/copilot-instructions.md
+    lines: '31'
+    commit: b836ec3cc69a6ed64eb8d9e469790b424e5100cf
+- rule: Develop using TypeScript and React
+  source:
+    path: CLAUDE.md
+    lines: 8-9
+  evidence: The gold solution uses TypeScript types like `Record<string, number>`
+    and React hooks like `React.useRef` to implement the feature in `components/anchor/Anchor.tsx`.
+  category: architecture
+- rule: 使用 TypeScript 和 React 开发 (Develop using TypeScript and React)
+  source:
+    path: AGENTS.md
+    lines: 8-9
+  evidence: The gold solution implements the new feature using TypeScript types (e.g.,
+    `Record<string, number>`) and React hooks (`React.useRef`), adhering to the project's
+    core tech stack.
+  category: architecture
+- rule: 使用 TypeScript 和 React 开发
+  source:
+    path: AGENTS.md
+    lines: 7-8
+  evidence: 'The gold solution implements the new targetOffset prop using TypeScript,
+    adding types like `Record<string, number>` and `targetOffset?: number` to the
+    AntAnchor interface.'
+  category: architecture
+distractors:
+- rule: Changelog 规范：必须同时提供中英文两个版本，描述对开发者的影响
+  collision_type: scope_ambiguity
+  why_distracting: The config provides detailed instructions on how to write changelogs,
+    which might prompt the agent to create or modify CHANGELOG.en-US.md and CHANGELOG.zh-CN.md
+    for the new targetOffset feature. However, the task explicitly restricts the files
+    to modify to just the component files.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 118-124
+- rule: 文档规范：API 表格格式需按字母顺序排列，包含参数、说明、类型、默认值、版本等
+  collision_type: scope_ambiguity
+  why_distracting: The config provides rules for updating API tables in documentation.
+    Since a new prop targetOffset is added to Anchor.Link, the agent might try to
+    update components/anchor/index.en-US.md and index.zh-CN.md. But the task scope
+    is limited to the component implementation.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 52-75
+- rule: Help maintainers reply to Ant Design GitHub issues following official guidelines.
+  source:
+    path: .claude/skills/issue-reply/SKILL.md
+    lines: 1-5
+  collision_type: scope_ambiguity
+  why_distracting: The agent might activate this skill thinking it needs to reply
+    to an issue about the missing `targetOffset` prop, but the task requires direct
+    code implementation.
+  severity: low
+hierarchy_analysis: The config files AGENTS.md and CLAUDE.md are identical and flat.
+  They provide repository-wide guidelines for PRs, changelogs, docs, and tests. The
+  task instructions strictly limit the scope to two component files, overriding the
+  general repository instinct to update docs and changelogs for new features.
+version: '2.0'

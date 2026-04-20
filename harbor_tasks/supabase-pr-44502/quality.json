@@ -1,0 +1,56 @@
+{
+  "model": "claude-opus-4-7",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "Instruction names the file SubscriptionPlanUpdateDialog.tsx, formatCurrency in helpers.ts, and describes the two reduce expressions the tests inspect."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction describes symptom (rounding strips precision) but doesn't explicitly say 'remove Math.round'; agent must trace the flow to find the wrapper."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests specifically check for absence of 'Math.round' string within 6 lines before the reduce; an alternative valid fix like replacing Math.round with a no-op wrapper or using toFixed would still fail even if it produces correct output, and conversely any non-Math.round wrapper stripping precision would pass."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "test_formatCurrency_preserves_decimals executes via tsx, test_intl_numberformat_two_decimals runs node, plus vitest and lint; although two tests grep source, behavioral tests exist."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "Tests check actual formatCurrency output values and verify source structure; a stub couldn't satisfy the formatCurrency value tests."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "Both reduce sites mentioned in instruction are tested, plus formatCurrency behavior and regression via vitest/lint."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are separate named functions with docstrings explaining bug vs fix state."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "No structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "Paths and commands appear correct."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction points to the component file which is the task domain; doesn't give exact line numbers or the Math.round keyword."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "Code-only task."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 1
+}

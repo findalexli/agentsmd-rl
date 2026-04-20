@@ -1,0 +1,21 @@
+[core]
+repository = "mantinedev/mantine"
+base_commit = "4e071c14d8febd7e583ef59a9f8eb9245c22a3ae"
+merge_commit = "67dc866fa74d6301fa02f02cfd0212ffddf0c728"
+pr_number = 8792
+
+[task]
+name = "mantine-mcp-ndjson-stdio"
+title = "[@mantine/mcp-server] Fix stdio transport to comply with MCP spec"
+description = "Fix the MCP server stdio transport to use NDJSON framing per MCP spec instead of LSP-style Content-Length headers."
+owner = "mantinedev"
+repo = "mantine"
+repo_short = "mantine"
+target_file = "packages/@mantine/mcp-server/src/server.ts"
+distinctive_line = "readline.createInterface"
+
+[patch]
+content = "diff --git a/packages/@mantine/mcp-server/src/server.ts b/packages/@mantine/mcp-server/src/server.ts\nindex 9d1068e0de..578310daa1 100644\n--- a/packages/@mantine/mcp-server/src/server.ts\n+++ b/packages/@mantine/mcp-server/src/server.ts\n@@ -1,3 +1,4 @@\n+import readline from 'readline';\n import { MantineMcpDataClient } from './data-client';\n import { GetItemArgs, ListItemsArgs, SearchDocsArgs } from './types';\n \n@@ -118,9 +119,7 @@ function parseSearchDocsArgs(args: Record<string, unknown>): SearchDocsArgs | nu\n }\n \n function writeMessage(payload: unknown) {\n-  const body = JSON.stringify(payload);\n-  const header = `Content-Length: ${Buffer.byteLength(body, 'utf8')}\\r\\n\\r\\n`;\n-  process.stdout.write(header + body);\n+  process.stdout.write(`${JSON.stringify(payload)}\\n`);\n }\n \n function writeResponse(id: string | number | null, result: unknown) {\n@@ -135,70 +134,29 @@ function writeError(id: string | number | null, code: number, message: string) {\n   });\n }\n \n-function readContentLength(rawHeaders: string) {\n-  const lines = rawHeaders.split('\\r\\n');\n-  const contentLengthHeader = lines.find((line) =>\n-    line.toLowerCase().startsWith('content-length:')\n-  );\n-\n-  if (!contentLengthHeader) {\n-    return null;\n-  }\n-\n-  const value = Number(contentLengthHeader.split(':')[1]?.trim());\n-  return Number.isFinite(value) ? value : null;\n-}\n-\n export function startServer() {\n   const timeoutMs = Number(process.env.MANTINE_MCP_TIMEOUT_MS || 10000);\n   const dataUrl = process.env.MANTINE_MCP_DATA_URL || 'https://mantine.dev/mcp';\n   const client = new MantineMcpDataClient(dataUrl, timeoutMs);\n \n-  let buffer = Buffer.alloc(0);\n-\n-  process.stdin.on('data', (chunk: Buffer) => {\n-    buffer = Buffer.concat([buffer, chunk]);\n-\n-    while (true) {\n-      const separatorIndex = buffer.indexOf('\\r\\n\\r\\n');\n-\n-      if (separatorIndex === -1) {\n-        return;\n-      }\n-\n-      const headersBuffer = buffer.subarray(0, separatorIndex);\n-      const headers = headersBuffer.toString('utf8');\n-      const contentLength = readContentLength(headers);\n-\n-      if (contentLength == null) {\n-        writeError(null, -32600, 'Invalid request: missing Content-Length header');\n-        buffer = Buffer.alloc(0);\n-        return;\n-      }\n-\n-      const bodyStart = separatorIndex + 4;\n-      const bodyEnd = bodyStart + contentLength;\n-\n-      if (buffer.length < bodyEnd) {\n-        return;\n-      }\n-\n-      const bodyBuffer = buffer.subarray(bodyStart, bodyEnd);\n-      buffer = buffer.subarray(bodyEnd);\n+  const rl = readline.createInterface({ input: process.stdin, terminal: false });\n \n-      let request: JsonRpcRequest;\n-      try {\n-        request = JSON.parse(bodyBuffer.toString('utf8'));\n-      } catch {\n-        writeError(null, -32700, 'Parse error');\n-        continue;\n-      }\n+  rl.on('line', (line: string) => {\n+    const trimmed = line.trim();\n+    if (trimmed.length === 0) {\n+      return;\n+    }\n \n-      void handleRequest(client, request);\n+    let request: JsonRpcRequest;\n+    try {\n+      request = JSON.parse(trimmed);\n+    } catch {\n+      writeError(null, -32700, 'Parse error');\n+      return;\n+    }\n+\n+    void handleRequest(client, request);\n+  });\n }\n"
+
+[verifier]
+env = { GEMINI_API_KEY = "${GEMINI_API_KEY:-}", ANTHROPIC_API_KEY = "${ANTHROPIC_API_KEY:-}" }

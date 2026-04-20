@@ -1,156 +1,161 @@
 source:
-  pr:
-    owner: ClickHouse
-    repo: ClickHouse
-    number: 102093
-    merge_commit: ab0bc159aa3820ebe906a2acacf1838d39f13481
-    base_commit: 7dad4d8f7af43976fa63a062d20225aad04842c8
-  task:
-    name: clickhouse-splitbystring-validation
-    title: Extend argument validation in splitByString tokenizer
-
-# List of all checks (one per test function in test_outputs.py)
-checks:
-  - id: test_empty_string_separator_validation_present
-    name: Empty string separator validation is present
-    type: fail_to_pass
-    description: Verifies the validation code that checks for empty string separators exists
-
-  - id: test_exception_thrown_for_empty_separator
-    name: Exception thrown for empty separator
-    type: fail_to_pass
-    description: Verifies the exception-throwing logic for empty separator is properly implemented
-
-  - id: test_error_message_improved_for_empty_separators
-    name: Error message improved for empty separators
-    type: pass_to_pass
-    description: Verifies the improved error message "the separators argument cannot be empty"
-
-  - id: test_validation_inside_loop_structure
-    name: Validation inside loop structure
-    type: pass_to_pass
-    description: Verifies the validation is properly structured inside the loop with value_as_string variable
-
-  - id: test_code_compiles
-    name: Code compiles without errors
-    type: pass_to_pass
-    description: Verifies the C++ code compiles without syntax errors
-
-  - id: test_repo_clang_syntax_check
-    name: Repo clang syntax check
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo's C++ syntax check passes using clang-18 - standard ClickHouse CI validation
-
-  - id: test_repo_code_style_basic
-    name: Repo code style basic check
-    type: pass_to_pass
-    origin: repo_tests
-    description: Basic Allman brace style compliance - ClickHouse coding standards
-
-  - id: test_repo_git_tracked
-    name: Repo git tracked check
-    type: pass_to_pass
-    origin: repo_tests
-    description: Verifies the target file is tracked by git (repo structure check)
-
-  - id: test_repo_file_headers
-    name: Repo file headers check
-    type: pass_to_pass
-    origin: repo_tests
-    description: Verifies the target file has proper include structure
-
-  - id: test_repo_no_trailing_whitespace
-    name: Repo no trailing whitespace check
-    type: pass_to_pass
-    origin: repo_tests
-    description: Verifies the target file has no trailing whitespace (ClickHouse style)
-
-  - id: test_repo_no_tabs
-    name: Repo no tabs check
-    type: pass_to_pass
-    origin: repo_tests
-    description: Verifies the target file uses spaces instead of tabs (ClickHouse style)
-
-  # New p2p tests with actual CI commands
-  - id: test_repo_cpp_style_braces_ci
-    name: C++ style braces CI check
-    type: pass_to_pass
-    origin: repo_tests
-    description: Verify Allman-style braces using grep - matches ClickHouse CI style check
-
-  - id: test_repo_cpp_style_tabs_ci
-    name: C++ style tabs CI check
-    type: pass_to_pass
-    origin: repo_tests
-    description: Verify no tabs in modified file using grep - matches ClickHouse CI style check
-
-  - id: test_repo_cpp_style_trailing_whitespace_ci
-    name: C++ style trailing whitespace CI check
-    type: pass_to_pass
-    origin: repo_tests
-    description: Verify no trailing whitespace using grep - matches ClickHouse CI style check
-
-  - id: test_repo_git_log_ci
-    name: Git log CI check
-    type: pass_to_pass
-    origin: repo_tests
-    description: Verify git log works and shows expected base commit - repo structure validation
-
-  - id: test_repo_file_compiles_ci
-    name: C++ file compiles CI check
-    type: pass_to_pass
-    origin: repo_tests
-    description: Verify C++ file has no syntax errors using clang-18 - standard ClickHouse CI validation
-
-  - id: test_repo_yaml_config_valid_ci
-    name: YAML config valid CI check
-    type: pass_to_pass
-    origin: repo_tests
-    description: Verify .github/dependabot.yaml is valid YAML - ClickHouse CI config validation
-
-  - id: test_repo_clang_format_config_valid_ci
-    name: Clang-format config valid CI check
-    type: pass_to_pass
-    origin: repo_tests
-    description: Verify .clang-format config is valid YAML - ClickHouse CI style config validation
-
-  - id: test_repo_clang_tidy_config_valid_ci
-    name: Clang-tidy config valid CI check
-    type: pass_to_pass
-    origin: repo_tests
-    description: Verify .clang-tidy config is valid YAML - ClickHouse static analysis config validation
-
-  - id: test_allman_brace_style
-    name: Allman brace style compliance
-    type: agent_config
-    source:
-      config_file: .claude/CLAUDE.md
-      lines: "When writing C++ code, always use Allman-style braces (opening brace on a new line)"
-    description: Verifies the code uses Allman-style braces (opening brace on new line)
-
-  - id: test_exception_not_crash_terminology
-    name: Exception terminology compliance
-    type: agent_config
-    source:
-      config_file: .claude/CLAUDE.md
-      lines: "When mentioning logical errors, say 'exception' instead of 'crash'"
-    description: Verifies proper terminology using 'exception' not 'crash' for logical errors
-
-  - id: test_function_naming_without_parens
-    name: Function naming convention compliance
-    type: agent_config
-    source:
-      config_file: .claude/CLAUDE.md
-      lines: "write names of functions and methods as `f` instead of `f()`"
-    description: Verifies function names in comments use `f` not `f()`
-
-# Rubric for soft/subjective rules that need LLM judge
+  repo: ClickHouse/ClickHouse.git
+  pr: 0
+  base_commit: 7dad4d8f7af43976fa63a062d20225aad04842c8
+  merge_commit: ''
 rubric:
-  - id: function_naming_in_comments
-    description: Function names in documentation/comments should not use parentheses
-    guidance: Function names should be written as `functionName` not `functionName()` per .claude/CLAUDE.md
-
-  - id: backtick_usage
-    description: Code elements should be wrapped in backticks
-    guidance: Wrap literal names from ClickHouse SQL language, classes and functions in inline code blocks
+- rule: When writing C++ code, always use Allman-style braces (opening brace on a
+    new line)
+  source:
+    path: .claude/CLAUDE.md
+    lines: 54-55
+    commit: 7dad4d8f7af43976fa63a062d20225aad04842c8
+  evidence: The gold solution uses Allman-style braces with opening braces on new
+    lines for the for loop and if statement in the validation code block
+  category: style
+- rule: When mentioning logical errors, say 'exception' instead of 'crash'
+  source:
+    path: AGENTS.md
+    lines: '9'
+    commit: 7dad4d8f7af43976fa63a062d20225aad04842c8
+- rule: Write names of functions and methods as `f` instead of `f()` - prefer it for
+    mathematical purity when it refers a function itself rather than its application
+  source:
+    path: AGENTS.md
+    lines: '7'
+    commit: 7dad4d8f7af43976fa63a062d20225aad04842c8
+  evidence: The gold solution correctly refers to SplitByStringTokenizer::getExternalName
+    without parentheses in the error message string, treating it as a function reference
+  category: style
+- rule: Wrap literal names from ClickHouse SQL language, classes and functions, or
+    literal excerpts from log messages inside inline code blocks
+  source:
+    path: AGENTS.md
+    lines: '5'
+    commit: 7dad4d8f7af43976fa63a062d20225aad04842c8
+  evidence: The gold solution uses single quotes around '{}' in the error message
+    which serves as literal formatting for code-like values, consistent with codebase
+    convention
+  category: style
+- rule: When mentioning logical errors, say "exception" instead of "crash", because
+    they don't crash the server in the release build.
+  source:
+    path: AGENTS.md
+    lines: 9-9
+  evidence: The gold solution throws an Exception with a clear error message ('the
+    empty string cannot be used as a separator') for the logical error of providing
+    an empty separator, avoiding any mention of 'cras
+  category: style
+distractors:
+- rule: wrap literal names from ClickHouse SQL language, classes and functions...
+    inside inline code blocks
+  collision_type: scope_ambiguity
+  why_distracting: The agent might apply markdown backticks to the tokenizer name
+    in the C++ exception message string (e.g., formatting it as `\`{}\``), but the
+    rule explicitly only applies to docs, comments, and commit messages, not C++ string
+    literals.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 5-5
+- rule: write names of functions and methods as `f` instead of `f()`
+  collision_type: would_cause_bug
+  why_distracting: The agent might try to remove the parentheses from `SplitByStringTokenizer::getExternalName()`
+    in the C++ code, mistakenly thinking the mathematical purity rule applies to code
+    execution, which would cause a compilation error.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 9-9
+hierarchy_analysis: The config file AGENTS.md contains rules for documentation, comments,
+  and commit messages. There is no deep hierarchy, and the rules are flat.
+checks:
+- id: test_empty_string_separator_validation_present
+  type: fail_to_pass
+  origin: static
+  description: Validation code for empty string separators is present
+- id: test_exception_thrown_for_empty_separator
+  type: fail_to_pass
+  origin: static
+  description: Exception throwing logic for empty separator is present
+- id: test_error_message_improved_for_empty_separators
+  type: fail_to_pass
+  origin: static
+  description: Error message improvement for empty separators argument
+- id: test_validation_inside_loop_structure
+  type: fail_to_pass
+  origin: static
+  description: Validation is properly structured inside the loop
+- id: test_repo_git_tracked
+  type: pass_to_pass
+  origin: repo_tests
+  description: Target file is tracked by git
+- id: test_repo_no_trailing_whitespace
+  type: pass_to_pass
+  origin: repo_tests
+  description: No trailing whitespace in target file
+- id: test_repo_no_tabs
+  type: pass_to_pass
+  origin: repo_tests
+  description: No tabs in target file (uses 4 spaces)
+- id: test_repo_clang_syntax_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: C++ syntax check using clang-18
+- id: test_repo_cpp_style_braces_ci
+  type: pass_to_pass
+  origin: repo_tests
+  description: Allman-style braces check using grep
+- id: test_repo_cpp_style_tabs_ci
+  type: pass_to_pass
+  origin: repo_tests
+  description: Tabs check using grep (repo CI style)
+- id: test_repo_cpp_style_trailing_whitespace_ci
+  type: pass_to_pass
+  origin: repo_tests
+  description: Trailing whitespace check using grep (repo CI style)
+- id: test_repo_git_log_ci
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git log shows expected base commit
+- id: test_repo_file_compiles_ci
+  type: pass_to_pass
+  origin: repo_tests
+  description: C++ file has no syntax errors
+- id: test_repo_clang_format_config_valid_ci
+  type: pass_to_pass
+  origin: repo_tests
+  description: .clang-format config is valid YAML
+- id: test_repo_clang_tidy_config_valid_ci
+  type: pass_to_pass
+  origin: repo_tests
+  description: .clang-tidy config is valid YAML
+- id: test_repo_yaml_config_valid_ci
+  type: pass_to_pass
+  origin: repo_tests
+  description: .github/dependabot.yaml is valid YAML
+- id: test_code_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: C++ code compiles without syntax errors (clang-18)
+- id: test_repo_code_style_basic
+  type: pass_to_pass
+  origin: agent_config
+  description: Basic code style check for Allman-style braces
+- id: test_repo_file_headers
+  type: pass_to_pass
+  origin: static
+  description: Target file has proper include structure
+- id: test_allman_brace_style
+  type: pass_to_pass
+  origin: agent_config
+  description: Allman-style braces are used for new code blocks
+- id: test_exception_not_crash_terminology
+  type: pass_to_pass
+  origin: agent_config
+  description: Use 'exception' not 'crash' for logical errors
+- id: test_function_naming_without_parens
+  type: pass_to_pass
+  origin: agent_config
+  description: Function names in comments don't use parentheses
+version: '2.0'

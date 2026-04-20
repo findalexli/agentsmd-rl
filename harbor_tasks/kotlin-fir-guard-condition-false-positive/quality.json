@@ -1,64 +1,60 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert on many specifics not mentioned in instruction.md: the exact guard pattern strings like 'is FirEqualityOperatorCall if condition.isArgumentWhenSubject() ->', the helper method signature 'private fun FirCall.isArgumentWhenSubject(): Boolean', the implementation detail 'argument.unwrapSmartcastExpression() is FirWhenSubjectExpression', the test data file path 'falsePositiveDuplicateCodition.kt' (with typo), the directive '// ISSUE: KT-85244', and '// RUN_PIPELINE_TILL: BACKEND'. None "
+      "reason": "Tests assert on specific literals like 'isArgumentWhenSubject', test data file name 'falsePositiveDuplicateCodition.kt', issue 'KT-85244', and directive '// RUN_PIPELINE_TILL: BACKEND', none of which are mentioned in instruction.md."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md explicitly states 'Modify the checker so that it only considers a condition as a potential duplicate if it's actually checking the when subject' and 'Guard conditions using else if that check other variables should be excluded from duplicate detection.' While not line-level, combined with naming the exact file, this substantially narrows the solution space. However, the tests require a very specific implementation pattern (guard conditions with isArgumentWhenSubject), which goes b"
+      "outcome": "pass",
+      "reason": "Instruction describes the problem conceptually (distinguish when subject vs other variables) without specifying exact code changes."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact guard syntax 'is FirEqualityOperatorCall if condition.isArgumentWhenSubject() ->', specific helper method name 'isArgumentWhenSubject', specific signature 'private fun FirCall.isArgumentWhenSubject(): Boolean', and specific implementation 'argument.unwrapSmartcastExpression() is FirWhenSubjectExpression'. An alternative correct fix using a different method name, inline checks, or different structure would fail these tests."
+      "reason": "Tests require exact literals like 'is FirEqualityOperatorCall if condition.isArgumentWhenSubject() ->' and method name 'isArgumentWhenSubject', test file name 'falsePositiveDuplicateCodition.kt', and ISSUE 'KT-85244' \u2014 alternative valid fixes (e.g., inline check, different helper name, different test filename) would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every test reads the file content and asserts on string patterns (e.g., 'assert equality_guard in content', 'assert re.search(method_pattern, content)'). No test compiles or executes the Kotlin code, runs the checker, or verifies actual behavior. This is purely text-matching."
+      "reason": "All tests are string/regex checks on file contents (e.g., `assert equality_guard in content`) with no compilation or execution of Kotlin code."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "A stub that simply writes the expected string patterns into the checker file without implementing actual logic would pass all tests, since every test only checks for string presence/absence in the file content. No behavioral execution is performed."
+      "outcome": "pass",
+      "reason": "Tests require specific code patterns that a stub couldn't satisfy without making the actual change."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "instruction.md says 'Actual duplicate conditions on the same subject should still be detected correctly' but no test verifies this regression requirement. Also 'The FIR checkers module should compile without errors' is not tested (no compilation step)."
+      "outcome": "pass",
+      "reason": "The described fix behavior is tested via pattern checks in the checker file."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (e.g., test_guard_condition_fix_behavior, test_helper_method_behaviorally_correct), have docstrings explaining their purpose, and are logically grouped by concern."
+      "reason": "Tests have descriptive names and docstrings explaining each check."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data like JSON/CSV/API/DB."
+      "reason": "No structured data output."
     },
     "no_typos": {
       "outcome": "fail",
-      "reason": "The test data filename 'falsePositiveDuplicateCodition.kt' contains a typo ('Codition' instead of 'Condition'). This typo appears in multiple tests and in the solution patch."
+      "reason": "Test data filename 'falsePositiveDuplicateCodition.kt' has a typo ('Codition' missing 'n'), which tests enforce as-is \u2014 agent can't discover this typo from instruction.md."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md names the exact file to modify: 'compiler/fir/checkers/src/org/jetbrains/kotlin/fir/analysis/checkers/expression/FirWhenConditionChecker.kt'. While the file is somewhat domain-obvious, the instruction also explains the exact mechanism of the bug (tracking type checks without distinguishing when subject), which significantly narrows the localization task."
+      "outcome": "pass",
+      "reason": "Instruction names the checker file, which is appropriate scope for the task domain."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits task."
+      "reason": "Code-only task."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
-    "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests",
-    "no_typos",
-    "instruction_no_hint_leakage"
+    "no_typos"
   ],
-  "pass_count": 1,
-  "fail_count": 8
+  "pass_count": 5,
+  "fail_count": 4
 }

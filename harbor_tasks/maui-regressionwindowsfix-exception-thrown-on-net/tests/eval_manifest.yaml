@@ -1,0 +1,204 @@
+version: '2.0'
+source:
+  repo: dotnet/maui
+  pr: 33179
+  base_commit: 260770c977f376c9b0190c03ed1a41920725f079
+  merge_commit: ef3ba62440f2365a9bba0ac3f61a4605f4cece9f
+checks:
+- id: permissions_file_compiles
+  type: pass_to_pass
+  origin: static
+  description: Modified Permissions.windows.cs compiles without errors
+- id: copilot_instructions_valid
+  type: pass_to_pass
+  origin: static
+  description: Copilot instructions file still exists and has valid markdown structure
+- id: skill_md_valid
+  type: pass_to_pass
+  origin: static
+  description: SKILL.md still exists and has valid structure
+- id: example_md_valid
+  type: pass_to_pass
+  origin: static
+  description: complete-example.md still exists and has valid structure
+- id: microphone_uses_packaged_check
+  type: fail_to_pass
+  origin: pr_diff
+  description: Microphone permission checks IsPackagedApp before EnsureDeclared
+- id: checkstatusasync_conditional_ensuredeclared
+  type: fail_to_pass
+  origin: pr_diff
+  description: CheckStatusAsync only calls EnsureDeclared for packaged apps
+- id: requestasync_conditional_ensuredeclared
+  type: fail_to_pass
+  origin: pr_diff
+  description: RequestAsync only calls EnsureDeclared for packaged apps
+- id: tryrequestpermissionasync_extracted
+  type: fail_to_pass
+  origin: pr_diff
+  description: TryRequestPermissionAsync helper method is extracted from RequestAsync
+- id: copilot_instructions_pr_note_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Stale PR testing note removed from copilot-instructions.md
+  source:
+    path: .github/copilot-instructions.md
+    lines: 200-213
+    commit: 260770c977f376c9b0190c03ed1a41920725f079
+- id: skill_md_pr_note_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Stale PR testing note removed from SKILL.md
+  source:
+    path: .github/skills/pr-finalize/SKILL.md
+    lines: 127-137
+    commit: 260770c977f376c9b0190c03ed1a41920725f079
+- id: example_md_pr_note_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Stale PR testing note removed from complete-example.md
+  source:
+    path: .github/skills/pr-finalize/references/complete-example.md
+    lines: 9-12
+    commit: 260770c977f376c9b0190c03ed1a41920725f079
+- id: permissions_file_not_stub
+  type: pass_to_pass
+  origin: static
+  description: Permissions file has real implementation, not just stubs
+- id: repo_permissions_file_parses
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified Permissions.windows.cs has valid C# syntax (balanced braces,
+    valid structure)
+- id: repo_file_headers_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files have valid headers and structure (namespace, usings,
+    class definitions)
+- id: no_stub_implementations
+  type: pass_to_pass
+  origin: repo_tests
+  description: Permissions file has no NotImplementedException stubs (real implementation
+    only)
+- id: permissions_file_formatting
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified Permissions.windows.cs follows repo formatting rules (dotnet
+    format check)
+- id: config_copilot_instructions_updated
+  type: fail_to_pass
+  origin: agent_config
+  description: Agent config files updated to remove stale PR note per Copilot instructions
+  source:
+    path: .github/copilot-instructions.md
+    lines: 200-213
+    commit: 260770c977f376c9b0190c03ed1a41920725f079
+rubric:
+- rule: 'C# code changes must follow the dotnet format command: `dotnet format Microsoft.Maui.sln
+    --no-restore --exclude Templates/src --exclude-diagnostics CA1822`'
+  source:
+    path: .github/copilot-instructions.md
+    lines: 93-99
+    commit: 260770c977f376c9b0190c03ed1a41920725f079
+- rule: Code changes must update XML documentation for public APIs when applicable
+  source:
+    path: .github/copilot-instructions.md
+    lines: 191-194
+    commit: 260770c977f376c9b0190c03ed1a41920725f079
+- rule: Guard against unexpected null or state
+  source:
+    path: .github/skills/try-fix/SKILL.md
+    lines: '366'
+  source_text: ✅ **Null/state checks** - Guard against unexpected null or state
+  evidence: The gold diff explicitly adds a state check `if (AppInfoUtils.IsPackagedApp)`
+    before calling `EnsureDeclared()`, guarding against the unexpected state of running
+    as an unpackaged app.
+  category: error handling
+  verification: llm_judge
+config_edits:
+- path: .github/copilot-instructions.md
+  tier: 1
+  gold_added: ''
+  gold_removed: '### Opening PRs
+
+
+    All PRs are required to have this at the top of the description:
+
+
+    ```
+
+    <!-- Please let the below note in for people that find this PR -->
+
+    > [!NOTE]
+
+    > Are you waiting for the changes in this PR to be merged?
+
+    > It would be very helpful if you could [test the resulting artifacts](https://github.com/dotnet/maui/wiki/Testing-PR-Builds)
+    from this PR and let us know in a comment if this change resolves your issue.
+    Thank you!
+
+    ```
+
+
+    Always put that at the top, without the block quotes. Without it, users will NOT
+    be able to try the PR and your work will have been in vain!'
+- path: .github/skills/pr-finalize/SKILL.md
+  tier: 1
+  gold_added: '1. Include the base sections from `.github/PULL_REQUEST_TEMPLATE.md`
+    ("Description of Change" and "Issues Fixed"). The skill adds additional structured
+    fields (Root cause, Fix, Key insight, etc.) as recommended enhancements for better
+    agent context.
+
+    2. Match the actual implementation'
+  gold_removed: '1. Start with the required NOTE block (so users can test PR artifacts)
+
+    2. Include the base sections from `.github/PULL_REQUEST_TEMPLATE.md` ("Description
+    of Change" and "Issues Fixed"). The skill adds additional structured fields (Root
+    cause, Fix, Key insight, etc.) as recommended enhancements for better agent context.
+
+    3. Match the actual implementation
+
+    <!-- Please let the below note in for people that find this PR -->
+
+    > [!NOTE]
+
+    > Are you waiting for the changes in this PR to be merged?
+
+    > It would be very helpful if you could [test the resulting artifacts](https://github.com/dotnet/maui/wiki/Testing-PR-Builds)
+    from this PR and let us know in a comment if this change resolves your issue.
+    Thank you!
+
+
+    <!-- Please let the below note in for people that find this PR -->
+
+    > [!NOTE]
+
+    > Are you waiting for the changes in this PR to be merged?
+
+    > It would be very helpful if you could [test the resulting artifacts](https://github.com/dotnet/maui/wiki/Testing-PR-Builds)
+    from this PR and let us know i'
+distractors:
+- rule: Always add correct API entries to PublicAPI.Unshipped.txt files
+  source:
+    path: .github/copilot-instructions.md
+    lines: '125'
+  source_text: '- **Always add correct API entries** to PublicAPI.Unshipped.txt files'
+  collision_type: scope_ambiguity
+  why_distracting: An agent modifying `Permissions.windows.cs` might mistakenly believe
+    it needs to update the public API tracking files. However, this PR only modifies
+    the internal implementation of the permission methods and does not alter their
+    public signatures, making this rule a distractor.
+  severity: high
+- rule: Create UI tests for GitHub issues
+  source:
+    path: .github/skills/write-ui-tests/SKILL.md
+    lines: '12'
+  source_text: Creates UI tests that reproduce a GitHub issue, following .NET MAUI
+    conventions.
+  collision_type: scope_ambiguity
+  why_distracting: An agent trying to be thorough might attempt to invoke the write-ui-tests
+    skill for this bug fix. However, testing Windows OS-level permission capabilities
+    (like Microphone access) is typically out of scope for the standard UI test suite
+    since it involves interacting with native OS prompts, which Appium UI tests handle
+    poorly.
+  severity: medium

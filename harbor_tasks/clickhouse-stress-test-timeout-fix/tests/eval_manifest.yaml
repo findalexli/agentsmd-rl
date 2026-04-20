@@ -1,0 +1,129 @@
+checks:
+- id: test_randomization_uses_random_not_date
+  type: fail_to_pass
+  origin: pr_diff
+  description: async_load_databases uses $RANDOM instead of date-based randomization
+- id: test_post_stress_start_server_has_timeout
+  type: fail_to_pass
+  origin: pr_diff
+  description: Post-stress start_server call has timeout argument of 30
+- id: test_no_date_based_randomization_anywhere
+  type: fail_to_pass
+  origin: pr_diff
+  description: No date-based randomization patterns remain in the file
+- id: test_start_server_timeout_has_comment
+  type: fail_to_pass
+  origin: pr_diff
+  description: Timeout change has explanatory comment about sanitizers
+- id: test_shellcheck_no_errors
+  type: pass_to_pass
+  origin: repo_tests
+  description: Shellcheck passes on the script
+- id: test_script_syntax_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Bash syntax check passes
+- id: test_stress_tests_lib_shellcheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Shellcheck passes on stress_tests.lib
+- id: test_stress_tests_lib_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Bash syntax check passes on stress_tests.lib
+- id: test_utils_lib_shellcheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Shellcheck passes on utils.lib
+- id: test_utils_lib_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Bash syntax check passes on utils.lib
+- id: test_upgrade_runner_shellcheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Shellcheck passes on upgrade_runner.sh
+- id: test_upgrade_runner_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Bash syntax check passes on upgrade_runner.sh
+- id: test_create_tpcds_shellcheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Shellcheck passes on create_tpcds.sh
+- id: test_create_tpcds_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Bash syntax check passes on create_tpcds.sh
+- id: test_create_tpch_shellcheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Shellcheck passes on create_tpch.sh
+- id: test_create_tpch_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Bash syntax check passes on create_tpch.sh
+- id: test_attach_gdb_lib_shellcheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Shellcheck passes on attach_gdb.lib
+- id: test_attach_gdb_lib_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Bash syntax check passes on attach_gdb.lib
+rubric:
+- rule: Comments should explain the 'why' behind non-obvious changes, not narrate
+    the code
+  source:
+    path: .claude/skills/review/SKILL.md
+    lines: 120-122
+    commit: 0e2f4c6c1fef69f5c0ba46252d04b1cd4687b661
+- rule: Follow existing code style in shell scripts. Check neighboring .sh files for
+    patterns.
+  source:
+    path: .claude/skills/review/SKILL.md
+    lines: '56'
+    commit: 0e2f4c6c1fef69f5c0ba46252d04b1cd4687b661
+- rule: Use clear, informative error messages that help users understand what went
+    wrong
+  source:
+    path: .claude/skills/review/SKILL.md
+    lines: 75-77
+    commit: 0e2f4c6c1fef69f5c0ba46252d04b1cd4687b661
+distractors:
+- rule: 'When writing text such as documentation, comments, or commit messages, wrap
+    literal names from ClickHouse SQL language, classes and functions, or literal
+    excerpts from log messages inside inline code blocks, such as: `MergeTree`.'
+  collision_type: would_cause_bug
+  why_distracting: The agent might apply markdown backticks to literal names in bash
+    `echo` statements (e.g., changing the error message to `echo "Failed to start
+    \`clickhouse-server\`"`). In bash, backticks inside double quotes trigger command
+    substitution, which would attempt to execute the command and cause a script failure
+    or hang.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 6-6
+- rule: When writing text such as documentation, comments, or commit messages, write
+    names of functions and methods as `f` instead of `f()`
+  collision_type: scope_ambiguity
+  why_distracting: The agent might misinterpret the rule about writing function names
+    without parentheses (intended for documentation/comments) and apply it to bash
+    code, potentially trying to modify bash function definitions or calls in a way
+    that breaks bash syntax (e.g., defining `start_server {` instead of `start_server()
+    {`).
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 10-10
+hierarchy_analysis: The AGENTS.md file contains rules primarily aimed at documentation,
+  commit messages, and C++ code conventions. Since this task involves modifying a
+  bash script (`tests/docker_scripts/stress_runner.sh`), applying markdown-specific
+  formatting rules (like backticks for code blocks) to bash strings can lead to unintended
+  command substitution bugs.
+version: '2.0'
+source:
+  repo: ClickHouse/ClickHouse
+  pr: 102014
+  base_commit: 0e2f4c6c1fef69f5c0ba46252d04b1cd4687b661
+  merge_commit: 507d8b1523ae3c7f4b0e97fe6d13c7df9267e762

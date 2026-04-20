@@ -1,0 +1,224 @@
+version: '2.0'
+source:
+  repo: microsoft/playwright
+  pr: 39071
+  base_commit: 824f63da57edf990c6eeab6301d5f1b65dcb4ca8
+  merge_commit: 8d91d675afb863c1953af92d3b4d2837a7ef6ab7
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Key source files must exist
+- id: route_tool_definition
+  type: fail_to_pass
+  origin: agent_config
+  description: route.ts must exist with browser_route tool and correct schema
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: '9'
+    commit: 824f63da57edf990c6eeab6301d5f1b65dcb4ca8
+- id: route_fulfill_and_continue
+  type: fail_to_pass
+  origin: pr_diff
+  description: browser_route handler calls fulfill for body/status, continue for headers
+- id: route_list_and_unroute_tools
+  type: fail_to_pass
+  origin: pr_diff
+  description: route.ts defines browser_route_list and browser_unroute tools
+- id: context_route_management
+  type: fail_to_pass
+  origin: pr_diff
+  description: context.ts exports RouteEntry type and has addRoute/removeRoute/routes
+    methods
+- id: route_tools_registered
+  type: fail_to_pass
+  origin: agent_config
+  description: tools.ts imports and spreads route module into browserTools
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: '10'
+    commit: 824f63da57edf990c6eeab6301d5f1b65dcb4ca8
+- id: network_category_and_help
+  type: fail_to_pass
+  origin: agent_config
+  description: command.ts and helpGenerator.ts include network category
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: 22-23
+    commit: 824f63da57edf990c6eeab6301d5f1b65dcb4ca8
+- id: cli_commands_registered
+  type: fail_to_pass
+  origin: agent_config
+  description: commands.ts declares route/route-list/unroute CLI commands
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: '24'
+    commit: 824f63da57edf990c6eeab6301d5f1b65dcb4ca8
+- id: skill_md_building_section
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md has Building sections with development guidance
+- id: skill_md_lint_command
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md lint command uses npm run flint (not flint:mcp)
+- id: test_repo_lint_packages
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo package consistency check passes
+- id: test_repo_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo build passes
+- id: test_repo_test_types
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo test types check passes
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo TypeScript compilation passes
+- id: test_repo_check_deps
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo dependency check passes
+- id: test_repo_lint_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo test linting passes
+rubric:
+- rule: 'SKILL.md must include a ## Building section in both Tools and CLI sections
+    with development guidance about watch mode and lint'
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: 1-50
+    commit: 8d91d675afb863c1953af92d3b4d2837a7ef6ab7
+  reference: '## Building
+
+    - Assume watch is running at all times, run lint to see type errors
+
+
+    ## Testing
+
+    - Do not run test --debug
+
+    '
+- rule: SKILL.md Lint section must use npm run flint instead of npm run flint:mcp
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: 40-45
+    commit: 8d91d675afb863c1953af92d3b4d2837a7ef6ab7
+  reference: '# Lint
+
+    - run `npm run flint` to lint everything before commit
+
+    '
+- rule: Create a new tool in the designated directory
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: '9'
+  source_text: '- Create a new tool in `packages/playwright/src/mcp/browser/tools/your-tool.ts`'
+  evidence: The gold diff creates a new tool file at packages/playwright/src/mcp/browser/tools/route.ts.
+  category: rubric
+  verification: llm_judge
+- rule: Register the tool in the central tools file
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: '10'
+  source_text: '- Register the tool in `packages/playwright/src/mcp/browser/tools.ts`'
+  evidence: The gold diff imports the newly created tool and adds it to the browserTools
+    array in packages/playwright/src/mcp/browser/tools.ts.
+  category: rubric
+  verification: llm_judge
+- rule: Implement corresponding MCP tool for CLI commands
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: '20'
+  source_text: '- CLI commands are based on MCP tools. Implement the corresponding
+    MCP tool as per `Adding MCP Tools` section above, if needed.'
+  evidence: The gold diff first implements the browser_route MCP tool and then implements
+    the corresponding CLI commands (routeMock, routeList, unroute) which delegate
+    to it.
+  category: rubric
+  verification: llm_judge
+- rule: Add a new CLI category if needed
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: 21-23
+  source_text: "- Add new CLI category for tool if needed:\n  - Add Category in `packages/playwright/src/mcp/terminal/command.ts`\n\
+    \  - Update doc generator `packages/playwright/src/mcp/terminal/helpGenerator.ts`"
+  evidence: 'The gold diff adds the ''network'' string literal to the Category type
+    union in command.ts and adds { name: ''network'', title: ''Network'' } to the
+    categories array in helpGenerator.ts.'
+  category: rubric
+  verification: llm_judge
+- rule: Register CLI command
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: '24'
+  source_text: '- Register command in `packages/playwright/src/mcp/terminal/commands.ts`'
+  evidence: The gold diff adds the new CLI commands (routeMock, routeList, unroute)
+    to the commandsArray in packages/playwright/src/mcp/terminal/commands.ts.
+  category: rubric
+  verification: llm_judge
+config_edits:
+- path: .claude/skills/playwright-mcp-dev/SKILL.md
+  tier: 1
+  gold_added: '## Building
+
+    - Assume watch is running at all times, run lint to see type errors
+
+
+    - Do not run test --debug
+
+    ## Building
+
+    - Assume watch is running at all times, run lint to see type errors
+
+
+    - Do not run test --debug
+
+    - run `npm run flint` to lint everything before commit'
+  gold_removed: '- run `npm run flint:mcp` to lint everything before commit'
+distractors:
+- rule: Add ToolCapability in config.d.ts
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: '11'
+  source_text: '- Add ToolCapability in `packages/playwright/src/mcp/config.d.ts`'
+  collision_type: architecture_boundary
+  why_distracting: The developer might think they need to add a new 'network' capability
+    in config.d.ts, but the new tools reuse the existing 'core' capability. Modifying
+    config.d.ts unnecessarily breaks architecture boundaries.
+  severity: high
+- rule: Place new MCP tests following the <category> pattern
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: '12'
+  source_text: '- Place new tests in `tests/mcp/mcp-<category>.spec.ts`'
+  collision_type: rule_conflict
+  why_distracting: The developer might create a file strictly named tests/mcp/mcp-network.spec.ts
+    (using the category), but the actual convention observed in the diff is to name
+    it after the feature, e.g., tests/mcp/route.spec.ts.
+  severity: medium
+- rule: Update skill file and references
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: 25-26
+  source_text: "- Update skill file at `packages/playwright/src/skill/SKILL.md` and\
+    \ references if necessary\n  in `packages/playwright/src/skill/references/`"
+  collision_type: scope_ambiguity
+  why_distracting: A developer might try to add documentation for the new CLI commands
+    into SKILL.md, but the gold diff explicitly avoids updating these user-facing
+    skill docs, as the scope of this change does not include user documentation.
+  severity: medium
+- rule: Place new CLI tests following the cli-<category> pattern
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: '27'
+  source_text: '- Place new tests in `tests/mcp/cli-<category>.spec.ts`'
+  collision_type: rule_conflict
+  why_distracting: A developer might try to create tests/mcp/cli-network.spec.ts using
+    the category name, but the correct convention observed in the diff is to name
+    it after the specific tool/feature, e.g., tests/mcp/cli-route.spec.ts.
+  severity: medium

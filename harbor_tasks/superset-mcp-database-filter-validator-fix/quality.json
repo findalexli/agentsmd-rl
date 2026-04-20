@@ -1,61 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert specific implementation details not fully discoverable from instruction.md: test_schemas_py_imports_field_validator asserts that `field_validator` is importable from `superset.mcp_service.database.schemas` and is identical to `pydantic.field_validator`; test_schemas_py_imports_parse_utilities asserts `parse_json_or_list` and `parse_json_or_model_list` are importable from that namespace. While instruction.md mentions re-exporting these, the test also checks `assert field_validator is"
+      "outcome": "pass",
+      "reason": "All test assertions (DatabaseFilter fields, ListDatabasesRequest JSON parsing, DATABASE_DEFAULT_COLUMNS import, DatabaseError.create timezone, _humanize_timestamp, app.py 'charts/dashboards/databases' and 'My databases:' strings, field_validator/parse_json_or_list/parse_json_or_model_list re-exports) are explicitly named in instruction.md."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "Instruction.md is extremely prescriptive: it says exactly to import `DATABASE_DEFAULT_COLUMNS` from `superset.mcp_service.common.schema_discovery` and use `default_columns=DATABASE_DEFAULT_COLUMNS`, to add `created_by_fk` and `changed_by_fk` to DatabaseFilter, to re-export `field_validator`, `parse_json_or_list`, and `parse_json_or_model_list`, to change docstring from `(chart, dataset, dashboard)` to `(chart, dataset, dashboard, database)`, and to add literal text `charts/dashboards/databases`."
+      "outcome": "pass",
+      "reason": "Instruction describes what's broken and expected behavior without stating exact code changes or line edits."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "test_list_databases_imports_default_columns_from_schema_discovery does static source code analysis checking for exact strings like `from superset.mcp_service.common.schema_discovery import` and `DATABASE_DEFAULT_COLUMNS` and `default_columns=DATABASE_DEFAULT_COLUMNS`. An alternative correct fix (e.g., using a different variable name or import style like `from superset.mcp_service.common import schema_discovery; schema_discovery.DATABASE_DEFAULT_COLUMNS`) would fail. test_app_py_has_database_crea"
+      "outcome": "pass",
+      "reason": "Tests verify behavior (parse results, timezone-aware output) and some literal strings that are explicitly required by the instruction itself ('charts/dashboards/databases', 'My databases:'), so alternative correct fixes would pass."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "test_list_databases_imports_default_columns_from_schema_discovery and test_app_py_has_database_created_by_fk_documentation are purely text/source-code inspection tests using `file_path.read_text()` and string `in content` checks with no code execution. While many other tests do execute code via subprocess, these two are purely textual."
+      "outcome": "pass",
+      "reason": "Tests execute imports and call functions like DatabaseFilter(), ListDatabasesRequest(), DatabaseError.create(), _humanize_timestamp() via subprocess."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests that execute code check non-trivial behavior: DatabaseFilter validation would reject unknown columns, ListDatabasesRequest without validators would fail on JSON strings, DatabaseError.create() without timezone fix would produce naive timestamps, and _humanize_timestamp would fail on aware datetimes. A stub/default implementation wouldn't pass these."
+      "reason": "Stubs can't satisfy JSON string parsing into structured objects, timezone-aware timestamp generation, and humanize outputs containing 'hour'/'ago'."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All six categories of fixes described in instruction.md are tested: DatabaseFilter fields, JSON parsing validators, import deduplication, timezone-aware timestamps, humanize_timestamp with aware datetimes, documentation updates, and the docstring fix (referenced in instruction #6 and likely in truncated test code)."
+      "reason": "Each of the six issues in instruction.md has corresponding test coverage."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names, have docstrings indicating which issue they test, and are grouped with section comments like '# Fail-to-Pass (f2p) Tests'."
+      "reason": "Tests have descriptive names, docstrings, and a section header comment for fail-to-pass tests."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task involves fixing Python code/models, not producing structured data output like JSON/CSV/API responses."
+      "reason": "Task is code fixes, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "Paths and names look consistent between instruction and tests."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "Instruction.md names exact modules/files: `superset.mcp_service.database.schemas`, `superset.mcp_service.common.schema_discovery`, `ModelGetSchemaCore.__init__`, `list_databases.py`, `app.py`, and specifies exact imports/variable names like `DATABASE_DEFAULT_COLUMNS`, `parse_json_or_list`, `parse_json_or_model_list`. This removes the need for the agent to locate bugs."
+      "outcome": "pass",
+      "reason": "Instruction identifies modules/functions at an appropriate level (e.g., 'DatabaseFilter', '_humanize_timestamp') without pointing to exact lines."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config editing task."
+      "reason": "Not an agentmd-edits/config task."
     }
   },
-  "tier_a_fails": [
-    "behavior_in_task_description",
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 4,
-  "fail_count": 5
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
 }

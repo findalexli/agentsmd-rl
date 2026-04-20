@@ -1,63 +1,56 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert specific patterns like 'if (arguments.len > 1 and arguments.ptr[1].isXxx())' via regex, require 'getTruthy' within 500 chars of the guard block, and check git commit history. The instruction.md does not mention the exact guard pattern format, the 'isCell' method name (the buggy method), the getTruthy proximity requirement, or that git commits are checked. The test also discovers 'isXxx' methods from the repo \u2014 while instruction.md mentions searching for 'fn isXxx' patterns, it doesn"
+      "outcome": "pass",
+      "reason": "Instruction names the file src/bun.js/api/bun/dns.zig, the Resolver struct, GetAddrInfo, globalThis, and getTruthy with 'port'/'family' keys \u2014 all literals tests check."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction.md explicitly states 'The code must not attempt to access arguments.ptr[1] as an object unless it is actually a valid object type' and 'Guard the second argument access', combined with the Discovery section telling the agent to search for 'fn isXxx' methods that 'return true only for objects'. This strongly guides the agent to replace an existing isXxx check with an object-discriminating one, essentially describing the fix (change isCell to isObject or similar)."
+      "outcome": "pass",
+      "reason": "Instruction describes the bug and requirements (guard non-object access) without stating the exact method change from isCell to isObject; it only hints at searching for isXxx methods."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests use a specific regex pattern 'if\\s*\\(\\s*arguments\\.len\\s*>\\s*1\\s+and\\s+arguments\\.ptr\\[1\\]\\.(\\w+)\\(\\)' to extract the guard method. An alternative correct fix that restructures the guard differently (e.g., using a separate variable, negating the condition, or using a different control flow) would fail because the regex wouldn't match. The tests are tied to the specific syntactic structure of the gold patch."
+      "outcome": "pass",
+      "reason": "Tests accept any method that is not 'isCell' and is discovered in Bun's JSValue source or starts with 'isObject', permitting multiple valid fixes."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "All tests use regex pattern matching on source code text (Path(TARGET).read_text() with re.search) and git log subprocess checks. No test actually compiles the code, runs dns.lookup(), or executes the fixed code to verify it doesn't crash. Every f2p test is essentially 'assert pattern in source' with git history checks."
+      "reason": "Tests only read dns.zig and regex-inspect for guard patterns and getTruthy; they never build/run Bun or execute dns.lookup. The 'behavioral' check is just git log counting commits, not actual behavior."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "A trivial fix that just does a regex replace of 'isCell' with any other 'is' method found in the codebase (e.g., 'isString') would pass all f2p tests, since the tests only check that the method is not 'isCell' and exists in the source. Such a fix would not actually resolve the bug correctly (isString would still crash for number arguments)."
+      "outcome": "pass",
+      "reason": "A stub cannot pass: the guard method must differ from 'isCell' and getTruthy must appear in the guard block, requiring the actual code change."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "The instruction says the lookup should 'proceed normally and return results' when given a non-object second argument, but no test verifies that dns.lookup actually returns correct results. Tests only check source code patterns."
+      "outcome": "pass",
+      "reason": "Tests cover the guard change, preservation of options parsing (port/family via getTruthy), and structural integrity of Resolver/GetAddrInfo."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section headers (Gates, Fail-to-pass, Pass-to-pass), descriptive function names, and detailed docstrings explaining what each test verifies."
+      "reason": "Tests are grouped with section comment banners (Gates, Fail-to-pass, Pass-to-pass) and descriptive function names."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task does not produce structured data like JSON/CSV/API/DB."
+      "reason": "Task is a code bug fix, produces no structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "Paths, method names (isCell/isObject/getTruthy), and struct names are consistent and correct."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction names the exact file 'src/bun.js/api/bun/dns.zig', the exact struct 'Resolver', mentions 'arguments.ptr[1]' specifically, and the Discovery section tells the agent exactly what kind of method to search for ('fn isXxx patterns that return bool'). This effectively pinpoints the exact buggy line and the category of fix needed."
+      "outcome": "pass",
+      "reason": "Instruction points to the file and Resolver struct, which is appropriate context; it does not name the exact buggy line or the replacement method."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits task."
+      "reason": "Code-only task, no config edits involved."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "behavior_in_tests",
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 2,
-  "fail_count": 7
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 1
 }

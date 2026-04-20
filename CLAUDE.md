@@ -17,9 +17,12 @@ taskforge/                  # Task construction toolkit
   hierarchy_context.py      #   Config hierarchy extractor (root → leaf AGENTS.md)
   pipeline.py               #   Parallel pipeline orchestrator (claude -p)
   judge.py                  #   LLM judge for config edit rubric (Gemini structured output)
+  distractor_judge.py       #   Track 4 judge — agent passes when it does NOT apply distractor
   rubric_validator.py       #   Precision/recall validator for rubric rules
   e2b.py                    #   E2B sandbox validation
   templates/task_template/  #   Task template with placeholders (copied by /scaffold-task)
+scripts/
+  run_agent_eval.py         #   Agent eval runner (Track 1+3+4) — see "Running an Eval" below
 harbor_tasks/               # Benchmark tasks: code-only bug fixes (775)
 harbor_tasks_agentmd_edits/ # Benchmark tasks: code + config edits (232, 4-track eval)
   <task>/
@@ -53,6 +56,34 @@ And satisfy standard requirements:
 
 1. `/scaffold-task owner/repo#PR_NUMBER` — create task from a PR (includes test audit + rubric extraction)
 2. `/validate-task <task-name>` — Docker oracle test (build, nop=0, gold=1)
+
+## Running an Eval (agent vs. tasks)
+
+Canonical eval runner: `scripts/run_agent_eval.py`. Runs N harbor tasks with claude-code agent pointed at a configurable backend, then scores Track 1 (programmatic tests), Track 3 (rubric LLM judge), Track 4 (distractor LLM judge — passes when agent did NOT apply the rule).
+
+```bash
+.venv/bin/python scripts/run_agent_eval.py \
+    --tasks pipeline_logs/minimax_eval/tasks.txt \
+    --out   pipeline_logs/minimax_eval/results.jsonl \
+    --concurrency 4 \
+    --backend minimax \     # minimax | anthropic | glm
+    --env e2b \             # e2b | docker
+    --timeout 2400
+```
+
+Key mechanics:
+- Shadow-copies each task to `/tmp/agent_eval_tasks/<task>/` and prepends a diff-capture hook to `tests/test.sh` (writes agent's diff to `/logs/verifier/agent.diff`).
+- Passes `--force-build` and `--verifier-timeout-multiplier 5` to harbor.
+- After each trial, runs `taskforge.judge.call_judge` (Gemini) for Track 3 and `taskforge.distractor_judge.judge_distractors` (inverted Gemini) for Track 4.
+- Emits per-task JSONL rows + a `<out>.summary.json` with 3 pass rates.
+- Backend pluggability via `BACKEND_CFG` at the top of the file — add an entry to eval a new model.
+
+Task selection filters (for `tasks.txt`):
+1. `status.json.verdict == "pass"` (oracle works)
+2. `quality.json` has no tier-A/B/C fails
+3. `eval_manifest.yaml` has both `rubric:` and `distractors:`
+4. `task.toml` is flat-format (no nested `[task]`/`[source]`)
+5. `environment/Dockerfile` has no `COPY --from=<image>` (E2B limitation)
 
 ## Evaluation Architecture
 

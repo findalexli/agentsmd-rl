@@ -1,0 +1,107 @@
+version: '2.0'
+source:
+  repo: astral-sh/ruff
+  pr: 24451
+  base_commit: 770cca65a1dc44241b503df7b1064a784f970499
+  merge_commit: 398e2a79c488cf2ae59512ea31e00626d7dd8833
+checks:
+- id: compilation
+  type: pass_to_pass
+  origin: repo_tests
+  description: Crate ty_python_semantic must compile without errors
+- id: test_repo_fmt
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo code must be formatted according to rustfmt standards
+- id: test_repo_clippy
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo code must pass clippy linting for ty_python_semantic
+- id: test_repo_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: ty_python_semantic library unit tests pass
+- id: test_repo_class_mdtests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Class-related mdtests pass — covers static_literal.rs call site
+- id: test_repo_enum_mdtests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Enum-related mdtests pass — covers enums.rs call site
+- id: test_repo_corpus_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Corpus tests (no-panic tests on real-world code) pass
+- id: test_repo_ruff_db_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: ruff_db library unit tests pass — foundational crate for ty_python_semantic
+- id: test_repo_ty_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: ty library unit tests pass — consumer of ty_python_semantic
+- id: any_reachable_method_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: DeclarationsIterator must have any_reachable method (renamed from all_reachable)
+- id: lazy_evaluation_pattern
+  type: fail_to_pass
+  origin: pr_diff
+  description: any_reachable uses self.any() with predicate checked before reachability
+    evaluation
+- id: call_sites_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: Both call sites use any_reachable with is_defined_and (De Morgan transform)
+- id: no_stale_all_reachable_calls
+  type: fail_to_pass
+  origin: pr_diff
+  description: No remaining .all_reachable() calls in the crate source
+- id: any_reachable_not_stub
+  type: pass_to_pass
+  origin: pr_diff
+  description: any_reachable method has real logic, not just a stub
+rubric:
+- rule: Follow existing code style. Check neighboring files for patterns.
+  source:
+    path: AGENTS.md
+    lines: '75'
+    commit: 770cca65a1dc44241b503df7b1064a784f970499
+- rule: Avoid writing significant amounts of new code. This is often a sign that we
+    are missing an existing method or mechanism that could help solve the problem.
+    Look for existing utilities first.
+  source:
+    path: AGENTS.md
+    lines: '78'
+    commit: 770cca65a1dc44241b503df7b1064a784f970499
+- rule: Use comments purposefully. Do not use comments to narrate code, but do use
+    them to explain invariants and why something unusual was done a particular way.
+  source:
+    path: AGENTS.md
+    lines: '82'
+    commit: 770cca65a1dc44241b503df7b1064a784f970499
+- rule: Avoid writing significant amounts of new code. Look for existing utilities
+    first.
+  source:
+    path: AGENTS.md
+    lines: 65-65
+  evidence: The gold solution leverages the existing `is_defined_and` method on `DefinitionState`
+    to cleanly invert the logic of `is_undefined_or`, rather than writing a complex
+    manual match or new utility.
+  category: style
+distractors:
+- rule: All changes must be tested. If you're not testing your changes, you're not
+    done.
+  collision_type: scope_ambiguity
+  why_distracting: The PR is a pure performance optimization that preserves existing
+    semantics (applying De Morgan's laws to the iterator and predicate). The agent
+    might waste time trying to write new tests for an internal iterator method, when
+    the existing test suite for class fields and enums already covers these code paths.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 62-62
+hierarchy_analysis: The config hierarchy is flat, with `CLAUDE.md` simply including
+  `AGENTS.md`. The rules are generic repository guidelines rather than specific architectural
+  constraints for this subsystem.

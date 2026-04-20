@@ -1,61 +1,57 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert specific patterns like 'TaskCacheStats::task_name' (test_task_name_from_storage), 'FormatSizes' and 'impl std::fmt::Display for FormatSizes' (test_format_sizes_struct), 'sort_key' method name (test_format_sizes_struct), and 'print_cache_item_size_with_compressed' feature name (test_cargo_feature_split). While the instruction hints at some of these (e.g., a formatting struct, feature split), it does not explicitly name 'TaskCacheStats::task_name', 'FormatSizes', 'sort_key', or the ex"
+      "outcome": "pass",
+      "reason": "instruction.md names the files (mod.rs, Cargo.toml), the feature names (print_cache_item_size, print_cache_item_size_with_compressed), the relevant methods (persist_snapshot, get_task_name, add_counts), and describes the patterns tests check for."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly states the fix: 'Replace all .entry(self.get_task_name(task_id, turbo_tasks)) calls... with entries derived from the storage reference directly', 'Not use self. in any .entry() argument', 'Make print_cache_item_size a standalone feature with no lzzzz dependency', 'Add a separate feature... that extends print_cache_item_size and adds lzzzz', 'Change the guard to encode_data || encode_meta'. These are specific implementation instructions, not just descriptions of what's "
+      "outcome": "pass",
+      "reason": "Instruction describes what's broken and required behavior changes but does not give exact replacement code like 'TaskCacheStats::task_name(inner)' \u2014 agent must derive it."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific implementation details: test_task_name_from_storage checks for patterns like 'TaskCacheStats::task_name' and 'task_name\\s*\\(\\s*inner'; test_format_sizes_struct checks for 'struct FormatSizes' and 'impl.*Display.*for.*FormatSizes' and 'fn sort_key'. An alternative correct fix could use a different function name (e.g., 'get_name_from_storage'), a different struct name, or inline the formatting without a Display impl, and would fail these tests."
+      "reason": "test_task_name_from_storage requires specific patterns like 'TaskCacheStats::task_name' or 'task_name(inner' or 'get_persistent_task_type' in context of .entry(); an alternative fix extracting the name via a differently-named helper (e.g., 'name_from_storage(inner)' using a different internal approach) would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every test reads the source file and checks for text patterns using regex (e.g., re.findall, re.search on file contents). No test compiles, executes, or calls any Rust code. They are purely static text/pattern checks like 'assert \"PASS\" in r.stdout' after grepping file contents."
+      "reason": "Tests are regex/substring grep over source files (e.g., re.findall on mod.rs, parsing Cargo.toml features as strings) with no execution of Rust code; Dockerfile has no Rust toolchain and the task notes confirm this."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The tests check for specific non-trivial patterns: .entry() calls must exist in cfg blocks but not reference self.get_task_name, TaskCacheStats::task_name must appear, FormatSizes struct with Display impl must exist, Cargo feature must be split correctly, and add_counts guard must include encode_data. A stub or empty implementation would not satisfy these pattern checks."
+      "reason": "Tests reject stub forms (string literals, String::new/from in .entry) and require storage-derived task name plus actual presence of .entry() in cfg blocks, so trivial stubs fail."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction specifies four required changes: deadlock fix, feature split, add_counts guard fix, and formatting struct. Tests cover all four: test_deadlock_pattern_removed, test_task_name_from_storage, test_cargo_feature_split, test_add_counts_covers_data, and test_format_sizes_struct."
+      "reason": "Tests cover the four required changes: deadlock removal, task name source, cargo feature split, add_counts guard expansion (per visible test list)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_deadlock_pattern_removed, test_task_name_from_storage, etc.), have docstrings explaining what they verify, and are logically grouped into 'gates' (static) and 'fail-to-pass' (behavioral) categories with comments."
+      "reason": "Tests are grouped with comments like '# Gates (pass_to_pass)' and '# Fail-to-pass (pr_diff)' and have descriptive docstrings and [tier] tags."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task modifies Rust source code and Cargo.toml configuration; it does not produce structured data output like JSON/CSV/API/DB."
+      "reason": "Task is a code fix, not a structured-data producer."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths (turbopack/crates/turbo-tasks-backend/src/backend/mod.rs, Cargo.toml), feature names (print_cache_item_size, print_cache_item_size_with_compressed), and function names are consistently spelled correctly throughout the instruction and tests."
+      "reason": "Paths and feature names are consistent across instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction names specific methods ('persist_snapshot', 'get_task_name', 'access_mut'), specific patterns to replace ('.entry(self.get_task_name(task_id, turbo_tasks))'), exact struct names ('TaskCacheStats'), and exact file paths. While naming the file is acceptable for this domain, specifying the exact method call pattern to replace and the exact guard condition change ('encode_data || encode_meta') goes beyond what's needed for bug description."
+      "outcome": "pass",
+      "reason": "Instruction points to method and struct names relevant to the bug but does not identify exact line numbers; localization is part of the task but the domain makes the files obvious."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The Cargo.toml diff is localized to just the [features] section, changing two lines (splitting print_cache_item_size and adding print_cache_item_size_with_compressed). This is a bounded, minimal config edit."
+      "reason": "Cargo.toml diff is a two-line localized change to [features], not a rewrite."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
-    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 5,
-  "fail_count": 5
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 2
 }

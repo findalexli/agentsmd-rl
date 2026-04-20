@@ -1,0 +1,227 @@
+version: '2.0'
+source:
+  repo: microsoft/playwright
+  pr: 39078
+  base_commit: 6a928b02f4de1efc633a8fae0331cd1fa821950e
+  merge_commit: 5c749f58b0c958606c0fc29150c61bfeeed3c14e
+  ci_commands:
+  - npm run tsc
+  - npm run check-deps
+  - npm run lint-packages
+  - npm run lint-tests
+  - npm run test-types
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files must exist and be non-empty
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TypeScript typecheck passes (npm run tsc)
+- id: test_repo_check_deps
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's dependency check passes (npm run check-deps)
+- id: test_repo_lint_packages
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's package consistency check passes (npm run lint-packages)
+- id: test_repo_lint_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's test linting passes (npm run lint-tests)
+- id: test_repo_test_types
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's type tests pass (npm run test-types)
+- id: test_repo_lint_code_snippets
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's documentation code snippet linting passes (node utils/doclint/linting-code-snippets/cli.js
+    --js-only)
+- id: test_repo_generate_channels
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's channel generation check passes (node utils/generate_channels.js)
+- id: install_skills_command_declared
+  type: fail_to_pass
+  origin: pr_diff
+  description: commands.ts declares an install-skills command
+- id: install_renamed_to_install_browser
+  type: fail_to_pass
+  origin: pr_diff
+  description: The install command is renamed to install-browser
+- id: route_capability_network
+  type: fail_to_pass
+  origin: pr_diff
+  description: Route tools use network capability instead of core
+- id: network_capability_type
+  type: fail_to_pass
+  origin: pr_diff
+  description: config.d.ts includes network in the ToolCapability union type
+- id: install_skills_implementation
+  type: fail_to_pass
+  origin: pr_diff
+  description: program.ts implements installSkills with command handler and copy logic
+- id: skill_md_documents_network_commands
+  type: fail_to_pass
+  origin: agent_config
+  description: SKILL.md documents route/unroute commands under a Network section
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: 29-30
+    commit: 6a928b02f4de1efc633a8fae0331cd1fa821950e
+- id: skill_md_documents_install_commands
+  type: fail_to_pass
+  origin: agent_config
+  description: SKILL.md documents install-browser and install-skills commands
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: 29-30
+    commit: 6a928b02f4de1efc633a8fae0331cd1fa821950e
+- id: request_mocking_cli_commands
+  type: fail_to_pass
+  origin: agent_config
+  description: request-mocking.md documents direct CLI route commands
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: 29-30
+    commit: 6a928b02f4de1efc633a8fae0331cd1fa821950e
+rubric:
+- rule: Skill documentation updates are consistent with the style and structure of
+    the existing SKILL.md
+  source:
+    path: packages/playwright/src/skill/SKILL.md
+    lines: 1-10
+    commit: 6a928b02f4de1efc633a8fae0331cd1fa821950e
+- rule: Add ToolCapability in config.d.ts
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: '11'
+  source_text: '- Add ToolCapability in `packages/playwright/src/mcp/config.d.ts`'
+  evidence: The gold diff adds the 'network' capability to the ToolCapability type
+    in packages/playwright/src/mcp/config.d.ts.
+  category: architecture
+  verification: llm_judge
+- rule: Register command in commands.ts
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: '28'
+  source_text: '- Register command in `packages/playwright/src/mcp/terminal/commands.ts`'
+  evidence: The gold diff registers the new installSkills command by adding it to
+    the commandsArray in packages/playwright/src/mcp/terminal/commands.ts.
+  category: architecture
+  verification: llm_judge
+- rule: Update skill file and references
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: 29-30
+  source_text: "- Update skill file at `packages/playwright/src/skill/SKILL.md` and\
+    \ references if necessary\n  in `packages/playwright/src/skill/references/`"
+  evidence: The gold diff adds new commands to packages/playwright/src/skill/SKILL.md
+    and updates network-related documentation in packages/playwright/src/skill/references/request-mocking.md.
+  category: documentation
+  verification: llm_judge
+config_edits:
+- path: .claude/skills/playwright-mcp-dev/SKILL.md
+  tier: 1
+  gold_added: '# SKILL File
+
+
+    The skill file is located at `packages/playwright/src/skill/SKILL.md`. It contains
+    documentation for all available CLI commands and MCP tools. Update it whenever
+    you add new commands or tools.
+
+    At any point in time you can run "npm run playwright-cli -- --help" to see the
+    latest available commands and use them to update the skill file.'
+  gold_removed: ''
+- path: packages/playwright/src/skill/SKILL.md
+  tier: 1
+  gold_added: '### Network
+
+
+    ```bash
+
+    playwright-cli route "**/*.jpg" --status=404
+
+    playwright-cli route "https://api.example.com/**" --body=''{"mock": true}''
+
+    playwright-cli route-list
+
+    playwright-cli unroute "**/*.jpg"
+
+    playwright-cli unroute
+
+    ```
+
+
+    ### Install
+
+
+    ```bash
+
+    playwright-cli install-browser
+
+    playwright-cli install-skills
+
+    ```
+
+
+    # Use specific browser when creating session
+
+    playwright-cli open --browser=chrome
+
+    playwright-cli open --browser=firefox
+
+    playwright-cli open --browser=webkit
+
+    playwright-cli open --browser=msedge
+
+    # Connect to browser via extension
+
+    playwright-cli open --extension
+
+
+    playwright-cli session-restart mysession'
+  gold_removed: '## Example: Authentication state reuse
+
+
+    ```bash
+
+    # Login and save auth state
+
+    playwright-cli open https://app.example.com/login
+
+    playwright-cli snapshot
+
+    playwright-cli fill e1 "user@example.com"
+
+    playwright-cli fill e2 "password123"
+
+    playwright-cli click e3
+
+    playwright-cli state-save auth.json
+
+
+    # Later, restore state and skip login
+
+    playwright-cli state-load auth.json
+
+    playwright-cli open https://app.example.com/dashboard
+
+    ```'
+distractors:
+- rule: Implement corresponding MCP tool for CLI commands
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: '24'
+  source_text: '- CLI commands are based on MCP tools. Implement the corresponding
+    MCP tool as per `Adding MCP Tools` section above, if needed.'
+  collision_type: architecture_boundary
+  why_distracting: The install-skills command strictly performs local file system
+    operations to install skills, rather than interacting with the browser. An agent
+    might mistakenly attempt to create a full MCP tool for it, incorrectly crossing
+    the architecture boundary from the local CLI execution context into the browser
+    automation context.
+  severity: medium

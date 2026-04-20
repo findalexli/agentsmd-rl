@@ -1,62 +1,59 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction mentions all key specifics: `pkg.packageManager`, `startsWith` for pnpm/yarn/bun, `detectPackageManager`, `addDevDependencies`, timeout of 120 seconds, `decompressGzip` error handling, the file paths `template-scaffold.ts` and `Bootstrap.ts`, lockfile priority, and the `scaffoldTemplate` method (implied by the resumable flow requirement). The test commands are also provided."
+      "reason": "Instruction mentions pm.startsWith(\"pnpm\") literal, 120 seconds timeout, addDevDependencies function concept, packageManager field, and scaffoldTemplate behavior is implied through the refactor description."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly tells the agent to use `startsWith` method (e.g., 'pm.startsWith(\"pnpm\")'), to use `pkg.packageManager`, to create an `addDevDependencies` async function, and to use `nodeStream.on('error', reject)` pattern. These are implementation-level details that constitute solution leakage, not just descriptions of what's broken."
+      "outcome": "pass",
+      "reason": "Instruction describes what's broken without giving exact line replacements."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact string patterns like 'pm.startsWith(\"pnpm\")', 'pkg.packageManager', 'nodeStream.on(\\'error\\', reject)', 'AbortSignal.timeout(120_000)', and 'export async function addDevDependencies'. Alternative correct implementations (e.g., using `packageManager.includes('pnpm')`, naming the variable differently, using `120000` instead of `120_000`, or using a different error handling pattern) would all fail these text-matching tests."
+      "reason": "Tests assert on exact literal strings like \"AbortSignal.timeout(120_000)\", \"nodeStream.on('error', reject)\", \"export async function addDevDependencies\", and \"pkg.packageManager\" \u2014 a correct alternative fix using different variable names or different stream error approach (e.g., pipeline()) would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Tests test_detect_package_manager_from_package_json_pnpm/yarn/bun, test_detect_package_manager_lockfile_priority, test_add_dev_dependencies_exists, test_template_scaffold_timeout_constant, test_decompress_gzip_has_error_handling, and test_scaffold_template_method_exists all use `assert 'string' in open(path).read()` pattern \u2014 pure text matching with no code execution or behavioral verification. Only test_repo_vitest_passes and the two repo-level checks actually execute code."
+      "reason": "Most f2p tests are `open(path).read(); assert 'string' in source`; only the vitest subprocess test executes code, and it's listed as pass_to_pass."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "The text-matching tests can be trivially satisfied by adding dead code. For example, adding `// pm.startsWith(\"pnpm\") pm.startsWith(\"yarn\") pm.startsWith(\"bun\") pkg.packageManager` as a comment, `export async function addDevDependencies() {}` as a stub, `// AbortSignal.timeout(120_000)` as a comment, and `// nodeStream.on('error', reject)` as a comment would pass most f2p tests without implementing the actual fix."
+      "outcome": "pass",
+      "reason": "A stub wouldn't contain the required literal strings like 'pkg.packageManager' or 'AbortSignal.timeout(120_000)'."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "The instruction requires: auto-install prompt behavior when deps are missing, resumable flow when --database is passed on already-linked project (skip link step and continue), and user-friendly timeout error messages. None of these behaviors are actually tested \u2014 only source code string patterns are checked."
+      "reason": "Instruction describes resumable flow for already-linked projects and auto-install prompt behavior, but no test verifies the link-skip logic or the prompt behavior \u2014 only a weak check that scaffoldTemplate method exists."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings indicating what each test verifies (e.g., 'detectPackageManager reads packageManager field from package.json for pnpm'), and are logically grouped by feature area."
+      "reason": "Tests have descriptive names and docstrings indicating fail_to_pass/pass_to_pass categorization."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves CLI behavior fixes, not structured data output."
+      "reason": "No structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or tests."
+      "reason": "Paths and commands look correct."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction names exact implementation details: 'use a method like startsWith to detect which package manager', 'pkg.packageManager', 'A new async function should be added that uses the detected package manager to install development dependencies', and specifies the exact decompression error handling pattern. These go well beyond describing the bug domain."
+      "outcome": "pass",
+      "reason": "Instruction references the CLI module broadly; specific file paths are part of the domain."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "Code-only task."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests",
-    "instruction_no_hint_leakage"
+    "behavior_in_tests"
   ],
-  "pass_count": 3,
-  "fail_count": 6
+  "pass_count": 6,
+  "fail_count": 3
 }

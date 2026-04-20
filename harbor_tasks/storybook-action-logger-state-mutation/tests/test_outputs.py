@@ -353,7 +353,13 @@ def test_not_stub():
     idx = content.find("setActions((")
     assert idx != -1, "setActions call missing"
     region = content[idx : idx + 600]
-    assert "if" in region and "else" in region, (
+    # Must have conditional logic (if/else, ternary, or logical operator)
+    has_conditional = (
+        ("if" in region and "else" in region)
+        or ("?" in region and ":" in region)  # ternary
+        or ("&&" in region)                   # logical AND pattern
+    )
+    assert has_conditional, (
         "addAction should have conditional deduplication logic"
     )
     assert "count" in region, "addAction should manage action counts"

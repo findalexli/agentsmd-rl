@@ -1,0 +1,80 @@
+source:
+  repo: TanStack/router
+  pr_number: 6915
+  title: "Fix backslash escaping in markdown sanitization"
+  base_commit: 4e465e93b3d0169ed7b2f9d1a7ccb1c5414b7161
+  merge_commit: 32497be9c8fc1c283b876d742deaf5d3bf5f2669
+
+checks:
+  # Fail-to-pass tests - verify the bug is fixed
+  - id: test_backslash_escaping_basic
+    type: fail_to_pass
+    origin: pr_behavior
+    description: Single backslash is properly escaped to double backslash
+
+  - id: test_backslash_escaping_multiple
+    type: fail_to_pass
+    origin: pr_behavior
+    description: Multiple backslashes in a string are all escaped
+
+  - id: test_backslash_with_template_sequences
+    type: pass_to_pass
+    origin: pr_behavior
+    description: Backslashes combined with template sequences are properly escaped
+
+  - id: test_backslash_escaping_windows_path
+    type: fail_to_pass
+    origin: pr_behavior
+    description: Windows-style paths with backslashes are properly escaped
+
+  - id: test_backslash_escaping_latex
+    type: fail_to_pass
+    origin: pr_behavior
+    description: LaTeX-style backslash sequences are properly escaped
+
+  # Pass-to-pass tests - verify existing functionality still works
+  - id: test_backtick_escaping
+    type: pass_to_pass
+    origin: pr_behavior
+    description: Backticks continue to be properly escaped
+
+  - id: test_template_variable_escaping
+    type: pass_to_pass
+    origin: pr_behavior
+    description: Template variable syntax continues to be escaped
+
+  - id: test_plain_text_unchanged
+    type: pass_to_pass
+    origin: pr_behavior
+    description: Plain text without special characters is unchanged
+
+  - id: test_script_file_exists
+    type: pass_to_pass
+    origin: structural
+    description: Target script file exists
+
+  - id: test_script_has_sanitize_function
+    type: pass_to_pass
+    origin: structural
+    description: sanitizeMarkdown function exists in the script
+
+  # Repo CI/CD pass-to-pass tests
+  - id: test_repo_node_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: Node.js syntax check passes on the modified script
+
+  - id: test_repo_script_shebang
+    type: pass_to_pass
+    origin: static
+    description: Script has proper Node.js shebang
+
+  - id: test_repo_script_exports_valid_js
+    type: pass_to_pass
+    origin: static
+    description: Script can be parsed as a module with valid JavaScript
+
+rubric:
+  - id: simple_bugfix_no_docs
+    rule: This is a simple 4-line regex bug fix in a utility script - no documentation, config file, or AGENTS.md changes are required. The fix adds backslash escaping to prevent template literal issues. Documentation changes would be unnecessary overhead for this type of targeted bug fix.
+    weight: 1.0

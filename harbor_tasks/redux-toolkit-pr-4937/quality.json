@@ -1,0 +1,59 @@
+{
+  "model": "claude-opus-4-7",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "Instruction names the file path packages/toolkit/src/query/react/buildHooks.ts, the literal strings 'const refetch = useCallback', 'refetchOrErrorIfUnmounted(promiseRef)', 'const stableArg = useStableQueryArgs', 'trigger(stableArg, \\'forward\\')', and 'trigger(stableArg, \\'backward\\')' that the tests check."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md explicitly dictates the exact code patterns: 'const refetch = useCallback(..., [...])', 'useStableQueryArgs(...)', and 'trigger(stableArg, \\'forward\\')'/'trigger(stableArg, \\'backward\\')' \u2014 this states the fix rather than describing the bug."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert literal strings like 'const stableArg = useStableQueryArgs' and 'const refetch = useCallback'; an equivalent fix using e.g. let, different variable name, or useMemo-wrapped stable ref would fail despite being correct."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests run yarn type-tests, yarn vitest, yarn build, and yarn lint \u2014 actual execution in addition to the text-grep tests."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "test_refetch_stability_fix and test_stable_arg_fix require specific substrings; vitest infinite query and buildHooks tests execute actual code that would fail without the fix."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "Both required behaviors (refetch via useCallback and stableArg usage in pagination) are directly tested; pass_to_pass tests cover TS, build, lint, and runtime."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are separate named functions with docstrings explaining pass_to_pass vs fix-verification purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task is code refactor, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "Paths and commands appear correct and consistent between instruction, tests, and solution."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "Instruction names the exact file 'packages/toolkit/src/query/react/buildHooks.ts' and dictates exact variable names ('stableArg') and calls \u2014 localization and implementation are given away."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "Code-only task, no agentmd config edits."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 3
+}

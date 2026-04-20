@@ -1,0 +1,164 @@
+version: '2.0'
+source:
+  repo: facebook/react
+  pr: 34757
+  base_commit: 9724e3e66e4ad3cc82c728e5c732c21986825b06
+  merge_commit: 7568e718549b85f60e3943f02d079d20d077077f
+checks:
+- id: recommended_config_rules
+  type: fail_to_pass
+  origin: pr_diff
+  description: recommended config uses allRuleConfigs (compiler rules included) instead
+    of basicRuleConfigs
+- id: legacy_configs_not_in_configs_object
+  type: fail_to_pass
+  origin: pr_diff
+  description: Legacy configs (recommended-legacy, recommended-latest-legacy, flat/recommended)
+    removed from configs object
+- id: plugin_meta_version_field
+  type: fail_to_pass
+  origin: pr_diff
+  description: Plugin meta object includes version field with semver value
+- id: package_json_version_bumped
+  type: fail_to_pass
+  origin: pr_diff
+  description: package.json version bumped to 7.x
+- id: recommended_latest_still_exists
+  type: pass_to_pass
+  origin: static
+  description: recommended-latest config still defined in index.ts
+- id: plugin_exports_structure
+  type: pass_to_pass
+  origin: static
+  description: Plugin still exports rules, configs, and meta
+- id: repo_index_ts_syntax
+  type: pass_to_pass
+  origin: static
+  description: Repo eslint-plugin index.ts has valid TypeScript syntax
+- id: repo_package_json_valid
+  type: pass_to_pass
+  origin: static
+  description: Repo eslint-plugin package.json is valid JSON with required fields
+- id: repo_readme_structure
+  type: pass_to_pass
+  origin: static
+  description: Repo eslint-plugin README.md has expected structure
+- id: repo_changelog_exists
+  type: pass_to_pass
+  origin: static
+  description: Repo eslint-plugin CHANGELOG.md exists with version entries
+- id: repo_fixtures_exist
+  type: pass_to_pass
+  origin: static
+  description: Repo eslint fixtures exist with valid JSON config
+- id: repo_git_status
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo git status command works correctly
+- id: repo_git_log
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo has expected base commit in git history
+- id: repo_no_patents_references
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo has no unexpected PATENTS file references (git grep check)
+- id: repo_eslint_plugin_src_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint plugin source files exist (subprocess ls check)
+- id: repo_eslint_plugin_rules_exist
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint plugin rules directory exists with expected files
+- id: repo_index_ts_no_syntax_errors
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint plugin index.ts passes basic grep syntax check
+- id: repo_ci_license_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI license check passes - no unexpected PATENTS references
+- id: repo_git_base_commit_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo contains the expected base commit in git history
+- id: repo_eslint_plugin_configs_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint plugin configs object has valid structure with expected keys
+- id: repo_eslint_plugin_meta_name
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint plugin meta object has name field
+- id: repo_eslint_plugin_typescript_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint plugin TypeScript files have valid syntax (balanced braces check)
+- id: repo_eslint_plugin_has_export_default
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint plugin index.ts exports a default plugin object
+- id: repo_eslint_plugin_rules_directory
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint plugin rules directory contains expected rule files
+- id: repo_eslint_fixtures_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint fixtures have expected structure with valid configs
+- id: repo_eslint_plugin_compiler_rules_exist
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint plugin shared directory contains ReactCompiler rules
+- id: repo_react_versions_file
+  type: pass_to_pass
+  origin: repo_tests
+  description: ReactVersions.js contains expected package versions
+- id: repo_git_ls_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git tracks expected files in eslint-plugin-react-hooks src
+- id: repo_root_package_json_scripts
+  type: pass_to_pass
+  origin: repo_tests
+  description: Root package.json has expected CI scripts
+- id: repo_scripts_ci_directory
+  type: pass_to_pass
+  origin: repo_tests
+  description: CI scripts directory has expected files
+- id: repo_eslint_config_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Root eslintrc.js exists and has valid structure
+- id: repo_babel_config_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Babel config files exist and have valid structure
+rubric:
+- rule: CHANGELOG.md contains v7.0.0 entry explaining config changes
+  source:
+    path: packages/eslint-plugin-react-hooks/CHANGELOG.md
+- rule: README removes version-specific subsection headings (>= 6.0.0, 5.2.0, etc.)
+  source:
+    path: packages/eslint-plugin-react-hooks/README.md
+- rule: README flat config example uses reactHooks.configs.flat.recommended
+  source:
+    path: packages/eslint-plugin-react-hooks/README.md
+- rule: README custom configuration section lists React Compiler rules
+  source:
+    path: packages/eslint-plugin-react-hooks/README.md
+- rule: README does not reference removed config names like recommended-legacy
+  source:
+    path: packages/eslint-plugin-react-hooks/README.md
+config_edits:
+- path: packages/eslint-plugin-react-hooks/CHANGELOG.md
+  tier: 2
+  gold_added: '## 7.0.0
+
+    This release slims down presets to just 2 configurations.'
+  gold_removed: ''
+- path: packages/eslint-plugin-react-hooks/README.md
+  tier: 2
+  gold_added: (see solve.sh patch)
+  gold_removed: (see solve.sh patch for removed content)

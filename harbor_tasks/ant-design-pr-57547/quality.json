@@ -1,63 +1,61 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert on the specific variable name 'mergedSelectedKeyList' (test_safe_list_variable_exists, test_preserve_cache_effect_uses_safe_list, test_derived_keys_memo_uses_safe_list, test_conduct_check_uses_safe_list, test_dependency_array_uses_safe_list). The instruction.md never mentions this variable name. It mentions 'EMPTY_LIST' and 'mergedSelectedKeys' but not 'mergedSelectedKeyList'. An agent reading only instruction.md cannot discover this specific variable name."
+      "outcome": "pass",
+      "reason": "Instruction names the file, the variable mergedSelectedKeyList, EMPTY_LIST, nullish coalescing, and all call sites tested."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly states: 'The EMPTY_LIST constant should be used as a fallback when mergedSelectedKeys is undefined', 'Both updatePreserveRecordsCache() and conductCheck() must receive valid arrays', 'The derivedSelectedKeys calculation must return a valid array even when checkStrictly is true', and 'All dependency arrays must reference the safe array reference'. This describes the exact fix implementation details, not just what's broken."
+      "reason": "Instruction explicitly prescribes the fix: variable name 'mergedSelectedKeyList', use nullish coalescing with EMPTY_LIST, and enumerates each replacement site (updatePreserveRecordsCache, derivedSelectedKeys, conductCheck, dependency arrays)."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on the exact variable name 'mergedSelectedKeyList' (e.g., test_safe_list_variable_exists asserts 'mergedSelectedKeyList' in content), exact string patterns like 'return [mergedSelectedKeyList,' and 'mergedSelectedKeyList, checkStrictly, keyEntities, isCheckboxDisabled'. A correct alternative fix using a different variable name (e.g., 'safeSelectedKeys') or different implementation approach would fail all fail_to_pass tests."
+      "reason": "Tests assert on exact variable name 'mergedSelectedKeyList' and patterns like 'return [mergedSelectedKeyList,' and 'mergedSelectedKeyList, checkStrictly, keyEntities, isCheckboxDisabled'; alternative correct fixes (e.g., using || [] inline or different name) would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail_to_pass tests (test_safe_list_variable_exists, test_preserve_cache_effect_uses_safe_list, test_derived_keys_memo_uses_safe_list, test_conduct_check_uses_safe_list, test_dependency_array_uses_safe_list, test_no_direct_mergedselectedkeys_in_effect) are ALL string-matching tests using patterns like `assert 'mergedSelectedKeyList' in content`. None of them actually render a Table component or test the runtime behavior of the fix."
+      "reason": "All fail_to_pass tests (test_safe_list_variable_exists, test_preserve_cache_effect_uses_safe_list, etc.) are string matches on file content; no test actually renders the Table or triggers the forEach crash."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "A trivial implementation that simply adds `const mergedSelectedKeyList = mergedSelectedKeys ?? EMPTY_LIST;` and does text substitutions of 'mergedSelectedKeys' to 'mergedSelectedKeyList' in the right places would pass all fail_to_pass tests without actually fixing any runtime crash, since the tests only check for string patterns in the source file, not actual behavior."
+      "outcome": "pass",
+      "reason": "Each f2p asserts a specific code pattern that a stub couldn't satisfy without introducing the variable."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "instruction.md describes a runtime crash scenario (rendering Table, re-rendering with different selectedRowKeys, clicking checkbox), but no test actually verifies this runtime behavior. The tests only check source code text patterns."
+      "reason": "Instruction's 'Expected Behavior' (Table should not crash on undefined selectedRowKeys transition) is not tested behaviorally; only source text patterns are checked."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings, clearly separated into pass_to_pass and fail_to_pass categories, and each test focuses on a specific aspect of the fix."
+      "reason": "Tests have descriptive names and docstrings explaining each check."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a UI component bug, not producing structured data."
+      "reason": "No structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "Paths and names match between instruction, solution, and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names the exact file ('components/table/hooks/useSelection.tsx'), the exact constant ('EMPTY_LIST'), the exact variable ('mergedSelectedKeys'), and the exact functions ('updatePreserveRecordsCache()', 'conductCheck()', 'derivedSelectedKeys'). It also specifies exactly what must change in dependency arrays. This goes far beyond identifying the bug."
+      "reason": "Instruction names the exact file components/table/hooks/useSelection.tsx and prescribes exact variable names and call sites, removing localization and design from the task."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "Code-only task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 2,
-  "fail_count": 7
+  "pass_count": 4,
+  "fail_count": 5
 }

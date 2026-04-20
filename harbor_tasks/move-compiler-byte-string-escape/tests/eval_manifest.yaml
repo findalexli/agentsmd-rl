@@ -1,0 +1,193 @@
+checks:
+- id: test_multibyte_hex_escape_error_handling
+  type: fail_to_pass
+  description: Compiler reports proper error for multi-byte UTF-8 chars in hex escapes,
+    not panic
+  origin: pr_diff
+- id: test_valid_hex_escape_still_works
+  type: fail_to_pass
+  description: Valid hex escape sequences continue to work
+  origin: pr_diff
+- id: test_single_invalid_hex_character
+  type: fail_to_pass
+  description: Compiler handles single invalid hex character correctly
+  origin: pr_diff
+- id: test_various_multibyte_chars
+  type: fail_to_pass
+  description: Compiler handles various multi-byte UTF-8 chars without panicking
+  origin: pr_diff
+- id: test_hex_escape_at_end
+  type: fail_to_pass
+  description: 'Edge case: hex escape at end of string handled gracefully'
+  origin: pr_diff
+- id: test_compiler_unit_tests
+  type: fail_to_pass
+  origin: repo_tests
+  description: Move compiler unit tests pass (repo CI check)
+- id: test_byte_string_expansion_compiles
+  type: fail_to_pass
+  origin: repo_tests
+  description: move-compiler builds without errors (cargo check)
+- id: test_move_compiler_formatting
+  type: pass_to_pass
+  origin: repo_tests
+  description: Move code follows Rust formatting standards (cargo fmt --check)
+- id: test_move_compiler_clippy
+  type: pass_to_pass
+  origin: repo_tests
+  description: Move compiler clippy lints pass (cargo move-clippy from CI)
+- id: test_move_compiler_unit_tests_p2p
+  type: pass_to_pass
+  origin: repo_tests
+  description: Move compiler unit tests pass at base commit (cargo test --lib)
+- id: test_repo_xlint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's custom linter passes (cargo xlint)
+- id: test_repo_git_checks
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's git checks pass (scripts/git-checks.sh)
+- id: test_move_compiler_cargo_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Move compiler compiles without errors (cargo check)
+rubric:
+- rule: Add comments only for non-obvious logic or assumptions, not for routine code.
+  source:
+    path: CLAUDE.md
+    lines: 118-124
+  source_text: '**Do NOT comment the obvious** - comments should not simply repeat
+    what the code does.
+
+    **When to comment**:
+
+    - Non-obvious algorithms or business logic
+
+    - Temporary exclusions, timeouts, or thresholds and their reasoning
+
+    - Complex calculations where the "why" isn''t immediately clear
+
+    - Subtle race conditions or threading considerations
+
+    - Assumptions about external state or preconditions'
+  evidence: 'In `external-crates/move/crates/move-compiler/src/expansion/byte_string.rs`,
+    the diff adds exactly one explanatory comment: `// one or both chars are multi-byte
+    UTF-8`. It is attached to the subtle `OddLength | InvalidStringLength` error path,
+    where two `char`s were read but `hex::decode` can still fail because a `char`
+    may occupy multiple UTF-8 bytes. That is a non-obvious assumption/precondition,
+    so the added comment matches the rule.'
+  category: commenting
+  verification: llm_judge
+- rule: Do not add comments for obvious assignments, library calls, or basic control
+    flow.
+  source:
+    path: CLAUDE.md
+    lines: 118,126-130
+  source_text: '**Do NOT comment the obvious** - comments should not simply repeat
+    what the code does.
+
+
+    **When NOT to comment**:
+
+    - Simple variable assignments
+
+    - Standard library usage
+
+    - Self-descriptive function calls
+
+    - Basic control flow (if/for/while)'
+  evidence: The patch substantially rewrites the `match (d0_opt, d1_opt)` handling
+    and the `hex::decode(hex)` error branches, but it does not add comments to straightforward
+    operations like `hex.push(d0)`, `buffer.extend(hex_buffer)`, or the normal `InvalidHexCharacter`
+    branch. The only added comment is reserved for the non-obvious UTF-8 case.
+  category: commenting
+  verification: llm_judge
+distractors:
+- rule: cargo build -p sui-core
+  collision_type: scope_ambiguity
+  why_distracting: The config suggests building `sui-core` as an example, but the
+    agent is working on `move-compiler` in `external-crates`. Building `sui-core`
+    is irrelevant to this PR and wastes time.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 32-33
+- rule: Run e2e tests. simtests must be run with `cargo simtest` to avoid false negatives
+  collision_type: scope_ambiguity
+  why_distracting: The config instructs running `cargo simtest -p sui-e2e-tests`,
+    which runs end-to-end tests for the Sui blockchain. This is completely unrelated
+    to the Move compiler bug and would waste significant time.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 38-40
+- rule: Use simtest-debug for debugging simulation tests
+  source:
+    path: .claude/skills/simtest-debug/SKILL.md
+    lines: 1-10
+  collision_type: scope_ambiguity
+  why_distracting: The agent might assume the compiler panic needs to be debugged
+    using the repository's custom simtest framework, leading it down a wrong path
+    since this is a pure compiler parsing bug.
+  severity: low
+- rule: 'Add your changes to the appropriate version block. Follow these patterns:
+    modify `cfg.some_constant`, add `ProtocolConfig` option fields, or add `FeatureFlags`
+    booleans.'
+  source:
+    path: .claude/skills/protocol-config/SKILL.md
+    lines: 92-109
+  source_text: 'Add your changes to the appropriate version block. Follow these patterns:
+
+
+    **Modify an existing constant:**
+
+    ```rust
+
+    cfg.some_constant = Some(new_value);
+
+    ```
+
+
+    **Add a new constant (which is None in prior versions):**
+
+    ```rust
+
+    cfg.new_constant = Some(new_value);
+
+    ```
+
+    Note: You must also add the field to the `ProtocolConfig` struct with type `Option<T>`.
+    The `ProtocolConfigAccessors` derive macro automatically generates accessor methods
+    (`new_constant()` and `new_constant_as_option()`).
+
+
+    **Add a new feature flag:**
+
+    ```rust
+
+    cfg.feature_flags.new_feature = true;
+
+    ```
+
+    Note: You must also add the field to the `FeatureFlags` struct with type `bool`.
+    The `ProtocolConfigFeatureFlagsGetters` derive macro automatically generates the
+    getter method.'
+  collision_type: architecture_boundary
+  why_distracting: 'The gold diff changes behavior, so an agent might think it should
+    be rolled behind protocol configuration or feature flags. That would be wrong
+    here: the changed file is the external Move compiler''s byte-string parser, not
+    Sui protocol-config code, and pushing parser correctness into `ProtocolConfig`
+    would violate layering.'
+  severity: high
+hierarchy_analysis: The hierarchy consists of two root-level files (`AGENTS.md` and
+  `CLAUDE.md`). `CLAUDE.md` mentions that sub-crate `CLAUDE.md` files should override
+  it, but no sub-crate configs are provided in the context. The agent must recognize
+  that the global examples in `CLAUDE.md` (like testing `sui-core`) do not apply to
+  the `move-compiler` crate.
+version: 2.0
+source:
+  repo: MystenLabs/sui
+  pr: 26032
+  base_commit: 92bc40908e2cd3a35255295fcde7d897f6e45910
+  merge_commit: 47cc0bb95fba0d3dcdd38632a7f8d6e748f4b5ea

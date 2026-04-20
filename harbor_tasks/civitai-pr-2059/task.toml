@@ -1,0 +1,33 @@
+[task]
+name = "civitai-username-blocklist"
+version = "1.0.0"
+
+[task.title]
+short = "Username blocklist anti-impersonation"
+full = "Prevent Civitai staff impersonation via username blocklist"
+
+[task.description]
+summary = "Strengthen anti-impersonation protections by expanding username blocklist to prevent 'civit' and leet-speak variants"
+details = """
+This PR adds protection against users impersonating Civitai staff by:
+1. Adding 'civit' and leet-speak variants (c1vit, civ1t, c1v1t) to the username partial blocklist
+2. Making isUsernamePermitted async to support dynamic blocklist from database
+3. Expanding auto-mute from Chat-only to Comment and CommentV2 entities
+4. Adding server-side username validation during onboarding
+
+Files changed:
+- src/utils/blocklist-username.json: Adds civit variants to partial blocklist
+- src/server/services/user.service.ts: Makes isUsernamePermitted async
+- src/server/jobs/entity-moderation.ts: Expands auto-mute to Comment/CommentV2
+- src/server/controllers/user.controller.ts: Uses await with isUsernamePermitted
+- src/server/common/enums.ts: Adds UsernameExact/UsernamePartial to BlocklistType
+"""
+
+[task.metadata]
+difficulty = "medium"
+estimated_time_minutes = 30
+tags = ["security", "username-filtering", "moderation", "typescript"]
+
+[agent]
+allowed_tools = ["Bash", "Read", "Edit", "Glob", "Grep", "WebFetch"]
+max_iterations = 100

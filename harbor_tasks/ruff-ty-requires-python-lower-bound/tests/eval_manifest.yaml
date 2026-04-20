@@ -1,0 +1,108 @@
+version: '2.0'
+source:
+  repo: astral-sh/ruff
+  pr: 24401
+  base_commit: af9ae49e84daf09f74e654ba3e6d87fe94f6d1ca
+  merge_commit: 62a863cf518086135dfd2321c92fbc3823f95de8
+checks:
+- id: ty_binary_exists
+  type: pass_to_pass
+  origin: static
+  description: ty binary was built successfully during Docker build
+- id: requires_python_27_no_panic
+  type: fail_to_pass
+  origin: pr_diff
+  description: ty handles requires-python='==2.7' gracefully, resolving to the lowest
+    supported version instead of panicking
+- id: requires_python_future_version_error
+  type: fail_to_pass
+  origin: pr_diff
+  description: ty gives a clear error for requires-python='==44.44' instead of panicking
+- id: requires_python_normal_version
+  type: pass_to_pass
+  origin: pr_diff
+  description: ty works normally with standard requires-python specifier '>=3.10'
+- id: requires_python_310_exact
+  type: pass_to_pass
+  origin: pr_diff
+  description: ty works with exact-version requires-python '==3.10'
+- id: no_unwrap_in_resolve_requires_python
+  type: pass_to_pass
+  origin: agent_config
+  description: 'resolve_requires_python avoids .unwrap() and panic! (AGENTS.md: avoid
+    panic!/unwrap)'
+  source:
+    path: AGENTS.md
+    lines: '79'
+    commit: af9ae49e84daf09f74e654ba3e6d87fe94f6d1ca
+- id: no_local_imports_in_resolve
+  type: pass_to_pass
+  origin: agent_config
+  description: 'No local use/import statements inside functions (AGENTS.md: imports
+    at top of file)'
+  source:
+    path: AGENTS.md
+    lines: '76'
+    commit: af9ae49e84daf09f74e654ba3e6d87fe94f6d1ca
+- id: repo_cargo_fmt
+  type: pass_to_pass
+  origin: repo_tests
+  description: cargo fmt --check passes (repo CI)
+- id: repo_cargo_check_ty_project
+  type: pass_to_pass
+  origin: repo_tests
+  description: cargo check -p ty_project passes (repo CI)
+- id: repo_cargo_clippy_ty_project
+  type: pass_to_pass
+  origin: repo_tests
+  description: cargo clippy -p ty_project --all-targets --all-features passes (repo
+    CI)
+rubric:
+- rule: All changes must be tested. If you're not testing your changes, you're not
+    done.
+  source:
+    path: AGENTS.md
+    lines: 56-56
+  reference: The gold solution adds two new tests (`requires_python_old_version_uses_lowest_supported_version`
+    and `requires_python_unsupported_future_version`) to verify the new behavior.
+  category: testing
+- rule: Look to see if your tests could go in an existing file before adding a new
+    file for your tests.
+  source:
+    path: AGENTS.md
+    lines: 57-57
+  reference: The gold solution adds the new tests to the existing `crates/ty_project/src/metadata.rs`
+    file rather than creating a new test file.
+  category: testing
+- rule: Try hard to avoid patterns that require `panic!`, `unreachable!`, or `.unwrap()`.
+  source:
+    path: AGENTS.md
+    lines: 63-63
+  reference: The gold solution handles the `None` case from `PythonVersion::iter().find(...)`
+    by returning a `ResolveRequiresPythonError::NoSupportedVersion` instead of using
+    `.unwrap()` or panicking.
+  category: architecture
+distractors:
+- rule: Run a single mdtest file. The path to the mdtest file should be relative to
+    the `crates/ty_python_semantic/resources/mdtest` folder
+  collision_type: architecture_boundary
+  why_distracting: The agent might try to write an mdtest for this feature since it's
+    a ty-specific change, but project metadata discovery is tested via standard Rust
+    unit tests in `metadata.rs`.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 18-26
+- rule: Avoid writing significant amounts of new code. This is often a sign that we're
+    missing an existing method or mechanism that could help solve the problem. Look
+    for existing utilities first.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might waste time looking for an existing version clamping
+    utility, but the gold solution implements the clamping logic manually using `PythonVersion::iter().find(...)`.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 70-70
+hierarchy_analysis: The config hierarchy is flat, with `CLAUDE.md` simply pointing
+  to `AGENTS.md`. The rules are general repository guidelines rather than deeply nested
+  or conflicting module-specific rules.

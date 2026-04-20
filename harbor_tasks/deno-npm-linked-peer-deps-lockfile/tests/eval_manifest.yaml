@@ -1,0 +1,219 @@
+version: '2.0'
+source:
+  repo: denoland/deno
+  pr: 33143
+  base_commit: dba93738662f4b6ad47356095f230f5be76a7908
+  merge_commit: 6383876893b0cfe7e6622259e9207a175fa24043
+checks:
+- id: deno_npm_compiles
+  type: pass_to_pass
+  origin: static
+  description: The deno_npm crate compiles successfully after changes
+- id: no_raw_key_comparison_for_link_packages
+  type: fail_to_pass
+  origin: pr_diff
+  description: Link package lookup must not compare against raw serialized lockfile
+    key (includes peer dep suffix)
+- id: dist_check_not_using_raw_key
+  type: fail_to_pass
+  origin: pr_diff
+  description: The dist assignment must not use raw serialized key for link package
+    matching
+- id: linked_peer_deps_unit_test_passes
+  type: fail_to_pass
+  origin: pr_diff
+  description: Unit test for linked packages with peer dep lockfile keys must exist
+    and pass
+- id: existing_snapshot_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Pre-existing snapshot unit tests still pass
+- id: deno_npm_lib_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: All deno_npm library unit tests pass
+- id: deno_npm_clippy
+  type: pass_to_pass
+  origin: repo_tests
+  description: deno_npm passes clippy linting
+- id: deno_npm_fmt
+  type: pass_to_pass
+  origin: repo_tests
+  description: deno_npm code is properly formatted
+- id: deno_npm_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: deno_npm passes cargo check
+- id: deno_npm_lib_tests_locked
+  type: pass_to_pass
+  origin: repo_tests
+  description: deno_npm library tests pass with --locked flag as CI does
+- id: deno_npm_clippy_locked
+  type: pass_to_pass
+  origin: repo_tests
+  description: deno_npm passes clippy linting with --locked flag as CI does
+- id: deno_lockfile
+  type: pass_to_pass
+  origin: repo_tests
+  description: deno_lockfile tests pass (related crate)
+- id: deno_npm_all_features
+  type: pass_to_pass
+  origin: repo_tests
+  description: deno_npm compiles with all features enabled
+- id: test_deno_npm_cache
+  type: pass_to_pass
+  origin: repo_tests
+  description: deno_npm_cache library tests pass (related crate)
+- id: test_deno_npmrc
+  type: pass_to_pass
+  origin: repo_tests
+  description: deno_npmrc library tests pass (related crate)
+- id: test_deno_npm_installer
+  type: pass_to_pass
+  origin: repo_tests
+  description: deno_npm_installer library tests pass (related crate)
+- id: test_deno_package_json
+  type: pass_to_pass
+  origin: repo_tests
+  description: deno_package_json library tests pass (related crate)
+- rule: Keep changes minimal and focused; avoid drive-by changes
+  source:
+    path: CLAUDE.md
+    lines: 31-33
+    commit: dba93738662f4b6ad47356095f230f5be76a7908
+- rule: Run tools/format.js and tools/lint.js before committing changes
+  source:
+    path: CLAUDE.md
+    lines: 26-30
+    commit: dba93738662f4b6ad47356095f230f5be76a7908
+- rule: Prioritize correctness bugs - logic errors should be the primary focus
+  source:
+    path: .github/copilot-instructions.md
+    lines: 139-147
+    commit: dba93738662f4b6ad47356095f230f5be76a7908
+- rule: Keep your changes minimal, don't do drive-by changes in a PR.
+  source:
+    path: CLAUDE.md
+    lines: 39-41
+  evidence: The gold solution strictly modifies the specific lines in `snapshot_from_lockfile`
+    related to linked package identification (changing `link_package_ids` to `link_package_nvs`)
+    and adds a single focuse
+  category: style
+distractors:
+- rule: Unit tests should be placed in the `tests/unit/` directory.
+  collision_type: architecture_boundary
+  why_distracting: The config states that unit tests belong in the `tests/unit/` directory.
+    However, the file being edited (`libs/npm/resolution/snapshot.rs`) uses an inline
+    `mod tests` block. An agent strictly following the config might try to create
+    a new file in `tests/unit/` instead of adding the test to the existing inline
+    test module, violating the local file's established convention.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 50-52
+- rule: Create a new git branch, push your branch to the remote repository, and open
+    a pull request.
+  collision_type: meta_confusion
+  why_distracting: The config instructs the developer to create a git branch, push
+    to a remote repository, and open a GitHub pull request. In an agentic evaluation
+    environment, attempting to perform these git/GitHub operations will fail and waste
+    execution steps.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 18-22
+- rule: The main form of integration test in deno is the 'spec' test... Create a directory
+    in `tests/specs/` with a descriptive name and add a `__test__.jsonc` file.
+  source:
+    path: CLAUDE.md
+    lines: 164-176
+  source_text: '## "spec" tests
+
+
+    The main form of integration test in deno is the "spec" test. These tests can
+    be
+
+    found in `tests/specs`. The idea is that you have a `__test__.jsonc` file that
+
+    lays out one or more tests, where a test is a CLI command to execute and the
+
+    output is captured and asserted against.
+
+
+    The name of the test comes from the directory the `__test__.jsonc` appears in.
+
+
+    ### Creating a New Spec Test
+
+
+    1. Create a directory in `tests/specs/` with a descriptive name
+
+    2. Add a `__test__.jsonc` file describing your test steps'
+  collision_type: scope_ambiguity
+  why_distracting: Since lockfile behavior has a user-facing CLI aspect, an agent
+    might incorrectly assume it should write a full CLI integration 'spec' test in
+    `tests/specs/`. However, this specific fix modifies an internal logic function
+    (`snapshot_from_lockfile`) inside a library crate (`libs/npm`), which is most
+    appropriately tested with an inline unit test.
+  severity: medium
+- rule: Test fixtures and data files belong in `tests/testdata/`.
+  source:
+    path: CLAUDE.md
+    lines: '63'
+  source_text: '- `tests/testdata/` - Test fixtures and data files'
+  collision_type: rule_conflict
+  why_distracting: An agent might interpret this list of directories as a strict requirement
+    that all mock data (such as the JSON lockfile content required for the test) must
+    be placed in a separate file in `tests/testdata/`. The gold diff correctly uses
+    a more readable raw string literal (`r#"..."#`) inline for the unit test instead.
+  severity: low
+- rule: The main form of integration test is the 'spec' test in `tests/specs/`. Each
+    test has a `__test__.jsonc` file describing CLI commands to run and expected output.
+  source:
+    path: .github/copilot-instructions.md
+    lines: 130-134
+  source_text: '### Spec Tests
+
+
+    The main form of integration test is the "spec" test in `tests/specs/`. Each
+
+    test has a `__test__.jsonc` file describing CLI commands to run and expected
+
+    output. The schema is in `tests/specs/schema.json`.'
+  collision_type: scope_ambiguity
+  why_distracting: An agent might try to create an integration test via CLI rather
+    than verifying the rust-level fix with a module-level unit test.
+  severity: medium
+hierarchy_analysis: The configuration is a flat, single file (`CLAUDE.md`). The primary
+  conflict arises between the general repository layout guidelines (which dictate
+  tests go in `tests/unit/`) and the local file conventions (which use inline `mod
+  tests`). The agent must prioritize the local context over the global config.
+rubric:
+- rule: Keep your changes minimal, don't do drive-by changes in a PR.
+  source:
+    path: CLAUDE.md
+    lines: 31-33
+  evidence: The diff strictly targets the `snapshot_from_lockfile` function and its
+    corresponding test module, avoiding any unrelated refactoring or drive-by changes.
+  category: style
+- rule: Unit tests must be written inline with the source code in each module.
+  source:
+    path: CLAUDE.md
+    lines: '160'
+  source_text: '- **Unit tests** - Inline with source code in each module'
+  evidence: The diff adds a new test `test_snapshot_from_lockfile_v5_with_linked_package_with_peer_deps`
+    using the `#[tokio::test]` macro directly inside the `libs/npm/resolution/snapshot.rs`
+    file within a `mod tests` block, adhering perfectly to this inline unit testing
+    convention.
+  category: Testing
+  verification: llm_judge
+- rule: Unit tests should be placed inline with the source code in each module.
+  source:
+    path: .github/copilot-instructions.md
+    lines: '126'
+  source_text: '- **Unit tests** — Inline with source code in each module'
+  evidence: The new test `test_snapshot_from_lockfile_v5_with_linked_package_with_peer_deps`
+    is added directly within `libs/npm/resolution/snapshot.rs` instead of an external
+    testing file.
+  category: Testing
+  verification: llm_judge

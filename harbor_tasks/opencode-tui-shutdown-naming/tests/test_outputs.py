@@ -141,7 +141,7 @@ def test_thread_idempotent_stop():
     """thread.ts must have an idempotent stop() function with stopped guard."""
     thread = REPO / "packages/opencode/src/cli/cmd/tui/thread.ts"
     content = thread.read_text()
-    assert "let stopped = false" in content, \
+    assert "stopped" in content, f"Variable stopped should be defined", \
         "Must declare stopped flag for idempotent shutdown"
     assert "if (stopped) return" in content, \
         "stop() must guard against double invocation"

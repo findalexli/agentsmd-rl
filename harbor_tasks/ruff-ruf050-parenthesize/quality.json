@@ -1,61 +1,59 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "The instruction mandates specific literal strings like 'parenthesized_range', 'has_top_level_line_break', 'condition_as_expression', 'is_named_expr', and a format! pattern '\"({', which are checked by test_replacement_handles_multiline and test_walrus_still_parenthesized. While most of these are mentioned in instruction.md, the tests also check things like exact fixture structure (test_fixture_retains_existing_cases checks for 'x := ', 'foo()', 'pass'), the existence of specific Rust symbols ('un"
+      "outcome": "pass",
+      "reason": "Instruction explicitly lists all required literal strings (parenthesized_range, has_top_level_line_break, condition_as_expression, is_named_expr, StmtIf, has_side_effects, Edit, Fix, unnecessary_if, format! with '({') and fixture requirements (walrus, foo(), pass, BinOp, Call with name+int args)."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md dictates exact implementation details: specific function names ('condition_as_expression', 'has_top_level_line_break'), specific variable names ('is_named_expr', 'needs_parens', 'nesting'), exact format string pattern ('format! with \"({'), and use of 'parenthesized_range'. It also specifies the approach (detect multiline at top level, preserve existing parentheses or add new ones). This is essentially a specification of the solution, not just a description of the bug."
+      "reason": "Instruction dictates specific implementation identifiers like 'parenthesized_range', 'has_top_level_line_break', 'condition_as_expression', 'is_named_expr' that must appear literally \u2014 this effectively names the gold solution's internal helper functions rather than describing what to change."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_replacement_handles_multiline checks for gold-specific identifiers like 'is_named_expr', 'parenthesized_range', 'has_top_level_line_break', 'condition_as_expression'. test_walrus_still_parenthesized checks for 'is_named_expr' and a regex for 'format!(\"({'. An alternative correct fix using different function/variable names (e.g., 'wrap_multiline_expr', 'check_needs_wrapping') would fail these string-matching tests even if behaviorally correct."
+      "reason": "test_replacement_handles_multiline and test_walrus_still_parenthesized require the literal strings 'is_named_expr' and format pattern 'format!(\"({'; an alternative correct fix using different helper names or approaches (e.g., checking for newlines differently, or different parenthesization strategy) would fail."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "test_replacement_handles_multiline and test_walrus_still_parenthesized are purely text-matching tests (checking for string literals in source code). test_core_ruf050_logic_intact checks for string presence in the Rust file. While some tests do execute subprocesses (cargo test, python -c with AST parsing), several core fail-to-pass tests are purely 'assert string in open(path).read()' style checks."
+      "outcome": "pass",
+      "reason": "Tests execute subprocesses (cargo test RUF050, unnecessary_if integration tests, python AST parsing of fixture, py_compile) in addition to string checks."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests require actual changes: test_fixture_has_multiline_expression requires adding an if-statement with BinOp condition to the fixture (not present in original), test_fixture_has_multiline_call requires adding a Call with multiple int args, and test_replacement_handles_multiline requires specific identifiers in the Rust source. A stub/no-op would not pass these."
+      "reason": "test_repo_ruf050_unit_tests and test_repo_unnecessary_if_integration run actual cargo tests which verify runtime behavior, not just stubs."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction describes: multiline arithmetic expression test case, multiline function call test case, preserving walrus operator handling, and adding parentheses for multiline expressions. All of these are tested: fixture tests check for BinOp and Call patterns, text tests check for walrus handling preservation, and cargo tests validate actual behavior."
+      "reason": "Instruction-required behaviors (multiline BinOp case, multiline Call case, walrus preservation, existing cases preserved, syntactic validity) all have corresponding tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section headers (fail-to-pass, pass-to-pass static, pass-to-pass repo_tests), descriptive function names, and docstrings explaining each test's purpose."
+      "reason": "Tests are grouped by section headers (fail_to_pass, pass_to_pass static, pass_to_pass repo_tests) with clear naming and docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task produces code changes (Rust source and Python fixture), not structured data like JSON/CSV/API/DB."
+      "reason": "Task modifies Rust source and Python fixture, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, commands, and identifiers appear consistent and correctly spelled throughout the instruction and test files."
+      "reason": "Paths, function names, and commands appear consistent and correct."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names the exact file to modify ('crates/ruff_linter/src/rules/ruff/rules/unnecessary_if.rs'), specifies exact function names to create ('condition_as_expression', 'has_top_level_line_break'), exact variable names ('is_named_expr', 'nesting', 'needs_parens'), and the exact format string pattern. This goes far beyond identifying the buggy module."
+      "reason": "Instruction names the exact rule file/module ('RUF050 rule implementation', 'unnecessary_if') and enumerates exact internal helper names ('parenthesized_range', 'has_top_level_line_break', 'condition_as_expression') \u2014 localization and implementation-level details are spelled out."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying Rust source and Python test fixtures, not configuration files."
+      "reason": "Code/fixture task, not a config edit task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
     "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 5
+  "pass_count": 6,
+  "fail_count": 3
 }

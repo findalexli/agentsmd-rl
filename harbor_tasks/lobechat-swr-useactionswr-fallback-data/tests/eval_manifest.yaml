@@ -1,0 +1,323 @@
+version: '2.0'
+source:
+  repo: lobehub/lobe-chat
+  pr: 11514
+  base_commit: 959c210e869803545d451c3019e178966188ef17
+  merge_commit: d44616354efaa54d76bd388a67ed8ed4736f279e
+checks:
+- id: swr_module_loads
+  type: pass_to_pass
+  origin: static
+  description: SWR module can be loaded and exports all expected hooks (useClientDataSWR,
+    useOnlyFetchOnceSWR, useActionSWR)
+- id: repo_swr_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: npx vitest run src/libs/swr/ - runs localStorageProvider.test.ts (16
+    tests)
+- id: repo_swr_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: npx eslint src/libs/swr/index.ts - verifies code style
+- id: repo_swr_prettier
+  type: pass_to_pass
+  origin: repo_tests
+  description: npx prettier --check src/libs/swr/index.ts - verifies formatting
+- id: use_action_swr_uses_fallback_data
+  type: fail_to_pass
+  origin: pr_diff
+  description: useActionSWR uses useSWR with fallbackData instead of useSWRMutation
+- id: swr_comments_english_only
+  type: fail_to_pass
+  origin: pr_diff
+  description: SWR module comments are in English, not Chinese
+- id: claude_md_references_linear_mdc
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLAUDE.md references .cursor/rules/linear.mdc for Linear rules
+- id: linear_mdc_exists_with_rules
+  type: fail_to_pass
+  origin: pr_diff
+  description: .cursor/rules/linear.mdc file exists with Linear issue management rules
+rubric:
+- rule: New cursor rules files (.mdc) should include standard frontmatter (e.g., '---',
+    'alwaysApply', '---') to match the implicit convention seen in existing files
+  source:
+    path: .cursor/rules/cursor-rules.mdc
+    lines: 1-5
+    commit: 959c210e869803545d451c3019e178966188ef17
+  evidence: The gold solution creates .cursor/rules/linear.mdc with frontmatter containing
+    ---, alwaysApply true, and --- at the top of the file.
+  category: conventions
+- rule: Reference external rule files using the '@.cursor/rules/filename.mdc' syntax
+  source:
+    path: CLAUDE.md
+    lines: 9-15
+  evidence: The gold solution replaces the inline Linear rules with 'Read @.cursor/rules/linear.mdc',
+    following the established pattern of referencing external rule files with the
+    '@.cursor/rules/' syntax seen in
+  category: documentation
+- rule: Use SWR for state management
+  source:
+    path: AGENTS.md
+    lines: 14-15
+  evidence: The gold solution implements useActionSWR using SWR's useSWR hook with
+    fallbackData and revalidateOnMount set to false to prevent auto-fetching, matching
+    the project's SWR-based state management approach.
+  category: architecture
+- rule: Use `@.cursor/rules/filename.mdc` syntax to reference external rule files.
+  source:
+    path: CLAUDE.md
+    lines: 10-14
+  evidence: The gold solution replaces the inline Linear rules with `Read @.cursor/rules/linear.mdc`,
+    perfectly matching the existing syntax used in CLAUDE.md for referencing external
+    rules (e.g., `read @.cursor/
+  category: documentation
+- rule: All project rules are saved under the `.cursor/rules/` directory.
+  source:
+    path: AGENTS.md
+    lines: 65-66
+  evidence: The gold solution creates `.cursor/rules/linear.mdc` as a new file in
+    the `.cursor/rules/` directory, following the established convention where all
+    rule files like `cursor-rules.mdc`, `react.mdc`, etc. are stored.
+  category: architecture
+- rule: Linear Issue Management rules and MCP tool usage instructions.
+  source:
+    path: CLAUDE.md
+    lines: 62-92
+  evidence: The agent extracts the exact Linear issue management instructions from
+    CLAUDE.md into the new `.mdc` file, preserving the content of the rules while
+    changing their location.
+  category: documentation
+- rule: Use the `@.cursor/rules/filename.mdc` syntax to reference external rule files
+    in markdown documentation.
+  source:
+    path: CLAUDE.md
+    lines: 10-32
+  evidence: The gold solution replaces the inline Linear rules with `Read @.cursor/rules/linear.mdc
+    when working with Linear issues.`, matching the `@.cursor/rules/...` reference
+    syntax used elsewhere in the file
+  category: documentation
+config_edits:
+- path: .cursor/rules/linear.mdc
+  tier: 1
+  gold_added: '---
+
+    alwaysApply: true
+
+    ---
+
+
+    # Linear Issue Management
+
+
+    When working with Linear issues:
+
+
+    1. **Retrieve issue details** before starting work using `mcp__linear-server__get_issue`
+
+    2. **Check for sub-issues**: If the issue has sub-issues, retrieve and review
+    ALL sub-issues using `mcp__linear-server__list_issues` with `parentId` filter
+    before starting work
+
+    3. **Update issue status** when completing tasks using `mcp__linear-server__update_issue`
+
+    4. **MUST add completion comment** using `mcp__linear-server__create_comment`
+
+
+    ## Creating Issues
+
+
+    When creating new Linear issues using `mcp__linear-server__create_issue`, **MUST
+    add the `claude code` label** to indicate the issue was created by Claude Code.
+
+
+    ## Completion Comment (REQUIRED)
+
+
+    **Every time you complete an issue, you MUST add a comment summarizing the work
+    done.** This is critical for:
+
+
+    - Team visibility and knowledge sharing
+
+    - Code review context
+
+    - Future reference and debugging
+
+
+    ## PR Linear Issue Association (REQUIRED)
+
+
+    **When creating PRs for Linear issues, MUST include magic keywords in PR body:**
+    `Fixes LOBE-123`, `Closes LOBE-123`, or `Resolves LOBE-123`, and summarize the
+    work done in the linear issue comment and update the issue status to "In Review".
+
+
+    ## IMPORTANT: Per-Issue Completion Rule
+
+
+    **When working with multiple issues (e.g., parent issue with sub-issues), you
+    MUST update status and add comment for EACH issue IMMEDIATELY after completing
+    it.** Do NOT wait until all issues are done to update them in batch.
+
+
+    **Workflow for EACH individual issue:**
+
+
+    1. Complete the implementation for this specific issue
+
+    2. Run type check: `bun run type-check`
+
+    3. Run related tests if applicable
+
+    4. Create PR if needed
+
+    5. **IMMEDIATELY** update issue status to **"In Review"** (NOT "Done"): `mcp__linear-server__update_issue`
+
+    6. **IMMEDIATELY** add completion comment: `mcp__linear-server__create_comment`
+
+    7. Only then move on to the next issue
+
+
+    **Note:** Issue status should be set to **"In Review"** when PR is created. The
+    status will be updated to **"Done"** only after the PR is merged (usually handled
+    by Linear-GitHub integration or manually).
+
+
+    **Wrong approach:**
+
+
+    - Complete Issue A -> Complete Issue B -> Complete Issue C -> Update all statuses
+    -> Add all comments
+
+    - Mark issue as "Done" immediately after creating PR
+
+
+    **Correct approach:**
+
+
+    - Complete Issue A -> Create PR -> Update A status to "In Review" -> Add A comment
+    -> Complete Issue B -> ...'
+  gold_removed: ''
+- path: CLAUDE.md
+  tier: 1
+  gold_added: '## Linear Issue Management(ignore if not installed linear mcp)
+
+    Read @.cursor/rules/linear.mdc when working with Linear issues.'
+  gold_removed: '## Linear Issue Management (ignore if not installed linear mcp)
+
+    When working with Linear issues:
+
+
+    1. **Retrieve issue details** before starting work using `mcp__linear-server__get_issue`
+
+    2. **Check for sub-issues**: If the issue has sub-issues, retrieve and review
+    ALL sub-issues using `mcp__linear-server__list_issues` with `parentId` filter
+    before starting work
+
+    3. **Update issue status** when completing tasks using `mcp__linear-server__update_issue`
+
+    4. **MUST add completion comment** using `mcp__linear-server__create_comment`
+
+
+    ### Creating Issues
+
+
+    When creating new Linear issues using `mcp__linear-server__create_issue`, **MUST
+    add the `claude code` label** to indicate the issue was created by Claude Code.
+
+
+    ### Completion Comment (REQUIRED)
+
+
+    **Every time you complete an issue, you MUST add a comment summarizing the work
+    done.** This is critical for:
+
+
+    - Team visibility and knowledge sharing
+
+    - Code review context
+
+    - Future reference and debugging
+
+
+    ### PR Linear Issue Association (REQUIRED)
+
+
+    **When creating PRs for Linear issues, MUST include magic keywords in PR body:**
+    `Fixes LOBE-123`, `Closes LOBE-123`, `Resolves LOBE-123`, and summarize the work
+    done in the linear issue comment and update the issue status to "In Review".
+
+
+    ### IMPORTANT: Per-Issue Completion Rule
+
+
+    **When working on multiple issues (e.g., parent issue with sub-issues), you MUST
+    update status and add comment for EACH issue IMMEDIATELY after completing it.**
+    Do NOT wait until all issues are done to update them in batch.
+
+
+    **Workflow for EACH individual issue:**
+
+
+    1. Complete the implementation for this specific issue
+
+    2. Run type check: `bun run type-check`
+
+    3. Run related tests if applicable
+
+    4. Create PR if needed
+
+    5. **IMMEDIATELY** update issue status to **"In Review"** (NOT "Done"): `mcp__linear-server__update_issue`
+
+    6. **IMMEDIATELY** add completion comment: `mcp__linear-server__create_comment`
+
+    7. Only then move on to the next issue
+
+
+    **Note:** Issue status should be set to **"In Review"** when PR is created. The
+    status will be updated to **"Done"** only after the PR is merged (usually handled
+    by Linear-GitHub integration or manually).
+
+
+    **Wrong approach:**
+
+
+    - Complete Issue A -> Complete Issue B -> Complete Issue C -> Update all statuses
+    -> Add all comments
+
+    - Mark issue as "Done" immediately after creating PR
+
+
+    **Correct approach:**
+
+
+    - Complete Issue A -> Create PR -> Update A status to "In Review" -> Add A comment
+    -> Complete Issue B -> ...'
+distractors:
+- rule: Retrieve issue details before starting work using mcp__linear-server__get_issue
+  collision_type: meta_confusion
+  why_distracting: The agent is instructed to extract the Linear issue management
+    rules. Because the text itself contains commands like `mcp__linear-server__get_issue`,
+    the agent might get confused and attempt to actually invoke these MCP tools to
+    find an issue for the current task, rather than just treating the text as string
+    content to be moved.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 55-60
+- rule: 'i18n Keys: Add to src/locales/default/namespace.ts'
+  collision_type: scope_ambiguity
+  why_distracting: The prompt asks the agent to translate non-English comments in
+    the SWR module. The agent might mistakenly apply the project's i18n rules and
+    attempt to extract these code comments into `src/locales/default/namespace.ts`,
+    which is meant for UI text, not inline code comments.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 50-52
+hierarchy_analysis: The agent must read `CLAUDE.md` to locate the inline rules, extract
+  them to a new file in the `.cursor/rules/` directory (as established by the pattern
+  in `AGENTS.md` and `CLAUDE.md`), and update `CLAUDE.md` to reference the new file
+  using the project's specific `@.cursor/rules/...` syntax.

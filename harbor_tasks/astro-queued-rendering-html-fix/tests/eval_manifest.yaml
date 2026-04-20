@@ -1,0 +1,85 @@
+source:
+  repo: withastro/astro
+  pr_number: 16080
+  merge_commit: e80ac73e4433d1ac0518af731f2af00f8aaa46ad
+  base_commit: be661fb9fd1348ffb038f561f9f053b1c64a3696
+  task_name: astro-queued-rendering-html-fix
+
+checks:
+  # Fail-to-pass tests
+  - id: test_html_page_not_escaped
+    type: fail_to_pass
+    origin: regression
+    description: HTML pages should NOT have their content escaped in queued rendering mode
+
+  - id: test_regular_components_still_escaped
+    type: fail_to_pass
+    origin: regression
+    description: Regular (non-.html) components should still have content escaped
+
+  # Pass-to-pass tests
+  - id: test_queue_rendering_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: All queue rendering unit tests pass
+
+  - id: test_render_page_module_exists
+    type: pass_to_pass
+    origin: structural
+    description: The render/page module can be imported
+
+  - id: test_repo_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repository lint passes
+
+  - id: test_import_escape_module
+    type: pass_to_pass
+    origin: structural
+    description: The escape module with markHTMLString function is available
+
+  - id: test_render_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: All render unit tests pass
+
+  - id: test_html_page_integration_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: HTML page integration tests pass
+
+  - id: test_jsx_queue_rendering_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: JSX queue rendering tests pass
+
+  - id: test_html_escape_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: HTML escape tests pass
+
+  - id: test_biome_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: Biome linting passes on the codebase
+
+rubric:
+  - id: use_markhtmlstring
+    description: The fix imports markHTMLString from escape.js and uses it to mark HTML strings
+    source: "packages/astro/src/runtime/server/render/page.ts"
+    reference: "import { markHTMLString } from '../escape.js';"
+
+  - id: check_astro_html_flag
+    description: The fix checks astro:html flag on component factory to identify HTML pages
+    source: "packages/astro/src/runtime/server/render/page.ts"
+    reference: "(componentFactory as any)['astro:html']"
+
+  - id: typeof_string_check
+    description: The fix includes typeof string check before marking vnode as safe
+    source: "packages/astro/src/runtime/server/render/page.ts"
+    reference: "typeof vnode === 'string'"
+
+  - id: apply_markhtmlstring
+    description: The fix applies markHTMLString to vnode for HTML page content
+    source: "packages/astro/src/runtime/server/render/page.ts"
+    reference: "vnode = markHTMLString(vnode);"

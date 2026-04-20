@@ -1,0 +1,113 @@
+checks:
+- id: test_buggy_pattern_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Verify buggy pattern (delete before build) is removed
+- id: test_fixed_deletes_after_build
+  type: fail_to_pass
+  origin: pr_diff
+  description: Verify fixed pattern (build to tempdir, then copy) is present
+- id: test_update_builds_to_tempdir_first
+  type: fail_to_pass
+  origin: pr_diff
+  description: Verify build always happens to tempdir first, not crate_root
+- id: test_safe_deletion_checks_existence
+  type: fail_to_pass
+  origin: pr_diff
+  description: Verify existence checks before deletion are present
+- id: test_copy_from_tempdir_after_build
+  type: fail_to_pass
+  origin: pr_diff
+  description: Verify copy from tempdir to crate_root after successful build
+- id: test_compilation_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Code compiles successfully
+- id: test_syntax_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Rust syntax is valid
+- id: test_repo_clippy
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's clippy lints pass on sui-framework
+- id: test_repo_rustfmt
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's formatting standards pass
+- id: test_repo_xlint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's license headers pass
+- id: test_build_system_packages_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: The modified build-system-packages test compiles
+- id: test_repo_git_checks
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's git checks pass
+rubric:
+- rule: Do NOT comment the obvious - comments should explain invariants, not narrate
+    code. Comments are for non-obvious algorithms, temporary exclusions, complex calculations,
+    subtle race conditions, and assumptions about external state.
+  source:
+    path: CLAUDE.md
+    lines: 116-131
+    commit: 2409c793c8f6092d665d28030cfc68967e5fc4dd
+- rule: ALWAYS run `cargo xclippy` after finishing development to ensure code passes
+    all linting checks. Fix underlying issues rather than suppressing them.
+  source:
+    path: CLAUDE.md
+    lines: 110-113
+    commit: 2409c793c8f6092d665d28030cfc68967e5fc4dd
+- rule: NEVER use `#[allow(dead_code)]`, `#[allow(unused)]`, or any other linting
+    suppressions - fix the underlying issues instead.
+  source:
+    path: CLAUDE.md
+    lines: '113'
+    commit: 2409c793c8f6092d665d28030cfc68967e5fc4dd
+- rule: NEVER disable or ignore tests - all tests must pass and be enabled.
+  source:
+    path: CLAUDE.md
+    lines: '112'
+    commit: 2409c793c8f6092d665d28030cfc68967e5fc4dd
+distractors:
+- rule: Use `cargo nextest --lib` to run only library tests and skip integration tests
+    for faster feedback
+  collision_type: scope_ambiguity
+  why_distracting: The config recommends using `cargo nextest --lib` to skip integration
+    tests for faster feedback. However, the file being modified (`crates/sui-framework/tests/build-system-packages.rs`)
+    is an integration test. If the agent follows this rule, it will skip the very
+    test it is trying to fix and verify.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 39-40
+- rule: All new files must start with the following license in comments at the top
+    of the file
+  collision_type: scope_ambiguity
+  why_distracting: The agent might mistakenly treat the heavily modified test file
+    as a new file or create a new helper file for the temp directory logic, adding
+    the license header unnecessarily.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 16-19
+- rule: Use simtest-specific debugging tools and macros for tests.
+  source:
+    path: .claude/skills/simtest-debug/SKILL.md
+    lines: 1-10
+  collision_type: scope_ambiguity
+  why_distracting: The agent might assume this test is a simtest and try to apply
+    simtest-specific debugging or macros, but it is a standard tokio integration test.
+  severity: low
+hierarchy_analysis: The config hierarchy is flat, consisting of repository-level `AGENTS.md`
+  and `CLAUDE.md`. `AGENTS.md` defers to `CLAUDE.md` and crate-specific files, but
+  no crate-specific files are present in the context.
+version: '2.0'
+source:
+  repo: MystenLabs/sui
+  pr: 26106
+  base_commit: 2409c793c8f6092d665d28030cfc68967e5fc4dd
+  merge_commit: 6a391733c6a07cda5d3c9939ef3ee306490d16bd

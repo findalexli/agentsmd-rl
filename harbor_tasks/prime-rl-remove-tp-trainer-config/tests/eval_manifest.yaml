@@ -1,0 +1,162 @@
+version: '2.0'
+source:
+  repo: PrimeIntellect-ai/prime-rl
+  pr: 2109
+  base_commit: 80a52899ea6a74e0738c15228181ef7b9775dfe9
+  merge_commit: effa509cb3e8fff74bd53a7685309171c9751e67
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: All modified files parse without syntax errors
+- id: test_repo_py_compile
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified Python files compile successfully via py_compile
+- id: test_repo_parallel_dims_ast
+  type: pass_to_pass
+  origin: repo_tests
+  description: ParallelDims class has required fields (AST check)
+- id: test_repo_model_config_ast
+  type: pass_to_pass
+  origin: repo_tests
+  description: ModelConfig class retains required fields (AST check)
+- id: test_repo_changelog_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: CHANGELOG.md exists and has substantial content
+- id: test_repo_no_stubbed_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files are not hollowed out/stubbed
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo ruff linter passes on modified files
+- id: test_repo_toml_configs_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: All TOML config files parse without errors
+- id: test_repo_parallel_dims_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: ParallelDims module has valid Python imports
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff format check passes on modified files
+- id: test_repo_trainer_config_no_syntax_errors
+  type: pass_to_pass
+  origin: repo_tests
+  description: Trainer config has valid Python syntax and classes
+- id: test_repo_rl_config_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: RL config module has valid structure with auto_setup_deployment
+- id: test_repo_sft_train_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: SFT train module has valid structure with train function
+- id: test_repo_configs_dir_readable
+  type: pass_to_pass
+  origin: repo_tests
+  description: Configs directory exists and contains TOML files
+- id: non_data_parallel_size_excludes_tp
+  type: fail_to_pass
+  origin: pr_diff
+  description: non_data_parallel_size returns cp*pp, not cp*tp*pp
+- id: seq_len_divisor_excludes_tp
+  type: fail_to_pass
+  origin: pr_diff
+  description: seq_len_divisor returns cp*2, not tp*cp*2
+- id: model_config_no_tp_field
+  type: fail_to_pass
+  origin: pr_diff
+  description: ModelConfig no longer has a tp field
+- id: parallel_dims_no_tp
+  type: fail_to_pass
+  origin: pr_diff
+  description: ParallelDims has no tp field or tp_enabled property
+- id: sft_train_no_tp_multiplication
+  type: fail_to_pass
+  origin: pr_diff
+  description: SFT train.py does not reference model.tp in computations
+- id: rl_deployment_no_tp
+  type: fail_to_pass
+  origin: pr_diff
+  description: auto_setup_deployment does not reference model.tp
+- id: changelog_documents_tp_removal
+  type: fail_to_pass
+  origin: pr_diff
+  description: CHANGELOG.md documents the removal of the tp config field
+- id: parallel_dims_core_fields
+  type: pass_to_pass
+  origin: pr_diff
+  description: ParallelDims retains dp_replicate, dp_shard, cp, pp, ep, world_size
+- id: parallel_dims_methods_intact
+  type: pass_to_pass
+  origin: pr_diff
+  description: Key properties (dp_enabled, cp_enabled, etc.) still exist
+- id: model_config_retains_fields
+  type: pass_to_pass
+  origin: static
+  description: ModelConfig retains cp, dp_replicate, ep and >=5 fields
+- id: parallel_dims_not_stubbed
+  type: pass_to_pass
+  origin: static
+  description: parallel_dims.py is not hollowed out (sufficient methods and lines)
+- id: no_excessive_try_except
+  type: pass_to_pass
+  origin: agent_config
+  description: Changed files do not introduce excessive try/except blocks
+  source:
+    path: AGENTS.md
+    lines: '5'
+    commit: 80a52899ea6a74e0738c15228181ef7b9775dfe9
+rubric:
+- rule: When documenting breaking changes in CHANGELOG.md, do not add explanatory
+    comments about the removal process or reference old code patterns.
+  source:
+    path: CHANGELOG.md
+    lines: 1-50
+  reference: The CHANGELOG entry states the removal fact without explaining the work
+    process or referencing how the code used to work.
+- rule: Document breaking configuration changes in CHANGELOG.md using exact field
+    names verified against the actual code.
+  source:
+    path: CHANGELOG.md
+    lines: 1-50
+  evidence: The changelog entry explicitly references the exact TOML config field
+    `model.tp` and the python class `ModelConfig`, adhering to the rule to verify
+    exact field names rather than guessing.
+  category: documentation
+  reference: 'CHANGELOG.md entry: `**`model.tp` (trainer `ModelConfig`)**: Removed
+    from the trainer model config.'
+distractors:
+- rule: 'When preparing release notes: ... organize notes into numbered highlight
+    sections (# 1., # 2., ...), then # Breaking Changes, # Bug Fixes, and # Misc.'
+  collision_type: scope_ambiguity
+  why_distracting: The instruction asks to document the breaking change in CHANGELOG.md.
+    The agent might confuse this with 'preparing release notes' and attempt to restructure
+    the changelog into numbered highlight sections and a '# Breaking Changes' header,
+    breaking the existing simple bulleted format.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 48-53
+- rule: Do not refer to old code. 'The code used to do that but now we are doing this'
+    is not a pattern we want.
+  collision_type: scope_ambiguity
+  why_distracting: The rule forbids referring to old code ('The code used to do that
+    but now we are doing this'). If applied to the CHANGELOG.md, the agent might fail
+    to write a helpful migration note explaining that the `tp` field was removed and
+    is no longer accepted.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 6-8
+hierarchy_analysis: The configuration is flat, with rules defined in AGENTS.md and
+  included via CLAUDE.md. The primary challenge is scope discrimination, ensuring
+  rules meant for code comments or GitHub releases are not incorrectly applied to
+  the CHANGELOG.md file.
+

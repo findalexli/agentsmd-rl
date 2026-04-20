@@ -1,0 +1,179 @@
+version: '2.0'
+source:
+  repo: oven-sh/bun
+  pr: 28823
+  base_commit: 3f41407f47eb009c654e45def5f3f67d6ce6c8ee
+  merge_commit: ea83a741b4fd78331a8163a377cceccb0129e15f
+checks:
+- id: test_c_file_readable
+  type: pass_to_pass
+  origin: static
+  description: Modified C file exists and has expected structure
+- id: test_hardcoded_1024_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Hardcoded 1024 in epoll/kevent calls replaced with LIBUS_MAX_READY_POLLS
+- id: test_drain_function_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: us_internal_drain_ready_polls function exists with proper signature
+- id: test_drain_logic_implemented
+  type: fail_to_pass
+  origin: pr_diff
+  description: Drain function has complete implementation with loop and dispatch
+- id: test_drain_uses_zero_timeout
+  type: fail_to_pass
+  origin: pr_diff
+  description: Drain logic re-polls with zero/non-blocking timeout
+- id: test_drain_has_iteration_cap
+  type: fail_to_pass
+  origin: pr_diff
+  description: Drain loop is capped to prevent unbounded spinning
+- id: test_drain_checks_saturation
+  type: fail_to_pass
+  origin: pr_diff
+  description: Drain loop checks for buffer saturation before re-polling
+- id: test_drain_called_after_dispatch_in_both_functions
+  type: fail_to_pass
+  origin: pr_diff
+  description: Both us_loop_run and us_loop_run_bun_tick call drain after dispatch
+- id: test_drain_has_real_logic
+  type: pass_to_pass
+  origin: static
+  description: Drain function has substantial implementation, not a stub
+- id: test_saturation_guard_present
+  type: pass_to_pass
+  origin: static
+  description: Drain checks for buffer saturation before re-polling
+- id: test_drain_behavior_via_code_execution
+  type: fail_to_pass
+  origin: pr_diff
+  description: Drain behavior verified by executing Python code analysis
+- id: test_hardcoded_1024_behavioral
+  type: fail_to_pass
+  origin: pr_diff
+  description: No hardcoded 1024 verified via behavioral code analysis
+- id: test_c_source_file_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: C source file has valid structure (balanced braces, no corruption)
+- id: test_libus_max_ready_polls_defined
+  type: pass_to_pass
+  origin: repo_tests
+  description: LIBUS_MAX_READY_POLLS constant is defined in internal headers
+- id: test_key_functions_exist
+  type: pass_to_pass
+  origin: repo_tests
+  description: Key event loop functions exist with proper signatures
+- id: test_loop_structure_has_epoll_and_kqueue_paths
+  type: pass_to_pass
+  origin: repo_tests
+  description: Source has both epoll and kqueue code paths
+- id: test_no_truncated_functions
+  type: pass_to_pass
+  origin: repo_tests
+  description: No function appears to be truncated mid-implementation
+- id: test_critical_macros_defined
+  type: pass_to_pass
+  origin: repo_tests
+  description: Critical compiler macros are used appropriately
+- id: test_modified_c_file_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified C file exists and is valid (verified via git show and Python
+    brace check)
+- id: test_c_code_grep_patterns
+  type: pass_to_pass
+  origin: repo_tests
+  description: C code has expected patterns verified via grep (key functions, epoll/kqueue
+    calls)
+- id: test_header_file_grep_patterns
+  type: pass_to_pass
+  origin: repo_tests
+  description: Header file has expected patterns verified via grep (LIBUS_MAX_READY_POLLS,
+    guards)
+- id: test_repo_git_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository git status is valid (no conflicts or broken state)
+- id: test_repo_file_permissions_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Source files have valid permissions and are readable
+- id: test_repo_directory_structure_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Required directories exist with expected structure
+- id: test_c_code_no_syntax_errors_basic
+  type: pass_to_pass
+  origin: repo_tests
+  description: C code has basic structural validity (balanced braces, comments)
+- id: test_c_header_file_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: C header file has valid structure with proper guards
+- id: test_c_file_clang_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified C file passes clang-format check (CI/CD from format.yml)
+- id: test_git_file_tracked
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files are tracked in git (CI/CD git ls-files check)
+- id: test_git_status_clean
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository has no uncommitted changes at base commit (CI/CD git status
+    check)
+- id: test_repo_clang_format_c_file
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified C file passes clang-format check (CI/CD from format.yml)
+- id: test_repo_git_ls_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files are tracked in git (CI/CD git ls-files check)
+- id: test_repo_git_history_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository has valid git history (CI/CD sanity check)
+rubric:
+- rule: C code changes should use existing project conventions (LIBUS_MAX_READY_POLLS
+    constant instead of hardcoded 1024).
+  source:
+    path: packages/bun-usockets/src/eventing/epoll_kqueue.c
+    lines: 295-325
+    commit: 3f41407f47eb009c654e45def5f3f67d6ce6c8ee
+- rule: Comments in low-level C code should explain invariants and design decisions,
+    such as why saturation checks and iteration caps are necessary.
+  source:
+    path: packages/bun-usockets/src/eventing/epoll_kqueue.c
+    lines: 288-295
+    commit: ea83a741b4fd78331a8163a377cceccb0129e15f
+distractors:
+- rule: If a test is for a specific numbered GitHub Issue, it should be placed in
+    test/regression/issue/${issueNumber}.test.ts
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to write a regression test for >1024 simultaneous
+    ready file descriptors to satisfy the testing instructions, but simulating event
+    loop saturation reliably in a test environment is highly complex and omitted from
+    the gold solution.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 48-50
+- rule: Guides using bun.sys for system calls and file I/O in Zig. Use when implementing
+    file operations instead of std.fs or std.posix.
+  collision_type: architecture_boundary
+  why_distracting: The agent might try to use `bun.sys` or bridge to Zig for system
+    calls, but the target file is a C file (`epoll_kqueue.c`) that must use standard
+    C system calls (`bun_epoll_pwait2`, `kevent64`).
+  severity: high
+  source:
+    path: .claude/skills/zig-system-calls
+    lines: 1-2
+hierarchy_analysis: The config files provide general guidance for Bun development
+  (Zig/C++ and JS tests), but the target file is a C file in a vendored/forked library
+  (`bun-usockets`). The agent must recognize that Zig-specific system call rules and
+  standard JS testing requirements do not cleanly apply to this low-level C event
+  loop patch.

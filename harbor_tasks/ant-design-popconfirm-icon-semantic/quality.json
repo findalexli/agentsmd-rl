@@ -1,61 +1,56 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert exact regex patterns like `className={clsx(\\`${prefixCls}-message-icon\\`, classNames?.icon)}` and `style={styles?.icon}` in test_icon_classnames_applied and test_icon_styles_applied. The instruction never specifies these exact code patterns (e.g., using clsx, the exact template literal format). Also, test_overlay_props_use_correct_type asserts exact strings like `classNames?: PopconfirmSemanticAllType['classNames']` which are not fully specified in instruction.md. The test_semantic_"
+      "outcome": "pass",
+      "reason": "Instruction names all file paths (PurePanel.tsx, index.tsx, demo/_semantic.tsx, __tests__/semantic.test.tsx), type names (PopconfirmSemanticType, PopconfirmSemanticAllType), and all literal fixture strings ('custom-icon', 'dynamic-icon', { color: 'blue' }, { name: 'icon' })."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what behavior is broken and what the expected outcome should be, but does not specify exact code changes like 'change line X to Y'. It describes the problem and expected behavior at a high level."
+      "reason": "Instruction describes what needs to work (semantic API for icon) but does not dictate exact code edits like 'use clsx' or 'replace PopoverSemanticAllType'."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests use exact regex patterns for implementation details. For example, test_icon_classnames_applied requires `className={clsx(\\`${prefixCls}-message-icon\\`, classNames?.icon)}` \u2014 an alternative using `cx()` or `classnames()` or a different ordering would fail. test_overlay_props_use_correct_type requires exact string `classNames?: PopconfirmSemanticAllType['classNames']` \u2014 using a different but correct type annotation format would fail."
+      "reason": "test_icon_classnames_applied asserts an exact regex `className=\\{clsx\\(\\`\\$\\{prefixCls\\}-message-icon\\`,\\s*classNames\\?\\.icon\\)\\}` requiring clsx specifically and the exact argument order; alternative valid fixes (e.g., using classnames package, template literals, or different variable naming) would fail."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_icon_classnames_applied, test_icon_styles_applied, test_type_definition_includes_icon, test_overlay_props_use_correct_type, test_semantic_demo_updated, test_semantic_test_file_updated) are ALL purely text-matching via `assert 'X' in open(path).read()` or regex on file contents. They never import, render, or execute the component. The pass-to-pass tests do run subprocesses, but the core f2p tests are all text-based."
+      "outcome": "pass",
+      "reason": "While several tests grep file content, multiple tests execute subprocesses (jest, eslint, tsc, biome) to verify behavior through the real test suite including snapshot tests."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "All fail-to-pass tests check file contents with string/regex matching. An agent could satisfy them by inserting the exact expected strings as comments or dead code without implementing actual behavior. For example, adding `// classNames?.icon` and `// styles?.icon` as comments in PurePanel.tsx would pass test_icon_classnames_applied's first assertion."
+      "outcome": "pass",
+      "reason": "The f2p tests require specific code changes that affect runtime behavior and snapshot tests; a stub cannot satisfy the subprocess-run jest tests that rely on snapshot matching."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: classNames.icon support, styles.icon support, type definitions (PopconfirmSemanticType/PopconfirmSemanticAllType), demo updates, and test file updates. All of these are tested in the test suite."
+      "reason": "Tests cover the icon classNames, icon styles, type definitions, demo update, and semantic test file update as stated in the instruction."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_icon_classnames_applied, test_icon_styles_applied, etc.) with docstrings indicating fail-to-pass vs pass-to-pass, and organized by concern."
+      "reason": "Tests have descriptive names and docstrings distinguishing fail-to-pass vs pass-to-pass categories."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB outputs."
+      "reason": "No structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "Paths and names appear consistent between instruction and tests."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly names exact type names (PopconfirmSemanticType, PopconfirmSemanticAllType), exact test fixture values ('custom-icon', 'dynamic-icon', { color: 'blue' }), and specifies which files to modify. While it doesn't give line numbers, it provides very specific implementation details that go beyond describing the problem."
+      "outcome": "pass",
+      "reason": "Instruction names files to modify at a natural granularity (component directory structure) without citing specific buggy lines."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "Code-only task, not a config edit."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 4,
-  "fail_count": 5
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 1
 }

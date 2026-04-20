@@ -1,0 +1,89 @@
+version: '2.0'
+source:
+  repo: denoland/deno
+  pr: 33071
+  base_commit: 6710d587bc05e4275c2336fb1cc5104d5eee9fdc
+  merge_commit: 8b9d1aa92bdab59b117ce85777e20d443d20e905
+checks:
+- id: win_escape_ampersand_pipe
+  type: fail_to_pass
+  origin: pr_diff
+  description: escapeShellArg (Windows) must quote args containing & or |
+- id: win_escape_angle_brackets_caret
+  type: fail_to_pass
+  origin: pr_diff
+  description: escapeShellArg (Windows) must quote args containing <, >, or ^
+- id: win_escape_exclamation_parens
+  type: fail_to_pass
+  origin: pr_diff
+  description: escapeShellArg (Windows) must quote args containing !, (, or )
+- id: win_escape_existing_specials_still_quoted
+  type: pass_to_pass
+  origin: pr_diff
+  description: Args with spaces, quotes, or backslashes must still be quoted
+- id: win_escape_plain_args_passthrough
+  type: pass_to_pass
+  origin: pr_diff
+  description: Plain alphanumeric args must pass through unchanged
+- id: deno_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Deno lint passes on modified file
+- id: deno_fmt
+  type: pass_to_pass
+  origin: repo_tests
+  description: Deno format check passes on modified file
+- id: child_process_shell_escape
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's child_process shell escape spec test passes
+- id: child_process_unref_stdio
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's child_process unref stdio spec test passes
+- id: child_process_unref_survives
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's child_process unref survives spec test passes
+- id: child_process_fork_conditions
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's child_process fork conditions spec test passes
+- id: child_process_node_cli_args
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's child_process node CLI args spec test passes
+rubric:
+- rule: Node.js compatibility code is in ext/node/polyfills/. When reviewing these
+    files, check behavior against Node.js docs, not just Deno conventions.
+  source:
+    path: .github/copilot-instructions.md
+    lines: 322-325
+    commit: 6710d587bc05e4275c2336fb1cc5104d5eee9fdc
+- rule: Keep your changes minimal, don't do drive-by changes in a PR.
+  source:
+    path: CLAUDE.md
+    lines: '39'
+    commit: 6710d587bc05e4275c2336fb1cc5104d5eee9fdc
+distractors:
+- rule: Before committing, make sure `tools/format.js` is run to format your code
+  collision_type: rule_conflict
+  why_distracting: Running a repository-wide or file-wide formatter might introduce
+    unrelated formatting changes, violating the 'Keep your changes minimal' rule and
+    causing a bloated PR.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 23-24
+- rule: Before committing, if only non-Rust was changed, make sure to run `tools/lint.js
+    --js` and fix any lint errors before committing
+  collision_type: rule_conflict
+  why_distracting: Fixing pre-existing lint errors in the file would constitute drive-by
+    changes, conflicting with the instruction to keep changes minimal.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 25-26
+hierarchy_analysis: The configuration is a flat, single file (`CLAUDE.md`) containing
+  general repository guidelines. There is an inherent tension between the rules to
+  run formatters/linters and the rule to keep changes minimal.

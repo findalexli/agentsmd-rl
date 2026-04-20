@@ -1,0 +1,111 @@
+version: '2.0'
+source:
+  repo: All-Hands-AI/OpenHands
+  pr: 0
+  base_commit: 5528b01c186958bf2c92d9adaaa7f7ea0c487185
+  merge_commit: b75c83d92abfcbbb63b7b82e0fdd0e981f69a66f
+checks:
+- id: test_useeffect_has_primitive_dependencies
+  type: fail_to_pass
+  origin: pr_diff
+  description: useEffect dependency array uses primitive string values
+- id: test_searchparams_extracted_outside_effect
+  type: fail_to_pass
+  origin: pr_diff
+  description: amount and sessionId extracted outside useEffect
+- id: test_no_searchparams_get_inside_effect
+  type: fail_to_pass
+  origin: pr_diff
+  description: searchParams.get() calls outside useEffect
+- id: test_checkout_status_extraction
+  type: fail_to_pass
+  origin: pr_diff
+  description: checkoutStatus extracted as primitive outside useEffect
+- id: test_vitest_billing_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's billing tests pass with vitest
+- id: test_frontend_lint_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Frontend lint check passes
+- id: test_frontend_typecheck_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Frontend TypeScript type check passes
+- id: test_frontend_build_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Frontend production build passes
+- id: test_frontend_translation_completeness
+  type: pass_to_pass
+  origin: repo_tests
+  description: Frontend translation completeness check passes
+- id: test_settings_with_payment
+  type: pass_to_pass
+  origin: repo_tests
+  description: Related settings/billing integration tests pass
+- id: test_i18n_generation
+  type: pass_to_pass
+  origin: repo_tests
+  description: i18n translation files can be generated
+- id: test_payment_form
+  type: pass_to_pass
+  origin: repo_tests
+  description: Payment form component tests pass
+rubric:
+- rule: This is a frontend code fix task that only modifies billing.tsx and billing.test.tsx.
+    No config files like AGENTS.md or CLAUDE.md need to be changed.
+  source:
+    path: frontend/src/routes/billing.tsx
+  reference: 'This is a code-only fix. The gold solution modifies:
+
+    - frontend/src/routes/billing.tsx (extracts amount/sessionId outside useEffect)
+
+    - frontend/__tests__/routes/billing.test.tsx (adds tests for the fix)
+
+    No config files are modified.
+
+    '
+- rule: Ensure that any simple test errors have been fixed before pushing changes.
+  source:
+    path: AGENTS.md
+    lines: 16-17
+  evidence: The gold solution adds tests in `frontend/__tests__/routes/billing.test.tsx`
+    to verify the checkout success and cancel flows, ensuring test coverage and correctness.
+  category: testing
+- rule: Before pushing any changes, you MUST ensure that any lint errors or simple
+    test errors have been fixed.
+  source:
+    path: AGENTS.md
+    lines: 18-20
+  evidence: The gold solution updates the tests in `frontend/__tests__/routes/billing.test.tsx`
+    to ensure that the test suite passes after modifying the frontend behavior, complying
+    with the requirement to fix si
+  category: testing
+distractors:
+- rule: When working on a PR that requires design documents, scripts meant for development-only,
+    or other temporary artifacts that should NOT be merged to main, store them in
+    a `.pr/` directory at the repository root.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might interpret the debugging of the React useEffect
+    hook as an investigation that requires documenting in a `.pr/analysis.md` file,
+    wasting effort on a simple bug fix.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 38-40
+- rule: This skill should be used when the user asks to 'test a cross-repo feature',
+    'deploy a feature branch to staging', 'test SDK against OH Cloud', 'e2e test a
+    cloud workspace feature'
+  source:
+    path: .agents/skills/cross-repo-testing/SKILL.md
+    lines: 1-5
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to set up cross-repo e2e tests for the Stripe
+    checkout flow, but the issue is a simple React frontend bug that can be tested
+    with unit/integration tests in the frontend directory.
+  severity: medium
+hierarchy_analysis: The configuration consists of a single root-level AGENTS.md file
+  containing generic repository guidelines. There is no complex hierarchy or overriding
+  of rules.

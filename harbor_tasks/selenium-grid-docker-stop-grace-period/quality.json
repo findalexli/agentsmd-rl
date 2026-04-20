@@ -1,62 +1,60 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert very specific details not fully discoverable from instruction.md alone. For example: test_debug_uses_static_logger checks for exact string 'private static final Logger SELENIUM_LOGGER', 'SELENIUM_LOGGER.setLevel(Level.FINE)', and 'SELENIUM_LOGGER.addHandler(handler)' \u2014 the instruction only vaguely mentions 'static SELENIUM_LOGGER for thread safety'. test_parse_multiplexed_stream_uses_read_fully checks for exact strings 'in.readFully(new byte[1])' and 'in.readFully(new byte[3])' whic"
+      "outcome": "pass",
+      "reason": "Instruction names all key files, the flag --docker-stop-grace-period, config key stop-grace-period, default 60, field names containerStopTimeout/videoContainerStopTimeout, and test method names match the listed verification points."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix: 'Add try-finally protection', 'Store Duration containerStopTimeout and Duration videoContainerStopTimeout fields', 'Add getStopGracePeriod() method', 'Add --docker-stop-grace-period CLI flag', 'use readFully() instead of skipBytes()', 'use a static SELENIUM_LOGGER'. It prescribes exact field names, method names, parameter names, and implementation approach rather than just describing what's broken."
+      "reason": "Instruction specifies exact field names (containerStopTimeout, videoContainerStopTimeout), exact CLI flag name, exact config key, exact default 60, and even dictates readFully() vs skipBytes() and static SELENIUM_LOGGER, leaving little for the agent to decide."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact field names like 'containerStopTimeout' and 'videoContainerStopTimeout', exact method visibility 'private Duration getStopGracePeriod()', exact string 'Require.nonNull(\"Container stop grace period\", stopGracePeriod)', exact variable name 'Duration stopGracePeriod = getStopGracePeriod()'. An alternative correct fix using different field names (e.g., 'browserTimeout', 'videoTimeout') or different method signatures would fail."
+      "reason": "Tests assert exact literals like 'private Duration getStopGracePeriod()', 'DEFAULT_STOP_GRACE_PERIOD = 60', 'stop-grace-period must be a non-negative integer', 'Require.nonNull(\"Container stop grace period\", stopGracePeriod)', 'in.readFully(new byte[1])', and specific test method names \u2014 alternative correct fixes would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every single test function reads source files as text and uses string matching (assert 'X' in content). No test imports Java code, compiles it, runs it, or checks behavior. For example, test_docker_session_has_try_finally just does regex on the source file. test_docker_session_unit_tests_exist only checks if test method names exist as strings in a file, not that they pass."
+      "reason": "All tests are string/regex greps over source files (open(path).read(), assert 'foo' in content); no code is executed or called."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "Since all tests are text-matching on source files, an agent could write source files containing the expected strings as comments or dead code without actually implementing the fix. For example, adding '// try { finally { container.stop( super.stop() }' as a comment would pass test_docker_session_has_try_finally without fixing the actual bug."
+      "outcome": "pass",
+      "reason": "Tests require specific structural elements (try/finally, Duration fields, constructor params, validation strings) that a stub couldn't trivially satisfy without implementing the change."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The tests cover all major behaviors described in instruction.md: try-finally protection, Duration fields, configurable stop grace period, CLI flag, factory integration, Debug thread safety fix, readFully replacement, and unit test existence."
+      "reason": "Try-finally, Duration fields, flag, validation, factory wiring, Debug static logger, and readFully fixes are all tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names (e.g., test_docker_session_has_try_finally, test_docker_options_has_get_stop_grace_period) and include docstrings explaining what each test verifies, with f2p/p2p annotations."
+      "reason": "Tests are individually named and docstringed per concern (session, options, flags, factory, debug, parseMultiplexedStream)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "Task is code changes, no structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No apparent typos in filenames, paths, commands, or variable names in the instruction or tests."
+      "reason": "Paths, flag names, and method names are consistent between instruction and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md shows the exact current buggy code block with line-level detail, names exact field names to add (containerStopTimeout, videoContainerStopTimeout), exact method names (getStopGracePeriod), exact flag names (--docker-stop-grace-period), and exact implementation patterns (try-finally, readFully instead of skipBytes). This goes far beyond describing what's broken."
+      "reason": "Instruction shows the exact buggy code block and dictates precise replacements including constant name 'DEFAULT_STOP_GRACE_PERIOD', error message approach, and 'readFully() instead of skipBytes()'."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits configuration task."
+      "reason": "Code-only task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 3,
-  "fail_count": 6
+  "pass_count": 5,
+  "fail_count": 4
 }

@@ -1,0 +1,143 @@
+version: '2.0'
+source:
+  repo: storybookjs/storybook
+  pr: 34436
+  base_commit: 95aa11484a255b1c7f6227f2c81e2d441bb28988
+  merge_commit: a43cc338991e3559aedd0befc55c90cdca425102
+checks:
+- id: test_repo_vitest_tags
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's vitest tests for tags module pass (5 tests covering parseTagsParam
+    and serializeTagsParam)
+- id: test_repo_tags_module
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's tags module functionality works via tsx (tests parseTagsParam
+    and serializeTagsParam)
+- id: test_repo_vitest_statuses
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's vitest tests for statuses module pass (22 tests covering parseStatusesParam
+    and serializeStatusesParam)
+- id: test_syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified files must exist and have valid TypeScript structure
+- id: filter_param_basic_inclusion
+  type: fail_to_pass
+  origin: pr_diff
+  description: parseFilterParam splits semicolons and sorts into included array
+- id: filter_param_exclusion_handling
+  type: fail_to_pass
+  origin: pr_diff
+  description: parseFilterParam routes !-prefixed items to excluded array, strips
+    the prefix
+- id: filter_param_transform_and_null_skip
+  type: fail_to_pass
+  origin: pr_diff
+  description: parseFilterParam applies transform callback and skips null/undefined
+    results
+- id: filter_param_empty_and_edge_cases
+  type: fail_to_pass
+  origin: pr_diff
+  description: parseFilterParam handles empty/undefined input and trailing semicolons
+- id: tags_uses_shared_helper
+  type: fail_to_pass
+  origin: pr_diff
+  description: tags.ts imports parseFilterParam and removes inline parsing logic
+- id: statuses_uses_shared_helper
+  type: fail_to_pass
+  origin: pr_diff
+  description: statuses.ts imports parseFilterParam and removes inline parsing logic
+- id: no_raw_console
+  type: pass_to_pass
+  origin: agent_config
+  description: Modified files must not use raw console.log/warn/error — use Storybook
+    loggers
+  source:
+    path: AGENTS.md
+    lines: 244-250
+    commit: 95aa11484a255b1c7f6227f2c81e2d441bb28988
+- id: explicit_ts_import_extensions
+  type: pass_to_pass
+  origin: agent_config
+  description: New/modified files use explicit .ts extensions for relative imports
+  source:
+    path: AGENTS.md
+    lines: '246'
+    commit: 95aa11484a255b1c7f6227f2c81e2d441bb28988
+rubric:
+- rule: New TypeScript files must use explicit .ts extensions for relative imports
+    (e.g., './foo.ts', '../lib/bar.ts')
+  source:
+    path: AGENTS.md
+    lines: '246'
+    commit: 95aa11484a255b1c7f6227f2c81e2d441bb28988
+- rule: Modified TypeScript files must not use raw console.log/warn/error - use Storybook
+    loggers (storybook/internal/client-logger for client-side, storybook/internal/node-logger
+    for server-side)
+  source:
+    path: AGENTS.md
+    lines: 241-250
+    commit: 95aa11484a255b1c7f6227f2c81e2d441bb28988
+- rule: Maintain code within the appropriate architectural boundaries (e.g., `manager-api/`
+    for Storybook UI logic).
+  source:
+    path: AGENTS.md
+    lines: 43-45
+  evidence: The gold solution creates the new shared utility `filter-param.ts` inside
+    `code/core/src/manager-api/lib/`, keeping the UI-related parameter parsing logic
+    within the `manager-api` boundary rather than
+  category: architecture
+- rule: 'The main package is `code/core/src/`. The most important areas are: `manager/`
+    and `manager-api/` for the Storybook UI.'
+  source:
+    path: AGENTS.md
+    lines: 46-55
+  evidence: The gold solution creates the new shared utility in `code/core/src/manager-api/lib/filter-param.ts`,
+    respecting the architectural boundary of the `manager-api` module within the core
+    package.
+  category: architecture
+distractors:
+- rule: code/lib/ - Supporting libraries
+  collision_type: architecture_boundary
+  why_distracting: The config describes `code/lib/` as the directory for 'Supporting
+    libraries'. An agent might be tempted to extract the shared filter logic to this
+    global library directory instead of keeping it scoped to `manager-api/lib/` as
+    requested by the prompt.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 21-31
+- rule: common/ for shared Node.js utilities
+  collision_type: architecture_boundary
+  why_distracting: The config mentions `common/` for 'shared Node.js utilities'. An
+    agent might incorrectly place the shared parsing logic in `code/core/src/common/`
+    instead of the UI-specific `manager-api/lib/`.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 38-45
+- rule: Test Directory Structure - Tests are located in the `code/` directory
+  collision_type: scope_ambiguity
+  why_distracting: The heavy emphasis on Vitest configuration and test directory structure
+    might cause the agent to hallucinate a requirement to write a `filter-param.test.ts`
+    file, which is not requested and not part of the gold solution.
+  severity: low
+  source:
+    path: .cursorrules
+    lines: 3-12
+- rule: Checks out a PR (including fork PRs), fixes all linting and TypeScript errors,
+    then pushes the changes back.
+  source:
+    path: .agents/skills/fix-linting-types-on-pr/SKILL.md
+    lines: 1-2
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to invoke this skill to fix linting errors
+    after refactoring, but this is a workflow skill meant for PRs, not for local refactoring
+    tasks.
+  severity: low
+hierarchy_analysis: The configuration is flat, consisting of root-level files (`AGENTS.md`
+  and `.cursorrules`). `CLAUDE.md` simply redirects to `AGENTS.md`. There is no deep
+  inheritance or overriding of rules.

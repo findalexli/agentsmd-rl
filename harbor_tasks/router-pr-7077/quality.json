@@ -1,59 +1,59 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the specific files (Match.tsx in react-router, solid-router, vue-router; not-found.tsx in solid-router), the exact patterns to implement (error.routeId ??= matchState.routeId, getNotFound helper with exact signature, .cause property handling, matchData.value?.routeId), and the function/variable names that tests assert on. All test-asserted specifics are discoverable from instruction.md."
+      "reason": "Instruction names the required patterns 'error.routeId ??= matchState.routeId', 'const notFoundError = getNotFound(error)', and 'error.routeId ??= matchData.value?.routeId' which match the literal strings asserted in tests."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly states the exact fix patterns: 'error.routeId ??= matchState.routeId as any', the exact function signature 'export function getNotFound(error: unknown)', 'const notFoundError = getNotFound(error)', and 'error.routeId ??= matchData.value?.routeId as any'. These are the literal code changes needed, not just descriptions of what's broken."
+      "reason": "Instruction explicitly dictates the exact code patterns to use (e.g., 'The fix must use `error.routeId ??= matchState.routeId`' and 'The fix must use `const notFoundError = getNotFound(error)`'), leaving no reasoning about what to change."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact string patterns like 'error.routeId ??= matchState.routeId' in file content, 'export function getNotFound(' in not-found.tsx, 'const notFoundError = getNotFound(error)' in Match.tsx, and 'routeId ??=' with 'matchData.value' in Vue Match.tsx. An alternative correct fix (e.g., using a different variable name, a different assignment pattern like 'if (!error.routeId) error.routeId = ...', or a differently named helper) would fail these text-matching tests."
+      "reason": "Tests assert on exact strings like 'error.routeId ??= matchState.routeId' and 'const notFoundError = getNotFound(error)' and 'export function getNotFound(' \u2014 alternative correct fixes (e.g., using `if (!error.routeId) error.routeId =` or a differently named helper) would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (TestReactRouterNotFoundFix, TestSolidRouterNotFoundFix, TestVueRouterNotFoundFix) exclusively use 'assert ... in content' pattern reading file contents as strings. They never import, execute, or call any code. The pass-to-pass tests do run subprocesses (TypeScript compilation, ESLint, unit tests), but all f2p tests are purely text-matching."
+      "reason": "The f2p tests (test_react_match_preserves_routeid_on_notfound_error, test_solid_has_getnotfound_helper, test_vue_match_preserves_routeid_on_notfound_error, etc.) are all string-in-file checks; pass_to_pass tests run lint/types/unit but don't verify the actual notFound routing behavior."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "A stub implementation that simply writes the expected string patterns into the files would pass all f2p tests. For example, adding a comment '// error.routeId ??= matchState.routeId' to Match.tsx would pass test_react_match_preserves_routeid_on_notfound_error since it just checks string containment."
+      "outcome": "pass",
+      "reason": "Each f2p requires a specific string be present in the source file; a stub/no-op cannot satisfy the assertion."
     },
     "behavior_in_tests": {
-      "outcome": "pass",
-      "reason": "The instruction requires: (1) React routeId preservation - tested, (2) Solid getNotFound helper with .cause handling - tested, (3) Vue routeId preservation with matchData.value - tested, (4) TypeScript compilation - tested, (5) existing tests pass - tested via unit test and eslint checks."
+      "outcome": "fail",
+      "reason": "Instruction says 'Route-thrown notFound() renders the current route's notFoundComponent' but no test actually renders a route and verifies the correct notFoundComponent is shown \u2014 only string pattern matches and generic unit test runs."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized into classes (TestReactRouterNotFoundFix, TestSolidRouterNotFoundFix, TestVueRouterNotFoundFix, TestPassToPass) with descriptive method names and docstrings explaining what each test verifies."
+      "reason": "Tests are grouped into TestReactRouterNotFoundFix, TestSolidRouterNotFoundFix, TestVueRouterNotFoundFix, TestPassToPass classes with docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB outputs."
+      "reason": "Task is code fix, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and commands in instruction.md and tests appear correct and consistent with the repository structure."
+      "reason": "Filenames and commands appear consistent with repo structure."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md provides exact code snippets for the fix including 'error.routeId ??= matchState.routeId as any', the exact getNotFound function signature, and 'error.routeId ??= matchData.value?.routeId as any'. It also names specific files (Match.tsx, not-found.tsx) in specific packages. This goes far beyond describing what's broken."
+      "reason": "Instruction names exact file-level fixes and even exact code lines (e.g., 'error.routeId ??= matchState.routeId') \u2014 localization and implementation details are fully given."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "Code-only task, no config edits."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
+    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
   "pass_count": 4,

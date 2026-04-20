@@ -1,0 +1,105 @@
+# eval_manifest.yaml - supabase/supabase#44502
+# fix: round currency value to 2 decimal places in subscription upgrade preview
+
+manifest_version: "1.0"
+
+task:
+  name: supabase-studio-subscription-preview-precision
+  description: >
+    The subscription upgrade preview in Supabase Studio was displaying truncated
+    currency totals because Math.round() was stripping decimal precision before
+    formatCurrency could render values with proper 2-decimal-place formatting.
+    The fix removes Math.round from two reduce-sum calculations in the billing
+    preview dialog.
+  difficulty: medium
+
+pr:
+  number: 44502
+  repo: supabase/supabase
+  base_commit: 82deff37de71922332d1b0ca72fb16f3b720ae75
+  merge_commit: 4189e76
+
+  title: "fix: round currency value to 2 decimal places in subscription upgrade preview"
+  description: |
+    Removes `Math.round` from the Totals in the subscription upgrade preview.
+    Monthly invoice estimates and plan totals now display more accurate currency amounts
+    by allowing proper 2-decimal-place precision via `formatCurrency`.
+
+  files_touched:
+    - apps/studio/components/interfaces/Organization/BillingSettings/Subscription/SubscriptionPlanUpdateDialog.tsx
+
+  lines_changed: 22 (-11, +11)
+
+checks:
+  # --- f2p: fail-on-base, pass-on-fix ---
+
+  - id: test_no_math_round_around_total_reduce
+    type: fail_to_pass
+    origin: agent_config
+    description: >
+      The "Total per month (excluding other usage)" display no longer wraps the
+      subscriptionPreview?.breakdown?.reduce sum in Math.round. The raw reduced
+      sum is passed directly to formatCurrency which formats with 2 decimal places.
+    source:
+      - file: ".claude/skills/studio-best-practices/SKILL.md"
+        lines: 1-50
+        commit: "studio-ui-patterns convention: formatCurrency handles precision"
+      - file: ".claude/skills/studio-testing/SKILL.md"
+        lines: 1-50
+        commit: "testing-extract-logic: business logic must be in pure utility tested exhaustively"
+
+  - id: test_no_math_round_around_invoice_reduce
+    type: fail_to_pass
+    origin: agent_config
+    description: >
+      The "Monthly invoice estimate" display no longer wraps the subscriptionPreview?.breakdown.reduce
+      sum in Math.round. The raw reduced sum is passed directly to formatCurrency.
+    source:
+      - file: ".claude/CLAUDE.md"
+        lines: 1-50
+        commit: "monorepo structure: Studio is the dashboard app"
+
+  - id: test_formatCurrency_preserves_decimals
+    type: pass_to_pass
+    origin: upstream
+    description: >
+      formatCurrency uses Intl.NumberFormat with minimumFractionDigits: 2 and
+      maximumFractionDigits: 2, correctly formatting values like 10.256 as "$10.26".
+      This behavior is verified by calling formatCurrency with known inputs and
+      asserting the expected output strings.
+
+  - id: test_intl_numberformat_two_decimals
+    type: pass_to_pass
+    origin: upstream
+    description: >
+      JavaScript's built-in Intl.NumberFormat with 2 decimal places correctly
+      rounds currency values (e.g., 10.256 → "$10.26", 10.005 → "$10.01").
+      This is the underlying mechanism that formatCurrency relies on.
+
+  - id: test_repo_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: >
+      Repo vitest unit tests for lib/helpers pass. The formatCurrency function
+      is tested in helpers.test.ts and must continue to pass after the fix.
+
+  - id: test_repo_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: >
+      Repo ESLint linting passes on the studio app. All lint warnings/errors
+      must be resolved.
+
+rubric: []
+
+test_outputs:
+  path: tests/test_outputs.py
+  framework: pytest
+  harness: python
+
+docker:
+  image: task-env
+  nop_volume: /workspace/task/tests:/tests:ro
+  gold_volume: /workspace/task/solution:/solution:ro
+
+timeout_seconds: 600

@@ -1,0 +1,142 @@
+checks:
+- id: smtp_register_uses_adapter
+  description: app/init/registers.php returns SMTP adapter instead of PHPMailer
+  origin: pr_diff
+  type: fail_to_pass
+- id: mails_worker_refactored
+  description: Mails worker uses EmailMessage and EmailAdapter instead of PHPMailer
+    methods
+  origin: pr_diff
+  type: fail_to_pass
+- id: doctor_task_refactored
+  description: Doctor task uses EmailMessage and SMTP adapter for health check
+  origin: pr_diff
+  type: fail_to_pass
+- id: dependency_updated
+  description: composer.json requires utopia-php/messaging ^0.22
+  origin: pr_diff
+  type: fail_to_pass
+- id: no_phpmailer_imports
+  description: PHPMailer imports removed from modified files
+  origin: pr_diff
+  type: fail_to_pass
+- id: getmailer_method_removed
+  description: getMailer() method removed from Mails worker
+  origin: pr_diff
+  type: fail_to_pass
+- id: usage_class_not_final
+  description: Usage class is not final (allows subclassing)
+  origin: pr_diff
+  type: fail_to_pass
+- id: syntax_check
+  description: All modified PHP files have valid syntax
+  origin: pr_diff
+  type: fail_to_pass
+- id: test_composer_validate
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's composer.json passes validation
+- id: test_composer_autoload_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's composer autoload configuration is valid
+- id: test_php_syntax_all_modified
+  type: pass_to_pass
+  origin: repo_tests
+  description: All modified PHP files have valid syntax
+- id: test_php_syntax_app_init
+  type: pass_to_pass
+  origin: repo_tests
+  description: All PHP files in app/init/ have valid syntax
+- id: test_php_syntax_src_appwrite
+  type: pass_to_pass
+  origin: repo_tests
+  description: Core source files in src/Appwrite have valid syntax
+- id: test_repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo linter passes
+- id: test_repo_analyze
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo static analysis passes
+- id: test_repo_unit_tests_event
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo unit tests for Event namespace pass
+- id: test_repo_unit_tests_platform
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo unit tests for Platform namespace pass
+- id: test_repo_unit_tests_messaging
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo unit tests for Messaging namespace pass
+rubric:
+- rule: Documentation files should not be modified for this PHP code refactoring task.
+    No changes to AGENTS.md, CLAUDE.md, README.md, or SKILL.md expected.
+  source:
+    path: AGENTS.md
+  reference: ''
+- rule: Use the Utopia PHP framework for application components and services.
+  source:
+    path: AGENTS.md
+    lines: 22-22
+  source_text: '- Utopia PHP framework (HTTP routing, CLI, DI, queue)'
+  evidence: The diff replaces the direct usage of `PHPMailer` with `Utopia\Messaging\Adapter\Email\SMTP`
+    from the Utopia PHP framework.
+  category: architecture
+  verification: llm_judge
+- rule: Place service registers in the `app/init/` directory.
+  source:
+    path: AGENTS.md
+    lines: 34-34
+  source_text: '- **app/init/** -- configs, constants, locales, models, registers,
+    resources, span, database filters/formats'
+  evidence: The diff modifies `app/init/registers.php` to update the `smtp` service
+    register definition.
+  category: architecture
+  verification: llm_judge
+distractors:
+- rule: Workers and Tasks should be placed inside module-specific directories.
+  collision_type: architecture_boundary
+  why_distracting: The Level 3 config emphasizes that workers and tasks should be
+    placed inside module-specific directories (e.g., `src/Appwrite/Platform/Modules/{Name}/Workers/`).
+    An agent might try to refactor the global `src/Appwrite/Platform/Workers/Mails.php`
+    and `src/Appwrite/Platform/Tasks/Doctor.php` into a new or existing module to
+    comply with this rule. However, Level 0 config clarifies that global workers and
+    tasks exist outside of modules, and moving them would break the application and
+    violate the explicit PR instructions.
+  severity: medium
+  source:
+    path: src/Appwrite/Platform/AGENTS.md
+    lines: 13-16
+- rule: When adding a module, always add a new directory under `src/Appwrite/Platform/Modules`.
+    The directory name should be PascalCase, and if possible, use only one word. For
+    example, `User`, `Database`, `Storage`, etc. Avoid using shorthands, unless they
+    are standardized, such as `DB`, `JWT`, or `SMTP`.
+  source:
+    path: src/Appwrite/Platform/AGENTS.md
+    lines: 11-11
+  source_text: When adding a module, always add a new directory under `src/Appwrite/Platform/Modules`.
+    The directory name should be PascalCase, and if possible, use only one word. For
+    example, `User`, `Database`, `Storage`, etc. Avoid using shorthands, unless they
+    are standardized, such as `DB`, `JWT`, or `SMTP`.
+  collision_type: scope_ambiguity
+  why_distracting: The rule explicitly mentions 'SMTP' as an allowed shorthand for
+    module names. An AI might mistakenly think that because it's working with SMTP,
+    it should restructure the code into a module under `src/Appwrite/Platform/Modules/SMTP`
+    or apply module-specific rules, whereas this is just a simple dependency injection
+    registration in the initialization script.
+  severity: medium
+hierarchy_analysis: The Level 0 `AGENTS.md` defines the global architecture, including
+  global `Workers` and `Tasks` directories. The Level 3 `src/Appwrite/Platform/AGENTS.md`
+  focuses specifically on the structure of `Modules`, which also contain their own
+  `Workers` and `Tasks` directories. The agent must understand this distinction and
+  not incorrectly apply the module-specific rules to global workers and tasks.
+version: '2.0'
+source:
+  repo: appwrite/appwrite
+  pr: 11748
+  base_commit: 96f4ef7d22ea9e12b5080268ed52a3b05b8649d9
+  merge_commit: 387668bb47695ad861aa431e82e39efbaf6c06b5

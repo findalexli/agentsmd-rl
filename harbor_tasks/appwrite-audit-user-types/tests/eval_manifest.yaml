@@ -1,0 +1,212 @@
+checks:
+- id: constants_defined
+  type: pass_to_pass
+  description: All new activity type constants (ACTIVITY_TYPE_USER, ACTIVITY_TYPE_ADMIN,
+    ACTIVITY_TYPE_GUEST, ACTIVITY_TYPE_KEY_PROJECT, ACTIVITY_TYPE_KEY_ACCOUNT, ACTIVITY_TYPE_KEY_ORGANIZATION)
+    are defined in app/init/constants.php
+  origin: pr_diff
+- id: log_model_has_usertype
+  type: pass_to_pass
+  description: Log response model includes userType field with correct description
+    and possible values
+  origin: pr_diff
+- id: api_controller_mode_based_type
+  type: pass_to_pass
+  description: API controller distinguishes between admin and regular users based
+    on APP_MODE_ADMIN
+  origin: pr_diff
+- id: api_controller_key_type_mapping
+  type: pass_to_pass
+  description: API controller maps API_KEY_STANDARD/ACCOUNT/ORGANIZATION to corresponding
+    ACTIVITY_TYPE_KEY_* values
+  origin: pr_diff
+- id: api_controller_mode_injection
+  type: pass_to_pass
+  description: API controller action properly injects and uses mode parameter
+  origin: pr_diff
+- id: api_controller_preserves_type
+  type: pass_to_pass
+  description: API controller only sets user type when not already set via empty()
+    guard
+  origin: pr_diff
+- id: users_api_includes_usertype
+  type: pass_to_pass
+  description: Users API log response construction includes both userType and mode
+    fields
+  origin: pr_diff
+- id: messaging_api_includes_usertype
+  type: pass_to_pass
+  description: All messaging API log response constructions include userType field
+  origin: pr_diff
+- id: xlist_endpoints_include_usertype
+  type: pass_to_pass
+  description: All log listing endpoints (teams, databases, collections, documents,
+    tablesDB) include userType in response
+  origin: pr_diff
+- id: key_project_replaces_app_type
+  type: pass_to_pass
+  description: ACTIVITY_TYPE_APP is replaced with ACTIVITY_TYPE_KEY_PROJECT for API
+    key handling
+  origin: pr_diff
+- id: php_syntax_valid
+  type: pass_to_pass
+  description: All modified PHP files pass PHP syntax check
+  origin: pr_diff
+- id: test_repo_phplint
+  type: pass_to_pass
+  description: All PHP files in app/ and src/ pass syntax validation
+  origin: repo_tests
+- id: test_repo_pint
+  type: pass_to_pass
+  description: All PHP files pass Pint code style checks
+  origin: repo_tests
+- id: test_repo_phpstan_modified
+  type: pass_to_pass
+  description: Modified directories pass PHPStan static analysis
+  origin: repo_tests
+- id: test_repo_composer_validate
+  type: pass_to_pass
+  description: composer.json passes schema validation with composer validate --strict
+  origin: repo_tests
+- id: test_repo_unit_detector
+  type: pass_to_pass
+  description: Detector unit tests pass (Device/OS detection)
+  origin: repo_tests
+- id: test_repo_unit_event
+  type: pass_to_pass
+  description: Event unit tests pass (Event/Queue system)
+  origin: repo_tests
+- id: test_repo_unit_filter
+  type: pass_to_pass
+  description: Filter unit tests pass (Branch domain filtering)
+  origin: repo_tests
+rubric:
+- rule: When updating documents, pass only changed attributes as a sparse Document.
+    Do not pass full documents.
+  source:
+    path: AGENTS.md
+    lines: 90-99
+    commit: bb078086618f85634763943b9bee5fb8e8453cbd
+- rule: resourceType values must always be plural (e.g., 'functions', 'sites', 'deployments').
+  source:
+    path: AGENTS.md
+    lines: '88'
+    commit: bb078086618f85634763943b9bee5fb8e8453cbd
+- rule: Follow the Action pattern for HTTP endpoints with proper constructor setup
+    and dependency injection.
+  source:
+    path: AGENTS.md
+    lines: 103-126
+    commit: bb078086618f85634763943b9bee5fb8e8453cbd
+- rule: HTTP endpoint files must be named Get.php, Create.php, Update.php, Delete.php,
+    or XList.php only.
+  source:
+    path: src/Appwrite/Platform/AGENTS.md
+    lines: '32'
+    commit: bb078086618f85634763943b9bee5fb8e8453cbd
+- rule: Use PHP 8.3+ features.
+  source:
+    path: AGENTS.md
+    lines: 18-18
+    commit: bb078086618f85634763943b9bee5fb8e8453cbd
+  evidence: The gold solution uses a PHP 8 `match` expression in `app/controllers/shared/api.php`
+    to map `$apiKey->getType()` to the corresponding `ACTIVITY_TYPE_KEY_*` constant.
+  category: style
+- rule: Use `XList.php` for list endpoints instead of `List.php`.
+  source:
+    path: src/Appwrite/Platform/AGENTS.md
+    lines: 31-35
+    commit: bb078086618f85634763943b9bee5fb8e8453cbd
+  evidence: The gold solution correctly targets `XList.php` files (e.g., `src/Appwrite/Platform/Modules/Databases/Http/Databases/Collections/Documents/Logs/XList.php`)
+    to update the log response builders in the n
+  category: naming
+- rule: Inside `Http` directories for services, file names can only be `Get.php`,
+    `Update.php`, `Create.php`, `Delete.php` or `XList.php`.
+  source:
+    path: src/Appwrite/Platform/AGENTS.md
+    lines: 31-35
+  evidence: The gold solution correctly identifies and modifies `XList.php` files
+    across various modules (e.g., Databases, Teams) to update the log response builders,
+    leveraging the naming convention that list endpoi
+  category: naming
+- rule: List endpoints in Http directories must be named `XList.php` because `List`
+    is a reserved keyword in PHP.
+  source:
+    path: src/Appwrite/Platform/AGENTS.md
+    lines: 31-35
+  evidence: The gold solution edits `XList.php` files under `Logs/` directories across
+    various modules (e.g., Databases, Teams) to composer.json passes schema validation
+    with composer validate --strict
+  category: naming
+- rule: Write code compatible with PHP 8.3+, utilizing modern PHP features where appropriate.
+  source:
+    path: AGENTS.md
+    lines: 21-21
+  source_text: '- PHP 8.3+, Swoole 6.x (async runtime, replaces PHP-FPM)'
+  evidence: The diff utilizes the modern PHP `match` expression to assign the 'type'
+    attribute based on the result of `$apiKey->getType()`.
+  category: syntax
+  verification: llm_judge
+- rule: Use the Utopia PHP framework for dependency injection (DI) in HTTP routing
+    and actions.
+  source:
+    path: AGENTS.md
+    lines: 22-22
+  source_text: '- Utopia PHP framework (HTTP routing, CLI, DI, queue)'
+  evidence: The diff uses the Utopia framework's DI system by adding `->inject('mode')`
+    to provide the mode dependency to the action closure.
+  category: architecture
+  verification: llm_judge
+hierarchy_analysis: The base `AGENTS.md` provides the general module structure, while
+  `src/Appwrite/Platform/AGENTS.md` provides the specific `XList.php` naming convention.
+  The agent must combine the instruction 'Update log response builders' with the `XList.php`
+  convention to successfully locate all the files that need editing.
+version: '2.0'
+source:
+  repo: appwrite/appwrite
+  pr: 11580
+  base_commit: bb078086618f85634763943b9bee5fb8e8453cbd
+  merge_commit: 20f80ac067e0042ea05ac9566f0a9ff1624bf3b2
+distractors:
+- rule: Model non-CRUD operations as property updates (e.g., `Update.php`).
+  source:
+    path: src/Appwrite/Platform/AGENTS.md
+    lines: 32-34
+  collision_type: scope_ambiguity
+  why_distracting: The instruction asks to 'Update log response builders'. An agent
+    might misinterpret this as a directive to create a new endpoint for updating logs
+    (e.g., `Logs/Update.php`) based on the rule to model non-CRUD operations as property
+    updates, rather than modifying the existing `XList.php` read endpoints.
+  severity: medium
+- rule: Each service is its own module, and related code should be grouped under one
+    roof.
+  source:
+    path: src/Appwrite/Platform/AGENTS.md
+    lines: 6-8
+  collision_type: architecture_boundary
+  why_distracting: The rule states that related code achieving a specific goal should
+    be put under one roof (a module). An agent might try to refactor all log-related
+    endpoints into a single new `Logs` module, rather than updating the existing log
+    endpoints scattered across different modules (Databases, Teams, etc.).
+  severity: medium
+- rule: HTTP endpoints belong in a module's Http directory
+  source:
+    path: src/Appwrite/Platform/AGENTS.md
+    lines: 13-18
+  source_text: 'A module consists of:
+
+
+    - `Module.php` - Simple register class registering all module''s services (from
+    `Services` directory)
+
+    - `Workers` directory - Contains behavior for module-specific workers
+
+    - `Tasks` directory - Contains behavior for module-specific CLI tasks
+
+    - `Http` directory - Contains HTTP endpoints for the module'
+  collision_type: architecture_boundary
+  why_distracting: The AI might think it needs to move the modified controllers (`app/controllers/api/messaging.php`,
+    `app/controllers/api/users.php`) into the new `src/Appwrite/Platform/Modules/*/Http`
+    structure. However, the gold diff correctly modifies the existing legacy controllers
+    in place without migrating them.
+  severity: medium

@@ -1,0 +1,158 @@
+version: '2.0'
+source:
+  repo: apache/beam
+  pr: 38008
+  base_commit: c8e45e79c699ef6df8847824833aeefab3b5767a
+  merge_commit: f7bdf517ccb9d7ff9a1a71f6850ceeaa3f4085ef
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified files must parse without errors
+- id: test_repo_ast_parsing_vllm_completion
+  type: pass_to_pass
+  origin: repo_tests
+  description: vllm_text_completion.py parses as valid Python AST via subprocess
+- id: test_repo_ast_parsing_vllm_inference
+  type: pass_to_pass
+  origin: repo_tests
+  description: vllm_inference.py parses as valid Python AST via subprocess
+- id: test_repo_git_commit
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo is at the expected base commit
+- id: test_repo_py_compile_vllm_completion
+  type: pass_to_pass
+  origin: repo_tests
+  description: vllm_text_completion.py compiles without errors via py_compile
+- id: test_repo_py_compile_vllm_inference
+  type: pass_to_pass
+  origin: repo_tests
+  description: vllm_inference.py compiles without errors via py_compile
+- id: test_repo_flake8_syntax_vllm_completion
+  type: pass_to_pass
+  origin: repo_tests
+  description: vllm_text_completion.py has no syntax errors via flake8 E9
+- id: test_repo_flake8_syntax_vllm_inference
+  type: pass_to_pass
+  origin: repo_tests
+  description: vllm_inference.py has no syntax errors via flake8 E9
+- id: test_repo_pycodestyle_blank_lines_vllm_completion
+  type: pass_to_pass
+  origin: repo_tests
+  description: vllm_text_completion.py has correct blank lines via pycodestyle E3
+- id: test_repo_pycodestyle_blank_lines_vllm_inference
+  type: pass_to_pass
+  origin: repo_tests
+  description: vllm_inference.py has correct blank lines via pycodestyle E3
+- id: test_repo_yapf_format_vllm_completion
+  type: pass_to_pass
+  origin: repo_tests
+  description: vllm_text_completion.py follows yapf formatting
+- id: test_repo_yapf_format_vllm_inference
+  type: pass_to_pass
+  origin: repo_tests
+  description: vllm_inference.py follows yapf formatting
+- id: test_repo_pylint_errors_vllm_completion
+  type: pass_to_pass
+  origin: repo_tests
+  description: vllm_text_completion.py has no pylint errors
+- id: test_repo_pylint_errors_vllm_inference
+  type: pass_to_pass
+  origin: repo_tests
+  description: vllm_inference.py has no pylint errors
+- id: parse_args_default_max_num_seqs
+  type: fail_to_pass
+  origin: pr_diff
+  description: parse_known_args exposes --vllm_max_num_seqs with a reasonable int
+    default
+- id: parse_args_default_gpu_memory_utilization
+  type: fail_to_pass
+  origin: pr_diff
+  description: parse_known_args exposes --vllm_gpu_memory_utilization with a reasonable
+    float default
+- id: parse_args_custom_overrides
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLI flags accept custom values for max_num_seqs and gpu_memory_utilization
+- id: build_vllm_server_kwargs
+  type: fail_to_pass
+  origin: pr_diff
+  description: Helper builds a dict of vLLM server CLI flags from parsed args
+- id: build_vllm_server_kwargs_propagates_values
+  type: fail_to_pass
+  origin: pr_diff
+  description: build_vllm_server_kwargs converts numeric args to string CLI flags
+    correctly
+- id: run_accepts_vllm_server_kwargs
+  type: fail_to_pass
+  origin: pr_diff
+  description: run() accepts a vllm_server_kwargs parameter for programmatic use
+- id: test_readme_documents_gpu_memory_settings
+  type: fail_to_pass
+  origin: pr_diff
+  description: README.md documents GPU memory constraints and vLLM tuning flags
+rubric:
+- rule: Documentation update is consistent with the tone and format of the existing
+    README
+  source:
+    path: sdks/python/apache_beam/examples/inference/README.md
+    lines: 1-50
+    commit: c8e45e79c699ef6df8847824833aeefab3b5767a
+- rule: README.md documents GPU memory constraints and vLLM tuning flags
+  source:
+    path: sdks/python/apache_beam/examples/inference/README.md
+    lines: 933-937
+    commit: f7bdf517ccb9d7ff9a1a71f6850ceeaa3f4085ef
+  reference: 'On GPUs with about 16GiB of memory (for example NVIDIA T4), vLLM''s
+    defaults can fail
+
+    during engine startup with CUDA out of memory. The example therefore passes conservative
+
+    ``--max-num-seqs`` and ``--gpu-memory-utilization`` values by default (overridable
+    with
+
+    ``--vllm_max_num_seqs`` and ``--vllm_gpu_memory_utilization``) via
+
+    `vllm_server_kwargs`, matching the pattern used in other vLLM examples.'
+config_edits:
+- path: sdks/python/apache_beam/examples/inference/README.md
+  tier: 2
+  gold_added: 'On GPUs with about 16GiB of memory (for example NVIDIA T4), vLLM''s
+    defaults can fail
+
+    during engine startup with CUDA out of memory. The example therefore passes conservative
+
+    ``--max-num-seqs`` and ``--gpu-memory-utilization`` values by default (overridable
+    with
+
+    ``--vllm_max_num_seqs`` and ``--vllm_gpu_memory_utilization``) via
+
+    `vllm_server_kwargs`, matching the pattern used in other vLLM examples.'
+  gold_removed: ''
+distractors:
+- rule: Integration tests have filenames ending in `IT.java` and use `TestPipeline`.
+  source:
+    path: .agent/skills/java-development/SKILL.md
+    lines: 76-76
+  source_text: Integration tests have filenames ending in `IT.java` and use `TestPipeline`.
+  collision_type: scope_ambiguity
+  why_distracting: This sounds like a repository-wide testing convention, but it is
+    explicitly scoped to Java development. The gold diff only changes Python and Markdown
+    files under `sdks/python/...`; following the Java naming/pattern here would send
+    an agent toward the wrong language, wrong test harness, and wrong file locations.
+  severity: medium
+- rule: Use `--requirements_file=requirements.txt` or custom containers.
+  source:
+    path: .agent/skills/python-development/SKILL.md
+    lines: 161-162
+  source_text: '### Specifying Additional Dependencies
+
+    Use `--requirements_file=requirements.txt` or custom containers.'
+  collision_type: scope_ambiguity
+  why_distracting: The vLLM example already lives in an environment-heavy area, so
+    packaging guidance looks relevant. But the bug described by the gold diff is CUDA
+    OOM during vLLM engine startup on ~16GiB GPUs, not missing Python dependencies.
+    Switching focus to requirements files or container packaging would leave the needed
+    `max-num-seqs` / `gpu-memory-utilization` defaults unfixed.
+  severity: medium

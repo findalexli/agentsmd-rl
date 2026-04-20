@@ -1,62 +1,58 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific names like 'addMcpServerShortcut', 'McpAddOptions', 'AddMcpServerResult', 'ServerConfigSchema', exact regex patterns like 'return\\s+\"streamableHttp\"', and 'already exists' error message. While instruction.md mentions transport type normalization and duplicate protection, it does not specify the exact function name 'addMcpServerShortcut', the exact interface names 'McpAddOptions'/'AddMcpServerResult', the exact string 'return \"streamableHttp\"' pattern, or that 'ServerConfigS"
+      "reason": "Tests assert specific identifiers not mentioned in instruction.md: function name 'addMcpServerShortcut', interface names 'McpAddOptions' and 'AddMcpServerResult', and schema name 'ServerConfigSchema' \u2014 instruction only says 'main async function', 'options interface', 'result interface' without naming them."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "instruction.md describes the desired behavior (add MCP server command, transport types, validation) without specifying exact code changes, line numbers, or the precise implementation. It tells what to build, not how to fix specific lines."
+      "reason": "Instruction describes requirements (what to add, what transports to support) without specifying exact code changes or line numbers."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests use regex to assert gold-specific implementation details: 'export\\s+(?:async\\s+)?function\\s+addMcpServerShortcut' (exact function name), 'export\\s+interface\\s+McpAddOptions' (exact interface name), 'export\\s+interface\\s+AddMcpServerResult' (exact interface name), 'return\\s+\"streamableHttp\"' (exact return pattern). An alternative correct implementation using different names (e.g., 'addServer', 'AddServerOptions', 'AddServerResult') or a different mapping approach (e.g., a lookup object inst"
+      "reason": "Tests require specific names like 'addMcpServerShortcut' (test_mcp_exports_main_function), 'McpAddOptions' (test_mcp_exports_options_interface), 'AddMcpServerResult' (test_mcp_exports_result_interface), and 'ServerConfigSchema.parse' (test_mcp_uses_schema_validation) \u2014 alternative correct implementations using different names would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Most fail-to-pass tests are purely text-matching: e.g., test_mcp_exports_main_function uses regex on file content, test_mcp_http_config_type_streamableHttp checks 'return\\s+\"streamableHttp\"' in source, test_mcp_duplicate_detection checks for 'already exists' string in source. These are all 'assert pattern in open(path).read()' style without executing the code. Only pass-to-pass tests like test_repo_cli_utils_tests actually execute code."
+      "reason": "Most f2p tests are regex/substring matching on source text (e.g., re.search for 'export interface McpAddOptions', 'type: \"stdio\"', 'return \"streamableHttp\"', 'ServerConfigSchema') rather than importing/executing code; only pass-to-pass tests run vitest."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "Several f2p tests can be passed by stub implementations. For example, test_mcp_writes_settings just checks 'writeFile' and 'JSON.stringify' appear in the source text. A file containing those strings as comments would pass. test_mcp_url_validation_error checks for 'new URL(' and 'throw new Error' in text - dead code containing these strings would pass. test_mcp_duplicate_detection checks for 'readFile' and 'already exists' as strings - these could appear in comments."
+      "outcome": "pass",
+      "reason": "Tests require specific structural content (writeFile calls, JSON.stringify, schema.parse, duplicate error message) that a no-op stub wouldn't satisfy."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "instruction.md requires URL validation behavior (error when URL provided without --type http), config output to specific path, and working CLI commands. The tests only check source text patterns rather than actually testing these behaviors (e.g., no test actually calls addMcpServerShortcut with a URL and verifies the error, no test verifies the actual JSON output format)."
+      "outcome": "pass",
+      "reason": "Tests cover the documented behaviors: stdio/http transports, URL validation, duplicates, schema validation, command registration."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear names, grouped into fail-to-pass and pass-to-pass categories with comments, and each test has a docstring explaining what it verifies."
+      "reason": "Tests are grouped with clear section comments (Fail-to-pass, Pass-to-pass) and descriptive names."
     },
     "structured_data_schema": {
-      "outcome": "fail",
-      "reason": "The task produces structured JSON (cline_mcp_settings.json with schema { mcpServers: { [name]: { command, args?, type, url? } } }), and while instruction.md mentions the format briefly, the exact schema including when 'url' vs 'command' fields are required for different transport types is not fully documented."
+      "outcome": "pass",
+      "reason": "Instruction documents the settings file format: '{ mcpServers: { [name]: { command, args?, type } } }' and 'url:' field for remote."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in instruction.md."
+      "reason": "No typos observed in file paths or commands."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "instruction.md specifies files to create/modify and general implementation patterns but doesn't name exact buggy lines or provide the fix code. It describes what to build at an appropriate level of abstraction."
+      "reason": "Instruction names the files to create which is appropriate task scoping, not buggy-line leakage."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task creating new files and modifying existing ones, not a config-edit task."
+      "reason": "This is a code task, not an agent-md/config edit task."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "behavior_in_tests",
-    "structured_data_schema"
-  ],
-  "pass_count": 4,
-  "fail_count": 6
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 3
 }

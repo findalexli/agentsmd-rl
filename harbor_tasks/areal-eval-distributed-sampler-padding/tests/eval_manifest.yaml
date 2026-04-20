@@ -1,0 +1,195 @@
+version: '2.0'
+source:
+  repo: inclusionAI/AReaL
+  pr: 1100
+  base_commit: fdca82dc09e76052fd6ee2fe22afcdc5ff044743
+  merge_commit: 0405b5c30c815044d858f15d04d2033c9a3d7760
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: dataloader.py must parse as valid Python
+- id: eval_sampler_no_padding
+  type: fail_to_pass
+  origin: pr_diff
+  description: EvalDistributedSampler covers every index exactly once without padding
+- id: create_dataloader_dispatches_eval_sampler
+  type: fail_to_pass
+  origin: pr_diff
+  description: create_dataloader uses EvalDistributedSampler for ValidDatasetConfig
+- id: edge_case_small_dataset
+  type: fail_to_pass
+  origin: pr_diff
+  description: Sampler handles dataset_size < num_replicas and exact division correctly
+- id: no_duplicate_indices
+  type: fail_to_pass
+  origin: pr_diff
+  description: No duplicate indices across ranks for various dataset sizes
+- id: training_config_unchanged
+  type: pass_to_pass
+  origin: pr_diff
+  description: Training config still uses standard DistributedSampler with drop_last=True
+- id: repo_ruff_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff linting passes on dataloader.py
+- id: repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff formatting passes on dataloader.py
+- id: repo_py_compile
+  type: pass_to_pass
+  origin: repo_tests
+  description: dataloader.py compiles as valid Python bytecode
+- id: repo_bandit
+  type: pass_to_pass
+  origin: repo_tests
+  description: Bandit security checks pass on dataloader.py
+- id: no_trailing_whitespace
+  type: pass_to_pass
+  origin: static
+  description: dataloader.py has no trailing whitespace
+- id: eof_newline
+  type: pass_to_pass
+  origin: static
+  description: dataloader.py ends with a newline
+- id: no_wildcard_imports
+  type: pass_to_pass
+  origin: agent_config
+  description: No wildcard imports in dataloader.py
+  source:
+    path: AGENTS.md
+    lines: '30'
+    commit: fdca82dc09e76052fd6ee2fe22afcdc5ff044743
+- id: no_print_statements
+  type: pass_to_pass
+  origin: agent_config
+  description: No print() calls in dataloader.py — use areal.utils.logging.getLogger()
+  source:
+    path: AGENTS.md
+    lines: 90-92
+    commit: fdca82dc09e76052fd6ee2fe22afcdc5ff044743
+- id: explicit_type_hints_in_eval_sampler
+  type: pass_to_pass
+  origin: agent_config
+  description: EvalDistributedSampler.__init__ has explicit type annotations on all
+    parameters
+  source:
+    path: AGENTS.md
+    lines: 100-101
+    commit: fdca82dc09e76052fd6ee2fe22afcdc5ff044743
+rubric:
+- rule: AGENTS.md was not modified - no unnecessary documentation changes
+  source:
+    path: AGENTS.md
+    lines: 1
+    commit: 0405b5c30c815044d858f15d04d2033c9a3d7760
+  evidence: Gold solution only modifies dataloader.py, not AGENTS.md
+  category: scope
+- rule: CLAUDE.md was not modified - no unnecessary documentation changes
+  source:
+    path: CLAUDE.md
+    lines: 1
+    commit: 0405b5c30c815044d858f15d04d2033c9a3d7760
+  evidence: Gold solution only modifies dataloader.py, not CLAUDE.md
+  category: scope
+- rule: cli_args.py was not modified - handled via isinstance check in dataloader
+    instead
+  source:
+    path: areal/api/cli_args.py
+    lines: 1
+    commit: 0405b5c30c815044d858f15d04d2033c9a3d7760
+  evidence: Gold solution avoids modifying config structures per AGENTS.md guidance
+  category: architecture
+- rule: Config dataclasses must follow the `XxxConfig` naming pattern.
+  source:
+    path: .claude/rules/code-style.md
+    lines: 50-52
+  source_text: '| Type             | Pattern       | Example                             |
+
+    | ---------------- | ------------- | ----------------------------------- |
+
+    | Config dataclass | `XxxConfig`   | `GRPOConfig`, `FSDPConfig`          |'
+  evidence: The diff imports and uses `ValidDatasetConfig`, which adheres to the `XxxConfig`
+    naming convention.
+  category: naming
+  verification: llm_judge
+- rule: Do not use wildcard imports (`from x import *`).
+  source:
+    path: AGENTS.md
+    lines: 25-25
+  source_text: '- No wildcard imports (`from x import *`).'
+  evidence: The diff explicitly imports `ValidDatasetConfig` and `_DatasetConfig`
+    from `areal.api.cli_args` rather than using a wildcard import.
+  category: imports
+  verification: llm_judge
+- rule: Keep inheritance shallow (≤2 levels when possible).
+  source:
+    path: .claude/rules/code-style.md
+    lines: 11-11
+  source_text: '- Keep inheritance shallow (≤2 levels when possible)'
+  evidence: The newly created `EvalDistributedSampler` class inherits directly from
+    `DistributedSampler`, maintaining a shallow inheritance hierarchy of just one
+    level.
+  category: architecture
+  verification: llm_judge
+distractors:
+- rule: Composition over inheritance -- keep hierarchies <= 2 levels; prefer delegation.
+  collision_type: architecture_boundary
+  why_distracting: The agent might try to use composition to wrap `DistributedSampler`
+    instead of inheriting from it. However, PyTorch's `DataLoader` expects a `Sampler`
+    object, and inheriting from `DistributedSampler` is the standard and much simpler
+    way to override the padding behavior.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 66-66
+- rule: Add tests for new functionality.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to create a new test file or modify existing
+    tests to cover `EvalDistributedSampler`, which is out of scope for this specific
+    bug fix PR and not present in the gold solution.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 31-31
+- rule: Process Group Management
+  source:
+    path: .claude/rules/distributed.md
+    lines: 10-14
+  source_text: '## Process Group Management
+
+
+    - **Never create global process group** in module-level code
+
+    - Always pass `process_group` explicitly, don''t rely on default
+
+    - Use `dist.get_rank(group)` not `dist.get_rank()` when group matters'
+  collision_type: scope_ambiguity
+  why_distracting: Because the code implements a custom `DistributedSampler` and handles
+    `rank` and `world_size`, an agent might try to apply these distributed rules by
+    requiring a `process_group` argument or replacing `rank` with `dist.get_rank(group)`.
+    However, this file is in `areal/utils/`, which is outside the rule's path scope
+    (`areal/engine/**`), and standard PyTorch samplers operate on `num_replicas` and
+    `rank` integers rather than process groups.
+  severity: medium
+- rule: Validation in __post_init__
+  source:
+    path: .claude/rules/api-config.md
+    lines: 35-43
+  source_text: "## Validation\n\n- Use `__post_init__` for validation\n- Raise `ValueError`\
+    \ with clear message:\n  ```python\n  def __post_init__(self):\n      if self.batch_size\
+    \ <= 0:\n          raise ValueError(f\"batch_size must be positive, got {self.batch_size}\"\
+    )\n  ```"
+  collision_type: architecture_boundary
+  why_distracting: The code validates `dataset_config.batch_size` against `world_size`
+    and raises a `ValueError`. An agent reading the API config rules might try to
+    move this validation into the `__post_init__` of `_DatasetConfig` or `ValidDatasetConfig`.
+    This would be an architectural error because `world_size` is a runtime environment
+    variable passed to the dataloader, not a property of the dataset configuration
+    itself.
+  severity: high
+hierarchy_analysis: AGENTS.md and CLAUDE.md provide overlapping rules at the root
+  level. The agent must synthesize the constraint against modifying `cli_args.py`
+  to arrive at the `isinstance` check in `dataloader.py`, while ignoring the 'composition
+  over inheritance' rule because it crosses the PyTorch architecture boundary.

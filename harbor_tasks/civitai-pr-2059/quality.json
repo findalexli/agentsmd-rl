@@ -1,0 +1,54 @@
+{
+  "model": "claude-opus-4-7",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "All test usernames (civitmod, c1vitai, etc.) and file paths (src/utils/blocklist-username.json) are explicitly listed in instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction describes the problem and verification cases but doesn't state the exact strings to add to the blocklist."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests only check behavior via the blocklist dict; any set of partial entries that correctly blocks/allows the listed usernames would pass."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests load JSON and execute is_username_permitted logic, plus run vitest subprocesses."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "F2p tests assert specific usernames are rejected; a stub cannot satisfy both rejection of civit variants and allowing civic/civil."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "Tests cover all rejected and allowed usernames from instruction's verification section."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are organized into TestUsernameBlocklist, TestBlocklistJsonStructure, and TestRepoCI classes with clear docstrings."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "Instruction documents the JSON schema with 'partial' and 'exact' array keys."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "Paths and names appear consistent."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction names the file to edit but localization is the task itself; doesn't reveal exact blocklist entries."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "Gold patch appends 4 entries to the partial array without rewriting the whole file."
+    }
+  },
+  "tier_a_fails": [],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 11,
+  "fail_count": 0
+}

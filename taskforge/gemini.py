@@ -18,7 +18,7 @@ from pathlib import Path
 
 import httpx
 
-GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent"
+GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-pro-preview-customtools:generateContent"
 
 # Structured output schema — reasoning before verdict (propertyOrdering).
 _RUBRIC_JUDGE_SCHEMA = {

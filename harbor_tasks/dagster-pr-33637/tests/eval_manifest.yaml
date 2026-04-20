@@ -1,0 +1,148 @@
+version: 1
+
+metadata:
+  task_name: "dagster-pipes-inventory-uri"
+  pr_number: 33637
+  owner: "dagster-io"
+  repo: "dagster"
+
+agent_config:
+  source: "dagster-io/dagster@7f73da5a70984fdcbf6b79967ccfd2bdd86acdeb:CLAUDE.md"
+  rules:
+    - id: must_run_ruff
+      description: "MANDATORY: After any Python code changes, ALWAYS run `make ruff` - this is mandatory and must never be skipped"
+      source: CLAUDE.md
+    - id: ruff_no_skip
+      description: "Never skip ruff linting step - code quality checks are essential for all contributions"
+      source: CLAUDE.md
+    - id: address_lint_before_complete
+      description: "MANDATORY: Address any linting issues before considering a task complete"
+      source: CLAUDE.md
+    - id: coding_conventions_type_hints
+      description: "Type hints required for all Python code; use builtin types (dict, list) not typing.Dict"
+      source: "dagster-io/dagster@7f73da5a70984fdcbf6b79967ccfd2bdd86acdeb:.claude/coding_conventions.md"
+    - id: coding_conventions_docstrings
+      description: "Follow Google-style docstrings with Args, Returns, and Raises sections where applicable"
+      source: "dagster-io/dagster@7f73da5a70984fdcbf6b79967ccfd2bdd86acdeb:.claude/coding_conventions.md"
+
+patch:
+  gold_patch: |
+    diff --git a/docs/sphinx/_ext/dagster-sphinx/dagster_sphinx/__init__.py b/docs/sphinx/_ext/dagster-sphinx/dagster_sphinx/__init__.py
+    index 53c913ed9c141..258c135c5ec7c 100644
+    --- a/docs/sphinx/_ext/dagster-sphinx/dagster_sphinx/__init__.py
+    +++ b/docs/sphinx/_ext/dagster-sphinx/dagster_sphinx/__init__.py
+    @@ -174,14 +174,17 @@ def get_child_as(node: nodes.Node, index: int, node_type: type[T_Node]) -> T_Nod
+     def transform_inventory_uri(uri: str) -> str:
+         """Transform Sphinx source paths to final documentation URLs.
+
+    -    Transforms paths like:
+    -        sections/api/apidocs/dagster/internals/
+    -    to:
+    -        api/dagster/internals
+    +    The Sphinx source files live under a ``sections/`` directory, but the
+    +    built documentation is served without that prefix.  For example::
+    +
+    +        sections/api/dagster/pipes        -> api/dagster/pipes
+    +        sections/integrations/libraries/… -> integrations/libraries/…
+    +
+    +    Stripping the ``sections/`` prefix aligns the inventory URIs with the
+    +    actual URL structure produced by the build-api-docs script.
+         """
+    -    # Remove the 'sections/api/apidocs/' prefix
+    -    if uri.startswith("sections/api/apidocs/"):
+    -        transformed = uri.replace("sections/api/apidocs/", "api/", 1)
+    +    if uri.startswith("sections/"):
+    +        transformed = uri[len("sections/") :]
+         # Remove trailing slash if present
+         if transformed.endswith("/"):
+             transformed = transformed[:-1]
+
+checks:
+  - id: test_transform_function_exists
+    description: "transform_inventory_uri function is callable and well-formed"
+    type: fail_to_pass
+    f2p_target: true
+    origin: agent_config
+    source: must_run_ruff
+
+  - id: test_dagster_pipes_uri_transformation
+    description: "Dagster pipes path transforms from sections/api/dagster/pipes to api/dagster/pipes"
+    type: fail_to_pass
+    f2p_target: true
+    origin: agent_config
+    source: must_run_ruff
+
+  - id: test_integration_libraries_uri
+    description: "Integration library paths strip sections/ prefix correctly"
+    type: fail_to_pass
+    f2p_target: true
+    origin: agent_config
+    source: must_run_ruff
+
+  - id: test_trailing_slash_removal
+    description: "Transformed URIs have trailing slashes removed"
+    type: fail_to_pass
+    f2p_target: true
+    origin: agent_config
+    source: must_run_ruff
+
+  - id: test_non_sections_uri_unchanged
+    description: "URIs not starting with sections/ pass through unchanged"
+    type: fail_to_pass
+    f2p_target: true
+    origin: agent_config
+    source: must_run_ruff
+
+  - id: test_sections_only_strips_prefix
+    description: "Only sections/ prefix is stripped from paths"
+    type: fail_to_pass
+    f2p_target: true
+    origin: agent_config
+    source: must_run_ruff
+
+  - id: test_repo_tests_exist
+    description: "Sphinx extension directory exists (pass_to_pass smoke test)"
+    type: pass_to_pass
+    origin: static
+
+  - id: test_repo_ruff_check
+    description: "Repo's ruff linter passes on dagster-sphinx code"
+    type: pass_to_pass
+    origin: repo_tests
+
+  - id: test_repo_ruff_format
+    description: "Repo's ruff formatter passes on dagster-sphinx code"
+    type: pass_to_pass
+    origin: repo_tests
+
+rubric:
+  - id: rubric_ruff_enforcement
+    description: "Code quality checks via `make ruff` are run after changes and all issues addressed"
+    source: CLAUDE.md
+    reference: "The dagster_sphinx directory passes ruff check and ruff format check with no errors."
+
+  - id: rubric_type_annotations
+    description: "Type annotations use builtin types (dict, list) not typing.Dict/typing.List"
+    source: ".claude/coding_conventions.md"
+    reference: "def transform_inventory_uri(uri: str) -> str:"
+
+  - id: rubric_docstring_style
+    description: "Docstrings follow Google-style with proper description of behavior"
+    source: ".claude/coding_conventions.md"
+    reference: |
+        """Transform Sphinx source paths to final documentation URLs.
+
+        The Sphinx source files live under a ``sections/`` directory, but the
+        built documentation is served without that prefix.  For example::
+
+            sections/api/dagster/pipes        -> api/dagster/pipes
+            sections/integrations/libraries/… -> integrations/libraries/…
+
+        Stripping the ``sections/`` prefix aligns the inventory URIs with the
+        actual URL structure produced by the build-api-docs script.
+        """
+
+  - id: rubric_no_print_in_prod
+    description: "No print() statements in production code"
+    source: ".claude/coding_conventions.md"
+    reference: "No print() statements present in dagster_sphinx/__init__.py"

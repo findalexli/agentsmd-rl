@@ -1,0 +1,200 @@
+source:
+  repo: excalidraw/excalidraw.git
+  pr: 0
+  base_commit: d29fd62e417b8cb73d1d5dc3e207735046401491
+  merge_commit: 54a98268177c19cee7a49d05ce56e64f7a424db1
+checks:
+- id: clipboard-flow-control
+  description: 'The copyTextToSystemClipboard function must return inside the clipboardEvent
+
+    block only when clipboardEvent is provided, and return after navigator.clipboard.writeText
+
+    succeeds. This ensures proper fallback behavior when no ClipboardEvent is available.
+
+    '
+  type: fail_to_pass
+  origin: pr_diff
+- id: plain-text-const
+  description: 'The plainTextEntry variable should be declared as const since it is
+    never reassigned.
+
+    '
+  type: fail_to_pass
+  origin: agent_config
+  source:
+    path: CLAUDE.md
+- id: no-redundant-undefined
+  description: 'After successful navigator.clipboard.writeText(), the code should
+    return directly
+
+    instead of setting plainTextEntry to undefined and continuing.
+
+    '
+  type: fail_to_pass
+  origin: pr_diff
+- id: scss-success-color
+  description: 'The FilledButton.scss file should include background-color: var(--color-success)
+
+    for loading and success states.
+
+    '
+  type: fail_to_pass
+  origin: pr_diff
+- id: repo-clipboard-ts-syntax
+  description: 'The clipboard.ts file must have valid TypeScript syntax that can be
+    parsed.
+
+    This is a pass_to_pass check to ensure the fix doesn''t break syntax.
+
+    '
+  type: pass_to_pass
+  origin: repo_tests
+- id: repo-clipboard-test-ts-syntax
+  description: 'The clipboard.test.ts file must have valid TypeScript syntax that
+    can be parsed.
+
+    Uses prettier --parser typescript to validate without requiring full type check.
+
+    This is a pass_to_pass check from the repo CI pipeline.
+
+    '
+  type: pass_to_pass
+  origin: repo_tests
+- id: repo-filledbutton-scss-syntax
+  description: 'The FilledButton.scss file must have valid SCSS syntax that can be
+    parsed.
+
+    This is a pass_to_pass check to ensure the fix doesn''t break syntax.
+
+    '
+  type: pass_to_pass
+  origin: repo_tests
+- id: repo-charts-test-syntax
+  description: 'The charts.test.ts file must have valid TypeScript syntax that can
+    be parsed.
+
+    Uses prettier --parser typescript to validate without requiring full type check.
+
+    This is a pass_to_pass check from the repo CI pipeline.
+
+    '
+  type: pass_to_pass
+  origin: repo_tests
+- id: repo-utils-test-syntax
+  description: 'The utils.test.ts file must have valid TypeScript syntax that can
+    be parsed.
+
+    Uses prettier --parser typescript to validate without requiring full type check.
+
+    This is a pass_to_pass check from the repo CI pipeline.
+
+    '
+  type: pass_to_pass
+  origin: repo_tests
+- id: repo-constants-ts-syntax
+  description: 'The constants.ts file must have valid TypeScript syntax that can be
+    parsed.
+
+    Uses prettier --parser typescript to validate without requiring full type check.
+
+    This is a pass_to_pass check from the repo CI pipeline.
+
+    '
+  type: pass_to_pass
+  origin: repo_tests
+- id: repo-clipboard-return-placement
+  description: 'The clipboard.ts file must have correct return statement placement
+    inside the if (clipboardEvent) block and after navigator.clipboard.writeText.
+
+    Uses Node.js to verify the control flow structure. This is a pass_to_pass check
+    from the repo CI pipeline.
+
+    '
+  type: pass_to_pass
+  origin: repo_tests
+- id: repo-clipboard-const-variable
+  description: 'The clipboard.ts file must declare plainTextEntry as const, not let.
+
+    Uses Node.js to verify the variable declaration. This is a pass_to_pass check
+    for code quality from the repo CI pipeline.
+
+    '
+  type: pass_to_pass
+  origin: repo_tests
+- id: repo-filledbutton-scss-structure
+  description: 'The FilledButton.scss file must have correct structure for loading/success
+    states with background-color: var(--color-success).
+
+    Uses Node.js to verify the SCSS structure. This is a pass_to_pass check from the
+    repo CI pipeline.
+
+    '
+  type: pass_to_pass
+  origin: repo_tests
+- id: repo-clipboard-no-redundant-undefined
+  description: 'The clipboard.ts file must not contain the redundant plainTextEntry
+    = undefined assignment after writeText.
+
+    Uses Node.js to verify the code pattern. This is a pass_to_pass check from the
+    repo CI pipeline.
+
+    '
+  type: pass_to_pass
+  origin: repo_tests
+rubric:
+- source:
+    path: CLAUDE.md
+  reference: '### Clipboard
+
+    - Clipboard operations must have fallbacks (event.clipboardData -> navigator.clipboard
+    -> execCommand)'
+  rule: Document clipboard fallback architecture in CLAUDE.md
+  category: documentation
+- rule: Prefer immutable data
+  source:
+    path: repo/.github/copilot-instructions.md
+    lines: '16'
+  source_text: '- Prefer immutable data (const, readonly)'
+  evidence: The gold diff converts `let plainTextEntry` to `const plainTextEntry`
+    by removing the subsequent `plainTextEntry = undefined;` reassignment, strictly
+    following the rule to prefer immutable `const` declarations when variables are
+    no longer re-assigned.
+  category: style
+  verification: llm_judge
+distractors:
+- rule: 'App Development: Work in `excalidraw-app/` for app-specific features'
+  collision_type: architecture_boundary
+  why_distracting: An agent might assume that system clipboard interaction is an app-specific
+    feature rather than an editor feature, leading it to search for or implement the
+    fix in `excalidraw-app/` instead of the core package.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: '15'
+- rule: 'Testing: Always run `yarn test:update` before committing'
+  collision_type: meta_confusion
+  why_distracting: The agent might attempt to run `yarn test:update` to update snapshots
+    as instructed before committing. In an isolated agent environment, this could
+    lead to unrelated snapshot changes or test failures, distracting from the specific
+    clipboard fix.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 16-23
+- rule: Use CSS modules for component styling
+  source:
+    path: repo/.github/copilot-instructions.md
+    lines: '24'
+  source_text: '- Use CSS modules for component styling'
+  collision_type: rule_conflict
+  why_distracting: The diff involves styling changes to a standard SCSS file (`FilledButton.scss`)
+    that uses BEM conventions (`.ExcButton--status-success`). An agent might mistakenly
+    attempt to rewrite this styling into a CSS module (`.module.css`) to obey this
+    rule, which would break the established architecture and component styles for
+    this specific package.
+  severity: high
+hierarchy_analysis: The repository uses a single `CLAUDE.md` file at the root level.
+  The primary challenge is distinguishing between editor features (`packages/excalidraw/`)
+  and app-specific features (`excalidraw-app/`), as clipboard interaction could conceptually
+  belong to either depending on the architecture.
+version: '2.0'

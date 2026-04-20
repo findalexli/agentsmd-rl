@@ -1,60 +1,56 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the migration file path, the disable_sqlite_fkeys context manager, the UPDATE statements for log and dag tables, and the batch_alter_table operations. All specific strings checked in tests (UPDATE log SET, UPDATE dag SET, disable_sqlite_fkeys, batch_alter_table, execute) are discoverable from the instruction."
+      "reason": "Instruction names the migration file path, the utils.py location, disable_sqlite_fkeys context manager, and the UPDATE statements with their exact SQL semantics."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction essentially describes the exact fix: move UPDATE statements inside the disable_sqlite_fkeys context manager. It says 'the current structure of the upgrade() function prevents this from working correctly' and the task is to 'fix the upgrade() function... ensuring that foreign key constraints are properly disabled when needed during the migration.' Combined with the detailed description of what disable_sqlite_fkeys does and what the upgrade function does, the fix is essentially spe"
+      "outcome": "pass",
+      "reason": "Instruction describes the bug (UPDATEs outside the context manager prevent PRAGMA from working) but doesn't explicitly say 'move UPDATEs inside the with block'."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests use AST parsing to check very specific structural requirements: UPDATE statements must be direct children of the disable_sqlite_fkeys with block (test_update_statements_inside_disable_sqlite_fkeys checks inner_stmt in stmt.body), must use op.execute with string constants, and must appear before batch_alter_table calls. An alternative correct fix that wraps only the batch_alter_table calls in disable_sqlite_fkeys and puts UPDATEs before the with block (but still within a transaction) would "
+      "outcome": "pass",
+      "reason": "Tests check structural properties (UPDATEs inside disable_sqlite_fkeys block, not before it) which any correct fix would satisfy; doesn't assert on variable names or exact positions."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every test operates by parsing the source file as text/AST and checking structural properties. No test actually imports the migration module, runs the upgrade function, creates a SQLite database, or verifies that foreign key constraints are properly handled. This is purely textual/structural verification."
+      "reason": "All tests use ast.parse and string inspection of the migration file (e.g., test_update_statements_inside_disable_sqlite_fkeys, test_no_updates_before_disable_sqlite_fkeys); no test actually runs the migration."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The original buggy file has UPDATE statements outside the disable_sqlite_fkeys context, so a stub or unmodified file would fail test_update_statements_inside_disable_sqlite_fkeys and test_no_updates_before_disable_sqlite_fkeys. The tests do require actual code changes."
+      "reason": "Tests require actual restructuring of the upgrade() function; a stub couldn't pass these AST structural checks."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires that UPDATE statements run inside disable_sqlite_fkeys context and that foreign key constraints are properly disabled during batch_alter_table. The tests verify the structural aspect of this (UPDATEs inside context, proper ordering)."
+      "reason": "Tests verify the structural fix described in the instruction (UPDATEs inside the disable_sqlite_fkeys context)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_migration_file_exists, test_migration_valid_syntax, test_update_statements_inside_disable_sqlite_fkeys, etc.) with docstrings explaining their purpose."
+      "reason": "Tests are separate named functions with docstrings explaining each check."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a migration file, not producing structured data output."
+      "reason": "No structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, function names, and variable names in the instruction and tests are consistent and correct."
+      "reason": "Paths and names appear consistent."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly names the exact file (0097_3_2_0_enforce_log_event_and_dag_is_stale_not_null.py), the exact function (upgrade()), and describes the structural issue (UPDATE statements need to be inside disable_sqlite_fkeys context). This goes beyond naming the buggy file and essentially describes the fix."
+      "outcome": "pass",
+      "reason": "Instruction points at the migration file (which is necessary task context) without specifying which lines to move."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "Code task, not a config edit."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 5,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 1
 }

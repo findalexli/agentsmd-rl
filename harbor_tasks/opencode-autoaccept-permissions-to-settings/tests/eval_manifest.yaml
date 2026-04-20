@@ -1,0 +1,185 @@
+version: '2.0'
+source:
+  repo: anomalyco/opencode
+  pr: 21308
+  base_commit: c2d2ca352252a922354c89bfbdb135cf1abfe1b6
+  merge_commit: 41612b3dbea7b4e30a5a83678d2526dbeae9b61a
+checks:
+- id: typescript_syntax
+  type: pass_to_pass
+  origin: static
+  description: Modified files must parse as valid TypeScript
+- id: permissions_button_removed_from_composer
+  type: fail_to_pass
+  origin: pr_diff
+  description: prompt-input.tsx must not render data-action prompt-permissions button
+- id: auto_accept_toggle_in_settings
+  type: fail_to_pass
+  origin: pr_diff
+  description: settings-general.tsx must have settings-auto-accept-permissions data-action
+    with Switch
+- id: settings_uses_permission_context
+  type: fail_to_pass
+  origin: pr_diff
+  description: settings-general.tsx must import and call usePermission
+- id: settings_toggle_handles_session_and_directory
+  type: fail_to_pass
+  origin: pr_diff
+  description: settings-general.tsx must handle both session-level and directory-level
+    permission toggling
+- id: prompt_toggle_accept_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: prompt-input.tsx must no longer define toggleAccept or acceptLabel
+- id: prompt_input_not_stubbed
+  type: pass_to_pass
+  origin: static
+  description: prompt-input.tsx has substantial content (>1000 lines)
+- id: settings_general_not_stubbed
+  type: pass_to_pass
+  origin: static
+  description: settings-general.tsx has substantial content (>100 lines)
+- id: no_any_type_in_settings
+  type: pass_to_pass
+  origin: agent_config
+  description: settings-general.tsx avoids using the any type
+  source:
+    path: AGENTS.md
+    lines: '13'
+    commit: c2d2ca352252a922354c89bfbdb135cf1abfe1b6
+- id: prefer_const_in_settings
+  type: pass_to_pass
+  origin: agent_config
+  description: settings-general.tsx prefers const over let
+  source:
+    path: AGENTS.md
+    lines: '70'
+    commit: c2d2ca352252a922354c89bfbdb135cf1abfe1b6
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TypeScript typecheck passes via bun typecheck
+- id: test_repo_prompt_input_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: prompt-input unit tests pass
+- id: test_repo_permission_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: permission context unit tests pass
+- id: test_repo_prettier_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files are correctly formatted with prettier
+- id: test_repo_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Full unit test suite passes
+rubric:
+- rule: Keep things in one function unless composable or reusable
+  source:
+    path: AGENTS.md
+    lines: '11'
+    commit: c2d2ca352252a922354c89bfbdb135cf1abfe1b6
+- rule: Avoid unnecessary destructuring. Use dot notation to preserve context.
+  source:
+    path: AGENTS.md
+    lines: '57'
+    commit: c2d2ca352252a922354c89bfbdb135cf1abfe1b6
+- rule: Avoid else statements. Prefer early returns.
+  source:
+    path: AGENTS.md
+    lines: '84'
+    commit: c2d2ca352252a922354c89bfbdb135cf1abfe1b6
+- rule: Always prefer createStore over multiple createSignal calls
+  source:
+    path: packages/app/AGENTS.md
+    lines: '15'
+    commit: c2d2ca352252a922354c89bfbdb135cf1abfe1b6
+- rule: Modified files are correctly formatted with prettier
+- rule: Full unit test suite passes via bun test
+- rule: Use provided action helpers like `openSettings(page)` and `closeDialog(page,
+    dialog)` for common UI interactions in tests.
+  source:
+    path: packages/app/e2e/AGENTS.md
+    lines: 43-46
+  evidence: The gold solution imports `openSettings` and `closeDialog` from `../actions`
+    and uses them to open the settings dialog, interact with the toggle, and close
+    the dialog, rather than writing raw Playwrig
+  category: testing
+- rule: Use single word names by default for new locals, params, and helper functions.
+  source:
+    path: AGENTS.md
+    lines: 24-30
+  evidence: The gold solution introduces new local variables using single-word names
+    such as `dialog`, `toggle`, `input`, and `checked`.
+  category: naming
+- rule: 'Helper Functions: Actions (`actions.ts`): `openSettings(page)`, `closeDialog(page,
+    dialog)`'
+  source:
+    path: packages/app/e2e/AGENTS.md
+    lines: 46-50
+  evidence: The gold solution imports and uses `openSettings` and `closeDialog` from
+    `../actions` to interact with the settings dialog instead of manually clicking
+    the settings button or writing raw Playwright lo
+  category: testing
+- rule: Use helper functions from `actions.ts` like `openSettings(page)` and `closeDialog(page,
+    dialog)` for dialog interactions.
+  source:
+    path: packages/app/e2e/AGENTS.md
+    lines: 48-49
+  evidence: The gold solution imports and uses `openSettings(page)` and `closeDialog(page,
+    dialog)` in both e2e test files instead of manually writing locators to click
+    the settings icon or close button.
+  category: testing
+- rule: Prefer `const` over `let`. Use ternaries or early returns instead of reassignment.
+  source:
+    path: AGENTS.md
+    lines: 62-63
+  evidence: The gold solution uses `const dialog`, `const toggle`, `const input`,
+    and `const checked` in the e2e tests, avoiding `let` reassignments entirely.
+  category: style
+- rule: Use predefined action helpers like `openSettings` and `closeDialog` for interacting
+    with common UI elements in tests.
+  source:
+    path: packages/app/e2e/AGENTS.md
+    lines: 42-44
+  evidence: The gold solution imports and uses `openSettings(page)` and `closeDialog(page,
+    dialog)` in both `prompt-shell.spec.ts` and `session-composer-dock.spec.ts` instead
+    of manually writing Playwright locato
+  category: testing
+- rule: Prefer single word names for variables and functions.
+  source:
+    path: AGENTS.md
+    lines: 21-31
+  evidence: The gold solution introduces new local variables in the tests using short,
+    single-word names like `dialog`, `toggle`, and `input`.
+  category: naming
+distractors:
+- rule: Use `agent-browser` for web automation.
+  collision_type: meta_confusion
+  why_distracting: The rule instructs the use of `agent-browser` for 'web automation'.
+    An agent might get confused between its own tool usage (using agent-browser to
+    navigate the web during the task) and the objective of writing Playwright e2e
+    tests (which is also web automation), potentially trying to insert agent-browser
+    commands into the test files.
+  severity: high
+  source:
+    path: packages/app/AGENTS.md
+    lines: 16-23
+- rule: Always prefer `createStore` over multiple `createSignal` calls in SolidJS.
+  collision_type: architecture_boundary
+  why_distracting: The rule mandates preferring `createStore` over `createSignal`.
+    An agent moving the toggle state to the settings page might attempt to refactor
+    the permission state management to use `createStore`, but the instructions explicitly
+    state to 'Read the current auto-accept state via the permission context'.
+  severity: medium
+  source:
+    path: packages/app/AGENTS.md
+    lines: 10-11
+hierarchy_analysis: The agent must navigate a 3-level deep hierarchy. The root `AGENTS.md`
+  provides general TypeScript and naming conventions. The `packages/app/AGENTS.md`
+  provides SolidJS rules and a distracting meta-instruction about web automation.
+  Crucially, the agent must discover `packages/app/e2e/AGENTS.md` to find the specific
+  Playwright action helpers (`openSettings`, `closeDialog`) required to cleanly update
+  the e2e tests without hardcoding DOM interactions.

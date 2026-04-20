@@ -1,0 +1,139 @@
+version: '2.0'
+source:
+  repo: oven-sh/bun
+  pr: 28202
+  base_commit: af24e281ebacd6ac77c0f14b4206599cf4ae1c9f
+  merge_commit: a04817ce2b7f1a1e8b7cbf8af8f2c027ab072f1d
+checks:
+- id: target_file_exists
+  type: pass_to_pass
+  origin: static
+  description: Target test file must exist and be non-empty
+- id: data_loss_pattern_fixed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Buggy str='' + continue outer pattern removed, remaining lines preserved
+- id: trailing_partial_lines_preserved
+  type: fail_to_pass
+  origin: pr_diff
+  description: Trailing partial line from stderr split saved for next iteration
+- id: bundler_no_inherit_pipes
+  type: fail_to_pass
+  origin: pr_diff
+  description: Bundler subprocesses must not use stdout/stderr:'inherit'
+- id: early_bundler_exit_detection
+  type: fail_to_pass
+  origin: pr_diff
+  description: Bundler-based tests detect early bundler exit via Promise.race or similar
+- id: sourcemap_tests_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: All three sourcemap hot-reload tests exist and verify 50 reload cycles
+- id: not_stub
+  type: fail_to_pass
+  origin: static
+  description: Modified file has meaningful code changes (>= 10 non-comment lines)
+- id: buffer_alloc_convention
+  type: fail_to_pass
+  origin: agent_config
+  description: Large repetitive strings use Buffer.alloc instead of .repeat()
+  source:
+    path: test/CLAUDE.md
+    lines: '147'
+    commit: af24e281ebacd6ac77c0f14b4206599cf4ae1c9f
+- id: repo_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo''s Prettier formatting check passes on the modified file (CI:
+    bun run prettier)'
+- id: target_typescript_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Target file has valid TypeScript syntax (CI: tsc --noEmit on target
+    file)'
+- id: repo_oxlint
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo''s oxlint passes on the target file with 0 errors (CI: bunx oxlint)'
+- id: repo_typescript_project
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo''s TypeScript project compiles without errors, excluding regression
+    fixtures (CI: cd test && bun run typecheck)'
+- id: test_repo_banned_words
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo banned words test passes (CI: bun test test/internal/ban-words.test.ts)'
+rubric:
+- rule: Do not write flaky tests. Unless explicitly asked, never wait for time to
+    pass in tests. Always wait for the condition to be met instead of waiting for
+    an arbitrary amount of time.
+  source:
+    path: test/CLAUDE.md
+    lines: '21'
+    commit: af24e281ebacd6ac77c0f14b4206599cf4ae1c9f
+  reference: 'Promise.race([driveErrorReloadCycle(...), bundler.exited.then(...)])'
+- rule: Generally, await using or using is a good idea to ensure proper resource cleanup.
+  source:
+    path: test/CLAUDE.md
+    lines: '100'
+    commit: af24e281ebacd6ac77c0f14b4206599cf4ae1c9f
+  reference: runner.kill() is called when targetCount is reached to clean up process
+- rule: Prefer async/await over callbacks.
+  source:
+    path: test/CLAUDE.md
+    lines: '104'
+    commit: af24e281ebacd6ac77c0f14b4206599cf4ae1c9f
+  reference: 'async function driveErrorReloadCycle with for await...of loop'
+- rule: Always wait for the condition to be met instead of waiting for an arbitrary
+    amount of time.
+  source:
+    path: test/AGENTS.md
+    lines: 20-22
+  evidence: The driveErrorReloadCycle function uses a for await loop over runner.stderr
+    to wait for specific error output instead of using arbitrary timeouts.
+  category: testing
+  reference: 'for await (const chunk of runner.stderr) with pattern matching'
+- rule: 'Use stderr: ''pipe'' when spawning processes in tests as demonstrated in
+    the multi-file test example.'
+  source:
+    path: AGENTS.md
+    lines: 66-72
+  evidence: 'The gold solution ensures the spawned process uses stderr: ''pipe'' instead
+    of ''inherit'', matching the Bun.spawn example in the config.'
+  category: testing
+  reference: 'stderr: "pipe" in spawn options'
+distractors:
+- rule: 'CRITICAL: Do not set a timeout on tests. Bun already has timeouts.'
+  collision_type: scope_ambiguity
+  why_distracting: 'The file already defines and uses a custom `timeout` variable
+    (`const timeout = isDebug ? Infinity : 10_000;`). An agent might try to remove
+    this to comply with the rule, but doing so is out of scope for the bug fix and
+    modifies existing test infrastructure.'
+  severity: medium
+  source:
+    path: test/AGENTS.md
+    lines: 109-110
+- rule: When a test file spawns a Bun process, we like for that file to end in `*-fixture.ts`.
+  collision_type: scope_ambiguity
+  why_distracting: The test file `hot.test.ts` spawns Bun processes. An agent might
+    try to rename the file or extract the spawned code into a `*-fixture.ts` file,
+    which is an unnecessary refactor for this bug fix.
+  severity: low
+  source:
+    path: test/AGENTS.md
+    lines: 89-90
+- rule: Use `tempDir` from `"harness"` to create a temporary directory.
+  collision_type: scope_ambiguity
+  why_distracting: The test already has an established way of writing files (`writeFileSync(hotRunnerRoot,
+    ...)`). Refactoring it to use `tempDir` would be out of scope and potentially
+    break the specific hot-reload test setup.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 90-91
+hierarchy_analysis: The repository has a two-level config hierarchy (`AGENTS.md` at
+  root, `test/AGENTS.md` in the test directory). The test-specific config provides
+  more granular rules about testing style, timeouts, and process spawning. The agent
+  must apply the test-specific rules while ignoring those that would trigger out-of-scope
+  refactoring of existing test infrastructure.

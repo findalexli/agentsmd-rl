@@ -1,0 +1,102 @@
+diff --git a/packages/@mantine/dates/src/components/MonthsList/MonthsList.story.tsx b/packages/@mantine/dates/src/components/MonthsList/MonthsList.story.tsx
+index ff4603a..0ddcf93 100644
+--- a/packages/@mantine/dates/src/components/MonthsList/MonthsList.story.tsx
++++ b/packages/@mantine/dates/src/components/MonthsList/MonthsList.story.tsx
+@@ -1,5 +1,6 @@
+ import dayjs from 'dayjs';
+ import { useState } from 'react';
++import { DateStringValue } from '../../types';
+ import { MonthsList } from './MonthsList';
+ 
+ export default { title: 'MonthsList' };
+@@ -36,6 +37,21 @@ export function MaxDate() {
+   );
+ }
+ 
++export function WithGetMonthControlPropsChildren() {
++  return (
++    <div style={{ padding: 40, width: 320 }}>
++      <MonthsList
++        year="2022-01-01"
++        getMonthControlProps={(date: DateStringValue) => {
++          return {
++            children: <strong>{date}</strong>,
++          };
++        }}
++      />
++    </div>
++  );
++}
++
+ export function WithSelection() {
+   const [selected, setSelected] = useState<string>(dayjs().format('YYYY-MM-DD'));
+ 
+diff --git a/packages/@mantine/dates/src/components/MonthsList/MonthsList.tsx b/packages/@mantine/dates/src/components/MonthsList/MonthsList.tsx
+index c923ea4..23824b4 100644
+--- a/packages/@mantine/dates/src/components/MonthsList/MonthsList.tsx
++++ b/packages/@mantine/dates/src/components/MonthsList/MonthsList.tsx
+@@ -125,6 +125,7 @@ export const MonthsList = factory<MonthsListFactory>((_props, ref) => {
+     const cells = monthsRow.map((month, cellIndex) => {
+       const controlProps = getMonthControlProps?.(month);
+       const isMonthInTabOrder = dayjs(month).isSame(monthInTabOrder, 'month');
++
+       return (
+         <td
+           key={cellIndex}
+@@ -166,7 +167,8 @@ export const MonthsList = factory<MonthsListFactory>((_props, ref) => {
+             }}
+             tabIndex={__preventFocus || !isMonthInTabOrder ? -1 : 0}
+           >
+-            {dayjs(month).locale(ctx.getLocale(locale)).format(monthsListFormat)}
++            {controlProps?.children ??
++              dayjs(month).locale(ctx.getLocale(locale)).format(monthsListFormat)}
+           </PickerControl>
+         </td>
+       );
+diff --git a/packages/@mantine/dates/src/components/YearsList/YearsList.story.tsx b/packages/@mantine/dates/src/components/YearsList/YearsList.story.tsx
+index 40ce575..efa9090 100644
+--- a/packages/@mantine/dates/src/components/YearsList/YearsList.story.tsx
++++ b/packages/@mantine/dates/src/components/YearsList/YearsList.story.tsx
+@@ -1,5 +1,6 @@
+ import dayjs from 'dayjs';
+ import { useState } from 'react';
++import { DateStringValue } from '../../types';
+ import { YearsList } from './YearsList';
+ 
+ export default { title: 'YearsList' };
+@@ -36,6 +37,21 @@ export function MaxDate() {
+   );
+ }
+ 
++export function WithGetYearsControlPropsChildren() {
++  return (
++    <div style={{ padding: 40, width: 320 }}>
++      <YearsList
++        decade="2022-02-01"
++        getYearControlProps={(date: DateStringValue) => {
++          return {
++            children: <strong>{date}</strong>,
++          };
++        }}
++      />
++    </div>
++  );
++}
++
+ export function WithRange() {
+   return (
+     <div style={{ padding: 40, width: 320 }}>
+diff --git a/packages/@mantine/dates/src/components/YearsList/YearsList.tsx b/packages/@mantine/dates/src/components/YearsList/YearsList.tsx
+index 22fc281..ce857e1 100644
+--- a/packages/@mantine/dates/src/components/YearsList/YearsList.tsx
++++ b/packages/@mantine/dates/src/components/YearsList/YearsList.tsx
+@@ -160,7 +160,8 @@ export const YearsList = factory<YearsListFactory>((_props, ref) => {
+             }}
+             tabIndex={__preventFocus || !isYearInTabOrder ? -1 : 0}
+           >
+-            {dayjs(year).locale(ctx.getLocale(locale)).format(yearsListFormat)}
++            {controlProps?.children ??
++              dayjs(year).locale(ctx.getLocale(locale)).format(yearsListFormat)}
+           </PickerControl>
+         </td>
+       );

@@ -1,63 +1,57 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: exact file paths like 'packages/playwright-core/src/tools/cli-client/session.ts' and 'packages/playwright-core/src/tools/cli-client/registry.ts', specific patterns like 'attachTarget && (args.cdp || args.endpoint || args.extension)', 'cliArgs.cdp' or '--cdp=' in session.ts, 'cdpEndpoint: options.cdp' or 'cdpEndpoint: cliOptions.cdp' in config.ts, 'export function resolveSessionName', and 'explicitSessionName'. Whi"
+      "outcome": "pass",
+      "reason": "Instruction names all key files (program.ts in cli-client, commands.ts and program.ts in cli-daemon, session.ts, mcp/config.ts, SKILL.md), the schema keys (cdp, cdpEndpoint), and the CLI flags (--cdp, --endpoint, --extension)."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "Instruction.md item 5 explicitly tells the agent exactly what to change in each file: 'Add cdp to the global CLI argument parsing in the cli-client program', 'Add a cdp field to the attach command's options schema in the cli-daemon commands', 'Register a --cdp CLI flag in the cli-daemon program', 'Pass the --cdp flag value from cli-client to cli-daemon through the session management code', 'Map the CLI cdp option to cdpEndpoint in the MCP config'. This is a step-by-step implementation guide, not"
+      "outcome": "pass",
+      "reason": "Instruction describes what to add/move but doesn't give exact code; agent must figure out implementation."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation patterns: test_attach_conflict_detection checks for the exact string 'attachTarget && (args.cdp || args.endpoint || args.extension)'; test_session_passes_cdp_to_daemon checks for 'cliArgs.cdp' or '--cdp='; test_config_cdp_endpoint_in_isolation checks for 'cdpEndpoint: options.cdp' or 'cdpEndpoint: cliOptions.cdp'. An alternative correct implementation using different variable names (e.g., 'target' instead of 'attachTarget', or 'params.cdp' instead of "
+      "reason": "test_config_cdp_endpoint_in_isolation requires literal 'cdpEndpoint: options.cdp' or 'cdpEndpoint: cliOptions.cdp'; test_attach_conflict_detection requires exact string 'attachTarget && (args.cdp || args.endpoint || args.extension)' \u2014 alternate equivalent code (e.g., using !== undefined, different variable name, or separate if-checks) would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "All 8 fail-to-pass tests exclusively use text matching: they read file contents with _get_file_content() and assert on string patterns (e.g., 'assert \"cdp:\" in src', 'assert \"attachTarget && (args.cdp || args.endpoint || args.extension)\" in src'). No test imports modules, calls functions, runs the CLI, or checks runtime behavior."
+      "reason": "Nearly all f2p tests are string-in-file checks (e.g., test_global_options_includes_cdp, test_attach_schema_has_cdp_option, test_daemon_registers_cdp_flag, test_skill_md_attach_has_extension) with no execution of the CLI."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "Since all f2p tests are pure text-matching on source files, a stub implementation that simply inserts the exact searched-for strings as comments (e.g., '// cdpEndpoint: cliOptions.cdp') into the relevant files would pass every test without implementing any actual functionality."
+      "outcome": "pass",
+      "reason": "Each f2p requires specific tokens that wouldn't exist in a stub; a stub returning defaults wouldn't add 'cdp' to globalOptions or register --cdp flag."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "Instruction item 4 requires that conflicting usage 'should produce an error', but no test actually runs the CLI to verify an error is produced. test_attach_conflict_detection only checks for the presence of a specific string pattern in source code. The actual error-producing behavior is not tested."
+      "outcome": "pass",
+      "reason": "Tests cover all behaviors listed in instruction: cdp option, extension moved to attach, conflict detection, schema, session passing, config mapping, SKILL.md docs."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized into two clearly labeled sections ('FAIL TO PASS TESTS' and 'PASS TO PASS TESTS') with descriptive function names and docstrings explaining each check."
+      "reason": "Tests are grouped with header comments ('FAIL TO PASS TESTS', 'PASS TO PASS TESTS') and each has a docstring."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task involves CLI feature implementation, not structured data output."
+      "reason": "Task is code modification, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or tests."
+      "reason": "Filenames and paths appear correct; minor 'pass_to_pas' typo in truncated comment doesn't affect task."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "Instruction.md item 5 names exact files and specific implementation steps: 'Add cdp to the global CLI argument parsing in the cli-client program', 'Add a cdp field to the attach command's options schema in the cli-daemon commands', 'Map the CLI cdp option to cdpEndpoint in the MCP config for browser isolation logic'. This goes well beyond describing behavior and locates the exact changes needed."
+      "outcome": "pass",
+      "reason": "Instruction identifies files but this localization guidance is appropriate for a refactoring task spanning multiple files."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-editing task, not a config-edit task."
+      "reason": "Code-only task, not an agentmd-edits task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
-    "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "behavior_in_tests",
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 2,
-  "fail_count": 7
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 2
 }

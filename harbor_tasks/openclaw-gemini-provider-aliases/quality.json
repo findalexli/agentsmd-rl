@@ -1,60 +1,56 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert specific details not discoverable from instruction.md: test_runtime_provider_not_hardcoded checks for regex pattern 'resolveGoogle31ForwardCompatModel\\s*\\(\\s*\\{([^}]+)\\}' in index.ts and verifies no hardcoded string literal for providerId; test_template_provider_id_fallback checks for 'templateProviderId' in the function signature area (first 500 chars after function name) and checks for 'GOOGLE_GEMINI_CLI_PROVIDER_ID' in call sites \u2014 the constant name GOOGLE_GEMINI_CLI_PROVIDER_ID "
+      "outcome": "pass",
+      "reason": "Instruction names test file path, required test names, model IDs, template IDs, prefixes, and the GOOGLE_GEMINI_CLI_PROVIDER_ID constant."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "Instruction.md explicitly states implementation details: 'The resolution function must accept a templateProviderId parameter', 'The code must use the actual runtime provider ID (from context) rather than a hardcoded string literal \"google\"', 'The resolver must check for gemini-3.1-flash-lite before gemini-3.1-flash', and specifies the exact files to modify. This tells the agent WHAT to change rather than just describing what's broken."
+      "outcome": "pass",
+      "reason": "Instruction describes what is broken and expected behavior without giving exact code changes."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_template_provider_id_fallback asserts 'templateProviderId' must appear in the function signature area of resolveGoogle31ForwardCompatModel and 'GOOGLE_GEMINI_CLI_PROVIDER_ID' must appear in call sites in index.ts. An alternative correct fix could use a different parameter name (e.g., 'fallbackProviderId') or a different mechanism for cross-provider lookup. test_runtime_provider_not_hardcoded uses specific regex to find the call pattern with providerId in an object literal, which constrains "
+      "reason": "test_runtime_provider_not_hardcoded uses regex requiring `providerId` as a key in the call and forbids any string literal value, forcing a specific call-site shape; test_template_provider_id_fallback requires the exact parameter name 'templateProviderId', excluding valid alternative parameter names."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests execute actual subprocesses (vitest, oxlint, tsc, pnpm) and check return codes and behavioral output. The fail-to-pass tests run the actual test suite and verify passing tests. While some tests do static code inspection (test_runtime_provider_not_hardcoded, test_template_provider_id_fallback), these are combined with execution-based tests that actually run the code."
+      "reason": "Tests execute vitest, lint, typecheck, and build subprocesses in addition to some static regex checks."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests run vitest which executes the provider-models.test.ts tests that must be created by the agent. These tests exercise resolveGoogle31ForwardCompatModel with mock contexts and verify specific resolution behavior. A stub returning undefined/None would fail the vitest assertions (expect(result).toBeDefined()). The static checks also require specific parameter names and non-hardcoded values."
+      "reason": "f2p tests run vitest which requires actual resolution logic; static checks verify specific code patterns tied to behavior."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All four behaviors mentioned in instruction.md (cross-provider resolution, direct provider resolution, flash-lite prefix ordering, runtime provider not hardcoded, templateProviderId parameter) are tested by corresponding fail-to-pass tests."
+      "reason": "Tests cover pro alias resolution, direct flash, flash-lite disambiguation, runtime provider usage, and templateProviderId parameter."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive names grouped by category (repo_tests pass_to_pass, static gates, fail_to_pass pr_diff checks) with docstrings explaining each test's purpose."
+      "reason": "Tests are labeled with [repo_tests]/[pr_diff]/[static] tags and grouped by purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data output like JSON/CSV/API/DB."
+      "reason": "Task is code-only, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "Paths and identifiers appear consistent."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "Instruction.md names the exact files to modify ('extensions/google/index.ts', 'extensions/google/provider-models.ts') and specifies exact parameter names ('templateProviderId'), exact constant names ('GOOGLE_GEMINI_CLI_PROVIDER_ID'), and the exact ordering fix needed (check flash-lite before flash). This goes beyond identifying the buggy module into specifying implementation details."
+      "outcome": "pass",
+      "reason": "Instruction references modules/directory but not exact line numbers; localization is fine given the task domain."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "Not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
-    "no_solution_leakage",
     "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 5,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 1
 }

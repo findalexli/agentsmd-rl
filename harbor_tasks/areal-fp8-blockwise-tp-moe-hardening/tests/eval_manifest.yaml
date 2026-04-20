@@ -1,0 +1,214 @@
+version: '2.0'
+source:
+  repo: inclusionAI/AReaL
+  pr: 1118
+  base_commit: d36657168b4929f3b20b2b6c891bdfefa0243bb2
+  merge_commit: 0ee85625db43edc47588f661103ec78ddc5771e4
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified Python files must parse without errors
+- id: fp8_config_enabled_property
+  type: fail_to_pass
+  origin: pr_diff
+  description: ArchonFP8Config has an 'enabled' property returning True for blockwise,
+    False for disabled
+- id: fp8_config_post_init_uses_enabled
+  type: fail_to_pass
+  origin: pr_diff
+  description: ArchonFP8Config.__post_init__ uses self.enabled instead of raw mode
+    check
+- id: validate_alignment_handles_grouped_experts
+  type: fail_to_pass
+  origin: pr_diff
+  description: validate_fp8_shard_alignment checks GroupedExperts w1/w2/w3 per-expert
+    dimensions
+- id: validate_alignment_not_linear_only
+  type: fail_to_pass
+  origin: pr_diff
+  description: validate_fp8_shard_alignment does not skip non-Linear modules unconditionally
+- id: dequant_only_accepts_e4m3fn
+  type: fail_to_pass
+  origin: pr_diff
+  description: dequant_fp8_state_dict only recognizes float8_e4m3fn (not e5m2/fnuz
+    variants)
+- id: check_shard_compatibility_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: _check_fp8_shard_compatibility exists to fail fast on unsupported DTensor
+    placements
+- id: fp8_linear_handles_dtensor
+  type: fail_to_pass
+  origin: pr_diff
+  description: _fp8_linear_fwd calls to_local() on weight to handle DTensor from TP
+- id: experts_forward_stores_fp8_block
+  type: fail_to_pass
+  origin: pr_diff
+  description: _patch_fp8_experts_forward stores _fp8_block so alignment validation
+    covers experts
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: Key modified functions have real logic, not just pass/return
+- id: no_wildcard_imports
+  type: pass_to_pass
+  origin: agent_config
+  description: No wildcard imports in modified files
+  source:
+    path: CLAUDE.md
+    lines: '93'
+    commit: d36657168b4929f3b20b2b6c891bdfefa0243bb2
+- id: config_validation_uses_valueerror
+  type: pass_to_pass
+  origin: agent_config
+  description: Config validation and early-exit functions raise ValueError with clear
+    message
+  source:
+    path: .claude/rules/api-config.md
+    lines: 37-42
+    commit: d36657168b4929f3b20b2b6c891bdfefa0243bb2
+- id: test_repo_ruff_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Python files pass ruff linting
+- id: test_repo_pyproject_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's pyproject.toml is valid
+- id: test_repo_precommit_yaml
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's YAML files pass pre-commit check-yaml
+- id: test_repo_precommit_trailing_whitespace
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified Python files pass pre-commit trailing-whitespace check
+- id: test_repo_precommit_eof_fixer
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified Python files pass pre-commit end-of-file-fixer check
+- id: test_repo_precommit_private_key
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo passes pre-commit detect-private-key check
+- id: test_repo_precommit_large_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo passes pre-commit check-added-large-files (no large files committed)
+- id: test_repo_precommit_json
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's JSON files pass pre-commit check-json
+- id: test_repo_precommit_nbstripout
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Jupyter notebooks pass nbstripout (no outputs committed)
+rubric:
+- rule: Follow existing code patterns in the same module.
+  source:
+    path: CLAUDE.md
+    lines: '76'
+    commit: d36657168b4929f3b20b2b6c891bdfefa0243bb2
+- rule: 'Prefer composition over inheritance: Avoid deep class hierarchies. Keep inheritance
+    shallow.'
+  source:
+    path: .claude/rules/code-style.md
+    lines: 7-11
+    commit: d36657168b4929f3b20b2b6c891bdfefa0243bb2
+- rule: DTensor requires consistent mesh across all ranks. Use DTensor.from_local()
+    with correct placements.
+  source:
+    path: .claude/rules/distributed.md
+    lines: 21-22
+    commit: d36657168b4929f3b20b2b6c891bdfefa0243bb2
+- rule: No wildcard imports (`from x import *`).
+  source:
+    path: AGENTS.md
+    lines: 21-21
+  evidence: In `areal/experimental/engine/archon_checkpoint.py`, the gold solution
+    explicitly imports `DTensor` and `Shard` from `torch.distributed.tensor` instead
+    of using wildcard imports.
+  category: style
+- rule: Verify DTensor placements to prevent issues like OOM or unsharded tensors
+    on the wrong device.
+  source:
+    path: .claude/rules/distributed.md
+    lines: 37-37
+  source_text: '| OOM           | Unsharded tensor on wrong device | Verify DTensor
+    placements      |'
+  evidence: The `_check_fp8_shard_compatibility` function explicitly iterates over
+    `weight.placements` and checks `if isinstance(p, Shard) and p.dim != 0:` to verify
+    DTensor placements and raise an error if they are incompatible.
+  category: distributed
+  verification: llm_judge
+- rule: Never use wildcard imports (`from x import *`); always use explicit imports.
+  source:
+    path: AGENTS.md
+    lines: 23-25
+  source_text: '**Hard rules** -- never violate:
+
+
+    - No wildcard imports (`from x import *`).'
+  evidence: The diff explicitly imports `DTensor` and `Shard` from `torch.distributed.tensor`
+    and `torch.distributed.tensor.placement_types` instead of using wildcard imports.
+  category: imports
+  verification: llm_judge
+distractors:
+- rule: 'Ask first before: Modifying config structures in `areal/api/cli_args.py`.'
+  collision_type: rule_conflict
+  why_distracting: The instruction explicitly requires centralizing the FP8 mode check,
+    which necessitates modifying `ArchonFP8Config` in `areal/api/cli_args.py`. Following
+    the 'Ask first' rule would cause the agent to halt or avoid making the necessary
+    change.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 43-44
+- rule: Add tests for new functionality.
+  collision_type: scope_ambiguity
+  why_distracting: The bug fix involves complex distributed FP8 Tensor Parallelism
+    and MoE interactions. The config mandates adding tests for new functionality,
+    but also notes integration tests require multi-node hardware. Attempting to write
+    tests for this specific hardware-dependent bug would waste effort and is not expected
+    in the gold solution.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: '38'
+- rule: Don't mock internals of FSDP/DTensor
+  source:
+    path: .claude/rules/testing.md
+    lines: 32-36
+  source_text: '## Mocking Distributed
+
+
+    - Use `torch.distributed.fake_pg` for unit tests
+
+    - Mock `dist.get_rank()` and `dist.get_world_size()` explicitly
+
+    - Don''t mock internals of FSDP/DTensor - use integration tests'
+  collision_type: scope_ambiguity
+  why_distracting: The diff introduces `DTensor` and `Shard` imports and usage in
+    `archon_checkpoint.py`. An AI might see this and try to apply the DTensor testing
+    rules, but these rules are strictly scoped to test files (as defined in the `paths`
+    section of the config), whereas the changes are in the main application code.
+  severity: low
+- rule: Add Archon Model
+  source:
+    path: .claude/skills/add-archon-model/SKILL.md
+    lines: 10-17
+  source_text: "## When to Use\n\nThis skill is triggered when:\n\n- User asks \"\
+    how do I add a model to Archon?\"\n- User wants to support a new model family\
+    \ (e.g., Llama, Mistral, DeepSeek) in\n  ArchonEngine\n- User mentions adding\
+    \ a new `ModelSpec` or model type for Archon"
+  collision_type: meta_confusion
+  why_distracting: The diff modifies `archon_engine.py` and `archon_checkpoint.py`
+    (which uses `ArchonEngine`) and deals with HuggingFace models. An AI might see
+    these keywords and think it needs to follow the model addition guide, but this
+    change is about FP8 checkpoint loading and configuration, not adding a new model
+    architecture.
+  severity: low
+hierarchy_analysis: Both `AGENTS.md` and `CLAUDE.md` are at the root level and contain
+  overlapping rules. The agent must weigh the explicit task instruction (centralize
+  mode checks) against the repository's general cautiousness around `cli_args.py`.

@@ -1,13 +1,13 @@
 {
   "schema_version": 2,
-  "valid": false,
-  "verdict": "fail",
-  "nop_reward": -1.0,
-  "gold_reward": -1.0,
-  "validated_at": "2026-04-15T22:16:45.104055",
-  "total_time": 2354.53,
-  "sandbox_id": "i77jmvxca5egh5unn3rl6",
-  "backend": "minimax",
+  "valid": true,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-16T11:16:12.365324",
+  "total_time": 745.94,
+  "sandbox_id": "itk0rdfwy652mh6cr5ice",
+  "backend": "anthropic",
   "pipeline": "pipeline",
   "start_at": "judge",
   "nodes": {
@@ -62,34 +62,30 @@
     },
     "quality_gate": {
       "status": "DELETE",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 0.69,
+      "model": "claude-opus-4-7",
+      "backend": "anthropic",
+      "time": 0.29,
       "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:4', 'A:[A] test_not_tautological @ tests/test_outputs.py:116: test `test_drain_function_exists` has 1 assert(s), all pass on a ', 'A:[A] test_not_tautological @ tests/test_outputs.py:214: test `test_drain_checks_saturation` has 2 assert(s), all pass on ', 'A:[A] test_not_tautological @ tests/test_outputs.py:299: test `test_saturation_guard_present` has 1 assert(s), all pass on', 'A:[A] test_not_tautological @ tests/test_outputs.py:382: test `test_loop_structure_has_epoll_and_kqueue_paths` has 2 asser']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 23.71,
+      "time": 13.27,
       "tier_a_fails": [
-        "behavior_in_task_description",
+        "no_solution_leakage",
         "solution_uniqueness_guard",
-        "tests_verify_behavior_not_text",
-        "anti_cheating_measures"
+        "tests_verify_behavior_not_text"
       ],
       "tier_b_fails": [],
-      "pass_count": 6,
+      "pass_count": 5,
       "fail_count": 4
+    },
+    "tests_rewrite": {
+      "status": "error",
+      "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":3025,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 400 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"invalid_request_error\\\",\\\"message\\\":\\\"\\\\\\\"thinking.type.enabled\\\\\\\" is not supported for this model. Use \\\\\\\"thinking.type.adap",
+      "time": 50.95
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "minimax",
-      "time": 2768.61,
-      "at": "2026-04-15T12:24:15.862759"
-    },
     {
       "verdict": "fail",
       "nop": -1.0,
@@ -121,6 +117,14 @@
       "backend": "minimax",
       "time": 2354.53,
       "at": "2026-04-15T22:16:45.104055"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "anthropic",
+      "time": 745.94,
+      "at": "2026-04-16T11:16:12.365324"
     }
   ]
 }

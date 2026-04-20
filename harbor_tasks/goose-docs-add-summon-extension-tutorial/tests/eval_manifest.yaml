@@ -1,0 +1,108 @@
+version: '2.0'
+source:
+  repo: block/goose
+  pr: 7310
+  base_commit: e2d174ac1d4ed3304d9949f04572803467d343cb
+  merge_commit: 85ab108645b7a1dfdeac584fa0ef4cd75c0361a3
+checks:
+- id: test_summon_mcp_file_created
+  type: fail_to_pass
+  origin: pr_diff
+  description: New summon-mcp.md exists with proper YAML frontmatter (title, description)
+- id: test_summon_mcp_example_content
+  type: fail_to_pass
+  origin: pr_diff
+  description: summon-mcp.md has Configuration, Example Usage sections and references
+    skills, recipes, subagents
+- id: test_skills_mcp_deprecated
+  type: fail_to_pass
+  origin: pr_diff
+  description: skills-mcp.md has deprecation caution with link to Summon extension
+- id: test_using_extensions_list_summon
+  type: fail_to_pass
+  origin: pr_diff
+  description: using-extensions.md lists Summon in built-in extensions instead of
+    Skills
+- id: test_using_skills_guide_summon
+  type: fail_to_pass
+  origin: pr_diff
+  description: using-skills.md references Summon extension instead of Skills
+- id: test_playwright_tutorial_summon
+  type: fail_to_pass
+  origin: pr_diff
+  description: playwright-skill.md references Summon extension with extensionName=Summon
+- id: test_remotion_tutorial_summon
+  type: fail_to_pass
+  origin: pr_diff
+  description: remotion-video-creation.md references Summon extension
+- id: test_summon_retro_image
+  type: fail_to_pass
+  origin: pr_diff
+  description: summon-retro-site.png screenshot exists in static/img/
+- id: test_documentation_npm_test
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: documentation npm test passes (scripts/*.test.js)'
+- id: test_documentation_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: documentation build passes (docusaurus build)'
+- id: test_documentation_verify_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: documentation verify-build passes (checks goose-docs-map.md
+    exists)'
+- id: test_existing_markdown_valid
+  type: pass_to_pass
+  origin: static
+  description: Pre-existing markdown files still parse correctly after changes
+rubric:
+- rule: Documentation must always use lowercase 'goose' (never 'Goose') when referring
+    to the product name
+  source:
+    path: documentation/AGENTS.md
+    lines: 5-10
+    commit: e2d174ac1d4ed3304d9949f04572803467d343cb
+- rule: The product name 'goose' should ALWAYS be written in lowercase 'g' in all
+    documentation.
+  source:
+    path: documentation/AGENTS.md
+    lines: 3-10
+  evidence: The gold solution consistently uses lowercase 'goose' in the newly created
+    `summon-mcp.md` file, such as in 'goose Desktop', 'goose CLI', 'goose Prompt',
+    and 'goose Output'.
+  category: style
+config_edits:
+- path: documentation/docs/tutorials/playwright-skill.md
+  tier: 1
+  gold_added: "### Enable Summon Extension\nIn goose, enable the [Summon extension](/docs/mcp/summon-mcp)\
+    \ to load Agent Skills within sessions.\n    extensionName=\"Summon\"\n  │  ●\
+    \ summon\n- [Summon Extension Documentation](/docs/mcp/summon-mcp)"
+  gold_removed: "### Enable Skills Extension\nIn goose, enable the [Skills extension](/docs/mcp/skills-mcp)\
+    \ to load Agent Skills within sessions.\n    extensionName=\"Skills\"\n  │  ●\
+    \ skills\n- [Skills Extension Documentation](/docs/mcp/skills-mcp)"
+distractors:
+- rule: The product name 'goose' should ALWAYS be written in lowercase 'g' in all
+    documentation
+  collision_type: would_cause_bug
+  why_distracting: The strict rule to ALWAYS use lowercase 'g' for 'goose' might lead
+    the agent to incorrectly lowercase the MDX React component `GooseBuiltinInstaller`
+    to `gooseBuiltinInstaller`, which would break the import and rendering.
+  severity: high
+  source:
+    path: documentation/AGENTS.md
+    lines: 3-16
+- rule: 'Test: When adding features, update goose-self-test.yaml, rebuild, then run
+    `goose run --recipe goose-self-test.yaml` to validate'
+  collision_type: scope_ambiguity
+  why_distracting: The PR adds documentation for the new Summon extension feature.
+    The agent might interpret this as 'adding features' and attempt to update `goose-self-test.yaml`
+    and rebuild, but this rule is intended for code features, not documentation updates.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 47-48
+hierarchy_analysis: The repository uses a root `AGENTS.md` for general Rust/CLI development
+  and a `documentation/AGENTS.md` specifically for documentation style. The documentation
+  style guide introduces a strict lowercase 'goose' rule that must be carefully applied
+  only to prose, not to MDX component names.

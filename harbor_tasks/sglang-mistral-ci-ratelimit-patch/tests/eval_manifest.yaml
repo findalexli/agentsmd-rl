@@ -1,0 +1,144 @@
+version: "2.0"
+
+source:
+  repo: "sgl-project/sglang"
+  pr: 21729
+  base_commit: "33cca495ae75e745be62b5b009f4c87fb40dd044"
+  merge_commit: "f4505e2ee395a581439839ef6e4383c0b308e8fc"
+
+checks:
+  # ---------------------------------------------------------------------------
+  # Pass-to-pass gates (static) - file structure/content checks
+  # ---------------------------------------------------------------------------
+  - id: test_repo_file_structure
+    type: pass_to_pass
+    origin: static
+    description: "Repo file structure is valid (directories and files exist)"
+
+  - id: test_repo_pyproject_toml_valid
+    type: pass_to_pass
+    origin: static
+    description: "Repo's pyproject.toml is valid TOML"
+
+  - id: test_repo_ast_valid
+    type: pass_to_pass
+    origin: static
+    description: "All Python files in sglang/srt/utils parse without syntax errors"
+
+  - id: test_repo_precommit_config_valid
+    type: pass_to_pass
+    origin: static
+    description: "Repo's pre-commit config is valid YAML"
+
+  # ---------------------------------------------------------------------------
+  # Pass-to-pass gates (repo_tests) - ACTUAL CI commands via subprocess.run()
+  # ---------------------------------------------------------------------------
+  - id: test_repo_ruff_linting
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Ruff linting passes on srt/utils (matches CI lint.yml)"
+
+  - id: test_repo_python_syntax_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Python can parse target file via subprocess"
+
+  - id: test_repo_tokenizer_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Tokenizer unit tests pass (test_patch_tokenizer.py)"
+
+  - id: test_repo_pytest_version
+    type: pass_to_pass
+    origin: repo_tests
+    description: "pytest is available and functional"
+
+  - id: test_repo_py_compile
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Python syntax check via py_compile passes"
+
+  - id: test_repo_import_utils
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Target module imports successfully via subprocess"
+
+  - id: test_repo_get_tokenizer_import
+    type: pass_to_pass
+    origin: repo_tests
+    description: "get_tokenizer and TokenizerWarningsFilter are importable"
+
+  - id: test_repo_ast_parse
+    type: pass_to_pass
+    origin: repo_tests
+    description: "AST parsing of target file succeeds via subprocess"
+
+  # ---------------------------------------------------------------------------
+  # Static pass_to_pass - syntax check
+  # ---------------------------------------------------------------------------
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "hf_transformers_utils.py must parse without syntax errors"
+
+  # ---------------------------------------------------------------------------
+  # Fail-to-pass (pr_diff) - core behavioral tests
+  # ---------------------------------------------------------------------------
+  - id: ci_patches_is_base_mistral
+    type: fail_to_pass
+    origin: pr_diff
+    description: "In CI mode, get_tokenizer patches is_base_mistral to return False"
+
+  - id: no_patch_without_ci_env
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Without SGLANG_IS_IN_CI, is_base_mistral is NOT replaced"
+
+  - id: idempotent_multiple_calls
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Calling get_tokenizer multiple times in CI doesn't break the patch"
+
+  - id: patch_before_from_pretrained
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Patch is applied BEFORE AutoTokenizer.from_pretrained is called"
+
+  - id: version_guard_skips_on_mismatch
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Mismatched transformers version constant causes patch to be skipped"
+
+  - id: get_tokenizer_signature
+    type: pass_to_pass
+    origin: pr_diff
+    description: "get_tokenizer function exists with expected signature"
+
+  - id: tokenizer_warnings_filter_exists
+    type: pass_to_pass
+    origin: pr_diff
+    description: "TokenizerWarningsFilter still exists as a logging.Filter"
+
+  - id: not_stub
+    type: fail_to_pass
+    origin: static
+    description: "File has non-trivial CI patching logic (not a stub)"
+
+rubric:
+  - rule: "Use defensive programming patterns for CI-related patches — include global guards to prevent double-patching and version checks to ensure patch compatibility."
+    source:
+      path: ".claude/skills/write-sglang-test/SKILL.md"
+      lines: "12-14,159-160,417-426"
+      commit: "33cca495ae75e745be62b5b009f4c87fb40dd044"
+
+  - rule: "Classify errors appropriately: API rate limiting (429 errors) and transient failures are retriable; code/logic errors (SyntaxError, ImportError, NameError, TypeError) are non-retriable."
+    source:
+      path: ".claude/skills/ci-workflow-guide/SKILL.md"
+      lines: "232-243"
+      commit: "33cca495ae75e745be62b5b009f4c87fb40dd044"
+
+  - rule: "Follow existing code style in the file — check neighboring functions for patterns like global flag variables, module-level constants, and logging conventions."
+    source:
+      path: ".claude/skills/write-sglang-test/SKILL.md"
+      lines: "159-160"
+      commit: "33cca495ae75e745be62b5b009f4c87fb40dd044"

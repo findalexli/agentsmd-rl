@@ -1,0 +1,127 @@
+version: '2.0'
+source:
+  repo: oven-sh/bun
+  pr: 28493
+  base_commit: 594f421fdc9a6aaf04b394e2775abc2f4baba05c
+  merge_commit: 36f17caa987d130788b97a6e9d7c9aea7895b6ed
+checks:
+- id: header_file_exists
+  type: pass_to_pass
+  origin: static
+  description: NodeVMScriptFetcher.h must exist and be non-empty
+- id: class_definition_present
+  type: pass_to_pass
+  origin: static
+  description: NodeVMScriptFetcher class definition must be present
+- id: m_owner_not_strong
+  type: fail_to_pass
+  origin: pr_diff
+  description: m_owner member must NOT use Strong<> (creates uncollectable GC cycle)
+- id: m_owner_uses_weak
+  type: fail_to_pass
+  origin: pr_diff
+  description: m_owner member must use Weak<> for GC-safe back-reference
+- id: owner_getter_null_check_and_fallback
+  type: fail_to_pass
+  origin: pr_diff
+  description: owner() getter must check weak ref liveness and return safe fallback
+- id: owner_setter_or_ctor_guards_iscell
+  type: fail_to_pass
+  origin: pr_diff
+  description: Owner setter or constructor must guard Weak assignment with isCell
+    check
+- id: weak_header_included
+  type: fail_to_pass
+  origin: pr_diff
+  description: Must include Weak.h or WeakInlines.h header
+- id: clang_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Header must pass clang-format validation (CI check)
+- id: cpp_header_syntax_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: C++ header must have valid syntax (gcc -fsyntax-only)
+- id: git_tracks_header_file
+  type: pass_to_pass
+  origin: repo_tests
+  description: Header file must be tracked in git
+- id: class_extends_script_fetcher
+  type: pass_to_pass
+  origin: static
+  description: Class must still extend JSC::ScriptFetcher
+- id: dynamic_import_callback_preserved
+  type: pass_to_pass
+  origin: static
+  description: dynamicImportCallback() method must still exist
+- id: m_owner_field_exists
+  type: pass_to_pass
+  origin: static
+  description: m_owner field must not be deleted entirely
+- id: nodevm_headers_exist
+  type: pass_to_pass
+  origin: static
+  description: Related NodeVM header files must exist (NodeVM.h, NodeVMScript.h, NodeVMSourceTextModule.h)
+- id: header_guard_present
+  type: pass_to_pass
+  origin: static
+  description: NodeVMScriptFetcher.h must have proper header guard
+- id: cpp_syntax_balanced_braces
+  type: pass_to_pass
+  origin: static
+  description: NodeVMScriptFetcher.h must have balanced braces and parentheses
+rubric:
+- rule: Include necessary headers for new types used (e.g., Weak.h when using JSC::Weak).
+  source:
+    path: src/bun.js/bindings/NodeVMScriptFetcher.h
+    lines: '1-10'
+  reference: >
+    Solution adds include statements for JavaScriptCore/Weak.h and WeakInlines.h
+    to provide the JSC::Weak type used in the m_owner field declaration.
+- rule: Use proper WebKit GC types (Weak<T>) for back-references to prevent GC cycles.
+  source:
+    path: src/bun.js/bindings/NodeVMScriptFetcher.h
+    lines: '45-60'
+  reference: >
+    m_owner field changed from Strong to Weak type to break the GC reference cycle
+    between NodeVMScript and its ScriptFetcher.
+- rule: Follow existing code style — check neighboring files for patterns.
+  source:
+    path: src/bun.js/bindings/NodeVMScriptFetcher.h
+    lines: '1-72'
+  reference: >
+    Solution follows Bun's C++ style with proper indentation, WebKit JSC naming
+    conventions, and includes a detailed comment explaining the Weak usage rationale.
+- rule: Use C++ for JavaScriptCore integration, powered by WebKit's JavaScriptCore
+    engine.
+  source:
+    path: src/bun.js/bindings/NodeVMScriptFetcher.h
+    lines: '1-72'
+  reference: >
+    NodeVMScriptFetcher.h uses JSC::Weak, JSC::JSCell, JSC::JSValue, and
+    includes JavaScriptCore/Weak.h headers for proper WebKit JSC integration.
+distractors:
+- rule: Always use `bun.*` APIs instead of `std.*`
+  collision_type: architecture_boundary
+  why_distracting: The agent is editing a C++ header file (`NodeVMScriptFetcher.h`)
+    for JSC bindings, but this rule dictates using Zig-specific `bun.*` APIs instead
+    of Zig's `std.*`. Applying Zig rules to C++ code would cause compilation errors.
+  severity: high
+  source:
+    path: src/AGENTS.md
+    lines: 15-25
+- rule: 'Test Organization: Place tests in test/regression/issue/ or specific directories
+    like test/js/node/'
+  collision_type: scope_ambiguity
+  why_distracting: The prompt explicitly asks for a regression test, and the config
+    dictates where to place it (e.g., `test/js/node/`). However, the gold solution
+    completely omits the test. An agent following the instructions and config to write
+    a test would generate a diff that diverges from the gold solution.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 25-35
+hierarchy_analysis: The hierarchy applies Zig-specific rules at the `src/` level,
+  but the agent must recognize that these rules do not apply to C++ files within the
+  same directory tree. The root config provides testing rules that conflict with the
+  gold solution's omission of a test.

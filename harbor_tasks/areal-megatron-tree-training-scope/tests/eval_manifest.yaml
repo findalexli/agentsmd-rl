@@ -1,0 +1,110 @@
+version: '2.0'
+source:
+  repo: inclusionAI/AReaL
+  pr: 1135
+  base_commit: 933218365af85d5488a554367d9fbe5071442b49
+  merge_commit: cca5b865b0883f7f6cdb02a01d4929387585d20d
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified file must parse without errors
+- id: mcore_model_in_tree_training_scope
+  type: fail_to_pass
+  origin: pr_diff
+  description: make_mcore_model must be called within patch_bridge_for_tree_training
+    context
+- id: device_context_nested_in_tree_training
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'with self.device: containing make_mcore_model must be nested inside
+    tree training context'
+- id: initialize_not_stub
+  type: pass_to_pass
+  origin: static
+  description: The initialize method must contain real logic, not a stub
+- id: no_wildcard_imports
+  type: pass_to_pass
+  origin: agent_config
+  description: Modified file must not use wildcard imports
+  source:
+    path: CLAUDE.md
+    lines: '93'
+    commit: 933218365af85d5488a554367d9fbe5071442b49
+- id: repo_ruff_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff lint check passes on modified file
+  source:
+    path: pyproject.toml
+    tool: ruff
+- id: repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff format check passes on modified file
+  source:
+    path: pyproject.toml
+    tool: ruff
+- id: repo_ruff_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's import sorting check passes on modified file
+  source:
+    path: pyproject.toml
+    tool: ruff
+- id: repo_trailing_whitespace
+  type: pass_to_pass
+  origin: repo_tests
+  description: No trailing whitespace in modified file
+  source:
+    path: .pre-commit-config.yaml
+    hook: trailing-whitespace
+- id: repo_end_of_file
+  type: pass_to_pass
+  origin: repo_tests
+  description: File ends with exactly one newline
+  source:
+    path: .pre-commit-config.yaml
+    hook: end-of-file-fixer
+- id: repo_no_private_keys
+  type: pass_to_pass
+  origin: repo_tests
+  description: No private keys detected in modified file
+  source:
+    path: .pre-commit-config.yaml
+    hook: detect-private-key
+rubric:
+- rule: Follow existing code patterns in the same module
+  source:
+    path: CLAUDE.md
+    lines: '76'
+    commit: 933218365af85d5488a554367d9fbe5071442b49
+- rule: Prefer composition over inheritance — keep hierarchies <= 2 levels; prefer
+    delegation
+  source:
+    path: .claude/rules/code-style.md
+    lines: 5-8
+    commit: 933218365af85d5488a554367d9fbe5071442b49
+- rule: Follow existing code patterns in the same module.
+  source:
+    path: AGENTS.md
+    lines: 27-27
+  evidence: The gold solution correctly indents the `with self.device:` block without
+    altering the underlying logic or introducing new patterns, adhering to the existing
+    structure of the `initialize` method.
+  category: style
+distractors:
+- rule: Add tests for new functionality.
+  collision_type: scope_ambiguity
+  why_distracting: The rule asks to 'Add tests for new functionality'. An agent might
+    interpret this bug fix as requiring a new test. However, testing MegatronEngine
+    initialization requires multi-node hardware (as stated elsewhere in the config),
+    so attempting to write and run a test would lead to wasted effort and environment
+    failures.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 32-32
+hierarchy_analysis: The repository contains two root-level configuration files (`AGENTS.md`
+  and `CLAUDE.md`) that provide overlapping, consistent guidelines. There is no deep
+  hierarchy or conflict between the files themselves.

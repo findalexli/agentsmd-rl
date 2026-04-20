@@ -1,0 +1,20 @@
+[task]
+name = "quickwit-ingester-status-default"
+task_title = "Fix ingester status defaulting incorrectly during rolling deployment"
+description = "When deploying a new version of Quickwit, old ingesters that don't broadcast their status cause the new control plane to only see new ingesters as Ready, breaking cluster shard placement."
+difficulty = "medium"
+tags = ["rust", "cluster", "ingestion", "bug-fix"]
+created_at = "2026-03-31"
+pr_number = 6249
+repo = "quickwit-oss/quickwit"
+base_commit = "8565b8a349662c3648648296501958ccec15ab61"
+merge_commit = "845d9a7a04c5d13daf6c09e81e715e55fe33c58c"
+
+[timeouts]
+build = 600
+test = 300
+solve = 120
+
+[metrics]
+build_timeout = 600
+test_timeout = 300

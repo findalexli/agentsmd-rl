@@ -1,0 +1,114 @@
+# Licensed under the Apache License, Version 2.0
+# Evaluation manifest for airflow-helm-scheduler-name task
+
+source:
+  repo: apache/airflow
+  pr_number: 64759
+  base_commit: 79af23f696fc5e6fe3170211cd691ac4141863f8
+  merge_commit: afcde65e4d129817affb694fd5f214ddd1544013
+
+checks:
+  # Fail-to-pass tests: behavior that the fix enables
+  - id: test_kubernetes_scheduler_name_takes_priority
+    type: fail_to_pass
+    origin: pr_behavior
+    description: workers.kubernetes.schedulerName takes priority over workers.schedulerName in pod template
+
+  - id: test_kubernetes_scheduler_name_only
+    type: fail_to_pass
+    origin: pr_behavior
+    description: workers.kubernetes.schedulerName is used when set without workers.schedulerName
+
+  - id: test_schema_has_kubernetes_scheduler_name
+    type: fail_to_pass
+    origin: pr_behavior
+    description: values.schema.json defines workers.kubernetes.schedulerName
+
+  - id: test_schema_has_celery_scheduler_name
+    type: fail_to_pass
+    origin: pr_behavior
+    description: values.schema.json defines workers.celery.schedulerName
+
+  - id: test_old_scheduler_name_marked_deprecated
+    type: fail_to_pass
+    origin: pr_behavior
+    description: workers.schedulerName is marked as deprecated in schema description
+
+  - id: test_values_has_kubernetes_scheduler_name
+    type: fail_to_pass
+    origin: pr_behavior
+    description: values.yaml has workers.kubernetes.schedulerName defined
+
+  - id: test_values_has_celery_scheduler_name
+    type: fail_to_pass
+    origin: pr_behavior
+    description: values.yaml has workers.celery.schedulerName defined
+
+  - id: test_deprecation_warning_in_notes_template
+    type: fail_to_pass
+    origin: pr_behavior
+    description: NOTES.txt contains deprecation warning logic for workers.schedulerName
+
+  # Pass-to-pass tests: existing behavior that must be preserved
+  - id: test_fallback_to_workers_scheduler_name
+    type: pass_to_pass
+    origin: regression
+    description: Fallback to workers.schedulerName when kubernetes.schedulerName not set
+
+  - id: test_fallback_to_global_scheduler_name
+    type: pass_to_pass
+    origin: regression
+    description: Fallback to global schedulerName when worker schedulerName not set
+
+  - id: test_helm_template_renders_without_error
+    type: pass_to_pass
+    origin: repo_tests
+    description: Basic helm template rendering works
+
+  - id: test_pod_template_file_renders
+    type: pass_to_pass
+    origin: repo_tests
+    description: Pod template file renders correctly
+
+  - id: test_repo_helm_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's helm lint passes
+
+  - id: test_repo_values_schema_validation
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's values.yaml validates against values.schema.json
+
+  - id: test_repo_scheduler_name_pod_template
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's scheduler name tests for pod template pass
+
+  - id: test_repo_scheduler_name_worker
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's scheduler name tests for celery worker pass
+
+rubric:
+  # Rules specific to Helm chart changes
+  - id: schema_has_descriptions
+    rule: "Schema property additions include descriptive descriptions"
+    source:
+      file: chart/values.schema.json
+      section: "properties"
+    guidance: "New schema properties should have description field explaining their purpose"
+
+  - id: deprecation_documented
+    rule: "Deprecated fields are documented in NOTES.txt with migration guidance"
+    source:
+      file: chart/templates/NOTES.txt
+      section: "DEPRECATION WARNING"
+    guidance: "When deprecating fields, add a deprecation warning in NOTES.txt that mentions the replacement fields"
+
+  - id: values_yaml_matches_schema
+    rule: "values.yaml default values match what is defined in values.schema.json"
+    source:
+      file: chart/values.yaml
+      section: "workers"
+    guidance: "New properties added to schema should also be added to values.yaml with matching defaults"

@@ -1,0 +1,54 @@
+{
+  "model": "claude-opus-4-7",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "Instruction names the file mlflow/entities/span.py, the function _try_convert_structured_content, the schema keys (inline_data, mime_type, data, candidates, content, parts), the mlflow-attachment:// prefix, and the span._attachments attribute with content_type values."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction describes the symptom and expected behavior but doesn't give exact code changes; agent must still implement parsing logic."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check observable behavior (prefix, attachment count, content_type, content_bytes) not gold-specific names."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests call span.set_outputs/set_inputs and inspect attachments; also run subprocess pytest on repo tests."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "Tests assert mlflow-attachment:// prefix AND attachment bytes equal original PNG_BYTES, which a stub cannot satisfy."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "Tests cover bytes repr via outputs, inputs, audio mime, regression for base64, invalid base64, and invalid repr \u2014 matching instruction's expected behavior."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are grouped with section comment banners (fail-to-pass, pass-to-pass, repo CI) and descriptive docstrings."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "Gemini inline_data schema keys documented in instruction example."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "Paths and function names match across instruction and tests."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction points to the file and function, which is acceptable localization-level info, not exact line numbers or fix."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "Code-only task."
+    }
+  },
+  "tier_a_fails": [],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 10,
+  "fail_count": 0
+}

@@ -1,0 +1,144 @@
+version: '2.0'
+source:
+  repo: microsoft/playwright
+  pr: 39116
+  base_commit: 8710e613f8297cebe33c4f6a745999ab4e4907aa
+  merge_commit: f864c2ee9cfd5d15b31d4a6a52977e2ac20df2ea
+checks:
+- id: typescript_compiles
+  type: pass_to_pass
+  origin: static
+  description: TypeScript project builds without errors after changes
+- id: kill_all_cli_output
+  type: fail_to_pass
+  origin: pr_diff
+  description: Running kill-all with no daemons prints expected message
+- id: kill_all_command_registered
+  type: fail_to_pass
+  origin: pr_diff
+  description: kill-all is registered in the commands map
+- id: skill_md_documents_kill_all
+  type: fail_to_pass
+  origin: agent_config
+  description: SKILL.md must document the kill-all command
+  source:
+    path: packages/playwright/src/skill/SKILL.md
+    lines: 168-176
+    commit: 8710e613f8297cebe33c4f6a745999ab4e4907aa
+- id: session_management_documents_kill_all
+  type: fail_to_pass
+  origin: agent_config
+  description: session-management.md reference must document the kill-all command
+  source:
+    path: packages/playwright/src/skill/references/session-management.md
+    lines: 1-50
+    commit: 8710e613f8297cebe33c4f6a745999ab4e4907aa
+- id: existing_session_commands_preserved
+  type: pass_to_pass
+  origin: static
+  description: Existing session management commands still documented in SKILL.md
+- id: test_repo_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo build command passes
+- id: test_repo_eslint_playwright_core
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo ESLint on playwright-core passes
+- id: test_repo_eslint_terminal
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo ESLint on terminal source files passes
+- id: test_repo_build_generates_cli
+  type: pass_to_pass
+  origin: repo_tests
+  description: Build generates playable CLI
+- id: test_repo_lint_packages
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo workspace package consistency check passes
+- id: test_repo_build_generates_help
+  type: pass_to_pass
+  origin: repo_tests
+  description: Build generates CLI help.json file
+rubric:
+- rule: Update skill file at packages/playwright/src/skill/SKILL.md and references
+    if necessary in packages/playwright/src/skill/references/
+  source:
+    path: packages/playwright/src/skill/SKILL.md
+    lines: 168-176
+    commit: 8710e613f8297cebe33c4f6a745999ab4e4907aa
+- rule: kill-all documentation is consistent with the style and formatting of existing
+    session commands in the skill file
+  source:
+    path: packages/playwright/src/skill/SKILL.md
+    lines: 168-176
+    commit: 8710e613f8297cebe33c4f6a745999ab4e4907aa
+- rule: Register CLI command in commands.ts
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: 28-28
+  source_text: '- Register command in `packages/playwright/src/mcp/terminal/commands.ts`'
+  evidence: The diff registers 'killAll' by appending it to the 'commandsArray' and
+    exporting it in 'packages/playwright/src/mcp/terminal/commands.ts'.
+  category: architecture
+  verification: llm_judge
+- rule: Update skill documentation and references
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: 29-30
+  source_text: "- Update skill file at `packages/playwright/src/skill/SKILL.md` and\
+    \ references if necessary\n  in `packages/playwright/src/skill/references/`"
+  evidence: The diff adds the 'kill-all' command description to both 'packages/playwright/src/skill/SKILL.md'
+    and 'packages/playwright/src/skill/references/session-management.md'.
+  category: documentation
+  verification: llm_judge
+- rule: Update central SKILL.md file when adding commands
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: 45-45
+  source_text: The skill file is located at `packages/playwright/src/skill/SKILL.md`.
+    It contains documentation for all available CLI commands and MCP tools. Update
+    it whenever you add new commands or tools.
+  evidence: The diff explicitly adds 'playwright-cli kill-all' and its description
+    to 'packages/playwright/src/skill/SKILL.md'.
+  category: documentation
+  verification: llm_judge
+config_edits:
+- path: packages/playwright/src/skill/SKILL.md
+  tier: 1
+  gold_added: 'playwright-cli kill-all  # forcefully kill all daemon processes (for
+    stale/zombie processes)'
+  gold_removed: ''
+distractors:
+- rule: Implement corresponding MCP tool for CLI commands
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: 24-24
+  source_text: '- CLI commands are based on MCP tools. Implement the corresponding
+    MCP tool as per `Adding MCP Tools` section above, if needed.'
+  collision_type: architecture_boundary
+  why_distracting: An agent reading this might mistakenly try to create an underlying
+    MCP browser tool for 'kill-all'. However, 'kill-all' interacts directly with OS
+    processes (using execSync) and does not map to a browser-level capability, so
+    it correctly leaves toolName as '' and avoids implementing an MCP tool.
+  severity: high
+- rule: Create and register MCP Tool
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: 8-12
+  source_text: '## Adding MCP Tools
+
+    - Create a new tool in `packages/playwright/src/mcp/browser/tools/your-tool.ts`
+
+    - Register the tool in `packages/playwright/src/mcp/browser/tools.ts`
+
+    - Add ToolCapability in `packages/playwright/src/mcp/config.d.ts`
+
+    - Place new tests in `tests/mcp/mcp-<category>.spec.ts`'
+  collision_type: scope_ambiguity
+  why_distracting: This applies to browser interaction tools, but the 'kill-all' command
+    is a pure daemon session management feature that belongs only to the terminal
+    UI layer, making these instructions distracting and irrelevant to the current
+    task.
+  severity: medium

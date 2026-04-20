@@ -8,27 +8,24 @@ difficulty = "medium"  # Requires understanding FastAPI, Pydantic, and the exist
 tags = ["fastapi", "pydantic", "api", "pagination", "python"]
 
 # Time estimates (in minutes)
-estimated_time = {
-    understanding = 15,  # Understanding the existing model structure and v1 router
-    implementation = 25,  # Creating models, router, and integration
-    verification = 10,   # Testing the implementation
-}
+estimated_time = {understanding = 15, implementation = 25, verification = 10}
 
-[source]
-owner = "All-Hands-AI"
-repo = "OpenHands"
-base_commit = "54858c0fc02196f797e4bb411eb00bc12267b0cc"
-merge_commit = "2eefa5edfd76573f39091357f970ebb95d585a1b"
+source_owner = "All-Hands-AI"
+source_repo = "OpenHands"
+source_base_commit = "54858c0fc02196f797e4bb411eb00bc12267b0cc"
+source_merge_commit = "2eefa5edfd76573f39091357f970ebb95d585a1b"
 
-[files]
 # Primary files that must be created/modified
-target = [
+target_files = [
     "openhands/app_server/config_api/config_models.py",
     "openhands/app_server/config_api/config_router.py",
     "openhands/app_server/v1_router.py",
     "openhands/server/routes/public.py",
 ]
 
-test = [
+test_files = [
     "tests/unit/app_server/test_config_router.py",
 ]
+
+[verifier]
+env = { GEMINI_API_KEY = "${GEMINI_API_KEY:-}", ANTHROPIC_API_KEY = "${ANTHROPIC_API_KEY:-}" }

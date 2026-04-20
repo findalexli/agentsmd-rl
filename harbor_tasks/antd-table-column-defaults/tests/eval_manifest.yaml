@@ -1,0 +1,198 @@
+checks:
+- id: test_useFilledColumns_hook_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: useFilledColumns hook is implemented with proper logic
+- id: test_useFilledColumns_imported
+  type: fail_to_pass
+  origin: pr_diff
+  description: useFilledColumns is imported and used in InternalTable
+- id: test_column_prop_types_exist
+  type: fail_to_pass
+  origin: pr_diff
+  description: TableProps interface includes column prop type definition
+- id: test_column_prop_passed_to_hook
+  type: fail_to_pass
+  origin: pr_diff
+  description: column prop is destructured and passed to useFilledColumns
+- id: test_column_omitted_from_table_props
+  type: fail_to_pass
+  origin: pr_diff
+  description: column prop is omitted from rc-table props
+- id: test_column_default_inheritance_logic
+  type: fail_to_pass
+  origin: pr_diff
+  description: Columns inherit defaults from column prop when not explicitly set
+- id: test_special_columns_preserved
+  type: fail_to_pass
+  origin: pr_diff
+  description: SELECTION_COLUMN and EXPAND_COLUMN are preserved
+- id: test_nested_column_groups
+  type: fail_to_pass
+  origin: pr_diff
+  description: Nested column groups properly merge recursively
+- id: test_children_omitted_from_merge
+  type: fail_to_pass
+  origin: pr_diff
+  description: children property is omitted when merging
+- id: test_internal_test_file_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: Test file has column prop tests
+- id: test_demo_file_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: Demo file for column defaults exists
+- id: test_repo_lint_biome
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Biome linting passes
+- id: test_repo_lint_eslint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ESLint linting passes
+- id: test_repo_format_biome
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Biome formatting passes on table files
+- id: test_repo_table_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Table component unit tests pass
+- id: test_repo_lint_biome_all_table
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Biome linting passes on all table files
+- id: test_repo_table_filter_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Table filter tests pass
+- id: test_repo_table_rowSelection_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Table rowSelection tests pass
+- id: test_repo_table_sorter_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Table sorter tests pass
+- id: test_repo_table_expand_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Table expand tests pass
+- id: test_repo_table_pagination_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Table pagination tests pass
+- id: test_repo_table_all_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: All Table component tests pass
+- id: test_demo_uses_absolute_imports
+  type: pass_to_pass
+  origin: agent_config
+  source:
+    commit: b73b49c02f70e54ffc67c6e7ec895ec8d62378f3
+    path: CLAUDE.md
+  description: Demo file uses absolute imports per project convention
+- id: test_internal_tests_use_relative_imports
+  type: pass_to_pass
+  origin: agent_config
+  source:
+    commit: b73b49c02f70e54ffc67c6e7ec895ec8d62378f3
+    path: CLAUDE.md
+  description: Test file uses relative imports per project convention
+rubric:
+- rule: 'Test 导入规范: 测试文件应优先从当前组件目录、相邻内部模块或共享测试工具目录通过相对路径引用，禁止使用绝对路径引用仓库内代码。'
+  source:
+    path: CLAUDE.md
+    lines: 39-43
+  evidence: 'The gold solution modifies `components/table/__tests__/Table.test.tsx`
+    to add a new test case without introducing any absolute imports for internal Ant
+    Design modules, adhering to the relative import '
+  category: testing
+- rule: Test files must use relative paths for internal imports and normal package
+    names for external dependencies.
+  source:
+    path: AGENTS.md
+    lines: 38-44
+  evidence: The gold solution modifies `components/table/__tests__/Table.test.tsx`
+    to add a test case using the existing `Table` component without introducing any
+    absolute imports for internal Ant Design modules,
+  category: testing
+- rule: 项目组件和逻辑必须使用 TypeScript 和 React 进行开发。
+  source:
+    path: AGENTS.md
+    lines: 8-8
+  source_text: '- 使用 TypeScript 和 React 开发'
+  evidence: The diff introduces a new file `useFilledColumns.ts` written in TypeScript,
+    which imports React (`import * as React from 'react';`), and uses TypeScript types
+    like `ColumnsType<RecordType>` and `Partial<ColumnType<RecordType>>`.
+  category: architecture
+  verification: llm_judge
+- rule: 单元测试文件应存放在对应组件目录下的 `__tests__/` 文件夹中。
+  source:
+    path: AGENTS.md
+    lines: 21-21
+  source_text: '│   │   ├── __tests__/            # 单元测试'
+  evidence: The diff adds a new test case for the Table component's column alignment
+    inside the file `components/table/__tests__/Table.test.tsx`, following the project
+    structure for unit tests.
+  category: architecture
+  verification: llm_judge
+- rule: 跨组件共享的工具函数和类型定义应放置在 `_util/` 目录中。
+  source:
+    path: AGENTS.md
+    lines: 25-25
+  source_text: '│   ├── _util/                   # 共享工具函数库'
+  evidence: The newly added hook `useFilledColumns.ts` imports the shared `AnyObject`
+    type from the `_util` directory (`import type { AnyObject } from '../../_util/type';`).
+  category: architecture
+  verification: llm_judge
+distractors:
+- rule: Demo files must use absolute paths (e.g., `antd`, `antd/es/*`) for internal
+    imports.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might confuse the test file or internal component files
+    with demo files and attempt to use absolute paths like `antd/es/table/hooks/useFilledColumns`
+    instead of relative paths.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 28-36
+- rule: API documentation must be updated with specific table formats when adding
+    new properties.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to update `components/table/index.en-US.md`
+    and `index.zh-CN.md` to document the new `column` prop. While good practice generally,
+    the instructions strictly scope the task to code and tests, making doc updates
+    a distraction.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 48-77
+- rule: Changelog entries must be added for new features in both English and Chinese.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to update `CHANGELOG.en-US.md` and `CHANGELOG.zh-CN.md`
+    to announce the new feature, which is out of scope for the provided instructions.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 115-130
+- rule: Help maintainers reply to Ant Design GitHub issues following official guidelines.
+  source:
+    path: .claude/skills/issue-reply/SKILL.md
+    lines: 1-5
+  collision_type: meta_confusion
+  why_distracting: The task description is formatted similarly to a GitHub issue ('Problem',
+    'Goal'). The agent might activate this irrelevant skill and attempt to generate
+    an issue response or comment instead of implementing the actual feature code.
+  severity: low
+hierarchy_analysis: The configuration is provided in identical flat files (`AGENTS.md`
+  and `CLAUDE.md`) at the repository root. There is no deep hierarchy or overriding
+  between directories.
+version: '2.0'
+source:
+  repo: ant-design/ant-design
+  pr: 57545
+  base_commit: b73b49c02f70e54ffc67c6e7ec895ec8d62378f3
+  merge_commit: 1b5323ef1771c54441d386b6dbe14240e7ae7ca3

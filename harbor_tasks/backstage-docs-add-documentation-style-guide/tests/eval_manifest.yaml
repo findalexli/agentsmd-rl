@@ -1,0 +1,181 @@
+version: '2.0'
+source:
+  repo: backstage/backstage
+  pr: 33538
+  base_commit: 7c99d4f3021c375b4dea1bae6156ccbf527580e3
+  merge_commit: 7f26ea88c58c9e6f14d83a4c6b216c4f9260b412
+checks:
+- id: test_style_guide_exists_with_frontmatter
+  type: fail_to_pass
+  origin: pr_diff
+  description: docs/contribute/doc-style-guide.md exists with Docusaurus frontmatter
+- id: test_style_guide_covers_tone
+  type: fail_to_pass
+  origin: pr_diff
+  description: Style guide covers tone/voice guidelines (friendly, professional)
+- id: test_style_guide_covers_formatting
+  type: fail_to_pass
+  origin: pr_diff
+  description: Style guide covers formatting standards (bold, code style, backticks)
+- id: test_style_guide_covers_writing_practices
+  type: fail_to_pass
+  origin: pr_diff
+  description: Style guide covers active voice, present tense, addressing reader as
+    you
+- id: test_style_guide_has_word_list
+  type: fail_to_pass
+  origin: pr_diff
+  description: Style guide includes Backstage-specific word/terminology list
+- id: test_sidebar_includes_style_guide
+  type: fail_to_pass
+  origin: pr_diff
+  description: microsite/sidebars.ts includes doc-style-guide in contribute section
+- id: test_repo_verify_links
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo link verification passes
+- id: test_repo_lockfile_no_duplicates
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo lockfile has no duplicate dependencies
+- id: test_repo_docs_structure_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo documentation structure is valid (key files exist)
+- id: test_repo_doc_references_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo documentation cross-references are valid
+rubric:
+- rule: The documentation style guide content is consistent with the style and tone
+    of the existing Backstage documentation.
+  source:
+    path: CONTRIBUTING.md
+    lines: 165-175
+    commit: 7c99d4f3021c375b4dea1bae6156ccbf527580e3
+- rule: The style guide is adapted to the Backstage project specifically, not a generic
+    writing guide.
+  source:
+    path: AGENTS.md
+    lines: 1-5
+    commit: 7c99d4f3021c375b4dea1bae6156ccbf527580e3
+- rule: AGENTS.md updated with Writing Standards section referencing style guide
+  source:
+    path: AGENTS.md
+    lines: 12-14
+    commit: 7f26ea88c58c9e6f14d83a4c6b216c4f9260b412
+  reference: 'Packages prefixed with `core-` (e.g., `@backstage/core-plugin-api`)
+    are part of the old frontend system. Packages prefixed with `frontend-` (e.g.,
+    `@backstage/frontend-plugin-api`) are part of the new frontend system. Packages
+    prefixed with `backend-` (e.g., `@backstage/backend-plugin-api`) are part of the
+    backend system.
+
+
+    ## Writing Standards
+
+
+    Changes to the docs should follow the documentation style guide at `/docs/contribute/doc-style-guide.md`.'
+- rule: CONTRIBUTING.md updated to reference the documentation style guide
+  source:
+    path: CONTRIBUTING.md
+    lines: '173'
+    commit: 7f26ea88c58c9e6f14d83a4c6b216c4f9260b412
+  reference: 'Ready to get started? You can find all the documentation files in the
+    [docs](docs) directory!
+
+    Please take a look through [our style guide](./docs/contribute/doc-style-guide.md)
+    as well for writing style tips.
+
+    If you have any questions or need help, feel free to reach out in the [Backstage
+    Discord Docs Channel](https://discord.com/channels/687207715902193673/687994765559463940).'
+- rule: The `/CONTRIBUTING.md` file contains comprehensive contribution guidelines.
+  source:
+    path: AGENTS.md
+    lines: 14-15
+  evidence: The gold solution updates `CONTRIBUTING.md` to include a link to the new
+    style guide, recognizing it as the central hub for contribution guidelines.
+  category: documentation
+- rule: The `/docs` directory is the designated location for documentation files.
+  source:
+    path: AGENTS.md
+    lines: 8-9
+  evidence: The gold solution places the new documentation style guide inside the
+    `docs/contribute/` directory.
+  category: architecture
+- rule: 'The following files contain guidelines for the project: - `/CONTRIBUTING.md`:
+    comprehensive contribution guidelines.'
+  source:
+    path: AGENTS.md
+    lines: 13-19
+  evidence: The gold solution updates CONTRIBUTING.md to link to the new style guide,
+    respecting its role as the comprehensive contribution guidelines, and updates
+    AGENTS.md to ensure AI agents are aware of the n
+  category: documentation
+- rule: Project guidelines and standards must be referenced in AGENTS.md so that AI
+    contributors are aware of them.
+  source:
+    path: AGENTS.md
+    lines: 16-22
+  evidence: The gold solution updates AGENTS.md to include a reference to the newly
+    created doc-style-guide.md, following the established pattern of listing project
+    guideline files (like STYLE.md and CONTRIBUTING
+  category: documentation
+config_edits:
+- path: AGENTS.md
+  tier: 1
+  gold_added: 'Packages prefixed with `core-` (e.g., `@backstage/core-plugin-api`)
+    are part of the old frontend system. Packages prefixed with `frontend-` (e.g.,
+    `@backstage/frontend-plugin-api`) are part of the new frontend system. Packages
+    prefixed with `backend-` (e.g., `@backstage/backend-plugin-api`) are part of
+    the backend system.
+
+
+    ## Writing Standards
+
+
+    Changes to the docs should follow the documentation style guide at `/docs/contribute/doc-style-guide.md`.'
+  gold_removed: Packages prefixed with `core-` (e.g., `@backstage/core-plugin-api`)
+    are part of the old frontend system. Packages prefixed with `frontend-` (e.g.,
+    `@backstage/frontend-plugin-api`) are part of the new frontend system (NFS). Packages
+    prefixed with `backend-` (e.g., `@backstage/backend-plugin-api`) are part of
+    the backend system.
+- path: CONTRIBUTING.md
+  tier: 2
+  gold_added: 'Ready to get started? You can find all the documentation files in the
+    [docs](docs) directory!
+
+    Please take a look through [our style guide](./docs/contribute/doc-style-guide.md)
+    as well for writing style tips.
+
+    If you have have any questions or need help, feel free to reach out in the [Backstage
+    Discord Docs Channel](https://discord.com/channels/687207715902193673/687994765559463940).'
+  gold_removed: Ready to get started? You can find all the documentation files in
+    the [docs](docs) directory! If you have any questions or need help, feel free
+    to reach out in the [Backstage Discord Docs Channel](https://discord.com/channels/687207715902193673/687994765559463940)
+distractors:
+- rule: All changes that affect the published version of packages in the `/packages`
+    and `/plugins` directories must be accompanied by a changeset.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might generate a changeset file for this PR because it
+    is adding a new feature (a style guide). However, the CI workflow explicitly states
+    that changesets are only for packages in `/packages` and `/plugins`. Since this
+    PR only modifies `/docs` and root markdown files, a changeset is unnecessary and
+    would fail validation.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 43-46
+- rule: When writing or generating code, always match the existing coding style of
+    each individual package and file.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to infer and document code-specific style rules
+    (like TypeScript formatting or React conventions) into the documentation style
+    guide, confusing 'coding style' with 'writing style'.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 24-26
+hierarchy_analysis: The configuration is flat (a single AGENTS.md file at the root),
+  but the task is highly meta-referential. The agent must understand that AGENTS.md
+  is the very file that dictates its own behavior and the behavior of future AI agents,
+  and must modify it to enforce the new documentation rules it just created.

@@ -1,0 +1,107 @@
+version: "1.0"
+
+source:
+  repo: TanStack/router
+  pr_number: 7037
+  pr_title: "fix: unexported `ShouldBlockFnLocation` interface causes TS4023"
+  base_commit: e1b019ccb84ba2a5c60d36adae2440ac9f5bc34f
+  merge_commit: a1ab2646348cb9fa89c98b2128a65d992925014f
+
+checks:
+  - id: test_ts4023_custom_hook_wrapper
+    type: pass_to_pass
+    origin: repo_tests
+    description: >
+      Wrapping useBlocker in a custom hook and exporting it compiles without errors
+
+  - id: test_interface_converted_to_type_react
+    type: fail_to_pass
+    origin: pr_behavior
+    description: >
+      ShouldBlockFnLocation uses 'type' declaration in react-router
+
+  - id: test_interface_converted_to_type_solid
+    type: fail_to_pass
+    origin: pr_behavior
+    description: >
+      ShouldBlockFnLocation uses 'type' declaration in solid-router
+
+  - id: test_interface_converted_to_type_vue
+    type: fail_to_pass
+    origin: pr_behavior
+    description: >
+      ShouldBlockFnLocation uses 'type' declaration in vue-router
+
+  - id: test_type_alias_has_equals_sign_react
+    type: fail_to_pass
+    origin: pr_behavior
+    description: >
+      Type alias uses proper '= {' syntax instead of interface syntax
+
+  - id: test_repo_type_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: >
+      Repository type checking passes for react-router package
+
+  - id: test_repo_eslint
+    type: pass_to_pass
+    origin: repo_tests
+    description: >
+      Repository ESLint passes for react-router package
+
+  - id: test_repo_build_react_router
+    type: pass_to_pass
+    origin: repo_tests
+    description: >
+      React-router package builds successfully
+
+  - id: test_repo_blocker_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: >
+      Repository unit tests for blocker functionality pass
+
+  - id: test_repo_solid_router_type_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: >
+      Solid-router package type checking passes
+
+  - id: test_repo_solid_router_eslint
+    type: pass_to_pass
+    origin: repo_tests
+    description: >
+      Solid-router package ESLint passes
+
+  - id: test_repo_solid_router_blocker_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: >
+      Solid-router blocker unit tests pass
+
+  - id: test_repo_vue_router_type_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: >
+      Vue-router package type checking passes
+
+  - id: test_repo_vue_router_eslint
+    type: pass_to_pass
+    origin: repo_tests
+    description: >
+      Vue-router package ESLint passes
+
+  - id: test_repo_vue_router_blocker_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: >
+      Vue-router blocker unit tests pass
+
+rubric:
+  - id: code_change_only
+    rule: >
+      This PR is a pure TypeScript code change that does not require
+      documentation or config file modifications (CLAUDE.md, AGENTS.md, etc).
+      The code change converts interface to type which is a valid fix.
+    weight: 1

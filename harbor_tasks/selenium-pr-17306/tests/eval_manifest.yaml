@@ -1,0 +1,91 @@
+source:
+  repo: SeleniumHQ/selenium
+  pr_number: 17306
+  base_commit: 1d58a30530101d6ff84ecabb4422ac3078f8e40d
+  merge_commit: 54ab290ac9bf164a08ed562e5dce81fdcfbf3a9e
+  title: "[dotnet] [bidi] Testing infra for custom module"
+
+checks:
+  # Fail-to-pass: These must fail on base commit, pass after fix
+  - id: test_command_class_is_public
+    type: fail_to_pass
+    origin: pr_diff
+    description: Command<TParameters, TResult> class must be declared public
+
+  - id: test_parameters_record_is_public
+    type: fail_to_pass
+    origin: pr_diff
+    description: Parameters record must be declared public
+
+  - id: test_ilogger_interface_is_public
+    type: fail_to_pass
+    origin: pr_diff
+    description: ILogger interface must be declared public
+
+  - id: test_log_current_context_is_public
+    type: fail_to_pass
+    origin: pr_diff
+    description: Log.CurrentContext property must be declared public
+
+  - id: test_log_getlogger_generic_is_public
+    type: fail_to_pass
+    origin: pr_diff
+    description: Log.GetLogger<T>() method must be declared public
+
+  - id: test_log_getlogger_type_is_public
+    type: fail_to_pass
+    origin: pr_diff
+    description: Log.GetLogger(Type) method must be declared public
+
+  - id: test_ilogcontext_getlogger_methods_are_public
+    type: fail_to_pass
+    origin: pr_diff
+    description: ILogContext.GetLogger methods must not have internal modifier
+
+  - id: test_internals_visible_to_removed_from_csproj
+    type: fail_to_pass
+    origin: pr_diff
+    description: InternalsVisibleTo must be removed from Selenium.WebDriver.csproj
+
+  - id: test_internals_visible_to_removed_from_bazel
+    type: fail_to_pass
+    origin: pr_diff
+    description: internals_visible_to must be removed from BUILD.bazel
+
+  # Pass-to-pass: These must pass both before and after fix
+  - id: test_command_base_class_exists
+    type: pass_to_pass
+    origin: static
+    description: Command base class exists with protected constructor
+
+  - id: test_log_class_exists
+    type: pass_to_pass
+    origin: static
+    description: Log class with public CreateContext method exists
+
+  - id: test_ilogcontext_interface_is_public
+    type: pass_to_pass
+    origin: static
+    description: ILogContext interface is public
+
+  - id: test_repo_dotnet_format_whitespace
+    type: pass_to_pass
+    origin: repo_tests
+    description: Dotnet format whitespace check passes on modified files
+
+  - id: test_repo_dotnet_format_style
+    type: pass_to_pass
+    origin: repo_tests
+    description: Dotnet format style check passes on modified files
+
+  - id: test_repo_dotnet_restore
+    type: pass_to_pass
+    origin: repo_tests
+    description: Dotnet restore succeeds for webdriver project
+
+rubric:
+  # This is a code-only PR (making internal types public for extensibility).
+  # The rubric judge evaluates config/documentation file edits, which are not
+  # applicable to this PR type. Using a null entry to satisfy the "non-empty
+  # rubric" requirement while yielding no evaluable rules.
+  - ~

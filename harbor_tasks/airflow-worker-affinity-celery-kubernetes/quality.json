@@ -1,49 +1,49 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all key file paths (pod-template-file.kubernetes-helm-yaml, NOTES.txt, values.schema.json, values.yaml), the new field names (workers.celery.affinity, workers.kubernetes.affinity), the deprecated field (workers.affinity), precedence rules, backwards compatibility, deprecation warning content, and schema type requirements. All test assertions check for these documented behaviors."
+      "reason": "Instruction names all modified file paths, field names (workers.celery.affinity, workers.kubernetes.affinity), and required behaviors that tests verify."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what needs to change (new fields, precedence, deprecation) but does not specify exact line numbers, exact template syntax like '{{- $affinity := or .Values.workers.kubernetes.affinity ...}}', or the precise implementation. A developer must figure out the Helm template logic themselves."
+      "reason": "Instruction describes what to change and requirements but doesn't dictate exact template syntax like `or .Values.workers.kubernetes.affinity .Values.workers.affinity`."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "Tests verify behavior by rendering helm templates and checking the output structure (affinity present in pod spec, precedence of values, deprecation warnings). They don't assert on specific variable names, line positions, or internal helper functions. Alternative implementations (e.g., using if/else instead of 'or' chain, different template structure) would pass as long as the rendered output is correct."
+      "reason": "Tests check rendered output (affinity keys/values present in pod spec and deployment), not specific template implementation details."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests execute 'helm template' as a subprocess, parse the YAML output, and verify the rendered Kubernetes resources have the correct affinity fields. This is behavioral testing through actual template rendering, not just text matching on source files."
+      "reason": "Tests execute `helm template` subprocess and parse YAML output to verify rendered behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests (test_kubernetes_affinity_applied_to_pod_template, test_celery_affinity_applied_to_worker_deployment, test_precedence_new_fields_over_deprecated, test_backwards_compatibility_deprecated_affinity) all require actual helm template changes. A stub or no-op would fail because the base commit doesn't support workers.kubernetes.affinity or workers.celery.affinity, so helm template would either error on unknown fields or not render the affinity."
+      "reason": "Tests assert specific label keys ('new-label', 'deprecated-label') appear in rendered output, requiring actual implementation."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All 7 requirements from the instruction are tested: new fields for kubernetes (test_kubernetes_affinity_applied_to_pod_template), new fields for celery (test_celery_affinity_applied_to_worker_deployment), backwards compatibility (test_backwards_compatibility_deprecated_affinity), precedence (test_precedence_new_fields_over_deprecated), deprecation warning (test_deprecation_warning_in_notes), schema updates (test_schema_includes_new_affinity_fields), and deprecation documentation (test_values_yam"
+      "reason": "Tests cover new fields applied, backwards compatibility, precedence, and (likely) deprecation warning per requirements."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-structured with descriptive function names, docstrings explaining each test's purpose, clear separation between f2p and p2p tests (marked with comments), and helper functions for common operations."
+      "reason": "Tests have docstrings, descriptive names, and a section header comment for fail-to-pass tests."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The instruction specifies that values.schema.json must include 'type: object' for both new fields, and the tests verify this schema requirement."
+      "reason": "Instruction specifies schema requirement (type: object for both new fields) matching test expectations."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All filenames, paths, field names, and commands in the instruction are correct and consistent with the actual repository structure and test expectations."
+      "reason": "Paths and field names appear consistent between instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names files to modify (which is appropriate for a helm chart task where the file set is bounded) but doesn't specify exact line numbers or exact template syntax. The files listed are the natural targets given the task domain."
+      "reason": "Instruction names files to modify but doesn't pinpoint the exact buggy line; locating the template logic is left to the agent."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold patch makes localized changes to 5 files (adding a few lines each), doesn't rewrite entire files, and the changes are consistent with what the instruction and tests require."
+      "reason": "Gold diff is localized to specific lines in each chart file, not full rewrites."
     }
   },
   "tier_a_fails": [],

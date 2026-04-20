@@ -1,0 +1,129 @@
+source:
+  repo: All-Hands-AI/OpenHands
+  pr: 13579
+  base_commit: c9b2ce2fb9c61313d80643a489f81728bb9f5b09
+  merge_commit: eb189144f2dfbbf0dad964cf7bdbd44e7910cb29
+checks:
+- id: test_no_env_vars_returns_none
+  type: fail_to_pass
+  description: _get_default_aws_endpoint_url returns None when no env vars set
+  origin: pr_diff
+- id: test_endpoint_https_prefix_secure
+  type: fail_to_pass
+  description: Endpoint URL with https:// prefix when secure=true
+  origin: pr_diff
+- id: test_endpoint_adds_https_when_secure
+  type: fail_to_pass
+  description: Adds https:// prefix when secure=true and no protocol
+  origin: pr_diff
+- id: test_endpoint_http_prefix_insecure
+  type: fail_to_pass
+  description: Endpoint URL with http:// prefix when secure=false
+  origin: pr_diff
+- id: test_endpoint_adds_http_when_insecure
+  type: fail_to_pass
+  description: Adds http:// prefix when secure=false and no protocol
+  origin: pr_diff
+- id: test_endpoint_http_to_https_conversion
+  type: fail_to_pass
+  description: Converts http:// to https:// when secure=true
+  origin: pr_diff
+- id: test_endpoint_https_to_http_conversion
+  type: fail_to_pass
+  description: Converts https:// to http:// when secure=false
+  origin: pr_diff
+- id: test_secure_defaults_true
+  type: fail_to_pass
+  description: AWS_S3_SECURE defaults to true when not set
+  origin: pr_diff
+- id: test_injector_endpoint_from_env
+  type: fail_to_pass
+  description: AwsEventServiceInjector.endpoint_url populated from env via Field default_factory
+  origin: pr_diff
+- id: test_injector_accepts_custom_endpoint
+  type: fail_to_pass
+  description: AwsEventServiceInjector accepts custom endpoint_url parameter
+  origin: pr_diff
+- id: test_injector_endpoint_none_no_env
+  type: fail_to_pass
+  description: AwsEventServiceInjector.endpoint_url is None when no env vars set
+  origin: pr_diff
+- id: test_injector_has_endpoint_url_attribute
+  type: fail_to_pass
+  description: AwsEventServiceInjector has endpoint_url as a class field
+  origin: pr_diff
+- id: test_repo_python_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Python syntax validation for modified file
+- id: test_repo_ast_parses
+  type: pass_to_pass
+  origin: repo_tests
+  description: Python AST parsing for modified file
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff linter passes for modified file
+- id: test_repo_ruff_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff format check passes for modified file
+- id: test_repo_mypy_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's mypy typecheck passes for modified file
+- id: test_repo_modified_file_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: Primary modified file exists and is readable
+distractors:
+- rule: Store PR-specific artifacts like design documents or analysis notes in a `.pr/`
+    directory.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might waste time creating a `.pr/design.md` or `.pr/analysis.md`
+    to document its changes for this simple configuration fix, which is unnecessary
+    and not part of the requested task.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 36-44
+- rule: Use cross-repo-testing skill when testing a cross-repo feature or deploying
+    a feature branch to staging.
+  source:
+    path: .agents/skills/cross-repo-testing/SKILL.md
+    lines: 1-3
+  collision_type: scope_ambiguity
+  why_distracting: The task mentions 'feature branches' and 'testing' S3/Minio endpoints,
+    which might lead the agent to think it needs to use the cross-repo-testing skill
+    to test a cross-repo feature or deploy a feature branch to staging. However, this
+    task is purely about modifying the backend code to support these configurations,
+    not actually running cross-repo tests.
+  severity: low
+- rule: Use relative imports without `enterprise.` prefix in enterprise code
+  source:
+    path: AGENTS.md
+    lines: 202-205
+  source_text: '**Import Patterns:**
+
+    - Use relative imports without `enterprise.` prefix in enterprise code
+
+    - Example: `from storage.database import a_session_maker` not `from enterprise.storage.database
+    import a_session_maker`
+
+    - This ensures code works in both OpenHands and enterprise contexts'
+  collision_type: scope_ambiguity
+  why_distracting: An agent modifying core Python files in `openhands/` might misapply
+    this enterprise-specific pattern, erroneously converting valid absolute imports
+    into relative ones and breaking module resolution.
+  severity: high
+hierarchy_analysis: The configuration consists of a single, flat `AGENTS.md` file
+  at the root level containing generic repository guidelines. There is no complex
+  hierarchy or overriding rules.
+rubric:
+- rule: Backend code is located in the `openhands` directory.
+  source:
+    path: AGENTS.md
+    lines: 63-65
+  evidence: The gold solution modifies `openhands/app_server/event/aws_event_service.py`,
+    correctly placing the backend changes in the `openhands` directory.
+  category: architecture

@@ -1,0 +1,134 @@
+version: "1.0"
+
+source:
+  pr: "OpenHands/OpenHands#13658"
+  title: "fix(backend): persist disabled_skills in SaaS settings store"
+  description: |
+    Migration 102 added disabled_skills to the legacy user_settings table,
+    but SaasSettingsStore reads from and writes to User/Org/OrgMember.
+    Since User lacked the column, disabled_skills was silently dropped on
+    save and missing on load, causing skill toggles to revert after refresh.
+    This fix adds disabled_skills JSON column to the User model and table.
+  base_commit: "73ba66faeae1520fc2671b07677db4b5e3e235d3"
+  merge_commit: "9c0f5d785ee71c7d16d157333994245cb242a885"
+  files_changed:
+    - "enterprise/storage/user.py"
+    - "enterprise/migrations/versions/104_add_disabled_skills_to_user.py"
+
+checks:
+  # Fail-to-pass tests
+  - id: test_user_model_has_disabled_skills_column
+    type: fail_to_pass
+    origin: behavior
+    description: User model must have disabled_skills column defined with JSON type
+    points: 15
+
+  - id: test_user_model_column_can_store_and_return_data
+    type: fail_to_pass
+    origin: behavior
+    description: User model must be able to store and retrieve disabled_skills data
+    points: 15
+
+  - id: test_migration_file_exists_and_valid
+    type: fail_to_pass
+    origin: behavior
+    description: Migration 104 must exist with proper Alembic structure
+    points: 15
+
+  - id: test_migration_references_correct_down_revision
+    type: fail_to_pass
+    origin: behavior
+    description: Migration must reference revision 103 as down_revision
+    points: 10
+
+  - id: test_disabled_skills_column_attributes
+    type: fail_to_pass
+    origin: behavior
+    description: disabled_skills column must have correct SQLAlchemy attributes
+    points: 10
+
+  # Pass-to-pass tests (structural/code quality)
+  - id: test_user_model_syntax_valid
+    type: pass_to_pass
+    origin: structural
+    description: User model file must have valid Python syntax
+    points: 5
+
+  - id: test_migration_file_syntax_valid
+    type: pass_to_pass
+    origin: structural
+    description: Migration file must have valid Python syntax
+    points: 5
+
+  - id: test_enterprise_storage_imports
+    type: pass_to_pass
+    origin: structural
+    description: Enterprise storage module must import without syntax errors
+    points: 5
+
+  - id: test_repo_ruff_check_enterprise
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo ruff linter passes on enterprise storage/user.py
+    points: 5
+
+  - id: test_repo_ruff_format_enterprise
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo ruff format check passes on enterprise storage/user.py
+    points: 5
+
+  - id: test_repo_validate_pyproject
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo pyproject.toml validation passes
+    points: 5
+
+  - id: test_repo_enterprise_storage_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo enterprise storage unit tests pass
+    points: 10
+
+rubric:
+  - rule: "SQLAlchemy model changes must include proper imports"
+    description: |
+      When adding new SQLAlchemy column types, ensure the corresponding
+      types are imported from sqlalchemy (e.g., JSON import when using JSON columns).
+    source: "AGENTS.md - Database schema changes"
+    weight: medium
+    reference: |
+      JSON,
+      disabled_skills = Column(JSON, nullable=True)
+
+  - rule: "Alembic migrations must have correct revision chain"
+    description: |
+      Database migrations must properly reference the down_revision to maintain
+      the migration chain. The revision ID must be unique and follow sequentially.
+    source: "AGENTS.md - Database Migrations section"
+    weight: high
+    reference: |
+      revision: str = '104'
+      down_revision: Union[str, None] = '103'
+
+  - rule: "Migrations must include both upgrade and downgrade"
+    description: |
+      All Alembic migrations must define both upgrade() and downgrade() functions
+      to ensure database changes are reversible.
+    source: "AGENTS.md - Database Migrations section"
+    weight: high
+    reference: |
+      def upgrade() -> None:
+          op.add_column('user', sa.Column('disabled_skills', sa.JSON(), nullable=True))
+      def downgrade() -> None:
+          op.drop_column('user', 'disabled_skills')
+
+  - rule: "Code must pass pre-commit hooks"
+    description: |
+      Before pushing changes, ensure pre-commit hooks pass successfully.
+      Run `pre-commit run --config ./dev_config/python/.pre-commit-config.yaml`
+      to verify code quality.
+    source: "AGENTS.md - General Setup section"
+    weight: medium
+    reference: |
+      Code passes ruff check and format validation

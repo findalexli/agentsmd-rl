@@ -1,63 +1,56 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert specific implementation details not mentioned in instruction.md: test_download_catalog_method_exists checks for '_download_catalog' method name, test_issue_to_s3_uses_settings patches 'praktika.issue.Utils.compress_gz' (specific module path), test_validator_uses_new_setting_name checks for literal string 'Settings.S3_REPORT_BUCKET' in validator.py source. The instruction never specifies the exact method name '_download_catalog' \u2014 it only says 'Add a classmethod that downloads a cata"
+      "outcome": "pass",
+      "reason": "Instruction names S3_REPORT_BUCKET, S3_UPSTREAM_REPORT_BUCKET, _USER_DEFINED_SETTINGS, Settings class, TestCaseIssueCatalog, to_s3/from_s3 methods, and the requirement for a classmethod to download catalogs (tested as _download_catalog)."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly states exact renames ('HTML_S3_PATH \u2192 S3_REPORT_BUCKET'), exact attribute names, exact file references ('The file that currently imports S3_REPORT_BUCKET_NAME from ci.settings.settings must be updated to use Settings.S3_REPORT_BUCKET instead'), and exact method behaviors (to_s3 must use S3_REPORT_BUCKET, from_s3 must merge). This tells the agent precisely WHAT to change rather than describing what's broken."
+      "outcome": "pass",
+      "reason": "Instruction describes what to rename and add without giving exact line changes; agent must still figure out which files use the setting."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_download_catalog_method_exists asserts the exact method name '_download_catalog' which is a gold-specific implementation detail. An alternative correct fix could name this method 'download_from_bucket', 'fetch_catalog', or 'get_remote_catalog' and still implement the same behavior correctly but fail this test."
+      "reason": "test_download_catalog_method_exists asserts the exact internal method name '_download_catalog', but instruction only says 'Add a classmethod that downloads a catalog' \u2014 an alternative valid implementation naming it e.g. 'download_catalog' would fail."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "test_validator_uses_new_setting_name reads the file and asserts 'Settings.S3_REPORT_BUCKET' in content \u2014 this is pure text matching. Several other tests (test_hook_html_uses_new_setting, test_html_prepare_uses_new_setting, test_info_uses_new_setting, test_result_uses_new_setting, test_s3_uses_new_setting) only check hasattr on Settings, never importing or calling the actual modules they claim to test."
+      "outcome": "pass",
+      "reason": "Tests import modules, call methods like to_s3(), and inspect class attributes, not just grep text."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "Multiple f2p tests can be satisfied by trivially adding attributes without implementing real logic: test_hook_html_uses_new_setting, test_html_prepare_uses_new_setting, test_info_uses_new_setting, test_result_uses_new_setting, test_s3_uses_new_setting all just check hasattr(Settings, 'S3_REPORT_BUCKET'). Adding 'S3_REPORT_BUCKET = \"\"' to Settings passes all of them without fixing any actual code in those modules."
+      "outcome": "pass",
+      "reason": "Tests require real attribute additions and method existence plus functional to_s3 behavior; a trivial stub wouldn't satisfy the combination."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "The instruction requires 'No non-comment references to HTML_S3_PATH may remain in any source file' and 'The legacy compatibility module must export S3_REPORT_BUCKET', but tests only check hasattr(Settings, 'HTML_S3_PATH') is False \u2014 they don't scan source files for remaining references or test the legacy compatibility module export."
+      "outcome": "pass",
+      "reason": "Tests cover rename, new setting, merge method existence, and imports across modified modules."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive names and docstrings, grouped under clear FAIL-TO-PASS section headers."
+      "reason": "Tests have clear docstrings and a FAIL-TO-PASS section header."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task does not produce structured data output like JSON/CSV/API/DB schemas."
+      "reason": "No structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names across the instruction and test files."
+      "reason": "Names consistent across instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction names exact files and exact code patterns: 'The file that currently imports S3_REPORT_BUCKET_NAME from ci.settings.settings must be updated to use Settings.S3_REPORT_BUCKET instead' \u2014 this pinpoints ci/jobs/collect_statistics.py and the exact import change needed, which is localization leakage."
+      "outcome": "pass",
+      "reason": "Instruction references module areas but not specific line numbers."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-editing task, not a config-edit task."
+      "reason": "Code task, not agentmd-edits."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "behavior_in_tests",
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 2,
-  "fail_count": 7
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 1
 }

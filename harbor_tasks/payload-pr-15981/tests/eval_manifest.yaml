@@ -1,0 +1,188 @@
+version: 1
+
+PR:
+  owner: payloadcms
+  repo: payload
+  number: 15981
+  base_commit: 944a889d
+  merge_commit: 57a0edc6ffe5d814147bbed46a041294247eb1f5
+  title: "fix: use latest draft version data when trashing unpublished documents"
+
+  description: |
+    Fixes a bug where localized field data was silently lost when bulk-trashing
+    draft-only documents on collections with `trash: true` and `versions.drafts` enabled.
+    The root cause was that bulk-trash operations read stale data from the main collection
+    table instead of the versions table. The fix ensures the versions table is queried
+    when trashing unpublished documents, similar to how single-document trash already works.
+
+    The change is minimal:
+    - In `packages/payload/src/collections/operations/update.ts`: Changed condition from
+      `shouldSaveDraft` to `(shouldSaveDraft || isTrashAttempt)` when deciding whether
+      to query the versions table for draft data.
+
+    Bug: #15980
+
+checks:
+  - id: test_fix_applied
+    type: fail_to_pass
+    origin: agent_config
+    description: |
+      Verifies the fix line 'shouldSaveDraft || isTrashAttempt' is present
+      in the update operation source code. This ensures the bulk trash operation
+      queries the versions table to get the latest draft data instead of stale
+      main table data.
+    source:
+      - file: packages/payload/src/collections/operations/update.ts
+        commit: 57a0edc6
+        rule: |
+          The bulk trash operation should read from the versions table
+          (queryDrafts) when trashing unpublished documents, not from the
+          main collection table which only reflects last published state.
+
+  - id: test_posts_collection_has_localized_field
+    type: fail_to_pass
+    origin: agent_config
+    description: |
+      Verifies the Posts collection test config defines the localizedField
+      needed to reproduce and test the bug. Without this field, the bug
+      cannot be properly tested.
+    source:
+      - file: test/trash/collections/Posts/index.ts
+        commit: 57a0edc6
+        rule: |
+          Collections with trash and versions.drafts enabled should have
+          test coverage for localized fields, as these are the most visible
+          symptom of the data loss bug.
+
+  - id: test_trash_config_has_localization
+    type: fail_to_pass
+    origin: agent_config
+    description: |
+      Verifies the trash test config has localization enabled with en/es locales.
+      This is required to test localized field preservation during trash operations.
+    source:
+      - file: test/trash/config.ts
+        commit: 57a0edc6
+        rule: |
+          Localization config must be present to test localized field
+          preservation during bulk trash operations.
+
+  - id: test_payload_types_include_localized_field
+    type: fail_to_pass
+    origin: agent_config
+    description: |
+      Verifies the generated TypeScript types include localizedField in Post interface.
+      This ensures the test code has proper type coverage for the new field.
+    source:
+      - file: test/trash/payload-types.ts
+        commit: 57a0edc6
+        rule: |
+          Generated types should reflect all collection fields including
+          newly added localized fields.
+
+  - id: test_update_ts_context
+    type: fail_to_pass
+    origin: agent_config
+    description: |
+      Verifies the fix is in the correct context within update.ts - the fix
+      should appear before the versionsWhere assignment.
+    source:
+      - file: packages/payload/src/collections/operations/update.ts
+        commit: 57a0edc6
+        rule: |
+          The fix must be in the correct location within the update operation,
+          near where versionsWhere is assigned, to ensure it affects the
+          version query logic correctly.
+
+  - id: test_repo_eslint_update_ts
+    type: pass_to_pass
+    origin: repo_tests
+    description: |
+      ESLint passes on the update.ts operation file. This verifies the
+      modified code follows the repo's linting rules and style guidelines.
+    source:
+      - file: packages/payload/src/collections/operations/update.ts
+        commit: 944a889d
+        rule: |
+          ESLint must pass for the update operation file as part of repo CI.
+
+  - id: test_repo_eslint_delete_operations
+    type: pass_to_pass
+    origin: repo_tests
+    description: |
+      ESLint passes on related trash operations (delete.ts, deleteByID.ts).
+      These are checked alongside update.ts since they handle related operations.
+    source:
+      - file: packages/payload/src/collections/operations/delete.ts
+        commit: 944a889d
+        rule: |
+          ESLint must pass for delete operations as part of repo CI.
+
+  - id: test_repo_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: |
+      Unit tests pass on the base commit. This ensures the existing test
+      suite runs successfully, verifying the codebase is in a valid state.
+    source:
+      - command: NODE_OPTIONS='--no-experimental-strip-types' npx vitest run --project unit
+        commit: 944a889d
+        rule: |
+          Unit tests must pass as part of repo CI on the base commit.
+
+rubric:
+  - source: CLAUDE.md
+    rule: |
+      Prefix booleans with `is/has/can`. The fix introduces `isTrashAttempt`
+      which follows this naming convention.
+    reference: |
+      if (hasDraftsEnabled(collectionConfig) && (shouldSaveDraft || isTrashAttempt)) {
+    weight: 0
+
+  - source: CLAUDE.md
+    rule: |
+      Use `import type` for types. TypeScript code in the fix follows
+      this pattern for type imports.
+    reference: |
+      import type { DeepPartial } from 'ts-essentials'
+      import type { AccessResult } from '../../config/types.js'
+      import type { PayloadRequest, PopulateType, SelectType, Sort, Where } from '../../types/index.js'
+      import type {
+    weight: 0
+
+  - source: CONTRIBUTING.md
+    rule: |
+      Tests must be self-contained and clean up after themselves. Any new
+      tests added should follow this pattern.
+    reference: |
+      it('should preserve localized field data when bulk trashing draft documents', async () => {
+        const localizedFieldValueEN = 'Localized Draft Content EN'
+        const localizedFieldValueES = 'Localized Draft Content ES'
+
+        const post = await payload.create({
+          collection: postsSlug,
+          data: {
+            title: 'Draft with Localized Field',
+            _status: 'draft',
+          },
+        })
+        // ... test body follows self-contained pattern
+    weight: 0
+
+  - source: CONTRIBUTING.md
+    rule: |
+      Tests must use `*int.spec.ts` suffix for integration tests. Any new
+      integration tests for this fix should follow this naming convention.
+    reference: |
+      test/trash/int.spec.ts
+    weight: 0
+
+  - source: CONTRIBUTING.md
+    rule: |
+      Clean up database records before test completes. Tests should properly
+      handle cleanup of created documents.
+    reference: |
+      The test creates documents via payload.create() and moves them to trash.
+      By moving to trash (deletedAt set), documents are soft-deleted and do
+      not require explicit cleanup - trash cleanup is handled by the test framework.
+    weight: 0

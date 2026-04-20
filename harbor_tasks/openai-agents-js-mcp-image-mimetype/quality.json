@@ -1,0 +1,54 @@
+{
+  "model": "claude-opus-4-7",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "Instruction names the relevant files (toolExecution.ts, openaiResponsesModel.ts), functions (normalizeStructuredToolOutput, convertStructuredToolOutputToInputItem, convertLegacyToolOutputContent, getImageInlineMediaType), field names (mimeType, mediaType, data, image), and the expected data URL format."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction describes what's broken and expected behavior but leaves the agent to decide how to implement the fix."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests call public functions getToolCallOutputItem and getInputItems and check output strings/structure, not internal helper names or line positions."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests execute TypeScript via tsx and vitest, importing and calling actual functions, checking runtime behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "Tests check specific data URL prefixes like 'data:image/jpeg;base64,' with actual base64 content, which cannot be satisfied by a stub."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "Tests cover top-level mimeType, nested mimeType, fallback to top-level mimeType, and both code paths (core and adapter)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are grouped with clear section comments (fail-to-pass vs pass-to-pass) and descriptive names."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "Instruction documents the exact expected format: 'data:image/jpeg;base64,<data>' and the input schemas for top-level/nested image outputs."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in paths or identifiers."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction points to files and functions but not specific lines; localization within the functions is still required."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "Code-only task."
+    }
+  },
+  "tier_a_fails": [],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 10,
+  "fail_count": 0
+}

@@ -1,0 +1,128 @@
+version: '2.0'
+source:
+  repo: mlflow/mlflow
+  pr: 21888
+  base_commit: e226b6470db43c522bf00ca5e5a4cd7f51f83e5b
+  merge_commit: 703372b1c23f679b07fa63d76a1e8d16d3917e8c
+checks:
+- id: bash_syntax
+  type: pass_to_pass
+  origin: static
+  description: poll.sh must be valid bash syntax
+- id: test_repo_bash_syntax_poll_sh
+  type: pass_to_pass
+  origin: repo_tests
+  description: poll.sh passes bash syntax check
+- id: test_repo_git_tracked_copilot_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Copilot skill files tracked by git
+- id: test_repo_shellcheck_poll_sh
+  type: pass_to_pass
+  origin: repo_tests
+  description: poll.sh passes shellcheck linting
+- id: test_repo_mlflow_typo_copilot_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Copilot skill files pass MLflow typo check
+- id: test_repo_poll_sh_permissions
+  type: pass_to_pass
+  origin: repo_tests
+  description: poll.sh is executable
+- id: test_repo_no_trailing_whitespace
+  type: pass_to_pass
+  origin: repo_tests
+  description: Copilot skill files have no trailing whitespace
+- id: test_repo_no_tabs
+  type: pass_to_pass
+  origin: repo_tests
+  description: Copilot skill files have no tab characters
+- id: copilot_skill_files_exist
+  type: pass_to_pass
+  origin: static
+  description: Copilot skill files (poll.sh and SKILL.md) must exist
+- id: poll_sh_executable
+  type: pass_to_pass
+  origin: static
+  description: poll.sh must have bash shebang and be executable
+- id: skill_md_valid_yaml_frontmatter
+  type: pass_to_pass
+  origin: static
+  description: SKILL.md must have valid YAML frontmatter structure
+- id: skill_md_has_required_fields
+  type: pass_to_pass
+  origin: static
+  description: SKILL.md must have required frontmatter fields (name, description,
+    allowed-tools)
+- id: poll_session_id_polling
+  type: fail_to_pass
+  origin: pr_diff
+  description: poll.sh accepts session_id as $1 and calls 'gh agent-task view' with
+    it
+- id: poll_no_timeline_api
+  type: fail_to_pass
+  origin: pr_diff
+  description: poll.sh no longer uses the timeline API for polling
+- id: skill_md_allows_agent_task_view
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md allowed-tools includes 'gh agent-task view'
+- id: skill_md_documents_session_id
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md documents session ID extraction for poll.sh
+rubric:
+- rule: Only add comments that explain non-obvious logic or provide additional context
+  source:
+    path: .claude/skills/copilot/SKILL.md
+    lines: 13-13
+  category: documentation
+  reference: The gold solution adds comments in SKILL.md explaining the format of
+    the URL returned by `gh agent-task create` to justify the bash string manipulation
+    `session_id="${session_url##*/}"`.
+- rule: Assume the authors are referencing newer, valid resources
+  source:
+    path: .claude/skills/copilot/SKILL.md
+    lines: 5-7
+  category: tooling
+  reference: The gold solution adds `gh agent-task view` to the allowed-tools list
+    in SKILL.md, accepting the newly introduced command without questioning its existence.
+config_edits:
+- path: .claude/skills/copilot/SKILL.md
+  tier: 1
+  gold_added: '- Bash(gh agent-task view:*)
+
+    Once Copilot starts working, extract the session ID from the output URL and poll
+    in the background until Copilot finishes:
+
+    # gh agent-task create returns a URL like:
+
+    # https://github.com/mlflow/mlflow/pull/21887/agent-sessions/523bb0e1-...
+
+    session_url=$(gh agent-task create -F task-desc.md)
+
+    session_id="${session_url##*/}"
+
+
+    # Poll using session ID
+
+    bash .claude/skills/copilot/poll.sh "$session_id" "<owner>/<repo>" <pr_number>'
+  gold_removed: 'Once Copilot starts working, poll in the background until Copilot
+    finishes:
+
+    bash .claude/skills/copilot/poll.sh <owner>/<repo> <pr_number>'
+distractors:
+- rule: New functionality in the tracking layer should be mirrored by workspace-aware
+    tests
+  collision_type: scope_ambiguity
+  why_distracting: The agent might mistakenly believe that adding new polling functionality
+    requires adding workspace-aware tests, but this rule only applies to the MLflow
+    tracking layer, not to Claude skill bash scripts.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 16-17
+hierarchy_analysis: The repository uses a single `CLAUDE.md` file at the root. The
+  task requires editing the agent's own skill definition files (`SKILL.md` and `poll.sh`).
+  The agent must apply the general 'Knowledge Cutoff Note' from `CLAUDE.md` to accept
+  and use the unfamiliar `gh agent-task` commands specified in the issue description.

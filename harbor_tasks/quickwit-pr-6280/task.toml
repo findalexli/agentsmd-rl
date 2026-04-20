@@ -1,0 +1,17 @@
+[package]
+name = "quickwit-delete-metrics-splits"
+version = "0.1.0"
+description = "Fix delete_metrics_splits error handling in postgres metastore"
+difficulty = "medium"
+auto = false
+
+[environment]
+docker_image = "task-env"
+docker_context = "environment"
+
+[agents]
+allowed_commands = ["cargo check", "cargo clippy", "cargo build", "make fmt", "make fix", "git diff", "git status"]
+time_limit = 600
+
+[verifier]
+env = { GEMINI_API_KEY = "${GEMINI_API_KEY:-}", ANTHROPIC_API_KEY = "${ANTHROPIC_API_KEY:-}" }

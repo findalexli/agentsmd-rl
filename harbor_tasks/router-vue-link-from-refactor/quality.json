@@ -1,61 +1,59 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert very specific things not mentioned in instruction.md: e.g., test_last_import_removed_from_stores_ts checks that 'last' is removed from imports in stores.ts; test_router_ts_uses_last_on_matches_id checks for the exact string 'last(this.stores.matchesId.state)'; test_vue_link_no_manual_from_computed checks for 'const _options = Vue.computed'; test_vue_link_uses_options_directly checks for exact string 'router.buildLocation(options as any)' in SSR section. None of these specific patter"
+      "outcome": "pass",
+      "reason": "All file paths, literal strings (last(this.stores.matchesId.state), this.stores.lastMatchId.state, const _options = Vue.computed, ..._options.value, router.buildLocation(options as any), router.stores.lastMatchRouteFullPath) are explicitly mentioned in instruction.md."
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "instruction.md describes the problem (inconsistent from handling) and goal (delegate to buildLocation) but doesn't specify exact code changes like 'replace X with Y on line Z'. It gives investigation guidance but the agent must still reason about what to change."
+      "outcome": "fail",
+      "reason": "Instruction.md dictates the exact replacement strings: 'should contain last(this.stores.matchesId.state)', 'should contain router.buildLocation(options as any)', and explicitly lists which lines to remove \u2014 leaving almost no reasoning about what to change."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific implementation details: test_router_ts_uses_last_on_matches_id requires exact string 'last(this.stores.matchesId.state)'; test_vue_link_uses_options_directly requires exact string 'router.buildLocation(options as any)' in SSR section; test_vue_link_no_manual_from_computed checks for absence of 'const _options = Vue.computed'. An alternative correct refactoring (e.g., using matchesId.state.at(-1) instead of last()) would fail these tests."
+      "reason": "Tests assert exact literal strings like 'router.buildLocation(options as any)' and 'last(this.stores.matchesId.state)'; alternative valid refactors (e.g., using a different cast or variable binding) would fail."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_last_match_id_removed_from_stores_ts, test_last_import_removed_from_stores_ts, test_last_match_route_full_path_removed, test_router_ts_uses_last_on_matches_id, test_vue_link_no_manual_from_computed, test_vue_link_uses_options_directly) are ALL pure text-matching assertions like 'assert X not in content' or 'assert X in content' with no code execution. The pass-to-pass tests do execute builds/tests, but the core f2p tests are entirely text-based."
+      "outcome": "pass",
+      "reason": "Tests include subprocess executions of builds, type checks, unit tests, and lint via pnpm nx run commands, not just string matching."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "A stub that simply deletes the relevant lines/stores from the source files (without implementing any actual fix logic) would pass all f2p tests since they only check for absence/presence of strings. For example, removing 'lastMatchId' from stores.ts and removing '_options' computed from link.tsx would pass without correctly wiring up last(this.stores.matchesId.state)."
+      "outcome": "pass",
+      "reason": "Tests verify specific code changes and require real builds/tests to pass; stub implementation cannot satisfy the build/unit-test checks."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction describes: removing manual from computation, removing unnecessary stores, delegating to buildLocation directly. Tests check for removal of lastMatchId, lastMatchRouteFullPath, _options computed, and direct buildLocation calls, covering the described behavioral requirements."
+      "reason": "All expected outcomes listed in instruction.md (store removals, import removals, string replacements, SSR call shape) are covered by corresponding tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are clearly grouped into 'Structural Tests (Fail-to-pass)' and 'Repo CI/CD Tests (Pass-to-pass)' sections with descriptive names and docstrings."
+      "reason": "Tests are grouped under 'Structural Tests' and 'Repo CI/CD Tests' section comments with descriptive names and docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task is a code refactoring task, not producing structured data output."
+      "reason": "Task is a code refactor; no structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and commands in instruction.md and tests match the actual repository structure correctly."
+      "reason": "File paths and commands appear consistent and correct."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names exact files (stores.ts, router.ts, routerStores.ts, link.tsx) and mentions specific implementation details like 'last() utility from ./utils' and that stores 'only exist to support this manual computation'. Combined with 'Investigation Guidance' step 3 about last(), this significantly narrows the solution space beyond what's needed to understand the problem."
+      "reason": "Instruction names exact files, exact lines to remove ('const _options = Vue.computed', '..._options.value'), and exact replacement string \u2014 this is heavy localization/fix leakage."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only refactoring task, not a config edit task."
+      "reason": "Code-only task, not an agentmd-edits task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "no_solution_leakage",
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 5
+  "pass_count": 6,
+  "fail_count": 3
 }

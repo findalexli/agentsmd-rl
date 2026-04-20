@@ -1,0 +1,132 @@
+version: '2.0'
+source:
+  repo: vercel/next.js
+  pr: 89271
+  base_commit: fc13ca90ab14987da0b9bc556fc4c7e9e1b531af
+  merge_commit: b9e9f1112f6bb3bc20ae57ec5f8138e11331a5b6
+checks:
+- id: cargo_check
+  type: pass_to_pass
+  origin: static
+  description: turbo-persistence crate compiles without errors
+- id: cargo_clippy
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's clippy lints pass for turbo-persistence
+- id: cargo_fmt
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's rustfmt formatting check passes for turbo-persistence
+- id: cargo_test_lib
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's unit tests pass for turbo-persistence
+- id: cargo_check_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Test code compiles for turbo-persistence
+- id: cargo_check_benches
+  type: pass_to_pass
+  origin: repo_tests
+  description: Benchmark code compiles for turbo-persistence
+- id: cargo_doc
+  type: pass_to_pass
+  origin: repo_tests
+  description: Documentation builds for turbo-persistence
+- id: inline_value_size_constant
+  type: fail_to_pass
+  origin: pr_diff
+  description: MAX_INLINE_VALUE_SIZE constant (8 bytes) defined in constants.rs
+- id: entry_value_has_inline_variant
+  type: fail_to_pass
+  origin: pr_diff
+  description: EntryValue enum has an Inline variant for key-block-stored values
+- id: inline_entry_type_constant
+  type: fail_to_pass
+  origin: pr_diff
+  description: KEY_BLOCK_ENTRY_TYPE_INLINE_MIN constant (8) defined in static_sorted_file.rs
+- id: handle_key_match_returns_slice_for_inline
+  type: fail_to_pass
+  origin: pr_diff
+  description: handle_key_match returns LookupValue::Slice for inline entries instead
+    of bailing
+- id: entry_val_size_function
+  type: fail_to_pass
+  origin: pr_diff
+  description: entry_val_size function computes value byte sizes for all entry types
+    including inline
+- id: put_inline_method
+  type: fail_to_pass
+  origin: pr_diff
+  description: KeyBlockBuilder has put_inline method that writes inline values to
+    key blocks
+- id: slice_from_subslice_method
+  type: fail_to_pass
+  origin: pr_diff
+  description: ArcSlice has slice_from_subslice for zero-copy inline value access
+rubric:
+- rule: Documentation update is consistent with the technical style of the existing
+    README
+  source:
+    path: turbopack/crates/turbo-persistence/README.md
+    lines: 1-10
+    commit: fc13ca90ab14987da0b9bc556fc4c7e9e1b531af
+- rule: README.md documents that types 8..255 store inlined values with size threshold
+  source:
+    path: turbopack/crates/turbo-persistence/README.md
+    lines: 128-131
+    commit: b9e9f1112f6bb3bc20ae57ec5f8138e11331a5b6
+  reference: "- 8..255: inlined value (currently only values ≤8 bytes are inlined,\
+    \ though the format supports up to 247)\n  - (type - 8) bytes value data (inline,\
+    \ no separate value block)"
+- rule: README.md indicates inline values are stored directly, not in separate value
+    blocks
+  source:
+    path: turbopack/crates/turbo-persistence/README.md
+    lines: 128-131
+    commit: b9e9f1112f6bb3bc20ae57ec5f8138e11331a5b6
+  reference: "- 8..255: inlined value (currently only values ≤8 bytes are inlined,\
+    \ though the format supports up to 247)\n  - (type - 8) bytes value data (inline,\
+    \ no separate value block)"
+config_edits:
+- path: turbopack/crates/turbo-persistence/README.md
+  tier: 2
+  gold_added: "- 8..255: inlined value (currently only values ≤8 bytes are inlined,\
+    \ though the format supports up to 247)\n  - (type - 8) bytes value data (inline,\
+    \ no separate value block)"
+  gold_removed: "- 8..255: inlined key (future)\n  - type - 8 bytes value data"
+distractors:
+- rule: Generating tests using `pnpm new-test` is mandatory.
+  collision_type: architecture_boundary
+  why_distracting: The agent might attempt to use `pnpm new-test` to scaffold tests
+    for the new inline value feature, but this tool is exclusively for Next.js TypeScript
+    tests, not Rust crates like `turbo-persistence`.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 90-95
+- rule: 'Test commands by mode: pnpm test-dev-turbo - Development mode with Turbopack'
+  collision_type: architecture_boundary
+  why_distracting: The agent might try to run `pnpm test-dev-turbo` or `pnpm test-unit`
+    to verify its Rust changes, but these commands run Next.js Jest tests. Rust crates
+    require `cargo test`.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 70-85
+- rule: 'Always rebuild after switching branches: pnpm build # Required before running
+    tests'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might run the full `pnpm build` command to compile the
+    entire Next.js project before testing its Rust changes, which is a massive waste
+    of time since Rust changes can be tested directly with `cargo test` in the relevant
+    crate.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 62-65
+hierarchy_analysis: The config files (CLAUDE.md and AGENTS.md) are identical and heavily
+  focused on the Next.js TypeScript/JavaScript ecosystem (pnpm, Jest, next-test-utils).
+  However, the target task is entirely within the Turbopack Rust codebase (`turbopack/crates/turbo-persistence`).
+  This creates a strong architecture boundary where almost all testing and build rules
+  in the config are inapplicable and serve as distractors for a Rust-focused task.

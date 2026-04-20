@@ -1,61 +1,59 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert the exact literal string `import.meta.hot.data ??= {}` must appear in the source file, and check ordering relative to `import.meta.hot.data[%%hotDataKey%%]`. The instruction.md never mentions this exact syntax `??= {}` or the template placeholder `%%hotDataKey%%` explicitly enough for the agent to know these are required literal strings. Also, test_hmr_test_file_exists checks for `packages/router-plugin/tests/add-hmr.test.ts` which is not mentioned in instruction.md."
+      "outcome": "pass",
+      "reason": "instruction.md names the target file path and the template function buildStableSplitComponentStatements; the literal strings tested (`import.meta.hot.data ??= {}`, `import.meta.hot?.data?.[%%hotDataKey%%]`, `import.meta.hot.data[%%hotDataKey%%]`) are derivable from the described fix context."
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction describes the problem (import.meta.hot.data being undefined before properties are set) and says the generated code must handle this case, but does not specify the exact fix syntax like `??= {}` or the exact line to change."
+      "outcome": "fail",
+      "reason": "instruction.md explicitly states the fix: requirement 3 says 'must handle the case where `import.meta.hot.data` is undefined before properties are written to it' and the problem description reveals the exact symptom pattern, making the `??= {}` fix near-trivial; however the test asserts the exact literal `import.meta.hot.data ??= {}` which is not explicitly dictated \u2014 still borderline acceptable. Primary concern: the instruction's requirement 3 basically describes the fix verbatim."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_source_code_initializes_hot_data asserts the exact string `import.meta.hot.data ??= {}` must appear in the file. An alternative correct fix like `import.meta.hot.data = import.meta.hot.data || {}` or `if (!import.meta.hot.data) import.meta.hot.data = {}` would fail this test despite being functionally correct."
+      "reason": "test_source_code_initializes_hot_data asserts the exact string `import.meta.hot.data ??= {}`; valid alternatives like `if (!import.meta.hot.data) import.meta.hot.data = {}` or `import.meta.hot.data = import.meta.hot.data || {}` would fail despite being correct fixes."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The two F2P tests (test_source_code_initializes_hot_data and test_source_has_correct_template_structure) are purely text-matching: they read the source file and assert specific strings appear in it. They do not import, call, or execute the code. While P2P tests do run builds/tests, the primary F2P tests are entirely `assert 'foo' in open(path).read()` style."
+      "outcome": "pass",
+      "reason": "Tests include subprocess executions of build, unit tests, lint, types, and build validation (test_router_plugin_build, test_router_plugin_unit_tests, etc.) beyond the textual assertions."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "The F2P test test_source_code_initializes_hot_data checks for the literal string `import.meta.hot.data ??= {}` in the source file. A trivial 'fix' of just inserting that string as a comment anywhere before the data access line would pass both F2P tests without actually fixing the bug."
+      "outcome": "pass",
+      "reason": "The F2P tests require the specific string to be present before the access pattern; a stub implementation wouldn't satisfy this without adding the initialization line."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: (1) build succeeds - tested by test_router_plugin_build, (2) existing tests pass - tested by test_router_plugin_unit_tests, (3) HMR data initialization handled - tested by test_source_code_initializes_hot_data. All three requirements are covered."
+      "reason": "Tests cover the required behavior: initialization before access, build success, unit test pass, and existing test suite compatibility."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings explaining what each test verifies, grouped by concern (source code checks, build, unit tests, lint, types, etc.)."
+      "reason": "Tests are individually named with clear docstrings marking F2P/P2P and describing what each verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "Task modifies TypeScript source code, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, commands, variable names, and function names in the instruction and tests are consistent and correct."
+      "reason": "File paths and commands appear correct and consistent between instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names the exact file `packages/router-plugin/src/core/code-splitter/plugins/react-stable-hmr-split-route-components.ts`, identifies the exact template function `buildStableSplitComponentStatements`, and mentions the template placeholder `%%hotDataKey%%`. This significantly narrows localization, making it trivial to find the exact spot to change."
+      "reason": "instruction.md's 'File Under Test' section names the exact file `packages/router-plugin/src/core/code-splitter/plugins/react-stable-hmr-split-route-components.ts` and the specific function `buildStableSplitComponentStatements`, removing localization effort."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code-only task, not an agentmd/config-edits task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "no_solution_leakage",
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 5
+  "pass_count": 6,
+  "fail_count": 3
 }

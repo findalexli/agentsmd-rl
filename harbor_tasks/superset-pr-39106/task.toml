@@ -1,3 +1,7 @@
+source_repo = "apache/superset"
+source_pr_number = 39106
+source_base_commit = "7380a59ab8a5e026d7cc07180001b0627ded2afd"
+source_merge_commit = "92747246fc7e562eef527034e8fcceec50aad9ab"
 [task]
 name = "superset-mcp-auth-valueerror-fallback"
 description = "Fix MCP auth layer to fail closed on ValueError instead of falling back to g.user"
@@ -8,8 +12,5 @@ tags = ["python", "flask", "security", "authentication", "error-handling"]
 human_minutes = 30
 agent_minutes = 15
 
-[source]
-repo = "apache/superset"
-pr_number = 39106
-base_commit = "7380a59ab8a5e026d7cc07180001b0627ded2afd"
-merge_commit = "92747246fc7e562eef527034e8fcceec50aad9ab"
+[verifier]
+env = { GEMINI_API_KEY = "${GEMINI_API_KEY:-}", ANTHROPIC_API_KEY = "${ANTHROPIC_API_KEY:-}" }

@@ -1,0 +1,190 @@
+version: '2.0'
+source:
+  repo: oven-sh/bun
+  pr: 28825
+  base_commit: 159a285841539c8f166509116c12b11e15b47fdf
+  merge_commit: 90538306b1b1d82f99735db9718c38a49c9d6266
+checks:
+- id: source_files_exist
+  type: pass_to_pass
+  origin: static
+  description: Core source file src/sys.zig must exist and be non-empty
+- id: zig_fmt_sys_zig
+  type: pass_to_pass
+  origin: repo_tests
+  description: Zig fmt check on src/sys.zig passes (from format.yml CI)
+  ci_source:
+    workflow: .github/workflows/format.yml
+    command: zig fmt --check src/
+- id: zig_fmt_build_zig
+  type: pass_to_pass
+  origin: repo_tests
+  description: Zig fmt check on build.zig passes (from format.yml CI)
+  ci_source:
+    workflow: .github/workflows/format.yml
+    command: zig fmt --check build.zig
+- id: claude_md_valid
+  type: pass_to_pass
+  origin: static
+  description: CLAUDE.md exists and is non-empty, AGENTS.md symlink valid
+  ci_source:
+    path: CLAUDE.md
+    note: Project coding guidelines file referenced by AGENTS.md
+- id: repo_structure_intact
+  type: pass_to_pass
+  origin: static
+  description: Repository structure is intact with required files and directories
+- id: coderabbit_config_valid
+  type: pass_to_pass
+  origin: static
+  description: CodeRabbit config (.coderabbit.yaml) exists and is valid YAML
+  ci_source:
+    path: .coderabbit.yaml
+    note: CodeRabbit AI code review configuration file
+- id: agents_symlink_valid
+  type: pass_to_pass
+  origin: static
+  description: AGENTS.md is a valid symlink pointing to CLAUDE.md
+  ci_source:
+    path: AGENTS.md
+    note: AGENTS.md must be a symlink to CLAUDE.md per repo conventions
+- id: editorconfig_valid
+  type: pass_to_pass
+  origin: static
+  description: EditorConfig file exists and contains expected settings
+  ci_source:
+    path: .editorconfig
+    note: EditorConfig specifies charset=utf-8, lf line endings, trim whitespace
+- id: test_ban_words_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Internal ban-words test passes (from format.yml CI)
+  ci_source:
+    workflow: .github/workflows/format.yml
+    command: bun ./test/internal/ban-words.test.ts
+    note: Skips if bun not available - requires bun runtime
+
+- id: test_zig_fmt_src_directory
+  type: pass_to_pass
+  origin: repo_tests
+  description: Zig fmt check on key src/ files passes (from format.yml CI)
+  ci_source:
+    workflow: .github/workflows/format.yml
+    command: zig fmt --check src/sys.zig src/bun.zig src/cli.zig
+    note: Lightweight check of core Zig files only (excludes vendor/due to version mismatch)
+- id: statx_handles_eperm
+  type: fail_to_pass
+  origin: pr_diff
+  description: statxImpl must fall back on EPERM (seccomp-blocked statx)
+- id: statx_handles_einval
+  type: fail_to_pass
+  origin: pr_diff
+  description: statxImpl must fall back on EINVAL (old Android builds)
+- id: statx_handles_positive_rc
+  type: fail_to_pass
+  origin: pr_diff
+  description: statxImpl must detect abnormal positive rc (QEMU/S390) and fall back
+- id: statx_errnos_grouped_in_switch
+  type: fail_to_pass
+  origin: pr_diff
+  description: All four errno cases (NOSYS, OPNOTSUPP, PERM, INVAL) must be grouped
+    together in fallback logic
+- id: statx_fallback_helper_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: statxFallback function exists with correct stat/lstat/fstat delegation
+- id: existing_errno_cases_preserved
+  type: fail_to_pass
+  origin: pr_diff
+  description: Original NOSYS and EOPNOTSUPP fallback cases must still work
+- id: statximpl_structure_intact
+  type: pass_to_pass
+  origin: pr_diff
+  description: 'statxImpl retains core structure: while loop, statx call, EINTR retry'
+- id: uses_bun_sys_not_std
+  type: pass_to_pass
+  origin: agent_config
+  description: Uses bun.sys patterns (Maybe(T)), not std.posix
+  source:
+    path: src/AGENTS.md
+    lines: 30-32
+    commit: 159a285841539c8f166509116c12b11e15b47fdf
+- id: error_handling_pattern
+  type: fail_to_pass
+  origin: agent_config
+  description: Error handling follows bun.sys Maybe(T) switch pattern
+  source:
+    path: .claude/skills/zig-system-calls/SKILL.md
+    lines: 64-66
+    commit: 159a285841539c8f166509116c12b11e15b47fdf
+rubric:
+- rule: Always use bun.* APIs instead of std.*. The bun namespace provides cross-platform
+    wrappers that preserve OS error info and never use unreachable.
+  source:
+    path: src/CLAUDE.md
+    lines: 17-19
+    commit: 159a285841539c8f166509116c12b11e15b47fdf
+  reference: bun.FileDescriptor, bun.span, lstat, fstat, Maybe(PosixStat)
+- rule: Follow existing code style. Check neighboring files for patterns.
+  source:
+    path: CLAUDE.md
+    lines: '210'
+    commit: 159a285841539c8f166509116c12b11e15b47fdf
+  reference: statxFallback helper function, switch statement for errno handling, proper
+    comments
+- rule: Error handling follows bun.sys Maybe(T) switch pattern with .result and .err
+    cases.
+  source:
+    path: .claude/skills/zig-system-calls/SKILL.md
+    lines: 64-66
+    commit: 159a285841539c8f166509116c12b11e15b47fdf
+  reference: return switch (fallback) { .result => |s| .{ .result = PosixStat.init(&s)
+    }, .err => |e| .{ .err = e } }
+- rule: All bun.sys functions return Maybe(T) — a tagged union of .result or .err.
+  source:
+    path: src/CLAUDE.md
+    lines: 32-38
+    commit: 159a285841539c8f166509116c12b11e15b47fdf
+  evidence: The statxFallback and statxImpl functions return Maybe(PosixStat) and
+    explicitly construct return values using .result and .err tagged union variants.
+  category: architecture
+- rule: Key functions in bun.sys take bun.FileDescriptor, not raw file descriptors.
+  source:
+    path: src/CLAUDE.md
+    lines: 40-41
+    commit: 159a285841539c8f166509116c12b11e15b47fdf
+  evidence: The statxFallback and statxImpl functions take bun.FileDescriptor as their
+    first argument rather than a raw OS file descriptor type.
+  category: naming
+- rule: 'All return Maybe(T) — a tagged union of .result: T or .err: bun.sys.Error'
+  source:
+    path: src/CLAUDE.md
+    lines: 34-40
+  evidence: The statxFallback function returns Maybe(PosixStat) and uses a switch
+    statement to explicitly handle .result and .err cases from the fallback functions.
+  category: architecture
+- rule: Key functions (all take bun.FileDescriptor, not std.posix.fd_t)
+  source:
+    path: src/CLAUDE.md
+    lines: 42-42
+  evidence: 'The statxFallback function signature takes `fd: bun.FileDescriptor` rather
+    than std.posix.fd_t.'
+  category: naming
+distractors:
+- rule: Always use bun.* APIs instead of std.* (e.g., use bun.sys.* equivalents for
+    stat/mkdir/etc)
+  collision_type: architecture_boundary
+  why_distracting: The rule instructs developers to use `bun.sys.*` equivalents instead
+    of standard posix functions. However, the agent is editing `src/sys.zig`, which
+    is the implementation of `bun.sys`. Calling `bun.sys.stat` here would be a circular
+    reference; the agent must call the local `stat`, `lstat`, and `fstat` functions
+    directly.
+  severity: high
+  source:
+    path: src/CLAUDE.md
+    lines: 18-28
+hierarchy_analysis: The agent must navigate from the root CLAUDE.md to the src/CLAUDE.md
+  file to find Zig-specific conventions. It must then selectively apply these conventions,
+  adopting the type signatures (Maybe, bun.FileDescriptor) while ignoring the namespace
+  prefixing (bun.sys.*) because it is operating inside the module that defines that
+  namespace.

@@ -4,12 +4,10 @@ time_limit = 1800  # 30 minutes
 tags = ["python", "fastapi", "refactor", "performance"]
 description = "Reduce sandbox service queries by refactoring conversation routes to use AppConversationInfoService instead of AppConversationService"
 
-[source]
-pr = "https://github.com/All-Hands-AI/OpenHands/pull/13610"
-repo = "https://github.com/All-Hands-AI/OpenHands"
-base_commit = "024f4d3326363616f2303e1fafb93224c8bb7ddb"
-merge_commit = "eba1f60c1d34ae68d34171a753d5e6b3ab5ad0be"
-
+source_pr = "https://github.com/All-Hands-AI/OpenHands/pull/13610"
+source_repo = "https://github.com/All-Hands-AI/OpenHands"
+source_base_commit = "024f4d3326363616f2303e1fafb93224c8bb7ddb"
+source_merge_commit = "eba1f60c1d34ae68d34171a753d5e6b3ab5ad0be"
 [environment]
 dockerfile = "environment/Dockerfile"
 
@@ -19,3 +17,6 @@ distinctive_line = "app_conversation_info_service_dependency = depends_app_conve
 
 [evaluation]
 script = "tests/test.sh"
+
+[verifier]
+env = { GEMINI_API_KEY = "${GEMINI_API_KEY:-}", ANTHROPIC_API_KEY = "${ANTHROPIC_API_KEY:-}" }

@@ -3,6 +3,11 @@ difficulty = "medium"
 time_estimate = "15-30 minutes"
 tags = ["go", "deprecation", "parser", "ast", "hugo"]
 
+source_pr_url = "https://github.com/gohugoio/hugo/pull/14515"
+source_repo = "hugo"
+source_owner = "gohugoio"
+source_merge_commit = "4a641d1594bd893e4baf147c562342bf050e87d2"
+source_base_commit = "8b7b6af92c0c01e258b52e1e0658e9f296f74410"
 [description]
 brief = "Replace deprecated Go parser APIs (parser.ParseDir and doc.New) with their modern equivalents"
 detail = """
@@ -13,13 +18,6 @@ This task involves replacing deprecated Go standard library APIs in Hugo's templ
 The changes are in tpl/internal/templatefuncsRegistry.go which parses Go documentation for Hugo's template functions.
 """
 
-[source]
-pr_url = "https://github.com/gohugoio/hugo/pull/14515"
-repo = "hugo"
-owner = "gohugoio"
-merge_commit = "4a641d1594bd893e4baf147c562342bf050e87d2"
-base_commit = "8b7b6af92c0c01e258b52e1e0658e9f296f74410"
-
 [environment]
 base_image = "golang:1.24-bookworm"
 setup_commands = [
@@ -29,3 +27,6 @@ setup_commands = [
 [solution]
 type = "patch"
 file = "solution/solve.sh"
+
+[verifier]
+env = { GEMINI_API_KEY = "${GEMINI_API_KEY:-}", ANTHROPIC_API_KEY = "${ANTHROPIC_API_KEY:-}" }

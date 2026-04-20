@@ -1,0 +1,136 @@
+version: '2.0'
+source:
+  repo: microsoft/playwright
+  pr: 39672
+  base_commit: 998f35dccb1de560350765493073dec5ec2c811c
+  merge_commit: 4df350b1c81b61ea471ff12767efd8e05f773377
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files parse without syntax errors
+- id: test_repo_lint_packages
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's workspace consistency check passes
+- id: test_repo_eslint_backend
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ESLint passes on backend tools
+- id: test_repo_eslint_cli_daemon
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ESLint passes on cli-daemon tools
+- id: test_repo_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's build passes
+- id: render_request_headers_and_body
+  type: fail_to_pass
+  origin: pr_diff
+  description: renderRequest outputs header and body sections when enabled
+- id: filter_regex_applied
+  type: fail_to_pass
+  origin: pr_diff
+  description: Handle function uses RegExp from filter param to filter requests by
+    URL
+- id: schema_has_new_params
+  type: fail_to_pass
+  origin: pr_diff
+  description: inputSchema declares filter, requestBody, and requestHeaders params
+- id: static_replaces_include_static
+  type: fail_to_pass
+  origin: pr_diff
+  description: Old includeStatic param renamed to static in tool schema
+- id: cli_new_options
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLI network command declares request-body, request-headers, and filter
+- id: copilot_instructions_created
+  type: fail_to_pass
+  origin: pr_diff
+  description: .github/copilot-instructions.md created with PR review guidelines
+rubric:
+- rule: PR review guidelines in copilot-instructions.md are concise, actionable, and
+    focus on substantive issues over style.
+  source:
+    path: .github/copilot-instructions.md
+    lines: 1-9
+    commit: 4df350b1c81b61ea471ff12767efd8e05f773377
+  reference: '## PR Review Guidelines
+
+    When reviewing pull requests:
+
+    - Only comment on semantically meaningful issues: bugs, incorrect logic, security
+    problems, or API contract violations.
+
+    - Skip style, formatting, naming, and whitespace observations unless they cause
+    functional problems.
+
+    - Keep each comment short — one or two sentences maximum.
+
+    - Do not write long descriptions or summaries of what the code does.
+
+    - Do not suggest refactors or improvements unrelated to the PR''s stated goal.
+
+    '
+- rule: Assume watch is running and code is up to date. Generated files (types, channels,
+    validators) are produced by watch automatically.
+  source:
+    path: CLAUDE.md
+    lines: 38-39
+  evidence: The gold solution only edits the source TypeScript files (`network.ts`,
+    `commands.ts`) and does not manually update any generated files, relying on the
+    watch process.
+  category: tooling
+- rule: '`playwright-core` is the package for the browser automation engine, server,
+    and dispatchers.'
+  source:
+    path: CLAUDE.md
+    lines: 4-5
+  evidence: The MCP tool backend is modified in `packages/playwright-core/src/tools/backend/network.ts`,
+    respecting the package boundary where core server/dispatcher logic lives.
+  category: architecture
+config_edits:
+- path: .github/copilot-instructions.md
+  tier: 1
+  gold_added: '## PR Review Guidelines
+
+    When reviewing pull requests:
+
+    - Only comment on semantically meaningful issues: bugs, incorrect logic, security
+    problems, or API contract violations.
+
+    - Skip style, formatting, naming, and whitespace observations unless they cause
+    functional problems.
+
+    - Keep each comment short — one or two sentences maximum.
+
+    - Do not write long descriptions or summaries of what the code does.
+
+    - Do not suggest refactors or improvements unrelated to the PR''s stated goal.
+
+    '
+  gold_removed: ''
+distractors:
+- rule: docs/src/ API documentation — source of truth for public TypeScript types
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to document the new MCP tool parameters in
+    `docs/src/api/`, but MCP tools are internal/developer tools and their schema is
+    self-documenting via `zod`, not part of the public Playwright API.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 24-25
+- rule: Import boundaries are enforced via DEPS.list files
+  collision_type: scope_ambiguity
+  why_distracting: The agent might look for or try to modify `DEPS.list` files when
+    updating the network tool, but no new cross-package imports are needed for adding
+    simple boolean/string parameters.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 67-68
+hierarchy_analysis: The repository uses a single CLAUDE.md file at the root. The primary
+  challenge is not config hierarchy, but the meta-referential nature of the task (creating
+  an instruction file for an AI).

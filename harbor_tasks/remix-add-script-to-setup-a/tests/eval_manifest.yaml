@@ -1,0 +1,264 @@
+version: '2.0'
+source:
+  repo: remix-run/remix
+  pr: 10964
+  base_commit: 598a92e3dc3488b02da7e4edafd1ff2498cc4c34
+  merge_commit: aff458aa4826f6d7e5c0457542b19d4dead701ad
+checks:
+- id: process_ts_exists
+  type: pass_to_pass
+  origin: static
+  description: scripts/utils/process.ts exists and exports logAndExec
+- id: logandexec_capture_returns_output
+  type: fail_to_pass
+  origin: pr_diff
+  description: logAndExec(cmd, true) returns the command stdout as a string
+- id: logandexec_default_returns_string
+  type: fail_to_pass
+  origin: pr_diff
+  description: logAndExec(cmd) without capture returns empty string (not void)
+- id: setup_script_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: scripts/setup-installable-branch.ts exists with key functionality
+- id: package_json_has_setup_script
+  type: fail_to_pass
+  origin: pr_diff
+  description: package.json registers the setup-installable-branch npm script
+- id: nightly_workflow_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: GitHub Actions nightly workflow exists with correct triggers
+- id: readme_installation_section
+  type: fail_to_pass
+  origin: pr_diff
+  description: README.md has Installation section with nightly build instructions
+- id: contributing_nightly_section
+  type: fail_to_pass
+  origin: pr_diff
+  description: CONTRIBUTING.md documents the nightly build process
+- id: test_repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ESLint passes (pnpm lint)
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TypeScript typecheck passes (pnpm typecheck)
+- id: test_repo_changes_validate
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's change file validation passes (pnpm changes:validate)
+- id: test_repo_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Prettier format check passes (pnpm format:check)
+- id: test_repo_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's build passes (pnpm build)
+rubric:
+- rule: 'Documentation: README.md and CONTRIBUTING.md have correct nightly sections'
+  source:
+    path: README.md
+  reference: '## Installation
+
+
+    ```sh
+
+    npm install remix
+
+
+    # Or, just install a single package
+
+    npm install @remix-run/fetch-router
+
+    ```
+
+
+    If you want to play around with the bleeding edge, we also build the latest `main`
+
+    branch every night into a `nightly` branch which can be [installed directly](https://pnpm.io/package-sources#install-from-a-git-repository-combining-different-parameters)
+
+    with `pnpm` (version 9+):
+
+
+    ```sh
+
+    pnpm install "remix-run/remix#nightly&path:packages/remix"
+
+
+    # Or, just install a single package
+
+    pnpm install "remix-run/remix#nightly&path:packages/@remix-run/fetch-router"
+
+    ```
+
+    '
+- rule: Include .ts extensions in imports
+  source:
+    path: /workspace/repo/AGENTS.md
+    lines: '23'
+  source_text: '- **Imports**: Always use `import type { X }` for types (separate
+    from value imports); use `export type { X }` for type exports; include `.ts` extensions'
+  evidence: 'In `scripts/setup-installable-branch.ts`, the local import explicitly
+    includes the extension: `import { logAndExec } from ''./utils/process.ts''`'
+  category: imports
+  verification: llm_judge
+- rule: Prefer let for locals
+  source:
+    path: /workspace/repo/AGENTS.md
+    lines: '24'
+  source_text: '- **Variables**: Prefer `let` for locals, `const` only at module scope;
+    never use `var`'
+  evidence: The `scripts/setup-installable-branch.ts` file extensively uses `let`
+    for all local variables, such as `let { values, positionals } = util.parseArgs`,
+    `let installableBranch`, and `let remoteBranches`.
+  category: variables
+  verification: llm_judge
+- rule: Use regular function declarations
+  source:
+    path: /workspace/repo/AGENTS.md
+    lines: '25'
+  source_text: '- **Functions**: Use regular function declarations/expressions by
+    default. Only use arrow functions as callbacks (e.g., route handlers, array methods)
+    where preserving lexical `this` is beneficial or the syntax is more concise'
+  evidence: The script uses regular function declarations for its utility functions
+    like `async function updateGitignore()`, `async function updatePackageDependencies()`,
+    and `function commitChanges()`.
+  category: functions
+  verification: llm_judge
+- rule: Format with single quotes and no semicolons
+  source:
+    path: /workspace/repo/AGENTS.md
+    lines: '28'
+  source_text: '- **Formatting**: Prettier (printWidth: 100, no semicolons, single
+    quotes, spaces not tabs)'
+  evidence: The code in the gold diff uses single quotes for strings (e.g., `'nightly'`)
+    and omits trailing semicolons across all statements.
+  category: formatting
+  verification: llm_judge
+config_edits:
+- path: CONTRIBUTING.md
+  tier: 2
+  gold_added: '## Nightly Builds
+
+
+    We also maintain installable nightly builds in a `nightly` branch as a way for
+    folks to test out the latest `main` branch without needing to publish nightly
+    releases to npm and clutter up the npm registry and version history UI.
+
+
+    This is managed via the [`nightly` workflow](/.github/workflows/nightly.yaml)
+    which uses the [`setup-installable-branch.ts`](./scripts/setup-installable-branch.ts)
+    script to build and commit the build and required `package.json` changes to the
+    `nightly` branch.
+
+
+    The nightly build can be [installed directly](https://pnpm.io/package-sources#install-from-a-git-repository-combining-different-parameters)
+    with `pnpm` (version 9+):
+
+
+    ```sh
+
+    pnpm install "remix-run/remix#nightly&path:packages/remix"
+
+
+    # Or, just install a single package
+
+    pnpm install "remix-run/remix#nightly&path:packages/@remix-run/fetch-router"
+
+    ```'
+  gold_removed: ''
+- path: README.md
+  tier: 2
+  gold_added: '## Installation
+
+
+    ```sh
+
+    npm install remix
+
+
+    # Or, just install a single package
+
+    npm install @remix-run/fetch-router
+
+    ```
+
+
+    If you want to play around with the bleeding edge, we also build the latest `main`
+    branch every night into a `nightly` branch which can be [installed directly](https://pnpm.io/package-sources#install-from-a-git-repository-combining-different-parameters)
+    with `pnpm` (version 9+):
+
+
+    ```sh
+
+    pnpm install "remix-run/remix#nightly&path:packages/remix"
+
+
+    # Or, just install a single package
+
+    pnpm install "remix-run/remix#nightly&path:packages/@remix-run/fetch-router"
+
+    ```'
+  gold_removed: ''
+distractors:
+- rule: 'Package exports: All `exports` in `package.json` have a dedicated file in
+    `src` that defines the public API by re-exporting from within `src/lib`'
+  collision_type: rule_conflict
+  why_distracting: The task instruction explicitly requires the script to 'Apply `publishConfig`
+    overrides so exports point to `dist/` instead of `src/`'. The config rule states
+    that all exports have a dedicated file in `src`. An agent might incorrectly prioritize
+    the config rule and fail to implement the `publishConfig` override, or try to
+    implement complex re-exporting logic instead of a simple path replacement.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 16-16
+- rule: 'Adding changes: Create `packages/*/.changes/[major|minor|patch].short-description.md`
+    files.'
+  collision_type: scope_ambiguity
+  why_distracting: The rule mandates creating a `.changes/` markdown file for changes.
+    However, this rule is explicitly scoped to `packages/*` (published packages).
+    This PR only adds repository infrastructure (GitHub Actions, scripts) and updates
+    root documentation, so no change file is needed. An agent might blindly create
+    a change file in a non-existent package or the root directory.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 38-38
+- rule: Two-phase component structure
+  source:
+    path: /workspace/repo/packages/component/AGENTS.md
+    lines: 86-89
+  source_text: 'All components follow a consistent two-phase structure:
+
+
+    1. **Setup Phase** - Runs once when the component is first created
+
+    2. **Render Phase** - Runs on initial render and every update afterward'
+  collision_type: scope_ambiguity
+  why_distracting: An agent searching for "setup" (since the PR introduces setup-installable-branch.ts)
+    might mistakenly try to apply component-based setup/render phases to the simple
+    Node.js build script. This rule only applies to UI components, not repo maintenance
+    scripts.
+  severity: medium
+- rule: Controlled vs Uncontrolled Inputs
+  source:
+    path: /workspace/repo/packages/component/AGENTS.md
+    lines: 1672-1673
+  source_text: Only control an input's value when something besides the user's interaction
+    with that input can also control its state. Otherwise, let the DOM manage the
+    input's value and read from it when needed. **This follows the principle of using
+    minimal component state** - don't store input state you don't need.
+  collision_type: scope_ambiguity
+  why_distracting: This rule applies specifically to browser DOM inputs and frontend
+    state management. An agent seeing 'input' or 'state' might get confused if applying
+    this to CLI arguments or node script variables.
+  severity: low
+hierarchy_analysis: The config is a flat single file (`AGENTS.md`). The agent must
+  synthesize the task instructions with the config rules, specifically recognizing
+  that the instruction to override `publishConfig` to `dist/` takes precedence for
+  this specific nightly build script over the general architectural rule about exports
+  pointing to `src/`.

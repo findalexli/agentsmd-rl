@@ -1,0 +1,192 @@
+version: '2.0'
+source:
+  repo: gradio-app/gradio
+  pr: 12976
+  base_commit: 41e98f9468bcf322ed55d1470e31e7b4021d0480
+  merge_commit: 7fb33fc3b80b421817c1d1ddea19c8858a9f2924
+checks:
+- id: file_exists_and_parses
+  type: pass_to_pass
+  origin: static
+  description: Target Svelte file exists and has substantial script + template sections
+- id: repo_svelte_file_structure
+  type: pass_to_pass
+  origin: static
+  description: 'Target Svelte file has valid structure: script block, template, proper
+    syntax'
+- id: repo_svelte_types_valid
+  type: pass_to_pass
+  origin: static
+  description: TypeScript type declarations in Svelte file are syntactically valid
+- id: repo_svelte_template_valid
+  type: pass_to_pass
+  origin: static
+  description: Svelte template section has valid syntax and required elements
+- id: repo_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: Prettier format check passes (pnpm format:check)'
+- id: repo_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: Frontend unit tests pass (pnpm test:run)'
+- id: repo_client_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: @gradio/client package builds successfully (pnpm --filter
+    @gradio/client build)'
+- id: repo_typescript_syntax_valid
+  type: pass_to_pass
+  origin: static
+  description: TypeScript script block has balanced braces and valid type declarations
+- id: repo_svelte_imports_valid
+  type: pass_to_pass
+  origin: static
+  description: Svelte imports follow valid ES module syntax with SvelteKit export
+    let data declaration
+- id: repo_svelte_template_bindings_valid
+  type: pass_to_pass
+  origin: static
+  description: Svelte template bindings and directives (bind:, svelte:window) are
+    syntactically valid
+- id: repo_html_structure_valid
+  type: pass_to_pass
+  origin: static
+  description: Template HTML elements are properly balanced
+- id: repo_js_expressions_valid
+  type: pass_to_pass
+  origin: static
+  description: JavaScript expressions in templates have balanced parentheses and valid
+    syntax
+- id: level_field_in_slug_type
+  type: fail_to_pass
+  origin: pr_diff
+  description: guide_slug type declaration includes a numeric level/depth field for
+    heading hierarchy
+- id: right_sidebar_with_slug_links
+  type: fail_to_pass
+  origin: pr_diff
+  description: Right-side TOC iterates guide_slug with clickable anchor links in a
+    sidebar container
+- id: scroll_tracking
+  type: fail_to_pass
+  origin: pr_diff
+  description: Reactive scroll tracking highlights the currently visible section in
+    the TOC
+- id: layout_no_mx_auto
+  type: fail_to_pass
+  origin: pr_diff
+  description: Content area no longer uses mx-auto centering, making room for right
+    sidebar
+- id: heading_level_indentation
+  type: fail_to_pass
+  origin: pr_diff
+  description: TOC entries indented based on heading level/depth for hierarchy
+- id: left_sidebar_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: Left sidebar iterating guide_names with categories still exists
+- id: prev_next_navigation_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: Previous/next guide navigation links still exist
+- id: sidebar_uses_tailwind
+  type: fail_to_pass
+  origin: agent_config
+  description: New sidebar uses Tailwind CSS utilities, consistent with surrounding
+    code
+  source:
+    path: AGENTS.md
+    lines: '45'
+    commit: 41e98f9468bcf322ed55d1470e31e7b4021d0480
+rubric:
+- rule: Be consistent with the style of the surrounding code.
+  source:
+    path: AGENTS.md
+    lines: '45'
+  source_text: '- Be consistent with the style of the surrounding code.'
+  evidence: The gold diff consistently uses Tailwind CSS classes (e.g., `hidden sticky
+    h-screen overflow-y-auto lg:block lg:w-2/12`, `text-sm tracking-wider font-semibold
+    text-gray-600 dark:text-gray-300`) that match the styling conventions established
+    in the surrounding Svelte template markup.
+  category: style
+  verification: llm_judge
+- rule: Use Svelte/TypeScript for frontend code in the js/ directory.
+  source:
+    path: AGENTS.md
+    lines: '12'
+  source_text: '- `js/` — frontend code (Svelte/TypeScript), with each component in
+    its own subdirectory'
+  evidence: 'The gold diff correctly implements the requested functionality using
+    native Svelte features like reactive statements (`$: if (y !== undefined...)`),
+    Svelte directives (`bind:this`), and TypeScript type annotations (`{ [key: string]:
+    HTMLElement }`).'
+  category: architecture
+  verification: llm_judge
+distractors:
+- rule: '`guides/` — written guides and tutorials for the website'
+  collision_type: architecture_boundary
+  why_distracting: The issue asks to fix the 'Guide Pages' missing a table of contents.
+    An agent might interpret this as needing to modify the actual guide contents in
+    the `guides/` directory. However, the fix requires changing the Svelte layout
+    component in `js/_website/`.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 16-16
+- rule: Run backend tests locally with `bash scripts/run_backend_tests.sh`.
+  collision_type: scope_ambiguity
+  why_distracting: The rule mandates running backend tests locally, but this PR is
+    strictly a frontend UI change in a Svelte component. Running backend tests would
+    waste agent time and compute.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 35-35
+- rule: Use gr.HTML to create custom HTML components.
+  source:
+    path: .agents/skills/gradio/SKILL.md
+    lines: '112'
+  source_text: If a task requires significant customization of an existing component
+    or a component that doesn't exist in Gradio, you can create one with `gr.HTML`.
+    It supports `html_template` (with `${}` JS expressions and `{{}}` Handlebars syntax),
+    `css_template` for scoped styles, and `js_on_load` for interactivity — where `props.value`
+    updates the component value and `trigger('event_name')` fires Gradio events. For
+    reuse, subclass `gr.HTML` and define `api_info()` for API/MCP support. See the
+    [full guide](https://www.gradio.app/guides/custom-HTML-components).
+  collision_type: architecture_boundary
+  why_distracting: Since the PR requires adding a custom UI element (a table of contents)
+    with HTML/CSS, an agent reading this skill might mistakenly attempt to implement
+    the feature in Python using the Gradio `gr.HTML` component instead of modifying
+    the actual Svelte codebase for the website.
+  severity: high
+- rule: Wire event listeners using the component.event_name() Python signature.
+  source:
+    path: .agents/skills/gradio/SKILL.md
+    lines: 216-244
+  source_text: "All event listeners share the same signature:\n\n```python\ncomponent.event_name(\n\
+    \    fn: Callable | None | Literal[\"decorator\"] = \"decorator\",\n    inputs:\
+    \ Component | Sequence[Component] | set[Component] | None = None,\n    outputs:\
+    \ Component | Sequence[Component] | set[Component] | None = None,\n    api_name:\
+    \ str | None = None,\n    api_description: str | None | Literal[False] = None,\n\
+    \    scroll_to_output: bool = False,\n    show_progress: Literal[\"full\", \"\
+    minimal\", \"hidden\"] = \"full\",\n    show_progress_on: Component | Sequence[Component]\
+    \ | None = None,\n    queue: bool = True,\n    batch: bool = False,\n    max_batch_size:\
+    \ int = 4,\n    preprocess: bool = True,\n    postprocess: bool = True,\n    cancels:\
+    \ dict[str, Any] | list[dict[str, Any]] | None = None,\n    trigger_mode: Literal[\"\
+    once\", \"multiple\", \"always_last\"] | None = None,\n    js: str | Literal[True]\
+    \ | None = None,\n    concurrency_limit: int | None | Literal[\"default\"] = \"\
+    default\",\n    concurrency_id: str | None = None,\n    api_visibility: Literal[\"\
+    public\", \"private\", \"undocumented\"] = \"public\",\n    time_limit: int |\
+    \ None = None,\n    stream_every: float = 0.5,\n    key: int | str | tuple[int\
+    \ | str, ...] | None = None,\n    validator: Callable | None = None,\n) -> Dependency\n\
+    ```"
+  collision_type: meta_confusion
+  why_distracting: The PR requires listening to scroll events to dynamically update
+    the active header on the page. An agent reading this might mistakenly try to wire
+    events using Python's `component.event_name(...)` instead of writing idiomatic
+    Svelte reactive statements and using DOM event bindings.
+  severity: high
+hierarchy_analysis: The repository uses a single AGENTS.md file at the root level,
+  providing high-level architectural guidance and PR rules. There are no conflicting
+  child configs.

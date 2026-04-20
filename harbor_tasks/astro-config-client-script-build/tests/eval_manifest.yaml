@@ -1,0 +1,109 @@
+version: 1.0
+task:
+  name: astro-config-client-script-build
+  description: Fix build failure when using astro:config/client in a client script
+  source_pr:
+    owner: withastro
+    repo: astro
+    number: 16014
+    merge_commit: fa73fbbac25c96eeadb766666ea3b2aded440bab
+    base_commit: fdd2c5a2f0eb63332b018df01b2c1eb0d5c8a102
+
+checks:
+  # Fail-to-pass tests - these must fail on base commit and pass on fix
+  - id: test_virtual_module_accepts_settings
+    type: fail_to_pass
+    origin: code_structure
+    description: Virtual module plugin accepts settings parameter
+
+  - id: test_client_config_inlines_values
+    type: fail_to_pass
+    origin: behavioral
+    description: Client config inlines values from settings instead of importing from manifest
+
+  - id: test_serialized_manifest_restricted_to_server
+    type: fail_to_pass
+    origin: behavioral
+    description: Serialized manifest plugin is restricted to server environments
+
+  - id: test_create_vite_passes_settings
+    type: fail_to_pass
+    origin: code_structure
+    description: createVite passes settings to astroVirtualManifestPlugin
+
+  - id: test_client_config_exports_correct_properties
+    type: fail_to_pass
+    origin: behavioral
+    description: Client config exports all required properties (base, i18n, trailingSlash, site, compressHTML, build, image)
+
+  - id: test_repo_unit_tests_pass
+    type: pass_to_pass
+    origin: integration
+    description: Repo unit tests for serializeManifest pass
+
+  # Pass-to-pass tests - these should pass on both base and fix
+  - id: test_repo_typescript_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: TypeScript compilation passes
+
+  - id: test_repo_linter_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: Biome linter passes
+
+  - id: test_repo_biome_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: Biome lint passes on the repository (CI command)
+
+  - id: test_repo_build
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repository build passes (pnpm run build CI command)
+
+  - id: test_repo_unit_tests_all
+    type: pass_to_pass
+    origin: repo_tests
+    description: All repository unit tests pass (pnpm run test:unit CI command)
+
+  - id: test_repo_serializeManifest
+    type: pass_to_pass
+    origin: repo_tests
+    description: serializeManifest test passes (related to modified code)
+
+  - id: test_repo_astro_manifest
+    type: pass_to_pass
+    origin: repo_tests
+    description: astro-manifest integration test passes (related to modified code)
+
+  - id: test_repo_manifest_routing
+    type: pass_to_pass
+    origin: repo_tests
+    description: Manifest routing unit tests pass (related to modified code)
+
+  - id: test_serialize_manifest_virtual_module_has_client_support
+    type: pass_to_pass
+    origin: static
+    description: serializeManifest test covers astro:config/client functionality
+
+rubric:
+  - rule: "Follow existing code patterns"
+    source: "AGENTS.md"
+    description: "Code should follow the same conventions and patterns detected in surrounding code"
+
+  - rule: "No Node.js APIs in runtime code"
+    source: ".agents/skills/astro-developer/SKILL.md"
+    description: "Runtime-agnostic code should not use Node.js APIs (use only in core/ or Vite plugins)"
+
+  - rule: "Code should be formatted consistently"
+    source: "AGENTS.md"
+    description: "Code should follow formatting rules defined in biome.jsonc"
+
+  - rule: "Prefer unit tests"
+    source: ".agents/skills/astro-developer/SKILL.md"
+    description: "Write unit-testable code by default; use integration tests only when necessary"
+
+  - rule: "Handle edge cases"
+    source: "PR description"
+    description: "Handle optional config values (i18n, image) by returning undefined when not set"

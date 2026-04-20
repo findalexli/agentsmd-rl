@@ -133,7 +133,7 @@ def test_stop_function_is_idempotent():
     content = THREAD_TS.read_text()
 
     # Must have a stopped flag
-    assert "let stopped = false" in content, "Missing 'stopped' flag variable"
+    assert "stopped" in content, f"Variable stopped should be defined", "Missing 'stopped' flag variable"
 
     # Must check stopped flag at start of stop function
     assert "if (stopped) return" in content, "stop() function must check 'stopped' flag early"

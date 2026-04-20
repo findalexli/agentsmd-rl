@@ -1,0 +1,173 @@
+version: '2.0'
+source:
+  repo: PostHog/posthog
+  pr: 53656
+  base_commit: c68338921ad4d5598a9830cca90c9e1f34c2dc8f
+  merge_commit: 92dcf444055fdc6379cfd469f0d1adaab6886e55
+checks:
+- id: yaml_valid_syntax
+  type: pass_to_pass
+  origin: static
+  description: tools.yaml parses as valid YAML without errors
+- id: test_tools_yaml_schema
+  type: pass_to_pass
+  origin: repo_tests
+  description: MCP tools.yaml follows schema (kebab-case names, scopes, annotations)
+    via Python subprocess
+- id: test_skills_readme_structure
+  type: pass_to_pass
+  origin: static
+  description: Skills README has required sections and references existing skills
+- id: test_existing_skills_have_frontmatter
+  type: pass_to_pass
+  origin: static
+  description: Existing SKILL.md files have valid frontmatter with name and description
+- id: test_no_evaluation_summary_enabled
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Baseline: llm-analytics-evaluation-summary-create is NOT enabled at
+    base commit'
+- id: test_mcp_prompts_yaml_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: MCP prompts.yaml parses as valid YAML via Python subprocess
+- id: test_all_existing_skills_in_readme
+  type: pass_to_pass
+  origin: repo_tests
+  description: All skill directories are documented in README via Python subprocess
+- id: test_existing_skills_valid_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: Skill files have valid frontmatter and kebab-case names via Python
+    subprocess
+- id: test_enabled_tools_count
+  type: pass_to_pass
+  origin: repo_tests
+  description: Verify expected number of tools are enabled at base commit
+- id: test_llm_analytics_directory_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: Required directories (mcp, skills, backend) exist via Python subprocess
+- id: tool_enabled_in_yaml
+  type: fail_to_pass
+  origin: pr_diff
+  description: llm-analytics-evaluation-summary-create is enabled in tools.yaml
+- id: tool_has_description_and_title
+  type: fail_to_pass
+  origin: pr_diff
+  description: Enabled tool has title and description metadata
+- id: skill_file_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: exploring-llm-evaluations SKILL.md exists with evaluation content
+- id: skills_readme_references_evaluations
+  type: fail_to_pass
+  origin: pr_diff
+  description: Skills README lists the exploring-llm-evaluations skill
+- id: tool_has_required_yaml_fields
+  type: fail_to_pass
+  origin: agent_config
+  description: Enabled tool has scopes and annotations per MCP tools guide
+  source:
+    path: .agents/skills/implementing-mcp-tools/SKILL.md
+    lines: 116-146
+    commit: c68338921ad4d5598a9830cca90c9e1f34c2dc8f
+- id: skill_has_frontmatter
+  type: fail_to_pass
+  origin: agent_config
+  description: Skill file has name and description frontmatter per writing-skills
+    guide
+  source:
+    path: .agents/skills/writing-skills/SKILL.md
+    lines: 42-49
+    commit: c68338921ad4d5598a9830cca90c9e1f34c2dc8f
+rubric:
+- rule: MCP tool names enabled in tools.yaml must follow kebab-case format with max
+    52 characters
+  source:
+    path: products/llm_analytics/mcp/tools.yaml
+    lines: 65
+    commit: 30f37cacc13303efa00c346122805352deb049ff
+  reference: "enabled: true\nscopes:\n    - llm_analytics:write\nannotations:\n  \
+    \  readOnly: false\n    destructive: false\n    idempotent: true\n"
+- rule: Enabled MCP tools must include scopes and annotations (readOnly, destructive,
+    idempotent) per YAML schema
+  source:
+    path: products/llm_analytics/mcp/tools.yaml
+    lines: 68-72
+    commit: 30f37cacc13303efa00c346122805352deb049ff
+  reference: "scopes:\n    - llm_analytics:write\nannotations:\n    readOnly: false\n\
+    \    destructive: false\n    idempotent: true\n"
+- rule: Skill documents must have frontmatter with name (lowercase kebab-case) and
+    description fields
+  source:
+    path: products/llm_analytics/skills/exploring-llm-evaluations/SKILL.md
+    lines: 1-10
+    commit: 30f37cacc13303efa00c346122805352deb049ff
+  reference: "---\nname: exploring-llm-evaluations\ndescription: >\n  Investigate\
+    \ LLM analytics evaluations of both types — `hog` (deterministic\n  code-based)\
+    \ and `llm_judge` (LLM-prompt-based).\n---\n"
+- rule: Skill documents should follow the directory structure products/{product}/skills/{skill-name}/SKILL.md
+  source:
+    path: products/llm_analytics/skills/exploring-llm-evaluations/SKILL.md
+    lines: 1
+    commit: 30f37cacc13303efa00c346122805352deb049ff
+  reference: products/llm_analytics/skills/exploring-llm-evaluations/SKILL.md
+- rule: 'Codebase Structure - Key entry points: `products/` (product apps)'
+  source:
+    path: products/llm_analytics/mcp/tools.yaml
+    lines: 65
+    commit: 30f37cacc13303efa00c346122805352deb049ff
+  evidence: The gold solution correctly places the new skill document and modifies
+    the MCP tools YAML within the `products/llm_analytics/` directory, adhering to
+    the product-centric architecture.
+  category: architecture
+  reference: products/llm_analytics/
+- rule: 'Codebase Structure - Key entry points: products/ (product apps)'
+  source:
+    path: products/llm_analytics/skills/exploring-llm-evaluations/SKILL.md
+    lines: 1
+    commit: 30f37cacc13303efa00c346122805352deb049ff
+  evidence: The gold solution places the new skill document in `products/llm_analytics/skills/exploring-llm-evaluations/SKILL.md`
+    rather than a global directory, adhering to the product-centric monorepo layout.
+  category: architecture
+  reference: products/llm_analytics/skills/exploring-llm-evaluations/SKILL.md
+- rule: Product-specific features and configurations should be placed in their respective
+    `products/` directory.
+  source:
+    path: products/llm_analytics/mcp/tools.yaml
+    lines: 65
+  reference: "products/llm_analytics/"
+  category: architecture
+- rule: 'chore: Non-production changes (docs, tests, config, CI, refactoring agents
+    instructions, etc.)'
+  source:
+    path: products/llm_analytics/mcp/tools.yaml
+    lines: 65
+  reference: "enabled: true\nscopes:\n    - llm_analytics:write\nannotations:\n    readOnly: false\n    destructive: false\n    idempotent: true\n"
+  category: tooling
+distractors:
+- rule: API views should declare request/response schemas — prefer `@validated_request`
+    from `posthog.api.mixins` or `@extend_schema` from drf-spectacular.
+  collision_type: scope_ambiguity
+  why_distracting: The prompt mentions the backend endpoint is fully implemented with
+    `@extend_schema`. The agent might be distracted by this rule and attempt to verify
+    or modify the backend API view, which is out of scope and unnecessary for this
+    PR.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 68-70
+- rule: 'OpenAPI/types: `hogli build:openapi` (regenerate after changing serializers/viewsets)'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might think it needs to regenerate OpenAPI schemas because
+    it is exposing an endpoint as an MCP tool, but the endpoint is already implemented
+    and the task only requires enabling the tool in the YAML config.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 25-26
+hierarchy_analysis: The agent must navigate from the root `AGENTS.md` to the specific
+  skill documents (`.agents/skills/implementing-mcp-tools/SKILL.md` and `.agents/skills/writing-skills/SKILL.md`)
+  to understand how to format the YAML and the skill document. The root rules about
+  backend development act as distractors.

@@ -1,0 +1,136 @@
+version: '2.0'
+source:
+  repo: facebook/react
+  pr: 36159
+  base_commit: 74568e8627aa43469b74f2972f427a209639d0b6
+  merge_commit: 2c2fd9d12c7159efef81e7ea6ec899943cf7ca33
+checks:
+- id: test_repo_babel_plugin_eslint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's babel-plugin-react-compiler ESLint passes
+- id: test_repo_babel_plugin_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's babel-plugin-react-compiler unit tests pass
+- id: test_repo_eslint_plugin_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's eslint-plugin-react-compiler unit tests pass
+- id: test_repo_make_read_only_util_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's make-read-only-util unit tests pass
+- id: test_repo_babel_plugin_typescript_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's babel-plugin-react-compiler TypeScript type check passes
+- id: test_repo_react_compiler_runtime_typescript_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's react-compiler-runtime TypeScript type check passes
+- id: test_repo_babel_plugin_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's babel-plugin-react-compiler builds successfully
+- id: parseConfigOverrides_test_suite
+  type: fail_to_pass
+  origin: pr_diff
+  description: PR's parseConfigOverrides unit test suite passes
+- id: json5_parses_playground_configs
+  type: fail_to_pass
+  origin: pr_diff
+  description: JSON5 correctly parses config formats used by the playground editor
+- id: json5_blocks_code_injection
+  type: fail_to_pass
+  origin: pr_diff
+  description: JSON5 parsing rejects malicious JS that new Function() would execute
+- id: xss_vulnerability_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: compilation.ts uses JSON5 and parseConfigOverrides instead of new Function
+- id: config_format_migrated_to_json5
+  type: fail_to_pass
+  origin: pr_diff
+  description: Default config and editor updated from TypeScript format to JSON5
+rubric:
+- rule: Use --silent and --no-watchman flags when running tests to limit output and
+    avoid sandboxing issues.
+  source:
+    path: .claude/skills/test/SKILL.md
+    lines: 39-42
+    commit: 74568e8627aa43469b74f2972f427a209639d0b6
+- rule: Always specify a test pattern when running tests - running without a pattern
+    runs ALL tests which is very slow.
+  source:
+    path: .claude/skills/test/SKILL.md
+    lines: 43-44
+    commit: 74568e8627aa43469b74f2972f427a209639d0b6
+- rule: Run `yarn prettier` and `yarn linc` to fix formatting and lint issues before
+    committing.
+  source:
+    path: .claude/skills/fix/SKILL.md
+    lines: 8-11
+    commit: 74568e8627aa43469b74f2972f427a209639d0b6
+- rule: When adding new dependencies like JSON5, update the package.json with the
+    correct version.
+  source:
+    path: compiler/CLAUDE.md
+    lines: 1-9
+    commit: 74568e8627aa43469b74f2972f427a209639d0b6
+  reference: 'Added to compiler/apps/playground/package.json dependencies: "json5": "^2.2.3"'
+- rule: React Compiler code resides in the `/compiler/` directory.
+  source:
+    path: CLAUDE.md
+    lines: 7-8
+  evidence: 'The gold solution correctly scopes its changes to the `/compiler/` directory
+    (specifically `compiler/apps/playground/`) as the issue pertains to the React
+    Compiler Playground, respecting the monorepo '
+  category: architecture
+- rule: Treat the `/compiler/` directory as a distinct part of the monorepo with its
+    own instructions.
+  source:
+    path: CLAUDE.md
+    lines: 6-7
+  evidence: The gold solution correctly scopes its changes to the `compiler/apps/playground/`
+    directory, respecting the monorepo boundary defined for the React Compiler.
+  category: architecture
+distractors:
+- rule: Run all tests using `yarn snap`
+  collision_type: scope_ambiguity
+  why_distracting: The rule suggests using `yarn snap` to run tests, but this command
+    is specific to the compiler's fixture tests in `packages/babel-plugin-react-compiler`.
+    The playground app has its own tests (e.g., Playwright e2e tests and Node tests),
+    so running `yarn snap` will not verify the XSS fix and might lead the agent to
+    think no tests need updating.
+  severity: high
+  source:
+    path: compiler/CLAUDE.md
+    lines: 18-22
+- rule: When modifying the compiler, you MUST read the documentation about that pass
+    in `compiler/packages/babel-plugin-react-compiler/docs/passes/`
+  collision_type: architecture_boundary
+  why_distracting: The rule mandates reading documentation in `docs/passes/` when
+    modifying the compiler. However, this PR modifies the playground web app's config
+    parser, not a compiler pass. Searching for pass documentation would waste time
+    and confuse the agent about the architecture.
+  severity: medium
+  source:
+    path: compiler/CLAUDE.md
+    lines: 8-9
+- rule: This repository uses Sapling (`sl`) for version control. Use `sl status`,
+    `sl addremove`, and `sl commit`.
+  collision_type: meta_confusion
+  why_distracting: The rule instructs the use of Sapling (`sl`) for version control
+    instead of git. In an automated agent evaluation environment, trying to use `sl`
+    commands to stage or commit files might fail or interfere with the evaluation
+    harness.
+  severity: low
+  source:
+    path: compiler/CLAUDE.md
+    lines: 58-61
+hierarchy_analysis: The root `CLAUDE.md` correctly delegates `/compiler/` directory
+  instructions to `compiler/CLAUDE.md`. However, `compiler/CLAUDE.md` assumes all
+  work in the `/compiler/` directory is within `packages/babel-plugin-react-compiler/`.
+  The agent must recognize that `apps/playground/` is a separate sub-project with
+  its own testing and architectural paradigms, overriding the generic compiler instructions.

@@ -1,0 +1,181 @@
+version: '2.0'
+source:
+  repo: oven-sh/bun
+  pr: 28496
+  base_commit: 639bc4351cd7b5daa38b99d47a506dec68e95353
+  merge_commit: e59a147d615a0b95d446c75ba836717cf0dbc513
+checks:
+- id: zig_files_balanced_braces
+  type: pass_to_pass
+  origin: static
+  description: Modified Zig files must have balanced braces
+- id: repo_ban_words
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ban-words check passes (validates no banned patterns like std.debug.assert,
+    usingnamespace)
+- id: repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TypeScript typecheck passes (tsc --noEmit)
+- id: repo_package_json_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's package.json lint check passes (validates exact dependency versions
+    in test package.json files)
+- id: repo_int_from_float
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's intFromFloat test passes (bun.intFromFloat function behavior
+    for float-to-integer conversion)
+- id: repo_sort_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's sort-imports script passes (Zig import sorting via scripts/sort-imports.ts)
+- id: repo_glob_sources
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's glob-sources script passes (validates Bun Glob API scanning 2000+
+    source files for CMake)
+- id: workitem_tracks_multiple_indices
+  type: fail_to_pass
+  origin: pr_diff
+  description: WorkItem must use a multi-index structure instead of single u32 idx
+- id: double_push_eliminated
+  type: fail_to_pass
+  origin: pr_diff
+  description: workbuf.append count reduced from 11 (no paired pushes for same dir)
+- id: pattern_matching_iterates_active_indices
+  type: fail_to_pass
+  origin: pr_diff
+  description: matchPatternDir/File called inside iteration over active index set
+- id: both_match_functions_present
+  type: pass_to_pass
+  origin: pr_diff
+  description: matchPatternDir and matchPatternFile are defined and called
+- id: core_api_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: Core GlobWalker identifiers (WorkItem, workbuf, match fns) still exist
+- id: workitem_retains_path_and_kind
+  type: pass_to_pass
+  origin: pr_diff
+  description: WorkItem struct retains path and kind fields
+- id: substantial_modification
+  type: fail_to_pass
+  origin: static
+  description: GlobWalker.zig has >= 20 lines added
+- id: coherent_zig_code
+  type: fail_to_pass
+  origin: static
+  description: Added lines contain real Zig constructs, not keyword stuffing
+- id: allocator_usage
+  type: fail_to_pass
+  origin: agent_config
+  description: New code references allocator (Zig memory management)
+  source:
+    path: CLAUDE.md
+    lines: '232'
+    commit: 639bc4351cd7b5daa38b99d47a506dec68e95353
+- id: no_inline_imports
+  type: pass_to_pass
+  origin: agent_config
+  description: No @import() inline inside functions
+  source:
+    path: src/CLAUDE.md
+    lines: '11'
+    commit: 639bc4351cd7b5daa38b99d47a506dec68e95353
+- id: no_std_namespace_in_new_code
+  type: pass_to_pass
+  origin: agent_config
+  description: New code uses bun.* APIs, not std.fs/std.posix/std.os
+  source:
+    path: src/CLAUDE.md
+    lines: '16'
+    commit: 639bc4351cd7b5daa38b99d47a506dec68e95353
+- id: no_catch_out_of_memory
+  type: pass_to_pass
+  origin: agent_config
+  description: Uses bun.handleOom() not catch bun.outOfMemory()
+  source:
+    path: src/CLAUDE.md
+    lines: '234'
+    commit: 639bc4351cd7b5daa38b99d47a506dec68e95353
+- id: no_std_mem_for_strings
+  type: pass_to_pass
+  origin: agent_config
+  description: New code must not use std.mem.eql/indexOf/startsWith for strings (use
+    bun.strings.* instead)
+  source:
+    path: src/CLAUDE.md
+    lines: '25'
+    commit: 639bc4351cd7b5daa38b99d47a506dec68e95353
+rubric:
+- rule: When adding new types or changing core data structures in complex algorithms,
+    add doc comments explaining the purpose and behavior
+  source:
+    path: CLAUDE.md
+    lines: '228'
+    commit: 639bc4351cd7b5daa38b99d47a506dec68e95353
+  reference: '+        /// Set of active component indices during traversal. At `**/X`
+
+    +        /// boundaries the walker needs to both advance past X and keep the
+
+    +        /// outer `**` alive; rather than visiting the directory twice, both
+
+    +        /// states are tracked in one set and evaluated in a single readdir.'
+- rule: Always use `bun.*` APIs instead of `std.*`.
+  source:
+    path: src/CLAUDE.md
+    lines: 18-20
+  evidence: The gold solution uses `bun.bit_set.AutoBitSet` instead of `std.bit_set`
+    to implement the `ComponentSet` for tracking active component indices.
+  category: architecture
+- rule: Always use bun.* APIs instead of std.*
+  source:
+    path: src/AGENTS.md
+    lines: 15-28
+  evidence: The gold solution uses `bun.bit_set.AutoBitSet` in `GlobWalker.zig` instead
+    of reaching for `std.bit_set`, adhering to the rule to prefer Bun APIs over the
+    standard library.
+  category: architecture
+- rule: 'Decl literals in Zig are recommended. const decl: Decl = .{ .binding = 0,
+    .value = 0 };'
+  source:
+    path: src/AGENTS.md
+    lines: 6-7
+  evidence: In `src/collections/bit_set.zig`, the `iterator` method returns `.{ .static
+    = s.iterator(options) }` and `.{ .dynamic = d.iterator(options) }`, correctly
+    using the recommended decl literal syntax inst
+  category: style
+distractors:
+- rule: "bun.sys \u2014 System Calls (src/sys.zig) ... Key functions: openat, read,\
+    \ etc."
+  collision_type: architecture_boundary
+  why_distracting: The bug description explicitly complains about 'redundant openat
+    + readdir + close syscalls'. The config file provides a large section detailing
+    how to use `bun.sys.openat`, `bun.sys.read`, and `bun.sys.File`. An agent might
+    be tempted to implement a directory caching mechanism at the `bun.sys` level or
+    modify the I/O calls directly, missing that the correct fix is algorithmic (fixing
+    the NFA state duplication in `GlobWalker.zig`).
+  severity: high
+  source:
+    path: src/AGENTS.md
+    lines: 30-70
+- rule: Do not write flaky tests. Unless explicitly asked, never wait for time to
+    pass in tests.
+  collision_type: would_cause_bug
+  why_distracting: The bug is described as a performance issue where the scan 'takes
+    roughly 2x longer'. An agent writing a regression test might try to measure execution
+    time (e.g., using `performance.now()`) to assert the fix, which directly violates
+    the rule against writing flaky tests.
+  severity: medium
+  source:
+    path: test/AGENTS.md
+    lines: 15-17
+hierarchy_analysis: The config hierarchy requires the agent to apply domain-specific
+  rules based on the file being edited. `src/AGENTS.md` governs the Zig implementation
+  (enforcing `bun.*` APIs and decl literals), while `test/AGENTS.md` governs the test
+  file. The root `AGENTS.md` provides the overarching build commands. The agent must
+  synthesize these separate domain rules without letting the extensive `bun.sys` documentation
+  distract from the algorithmic nature of the bug.

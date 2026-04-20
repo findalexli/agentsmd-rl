@@ -1,0 +1,147 @@
+source:
+  repo: All-Hands-AI/OpenHands
+  pr: 0
+  base_commit: 30b7af31b9cc6c7e1dbdb88f311ae4da3fdfb3c3
+  merge_commit: aeda0ea76245be1ecae69a2aabaa5317e08fac10
+checks:
+- id: test_i18n_keys_exist
+  type: fail_to_pass
+  origin: pr_diff
+  description: i18n translation keys must be added to declaration.ts
+- id: test_i18n_translations_exist
+  type: fail_to_pass
+  origin: pr_diff
+  description: All 15 language translations must exist for both toast messages
+- id: test_use_switch_organization_imports_toast_handler
+  type: fail_to_pass
+  origin: pr_diff
+  description: useSwitchOrganization hook must import displaySuccessToast
+- id: test_use_switch_organization_uses_i18n_keys
+  type: fail_to_pass
+  origin: pr_diff
+  description: useSwitchOrganization must use ORG$SWITCHED_TO_ORGANIZATION and ORG$SWITCHED_TO_PERSONAL_WORKSPACE
+    i18n keys
+- id: test_use_switch_organization_mutation_params
+  type: fail_to_pass
+  origin: pr_diff
+  description: useSwitchOrganization mutation must accept orgName and isPersonal parameters
+- id: test_org_selector_passes_org_details
+  type: fail_to_pass
+  origin: pr_diff
+  description: OrgSelector component must pass orgName and isPersonal flag to switchOrganization
+- id: test_org_selector_finds_org_by_id
+  type: fail_to_pass
+  origin: pr_diff
+  description: OrgSelector must look up organization by ID before switching
+- id: test_org_selector_tests_include_toast_assertions
+  type: fail_to_pass
+  origin: pr_diff
+  description: Unit tests must verify displaySuccessToast is called
+- id: test_org_selector_tests_cover_team_org
+  type: fail_to_pass
+  origin: pr_diff
+  description: Unit tests must cover switching to team organization
+- id: test_org_selector_tests_cover_personal_workspace
+  type: fail_to_pass
+  origin: pr_diff
+  description: Unit tests must cover switching to personal workspace
+- id: test_org_selector_test_accepts_params_in_translation
+  type: fail_to_pass
+  origin: pr_diff
+  description: Test translation mock must accept params for interpolated strings
+- id: test_repo_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Org-selector unit tests must pass
+- id: test_repo_org_component_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: All org component tests must pass
+- id: test_repo_mutation_hook_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Mutation hook tests must pass
+- id: test_repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Frontend linting must pass
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Frontend TypeScript type checking must pass
+- id: test_i18n_completeness
+  type: pass_to_pass
+  origin: repo_tests
+  description: All translations must be complete
+- id: test_repo_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Frontend build must succeed
+rubric:
+- rule: Toast notifications should only show on successful organization switch
+  source:
+    path: frontend/src/hooks/mutation/use-switch-organization.ts
+  reference: "onSuccess: (_, { orgId, orgName, isPersonal }) => {\n  const message\
+    \ = isPersonal\n    ? t(I18nKey.ORG$SWITCHED_TO_PERSONAL_WORKSPACE)\n    : t(I18nKey.ORG$SWITCHED_TO_ORGANIZATION,\
+    \ { name: orgName });\n  displaySuccessToast(message);\n"
+- rule: Hook logic should remain clean and readable after adding toast functionality
+  source:
+    path: frontend/src/hooks/mutation/use-switch-organization.ts
+  reference: "export const useSwitchOrganization = () => {\n  const { t } = useTranslation();\n\
+    \  const queryClient = useQueryClient();\n  const { setOrganizationId } = useSelectedOrganizationId();\n\
+    \  const navigate = useNavigate();\n  const conversationMatch = useMatch(\"/conversations/:conversationId\"\
+    );\n\n  return useMutation({\n    mutationFn: ({\n      orgId,\n    }: {\n   \
+    \   orgId: string;\n      orgName: string;\n      isPersonal: boolean;\n    })\
+    \ => organizationService.switchOrganization({ orgId }),\n    onSuccess: (_, {\
+    \ orgId, orgName, isPersonal }) => {\n      const message = isPersonal\n     \
+    \   ? t(I18nKey.ORG$SWITCHED_TO_PERSONAL_WORKSPACE)\n        : t(I18nKey.ORG$SWITCHED_TO_ORGANIZATION,\
+    \ { name: orgName });\n      displaySuccessToast(message);\n"
+- rule: Tests should properly mock external dependencies and verify behavior not implementation
+  source:
+    path: frontend/__tests__/components/features/org/org-selector.test.tsx
+  reference: "const displaySuccessToastSpy = vi.spyOn(\n  ToastHandlers,\n  \"displaySuccessToast\"\
+    ,\n);\n"
+- rule: React frontend code is located in the `frontend` directory.
+  source:
+    path: AGENTS.md
+    lines: 1-2
+  reference: 'frontend/src/hooks/mutation/use-switch-organization.ts
+
+    frontend/src/components/features/org/org-selector.tsx
+
+    '
+  category: architecture
+distractors:
+- rule: When working on a PR that requires design documents... store them in a `.pr/`
+    directory
+  collision_type: scope_ambiguity
+  why_distracting: The agent might interpret adding a new user-facing feature as requiring
+    a design document or analysis notes in the `.pr/` directory, wasting time on unnecessary
+    documentation for a simple toast notification.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 41-51
+- rule: To set up the entire repo, including frontend and backend, run `make build`.
+    You don't need to do this unless the user asks you to
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to run `make build` to test its frontend
+    changes, which is a heavy operation, despite the rule stating it's only needed
+    if the user asks or to run the entire application.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 4-6
+- rule: Use this skill when testing a cross-repo feature or when changes span the
+    SDK and OpenHands server repos.
+  source:
+    path: .agents/skills/cross-repo-testing/SKILL.md
+    lines: 1-3
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to run cross-repo tests because organization
+    switching involves backend state, but this task is strictly a frontend visual
+    feedback addition.
+  severity: medium
+hierarchy_analysis: The configuration consists of a single, flat repository-level
+  file (`AGENTS.md`) containing generic boilerplate instructions.
+version: '2.0'

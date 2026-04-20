@@ -1,0 +1,125 @@
+version: '2.0'
+source:
+  repo: oven-sh/bun
+  pr: 28858
+  base_commit: 485ec522a22b469b336aece8276b507a71665a87
+  merge_commit: 871f660f5816a48dacc6c53e104f42d775852e6b
+checks:
+- id: cc_implicit_dep_outputs
+  type: fail_to_pass
+  origin: pr_diff
+  description: cc() calls in compileC pass depOutputs as implicitInputs, not orderOnlyInputs
+- id: nopch_cxx_implicit_dep_outputs
+  type: fail_to_pass
+  origin: pr_diff
+  description: No-PCH cxx path sets opts.implicitInputs = depOutputs
+- id: codegen_separated_from_dep_outputs
+  type: fail_to_pass
+  origin: pr_diff
+  description: depOutputs and codegen.cppAll are not combined into one order-only
+    variable
+- id: claude_md_dep_strategy_updated
+  type: fail_to_pass
+  origin: agent_config
+  description: CLAUDE.md Gotchas documents cc and no-PCH cxx using implicit deps on
+    depOutputs
+  source:
+    path: scripts/build/CLAUDE.md
+    lines: 227-229
+    commit: 485ec522a22b469b336aece8276b507a71665a87
+- id: compile_opts_has_both_input_types
+  type: pass_to_pass
+  origin: static
+  description: compile.ts CompileOpts interface retains both implicitInputs and orderOnlyInputs
+- id: bun_ts_pch_implicit_deps
+  type: pass_to_pass
+  origin: static
+  description: PCH still uses implicit deps on depOutputs (unchanged behavior)
+- id: repo_editorconfig_compliance
+  type: pass_to_pass
+  origin: repo_tests
+  description: Build scripts comply with EditorConfig (UTF-8, LF, no trailing whitespace)
+- id: repo_build_script_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: Build script imports point to existing files
+- id: repo_json_configs_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: JSON configuration files are syntactically valid
+- id: repo_git_integrity
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git repository passes fsck integrity check
+- id: repo_shell_scripts_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Shell scripts in .buildkite/ have valid syntax
+- id: repo_build_scripts_exist
+  type: pass_to_pass
+  origin: repo_tests
+  description: Build scripts exist and have substantial content
+- id: repo_claude_md_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: CLAUDE.md has expected sections (Ninja Primer, Gotchas)
+- id: repo_build_scripts_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: Build scripts have expected functions and interfaces
+- id: repo_tsconfig_valid_jsonc
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript config files are syntactically valid JSONC
+rubric:
+- rule: PCH, cc, and no-PCH cxx must all use implicit deps on depOutputs, not order-only
+    — the Gotchas section must be updated to reflect this unified approach
+  source:
+    path: scripts/build/CLAUDE.md
+    lines: 227-229
+    commit: 485ec522a22b469b336aece8276b507a71665a87
+  reference: '**PCH, cc, and no-PCH cxx need implicit dep on `depOutputs`**, not order-only.
+    Local WebKit''s sub-build rewrites forwarding headers as an undeclared side effect
+    (only `lib*.a` are declared outputs). Depfiles record those headers, but ninja
+    stats them before the sub-build runs — order-only lags one build. The lib itself
+    is the invalidation signal. Codegen headers stay order-only: they''re declared
+    outputs with restat, so depfile tracking is exact.'
+- rule: Bun is written primarily in Zig with C++ for JavaScriptCore integration, powered
+    by WebKit's JavaScriptCore engine.
+  source:
+    path: CLAUDE.md
+    lines: 1-3
+  evidence: The gold solution modifies the build script to correctly handle implicit
+    dependencies for C++ files on WebKit/JavaScriptCore library outputs (like libJavaScriptCore.a),
+    ensuring that when WebKit rebui
+  category: architecture
+distractors:
+- rule: 'Test Organization: find the best existing file to modify instead, such as
+    test/js/bun/, test/cli/, etc.'
+  collision_type: scope_ambiguity
+  why_distracting: The config provides detailed instructions on how to write and organize
+    tests using Bun's test runner. An agent might try to write a TypeScript test to
+    verify the build script's dependency graph behavior. However, this PR fixes a
+    Ninja build graph issue in `scripts/build/bun.ts` that causes spurious relinks,
+    which cannot be tested via the standard runtime test suite.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 44-58
+- rule: 'Run tests with your debug build: `bun bd test <test-file>`'
+  collision_type: meta_confusion
+  why_distracting: The config instructs to run tests with `bun bd test <test-file>`.
+    An agent might try to use this command to verify its changes. However, the issue
+    specifically occurs on the second `build:release:local` run after a local WebKit
+    rebuild. Running standard tests won't reproduce the spurious relink issue or verify
+    the fix.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 9-11
+hierarchy_analysis: The repository uses a flat configuration structure with `CLAUDE.md`
+  and `AGENTS.md` providing identical root-level guidance. The guidance heavily emphasizes
+  runtime testing and standard build commands (`bun bd`), which is distracting for
+  this specific meta-build issue. The PR requires modifying the build system itself
+  (`scripts/build/bun.ts`) to fix Ninja dependency edges, meaning standard testing
+  protocols do not apply.

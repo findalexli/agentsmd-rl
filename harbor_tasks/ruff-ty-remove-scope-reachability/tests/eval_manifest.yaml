@@ -1,0 +1,87 @@
+version: '2.0'
+source:
+  repo: astral-sh/ruff
+  pr: 24457
+  base_commit: 5fd492a95721a158c54d60349b54e5fe4b7cd874
+  merge_commit: b6c69c288fe9e5b63d70d1743aabdfa40523e344
+checks:
+- id: no_is_scope_reachable
+  type: fail_to_pass
+  origin: pr_diff
+  description: The is_scope_reachable method must be completely removed from semantic_index.rs
+- id: no_reachability_field_in_scope
+  type: fail_to_pass
+  origin: pr_diff
+  description: The reachability field must be removed from the Scope struct in scope.rs
+- id: is_range_reachable_uses_ancestor_scopes
+  type: fail_to_pass
+  origin: pr_diff
+  description: is_range_reachable must use ancestor_scopes iteration instead of is_scope_reachable
+- id: ide_support_uses_is_range_reachable
+  type: fail_to_pass
+  origin: pr_diff
+  description: ide_support.rs must use is_range_reachable instead of is_scope_reachable
+- id: cargo_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: ty_python_semantic must compile cleanly after reachability removal
+- id: cargo_clippy
+  type: pass_to_pass
+  origin: repo_tests
+  description: No clippy warnings on the affected crate after removal
+- id: cargo_test_lib
+  type: pass_to_pass
+  origin: repo_tests
+  description: ty_python_semantic library unit tests pass
+- id: cargo_test_mdtest
+  type: pass_to_pass
+  origin: repo_tests
+  description: ty_python_semantic markdown tests pass
+- id: cargo_check_workspace
+  type: pass_to_pass
+  origin: repo_tests
+  description: Full workspace compiles cleanly
+- id: test_cargo_test_corpus
+  type: pass_to_pass
+  origin: repo_tests
+  description: Corpus integration tests pass
+- id: test_cargo_fmt_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Code formatting follows rustfmt standards
+rubric:
+- rule: Avoid writing significant amounts of new code. This is often a sign that we're
+    missing an existing method or mechanism that could help solve the problem.
+  source:
+    path: AGENTS.md
+    lines: '78'
+    commit: 5fd492a95721a158c54d60349b54e5fe4b7cd874
+- rule: But if a lint is complaining about unused/dead code, it's usually best to
+    just delete the unused code.
+  source:
+    path: AGENTS.md
+    lines: '81'
+    commit: 5fd492a95721a158c54d60349b54e5fe4b7cd874
+- rule: Avoid writing significant amounts of new code. Look for existing utilities
+    first.
+  source:
+    path: AGENTS.md
+    lines: 58-58
+  evidence: 'The gold solution replaces the custom recursive `is_scope_reachable`
+    logic with a simple call to the existing `self.ancestor_scopes(scope_id)` utility
+    method combined with `.all()`, avoiding the need '
+  category: architecture
+distractors:
+- rule: All changes must be tested. If you're not testing your changes, you're not
+    done.
+  collision_type: scope_ambiguity
+  why_distracting: The task is a pure refactoring and dead code removal that preserves
+    existing behavior. The existing test suite is sufficient, and trying to add new
+    tests for removed code or unchanged behavior would be wasted effort.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 58-58
+hierarchy_analysis: The config hierarchy is flat, consisting of a single `AGENTS.md`
+  file containing generic repository guidelines (with `CLAUDE.md` simply including
+  it). There are no deep overrides or complex rule interactions.

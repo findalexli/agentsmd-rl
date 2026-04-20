@@ -1,0 +1,177 @@
+version: '2.0'
+source:
+  repo: oven-sh/bun
+  pr: 28314
+  base_commit: 581d45c267edeeeba53595f1663d73a8d90dec4e
+  merge_commit: 9933f7a9aa375150947ab3e4bf725e46a7348c64
+checks:
+- id: no_bare_putdirect_in_tojson
+  type: fail_to_pass
+  origin: pr_diff
+  description: toJSON must not use bare putDirect — crashes on numeric cookie names
+- id: all_insertion_paths_safe
+  type: fail_to_pass
+  origin: pr_diff
+  description: Both modified-cookie and original-cookie insertion paths must be index-safe
+- id: dedup_avoids_hasproperty
+  type: fail_to_pass
+  origin: pr_diff
+  description: Deduplication must not call hasProperty on JSObject (also crashes on
+    numeric keys)
+- id: tojson_preserves_functionality
+  type: pass_to_pass
+  origin: pr_diff
+  description: toJSON still constructs JS object, handles exceptions, iterates cookies
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: toJSON has a real implementation (>=8 non-blank lines), not a stub
+- id: other_methods_preserved
+  type: pass_to_pass
+  origin: static
+  description: Other CookieMap methods still present — file not replaced wholesale
+- id: put_inside_loop
+  type: pass_to_pass
+  origin: pr_diff
+  description: Property insertion occurs inside iteration loop — coherent implementation
+- id: exception_scope_in_tojson
+  type: pass_to_pass
+  origin: agent_config
+  description: toJSON must use JSC exception scope pattern (DECLARE_THROW_SCOPE)
+  source:
+    path: .claude/skills/implementing-jsc-classes-cpp/SKILL.md
+    lines: 94-101
+    commit: 581d45c267edeeeba53595f1663d73a8d90dec4e
+- id: git_no_conflict_markers
+  type: pass_to_pass
+  origin: repo_tests
+  description: Source files have no merge conflict markers or trailing whitespace
+    (git diff --check)
+  source:
+    path: .github/workflows/format.yml
+    commit: 581d45c267edeeeba53595f1663d73a8d90dec4e
+- id: git_valid_repo_state
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository has valid git state with commit history
+  source:
+    path: .github/workflows/format.yml
+    commit: 581d45c267edeeeba53595f1663d73a8d90dec4e
+- id: no_banned_patterns_in_cookiemap
+  type: pass_to_pass
+  origin: repo_tests
+  description: CookieMap.cpp has no banned C++ anti-patterns (git grep check)
+  source:
+    path: test/internal/ban-words.test.ts
+    commit: 581d45c267edeeeba53595f1663d73a8d90dec4e
+- id: cookiemap_tracked_in_git
+  type: pass_to_pass
+  origin: repo_tests
+  description: CookieMap.cpp is tracked in git at expected path
+  source:
+    path: src/bun.js/bindings/CookieMap.cpp
+    commit: 581d45c267edeeeba53595f1663d73a8d90dec4e
+- id: cookiemap_file_exists
+  type: pass_to_pass
+  origin: static
+  description: CookieMap.cpp file exists at expected path
+  source:
+    path: src/bun.js/bindings/CookieMap.cpp
+    commit: 581d45c267edeeeba53595f1663d73a8d90dec4e
+- id: git_cookiemap_in_index
+  type: pass_to_pass
+  origin: repo_tests
+  description: CookieMap.cpp is tracked in git index (not untracked)
+  source:
+    path: .github/workflows/format.yml
+    commit: 581d45c267edeeeba53595f1663d73a8d90dec4e
+- id: git_cookiemap_whitespace
+  type: pass_to_pass
+  origin: repo_tests
+  description: CookieMap.cpp has no whitespace errors (trailing whitespace, etc.)
+  source:
+    path: .github/workflows/format.yml
+    commit: 581d45c267edeeeba53595f1663d73a8d90dec4e
+- id: cookiemap_has_history
+  type: pass_to_pass
+  origin: repo_tests
+  description: CookieMap.cpp has git history (at least one commit)
+  source:
+    path: .github/workflows/format.yml
+    commit: 581d45c267edeeeba53595f1663d73a8d90dec4e
+- id: cookiemap_tojson_has_history
+  type: pass_to_pass
+  origin: repo_tests
+  description: CookieMap::toJSON method exists and has history
+  source:
+    path: src/bun.js/bindings/CookieMap.cpp
+    commit: 581d45c267edeeeba53595f1663d73a8d90dec4e
+- id: package_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: package.json must be valid JSON
+  source:
+    path: package.json
+    commit: 581d45c267edeeeba53595f1663d73a8d90dec4e
+- id: cookiemap_header_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: CookieMap.h header file must exist and have proper guards
+  source:
+    path: src/bun.js/bindings/CookieMap.h
+    commit: 581d45c267edeeeba53595f1663d73a8d90dec4e
+- id: cookiemap_valid_utf8
+  type: pass_to_pass
+  origin: repo_tests
+  description: CookieMap.cpp must be valid UTF-8
+  source:
+    path: src/bun.js/bindings/CookieMap.cpp
+    commit: 581d45c267edeeeba53595f1663d73a8d90dec4e
+- id: git_attributes_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository must have valid .gitattributes file
+  source:
+    path: .gitattributes
+    commit: 581d45c267edeeeba53595f1663d73a8d90dec4e
+- id: ci_scripts_exist
+  type: pass_to_pass
+  origin: repo_tests
+  description: CI scripts referenced by workflows must exist
+  source:
+    path: scripts/run-clang-format.sh
+    commit: 581d45c267edeeeba53595f1663d73a8d90dec4e
+distractors:
+- rule: Always use `bun.*` APIs instead of `std.*`.
+  collision_type: architecture_boundary
+  why_distracting: The rule instructs to avoid `std.*` and use `bun.*` APIs. While
+    intended for Zig, an agent editing C++ might incorrectly avoid standard C++ or
+    WTF data structures (like `HashSet`) and look for non-existent Bun C++ wrappers.
+  severity: medium
+  source:
+    path: src/AGENTS.md
+    lines: 16-18
+- rule: NEVER write tests that check for no "panic" or "uncaught exception" or similar
+    in the test output.
+  collision_type: scope_ambiguity
+  why_distracting: The bug is an assertion failure/crash. The agent might try to write
+    a regression test but get confused by the rule forbidding tests that check for
+    'no panic' or 'uncaught exception'.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: '74'
+hierarchy_analysis: The hierarchy applies Zig-specific rules at the `src/` level,
+  but the target file is C++ within `src/bun.js/bindings/`. The agent must understand
+  that the `src/AGENTS.md` rules do not apply across the language boundary.
+rubric:
+- rule: It's written primarily in Zig with C++ for JavaScriptCore integration, powered
+    by WebKit's JavaScriptCore engine.
+  source:
+    path: CLAUDE.md
+    lines: 1-3
+  evidence: The solution uses WebKit's WTF::HashSet (#include <wtf/HashSet.h>) and
+    JSC APIs (putDirectMayBeIndex) rather than standard C++ std::unordered_set, aligning
+    with the architecture of using WebKit's JavaScriptCore engine.
+  category: architecture
+  verification: llm_judge

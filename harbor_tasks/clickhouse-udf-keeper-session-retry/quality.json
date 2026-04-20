@@ -1,61 +1,58 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific patterns like 'catch (const zkutil::KeeperException & e)', 'Coordination::isHardwareError(e.code)', '.retryLoop([', 'ZooKeeperRetriesControl \\w+(', 'backQuote(\\w+)', 'LOG_WARNING(...hardware error...)', exact include paths '#include <Common/ZooKeeper/ZooKeeperCommon.h>' and '#include <Common/ZooKeeper/ZooKeeperRetries.h>', and variable names like 'max_retries', 'initial_backoff_ms', 'max_backoff_ms'. While instruction.md mentions concepts like isHardwareError(), ZooKeeperRe"
+      "reason": "Tests assert on specific literal strings/symbols not mentioned in instruction.md: the exact file path 'src/Functions/UserDefined/UserDefinedSQLObjectsZooKeeperStorage.cpp', include names 'Common/ZooKeeper/ZooKeeperCommon.h' and 'Common/ZooKeeper/ZooKeeperRetries.h', variable names 'max_retries', 'initial_backoff_ms', 'max_backoff_ms', and the 'backQuote' function \u2014 none of these specifics are named in the instruction."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "Instruction.md essentially describes the exact implementation: add specific includes, catch KeeperException, check isHardwareError, re-throw hardware errors, use ZooKeeperRetriesControl with configurable parameters, wrap in retry loop, clear results inside retry loop. This is a step-by-step implementation guide, not a problem description."
+      "outcome": "pass",
+      "reason": "Instruction describes what needs to change behaviorally (retry logic, catch Keeper exceptions, re-throw hardware errors) without giving exact line edits."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific implementation details: exact variable names 'max_retries', 'initial_backoff_ms', 'max_backoff_ms' (test_zookeeper_retries_control_usage); exact pattern '.retryLoop([' (test_retry_loop_pattern); exact catch signature 'const zkutil::KeeperException &' (test_keeper_exception_handler); 'backQuote()' usage (test_error_logging). An alternative correct fix using different variable names, a manual retry loop instead of retryLoop(), or fmt::format instead of backQuote() would "
+      "reason": "Tests require specific literal variable names like 'max_retries', 'initial_backoff_ms', 'max_backoff_ms' (test_zookeeper_retries_control_usage) and 'backQuote(...)' (test_error_logging), which a valid alternative fix using different names (e.g., 'retry_count', 'quoteName') would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "All f2p tests use pattern matching on source file text (regex searches on file content). None compile, execute, or call the code. Tests like test_keeper_exception_handler do strip comments which is slightly better than raw string matching, but fundamentally they are still 'assert pattern in open(path).read()' style checks."
+      "reason": "All test_* functions only read the source file and regex-match patterns; none compile, import, or execute the changed code \u2014 e.g., test_keeper_exception_handler just regex-searches stripped text."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for specific code patterns (KeeperException catch block, isHardwareError check, retryLoop call, ZooKeeperRetriesControl instantiation) that don't exist in the original source file. A stub/no-op implementation would not pass these tests since the base file lacks these patterns."
+      "reason": "Tests check for specific structural patterns (catch blocks, retryLoop calls, isHardwareError usage) that can't be satisfied by a stub; they require actual code edits."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behavioral requirements from instruction.md are tested: includes (test_hardware_error_include, test_retries_include), KeeperException handling (test_keeper_exception_handler), retry logic (test_zookeeper_retries_control_usage, test_retry_loop_pattern), logging (test_error_logging), and comments (test_comment_documentation)."
+      "reason": "The instruction's behavioral requirements (includes, catch block, re-throw, retry loop, clear results, logging, comments) each map to a corresponding test."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive function names (test_hardware_error_include, test_keeper_exception_handler, etc.), docstrings explaining what each test checks, and clear separation between behavioral tests and style/CI checks."
+      "reason": "Tests are grouped with clear names and docstrings, separated into behavioral and P2P repo-style sections."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task involves C++ source code modification, not structured data output."
+      "reason": "Task does not produce structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No obvious typos found in filenames, paths, function names, or variable names in instruction.md or test files."
+      "reason": "No obvious typos in paths, filenames, or commands."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "Instruction.md names the exact class 'UserDefinedSQLObjectsZooKeeperStorage', exact function 'isHardwareError()', exact class 'ZooKeeperRetriesControl', and specifies exact headers 'Common/ZooKeeper'. Combined with the step-by-step behavioral requirements, the agent needs minimal reasoning about what to change."
+      "outcome": "pass",
+      "reason": "Instruction references the source file domain generally ('user-defined SQL objects with ZooKeeper storage') without citing exact filenames or line numbers."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "This is a code-edit task, not a config/agentmd-edits task."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
-    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 4,
-  "fail_count": 5
+  "tier_c_fails": [],
+  "pass_count": 6,
+  "fail_count": 3
 }

@@ -1,61 +1,57 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all key file paths (worker.ts, thread.ts, app.tsx), the RPC method name 'snapshot', the filenames 'tui.heapsnapshot' and 'server.heapsnapshot', the 'onSnapshot' callback, 'node:v8'/'v8' imports, 'writeHeapSnapshot', 'client.call', and the changelog sections (# TUI, # Desktop, # Core, # Misc) and output file (UPCOMING_CHANGELOG.md). The test for changelog also checks for 'appropriate section' or 'append.*section' pattern, and the instruction mentions 'Each subagent should ap"
+      "reason": "Instruction names all key strings: tui.heapsnapshot, server.heapsnapshot, snapshot RPC method, onSnapshot callback, file paths worker.ts/thread.ts/app.tsx, changelog.md path, section headers, and UPCOMING_CHANGELOG.md."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly states the exact implementation: 'An RPC method named snapshot on the worker that writes the server heap to server.heapsnapshot', 'An onSnapshot callback in the TUI thread that triggers both snapshot writes (TUI locally, server via RPC) and returns both file paths', 'The onSnapshot callback must be passed as an optional prop through to the App component'. This is prescriptive of WHAT to change rather than just describing what's broken."
+      "outcome": "pass",
+      "reason": "Instruction describes what should happen (RPC method, callback, prop) without specifying line numbers or exact code to write."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests check for exact string matches like 'snapshot()' in worker.ts, 'onSnapshot?:' in app.tsx, 'onSnapshot={input.onSnapshot}' in app.tsx, and 'client.call(\"snapshot\"' in thread.ts. An alternative correct implementation using e.g. 'heapSnapshot' as the method name, or destructuring the prop differently (e.g., `onSnapshot={props.onSnapshot}`), or using a different RPC calling pattern would fail these text-matching tests."
+      "reason": "test_app_accepts_onsnapshot_prop asserts the literal string 'onSnapshot={input.onSnapshot}' pattern, forcing the agent to pass the prop from input rather than via another valid mechanism; test_thread_implements_onsnapshot requires specifically client.call(\"snapshot\", ...) syntax."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The four fail-to-pass tests (test_worker_has_snapshot_rpc, test_thread_implements_onsnapshot, test_app_accepts_onsnapshot_prop, test_changelog_command_updated) all exclusively read file contents as strings and check for substring/regex matches. None of them import, execute, or call the code to verify actual behavior. They are pure text-matching tests."
+      "reason": "All f2p tests are string-matching checks (e.g., includes('writeHeapSnapshot'), includes('tui.heapsnapshot'), includes('onSnapshot={input.onSnapshot}')) \u2014 no test actually executes the snapshot command or calls the RPC."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "A stub implementation that simply adds the right string literals to each file (e.g., adding dead-code comments containing 'writeHeapSnapshot', 'snapshot()', 'server.heapsnapshot', 'onSnapshot?:', 'client.call(\"snapshot\"', etc.) would pass all four fail-to-pass tests without implementing any actual functionality, since the tests only check for string presence in file contents."
+      "outcome": "pass",
+      "reason": "Each f2p test requires multiple distinct substrings that together can't be satisfied by a stub; implementing them essentially requires the behavior."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in the instruction are tested: worker snapshot RPC method, thread onSnapshot callback with TUI/server coordination, App component accepting onSnapshot prop, and changelog section structure. The toast notification displaying both paths is partially tested via the app.tsx checks."
+      "reason": "Tests cover worker snapshot RPC, thread onSnapshot, app prop wiring, and changelog restructure \u2014 all behaviors mentioned in instruction."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates/static, Fail-to-pass/pr_diff, Pass-to-pass/repo_tests), descriptive function names, and docstrings explaining what each test verifies."
+      "reason": "Tests are grouped under section-header comments (Gates, Fail-to-pass, Pass-to-pass) with descriptive docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task does not produce structured data like JSON/CSV/API/DB outputs."
+      "reason": "No structured data output; task produces code changes and a markdown file."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and the test files."
+      "reason": "File paths and identifiers in instruction match those in tests and solution script."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly names all three files to modify (worker.ts, thread.ts, app.tsx) and prescribes exactly what to add to each: an RPC method named 'snapshot' in worker, an 'onSnapshot' callback in thread, and an optional prop in app. This goes beyond describing the bug to prescribing the exact implementation architecture."
+      "outcome": "pass",
+      "reason": "Instruction names the relevant files (which are inherent to the task) but not exact lines or code snippets."
     },
     "config_edit_scope_bounded": {
-      "outcome": "pass",
-      "reason": "The changelog.md edit is localized (restructuring content of one file) and doesn't contradict other files. The code edits are also localized additions to existing files."
+      "outcome": "not_applicable",
+      "reason": "Not an agentmd-edits/config task; changelog.md is fully rewritten as part of the task requirement."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 5,
-  "fail_count": 5
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 2
 }

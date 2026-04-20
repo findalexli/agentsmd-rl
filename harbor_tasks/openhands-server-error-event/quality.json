@@ -1,59 +1,60 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert on specific file paths like 'src/types/v1/core/events/conversation-state-event.ts', 'src/types/v1/type-guards.ts', 'src/types/v1/core/openhands-event.ts', 'src/mocks/mock-ws-helpers.ts', 'src/contexts/conversation-websocket-context.tsx', and specific function names like 'isServerErrorEvent', 'isDisplayableErrorEvent', 'createMockServerErrorEvent', and specific test description strings like 'should update error message store on ServerErrorEvent'. None of these file paths or function "
+      "reason": "Tests assert on specific file paths like `frontend/src/types/v1/type-guards.ts`, function names `isServerErrorEvent`, `isDisplayableErrorEvent`, `createMockServerErrorEvent`, and specific test names like 'should update error message store on ServerErrorEvent' that are not mentioned in instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what's broken (ServerErrorEvent is ignored) and what the expected behavior should be (error banner, analytics, budget/credit errors, error clearing), but does not specify exact code changes, line numbers, or implementation details."
+      "reason": "Instruction describes the problem and expected behavior without specifying implementation details like specific helper function names or file paths."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact function names 'isServerErrorEvent', 'isDisplayableErrorEvent', 'createMockServerErrorEvent'; exact file locations; the requirement that isDisplayableErrorEvent calls both isConversationErrorEvent and isServerErrorEvent internally; and that websocket context must NOT call isConversationErrorEvent directly. An alternative correct fix (e.g., modifying the existing isConversationErrorEvent to also handle ServerErrorEvent, or using a differ"
+      "reason": "Tests require specific internal names: `isDisplayableErrorEvent`, `isServerErrorEvent`, `createMockServerErrorEvent`, specific file paths like `conversation-state-event.ts`, and even specific test case titles \u2014 an alternative correct implementation using different names would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Most fail_to_pass tests (test_server_error_event_type_exists, test_is_server_error_event_guard_exists, test_is_displayable_error_event_guard_exists, test_websocket_context_uses_displayable_error, test_openhands_event_includes_server_error, test_mock_helper_includes_server_error, test_websocket_handler_tests_exist) are purely text-matching with 'assert X in open(path).read()' \u2014 they never import, compile, or execute the code they check. Only the pass_to_pass tests (typecheck, lint, build, vitest "
+      "reason": "Most f2p tests (test_server_error_event_type_exists, test_is_server_error_event_guard_exists, test_is_displayable_error_event_guard_exists, test_websocket_context_uses_displayable_error, test_openhands_event_includes_server_error, test_mock_helper_includes_server_error, test_websocket_handler_tests_exist) are pure `'foo' in open(path).read()` text grep checks."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "Several fail_to_pass tests like test_websocket_handler_tests_exist only check that certain strings exist in test files (e.g., 'assert \"createMockServerErrorEvent\" in content'). An agent could add the string as a comment without implementing anything and pass these tests. Similarly, test_server_error_event_type_exists just checks for string presence in a file, satisfiable by adding a comment containing those strings."
+      "outcome": "pass",
+      "reason": "The runtime tests (test_repo_websocket_handler_tests) execute actual vitest tests that verify behavior; stubs wouldn't pass behavior tests."
     },
     "behavior_in_tests": {
-      "outcome": "pass",
-      "reason": "The instruction specifies error banner display, analytics tracking, budget/credit error handling, and error clearing. The tests cover error banner (via vitest behavioral tests), error clearing, and type system integration. Analytics tracking is partially covered through the pass_to_pass vitest runs. Budget/credit error handling is implicitly tested through the existing test infrastructure."
+      "outcome": "fail",
+      "reason": "Instruction requires budget/credit errors show i18n localized messages (point 3), but no test in test_outputs.py verifies i18n localization for budget/credit errors."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings, organized by concern (type definitions, type guards, websocket context, mock helpers, behavioral tests), and include pass_to_pass/fail_to_pass annotations."
+      "reason": "Tests are named with clear prefixes (test_repo_*, test_server_error_*) and have docstrings describing pass_to_pass vs fail_to_pass."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The instruction documents the ServerErrorEvent schema with exact field names, types, and values (kind: 'ServerErrorEvent', source: 'environment', code: string, detail: string)."
+      "reason": "The ServerErrorEvent schema (kind, source, code, detail) is documented in instruction.md."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No obvious typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos detected in paths or commands."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction mentions ConversationErrorEvent as existing behavior context but doesn't name specific files, line numbers, or exact functions to modify. It describes the problem domain and expected behavior without pinpointing implementation locations."
+      "reason": "Instruction describes the domain area (WebSocket error handling) without naming specific buggy lines or files."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code task, not an agentmd/config-edits task."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests"
+  ],
   "pass_count": 6,
   "fail_count": 4
 }

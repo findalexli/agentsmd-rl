@@ -1,0 +1,133 @@
+version: '2.0'
+source:
+  repo: PrimeIntellect-ai/prime-rl
+  pr: 2094
+  base_commit: a25b3e7a18e76999558a888c1ab1f8e5cd0e3831
+  merge_commit: 4f612601f6447b3df1ee17e535ac698b5cc3d16c
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: config.py must parse without syntax errors
+- id: none_inside_flat_list
+  type: fail_to_pass
+  origin: pr_diff
+  description: None values inside a flat list are converted to 'None' strings
+- id: none_inside_dict_in_list
+  type: fail_to_pass
+  origin: pr_diff
+  description: None inside a dict nested in a list is converted
+- id: deeply_nested_list_of_list
+  type: fail_to_pass
+  origin: pr_diff
+  description: Deeply nested None (list of list) is converted
+- id: toml_roundtrip_with_none_in_list
+  type: fail_to_pass
+  origin: pr_diff
+  description: TOML serialization succeeds after converting None in lists
+- id: top_level_none_converted
+  type: pass_to_pass
+  origin: repo_tests
+  description: Top-level None values are still converted
+- id: nested_dict_none_converted
+  type: pass_to_pass
+  origin: repo_tests
+  description: Nested dict None values are still converted
+- id: non_none_values_unchanged
+  type: pass_to_pass
+  origin: repo_tests
+  description: Non-None values pass through without modification
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: none_to_none_str returns meaningful output, not a trivial stub
+- id: no_unnecessary_try_except
+  type: pass_to_pass
+  origin: agent_config
+  description: No try/except blocks in config.py — let errors propagate
+  source:
+    path: AGENTS.md
+    lines: '5'
+    commit: a25b3e7a18e76999558a888c1ab1f8e5cd0e3831
+- id: no_work_process_comments
+  type: pass_to_pass
+  origin: agent_config
+  description: No comments referencing old code or work process
+  source:
+    path: AGENTS.md
+    lines: '7'
+    commit: a25b3e7a18e76999558a888c1ab1f8e5cd0e3831
+- id: test_repo_syntax_all
+  type: pass_to_pass
+  origin: repo_tests
+  description: All Python files in the repo have valid syntax (p2p_enrichment)
+- id: test_config_module_loads
+  type: pass_to_pass
+  origin: repo_tests
+  description: Config module can be parsed and loaded (p2p_enrichment)
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff linter passes on the modified config.py (p2p_enrichment)
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff format check passes on the modified config.py (p2p_enrichment)
+- id: test_repo_imports_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff import check (I rules) passes on the modified config.py (p2p_enrichment)
+rubric:
+- rule: Code should have minimal unnecessary comments and work process notes in config.py.
+  source:
+    path: src/prime_rl/utils/config.py
+    lines: 1-30
+  reference: |
+    def _convert_none(obj):
+        """Recursively convert None values to 'None' strings."""
+        if isinstance(obj, dict):
+            return {k: _convert_none(v) for k, v in obj.items()}
+        elif isinstance(obj, list):
+            return [_convert_none(item) for item in obj]
+        elif obj is None:
+            return "None"
+        return obj
+  category: style
+- rule: Avoid try/except blocks unless it's really necessary in config.py.
+  source:
+    path: src/prime_rl/utils/config.py
+    lines: 1-30
+  reference: |
+    def _convert_none(obj):
+        if isinstance(obj, dict):
+            return {k: _convert_none(v) for k, v in obj.items()}
+        elif isinstance(obj, list):
+            return [_convert_none(item) for item in obj]
+        elif obj is None:
+            return "None"
+        return obj
+  category: style
+distractors:
+- rule: Flat is better than nested.
+  collision_type: rule_conflict
+  why_distracting: The data structure being serialized is inherently nested (dicts
+    containing lists containing dicts). An agent might try to follow 'Flat is better
+    than nested' by avoiding recursion and writing a complex iterative stack-based
+    implementation, which would violate 'Simple is better than complex'.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 15-15
+- rule: You are responsible for maintaining the skills folder. When a workflow fails
+    and you fix it... you must update the skills to make implicit knowledge explicit.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to edit the `toml-config` skill file to
+    document that `None` values inside lists are now supported. However, this is an
+    internal bug fix for serialization, not a workflow change or new implicit knowledge
+    that belongs in user-facing skill documentation.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 40-42
+hierarchy_analysis: The hierarchy is effectively flat, as CLAUDE.md simply includes
+  AGENTS.md. The rules are global and generic, with no deep overriding logic required.

@@ -1,0 +1,156 @@
+version: "2.0"
+
+source:
+  repo: "PrimeIntellect-ai/prime-rl"
+  pr: 1448
+  base_commit: "05165f6c09009c1b2ed3e4c93997152f8cfb6e29"
+  merge_commit: "594cbabde264971630f1d25f7287dac387377e22"
+
+checks:
+  # Gates (syntax/compatibility)
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified files parse without errors"
+
+  # Fail-to-pass (core behavioral changes) - all use subprocess.run() for code execution
+  - id: interleave_rollout_returns_none_for_empty_trajectory
+    type: fail_to_pass
+    origin: pr_diff
+    description: "interleave_rollout returns None when trajectory is empty (subprocess execution)"
+
+  - id: branch_rollout_returns_none_for_empty_trajectory
+    type: fail_to_pass
+    origin: pr_diff
+    description: "branch_rollout returns None when trajectory is empty (subprocess execution)"
+
+  - id: interleave_rollout_zeros_completion_mask_on_error
+    type: fail_to_pass
+    origin: pr_diff
+    description: "interleave_rollout zeros completion_mask when state has error (subprocess execution)"
+
+  - id: branch_rollout_zeros_completion_mask_on_error
+    type: fail_to_pass
+    origin: pr_diff
+    description: "branch_rollout zeros completion_mask when state has error (subprocess execution)"
+
+  - id: orchestrator_imports_no_get_is_truncated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "orchestrator.py no longer imports get_is_truncated from utils.vf"
+
+  - id: trajectories_return_type_annotation
+    type: fail_to_pass
+    origin: pr_diff
+    description: "interleave_rollout and branch_rollout have correct return type annotations with None"
+
+  # Pass-to-pass (regression + functionality)
+  - id: upstream_trajectory_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Upstream trajectory unit tests still pass (subprocess execution)"
+
+  - id: interleave_rollout_normal_case_works
+    type: pass_to_pass
+    origin: static
+    description: "interleave_rollout works normally when no error and non-empty trajectory (subprocess execution)"
+
+  - id: branch_rollout_normal_case_works
+    type: pass_to_pass
+    origin: static
+    description: "branch_rollout works normally when no error and non-empty trajectory (subprocess execution)"
+
+  - id: orchestrator_has_error_handling
+    type: pass_to_pass
+    origin: static
+    description: "orchestrator.py safely handles None return from make_train_example"
+
+  - id: orchestrator_uses_rollout_is_truncated
+    type: pass_to_pass
+    origin: static
+    description: "orchestrator.py uses rollout['is_truncated'] directly instead of get_is_truncated()"
+
+  # P2P Enrichment - CI/CD checks from the repo
+  - id: repo_ruff_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Ruff linter passes on modified orchestrator files"
+
+  - id: repo_ruff_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Ruff format check passes on modified orchestrator files"
+
+  - id: repo_ruff_lint_all_src
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Ruff linter passes on all source files (CI check)"
+
+  - id: repo_import_syntax_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Python syntax validation passes for all modified files"
+
+  # Additional P2P Enrichment - CI/CD checks from the repo
+  - id: orchestrator_unit_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All orchestrator unit tests pass (batch + trajectory tests, excluding torch-dependent)"
+
+  - id: train_runs_unit_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Train runs unit tests pass"
+
+  - id: train_world_unit_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Train world unit tests pass"
+
+
+  # Additional P2P Enrichment - CI/CD checks found during exploration
+  - id: test_repo_batch_unit_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Batch preparation unit tests pass (CI test)"
+
+  - id: test_repo_all_orchestrator_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All working orchestrator unit tests pass - batch and trajectory tests (CI test)"
+
+  - id: test_repo_pytest_version
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Pytest is available and working (CI tooling check)"
+
+  - id: test_repo_imports_work
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Core orchestrator modules can be imported (CI smoke test)"
+rubric:
+  - rule: "When handling errors in trajectory processing, zero out the completion_mask to prevent logprob computation issues"
+    source:
+      path: "src/prime_rl/orchestrator/trajectories.py"
+      lines: "190-200"
+      commit: "05165f6c09009c1b2ed3e4c93997152f8cfb6e29"
+    reference: |
+      When state has an error, the completion_mask should be set to all False:
+      ```python
+      has_error = state["error"] is not None
+      if has_error:
+          completion_mask = [False] * len(tokens["completion_mask"])
+      ```
+
+  - rule: "Use type annotations with Union syntax (X | Y) for return types that can be None"
+    source:
+      path: "src/prime_rl/orchestrator/trajectories.py"
+      lines: "175-180"
+      commit: "05165f6c09009c1b2ed3e4c93997152f8cfb6e29"
+    reference: |
+      Return type should use modern Union syntax:
+      ```python
+      def interleave_rollout(state: vf.State) -> list[TrainingSample] | None:
+      def branch_rollout(state: vf.State) -> list[TrainingSample] | None:
+      ```
+

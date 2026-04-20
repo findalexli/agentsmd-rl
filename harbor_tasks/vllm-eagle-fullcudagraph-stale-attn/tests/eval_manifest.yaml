@@ -1,0 +1,159 @@
+version: '2.0'
+source:
+  repo: vllm-project/vllm
+  pr: 38311
+  base_commit: 44a6528028ad79951de08b6a7928f6c05788d00d
+  merge_commit: 384e4d5f48cea203b0fbcd41951d2d49775bf6bd
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified file must parse without errors
+- id: no_fullgraph_early_return
+  type: fail_to_pass
+  origin: pr_diff
+  description: FULL cudagraph path must not early-return before building attention
+    metadata
+- id: attn_metadata_before_fullgraph_execution
+  type: fail_to_pass
+  origin: pr_diff
+  description: Attention metadata must be built before FULL cudagraph execution
+- id: slot_mappings_computed
+  type: pass_to_pass
+  origin: pr_diff
+  description: Slot mappings computed in propose() for all cudagraph modes
+- id: core_class_structure
+  type: pass_to_pass
+  origin: pr_diff
+  description: EagleSpeculator class retains all required methods
+- id: propose_not_stub
+  type: pass_to_pass
+  origin: static
+  description: propose() has real logic — conditionals, calls, self attribute access
+- id: no_bare_pip
+  type: pass_to_pass
+  origin: agent_config
+  description: No bare pip usage in modified file
+  source:
+    path: AGENTS.md
+    lines: '42'
+    commit: 44a6528028ad79951de08b6a7928f6c05788d00d
+- id: no_wildcard_imports
+  type: pass_to_pass
+  origin: static
+  description: No wildcard imports in modified file
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo ruff linter passes on modified file
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo ruff format check passes on modified file
+- id: test_repo_typos
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo typos checker passes on modified file
+- id: test_repo_py_compile
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified file compiles without syntax errors
+- id: test_repo_ast_parse
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified file parses as valid Python AST
+- id: test_repo_mypy
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo mypy type checker passes on modified file
+- id: test_repo_spdx_header
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified file has SPDX license header
+- id: test_repo_forbidden_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified file has no forbidden imports
+rubric: []
+distractors:
+- rule: Duplicate-work checks using gh CLI
+  collision_type: meta_confusion
+  why_distracting: The agent might attempt to run `gh issue view` or `gh pr list`
+    inside the `solve.sh` script to check for duplicate work. This will fail in the
+    evaluation environment where the GitHub CLI is not authenticated or installed,
+    and is irrelevant for a code generation task.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 8-15
+- rule: Running tests using uv and pytest
+  collision_type: meta_confusion
+  why_distracting: The agent might try to install test dependencies using `uv pip
+    install` and run `pytest` inside the `solve.sh` script. This would cause the script
+    to take excessively long or fail due to environment constraints, as testing is
+    handled by the evaluation framework.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 48-58
+- rule: Commit messages must include attribution trailers
+  collision_type: meta_confusion
+  why_distracting: The agent might try to use `git commit` with `Co-authored-by:`
+    trailers inside the `solve.sh` script. The evaluation framework expects a patch
+    or file modifications, not a git commit, and running git commit might fail if
+    the git user is not configured.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 71-80
+- rule: Keep AGENTS.md under 200 lines and each domain guide under 300 lines.
+  source:
+    path: docs/contributing/editing-agent-instructions.md
+    lines: '8'
+  source_text: Keep `AGENTS.md` under **200 lines** and each domain guide under **300
+    lines**.
+  collision_type: scope_ambiguity
+  why_distracting: An agent editing the Python codebase (e.g., speculator.py) might
+    mistakenly apply this length restriction to source code, attempting an unnecessary
+    and potentially bug-inducing refactor to keep the file under 300 lines.
+  severity: high
+- rule: Avoid hardcoded paths; use "search for X" patterns instead.
+  source:
+    path: docs/contributing/editing-agent-instructions.md
+    lines: '17'
+  source_text: '- **Hardcoded paths.** File paths change; use "search for X" patterns
+    instead.'
+  collision_type: scope_ambiguity
+  why_distracting: This rule is intended for writing robust instructions within documentation.
+    If an agent applies this to Python code, it might try to write dynamic search
+    logic instead of using explicit file paths or literal strings required by the
+    application.
+  severity: medium
+- rule: Prefer examples over explanations.
+  source:
+    path: docs/contributing/editing-agent-instructions.md
+    lines: '50'
+  source_text: '- Prefer examples over explanations — a 3-line snippet beats a paragraph
+    of prose.'
+  collision_type: scope_ambiguity
+  why_distracting: This rule is meant for documentation brevity, but an agent modifying
+    Python code might follow it by avoiding helpful explanatory comments or docstrings,
+    such as the block comments explaining FULL cudagraph added in the diff.
+  severity: medium
+- rule: Show the command to get the value, not the value itself.
+  source:
+    path: docs/contributing/editing-agent-instructions.md
+    lines: '62'
+  source_text: '| Config snapshots | Show the command to get the value, not the value
+    itself |'
+  collision_type: scope_ambiguity
+  why_distracting: If an agent applies this documentation rule to Python code, it
+    might attempt to execute shell commands (e.g., via subprocess) to fetch configurations
+    dynamically instead of using the provided configuration objects or constants.
+  severity: high
+hierarchy_analysis: The configuration hierarchy consists of `CLAUDE.md` which simply
+  includes `AGENTS.md`. `AGENTS.md` provides extensive guidelines on PR submission,
+  environment setup, and testing. Since the task is to generate a fix script (`solve.sh`)
+  for an evaluation environment, many of the workflow and PR-related rules in `AGENTS.md`
+  (like using `gh` CLI, running tests, and formatting commit messages) are meta-distractors
+  that conflict with the constraints of a headless evaluation script.

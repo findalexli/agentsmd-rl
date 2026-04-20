@@ -1,0 +1,94 @@
+source_pr:
+  owner: excalidraw
+  repo: excalidraw
+  number: 10648
+  title: "perf: Cache hits in collision detection"
+  merge_commit: dfdd994dbbefc0562c0c5e42f267f23ae8d9d62d
+  base_commit: 3b97f5a10cc576cbe7863a2e4772203ebb13b606
+
+target_file:
+  - packages/element/src/collision.ts
+
+distinctive_lines:
+  - "let cachedPoint: GlobalPoint | null = null"
+  - "cachedThreshold <= threshold"
+  - "new WeakRef(element)"
+
+checks:
+  # Fail-to-pass: Caching implementation
+  - id: test_collision_cache_implements_caching
+    type: fail_to_pass
+    origin: task
+    description: "Caching variables and WeakRef are implemented in collision.ts"
+
+  - id: test_cache_reuses_result_for_increased_threshold
+    type: fail_to_pass
+    origin: task
+    description: "Cache checks threshold comparison (cachedThreshold <= threshold)"
+
+  - id: test_cache_invalidates_on_version_change
+    type: fail_to_pass
+    origin: task
+    description: "Cache invalidates when element version or versionNonce changes"
+
+  - id: test_uses_weakref_for_element_cache
+    type: fail_to_pass
+    origin: task
+    description: "Cache uses WeakRef to avoid memory leaks"
+
+  - id: test_cache_stores_hit_result
+    type: fail_to_pass
+    origin: task
+    description: "Hit result is stored in cachedHit and returned from cache"
+
+  # Pass-to-pass: Repo CI tests
+  - id: test_repo_typescript_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "TypeScript type checking passes (tsc)"
+
+  - id: test_repo_lint_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ESLint code style check passes"
+
+  - id: test_repo_prettier_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Prettier formatting check passes"
+
+  - id: test_repo_collision_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repository's collision tests pass"
+
+
+# Code implementation quality rules (evaluated against actual code changes)
+rubric:
+  - rule: "TypeScript code uses proper type annotations (GlobalPoint | null, WeakRef<ExcalidrawElement>)"
+    source: "CLAUDE.md"
+    category: "language"
+
+  - rule: "Cache implementation uses const for immutable variables and let for mutable cache state"
+    source: "CLAUDE.md"
+    category: "style"
+
+  - rule: "Uses optional chaining (?.) operator for cachedElement?.deref()"
+    source: "CLAUDE.md"
+    category: "style"
+
+  - rule: "Variable names use camelCase (cachedPoint, cachedElement, cachedThreshold, cachedHit)"
+    source: ".github/copilot-instructions.md"
+    category: "naming"
+
+  - rule: "Implements proper cache invalidation by checking element version and versionNonce"
+    source: "task_specific"
+    category: "correctness"
+
+  - rule: "Uses WeakRef to hold element reference, avoiding memory leaks"
+    source: "task_specific"
+    category: "memory_management"
+
+  - rule: "Uses pointsEqual() for efficient point comparison instead of manual coordinate checks"
+    source: "CLAUDE.md"
+    category: "performance"

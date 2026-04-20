@@ -1,0 +1,88 @@
+version: '2.0'
+source:
+  repo: astral-sh/ruff
+  pr: 24371
+  base_commit: de6d6be794a1b649ba5d60af6fe956c194dc9b2a
+  merge_commit: 50ee3c2e70ccd8b945b1280cc1a1bf92612744db
+checks:
+- id: cargo_check
+  type: pass_to_pass
+  origin: static
+  description: The crate must compile without errors
+- id: fix_safe_in_preview
+  type: fail_to_pass
+  origin: pr_diff
+  description: With --preview, SIM102 collapsible-if fix applicability must be 'safe'
+- id: fix_safe_in_preview_varied_inputs
+  type: fail_to_pass
+  origin: pr_diff
+  description: Preview-safe fix works across multiple different collapsible-if patterns
+- id: preview_function_defined
+  type: fail_to_pass
+  origin: pr_diff
+  description: preview.rs must define is_collapsible_if_fix_safe_enabled
+- id: fix_unsafe_without_preview
+  type: pass_to_pass
+  origin: pr_diff
+  description: Without --preview, the SIM102 fix must remain 'unsafe'
+- id: cargo_test_collapsible
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: cargo test collapsible (SIM102) passes'
+- id: cargo_check_ruff_linter
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: cargo check --package ruff_linter passes'
+- id: cargo_test_flake8_simplify
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: cargo test flake8_simplify module passes'
+- id: no_unwrap_or_panic
+  type: pass_to_pass
+  origin: agent_config
+  description: No panic!(), unreachable!(), or .unwrap() in modified rule files
+  source:
+    path: AGENTS.md
+    lines: '79'
+    commit: de6d6be794a1b649ba5d60af6fe956c194dc9b2a
+- id: rust_imports_at_top
+  type: pass_to_pass
+  origin: agent_config
+  description: Rust imports must be at top of file, not inside functions
+  source:
+    path: AGENTS.md
+    lines: '76'
+    commit: de6d6be794a1b649ba5d60af6fe956c194dc9b2a
+rubric:
+- rule: Follow existing code style. Check neighboring files for patterns.
+  source:
+    path: AGENTS.md
+    lines: '75'
+    commit: de6d6be794a1b649ba5d60af6fe956c194dc9b2a
+- rule: Use comments purposefully. Don't use comments to narrate code, but do use
+    them to explain invariants and why something unusual was done a particular way.
+  source:
+    path: AGENTS.md
+    lines: '82'
+    commit: de6d6be794a1b649ba5d60af6fe956c194dc9b2a
+- rule: Rust imports should always go at the top of the file, never locally in functions.
+  source:
+    path: AGENTS.md
+    lines: 64-64
+  evidence: In `crates/ruff_linter/src/rules/flake8_simplify/rules/collapsible_if.rs`,
+    the imports `use ruff_diagnostics::Applicability::{Safe, Unsafe};` and `use crate::preview::is_collapsible_if_fix_safe_enable
+  category: style
+distractors:
+- rule: All changes must be tested. If you're not testing your changes, you're not
+    done.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to manually write new test functions or files
+    to verify the preview behavior. However, Ruff uses snapshot tests (`insta`) which
+    are updated automatically via the test command provided in the instructions, so
+    manually writing new test code is unnecessary and distracting.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 51-51
+hierarchy_analysis: The configuration is flat, with `CLAUDE.md` simply including `AGENTS.md`.
+  There are no conflicting rules between files.

@@ -1,0 +1,178 @@
+version: '2.0'
+source:
+  repo: astral-sh/uv
+  pr: 18571
+  base_commit: 685a79876028a83976acafffd94e8abe3295d72a
+  merge_commit: b38bea427cca74f993c78213522a16a902b6046e
+checks:
+- id: uv_audit_clap_feature_compiles
+  type: fail_to_pass
+  origin: pr_diff
+  description: uv-audit crate compiles with the clap feature enabled (validates optional
+    dep + ValueEnum derive)
+- id: vulnerability_service_format_is_public
+  type: fail_to_pass
+  origin: pr_diff
+  description: VulnerabilityServiceFormat is a public enum with Osv variant and Copy+Clone+Debug
+    derives
+- id: cli_service_format_field
+  type: fail_to_pass
+  origin: pr_diff
+  description: AuditArgs.service_format is VulnerabilityServiceFormat
+- id: cli_service_url_field
+  type: fail_to_pass
+  origin: pr_diff
+  description: AuditArgs.service_url is Option<String>
+- id: cli_arg_attributes
+  type: fail_to_pass
+  origin: pr_diff
+  description: service_format has value_enum + default_value osv, service_url has
+    ValueHint::Url
+- id: audit_fn_accepts_service_params
+  type: fail_to_pass
+  origin: pr_diff
+  description: audit() uses VulnerabilityServiceFormat and service_url with API_BASE
+    fallback
+- id: settings_wires_service_fields
+  type: fail_to_pass
+  origin: pr_diff
+  description: AuditSettings includes and wires service_format and service_url
+- id: uv_cli_depends_on_uv_audit
+  type: fail_to_pass
+  origin: pr_diff
+  description: uv-cli Cargo.toml depends on uv-audit with clap feature enabled
+- id: test_repo_cargo_check_uv_audit
+  type: pass_to_pass
+  origin: repo_tests
+  description: uv-audit crate compiles (repo CI)
+- id: test_repo_cargo_check_uv_cli
+  type: pass_to_pass
+  origin: repo_tests
+  description: uv-cli crate compiles (repo CI)
+- id: test_repo_cargo_check_uv
+  type: pass_to_pass
+  origin: repo_tests
+  description: Main uv crate compiles (repo CI)
+- id: test_repo_cargo_test_uv_audit
+  type: pass_to_pass
+  origin: repo_tests
+  description: uv-audit tests pass (repo CI)
+- id: test_repo_cargo_test_uv_cli
+  type: pass_to_pass
+  origin: repo_tests
+  description: uv-cli tests pass (repo CI)
+- id: test_repo_cargo_clippy_uv_audit
+  type: pass_to_pass
+  origin: repo_tests
+  description: uv-audit crate passes clippy linting (repo CI)
+- id: test_repo_cargo_clippy_uv_cli
+  type: pass_to_pass
+  origin: repo_tests
+  description: uv-cli crate passes clippy linting (repo CI)
+- id: test_repo_cargo_fmt
+  type: pass_to_pass
+  origin: repo_tests
+  description: All Rust code passes formatting checks (repo CI)
+- id: no_unwrap_in_new_service_code
+  type: pass_to_pass
+  origin: agent_config
+  description: No bare .unwrap() in new service-handling code in audit.rs
+  source:
+    path: CLAUDE.md
+    lines: '7'
+    commit: 685a79876028a83976acafffd94e8abe3295d72a
+- id: top_level_imports
+  type: fail_to_pass
+  origin: agent_config
+  description: VulnerabilityServiceFormat imported at top of files that use it
+  source:
+    path: CLAUDE.md
+    lines: '16'
+    commit: 685a79876028a83976acafffd94e8abe3295d72a
+- id: no_panic_in_new_code
+  type: pass_to_pass
+  origin: agent_config
+  description: No panic!, unreachable!, or unsafe in service/mod.rs
+  source:
+    path: CLAUDE.md
+    lines: '7'
+    commit: 685a79876028a83976acafffd94e8abe3295d72a
+rubric:
+- rule: PREFER patterns like if let to handle fallibility
+  source:
+    path: CLAUDE.md
+    lines: '8'
+    commit: 685a79876028a83976acafffd94e8abe3295d72a
+- rule: AVOID shortening variable names, e.g., use version instead of ver, and requires_python
+    instead of rp
+  source:
+    path: CLAUDE.md
+    lines: 17-18
+    commit: 685a79876028a83976acafffd94e8abe3295d72a
+- rule: PREFER let chains (if let combined with &&) over nested if let statements
+  source:
+    path: CLAUDE.md
+    lines: '11'
+    commit: 685a79876028a83976acafffd94e8abe3295d72a
+- rule: PREFER top-level imports over local imports or fully qualified names
+  source:
+    path: CLAUDE.md
+    lines: 15-15
+  evidence: The gold solution adds `use uv_audit::service::VulnerabilityServiceFormat;`
+    at the top of `crates/uv-cli/src/lib.rs` rather than using the fully qualified
+    name inline within the `AuditArgs` struct.
+  category: style
+- rule: AVOID shortening variable names, e.g., use `version` instead of `ver`
+  source:
+    path: CLAUDE.md
+    lines: 16-17
+  evidence: The gold solution uses descriptive, unshortened variable names `service_format`
+    and `service_url` in `AuditArgs` rather than abbreviations like `svc_fmt` or `url`.
+  category: naming
+- rule: AVOID shortening variable names
+  source:
+    path: CLAUDE.md
+    lines: 16-17
+  evidence: The new CLI arguments and struct fields are named `service_format` and
+    `service_url` rather than shortened versions like `svc_fmt` or `url`.
+  category: naming
+distractors:
+- rule: ALWAYS attempt to add a test case for changed behavior / PREFER integration
+    tests
+  collision_type: scope_ambiguity
+  why_distracting: The gold solution does not add any tests. An agent strictly following
+    this rule might waste significant time trying to mock the OSV API or write integration
+    tests for the new CLI flags, which is out of scope for this specific architectural
+    plumbing PR.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 2-3
+- rule: NEVER update all dependencies in the lockfile and ALWAYS use `cargo update
+    --precise` to make lockfile changes
+  collision_type: meta_confusion
+  why_distracting: The agent needs to add `clap` as a dependency to `uv-audit`. This
+    naturally requires updating the lockfile (usually via `cargo check` or `cargo
+    build`). The rule about using `cargo update --precise` applies to version bumps
+    of existing dependencies, not adding new ones. An agent might get confused and
+    try to use `cargo update --precise` inappropriately or fail to commit the lockfile
+    changes.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 12-13
+- rule: Prefer [`TypeName`] references when writing Rust doc comments.
+  source:
+    path: CLAUDE.md
+    lines: '19'
+  source_text: '- PREFER [`TypeName`] references when writing Rust doc comments'
+  collision_type: meta_confusion
+  why_distracting: The diff adds `///` comments on clap argument fields in `AuditArgs`
+    (patch lines 77-92). Those comments are consumed as CLI help text, not primarily
+    as Rustdoc. Inserting Rustdoc intra-doc links like [`VulnerabilityServiceFormat`]
+    here would leak markup into user-facing help output, so ignoring this convention
+    is correct for this change.
+  severity: medium
+hierarchy_analysis: The configuration is a flat, single-file `CLAUDE.md` at the repository
+  root. There are no hierarchical conflicts, but the agent must apply these global
+  rules appropriately to a multi-crate workspace refactoring task.

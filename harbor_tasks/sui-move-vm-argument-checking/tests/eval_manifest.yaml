@@ -1,0 +1,139 @@
+checks:
+- id: test_compilation
+  type: pass_to_pass
+  origin: repo_tests
+  description: move-vm-runtime compiles successfully
+- id: test_argument_count_happy_path_0_args
+  type: pass_to_pass
+  origin: repo_tests
+  description: Function calls with correct 0 arguments succeed
+- id: test_argument_count_happy_path_1_arg
+  type: pass_to_pass
+  origin: repo_tests
+  description: Function calls with correct 1 argument succeed
+- id: test_repo_cargo_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's cargo check on move-vm-runtime passes
+- id: test_repo_cargo_check_all
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's cargo check on all move crates passes
+- id: test_repo_cargo_test_move_vm_runtime
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's cargo test on move-vm-runtime --lib passes
+- id: test_repo_cargo_xlint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's cargo xlint (license check) passes
+- id: test_repo_function_arg_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's function_arg_tests module passes
+- id: test_repo_move_clippy
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's cargo move-clippy on external-crates/move passes (CI lint)
+- id: test_argument_count_mismatch_0_expected_1_got
+  type: fail_to_pass
+  origin: pr_diff
+  description: Calling function expecting 0 args with 1 arg fails with NUMBER_OF_ARGUMENTS_MISMATCH
+- id: test_argument_count_mismatch_1_expected_0_got
+  type: fail_to_pass
+  origin: pr_diff
+  description: Calling function expecting 1 arg with 0 args fails with NUMBER_OF_ARGUMENTS_MISMATCH
+- id: test_argument_count_mismatch_2_expected_1_got
+  type: fail_to_pass
+  origin: pr_diff
+  description: Calling function expecting 2 args with 1 arg fails with NUMBER_OF_ARGUMENTS_MISMATCH
+- id: test_argument_count_mismatch_2_expected_3_got
+  type: fail_to_pass
+  origin: pr_diff
+  description: Calling function expecting 2 args with 3 args fails with NUMBER_OF_ARGUMENTS_MISMATCH
+- id: test_type_argument_count_mismatch_0_expected_1_got
+  type: fail_to_pass
+  origin: pr_diff
+  description: Calling generic function with 0 type args fails with NUMBER_OF_TYPE_ARGUMENTS_MISMATCH
+- id: test_type_argument_count_mismatch_1_expected_2_got
+  type: fail_to_pass
+  origin: pr_diff
+  description: Calling generic function with 2 type args when 1 expected fails
+- id: test_type_argument_count_mismatch_non_generic_with_args
+  type: fail_to_pass
+  origin: pr_diff
+  description: Calling non-generic function with type args fails with NUMBER_OF_TYPE_ARGUMENTS_MISMATCH
+- id: test_type_argument_count_mismatch_2_expected_1_got
+  type: fail_to_pass
+  origin: pr_diff
+  description: Calling function expecting 2 type args with 1 fails
+- id: test_type_argument_count_mismatch_2_expected_3_got
+  type: fail_to_pass
+  origin: pr_diff
+  description: Calling function expecting 2 type args with 3 fails
+- id: test_vm_code_present
+  type: fail_to_pass
+  origin: static
+  description: VM argument checking code is present in vm.rs
+rubric:
+- rule: All new files must start with the Mysten Labs Apache-2.0 license header
+  source:
+    path: CLAUDE.md
+    lines: 16-21
+    commit: fbb6960c6225c2a4406cd336a0899b54e53e4787
+- rule: Always run cargo xclippy after finishing development to ensure code passes
+    all linting checks
+  source:
+    path: CLAUDE.md
+    lines: 51-59,111
+    commit: fbb6960c6225c2a4406cd336a0899b54e53e4787
+- rule: 'NEVER use #[allow(dead_code)], #[allow(unused)], or any other linting suppressions
+    - fix the underlying issues instead'
+  source:
+    path: CLAUDE.md
+    lines: '113'
+    commit: fbb6960c6225c2a4406cd336a0899b54e53e4787
+- rule: Do NOT comment the obvious - comments should explain non-obvious algorithms,
+    business logic, or invariants, not narrate simple code
+  source:
+    path: CLAUDE.md
+    lines: 116-131
+    commit: fbb6960c6225c2a4406cd336a0899b54e53e4787
+- rule: 'Execution Pipeline: Move VM executes smart contracts'
+  source:
+    path: CLAUDE.md
+    lines: 82-84
+  evidence: The gold solution modifies `execute_function` in `vm.rs` to validate argument
+    counts before allowing the Move VM to execute the smart contract, aligning with
+    the execution pipeline architecture.
+  category: architecture
+distractors:
+- rule: Run tests using `cargo simtest -p sui-e2e-tests` or `SUI_SKIP_SIMTESTS=1 cargo
+    nextest run`
+  collision_type: rule_conflict
+  why_distracting: The config instructs running the entire test suite using cargo
+    nextest or simtest, which takes over 10 minutes. The task instruction provides
+    a specific, fast cargo test command for the exact tests needed.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 31-35
+- rule: Run `./scripts/lint.sh` or `cargo fmt --all -- --check` and `cargo xclippy`
+    before commit
+  collision_type: scope_ambiguity
+  why_distracting: The config suggests running global linting and formatting checks.
+    In a large codebase, this might surface unrelated issues or take a long time,
+    distracting the agent from the specific bug fix.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 49-53
+hierarchy_analysis: The hierarchy is flat with only root-level AGENTS.md and CLAUDE.md
+  files. The task instruction provides specific testing commands that conflict with
+  the global testing commands in CLAUDE.md.
+version: '2.0'
+source:
+  repo: MystenLabs/sui.git
+  pr: 0
+  base_commit: fbb6960c6225c2a4406cd336a0899b54e53e4787
+  merge_commit: ''

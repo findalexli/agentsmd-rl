@@ -1,60 +1,56 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert specific implementation details not mentioned in instruction.md: test_component_filters_versions_conditionally checks for the exact variable name 'runData' and the regex pattern 'runId !== undefined && runData|runId && runData'. The instruction never mentions the variable name 'runData' or the specific conditional pattern. Also, test_component_extracts_runid_from_params asserts a specific destructuring pattern 'const {.*runId.*} = useParams' which is not specified in the instruction"
+      "outcome": "pass",
+      "reason": "Instruction names the component path, the runId/dagId route params, the openapi/queries module, and the dag_versions field used by tests."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the problem (version dropdown shows all versions instead of run-specific ones) and expected behavior, but does not specify the exact code changes, line numbers, or variable names to use."
+      "reason": "Instruction describes the desired behavior without specifying code changes or exact hook names like useDagRunServiceGetDagRun."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_component_filters_versions_conditionally asserts the exact variable name 'runData' via `assert 'runData' in content` and a specific conditional pattern `runId !== undefined && runData|runId && runData`. An alternative correct fix using a different variable name (e.g., 'dagRunResponse' or 'selectedRun') or a different conditional structure (e.g., if-else block, separate useMemo) would fail these regex-based checks."
+      "reason": "test_component_filters_versions_conditionally requires specific regex matches for 'runId !== undefined && runData' or 'runId && runData' and mandates variable name 'runData', rejecting valid alternative implementations (e.g., using optional chaining, different variable names, or different conditional structures)."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Three of the seven tests (test_component_imports_dag_run_service, test_component_extracts_runid_from_params, test_component_filters_versions_conditionally) are purely text-matching tests using `assert X in content` and regex searches on the source file, with no execution or behavioral verification. While test_vitest_dagversionselect_filtering does execute the component, the majority of f2p-specific tests are text-based."
+      "outcome": "pass",
+      "reason": "test_vitest_dagversionselect_filtering actually runs vitest and renders the component, and typescript/eslint/prettier are executed."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The vitest test (test_vitest_dagversionselect_filtering) renders the component with a mocked DagRun and asserts exactly 2 items are shown instead of 3, which cannot be satisfied by a stub/no-op implementation. The text-based tests also check for specific imports and patterns that aren't present in the original file."
+      "reason": "The vitest test asserts specific item counts (3 vs 2) based on runId selection, which a stub cannot trivially satisfy."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires two behaviors: (1) filter versions when a DagRun is selected, and (2) show all versions when no DagRun is selected. Both are tested in the vitest tests ('shows all versions when no DagRun is selected' and 'shows only the selected run's versions when a DagRun is selected')."
+      "reason": "Tests verify the two cases described in Expected Behavior (all versions without runId, filtered with runId), plus the lint/typescript/prettier constraints."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names and docstrings explaining what each test verifies, and the vitest tests use describe/it blocks with clear descriptions."
+      "reason": "Tests have descriptive names and docstrings indicating f2p vs p2p intent."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves modifying a UI component, not producing structured data output."
+      "reason": "No structured data output is produced."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "Paths and identifiers appear consistent and correct."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly names the exact file path 'airflow-core/src/airflow/ui/src/components/DagVersionSelect.tsx' and specifies that 'The DagRun response includes a dag_versions array field' and mentions specific API hooks like 'useDagRunServiceGetDagRun' by naming the 'openapi/queries' module. While the component file is somewhat obvious, naming the exact API hook module and response field structure is significant hint leakage."
+      "outcome": "pass",
+      "reason": "Instruction names the component file, which is appropriate since the task is explicitly about that component."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a configuration edit task."
+      "reason": "This is a code task, not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 5,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 1
 }

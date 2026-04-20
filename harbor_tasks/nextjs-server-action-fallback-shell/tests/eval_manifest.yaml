@@ -1,0 +1,120 @@
+version: '2.0'
+source:
+  repo: vercel/next.js
+  pr: 91711
+  base_commit: 6a8a31a7f42bb7d133aed5a6d854d069883aa57b
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: app-page.ts must have balanced braces and export the handler function
+- id: server_action_guard_in_static_path_key
+  type: fail_to_pass
+  origin: pr_diff
+  description: staticPathKey condition must reference server actions to prevent fallback
+    rendering on action requests
+- id: server_action_excluded_from_static_path_key
+  type: fail_to_pass
+  origin: pr_diff
+  description: Server actions must be excluded (negated) from staticPathKey assignment,
+    not just referenced
+- id: dev_mode_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: routeModule.isDev path still present in staticPathKey condition
+- id: ssg_dynamic_fallback_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: isSSG, pageIsDynamic, and fallbackRouteParams remain in the staticPathKey
+    condition
+- id: handler_not_stub
+  type: pass_to_pass
+  origin: static
+  description: handler() exported and non-trivial (>100 lines, file >30KB)
+- id: no_relative_require
+  type: pass_to_pass
+  origin: agent_config
+  description: No relative-path require() in build template — traced by bundler at
+    build time
+  source:
+    path: AGENTS.md
+    lines: '407'
+    commit: 6a8a31a7f42bb7d133aed5a6d854d069883aa57b
+- id: no_hardcoded_secrets
+  type: pass_to_pass
+  origin: agent_config
+  description: No hardcoded secret values in source
+  source:
+    path: AGENTS.md
+    lines: '306'
+    commit: 6a8a31a7f42bb7d133aed5a6d854d069883aa57b
+- id: no_react_server_dom_webpack_import
+  type: pass_to_pass
+  origin: agent_config
+  description: react-server-dom-webpack/* imports must stay in entry-base.ts, not
+    in build templates
+  source:
+    path: AGENTS.md
+    lines: '398'
+    commit: 6a8a31a7f42bb7d133aed5a6d854d069883aa57b
+- id: test_repo_check_error_codes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's error codes check passes
+- id: test_repo_lint_eslint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ESLint passes on app-page.ts
+- id: test_repo_prettier_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Prettier formatting passes on app-page.ts
+- id: test_repo_lint_ast_grep
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ast-grep linting passes
+- id: test_repo_compiler_fixtures
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's compiler fixtures type-check passes
+rubric:
+- rule: Fix is applied to packages/next/src/build/templates/app-page.ts
+  source:
+    path: packages/next/src/build/templates/app-page.ts
+  reference: |
+    The fix adds "&& !isPossibleServerAction" to the condition that sets
+    staticPathKey, preventing server action requests from entering fallback rendering.
+  category: correctness
+- rule: Fix adds !isPossibleServerAction guard to staticPathKey condition
+  source:
+    path: packages/next/src/build/templates/app-page.ts
+  reference: |
+    The fix adds "&& !isPossibleServerAction" to the condition that sets
+    staticPathKey, preventing server action requests from entering fallback rendering.
+  category: correctness
+distractors:
+- rule: 'Always run a full bootstrap build after switching branches: pnpm build-all'
+  collision_type: scope_ambiguity
+  why_distracting: The rule instructs to run `pnpm build-all` after switching branches.
+    An agent might misinterpret this as a requirement to run a full bootstrap build
+    before starting work, which would waste significant time and compute resources
+    since no branch switch occurred.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 84-87
+- rule: Before editing or creating files in any subdirectory, read all README.md files
+    in the directory path from the repo root up to and including the target file's
+    directory.
+  collision_type: scope_ambiguity
+  why_distracting: The rule asks to read all README.md files in the directory path
+    before editing a file. Since the prompt already provides the exact file (`app-page.ts`),
+    line number, and root cause, searching for and reading READMEs up the directory
+    tree is an unnecessary distraction.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 42-49
+hierarchy_analysis: The configuration is flat, consisting of identical `AGENTS.md`
+  and `CLAUDE.md` files at the repository root. There is no deep hierarchy or overriding
+  of rules.

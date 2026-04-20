@@ -1,0 +1,97 @@
+version: '2.0'
+source:
+  repo: PrimeIntellect-ai/prime-rl
+  pr: 2154
+  base_commit: 04da032d968418edef069173d368e3a6080bfcb2
+  merge_commit: 355956e0c3f89c0537110c0b3ca504832d480dbb
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: ckpt.py must parse without syntax errors
+- id: test_repo_py_compile_ckpt
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo py_compile check passes on ckpt.py
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo ruff lint check passes on ckpt.py
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo ruff format check passes on ckpt.py
+- id: test_repo_pyproject_toml_valid
+  type: pass_to_pass
+  origin: static
+  description: Repo pyproject.toml is valid TOML
+- id: test_repo_all_prime_rl_files_compile
+  type: pass_to_pass
+  origin: static
+  description: All prime_rl Python source files compile without syntax errors
+- id: test_repo_ckpt_ast_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: ckpt.py has required AST structure (AppState class, load_state_dict
+    method)
+- id: test_repo_ruff_check_trainer_module
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo ruff lint check passes on trainer module
+- id: gc_imported
+  type: fail_to_pass
+  origin: pr_diff
+  description: gc module must be imported for gc.collect() to break circular refs
+- id: memory_reclamation_on_cpu_offload
+  type: fail_to_pass
+  origin: pr_diff
+  description: load_state_dict must call gc.collect() and torch.cuda.empty_cache()
+    to reclaim GPU memory after CPU offload load
+- id: cleanup_gated_on_offload
+  type: fail_to_pass
+  origin: pr_diff
+  description: Memory cleanup must be conditional on CPUOffloadOptimizer presence,
+    not unconditional
+- id: load_state_dict_not_stub
+  type: pass_to_pass
+  origin: static
+  description: load_state_dict has substantial logic, not a stub
+rubric:
+- rule: 'Minimal try/except: let errors propagate — silent failures hide bugs. Only
+    catch exceptions for intentional fault tolerance (retries, robustness).'
+  source:
+    path: AGENTS.md
+    lines: '5'
+    commit: 04da032d968418edef069173d368e3a6080bfcb2
+  reference: "# No try/except blocks used in the fix\n# Code changes use direct conditional\
+    \ logic without exception handling\nif has_cpu_offload:\n    state_dict.clear()\n\
+    \    gc.collect()\n    torch.cuda.empty_cache()\n"
+- rule: 'Targeted comments: don''t explain your work process or reference old code.
+    Use targeted comments sparingly to clarify ambiguous logic.'
+  source:
+    path: AGENTS.md
+    lines: '6'
+    commit: 04da032d968418edef069173d368e3a6080bfcb2
+  reference: '# Comments are minimal and describe what the code does, not the process:
+
+    # "Re-initialize CPU offload wrappers after loading" - describes purpose
+
+    # No references to "old code", "previously", "instead of", etc.
+
+    # No explanation of why changes were made or what was there before
+
+    '
+distractors:
+- rule: Write tests as plain functions with pytest fixtures. Don't use class-based
+    tests.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to write a test for the OOM fix to comply
+    with the testing rule. However, simulating a distributed checkpoint load with
+    CPU offloading to verify GPU memory reclamation is highly complex, requires specific
+    hardware setups, and is out of scope for this specific memory leak fix.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 30-31
+hierarchy_analysis: The hierarchy is flat, with `CLAUDE.md` simply including `AGENTS.md`.
+  There are no conflicting rules between files.

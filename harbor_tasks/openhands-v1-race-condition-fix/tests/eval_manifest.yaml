@@ -1,0 +1,132 @@
+source:
+  repo: All-Hands-AI/OpenHands
+  pr: 0
+  base_commit: b0d8244ad528a85d3b223478855b2a6cf8391d30
+  merge_commit: 9ad47bf43fe2dc7cdd68c5e61268c3c56937951f
+checks:
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TypeScript typecheck passes
+- id: test_repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's lint check (ESLint + Prettier) passes
+- id: test_repo_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's production build passes
+- id: test_repo_tests_relevant
+  type: pass_to_pass
+  origin: repo_tests
+  description: Tests for use-create-conversation pass
+- id: test_repo_tests_v1_conversation_service
+  type: pass_to_pass
+  origin: repo_tests
+  description: Tests for V1 conversation service pass
+- id: test_repo_tests_settings_related
+  type: pass_to_pass
+  origin: repo_tests
+  description: Tests for settings-related hooks pass
+- id: test_repo_tests_all_mutation_hooks
+  type: pass_to_pass
+  origin: repo_tests
+  description: All mutation hook tests pass
+- id: test_repo_tests_all_query_hooks
+  type: pass_to_pass
+  origin: repo_tests
+  description: All query hook tests pass
+- id: test_repo_translation_completeness
+  type: pass_to_pass
+  origin: repo_tests
+  description: Translation completeness check passes
+- id: test_repo_tests_organization_scoped_queries
+  type: pass_to_pass
+  origin: repo_tests
+  description: Tests for organization-scoped query hooks pass
+- id: test_repo_tests_new_conversation_command
+  type: pass_to_pass
+  origin: repo_tests
+  description: Tests for use-new-conversation-command hook pass
+- id: test_repo_prettier_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Prettier formatting check passes
+- id: test_repo_tests_all_api
+  type: pass_to_pass
+  origin: repo_tests
+  description: All API service tests pass
+- id: test_default_settings_v1_enabled
+  type: fail_to_pass
+  origin: pr_diff
+  description: DEFAULT_SETTINGS.v1_enabled must be true to align with backend default
+- id: test_getSettingsQueryFn_exported
+  type: fail_to_pass
+  origin: pr_diff
+  description: getSettingsQueryFn must be exported from use-settings.ts for mutation
+    hook
+- id: test_use_create_conversation_uses_ensureQueryData
+  type: fail_to_pass
+  origin: pr_diff
+  description: useCreateConversation must use ensureQueryData to wait for settings
+    before deciding V0 vs V1
+- id: test_use_create_conversation_has_fallback
+  type: fail_to_pass
+  origin: pr_diff
+  description: useCreateConversation must have try/catch fallback to DEFAULT_SETTINGS
+    when settings fetch fails
+- id: test_use_create_conversation_uses_organizationId
+  type: fail_to_pass
+  origin: pr_diff
+  description: useCreateConversation must use organizationId from useSelectedOrganizationId
+    for proper queryKey
+- id: test_use_create_conversation_imports
+  type: fail_to_pass
+  origin: pr_diff
+  description: useCreateConversation must import all required dependencies (Settings,
+    getSettingsQueryFn, DEFAULT_SETTINGS, useSelectedOrganizationId)
+- id: test_typescript_no_new_errors
+  type: fail_to_pass
+  origin: repo_tests
+  description: The fix must not introduce new syntax errors in modified files
+- id: test_use_create_conversation_structure
+  type: fail_to_pass
+  origin: pr_diff
+  description: useCreateConversation must have correct structure (no useSettings,
+    proper useV1 logic, fallback handling)
+rubric:
+- rule: The fix properly handles the race condition with appropriate error handling
+- rule: The fix maintains backwards compatibility for organizations with v1_enabled
+    explicitly false
+- rule: The backend includes V1 routes by default unless ENABLE_V1=0.
+  source:
+    path: AGENTS.md
+    lines: 54-56
+  evidence: The gold solution changes `DEFAULT_SETTINGS.v1_enabled` from `false` to
+    `true` in `frontend/src/services/settings.ts`, aligning the frontend with the
+    backend's default behavior of enabling V1 routes.
+  category: architecture
+distractors:
+- rule: Store design documents, scripts meant for development-only, or other temporary
+    artifacts in a `.pr/` directory.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might waste time creating a `.pr/analysis.md` file to
+    document the race condition investigation, which is unnecessary for this straightforward
+    bug fix and distracts from the actual code changes.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 38-46
+- rule: Use this skill when changes span the SDK and OpenHands server repos and need
+    e2e testing or cross-repo feature testing.
+  source:
+    path: .agents/skills/cross-repo-testing/SKILL.md
+    lines: 1-3
+  collision_type: scope_ambiguity
+  why_distracting: The issue mentions 'Align frontend default with backend default',
+    which might trick the agent into thinking it needs to perform cross-repo testing
+    or modify backend files, but the fix is strictly isolated to the frontend.
+  severity: medium
+hierarchy_analysis: Only a single root-level AGENTS.md file is present. No hierarchy
+  or overriding rules exist.
+version: '2.0'

@@ -1,0 +1,83 @@
+version: "2.0"
+source:
+  repo: "example/calc-repo"
+  pr: 1
+  base_commit: "abc123"
+  merge_commit: "def456"
+
+checks:
+  # Fail-to-pass tests (the main bug fix)
+  - id: divide_by_zero_raises_error
+    type: fail_to_pass
+    origin: pr_diff
+    description: "divide() raises ValueError when dividing by zero"
+
+  - id: divide_error_message
+    type: fail_to_pass
+    origin: pr_diff
+    description: "divide() error message is 'Cannot divide by zero'"
+
+  # Pass-to-pass tests (repo CI tests)
+  - id: test_repo_pytest_add
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's pytest for add() passes"
+
+  - id: test_repo_pytest_subtract
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's pytest for subtract() passes"
+
+  - id: test_repo_pytest_multiply
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's pytest for multiply() passes"
+
+  - id: test_repo_pytest_divide
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's pytest for divide() passes"
+
+  - id: test_repo_pytest_all
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All repo pytest tests pass"
+
+  - id: test_repo_ruff_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ruff linter passes"
+
+
+config_edits:
+  - path: ".claude/CLAUDE.md"
+    tier: 1
+    gold_added: |
+      # Calculator Module Conventions
+
+      ## Error Handling
+
+      All mathematical operations must validate inputs and raise appropriate exceptions:
+      - Division by zero must raise `ValueError` with a clear message
+      - Invalid types should raise `TypeError`
+
+      ## Testing
+
+      Run tests with: `pytest tests/ -v`
+      Run linting with: `ruff check src/`
+      Run type checking with: `mypy src/`
+
+rubric:
+  - rule: "Agent should add proper error handling for division by zero"
+    source:
+      path: ".claude/CLAUDE.md"
+      lines: "6-8"
+    evidence: "Gold solution adds if b == 0 check with ValueError"
+    category: "architecture"
+
+  - rule: "Agent should document error handling conventions in CLAUDE.md"
+    source:
+      path: ".claude/CLAUDE.md"
+      lines: "1-12"
+    evidence: "Gold solution creates CLAUDE.md with error handling section"
+    category: "documentation"

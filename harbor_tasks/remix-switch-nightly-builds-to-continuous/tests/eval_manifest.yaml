@@ -1,0 +1,219 @@
+version: '2.0'
+source:
+  repo: remix-run/remix
+  pr: 11003
+  base_commit: 721dac4c6704d5b3e8428887af21accdcb3b23ea
+  merge_commit: 5d080eb4aa24c706915844a6ea2fa0606598aef8
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Key modified files exist and are non-empty
+- id: repo_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Prettier formatting check passes
+- id: repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo ESLint passes
+- id: repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo TypeScript typecheck passes
+- id: repo_changes_validate
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo change file validation passes
+- id: repo_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo build passes
+- id: nightly_workflow_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Old nightly.yml workflow is deleted
+- id: preview_workflow_push_trigger
+  type: fail_to_pass
+  origin: pr_diff
+  description: preview.yml has push trigger targeting main branch (YAML parsed via
+    subprocess)
+- id: script_no_branch_flag
+  type: fail_to_pass
+  origin: pr_diff
+  description: setup-installable-branch.ts parseArgs config rejects --branch flag
+    (executed via Node subprocess)
+- id: script_requires_branch_name
+  type: fail_to_pass
+  origin: pr_diff
+  description: setup-installable-branch.ts must not silently default to nightly with
+    no args (executed via Node subprocess)
+- id: script_removes_overwrite_protection
+  type: fail_to_pass
+  origin: pr_diff
+  description: setup-installable-branch.ts removes nightly-specific overwrite protection
+- id: preview_workflow_builds_on_push
+  type: fail_to_pass
+  origin: pr_diff
+  description: preview.yml builds and pushes a preview branch on push events
+- id: script_comments_reference_preview
+  type: fail_to_pass
+  origin: pr_diff
+  description: setup-installable-branch.ts JSDoc references preview, not nightly
+- id: readme_nightly_to_preview
+  type: fail_to_pass
+  origin: pr_diff
+  description: README.md install commands reference preview branch, not nightly
+- id: contributing_nightly_to_preview
+  type: fail_to_pass
+  origin: pr_diff
+  description: CONTRIBUTING.md references preview builds, not nightly builds
+- id: preview_workflow_retains_pr_previews
+  type: pass_to_pass
+  origin: static
+  description: PR preview branches (preview/{number}) still supported
+- id: preview_workflow_retains_cleanup
+  type: pass_to_pass
+  origin: static
+  description: Workflow retains branch cleanup step for closed PRs
+rubric:
+- rule: README.md install commands reference preview branch instead of nightly
+  source:
+    path: README.md
+    lines: 72-82
+    commit: 5d080eb4aa24c706915844a6ea2fa0606598aef8
+  reference: 'If you want to play around with the bleeding edge, we also build the
+    latest `main` branch into a `preview` branch which can be [installed directly](https://pnpm.io/package-sources#install-from-a-git-repository-combining-different-parameters)
+    with `pnpm` (version 9+):
+
+    pnpm install "remix-run/remix#preview&path:packages/remix"
+
+    pnpm install "remix-run/remix#preview&path:packages/@remix-run/fetch-router"'
+- rule: README.md prose describes preview branch, not nightly scheduling
+  source:
+    path: README.md
+    lines: '72'
+    commit: 5d080eb4aa24c706915844a6ea2fa0606598aef8
+  reference: 'If you want to play around with the bleeding edge, we also build the
+    latest `main` branch into a `preview` branch which can be [installed directly](https://pnpm.io/package-sources#install-from-a-git-repository-combining-different-parameters)
+    with `pnpm` (version 9+):
+
+    pnpm install "remix-run/remix#preview&path:packages/remix"
+
+    pnpm install "remix-run/remix#preview&path:packages/@remix-run/fetch-router"'
+- rule: CONTRIBUTING.md install commands reference preview instead of nightly
+  source:
+    path: CONTRIBUTING.md
+    lines: 163-176
+    commit: 5d080eb4aa24c706915844a6ea2fa0606598aef8
+  reference: '## Preview builds
+
+    We maintain installable builds of `main` in a `preview` branch as a way for folks
+    to test out the latest `main` branch without needing to publish releases to npm
+    and clutter up the npm registry and version history UI.
+
+    This is managed via the [`preview` workflow](/.github/workflows/preview.yaml)
+    which uses the [`setup-installable-branch.ts`](./scripts/setup-installable-branch.ts)
+    script to build and commit the build and required `package.json` changes to the
+    `preview` branch on '
+- rule: CONTRIBUTING.md section heading says Preview builds, not Nightly Builds
+  source:
+    path: CONTRIBUTING.md
+    lines: '162'
+    commit: 5d080eb4aa24c706915844a6ea2fa0606598aef8
+  reference: '## Preview builds
+
+    We maintain installable builds of `main` in a `preview` branch as a way for folks
+    to test out the latest `main` branch without needing to publish releases to npm
+    and clutter up the npm registry and version history UI.
+
+    This is managed via the [`preview` workflow](/.github/workflows/preview.yaml)
+    which uses the [`setup-installable-branch.ts`](./scripts/setup-installable-branch.ts)
+    script to build and commit the build and required `package.json` changes to the
+    `preview` branch on '
+- rule: 'Formatting: Prettier (printWidth: 100, no semicolons, single quotes, spaces
+    not tabs)'
+  source:
+    path: scripts/setup-installable-branch.ts
+  evidence: When modifying `scripts/setup-installable-branch.ts` to require the branch
+    name as a positional argument, the code is written without semicolons and uses
+    single quotes, adhering to the project's Prettier configuration.
+  category: style
+- rule: 'Variables: Prefer `let` for locals, `const` only at module scope; never use
+    `var`'
+  source:
+    path: scripts/setup-installable-branch.ts
+  evidence: When adding or modifying local variables in `scripts/setup-installable-branch.ts`
+    to handle the new positional argument logic, the gold solution uses `let` instead
+    of `const` for local scope.
+  category: style
+config_edits:
+- path: CONTRIBUTING.md
+  tier: 2
+  gold_added: '## Preview builds
+
+    We maintain installable builds of `main` in a `preview` branch as a way for folks
+    to test out the latest `main` branch without needing to publish releases to npm
+    and clutter up the npm registry and version history UI.
+
+    This is managed via the [`preview` workflow](/.github/workflows/preview.yaml)
+    which uses the [`setup-installable-branch.ts`](./scripts/setup-installable-branch.ts)
+    script to build and commit the build and required `package.json` changes to the
+    `preview` branch on every new commit to `main`.
+
+    The `preview` branch build can be [installed directly](https://pnpm.io/package-sources#install-from-a-git-repository-combining-different-parameters)
+    with `pnpm` (version 9+):
+
+    pnpm install "remix-run/remix#preview&path:packages/remix"
+
+    pnpm install "remix-run/remix#preview&path:packages/@remix-run/fetch-router"'
+  gold_removed: '## Nightly Builds
+
+    We also maintain installable nightly builds in a `nightly` branch as a way for
+    folks to test out the latest `main` branch without needing to publish nightly
+    releases to npm and clutter up the npm registry and version history UI.
+
+    This is managed via the [`nightly` workflow](/.github/workflows/nightly.yaml)
+    which uses the [`setup-installable-branch.ts`](./scripts/setup-installable-branch.ts)
+    script to build and commit the build and required `package.json` changes to the
+    `nightly` branch.
+
+    The nightly build can be [installed directly](https://pnpm.io/package-sources#install-from-a-git-repository-combining-different-parameters)
+    with `pnpm` (version 9+):
+
+    pnpm install "remix-run/remix#nightly&path:packages/remix"
+
+    pnpm install "remix-run/remix#nightly&path:packages/@remix-run/fetch-router"'
+- path: README.md
+  tier: 2
+  gold_added: 'If you want to play around with the bleeding edge, we also build the
+    latest `main` branch into a `preview` branch which can be [installed directly](https://pnpm.io/package-sources#install-from-a-git-repository-combining-different-parameters)
+    with `pnpm` (version 9+):
+
+    pnpm install "remix-run/remix#preview&path:packages/remix"
+
+    pnpm install "remix-run/remix#preview&path:packages/@remix-run/fetch-router"'
+  gold_removed: 'If you want to play around with the bleeding edge, we also build
+    the latest `main` branch every night into a `nightly` branch which can be [installed
+    directly](https://pnpm.io/package-sources#install-from-a-git-repository-combining-different-parameters)
+    with `pnpm` (version 9+):
+
+    pnpm install "remix-run/remix#nightly&path:packages/remix"
+
+    pnpm install "remix-run/remix#nightly&path:packages/@remix-run/fetch-router"'
+distractors:
+- rule: 'Adding changes: Create `packages/*/.changes/[major|minor|patch].short-description.md`
+    files.'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to create a changeset file in `packages/*/.changes/`
+    because it is making a significant change to the build process. However, this
+    PR only modifies root-level CI workflows, scripts, and documentation, not the
+    actual packages, making a changeset file out of scope.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 40-41
+hierarchy_analysis: The configuration is a flat single file (`AGENTS.md`). The agent
+  must apply the style rules to the TypeScript script modifications while correctly
+  scoping the changeset rule to realize it does not apply to root-level infrastructure
+  changes.

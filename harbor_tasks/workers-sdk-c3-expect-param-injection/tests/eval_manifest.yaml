@@ -1,0 +1,144 @@
+version: '2.0'
+source:
+  repo: cloudflare/workers-sdk
+  pr: 13245
+  base_commit: f23c455ca2f762f0067ed0bfc810209ee3ab8323
+  merge_commit: 10e731d83895f229a9383828e30c6d92a3ba9526
+checks:
+- id: c3_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: C3 package TypeScript typecheck passes via turbo
+  commands:
+  - pnpm turbo check:type --filter=create-cloudflare
+- id: c3_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: C3 package unit tests pass via turbo
+  commands:
+  - pnpm turbo test:ci --filter=create-cloudflare
+- id: c3_lint_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: C3 package lint and format checks pass
+  commands:
+  - npx oxlint --deny-warnings --type-aware
+  - npx oxfmt --check
+- id: c3_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: C3 package builds successfully via turbo
+  commands:
+  - pnpm turbo build --filter=create-cloudflare
+- id: c3_type_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: C3 package test files typecheck passes via turbo
+  commands:
+  - pnpm turbo type:tests --filter=create-cloudflare
+- id: eslint_disable_comments_resolved
+  type: fail_to_pass
+  origin: pr_diff
+  description: Bare eslint-disable-next-line no-restricted-imports comments are removed
+    or justified
+- id: helpers_accept_expect_param
+  type: fail_to_pass
+  origin: pr_diff
+  description: E2E helper functions accept expect as an injected parameter instead
+    of importing it
+- id: mocks_throw_error
+  type: fail_to_pass
+  origin: pr_diff
+  description: mocks.ts uses throw new Error() instead of expect.fail() for validation
+    checks
+- id: call_sites_pass_expect
+  type: fail_to_pass
+  origin: pr_diff
+  description: Test files pass expect as an argument to refactored helper functions
+- id: type_only_vitest_import
+  type: fail_to_pass
+  origin: agent_config
+  description: Helper files use type-only imports for vitest types per consistent-type-imports
+    rule
+  source:
+    path: AGENTS.md
+    lines: '91'
+    commit: f23c455ca2f762f0067ed0bfc810209ee3ab8323
+rubric:
+- rule: Use `import type` for type-only imports
+  source:
+    path: AGENTS.md
+    lines: 91-91
+  source_text: '- Use `import type { X }` for type-only imports (`@typescript-eslint/consistent-type-imports`)'
+  evidence: The gold diff explicitly adds `import type { ExpectStatic } from "vitest";`
+    instead of importing it as a value.
+  category: imports
+  verification: llm_judge
+- rule: Never import expect from vitest; use test context instead
+  source:
+    path: packages/wrangler/AGENTS.md
+    lines: 49-49
+  source_text: '- Never import `expect` from vitest — use test context `({ expect
+    }) => {}`'
+  evidence: 'The gold diff removes `import { expect } from "vitest";` from the test
+    files and helpers, updating functions to accept `expect: ExpectStatic` as an argument
+    from the test context (e.g. `runC3ForFrameworkTest(expect, ...)`).'
+  category: testing
+  verification: llm_judge
+- rule: expect must come from test context
+  source:
+    path: packages/vitest-pool-workers/AGENTS.md
+    lines: 50-50
+  source_text: '- `expect` must come from test context: `it("name", ({ expect }) =>
+    {})` — never `import { expect } from "vitest"`'
+  evidence: The gold diff removes `import { expect } from "vitest";` and refactors
+    test execution to pass the contextual `expect` object down to helper functions.
+  category: testing
+  verification: llm_judge
+distractors:
+- rule: Shared lint config in `packages/lint-config-shared/`
+  collision_type: architecture_boundary
+  why_distracting: The agent might try to 'resolve' the ESLint warnings by modifying
+    the shared lint config to allow importing `expect` from `vitest` in helper files,
+    rather than performing the required dependency injection refactoring.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 52-52
+- rule: Templates excluded from linting (except `c3.ts` files within templates)
+  collision_type: scope_ambiguity
+  why_distracting: The agent might mistakenly think that the helper files are part
+    of the templates or should be excluded from linting, and try to add them to an
+    ignore list instead of fixing the imports.
+  severity: medium
+  source:
+    path: packages/create-cloudflare/AGENTS.md
+    lines: 18-18
+- rule: consistent-type-imports temporarily DISABLED
+  source:
+    path: packages/miniflare/AGENTS.md
+    lines: 26-27
+  source_text: '- Many shared ESLint rules temporarily DISABLED: `curly`, `no-explicit-any`,
+    `consistent-type-imports`, `no-shadow`, `no-floating-promises`, others
+
+    - Comment in config: "temporarily enabled while we transition Miniflare to use
+    the standard workers-sdk eslint config"'
+  collision_type: scope_ambiguity
+  why_distracting: An agent might see that `consistent-type-imports` is disabled and
+    wrongly assume it doesn't need to use `import type { ExpectStatic }` in the `create-cloudflare`
+    package. However, this exception only applies to the `miniflare` package.
+  severity: medium
+- rule: Test files use .spec.ts (NOT .test.ts)
+  source:
+    path: packages/miniflare/AGENTS.md
+    lines: 39-39
+  source_text: '- Test files use `.spec.ts` (NOT `.test.ts`)'
+  collision_type: scope_ambiguity
+  why_distracting: The PR modifies files in `create-cloudflare` which actually uses
+    `.test.ts` (e.g. `frameworks.test.ts`). An agent might see this miniflare rule
+    and incorrectly rename or expect test files to be named `.spec.ts`.
+  severity: low
+hierarchy_analysis: The hierarchy is relatively flat for this task. The root AGENTS.md
+  provides monorepo context (shared lint config), while the package-specific AGENTS.md
+  provides local context. The agent must respect the architecture boundary by not
+  modifying the shared lint config to bypass the rule.

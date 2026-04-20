@@ -1,62 +1,60 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert exact strings like 'async (page) =>' , 'single argument, page' or 'page, which you can use', and 'await (${params.code})(page)' with specific count requirements (content.count('(${params.code})(page)') >= 2). The instruction.md does not specify these exact literal strings; it only gives high-level guidance like 'treat the input as a function expression and invoke it with the page argument'. The exact phrasing 'single argument, page' and the requirement for the pattern to appear at l"
+      "outcome": "pass",
+      "reason": "Instruction names all required files, the exact patterns `(${params.code})(page)`, `async (page) =>`, and the two alternative text strings 'single argument, page' OR 'page, which you can use'."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly states 'treat the input as a function expression and invoke it with the page argument', specifies removing 'async IIFE with direct ${params.code} injection', and describes the exact execution pattern. It also gives exact file paths, exact alphabetical positioning, and exact tool name formats. This is close to telling the agent exactly what to write rather than describing what's broken."
+      "reason": "Instruction essentially dictates the exact string patterns to use: `(${params.code})(page)` must appear \u22652 times, the exact phrase `async (page) =>`, and the exact alternative documentation strings \u2014 leaving no reasoning about what to change."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact strings like 'await (${params.code})(page)' appearing at least twice, and exact description phrases like 'single argument, page' or 'page, which you can use'. An alternative correct implementation using e.g. 'const fn = new Function(...)' or different description wording like 'accepts a page parameter' would fail these tests despite being functionally correct."
+      "reason": "Tests assert on the literal substring `await (${params.code})(page)` and count \u22652 occurrences; a correct alternative implementation (e.g., assigning `const fn = ${params.code}; await fn(page)`) would fail."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Tests test_run_code_ts_uses_function_format, test_run_code_ts_wraps_function_call, test_run_code_ts_no_direct_injection, test_claude_agents_has_browser_run_code, test_github_agents_has_browser_run_code, and test_packages_agents_has_browser_run_code all exclusively use 'assert X in file.read_text()' pattern \u2014 pure text matching with no code execution. test_typescript_compiles runs tsc and test_repo_run_code_tests runs tests but with a very loose assertion (returncode in [0,1]). The f2p tests are "
+      "outcome": "pass",
+      "reason": "In addition to text checks, tests invoke `tsc --noEmit` and run the playwright test spec via subprocess to verify compilation and behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for specific strings that don't exist in the original file (e.g., 'async (page) =>', 'await (${params.code})(page)'), so a stub or unmodified file would fail them."
+      "reason": "Tests require specific content changes in runCode.ts and three agent files plus TypeScript compilation; a stub cannot satisfy them."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction describes updating runCode.ts parameter description and execution logic, and adding tool to three agent config files \u2014 all of which are tested. The alphabetical ordering requirement is also tested."
+      "reason": "All three requirement sections (parameter docs, execution logic, three agent file updates) are covered by dedicated test functions."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names and docstrings containing tags like [f2p_code], [f2p_config], [p2p] that clearly categorize their purpose."
+      "reason": "Each test function has a docstring with [f2p_code]/[f2p_config]/[p2p] tags and a descriptive name."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task does not produce structured data like JSON/CSV/API/DB schemas."
+      "reason": "Task does not produce structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and commands in instruction.md and tests are consistent and correctly spelled."
+      "reason": "File paths and tool names are consistent between instruction and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names the exact file (runCode.ts), describes the exact old pattern ('async IIFE with direct ${params.code} injection'), and the exact new pattern ('invoke it with the page argument'). It also specifies exact insertion positions in config files (after browser_press_key, before browser_select_option)."
+      "reason": "Instruction specifies exact patterns like `(${params.code})(page)` must appear at least twice and exact doc strings, which is heavy-handed leakage beyond naming the file."
     },
     "config_edit_scope_bounded": {
       "outcome": "fail",
-      "reason": "The gold solution in solve.sh does a full-file rewrite of both runCode.ts and playwright-test-planner.md (using heredocs), rather than localized edits. This is disproportionate for adding one tool name to config files."
+      "reason": "The gold solve.sh rewrites entire files (e.g., `cat > examples/todomvc/.claude/agents/playwright-test-planner.md`) rather than localized edits."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
     "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage",
     "config_edit_scope_bounded"
   ],
-  "pass_count": 4,
-  "fail_count": 6
+  "pass_count": 6,
+  "fail_count": 4
 }

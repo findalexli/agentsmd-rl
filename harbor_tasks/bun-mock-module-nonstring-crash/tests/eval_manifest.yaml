@@ -1,0 +1,171 @@
+version: '2.0'
+source:
+  repo: oven-sh/bun
+  pr: 28518
+  base_commit: e94c3035c6f9d7868fb814cfeaf27b219d00e565
+  merge_commit: 24fa207fc51e7e5530acdb71325aee13a4b260b9
+checks:
+- id: type_guard_before_tostring
+  type: fail_to_pass
+  origin: pr_diff
+  description: Type validation guard (isString or equivalent) exists before toString()
+    call in JSMock__jsModuleMock
+- id: type_guard_error_path
+  type: fail_to_pass
+  origin: pr_diff
+  description: Error thrown and early return when first argument is not a string
+- id: error_message_descriptive
+  type: fail_to_pass
+  origin: pr_diff
+  description: Error message mentions 'string' or 'module' so the user knows what
+    went wrong
+- id: existing_guards_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: Original argumentCount() and isEmpty() validation guards still present
+- id: test_repo_ts_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TypeScript typecheck passes (tsc --noEmit)
+- id: test_repo_ban_words
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's banned words check passes
+- id: test_repo_js_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's JS lint (oxlint on src/js/bun) passes with no errors
+- id: test_repo_package_json_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo package.json lint passes (exact version check)
+- id: test_repo_mock_fn_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo mock function tests pass
+- id: test_repo_mock_disposable_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo mock disposable tests pass
+- id: test_repo_mock_module_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's mock module tests pass
+- id: test_repo_mock_module_resolve_log_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's mock module resolve log tests pass
+- id: test_repo_bun_test_framework
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's bun:test framework core tests pass
+- id: test_repo_jest_hooks
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's jest hooks tests pass
+- id: test_repo_jest_each
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's jest-each tests pass
+- id: test_repo_describe_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's describe block tests pass
+- id: meaningful_source_changes
+  type: fail_to_pass
+  origin: static
+  description: At least 3 meaningful non-comment lines added to BunPlugin.cpp
+- id: agent_test_file_created
+  type: fail_to_pass
+  origin: agent_config
+  description: Agent created a test file for mock.module non-string validation in
+    test/
+  source:
+    path: CLAUDE.md
+    lines: 226,229
+    commit: e94c3035c6f9d7868fb814cfeaf27b219d00e565
+- id: agent_test_file_naming
+  type: fail_to_pass
+  origin: agent_config
+  description: Test file ends in .test.ts or .test.tsx
+  source:
+    path: CLAUDE.md
+    lines: '229'
+    commit: e94c3035c6f9d7868fb814cfeaf27b219d00e565
+- id: agent_test_file_location
+  type: fail_to_pass
+  origin: agent_config
+  description: Bun API test file is in test/js/bun/ directory
+  source:
+    path: CLAUDE.md
+    lines: 32-33
+    commit: e94c3035c6f9d7868fb814cfeaf27b219d00e565
+- id: agent_test_no_settimeout
+  type: fail_to_pass
+  origin: agent_config
+  description: Test file does not use setTimeout (flaky test anti-pattern)
+  source:
+    path: CLAUDE.md
+    lines: '102'
+    commit: e94c3035c6f9d7868fb814cfeaf27b219d00e565
+- id: agent_test_asserts_positive_behavior
+  type: fail_to_pass
+  origin: agent_config
+  description: Test asserts TypeError is thrown, not just absence of crash
+  source:
+    path: CLAUDE.md
+    lines: '99'
+    commit: e94c3035c6f9d7868fb814cfeaf27b219d00e565
+- id: agent_test_no_timeout_option
+  type: fail_to_pass
+  origin: agent_config
+  description: Test does not set a custom timeout (Bun has built-in timeouts)
+  source:
+    path: test/AGENTS.md
+    lines: '120'
+    commit: e94c3035c6f9d7868fb814cfeaf27b219d00e565
+- id: agent_test_no_shell_commands
+  type: fail_to_pass
+  origin: agent_config
+  description: Test file does not spawn shell commands (find, grep) — uses Bun's Glob
+    and built-in tools instead
+  source:
+    path: CLAUDE.md
+    lines: '231'
+    commit: e94c3035c6f9d7868fb814cfeaf27b219d00e565
+rubric:
+- rule: Since this task is a pure code fix, the agent is EXPECTED to leave config
+    files untouched. The correct behavior is 'nothing — file not modified'
+- rule: For this pure code fix task, since the gold solution correctly placed the
+    test in `test/js/bun/test/mock/` following CLAUDE.md lines 31-32,
+  source:
+    path: CLAUDE.md
+    lines: 31-32
+  evidence: The gold solution creates the test file in `test/js/bun/test/mock/mock-module-non-string.test.ts`,
+    correctly identifying it as a Bun-specific API test.
+  category: testing
+distractors:
+- rule: Always use `bun.*` APIs instead of `std.*`.
+  collision_type: architecture_boundary
+  why_distracting: The rule dictates using `bun.*` APIs instead of `std.*` for Zig
+    code, but the fix requires editing C++ code (`BunPlugin.cpp`). An agent might
+    get confused and try to apply Zig conventions to C++ or incorrectly search for
+    a Zig file to edit.
+  severity: medium
+  source:
+    path: src/CLAUDE.md
+    lines: 14-15
+- rule: For single-file tests, prefer `-e` over `tempDir`.
+  collision_type: scope_ambiguity
+  why_distracting: The rule suggests using `Bun.spawn` with `-e` for single-file tests.
+    However, for testing `mock.module` (which is part of `bun:test`), a standard unit
+    test using `expect().toThrow()` is much cleaner and more appropriate than spawning
+    a subprocess.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 49-50
+hierarchy_analysis: The hierarchy includes root-level configs and `src/`-level configs.
+  The `src/` level configs are entirely focused on Zig conventions, which are irrelevant
+  for this C++ fix. The agent must recognize that the `src/` configs do not apply
+  to `.cpp` files despite being in the same directory tree.

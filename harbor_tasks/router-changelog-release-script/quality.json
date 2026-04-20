@@ -1,63 +1,57 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert very specific literal strings not mentioned in instruction.md: e.g., 'const bumpedPackages = []' (exact variable initialization), 'if (prevPkg.version !== currentPkg.version)' (exact comparison syntax), 'const changelogPath = path.join(packagesDir, pkg.dir, \\'CHANGELOG.md\\')' (exact path construction), 'changelog.indexOf(versionHeader)' (exact method call), 'const withAuthors = await appendAuthors(content)' (exact variable assignment), 'changelogMd += `#### ${pkg.name}' (exact templ"
+      "outcome": "pass",
+      "reason": "Instruction names function signatures (resolveAuthorForCommit, appendAuthors), the script path, CHANGELOG.md extraction, bumpedPackages comparison, sorting by name, and the old patterns to remove literally matching test asserts."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction specifies exact patterns to remove (e.g., 'const groups = {}', 'const typeOrder = [', 'for (const type of sortedTypes)'), exact function signatures ('async function resolveAuthorForCommit(hash)', 'async function appendAuthors(content)'), exact variable names ('bumpedPackages', 'prevPkg.version', 'currentPkg.version'), and exact implementation details like 'prevVersion: null'. This tells the agent precisely WHAT to write, not just what's broken."
+      "outcome": "pass",
+      "reason": "Instruction describes what to change and what behaviors to implement without providing exact code snippets for the fix."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact function names ('async function resolveAuthorForCommit(hash)', 'async function appendAuthors(content)'), exact variable names ('const bumpedPackages = []'), exact comparison code ('if (prevPkg.version !== currentPkg.version)'), exact sort expression, exact comment text ('// Package didn\\'t exist in previous release'), and exact template literals. An alternative correct implementation using different names (e.g., 'getAuthor', 'changedPac"
+      "reason": "Tests assert exact literal strings like 'const bumpedPackages = []', 'if (prevPkg.version !== currentPkg.version)', 'bumpedPackages.sort((a, b) => a.name.localeCompare(b.name))', 'const withAuthors = await appendAuthors(content)', and the exact comment \"// Package didn't exist in previous release\" \u2014 alternative correct implementations using different variable names or sort styles would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Almost every test (7 out of 8) only does `assert 'some string' in content` after reading the file with `open(SCRIPT_PATH, 'r')`. Only test_script_syntax_valid actually executes the code (via `node --check`). No test imports, calls, or runs the script to verify actual behavior."
+      "reason": "Almost all tests use `open(SCRIPT_PATH).read()` with `assert X in content`; only test_script_syntax_valid executes the script (node --check), without testing runtime behavior."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "All f2p tests check for exact string presence in the source file. An agent could simply write a file containing all the asserted strings as comments or dead code without implementing any actual functionality, and all tests would pass. For example, writing '// async function resolveAuthorForCommit(hash)' or '// const bumpedPackages = []' as string literals in the file would satisfy the assertions."
+      "outcome": "pass",
+      "reason": "Each f2p test asserts specific required strings/patterns that a no-op stub would not contain."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "The instruction requires behaviors like 'Resolve that email to a GitHub username', 'Return the username string', 'Compare package.json versions between releases', and actual output format verification. None of these runtime behaviors are tested\u2014only string presence in source code is checked."
+      "outcome": "pass",
+      "reason": "Tests cover author resolution, appendAuthors, bumpedPackages construction, CHANGELOG.md extraction, removal of old patterns, sorting, and new-package handling as described in instruction."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names and docstrings indicating whether they're F2P or P2P, grouped by functionality (function existence, logic, removal of old patterns, syntax)."
+      "reason": "Tests have descriptive names and docstrings indicating F2P/P2P purposes."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task produces markdown changelog output, not structured data like JSON/CSV/API/DB."
+      "reason": "Output is markdown changelog text, not structured data."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "Paths and function names are consistent across instruction and tests."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction names the exact file ('scripts/create-github-release.mjs'), exact function signatures to create, exact variable names to use, exact old patterns to remove with literal code strings, and exact implementation patterns like 'prevVersion: null'. This goes well beyond describing what's broken."
+      "outcome": "pass",
+      "reason": "Instruction names the script file (which is inherent to the task) but does not cite exact line numbers or internal variables."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits or config edit task."
+      "reason": "Code task, not config edits."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
-    "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "behavior_in_tests",
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 2,
-  "fail_count": 7
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 2
 }

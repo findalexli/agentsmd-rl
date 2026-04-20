@@ -1,0 +1,130 @@
+checks:
+- id: test_code_compiles
+  type: fail_to_pass
+  origin: pr_diff
+  description: Code compiles after fix is applied
+- id: test_without_root_bound_applied
+  type: fail_to_pass
+  origin: pr_diff
+  description: without_root_bound() call is present in display_v2 function
+- id: test_fix_has_proper_comment
+  type: fail_to_pass
+  origin: pr_diff
+  description: Fix includes explanatory comment about Display registry objects
+- id: test_scope_struct_unchanged
+  type: pass_to_pass
+  origin: repo_tests
+  description: Scope struct definition is intact
+- id: test_git_checks
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo passes git checks (whitespace, line endings)
+- id: test_cargo_xlint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo passes cargo xlint (license and workspace checks)
+- id: test_cargo_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: sui-indexer-alt-graphql package compiles with cargo check
+- id: test_rustfmt_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Code formatting check
+- id: test_cargo_doc
+  type: pass_to_pass
+  origin: repo_tests
+  description: Documentation builds successfully for the package
+- id: test_doc_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Doc tests pass for sui-indexer-alt-graphql package
+- id: test_cargo_clippy
+  type: pass_to_pass
+  origin: repo_tests
+  description: Code passes clippy lints for sui-indexer-alt-graphql package
+distractors:
+- rule: All new files must start with the following license in comments at the top
+    of the file
+  collision_type: scope_ambiguity
+  why_distracting: The agent might mistakenly prepend the license header to the existing
+    `display.rs` file to ensure compliance, even though the rule explicitly states
+    it is only for 'new files'.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 18-21
+- rule: Run e2e tests. simtests must be run with `cargo simtest` to avoid false negatives
+  collision_type: rule_conflict
+  why_distracting: The agent might attempt to run the full `sui-e2e-tests` simulation
+    suite, which is slow and unnecessary for this localized GraphQL fix, conflicting
+    with the task's specific instruction to just run `cargo check -p sui-indexer-alt-graphql`.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 31-33
+- rule: Use simtest for debugging and testing
+  source:
+    path: .claude/skills/simtest-debug/SKILL.md
+    lines: 1-10
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to run or write simulation tests (simtests)
+    for this GraphQL API bug, which is unnecessary, time-consuming, and outside the
+    scope of the requested fix.
+  severity: medium
+- rule: Never modify settings for a version that exists in a release branch
+  source:
+    path: repo/.claude/skills/protocol-config/SKILL.md
+    lines: 153-153
+  source_text: '- **Never modify settings for a version that exists in a release branch**
+    - this will break consensus'
+  collision_type: scope_ambiguity
+  why_distracting: The diff mentions ignoring 'root-version bound inherited from the
+    value so a newer Display v2 object can still be resolved for older objects'. An
+    agent might see the word 'version' and 'older objects' and mistakenly think this
+    violates the rule against modifying version settings, confusing GraphQL object
+    versions with protocol versioning.
+  severity: high
+hierarchy_analysis: The hierarchy is flat (only root-level AGENTS.md and CLAUDE.md
+  are present). The rules provided are generic repository guidelines that do not interact
+  deeply with the specific GraphQL scoping bug.
+version: '2.0'
+source:
+  repo: MystenLabs/sui
+  pr: 26077
+  base_commit: 4edd79bb00bb472bf7cfb56a891b7d6ab3e9db25
+  merge_commit: ''
+rubric:
+- rule: Check code without building (preferred) using cargo check
+  source:
+    path: CLAUDE.md
+    lines: 21-22
+  evidence: The task instruction and standard workflow align with using `cargo check`
+    for validation rather than a full build, as preferred by the config.
+  category: tooling
+  verification: llm_judge
+- rule: Comment non-obvious algorithms, business logic, and assumptions about external
+    state.
+  source:
+    path: repo/CLAUDE.md
+    lines: 118-124
+  source_text: '**Do NOT comment the obvious** - comments should not simply repeat
+    what the code does.
+
+    **When to comment**:
+
+    - Non-obvious algorithms or business logic
+
+    - Temporary exclusions, timeouts, or thresholds and their reasoning
+
+    - Complex calculations where the "why" isn''t immediately clear
+
+    - Subtle race conditions or threading considerations
+
+    - Assumptions about external state or preconditions'
+  evidence: The diff adds a comment `// Display registry objects are global objects,
+    not children of the value being rendered...` which explains the external assumptions
+    and 'why' the `without_root_bound()` is called, rather than just repeating what
+    it does.
+  category: style
+  verification: llm_judge

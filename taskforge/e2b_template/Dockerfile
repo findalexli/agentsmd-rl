@@ -11,10 +11,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Docker (runs natively in Firecracker microVM)
 RUN curl -fsSL https://get.docker.com | sh
 
-# Node.js 22 + Claude Code CLI
+# Node.js 22 + Claude Code CLI + Gemini CLI
 RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
     apt-get install -y nodejs && \
-    npm install -g @anthropic-ai/claude-code@latest
+    npm install -g @anthropic-ai/claude-code@latest @google/gemini-cli
 
 # GitHub CLI (for scaffold PR fetching)
 RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | \

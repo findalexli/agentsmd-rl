@@ -1,0 +1,56 @@
+version: 1
+task:
+  name: quickwit-ingester-status-default
+  repo: quickwit-oss/quickwit
+  pr_number: 6249
+  base_commit: "8565b8a349662c3648648296501958ccec15ab61"
+  merge_commit: "845d9a7a04c5d13daf6c09e81e715e55fe33c58c"
+
+description: |
+  Fix ingester status defaulting incorrectly during rolling deployment.
+  When deploying a new version of Quickwit, old ingesters that don't broadcast
+  their status cause the new control plane to only see new ingesters as Ready,
+  breaking cluster shard placement.
+
+checks:
+  - id: test_ingester_status_fix_in_member_rs
+    type: fail_to_pass
+    description: |
+      Verify that the fix is in place by checking that
+      unwrap_or(IngesterStatus::Ready) replaces the buggy default in the
+      ingester_status function in impl NodeStateExt for NodeState.
+      On base commit: The pattern is not present.
+      On fixed commit: The pattern is present in the correct function.
+    timeout: 30
+
+  - id: test_cargo_check_quickwit_cluster
+    type: pass_to_pass
+    origin: repo_tests
+    description: The quickwit-cluster crate should compile without errors.
+    timeout: 300
+
+  - id: test_cargo_test_quickwit_cluster_testsuite
+    type: pass_to_pass
+    origin: repo_tests
+    description: Run the existing testsuite for quickwit-cluster to ensure no regressions.
+    timeout: 600
+
+  - id: test_cargo_clippy_quickwit_cluster
+    type: pass_to_pass
+    origin: repo_tests
+    description: Run clippy on quickwit-cluster to catch common mistakes and improve code quality.
+    timeout: 600
+
+rubric: []
+# No agent config files were found in the repository at the base commit.
+# The quickwit project does not have CLAUDE.md, AGENTS.md, or similar agent instructions.
+
+metadata:
+  files_changed:
+    - quickwit/quickwit-cluster/src/member.rs
+    - quickwit/quickwit-serve/src/lib.rs
+  lines_added: 22
+  lines_removed: 10
+  test_commands:
+    - cargo test -p quickwit-cluster --features=testsuite
+    - cargo check -p quickwit-cluster --features=testsuite

@@ -1,0 +1,73 @@
+{
+  "schema_version": 2,
+  "valid": true,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-16T12:13:29.237191",
+  "total_time": 8543.03,
+  "sandbox_id": "i37ghcc8anakv1j4vw3o9",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "scaffold",
+  "nodes": {
+    "scaffold": {
+      "status": "ok",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 2276.68,
+      "notes": ""
+    },
+    "quality_gate": {
+      "status": "passed",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.26,
+      "notes": "flags=['lint_tier_b:1', 'B:[B] f2p_p2p_classification_correct @ eval_manifest.yaml: yaml parse error: mapping values are not allowed here\\n  in \"<un']"
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 1323.7,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 2,
+      "notes": "Fixed YAML parsing errors (quoted source values with colons) and set rubric: [] (code-only task, no config_edits). Docker build, NOP (reward=0), Gold (reward=1) all pass. Rubric judge returns 1.0 when pointing to git repo with gold fix (at /tmp/prefect-judge). When pointing to /workspace/task/environment (no git repo), judge returns 0.0 due to no diff - this is expected for Docker-based task where gold fix is in container not host fs.",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 1981.49
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 10.33,
+      "tier_a_fails": [
+        "solution_uniqueness_guard"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 8,
+      "fail_count": 1
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 8543.03,
+      "at": "2026-04-16T12:13:29.237191"
+    }
+  ]
+}

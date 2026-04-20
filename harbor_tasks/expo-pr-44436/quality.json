@@ -1,61 +1,57 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names both file paths (installer.rb, precompiled_modules.rb), the method names (perform_post_install_actions, generate_available_uuid_list, clear_cocoapods_cache, define_singleton_method), SecureRandom with hex for 24-char hex strings (implying hex(12)), local_podspecs_dir concept, .podspec.json, xcframework/Info.plist path pattern, and FileUtils removal of pod directories. All specific strings and patterns checked in the tests are discoverable from the instruction."
+      "reason": "instruction.md names both file paths (installer.rb, precompiled_modules.rb), method names (generate_available_uuid_list, perform_post_install_actions, clear_cocoapods_cache), SecureRandom, and the Info.plist path pattern that tests assert on."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction essentially specifies the exact implementation: 'defined as a singleton method (dynamically attached to the project instance)', 'Uses cryptographically secure random UUID generation (from Ruby's SecureRandom module with sufficient entropy for 24-character hex strings)', 'Check for the presence of the xcframework's Info.plist file at the path {product_name}.xcframework/Info.plist', 'Remove the entire pod directory when no xcframework Info.plist exists'. This is not just describing"
+      "outcome": "pass",
+      "reason": "Instruction describes required behaviors (singleton method, SecureRandom usage, collision avoidance, removing pod dirs without xcframework Info.plist) without giving exact code."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: test_installer_uses_securerandom_for_uuids checks for the exact string 'SecureRandom.hex(12)' \u2014 an alternative using SecureRandom.uuid or SecureRandom.hex(16) with truncation would fail. test_installer_defines_uuid_singleton_method checks for the exact string 'define_singleton_method(:generate_available_uuid_list)'. test_precompiled_clears_stale_pod_dir checks for 'xcfw_info' as a variable name and 'rm_rf(pod_dir)' or 'rm_rf pod_dir' as exact"
+      "reason": "Tests grep for specific strings like `define_singleton_method.*:generate_available_uuid_list`, `SecureRandom`, `objects_by_uuid|existing_uuids|generated_uuids`, and conditional patterns `unless.*File\\.exist/if.*File\\.exist`; a valid alternative fix using e.g. a module method, `Random.bytes`, or `File.file?`/`Pathname.exist?` would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "All four f2p tests exclusively use string matching on file contents (e.g., 'assert \"SecureRandom.hex(12)\" in content', checking for 'define_singleton_method' as a substring, checking for 'local_podspecs_dir' in content). None of them import, call, or execute the Ruby code to verify actual behavior. The p2p tests do run 'ruby -c' for syntax checking, but the core behavioral assertions are purely textual."
+      "reason": "The f2p tests use `File.read(...)` and `installer_content.match?` / `content.include?` regex/substring checks on source files rather than calling the actual installer or clear_cocoapods_cache functions; the behavioral Ruby code executed is a mock reimplementation, not the repo code."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "A developer could pass all f2p tests by simply appending commented-out or dead-code lines containing the expected strings. For example, adding '# SecureRandom.hex(12)' and '# define_singleton_method(:generate_available_uuid_list)' as comments would pass test_installer_uses_securerandom_for_uuids and test_installer_defines_uuid_singleton_method. The tests only check for string presence in the file, not actual execution or behavior."
+      "outcome": "pass",
+      "reason": "Tests require presence of the real method definition plus SecureRandom and collision-check tokens in the source, which a no-op stub wouldn't satisfy."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: (1) singleton method definition for generate_available_uuid_list \u2014 tested. (2) SecureRandom-based UUID generation \u2014 tested. (3) Clearing local podspecs .podspec.json files \u2014 tested. (4) Removing pod directories lacking xcframework Info.plist \u2014 tested. All major required behaviors are covered."
+      "reason": "Both bugs (UUID generation/collision avoidance and stale pod directory/podspec cache clearing) are covered by dedicated tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear f2p/p2p grouping via comments, descriptive function names (e.g., test_installer_defines_uuid_singleton_method), and docstrings explaining what each test verifies and why it would fail on the base commit."
+      "reason": "Tests are separated by section comments (Fail-to-Pass) and named descriptively per behavior."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task involves Ruby source code modifications, not structured data output like JSON/CSV/API/DB schemas."
+      "reason": "Task is code changes, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, method names, and variable names in the instruction and tests are consistent and correctly spelled."
+      "reason": "Paths and names match between instruction, tests, and Dockerfile symlink."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction names the exact methods to modify (perform_post_install_actions, generate_available_uuid_list, clear_cocoapods_cache), specifies exact implementation details (define_singleton_method, SecureRandom.hex with 24-character hex strings implying hex(12)), and names the exact file paths. This goes beyond describing the bug to essentially prescribing the implementation."
+      "outcome": "pass",
+      "reason": "Instruction names the files and methods but these are the natural scope of the bug description, no line numbers."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task involving Ruby source file modifications, not configuration edits."
+      "reason": "Code-only task."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 4,
-  "fail_count": 5
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 2
 }

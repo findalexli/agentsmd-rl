@@ -1,0 +1,82 @@
+version: 1.0
+owner: mantinedev
+repo: mantine
+repo_short: mantine
+base_commit: 1cb55b4131525aa802b68020c66a345760a0d466
+merge_commit: 50a9ce9eeea9e166fe95d23faf36dad071d66adb
+pr_number: "8777"
+name: mantine-heatmap-equal-values
+title: Fix HeatmapChart division by zero when all values are equal
+description: When all heatmap data values are identical, max-min equals zero causing NaN fill colors
+difficulty: medium
+tags:
+  - typescript
+  - charts
+  - mantine
+  - bugfix
+  - edge-case
+estimated_minutes: 30
+
+files:
+  - packages/@mantine/charts/src/Heatmap/get-heat-color/get-heat-color.ts
+  - packages/@mantine/charts/src/Heatmap/get-heat-color/get-heat-color.test.ts
+  - packages/@mantine/charts/src/Heatmap/Heatmap.test.tsx
+
+distinctive_line: "max === min ? 1"
+
+checks:
+  - id: test_get_heat_color_equal_values_direct
+    type: fail_to_pass
+    origin: code_fix
+    description: >
+      getHeatColor returns a valid color string (not NaN/undefined) when max equals min.
+      The function is called with equal min/max values and must return the last color
+      from the colors array.
+    details: >
+      File: packages/@mantine/charts/src/Heatmap/get-heat-color/get-heat-color.ts
+      Function: getHeatColor({ value, min, max, colors })
+      Input: value=5, min=5, max=5, colors=['1','2','3','4']
+      Expected: returns '4' (the last color in the array)
+      Bug behavior: returns undefined because (5-5)/(5-5) = NaN, then Math.round(NaN*3) = NaN
+
+  - id: test_get_heat_color_normal_values
+    type: fail_to_pass
+    origin: code_fix
+    description: >
+      Normal getHeatColor operation still works correctly when min < max.
+      Tests several values in a spread range.
+    details: >
+      Verifies the fix does not break existing behavior.
+      Input: values {1,2,3,4} with min=1, max=4, colors=['1','2','3','4']
+      Expected: returns '1','2','3','4' respectively
+
+  - id: test_repo_heatmap_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: >
+      All existing Heatmap tests in the repo pass.
+      This is a pass_to_pass check — tests pass both before and after the fix.
+
+  - id: test_repo_heatmap_eslint
+    type: pass_to_pass
+    origin: repo_tests
+    description: >
+      ESLint passes on the Heatmap source files.
+      A pass_to_pass check that the linter is clean.
+
+  - id: test_repo_heatmap_prettier
+    type: pass_to_pass
+    origin: repo_tests
+    description: >
+      Prettier code style check passes on Heatmap TypeScript files.
+      A pass_to_pass check that formatting is correct.
+
+environment:
+  image: task-env
+  setup: |
+    The repo is cloned at the base commit. Node.js and yarn are available.
+    All dependencies are pre-installed via `yarn install`.
+
+tests:
+  - bash
+  - node

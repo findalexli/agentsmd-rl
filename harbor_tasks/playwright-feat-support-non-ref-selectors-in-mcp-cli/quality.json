@@ -1,61 +1,56 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all key file paths, function names (asRef, refLocator, refLocators, filteredTools), parameter names (target, startElement, endElement, selector, startSelector, endSelector), the regex pattern, return value structures, error messages ('does not match any elements'), and schema details (z.string().optional(), .omit()) that the tests assert on."
+      "reason": "Instruction names all relevant files, parameter names (target, startElement, endElement), schema field (selector), regex pattern ^(f\\d+)?e\\d+$, error message 'does not match any elements', and required SKILL.md content."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly specifies exact implementation details: the regex pattern `^(f\\d+)?e\\d+$`, the exact return values of the classification helper (`{ ref: refOrSelector }`, `{ ref: '', selector: refOrSelector }`, `{}`), exact parameter renames (target, startElement, endElement), exact method signatures (selector?: string), exact .omit() call with `{ selector: true, startSelector: true, endSelector: true }`. This is effectively dictating the solution, not just describing what's broken."
+      "outcome": "pass",
+      "reason": "Instruction describes what should happen (classify inputs, use target param, spread results) without giving exact code; developer must still reason about implementation."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on exact implementation strings like `return { ref: refOrSelector }`, `return { ref: '', selector: refOrSelector }`, `return {}`, `function asRef(refOrSelector`, `refOrSelector.match(/^(f\\d+)?e\\d+$/)`, `this.page.locator(param.selector)`. An alternative correct implementation (e.g., using a different function name, different return structure, or `test()` instead of `match()`) would fail these tests despite being functionally correct."
+      "reason": "Tests assert gold-specific implementation details: 'function asRef(' name is required (test_asref_function_classifies_inputs, test_cli_commands_use_target_param), specific return shape strings like \"return { ref: '', selector: refOrSelector }\", '.omit(' usage with 'selector: true'. Alternative correct fixes using different helper names or pick() instead of omit() would fail."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Almost all tests are pure text-matching: `assert 'function asRef(refOrSelector' in commands_ts`, `assert 'return { ref: refOrSelector }' in commands_ts`, `assert 'this.page.locator(param.selector)' in tab_ts`, etc. The one test that executes code (test_asref_function_classifies_inputs) re-implements the function from scratch rather than importing/calling the actual code, so it doesn't verify the real implementation's behavior."
+      "outcome": "pass",
+      "reason": "test_asref_function_classifies_inputs actually executes TypeScript logic via node subprocess, though many other tests are grep-based."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "The test_asref_function_classifies_inputs test runs a self-contained re-implementation of asRef, not the actual code. A stub that just adds the exact string patterns to commands.ts without any real logic would pass most tests. For example, test_cli_commands_use_target_param just counts regex matches for `target: z.string()` \u2014 inserting 7 commented-out lines with that pattern would pass."
+      "outcome": "pass",
+      "reason": "Tests require specific behavioral substrings and TypeScript execution of classification logic; stubs would not produce the correct mapping outputs."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The tests cover all major behavioral requirements: asRef classification, CLI parameter renames, drag parameter renames, tab.ts selector support, tool schema selector fields, filteredTools stripping, and SKILL.md documentation updates."
+      "reason": "Tests cover asRef classification, CLI target params, drag start/end, tab.refLocator selector support, schema selector fields, filteredTools stripping, and SKILL.md doc updates."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with section headers (Gates, Fail-to-pass, Config/doc), descriptive function names, and docstrings explaining each test's purpose."
+      "reason": "Tests are grouped by section headers (Gates, Fail-to-pass, Config/doc updates) with clear naming and comments tagging each test."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task does not produce structured data output like JSON/CSV/API/DB; it modifies source code and documentation."
+      "reason": "Task is code/schema changes, not producing structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, commands, and patterns in the instruction are consistent with the test expectations and the codebase structure."
+      "reason": "Filenames and identifiers are consistent between instruction and tests."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction specifies exact implementation details: the regex `^(f\\d+)?e\\d+$`, exact return value structures, exact parameter names, exact .omit() arguments, and exact method signatures. This goes far beyond describing the problem or expected behavior \u2014 it dictates the exact code changes."
+      "outcome": "pass",
+      "reason": "Instruction lists relevant files but doesn't give line numbers or exact replacements; localization is still meaningful work."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The SKILL.md edit is a localized addition of documentation about selector support, not a full-file rewrite, and doesn't contradict other files."
+      "reason": "SKILL.md doc update is a bounded addition describing new selector support, not a full rewrite, and aligns with code changes."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 5,
-  "fail_count": 5
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 1
 }

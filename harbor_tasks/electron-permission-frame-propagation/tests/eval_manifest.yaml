@@ -1,0 +1,218 @@
+source:
+  repo: electron/electron.git
+  pr: 0
+  base_commit: 821b738db0a64c863e8371e7141564cef70d56b8
+  merge_commit: ''
+checks:
+- id: check_permission_signature
+  description: CheckPermission must accept requesting_frame as first parameter
+  type: fail_to_pass
+  origin: agent_config
+  source:
+    lines: 95-96
+    path: CLAUDE.md
+- id: check_permission_uses_requesting_frame
+  description: CheckPermission must use requesting_frame to get origin
+  type: fail_to_pass
+  origin: agent_config
+  source:
+    lines: 95-96
+    path: CLAUDE.md
+- id: check_media_access_signature
+  description: CheckMediaAccessPermission must accept requesting_frame parameter
+  type: fail_to_pass
+  origin: agent_config
+  source:
+    lines: 95-96
+    path: CLAUDE.md
+- id: check_media_access_passes_frame
+  description: CheckMediaAccessPermission must pass requesting_frame to CheckPermission
+  type: fail_to_pass
+  origin: agent_config
+  source:
+    lines: 95-96
+    path: CLAUDE.md
+- id: web_contents_passes_render_frame_host
+  description: WebContents::CheckMediaAccessPermission must pass render_frame_host
+  type: fail_to_pass
+  origin: agent_config
+  source:
+    lines: 95-96
+    path: CLAUDE.md
+- id: check_serial_access_signature
+  description: CheckSerialAccessPermission must accept requesting_frame instead of
+    origin
+  type: fail_to_pass
+  origin: agent_config
+  source:
+    lines: 95-96
+    path: CLAUDE.md
+- id: serial_delegate_passes_frame
+  description: ElectronSerialDelegate must pass frame to CheckSerialAccessPermission
+  type: fail_to_pass
+  origin: agent_config
+  source:
+    lines: 95-96
+    path: CLAUDE.md
+- id: check_serial_access_uses_requesting_frame
+  description: CheckSerialAccessPermission must use requesting_frame for security
+    origin
+  type: fail_to_pass
+  origin: agent_config
+  source:
+    lines: 95-96
+    path: CLAUDE.md
+- id: header_guards_follow_convention
+  description: Header guards must follow Electron's ELECTRON_SHELL_BROWSER_*_H_ convention
+  type: fail_to_pass
+  origin: agent_config
+  source:
+    lines: 95-96
+    path: CLAUDE.md
+- id: no_web_contents_primary_main_frame
+  description: CheckPermission must not use GetPrimaryMainFrame, should use requesting_frame
+  type: fail_to_pass
+  origin: agent_config
+  source:
+    lines: 95-96
+    path: CLAUDE.md
+- id: clang_format
+  description: Modified C++ files must pass clang-format check (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+- id: modified_headers_have_guards
+  description: Modified header files must have proper include guards (pass_to_pass)
+  type: pass_to_pass
+  origin: static
+- id: cpplint
+  description: Modified C++ files must pass cpplint style checks (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+- id: header_guards_follow_convention_p2p
+  description: Header guards must follow Electron's naming convention (pass_to_pass)
+  type: pass_to_pass
+  origin: static
+- id: modified_files_exist
+  description: All modified files must exist and be readable (pass_to_pass)
+  type: pass_to_pass
+  origin: static
+- id: serial_delegate_has_can_request_port_permission
+  description: ElectronSerialDelegate must have CanRequestPortPermission method (pass_to_pass)
+  type: pass_to_pass
+  origin: static
+- id: web_contents_permission_helper_structure
+  description: WebContentsPermissionHelper must have expected class structure (pass_to_pass)
+  type: pass_to_pass
+  origin: static
+- id: shell_directory_clang_format
+  description: All shell/browser C++ files must pass clang-format (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+- id: git_repository_valid
+  description: Git repository must be at expected base commit (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+- id: no_merge_conflict_markers
+  description: Modified files must not contain Git merge conflict markers (pass_to_pass)
+  type: pass_to_pass
+  origin: static
+- id: file_utf8_encoding
+  description: All modified files must be valid UTF-8 encoded (pass_to_pass)
+  type: pass_to_pass
+  origin: static
+- id: no_trailing_whitespace_in_modified
+  description: Modified files must not have trailing whitespace (pass_to_pass)
+  type: pass_to_pass
+  origin: static
+- id: patches_config_valid
+  description: Patches config.json must be valid JSON with required structure (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+- id: patches_directory_structure
+  description: Chromium patches directory must have valid .patches file (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+- id: clang_format_shell_browser
+  description: shell/browser C++ files must pass clang-format with parallel jobs (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+- id: cpplint_modified_files
+  description: Modified C++ files must pass cpplint with Electron's filters (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+- id: shell_common_clang_format
+  description: shell/common C++ files must pass clang-format (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+- id: git_no_uncommitted_changes
+  description: Git repository must have no uncommitted changes at base commit (pass_to_pass)
+  type: pass_to_pass
+  origin: repo_tests
+rubric:
+- rule: Follow Chromium coding style for all C++ code, enforced by clang-format and
+    clang-tidy
+  source:
+    path: CLAUDE.md
+    lines: '93'
+    commit: 821b738db0a64c863e8371e7141564cef70d56b8
+- rule: 'C++ header guards must follow Electron convention: #ifndef ELECTRON_SHELL_BROWSER_*_H_'
+  source:
+    path: .github/copilot-instructions.md
+    lines: 60-61
+    commit: 821b738db0a64c863e8371e7141564cef70d56b8
+- rule: When modifying permission checks, propagate the requesting RenderFrameHost
+    through all related functions to ensure correct origin verification
+  source:
+    path: CLAUDE.md
+    lines: 93-96
+    commit: 821b738db0a64c863e8371e7141564cef70d56b8
+- rule: Make your changes in shell/ or lib/ or ../
+  source:
+    path: CLAUDE.md
+    lines: 69-69
+  evidence: The gold solution correctly implements the fix entirely within the `shell/browser/`
+    directory
+  category: architecture
+- rule: Test your changes (Leave the user to do this, don't run these commands unless
+    asked)
+  source:
+    path: CLAUDE.md
+    lines: 58-60
+  evidence: The gold solution does not invoke `e test` or `e start`, adhering to the
+    instruction to leave testing to the user.
+  category: tooling
+distractors:
+- rule: Test your changes (Leave the user to do this, don't run these commands unless
+    asked)
+  collision_type: meta_confusion
+  why_distracting: An agent would naturally want to verify its C++ changes by running
+    the test suite, but the instructions explicitly forbid running `e start` or `e
+    test` unless asked.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 73-75
+- rule: Fix existing patches 99% of the time rather than creating new ones
+  collision_type: scope_ambiguity
+  why_distracting: Because the issue involves core Chromium concepts like `RenderFrameHost`
+    and permissions, the agent might mistakenly assume it needs to modify or create
+    a Chromium patch in `patches/chromium/` rather than editing Electron's native
+    C++ code.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 91-91
+- rule: Guide for performing Chromium version upgrades in the Electron project.
+  source:
+    path: .claude/skills/electron-chromium-upgrade/SKILL.md
+    lines: 1-5
+  collision_type: scope_ambiguity
+  why_distracting: The agent might activate this skill thinking the issue is related
+    to a Chromium upgrade or patch conflict, leading it to waste time on the patch
+    application workflow instead of fixing the C++ logic in Electron.
+  severity: medium
+hierarchy_analysis: The configuration consists of a single flat file (`CLAUDE.md`)
+  that provides workflow and tooling instructions. There are no hierarchical conflicts,
+  as the rules primarily dictate development loop constraints rather than code-level
+  styling.
+version: '2.0'

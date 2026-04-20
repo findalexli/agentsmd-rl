@@ -1,61 +1,60 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction.md explicitly names all file paths (context.ts, ModalsProvider.tsx, events.ts, index.ts, use-modals.test.tsx), function/type names (openContextModal, closeContextModal, closeAllModals, updateContextModal, ContextModalInnerProps, modalKey), literal strings ('contextTest'), and schema keys (innerProps?: never, innerProps: P) that the tests assert on."
+      "reason": "Instruction names all files, function signatures, literal strings like 'modalKey: TKey', 'closeAllModals: () => void', 'innerProps?: never', 'innerProps: P', and test assertions like 'modalKey: \\'contextTest\\''."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction essentially dictates the exact fix: it specifies exact function signatures like 'closeContextModal: <TKey extends MantineModal>(modalKey: TKey' followed by optional canceled parameter, exact type definitions like 'innerProps?: never' and 'innerProps: P', and exact naming replacements like 'closeAll' \u2192 'closeAllModals'. This leaves almost no reasoning for the agent about WHAT to change."
+      "reason": "Instruction specifies exact signatures like 'closeContextModal: <TKey extends MantineModal>(modalKey: TKey', 'closeAllModals: () => void', 'innerProps?: never', 'innerProps: P', and the exact test literal 'modalKey: \\'contextTest\\''\u2014essentially dictating the implementation text rather than describing the bug."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on exact literal strings like 'closeContextModal: <TKey extends MantineModal>(modalKey: TKey' in context.ts, 'closeAllModals: () => void' exact match, 'innerProps?: never' and 'innerProps: P' exact strings, and 'closeAllModals,' in ModalsProvider.tsx. An alternative correct implementation using different but valid TypeScript syntax (e.g., different whitespace, type aliases, or parameter ordering) would fail these string-matching tests."
+      "reason": "Tests assert exact strings like 'closeContextModal: <TKey extends MantineModal>(modalKey: TKey' and 'closeAllModals: () => void' \u2014 any semantically equivalent alternative (e.g., different generic naming, multi-line formatting, or different type parameter order) would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The vast majority of tests are text-matching: reading files and checking for string presence (e.g., 'assert \"modalKey: TKey\" in content', 'assert \"innerProps?: never\" in content'). While test_repo_unit_tests runs Jest and test_typescript_syntax_valid runs tsc, the core f2p tests (test_open_context_modal_uses_modal_key, test_close_context_modal_function_exists, test_context_modal_inner_props_type, etc.) are purely text-based assertions."
+      "reason": "Most f2p tests use 'assert X in open(path).read()' style checks (test_close_all_modals_method_exists, test_open_context_modal_uses_modal_key, test_close_context_modal_function_exists, etc.) rather than executing code; only test_repo_unit_tests actually runs behavior."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "Most f2p tests just check string presence in files. A stub that simply writes the expected strings into the files without any real implementation logic would pass tests like test_context_modal_inner_props_type (just needs 'innerProps?: never' and 'innerProps: P' strings in context.ts). However, test_repo_unit_tests does run actual Jest tests, which provides some behavioral verification."
+      "outcome": "pass",
+      "reason": "A stub wouldn't satisfy string-matching for specific signatures and the jest unit test run would also need the actual implementation to work."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md are tested: openContextModal modalKey parameter, closeContextModal export and signature, closeAllModals rename, updateContextModal with modalKey, ContextModalInnerProps conditional typing, events.ts changes, index.ts exports, unit test updates, and ModalsProvider changes."
+      "reason": "Tests cover all enumerated requirements: closeAllModals rename, modalKey usage, closeContextModal existence/export, ContextModalInnerProps conditional typing, events.ts updates."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings (e.g., 'test_open_context_modal_uses_modal_key', 'test_close_context_modal_function_exists') and grouped logically by feature area. Each test has a clear purpose stated in its docstring."
+      "reason": "Tests are individually named functions with docstrings indicating f2p/p2p grouping."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves TypeScript API refactoring, not structured data output like JSON/CSV/API/DB schemas."
+      "reason": "Not a structured-data task."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, function names, and commands in the instruction are all correctly spelled and match the actual codebase conventions."
+      "reason": "File paths and identifiers are consistent across instruction and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact function signatures (e.g., 'closeContextModal: <TKey extends MantineModal>(modalKey: TKey'), exact type definitions ('innerProps?: never'), and exact context value entries ('closeAllModals,'). This goes well beyond describing what's broken and into specifying exact implementation details."
+      "reason": "Instruction explicitly names files AND exact signatures/literals to write (e.g., 'closeAllModals,' with trailing comma, 'innerProps?: never', 'modalKey: \\'contextTest\\''), eliminating reasoning about where/what to change."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task involving TypeScript source files, not configuration file edits."
+      "reason": "Code-only task."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 5
+  "pass_count": 5,
+  "fail_count": 4
 }

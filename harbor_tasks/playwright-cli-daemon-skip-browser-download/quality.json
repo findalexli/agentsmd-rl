@@ -1,62 +1,59 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert exact strings like `async function resolveAndInstall(nameOrChannel: string)`, `browserRegistry.resolveBrowsers([nameOrChannel], { shell: 'no' })`, `browserRegistry.install(executables)`, and `import { getAsBooleanFromENV } from '../../server/utils/env'`. While instruction.md mentions getAsBooleanFromENV, resolveBrowsers, and the import path, it does not specify the exact helper function signature `resolveAndInstall(nameOrChannel: string)`, the exact variable name `executables`, or t"
+      "outcome": "pass",
+      "reason": "Instruction names the file path, env var name PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD, getAsBooleanFromENV import path, resolveBrowsers with {shell:'no'}, ffmpeg, and the chromium fallback pattern."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "Instruction.md essentially dictates the exact fix: use getAsBooleanFromENV at the start of ensureConfiguredBrowserInstalled, remove fs.existsSync checks, create a shared helper using resolveBrowsers({shell:'no'}) and install(), add ffmpeg resolution. It describes precisely WHAT to change and HOW, not just what's broken."
+      "reason": "Instruction explicitly dictates the implementation: use getAsBooleanFromENV from '../../server/utils/env', call browserRegistry.resolveBrowsers with {shell:'no'}, factor into a shared async helper taking name/channel string, and install ffmpeg \u2014 essentially describing the patch."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact implementation details: `async function resolveAndInstall(nameOrChannel: string)` (exact function name and parameter name), `browserRegistry.resolveBrowsers([nameOrChannel], { shell: 'no' })` (exact call syntax), `browserRegistry.install(executables)` (exact variable name 'executables'). An alternative correct fix using different helper names (e.g., `installBrowser`), different parameter names, or slightly different call patterns would fail."
+      "reason": "Tests assert the exact helper name `async function resolveAndInstall(nameOrChannel: string)` and literal `await resolveAndInstall('ffmpeg')`/`await resolveAndInstall('chromium')`, which rejects correct alternatives with different helper names or signatures."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The core fail-to-pass tests (test_env_var_check_exists, test_resolve_and_install_helper_exists, test_ffmpeg_dependency_installation, test_chromium_uses_resolve_and_install, test_not_stub) are ALL string-matching tests using `assert '...' in src`. They never import, call, or execute the code being tested. The build/lint tests do run subprocesses but only verify compilation, not behavioral correctness."
+      "outcome": "pass",
+      "reason": "In addition to text asserts, tests run npm build, eslint, lint-packages, check-deps as subprocesses."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "Since all f2p tests are pure string-matching (`assert 'X' in src`), a stub that simply contains the expected strings as comments or dead code would pass. For example, adding `// async function resolveAndInstall(nameOrChannel: string)` and similar comment lines could satisfy the assertions without implementing any actual fix."
+      "outcome": "pass",
+      "reason": "Tests require specific new code (env var check, resolveAndInstall helper, ffmpeg install call) plus a successful build; a stub returning nothing would fail build and string checks."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All five behavioral requirements from instruction.md are covered: env var check (test_env_var_check_exists), shared helper with resolveBrowsers (test_resolve_and_install_helper_exists), ffmpeg dependency (test_ffmpeg_dependency_installation), chromium consolidated approach (test_chromium_uses_resolve_and_install), and removal of old patterns (test_chromium_uses_resolve_and_install checks old_pattern not in src)."
+      "reason": "Env var check, helper with resolveBrowsers shell:'no', ffmpeg install, and chromium usage via helper are all tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass anti-stub, Pass-to-pass repo_tests), descriptive function names, and docstrings explaining each test's purpose."
+      "reason": "Tests are grouped with comment section headers (Gates, Fail-to-pass, Pass-to-pass, repo_tests)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves modifying TypeScript source code, not producing structured data output."
+      "reason": "No structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, variable names, or function names across instruction.md and tests."
+      "reason": "Paths and identifiers appear correct."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "Instruction.md names the exact file, exact functions (ensureConfiguredBrowserInstalled, findOrInstallDefaultBrowser), exact import path ('../../server/utils/env'), exact method calls (resolveBrowsers with {shell:'no'}), and exact old code pattern to remove (`!fs.existsSync(chromiumExecutable?.executablePath()!)`). This goes far beyond describing what's broken."
+      "reason": "Instruction provides near line-level guidance: 'At the very start of ensureConfiguredBrowserInstalled()', exact import path '../../server/utils/env', exact option {shell:'no'}, and directs to factor into a shared helper accepting name/channel \u2014 essentially the patch recipe."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "Code-only task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
     "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 3,
-  "fail_count": 6
+  "pass_count": 6,
+  "fail_count": 3
 }

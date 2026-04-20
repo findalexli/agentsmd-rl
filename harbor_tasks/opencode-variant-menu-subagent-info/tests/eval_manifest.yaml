@@ -1,0 +1,176 @@
+version: '2.0'
+source:
+  repo: anomalyco/opencode
+  pr: 19537
+  base_commit: 860531c275cf845f80ccf26bba5bad745fe98398
+  merge_commit: aa2d753e7edbf323baf635aec7972b673d2b64a3
+checks:
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TypeScript typecheck passes via bun run typecheck
+- id: test_repo_tui_prompt_part_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: TUI prompt-part unit tests pass via bun test
+- id: test_repo_session_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Session module unit tests pass via bun test
+- id: test_repo_tui_thread_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: TUI thread unit tests pass via bun test
+- id: test_repo_server_session_list_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Server session-list unit tests pass via bun test
+- id: test_repo_server_session_messages_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Server session-messages unit tests pass via bun test
+- id: test_repo_cli_keybind_plugin_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: CLI keybind-plugin unit tests pass via bun test
+- id: test_repo_session_compaction_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Session compaction unit tests pass via bun test
+- id: test_repo_tui_transcript_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: TUI transcript unit tests pass via bun test
+- id: test_repo_tui_theme_store_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: TUI theme-store unit tests pass via bun test
+- id: test_repo_server_session_select_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Server session-select unit tests pass via bun test
+- id: test_repo_server_global_session_list_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Server global-session-list unit tests pass via bun test
+- id: files_exist_and_not_truncated
+  type: pass_to_pass
+  origin: static
+  description: Modified files must exist and have meaningful content
+- id: core_exports_intact
+  type: pass_to_pass
+  origin: static
+  description: Key exports (Session, SubagentFooter, InlineTool) still exist
+- id: cycle_direction_fixed
+  type: fail_to_pass
+  origin: pr_diff
+  description: cycleSession must subtract direction from index (inverted arithmetic)
+- id: subagent_footer_shows_type
+  type: fail_to_pass
+  origin: pr_diff
+  description: Footer extracts agent type from session title via regex and displays
+    it
+- id: subagent_footer_shows_index
+  type: fail_to_pass
+  origin: pr_diff
+  description: Footer computes and displays sibling index (e.g. '2 of 5')
+- id: task_content_includes_subagent_type
+  type: fail_to_pass
+  origin: pr_diff
+  description: Task component includes subagent_type with capitalization and fallback
+- id: dead_code_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Unused ToolTitle function removed from session/index.tsx
+- id: functional_array_methods
+  type: fail_to_pass
+  origin: agent_config
+  description: Sibling computation uses functional array methods per AGENTS.md:17
+  source:
+    path: AGENTS.md
+    lines: '17'
+    commit: 860531c275cf845f80ccf26bba5bad745fe98398
+- id: no_try_catch_in_footer
+  type: pass_to_pass
+  origin: agent_config
+  description: subagent-footer.tsx must not use try/catch blocks per AGENTS.md:12
+  source:
+    path: AGENTS.md
+    lines: '12'
+    commit: 860531c275cf845f80ccf26bba5bad745fe98398
+rubric:
+- rule: 'CODE VERIFIED: subagent-footer.tsx contains no try/catch blocks (AGENTS.md:12)'
+  source:
+    path: AGENTS.md
+    lines: '12'
+    commit: 860531c275cf845f80ccf26bba5bad745fe98398
+- rule: 'CODE VERIFIED: Sibling computation uses functional array methods .filter()
+    and .findIndex() (AGENTS.md:17)'
+  source:
+    path: AGENTS.md
+    lines: '17'
+    commit: 860531c275cf845f80ccf26bba5bad745fe98398
+- rule: Avoid `else` statements. Prefer early returns.
+  source:
+    path: AGENTS.md
+    lines: 73-82
+  evidence: In `subagent-footer.tsx`, the `subagentInfo` memo uses `if (!s) return
+    ...` and `if (!s.parentID) return ...` instead of wrapping the rest of the logic
+    in `else` blocks.
+  category: style
+- rule: Prefer functional array methods (flatMap, filter, map) over for loops
+  source:
+    path: AGENTS.md
+    lines: 17-18
+  evidence: In `subagent-footer.tsx`, the `siblings` array is computed using `.filter()`
+    and `.toSorted()` rather than a traditional `for` loop.
+  category: style
+- rule: Avoid unnecessary destructuring. Use dot notation to preserve context.
+  source:
+    path: AGENTS.md
+    lines: 51-59
+  evidence: In `subagent-footer.tsx`, the gold solution accesses properties directly
+    via `s.title`, `s.parentID`, and `s.id` rather than destructuring the session
+    object.
+  category: style
+- rule: Rely on type inference when possible; avoid explicit type annotations
+  source:
+    path: AGENTS.md
+    lines: 16-17
+  evidence: 'The `subagentInfo` memo in `subagent-footer.tsx` does not declare an
+    explicit return type, relying on TypeScript to infer the `{ label: string, index:
+    number, total: number }` shape.'
+  category: style
+- rule: Use single word names by default for new locals, params, and helper functions.
+  source:
+    path: AGENTS.md
+    lines: 18-31
+  evidence: In `subagent-footer.tsx`, the gold solution uses single-word variable
+    names like `s`, `label`, `siblings`, and `index` to adhere to the naming enforcement
+    rule.
+  category: naming
+distractors:
+- rule: Prefer `const` over `let`. Use ternaries or early returns instead of reassignment.
+  collision_type: scope_ambiguity
+  why_distracting: The existing `cycleSession` logic uses `let next = ...` and reassigns
+    it if it goes out of bounds. An agent strictly following 'Prefer const over let'
+    might try to refactor this into a complex ternary or modulo expression, which
+    is out of scope for a simple direction inversion and risks introducing bugs.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 70-79
+- rule: Avoid using the `any` type
+  collision_type: scope_ambiguity
+  why_distracting: 'The `ToolTitle` component contains `when: any`. An agent might
+    try to fix this type violation by replacing `any` with a proper type, missing
+    the fact that the component is entirely unreferenced and should just be deleted
+    as per the hint.'
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 13-14
+hierarchy_analysis: The agent must apply general TypeScript/SolidJS style rules from
+  the root `AGENTS.md` (Level 0) while ignoring the Effect and Database specific rules
+  in `packages/opencode/AGENTS.md` (Level 2) since this is a TUI React/Solid component
+  task.

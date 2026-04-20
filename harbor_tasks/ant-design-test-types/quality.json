@@ -1,62 +1,59 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert exact strings like 'type SnapshotTarget = HTMLElement | DocumentFragment | HTMLCollection | NodeList | Node[]', 'function formatHTML(nodes: SnapshotTarget)', 'let cloneNodes: Node | Node[]', 'type FocusableRef = {', 'React.createRef<FocusableRef>()', and 'const getElement = (container: HTMLElement): HTMLElement => {'. While the instruction describes what types/changes are needed conceptually, it does not explicitly state the exact type name 'SnapshotTarget' or 'FocusableRef' \u2014 these"
+      "outcome": "pass",
+      "reason": "All required type names, function signatures, literal strings (SnapshotTarget, FocusableRef, formatHTML, getElement, 15.2.0, @sinonjs/fake-timers, pnpm.overrides, overrides, resolutions) are explicitly named in instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction essentially dictates the exact fix: 'Define a type that represents all valid snapshot targets (HTMLElement, DocumentFragment, HTMLCollection, NodeList, and arrays of Node elements)', 'Replace unsafe `as any` assertions with proper `as HTMLElement` assertions', 'Update both print callback functions to properly assert elements before passing to formatHTML', 'Add configuration for @sinonjs/fake-timers version 15.2.0 via pnpm.overrides, overrides, and resolutions fields'. These are n"
+      "reason": "Instruction dictates exact code strings like 'type SnapshotTarget = HTMLElement | DocumentFragment | HTMLCollection | NodeList | Node[]', 'function formatHTML(nodes: SnapshotTarget)', 'let cloneNodes: Node | Node[]', and the exact getElement signature \u2014 essentially providing the fix verbatim."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact strings like 'type SnapshotTarget = HTMLElement | DocumentFragment | HTMLCollection | NodeList | Node[]' and 'type FocusableRef = {' and 'React.createRef<FocusableRef>()' and 'const getElement = (container: HTMLElement): HTMLElement => {'. An alternative correct fix using different type names (e.g., 'SnapshotInput', 'FocusableElement'), different type structures (e.g., interface instead of type alias), or different formatting would fail these string-matching tests despite bein"
+      "reason": "Tests assert exact strings like 'let cloneNodes: Node | Node[]' and 'const getElement = (container: HTMLElement): HTMLElement => {'; alternative valid fixes (e.g., different but correct type for cloneNodes, arrow vs function differences) would fail."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The first 7 tests (test_snapshot_target_type_exists through test_fire_event_calls_without_nonnull_assertion) are purely text-matching: they read files and check for exact string patterns like 'type SnapshotTarget = ...' in content. While later tests do run subprocesses (tsc, eslint, jest), the fail-to-pass tests are all string-in-file checks with no execution."
+      "outcome": "pass",
+      "reason": "Tests run subprocesses like 'npx tsc --noEmit', 'npm run lint', 'npx biome lint', and 'npx jest' in addition to file content checks."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "All fail-to-pass tests are string-matching assertions. A stub that simply writes the expected strings into the files (e.g., appending 'type SnapshotTarget = HTMLElement | DocumentFragment | HTMLCollection | NodeList | Node[]' as a comment) without actually implementing the type system changes could pass the f2p tests. The behavioral tests (tsc, eslint) are pass-to-pass, not fail-to-pass."
+      "outcome": "pass",
+      "reason": "Tests require actual specific type declarations and successful tsc/lint runs; a stub cannot satisfy them."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires type safety fixes in setupAfterEnv.ts, focusTest.tsx, and package.json changes. Tests cover all these: type definitions, function signatures, type assertions, ref typing, querySelector generics, non-null assertion removal, package.json overrides, plus compilation and lint checks."
+      "reason": "Tests cover all behaviors described: SnapshotTarget, formatHTML signature, cloneNodes, SnapshotTarget assertions, FocusableRef, createRef, getElement, querySelector, null check, no non-null assertion, and package.json overrides via lint/tsc."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_snapshot_target_type_exists, test_format_html_uses_proper_types, etc.), have docstrings indicating fail-to-pass vs pass-to-pass, and are logically grouped by file/concern."
+      "reason": "Tests have descriptive names and docstrings labeling fail-to-pass vs pass-to-pass."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "No structured data output; only code/config edits."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No apparent typos in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "Filenames and identifiers appear correct and consistent."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact implementation details: 'Replace unsafe `as any` assertions with proper `as HTMLElement` assertions', 'Update both `print` callback functions to properly assert elements before passing to `formatHTML`', 'Add configuration for `@sinonjs/fake-timers` version `15.2.0` via `pnpm.overrides`, `overrides`, and `resolutions` fields'. These go beyond describing what's broken and prescribe the exact fix."
+      "reason": "Instruction specifies exact files and exact code lines to produce (e.g., the full SnapshotTarget union, the getElement return type signature), eliminating localization reasoning."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The package.json gold diff adds only 11 lines of override configuration and doesn't contradict other files. The other diffs are localized type annotation changes."
+      "reason": "Gold package.json diff is a localized addition of pnpm/overrides/resolutions blocks, not a full-file rewrite."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
     "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 6
+  "pass_count": 7,
+  "fail_count": 3
 }

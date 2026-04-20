@@ -1,62 +1,59 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests check for specific patterns like 'zookeeper_getter' (test_session_renewal_mechanism_exists), 'getZooKeeper' (same test), ordering of isRetry() before getObjectNamesAndSetWatch (test_session_renewed_before_use), no tabs (test_repo_no_tabs), no trailing whitespace (test_repo_no_trailing_whitespace), no std::cerr/cout (test_repo_no_cerr_cout), no std::format (test_repo_no_std_format), no raw assert (test_repo_no_raw_assert), no __builtin_unreachable, Allman brace style (test_clickhouse_allman"
+      "outcome": "pass",
+      "reason": "instruction.md names the file path, function, and all required code patterns (current_zookeeper, isRetry(), getZooKeeper, etc.) that tests check for."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact code patterns required: 'zkutil::ZooKeeperPtr current_zookeeper = zookeeper;', 'if (retries_ctl.isRetry())', 'zookeeper_getter.getZooKeeper().first;', and specifies that tryLoadObject and getObjectNamesAndSetWatch must be called with current_zookeeper. This is essentially dictating the exact fix rather than describing what's broken."
+      "reason": "Instruction explicitly dictates the fix with exact code patterns like 'zkutil::ZooKeeperPtr current_zookeeper = zookeeper;', 'if (retries_ctl.isRetry())', and 'zookeeper_getter.getZooKeeper().first;' \u2014 the agent doesn't need to reason about what to change."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: test_session_renewal_mechanism_exists checks for literal string 'zookeeper_getter' in the retry body, test_session_renewal_on_retry checks for 'getZooKeeper' after isRetry(). An alternative correct fix that uses a different renewal mechanism (e.g., directly calling a reconnect method, or using a different getter pattern) would fail these tests."
+      "outcome": "pass",
+      "reason": "Tests check behavioral patterns (isRetry before getObjectNamesAndSetWatch, use of zookeeper_getter) rather than exact variable names; alternative correct fixes using the same mechanism would pass."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Nearly all fail-to-pass tests are pure text/pattern matching on source code: test_session_renewal_on_retry checks for 'isRetry()' and 'getZooKeeper' strings in source, test_object_names_fetched_inside_retry_loop checks for 'getObjectNamesAndSetWatch' string, test_session_renewal_mechanism_exists checks for 'zookeeper_getter' string. No test actually compiles, links, or executes the C++ code."
+      "reason": "All f2p tests are static text/regex inspection of the cpp file (e.g., 'isRetry()' in retry_body, 'getObjectNamesAndSetWatch' in retry_body); no compilation or runtime behavior is exercised."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests do check for specific code patterns that are absent in the original (unfixed) file. For example, isRetry() and getZooKeeper inside the retry loop, and getObjectNamesAndSetWatch moved inside the retry loop. A stub or no-op wouldn't pass these since the original file lacks these patterns in the retry body."
+      "reason": "A stub cannot pass because tests require specific call ordering (isRetry before getObjectNamesAndSetWatch) and presence of zookeeper_getter.getZooKeeper within retryLoop body."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "Instruction requires comments referencing 'zookeeper_getter' with terms 'renew', 'expired', or 'fresh' (Code Style Requirement #6), but no test checks for comment content containing these specific terms. Also, instruction requires 'current_zookeeper = zookeeper;' as a local variable declaration but tests don't verify this exact pattern."
+      "outcome": "pass",
+      "reason": "Tests cover the session renewal, retry check placement, and getObjectNamesAndSetWatch being inside retry loop as required by instruction.md."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names (test_session_renewal_on_retry, test_object_names_fetched_inside_retry_loop, etc.) and include docstrings explaining what each test verifies and why."
+      "reason": "Tests are clearly named (test_session_renewal_on_retry, test_session_renewed_before_use, etc.) with docstrings explaining intent."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves modifying C++ source code, not producing structured data like JSON/CSV/API/DB."
+      "reason": "Task is a C++ code fix, not structured data."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No obvious typos found in filenames, paths, variable names, or commands in the instruction or test files."
+      "reason": "File paths, function names, and macros in instruction.md match those used in tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact file (UserDefinedSQLObjectsZooKeeperStorage.cpp), exact function (refreshObjects), and provides exact code patterns to implement including variable names and method calls. This goes well beyond identifying the buggy area and essentially dictates the solution."
+      "reason": "instruction.md gives the exact code patterns to insert (e.g., 'zkutil::ZooKeeperPtr current_zookeeper = zookeeper;' and 'zookeeper_getter.getZooKeeper().first;') rather than just identifying the broken area."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying a C++ source file, not a configuration edit task."
+      "reason": "Not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
     "no_solution_leakage",
-    "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 3,
-  "fail_count": 6
+  "pass_count": 6,
+  "fail_count": 3
 }

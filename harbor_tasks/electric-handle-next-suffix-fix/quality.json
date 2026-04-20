@@ -1,61 +1,58 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert specific implementation details not mentioned in instruction.md: the function name `createCacheBuster` (test_createCacheBuster_produces_unique_values), the private field `#refetchCacheBuster` (test_refetchCacheBuster_private_field_exists), the constant `CACHE_BUSTER_QUERY_PARAM` (test_cache_buster_query_param_mechanism_exists), and the exact pattern `#refetchCacheBuster = createCacheBuster` are all undiscoverable from instruction.md alone."
+      "reason": "Tests assert on specific internal names like `createCacheBuster` function, `#refetchCacheBuster` private field, and `CACHE_BUSTER_QUERY_PARAM` constant usage which are not mentioned in instruction.md."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md explicitly states implementation details: 'The `#reset()` method must be called in a way that properly handles missing handles (passing `undefined` rather than fabricating a string)' and 'Retried requests without a handle header must use a unique cache-busting strategy (e.g., query parameter with a time-based + random value)'. It also says 'Look for code that constructs handles by appending `-next`', directing the agent to the exact buggy pattern."
+      "outcome": "pass",
+      "reason": "Instruction describes the problem and expected behavior without specifying exact line changes or internal symbol names."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests require the exact function name `createCacheBuster` (regex `function\\s+createCacheBuster`), the exact private field `#refetchCacheBuster` (regex `#refetchCacheBuster\\s*\\?:`), and the exact assignment `#refetchCacheBuster = createCacheBuster`. An alternative correct fix using different names (e.g., `generateCacheBuster`, `#cacheBusterValue`) would fail these tests."
+      "reason": "test_createCacheBuster_produces_unique_values requires a function named exactly `createCacheBuster`, and test_refetchCacheBuster_private_field_exists requires exactly `#refetchCacheBuster?:`, and test_cache_buster_query_param_mechanism_exists requires `#refetchCacheBuster = createCacheBuster` \u2014 alternative correct implementations (e.g., inline or different naming) would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The TestCacheBusterBehavior tests (test_createCacheBuster_produces_unique_values, test_no_next_suffix_in_handle_construction, test_cache_buster_query_param_mechanism_exists, test_warning_for_missing_handle_header_on_409, test_refetchCacheBuster_private_field_exists) all use regex pattern matching on source/built file content (`re.findall` on `get_source_content()`). Despite being labeled 'Behavioral test', none actually execute the code or test runtime behavior. Only the TestRepoIntegration test"
+      "reason": "TestCacheBusterBehavior tests all use `re.findall` on source/dist content to check for specific patterns like `#refetchCacheBuster\\s*\\?:` rather than executing the code; only the integration tests actually run code."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests (test_vitest_unit_tests_pass, test_shape_stream_state_tests_pass, test_expired_shapes_cache_tests_pass, test_typescript_typecheck_passes, test_eslint_stylecheck_passes) run the actual repo test suite/typechecker/linter. A stub or no-op implementation would fail TypeScript compilation and the existing unit tests."
+      "reason": "Tests require specific behavioral artifacts (warning text, cache buster param setting, absence of `-next`), not trivially satisfiable by stubs."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors from instruction.md are tested: no `-next` suffix (test_no_next_suffix_in_handle_construction), warning message content (test_warning_for_missing_handle_header_on_409), cache-busting strategy (test_cache_buster_query_param_mechanism_exists, test_createCacheBuster_produces_unique_values), and proper handling of missing handles (test_refetchCacheBuster_private_field_exists)."
+      "reason": "Instruction requirements (no -next suffix, warning text, reset with undefined, cache-busting strategy) are covered by the tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized into two classes (TestCacheBusterBehavior, TestRepoIntegration) with descriptive method names and docstrings explaining what each test verifies."
+      "reason": "Tests are organized into TestCacheBusterBehavior and TestRepoIntegration classes with docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a bug in client code, not producing structured data output."
+      "reason": "Task is a code fix, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "Paths and commands look correct."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md explicitly names the file (`packages/typescript-client/src/client.ts`), the class (`ShapeStream`), the method (`#reset()`), and says 'Look for code that constructs handles by appending `-next` when processing 409 responses', pinpointing the exact buggy code location and pattern."
+      "outcome": "pass",
+      "reason": "Instruction names `packages/typescript-client/src/client.ts` and `ShapeStream` class, which is appropriate scoping rather than pinpoint leakage."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "Code-only task, no config edits."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
-    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 4,
-  "fail_count": 5
+  "tier_c_fails": [],
+  "pass_count": 6,
+  "fail_count": 3
 }

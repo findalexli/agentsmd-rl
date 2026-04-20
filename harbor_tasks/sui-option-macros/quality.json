@@ -1,60 +1,57 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert very specific patterns not fully described in instruction.md. For example, test_is_none_or_exists asserts 'o.is_none()' appears in the implementation; test_fold_exists asserts 'o.destroy_some()' appears. The instruction says to 'study existing macro definitions' but never specifies these exact implementation details. Also test_no_lint_suppressions asserts '#[allow(' is not in the file, which is never mentioned in instructions. test_macro_syntax_valid requires 'at least 5 new macros "
+      "outcome": "pass",
+      "reason": "Instruction names the file path, all 5 macro names, their signatures (parameter types and return types), and placement hints matching what the tests check."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what macros to implement (signatures, behavior) but does not give the exact code. It tells the agent to study existing patterns rather than prescribing exact line changes."
+      "reason": "Instruction describes what to implement and patterns to follow but doesn't provide exact code; agent must write the macro bodies."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests enforce exact signature patterns via regex (e.g., test_map_mut_correct_signature requires exact '$o: &mut Option<$T>, $f: |&mut $T| -> $U'). They also enforce specific implementation details like 'o.is_none()' in is_none_or and 'o.destroy_some()' in fold. An alternative correct implementation using different parameter names (e.g., $option instead of $o) or different internal calls (e.g., pattern matching instead of is_none/destroy_some) would fail."
+      "reason": "Tests use strict regex on exact signatures (e.g., `public macro fun fold<\\$T, \\$R>\\(\\$o: Option<\\$T>, \\$none: \\$R, \\$some: \\|\\$T\\| -> \\$R\\): \\$R`) requiring specific parameter names like `$none`/`$some` and specific type param order/names, plus `o.destroy_some()` must appear literally in fold \u2014 alternative correct implementations using different parameter names or `option::destroy_some(o)` syntax would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Nearly every test is text-matching: 'assert \"public macro fun map_mut<\" in content', regex searches on file content, etc. No test actually compiles or executes the Move code. The tests are entirely string/regex assertions on file contents with no behavioral execution."
+      "reason": "Instruction explicitly says 'we don't have the Move compiler in the test environment' \u2014 all tests are textual regex/string matches on source file; no execution of the macros' behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests (file structure, module declaration, existing functions, Move.toml validity, braces balanced, source files present) check pre-existing conditions of the repo that should already pass at the base commit. A stub/no-op change would not add the required macro signatures that the f2f tests check. The f2p tests themselves verify baseline repo integrity."
+      "reason": "A stub returning None cannot satisfy the signature regex checks; tests require specific code patterns to be present."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "The instruction specifies behavioral semantics like 'the default should only be evaluated if the option is None' for fold, but no test actually verifies lazy evaluation behavior. Tests only check string presence and signature patterns, not actual runtime behavior."
+      "outcome": "pass",
+      "reason": "All 5 macros are individually tested for existence, signature, and some for docs."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_map_mut_exists, test_fold_correct_signature, etc.), have docstrings explaining their purpose, and are logically grouped by what they verify (existence, docs, signatures, structure)."
+      "reason": "Tests are named per macro and grouped with section comments like '=== Pass-to-Pass Repo Tests ==='."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task produces Move source code, not structured data like JSON/CSV/API/DB."
+      "reason": "Task produces Move source code, not structured data."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "Paths and names appear consistent and correct."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names the file to edit (option.move) which is obvious from the task domain, and suggests placement near existing macros, but doesn't specify exact line numbers or the exact code to write."
+      "reason": "Instruction points to the obvious file option.move where the macros must go, which is necessary context, not line-level leakage."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task (adding macros to a Move source file), not a config-edit task."
+      "reason": "Code task, not an agentmd/config edit task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "behavior_in_tests"
-  ],
-  "pass_count": 5,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 2
 }

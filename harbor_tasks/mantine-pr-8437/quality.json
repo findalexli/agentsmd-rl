@@ -1,0 +1,56 @@
+{
+  "model": "claude-opus-4-7",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "All file paths, prop names (openDelay, closeDelay), default value (0), and hook name (useDelayedHover) referenced in tests are named in instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction describes symptoms and expected behavior without dictating exact code changes."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check for interface declaration, destructuring, defaultProps value, and non-hardcoded hook arg - all of which any correct fix would satisfy."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "All tests are regex/string checks on source file contents (e.g., re.search for 'openDelay\\s*\\?\\s*:\\s*number'); no runtime execution of the component or type-checking."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "Tests require specific structural changes (interface, defaultProps, destructuring, hook call) that a stub cannot satisfy."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "Interface acceptance, default of 0, passing to hook, and demo/story file updates are all verified."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests grouped with FAIL_TO_PASS and PASS_TO_PASS section comments and descriptive names."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "No structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "Paths and names are consistent and correct."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction names the files to modify but not the exact buggy line; localization is still required."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "Code-only task, no config edits."
+    }
+  },
+  "tier_a_fails": [
+    "tests_verify_behavior_not_text"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 1
+}

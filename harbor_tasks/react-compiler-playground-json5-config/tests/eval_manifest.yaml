@@ -1,0 +1,163 @@
+version: '2.0'
+source:
+  repo: facebook/react
+  pr: 36159
+  base_commit: 74568e8627aa43469b74f2972f427a209639d0b6
+  merge_commit: 2c2fd9d12c7159efef81e7ea6ec899943cf7ca33
+checks:
+- id: test_parse_config_overrides_rejects_xss_patterns
+  type: fail_to_pass
+  origin: pr_diff
+  description: parseConfigOverrides uses JSON5.parse (not new Function) - proven by
+    XSS rejection
+- id: test_parse_config_overrides_parses_valid_json5
+  type: fail_to_pass
+  origin: pr_diff
+  description: parseConfigOverrides correctly parses valid JSON5 configs including
+    comments and trailing commas
+- id: test_default_config_is_valid_json5
+  type: fail_to_pass
+  origin: pr_diff
+  description: defaultStore.ts default config can be parsed as valid JSON5 without
+    TypeScript syntax
+- id: test_json5_dependency_in_package_json
+  type: fail_to_pass
+  origin: pr_diff
+  description: json5 is listed as a dependency in playground package.json
+- id: test_parse_config_unit_tests_pass
+  type: fail_to_pass
+  origin: pr_diff
+  description: parseConfigOverrides unit tests exist and pass
+- id: test_config_editor_uses_json_language
+  type: pass_to_pass
+  origin: static
+  description: ConfigEditor.tsx uses JSON language mode for config
+- id: test_json5_safely_rejects_injection
+  type: pass_to_pass
+  origin: static
+  description: JSON5 parsing rejects common XSS/injection patterns
+- id: test_json5_parses_valid_configs
+  type: pass_to_pass
+  origin: static
+  description: JSON5 correctly parses valid JSON5 config patterns
+- id: test_repo_package_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo playground package.json is valid JSON via node JSON.parse
+- id: test_repo_compilation_ts_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo compilation.ts has valid JavaScript/TypeScript syntax via node
+    --check
+- id: test_repo_default_store_ts_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo defaultStore.ts has valid JavaScript/TypeScript syntax via node
+    --check
+- id: test_repo_prettier_check_compilation
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo compilation.ts passes prettier formatting check via npx prettier
+    --check
+- id: test_repo_prettier_check_default_store
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo defaultStore.ts passes prettier formatting check via npx prettier
+    --check
+- id: test_repo_prettier_check_config_editor
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo ConfigEditor.tsx passes prettier formatting check via npx prettier
+    --check
+- id: test_repo_git_status_clean
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo has no uncommitted changes at base commit via git status --porcelain
+- id: test_repo_node_modules_json5_available
+  type: pass_to_pass
+  origin: repo_tests
+  description: json5 dependency is available for repo tests
+- id: test_repo_tsconfig_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's playground tsconfig.json is valid JSON via node JSON.parse
+- id: test_repo_eslintrc_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's playground .eslintrc.json is valid JSON via node JSON.parse
+- id: test_repo_yarn_install_frozen_lockfile
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's playground yarn install --frozen-lockfile passes CI validation
+- id: test_repo_page_spec_ts_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's page.spec.ts e2e test file has valid syntax via node --check
+- id: test_repo_prettier_check_page_spec
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's page.spec.ts passes prettier formatting check via npx prettier
+    --check
+rubric:
+- rule: Run compiler tests with `yarn snap` when modifying compiler files. Tests should
+    pass before submitting.
+  source:
+    path: compiler/CLAUDE.md
+    lines: 21-36
+    commit: 74568e8627aa43469b74f2972f427a209639d0b6
+  reference: DISTRACTOR - This rule applies to core compiler passes, not the playground
+    app.
+- rule: Format code with `yarn prettier-all` when modifying compiler files. Code must
+    pass formatting checks.
+  source:
+    path: compiler/CLAUDE.md
+    lines: 45-50
+    commit: 74568e8627aa43469b74f2972f427a209639d0b6
+  reference: DISTRACTOR - This rule is for core compiler package.
+- rule: Use Sapling (`sl`) commands for version control, not git. Use `sl addremove`
+    to track new/deleted files and `sl commit` to commit changes.
+  source:
+    path: compiler/CLAUDE.md
+    lines: 77-98
+    commit: 74568e8627aa43469b74f2972f427a209639d0b6
+  reference: DISTRACTOR - The environment uses git, not sl.
+- rule: React Compiler playground files are located in the `/compiler/apps/playground/`
+    directory. Changes to the playground app should only modify files within this directory
+    tree, not the core compiler packages.
+  reference: 'PASS: The gold solution correctly modifies files within /compiler/apps/playground/
+    (compilation.ts, defaultStore.ts, ConfigEditor.tsx, package.json, page.spec.ts).
+    This rule is satisfied because all changed files are in the compiler/apps/playground/
+    directory.'
+distractors:
+- rule: When modifying the compiler, you MUST read the documentation about that pass
+    in compiler/packages/babel-plugin-react-compiler/docs/passes/
+  collision_type: scope_ambiguity
+  why_distracting: The task is to fix an XSS vulnerability in the playground's config
+    parser, which is a separate app, not a compiler pass. Looking for pass documentation
+    would waste time and confuse the agent.
+  severity: medium
+  source:
+    path: compiler/CLAUDE.md
+    lines: 8-10
+- rule: Run all tests using `yarn snap`
+  collision_type: scope_ambiguity
+  why_distracting: '`yarn snap` is for the main compiler package''s snapshot tests,
+    but the task involves the playground app. The agent might try to run `yarn snap`
+    to test its changes and get confused when it doesn''t run the playground tests.'
+  severity: medium
+  source:
+    path: compiler/CLAUDE.md
+    lines: 20-22
+- rule: This repository uses Sapling (sl) for version control.
+  collision_type: meta_confusion
+  why_distracting: The agent might try to use `sl` commands to check status or commit,
+    which could fail or cause confusion if the environment uses `git` (as seen in
+    the gold solution's `git status`).
+  severity: low
+  source:
+    path: compiler/CLAUDE.md
+    lines: 60-62
+hierarchy_analysis: The root CLAUDE.md delegates compiler-specific instructions to
+  compiler/CLAUDE.md. However, compiler/CLAUDE.md is heavily focused on the babel-plugin-react-compiler
+  package, whereas this task is in compiler/apps/playground. The agent must recognize
+  this scope boundary and not apply compiler-pass rules to the playground app.

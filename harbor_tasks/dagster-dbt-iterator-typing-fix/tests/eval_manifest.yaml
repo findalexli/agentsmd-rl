@@ -1,0 +1,127 @@
+rubric:
+- rule: Use specific, accurate type annotations - not generic types like Iterator
+    when a more precise type (DbtEventIterator[DbtDagsterEventType]) is available
+  source:
+    path: .claude/coding_conventions.md
+    lines: 22-25
+    commit: f44352a8a384296e999c33df60bb785bd69953c4
+- rule: All Python code must pass pyright type checking with zero errors
+  source:
+    path: .claude/coding_conventions.md
+    lines: '25'
+    commit: f44352a8a384296e999c33df60bb785bd69953c4
+- rule: Use builtin types for annotations (list, dict, set, tuple) instead of typing
+    module variants, and prefer modern generic syntax
+  source:
+    path: .claude/coding_conventions.md
+    lines: 23-24
+    commit: f44352a8a384296e999c33df60bb785bd69953c4
+- rule: 'Python: Core framework in `python_modules/dagster/`, libraries in `python_modules/libraries/`'
+  source:
+    path: CLAUDE.md
+    lines: 44-45
+  evidence: The gold solution correctly targets the `dagster-dbt` package inside the
+    `python_modules/libraries/` directory for its modifications, aligning with the
+    repository's architectural layout.
+  category: architecture
+checks:
+- id: test_ruff_check_component
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff linter check passes on component.py
+- id: test_ruff_check_iterator
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff linter check passes on dbt_event_iterator.py
+- id: test_component_py_compile
+  type: pass_to_pass
+  origin: repo_tests
+  description: Python syntax check passes on component.py
+- id: test_iterator_py_compile
+  type: pass_to_pass
+  origin: repo_tests
+  description: Python syntax check passes on dbt_event_iterator.py
+- id: test_ruff_format_check_component
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff format check passes on component.py
+- id: test_ruff_format_check_iterator
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff format check passes on dbt_event_iterator.py
+- id: test_validate_pyproject
+  type: pass_to_pass
+  origin: repo_tests
+  description: dagster-dbt pyproject.toml is valid
+- id: test_check_manifest
+  type: pass_to_pass
+  origin: repo_tests
+  description: dagster-dbt package manifest is complete
+- id: test_dagster_dbt_package_structure
+  type: pass_to_pass
+  origin: static
+  description: dagster-dbt package has expected directory structure
+- id: test_pyproject_toml_exists
+  type: pass_to_pass
+  origin: static
+  description: dagster-dbt pyproject.toml exists and is valid
+- id: test_component_ast_valid
+  type: pass_to_pass
+  origin: static
+  description: component.py has valid AST with DbtProjectComponent class
+- id: test_iterator_ast_valid
+  type: pass_to_pass
+  origin: static
+  description: dbt_event_iterator.py has valid AST with DbtEventIterator class
+- id: test_dbt_event_iterator_has_event_type_alias
+  type: pass_to_pass
+  origin: static
+  description: DbtDagsterEventType TypeAlias is defined in dbt_event_iterator.py
+- id: test_component_iterator_return_type
+  description: _get_dbt_event_iterator returns DbtEventIterator[DbtDagsterEventType]
+  type: fail_to_pass
+  origin: pr_diff
+- id: test_iterator_fetch_row_counts_return_type
+  description: fetch_row_counts returns DbtEventIterator[DbtDagsterEventType]
+  type: fail_to_pass
+  origin: pr_diff
+- id: test_iterator_fetch_column_metadata_return_type
+  description: fetch_column_metadata returns DbtEventIterator[DbtDagsterEventType]
+  type: fail_to_pass
+  origin: pr_diff
+- id: test_iterator_with_insights_return_type
+  description: with_insights returns DbtEventIterator[DbtDagsterEventType]
+  type: fail_to_pass
+  origin: pr_diff
+- id: test_component_imports_event_types
+  description: component.py imports DbtEventIterator and DbtDagsterEventType
+  type: fail_to_pass
+  origin: pr_diff
+- id: test_imports_are_callable
+  description: The imports work at runtime
+  type: fail_to_pass
+  origin: pr_diff
+- id: test_dbt_dagster_event_type_is_type_alias
+  description: DbtDagsterEventType is properly defined as TypeAlias
+  type: fail_to_pass
+  origin: pr_diff
+distractors:
+- rule: See [.claude/coding_conventions.md](./.claude/coding_conventions.md) for all
+    code style and convention guidelines
+  collision_type: scope_ambiguity
+  why_distracting: The agent might waste time trying to read the external coding_conventions.md
+    file for type annotation rules, but the prompt already explicitly dictates the
+    exact type aliases and imports to use.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 54-55
+hierarchy_analysis: The config hierarchy consists of a single root CLAUDE.md file
+  containing general repository guidelines. No specific rules apply to the type annotation
+  changes requested in the prompt.
+version: '2.0'
+source:
+  repo: dagster-io/dagster
+  pr: 33615
+  base_commit: f44352a8a384296e999c33df60bb785bd69953c4
+  merge_commit: ca3d311541c8fc8e12a0fbd1e79ad956bba4a752

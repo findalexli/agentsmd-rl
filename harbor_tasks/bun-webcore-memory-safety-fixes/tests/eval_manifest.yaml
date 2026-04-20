@@ -1,0 +1,272 @@
+version: '2.0'
+source:
+  repo: oven-sh/bun
+  pr: 28494
+  base_commit: 639bc4351cd7b5daa38b99d47a506dec68e95353
+  merge_commit: 9ce5b052840cecea4aa1977aeb063c47d0137a22
+checks:
+- id: source_files_exist
+  type: pass_to_pass
+  origin: static
+  description: All five WebCore source files must exist and be non-empty
+- id: message_port_closed_guard
+  type: fail_to_pass
+  origin: pr_diff
+  description: postMessageToRemote must check m_isClosed before m_pendingMessages
+- id: message_port_variable_index
+  type: fail_to_pass
+  origin: pr_diff
+  description: m_isClosed guard uses computed index, not hardcoded literal
+- id: abort_signal_reason_visited
+  type: fail_to_pass
+  origin: pr_diff
+  description: visitChildrenImpl visits chained signal().reason()
+- id: broadcast_channel_weak_ptr
+  type: fail_to_pass
+  origin: pr_diff
+  description: allBroadcastChannels map uses template pointer wrapper, not raw pointer
+- id: event_listener_map_thread_affinity
+  type: fail_to_pass
+  origin: pr_diff
+  description: At least 4/5 EventListenerMap mutators have thread affinity checks
+    before Locker
+- id: event_listener_map_thread_uid_member
+  type: fail_to_pass
+  origin: pr_diff
+  description: EventListenerMap.h declares a thread UID member variable
+- id: event_listener_map_gc_thread_exemption
+  type: fail_to_pass
+  origin: pr_diff
+  description: Thread affinity helper exempts GC threads via function call
+- id: broadcast_channel_still_registers
+  type: pass_to_pass
+  origin: pr_diff
+  description: BroadcastChannel constructor still registers in global map
+- id: visit_children_retains_base_calls
+  type: pass_to_pass
+  origin: pr_diff
+  description: visitChildrenImpl retains Base::visitChildren and addWebCoreOpaqueRoot
+- id: broadcast_channel_locker_style
+  type: pass_to_pass
+  origin: agent_config
+  description: BroadcastChannel.cpp follows existing Locker pattern
+  source:
+    path: CLAUDE.md
+    lines: '228'
+    commit: 639bc4351cd7b5daa38b99d47a506dec68e95353
+- id: repo_git_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git repository is valid and at expected base commit via git rev-parse
+- id: repo_cpp_toolchain
+  type: pass_to_pass
+  origin: repo_tests
+  description: C++ compiler toolchain works and supports C++17 via g++ subprocess
+- id: repo_source_structure
+  type: pass_to_pass
+  origin: static
+  description: Modified C++ source files have valid structure (non-empty, proper includes)
+- id: repo_headers_valid
+  type: pass_to_pass
+  origin: static
+  description: C++ header files have valid include guards and expected includes
+- id: repo_line_endings
+  type: pass_to_pass
+  origin: static
+  description: Source files use LF line endings (not CRLF)
+- id: repo_cpp_syntax_basic
+  type: pass_to_pass
+  origin: static
+  description: Modified C++ files have basic syntactic validity (balanced braces/parens)
+- id: repo_editorconfig
+  type: pass_to_pass
+  origin: static
+  description: Source files follow basic editorconfig rules (no trailing whitespace,
+    ends with newline)
+- id: repo_no_tabs
+  type: pass_to_pass
+  origin: static
+  description: Modified C++ files use spaces for indentation (no hard tabs)
+- id: repo_no_banned_words
+  type: pass_to_pass
+  origin: static
+  description: Modified files do not contain banned words/phrases (HACK, etc.)
+- id: repo_include_guards_webcore
+  type: pass_to_pass
+  origin: static
+  description: WebCore header files have proper include guards or pragma once
+- id: repo_license_headers
+  type: pass_to_pass
+  origin: static
+  description: Modified files have license headers (WebKit/Bun convention)
+- id: repo_no_merge_conflict_markers
+  type: pass_to_pass
+  origin: static
+  description: Modified files do not contain Git merge conflict markers
+- id: test_repo_git_clean
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git repository has no uncommitted changes at base commit
+- id: test_repo_files_readable
+  type: pass_to_pass
+  origin: repo_tests
+  description: All modified C++ files are valid and can be read via filesystem
+- id: test_repo_cpp_weakptr_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: C++ compiler can compile weak_ptr pattern used in BroadcastChannel
+    fix
+- id: test_repo_cpp_thread_patterns_compile
+  type: pass_to_pass
+  origin: repo_tests
+  description: C++ compiler can compile thread safety patterns used in EventListenerMap
+    fix
+- id: test_repo_git_log
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git log shows repository has expected commit history
+- id: test_repo_cpp_includes_exist
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified C++ files have valid include paths that exist in repo
+- id: test_repo_file_encoding
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified C++ files use valid UTF-8 encoding via file command
+- id: test_repo_git_attributes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git attributes configuration is present and applies to source files
+- id: test_repo_config_files_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository ban-limits.json and package.json are valid JSON
+- id: test_repo_shell_scripts_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Shell scripts in repository are syntactically valid via bash -n
+- id: test_repo_cpp_preprocessor
+  type: pass_to_pass
+  origin: repo_tests
+  description: C++ preprocessor can process basic syntax patterns
+- id: test_repo_git_fsck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git repository passes basic integrity check via git fsck
+- id: test_repo_claude_md_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: CLAUDE.md documentation file exists and is readable
+rubric:
+- rule: Update CLAUDE.md with a note about WebCore fixes applied.
+  source:
+    path: CLAUDE.md
+    lines: '228'
+    commit: 639bc4351cd7b5daa38b99d47a506dec68e95353
+  reference: '- WebCore fixes applied: MessagePortChannel memory leak, JSAbortController
+    signal reason, BroadcastChannel use-after-free, EventListenerMap thread affinity.'
+- rule: Visit custom objects and properties in visitChildrenImpl for correct Garbage
+    Collection
+  source:
+    path: .claude/skills/implementing-jsc-classes-cpp/SKILL.md
+    lines: 165-169
+  source_text: 'Visit in `visitChildrenImpl`:
+
+
+    ```cpp
+
+    m_JSFooClassStructure.visit(visitor);
+
+    ```'
+  evidence: The gold diff correctly ensures proper garbage collection traversal by
+    explicitly adding `thisObject->wrapped().signal().reason().visit(visitor);` inside
+    `JSAbortController::visitChildrenImpl`, successfully preventing a GC memory leak.
+  category: architecture
+  verification: llm_judge
+- rule: Implement visitChildren() for custom heap objects to resolve GC issues
+  source:
+    path: src/bun.js/bindings/v8/CLAUDE.md
+    lines: 230-230
+  source_text: '- Implement `visitChildren()` for custom heap objects'
+  evidence: The gold diff resolves a memory/GC issue by invoking `visit(visitor)`
+    on `thisObject->wrapped().signal().reason()` in `JSAbortController.cpp`'s `visitChildrenImpl`.
+  category: memory_management
+  verification: llm_judge
+distractors:
+- rule: Always use bun.* APIs instead of std.*
+  collision_type: architecture_boundary
+  why_distracting: The rule mandates using Bun's Zig APIs (bun.sys, bun.base64) instead
+    of std.*, but the agent is editing C++ files that use the WebKit Template Framework
+    (WTF) and standard C++ libraries.
+  severity: high
+  source:
+    path: src/AGENTS.md
+    lines: 15-25
+- rule: Place tests for specific numbered GitHub Issues in test/regression/issue/${issueNumber}.test.ts
+  collision_type: scope_ambiguity
+  why_distracting: The prompt mentions 'confirmed upstream WebKit bug', which might
+    lead the agent to try and write a regression test in test/regression/issue/ using
+    the WebKit bug number, but the gold solution focuses purely on the C++ fixes.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 26-28
+- rule: Prefer Bun APIs over std
+  source:
+    path: src/CLAUDE.md
+    lines: 14-16
+  source_text: '## Prefer Bun APIs over `std`
+
+
+    **Always use `bun.*` APIs instead of `std.*`.** The `bun` namespace (`@import("bun")`)
+    provides cross-platform wrappers that preserve OS error info and never use `unreachable`.
+    Using `std.fs`, `std.posix`, or `std.os` directly is wrong in this codebase.'
+  collision_type: architecture_boundary
+  why_distracting: The gold diff modifies C++ WebCore binding files (`.cpp` and `.h`)
+    where the C++ standard library (`std::`) is correctly used (e.g., `std::atomic`
+    and `std::memory` in `EventListenerMap.h`). This rule applies exclusively to the
+    Zig codebase (`src/*.zig`), but its general wording could trick an agent into
+    incorrectly attempting to replace C++ `std::` components with non-existent `bun::`
+    equivalents.
+  severity: high
+- rule: 'Memory & Allocators: Use bun.default_allocator'
+  source:
+    path: src/CLAUDE.md
+    lines: 230-234
+  source_text: '## Memory & Allocators
+
+
+    **Use `bun.default_allocator` for almost everything.** It''s backed by mimalloc.
+
+
+    `bun.handleOom(expr)` converts `error.OutOfMemory` into a crash without swallowing
+    other errors:'
+  collision_type: architecture_boundary
+  why_distracting: The gold diff addresses memory management (fixing leaks and use-after-free
+    issues) in C++ classes using idiomatic C++ approaches like `ThreadSafeWeakPtr`.
+    An agent might mistakenly apply this Zig-specific allocator rule to C++ code instead
+    of utilizing proper reference counting and smart pointers.
+  severity: medium
+- rule: Handle Scopes for V8 Memory Management
+  source:
+    path: src/bun.js/bindings/v8/CLAUDE.md
+    lines: 220-224
+  source_text: '### Handle Scopes
+
+
+    - All V8 values must be created within an active handle scope
+
+    - Use `isolate->currentHandleScope()->createLocal<T>()` to create handles
+
+    - Handle scopes automatically clean up when destroyed'
+  collision_type: scope_ambiguity
+  why_distracting: The diff resolves memory lifetime issues in WebCore C++ bindings
+    (`BroadcastChannel.cpp`). An agent might mistakenly read the V8 implementation
+    guide and attempt to use V8 `HandleScope` mechanisms to manage these lifetimes,
+    crossing the architectural boundary between native WebCore implementations and
+    the Node.js V8 API compatibility shim.
+  severity: high
+hierarchy_analysis: The config hierarchy provides rules for Zig and JS/TS testing,
+  but the task is entirely within the C++ WebCore bindings. The agent must recognize
+  that the Zig-specific rules in `src/AGENTS.md` do not apply to `.cpp` files, crossing
+  an architecture boundary.

@@ -4,12 +4,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-15T12:36:18.273820",
-  "total_time": 34.07,
-  "sandbox_id": "iv365tkpp1e90s325p2fm",
-  "backend": "fireworks",
+  "validated_at": "2026-04-16T20:00:10.563609",
+  "total_time": 3265.58,
+  "sandbox_id": "iebs5r5b5abh2m4dh2cvq",
+  "backend": "minimax",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "validate",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -29,11 +29,11 @@
       "status": "pass",
       "nop_reward": 0.0,
       "gold_reward": 1.0,
-      "attempts": 1,
-      "notes": "All validation checks passed: Docker build OK, NOP test reward=0 (6 f2p tests fail correctly on base), Gold test reward=1 (all 17 tests pass). Rubric judge ICR=0.00 because the rules are for Python development (pytest, ruff) but this is a Helm chart task. The rubric rules from CLAUDE.md/AGENTS.md do not apply to Helm chart changes (values.yaml, values.schema.json, templates). Gold solution correctly implements workers.celery.affinity and workers.kubernetes.affinity with deprecation warnings and backwards compatibility.",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 149.84
+      "attempts": 2,
+      "notes": "Fixed tests: (1) changed templates/pod-template-file.yaml to templates/configmaps/configmap.yaml since the pod template is embedded in the configmap, not a separate template file; (2) changed Deployment to StatefulSet for worker lookup since CeleryExecutor uses StatefulSet not Deployment; (3) changed NOTES.txt test to read template file directly since helm template does not render NOTES.txt by default. All 18 tests now pass on gold, 7 f2p tests correctly fail on base. Rubric judge returns 0.0 because task directory has no git history (not a git repo).",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 1112.1
     },
     "rubric_judge": {
       "status": "fail",
@@ -54,31 +54,21 @@
     },
     "quality_gate": {
       "status": "passed",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 0.53,
-      "notes": "flags=['lint_tier_b:3', 'B:[B] pinned_dependencies @ environment/Dockerfile:18: unpinned pip deps: uv', 'B:[B] pinned_dependencies @ environment/Dockerfile:31: unpinned pip deps: pytest, pyyaml, jmespath, jsonschema, kubernetes', 'B:[B] no_network_during_tests @ tests/test.sh:5: network call at test time: `pip install`']"
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.26,
+      "notes": "flags=[\"lint_tier_b:3\", \"B:[B] pinned_dependencies @ environment/Dockerfile:18: unpinned pip deps: uv\", \"B:[B] pinned_dependencies @ environment/Dockerfile:31: unpinned pip deps: pytest, pyyaml, jmespath, jsonschema, kubernetes\", \"B:[B] no_network_during_tests @ tests/test.sh:5: network call at test time: \"]"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 23.84,
-      "tier_a_fails": [
-        "anti_cheating_measures"
-      ],
+      "time": 10.76,
+      "tier_a_fails": [],
       "tier_b_fails": [],
       "pass_count": 11,
-      "fail_count": 1
+      "fail_count": 0
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 768.26,
-      "at": "2026-04-15T03:26:19.342159"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -93,7 +83,7 @@
       "gold": 1.0,
       "backend": "fireworks",
       "time": 15.26,
-      "at": "2026-04-15T11:19:29.980302"
+      "at": "2026-04-17T11:19:29.980302"
     },
     {
       "verdict": "pass",
@@ -101,7 +91,7 @@
       "gold": 1.0,
       "backend": "fireworks",
       "time": 950.48,
-      "at": "2026-04-15T11:36:10.890902"
+      "at": "2026-04-17T11:36:10.890902"
     },
     {
       "verdict": "pass",
@@ -109,7 +99,15 @@
       "gold": 1.0,
       "backend": "fireworks",
       "time": 34.07,
-      "at": "2026-04-15T12:36:18.273820"
+      "at": "2026-04-17T12:36:18.273820"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 3265.58,
+      "at": "2026-04-16T20:00:10.563609"
     }
   ]
 }

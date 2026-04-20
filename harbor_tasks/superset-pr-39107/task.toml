@@ -1,3 +1,7 @@
+source_repo = "apache/superset"
+source_pr_number = 39107
+source_base_commit = "92747246fc7e562eef527034e8fcceec50aad9ab"
+source_merge_commit = "83ad1eca26bec5de6e6d908ebf3ba6aa8eea0c21"
 [task]
 name = "superset-mcp-truncation"
 title = "Add dynamic response truncation for oversized MCP info tool responses"
@@ -11,12 +15,9 @@ difficulty = "medium"
 time_estimate_minutes = 45
 tags = ["python", "backend", "mcp", "truncation", "superset"]
 
-[source]
-repo = "apache/superset"
-pr_number = 39107
-base_commit = "92747246fc7e562eef527034e8fcceec50aad9ab"
-merge_commit = "83ad1eca26bec5de6e6d908ebf3ba6aa8eea0c21"
-
 [environment]
 dockerfile = "environment/Dockerfile"
 workdir = "/workspace/superset"
+
+[verifier]
+env = { GEMINI_API_KEY = "${GEMINI_API_KEY:-}", ANTHROPIC_API_KEY = "${ANTHROPIC_API_KEY:-}" }

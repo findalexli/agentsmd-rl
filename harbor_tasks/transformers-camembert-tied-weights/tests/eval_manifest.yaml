@@ -1,0 +1,139 @@
+version: '2.0'
+source:
+  repo: huggingface/transformers
+  pr: 45031
+  base_commit: d81ad48109331f910fd81f699869855cbd50f681
+  merge_commit: 882ffdbbd6b8ad50feaa860d702e70950cfc95d0
+checks:
+- id: syntax_valid
+  type: pass_to_pass
+  origin: static
+  description: Modified camembert files must parse without syntax errors
+- id: ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Camembert module passes ruff linting
+- id: ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Camembert module passes ruff format check
+- id: check_copies
+  type: pass_to_pass
+  origin: repo_tests
+  description: Camembert modeling file passes check_copies validation
+- id: init_isort
+  type: pass_to_pass
+  origin: repo_tests
+  description: Init files have correct import ordering
+- id: modeling_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modeling files have correct structure
+- id: inits
+  type: pass_to_pass
+  origin: repo_tests
+  description: Init files are correctly structured
+- id: dummies
+  type: pass_to_pass
+  origin: repo_tests
+  description: Dummy objects are correctly generated
+- id: pipeline_typing
+  type: pass_to_pass
+  origin: repo_tests
+  description: Pipeline type hints are correct
+- id: config_attributes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Config attributes are correctly defined
+- id: modeling_file_structure
+  type: pass_to_pass
+  origin: static
+  description: Camembert modeling files have valid structure and CamembertForCausalLM
+    class exists
+- id: tied_weights_keys_exists
+  type: pass_to_pass
+  origin: static
+  description: CamembertForCausalLM has _tied_weights_keys defined in both modeling
+    and modular files
+- id: syntax_valid_ast
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified camembert files must parse without syntax errors via AST
+- id: camembert_importable
+  type: pass_to_pass
+  origin: repo_tests
+  description: CamembertForCausalLM can be imported without errors
+- id: model_instantiates
+  type: fail_to_pass
+  origin: pr_diff
+  description: CamembertForCausalLM can be created without ValueError on tied weights
+- id: weight_tying_shares_memory
+  type: fail_to_pass
+  origin: pr_diff
+  description: lm_head.decoder.weight is the same tensor object as roberta embeddings
+- id: weight_mutation_propagates
+  type: fail_to_pass
+  origin: pr_diff
+  description: Mutating lm_head weight propagates to embedding weight and vice versa
+- id: other_camembert_models_unaffected
+  type: pass_to_pass
+  origin: static
+  description: Other Camembert model variants (CamembertModel, ForMaskedLM, ForSequenceClassification)
+    still load
+- id: modular_has_roberta_tied_key
+  type: fail_to_pass
+  origin: static
+  description: modular_camembert.py CamembertForCausalLM defines _tied_weights_keys
+    with roberta path
+  source:
+    path: CLAUDE.md
+    lines: '67'
+    commit: d81ad48109331f910fd81f699869855cbd50f681
+rubric:
+- rule: Code fix tasks require only code changes, not config file modifications. The
+    tied weights fix correctly changes only modeling_camembert.py and modular_camembert.py.
+  source:
+    path: src/transformers/models/camembert/modeling_camembert.py
+  reference: _tied_weights_keys defines roberta.embeddings.word_embeddings.weight
+- rule: The newer method is to add a file named `modular_<name>.py` in the model directory.
+    `modular` files can inherit from other models.
+  source:
+    path: src/transformers/models/camembert/modular_camembert.py
+  evidence: The gold solution modifies `modular_camembert.py` to add the `_tied_weights_keys`
+    override to `CamembertForCausalLM`, which inherits from `RobertaForCausalLM`,
+    aligning with the modular file design pattern
+  category: architecture
+distractors:
+- rule: If coordination evidence cannot be found, do not proceed to PR-ready output.
+    In blocked cases, return a short explanation of what is missing.
+  collision_type: meta_confusion
+  why_distracting: The prompt does not provide coordination evidence or an issue link.
+    The agent might follow the fail-closed behavior and refuse to generate the fix,
+    returning an explanation instead.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 61-64
+- rule: If approval is missing or ambiguous, stop and ask for clarification instead
+    of drafting a PR.
+  collision_type: meta_confusion
+  why_distracting: The agent might stop and ask for clarification instead of drafting
+    the fix because there is no explicit approval or issue thread provided in the
+    prompt.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 38-42
+- rule: Do not open one-off PRs for tiny edits (single typo, isolated lint cleanup,
+    one mutable default argument, etc.).
+  collision_type: scope_ambiguity
+  why_distracting: The agent might classify this single-line dictionary value fix
+    as a 'tiny edit' or 'low-value busywork' and refuse to generate the patch.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 49-51
+hierarchy_analysis: The config is flat (Level 0 `AGENTS.md` and `CLAUDE.md` are identical).
+  The primary challenge is balancing the strict meta-instructions (fail-closed, coordination
+  required) against the user's direct instruction to fix the bug. The agent must proceed
+  with the fix despite the lack of coordination evidence.

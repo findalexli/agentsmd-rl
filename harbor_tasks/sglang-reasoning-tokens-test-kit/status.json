@@ -4,10 +4,10 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-15T13:53:41.703626",
-  "total_time": 2050.41,
-  "sandbox_id": "i1i2wg18n084br6s3saci",
-  "backend": "minimax",
+  "validated_at": "2026-04-16T11:41:28.249451",
+  "total_time": 105.94,
+  "sandbox_id": "iffur4zrbhi4w06i39nv1",
+  "backend": "anthropic",
   "pipeline": "pipeline",
   "start_at": "judge",
   "nodes": {
@@ -73,34 +73,29 @@
     },
     "quality_gate": {
       "status": "DELETE",
-      "model": "MiniMax-M2.7",
-      "backend": "minimax",
-      "time": 0.32,
-      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:2', 'A:[A] test_not_tautological @ tests/test_outputs.py:22: test `test_reasoning_tokens_kit_syntax` has 2 assert(s), all pass ', 'A:[A] test_not_tautological @ tests/test_outputs.py:36: test `test_modified_files_syntax` has 1 assert(s), all pass on a s', 'lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:21: unpinned pip deps: requests']"
+      "model": "claude-opus-4-7",
+      "backend": "anthropic",
+      "time": 0.35,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:40: test `test_modified_files_syntax` has 1 assert(s), all pass on a s', 'lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:21: unpinned pip deps: requests']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 26.94,
+      "time": 12.93,
       "tier_a_fails": [
-        "no_solution_leakage",
-        "tests_verify_behavior_not_text",
-        "test_not_tautological",
-        "anti_cheating_measures"
+        "behavior_in_task_description",
+        "solution_uniqueness_guard"
       ],
       "tier_b_fails": [],
-      "pass_count": 4,
-      "fail_count": 6
+      "pass_count": 7,
+      "fail_count": 2
+    },
+    "tests_rewrite": {
+      "status": "error",
+      "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":508,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 400 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"invalid_request_error\\\",\\\"message\\\":\\\"\\\\\\\"thinking.type.enabled\\\\\\\" is not supported for this model. Use \\\\\\\"thinking.type.adapt",
+      "time": 2.08
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 2102.55,
-      "at": "2026-04-12T03:00:32.667507"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -134,6 +129,14 @@
       "backend": "minimax",
       "time": 2050.41,
       "at": "2026-04-15T13:53:41.703626"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "anthropic",
+      "time": 105.94,
+      "at": "2026-04-16T11:41:28.249451"
     }
   ]
 }

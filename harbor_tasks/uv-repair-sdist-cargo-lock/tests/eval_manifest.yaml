@@ -1,0 +1,113 @@
+version: '2.0'
+source:
+  repo: astral-sh/uv
+  pr: 18831
+  base_commit: c5977cc4ae4cd1cf8b97c7193e927f7b2a9c4e87
+  merge_commit: f40124f1eec8a813d2040dad2f7ad624179c655a
+checks:
+- id: rejects_non_tarfile
+  type: fail_to_pass
+  origin: pr_diff
+  description: Script exits non-zero when given a non-tarball file
+- id: rejects_missing_cargo_lock
+  type: fail_to_pass
+  origin: pr_diff
+  description: Script exits non-zero when sdist tarball has no Cargo.lock
+- id: rejects_multi_toplevel
+  type: fail_to_pass
+  origin: pr_diff
+  description: Script exits non-zero when tarball has multiple top-level directories
+- id: repairs_and_repacks_sdist
+  type: fail_to_pass
+  origin: pr_diff
+  description: Script prunes stale Cargo.lock entries and repacks the tarball
+- id: cli_argument_parsing
+  type: fail_to_pass
+  origin: pr_diff
+  description: Script provides a CLI with --help that describes its purpose
+- id: top_level_imports
+  type: fail_to_pass
+  origin: agent_config
+  description: All imports are at module level, not inside functions
+  source:
+    path: AGENTS.md
+    lines: '16'
+    commit: c5977cc4ae4cd1cf8b97c7193e927f7b2a9c4e87
+- id: test_repo_cargo_check_uv_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: uv-build crate compiles cleanly with cargo check
+- id: test_repo_cargo_fmt
+  type: pass_to_pass
+  origin: repo_tests
+  description: Rust code formatting is correct (cargo fmt --check)
+- id: test_repo_cargo_clippy_uv_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: uv-build crate passes clippy linting
+- id: test_repo_python_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Python scripts in scripts/ have valid syntax
+- id: test_repo_ruff_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Python scripts in scripts/ pass ruff linting
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Python scripts in scripts/ pass ruff format check
+- id: test_repo_cargo_deny_uv_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: uv-build crate passes cargo deny bans check
+- id: test_repo_cargo_shear
+  type: pass_to_pass
+  origin: repo_tests
+  description: No unused dependencies found via cargo-shear
+rubric:
+- rule: PREFER top-level imports over local imports or fully qualified names
+  source:
+    path: AGENTS.md
+    lines: 15-15
+  evidence: The Python script `scripts/repair-sdist-cargo-lock.py` uses top-level
+    imports (`import argparse`, `import os`, `import subprocess`, etc.) rather than
+    local imports.
+  category: style
+  verification: llm_judge
+- rule: AVOID shortening variable names, e.g., use `version` instead of `ver`
+  source:
+    path: AGENTS.md
+    lines: 16-17
+  evidence: The script uses descriptive, unshortened variable names like `sdist_path`,
+    `extracted_dir`, and `top_level_name`.
+  category: naming
+  verification: llm_judge
+distractors:
+- rule: NEVER update all dependencies in the lockfile and ALWAYS use `cargo update
+    --precise` to make lockfile changes
+  collision_type: scope_ambiguity
+  why_distracting: The task requires pruning a Cargo.lock file inside an extracted
+    sdist tarball, which is best achieved by running `cargo update --workspace` (as
+    noted in the gold solution's docstring). The rule forbids updating all dependencies
+    and mandates `--precise`, but this rule is intended for the main repository's
+    lockfile, not a temporary lockfile being repaired for a distribution.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 12-13
+- rule: ALWAYS attempt to add a test case for changed behavior and PREFER integration
+    tests, e.g., at `it/...`
+  collision_type: architecture_boundary
+  why_distracting: The agent might attempt to write a Rust integration test in `it/...`
+    to test the lockfile repair behavior. However, this is a Python packaging script
+    invoked during the GitHub Actions release workflow, and testing it requires a
+    full sdist build environment, which is already handled by the CI workflow modifications
+    in the gold solution.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 2-3
+hierarchy_analysis: The configuration is effectively a flat single file, as `CLAUDE.md`
+  simply includes `AGENTS.md`. The primary challenge is discerning which Rust-centric
+  rules apply to a Python script operating on Rust artifacts (Cargo.lock).

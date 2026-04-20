@@ -1,0 +1,144 @@
+version: '2.0'
+source:
+  repo: astral-sh/ruff
+  pr: 24470
+  base_commit: 02e5d6d90e269ca2c49b231f23b7d3c4fd579d92
+  merge_commit: 45409a743e0f74c00d74b55cad4c99d5a291b8a8
+checks:
+- id: cargo_check
+  type: pass_to_pass
+  origin: static
+  description: ty binary exists after build
+- id: cargo_check_ty_package
+  type: pass_to_pass
+  origin: repo_tests
+  description: ty crate and its dependencies compile without errors
+- id: nested_if_else_type_checking
+  type: fail_to_pass
+  origin: pr_diff
+  description: Overloads inside if/else nested within TYPE_CHECKING should not trigger
+    invalid-overload
+- id: nested_elif_type_checking
+  type: fail_to_pass
+  origin: pr_diff
+  description: Overloads inside elif branch nested within TYPE_CHECKING should not
+    trigger invalid-overload
+- id: deeply_nested_type_checking
+  type: fail_to_pass
+  origin: pr_diff
+  description: Overloads inside double-nested conditionals within TYPE_CHECKING should
+    not trigger invalid-overload
+- id: direct_type_checking_no_regression
+  type: pass_to_pass
+  origin: pr_diff
+  description: Overloads directly inside TYPE_CHECKING (no nesting) still produce
+    no false positive
+- id: overloads_mdtest
+  type: pass_to_pass
+  origin: repo_tests
+  description: Upstream overloads mdtest suite passes
+- id: no_panic_unwrap
+  type: pass_to_pass
+  origin: agent_config
+  description: No panic!/unreachable!/unwrap near the TYPE_CHECKING state assignment
+  source:
+    path: AGENTS.md
+    lines: '79'
+    commit: 02e5d6d90e269ca2c49b231f23b7d3c4fd579d92
+- id: no_local_imports
+  type: pass_to_pass
+  origin: agent_config
+  description: No local use/import statements inside the Visitor impl
+  source:
+    path: AGENTS.md
+    lines: '76'
+    commit: 02e5d6d90e269ca2c49b231f23b7d3c4fd579d92
+- id: cargo_fmt_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Code passes rustfmt formatting checks
+- id: overloads_md_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: Upstream overloads mdtest file exists and contains expected test content
+- id: cargo_metadata
+  type: pass_to_pass
+  origin: repo_tests
+  description: Cargo metadata command works and includes ty_python_semantic
+- id: ty_binary_runs
+  type: pass_to_pass
+  origin: repo_tests
+  description: ty binary executes without errors and shows version
+- id: ty_check_valid_overloads
+  type: pass_to_pass
+  origin: repo_tests
+  description: ty correctly handles valid overloads in TYPE_CHECKING block
+- id: cargo_doc_ty_python_semantic
+  type: pass_to_pass
+  origin: repo_tests
+  description: Documentation for ty_python_semantic crate builds without errors
+- id: mdtest_file_exists
+  type: pass_to_pass
+  origin: static
+  description: Overloads mdtest file exists and contains expected TYPE_CHECKING content
+- id: no_tabs_in_builder_rs
+  type: pass_to_pass
+  origin: static
+  description: Source code uses spaces not tabs for indentation
+- id: builder_rs_has_type_checking_logic
+  type: pass_to_pass
+  origin: static
+  description: Builder.rs contains TYPE_CHECKING state tracking where fix is applied
+rubric:
+- rule: Use comments purposefully. Don't use comments to narrate code, but do use
+    them to explain invariants and why something unusual was done a particular way.
+  source:
+    path: AGENTS.md
+    lines: '82'
+    commit: 02e5d6d90e269ca2c49b231f23b7d3c4fd579d92
+- rule: Avoid writing significant amounts of new code. This is often a sign that we're
+    missing an existing method or mechanism that could help solve the problem. Look
+    for existing utilities first.
+  source:
+    path: AGENTS.md
+    lines: '78'
+    commit: 02e5d6d90e269ca2c49b231f23b7d3c4fd579d92
+- rule: Prefer let chains (if let combined with &&) over nested if let statements
+    to reduce indentation and improve readability.
+  source:
+    path: AGENTS.md
+    lines: '80'
+    commit: 02e5d6d90e269ca2c49b231f23b7d3c4fd579d92
+- rule: Look to see if your tests could go in an existing file before adding a new
+    file for your tests.
+  source:
+    path: AGENTS.md
+    lines: 65-66
+  evidence: The gold solution adds the new test case for nested conditional blocks
+    to the existing `crates/ty_python_semantic/resources/mdtest/overloads.md` file
+    rather than creating a new test file.
+  category: testing
+- rule: All changes must be tested. If you're not testing your changes, you're not
+    done.
+  source:
+    path: AGENTS.md
+    lines: 64-65
+  evidence: The gold solution includes a test case in `overloads.md` that specifically
+    verifies the behavior of overloaded functions inside nested conditional blocks
+    within `if TYPE_CHECKING:`.
+  category: testing
+distractors:
+- rule: Rust imports should always go at the top of the file, never locally in functions.
+  collision_type: scope_ambiguity
+  why_distracting: The rule states that imports should always go at the top of the
+    file and never locally. However, this rule explicitly applies to Rust code. The
+    Python test case added in the markdown file requires a local import (`import sys`
+    inside `if TYPE_CHECKING:`) to properly set up the nested conditional block scenario.
+    An agent might mistakenly apply this Rust rule to the Python test code, moving
+    the import and potentially altering the test's behavior.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 66-67
+hierarchy_analysis: The configuration is essentially flat, with `CLAUDE.md` simply
+  including `AGENTS.md`. The rules provided are generic repository guidelines.

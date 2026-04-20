@@ -1,0 +1,175 @@
+version: '2.0'
+source:
+  repo: apache/beam
+  pr: 37630
+  base_commit: bab2374552da7a1f7fbe783408c3b4159e3f0391
+  merge_commit: 46b27eee882a52cb400a549b7c959078a42aa509
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Terraform files have balanced braces
+- id: test_terraform_validate
+  type: pass_to_pass
+  origin: repo_tests
+  description: Terraform configuration passes validation
+- id: test_terraform_files_exist
+  type: pass_to_pass
+  origin: repo_tests
+  description: Required Terraform files exist and are readable
+- id: test_terraform_providers
+  type: pass_to_pass
+  origin: repo_tests
+  description: Terraform providers are correctly configured
+- id: test_required_variables_exist
+  type: pass_to_pass
+  origin: static
+  description: Required variables are defined in variables.tf
+- id: test_outputs_configured
+  type: pass_to_pass
+  origin: static
+  description: Outputs are defined in outputs.tf
+- id: test_prerequisites_configured
+  type: pass_to_pass
+  origin: static
+  description: Prerequisites.tf has required API services
+- id: test_terraform_fmt_clean_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Terraform formatting is correct for clean files
+- id: test_repo_terraform_readme_has_variable_table
+  type: pass_to_pass
+  origin: repo_tests
+  description: README.md contains the expected Terraform variables table section
+- id: test_repo_terraform_readme_has_examples_section
+  type: pass_to_pass
+  origin: repo_tests
+  description: README.md has the Beam pipeline examples section
+- id: test_repo_gke_tf_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: gke.tf has the expected GKE cluster resource structure
+- id: test_repo_ratelimit_tf_has_k8s_resources
+  type: pass_to_pass
+  origin: repo_tests
+  description: ratelimit.tf contains the expected Kubernetes resources
+- id: test_repo_variables_tf_has_required_vars
+  type: pass_to_pass
+  origin: repo_tests
+  description: variables.tf defines the expected required variables
+- id: test_repo_prerequisites_tf_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: prerequisites.tf enables required GCP APIs
+- id: namespace_variable_defined
+  type: fail_to_pass
+  origin: pr_diff
+  description: variables.tf defines a namespace variable with string type and envoy-ratelimiter
+    default
+- id: enable_metrics_variable_defined
+  type: fail_to_pass
+  origin: pr_diff
+  description: variables.tf defines an enable_metrics variable with bool type and
+    false default
+- id: kubernetes_namespace_resource
+  type: fail_to_pass
+  origin: pr_diff
+  description: ratelimit.tf creates a kubernetes_namespace resource that uses var.namespace
+- id: all_k8s_resources_use_namespace
+  type: fail_to_pass
+  origin: pr_diff
+  description: All Kubernetes resources (excluding namespace itself) set namespace
+    = var.namespace
+- id: use_statsd_is_conditional
+  type: fail_to_pass
+  origin: pr_diff
+  description: USE_STATSD env var is conditional on enable_metrics, not hardcoded
+- id: statsd_sidecar_is_conditional
+  type: fail_to_pass
+  origin: pr_diff
+  description: StatsD exporter sidecar uses dynamic block gated on enable_metrics
+rubric:
+- rule: README variable documentation is consistent with the style of the existing
+    table
+  source:
+    path: examples/terraform/envoy-ratelimiter/README.md
+    lines: 163-175
+    commit: bab2374552da7a1f7fbe783408c3b4159e3f0391
+- rule: USE_STATSD env var is conditional on enable_metrics, not hardcoded
+  reference: '# examples/terraform/envoy-ratelimiter/README.md
+
+    Example Beam Python Pipelines using it:
+
+    Example Beam Java Pipelines using it:
+
+    *   [Simple DoFn RateLimiter](https://github.com/apache/beam/blob/master/examples/java/src/main/java/org/apache/beam/examples/RateLimiterSimple.java)
+
+
+    namespace             = "envoy-ratelimiter"         # Kubernetes namespace for
+    deployment
+
+    enable_metrics        = false                       # Deploy statsd-exporter sidecar
+
+    |namespace              |Kubernetes namespace t'
+- rule: README.md documents the namespace variable in tfvars example or table
+  source:
+    path: examples/terraform/envoy-ratelimiter/README.md
+    lines: 168-169
+    commit: bab2374552da7a1f7fbe783408c3b4159e3f0391
+- rule: README.md documents the enable_metrics variable
+  source:
+    path: examples/terraform/envoy-ratelimiter/README.md
+    lines: 82-83
+    commit: bab2374552da7a1f7fbe783408c3b4159e3f0391
+- rule: README.md references Java pipeline examples alongside Python
+  source:
+    path: examples/terraform/envoy-ratelimiter/README.md
+    lines: 31-33
+    commit: bab2374552da7a1f7fbe783408c3b4159e3f0391
+- rule: statsd-exporter sidecar uses dynamic block gated on enable_metrics
+  reference: '# examples/terraform/envoy-ratelimiter/README.md
+
+    Example Beam Python Pipelines using it:
+
+    Example Beam Java Pipelines using it:
+
+    *   [Simple DoFn RateLimiter](https://github.com/apache/beam/blob/master/examples/java/src/main/java/org/apache/beam/examples/RateLimiterSimple.java)
+
+
+    namespace             = "envoy-ratelimiter"         # Kubernetes namespace for
+    deployment
+
+    enable_metrics        = false                       # Deploy statsd-exporter sidecar
+
+    |namespace              |Kubernetes namespace t'
+config_edits:
+- path: examples/terraform/envoy-ratelimiter/README.md
+  tier: 2
+  gold_added: 'Example Beam Python Pipelines using it:
+
+    Example Beam Java Pipelines using it:
+
+    *   [Simple DoFn RateLimiter](https://github.com/apache/beam/blob/master/examples/java/src/main/java/org/apache/beam/examples/RateLimiterSimple.java)
+
+
+    namespace             = "envoy-ratelimiter"         # Kubernetes namespace for
+    deployment
+
+    enable_metrics        = false                       # Deploy statsd-exporter sidecar
+
+    |namespace              |Kubernetes namespace to deploy resources into        |envoy-ratelimiter                |
+
+    |enable_metrics         |Deploy statsd-exporter sidecar                       |false                            |'
+  gold_removed: 'Example Beam Pipelines using it:'
+distractors:
+- rule: Add unit tests for your changes
+  source:
+    path: .agent/skills/contributing/SKILL.md
+    lines: 68-68
+  source_text: '- Add unit tests for your changes'
+  collision_type: scope_ambiguity
+  why_distracting: The diff modifies Terraform deployment files for an example. There
+    is no unit testing framework setup for these Terraform examples in this repository,
+    so attempting to write unit tests for these .tf changes would be out of scope
+    and cause errors.
+  severity: medium

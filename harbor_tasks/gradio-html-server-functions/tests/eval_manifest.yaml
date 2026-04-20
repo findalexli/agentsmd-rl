@@ -1,0 +1,109 @@
+version: '2.0'
+source:
+  repo: gradio-app/gradio
+  pr: 12929
+  base_commit: 7c3fa2a6900cfa3c87cb61ffa9b34b75d1ae49ba
+  merge_commit: 978bc6ea5094aa11e10994cdd662c4c663a86a83
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified Python files must parse without errors
+- id: html_accepts_server_functions
+  type: fail_to_pass
+  origin: pr_diff
+  description: gr.HTML component accepts server_functions parameter and stores it
+- id: html_str_shows_server_functions
+  type: fail_to_pass
+  origin: pr_diff
+  description: gr.HTML __str__ method includes server_functions information
+- id: html_without_server_functions
+  type: fail_to_pass
+  origin: pr_diff
+  description: gr.HTML works normally without server_functions parameter
+- id: skill_md_documents_server_functions
+  type: fail_to_pass
+  origin: agent_config
+  description: SKILL.md documents server_functions parameter in HTML signature
+  source:
+    path: .agents/skills/gradio/SKILL.md
+    lines: '106'
+    commit: 7c3fa2a6900cfa3c87cb61ffa9b34b75d1ae49ba
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: HTML.__init__ has real implementation for server_functions, not just
+    pass/return
+- id: repo_html_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff lint check passes on modified Python file
+- id: repo_html_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff format check passes on modified Python file
+- id: repo_html_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: HTML component unit tests pass
+rubric:
+- rule: Config update is consistent with the style of existing documentation in SKILL.md
+  source:
+    path: .agents/skills/gradio/SKILL.md
+    lines: 103-109
+    commit: 7c3fa2a6900cfa3c87cb61ffa9b34b75d1ae49ba
+- rule: Tests must pass. Run backend tests locally with `bash scripts/run_backend_tests.sh`.
+  source:
+    path: AGENTS.md
+    lines: 28-28
+  evidence: 'Updates `test/components/test_html.py` to include `"server_functions":
+    None` in the expected config dictionary, ensuring existing backend tests continue
+    to pass after the component signature change.'
+  category: testing
+- rule: Be consistent with the style of the surrounding code.
+  source:
+    path: AGENTS.md
+    lines: 37-37
+  evidence: Adds the `server_functions` parameter to the docstring of `gr.HTML` matching
+    the exact indentation and style of the existing `props` parameter.
+  category: style
+config_edits:
+- path: .agents/skills/gradio/SKILL.md
+  tier: 1
+  gold_added: '### `HTML(value: Any | Callable | None = None, label: str | I18nData
+    | None = None, html_template: str = "${value}", css_template: str = "", js_on_load:
+    str | None = "element.addEventListener(''click'', function() { trigger(''click'')
+    });", apply_default_css: bool = True, every: Timer | float | None = None, inputs:
+    Component | Sequence[Component] | set[Component] | None = None, show_label: bool
+    = False, visible: bool | Literal[''hidden''] = True, elem_id: str | None = None,
+    elem_classes: list[str] | str | None = None, render: bool = True, key: int | str
+    | tuple[int | str, ...] | None = None, preserved_by_key: list[str] | str | None
+    = "value", min_height: int | None = None, max_height: int | None = None, container:
+    bool = False, padding: bool = False, autoscroll: bool = False, buttons: list[Button]
+    | None = None, server_functions: list[Callable] | None = None, props: Any)`'
+  gold_removed: '### `HTML(value: Any | Callable | None = None, label: str | I18nData
+    | None = None, html_template: str = "${value}", css_template: str = "", js_on_load:
+    str | None = "element.addEventListener(''click'', function() { trigger(''click'')
+    });", apply_default_css: bool = True, every: Timer | float | None = None, inputs:
+    Component | Sequence[Component] | set[Component] | None = None, show_label: bool
+    = False, visible: bool | Literal[''hidden''] = True, elem_id: str | None = None,
+    elem_classes: list[str] | str | None = None, render: bool = True, key: int | str
+    | tuple[int | str, ...] | None = None, preserved_by_key: list[str] | str | None
+    = "value", min_height: int | None = None, max_height: int | None = None, container:
+    bool = False, padding: bool = False, autoscroll: bool = False, buttons: list[Button]
+    | None = None, props: Any)`'
+distractors:
+- rule: '`js/` — frontend code (Svelte/TypeScript), with each component in its own
+    subdirectory'
+  collision_type: architecture_boundary
+  why_distracting: The prompt mentions making functions callable from `js_on_load`
+    via a `server` object. An agent might assume it needs to modify the Svelte/TypeScript
+    frontend code in `js/` to implement this JS-side `server` object, but the gold
+    solution only modifies the Python backend component to pass the parameter.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 10-10
+hierarchy_analysis: Only `AGENTS.md` is provided, so there are no hierarchy conflicts.
+  The agent must carefully scope its changes to the Python backend and documentation,
+  despite the feature involving JavaScript interactivity.

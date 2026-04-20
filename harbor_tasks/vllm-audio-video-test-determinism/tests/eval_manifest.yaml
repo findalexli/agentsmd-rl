@@ -1,0 +1,129 @@
+version: '2.0'
+source:
+  repo: vllm-project/vllm
+  pr: 38492
+  base_commit: c133f3374625652c88e122fff995e4126c4635c0
+  merge_commit: bea23536f627b2b4153f2e672753b6034b78dedb
+checks:
+- id: test_syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Target test file must be valid Python
+- id: test_temperature_deterministic
+  type: fail_to_pass
+  origin: pr_diff
+  description: Both flaky test functions must set temperature=0.0 for deterministic
+    output
+- id: test_max_tokens_reduced
+  type: fail_to_pass
+  origin: pr_diff
+  description: Both flaky test functions must use max_tokens <= 8 to force length
+    cutoff
+- id: test_debug_output_added
+  type: fail_to_pass
+  origin: pr_diff
+  description: Both flaky test functions must include debug output referencing finish_reason
+- id: test_turn_variable_used
+  type: fail_to_pass
+  origin: pr_diff
+  description: Both flaky test functions must use 'turn' variable in the loop (changed
+    from '_')
+- id: test_interleaved_test_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: Third test function (interleaved) must still exist with a real body
+- id: test_assertions_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: Both flaky functions must still assert finish_reason=='length' and
+    len(choices)==1
+- id: test_not_stubs
+  type: pass_to_pass
+  origin: static
+  description: Both flaky functions must have substantial bodies (loop, await, assert)
+- id: test_mm_processor_kwargs_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: Both flaky functions must pass mm_processor_kwargs with use_audio_in_video
+- id: test_repo_ruff_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff linting passes on target test file
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff formatting passes on target test file
+- id: test_repo_spdx_header
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's SPDX header check passes on target test file
+- id: test_repo_boolean_context_manager
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's boolean context manager check passes on target test file
+- id: test_repo_forbidden_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's forbidden imports check passes on target test file
+- id: test_repo_torch_cuda
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's torch.cuda API check passes on target test file
+- id: test_repo_init_lazy_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's root __init__ lazy imports check passes
+- id: test_repo_check_filenames
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's filename check passes - no spaces in filenames
+- id: test_repo_no_symlink_utils
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's symlink utils check passes on target test file
+- id: test_repo_validate_config
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's config validation passes on target test file
+- id: test_repo_shellcheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's shellcheck passes on shell scripts
+- id: test_repo_actionlint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's actionlint passes on GitHub workflow files
+rubric: []
+distractors:
+- rule: Do not open one-off PRs for tiny edits (single typo, isolated style change,
+    one mutable default, etc.).
+  collision_type: scope_ambiguity
+  why_distracting: The agent might classify changing `max_tokens` and `temperature`
+    as a 'tiny edit' or 'one mutable default' and refuse to proceed, failing to recognize
+    that fixing a flaky CI test is substantive and necessary work.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 18-19
+- rule: Pure code-agent PRs are not allowed. A human submitter must understand and
+    defend the change end-to-end.
+  collision_type: meta_confusion
+  why_distracting: The agent might refuse to generate the fix, claiming that as an
+    AI it cannot submit the PR, even though its job in this context is to generate
+    the patch for the human user.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 23-24
+- rule: 'Fail-closed behavior: If work is duplicate/trivial busywork, do not proceed.
+    Return a short explanation of what is missing.'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might trigger the fail-closed behavior if it incorrectly
+    assesses the test fix as trivial busywork, returning an explanation instead of
+    the required code patch.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 32-33
+hierarchy_analysis: The hierarchy is flat, with CLAUDE.md simply pointing to AGENTS.md.
+  The rules are generic contribution guidelines rather than code-specific constraints.

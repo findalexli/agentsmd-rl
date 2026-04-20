@@ -1,0 +1,125 @@
+source:
+  repo: JetBrains/kotlin
+  pr: 0
+  base_commit: 95085a77af52e78028044f0ea5404803232ad697
+  merge_commit: b5f3ee74f680ff96d594274bf61e3179de06a348
+checks:
+- id: test_deprecated_apis_section_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: DEPRECATED APIs comment section is removed from ExtrasProperty.kt
+- id: test_deprecated_functions_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Deprecated functions (extrasReadProperty, extrasFactoryProperty, extrasNullableLazyProperty)
+    are removed
+- id: test_deprecated_interfaces_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Deprecated interfaces (ExtrasReadOnlyProperty, ExtrasFactoryProperty,
+    NullableExtrasLazyProperty) are removed
+- id: test_deprecated_extensions_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Deprecated extension properties (readProperty, factoryProperty, nullableLazyProperty)
+    are removed
+- id: test_java_util_import_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: import java.util.* is removed since Optional is no longer needed
+- id: test_test_file_uses_readwrite_property
+  type: fail_to_pass
+  origin: pr_diff
+  description: ExtrasPropertyTest.kt uses readWriteProperty instead of deprecated
+    readProperty
+- id: test_test_file_uses_lazy_property
+  type: fail_to_pass
+  origin: pr_diff
+  description: ExtrasPropertyTest.kt uses lazyProperty instead of deprecated factoryProperty
+- id: test_no_deprecation_suppress_in_test
+  type: fail_to_pass
+  origin: pr_diff
+  description: '@Suppress(''DEPRECATION_ERROR'') is removed from ExtrasPropertyTest'
+- id: test_nullable_lazy_property_test_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Test for lazyNullableProperty is removed from ExtrasPropertyTest
+- id: test_scheduled_for_removal_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: All 'Scheduled for removal in Kotlin 2.3' annotations are removed
+- id: test_main_sources_compile
+  type: pass_to_pass
+  origin: repo_tests
+  description: Main Kotlin sources compile successfully
+- id: test_extras_property_test_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: ExtrasPropertyTest.kt compiles successfully
+- id: test_extras_property_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: ExtrasPropertyTest passes
+- id: test_all_sources_compile
+  type: pass_to_pass
+  origin: repo_tests
+  description: All main and test sources compile together
+- id: test_extras_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: ExtrasTest passes
+- id: test_extras_serializable_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: ExtrasSerializableTest passes
+- id: test_extras_key_stable_string_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: ExtrasKeyStableStringTest passes
+- id: test_closure_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: ClosureTest passes
+- id: test_type_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeTest passes
+- id: test_interner_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: InternerTest passes
+- id: test_kotlin_tooling_version_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: KotlinToolingVersionTest passes
+rubric:
+- rule: Remove deprecated APIs that are scheduled for removal (marked with @Deprecated
+    level = DeprecationLevel.ERROR). Do not leave dead code.
+  source:
+    path: .ai/guidelines.md
+    lines: 60-68
+    commit: 95085a77af52e78028044f0ea5404803232ad697
+- rule: When removing deprecated code, update all usages in tests to use the replacement
+    non-deprecated APIs.
+  source:
+    path: .ai/guidelines.md
+    lines: '64'
+    commit: 95085a77af52e78028044f0ea5404803232ad697
+- rule: Remove unused imports when removing code that was the sole consumer of those
+    imports.
+  source:
+    path: .ai/guidelines.md
+    lines: 1-10
+    commit: 95085a77af52e78028044f0ea5404803232ad697
+- rule: Remove @Suppress annotations that were suppressing deprecation warnings for
+    APIs that are being removed.
+  source:
+    path: .ai/guidelines.md
+    lines: 1-10
+    commit: 95085a77af52e78028044f0ea5404803232ad697
+hierarchy_analysis: The provided configuration files (`CLAUDE.md` and `AGENTS.md`)
+  act as entry points and contain no actionable coding rules themselves. They only
+  provide meta-information (project name, languages, build system) and pointers to
+  other guideline files (`.ai/guidelines.md`, `.claude/local.md`) which are not present
+  in the context.
+version: '2.0'

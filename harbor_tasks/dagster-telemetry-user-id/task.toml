@@ -3,6 +3,10 @@ title = "Add anonymous user_id to telemetry payload"
 difficulty = "medium"
 estimated_time = "15-25 minutes"
 
+source_repo = "dagster-io/dagster"
+source_pr_number = 33320
+source_base_commit = "1bccaaca43c35a850e824e65a70655ab9f0136b8"
+source_merge_commit = "dc6e45a1a39120970c173bc5ac34bfc3ef883367"
 [description]
 brief = "Add a persistent user-level identifier to telemetry events that is independent of DAGSTER_HOME"
 details = """
@@ -17,12 +21,6 @@ Key requirements:
 4. Include user_id in all telemetry payloads
 5. Ensure user_id is consistent across different DAGSTER_HOME values
 """
-
-[source]
-repo = "dagster-io/dagster"
-pr_number = 33320
-base_commit = "1bccaaca43c35a850e824e65a70655ab9f0136b8"
-merge_commit = "dc6e45a1a39120970c173bc5ac34bfc3ef883367"
 
 [files]
 dockerfile = "environment/Dockerfile"
@@ -40,3 +38,6 @@ domain = ["data-engineering", "observability"]
 [settings]
 timeout_seconds = 600
 max_retries = 1
+
+[verifier]
+env = { GEMINI_API_KEY = "${GEMINI_API_KEY:-}", ANTHROPIC_API_KEY = "${ANTHROPIC_API_KEY:-}" }

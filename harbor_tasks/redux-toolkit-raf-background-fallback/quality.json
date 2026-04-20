@@ -1,62 +1,57 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "The instruction names all key specifics tested: the function name `createRafWithFallbackTimer`, the `called` flag, `cancelAnimationFrame`/`clearTimeout`, the exact invocation `createRafWithFallbackTimer(window.requestAnimationFrame, 100)`, the file path `src/autoBatchEnhancer.ts`, and the test commands. All asserted strings and paths in tests are discoverable from instruction.md."
+      "outcome": "fail",
+      "reason": "Tests assert on the specific helper name 'createRafWithFallbackTimer' and exact literal 'createRafWithFallbackTimer(window.requestAnimationFrame, 100)', but instruction.md never mentions this helper name or exact call signature."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction's 'Implementation Requirements' section explicitly dictates the exact solution: create a helper named `createRafWithFallbackTimer`, use a `called` flag, call `cancelAnimationFrame`/`clearTimeout`, and invoke as `createRafWithFallbackTimer(window.requestAnimationFrame, 100)`. This leaves no reasoning for the agent \u2014 it specifies exactly what to write."
+      "outcome": "pass",
+      "reason": "Instruction describes the problem (background tab RAF throttling) and desired behavior (100ms fallback, single notification) without specifying code-level changes."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests like `test_raf_fallback_function_exists` assert exact string matches for `createRafWithFallbackTimer`, `called`, `cancelAnimationFrame`, `clearTimeout`. `test_raf_strategy_uses_fallback` asserts the exact string `createRafWithFallbackTimer(window.requestAnimationFrame, 100)`. An alternative correct fix (e.g., using a different function name, a different flag name, or inlining the logic) would fail these tests despite being functionally correct."
+      "reason": "Tests require the exact helper name 'createRafWithFallbackTimer', the literal 'called' flag variable, and exact string 'createRafWithFallbackTimer(window.requestAnimationFrame, 100)' \u2014 alternative correct fixes using different names or inline implementations would fail."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Tests `test_raf_fallback_function_exists`, `test_raf_strategy_uses_fallback`, and `test_100ms_timeout_value` are purely text-matching (`assert 'string' in content`). They read the source file and check for string presence, never importing, calling, or executing the code. Only `test_unit_tests_pass` and `test_full_test_suite` execute code, but the fail-to-pass tests are all text-based."
+      "outcome": "pass",
+      "reason": "Tests include subprocess calls to yarn test, tsc, and type-tests in addition to text inspection."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "The f2p tests (`test_raf_fallback_function_exists`, `test_raf_strategy_uses_fallback`, `test_100ms_timeout_value`) only check for string presence in the source file. A stub that simply adds a comment containing `createRafWithFallbackTimer`, `called`, `cancelAnimationFrame`, `clearTimeout`, and `createRafWithFallbackTimer(window.requestAnimationFrame, 100)` as dead code would pass all three f2p tests without fixing any bug."
+      "outcome": "pass",
+      "reason": "test_unit_tests_pass and test_full_test_suite run the actual repo test suite which would fail for a stub."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "The instruction requires that 'notification should still happen at ~16ms via RAF' in foreground and that 'exactly one notification occurs per batch'. Neither of these behavioral requirements is actually tested \u2014 the f2p tests only check string presence in source code, not runtime behavior like timing or deduplication."
+      "outcome": "pass",
+      "reason": "Tests cover the RAF+setTimeout race, 100ms timeout, deduplication via called flag, and full test suite for regression."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (e.g., `test_raf_fallback_function_exists`, `test_raf_strategy_uses_fallback`), have docstrings explaining their purpose and origin (fail-to-pass vs pass-to-pass), and are logically grouped."
+      "reason": "Tests have descriptive names, docstrings indicating fail-to-pass vs pass-to-pass, and origin comments."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task does not produce structured data like JSON, CSV, API responses, or database schemas."
+      "reason": "Task produces TypeScript code, not structured data."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across the instruction and test files."
+      "reason": "Paths and commands (yarn test, src/autoBatchEnhancer.ts, tsc --noEmit) are consistent and correct."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly names the helper function `createRafWithFallbackTimer`, the internal variable `called`, and the exact invocation `createRafWithFallbackTimer(window.requestAnimationFrame, 100)`. This goes far beyond naming the file \u2014 it specifies internal implementation details that constitute the solution."
+      "outcome": "pass",
+      "reason": "Instruction names the file to modify but this is appropriate localization guidance, not line-level leakage."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "Code-only task, not a config edit."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "behavior_in_task_description",
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "behavior_in_tests",
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 3,
-  "fail_count": 6
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 2
 }

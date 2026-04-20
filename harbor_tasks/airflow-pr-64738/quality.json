@@ -1,62 +1,58 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert on specific variable names like 'ser_dag_ids', 'missing_from_serialized', 'adrq_by_dag', 'dag_statuses', exact patterns like 'set(adrq_by_dag.keys()) - ser_dag_ids', 'sorted(missing_from_serialized)', 'del adrq_by_dag[dag_id]', 'del dag_statuses[dag_id]'. The instruction.md never names these specific variables (e.g., 'ser_dag_ids', 'missing_from_serialized', 'adrq_by_dag', 'dag_statuses'). It also doesn't specify the file path 'airflow-core/src/airflow/models/dag.py' or the class 'D"
+      "reason": "Tests assert on specific variable names like 'ser_dag_ids', 'missing_from_serialized', 'adrq_by_dag', 'dag_statuses', and file path 'airflow-core/src/airflow/models/dag.py', none of which are mentioned in instruction.md."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly states the implementation approach: 'Compute this using set difference between the ADRQ grouping keys and the serialized dag IDs', 'Remove orphaned dag_ids from the in-memory grouping and status dicts', 'emit an INFO-level log message containing the phrase not found in the serialized_dag table', 'Log the affected dag_ids in sorted order'. This describes exactly WHAT to change and HOW, not just what's broken."
+      "outcome": "pass",
+      "reason": "Instruction describes the problem and requirements but doesn't dictate exact variable names or code changes."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific variable names: test_missing_serialized_dag_handling checks for 'ser_dag_ids' and 'missing_from_serialized' as string literals in code. test_fix_uses_set_difference checks for exact pattern 'set(adrq_by_dag.keys())' and '- ser_dag_ids'. test_fix_logs_sorted_dag_ids checks for 'sorted(missing_from_serialized)'. An alternative correct fix using different variable names (e.g., 'serialized_ids', 'orphaned_dags') would fail all these tests."
+      "reason": "Tests assert on gold-specific variable names like 'missing_from_serialized', 'ser_dag_ids', 'adrq_by_dag', 'dag_statuses', and exact patterns like 'set(adrq_by_dag.keys()) - ser_dag_ids' \u2014 an equivalent fix using different names would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every fail_to_pass test reads the source file as text and checks for string patterns (e.g., '\"ser_dag_ids = \" in dag_code', '\"missing_from_serialized\" in dag_code', '\"set(adrq_by_dag.keys())\" in dag_code'). No test actually imports or calls the code, creates test DAGs, or verifies runtime behavior. This is pure text/pattern matching."
+      "reason": "All fail_to_pass tests (test_missing_serialized_dag_handling, test_fix_removes_orphan_dags_from_both_dicts, test_fix_logs_skipped_dags_message, etc.) perform string matching on dag.py source code rather than executing the fix."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "Since the tests only check for string patterns in source code, a developer could simply add a dead code comment block containing all the required strings (e.g., '# ser_dag_ids = ... missing_from_serialized ... set(adrq_by_dag.keys()) - ser_dag_ids ...') without implementing any actual fix, and all tests would pass."
+      "outcome": "pass",
+      "reason": "Tests check for specific substrings that require actually writing the fix (though they verify text, not behavior)."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The tests cover all four requirements from instruction.md: detecting orphaned DAGs (set difference), logging skipped DAGs with the specific message and sorted order, cleaning up in-memory state only (no DB deletion), and preserving existing functionality (syntax validity, method existence)."
+      "reason": "Each instruction requirement (detect orphans, log message, cleanup in-memory, preserve DB rows) has a corresponding test."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_missing_serialized_dag_handling, test_fix_removes_orphan_dags_from_both_dicts, etc.), each has a descriptive docstring explaining what aspect of the fix it verifies, and they're logically grouped by concern."
+      "reason": "Tests are individually named and documented with docstrings explaining their purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task involves fixing a scheduler bug in Python code, not producing structured data output."
+      "reason": "Task is a code bug fix, not structured data production."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No obvious typos in paths, filenames, or commands."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction describes internal implementation details: 'A dict grouping ADRQ rows by dag_id', 'A dict tracking per-DAG scheduling status', 'iterates over results and accesses the status dict by dag_id'. While it doesn't name the exact file, it narrows the location to specific data structures and control flow patterns, significantly reducing the localization challenge."
+      "outcome": "pass",
+      "reason": "Instruction describes the problem domain (scheduler, ADRQ, serialized_dag) without naming exact file/line locations."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "Code-only task, not a config edit task."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
-    "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 3,
-  "fail_count": 6
+  "tier_c_fails": [],
+  "pass_count": 6,
+  "fail_count": 3
 }

@@ -1,61 +1,59 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "All test-asserted specifics (file paths like load-matches.ts and router.ts, variable names like prevLoadPromise and previousCommitPromise, patterns like 'let prevLoadPromise', 'match._nonReactive.loadPromise = undefined', 'match._nonReactive.loaderPromise = undefined', '!loaderIsRunningAsync', 'this.commitLocationPromise') are explicitly named in instruction.md."
+      "reason": "Instruction names both files (load-matches.ts, router.ts), all variable names (prevLoadPromise, previousCommitPromise, loadPromise, loaderPromise, loaderIsRunningAsync), and the exact patterns tested."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix: 'declared with let (not const)', 'set to undefined after resolution', provides exact variable names, exact patterns like 'let prevLoadPromise = match._nonReactive.loadPromise followed later by prevLoadPromise = undefined'. This is a complete specification of what to change, not just a description of what's broken."
+      "reason": "Instruction explicitly states the fix: 'let prevLoadPromise = match._nonReactive.loadPromise' followed by 'prevLoadPromise = undefined', and similar for previousCommitPromise \u2014 essentially the literal code change."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on exact gold-specific patterns: regex for 'let prevLoadPromise', exact string 'prevLoadPromise = undefined', 'let previousCommitPromise = this.commitLocationPromise', and proximity of 'match._nonReactive.loadPromise = undefined' to 'match._nonReactive.loaderPromise = undefined'. An alternative correct fix (e.g., using WeakRef, nullifying via a helper function, or using different variable naming) would fail these text-matching tests."
+      "reason": "Tests assert on exact variable names (prevLoadPromise, previousCommitPromise) and 'let' keyword via regex; an alternative fix using e.g. a different variable name or WeakRef approach would fail."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The four fail_to_pass tests (test_load_matches_prevLoadPromise_cleanup, test_load_matches_loadPromise_cleanup_in_try_block, test_load_matches_loadPromise_cleanup_after_sync_load, test_router_previousCommitPromise_cleanup) all exclusively use 'read_text()' and regex/string matching on source files. They never import, execute, or test runtime behavior. The pass_to_pass tests do run builds/tests but the core f2p tests are purely textual."
+      "outcome": "pass",
+      "reason": "Tests include subprocess calls to build, type-check, lint, and run unit tests, not just text matching."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "The f2p tests only check for text patterns in source files (e.g., 'prevLoadPromise = undefined' in content). A stub that simply appends the required strings as comments to the file would pass all four f2p tests without actually fixing the memory leak."
+      "outcome": "pass",
+      "reason": "f2p tests check for specific code patterns that require making the fix; a stub wouldn't satisfy them."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All four cleanup locations (A-D) described in instruction.md are tested: prevLoadPromise cleanup, loadPromise alongside loaderPromise, sync loader path cleanup, and previousCommitPromise cleanup. Build/type/lint/unit tests also verify existing functionality is maintained."
+      "reason": "All four locations described in instruction.md are tested, plus build/lint/type/unit tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings, clearly separated by concern (each cleanup location gets its own test), and annotated with fail_to_pass vs pass_to_pass markers."
+      "reason": "Tests are individually named with docstrings indicating f2p/p2p and purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing source code for memory leaks, not producing structured data output."
+      "reason": "Not a structured data task."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and patterns in instruction.md match those in test assertions and solution. No typos detected."
+      "reason": "Paths and variable names are consistent between instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names exact files (load-matches.ts, router.ts), exact functions (executeBeforeLoad, loadRouteMatch), exact variable names (prevLoadPromise, previousCommitPromise), exact properties (match._nonReactive.loadPromise), and exact fix patterns ('let prevLoadPromise = match._nonReactive.loadPromise followed later by prevLoadPromise = undefined'). This is extreme localization leakage."
+      "reason": "Instruction names exact files, functions, variable names, and the precise code patterns ('let prevLoadPromise = match._nonReactive.loadPromise followed later by prevLoadPromise = undefined inside the callback'), leaving no localization or design work."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "Code-only task."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 5
+  "pass_count": 6,
+  "fail_count": 3
 }

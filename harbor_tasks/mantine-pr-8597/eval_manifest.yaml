@@ -1,0 +1,56 @@
+source:
+  owner: mantinedev
+  repo: mantine
+  pr_number: 8597
+  base_commit: b7075e17ccce448cebda8cde98096b8dde633963
+  merge_commit: 7fbe5d8a5f3e89c57bd37c10a096812c0fc673d3
+  title: "[@mantine/core] implements selectFirstOptionOnDropdownOpen"
+  files_changed:
+    - packages/@mantine/core/src/components/Combobox/Combobox.types.ts
+    - packages/@mantine/core/src/components/Select/Select.tsx
+    - packages/@mantine/core/src/components/MultiSelect/MultiSelect.tsx
+    - packages/@mantine/core/src/components/Autocomplete/Autocomplete.tsx
+    - packages/@mantine/core/src/components/TagsInput/TagsInput.tsx
+
+checks:
+  - id: test_combobox_types_has_new_prop
+    type: fail_to_pass
+    description: ComboboxLikeProps includes selectFirstOptionOnDropdownOpen with JSDoc
+    origin: repo_tests
+
+  - id: test_select_implements_behavior
+    type: fail_to_pass
+    description: Select uses selectFirstOptionOnDropdownOpen conditional in onDropdownOpen
+    origin: repo_tests
+
+  - id: test_autocomplete_implements_behavior
+    type: fail_to_pass
+    description: Autocomplete uses selectFirstOptionOnDropdownOpen conditional in onDropdownOpen
+    origin: repo_tests
+
+  - id: test_multiselect_implements_behavior
+    type: fail_to_pass
+    description: MultiSelect uses selectFirstOptionOnDropdownOpen conditional in onDropdownOpen
+    origin: repo_tests
+
+  - id: test_tagsinput_implements_behavior
+    type: fail_to_pass
+    description: TagsInput uses selectFirstOptionOnDropdownOpen conditional in onDropdownOpen
+    origin: repo_tests
+
+  - id: test_repo_prettier
+    type: pass_to_pass
+    description: Repo's prettier check passes on changed files
+    origin: repo_tests
+
+  - id: test_repo_lint
+    type: pass_to_pass
+    description: Repo's lint (eslint + stylelint) passes on all packages
+    origin: repo_tests
+
+  - id: test_repo_syncpack
+    type: pass_to_pass
+    description: Repo's syncpack check passes (no mismatched dependencies)
+    origin: repo_tests
+
+rubric: []

@@ -1,0 +1,173 @@
+version: "2.0"
+
+source:
+  repo: sgl-project/sglang
+  pr: 22100
+  base_commit: 1ad6839659085732a6fe308f97141841d67f6323
+  merge_commit: e9d92b0e33770651fd065c04ea28d0a5564e229d
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified test file must parse without errors"
+
+  - id: assertion_logic_at_threshold
+    type: fail_to_pass
+    origin: pr_diff
+    description: "assertGreaterEqual with 0.69 threshold passes when score == 0.69 (BEHAVIORAL)"
+
+  - id: old_behavior_fails_at_exact_threshold
+    type: fail_to_pass
+    origin: pr_diff
+    description: "assertGreater with 0.7 threshold FAILS when score == 0.7 - proves the bug (BEHAVIORAL)"
+
+  - id: accuracy_threshold_v1
+    type: fail_to_pass
+    origin: pr_diff
+    description: "TestStandaloneSpeculativeDecodingBase.accuracy_threshold is 0.69"
+
+  - id: accuracy_threshold_v2
+    type: fail_to_pass
+    origin: pr_diff
+    description: "TestStandaloneV2SpeculativeDecodingBase.accuracy_threshold is 0.69"
+
+  - id: gsm8k_uses_greater_equal_v1
+    type: fail_to_pass
+    origin: pr_diff
+    description: "V1 test_gsm8k uses assertGreaterEqual for accuracy comparison"
+
+  - id: gsm8k_uses_greater_equal_v2
+    type: fail_to_pass
+    origin: pr_diff
+    description: "V2 test_gsm8k uses assertGreaterEqual for accuracy comparison"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "test_gsm8k methods have real logic, not just pass/return"
+
+  - id: inherits_custom_test_case
+    type: pass_to_pass
+    origin: agent_config
+    description: "Both base classes inherit from CustomTestCase"
+    source:
+      path: ".claude/skills/write-sglang-test/SKILL.md"
+      lines: "12"
+      commit: 1ad6839659085732a6fe308f97141841d67f6323
+
+  # Repo CI/CD pass_to_pass checks (enrichment)
+  - id: test_repo_python_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified test file must have valid Python syntax"
+    command: "python3 -m py_compile test/registered/spec/test_standalone_speculative_decoding.py"
+
+  - id: test_repo_ruff_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified test file must pass ruff lint checks (F401, F821)"
+    command: "ruff check --select=F401,F821 test/registered/spec/test_standalone_speculative_decoding.py"
+
+  - id: test_repo_black_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified test file must be Black-formatted"
+    command: "black --check --diff test/registered/spec/test_standalone_speculative_decoding.py"
+
+  - id: test_repo_codespell
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified test file must have no common typos"
+    command: "codespell --config .codespellrc test/registered/spec/test_standalone_speculative_decoding.py"
+
+  - id: test_repo_isort
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Modified test file must have correctly sorted imports (isort)"
+    command: "isort --check-only --profile black test/registered/spec/test_standalone_speculative_decoding.py"
+
+  - id: test_repo_yaml_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CI workflow YAML files must be valid"
+    command: "python3 -c 'import yaml; yaml.safe_load(open(\".github/workflows/lint.yml\"))'"
+
+  - id: test_repo_workflow_job_names
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CI workflow job names must be unique (repo CI check)"
+    command: "python3 scripts/ci/check_workflow_job_names.py"
+
+  - id: test_repo_ci_permissions_sorted
+    type: pass_to_pass
+    origin: repo_tests
+    description: "CI permissions file must be sorted (repo CI check)"
+    command: "python3 .github/update_ci_permission.py --sort-only"
+
+  - id: test_repo_merge_conflict
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Source files must not contain merge conflict markers"
+    command: "pre-commit run check-merge-conflict --all-files"
+
+  - id: test_repo_private_key
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Source files must not contain private keys"
+    command: "pre-commit run detect-private-key --all-files"
+
+  - id: test_repo_toml_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "TOML files must be valid"
+    command: "pre-commit run check-toml --all-files"
+
+  - id: test_repo_trailing_whitespace
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Source files must not have trailing whitespace"
+    command: "pre-commit run trailing-whitespace --all-files"
+
+  - id: test_repo_shebang_executable
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Scripts with shebangs must be executable"
+    command: "pre-commit run check-shebang-scripts-are-executable --all-files"
+  - id: test_repo_yaml_valid_all
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All YAML files must be valid"
+    command: "pre-commit run check-yaml --all-files"
+
+  - id: test_repo_debug_statements
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Source files must not contain debug statements"
+    command: "pre-commit run debug-statements --all-files"
+
+  - id: test_repo_end_of_file
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Files must end with exactly one newline"
+    command: "pre-commit run end-of-file-fixer --all-files"
+
+
+rubric:
+  - rule: "Always inherit from CustomTestCase, never raw unittest.TestCase"
+    source:
+      path: ".claude/skills/write-sglang-test/SKILL.md"
+      lines: "12"
+      commit: "1ad6839659085732a6fe308f97141841d67f6323"
+
+  - rule: "tearDownClass must be defensive - use hasattr/null checks before accessing resources that setUpClass may not have allocated"
+    source:
+      path: ".claude/skills/write-sglang-test/SKILL.md"
+      lines: "15"
+      commit: "1ad6839659085732a6fe308f97141841d67f6323"
+
+  - rule: "Test classes should use class attributes for configurable thresholds (e.g., accuracy_threshold) to allow derived tests to override"
+    source:
+      path: ".claude/skills/write-sglang-test/SKILL.md"
+      lines: "318-325"
+      commit: "1ad6839659085732a6fe308f97141841d67f6323"

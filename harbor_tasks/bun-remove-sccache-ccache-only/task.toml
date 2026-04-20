@@ -1,6 +1,10 @@
 name = "bun-remove-sccache-ccache-only"
 description = "Remove sccache support from Bun build system, use ccache only. Update documentation to reflect the change."
 version = "1.0.0"
+source_repo = "oven-sh/bun"
+source_pr = 25682
+source_base_commit = "08e03814e56a493571da07e5d5160280e89856cd"
+source_merge_commit = "81b4a40fbdcce6d5ac08ca68c179c854b2393286"
 difficulty = "medium"
 timeout_seconds = 600
 max_memory_mb = 2048
@@ -11,12 +15,9 @@ tags = ["agentmd-edit", "build-system", "cmake", "documentation", "ccache", "bun
 cpu_cores = 2
 disk_mb = 5120
 
-[source]
-repo = "oven-sh/bun"
-pr = 25682
-base_commit = "08e03814e56a493571da07e5d5160280e89856cd"
-merge_commit = "81b4a40fbdcce6d5ac08ca68c179c854b2393286"
-
 [evaluation]
 type = "docker"
 test_command = "bash /tests/test.sh"
+
+[verifier]
+env = { GEMINI_API_KEY = "${GEMINI_API_KEY:-}", ANTHROPIC_API_KEY = "${ANTHROPIC_API_KEY:-}" }

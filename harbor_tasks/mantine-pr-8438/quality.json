@@ -1,0 +1,56 @@
+{
+  "model": "claude-opus-4-7",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "Instruction names the utility function names (findElementBySelector, findElementsBySelector, getRootElement), the target file locations (packages/@mantine/core/src/core/utils/), and the hook file (use-combobox.ts) that tests assert on."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction describes the problem (Shadow DOM not traversed) and expected function signatures/behaviors without dictating the implementation."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_findelementsbyselector_calls_queryselectorall_on_shadow_root asserts specifically that querySelectorAll is called with '*' to find elements with shadowRoot, and expects count==2 from a specific mock pattern \u2014 a valid alternative implementation (e.g., using TreeWalker or iterating children) would not call querySelectorAll('*') and would fail."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Most tests execute TypeScript via tsx subprocess and verify runtime behavior via mocked ShadowRoot; only a few auxiliary tests use text inspection."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "Behavioral tests mock ShadowRoot and assert querySelector is called with the correct selector and returns correct results, which a stub cannot satisfy."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "Tests cover the three utility functions' behavior and use-combobox integration as described in the instruction."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are grouped with section comment headers ('Fail-to-pass tests', 'Pass-to-pass tests') and descriptive docstrings."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task is code modification, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "Filenames, paths, and function names appear consistent between instruction, tests, and solution."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction identifies the component domain and expected API but does not point to specific buggy lines."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "Not an agentmd-edits/config task."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 1
+}

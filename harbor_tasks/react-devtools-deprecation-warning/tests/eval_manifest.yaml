@@ -1,0 +1,83 @@
+version: '2.0'
+source:
+  repo: facebook/react
+  pr: 35994
+  base_commit: 014138df87869b174956f90a33fd6cf66e160114
+  merge_commit: 7b5b561bd2dda205ed8f397864379003b707d4ae
+checks:
+- id: repo_flow_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Flow typecheck passes on dom-node renderer
+- id: repo_eslint_modified
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint passes on modified devtools files
+- id: repo_check_license
+  type: pass_to_pass
+  origin: repo_tests
+  description: License check passes - no PATENTS references
+- id: repo_test_print_warnings
+  type: pass_to_pass
+  origin: repo_tests
+  description: Print warnings test passes
+- id: repo_version_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Version check passes
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Pre-existing modified JS files parse without syntax errors
+- id: new_reactbuildtype_file_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: reactBuildType.js is created and exports working reduceReactBuild and
+    createReactRendererListener functions (verified via code execution)
+- id: reduce_react_build_worst_build_wins
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'reduceReactBuild implements worst build logic: non-production beats
+    production (verified via code execution)'
+- id: listener_maintains_state_across_renderers
+  type: fail_to_pass
+  origin: pr_diff
+  description: createReactRendererListener maintains closure state so later production
+    renderers don't override an earlier dev/outdated build (verified via code execution)
+- id: installhook_uses_factory_not_inline
+  type: fail_to_pass
+  origin: pr_diff
+  description: installHook.js uses createReactRendererListener factory, removes old
+    inline listener, and passes Flow type check
+- id: react_build_type_union_exported
+  type: fail_to_pass
+  origin: pr_diff
+  description: ReactBuildType union type is exported from types.js with all five literal
+    values and passes Flow type check
+- id: not_stub
+  type: fail_to_pass
+  origin: static
+  description: reactBuildType.js contains real implementation logic, not a stub
+rubric:
+- rule: New React source files should include appropriate documentation headers.
+  reference: Copyright headers present in new reactBuildType.js
+- rule: React files are located outside the `/compiler/` directory.
+  source:
+    path: CLAUDE.md
+    lines: 6-7
+  evidence: The gold solution modifies files in `packages/react-devtools-extensions`
+    and `packages/react-devtools-shared`, which are outside the `/compiler/` directory,
+    correctly identifying them as part of React
+  category: architecture
+distractors:
+- rule: 'React Compiler: `/compiler/` directory (has its own instructions)'
+  collision_type: scope_ambiguity
+  why_distracting: The issue is about React DevTools, which is part of React, not
+    the React Compiler. An agent might mistakenly think DevTools is a compiler feature
+    or look for DevTools instructions in the compiler directory.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 8-8
+hierarchy_analysis: The CLAUDE.md file provides a basic monorepo overview, distinguishing
+  between React and React Compiler.

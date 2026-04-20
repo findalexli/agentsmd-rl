@@ -1,0 +1,193 @@
+source_pr:
+  owner: All-Hands-AI
+  repo: OpenHands
+  number: 13799
+  title: "Deprecate /api/options/models, add /api/v1/config/models/search endpoint"
+  base_commit: 54858c0fc02196f797e4bb411eb00bc12267b0cc
+  merge_commit: 2eefa5edfd76573f39091357f970ebb95d585a1b
+
+# Reward function: all-or-nothing (all checks must pass)
+scoring:
+  type: binary
+  threshold: 1.0
+
+# Each check maps to a test_* function in test_outputs.py
+checks:
+  # Fail-to-pass tests (new functionality)
+  - id: test_config_models_file_exists
+    type: fail_to_pass
+    origin: agent_config
+    description: "config_models.py file must exist with LLMModel and LLMModelPage classes"
+    source:
+      file: AGENTS.md
+      lines: "1-50"
+      quote: "Backend tests reside in tests/unit/test_*.py and run via poetry run pytest"
+
+  - id: test_config_router_file_exists
+    type: fail_to_pass
+    origin: agent_config
+    description: "config_router.py file must exist with search_models endpoint and helper functions"
+    source:
+      file: AGENTS.md
+      lines: "1-50"
+      quote: "Backend tests reside in tests/unit/test_*.py and run via poetry run pytest"
+
+  - id: test_v1_router_includes_config_router
+    type: fail_to_pass
+    origin: agent_config
+    description: "v1_router.py must import and include the config_router"
+
+  - id: test_public_models_deprecated
+    type: fail_to_pass
+    origin: agent_config
+    description: "/models endpoint must be marked as deprecated with deprecated=True parameter"
+
+  - id: test_llm_model_serialization
+    type: fail_to_pass
+    origin: agent_config
+    description: "LLMModel must serialize correctly to dict/JSON format"
+
+  - id: test_get_verified_models_function
+    type: fail_to_pass
+    origin: agent_config
+    description: "_get_verified_models helper must return set of provider/name model identifiers"
+
+  - id: test_get_all_models_with_verified
+    type: fail_to_pass
+    origin: agent_config
+    description: "_get_all_models_with_verified must correctly mark models as verified/unverified"
+
+  - id: test_search_models_signature
+    type: fail_to_pass
+    origin: agent_config
+    description: "search_models function must have correct parameters (page_id, limit, query, verified__eq, models)"
+
+  - id: test_limit_parameter_validation_bounds
+    type: fail_to_pass
+    origin: agent_config
+    description: "Limit parameter must have gt=0 and le=100 validation constraints"
+
+  - id: test_llm_model_page_has_items_and_next_page_id
+    type: fail_to_pass
+    origin: agent_config
+    description: "LLMModelPage must have items and next_page_id fields"
+
+  - id: test_config_router_imports_correct_modules
+    type: fail_to_pass
+    origin: agent_config
+    description: "Config router must correctly import all required dependencies"
+
+  - id: test_query_parameter_is_case_insensitive
+    type: fail_to_pass
+    origin: agent_config
+    description: "Query parameter filtering must be case-insensitive (use .lower())"
+
+  - id: test_new_endpoint_path_correct
+    type: fail_to_pass
+    origin: agent_config
+    description: "New endpoint must be registered at /config/models/search path"
+
+  - id: test_config_api_directory_structure
+    type: fail_to_pass
+    origin: agent_config
+    description: "config_api directory must exist with config_models.py and config_router.py"
+
+  - id: test_config_models_imports_base_model
+    type: fail_to_pass
+    origin: agent_config
+    description: "config_models.py must import BaseModel from pydantic and define LLMModel classes correctly"
+
+  - id: test_router_has_dependencies
+    type: fail_to_pass
+    origin: agent_config
+    description: "Config router must use get_dependencies() for auth signaling"
+
+  - id: test_endpoint_returns_llm_model_page
+    type: fail_to_pass
+    origin: agent_config
+    description: "search_models endpoint must return LLMModelPage with items and next_page_id"
+
+  - id: test_filters_combined_correctly
+    type: fail_to_pass
+    origin: agent_config
+    description: "Query and verified filters must be combined (both applied if provided)"
+
+  - id: test_pagination_applied_to_filtered_results
+    type: fail_to_pass
+    origin: agent_config
+    description: "Pagination must be applied after filtering (paginate_results called on filtered_models)"
+
+  # Pass-to-pass tests (existing functionality that must continue working)
+  - id: test_repo_unit_tests_circular_imports
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's circular import tests pass (tests/unit/utils/test_circular_imports.py)"
+
+  - id: test_repo_unit_tests_import_utils
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's import utils tests pass (tests/unit/utils/test_import_utils.py)"
+
+  - id: test_repo_pagination_utils_importable
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Pagination utilities can be imported and basic pagination works"
+
+  - id: test_repo_pydantic_models_work
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Pydantic models can be created and serialized for API responses"
+
+  - id: test_repo_fastapi_router_creation
+    type: pass_to_pass
+    origin: repo_tests
+    description: "FastAPI routers can be created with proper prefix and tags"
+
+  - id: test_repo_base64_encoding
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Base64 encoding works correctly for pagination tokens"
+
+# Rubric entries from agent config files (soft/subjective rules)
+rubric:
+  - criterion: "Follow FastAPI patterns for router creation"
+    weight: optional
+    source:
+      file: AGENTS.md
+      description: "Use FastAPI APIRouter with prefix and tags for organizing endpoints"
+
+  - criterion: "Use Pydantic BaseModel for request/response models"
+    weight: optional
+    source:
+      file: AGENTS.md
+      description: "Pydantic models provide validation and serialization for API data"
+
+  - criterion: "Use Annotated types with Query for parameter validation"
+    weight: optional
+    source:
+      file: AGENTS.md
+      description: "FastAPI recommends Annotated[Type, Query(...)] for query parameters with constraints"
+
+  - criterion: "Include proper docstrings for public functions"
+    weight: optional
+    source:
+      file: AGENTS.md
+      description: "Docstrings provide API documentation and help other developers understand the code"
+
+  - criterion: "Mark deprecated endpoints with deprecated=True parameter"
+    weight: optional
+    source:
+      file: AGENTS.md
+      description: "FastAPI deprecated flag generates proper OpenAPI documentation for deprecated endpoints"
+
+  - criterion: "Use type hints throughout the codebase"
+    weight: optional
+    source:
+      file: AGENTS.md
+      description: "Type hints improve code clarity and enable static analysis"
+
+  - criterion: "Follow module naming conventions (snake_case for modules)"
+    weight: optional
+    source:
+      file: AGENTS.md
+      description: "Python convention uses snake_case for module and function names"

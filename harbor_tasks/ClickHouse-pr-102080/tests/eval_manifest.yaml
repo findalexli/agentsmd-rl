@@ -1,0 +1,344 @@
+version: '2.0'
+checks:
+- id: test_large_file_check_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: Large file check code exists in various_checks.sh
+- id: test_large_file_check_logic
+  type: fail_to_pass
+  origin: pr_diff
+  description: Large file detection logic correctly identifies oversized files
+- id: test_whitelist_comprehensive
+  type: fail_to_pass
+  origin: pr_diff
+  description: Whitelist contains expected entries for known large test files
+- id: test_stat_format_detection
+  type: fail_to_pass
+  origin: pr_diff
+  description: Script detects GNU vs BSD stat format correctly
+- id: test_large_file_warning_message
+  type: fail_to_pass
+  origin: pr_diff
+  description: Warning message follows expected format
+- id: test_script_syntax_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Shell script has valid bash syntax
+- id: test_various_checks_runs
+  type: pass_to_pass
+  origin: repo_tests
+  description: various_checks.sh script runs without crashing
+- id: test_check_submodules_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: check_submodules.sh has valid bash syntax
+- id: test_check_submodules_runs
+  type: pass_to_pass
+  origin: repo_tests
+  description: check_submodules.sh runs without crashing
+- id: test_check_cpp_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: check_cpp.sh has valid bash syntax
+- id: test_check_aspell_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: check_aspell.sh has valid bash syntax
+- id: test_check_typos_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: check_typos.sh has valid bash syntax
+- id: test_check_mypy_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: check-mypy has valid bash syntax
+- id: test_check_settings_style_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: check-settings-style has valid bash syntax
+- id: test_check_style_py_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: check_style.py has valid Python syntax
+- id: test_check_mypy_diff_py_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: check-mypy-diff.py has valid Python syntax
+- id: test_clang_tidy_cache_sh_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: clang-tidy-cache.sh has valid bash syntax
+- id: test_docker_in_docker_sh_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: docker_in_docker.sh has valid bash syntax
+- id: test_docker_server_config_sh_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: docker_server/config.sh has valid bash syntax
+- id: test_check_ci_py_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: check_ci.py has valid Python syntax
+- id: test_find_tests_py_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: find_tests.py has valid Python syntax
+- id: test_done_py_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: done.py has valid Python syntax
+- id: test_log_parser_py_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: log_parser.py has valid Python syntax
+- id: test_check_settings_style_runs
+  type: pass_to_pass
+  origin: repo_tests
+  description: check-settings-style runs without crashing
+- id: test_check_mypy_runs
+  type: pass_to_pass
+  origin: repo_tests
+  description: check-mypy script runs without crashing
+- id: test_check_aspell_runs
+  type: pass_to_pass
+  origin: repo_tests
+  description: check_aspell.sh runs without crashing
+- id: test_check_typos_runs
+  type: pass_to_pass
+  origin: repo_tests
+  description: check_typos.sh runs without crashing
+- id: test_clickhouse_proc_py_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: clickhouse_proc.py has valid Python syntax
+- id: test_clickhouse_version_py_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: clickhouse_version.py has valid Python syntax
+- id: test_docker_image_py_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: docker_image.py has valid Python syntax
+- id: test_build_master_head_hook_py_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: build_master_head_hook.py has valid Python syntax
+- id: test_docker_clean_up_hook_py_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: docker_clean_up_hook.py has valid Python syntax
+- id: test_repo_style_shell_scripts
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo shell style checks pass via check_cpp.sh
+- id: test_repo_various_checks_pipeline
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo various_checks.sh style checks pass
+- id: test_repo_git_ls_files_stat_pipeline
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git ls-files with stat pipeline works for large file detection
+- id: test_repo_grep_whitelist_pipeline
+  type: pass_to_pass
+  origin: repo_tests
+  description: Grep with whitelist pattern works for large file filtering
+- id: test_repo_docker_image_py
+  type: pass_to_pass
+  origin: repo_tests
+  description: docker_image.py has valid Python syntax and imports
+- id: test_repo_log_parser_py
+  type: pass_to_pass
+  origin: repo_tests
+  description: log_parser.py has valid Python syntax
+- id: test_repo_clickhouse_version_py
+  type: pass_to_pass
+  origin: repo_tests
+  description: clickhouse_version.py has valid Python syntax
+- id: test_repo_clickhouse_proc_py
+  type: pass_to_pass
+  origin: repo_tests
+  description: clickhouse_proc.py has valid Python syntax
+- id: agent_config_no_large_binary_files
+  type: fail_to_pass
+  origin: agent_config
+  description: No large / binary files in git check implemented as per SKILL.md rule
+  source:
+    lines: 226-228
+    commit: cf5fb461472203d56bb0c169a61d194dd97fc2f2
+    path: .claude/skills/review/SKILL.md
+rubric:
+- rule: Add comments explaining invariants and rationale for complex logic, not just
+    narrating what the code does. Every byte committed to git is cloned forever —
+    bulk stat via xargs is preferred over fork-per-file for performance.
+  source:
+    path: .claude/skills/review/SKILL.md
+    lines: 226-230
+    commit: cf5fb461472203d56bb0c169a61d194dd97fc2f2
+  reference: '# Every byte committed is cloned by every contributor forever and cannot
+    be removed without history rewriting.
+
+    # Bulk stat all tracked files via xargs (avoids fork-per-file which takes minutes
+    on large repos).
+
+    '
+- rule: Scripts should detect platform differences (GNU vs BSD tools) explicitly rather
+    than failing per-file. Use feature detection, not version checks. The code must
+    detect once instead of failing per file, and handle both GNU and BSD formats.
+  source:
+    path: .claude/skills/review/SKILL.md
+    lines: 141-150
+    commit: cf5fb461472203d56bb0c169a61d194dd97fc2f2
+  reference: "REQUIRED PATTERN: Platform detection using feature detection (not version\
+    \ checks):\n# GNU stat (Linux) uses -c, BSD stat (macOS) uses -f — detect once\
+    \ instead of failing per file.\nif stat -c '%s %n' /dev/null >/dev/null 2>&1;\
+    \ then\n    STAT_FMT_FLAG='-c'\n    STAT_FMT='%s %n'\nelse\n    STAT_FMT_FLAG='-f'\n\
+    \    STAT_FMT='%z %N'\nfi\n\nLook for:\n1. Comment explaining the platform difference\n\
+    2. if/else with stat -c test on /dev/null to detect GNU vs BSD\n3. Setting different\
+    \ format flags for each platform\n"
+- rule: Follow existing code style in the file being modified. Match surrounding brace
+    style, indentation, and quoting patterns.
+  source:
+    path: .claude/CLAUDE.md
+    lines: 1-50
+    commit: cf5fb461472203d56bb0c169a61d194dd97fc2f2
+  reference: '# Code follows existing bash style: proper indentation, matching brace
+    style,
+
+    # consistent quoting with surrounding code in various_checks.sh
+
+    '
+- rule: Avoid magic constants; give important thresholds a named variable instead
+    of burying them inside logic.
+  source:
+    path: ./.claude/skills/review/SKILL.md
+    lines: 212-213
+  source_text: "- **No magic constants**\n  Avoid magic constants; represent important\
+    \ thresholds or alternative behaviors as settings with sensible defaults."
+  evidence: The patch introduces `MAX_FILE_SIZE=$((5 * 1024 * 1024))` at gold diff
+    line 13 and then passes it into `awk -v limit="$MAX_FILE_SIZE"` at line 43, instead
+    of embedding the byte threshold directly inside the pipeline.
+  category: style
+  verification: llm_judge
+- rule: Make user-facing error messages clear, specific, and actionable.
+  source:
+    path: ./.claude/skills/review/SKILL.md
+    lines: 96-99
+  source_text: '**Always check for typos and message quality:**
+
+    - Scan all changed lines for typos in comments, variable names, string literals,
+    log messages, error messages, and documentation.
+
+    - Report all typos found with suggested corrections.
+
+    - Check that error messages are clear, informative, and help the user understand
+    what went wrong and how to fix it.'
+  evidence: 'The new message at gold diff lines 45-46 says exactly what failed and
+    what to do next: `File $file is larger than 5 MB. Large files should not be committed
+    to git — download them at test time or build from source instead.`'
+  category: error_handling
+  verification: llm_judge
+- rule: Add comments around non-obvious logic that maintainers would otherwise have
+    to reverse-engineer.
+  source:
+    path: ./.claude/skills/review/SKILL.md
+    lines: 241-241
+  source_text: '- Missing or unclear comments in complex logic that future maintainers
+    must understand.'
+  evidence: 'The patch explains two subtle implementation choices with comments: GNU
+    vs BSD `stat` flag detection at gold diff lines 33-40, and the bulk `git ls-files
+    -z | xargs -0 stat` approach to avoid fork-per-file overhead at lines 41-43.'
+  category: maintainability
+  verification: llm_judge
+distractors:
+- rule: Links to ClickHouse CI should be analyzed using the tool at `.claude/tools/fetch_ci_report.js`
+  collision_type: meta_confusion
+  why_distracting: The task involves modifying a CI script. The agent might be distracted
+    by the instructions on how to analyze CI reports using the provided tools, which
+    is irrelevant to writing the bash script for the style check.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 14-15
+- rule: When writing text such as documentation, comments, or commit messages, wrap
+    literal names from ClickHouse SQL language, classes and functions, or literal
+    excerpts from log messages inside inline code blocks
+  collision_type: scope_ambiguity
+  why_distracting: The agent is writing comments in a bash script and might over-apply
+    this rule by wrapping standard Unix commands (like stat or xargs) in backticks,
+    even though the rule specifically targets ClickHouse SQL language, classes, and
+    functions.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 7-8
+- rule: Wrap literal names in inline code blocks when writing comments or messages.
+  source:
+    path: ./AGENTS.md
+    lines: 5-5
+  source_text: 'When writing text such as documentation, comments, or commit messages,
+    wrap literal names from ClickHouse SQL language, classes and functions, or literal
+    excerpts from log messages inside inline code blocks, such as: `MergeTree`.'
+  collision_type: would_cause_bug
+  why_distracting: This patch adds shell comments and a runtime `echo` message, so
+    a generic agent might try to add Markdown backticks around paths or variables.
+    In shell output strings, backticks trigger command substitution, so turning `File
+    $file...` into something like ``File `$file`...`` would be incorrect and potentially
+    unsafe.
+  severity: high
+- rule: When adding tests, prefer new `tests/queries` cases and use `add-test` for
+    the prefix.
+  source:
+    path: ./AGENTS.md
+    lines: 141-143
+  source_text: 'When writing tests in tests/queries, prefer adding a new test instead
+    of extending existing ones.
+
+
+    When adding a new test, consult `./tests/queries/0_stateless/add-test` to determine
+    the correct name prefix for the new test.'
+  collision_type: architecture_boundary
+  why_distracting: The change is in `ci/jobs/scripts/check_style/various_checks.sh`,
+    adding repository-lint behavior rather than SQL runtime behavior. A `tests/queries`
+    case would not directly validate this shell-based style check and would push the
+    change into the wrong subsystem.
+  severity: medium
+- rule: Use Allman-style braces.
+  source:
+    path: ./AGENTS.md
+    lines: 145-145
+  source_text: When writing C++ code, always use Allman-style braces (opening brace
+    on a new line). This is enforced by the style check in CI.
+  collision_type: scope_ambiguity
+  why_distracting: The edited file is a Bash script, not C++. Applying a C++ brace-style
+    rule here would be a scope mistake and would at best waste time on irrelevant
+    formatting changes.
+  severity: low
+- rule: Treat new validation/enforcement as backward-compatibility-sensitive runtime
+    behavior that may need compatibility settings.
+  source:
+    path: ./.claude/skills/review/SKILL.md
+    lines: 214-215
+  source_text: "- **Backward compatibility**\n  New versions must be configurable\
+    \ to behave like older versions via `compatibility` settings. Ensure `SettingsChangesHistory.cpp`\
+    \ is updated when settings change. **New validation / enforcement on existing\
+    \ data:** if a PR adds a check that throws at `CREATE TABLE`, query execution,\
+    \ or server startup, and that check applies to objects created before the PR,\
+    \ it is a backward-incompatibility — the constraint may be violated by legitimate\
+    \ existing setups. It should either be gated behind a setting or applied only\
+    \ to newly created objects."
+  collision_type: architecture_boundary
+  why_distracting: This diff adds a CI/repository policy check, not server runtime
+    validation. Gating the file-size check behind compatibility settings or rollout
+    controls would undermine the purpose of a style/lint script and cross an architecture
+    boundary into product-runtime concerns.
+  severity: medium
+hierarchy_analysis: The config file AGENTS.md is a flat, single file at the root.
+  It contains general guidelines for documentation, commit messages, and CI analysis
+  tools, none of which directly apply to the bash script logic required for this task.
+source:
+  repo: ClickHouse/ClickHouse
+  pr: 0
+  base_commit: cf5fb461472203d56bb0c169a61d194dd97fc2f2
+  merge_commit: d037e27f19e1ac3bc99d027a328d646853bc6b8e

@@ -1,0 +1,118 @@
+version: '2.0'
+source:
+  repo: microsoft/playwright
+  pr: 40017
+  base_commit: 9d81a6754d9426295ac10bd33278fb2af476c8a9
+  merge_commit: bf7d912bd5974f9dc6a1a470af7b65896af4dc14
+checks:
+- id: global_options_includes_cdp
+  type: fail_to_pass
+  origin: pr_diff
+  description: globalOptions array includes 'cdp' for CLI argument parsing
+- id: attach_schema_has_cdp_option
+  type: fail_to_pass
+  origin: pr_diff
+  description: attach command zod schema declares cdp option
+- id: attach_conflict_detection
+  type: fail_to_pass
+  origin: pr_diff
+  description: attach command detects conflicting target + --cdp/--endpoint/--extension
+    args
+- id: daemon_registers_cdp_flag
+  type: fail_to_pass
+  origin: pr_diff
+  description: daemon program.ts registers --cdp CLI flag via .option()
+- id: session_passes_cdp_to_daemon
+  type: fail_to_pass
+  origin: pr_diff
+  description: session.ts passes --cdp flag value to daemon arguments
+- id: config_cdp_endpoint_in_isolation
+  type: fail_to_pass
+  origin: pr_diff
+  description: config.ts maps cdpEndpoint and uses it in browser isolation logic
+- id: skill_md_attach_has_extension
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md documents 'playwright-cli attach --extension' command
+- id: skill_md_open_no_extension
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md no longer documents 'open --extension'
+- id: typescript_balanced_braces
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files have balanced braces
+- id: resolve_session_name_has_logic
+  type: pass_to_pass
+  origin: static
+  description: resolveSessionName function has real logic, not a stub
+- id: repo_cli_program_exports
+  type: pass_to_pass
+  origin: repo_tests
+  description: CLI client program.ts exports the program function
+- id: repo_tools_files_exist
+  type: pass_to_pass
+  origin: repo_tests
+  description: Key tools files exist in the repo
+- id: repo_mcp_config_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: MCP config.ts has valid structure with CLIOptions type
+- id: repo_esbuild_tools_compile
+  type: pass_to_pass
+  origin: repo_tests
+  description: Tools TypeScript files compile with esbuild
+- id: repo_npm_install_and_eslint
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint passes on tools directory after npm install
+- id: repo_check_deps_runs
+  type: pass_to_pass
+  origin: repo_tests
+  description: Dependency check script runs without crashing
+- id: repo_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Build completes successfully
+- id: repo_lint_packages
+  type: pass_to_pass
+  origin: repo_tests
+  description: Workspace packages are consistent
+rubric:
+- rule: SKILL.md documentation update is consistent with the existing command documentation
+    style
+  source:
+    path: packages/playwright-core/src/tools/cli-client/skill/SKILL.md
+    lines: 1-50
+    commit: 9d81a6754d9426295ac10bd33278fb2af476c8a9
+config_edits:
+- path: packages/playwright-core/src/tools/cli-client/skill/SKILL.md
+  tier: 1
+  gold_added: '# Connect to browser via extension
+
+    playwright-cli attach --extension'
+  gold_removed: '# Connect to browser via extension
+
+    playwright-cli open --extension'
+distractors:
+- rule: docs/src/ API documentation — source of truth for public TypeScript types
+  collision_type: scope_ambiguity
+  why_distracting: The rule states that docs/src/ is the source of truth for API documentation,
+    which might lead the agent to look for CLI documentation there instead of SKILL.md.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 30-32
+- rule: Import boundaries are enforced via DEPS.list files
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to modify DEPS.list files when moving options
+    between commands, but this task only involves modifying existing CLI command files
+    and config.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 75-76
+hierarchy_analysis: The task involves editing an agent instruction file (SKILL.md)
+  as part of the codebase, making it a meta-referential task. The CLAUDE.md file provides
+  general repository guidelines, but the specific instructions for this task override
+  the general documentation locations.

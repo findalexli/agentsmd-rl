@@ -1,0 +1,179 @@
+version: '2.0'
+source:
+  repo: inclusionAI/AReaL
+  pr: 1008
+  base_commit: 4f5a2944f0acfebba378e5b88bf2ab940f84b943
+  merge_commit: ''
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Both modified files (types.py, clevr_count_70k.py) must parse without
+    syntax errors
+- id: reward_fn_returns_float
+  type: fail_to_pass
+  origin: pr_diff
+  description: clevr_count_70k_reward_fn must return float (not int) for correct,
+    wrong, and no-match inputs
+- id: enum_classes_str_compatible
+  type: fail_to_pass
+  origin: pr_diff
+  description: ApiType and InputName must be str-compatible Enum subclasses with correct
+    member values
+- id: properties_use_enum_types
+  type: fail_to_pass
+  origin: pr_diff
+  description: api_type and input_name_for_logging properties must return enum instances,
+    not bare strings
+- id: no_bare_print_uses_logger
+  type: fail_to_pass
+  origin: pr_diff
+  description: clevr_count_70k.py must not use bare print(); must use logger instead
+- id: log_message_space_fix
+  type: fail_to_pass
+  origin: pr_diff
+  description: Warning message in to_tensor_dict must not have implicit string concat
+    bug (missing space)
+- id: extract_answer_works
+  type: pass_to_pass
+  origin: pr_diff
+  description: extract_answer still correctly parses bracketed numbers from text
+- id: reward_fn_edge_cases
+  type: pass_to_pass
+  origin: pr_diff
+  description: Reward function handles None answer and various inputs correctly
+- id: no_wildcard_imports
+  type: pass_to_pass
+  origin: agent_config
+  description: Modified files must not use wildcard imports
+  source:
+    path: AGENTS.md
+    lines: '30'
+    commit: 4f5a2944f0acfebba378e5b88bf2ab940f84b943
+- id: reward_fn_has_return_annotation
+  type: fail_to_pass
+  origin: agent_config
+  description: clevr_count_70k_reward_fn must have an explicit '-> float' return type
+    annotation
+  source:
+    path: AGENTS.md
+    lines: '99'
+    commit: 4f5a2944f0acfebba378e5b88bf2ab940f84b943
+- id: properties_annotated_with_enum_types
+  type: fail_to_pass
+  origin: agent_config
+  description: api_type and input_name_for_logging properties must be annotated with
+    enum types (ApiType/InputName), not bare str
+  source:
+    path: AGENTS.md
+    lines: '99'
+    commit: 4f5a2944f0acfebba378e5b88bf2ab940f84b943
+- id: reward_uses_areal_logging
+  type: fail_to_pass
+  origin: agent_config
+  description: clevr_count_70k.py must import logging from areal.utils, not stdlib
+  source:
+    path: AGENTS.md
+    lines: 89-91
+    commit: 4f5a2944f0acfebba378e5b88bf2ab940f84b943
+- id: logger_pascalcase_name
+  type: fail_to_pass
+  origin: agent_config
+  description: getLogger in clevr_count_70k.py must use a PascalCase descriptive name
+  source:
+    path: AGENTS.md
+    lines: '89'
+    commit: 4f5a2944f0acfebba378e5b88bf2ab940f84b943
+- id: test_repo_py_compile
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified Python files compile without syntax errors (repo CI check
+    via py_compile)
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified Python files pass ruff linting (repo CI check)
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified Python files are properly formatted (repo CI check via ruff
+    format --check)
+- id: test_repo_ruff_check_fix
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified Python files have no auto-fixable lint issues via ruff check
+    --fix
+- id: test_repo_import_sorting
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified Python files follow isort conventions via ruff import sorting
+    check
+- id: test_repo_precommit_eof
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified Python files pass end-of-file-fixer pre-commit hook (repo
+    CI check)
+- id: test_repo_precommit_trailing_whitespace
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified Python files pass trailing-whitespace pre-commit hook (repo
+    CI check)
+- id: test_repo_precommit_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified Python files pass ruff-format pre-commit hook (repo CI check)
+- id: test_repo_precommit_ruff
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified Python files pass ruff lint pre-commit hook (repo CI check)
+- id: test_repo_precommit_check_large_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified Python files pass check-added-large-files pre-commit hook
+    (repo CI check)
+- id: test_repo_precommit_detect_private_key
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified Python files pass detect-private-key pre-commit hook (repo
+    CI check)
+rubric:
+- rule: 'Logging: `areal.utils.logging.getLogger(name)` with PascalCase names -- never
+    print'
+  source:
+    path: AGENTS.md
+    lines: 40-42
+  evidence: The gold solution removes the bare `print()` call in `clevr_count_70k.py`
+    and replaces it with `logger = logging.getLogger("CLEVR70KReward")`.
+  category: style
+  verification: llm_judge
+- rule: 'Returns: Reward value (float), typically 0.0 or 1.0'
+  source:
+    path: .claude/skills/add-reward/SKILL.md
+    lines: 26-28
+  evidence: The gold solution adds the `-> float` return type hint to `clevr_count_70k_reward_fn`
+    and updates `return 0` to `return 0.0`.
+  category: style
+  verification: llm_judge
+distractors:
+- rule: Register new loggers with color in areal/utils/logging.py.
+  collision_type: scope_ambiguity
+  why_distracting: The rule instructs to register new loggers with color in `areal/utils/logging.py`,
+    but the task instructions restrict modifications to only `types.py` and `clevr_count_70k.py`.
+    Attempting to edit `logging.py` would violate the file modification boundaries.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 67-68
+- rule: Add tests for new functionality.
+  collision_type: scope_ambiguity
+  why_distracting: The rule requires adding tests for new functionality, but this
+    is a bug fix PR with explicitly restricted files to modify. Adding tests would
+    be out of scope.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 28-28
+hierarchy_analysis: The repository contains two root-level configuration files (`AGENTS.md`
+  and `CLAUDE.md`) with overlapping guidelines. The agent must synthesize the specific
+  logging rules from `AGENTS.md` while ignoring the general testing and logger registration
+  rules that fall outside the scope of the requested bug fix.

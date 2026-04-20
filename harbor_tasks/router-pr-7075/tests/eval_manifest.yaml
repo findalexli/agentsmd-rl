@@ -1,0 +1,51 @@
+source:
+  repo: TanStack/router
+  pr_number: 7075
+  base_commit: 4756d760ca00e290210684fcd23f39e0931ab384
+  merge_commit: 2d1ec865a446926f7db6e29dbbde82d265de6d36
+  title: "fix(router-core): stop preload after beforeLoad errors"
+
+checks:
+  - id: test_preload_error_stops_child_handlers
+    type: fail_to_pass
+    origin: behavioral
+    description: Parent beforeLoad error during preload stops child handler execution
+
+  - id: test_break_condition_includes_firstbadmatchindex
+    type: fail_to_pass
+    origin: behavioral
+    description: The break condition includes firstBadMatchIndex check
+
+  - id: test_headmaxindex_uses_firstbadmatchindex_directly
+    type: fail_to_pass
+    origin: behavioral
+    description: headMaxIndex calculation uses firstBadMatchIndex directly, not serialError
+
+  - id: test_router_core_type_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: TypeScript type checking passes
+
+  - id: test_router_core_eslint
+    type: pass_to_pass
+    origin: repo_tests
+    description: ESLint passes on router-core
+
+  - id: test_router_core_build
+    type: pass_to_pass
+    origin: repo_tests
+    description: router-core package builds successfully
+
+  - id: test_router_core_all_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: All router-core unit tests pass
+
+  - id: test_router_core_package_quality
+    type: pass_to_pass
+    origin: repo_tests
+    description: Package quality checks (publint, attw) pass
+
+rubric:
+  - id: code_only_task
+    rule: This is a code-only fix task that does not require any documentation or config file changes

@@ -1,56 +1,56 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "The instruction explicitly names all function names (isRolldown, bundlerOptionsKey, getBundlerOptions), exact string literals ('rolldownVersion' in vite, 'rolldownOptions', 'rollupOptions'), file paths (utils, plugin.ts, preview-server-plugin/plugin.ts), import patterns (from './utils', from '../utils'), computed property access ([bundlerOptionsKey]), and the specific pattern getBundlerOptions(serverEnv?.build). All test assertions reference items discoverable from instruction.md."
+      "outcome": "fail",
+      "reason": "Tests assert specific literal strings like \"'rolldownVersion' in vite\", exact function names `isRolldown`, `bundlerOptionsKey`, `getBundlerOptions`, and specific call signature `getBundlerOptions(serverEnv?.build)` \u2014 the instruction mentions these functions generically but does not specify the exact detection string 'rolldownVersion' or the exact parameter signature."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact implementation: 'isRolldown - detects if Rolldown is the active bundler', 'bundlerOptionsKey - returns rolldownOptions when using Rolldown', 'getBundlerOptions - reads bundler options from a build config using the pattern build?.rolldownOptions ?? build?.rollupOptions', 'Use computed property access [bundlerOptionsKey]', and 'preview plugin must use getBundlerOptions(serverEnv?.build)'. This is a complete specification of the fix, not just a descriptio"
+      "reason": "instruction.md explicitly names the three utility functions to create (isRolldown, bundlerOptionsKey, getBundlerOptions implied by descriptions) and dictates using computed property access [bundlerOptionsKey], removing most design reasoning."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on exact function names (isRolldown, bundlerOptionsKey, getBundlerOptions), exact string patterns ('rolldownVersion' in vite), exact import paths (from './utils', from '../utils'), and exact code patterns (getBundlerOptions(serverEnv?.build), [bundlerOptionsKey]). An alternative correct fix using different names (e.g., detectBundler, getBuildOptions, bundlerKey) or different file organization would fail."
+      "reason": "Tests assert exact names (`isRolldown`, `bundlerOptionsKey`, `getBundlerOptions`), exact detection string `'rolldownVersion' in vite`, exact call form `getBundlerOptions(serverEnv?.build)`, and exact import paths `from './utils'` \u2014 alternative valid implementations (e.g., different function names or using `vite.rolldownVersion !== undefined`) would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_utils_exports_exist, test_isRolldown_logic, test_bundlerOptionsKey_logic, test_getBundlerOptions_logic, test_plugin_imports_utils, test_plugin_uses_bundlerOptionsKey, test_plugin_uses_getBundlerOptions, test_preview_plugin_imports_utils, test_preview_plugin_uses_getBundlerOptions) are ALL text-matching assertions using patterns like `assert 'X' in content` on file reads. While there are some subprocess tests (test_repo_unit_tests_import_protection, test_repo_unit_tes"
+      "reason": "Most f2p tests are `assert 'string' in open(path).read()` checks (test_utils_exports_exist, test_isRolldown_logic, test_bundlerOptionsKey_logic, test_getBundlerOptions_logic, test_plugin_imports_utils, etc.); only a few tests execute subprocesses for build/unit tests."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "A stub implementation that simply creates utils.ts with the exact string literals checked (e.g., a file containing the right keywords like 'isRolldown', 'rolldownVersion' in vite, 'build?.rolldownOptions', etc.) without any actual working logic would pass most fail-to-pass tests since they only check for string presence in files."
+      "outcome": "pass",
+      "reason": "Tests do check for meaningful content (detection logic, key usage, removal of hardcoded references), so a pure stub wouldn't pass them all."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in the instruction (detection logic, configuration keys, utility functions, integration requirements, import patterns) are tested. The tests cover utils exports, isRolldown logic, bundlerOptionsKey logic, getBundlerOptions logic, plugin imports, computed property usage, preview plugin integration, and build validation."
+      "reason": "The stated behavior requirements (detection, key selection, reading options, preview plugin update) are each covered by tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_utils_exports_exist, test_isRolldown_logic, etc.), have docstrings indicating fail-to-pass vs pass-to-pass classification, and are logically grouped by component (utils, plugin, preview plugin, structural validation)."
+      "reason": "Tests have descriptive names and docstrings grouping f2p vs p2p."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code modifications to TypeScript files, not structured data output like JSON/CSV/API/DB schemas."
+      "reason": "No structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All filenames, paths, commands, variable names, and function names in the instruction are consistent and correct (utils.ts, plugin.ts, preview-server-plugin/plugin.ts, isRolldown, bundlerOptionsKey, getBundlerOptions, pnpm test:types, etc.)."
+      "reason": "No obvious typos in paths or commands."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact function names (isRolldown, bundlerOptionsKey, getBundlerOptions), exact implementation patterns (build?.rolldownOptions ?? build?.rollupOptions), exact file locations, and exact usage patterns (getBundlerOptions(serverEnv?.build), [bundlerOptionsKey]). This goes well beyond identifying the buggy area and prescribes the complete solution structure."
+      "reason": "Instruction names the specific files and functions to create (utility module with three functions, preview-server-plugin update), effectively pointing to the exact locations \u2014 though domain-appropriate, combined with function descriptions it over-specifies."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task involving TypeScript source files, not configuration file edits."
+      "reason": "Code-only task."
     }
   },
   "tier_a_fails": [
+    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [

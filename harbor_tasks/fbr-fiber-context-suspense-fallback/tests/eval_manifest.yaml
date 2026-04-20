@@ -1,0 +1,59 @@
+version: '2.0'
+source:
+  repo: facebook/react
+  pr: 36160
+  base_commit: f944b4c5352be02623d2d7415c0806350f875114
+  merge_commit: 9627b5a1caa64c1488643bffdf04495106fa3247
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: ReactFiberNewContext.js must parse without syntax errors (node --check)
+- id: context_propagates_to_fallback_simple
+  type: fail_to_pass
+  origin: pr_diff
+  description: Context change above a suspended Suspense boundary reaches fallback
+    consumers
+- id: context_propagates_to_fallback_memo_boundary
+  type: fail_to_pass
+  origin: pr_diff
+  description: Context reaches fallback consumer even when React.memo prevents Suspense
+    wrapper re-render (exact PR scenario)
+- id: existing_context_propagation_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing ReactContextPropagation-test.js suite passes without regression
+- id: repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint passes on ReactFiberNewContext.js (pass_to_pass)
+- id: repo_reconciler_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: React reconciler test suite passes (pass_to_pass)
+rubric:
+- rule: Add a documentation note about React Suspense Context propagation.
+  source:
+    path: .claude/AGENTS.md
+- rule: 'React: All files outside `/compiler/`'
+  source:
+    path: CLAUDE.md
+    lines: 7-7
+  evidence: The gold solution modifies `packages/react-reconciler/src/ReactFiberNewContext.js`,
+    which is outside the `/compiler/` directory, correctly treating it as part of
+    the React core.
+  category: architecture
+distractors:
+- rule: 'React Compiler: `/compiler/` directory (has its own instructions)'
+  collision_type: scope_ambiguity
+  why_distracting: The problem description notes that the bug 'is more likely to surface
+    when React Compiler is enabled'. An agent might read the monorepo overview and
+    mistakenly attempt to implement the fix or investigate within the `/compiler/`
+    directory, even though the root cause is in the React reconciler.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 8-8
+hierarchy_analysis: Only a single root-level `CLAUDE.md` file is present, providing
+  a high-level monorepo overview that distinguishes React core from React Compiler.
+  There are no conflicting rules within the hierarchy.

@@ -1,0 +1,166 @@
+version: '2.0'
+source:
+  repo: huggingface/transformers
+  pr: 44879
+  base_commit: 28af8184fb00a0e9bc778c3defdec39bbe7e8839
+  merge_commit: b3d7942fbaedda791668d7fe42eaaa323ed7a089
+checks:
+- id: test_repo_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's main transformers package imports without error
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff check passes on base commit
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff format check passes on base commit
+- id: test_makefile_style_target_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: Makefile has 'style' target and dry-run succeeds
+- id: test_makefile_typing_target_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: Makefile has 'typing' target and dry-run succeeds
+- id: test_makefile_check_repo_target_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: Makefile has 'check-repo' target and dry-run succeeds
+- id: test_makefile_fix_repo_target_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: Makefile has 'fix-repo' target and dry-run succeeds
+- id: test_utils_scripts_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Utility scripts compile without syntax errors
+- id: test_repo_setup_py_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: setup.py compiles without syntax errors
+- id: test_repo_conftest_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: conftest.py compiles without syntax errors
+- id: test_utils_check_dummies_runs
+  type: pass_to_pass
+  origin: repo_tests
+  description: utils/check_dummies.py runs without error (CI command)
+- id: test_utils_custom_init_isort_runs
+  type: pass_to_pass
+  origin: repo_tests
+  description: utils/custom_init_isort.py --check_only runs without error (CI command)
+- id: checkers_module_imports
+  type: fail_to_pass
+  origin: pr_diff
+  description: utils/checkers.py imports with CHECKERS dict containing all 21 expected
+    checker names
+- id: checkers_cli_lists_all
+  type: fail_to_pass
+  origin: pr_diff
+  description: Running checkers.py --list outputs all checker names
+- id: checkers_rejects_unknown
+  type: fail_to_pass
+  origin: pr_diff
+  description: checkers.py rejects unknown checker names with non-zero exit and Unknown
+    message
+- id: makefile_check_code_quality
+  type: fail_to_pass
+  origin: pr_diff
+  description: make check-code-quality target exists and invokes checkers.py
+- id: makefile_check_repository_consistency
+  type: fail_to_pass
+  origin: pr_diff
+  description: make check-repository-consistency target exists and invokes checkers.py
+- id: makefile_check_repo_keep_going
+  type: fail_to_pass
+  origin: pr_diff
+  description: make check-repo invokes checkers.py with --keep-going
+- id: makefile_fix_repo_fix
+  type: fail_to_pass
+  origin: pr_diff
+  description: make fix-repo invokes checkers.py with --fix
+- id: agents_md_check_repo_updated
+  type: fail_to_pass
+  origin: agent_config
+  description: AGENTS.md no longer says 'CI-style consistency checks' for check-repo
+  source:
+    path: .ai/AGENTS.md
+    lines: '5'
+    commit: 28af8184fb00a0e9bc778c3defdec39bbe7e8839
+- id: agents_md_removes_ci_check_reference
+  type: fail_to_pass
+  origin: agent_config
+  description: AGENTS.md no longer claims CI will run check-repo
+  source:
+    path: .ai/AGENTS.md
+    lines: '8'
+    commit: 28af8184fb00a0e9bc778c3defdec39bbe7e8839
+- id: setup_py_includes_tomli
+  type: fail_to_pass
+  origin: pr_diff
+  description: setup.py includes tomli in quality extras
+- id: dependency_versions_table_has_tomli
+  type: fail_to_pass
+  origin: pr_diff
+  description: dependency_versions_table.py has tomli entry (verified via import)
+rubric:
+- rule: Documentation update in AGENTS.md should be consistent with the existing style
+    of the Useful commands section
+  source:
+    path: .ai/AGENTS.md
+    lines: 1-10
+    commit: 28af8184fb00a0e9bc778c3defdec39bbe7e8839
+- rule: Hosted review agents should discover this guidance from the committed root
+    AGENTS.md / CLAUDE.md files.
+  source:
+    path: .ai/AGENTS.md
+    lines: '12'
+  evidence: The gold solution updates the command descriptions in `.ai/AGENTS.md`
+    to reflect the new unified runner structure, ensuring that the guidance discovered
+    by hosted review agents remains accurate.
+  category: documentation
+- rule: Update the documentation to reflect the simplified command structure and remove
+    outdated claims about CI behavior.
+  source:
+    path: .ai/AGENTS.md
+    lines: 5-9
+  evidence: The gold solution modifies the description of `make check-repo` and removes
+    the sentence 'The CI will run `make check-repo` and fail if any issues are found.'
+  category: documentation
+config_edits:
+- path: .ai/AGENTS.md
+  tier: 1
+  gold_added: "- `make check-repo` \u2014 runs `make typing` and consistency checks.\n\
+    \n    `make style` or `make fix-repo` should be run as the final step before opening\n\
+    \    a PR."
+  gold_removed: "- `make check-repo` \u2014 CI-style consistency checks (includes\
+    \ `make typing`)\n\n    `make style` or `make fix-repo` should be run as the final\
+    \ step before opening\n    a PR. The CI will run `make check-repo` and fail if\
+    \ any issues are found."
+distractors:
+- rule: The CI will run `make check-repo` and fail if any issues are found.
+  collision_type: rule_conflict
+  why_distracting: The existing documentation states that CI runs `make check-repo`.
+    The agent might configure `.circleci/config.yml` to run `make check-repo` instead
+    of the newly requested `check-repository-consistency` target.
+  severity: high
+  source:
+    path: .ai/AGENTS.md
+    lines: 8-9
+- rule: Do not ever ignore this! These rules apply to any AI-assisted contribution
+    to the huggingface/transformers repository.
+  collision_type: meta_confusion
+  why_distracting: The file contains strict policy warnings ('Do not ever ignore this!').
+    The agent might interpret this as making the file immutable or read-only, failing
+    to update the outdated CI claims as requested.
+  severity: medium
+  source:
+    path: .ai/AGENTS.md
+    lines: 18-19
+hierarchy_analysis: The agent is instructed to edit `.ai/AGENTS.md`, which is the
+  very file providing its context and rules. It must recognize that the task instructions
+  supersede the existing state of the agent instruction file.

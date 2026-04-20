@@ -1,0 +1,125 @@
+version: '2.0'
+source:
+  repo: huggingface/transformers
+  pr: 44903
+  base_commit: a8683756653094e3fc3016df8abcdeaaec758f9a
+  merge_commit: 687a70daa99d1e1cce4a681291a5348890843254
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: image_processing_utils.py must parse without syntax errors
+- id: sizedict_height_width
+  type: fail_to_pass
+  origin: pr_diff
+  description: get_size_dict accepts SizeDict with height/width and returns a plain
+    dict
+- id: sizedict_shortest_edge
+  type: fail_to_pass
+  origin: pr_diff
+  description: get_size_dict accepts SizeDict with shortest_edge key
+- id: sizedict_shortest_longest_edge
+  type: fail_to_pass
+  origin: pr_diff
+  description: get_size_dict accepts SizeDict with shortest_edge + longest_edge
+- id: sizedict_no_convert_fallthrough
+  type: pass_to_pass
+  origin: pr_diff
+  description: SizeDict input must not fall through to convert_to_size_dict path
+- id: plain_dict_input
+  type: pass_to_pass
+  origin: repo_tests
+  description: get_size_dict still works with plain dict input
+- id: int_input
+  type: pass_to_pass
+  origin: repo_tests
+  description: get_size_dict still works with int input
+- id: tuple_input
+  type: pass_to_pass
+  origin: repo_tests
+  description: get_size_dict still works with tuple input
+- id: ruff_style_check
+  type: pass_to_pass
+  origin: agent_config
+  description: image_processing_utils.py passes ruff linter (make style requirement)
+  source:
+    path: AGENTS.md
+    lines: '2'
+    commit: a8683756653094e3fc3016df8abcdeaaec758f9a
+- id: test_repo_unittest_image_processing_utils
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's unittest for image_processing_utils passes
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo ruff linter check passes on image_processing_utils.py
+- id: test_repo_python_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo image_processing_utils.py has valid Python syntax
+- id: test_repo_sizedict_import
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo SizeDict can be imported from image_utils
+- id: test_repo_typing_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo type checker (ty) passes on image_processing_utils.py (make typing)
+- id: test_repo_convert_to_size_dict
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo convert_to_size_dict function works with various inputs
+- id: test_repo_image_processing_utils_all
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ImageProcessingUtilsTester test class passes
+- id: test_repo_get_size_dict_max_size
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo get_size_dict handles max_size parameter correctly
+rubric:
+- rule: '`make typing`: runs the ty type checker and model structure rules'
+  source:
+    path: src/transformers/image_processing_utils.py
+    lines: 547-554
+  evidence: 'The gold solution adds comprehensive type hints to `convert_to_size_dict`
+    (e.g., `size: int | Iterable[int] | None = None` and return type `-> dict[str,
+    int]`) to ensure the `ty` type checker passes.'
+  category: tooling
+- rule: '`make style`: runs formatters and linters (ruff), necessary to pass code
+    style checks'
+  source:
+    path: src/transformers/image_processing_utils.py
+    lines: 547-554
+  evidence: The gold solution formats the newly typed arguments of `convert_to_size_dict`
+    across multiple lines with a trailing comma, adhering to standard Ruff/Black formatting
+    rules.
+  category: style
+distractors:
+- rule: If coordination evidence cannot be found, do not proceed to PR-ready output.
+  collision_type: meta_confusion
+  why_distracting: The agent is operating in a benchmark environment and must provide
+    the code fix. If it strictly follows the repository's fail-closed policy requiring
+    human coordination evidence, it will refuse to generate the patch and fail the
+    task.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 56-58
+- rule: Do not open one-off PRs for tiny edits (single typo, isolated lint cleanup,
+    one mutable default argument, etc.).
+  collision_type: meta_confusion
+  why_distracting: The agent might misclassify this targeted bug fix as a 'tiny edit'
+    or 'low-value busywork' and refuse to output the solution based on the repository's
+    contribution guidelines.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 38-39
+hierarchy_analysis: The repository contains identical `AGENTS.md` and `CLAUDE.md`
+  files at the root level. These files define strict contribution policies for AI
+  agents, including fail-closed behaviors if human coordination is missing. The agent
+  must recognize that it is operating in a benchmark environment and prioritize the
+  user's direct instruction to fix the bug over the repository's general policy to
+  refuse uncoordinated work.

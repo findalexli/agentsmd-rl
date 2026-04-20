@@ -1,61 +1,56 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "The tests assert very specific implementation details not fully discoverable from instruction.md: test_parse_dir_helper_exists checks for a function named exactly 'parseDir' with a specific signature pattern '(*token.FileSet, dir) returns []*ast.File'; test_uses_doc_new_from_files checks for 'doc.NewFromFiles(fset, <files>, ...)' with the specific variable name 'fset'; test_parse_dir_uses_parser_parse_file checks for 'parser.ParseFile'. While instruction.md mentions parseDir helper, parser.Parse"
+      "outcome": "pass",
+      "reason": "Instruction names the target file, deprecated APIs (parser.ParseDir, doc.New), required replacements (parser.ParseFile, doc.NewFromFiles), required import (go/ast), and required unexported helper for directory parsing."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md explicitly states the exact fix: 'must use parser.ParseFile API (not parser.ParseDir)', 'must use doc.NewFromFiles instead of doc.New', 'must define an unexported helper function for directory parsing', 'must import the go/ast package'. These are not descriptions of what's broken but direct prescriptions of what to change to."
+      "outcome": "pass",
+      "reason": "Instruction describes what's broken and required APIs but doesn't give exact code or line numbers; agent must figure out how to implement parseDir."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests enforce gold-specific implementation details: test_parse_dir_helper_exists requires a function named exactly 'parseDir' with a specific signature involving *token.FileSet returning []*ast.File. An alternative correct fix could use a different helper name (e.g., 'parseDirFiles'), use a closure instead of a named function, or inline the logic. test_uses_doc_new_from_files requires the variable name 'fset' in the call to doc.NewFromFiles. These constraints reject valid alternative implementat"
+      "reason": "test_parse_dir_helper_exists requires function named exactly 'parseDir' with first parameter '*token.FileSet'; test_uses_doc_new_from_files requires literal variable name 'fset' as first argument to doc.NewFromFiles; alternative correct fixes using different names (e.g., parsePackageDir, different FileSet variable name) would fail."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Tests test_parse_dir_helper_exists, test_parse_dir_uses_parser_parse_file, test_uses_doc_new_from_files, test_no_deprecated_parser_parse_dir, test_no_deprecated_doc_new, test_ast_import_added, and test_parse_dir_not_exported are all purely text-matching (regex on file content). However, tests test_code_compiles, test_package_tests_pass, test_check_script_compiles, test_repo_go_vet, test_repo_gofmt, and test_repo_build_all do execute subprocesses. Since not EVERY test is text-only, this is border"
+      "outcome": "pass",
+      "reason": "Tests run go build, go test, go vet, gofmt subprocesses in addition to regex checks."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check for specific code patterns (parseDir function, parser.ParseFile usage, doc.NewFromFiles usage, go/ast import) and absence of deprecated calls. A stub or no-op implementation would not pass these tests since the original file contains the deprecated calls and lacks the required new patterns."
+      "reason": "Tests require actual compilation and test-pass, so a stub cannot satisfy the f2p checks."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All 11 verification criteria listed in instruction.md are covered by corresponding test functions: deprecated API removal (tests 1-2), new code requirements (tests 3-6), and build/quality checks (tests 7-11)."
+      "reason": "All 11 criteria in instruction.md are tested including build, vet, gofmt, test pass, and API-usage checks."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names and docstrings indicating what each checks (e.g., 'Fail-to-pass: parser.ParseDir should not be used') and are logically grouped by concern."
+      "reason": "Tests have descriptive names and docstrings labeling fail-to-pass vs pass-to-pass categories."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code refactoring, not producing structured data like JSON/CSV/API/DB."
+      "reason": "Task is a code modification, no structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "Filenames and commands in instruction match the repo paths and test expectations."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md names the exact file 'tpl/internal/templatefuncsRegistry.go' and specifies exact replacement APIs (parser.ParseFile, doc.NewFromFiles), the exact helper function name (unexported parseDir), and the exact import (go/ast). This goes well beyond identifying what's broken and prescribes the exact solution structure."
+      "outcome": "pass",
+      "reason": "Instruction identifies the file and deprecated APIs since that's the task scope, but doesn't give line-level fixes."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "Code-only task, not a config edit."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 4,
-  "fail_count": 5
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 1
 }

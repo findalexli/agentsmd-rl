@@ -1,0 +1,157 @@
+version: 1
+
+source:
+  owner: quickwit-oss
+  repo: quickwit
+  pr_number: 6280
+  base_commit: 469c60695b6c010d2ad4df4b5098b4db181c1059
+  merge_commit: 71f0d303fa0734dc6509ec036f1d59398eda9632
+
+description: |
+  Fix delete_metrics_splits error handling in postgres metastore to distinguish
+  "not found" (warn + succeed, idempotent) from "not deletable" (FailedPrecondition).
+  Also fixes the row_keys_proto doc comment to reference the correct proto type.
+
+instruction: |
+  The postgres metastore's `delete_metrics_splits` function has a bug in error handling.
+
+  **Current broken behavior:**
+  When asked to delete splits that are `Staged` or `Published` (not yet marked for deletion),
+  the function silently succeeds without actually deleting them. The caller has no way to
+  know that the splits were not actually deleted.
+
+  **Expected behavior (matching the non-metrics `delete_splits` pattern):**
+  - If any requested split is in `Staged` or `Published` state, the function should return
+    a `FailedPrecondition` error with the split IDs listed.
+  - If splits don't exist at all, the function should warn and succeed (idempotent —
+    this is already working).
+
+  **Additionally**, the doc comment for `row_keys_proto` in `MetricsSplitMetadata`
+  (file `quickwit/quickwit-parquet-engine/src/split/metadata.rs`) currently says
+  "RowKeys (sort-key min/max boundaries) as proto bytes." It should reference the actual
+  proto type: `sortschema::RowKeys` from `event_store_sortschema.proto`.
+
+  **How to verify your fix:**
+  The code change is in `quickwit/quickwit-metastore/src/metastore/postgres/metastore.rs`
+  in the `delete_metrics_splits` function. After your fix:
+  1. The `DELETE_SPLITS_QUERY` constant uses a CTE pattern with `input_splits` and `deleted` subqueries
+  2. When a split is Staged or Published (not marked for deletion), the function returns
+     `MetastoreError::FailedPrecondition` with message "splits `X, Y` are not deletable"
+  3. When a split truly doesn't exist, the function logs a warning and returns success
+  4. The doc comment for `row_keys_proto` mentions `sortschema::RowKeys` and `event_store_sortschema.proto`
+
+checks:
+  - id: test_delete_splits_query_uses_cte
+    description: DELETE_SPLITS_QUERY in delete_metrics_splits uses CTE pattern with input_splits
+    type: fail_to_pass
+    origin: agent_config
+    source:
+      config: .claude/skills/fix-clippy/SKILL.md
+      lines: "For each remaining warning, find the exact location and fix it manually."
+    description: |
+      The `delete_metrics_splits` function's DELETE_SPLITS_QUERY should use a CTE pattern
+      with an `input_splits` subquery that joins against metrics_splits to determine
+      the state of each requested split.
+
+  - id: test_failed_precondition_for_staged_published
+    description: Published/staged splits return FailedPrecondition instead of silent success
+    type: fail_to_pass
+    origin: agent_config
+    source:
+      config: .claude/skills/fix-clippy/SKILL.md
+      lines: "For each remaining warning, find the exact location and fix it manually."
+    description: |
+      When attempting to delete splits that are in Staged or Published state (not marked
+      for deletion), the function should return MetastoreError::FailedPrecondition with
+      a message listing the non-deletable split IDs in the format "splits `X, Y` are not deletable".
+
+  - id: test_row_keys_proto_doc_updated
+    description: row_keys_proto doc comment references sortschema::RowKeys and event_store_sortschema.proto
+    type: fail_to_pass
+    origin: agent_config
+    source:
+      config: CONTRIBUTING.md
+      lines: "To build docs run `make build-rustdoc`."
+    description: |
+      The doc comment for `row_keys_proto` in `MetricsSplitMetadata` should reference
+      `sortschema::RowKeys` (from the `sortschema` crate) and `event_store_sortschema.proto`
+      instead of the generic "proto bytes" wording.
+
+  - id: test_not_found_handling
+    description: Non-existent splits result in warning + success (idempotent behavior preserved)
+    type: pass_to_pass
+    origin: repo_tests
+    description: |
+      The fix should preserve the existing idempotent behavior: deleting non-existent
+      splits logs a warning but returns success. The code should track `not_found_ids`.
+
+  - id: test_delete_splits_query_returns_struct
+    description: DELETE_SPLITS_QUERY returns a struct with num_found, num_deleted, not_deletable, not_found
+    type: fail_to_pass
+    origin: repo_tests
+    description: |
+      The fixed CTE query should return multiple values: num_found (count of found splits),
+      num_deleted (count of deleted splits), not_deletable (array of Staged/Published split IDs),
+      and not_found (array of non-existent split IDs).
+
+  - id: test_metastore_check
+    description: quickwit-metastore lib passes cargo check (no syntax errors)
+    type: pass_to_pass
+    origin: repo_tests
+    description: |
+      The metastore crate compiles without errors (cargo check --lib).
+
+  - id: test_metastore_clippy
+    description: quickwit-metastore lib passes clippy with no warnings
+    type: pass_to_pass
+    origin: repo_tests
+    description: |
+      The metastore crate passes clippy with -D warnings (no lint warnings).
+
+  - id: test_parquet_engine_check
+    description: quickwit-parquet-engine lib passes cargo check (no syntax errors)
+    type: pass_to_pass
+    origin: repo_tests
+    description: |
+      The parquet-engine crate compiles without errors (cargo check --lib).
+
+  - id: test_parquet_engine_clippy
+    description: quickwit-parquet-engine lib passes clippy with no warnings
+    type: pass_to_pass
+    origin: repo_tests
+    description: |
+      The parquet-engine crate passes clippy with -D warnings (no lint warnings).
+
+rubric:
+  - rule: |
+      Code changes must not introduce syntax errors. All cargo checks must pass.
+    origin: CONTRIBUTING.md
+    reference: |
+      Uses `sqlx::query_as` with a CTE query that returns a tuple:
+      `(num_found, num_deleted, not_deletable_ids, not_found_ids)`. Code compiles without error.
+  - rule: |
+      Rust code should follow existing Rust conventions and idioms used in the codebase.
+      Use CTEs for complex queries that need to return multiple result sets.
+    origin: .claude/skills/fix-clippy/SKILL.md
+    reference: |
+      DELETE_SPLITS_QUERY uses `WITH input_splits AS (...)` CTE pattern to join
+      UNNEST($2) against metrics_splits to determine state, plus a `deleted` CTE
+      for the actual DELETE. Query returns num_found, num_deleted, not_deletable, not_found.
+  - rule: |
+      Doc comments should be accurate and reference correct types/files to avoid broken rustdoc links.
+    origin: CONTRIBUTING.md
+    reference: |
+      row_keys_proto doc comment says: "RowKeys (sort-key min/max boundaries)
+      as serialized proto bytes (`sortschema::RowKeys` in `event_store_sortschema.proto`)."
+  - rule: |
+      Error messages should be informative and include relevant identifiers (split IDs).
+    origin: agent_config (implicit Rust convention)
+    reference: |
+      FailedPrecondition error message: `format!("splits \`{}\` are not deletable", not_deletable_ids.join(", "))`
+      with `entity: EntityKind::Splits { split_ids: not_deletable_ids }`.
+  - rule: |
+      Idempotent operations should warn about missing resources but continue successfully.
+    origin: agent_config (API design principle)
+    reference: |
+      When `!not_found_ids.is_empty()`, logs a warning via `warn!(...)` but does NOT
+      return an error - execution continues to `info!(...)` and returns `Ok(EmptyResponse {})`.

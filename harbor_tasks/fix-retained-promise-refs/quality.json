@@ -1,62 +1,59 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert specific variable names like 'prevLoadPromise', 'previousCommitPromise', exact patterns like 'let prevLoadPromise = match._nonReactive.loadPromise', 'match._nonReactive.loadPromise = undefined' (with count >= 2), and 'let previousCommitPromise = this.commitLocationPromise'. The instruction mentions releasing references generically but never names 'prevLoadPromise' or 'previousCommitPromise' as variables, nor specifies the exact clearing pattern (set to undefined). An agent cannot di"
+      "outcome": "pass",
+      "reason": "Instruction names the variable names (prevLoadPromise, previousCommitPromise), property (match._nonReactive.loadPromise), and the required patterns tested."
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction describes what's broken (promise references retained) and which functions/files to look at, but does not specify the exact fix (e.g., changing const to let, setting variables to undefined). It describes symptoms, not the patch."
+      "outcome": "fail",
+      "reason": "Instruction explicitly dictates the exact code: 'let prevLoadPromise = match._nonReactive.loadPromise', 'prevLoadPromise = undefined', 'let previousCommitPromise = this.commitLocationPromise', leaving no reasoning about what to change."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific variable names: 'let prevLoadPromise' (test_load_matches_prev_promise_cleared), 'prevLoadPromise = undefined', 'let previousCommitPromise = this.commitLocationPromise', 'previousCommitPromise = undefined'. An alternative correct fix that uses different variable names (e.g., 'let oldLoadPromise') or a different clearing strategy (e.g., deleting the property, using a WeakRef, or restructuring the closure) would fail these string-matching tests."
+      "reason": "Tests assert on specific variable names like 'let prevLoadPromise' and 'let previousCommitPromise' \u2014 an alternative fix using different names (e.g., renaming to prevPromise) would fail despite being correct."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The f2p tests (test_load_matches_prev_promise_cleared, test_load_matches_load_promise_cleared_in_loader, test_router_commit_promise_cleared) are purely text-matching assertions like 'assert \"let prevLoadPromise = match._nonReactive.loadPromise\" in content'. They never import, call, or execute the code to verify the memory leak is actually fixed. The p2p tests do run builds/tests but the f2p tests are all text-based."
+      "outcome": "pass",
+      "reason": "Tests include subprocess execution of build, type-check, unit tests, eslint, and publint beyond string checks."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "The f2p tests only check for string patterns in source files. A developer could satisfy them by adding dead code comments containing the required strings (e.g., '// let prevLoadPromise = match._nonReactive.loadPromise') without actually fixing the bug. No behavioral verification exists for the memory leak fix."
+      "outcome": "pass",
+      "reason": "Tests verify concrete source patterns and also run the build/typecheck/unit pipeline, not trivially satisfiable by stubs."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction describes three changes (clearing prevLoadPromise in executeBeforeLoad, clearing loadPromise in loadRouteMatch, clearing previousCommitPromise in commitLocation), and all three are tested in the f2p tests, plus build/type/unit/lint checks are included as p2p tests."
+      "reason": "Each of the three required fix patterns from instruction.md has corresponding assertions."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive function names (test_load_matches_prev_promise_cleared, test_router_commit_promise_cleared, etc.), docstrings explaining each test's purpose, and a module-level docstring summarizing the PR."
+      "reason": "Tests are well-named with docstrings and grouped by concern (load-matches prev, loader, router commit, CI checks)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves source code modifications, not structured data output (JSON/CSV/API/DB)."
+      "reason": "No structured data output."
     },
     "no_typos": {
-      "outcome": "fail",
-      "reason": "In test_load_matches_prev_promise_cleared, the final assert message says 'in execute_before_load' (Python snake_case) instead of 'in executeBeforeLoad' (the actual function name). Minor but technically a naming inconsistency."
+      "outcome": "pass",
+      "reason": "No typos detected in paths, commands, or identifiers."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names exact functions (executeBeforeLoad, loadRouteMatch, commitLocation), exact files, and specific properties (match._nonReactive.loadPromise, this.commitLocationPromise). While the files are somewhat domain-obvious, naming the exact internal property paths and function names significantly narrows the search space beyond what's needed for a task description."
+      "reason": "Instruction provides exact code lines to write (e.g., 'let prevLoadPromise = match._nonReactive.loadPromise', 'prevLoadPromise = undefined') rather than describing the problem."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config editing task."
+      "reason": "Code-only task, not an agentmd-edits task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "no_solution_leakage",
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "no_typos",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 3,
-  "fail_count": 6
+  "pass_count": 6,
+  "fail_count": 3
 }

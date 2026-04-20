@@ -1,0 +1,130 @@
+task:
+  name: hugo-css-external-sourcemap
+  source_pr:
+    owner: gohugoio
+    repo: hugo
+    number: 14622
+    title: "tpl/css: Fix external source maps"
+    merge_commit: e431f90bc6fff33742c468f25b77689852930284
+    base_commit: a7cbcf15f0c5ef04b45350390e00e584e4d635b9
+
+checks:
+  # Fail-to-pass tests - verify the fix works
+  - id: test_sourcemap_fix_behavior
+    type: fail_to_pass
+    origin: agent_config
+    description: sourcemap.go properly handles source filtering with inline loop
+    source:
+      file: AGENTS.md
+      lines: "1-20"
+      commit: a7cbcf15f0c5ef04b45350390e00e584e4d635b9
+
+  - id: test_build_go_source_resolution
+    type: fail_to_pass
+    origin: agent_config
+    description: build.go returns absolute filenames for source files
+    source:
+      file: AGENTS.md
+      lines: "1-20"
+      commit: a7cbcf15f0c5ef04b45350390e00e584e4d635b9
+
+  - id: test_css_integration_source_count
+    type: fail_to_pass
+    origin: agent_config
+    description: CSS integration test validates correct source count (4 sources)
+    source:
+      file: AGENTS.md
+      lines: "1-20"
+      commit: a7cbcf15f0c5ef04b45350390e00e584e4d635b9
+
+  - id: test_js_integration_source_count
+    type: fail_to_pass
+    origin: agent_config
+    description: JS integration test expects 5 sources in source map
+    source:
+      file: AGENTS.md
+      lines: "1-20"
+      commit: a7cbcf15f0c5ef04b45350390e00e584e4d635b9
+
+  - id: test_css_test_loop_variations
+    type: fail_to_pass
+    origin: agent_config
+    description: CSS tests run with both minify=true and minify=false
+    source:
+      file: AGENTS.md
+      lines: "1-20"
+      commit: a7cbcf15f0c5ef04b45350390e00e584e4d635b9
+
+  # Pass-to-pass tests - verify repo works after fix
+  - id: test_repo_css_integration_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Hugo's CSS integration tests pass
+
+  - id: test_repo_sourcemap_package_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Hugo's sourcemap package tests pass
+
+  - id: test_repo_js_integration_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Hugo's JS integration tests pass
+
+  - id: test_go_build
+    type: pass_to_pass
+    origin: repo_tests
+    description: Hugo compiles successfully
+
+  - id: test_go_vet
+    type: pass_to_pass
+    origin: repo_tests
+    description: Hugo passes go vet static analysis
+
+  - id: test_gofmt
+    type: pass_to_pass
+    origin: repo_tests
+    description: Hugo code passes gofmt formatting check
+
+  - id: test_staticcheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: Hugo passes staticcheck linter
+
+  - id: test_go_mod_verify
+    type: pass_to_pass
+    origin: repo_tests
+    description: Hugo go.mod is valid and dependencies are clean
+
+rubric:
+  - rule: "Brevity is good - Don't use comments to explain the obvious"
+    weight: 1
+    type: style
+    source:
+      file: AGENTS.md
+      lines: "1-5"
+      commit: a7cbcf15f0c5ef04b45350390e00e584e4d635b9
+
+  - rule: "Avoid global state at (almost) all cost"
+    weight: 1
+    type: design
+    source:
+      file: AGENTS.md
+      lines: "6-10"
+      commit: a7cbcf15f0c5ef04b45350390e00e584e4d635b9
+
+  - rule: "Never export a symbol (type, method, function) that's not needed outside the package"
+    weight: 1
+    type: design
+    source:
+      file: AGENTS.md
+      lines: "11-15"
+      commit: a7cbcf15f0c5ef04b45350390e00e584e4d635b9
+
+  - rule: "Use qt (quicktest) matchers in tests instead of if/t.Fatal"
+    weight: 1
+    type: testing
+    source:
+      file: AGENTS.md
+      lines: "16-20"
+      commit: a7cbcf15f0c5ef04b45350390e00e584e4d635b9

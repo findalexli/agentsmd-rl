@@ -1,0 +1,191 @@
+version: '2.0'
+source:
+  repo: oven-sh/bun
+  pr: 28488
+  base_commit: f6528b58ed67c8fb8c80046114829d9ad79a292f
+  merge_commit: 639bc4351cd7b5daa38b99d47a506dec68e95353
+checks:
+- id: create_error_instance_clears_exception
+  type: fail_to_pass
+  origin: pr_diff
+  description: createErrorInstance catch must call clearExceptionExceptTermination
+    before return
+- id: create_type_error_clears_and_returns_typed
+  type: fail_to_pass
+  origin: pr_diff
+  description: createTypeErrorInstance catch must clear exception and return TypeError,
+    not generic Error
+- id: create_syntax_error_clears_and_returns_typed
+  type: fail_to_pass
+  origin: pr_diff
+  description: createSyntaxErrorInstance catch must clear exception and return SyntaxError
+- id: create_range_error_clears_and_returns_typed
+  type: fail_to_pass
+  origin: pr_diff
+  description: createRangeErrorInstance catch must clear exception and return RangeError
+- id: dom_exception_not_modified
+  type: pass_to_pass
+  origin: pr_diff
+  description: createDOMExceptionInstance must NOT gain clearExceptionExceptTermination
+- id: file_not_stubbed
+  type: pass_to_pass
+  origin: static
+  description: Target file retains substantial content (not gutted)
+- id: all_four_functions_exist
+  type: pass_to_pass
+  origin: static
+  description: All four create*ErrorInstance functions must still exist
+- id: no_inline_imports_in_error_functions
+  type: pass_to_pass
+  origin: agent_config
+  description: No @import() calls inline inside the four create*ErrorInstance function
+    bodies
+  source:
+    path: src/CLAUDE.md
+    lines: '11'
+    commit: f6528b58ed67c8fb8c80046114829d9ad79a292f
+- id: no_forbidden_std_apis_in_error_functions
+  type: pass_to_pass
+  origin: agent_config
+  description: No std.fs, std.posix, std.os, std.process usage — must use bun.* equivalents
+  source:
+    path: src/CLAUDE.md
+    lines: 16-28
+    commit: f6528b58ed67c8fb8c80046114829d9ad79a292f
+- id: no_catch_out_of_memory_pattern
+  type: pass_to_pass
+  origin: agent_config
+  description: No 'catch bun.outOfMemory()' — use bun.handleOom() instead
+  source:
+    path: src/CLAUDE.md
+    lines: 234-238
+    commit: f6528b58ed67c8fb8c80046114829d9ad79a292f
+- id: repo_banned_words
+  type: pass_to_pass
+  origin: repo_tests
+  description: Banned words check from CI passes - runs bun ./test/internal/ban-words.test.ts
+- id: repo_int_from_float
+  type: pass_to_pass
+  origin: repo_tests
+  description: int_from_float test from CI passes - runs bun test test/internal/int_from_float.test.ts
+- id: repo_glob_sources
+  type: pass_to_pass
+  origin: repo_tests
+  description: glob-sources script from CI passes - runs bun scripts/glob-sources.mjs
+- id: repo_package_json_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Package.json dependencies must be exact versions - runs bun test test/package-json-lint.test.ts
+- id: repo_bun_cli
+  type: pass_to_pass
+  origin: repo_tests
+  description: Bun CLI tests pass - runs bun test test/cli/bun.test.ts (NO_COLOR,
+    revision, getcompletes)
+- id: repo_typecheck_root
+  type: pass_to_pass
+  origin: repo_tests
+  description: Root project TypeScript typecheck passes - runs tsc --noEmit on root
+    project (test/ has intentional errors)
+- id: zig_file_balanced_braces
+  type: pass_to_pass
+  origin: static
+  description: JSGlobalObject.zig has balanced braces (basic syntax check)
+- id: zig_file_balanced_parens
+  type: pass_to_pass
+  origin: static
+  description: JSGlobalObject.zig has balanced parentheses (basic syntax check)
+- id: zig_file_no_double_semicolons
+  type: pass_to_pass
+  origin: static
+  description: JSGlobalObject.zig has no double semicolons (common syntax error)
+- id: zig_file_pub_fn_syntax
+  type: pass_to_pass
+  origin: static
+  description: JSGlobalObject.zig pub fn declarations have valid syntax
+- id: zig_file_no_trailing_whitespace
+  type: pass_to_pass
+  origin: static
+  description: JSGlobalObject.zig has no lines with trailing whitespace (code style)
+- id: no_banned_undefined_comparisons
+  type: pass_to_pass
+  origin: static
+  description: JSGlobalObject.zig error functions have no undefined comparisons -
+    UB per ban-words
+- id: no_usingnamespace_in_target
+  type: pass_to_pass
+  origin: static
+  description: JSGlobalObject.zig error functions do not use usingnamespace - deprecated
+    in Zig 0.15
+- id: no_banned_jsvalue_patterns
+  type: pass_to_pass
+  origin: static
+  description: JSGlobalObject.zig error functions do not use banned JSValue patterns
+- id: no_std_debug_in_error_functions
+  type: pass_to_pass
+  origin: static
+  description: JSGlobalObject.zig error functions do not use std.debug patterns per
+    ban-words
+- id: repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: JavaScript linting passes - runs bun lint (oxlint)
+- id: repo_prettier_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Prettier formatting check passes - verifies JS/TS files are formatted
+
+rubric:
+- rule: Follow existing code style. Check neighboring files for patterns.
+  source:
+    path: src/CLAUDE.md
+    lines: '228'
+    commit: f6528b58ed67c8fb8c80046114829d9ad79a292f
+- rule: In Zig code, be careful with allocators and use defer for cleanup.
+  source:
+    path: src/CLAUDE.md
+    lines: '232'
+    commit: f6528b58ed67c8fb8c80046114829d9ad79a292f
+- rule: Never use `@import()` inline inside of functions. Always put them at the bottom
+    of the file or containing struct.
+  source:
+    path: src/CLAUDE.md
+    lines: 10-11
+  evidence: 'The gold solution calls `this.clearExceptionExceptTermination()` directly
+    on the existing object without attempting to add any inline `@import()` statements
+    to bring in external dependencies or error '
+  category: style
+distractors:
+- rule: NEVER write tests that check for no "panic" or "uncaught exception" or similar
+    in the test output.
+  collision_type: rule_conflict
+  why_distracting: The bug causes an assertion failure (crash). The agent might try
+    to add a test using the reproduction script to ensure it doesn't crash, but the
+    rule explicitly forbids writing tests that check for no 'panic' or 'uncaught exception'.
+    The gold solution correctly avoids adding a test.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 65-66
+- rule: Always use bun.* APIs instead of std.*
+  collision_type: scope_ambiguity
+  why_distracting: The existing code in the modified functions uses `std.Io.Writer`.
+    The agent might try to refactor this to use `bun.*` APIs to comply with the rule,
+    unnecessarily expanding the scope of the PR and potentially breaking the formatting
+    logic.
+  severity: medium
+  source:
+    path: src/AGENTS.md
+    lines: 14-15
+- rule: Ensure the issue number is REAL and not a placeholder!
+  collision_type: rule_conflict
+  why_distracting: If the agent attempts to add a test for the bug, it might place
+    it in the regression directory with a fake issue number since no issue number
+    is provided in the prompt, violating the rule against placeholders.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 26-27
+hierarchy_analysis: The hierarchy consists of root-level testing/build rules and src-level
+  Zig conventions. The agent must apply the Zig conventions to the source code but
+  recognize that the testing rules make it difficult or forbidden to test this specific
+  crash, thus correctly choosing to omit a test.

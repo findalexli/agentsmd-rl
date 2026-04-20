@@ -1,0 +1,162 @@
+version: '2.0'
+source:
+  repo: THUDM/slime
+  pr: 0
+  base_commit: a1ee76cfe1c0fbb4511d5bc2d2fc28622728121c
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: All modified files must be valid Python
+- id: repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff linter passes on modified files
+- id: repo_isort_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's isort import sorting passes on modified files
+- id: repo_plugin_contracts
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's plugin contract tests pass
+- id: vision_info_base64
+  type: fail_to_pass
+  origin: pr_diff
+  description: process_vision_info returns PIL images from base64 strings without
+    qwen_vl_utils
+- id: vision_info_data_uri
+  type: fail_to_pass
+  origin: pr_diff
+  description: process_vision_info handles data:image/...;base64,... URIs
+- id: vision_info_pil_passthrough
+  type: fail_to_pass
+  origin: pr_diff
+  description: process_vision_info passes through PIL Image objects directly
+- id: vision_info_multiple_images
+  type: fail_to_pass
+  origin: pr_diff
+  description: process_vision_info extracts multiple images across messages
+- id: vision_info_no_images
+  type: fail_to_pass
+  origin: pr_diff
+  description: process_vision_info returns None/empty for messages with no image content
+- id: build_processor_kwargs
+  type: pass_to_pass
+  origin: pr_diff
+  description: build_processor_kwargs still works with and without multimodal inputs
+- id: encode_image
+  type: pass_to_pass
+  origin: pr_diff
+  description: encode_image_for_rollout_engine still produces valid data URIs
+- id: actor_numpy_handling
+  type: fail_to_pass
+  origin: pr_diff
+  description: actor.py must import numpy and handle ndarray values in multimodal_train_inputs
+- id: sglang_safe_multimodal_access
+  type: fail_to_pass
+  origin: pr_diff
+  description: sglang_rollout.py must use safe access (.get) for multimodal_inputs
+    images key
+rubric:
+- rule: Ensure required training fields (like `tokens`) are populated for each generated
+    sample.
+  source:
+    path: .claude/skills/add-rollout-function/SKILL.md
+    lines: 72-77
+  source_text: 'For each generated sample, ensure required training fields are populated
+    consistently with your objective:
+
+
+    - `tokens`
+
+    - `response_length`
+
+    - `reward` (or reward dict if your setup uses keyed rewards)
+
+    - `status`'
+  evidence: In `slime/rollout/sglang_rollout.py`, when a multimodal first-turn is
+    detected, the gold diff explicitly initializes `sample.tokens = prompt_ids` if
+    it is missing, ensuring the tokens field is properly populated according to the
+    required training fields contract.
+  category: architecture
+  verification: llm_judge
+- rule: Ensure required training fields are populated for each generated sample
+  source:
+    path: .claude/skills/add-rollout-function/SKILL.md
+    lines: 72-77
+  source_text: 'For each generated sample, ensure required training fields are populated
+    consistently with your objective:
+
+
+    - `tokens`
+
+    - `response_length`
+
+    - `reward` (or reward dict if your setup uses keyed rewards)
+
+    - `status`'
+  evidence: 'The gold diff explicitly ensures the `tokens` field is populated for
+    multimodal first-turns by adding `if not sample.tokens: sample.tokens = prompt_ids`
+    in `slime/rollout/sglang_rollout.py`.'
+  category: rubric
+  verification: llm_judge
+distractors:
+- rule: Create a new rollout path based on sglang_rollout.py for new engine-based
+    tasks.
+  source:
+    path: .claude/skills/add-rollout-function/SKILL.md
+    lines: 27-28
+  source_text: 'If the task needs engine-based async generation and rewards, use the
+    sglang path as base.
+
+    If the task is file/buffer-driven and simple, use sft path as base.'
+  collision_type: architecture_boundary
+  why_distracting: An agent tasked with adding multimodal rollout support might mistakenly
+    think they need to create a new rollout module (using sglang as a base reference)
+    rather than modifying the core `sglang_rollout.py`, but the gold diff correctly
+    builds the capability natively into the existing path.
+  severity: high
+- rule: Keep exceptions explicit for invalid metadata instead of silently returning
+    zeros.
+  source:
+    path: .claude/skills/add-reward-function/SKILL.md
+    lines: '51'
+  source_text: '- Keep exceptions explicit for invalid metadata instead of silently
+    returning zeros.'
+  collision_type: scope_ambiguity
+  why_distracting: An agent might incorrectly apply this "explicit exceptions" rule
+    to `_try_load_glm4v_processor` in `processing_utils.py` and forcefully raise an
+    exception when `preprocessor_config.json` doesn't exist, whereas the gold diff
+    correctly uses a silent return of `None` to gracefully fallback to other processors.
+  severity: medium
+- rule: Prefer `sample.remove_sample=True` over deleting objects for sample removal.
+  source:
+    path: .claude/skills/add-dynamic-filter/SKILL.md
+    lines: '70'
+  source_text: '- For sample removal, prefer `sample.remove_sample=True` over deleting
+    objects.'
+  collision_type: scope_ambiguity
+  why_distracting: An agent working in `sglang_rollout.py` might try to prematurely
+    apply this dynamic filtering rule to flag unsupported or malformed multimodal
+    samples, instead of properly parsing/handling them natively within the rollout
+    preparation flow.
+  severity: low
+- rule: Implement Train and Eval Branches Explicitly by returning RolloutFnTrainOutput
+    or RolloutFnEvalOutput
+  source:
+    path: .claude/skills/add-rollout-function/SKILL.md
+    lines: 43-46
+  source_text: '### Step 3: Implement Train and Eval Branches Explicitly
+
+
+    - For training (`evaluation=False`), return `RolloutFnTrainOutput(samples=...,
+    metrics=...)`
+
+    - For evaluation (`evaluation=True`), return `RolloutFnEvalOutput(data=..., metrics=...)`'
+  collision_type: architecture_boundary
+  why_distracting: The PR modifies `slime/rollout/sglang_rollout.py` which is mentioned
+    as the main rollout path. An agent might mistakenly try to return `RolloutFnTrainOutput`
+    from the inner `generate` async helper that is modified in the diff, breaking
+    the SGLang generation loop which expects an internal payload or payload dict.
+  severity: high

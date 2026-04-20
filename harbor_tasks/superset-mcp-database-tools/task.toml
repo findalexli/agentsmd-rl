@@ -8,11 +8,10 @@ tags = ["python", "mcp", "pydantic", "superset", "database"]
 estimated_time = { min = 15, max = 45, optimal = 25 }
 
 # Source information
-[source]
-repo = "apache/superset"
-pr_number = 39113
-base_commit = "fc8c06f7a3ba4c0a5feeafbb522b876b5f017d45"
-merge_commit = "be7e1abd8ad3657337840384878d3bbe9f6bde1b"
+source = "apache/superset"
+source_pr_number = 39113
+source_base_commit = "fc8c06f7a3ba4c0a5feeafbb522b876b5f017d45"
+source_merge_commit = "be7e1abd8ad3657337840384878d3bbe9f6bde1b"
 
 # Task structure
 task_files = [
@@ -24,12 +23,14 @@ task_files = [
 ]
 
 # Entry point for the solution
-[entrypoint]
-type = "file_edit"
-target_files = [
+entrypoint_type = "file_edit"
+entrypoint_target_files = [
     "superset/mcp_service/database/schemas.py",
     "superset/mcp_service/database/tool/list_databases.py",
     "superset/mcp_service/app.py",
     "superset/mcp_service/mcp_core.py",
     "tests/unit_tests/mcp_service/database/tool/test_database_tools.py",
 ]
+
+[verifier]
+env = { GEMINI_API_KEY = "${GEMINI_API_KEY:-}", ANTHROPIC_API_KEY = "${ANTHROPIC_API_KEY:-}" }

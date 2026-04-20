@@ -1,0 +1,150 @@
+version: '2.0'
+source:
+  repo: PrimeIntellect-ai/prime-rl
+  pr: 2086
+  base_commit: 60f01a04681df563044cf3cb7c64ec480b608451
+  merge_commit: f414d9ae496d40fc386e201c61e19392a57c1653
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: eval_utils.py and vf_utils.py must parse without syntax errors
+- id: test_function_signature_generate
+  type: pass_to_pass
+  origin: static
+  description: generate() function signature is preserved (AST structural check)
+- id: test_function_signature_evaluate_env
+  type: pass_to_pass
+  origin: static
+  description: evaluate_env() function signature is preserved (AST structural check)
+- id: test_repo_ruff_lint_full
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff lint check passes on full src directory
+- id: test_repo_ruff_format_full
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff format check passes on full src directory
+- id: test_repo_py_compile_modified
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified orchestrator files compile without errors
+- id: test_repo_py_compile_orchestrator_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Orchestrator unit test files compile without errors (test_advantage.py,
+    test_batch.py, test_buffer.py, test_scheduler.py, test_trajectories.py, test_filters.py)
+- id: test_repo_no_ipython_debug
+  type: pass_to_pass
+  origin: repo_tests
+  description: No IPython debugger calls in modified files
+- id: test_repo_no_print_debug
+  type: pass_to_pass
+  origin: repo_tests
+  description: No debug print statements in modified files
+- id: generate_catches_group_exceptions
+  type: fail_to_pass
+  origin: pr_diff
+  description: generate() catches per-group exceptions and returns successful results
+- id: generate_all_groups_fail
+  type: fail_to_pass
+  origin: pr_diff
+  description: generate() attempts all groups even when all fail, returns empty list
+- id: generate_logs_group_failures
+  type: fail_to_pass
+  origin: pr_diff
+  description: generate() logs a warning for each failed group
+- id: evaluate_env_empty_outputs
+  type: fail_to_pass
+  origin: pr_diff
+  description: evaluate_env() returns early with warning when all rollouts fail
+- id: compute_eval_ckpt_step
+  type: pass_to_pass
+  origin: repo_tests
+  description: compute_eval_ckpt_step pure function regression tests
+- id: test_repo_unit_test_eval_scheduling
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI unit tests for eval_scheduling pass
+- id: evaluate_calls_generate
+  type: pass_to_pass
+  origin: pr_diff
+  description: evaluate() still calls generate() — AST structural regression
+- id: no_bare_except
+  type: pass_to_pass
+  origin: agent_config
+  description: No bare except blocks — must catch specific exception types
+  source:
+    path: AGENTS.md
+    lines: '5'
+    commit: 60f01a04681df563044cf3cb7c64ec480b608451
+- id: no_process_comments
+  type: pass_to_pass
+  origin: agent_config
+  description: No process-explanatory comments referencing old code
+  source:
+    path: AGENTS.md
+    lines: '7'
+    commit: 60f01a04681df563044cf3cb7c64ec480b608451
+rubric:
+- rule: Errors should never pass silently. Unless explicitly silenced. Code must log
+    warnings for failures.
+  source:
+    path: src/prime_rl/orchestrator/vf_utils.py
+    lines: 181-183
+    commit: 60f01a04681df563044cf3cb7c64ec480b608451
+  reference: "except Exception as e:\n            get_logger().warning(f\"Group failed:\\\
+    \  {e}\")"
+- rule: Simple is better than complex. Code should be straightforward without over-engineering.
+  source:
+    path: src/prime_rl/orchestrator/vf_utils.py
+    lines: 166-185
+    commit: 60f01a04681df563044cf3cb7c64ec480b608451
+  reference: Simple try/except wrapper around run_group with logging and progress
+    update, returns None on failure
+- rule: Explicit is better than implicit. Use explicit exception types, not bare except.
+  source:
+    path: src/prime_rl/orchestrator/vf_utils.py
+    lines: '181'
+    commit: 60f01a04681df563044cf3cb7c64ec480b608451
+  reference: 'except Exception as e:'
+- rule: Try/except blocks should only be used for intentional fault tolerance with
+    logging.
+  source:
+    path: src/prime_rl/orchestrator/vf_utils.py
+    lines: 180-185
+    commit: 60f01a04681df563044cf3cb7c64ec480b608451
+  reference: Try/except in run_group_with_progress for intentional per-group fault
+    tolerance with warning log
+- rule: Do not add unnecessary comments explaining code changes or referring to old
+    code.
+  source:
+    path: src/prime_rl/orchestrator/eval_utils.py
+    lines: 128-130
+    commit: 60f01a04681df563044cf3cb7c64ec480b608451
+  reference: Clean code without process-explanatory comments - see test_no_process_comments
+- rule: You can add try catch on code that explicitly aims to be fault tolerant like
+    adding retry mechanisms or explicit and intentional robustness.
+  source:
+    path: AGENTS.md
+    lines: 5-7
+  evidence: The gold solution adds a `try/except Exception as e:` block inside `run_group_with_progress`
+    in `vf_utils.py` to isolate failures and prevent `asyncio.gather` from crashing,
+    which aligns with the exce
+  category: architecture
+distractors:
+- rule: Avoid try/except blocks unless it's really necessary. It's fine that a program
+    fails if something goes wrong as this helps us to catch non-obvious bugs and unforeseen
+    side-effects earlier.
+  collision_type: rule_conflict
+  why_distracting: The agent might strictly follow the first sentence and avoid adding
+    a try/except block, failing to implement the requested fault tolerance for rollout
+    groups.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 3-5
+hierarchy_analysis: The rules are defined in a single AGENTS.md file. The agent must
+  read the full paragraph about try/except blocks to understand that while they are
+  generally discouraged, they are permitted for explicit fault tolerance, which is
+  exactly what the task requires.

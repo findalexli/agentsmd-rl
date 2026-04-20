@@ -1,61 +1,56 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "Every assert in the test file checks for strings, function names, struct fields, module attributes, and file paths that are explicitly specified in instruction.md. For example: `check_fast_loop`, `clear_fast_loop`, `@fast_loop_window_ms 500`, `@fast_loop_threshold 5`, `@fast_loop_max_count 5`, `recent_requests: []`, `fast_loop_consecutive_count: 0`, `check_fast_loop(stream)`, `ShapeState.clear_fast_loop`, the file paths, `8 tests`, and the mix commands are all documented in the instruction."
+      "reason": "Instruction names the files, functions (check_fast_loop/1, clear_fast_loop/1), struct fields, module attributes with exact values, and the 8-test count that the tests assert on."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction specifies exact function names (`check_fast_loop/1`, `clear_fast_loop/1`), exact struct field names and defaults (`recent_requests: []`, `fast_loop_consecutive_count: 0`), exact module attribute names and values (`@fast_loop_window_ms 500`, `@fast_loop_threshold 5`, `@fast_loop_max_count 5`), exact files to modify, and detailed behavioral steps (clear shape handle on first detection, exponential backoff on subsequent, raise after 5). This is essentially a complete specification o"
+      "outcome": "pass",
+      "reason": "Instruction describes behavior requirements (sliding window, thresholds, backoff) but does not provide the actual implementation code."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Most tests are pure text-matching (e.g., `assert '@fast_loop_window_ms 500' in content`, `assert 'check_fast_loop(stream)' in content`). An alternative correct implementation using different variable names (e.g., `@loop_detection_window 500`), different function call syntax (e.g., `check_fast_loop(state)` instead of `check_fast_loop(stream)`), or a different module structure would fail these string-matching tests despite being functionally correct."
+      "reason": "Tests assert specific literal strings like 'recent_requests: []', 'fast_loop_consecutive_count: 0', '@fast_loop_window_ms 500', and 'check_fast_loop(stream)' \u2014 but these are all also mandated by instruction.md, so alternative correct fixes would still conform. However, the hidden shape_state_test.exs (8 tests) may assert on gold-specific internal behavior not discoverable from instruction."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Tests `test_fast_loop_check_exists`, `test_fast_loop_constants`, `test_fast_loop_struct_fields`, `test_clear_fast_loop_exists`, `test_stream_calls_check_fast_loop`, and `test_stream_clears_fast_loop_on_live` are purely text-based (`assert '...' in content` after reading files). While `test_elixir_tests_pass` runs mix test, it depends on a pre-existing test file `shape_state_test.exs` that the agent cannot see. The majority of the novel f2p tests are text-matching only."
+      "outcome": "pass",
+      "reason": "Tests run `mix test`, `mix format`, `mix compile` subprocesses in addition to text checks, executing the actual ShapeState tests and full suite."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "Tests like `test_fast_loop_check_exists`, `test_fast_loop_constants`, `test_fast_loop_struct_fields`, `test_clear_fast_loop_exists` can be satisfied by adding stub functions and struct fields with no actual logic. For example, `def check_fast_loop(state), do: state` and `def clear_fast_loop(state), do: state` with the right module attributes would pass 6 of the text-matching tests without implementing any real fast-loop detection."
+      "outcome": "pass",
+      "reason": "test_elixir_tests_pass runs the hidden shape_state_test.exs which requires real behavior, and the compile/format/other test suites must pass."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires specific functions, struct fields, constants, stream integration, and passing of 8 unit tests. All of these are tested via text checks and the mix test execution. The behavioral requirements (sliding window, backoff, error after 5 counts, reset on live) are tested via the hidden shape_state_test.exs with 8 tests."
+      "reason": "Behaviors (detection, clearing on live, integration in stream) are all covered via string checks plus running the hidden unit test file."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings (e.g., `test_fast_loop_check_exists` with 'ShapeState has check_fast_loop/1 function'), clearly grouped by concern (existence checks, integration checks, compilation checks, existing test suites)."
+      "reason": "Tests are named descriptively per behavior and have docstrings grouping interface checks vs. execution checks."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "Task is a code change, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All filenames, paths, commands, variable names, and function names in the instruction and tests are consistent and correctly spelled."
+      "reason": "Paths, commands, and identifiers appear consistent between instruction and tests."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly names the exact files to modify (`shape_state.ex`, `stream.ex`), exact function names, exact struct fields with defaults, exact module attributes with values, and exact calling patterns (`check_fast_loop(stream)`, `ShapeState.clear_fast_loop`). This goes well beyond describing what's broken and essentially dictates the implementation."
+      "outcome": "pass",
+      "reason": "Instruction names the two files to modify, which is expected scoping, not line-level leakage."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "Code-only task, not an agentmd-edits config task."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 4,
-  "fail_count": 5
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 1
 }

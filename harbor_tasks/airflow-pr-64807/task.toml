@@ -1,5 +1,9 @@
 # SPDX-License-Identifier: Apache-2.0
 
+source_repo = "apache/airflow"
+source_pr_number = 64807
+source_base_commit = "d53a7ad5c7e6feaa930bd35c9142b12cd61f5394"
+source_merge_commit = "c2f83ea7c973aef140b732d17fd720024644ef6e"
 [task]
 name = "airflow-emr-serverless-openlineage-injection"
 title = "Add OpenLineage parent and transport info injection to EmrServerlessStartJobOperator"
@@ -7,8 +11,5 @@ difficulty = "medium"
 time_estimate_minutes = 45
 tags = ["python", "airflow", "openlineage", "emr", "aws", "operators"]
 
-[source]
-repo = "apache/airflow"
-pr_number = 64807
-base_commit = "d53a7ad5c7e6feaa930bd35c9142b12cd61f5394"
-merge_commit = "c2f83ea7c973aef140b732d17fd720024644ef6e"
+[verifier]
+env = { GEMINI_API_KEY = "${GEMINI_API_KEY:-}", ANTHROPIC_API_KEY = "${ANTHROPIC_API_KEY:-}" }

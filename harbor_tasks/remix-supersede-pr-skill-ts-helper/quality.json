@@ -1,49 +1,49 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all key paths (skills/supersede-pr/SKILL.md, skills/supersede-pr/scripts/close_superseded_pr.ts, skills/supersede-pr/tsconfig.json, skills/make-pr/SKILL.md, AGENTS.md), specifies the shebang line, the --repo/--dry-run/--help flags, validation behavior with specific error words ('numeric'/'number', 'different'), strict/noEmit tsconfig settings, and the positional arguments <old_pr> <new_pr>. All assert'd specifics in tests are discoverable from the instruction."
+      "reason": "All asserted paths (skills/supersede-pr/SKILL.md, scripts/close_superseded_pr.ts, tsconfig.json, skills/make-pr/SKILL.md, AGENTS.md), literal strings ('numeric'/'number', 'different', '--repo', '--dry-run', 'close_superseded_pr' or 'old_pr', shebang '#!/usr/bin/env node'), and schema keys (strict, noEmit) are explicitly mentioned in instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what to create and behavioral requirements but does not give exact code, line numbers, or verbatim implementations. A developer must still reason about how to implement the script, structure the SKILL.md files, and edit AGENTS.md."
+      "reason": "Instruction describes requirements (validation, flags, help output) but doesn't give the implementation code."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "Tests check behavioral properties: exit codes, presence of keywords in help output (case-insensitive 'close_superseded_pr' or 'old_pr'), error messages containing 'numeric'/'number'/'different', shebang line, tsconfig settings. These are flexible enough to accept varied implementations. The script tests run the actual script with subprocess, not checking exact code patterns."
+      "reason": "Tests check behavior (exit codes, stderr keywords, flag presence) and config keys, not specific variable names or internal helpers."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "The core fail-to-pass tests execute the TypeScript script via subprocess (node --experimental-strip-types) and check exit codes and output content. test_syntax_check runs node --check. test_tsconfig_exists parses JSON and checks specific keys. The pass-to-pass tests run actual repo CI commands. These are behavioral tests, not pure text matching."
+      "reason": "Tests execute the script via subprocess with various args and run pnpm lint/typecheck/tests; they invoke code rather than just grep files."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub/empty script would fail: test_script_shows_help requires exit code 0 AND specific strings in output; test_script_rejects_no_args requires non-zero exit; test_script_rejects_non_numeric_pr requires non-zero exit AND 'numeric'/'number' in stderr; test_script_rejects_same_pr_numbers requires non-zero exit AND 'different' in stderr. No trivial stub satisfies all these simultaneously."
+      "reason": "Each f2p test requires actual behavior (script must parse, validate, emit specific messages, exit codes); a stub returning default wouldn't satisfy the validation + help assertions."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "Several behaviors required in instruction.md are not tested: (1) AGENTS.md updates (code style rule about executable TypeScript, Skills section) \u2014 the config_edit tests are empty stubs with no assertions; (2) skills/make-pr/SKILL.md existence is not tested; (3) agents/openai.yaml files are not tested; (4) SKILL.md YAML frontmatter (name/description fields) is not tested. The empty config_edit test functions contain no code."
+      "reason": "Instruction requires AGENTS.md updates (code style rule for one-off TS scripts, Skills section), make-pr SKILL.md, YAML frontmatter with name/description, and agents/openai.yaml files, but the visible test file has empty config_edit test bodies (only comments) so these behaviors aren't actually tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with section comments (pass-to-pass gates, fail-to-pass behavioral tests, config_edit), descriptive function names (test_script_shows_help, test_script_rejects_non_numeric_pr), and docstrings explaining each test's purpose."
+      "reason": "Tests are grouped with section comments (pass_to_pass gates, fail_to_pass behavioral, config_edit) and descriptive names."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The tsconfig.json schema is documented in the instruction (strict: true, noEmit: true in compilerOptions), and SKILL.md YAML frontmatter fields (name, description) are specified."
+      "reason": "tsconfig schema keys (strict, noEmit) and SKILL.md frontmatter fields (name, description) are documented in instruction.md."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and tests."
+      "reason": "Paths and flags are consistent between instruction and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what to create and behavioral specifications without revealing exact implementation code or line-level details of existing files. It specifies file paths to create (which is necessary for the task) but not internal implementation details."
+      "reason": "Instruction describes files to create at appropriate granularity without over-specifying implementation lines."
     },
     "config_edit_scope_bounded": {
       "outcome": "fail",
-      "reason": "The config_edit tests (6 test functions) are completely empty \u2014 they have category comments but no assertions or code. This means the AGENTS.md edits described in the instruction are entirely untested, making the gold diff's AGENTS.md changes unverifiable."
+      "reason": "The config_edit test functions in test_outputs.py are empty placeholders (only '# [config_edit] fail_to_pass' comments with no assertions), so although instruction requires AGENTS.md edits, no test actually validates the scope/content of those edits."
     }
   },
   "tier_a_fails": [],

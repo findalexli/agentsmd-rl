@@ -1,0 +1,123 @@
+version: '2.0'
+source:
+  repo: microsoft/playwright
+  pr: 39734
+  base_commit: 4df350b1c81b61ea471ff12767efd8e05f773377
+  merge_commit: 61afb37f4e6af73ae536c7d05ee1a926328b6d80
+checks:
+- id: minimist_parses_args
+  type: fail_to_pass
+  origin: pr_diff
+  description: Vendored minimist correctly parses boolean, string, and positional
+    args
+- id: minimist_boolean_equals_error
+  type: fail_to_pass
+  origin: pr_diff
+  description: Vendored minimist throws error when boolean option passed with =value
+- id: minimist_double_dash
+  type: fail_to_pass
+  origin: pr_diff
+  description: Vendored minimist handles -- separator correctly
+- id: program_imports_vendored
+  type: fail_to_pass
+  origin: pr_diff
+  description: program.ts imports minimist from local vendored file, not npm package
+- id: types_minimist_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: '@types/minimist dev dependency removed from package.json'
+- id: deps_list_updated
+  type: fail_to_pass
+  origin: agent_config
+  description: DEPS.list declares minimist.ts as allowed import per CLAUDE.md DEPS
+    rule
+  source:
+    path: CLAUDE.md
+    lines: '95'
+    commit: 4df350b1c81b61ea471ff12767efd8e05f773377
+- id: claude_md_generated_with_rule
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLAUDE.md includes rule against 'Generated with' in commit messages
+- id: claude_md_commit_rules_intact
+  type: pass_to_pass
+  origin: agent_config
+  description: CLAUDE.md still has existing commit message and branch naming rules
+  source:
+    path: CLAUDE.md
+    lines: 127-128
+    commit: 4df350b1c81b61ea471ff12767efd8e05f773377
+- id: repo_cli_client_files_exist
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's cli-client source files exist and are non-empty
+- id: repo_cli_client_typescript_no_syntax_errors
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's cli-client TypeScript files have no obvious syntax errors
+- id: repo_deps_list_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's DEPS.list file is valid and parseable
+- id: repo_package_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's package.json is valid JSON with expected structure
+- id: test_repo_eslint_cli_client
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ESLint passes on cli-client directory
+- id: test_repo_typescript_compile
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TypeScript compiler passes
+- id: test_repo_check_deps
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's DEPS.list check passes
+- id: test_repo_lint_packages
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's workspace package lint passes
+rubric:
+- rule: Vendored code should include proper license/attribution headers
+  source:
+    path: .claude/skills/playwright-dev/vendor.md
+    lines: 1-10
+    commit: 4df350b1c81b61ea471ff12767efd8e05f773377
+- rule: Import boundaries are enforced via DEPS.list files
+  source:
+    path: CLAUDE.md
+    lines: 90-95
+    commit: 4df350b1c81b61ea471ff12767efd8e05f773377
+  evidence: The gold solution updates DEPS.list to declare `./minimist.ts` as an allowed
+    import for program.ts and session.ts, and creates a new `[minimist.ts]` section
+  category: architecture
+config_edits:
+- path: CLAUDE.md
+  tier: 1
+  gold_added: Never add "Generated with" in commit message.
+  gold_removed: ''
+distractors:
+- rule: Generated files (types, channels, validators) are produced by watch automatically.
+  collision_type: scope_ambiguity
+  why_distracting: The rule states that generated files (types, channels) are produced
+    by watch automatically. An agent might incorrectly assume it doesn't need to manually
+    define and export the MinimistArgs type in the vendored file, relying on auto-generation
+    instead.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 50-52
+- rule: Do not use `tsc --noEmit` or individual lint commands separately.
+  collision_type: rule_conflict
+  why_distracting: The agent might want to run `tsc` or `eslint` on the newly created
+    minimist.ts file to ensure it is correct, but the rule strictly forbids individual
+    lint commands, requiring the full `flint` suite instead.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 58-60
+hierarchy_analysis: The repository uses a single CLAUDE.md file at the root, but it
+  enforces a distributed architecture rule (DEPS.list files in subdirectories). The
+  agent must apply the root-level DEPS concept to the specific cli-client subdirectory.

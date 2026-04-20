@@ -1,62 +1,60 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all relevant file paths (binding.ts, linearElementEditor.ts, actionFinalize.tsx, App.tsx), function names (bindOrUnbindBindingElement, getBindingStrategyForDraggingBindingElementEndpoints, pointDraggingUpdates, shouldRotateWithDiscreteAngle), parameter names (angleLocked, shiftKey), and concepts (projectFixedPointOntoDiagonal, orbit mode) that the tests assert on. Every specific string and path checked in tests is discoverable from the instruction."
+      "reason": "Instruction names all files, functions, and parameter names (angleLocked, shouldRotateWithDiscreteAngle, projectFixedPointOntoDiagonal, getPointAtIndexGlobalCoordinates) that tests assert on."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the fix: 'replace the raw shiftKey parameter with an angleLocked boolean', 'simplify the angle-lock conditions... without gating on hovered elements or existing bindings', 'use orbit mode with a focus point from projectFixedPointOntoDiagonal'. It specifies exact parameter names, exact function signatures, and exact code paths to add, leaving almost no reasoning for the agent."
+      "reason": "Instruction explicitly states the fix: 'replace the raw shiftKey parameter with an angleLocked boolean', 'use orbit mode with a focus point from projectFixedPointOntoDiagonal', and names exact helpers like getPointAtIndexGlobalCoordinates \u2014 leaving little to reason about."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific implementation details: exact string 'angleLocked?: boolean;' in binding.ts, exact string 'opts?.angleLocked && otherBindableElement' in binding.ts, exact string 'angleLocked: boolean' in linearElementEditor.ts, exact string 'angleLocked: shouldRotateWithDiscreteAngle(event)' in actionFinalize.tsx, exact string 'angleLocked: shouldRotateWithDiscreteAngle(event.nativeEvent)' in App.tsx. An alternative correct fix using a different parameter name (e.g., 'isAngleLocked') "
+      "reason": "Tests assert exact literal strings like 'opts?.angleLocked && otherBindableElement', 'angleLocked: shouldRotateWithDiscreteAngle(event)', and specific nested opts type pattern \u2014 alternative valid refactors (e.g., different naming/ordering or wrapping helper) would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_angle_locked_param_exists_in_binding, test_angle_locked_used_in_strategy_logic, test_shift_key_check_simplified_in_linear_editor, test_point_dragging_updates_passes_angle_locked, test_action_finalize_passes_angle_locked, test_app_component_passes_angle_locked, test_binding_strategy_respects_angle_lock) are all purely text-matching with 'assert X in file.read_text()'. They never import, call, or execute the code to verify actual behavior. The pass-to-pass tests do run"
+      "reason": "The f2p tests (test_angle_locked_param_exists_in_binding, test_shift_key_check_simplified_in_linear_editor, etc.) are all substring checks on file content; only the p2p tests run subprocesses."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "The f2p tests only check for string presence in source files (e.g., 'angleLocked?: boolean;' in binding.ts). An agent could add dead-code comments containing these strings without implementing any behavioral fix, and all f2p tests would pass. The tests don't verify that angle locking actually works during binding."
+      "outcome": "pass",
+      "reason": "Tests require specific code patterns plus repo test suites (binding/linear/elbow) to pass, which a stub cannot satisfy."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "The instruction says angle constraint should be maintained when endpoint snaps to a binding target, but no test actually verifies this behavioral outcome. All f2p tests only check source code text patterns, not runtime behavior of angle locking during binding."
+      "outcome": "pass",
+      "reason": "Tests cover the four symptom points: simplified condition, angleLocked parameter, orbit-mode strategy, and callers in actionFinalize and App.tsx."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named, have docstrings explaining what they check, and are logically grouped into fail-to-pass structural checks and pass-to-pass CI checks with clear comments separating them."
+      "reason": "Tests have descriptive names and a section comment dividing f2p and p2p tests."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task involves fixing code behavior, not producing structured data output."
+      "reason": "No structured data output produced."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, function names, parameter names, and commands in the instruction and tests are consistent and correctly spelled."
+      "reason": "File paths and command names appear correct."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names exact parameter names to use ('angleLocked'), exact conditions to remove ('!hoveredElement && !element.startBinding && !element.endBinding'), exact functions to call (projectFixedPointOntoDiagonal), and exact binding mode ('orbit'). This goes far beyond identifying the buggy area."
+      "reason": "Instruction names exact symbols to use (projectFixedPointOntoDiagonal, getPointAtIndexGlobalCoordinates, orbit mode) and the precise parameter rename \u2014 localization and design are fully given."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "Code-only task."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 3,
-  "fail_count": 6
+  "pass_count": 5,
+  "fail_count": 4
 }

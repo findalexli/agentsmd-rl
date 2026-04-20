@@ -1,0 +1,54 @@
+{
+  "model": "claude-opus-4-7",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "Instruction lists all test scenarios, paths (workflows/flow.py, a/b/c/file.py), patterns, and assertions explicitly."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction describes the bug and expected behavior without specifying code changes or implementation."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests only check membership of paths in the result set, which any correct fix would produce regardless of implementation details."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests call filter_files() with real tempdirs and also run ruff subprocesses."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "Tests require real inclusion of both files and parent dirs; a stub returning empty/None would fail assertions like 'workflows' in result."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "Tests cover negation, nested dirs, include_dirs=False preservation, and basic functionality as described in instruction."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests have descriptive names, docstrings labeling FAIL-TO-PASS vs PASS-TO-PASS."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task produces a set of paths, not structured data requiring a schema."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "Paths and function names are consistent throughout."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction names the function and module but doesn't pinpoint buggy lines; localization is part of the task domain."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code fix task, not an agentmd-edits task."
+    }
+  },
+  "tier_a_fails": [],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
+}

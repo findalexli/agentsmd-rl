@@ -1,0 +1,162 @@
+version: '2.0'
+source:
+  repo: biomejs/biome
+  pr: 9764
+  base_commit: 716e4e195d6a76f02850f3cf41b8b38b757708ec
+  merge_commit: f009153b5571d8f4916711eb0707955c437c6a8f
+checks:
+- id: cargo_check
+  type: pass_to_pass
+  origin: static
+  description: The biome_markdown_parser crate compiles without errors
+- id: cargo_fmt_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Rust code formatting passes (cargo fmt --check)
+- id: double_blank_nested_list_no_errors
+  type: fail_to_pass
+  origin: pr_diff
+  description: Double blank lines between nested list siblings must not produce parser
+    errors
+- id: triple_blank_nested_list_no_errors
+  type: fail_to_pass
+  origin: pr_diff
+  description: Triple blank lines between nested list siblings must not produce parser
+    errors
+- id: deeper_nested_blank_lines_no_errors
+  type: fail_to_pass
+  origin: pr_diff
+  description: Deeper nested lists (3 levels) with double blank lines must not produce
+    parser errors
+- id: single_blank_nested_list_ok
+  type: pass_to_pass
+  origin: pr_diff
+  description: Single blank line between nested list items parses correctly (regression
+    guard)
+- id: cargo_clippy
+  type: pass_to_pass
+  origin: repo_tests
+  description: Clippy lints pass for biome_markdown_parser crate
+- id: cargo_test_markdown_parser
+  type: pass_to_pass
+  origin: repo_tests
+  description: All tests in biome_markdown_parser crate pass
+- id: cargo_test_markdown_parser_lib
+  type: pass_to_pass
+  origin: repo_tests
+  description: Library unit tests for biome_markdown_parser pass
+- id: cargo_test_markdown_parser_doc
+  type: pass_to_pass
+  origin: repo_tests
+  description: Doc tests for biome_markdown_parser pass
+rubric:
+- rule: The fix must modify list.rs to track indent while skipping blank lines in
+    nested list parsing, removing the redundant indent-counting loop after the blank-line
+    loop.
+  reference: "--- a/crates/biome_markdown_parser/src/syntax/list.rs\n+++ b/crates/biome_markdown_parser/src/syntax/list.rs\n\
+    @@ -2569,11 +2569,21 @@ where\n     F: Fn(&mut MarkdownParser) -> bool,\n {\n\
+    \     p.lookahead(|p| {\n-        // Skip all blank lines\n+        // Skip all\
+    \ blank lines, tracking the indent of the last line visited.\n+        // The\
+    \ loop consumes whitespace on each line to check if it's blank\n+        // (only\
+    \ whitespace + newline). When we hit a non-blank line, the\n+        // whitespace\
+    \ was already consumed, so we must track the indent here\n+        // rather than\
+    \ counting it separately afterwards.\n+        let mut indent;\n         loop\
+    \ {\n+            indent = 0;\n             while p.at(MD_TEXTUAL_LITERAL) {\n\
+    \                 let text = p.cur_text();\n-                if text == \" \"\
+    \ || text == \"\\t\" {\n+                if text == \" \" {\n+               \
+    \     indent += 1;\n+                    p.bump(MD_TEXTUAL_LITERAL);\n+      \
+    \          } else if text == \"\\t\" {\n+                    indent += TAB_STOP_SPACES\
+    \ - (indent % TAB_STOP_SPACES);\n                 p.bump(MD_TEXTUAL_LITERAL);\n\
+    \             } else {\n                 break;\n@@ -2586,20 +2596,6 @@ where\n\
+    \         break;\n     }\n\n-        let mut indent = 0;\n-        while p.at(MD_TEXTUAL_LITERAL)\
+    \ {\n-            let text = p.cur_text();\n-            if text == \" \" {\n\
+    -                indent += 1;\n-                p.bump(MD_TEXTUAL_LITERAL);\n\
+    -            } else if text == \"\\t\" {\n-                indent += TAB_STOP_SPACES\
+    \ - (indent % TAB_STOP_SPACES);\n-                p.bump(MD_TEXTUAL_LITERAL);\n\
+    -            } else {\n-                break;\n-            }\n-        }\n-\n\
+    \         // Check indent matches the list's marker indent range\n         if\
+    \ expected_indent == 0 {\n             if indent > MAX_BLOCK_PREFIX_INDENT {\n"
+- rule: Check both general cases AND specific types... Verify your solution works
+    for all relevant variant types
+  source:
+    path: .claude/skills/biome-developer/SKILL.md
+    lines: 18-21
+  evidence: The gold solution correctly handles both space and tab characters when
+    calculating the indent, ensuring it works for all relevant whitespace variants
+    rather than just assuming spaces.
+  category: architecture
+  verification: llm_judge
+- rule: Understand the node hierarchy and parent-child relationships
+  source:
+    path: .claude/skills/biome-developer/SKILL.md
+    lines: 16-17
+  evidence: The gold solution correctly tracks the indent of the last line visited
+    to maintain the proper parent-child relationship of nested list items in the AST.
+  category: architecture
+  verification: llm_judge
+- rule: Verify your solution works for all relevant variant types, not just the first
+    one you find
+  source:
+    path: .claude/skills/biome-developer/SKILL.md
+    lines: 19-20
+  evidence: The gold solution uses a loop to consume all blank lines and tracks the
+    indent of the last one, ensuring the fix works for any number of extra blank lines
+    (two, three, etc.) rather than just a specific case.
+  category: architecture
+  verification: llm_judge
+distractors:
+- rule: Create a changeset file for user-facing changes (including bug fixes that
+    affect behavior).
+  collision_type: meta_confusion
+  why_distracting: The guidelines explicitly mandate creating a changeset file in
+    the `.changeset/` directory for user-facing bug fixes. An agent might generate
+    this file, but the gold solution only modifies the parser source code. In a benchmark
+    environment, generating extra changeset files is out of scope.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 54-85
+- rule: Include a test plan showing what tests were added to demonstrate correctness.
+  collision_type: scope_ambiguity
+  why_distracting: The guidelines mention a 'Test Plan' and showing what tests were
+    added. An agent might try to find and modify test files or add new markdown snapshot
+    tests to prove the fix works, but the gold solution strictly fixes the parser
+    logic without touching test files.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 38-40
+- rule: Disclose AI assistance in the pull request.
+  collision_type: meta_confusion
+  why_distracting: The guidelines require disclosing AI assistance in the pull request.
+    An agent might try to create or modify a PR description file or add comments to
+    the code disclosing its identity, which is unnecessary and incorrect for a raw
+    code patch.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 46-60
+- rule: Guide for creating high-quality, user-friendly diagnostics in Biome.
+  source:
+    path: .claude/skills/diagnostics-development/SKILL.md
+    lines: 1-5
+  collision_type: scope_ambiguity
+  why_distracting: The issue mentions a 'false diagnostic', which might lead the agent
+    to look into diagnostic generation. However, the fix must be made in the parser's
+    syntax logic, not in the diagnostics infrastructure.
+  severity: medium
+- rule: Step-by-step guide for creating and implementing lint rules in Biome's analyzer.
+  source:
+    path: .claude/skills/lint-rule-development/SKILL.md
+    lines: 1-5
+  collision_type: architecture_boundary
+  why_distracting: The issue describes a false diagnostic, which an agent might misinterpret
+    as a lint rule bug. The agent might try to modify the analyzer instead of the
+    markdown parser.
+  severity: medium
+hierarchy_analysis: The config files (CLAUDE.md and AGENTS.md) are heavily focused
+  on the PR lifecycle (PR templates, changesets, AI disclosures). However, the gold
+  solution is a raw code patch for a specific bug. This creates a meta-level conflict
+  where the agent must realize it is operating in a code-fix benchmark rather than
+  a full repository contribution workflow, and should ignore instructions about PRs
+  and changesets.

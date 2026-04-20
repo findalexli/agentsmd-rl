@@ -1,0 +1,133 @@
+version: "1.0"
+
+source:
+  pr:
+    owner: langchain-ai
+    repo: langchain
+    number: 36660
+    title: "fix(core): Use reference counting for storing inherited run trees to support garbage collection"
+    merge_commit: a6eb82970166a8fb966f1eb04238e6c378811bcc
+    base_commit: c59e83a1ffba63d709ea4847445845edd82085dc
+  notes: >
+    This PR fixes a memory leak in the LangChain tracer where external RunTree
+    objects injected into run_map were never cleaned up. The fix adds reference
+    counting via _external_run_ids to track when all children of an external
+    parent have finished, allowing proper eviction from run_map.
+
+checks:
+  # Fail-to-pass tests (core behavioral fixes)
+  - id: test_external_run_id_cleanup_single_child
+    type: fail_to_pass
+    origin: agent_config
+    description: External RunTree is cleaned up after its single child finishes
+    source:
+      file: libs/core/langchain_core/tracers/core.py
+      lines: [89-99]
+      reason: _external_run_ids refcount implementation
+
+  - id: test_external_run_id_cleanup_sibling_children
+    type: fail_to_pass
+    origin: agent_config
+    description: External parent survives until ALL sibling children finish (refcount mechanism)
+    source:
+      file: libs/core/langchain_core/tracers/base.py
+      lines: [50-59, 580-589]
+      reason: Proper refcount decrement and cleanup in _end_trace
+
+  - id: test_runtree_no_accumulation
+    type: fail_to_pass
+    origin: agent_config
+    description: RunTree objects don't accumulate across multiple calls (memory-level regression test)
+    source:
+      file: libs/core/langchain_core/tracers/core.py
+      lines: [132-134]
+      reason: Refcount increment in _start_trace
+
+  # Pass-to-pass tests (repo standards)
+  - id: test_core_unit_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: Core unit tests for tracing_interops module pass
+
+  - id: test_import_core_modules
+    type: pass_to_pass
+    origin: repo_tests
+    description: Core tracer modules can be imported and have required attributes
+
+  - id: test_repo_lint_tracers
+    type: pass_to_pass
+    origin: repo_tests
+    description: Ruff linting passes for tracers and callbacks modules
+
+  - id: test_repo_format_tracers
+    type: pass_to_pass
+    origin: repo_tests
+    description: Ruff format check passes for tracers and callbacks modules
+
+  - id: test_repo_tracer_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Unit tests for tracers module pass
+
+  - id: test_repo_callback_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Unit tests for callbacks module pass
+
+  - id: test_repo_manager_imports
+    type: pass_to_pass
+    origin: repo_tests
+    description: Callback manager module imports correctly
+
+  # Agent config derived checks
+  - id: proper_resource_cleanup
+    type: fail_to_pass
+    origin: agent_config
+    description: Proper resource cleanup for memory management
+    source:
+      file: CLAUDE.md
+      section: "Security and risk assessment"
+      reason: Resource leak prevention is explicitly required
+
+  - id: type_hints_present
+    type: pass_to_pass
+    origin: agent_config
+    description: All modified code includes type hints and return types
+    source:
+      file: CLAUDE.md
+      section: "Code quality standards"
+      reason: "All Python code MUST include type hints and return types"
+
+  - id: unit_test_coverage
+    type: pass_to_pass
+    origin: agent_config
+    description: Bugfix includes unit test coverage
+    source:
+      file: CLAUDE.md
+      section: "Testing requirements"
+      reason: "Every new feature or bugfix MUST be covered by unit tests"
+
+rubric:
+  - criterion: "Type hints and return types"
+    description: "All new/modified functions have proper type annotations"
+    source:
+      file: CLAUDE.md
+      section: "Code quality standards"
+
+  - criterion: "Google-style docstrings"
+    description: "New public functions use Google-style docstrings with Args section"
+    source:
+      file: CLAUDE.md
+      section: "Documentation standards"
+
+  - criterion: "Stable public interfaces"
+    description: "Function signatures preserved, new params use keyword-only syntax"
+    source:
+      file: CLAUDE.md
+      section: "Maintain stable public interfaces"
+
+  - criterion: "Resource cleanup"
+    description: "Proper cleanup of external resources to prevent leaks"
+    source:
+      file: CLAUDE.md
+      section: "Security and risk assessment"

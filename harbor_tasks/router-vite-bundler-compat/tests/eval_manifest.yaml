@@ -1,0 +1,122 @@
+manifest_version: "1.0"
+
+source:
+  pr:
+    owner: TanStack
+    repo: router
+    number: 6955
+    title: "feat(vite-plugin-core): Support both Vite 7 (rollupOptions) and Vite 8 (rolldownOptions)"
+    merge_commit: 6651473d028a55c70f3f54af37a12b4379b46813
+    base_commit: 3bc18d4623459a56ae972de8ff969ebf7a994ca7
+
+checks:
+  # Fail-to-pass: Core functionality tests
+  - id: test_utils_exports_exist
+    type: fail_to_pass
+    origin: behavioral
+    description: "utils.ts exports isRolldown, bundlerOptionsKey, and getBundlerOptions"
+
+  - id: test_isRolldown_logic
+    type: fail_to_pass
+    origin: behavioral
+    description: "isRolldown detects Rolldown by checking 'rolldownVersion' in vite"
+
+  - id: test_bundlerOptionsKey_logic
+    type: fail_to_pass
+    origin: behavioral
+    description: "bundlerOptionsKey returns 'rolldownOptions' or 'rollupOptions' based on detection"
+
+  - id: test_getBundlerOptions_logic
+    type: fail_to_pass
+    origin: behavioral
+    description: "getBundlerOptions reads rolldownOptions first, then rollupOptions as fallback"
+
+  - id: test_plugin_imports_utils
+    type: fail_to_pass
+    origin: behavioral
+    description: "plugin.ts imports bundlerOptionsKey and getBundlerOptions from utils"
+
+  - id: test_plugin_uses_bundlerOptionsKey
+    type: fail_to_pass
+    origin: behavioral
+    description: "plugin.ts uses [bundlerOptionsKey] instead of hardcoded 'rollupOptions' in build configs"
+
+  - id: test_plugin_uses_getBundlerOptions
+    type: fail_to_pass
+    origin: behavioral
+    description: "plugin.ts uses getBundlerOptions() to read server input configuration"
+
+  - id: test_preview_plugin_imports_utils
+    type: fail_to_pass
+    origin: behavioral
+    description: "preview-server-plugin imports getBundlerOptions from utils"
+
+  - id: test_preview_plugin_uses_getBundlerOptions
+    type: fail_to_pass
+    origin: behavioral
+    description: "preview-server-plugin uses getBundlerOptions() instead of direct build.rollupOptions.input access"
+
+  # Pass-to-pass: Code quality checks
+  - id: test_modified_files_parseable
+    type: pass_to_pass
+    origin: static
+    description: "Modified TypeScript files have valid syntax structure"
+
+  - id: test_code_no_duplicate_imports
+    type: pass_to_pass
+    origin: static
+    description: "No duplicate or conflicting import statements"
+
+  - id: test_utils_functions_exported_correctly
+    type: pass_to_pass
+    origin: static
+    description: "New utility functions are properly exported"
+
+  - id: test_no_placeholder_code
+    type: pass_to_pass
+    origin: static
+    description: "No TODO or placeholder comments in implementation"
+
+  # Pass-to-pass: Repo CI tests (from actual CI commands)
+  - id: test_repo_unit_tests_import_protection
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Import protection unit tests pass"
+
+  - id: test_repo_unit_tests_server
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Server-related unit tests pass"
+
+  - id: test_repo_build
+    type: pass_to_pass
+    origin: repo_tests
+    description: "start-plugin-core package builds successfully"
+
+# Agent config rules to evaluate
+rubric:
+  - rule: "Always run unit and type tests during development"
+    source: "AGENTS.md"
+    relevant: false
+    scope: "Testing requirements"
+
+  - rule: "Use TypeScript strict mode with extensive type safety"
+    source: "AGENTS.md"
+    relevant: false
+    scope: "Type safety"
+
+  - rule: "Before committing, run pnpm test:eslint, pnpm test:types, and pnpm test:unit"
+    source: "AGENTS.md"
+    relevant: false
+    scope: "Pre-commit checks"
+
+  - rule: "Use Nx commands like pnpm nx run @tanstack/start-plugin-core:test:unit for targeted testing"
+    source: "AGENTS.md"
+    relevant: false
+    scope: "Efficient testing"
+
+  - rule: "Maintain framework-agnostic core logic distinct from framework-specific bindings"
+    source: "AGENTS.md"
+    relevant: false
+    scope: "Architecture"
+    note: "The bundler detection logic should be in utils.ts, separate from plugin-specific code"

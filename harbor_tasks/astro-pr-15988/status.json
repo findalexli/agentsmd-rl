@@ -4,10 +4,10 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-15T22:11:06.821153",
-  "total_time": 2014.99,
-  "sandbox_id": "i25ug8hss2i4nz4n8rsom",
-  "backend": "fireworks",
+  "validated_at": "2026-04-16T12:48:29.737381",
+  "total_time": 44.99,
+  "sandbox_id": "ico34k68najavcgxa1yq2",
+  "backend": "anthropic",
   "pipeline": "pipeline",
   "start_at": "judge",
   "nodes": {
@@ -44,35 +44,30 @@
       "time": 1383.64
     },
     "quality_gate": {
-      "status": "passed",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 0.27,
-      "notes": "flags=['lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:11: unpinned pip deps: pytest']"
+      "status": "DELETE",
+      "model": "claude-opus-4-7",
+      "backend": "anthropic",
+      "time": 0.34,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:2', 'A:[A] test_not_tautological @ tests/test_outputs.py:52: test `test_pre_walk_module_graph_logic_exists` has 2 assert(s), al', 'A:[A] test_not_tautological @ tests/test_outputs.py:241: test `test_circular_dependency_protection` has 1 assert(s), all p', 'lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:11: unpinned pip deps: pytest']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 21.85,
+      "time": 14.83,
       "tier_a_fails": [
-        "no_solution_leakage",
         "solution_uniqueness_guard",
-        "tests_verify_behavior_not_text",
-        "test_not_tautological"
+        "tests_verify_behavior_not_text"
       ],
       "tier_b_fails": [],
-      "pass_count": 4,
-      "fail_count": 5
+      "pass_count": 7,
+      "fail_count": 2
+    },
+    "tests_rewrite": {
+      "status": "error",
+      "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":369,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 400 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"invalid_request_error\\\",\\\"message\\\":\\\"\\\\\\\"thinking.type.enabled\\\\\\\" is not supported for this model. Use \\\\\\\"thinking.type.adapt",
+      "time": 2.17
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "minimax",
-      "time": 3790.68,
-      "at": "2026-04-15T11:17:34.880881"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -104,6 +99,14 @@
       "backend": "fireworks",
       "time": 2014.99,
       "at": "2026-04-15T22:11:06.821153"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "anthropic",
+      "time": 44.99,
+      "at": "2026-04-16T12:48:29.737381"
     }
   ]
 }

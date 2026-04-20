@@ -1,0 +1,79 @@
+source_pr: "https://github.com/All-Hands-AI/OpenHands/pull/13558"
+title: "APP-1097 fix: reuse db session in migrate_customer call causing FK violation"
+base_commit: "ff240c968bb938e414cacaa4b31be4f2948c4619"
+merge_commit: "1f275a7cfe91bf8ca090430b49dcae3c5392fe7d"
+
+checks:
+  # Fail-to-pass tests
+  - id: test_migrate_customer_signature_change
+    type: fail_to_pass
+    description: "migrate_customer function accepts 'session' as first parameter"
+    origin: code_structure
+
+  - id: test_migrate_customer_no_new_session
+    type: fail_to_pass
+    description: "migrate_customer does NOT create a new async session with a_session_maker"
+    origin: code_structure
+
+  - id: test_migrate_customer_uses_session_execute
+    type: fail_to_pass
+    description: "migrate_customer calls session.execute() directly using passed session"
+    origin: code_structure
+
+  - id: test_user_store_passes_session_to_migrate_customer
+    type: fail_to_pass
+    description: "user_store.py passes session as first argument to migrate_customer()"
+    origin: code_structure
+
+  - id: test_migrate_customer_no_session_commit
+    type: fail_to_pass
+    description: "migrate_customer does NOT call session.commit() - caller manages lifecycle"
+    origin: code_structure
+
+  - id: test_distinctive_fix_line_present
+    type: fail_to_pass
+    description: "The key fix line 'await migrate_customer(session, user_id, org)' exists"
+    origin: code_structure
+
+  # Pass-to-pass tests
+  - id: test_import_falls_back_to_ast
+    type: pass_to_pass
+    description: "stripe_service.py is syntactically valid Python"
+    origin: repo_tests
+
+  - id: test_user_store_imports_fall_back
+    type: pass_to_pass
+    description: "user_store.py is syntactically valid Python"
+    origin: repo_tests
+
+  - id: test_repo_lint_stripe_service
+    type: pass_to_pass
+    description: "stripe_service.py passes Python syntax check (CI)"
+    origin: repo_tests
+
+  - id: test_repo_lint_user_store
+    type: pass_to_pass
+    description: "user_store.py passes Python syntax check (CI)"
+    origin: repo_tests
+
+  - id: test_repo_stripe_service_db_tests_valid
+    type: pass_to_pass
+    description: "stripe_service_db tests are syntactically valid (CI)"
+    origin: repo_tests
+
+# Rubric for soft/subjective rules from AGENTS.md
+# Note: The gold solution only modifies stripe_service.py and user_store.py (not test files)
+# The original rubric rules about AsyncMock and database testing were not applicable
+# since no test files are modified by this PR.
+rubric:
+  - rule: "migrate_customer should accept session as first parameter"
+    weight: 1.0
+    source: "enterprise/integrations/stripe_service.py"
+    description: "The function signature should be migrate_customer(session, user_id, org)"
+    reference: "async def migrate_customer(session, user_id: str, org: Org):"
+
+  - rule: "migrate_customer should use passed session, not create new one"
+    weight: 1.0
+    source: "enterprise/integrations/stripe_service.py"
+    description: "Function should call session.execute() directly, not use a_session_maker()"
+    reference: "result = await session.execute("

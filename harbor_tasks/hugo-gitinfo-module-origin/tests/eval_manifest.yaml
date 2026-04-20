@@ -1,0 +1,102 @@
+checks:
+- id: test_module_origin_iszero_true_when_empty
+  description: ModuleOrigin.IsZero() returns true when URL is empty
+  type: fail_to_pass
+  origin: pr_diff
+- id: test_loadgitinfo_returns_error
+  description: loadGitInfo returns error instead of just logging
+  type: fail_to_pass
+  origin: pr_diff
+- id: test_origin_check_with_iszero_in_gitinfo
+  description: gitinfo.go checks !mod.Origin().IsZero() before using Origin
+  type: fail_to_pass
+  origin: pr_diff
+- id: test_client_handles_nil_origin
+  description: client.go handles nil Origin by loading from .info file
+  type: fail_to_pass
+  origin: pr_diff
+- id: test_syntax_compiles
+  description: Modified Go code compiles without syntax errors
+  type: fail_to_pass
+  origin: pr_diff
+- id: test_module_origin_struct_has_fields
+  description: ModuleOrigin struct has expected fields
+  type: fail_to_pass
+  origin: pr_diff
+- id: test_repo_gofmt
+  description: Repo's Go code passes gofmt formatting check
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_vet
+  description: Repo's Go code passes go vet static analysis
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_build
+  description: Repo's Go code builds successfully
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_modules_tests
+  description: Tests for modules package pass
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_hugolib_tests
+  description: Tests for hugolib package pass
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_staticcheck
+  description: Repo's Go code passes staticcheck linter
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_go_mod_verify
+  description: Go module checksums are verified
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_check_sh_modules
+  description: Repo's check.sh passes for modules package
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_repo_check_sh_hugolib
+  description: Repo's check.sh passes for hugolib package
+  type: pass_to_pass
+  origin: repo_tests
+rubric:
+- rule: 'Go code fix: IsZero() method should be concise and follow brevity principle'
+  source:
+    path: modules/module.go
+    lines: IsZero() implementation
+    commit: 68059972e8789258447e31ca23641c79598d66be
+- rule: Use short variable names when the context is clear.
+  source:
+    path: AGENTS.md
+    lines: 4-5
+  evidence: The gold solution uses short variable names like `o` for the `ModuleOrigin`
+    receiver and `b` for the byte slice returned by `afero.ReadFile`.
+  category: naming
+- rule: Never export symbols that's not needed outside of the package.
+  source:
+    path: AGENTS.md
+    lines: 7-7
+  evidence: The `info` struct used to unmarshal the JSON file in `modules/client.go`
+    is defined inline and unexported, preventing unnecessary package-level exports.
+  category: architecture
+distractors:
+- rule: Brevity is good. This applies to code, comments... Don't write a novel. Don't
+    use comments to explain the obvious.
+  collision_type: scope_ambiguity
+  why_distracting: The gold solution includes a very detailed, multi-line comment
+    explaining the workaround for a Go upstream issue (golang/go#67363) and the structure
+    of the JSON file. An agent strictly following the brevity rule might omit this
+    crucial context, making the workaround seem like magic.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 2-4, 13-13
+hierarchy_analysis: The config hierarchy is flat, with all rules contained in AGENTS.md
+  (referenced by CLAUDE.md). The agent must balance the general instruction for brevity
+  against the specific need to document a complex workaround for an upstream bug.
+version: '2.0'
+source:
+  repo: gohugoio/hugo
+  pr: 14565
+  base_commit: 68059972e8789258447e31ca23641c79598d66be
+  merge_commit: d98cd4aecf25b9df78d811759ea6135b0c7610f1

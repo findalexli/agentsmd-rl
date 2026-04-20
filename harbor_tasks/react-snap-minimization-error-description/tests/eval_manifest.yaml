@@ -1,0 +1,115 @@
+version: '2.0'
+source:
+  repo: facebook/react
+  pr: 35689
+  base_commit: f84ce5a45c47b1081a09c17eea58c16ef145c113
+  merge_commit: 90c6d1b218bbe07eeb757ce8777805a9b7f8e3c3
+checks:
+- id: minimize_ts_exists
+  type: pass_to_pass
+  origin: static
+  description: minimize.ts must exist and contain expected function errorsMatch
+- id: snap_typescript_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: Snap package TypeScript must compile
+- id: snap_builds
+  type: pass_to_pass
+  origin: repo_tests
+  description: Snap package must build successfully
+- id: babel_plugin_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: babel-plugin-react-compiler must pass lint checks
+- id: babel_plugin_jest
+  type: pass_to_pass
+  origin: repo_tests
+  description: babel-plugin-react-compiler Jest tests must pass
+- id: eslint_plugin_react_compiler
+  type: pass_to_pass
+  origin: repo_tests
+  description: eslint-plugin-react-compiler tests must pass
+- id: make_read_only_util
+  type: pass_to_pass
+  origin: repo_tests
+  description: make-read-only-util tests must pass
+- id: snap_prettier
+  type: pass_to_pass
+  origin: repo_tests
+  description: Snap package must pass prettier formatting check
+- id: errorsMatch_rejects_different_descriptions
+  type: fail_to_pass
+  origin: pr_diff
+  description: errorsMatch must return false when error descriptions differ (behavioral
+    eval)
+- id: description_in_error_types
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'CompileErrors and error.details types must include description: string
+    | null'
+- id: error_mapping_copies_description
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'error.details.map must copy description field via description: detail.description'
+- id: new_generators_defined
+  type: fail_to_pass
+  origin: pr_diff
+  description: Generator functions removeFunctionParameters, removeArrayPatternElements,
+    removeObjectPatternProperties must be defined
+- id: new_strategies_registered
+  type: fail_to_pass
+  origin: pr_diff
+  description: All three new strategies must be registered in simplificationStrategies
+    array
+rubric: []
+distractors:
+- rule: When modifying the compiler, you MUST read the documentation about that pass
+    in compiler/packages/babel-plugin-react-compiler/docs/passes/
+  collision_type: architecture_boundary
+  why_distracting: The rule mandates reading pass documentation in `babel-plugin-react-compiler/docs/passes/`
+    when modifying the compiler. However, `minimize.ts` is a testing utility in the
+    `snap` package, not a compiler pass. An agent might waste time looking for non-existent
+    documentation or misinterpret the architecture.
+  severity: medium
+  source:
+    path: compiler/CLAUDE.md
+    lines: 7-8
+- rule: When the compiler encounters an unsupported but known pattern, use `CompilerError.throwTodo()`
+    instead of `CompilerError.invariant()`.
+  source:
+    path: compiler/CLAUDE.md
+    lines: 242-242
+  source_text: When the compiler encounters an unsupported but known pattern, use
+    `CompilerError.throwTodo()` instead of `CompilerError.invariant()`. Todo errors
+    cause graceful bailouts in production; Invariant errors are hard failures indicating
+    unexpected/invalid states.
+  collision_type: scope_ambiguity
+  why_distracting: The PR updates error parsing and typing (`CompileErrors` and `compileAndGetError`)
+    in the `snap` test utility runner to include a `description` field, not the React
+    Compiler's internal error throwing mechanism. An agent might mistakenly try to
+    use `throwTodo()` inside the test runner instead of correctly propagating the
+    error details.
+  severity: high
+- rule: Use inline `gate()` if both paths should run. It's `gate(flags => flags.name)`,
+    not `gate('name')`
+  source:
+    path: .claude/skills/feature-flags/SKILL.md
+    lines: 76-78
+  source_text: '- **Using @gate for behavior differences** - Use inline `gate()` if
+    both paths should run
+
+    - **Missing fork files** - New flags must be added to ALL fork files, not just
+    the main one
+
+    - **Wrong gate syntax** - It''s `gate(flags => flags.name)`, not `gate(''name'')`'
+  collision_type: architecture_boundary
+  why_distracting: These feature flag conventions strictly apply to the main React
+    codebase. The PR is in the `compiler/` directory, which has its own distinct feature
+    flag system configured via `Environment.ts` and pragma comments (as noted in `compiler/CLAUDE.md`).
+    Using React's `gate()` syntax or modifying `ReactFeatureFlags.js` here would cause
+    a bug.
+  severity: high
+hierarchy_analysis: The hierarchy consists of a root `CLAUDE.md` that explicitly delegates
+  compiler-specific instructions to `compiler/CLAUDE.md`. The agent must recognize
+  that it is working within the `/compiler/` directory and apply the rules from the
+  child config, while ignoring React core tooling.

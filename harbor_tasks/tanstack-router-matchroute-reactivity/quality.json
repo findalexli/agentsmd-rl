@@ -1,62 +1,57 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: test_usematchroute_opts_inside_memo checks for 'const { pending, caseSensitive, fuzzy, includeSearch' inside createMemo; test_matchroute_uses_memo_for_children checks for 'const renderedChild = Solid.createMemo' and 'const child = props.children' inside the memo; test_matchroute_returns_jsx_fragment checks for exact string 'return <>{renderedChild()}</>'. None of these specific patterns are described in the instru"
+      "reason": "Tests assert specific implementation strings like 'const { pending, caseSensitive, fuzzy, includeSearch' inside createMemo, 'const renderedChild = Solid.createMemo', 'const child = props.children' inside the memo, and literal 'return <>{renderedChild()}</>' \u2014 none of these specific code structures are mentioned in instruction.md."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "While instruction.md doesn't explicitly state the fix, the hidden tests check for extremely specific implementation patterns (moving destructuring inside createMemo, wrapping renderedChild in Solid.createMemo, returning JSX fragment). However, instruction.md itself only describes the bug symptoms, so from the agent's perspective it doesn't leak. But the tests effectively require a single specific solution pattern that instruction.md doesn't describe - this is more a solution_uniqueness_guard iss"
+      "outcome": "pass",
+      "reason": "instruction.md describes the bug symptoms (reactivity not working with signals/navigation) without prescribing the exact code change."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on exact implementation strings like 'const renderedChild = Solid.createMemo', 'return <>{renderedChild()}</>', and 'const { pending, caseSensitive, fuzzy, includeSearch' being inside createMemo. Alternative correct fixes (e.g., using createEffect, using a different variable name, using Solid.memo wrapper, or returning renderedChild differently) would fail these text-matching tests even if they correctly fix the reactivity bug."
+      "reason": "test_matchroute_returns_jsx_fragment requires literal `return <>{renderedChild()}</>`, test_matchroute_uses_memo_for_children requires exact `const renderedChild = Solid.createMemo` and `const child = props.children` inside it \u2014 an alternative correct fix (e.g., using Solid.Show, or keeping child outside but reading props.children reactively via getter) would fail these tests."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Three of the fail_to_pass tests (test_usematchroute_opts_inside_memo, test_matchroute_uses_memo_for_children, test_matchroute_returns_jsx_fragment) are purely text-matching tests that read file content and assert on string patterns. They never import, call, or execute the code. Only test_repo_unit_tests and test_repo_type_tests actually execute code, but those are pass_to_pass tests."
+      "outcome": "pass",
+      "reason": "Tests run unit tests, type tests, build, and eslint via subprocess; though several tests are text-grep, behavior is also verified via actual test execution."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "The f2p tests (test_usematchroute_opts_inside_memo, test_matchroute_uses_memo_for_children, test_matchroute_returns_jsx_fragment) are text-matching tests. A developer could pass them by simply rearranging code text to match the expected patterns without actually fixing the reactivity bug. For example, moving the destructuring line inside createMemo textually without fixing the actual reactive tracking would pass test_usematchroute_opts_inside_memo."
+      "outcome": "pass",
+      "reason": "The f2p tests require specific code patterns that a stub/no-op would not satisfy, and the unit tests execute real behavior."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "Instruction.md requires that 'MatchRoute properly reactive to both navigation changes and signal updates' but no test actually verifies this behavior by rendering components and checking reactivity. The tests only check source code text patterns."
+      "outcome": "pass",
+      "reason": "Unit tests, type tests, and build all covered as required by instruction.md."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings explaining what each test verifies and why, clearly separating pass_to_pass from fail_to_pass concerns."
+      "reason": "Each test has a descriptive name and docstring explaining fail_to_pass vs pass_to_pass."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a UI component reactivity bug, not producing structured data."
+      "reason": "Not a structured data task."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "No typos in paths or commands observed."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "instruction.md names the file to modify (packages/solid-router/src/Matches.tsx) which is reasonable since it's the file containing MatchRoute. It doesn't specify exact lines or the specific fix needed."
+      "reason": "Instruction points at Matches.tsx which is reasonable given the MatchRoute component is the subject; doesn't pinpoint lines."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "Code-only task, not an agentmd-edits config task."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "behavior_in_tests"
-  ],
-  "pass_count": 3,
-  "fail_count": 6
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 2
 }

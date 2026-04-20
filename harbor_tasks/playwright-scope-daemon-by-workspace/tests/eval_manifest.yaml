@@ -1,0 +1,182 @@
+version: "2.0"
+
+source:
+  repo: "microsoft/playwright"
+  pr: 39144
+  base_commit: "08752e9a9be05e5d11173977c8651cf105c1aace"
+  merge_commit: "c4a4efa50a02f404829c8cf8a169d5b70e8e35ae"
+
+# Track 1: Code correctness checks (hard tests via test.sh)
+checks:
+  # TypeScript syntax validation
+  - id: typescript_syntax_valid
+    type: pass_to_pass
+    origin: static
+    description: "Modified TypeScript files have valid syntax"
+
+  # Core code changes - workspace scoping
+  - id: workspace_dir_hash_used
+    type: fail_to_pass
+    origin: pr_diff
+    description: "program.ts uses workspaceDirHash instead of installationDirHash"
+
+  - id: find_workspace_dir_function_exists
+    type: fail_to_pass
+    origin: pr_diff
+    description: "program.ts has findWorkspaceDir function that looks for .playwright folder"
+
+  - id: installation_dir_removed_from_client_info
+    type: fail_to_pass
+    origin: pr_diff
+    description: "ClientInfo type uses workspaceDirHash, not installationDir/installationDirHash"
+
+  - id: config_file_path_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Default config file path updated to .playwright/cli.config.json"
+
+  - id: daemon_profiles_dir_scoped
+    type: fail_to_pass
+    origin: pr_diff
+    description: "daemonProfilesDir includes workspace hash subdirectory"
+
+  - id: socket_path_uses_workspace_hash
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Socket path uses workspaceDirHash instead of installationDirHash"
+
+  - id: install_function_handles_skills_flag
+    type: fail_to_pass
+    origin: pr_diff
+    description: "install function creates .playwright folder and conditionally installs skills"
+
+  # Command renames
+  - id: session_kill_all_command
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Command renamed from kill-all to session-kill-all"
+
+  - id: install_command_restructured
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Install commands restructured: install (workspace init), install-browser (browser install)"
+
+  - id: open_description_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Open command description updated to 'Open the browser' with default config path"
+
+  - id: close_description_updated
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Close command description updated to 'Close the browser'"
+
+  # Config/instruction file update checks (Track 2)
+  - id: skill_md_documents_session_kill_all
+    type: fail_to_pass
+    origin: agent_config
+    description: "SKILL.md documents session-kill-all command instead of kill-all"
+    source:
+      path: ".claude/skills/playwright-mcp-dev/SKILL.md"
+      lines: "30-32"
+      commit: "08752e9a9be05e5d11173977c8651cf105c1aace"
+
+  - id: skill_md_documents_close_and_delete_data
+    type: fail_to_pass
+    origin: agent_config
+    description: "SKILL.md Configuration section documents close and delete-data commands"
+    source:
+      path: ".claude/skills/playwright-mcp-dev/SKILL.md"
+      lines: "30-32"
+      commit: "08752e9a9be05e5d11173977c8651cf105c1aace"
+
+  - id: session_management_md_updated
+    type: fail_to_pass
+    origin: agent_config
+    description: "session-management.md references session-kill-all and .playwright path"
+    source:
+      path: ".claude/skills/playwright-mcp-dev/SKILL.md"
+      lines: "30-32"
+      commit: "08752e9a9be05e5d11173977c8651cf105c1aace"
+
+# Track 2: Gold config edits (extracted from solve.sh)
+config_edits:
+  - path: "packages/playwright/src/skill/SKILL.md"
+    tier: 1
+    gold_added: "# Close the browser\nplaywright-cli close\n# Delete user data for the default session\nplaywright-cli delete-data"
+    gold_removed: "playwright-cli close                      # stop the default session"
+
+  - path: "packages/playwright/src/skill/SKILL.md"
+    tier: 1
+    gold_added: "# Close all browsers\nplaywright-cli session-close-all\n# Forcefully kill all browser processes\nplaywright-cli session-kill-all"
+    gold_removed: "playwright-cli session-close-all          # stop all sessions\nplaywright-cli delete-data                # delete user data for default session\nplaywright-cli kill-all                   # forcefully kill all daemon processes (for stale/zombie processes)"
+
+  - path: "packages/playwright/src/skill/references/session-management.md"
+    tier: 1
+    gold_added: "playwright-cli session-kill-all"
+    gold_removed: "playwright-cli kill-all"
+
+  - path: "packages/playwright/src/skill/references/session-management.md"
+    tier: 1
+    gold_added: "--config=.playwright/my-cli.json"
+    gold_removed: "--config=playwright-cli.json"
+
+# Track 3: Positive rubric - conventions the gold solution follows
+rubric:
+  - rule: "Update skill documentation when CLI commands change"
+    source:
+      path: ".claude/skills/playwright-mcp-dev/SKILL.md"
+      lines: "30-32"
+      commit: "08752e9a9be05e5d11173977c8651cf105c1aace"
+    evidence: "SKILL.md and session-management.md updated to reflect new command names"
+    category: documentation
+    verification: llm_judge
+
+  - rule: "Use workspace-relative paths for daemon scoping"
+    source:
+      path: ".claude/skills/playwright-mcp-dev/SKILL.md"
+      lines: "24-27"
+      commit: "08752e9a9be05e5d11173977c8651cf105c1aace"
+    evidence: "Implementation uses .playwright folder for workspace detection instead of installation directory"
+    category: architecture
+    verification: llm_judge
+
+  - rule: "Prefix session-related commands with 'session-'"
+    evidence: "kill-all renamed to session-kill-all for consistency with session-close-all"
+    category: naming
+    verification: programmatic
+    check_cmd: "grep -q \"name: 'session-kill-all'\" /workspace/playwright/packages/playwright/src/mcp/terminal/commands.ts"
+
+  - rule: "Use consistent terminology in descriptions"
+    evidence: "'Open the browser' and 'Close the browser' instead of generic 'Open browser' / 'Close the page'"
+    category: documentation
+    verification: llm_judge
+
+# Track 4: Distractors - conventions that create collisions
+distractors:
+  - rule: "Keep daemon scoped by installation directory for global persistence"
+    source:
+      path: ".claude/skills/playwright-mcp-dev/SKILL.md"
+      lines: "24-27"
+      commit: "08752e9a9be05e5d11173977c8651cf105c1aace"
+    collision_type: architecture_boundary
+    why_distracting: "The old behavior scoped by installation dir; new behavior scopes by workspace. Global persistence is actually incorrect for this feature."
+    severity: medium
+
+  - rule: "Keep install-skills as separate top-level command"
+    source:
+      path: ".claude/skills/playwright-mcp-dev/SKILL.md"
+      lines: "24-27"
+      commit: "08752e9a9be05e5d11173977c8651cf105c1aace"
+    collision_type: rule_conflict
+    why_distracting: "PR restructures install-skills into install --skills flag; keeping it separate contradicts the workspace initialization flow."
+    severity: medium
+
+  - rule: "Document commands with inline comments only"
+    source:
+      path: ".claude/skills/playwright-mcp-dev/SKILL.md"
+      lines: "30-32"
+      commit: "08752e9a9be05e5d11173977c8651cf105c1aace"
+    collision_type: scope_ambiguity
+    why_distracting: "The PR adds section headers (# Close the browser) which is a different style than inline comments."
+    severity: low

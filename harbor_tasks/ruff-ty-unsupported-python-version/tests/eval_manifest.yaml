@@ -1,0 +1,112 @@
+version: '2.0'
+source:
+  repo: astral-sh/ruff
+  pr: 24402
+  base_commit: 62a863cf518086135dfd2321c92fbc3823f95de8
+  merge_commit: f6ef72c291d597fc6716fd00a0ee170b2da076c9
+checks:
+- id: compiles
+  type: pass_to_pass
+  origin: static
+  description: ty_project crate compiles successfully after changes
+- id: rejects_unsupported_python_27
+  type: fail_to_pass
+  origin: pr_diff
+  description: Deserializing python-version='2.7' in config must fail
+- id: rejects_unsupported_python_36
+  type: fail_to_pass
+  origin: pr_diff
+  description: Deserializing python-version='3.6' in config must fail
+- id: accepts_supported_python_312
+  type: pass_to_pass
+  origin: pr_diff
+  description: Deserializing python-version='3.12' in config still succeeds
+- id: accepts_supported_python_313
+  type: pass_to_pass
+  origin: pr_diff
+  description: Deserializing python-version='3.13' in config still succeeds
+- id: no_panic_unwrap_in_validation
+  type: pass_to_pass
+  origin: agent_config
+  description: No panic!/unwrap()/unreachable!() in the version validation function
+  source:
+    path: AGENTS.md
+    lines: '79'
+    commit: 62a863cf518086135dfd2321c92fbc3823f95de8
+- id: imports_at_file_top
+  type: pass_to_pass
+  origin: agent_config
+  description: Rust imports at the top of the file, not locally in functions
+  source:
+    path: AGENTS.md
+    lines: '76'
+    commit: 62a863cf518086135dfd2321c92fbc3823f95de8
+- id: test_repo_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's cargo check on ty_project passes
+- id: test_repo_clippy
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's cargo clippy on ty_project passes (no warnings)
+- id: test_repo_fmt
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's rustfmt on ty_project passes (correct formatting)
+- id: test_repo_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's unit tests for ty_project crate pass (41 tests)
+- id: test_repo_doc
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's documentation for ty_project crate builds without warnings
+rubric:
+- rule: Rust imports should always go at the top of the file, never locally in functions.
+  source:
+    path: crates/ty_project/src/metadata/options.rs
+    lines: 23-23
+  evidence: The `Deserializer` trait is added to the existing `use serde::{...}` block
+    at the top of the file rather than being imported locally inside the `deserialize_supported_python_version`
+    function.
+  category: style
+  reference: use serde::{Deserialize, Deserializer, Serialize};
+- rule: Try hard to avoid patterns that require `panic!`, `unreachable!`, or `.unwrap()`.
+  source:
+    path: crates/ty_project/src/metadata/options.rs
+    lines: 41-47
+  evidence: The custom deserializer returns `Err(serde::de::Error::custom(...))` to
+    gracefully handle unsupported versions instead of using `.unwrap()` or `panic!()`.
+  category: style
+  reference: Err(serde::de::Error::custom(format!
+- rule: Prefer let chains (`if let` combined with `&&`)
+  source:
+    path: crates/ty_project/src/metadata/options.rs
+    lines: 38-40
+  evidence: The `deserialize_supported_python_version` function uses an `if let Some(...)
+    = ... && !...` chain to check if the version is supported.
+  category: style
+  reference: "if let Some(python_version) = &python_version\n        && !PythonVersion::iter().any(|supported_version|"
+distractors:
+- rule: Avoid writing significant amounts of new code. Look for existing utilities
+    first.
+  collision_type: rule_conflict
+  why_distracting: The agent might waste time searching for an existing validation
+    utility or try to avoid writing the ~20 line custom deserializer function, but
+    writing this new function is exactly what is required to solve the issue.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 57-57
+- rule: All changes must be tested. If you're not testing your changes, you're not
+    done.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might spend significant effort trying to write and wire
+    up tests for the configuration parser, but the gold solution does not require
+    adding new tests for this specific fix.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 51-51
+hierarchy_analysis: The configuration is flat, with CLAUDE.md simply including AGENTS.md.
+  The agent must apply the style rules from AGENTS.md directly to the Rust code.

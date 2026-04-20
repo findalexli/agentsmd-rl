@@ -1,62 +1,60 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file path (`packages/@mantine/hooks/src/use-did-update/use-did-update.ts`), the function signature (`useDidUpdate(fn: EffectCallback, dependencies?: DependencyList)`), the imports, the patterns like `mounted.current = false`, `return undefined`, and the need for two `useEffect` calls. All test-asserted specifics (file path, string patterns, function signature, import line) are discoverable from instruction.md."
+      "reason": "The instruction names the file path, the specific strings tested ('mounted.current = false', 'return undefined'), and mentions the two useEffect structure."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the exact fix: 'Adding a separate useEffect that runs only on mount/unmount (empty dependency array)', 'This effect should return a cleanup function that sets mounted.current = false', and 'The main effect should explicitly return undefined after setting mounted.current = true'. This is a complete implementation specification, not just a description of what's broken."
+      "reason": "Instruction explicitly spells out the fix: 'Adding a separate useEffect that runs only on mount/unmount (empty dependency array)', 'This effect should return a cleanup function that sets mounted.current = false', and 'main effect should explicitly return undefined after setting mounted.current = true'\u2014this is nearly the exact patch."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact string patterns like `return undefined` and `mounted.current = false`, and count `useEffect` occurrences. An alternative correct fix (e.g., using `return void 0` instead of `return undefined`, or using a different ref-reset mechanism, or using a single useEffect with cleanup) would fail these string-matching tests even if functionally correct."
+      "reason": "Tests require literal 'return undefined' string (test_returns_undefined_in_effect, test_strict_mode_fix_complete), but an equally-correct fix could omit that or use 'return;' \u2014 the test asserts a gold-specific implementation detail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_cleanup_effect_exists, test_returns_undefined_in_effect, test_two_useeffect_calls, test_cleanup_effect_structure, test_strict_mode_fix_complete) are ALL string-matching on source code using `assert 'pattern' in source`. None of them actually execute the hook or test its runtime behavior in Strict Mode. The pass-to-pass tests do run Jest/ESLint/Prettier, but no f2p test verifies actual behavior."
+      "reason": "Most f2p tests (test_cleanup_effect_exists, test_returns_undefined_in_effect, test_two_useeffect_calls, test_cleanup_effect_structure, test_strict_mode_fix_complete) use 'in source' string checks; only the jest/eslint/prettier tests execute code, and jest is pass_to_pass not f2p."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "A trivial solution that just adds a dead-code comment containing `mounted.current = false`, `return undefined`, and an extra `useEffect` reference in a comment would pass all f2p tests since they only check for string presence in the source file, not actual runtime behavior."
+      "outcome": "pass",
+      "reason": "The f2p tests require specific source content that a stub wouldn't produce, and repo jest test would need actual correct behavior."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "The instruction says 'useDidUpdate should only execute the callback when dependencies change after the initial mount' and 'should work correctly in React Strict Mode', but no test actually verifies the hook's runtime behavior in Strict Mode. Tests only check source code text patterns."
+      "outcome": "pass",
+      "reason": "Tests cover the cleanup effect, two useEffects, return undefined, signature preservation, and jest behavior\u2014matching instruction requirements."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_cleanup_effect_exists, test_returns_undefined_in_effect, etc.), have docstrings with fail-to-pass/pass-to-pass annotations, and the module has a comprehensive docstring explaining the bug and fix."
+      "reason": "Tests are named descriptively with docstrings indicating fail-to-pass vs pass-to-pass categorization."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a React hook; no structured data output (JSON/CSV/API/DB) is produced."
+      "reason": "Task produces TypeScript code, not structured data."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "Paths and commands appear correct."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies the exact file path AND the exact implementation details: 'Adding a separate useEffect that runs only on mount/unmount (empty dependency array)', 'return a cleanup function that sets mounted.current = false', 'explicitly return undefined after setting mounted.current = true'. This is full solution leakage, not just localization."
+      "reason": "Instruction pinpoints exact implementation: 'useEffect that runs only on mount/unmount (empty dependency array)', 'sets mounted.current = false', 'explicitly return undefined'\u2014leaking the exact code tokens the tests check."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying a TypeScript source file, not a config edit task."
+      "reason": "Not an agentmd-edits task."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 3,
-  "fail_count": 6
+  "pass_count": 5,
+  "fail_count": 4
 }

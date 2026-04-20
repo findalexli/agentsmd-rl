@@ -1,0 +1,169 @@
+version: '2.0'
+source:
+  repo: anomalyco/opencode
+  pr: 17072
+  base_commit: 2aae0d3493ac51aa2fd3929c6db0814ab795b04b
+  merge_commit: 981c7b9e375b7d9ac57d2c6a3179451139b2b99b
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files must compile without errors
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's typecheck (tsgo --noEmit) passes on base commit
+- id: test_repo_account_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Account tests pass on base commit
+- id: test_repo_auth_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Auth tests pass on base commit
+- id: test_repo_storage_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Storage tests pass on base commit
+- id: test_repo_bun_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Bun tests pass on base commit
+- id: test_repo_acp_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: ACP (Agent Client Protocol) tests pass on base commit
+- id: test_repo_scheduler_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Scheduler tests pass on base commit
+- id: test_repo_config_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Config tests pass on base commit
+- id: repo_passes_account_tests
+  type: fail_to_pass
+  origin: pr_diff
+  description: Account repo and service tests must pass after the refactor
+- id: schema_has_branded_types
+  type: fail_to_pass
+  origin: pr_diff
+  description: Schema must define RefreshToken, DeviceCode, UserCode branded types
+- id: service_uses_layer_effect
+  type: fail_to_pass
+  origin: pr_diff
+  description: AccountService must use Layer.effect with Effect.gen pattern
+- id: repo_uses_layer_effect
+  type: fail_to_pass
+  origin: pr_diff
+  description: AccountRepo must use Layer.effect with Effect.gen pattern
+- id: service_has_namespace
+  type: pass_to_pass
+  origin: pr_diff
+  description: AccountService must export namespace with Service interface
+- id: schema_uses_class_for_data_types
+  type: pass_to_pass
+  origin: pr_diff
+  description: Data types like Login, User, ClientId must use Schema.Class and Duration
+- id: agents_md_has_effect_guide
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md must include the opencode Effect guide section
+- id: agents_md_schemas_rule
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md must document Schema.Class for data types and Schema.brand
+    for single-value types
+- id: agents_md_services_rule
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md must document Layer.effect pattern for services
+- id: agents_md_effects_rule
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md must document Effect.gen and Effect.fn patterns
+- id: agents_md_errors_rule
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md must document preferring 'yield* new MyError' over 'yield*
+    Effect.fail'
+rubric:
+- rule: Services must use Layer.effect with Effect.gen pattern, not Layer.succeed
+    with plain objects
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: 14-15
+    commit: 2aae0d3493ac51aa2fd3929c6db0814ab795b04b
+  reference: In `Layer.effect`, always return service implementations with `ServiceName.of({
+    ... })`, never a plain object.
+- rule: Data types with multiple fields must use Schema.Class, not Schema.Struct
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: '12'
+    commit: 2aae0d3493ac51aa2fd3929c6db0814ab795b04b
+  reference: Use `Schema.Class` for data types with multiple fields.
+- rule: Single-value types must use branded schemas (Schema.brand)
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: '13'
+    commit: 2aae0d3493ac51aa2fd3929c6db0814ab795b04b
+  reference: Use branded schemas (`Schema.brand`) for single-value types.
+- rule: Internal helpers must use Effect.fnUntraced, public methods must use Effect.fn
+    with name
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: '25'
+    commit: 2aae0d3493ac51aa2fd3929c6db0814ab795b04b
+  reference: Use `Effect.fn("ServiceName.method")` for named/traced effects and `Effect.fnUntraced`
+    for internal helpers.
+- rule: In Effect.gen, prefer 'yield* new MyError()' over 'yield* Effect.fail(new
+    MyError())'
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: 21-22,31-32
+    commit: 2aae0d3493ac51aa2fd3929c6db0814ab795b04b
+  reference: In `Effect.gen`, prefer `yield* new MyError(...)` over `yield* Effect.fail(new
+    MyError(...))` for direct early-failure branches.
+- rule: Avoid `try`/`catch` where possible
+  source:
+    path: AGENTS.md
+    lines: 12-12
+  evidence: The expected behavior specifies using `HttpClient.filterStatusOk` for
+    proper HTTP status handling and structured error handling, which aligns with the
+    rule to avoid traditional `try`/`catch` blocks.
+  category: style
+- rule: Keep things in one function unless composable or reusable
+  source:
+    path: AGENTS.md
+    lines: 11-11
+  evidence: The expected behavior requires moving helper functions inside the `Effect.gen`
+    scope, which aligns with the rule to keep things in one function.
+  category: style
+distractors:
+- rule: Prefer single word names for variables and functions. Only use multiple words
+    if necessary. Do not introduce new camelCase compounds when a short single-word
+    alternative is clear.
+  collision_type: rule_conflict
+  why_distracting: The rule mandates single-word names and forbids new camelCase compounds,
+    but the task explicitly requires creating multi-word identifiers like `RefreshToken`,
+    `DeviceCode`, `UserCode`, `AccountRepo`, and `AccountService`.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 22-35
+- rule: Rely on type inference when possible; avoid explicit type annotations or interfaces
+    unless necessary for exports or clarity
+  collision_type: rule_conflict
+  why_distracting: The rule discourages explicit type annotations and interfaces,
+    but the task explicitly requires adding a `Service` interface to the `AccountService`
+    namespace and updating type signatures to use branded types.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 14-15
+hierarchy_analysis: The agent is provided with a single `AGENTS.md` file containing
+  general style guidelines. However, the task instructions explicitly contradict several
+  of these guidelines (e.g., requiring multi-word camelCase names and explicit interfaces).
+  Furthermore, the task requires the agent to document Effect patterns, which the
+  gold solution achieves by modifying the `AGENTS.md` file itself, making this a highly
+  meta-referential task where the agent must edit its own instructions.

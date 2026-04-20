@@ -1,0 +1,390 @@
+version: '2.0'
+source:
+  repo: vercel/next.js
+  pr: 87943
+  base_commit: c74cb2ae25bbe515c600b85f1e974f7eb26db576
+  merge_commit: 3c47bd99afb7babc202898f71a815a8663db42b1
+checks:
+- id: test_claude_md_exists_with_content
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLAUDE.md created with Next.js development guide content
+- id: test_claude_ci_failures_command_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: .claude/commands/ci-failures.md created with CI analysis instructions
+- id: test_gitignore_updated_for_claude
+  type: fail_to_pass
+  origin: pr_diff
+  description: .gitignore updated to ignore Claude Code local settings
+- id: test_alexignore_updated_for_claude
+  type: fail_to_pass
+  origin: pr_diff
+  description: .alexignore updated to ignore .claude/ directory and CLAUDE.md
+- id: test_claude_md_has_graphite_safety_rules
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLAUDE.md contains Graphite stack safety rules
+- id: test_claude_md_has_testing_commands
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLAUDE.md contains testing commands section with pnpm test commands
+- id: test_claude_md_not_empty
+  type: pass_to_pass
+  origin: static
+  description: CLAUDE.md is not empty or stub
+- id: test_ci_failures_md_not_empty
+  type: pass_to_pass
+  origin: static
+  description: .claude/commands/ci-failures.md is not empty or stub
+- id: test_claude_directory_structure_correct
+  type: pass_to_pass
+  origin: static
+  description: .claude/ directory exists with correct structure
+- id: test_repo_git_status_clean
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo has no uncommitted changes at base commit
+- id: test_repo_prettier_package_json
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo package.json files pass prettier formatting check
+- id: test_repo_alex_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo markdown files pass alex language linting
+rubric:
+- rule: CLAUDE.md must include a Graphite Stack Safety Rules section with specific safety
+    guidelines for using gt commands
+  source:
+    path: CLAUDE.md
+    lines: 29-41
+    commit: c74cb2ae25bbe515c600b85f1e974f7eb26db576
+  reference: Graphite Stack Safety Rules with guidelines for gt commands including warnings about force-pushes, uncommitted changes, git stash, git checkout, and gt checkout usage
+- rule: CLAUDE.md must document pnpm-based testing commands including pnpm test-dev-turbo
+    and pnpm test-start-turbo
+  source:
+    path: CLAUDE.md
+    lines: 102-126
+    commit: c74cb2ae25bbe515c600b85f1e974f7eb26db576
+  reference: Testing commands section with pnpm test-dev-turbo, pnpm test-start-turbo, pnpm test-unit
+- rule: .gitignore must be updated to ignore Claude Code local settings (.claude/settings.local.json,
+    .claude/plans/, .claude/todos.json, CLAUDE.local.md)
+  source:
+    path: .gitignore
+    lines: 66-71
+    commit: c74cb2ae25bbe515c600b85f1e974f7eb26db576
+  reference: "# Claude Code (local settings and session files)\n.claude/settings.local.json\n.claude/plans/\n\
+    .claude/todos.json\nCLAUDE.local.md"
+- rule: .alexignore must be updated to ignore the .claude/ directory and CLAUDE.md from
+    alex linting
+  source:
+    path: .alexignore
+    lines: 4-5
+    commit: c74cb2ae25bbe515c600b85f1e974f7eb26db576
+  reference: ".claude/ directory and CLAUDE.md file ignored"
+- rule: .claude/commands/ci-failures.md must include instructions for analyzing CI failures
+    using gh api (not gh run view --log) with pagination handling for >100 jobs
+  source:
+    path: .claude/commands/ci-failures.md
+    lines: 28-35
+    commit: c74cb2ae25bbe515c600b85f1e974f7eb26db576
+  reference: "**CRITICAL: Use the API endpoint for logs, NOT `gh run view --log`**\n- `gh\n\
+    run view --job --log` FAILS when run is in-progress\n- `gh api \"repos/.../actions/jobs/{job_id}/logs\"`\
+    **WORKS** for any completed job\n- Always use the API endpoint for reliability"
+config_edits:
+- path: .claude/commands/ci-failures.md
+  tier: 2
+  gold_added: |
+    # Check CI Failures
+
+    Analyze failing tests from PR CI runs with parallel subagent log analysis.
+
+    ## Usage
+
+    ```
+    /ci-failures [pr-number]
+    ```
+
+    If no PR number provided, detect from current branch.
+
+    ## Instructions
+
+    1. Get the PR number from argument or current branch:
+
+       ```bash
+       gh pr view --json number,headRefName --jq '"\(.number) \(.headRefName)"'
+       ```
+
+    2. **CRITICAL: Always fetch fresh run IDs** - never trust cached IDs from conversation summaries:
+
+       ```bash
+       gh api "repos/vercel/next.js/actions/runs?branch={branch}&per_page=10" \
+         --jq '.workflow_runs[] | select(.name == "build-and-test") | "\(.id) attempts:\(.run_attempt) status:\(.status) conclusion:\(.conclusion)"'
+       ```
+
+    3. **Prioritize the MOST RECENT run, even if in-progress:**
+       - If the latest run is `in_progress` or `queued`, check it FIRST - it has the most relevant failures
+       - Individual jobs complete before the overall run - analyze them as they finish
+       - Only fall back to older completed runs if the current run has no completed jobs yet
+
+    4. Get all failed jobs from the run (works for in-progress runs too):
+
+       ```bash
+       gh api "repos/vercel/next.js/actions/runs/{run_id}/jobs?per_page=100" \
+         --jq '.jobs[] | select(.conclusion == "failure") | "\(.id) \(.name)"'
+       ```
+
+       **Note:** For runs with >100 jobs, paginate:
+
+       ```bash
+       gh api "repos/vercel/next.js/actions/runs/{run_id}/jobs?per_page=100&page=2"
+       ```
+
+    5. Spawn parallel haiku subagents to analyze logs (limit to 3-4 to avoid rate limits):
+       - **CRITICAL: Use the API endpoint for logs, NOT `gh run view --log`**
+       - `gh run view --job --log` FAILS when run is in-progress
+       - **Do NOT group by job name** (e.g., "test dev", "turbopack") - group by failure pattern instead
+       - Agent prompt should extract structured data using:
+         ```bash
+         # Extract assertion failures with context:
+         gh api "repos/vercel/next.js/actions/jobs/{job_id}/logs" 2>&1 | \
+           grep -B3 -A10 "expect.*\(toBe\|toContain\|toEqual\|toStartWith\|toMatch\)" | head -100
+         # Also check for test file paths:
+         gh api "repos/vercel/next.js/actions/jobs/{job_id}/logs" 2>&1 | \
+           grep -E "^\s+at Object\.|FAIL\s+test/" | head -20
+         ```
+
+    ## Common Gotchas
+
+    ### In-Progress Runs
+
+    - `gh run view {run_id} --job {job_id} --log` **FAILS** when run is in-progress
+    - `gh api "repos/.../actions/jobs/{job_id}/logs"` **WORKS** for any completed job
+    - Always use the API endpoint for reliability
+
+    ### Pagination
+
+    - GitHub API paginates at 100 jobs per page
+    - Next.js CI has ~120+ jobs - always check page 2:
+      ```bash
+      gh api ".../jobs?per_page=100&page=1" --jq '[.jobs[] | select(.conclusion == "failure")] | length'
+      gh api ".../jobs?per_page=100&page=2" --jq '[.jobs[] | select(.conclusion == "failure")] | length'
+      ```
+
+    ### Multiple Attempts
+
+    - CI runs can have multiple attempts (retries)
+    - Check attempt count: `.run_attempt` field
+    - Query specific attempt: `.../runs/{id}/attempts/{n}/jobs`
+    - 404 on attempt endpoint means that attempt doesn't exist
+  gold_removed: ''
+- path: CLAUDE.md
+  tier: 1
+  gold_added: |
+    # Next.js Development Guide
+
+    ## Git Workflow
+
+    **Use Graphite for all git operations** instead of raw git commands:
+
+    - `gt create <branch-name> -m "message"` - Create a new branch with commit
+    - `gt modify -a --no-edit` - Stage all and amend current branch's commit
+    - `gt checkout <branch>` - Switch branches (use instead of `git checkout`)
+    - `gt sync` - Sync and restack all branches
+    - `gt submit --no-edit` - Push and create/update PRs (use `--no-edit` to avoid interactive prompts)
+    - `gt log short` - View stack status
+
+    **Note**: `gt submit` runs in interactive mode by default and won't push in automated contexts. Always use `gt submit --no-edit` or `gt submit -q` when running from Claude.
+
+    **Graphite Stack Safety Rules:**
+
+    - Graphite force-pushes everything - old commits only recoverable via reflog
+    - Never have uncommitted changes when switching branches - they get lost during restack
+    - Never use `git stash` with Graphite - causes conflicts when `gt modify` restacks
+    - Never use `git checkout HEAD -- <file>` after editing - silently restores unfixed version
+    - Always use `gt checkout` (not `git checkout`) to switch branches
+    - `gt modify --no-edit` with unstaged/untracked files stages ALL changes
+    - `gt sync` pulls FROM remote, doesn't push TO remote
+    - `gt modify` restacks children locally but doesn't push them
+    - Always verify with `git status -sb` after stack operations
+    - When resuming from summarized conversation, never trust cached IDs - re-fetch from git/GitHub API
+
+    **Safe multi-branch fix workflow:**
+
+    ```bash
+    gt checkout parent-branch
+    # make edits
+    gt modify -a --no-edit        # Stage all, amend, restack children
+    git show HEAD -- <files>      # VERIFY fix is in commit
+    gt submit --no-edit           # Push immediately
+
+    gt checkout child-branch      # Already restacked from gt modify
+    # make edits
+    gt modify -a --no-edit
+    git show HEAD -- <files>      # VERIFY
+    gt submit --no-edit
+    ```
+
+    ## Build Commands
+
+    ```bash
+    # Build the Next.js package (dev server only - faster)
+    pnpm --filter=next build:dev-server
+
+    # Build everything
+    pnpm build
+
+    # Run specific task
+    pnpm --filter=next taskfile <task>
+    ```
+
+    ## Fast Local Development
+
+    For iterative development, use watch mode + fast test execution:
+
+    **1. Start watch build in background:**
+
+    ```bash
+    # Runs taskr in watch mode - auto-rebuilds on file changes
+    # Use Bash(run_in_background=true) to keep working while it runs
+    pnpm --filter=next dev
+    ```
+
+    **2. Run tests fast (no isolation, no packing):**
+
+    ```bash
+    # NEXT_SKIP_ISOLATE=1 - skip packing Next.js for each test (much faster)
+    # testonly - runs with --runInBand (no worker isolation overhead)
+    NEXT_SKIP_ISOLATE=1 NEXT_TEST_MODE=dev pnpm testonly test/path/to/test.ts
+    ```
+
+    **3. When done, kill the background watch process.**
+
+    Only use full `pnpm --filter=next build` for one-off builds (after branch switch, before CI push).
+
+    **Always rebuild after switching branches:**
+
+    ```bash
+    gt checkout <branch>
+    pnpm build   # Required before running tests (Turborepo dedupes if unchanged)
+    ```
+
+    ## Testing
+
+    ```bash
+    # Run specific test file (development mode with Turbopack)
+    pnpm test-dev-turbo test/path/to/test.test.ts
+
+    # Run tests matching pattern
+    pnpm test-dev-turbo -t "pattern"
+
+    # Run development tests
+    pnpm test-dev-turbo test/development/
+    ```
+
+    **Test commands by mode:**
+
+    - `pnpm test-dev-turbo` - Development mode with Turbopack (default)
+    - `pnpm test-dev-webpack` - Development mode with Webpack
+    - `pnpm test-start-turbo` - Production build+start with Turbopack
+    - `pnpm test-start-webpack` - Production build+start with Webpack
+
+    **Other test commands:**
+
+    - `pnpm test-unit` - Run unit tests only (fast, no browser)
+    - `pnpm testonly <path>` - Run tests without rebuilding (faster iteration)
+    - `pnpm new-test` - Generate a new test file from template
+
+    ## Linting and Types
+
+    ```bash
+    pnpm lint              # Full lint (types, prettier, eslint, ast-grep)
+    pnpm lint-fix          # Auto-fix lint issues
+    pnpm prettier-fix      # Fix formatting only
+    pnpm types             # TypeScript type checking
+    ```
+
+    ## Investigating CI Test Failures
+
+    **Use `/ci-failures` for automated analysis** - analyzes failing jobs in parallel and groups by test file.
+
+    **CI Analysis Tips:**
+
+    - Don't spawn too many parallel agents hitting GitHub API (causes rate limits)
+    - Prioritize blocking jobs first: lint, types, then test jobs
+    - Use `gh api` for logs (works on in-progress runs), not `gh run view --log`
+
+    **Quick triage:**
+
+    ```bash
+    # List failed jobs for a PR
+    gh pr checks <pr-number> | grep fail
+
+    # Get failed job names
+    gh run view <run-id> --json jobs --jq '.jobs[] | select(.conclusion == "failure") | .name'
+
+    # Search job logs for errors (completed runs only - use gh api for in-progress)
+    gh run view <run-id> --job <job-id> --log 2>&1 | grep -E "FAIL|Error|error:" | head -30
+    ```
+
+    **Common failure patterns:**
+
+    - `rust check / build` → Run `cargo fmt -- --check` locally, fix with `cargo fmt`
+    - `lint / build` → Run `pnpm prettier --write <file>` for prettier errors
+    - Test failures → Run the specific test locally with `pnpm test-dev-turbo <test-path>`
+
+    **Run tests in the right mode:**
+
+    ```bash
+    # Dev mode (Turbopack)
+    pnpm test-dev-turbo test/path/to/test.ts
+
+    # Prod mode
+    pnpm test-start-turbo test/path/to/test.ts
+    ```
+
+    ## Key Directories
+
+    - `packages/next/src/` - Main Next.js source code
+      - `server/` - Server runtime (dev server, router, rendering)
+      - `client/` - Client-side code
+      - `build/` - Build tooling (webpack, turbopack configs)
+      - `cli/` - CLI entry points
+    - `packages/next/dist/` - Compiled output
+    - `turbopack/` - Turbopack bundler (Rust)
+    - `test/` - Test suites
+      - `development/` - Dev server tests
+      - `production/` - Production build tests
+      - `e2e/` - End-to-end tests
+
+    ## Development Tips
+
+    - The dev server entry point is `packages/next/src/cli/next-dev.ts`
+    - Router server: `packages/next/src/server/lib/router-server.ts`
+    - Use `DEBUG=next:*` for debug logging
+    - Use `NEXT_TELEMETRY_DISABLED=1` when testing locally
+
+    ## Commit and PR Style
+
+    - Do NOT add "Generated with Claude Code" or co-author footers to commits or PRs
+    - Keep commit messages concise and descriptive
+    - PR descriptions should focus on what changed and why
+
+    ## Development Anti-Patterns
+
+    ### Test Gotchas
+
+    - Mode-specific tests need `skipStart: true` + manual `next.start()` in `beforeAll` after mode check
+    - Don't rely on exact log messages - filter by content patterns, find sequences not positions
+
+    ### Rust/Cargo
+
+    - cargo fmt uses ASCII order (uppercase before lowercase) - just run `cargo fmt`
+
+    ### Node.js Source Maps
+
+    - `findSourceMap()` needs `--enable-source-maps` flag or returns undefined
+    - Source map paths vary (webpack: `./src/`, tsc: `src/`) - try multiple formats
+    - `process.cwd()` in stack trace formatting produces different paths in tests vs production
+  gold_removed: ''

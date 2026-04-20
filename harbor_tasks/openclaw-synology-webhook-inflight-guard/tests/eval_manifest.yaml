@@ -1,0 +1,234 @@
+version: '2.0'
+source:
+  repo: openclaw/openclaw
+  pr: 57729
+  base_commit: 7a953a52271b9188a5fa830739a4366614ff9916
+  merge_commit: 7a953a52271b9188a5fa830739a4366614ff9916
+checks:
+- id: files_exist
+  type: pass_to_pass
+  origin: static
+  description: Modified files (webhook-handler.ts, test-http-utils.ts) must exist
+- id: concurrent_requests_429
+  type: fail_to_pass
+  origin: pr_diff
+  description: Excess concurrent pre-auth body reads are rejected with HTTP 429
+- id: makeres_statuscode_sync
+  type: fail_to_pass
+  origin: pr_diff
+  description: makeRes() statusCode property is synced bidirectionally to _status
+- id: shared_limiter_across_handlers
+  type: fail_to_pass
+  origin: pr_diff
+  description: Module-level limiter is shared across handler instances (not per-request)
+- id: cleanup_clears_inflight_limiter
+  type: fail_to_pass
+  origin: pr_diff
+  description: clearSynologyWebhookRateLimiterStateForTest() resets in-flight limiter
+- id: account_scoped_inflight_key
+  type: fail_to_pass
+  origin: pr_diff
+  description: In-flight key uses account-level scoping, not fragile remoteAddress
+- id: upstream_vitest_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing upstream webhook-handler tests pass via vitest
+- id: repo_core_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: synology-chat core tests pass via vitest
+- id: repo_client_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: synology-chat client tests pass via vitest
+- id: repo_channel_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: synology-chat channel tests pass via vitest
+- id: repo_approval_auth_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: synology-chat approval-auth tests pass via vitest
+- id: repo_oxlint
+  type: pass_to_pass
+  origin: repo_tests
+  description: oxlint passes on modified synology-chat files
+- id: repo_no_conflict_markers
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo has no Git conflict markers
+- id: repo_extension_boundary_relative_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: Extension relative imports stay within package boundaries
+- id: repo_extension_no_src_outside_plugin_sdk
+  type: pass_to_pass
+  origin: repo_tests
+  description: Extensions don't import src outside plugin-sdk
+- id: repo_extension_no_plugin_sdk_internal
+  type: pass_to_pass
+  origin: repo_tests
+  description: Extensions don't use plugin-sdk-internal imports
+- id: repo_webhook_auth_body_order
+  type: pass_to_pass
+  origin: repo_tests
+  description: Webhook auth/body order check passes
+- id: repo_plugin_extension_import_boundary
+  type: pass_to_pass
+  origin: repo_tests
+  description: Plugin extension import boundary check passes
+- id: repo_no_extension_src_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: No extension src imports check passes
+- id: repo_no_extension_test_core_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: No extension test core imports check passes
+- id: repo_no_monolithic_plugin_sdk_entry_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: No monolithic plugin-sdk entry imports check passes
+- id: guard_integrated_before_auth
+  type: fail_to_pass
+  origin: pr_diff
+  description: Pre-auth concurrency guard is called before auth with early-return
+    on rejection
+- id: guard_release_lifecycle
+  type: fail_to_pass
+  origin: pr_diff
+  description: Auth is wrapped in try/finally (or equivalent) that releases the guard
+- id: import_from_plugin_sdk
+  type: fail_to_pass
+  origin: agent_config
+  description: New webhook-ingress imports use openclaw/plugin-sdk/* path, not core
+    internals
+  source:
+    path: AGENTS.md
+    lines: '16'
+    commit: 7a953a52271b9188a5fa830739a4366614ff9916
+- id: no_any_types
+  type: pass_to_pass
+  origin: agent_config
+  description: No any type annotations in webhook-handler.ts
+  source:
+    path: AGENTS.md
+    lines: 144,147
+    commit: 7a953a52271b9188a5fa830739a4366614ff9916
+- id: no_relative_imports_outside_package
+  type: pass_to_pass
+  origin: agent_config
+  description: No relative imports that escape the synology-chat extension package
+    root
+  source:
+    path: AGENTS.md
+    lines: '158'
+    commit: 7a953a52271b9188a5fa830739a4366614ff9916
+- id: no_magic_sentinels
+  type: pass_to_pass
+  origin: agent_config
+  description: No ?? 0, ?? '', or ?? {} sentinel fallbacks in webhook-handler.ts
+  source:
+    path: AGENTS.md
+    lines: '152'
+    commit: 7a953a52271b9188a5fa830739a4366614ff9916
+- id: no_ts_suppress
+  type: pass_to_pass
+  origin: agent_config
+  description: No @ts-nocheck or inline lint suppressions in webhook-handler.ts
+  source:
+    path: AGENTS.md
+    lines: 146-147
+    commit: 7a953a52271b9188a5fa830739a4366614ff9916
+- id: no_sdk_self_import
+  type: pass_to_pass
+  origin: agent_config
+  description: synology-chat extension does not import itself via openclaw/plugin-sdk/synology-chat
+  source:
+    path: AGENTS.md
+    lines: '157'
+    commit: 7a953a52271b9188a5fa830739a4366614ff9916
+rubric:
+- rule: Add brief code comments for tricky or non-obvious logic.
+  source:
+    path: AGENTS.md
+    lines: '163'
+    commit: 7a953a52271b9188a5fa830739a4366614ff9916
+- rule: Prefer Result<T, E>-style outcomes and closed error-code unions for recoverable
+    runtime decisions.
+  source:
+    path: AGENTS.md
+    lines: '150'
+    commit: 7a953a52271b9188a5fa830739a4366614ff9916
+- rule: Prefer discriminated unions when parameter shape changes runtime behavior.
+  source:
+    path: AGENTS.md
+    lines: '149'
+    commit: 7a953a52271b9188a5fa830739a4366614ff9916
+- rule: 'Written English: use American spelling and grammar in code, comments, docs,
+    and UI strings.'
+  source:
+    path: AGENTS.md
+    lines: '167'
+    commit: 7a953a52271b9188a5fa830739a4366614ff9916
+- rule: Extension production code should import from openclaw/plugin-sdk/* and its
+    own local barrels; do not import core internals or another extension's src/**.
+  source:
+    path: extensions/AGENTS.md
+    lines: 27-30
+    commit: 7a953a52271b9188a5fa830739a4366614ff9916
+- rule: Keep human-readable strings for logs, CLI output, and UI; do not use freeform
+    strings as the source of truth for internal branching.
+  source:
+    path: AGENTS.md
+    lines: '151'
+    commit: 7a953a52271b9188a5fa830739a4366614ff9916
+- rule: Write tests to clean up timers, env, globals, mocks, sockets, temp dirs, and
+    module state so --isolate=false stays green.
+  source:
+    path: AGENTS.md
+    lines: '181'
+    commit: 7a953a52271b9188a5fa830739a4366614ff9916
+- rule: Extension production code should import from `openclaw/plugin-sdk/*` and its
+    own local barrels.
+  source:
+    path: extensions/CLAUDE.md
+    lines: 22-23
+  evidence: The gold solution imports `beginWebhookRequestPipelineOrReject` and `createWebhookInFlightLimiter`
+    from `openclaw/plugin-sdk/webhook-ingress` rather than reaching into core internals.
+  category: architecture
+- rule: 'Tests: colocated `*.test.ts`.'
+  source:
+    path: CLAUDE.md
+    lines: 9-9
+  evidence: The new test for rejecting excess concurrent pre-auth body reads is added
+    directly to the colocated `extensions/synology-chat/src/webhook-handler.test.ts`
+    file.
+  category: testing
+distractors:
+- rule: Do not import core internals from `src/**`, `src/channels/**`, `src/plugin-sdk-internal/**`,
+    or another extension's `src/**`.
+  collision_type: architecture_boundary
+  why_distracting: The task hint explicitly tells the agent to look at how limiters
+    are used by other webhook handlers. The agent will likely look at core channels
+    in `src/channels/*` and might be tempted to import helper functions or constants
+    from those core directories, which violates the strict extension boundary.
+  severity: high
+  source:
+    path: extensions/AGENTS.md
+    lines: 21-22
+- rule: Do not edit files covered by security-focused `CODEOWNERS` rules unless a
+    listed owner explicitly asked for the change.
+  collision_type: scope_ambiguity
+  why_distracting: The task involves fixing a pre-auth concurrency limit (a DoS/security
+    issue) in a webhook handler. An agent might overly cautiously refuse to edit the
+    webhook handler, thinking it's a restricted security surface covered by CODEOWNERS.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 5-5
+hierarchy_analysis: The repository defines a global architecture in the root `AGENTS.md`
+  and enforces a strict plugin boundary in `extensions/AGENTS.md`. The agent must
+  navigate this hierarchy to understand that while it can look at core channels for
+  inspiration (as hinted), it must strictly adhere to the `openclaw/plugin-sdk/*`
+  boundary for imports.

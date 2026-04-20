@@ -1,0 +1,193 @@
+version: '2.0'
+source:
+  repo: pytorch/pytorch
+  pr: 176131
+  base_commit: 63fcbe1040ffef63e82abd4e66da1d7554d23aa4
+  merge_commit: 5a6d6b3ece55cc4f4db0e377fa33b9c8374a507f
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: scheduler.py must be valid Python
+- id: contiguity_guard_rejects_noncontiguous_pointwise
+  type: fail_to_pass
+  origin: pr_diff
+  description: sub_node_can_fuse rejects fusion when node1 is contiguous but node2
+    is non-contiguous pointwise, across varying scores/numel
+- id: contiguity_guard_rejects_noncontiguous_reduction
+  type: fail_to_pass
+  origin: pr_diff
+  description: sub_node_can_fuse rejects non-contiguous reduction when node1 is contiguous,
+    regardless of score
+- id: contiguity_guard_with_ancestors_and_other_nodes
+  type: fail_to_pass
+  origin: pr_diff
+  description: Guard rejects contiguous+non-contiguous even when nodes have ancestors
+    and other_nodes are present
+- id: both_contiguous_fusion_allowed
+  type: pass_to_pass
+  origin: pr_diff
+  description: Both contiguous nodes are allowed to fuse (guard does not over-reject)
+- id: noncontiguous_node1_contiguous_node2_allowed
+  type: pass_to_pass
+  origin: pr_diff
+  description: Non-contiguous node1 + contiguous node2 still allowed to fuse
+- id: both_noncontiguous_allowed
+  type: pass_to_pass
+  origin: pr_diff
+  description: Both non-contiguous nodes still allowed (guard only fires when node1
+    IS contiguous)
+- id: ancestor_cycle_still_rejected
+  type: pass_to_pass
+  origin: pr_diff
+  description: Ancestor/operation-name cycle detection still works after contiguity
+    guard
+- id: can_fuse_false_still_rejected
+  type: pass_to_pass
+  origin: pr_diff
+  description: When scheduler.can_fuse returns False, fusion is rejected regardless
+- id: sub_node_can_fuse_not_stub
+  type: pass_to_pass
+  origin: static
+  description: sub_node_can_fuse has real logic (>= 5 top-level statements)
+- id: fuse_with_method_preserved
+  type: pass_to_pass
+  origin: static
+  description: fuse_with method still exists in FusedMixOrderReductions
+- id: init_contiguity_assertion_preserved
+  type: pass_to_pass
+  origin: static
+  description: FusedMixOrderReductions.__init__ still asserts contiguity invariant
+- id: no_dynamic_setattr_in_fix
+  type: pass_to_pass
+  origin: agent_config
+  description: Fix must not use dynamic setattr/getattr (explicit state management)
+  source:
+    path: CLAUDE.md
+    lines: 53-56
+    commit: 63fcbe1040ffef63e82abd4e66da1d7554d23aa4
+- id: test_repo_inductor_syntax
+  type: pass_to_pass
+  origin: static
+  description: All torch/_inductor/*.py files have valid Python syntax
+- id: test_repo_scheduler_ast
+  type: pass_to_pass
+  origin: static
+  description: scheduler.py has valid AST structure
+- id: test_repo_inductor_compileall
+  type: pass_to_pass
+  origin: static
+  description: All torch/_inductor/*.py files compile without errors via compileall
+- id: test_repo_scheduler_structure
+  type: pass_to_pass
+  origin: static
+  description: scheduler.py contains required MixOrderReduction and FusedMixOrderReductions
+    classes
+- id: test_repo_torch_package_syntax
+  type: pass_to_pass
+  origin: static
+  description: All torch/*.py package files have valid Python syntax
+- id: test_repo_ci_scheduler_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: scheduler.py passes Python syntax check via subprocess (CI py_compile)
+- id: test_repo_ci_inductor_compileall
+  type: pass_to_pass
+  origin: repo_tests
+  description: All torch/_inductor files compile via compileall subprocess
+- id: test_repo_ci_kernel_launch_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: CUDA kernel launch patterns are valid (CI check_kernel_launches.py)
+- id: test_repo_ci_ciflow_labels
+  type: pass_to_pass
+  origin: repo_tests
+  description: CI flow labels are valid (CI collect_ciflow_labels.py --validate-tags)
+- id: test_repo_ci_mix_order_test_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: test_mix_order_reduction.py has valid syntax via subprocess
+rubric:
+- rule: Minimize comments; be concise; code should be self-explanatory and self-documenting.
+  source:
+    path: CLAUDE.md
+    lines: '48'
+    commit: 63fcbe1040ffef63e82abd4e66da1d7554d23aa4
+- rule: If uncertain, choose the simpler, more concise implementation.
+  source:
+    path: CLAUDE.md
+    lines: '62'
+    commit: 63fcbe1040ffef63e82abd4e66da1d7554d23aa4
+- rule: Match existing code style and architectural patterns.
+  source:
+    path: CLAUDE.md
+    lines: '57'
+    commit: 63fcbe1040ffef63e82abd4e66da1d7554d23aa4
+- rule: Don't make trivial (1-2 LOC) helper functions that are only used once unless
+    it significantly improves code readability.
+  source:
+    path: CLAUDE.md
+    lines: 51-52
+    commit: 63fcbe1040ffef63e82abd4e66da1d7554d23aa4
+- rule: Comments should be useful — remind the reader about global context that is
+    non-obvious and can't be inferred locally.
+  source:
+    path: CLAUDE.md
+    lines: 49-50
+    commit: 63fcbe1040ffef63e82abd4e66da1d7554d23aa4
+- rule: Comments should be useful, for example, comments that remind the reader about
+    some global context that is non-obvious and can't be inferred locally.
+  source:
+    path: CLAUDE.md
+    lines: 46-47
+    commit: 63fcbe1040ffef63e82abd4e66da1d7554d23aa4
+  evidence: The gold solution adds a comment explaining that 'Since node1 is from
+    the current mix order reduction, if node1 is contiguous, the fused node should
+    also be contiguous', which provides necessary globa
+  category: documentation
+distractors:
+- rule: Minimize comments; be concise; code should be self-explanatory and self-documenting.
+  collision_type: rule_conflict
+  why_distracting: The agent might strictly follow this rule and omit the explanatory
+    comment about the contiguity invariant. However, the invariant is enforced in
+    a different class (`FusedMixOrderReductions.__init__`), making the local code
+    non-self-explanatory without the comment.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: '44'
+- rule: Once the change is passing, find an appropriate test file to add the test
+    to and make sure to follow local conventions on the test file.
+  collision_type: scope_ambiguity
+  why_distracting: The reproduction requires a highly specific and complex setup (large
+    asymmetric shape, split_reductions=False, specific op sequence). The gold solution
+    omits the test, likely because it's too complex or flaky to add as a standard
+    unit test. The agent might waste significant effort trying to fulfill this testing
+    requirement.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 3-6
+- rule: Migrate a file to use stricter Pyrefly type checking with annotations required
+    for all functions, classes, and attributes.
+  source:
+    path: .claude/skills/pyrefly-type-coverage/SKILL.md
+    lines: 1-2
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to add strict type annotations to `sub_node_can_fuse`
+    or other parts of `scheduler.py` while modifying it, which is out of scope for
+    this bug fix and would bloat the PR.
+  severity: medium
+- rule: Write docstrings for PyTorch functions and methods following PyTorch conventions.
+  source:
+    path: .claude/skills/docstring/SKILL.md
+    lines: 1-2
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to add or update the docstring for `sub_node_can_fuse`
+    to document the new contiguity requirement, rather than just adding the necessary
+    inline comment, violating the 'minimize comments' rule.
+  severity: low
+hierarchy_analysis: The config hierarchy is flat, consisting of two Level 0 files
+  (`AGENTS.md` and `CLAUDE.md`). There is an internal conflict within `CLAUDE.md`
+  regarding documentation (minimizing comments vs. adding useful global context),
+  requiring the agent to balance conciseness with clarity.

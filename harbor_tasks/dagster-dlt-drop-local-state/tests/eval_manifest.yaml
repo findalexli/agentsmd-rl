@@ -1,0 +1,71 @@
+checks:
+- id: test_stale_state_interference_regression
+  type: fail_to_pass
+  description: Verify stale state from previous runs doesn't interfere
+  origin: pr_diff
+- id: test_drop_state_called
+  type: fail_to_pass
+  description: Verify drop() is called during dagster-dlt runs
+  origin: pr_diff
+- id: test_repo_dagster_dlt_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: dagster-dlt test suite passes
+- id: test_repo_dagster_dlt_core_pipeline
+  type: pass_to_pass
+  origin: repo_tests
+  description: dagster-dlt core pipeline test passes
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff lint check on dagster-dlt passes
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff format check on dagster-dlt passes
+- id: test_repo_dagster_core_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: Dagster core and dagster-dlt can be imported without errors
+- id: test_repo_dagster_dlt_resource_import
+  type: pass_to_pass
+  origin: repo_tests
+  description: DagsterDltResource and related classes can be imported
+rubric:
+- rule: 'Python: Core framework in `python_modules/dagster/`, libraries in `python_modules/libraries/`'
+  source:
+    path: CLAUDE.md
+    lines: 40-41
+    commit: 095d02df486d2ab390f8d2385e1ef9413ecf37e0
+  reference: The gold solution modifies `python_modules/libraries/dagster-dlt/dagster_dlt/resource.py`,
+    correctly locating the `dagster-dlt` integration in the libraries directory rather
+    than the core framework.
+  category: architecture
+- rule: Python libraries are located in python_modules/libraries/
+  source:
+    path: CLAUDE.md
+    lines: 46-47
+  evidence: The patch modifies `python_modules/libraries/dagster-dlt/dagster_dlt/resource.py`,
+    correctly locating the library code in the `libraries` directory as specified
+    by the architecture guidelines.
+  category: architecture
+distractors:
+- rule: use @record instead of @dataclass for data structures
+  collision_type: scope_ambiguity
+  why_distracting: The rule instructs to use `@record` instead of `@dataclass` for
+    data structures, which might prompt an agent to look up data structure conventions.
+    However, this task only involves modifying procedural logic in an existing method,
+    making data structure rules irrelevant.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 10-11
+hierarchy_analysis: The configuration consists of a single flat file (`CLAUDE.md`)
+  at the root level containing generic repository guidelines. There are no hierarchical
+  overrides or conflicts.
+version: '2.0'
+source:
+  repo: dagster-io/dagster
+  pr: 33620
+  base_commit: 095d02df486d2ab390f8d2385e1ef9413ecf37e0
+  merge_commit: b776602f1381cd661d3328ed7835ac0120f33111

@@ -1,61 +1,58 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "The instruction mentions the script path (scripts/create-github-release.mjs), the function appendAuthors, the GitHub API endpoint for pulls, the PR pattern format ([#6891](url)), caching of PR lookups, PR resolution before commit hash resolution, the 'by @username' format, the '- ' prefix check, and ESLint/Prettier constraints. All specific strings and concepts tested (resolveAuthorForPR, prAuthorCache, prMatch before commitMatch, api.github.com/pulls endpoint, PR regex pattern, startsWith('- ')"
+      "outcome": "fail",
+      "reason": "Tests assert on specific identifier names like 'resolveAuthorForPR' (test_resolve_author_for_pr_function_exists) and 'prAuthorCache' (test_pr_author_cache_exists) and 'prMatch'/'commitMatch' (test_pr_resolution_before_commit), but instruction.md never specifies these exact identifier names."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly specifies implementation details: use a function to resolve PR authors, cache with a PR author cache, match PR patterns with regex like ([#6891](url)), attempt PR resolution before commit hash resolution, and use the specific GitHub API endpoint. It essentially prescribes the exact solution architecture rather than just describing the broken behavior."
+      "outcome": "pass",
+      "reason": "Instruction describes the problem and requirements (resolve PRs, cache, match pattern, PR-first) without dictating specific line changes or exact code."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific variable names: 'resolveAuthorForPR' (test_resolve_author_for_pr_function_exists), 'prAuthorCache' (test_pr_author_cache_exists), 'prMatch' before 'commitMatch' (test_pr_resolution_before_commit). An alternative correct fix using different names like 'fetchPRAuthor', 'prCache', or 'pullRequestMatch' would fail these tests despite being functionally correct."
+      "reason": "Tests require specific internal identifiers: 'resolveAuthorForPR', 'prAuthorCache', 'prMatch', 'commitMatch' \u2014 a correct alternative fix using different variable/function names (e.g., 'getPRAuthor', 'pullRequestCache') would fail these tests."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_resolve_author_for_pr_function_exists, test_pr_pattern_matching, test_pr_author_cache_exists, test_pr_resolution_before_commit, test_github_api_pr_endpoint, test_pr_match_regex_correctness) are ALL string-matching tests using 'assert X in content' on the file contents. None of them import, call, or execute the JavaScript code to verify actual behavior. Only the pass-to-pass tests (syntax check, eslint, prettier) execute the code."
+      "reason": "Most tests are `open(SCRIPT_PATH).read()` string-in-content checks; only node --check, eslint, and prettier subprocess calls exist, and none actually execute appendAuthors against sample input to verify behavior."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "A stub implementation that simply adds the strings 'resolveAuthorForPR', 'prAuthorCache', 'prMatch', 'commitMatch', 'api.github.com', 'pulls', and the regex pattern as comments in the file would pass all fail-to-pass tests without implementing any actual functionality, since every f2p test only checks for string presence in the file content."
+      "outcome": "pass",
+      "reason": "The fail_to_pass tests check for specific strings that the baseline script doesn't contain, so a no-op stub couldn't pass them."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All five implementation requirements from the instruction (resolve PR authors, cache PR lookups, match PR patterns, PR before commit resolution, consistent author format) are tested, along with the constraints (ESLint, Prettier, non-list-item passthrough)."
+      "reason": "Requirements (PR resolution, caching, pattern matching, PR-first ordering, API endpoint, format) are all covered by tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names and docstrings explaining what each test verifies, including fail_to_pass/pass_to_pass annotations."
+      "reason": "Tests are named descriptively with docstrings indicating fail_to_pass/pass_to_pass categorization."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "Task modifies a script, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across the instruction, tests, and solution files."
+      "reason": "File paths and function references are consistent and correct."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction names the exact function (appendAuthors), specifies the exact file (scripts/create-github-release.mjs), describes the exact pattern formats to match, the exact API endpoint URL, and the exact resolution order (PR before commit). This goes well beyond identifying what's broken and essentially provides a detailed implementation specification."
+      "outcome": "pass",
+      "reason": "Instruction names the file to modify, which is appropriate since localization is not part of the task."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "Code-only task, not a config edit."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
+    "behavior_in_task_description",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 4,
-  "fail_count": 5
+  "tier_c_fails": [],
+  "pass_count": 6,
+  "fail_count": 3
 }

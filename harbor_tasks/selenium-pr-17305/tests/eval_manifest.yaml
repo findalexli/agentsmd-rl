@@ -1,0 +1,120 @@
+source:
+  repo: SeleniumHQ/selenium
+  pr_number: 17305
+  base_commit: e78c3900fdef5d729cc3a24cfc7e2e7ea3421de4
+  merge_commit: 1d58a30530101d6ff84ecabb4422ac3078f8e40d
+  title: "[dotnet] Fix domain lifecycle in CDP adapters"
+
+checks:
+  # V143 lazy field declarations
+  - id: test_v143_has_lazy_network_field
+    type: fail_to_pass
+    origin: pr_behavior
+    description: V143Domains declares Lazy<V143Network> field
+
+  - id: test_v143_has_lazy_javascript_field
+    type: fail_to_pass
+    origin: pr_behavior
+    description: V143Domains declares Lazy<V143JavaScript> field
+
+  - id: test_v143_has_lazy_target_field
+    type: fail_to_pass
+    origin: pr_behavior
+    description: V143Domains declares Lazy<V143Target> field
+
+  - id: test_v143_has_lazy_log_field
+    type: fail_to_pass
+    origin: pr_behavior
+    description: V143Domains declares Lazy<V143Log> field
+
+  # V143 property implementations
+  - id: test_v143_network_property_uses_lazy_value
+    type: fail_to_pass
+    origin: pr_behavior
+    description: V143Domains.Network property returns lazy value
+
+  - id: test_v143_javascript_property_uses_lazy_value
+    type: fail_to_pass
+    origin: pr_behavior
+    description: V143Domains.JavaScript property returns lazy value
+
+  - id: test_v143_target_property_uses_lazy_value
+    type: fail_to_pass
+    origin: pr_behavior
+    description: V143Domains.Target property returns lazy value
+
+  - id: test_v143_log_property_uses_lazy_value
+    type: fail_to_pass
+    origin: pr_behavior
+    description: V143Domains.Log property returns lazy value
+
+  # V143 constructor initialization
+  - id: test_v143_constructor_initializes_lazy_fields
+    type: fail_to_pass
+    origin: pr_behavior
+    description: V143Domains constructor initializes all lazy fields with factory lambdas
+
+  # V144 and V145 complete pattern
+  - id: test_v144_implements_lazy_pattern
+    type: fail_to_pass
+    origin: pr_behavior
+    description: V144Domains implements lazy initialization for all domain properties
+
+  - id: test_v145_implements_lazy_pattern
+    type: fail_to_pass
+    origin: pr_behavior
+    description: V145Domains implements lazy initialization for all domain properties
+
+  # Bug absence verification
+  - id: test_no_new_instance_in_property_getter
+    type: fail_to_pass
+    origin: pr_behavior
+    description: Domain properties must NOT create new instances directly
+
+  # Pass-to-pass structural tests
+  - id: test_domain_files_exist
+    type: pass_to_pass
+    origin: repo_structure
+    description: All version-specific domain files exist
+
+  - id: test_domain_classes_have_required_properties
+    type: pass_to_pass
+    origin: repo_structure
+    description: Domain classes expose Network, JavaScript, Target, Log properties
+
+  - id: test_domain_classes_extend_devtools_domains
+    type: pass_to_pass
+    origin: repo_structure
+    description: All version domain classes extend DevToolsDomains base class
+
+  - id: test_domain_classes_have_constructor_with_session
+    type: pass_to_pass
+    origin: repo_structure
+    description: Domain classes have constructor accepting DevToolsSession
+
+  - id: test_csharp_syntax_valid
+    type: pass_to_pass
+    origin: repo_structure
+    description: C# files have valid syntax - no obvious syntax errors
+
+  # CI commands - repo tests (runs actual dotnet format commands)
+  - id: test_repo_dotnet_format_whitespace
+    type: pass_to_pass
+    origin: repo_tests
+    description: Modified Domains.cs files pass dotnet format whitespace check
+
+  - id: test_repo_dotnet_format_style
+    type: pass_to_pass
+    origin: repo_tests
+    description: Modified Domains.cs files pass dotnet format style check
+
+  - id: test_repo_dotnet_format_analyzers
+    type: pass_to_pass
+    origin: repo_tests
+    description: Modified Domains.cs files pass dotnet format analyzers check
+
+rubric:
+  - id: code_only_task
+    rule: "This is a CODE-ONLY task - the correct solution modifies only .cs files with lazy initialization pattern. No documentation or config file (CLAUDE.md, AGENTS.md, etc.) edits are required or expected. PASS if the agent correctly made NO config file changes."
+    reference: "PASS criteria: Agent made code changes to VxxxDomains.cs files without modifying any config files. The absence of config file changes is CORRECT behavior for this task."
+    weight: 1.0

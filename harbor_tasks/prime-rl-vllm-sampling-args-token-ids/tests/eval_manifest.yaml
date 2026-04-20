@@ -1,0 +1,132 @@
+version: '2.0'
+source:
+  repo: PrimeIntellect-ai/prime-rl
+  pr: 2100
+  base_commit: b92c2128ddeb679c23954c2bf6825e4d6659d501
+  merge_commit: f725629e47619a4affae87dad35db1714c0571b9
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified files (utils.py, orchestrator.py, scheduler.py) parse without
+    errors
+- id: test_repo_pyproject_toml_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's pyproject.toml is valid TOML
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo ruff linting passes on modified files
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo ruff format check passes on modified files
+- id: test_repo_mypy
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo mypy type check passes on modified utils.py
+- id: vllm_backend_gets_return_token_ids
+  type: fail_to_pass
+  origin: pr_diff
+  description: vLLM backend receives return_token_ids=True in extra_body
+- id: non_vllm_backend_omits_vllm_keys
+  type: fail_to_pass
+  origin: pr_diff
+  description: Non-vLLM backend does not get return_token_ids, top_k, or min_p
+- id: logprobs_always_true
+  type: pass_to_pass
+  origin: pr_diff
+  description: logprobs=True regardless of backend type
+- id: min_tokens_and_repetition_penalty_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: min_tokens and repetition_penalty still appear in extra_body when set
+- id: max_tokens_in_result
+  type: pass_to_pass
+  origin: pr_diff
+  description: max_tokens is still passed through in the result dict
+- id: orchestrator_callers_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: orchestrator.py callers no longer pass use_token_client to get_sampling_args
+- id: scheduler_callers_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: scheduler.py callers no longer pass use_token_client to get_sampling_args
+- id: explicit_vllm_parameter
+  type: fail_to_pass
+  origin: agent_config
+  description: get_sampling_args uses an explicit vLLM flag instead of use_token_client
+  source:
+    path: AGENTS.md
+    lines: '15'
+    commit: b92c2128ddeb679c23954c2bf6825e4d6659d501
+rubric:
+- rule: Do not add unnecessary comments. Especially do not try to explain code change
+    that reflect your work process, do not refer to old code.
+  source:
+    path: AGENTS.md
+    lines: 6-7
+  evidence: The gold solution modifies the logic to use `is_vllm` instead of `use_token_client`
+    without adding any comments explaining the change or referencing the old code.
+  category: style
+  verification: llm_judge
+- rule: 'Zen of Python: Explicit is better than implicit.'
+  source:
+    path: AGENTS.md
+    lines: 18-38
+  evidence: The gold solution explicitly defines `is_vllm = config.teacher_rollout_model
+    is None` rather than implicitly relying on `use_token_client` to determine if
+    the backend is vLLM.
+  category: architecture
+  verification: llm_judge
+distractors:
+- rule: You are responsible for maintaining the skills folder. When a workflow fails
+    and you fix it... you must update the skills to make implicit knowledge explicit.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might believe that fixing a bug related to vLLM inference
+    and token clients requires updating the `inference-server` skill to document the
+    new `is_vllm` behavior or the `teacher_rollout_model` configuration, leading to
+    out-of-scope file modifications.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 36-39
+- rule: Write tests as plain functions with pytest fixtures. Don't use class-based
+    tests.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to write a new test function with pytest fixtures
+    to verify that `get_sampling_args` correctly sets `return_token_ids` when `is_vllm`
+    is True, but the gold solution is a targeted bug fix that does not include new
+    tests.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 41-41
+- rule: Start and test the prime-rl inference server. Use when asked to run inference,
+    start vLLM, test a model, or launch the inference server.
+  source:
+    path: .claude/skills/inference-server/SKILL.md
+    lines: 1-2
+  collision_type: scope_ambiguity
+  why_distracting: The issue explicitly mentions the 'vLLM inference server' and 'vLLM
+    backend'. An agent might activate this skill and attempt to modify the inference
+    server configuration or startup scripts, but the bug is entirely client-side within
+    the orchestrator's request generation logic.
+  severity: high
+- rule: How to write and use TOML configs in prime-rl. Use when creating config files,
+    running commands with configs, or overriding config values via CLI.
+  source:
+    path: .claude/skills/toml-config/SKILL.md
+    lines: 1-2
+  collision_type: scope_ambiguity
+  why_distracting: The issue mentions CLI flags (`--orchestrator.no-use-token-client`)
+    and configuration properties (`config.use_token_client`). The agent might be distracted
+    into modifying TOML configuration files or CLI parsing logic instead of fixing
+    the Python logic that constructs the sampling arguments.
+  severity: medium
+hierarchy_analysis: The configuration is essentially a flat single file (`AGENTS.md`
+  included by `CLAUDE.md`). The agent must apply the style guidelines (avoiding explanatory
+  comments) while recognizing that the directive to update skills or write tests is
+  out of scope for this specific, targeted bug fix.

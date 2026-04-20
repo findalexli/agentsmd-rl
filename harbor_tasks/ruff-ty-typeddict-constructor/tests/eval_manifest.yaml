@@ -1,0 +1,121 @@
+version: '2.0'
+source:
+  repo: astral-sh/ruff
+  pr: 24480
+  base_commit: 6ad36f8be239475137b5cccf5e8463adb4639418
+  merge_commit: 6e236f764f11e7d3d6ed9b1ba0ef92500135ab99
+checks:
+- id: compiles
+  type: pass_to_pass
+  origin: static
+  description: ty binary exists and is executable
+- id: no_duplicate_diagnostics
+  type: fail_to_pass
+  origin: pr_diff
+  description: TypedDict constructor should not emit duplicate diagnostics
+- id: constant_key_in_dict_literal
+  type: fail_to_pass
+  origin: pr_diff
+  description: TypedDict constructor accepts Final string constants as dict keys
+- id: mixed_dict_keyword_valid
+  type: fail_to_pass
+  origin: pr_diff
+  description: TypedDict constructor validates mixed dict literal + keyword args
+- id: constant_key_type_error
+  type: fail_to_pass
+  origin: pr_diff
+  description: TypedDict constructor detects type errors through constant keys
+- id: existing_typed_dict_behavior
+  type: pass_to_pass
+  origin: pr_diff
+  description: Basic TypedDict constructor validation still works correctly
+- id: test_repo_clippy_ty_python_semantic
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's clippy linting passes for ty_python_semantic with -D warnings
+- id: test_repo_fmt_ty_python_semantic
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's formatting check passes for ty_python_semantic
+- id: test_repo_check_ty_python_semantic
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's type check passes for ty_python_semantic --all-targets
+- id: test_repo_doc_ty_python_semantic
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's documentation builds without warnings for ty_python_semantic
+- id: no_panic_unwrap_in_modified_functions
+  type: pass_to_pass
+  origin: agent_config
+  description: No panic!/unwrap in TypedDict-related functions
+  source:
+    path: AGENTS.md
+    lines: '79'
+    commit: 6ad36f8be239475137b5cccf5e8463adb4639418
+- id: no_local_imports_in_modified_functions
+  type: pass_to_pass
+  origin: agent_config
+  description: No local use statements inside functions
+  source:
+    path: AGENTS.md
+    lines: '76'
+    commit: 6ad36f8be239475137b5cccf5e8463adb4639418
+rubric:
+- rule: Follow existing code style. Check neighboring files for patterns.
+  source:
+    path: AGENTS.md
+    lines: '75'
+    commit: 6ad36f8be239475137b5cccf5e8463adb4639418
+- rule: Prefer let chains (if let combined with &&) over nested if let statements
+    to reduce indentation and improve readability.
+  source:
+    path: AGENTS.md
+    lines: '80'
+    commit: 6ad36f8be239475137b5cccf5e8463adb4639418
+- rule: Use comments purposefully. Don't use comments to narrate code, but do use
+    them to explain invariants and why something unusual was done a particular way.
+  source:
+    path: AGENTS.md
+    lines: '82'
+    commit: 6ad36f8be239475137b5cccf5e8463adb4639418
+- rule: Look to see if your tests could go in an existing file before adding a new
+    file for your tests.
+  source:
+    path: AGENTS.md
+    lines: 63-63
+  evidence: The gold solution adds new test cases for TypedDict constructor validation
+    to the existing `crates/ty_python_semantic/resources/mdtest/typed_dict.md` file
+    rather than creating a new test file.
+  category: testing
+- rule: Prefer let chains (`if let` combined with `&& let`).
+  source:
+    path: AGENTS.md
+    lines: 70-70
+  evidence: The gold solution uses a let chain `} else if arguments.args.len() ==
+    1 && let ast::Expr::Dict(di...` in `builder.rs` to concisely check the argument
+    length and destructure the dictionary expression.
+  category: style
+- rule: Try hard to avoid patterns that require `panic!`, `unreachable!`, or `.unwrap()`.
+  source:
+    path: AGENTS.md
+    lines: 60-62
+  evidence: The gold solution uses `.unwrap_or_else(|| self.infer_expression(expr,
+    tcx))` in `get_or_infer_expression` instead of using `.unwrap()`.
+  category: style
+distractors:
+- rule: Avoid writing significant amounts of new code. This is often a sign that we're
+    missing an existing method or mechanism that could help solve the problem.
+  collision_type: scope_ambiguity
+  why_distracting: The rule advises avoiding significant amounts of new code and looking
+    for existing utilities. An agent might misinterpret this and try to hack the existing
+    `infer_call_arguments` or `infer_expression` methods to handle TypedDicts, rather
+    than correctly introducing the dedicated `infer_typed_dict_constructor_values`
+    method needed for this complex validation.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 58-59
+hierarchy_analysis: The configuration hierarchy is flat. `CLAUDE.md` simply references
+  `AGENTS.md` using an `@` include, meaning all rules are evaluated at the same level
+  without any overriding child configurations.

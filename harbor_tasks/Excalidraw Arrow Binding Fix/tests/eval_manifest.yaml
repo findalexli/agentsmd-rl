@@ -1,0 +1,129 @@
+source:
+  repo: excalidraw/excalidraw
+  pr: 0
+  base_commit: 60ab14c2f633112613843eec3c049f6da0f566e8
+  merge_commit: 9ba0f5dbc9d551aad9277341a82449e04043c5ae
+checks:
+- id: typescript_compiles
+  description: TypeScript must compile without errors
+  type: fail_to_pass
+  origin: pr_diff
+- id: fix_has_import
+  description: Fix must include pointsEqual or equivalent import for point comparison
+  type: fail_to_pass
+  source:
+    path: CLAUDE.md
+  origin: pr_diff
+- id: initial_arrow_guard
+  description: updateBoundPoint must check for initial arrow state and return null
+  type: fail_to_pass
+  origin: pr_diff
+- id: existing_logic_preserved
+  description: Fix must not break existing binding functionality
+  type: pass_to_pass
+  origin: pr_diff
+- id: move_tests_pass
+  description: Arrow move tests must pass with correct positions
+  type: fail_to_pass
+  origin: pr_diff
+- id: history_tests_pass
+  description: Bidirectional binding history tests must pass
+  type: fail_to_pass
+  origin: pr_diff
+- id: repo_eslint
+  description: Repo's ESLint check passes on the fix
+  type: pass_to_pass
+  origin: repo_tests
+- id: repo_prettier
+  description: Repo's Prettier formatting check passes on the fix
+  type: pass_to_pass
+  origin: repo_tests
+- id: repo_element_tests
+  description: Repo's element package tests pass on the fix
+  type: pass_to_pass
+  origin: repo_tests
+- id: repo_math_tests
+  description: Repo's math package tests pass on the fix
+  type: pass_to_pass
+  origin: repo_tests
+- id: repo_common_tests
+  description: Repo's common package tests pass on the fix
+  type: pass_to_pass
+  origin: repo_tests
+- id: repo_utils_tests
+  description: Repo's utils package tests pass on the fix
+  type: pass_to_pass
+  origin: repo_tests
+- id: repo_binding_tests
+  description: Repo's binding-specific tests pass on the fix
+  type: pass_to_pass
+  origin: repo_tests
+rubric:
+- rule: Add rubric rules section to CLAUDE.md or .github/copilot-instructions.md with
+    coding standards and workflow guidelines
+  source:
+    path: .github/copilot-instructions.md
+- rule: Work in `packages/*` for editor features
+  source:
+    path: CLAUDE.md
+    lines: 13-13
+  evidence: The fix for the arrow dragging behavior is implemented in `packages/element/src/binding.ts`,
+    adhering to the rule to work in `packages/*` for editor features.
+  category: architecture
+- rule: Always run `yarn test:update` before committing
+  source:
+    path: CLAUDE.md
+    lines: 15-15
+  evidence: The gold solution updates test snapshots in `packages/excalidraw/tests/move.test.tsx`
+    and `packages/excalidraw/tests/history.test.tsx`, reflecting the outcome of running
+    `yarn test:update`.
+  category: testing
+- rule: 'Package Development: Work in `packages/*` for editor features'
+  source:
+    path: CLAUDE.md
+    lines: 13-14
+  evidence: The gold solution modifies `packages/element/src/binding.ts` to fix the
+    arrow binding logic, correctly identifying it as an editor feature rather than
+    an app-specific feature.
+  category: architecture
+- rule: 'Testing: Always run `yarn test:update` before committing (implies updating
+    test snapshots/expectations when behavior changes)'
+  source:
+    path: CLAUDE.md
+    lines: 15-16
+  evidence: The gold solution updates test expectations in `packages/excalidraw/tests/move.test.tsx`
+    and `packages/excalidraw/tests/history.test.tsx` to account for the new arrow
+    coordinates, aligning with the in
+  category: testing
+- rule: Work in `packages/*` for editor features.
+  source:
+    path: CLAUDE.md
+    lines: 14-14
+  source_text: '1. **Package Development**: Work in `packages/*` for editor features'
+  evidence: The diff modifies the element binding logic, which is an editor feature,
+    inside `packages/element/src/binding.ts`.
+  category: architecture
+  verification: llm_judge
+- rule: Use TypeScript throughout the codebase.
+  source:
+    path: CLAUDE.md
+    lines: 34-34
+  source_text: '- TypeScript throughout with strict configuration'
+  evidence: The diff modifies `.ts` and `.tsx` files and utilizes TypeScript generics,
+    such as `pointFrom<LocalPoint>(0, 0)`.
+  category: language
+  verification: llm_judge
+distractors:
+- rule: 'App Development: Work in `excalidraw-app/` for app-specific features'
+  collision_type: architecture_boundary
+  why_distracting: The agent might misinterpret arrow dragging as an app-specific
+    interaction and attempt to implement the fix in the `excalidraw-app/` directory
+    instead of the core `packages/element/` library.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 14-15
+hierarchy_analysis: The configuration consists of a single root-level CLAUDE.md file
+  that outlines the monorepo architecture and basic development workflow. No complex
+  hierarchy or overriding is present.
+version: '2.0'

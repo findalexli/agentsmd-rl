@@ -1,62 +1,57 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert exact implementation details not mentioned in instruction.md: test_artifact_card_has_getartifactid_function checks for 'const getArtifactId = ' (exact function name), test_artifact_card_has_haskey_check checks for 'hasKey = ' variable name and 'Boolean(artifact.key)' exact pattern, test_artifact_card_routes_to_key_page_when_key_present checks for 'artifact.key as string' exact type assertion. While instruction.md mentions duck-typing with 'latest_id in artifact', it doesn't specify "
+      "reason": "Tests assert specific identifiers like `getArtifactId`, `hasKey = `, `Boolean(artifact.key)`, and `artifact.key as string` which are not mentioned in instruction.md (it only describes the behavior, not the specific variable/function names)."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md specifies exact implementation details: 'Use duck-typing with \"latest_id\" in artifact', 'use Boolean(artifact.key) to determine routing', specific route strings '/artifacts/key/$key' and '/artifacts/artifact/$id', specific variable naming 'hasKey', and specific type handling. This goes beyond describing what's broken and prescribes the exact fix approach."
+      "outcome": "pass",
+      "reason": "Instruction describes the broken behavior and required routing logic but does not dictate exact code changes or identifier names."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific implementation details: 'const getArtifactId = ' (exact helper function name), 'hasKey = ' (exact variable name), 'Boolean(artifact.key)' (exact pattern - could use !!artifact.key or artifact.key ? ... : ...), 'artifact.key as string' (exact type assertion - could use String(artifact.key) or artifact.key!). An alternative correct fix using different names or patterns would fail these string-matching tests."
+      "reason": "Tests require specific implementation details: `const getArtifactId = `, `hasKey = `, `Boolean(artifact.key)`, and `artifact.key as string` \u2014 a correct alternative using different names (e.g., `resolveId`, inline ternary, `!!artifact.key`, or `String(artifact.key)`) would fail."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Most tests (test_artifact_card_has_getartifactid_function, test_artifact_card_has_haskey_check, test_artifact_card_routes_to_key_page_when_key_present, test_artifact_card_routes_to_id_page_when_key_missing, test_artifact_card_does_not_use_old_fallback, test_null_key_artifact_links_to_detail_page, test_collection_uses_latest_id_for_null_key, test_keyed_artifact_uses_key_route) are purely string-matching via 'assert X in open(path).read()'. While test_vitest_tests_pass, test_typecheck_passes, test"
+      "outcome": "pass",
+      "reason": "Tests include subprocess execution of `npm test`, `npx tsc`, `npm run check/lint/build` in addition to string inspection."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "The f2p tests (test_null_key_artifact_links_to_detail_page, test_collection_uses_latest_id_for_null_key, test_keyed_artifact_uses_key_route) only check for string presence in the source file. A developer could add dead-code comments containing the exact strings like '// \"/artifacts/artifact/$id\"' and '// \"latest_id\" in artifact' to pass these tests without implementing any actual fix."
+      "outcome": "pass",
+      "reason": "The vitest/typecheck/build tests require actual working code; stub returns cannot satisfy them."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors from instruction.md are tested: key-based routing (test_keyed_artifact_uses_key_route), id-based routing for null keys (test_null_key_artifact_links_to_detail_page), ArtifactCollection handling with latest_id (test_collection_uses_latest_id_for_null_key), and removal of old pattern (test_artifact_card_does_not_use_old_fallback)."
+      "reason": "Tests cover key-route, id-route, latest_id handling, removal of old pattern, and overall build/lint/type validity."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings explaining the purpose (e.g., 'Fail-to-pass: ArtifactCard links to /artifacts/artifact/$id for null-key artifacts'). Tests are logically grouped by concern."
+      "reason": "Tests have descriptive names and docstrings explaining each check."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing UI component routing logic, not producing structured data like JSON/CSV/API/DB."
+      "reason": "No structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "Paths and commands appear correct."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md specifies exact implementation approach: 'Use duck-typing with \"latest_id\" in artifact', 'Boolean(artifact.key)', exact route strings, the exact pattern to create (linkProps with conditional ternary), and even the exact type assertion approach ('artifact.key as string' implied by the constraints). This goes beyond identifying the buggy file."
+      "outcome": "pass",
+      "reason": "Instruction identifies the component file, which is appropriate for a component-scoped fix task."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "Code-only task."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 3,
-  "fail_count": 6
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 2
 }

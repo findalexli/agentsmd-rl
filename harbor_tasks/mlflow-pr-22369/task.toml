@@ -1,0 +1,19 @@
+[task]
+name = "mlflow-lookup-model-info-bundled-provider"
+display_name = "MLflow lookup_model_info bundled provider fix"
+description = "Fix _lookup_model_info to use _load_bundled_provider instead of _load_provider when no provider is given, avoiding O(N) network latency."
+difficulty = "medium"
+estimated_minutes = 30
+pr_number = 22369
+
+[tags]
+categories = ["mlflow", "performance", "tracing"]
+languages = ["python"]
+
+[workspace]
+repo = "mlflow/mlflow"
+base_commit = "b3075b40fed52161849b3a238c06d3b36102e0f4"
+merge_commit = "173ce0e65a25210f62731f42838985c052a55cb1"
+
+[verifier]
+env = { GEMINI_API_KEY = "${GEMINI_API_KEY:-}", ANTHROPIC_API_KEY = "${ANTHROPIC_API_KEY:-}" }

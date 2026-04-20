@@ -1,0 +1,188 @@
+version: '2.0'
+source:
+  repo: vercel/next.js
+  pr: 92167
+  base_commit: 8a241bb504bf167d191b96e914b7785156510038
+  merge_commit: 4b62ff78c0ad4117477ab78806df809f4c1f8b33
+checks:
+- id: check_manifests_script_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: scripts/check-manifests.js must have valid Node.js syntax
+- id: check_is_release_script_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: scripts/check-is-release.js must have valid Node.js syntax
+- id: check_unused_turbo_tasks_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: scripts/check-unused-turbo-tasks.mjs must have valid Node.js syntax
+- id: pull_turbo_cache_script_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: scripts/pull-turbo-cache.js must have valid Node.js syntax
+- id: turbo_cache_script_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: scripts/turbo-cache.mjs must have valid Node.js syntax
+- id: prettier_root_package_json
+  type: pass_to_pass
+  origin: repo_tests
+  description: package.json must be formatted according to Prettier standards
+- id: turbo_json_valid_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: turbo.json must parse as valid JSON via Python json.tool
+- id: turbo_jsonc_valid_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: packages/next-swc/turbo.jsonc must parse as valid JSONC via node
+- id: next_swc_package_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: packages/next-swc/package.json must be valid JSON with required scripts
+    via node
+- id: root_package_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: package.json must be valid JSON with required scripts
+- id: rust_fingerprint_script_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: scripts/rust-fingerprint.js must have valid Node.js syntax
+- id: prettier_turbo_json
+  type: pass_to_pass
+  origin: repo_tests
+  description: turbo.json must be formatted according to Prettier standards
+- id: prettier_turbo_jsonc
+  type: pass_to_pass
+  origin: repo_tests
+  description: packages/next-swc/turbo.jsonc must be formatted according to Prettier
+    standards
+- id: prettier_next_swc_package_json
+  type: pass_to_pass
+  origin: repo_tests
+  description: packages/next-swc/package.json must be formatted according to Prettier
+    standards
+- id: node_syntax_build_native
+  type: pass_to_pass
+  origin: repo_tests
+  description: scripts/build-native.ts must have valid Node.js/TypeScript syntax
+- id: validate_externals_doc_script_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: scripts/validate-externals-doc.js must have valid Node.js syntax
+- id: git_configure_script_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: scripts/git-configure.mjs must have valid Node.js syntax
+- id: install_native_script_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: scripts/install-native.mjs must have valid Node.js syntax
+- id: run_tests_script_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: run-tests.js must have valid Node.js syntax
+- id: run_evals_script_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: run-evals.js must have valid Node.js syntax
+- id: prettier_ignore_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: .prettierignore must exist and be readable by prettier
+- id: rust_fingerprint_writes_stamp
+  type: fail_to_pass
+  origin: pr_diff
+  description: rust-fingerprint.js writes TURBO_HASH to stamp file when env var is
+    set
+- id: rust_fingerprint_skips_without_turbo_hash
+  type: fail_to_pass
+  origin: pr_diff
+  description: rust-fingerprint.js exits 0 and skips when TURBO_HASH is unset
+- id: turbo_jsonc_has_fingerprint_task
+  type: fail_to_pass
+  origin: pr_diff
+  description: turbo.jsonc defines rust-fingerprint task with Rust source inputs and
+    stamp output
+- id: build_tasks_depend_on_fingerprint
+  type: fail_to_pass
+  origin: pr_diff
+  description: Rust build/check tasks depend on rust-fingerprint instead of duplicating
+    globs
+- id: build_tasks_use_stamp_not_globs
+  type: fail_to_pass
+  origin: pr_diff
+  description: Build tasks use stamp file input, not old duplicated Rust source globs
+- id: sccache_passthrough_env
+  type: fail_to_pass
+  origin: pr_diff
+  description: turbo.json globalPassThroughEnv includes SCCACHE_* and RUSTC_WRAPPER
+- id: ci_in_global_env
+  type: fail_to_pass
+  origin: pr_diff
+  description: turbo.json globalEnv includes CI
+- id: package_json_fingerprint_script
+  type: fail_to_pass
+  origin: pr_diff
+  description: packages/next-swc/package.json defines rust-fingerprint script
+rubric:
+- rule: When adding new scripts to the scripts/ directory, include a descriptive comment
+    header explaining the script's purpose and any environment variables it uses.
+  source:
+    path: CLAUDE.md
+    lines: 302-309
+    commit: 8a241bb504bf167d191b96e914b7785156510038
+- rule: For changes to build configuration (turbo.json, turbo.jsonc, package.json
+    scripts), verify the changes work with the actual build system (e.g., turbo tasks
+    must have proper inputs/outputs defined).
+  source:
+    path: CLAUDE.md
+    lines: 353-358
+    commit: 8a241bb504bf167d191b96e914b7785156510038
+- rule: When modifying package.json files (especially in packages/next-swc/), ensure
+    scripts are properly named and follow the existing naming convention (e.g., rust-*
+    prefix for Rust-related scripts).
+  source:
+    path: CLAUDE.md
+    lines: 55-69
+    commit: 8a241bb504bf167d191b96e914b7785156510038
+- rule: Place build and maintenance scripts in the \`scripts/\` directory.
+  source:
+    path: CLAUDE.md
+    lines: 12-20
+  evidence: The gold solution creates \`scripts/rust-fingerprint.js\`, correctly placing
+    the new build script in the designated \`scripts/\` directory as defined by the
+    monorepo overview.
+  category: architecture
+- rule: Build and maintenance scripts should be placed in the \`scripts/\` directory.
+  source:
+    path: AGENTS.md
+    lines: 16-24
+  evidence: The new \`rust-fingerprint.js\` script is placed in the \`scripts/\` directory,
+    aligning with the monorepo structure definition.
+  category: architecture
+- rule: Place build and maintenance scripts in the `scripts/` directory.
+  source:
+    path: AGENTS.md
+    lines: 15-23
+  evidence: The gold solution creates the `rust-fingerprint.js` script in the `scripts/`
+    directory, which aligns with the monorepo overview designating `scripts/` for
+    'Build and maintenance scripts'.
+  category: architecture
+distractors:
+- rule: Start `pnpm --filter=next dev` in a separate terminal session before making
+    edits to Next.js source or integration tests.
+  collision_type: scope_ambiguity
+  why_distracting: The rule instructs the agent to start `pnpm --filter=next dev`
+    when changing Next.js source or integration tests. However, this task involves
+    modifying Rust build configurations and turbo tasks, not Next.js JS/TS source
+    or integration tests. Running the dev server would be a waste of time and resources.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 60-65
+hierarchy_analysis: The config hierarchy is flat, consisting of identical `AGENTS.md`
+  and `CLAUDE.md` files at the root level. There are no conflicting rules between
+  different levels of the hierarchy.

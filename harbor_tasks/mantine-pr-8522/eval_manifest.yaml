@@ -1,0 +1,103 @@
+version: 1
+
+meta:
+  PR: "mantinedev/mantine#8522"
+  base_commit: "d3ca1bcb9f872673aca275b944aa2c7e55666c4e"
+  merge_commit: "57df830379fae3bb58ff3daa47442eeeb2689c69"
+  title: "[@mantine/core] Fix SSR-related errors in Tooltip, Popover.Target etc"
+  task_name: "mantine-ssr-tooltip-fix"
+
+checks:
+  - id: test_get_single_element_child_file_exists
+    type: fail_to_pass
+    description: "The getSingleElementChild utility file was created"
+    timeout: 30
+
+  - id: test_core_package_exports
+    type: fail_to_pass
+    description: "The core package exports getSingleElementChild"
+    timeout: 30
+
+  - id: test_popover_target_uses_fix
+    type: fail_to_pass
+    description: "PopoverTarget component uses getSingleElementChild"
+    timeout: 30
+
+  - id: test_tooltip_uses_fix
+    type: fail_to_pass
+    description: "Tooltip component uses getSingleElementChild"
+    timeout: 30
+
+  - id: test_tooltip_floating_uses_fix
+    type: fail_to_pass
+    description: "TooltipFloating component uses getSingleElementChild"
+    timeout: 30
+
+  - id: test_menu_target_uses_fix
+    type: fail_to_pass
+    description: "MenuTarget component uses getSingleElementChild"
+    timeout: 30
+
+  - id: test_hovercard_target_uses_fix
+    type: fail_to_pass
+    description: "HoverCardTarget component uses getSingleElementChild"
+    timeout: 30
+
+  - id: test_combobox_target_uses_fix
+    type: fail_to_pass
+    description: "ComboboxTarget component uses getSingleElementChild"
+    timeout: 30
+
+  - id: test_combobox_events_target_uses_fix
+    type: fail_to_pass
+    description: "ComboboxEventsTarget component uses getSingleElementChild"
+    timeout: 30
+
+  - id: test_focus_trap_uses_fix
+    type: fail_to_pass
+    description: "FocusTrap component uses getSingleElementChild"
+    timeout: 30
+
+  - id: test_tooltip_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Tooltip tests pass (repo's own tests)"
+    timeout: 300
+
+  - id: test_popover_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Popover tests pass (repo's own tests)"
+    timeout: 300
+
+  - id: test_menu_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Menu tests pass (repo's own tests)"
+    timeout: 300
+
+  - id: test_combobox_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Combobox tests pass (repo's own tests)"
+    timeout: 300
+
+  - id: test_hovercard_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: "HoverCard tests pass (repo's own tests)"
+    timeout: 300
+
+  - id: test_repo_typecheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: "TypeScript typecheck passes"
+    timeout: 600
+
+  - id: test_repo_eslint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ESLint passes on packages"
+    timeout: 600
+
+rubric: []

@@ -1,0 +1,217 @@
+checks:
+- id: file_exists
+  type: fail_to_pass
+  description: Target file exists
+  source:
+    path: base_commit
+    lines: ''
+  origin: pr_diff
+- id: php_syntax
+  type: fail_to_pass
+  description: PHP syntax is valid
+  source:
+    path: base_commit
+    lines: ''
+  origin: pr_diff
+- id: bootstrap_comment
+  type: fail_to_pass
+  description: Explanatory comment about race condition fix is present
+  source:
+    path: agent_config
+    lines: ''
+  origin: pr_diff
+- id: retry_loop
+  type: fail_to_pass
+  description: Retry loop with 5 attempts is implemented
+  source:
+    path: merge_commit
+    lines: ''
+  origin: pr_diff
+- id: duplicate_exception
+  type: fail_to_pass
+  description: DuplicateException is caught and handled with break
+  source:
+    path: merge_commit
+    lines: ''
+  origin: pr_diff
+- id: throwable_catch
+  type: fail_to_pass
+  description: Throwable is caught with metadata exists check
+  source:
+    path: merge_commit
+    lines: ''
+  origin: pr_diff
+- id: max_attempts
+  type: fail_to_pass
+  description: Max attempts check before throwing
+  source:
+    path: merge_commit
+    lines: ''
+  origin: pr_diff
+- id: usleep_delay
+  type: fail_to_pass
+  description: 100ms usleep between retry attempts
+  source:
+    path: merge_commit
+    lines: ''
+  origin: pr_diff
+- id: no_pre_check
+  type: fail_to_pass
+  description: Old exists() pre-check pattern is removed
+  source:
+    path: merge_commit
+    lines: ''
+  origin: pr_diff
+- id: create_in_loop
+  type: fail_to_pass
+  description: create() is called inside retry loop
+  source:
+    path: merge_commit
+    lines: ''
+  origin: pr_diff
+- id: retry_comprehensive
+  type: fail_to_pass
+  description: All retry logic components in correct order
+  source:
+    path: merge_commit
+    lines: ''
+  origin: pr_diff
+- id: composer_validate
+  type: pass_to_pass
+  description: Repo's composer.json passes composer validation
+  origin: repo_tests
+- id: composer_audit
+  type: pass_to_pass
+  description: Repo's dependencies pass security audit
+  origin: repo_tests
+- id: php_syntax_check
+  type: pass_to_pass
+  description: Target PHP file passes php -l syntax check
+  origin: repo_tests
+- id: composer_lint
+  type: pass_to_pass
+  description: Target PHP file passes Pint/PSR-12 lint check
+  origin: repo_tests
+- id: composer_analyze
+  type: pass_to_pass
+  description: Target PHP file passes PHPStan static analysis
+  origin: repo_tests
+- id: repo_composer_lint_all
+  type: pass_to_pass
+  description: Full repo passes Pint/PSR-12 lint check
+  origin: repo_tests
+- id: repo_composer_analyze_all
+  type: pass_to_pass
+  description: Full repo passes PHPStan static analysis
+  origin: repo_tests
+- id: unit_tests_collections
+  type: pass_to_pass
+  description: Unit tests for Collections pass
+  origin: repo_tests
+- id: unit_tests_platform
+  type: pass_to_pass
+  description: Unit tests for Platform modules pass
+  origin: repo_tests
+- id: unit_tests_database
+  type: pass_to_pass
+  description: Unit tests for Database components pass
+  origin: repo_tests
+- id: composer_json_valid
+  type: pass_to_pass
+  description: Repo's composer.json is valid JSON with required scripts
+  origin: static
+- id: pint_json_valid
+  type: pass_to_pass
+  description: Repo's pint.json enforces PSR-12 preset
+  origin: static
+- id: phpstan_config_valid
+  type: pass_to_pass
+  description: Repo's phpstan.neon config is valid YAML
+  origin: static
+- id: phpunit_xml_valid
+  type: pass_to_pass
+  description: Repo's phpunit.xml is valid XML
+  origin: static
+- id: target_file_no_syntax_errors
+  type: pass_to_pass
+  description: Target PHP file has balanced braces/parens/brackets
+  origin: static
+- id: php_namespace_valid
+  type: pass_to_pass
+  description: PHP namespace and use statements are valid
+  origin: static
+- id: repo_directory_structure
+  type: pass_to_pass
+  description: Repo has expected directory structure for CI/CD
+  origin: static
+- id: php_class_structure
+  type: pass_to_pass
+  description: Target file has valid PHP class structure
+  origin: static
+- id: no_merge_conflicts
+  type: pass_to_pass
+  description: No Git merge conflict markers in target file
+  origin: static
+- id: php_opening_tag
+  type: pass_to_pass
+  description: PHP files have proper opening tag
+  origin: static
+rubric:
+- rule: PSR-12 formatting must be enforced. PHP code should follow PSR-12 style conventions
+    as enforced by Pint.
+  source:
+    path: AGENTS.md
+    lines: '86'
+    commit: 4e10cabec0bf504daffb1bc53ad86bdf6f2cc727
+- rule: Code changes should include appropriate comments explaining the rationale,
+    especially for non-obvious logic like race condition fixes.
+  source:
+    path: AGENTS.md
+    lines: '86'
+    commit: 4e10cabec0bf504daffb1bc53ad86bdf6f2cc727
+- rule: Action pattern (HTTP endpoints) where the endpoint logic is implemented in
+    the `action()` method.
+  source:
+    path: AGENTS.md
+    lines: 64-83
+  evidence: The fix is implemented directly inside the `action()` method of the `Create`
+    class, preserving the established Action pattern for HTTP endpoints.
+  category: architecture
+- rule: Inside `Http` directories for services, file names can only be `Get.php`,
+    `Update.php`, `Create.php`, `Delete.php` or `XList.php`.
+  source:
+    path: src/Appwrite/Platform/AGENTS.md
+    lines: 29-32
+  evidence: The fix modifies `src/Appwrite/Platform/Modules/Databases/Http/VectorsDB/Collections/Create.php`,
+    which strictly follows the rule that file names in Http directories can only be
+    standard CRUD names.
+  category: naming
+- rule: PHP 8.3+
+  source:
+    path: AGENTS.md
+    lines: 16-17
+  evidence: Uses PHP 8+ syntax such as catching an exception without assigning it
+    to a variable (`catch (DuplicateException)`) and using numeric literal separators
+    (`100_000`).
+  category: style
+distractors:
+- rule: Swoole 6.x (async runtime, replaces PHP-FPM)
+  collision_type: architecture_boundary
+  why_distracting: The agent might avoid using the standard PHP `\usleep()` function,
+    assuming it will block the async event loop, and instead try to implement Swoole-specific
+    coroutine sleep functions (e.g., `\Swoole\Coroutine::sleep()`). This breaks the
+    framework's abstraction, as Swoole automatically hooks native PHP functions.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 16-17
+hierarchy_analysis: The config hierarchy provides general architectural guidelines
+  (Swoole, PHP 8.3, module structure) across two `AGENTS.md` files. However, the task
+  instructions are highly prescriptive, reducing the need to deeply consult or resolve
+  conflicts within the configs.
+version: '2.0'
+source:
+  repo: appwrite/appwrite.git
+  pr: 0
+  base_commit: 4e10cabec0bf504daffb1bc53ad86bdf6f2cc727
+  merge_commit: ''

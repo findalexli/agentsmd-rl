@@ -4,10 +4,10 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-15T13:58:22.448711",
-  "total_time": 2549.88,
-  "sandbox_id": "iq3i03xedj7ouyj35ld4b",
-  "backend": "minimax",
+  "validated_at": "2026-04-16T12:51:02.313343",
+  "total_time": 108.15,
+  "sandbox_id": "i26vagxv4gpnfd48qyhuw",
+  "backend": "anthropic",
   "pipeline": "pipeline",
   "start_at": "judge",
   "nodes": {
@@ -45,24 +45,27 @@
     },
     "quality_gate": {
       "status": "DELETE",
-      "model": "MiniMax-M2.7",
-      "backend": "minimax",
-      "time": 0.34,
-      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:173: test `test_csharp_syntax_valid` has 1 assert(s), all pass on a st', 'lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:18: unpinned pip deps: pytest']"
+      "model": "claude-opus-4-7",
+      "backend": "anthropic",
+      "time": 0.25,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:299: test `test_thread_safe_handler_iteration` has 1 assert(s), all pa', 'lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:18: unpinned pip deps: pytest']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 23.83,
+      "time": 14.26,
       "tier_a_fails": [
-        "no_solution_leakage",
+        "behavior_in_task_description",
         "solution_uniqueness_guard",
-        "tests_verify_behavior_not_text",
-        "test_not_tautological",
-        "anti_cheating_measures"
+        "tests_verify_behavior_not_text"
       ],
       "tier_b_fails": [],
-      "pass_count": 4,
-      "fail_count": 6
+      "pass_count": 6,
+      "fail_count": 3
+    },
+    "tests_rewrite": {
+      "status": "error",
+      "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":402,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 400 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"invalid_request_error\\\",\\\"message\\\":\\\"\\\\\\\"thinking.type.enabled\\\\\\\" is not supported for this model. Use \\\\\\\"thinking.type.adapt",
+      "time": 1.82
     }
   },
   "history": [
@@ -89,6 +92,14 @@
       "backend": "minimax",
       "time": 2549.88,
       "at": "2026-04-15T13:58:22.448711"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "anthropic",
+      "time": 108.15,
+      "at": "2026-04-16T12:51:02.313343"
     }
   ]
 }

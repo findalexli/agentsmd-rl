@@ -1,61 +1,56 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "The test `test_orchestrator_imports_no_get_is_truncated` checks that the import line starting with 'from prime_rl.utils.vf' does not contain 'get_is_truncated'. The test `test_trajectories_return_type_annotation` checks for the exact string 'def interleave_rollout(state: vf.State) -> list[TrainingSample] | None:' and similarly for branch_rollout. While instruction.md mentions the `| None` pattern and mentions removing `get_is_truncated`, it does not specify the exact parameter signature `(state:"
+      "outcome": "pass",
+      "reason": "File paths (trajectories.py, orchestrator.py, test_trajectories.py), function names (interleave_rollout, branch_rollout, make_train_example), field names (error, completion_mask, is_truncated), and import constraints (get_is_truncated from prime_rl.utils.vf) are all explicitly named in instruction.md."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md essentially states the exact fixes: 'Return None when the trajectory is empty', 'Zero out all completion_mask entries when state[\"error\"] is set', 'Check if train_example is None before iterating', 'Access the truncation status directly from the rollout data structure' (with example `rollout[\"is_truncated\"]`), and specifies the exact return type annotation pattern `-> list[TrainingSample] | None:`. These are specific implementation instructions, not just descriptions of what's bro"
+      "outcome": "pass",
+      "reason": "Instruction describes WHAT the bugs are (empty trajectory crash, error not zeroing mask, etc.) and expected behavior, without giving literal code replacements."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_trajectories_return_type_annotation checks for the EXACT string 'def interleave_rollout(state: vf.State) -> list[TrainingSample] | None:' \u2014 an alternative using `Optional[list[TrainingSample]]` or `list[TrainingSample] | None` with different spacing would fail. This asserts on gold-specific formatting rather than behavior."
+      "reason": "test_trajectories_return_type_annotation asserts the exact string 'def interleave_rollout(state: vf.State) -> list[TrainingSample] | None:' - this forces exact parameter name 'state', exact type 'vf.State', and exact formatting, rejecting valid alternatives like using Optional[list[TrainingSample]] or different parameter naming."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "test_trajectories_return_type_annotation and test_orchestrator_imports_no_get_is_truncated are purely text-matching tests (checking string presence/absence in source files). test_orchestrator_none_handling also appears to be text-based (checking for 'if train_example is not None:' string in file). While many tests do execute code via subprocess, these specific tests are text-only checks."
+      "outcome": "pass",
+      "reason": "Tests import and call interleave_rollout/branch_rollout via subprocess, inspecting returned values and completion_mask attributes, alongside some text checks."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The behavioral tests (e.g., test_interleave_rollout_returns_none_for_empty_trajectory, test_interleave_rollout_zeros_completion_mask_on_error) actually call the functions with specific inputs and verify outputs. A stub that always returns None would fail the error-masking tests (which expect non-None results with zeroed masks). A stub that never returns None would fail the empty-trajectory tests."
+      "reason": "Tests check actual returned None, verify completion_mask values are False, and run upstream tests \u2014 a stub returning None for everything would fail the normal-case test."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction specifies: returning None for empty trajectories (tested), zeroing completion_mask on error (tested), None checking in orchestrator (tested), removing get_is_truncated import (tested), return type annotations (tested), error=None in fixtures (tested via upstream tests), and truncation field access (tested). All major behavioral requirements are covered."
+      "reason": "Empty trajectory handling, error mask zeroing, None check in orchestrator, get_is_truncated removal, and return type signatures are all tested; error metrics logging is partially verified via the truncated output."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear names, docstrings, and comments grouping them into categories (Gates/static, Fail-to-pass/pr_diff, Pass-to-pass/repo_tests)."
+      "reason": "Tests are grouped with section comments (Gates, Fail-to-pass, Pass-to-pass) and each has descriptive names and docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task doesn't produce structured data like JSON/CSV/API/DB outputs."
+      "reason": "Task is code behavior, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No obvious typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "File paths and names appear consistent between instruction and tests."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md names the exact files to modify, exact functions (interleave_rollout, branch_rollout, make_train_example), exact import to remove (get_is_truncated from prime_rl.utils.vf), exact field to use (rollout['is_truncated']), and exact return type pattern. This goes well beyond describing what's broken and provides a near-complete implementation guide."
+      "outcome": "pass",
+      "reason": "Instruction describes problem areas at function-level, not line numbers; localization within those functions remains the agent's task."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is primarily a code-editing task, not a config-edit task."
+      "reason": "Code task, not an agentmd-edits config task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 4,
-  "fail_count": 5
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 1
 }

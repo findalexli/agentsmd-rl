@@ -4,12 +4,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-16T10:35:52.814633",
-  "total_time": 95.15,
-  "sandbox_id": "iq2vu5b98qqfbxhr1dr9h",
-  "backend": "anthropic",
+  "validated_at": "2026-04-16T20:04:55.064327",
+  "total_time": 4008.54,
+  "sandbox_id": "imfak9qtcsdlbgzyqtu13",
+  "backend": "minimax",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "validate",
   "nodes": {
     "p2p_enrich": {
       "status": "completed",
@@ -30,10 +30,10 @@
       "nop_reward": 0.0,
       "gold_reward": 1.0,
       "attempts": 1,
-      "notes": "Docker build successful. NOP test: 4 fail-to-pass tests correctly fail on base code. Gold test: all 19 tests pass after solve.sh applied. Rubric judge requires API key not available - manual verification shows gold solution follows style rules.",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 284.55
+      "notes": "Docker build successful. NOP test: 4 fail-to-pass tests correctly fail on base code (router_exports_middleware, instance_provide_removed_from_instance_ts, old_middleware_deleted, server_imports_from_router). Gold test: all 19 tests pass after solve.sh applied. Rubric judge: verified manually, repo_dir path issue in judge.py but rubric rules are satisfied by gold solution.",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 483.5
     },
     "p2p_enrichment": {
       "status": "ok",
@@ -61,18 +61,20 @@
     },
     "quality_gate": {
       "status": "passed",
-      "model": "claude-opus-4-7",
-      "backend": "anthropic",
-      "time": 0.19,
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.29,
       "notes": "flags=['lint_tier_b:1']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 12.77,
-      "tier_a_fails": [],
+      "time": 14.3,
+      "tier_a_fails": [
+        "solution_uniqueness_guard"
+      ],
       "tier_b_fails": [],
-      "pass_count": 9,
-      "fail_count": 0
+      "pass_count": 8,
+      "fail_count": 1
     },
     "tests_rewrite": {
       "status": "error",
@@ -81,14 +83,6 @@
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "minimax",
-      "time": 1419.8,
-      "at": "2026-04-15T05:00:41.423702"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -120,6 +114,14 @@
       "backend": "anthropic",
       "time": 95.15,
       "at": "2026-04-16T10:35:52.814633"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 4008.54,
+      "at": "2026-04-16T20:04:55.064327"
     }
   ]
 }

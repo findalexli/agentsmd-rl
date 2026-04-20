@@ -1,6 +1,9 @@
 name = "airflow-rustup-install-sha256-verify"
 description = "Add rustup and cargo installation with SHA256 checksum verification to Airflow CI and prod build images"
 version = "1.0.0"
+source_pr = "apache/airflow#64725"
+source_base_commit = "c4a209ba0ec1749ce0d0ac561fb22feba5bad567"
+source_merge_commit = "1b2893300d8b6c3ae656b8e7d9a44138b663d633"
 
 difficulty = "medium"
 category = "infrastructure"
@@ -10,14 +13,12 @@ tags = ["docker", "shell", "security", "rustup", "sha256"]
 estimated_minutes = 45
 max_test_minutes = 10
 
-[source]
-pr = "apache/airflow#64725"
-base_commit = "c4a209ba0ec1749ce0d0ac561fb22feba5bad567"
-merge_commit = "1b2893300d8b6c3ae656b8e7d9a44138b663d633"
-
 [environment]
 image = "task-env"
 workdir = "/workspace/airflow"
 
 [solution]
 apply = "/solution/solve.sh"
+
+[verifier]
+env = { GEMINI_API_KEY = "${GEMINI_API_KEY:-}", ANTHROPIC_API_KEY = "${ANTHROPIC_API_KEY:-}" }

@@ -1,0 +1,373 @@
+version: '2.0'
+source:
+  repo: microsoft/playwright
+  pr: 38932
+  base_commit: 1e81675f850280d2cbaa0bbb01a7f066532d0e01
+  merge_commit: 3cdf7ca18324b9a0aa0ec80d818c2f9602b0ef60
+checks:
+- id: help_json_valid
+  type: pass_to_pass
+  origin: static
+  description: help.json must be valid JSON
+- id: test_repo_npm_install
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo npm install succeeds
+- id: test_repo_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo npm run build succeeds
+- id: test_repo_tsc
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo TypeScript typecheck passes
+- id: test_repo_eslint_mcp
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo ESLint on MCP files passes
+- id: test_repo_check_deps
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo dependency check passes
+- id: test_repo_lint_packages
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo workspace packages consistency check passes
+- id: test_repo_mcp_files_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo MCP modified files have valid syntax
+- id: commands_renamed_in_help
+  type: fail_to_pass
+  origin: pr_diff
+  description: help.json command keys use new unhyphenated names (press, keydown,
+    mousemove, etc.)
+- id: help_global_text_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: Global help text references new command names, not hyphenated ones
+- id: modal_state_dual_format
+  type: fail_to_pass
+  origin: pr_diff
+  description: renderModalStates accepts config and conditionally renders skill vs
+    tool name
+- id: eval_auto_wraps_expression
+  type: fail_to_pass
+  origin: pr_diff
+  description: evaluate.ts auto-wraps non-arrow expressions with () => (...)
+- id: skill_md_documents_cli
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md exists with frontmatter and documents CLI commands with new
+    names
+- id: build_copies_terminal_md
+  type: fail_to_pass
+  origin: pr_diff
+  description: build.js copies terminal .md files to lib output
+- id: clearedby_type_is_object
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'ModalState clearedBy type is { tool: string; skill: string } not plain
+    string'
+rubric:
+- rule: All TypeScript source files must include the Microsoft copyright header (Copyright
+    (c) Microsoft Corporation.)
+  source:
+    path: eslint.config.mjs
+    lines: 202-208
+    commit: 1e81675f850280d2cbaa0bbb01a7f066532d0e01
+  reference: |
+    /**
+     * Copyright (c) Microsoft Corporation.
+     *
+     * Licensed under the Apache License, Version 2.0 (the "License");
+     * ...
+     */
+- rule: TypeScript files in packages/playwright must not have floating promises -
+    all promises must be awaited or handled
+  source:
+    path: eslint.config.mjs
+    lines: 359-364
+    commit: 1e81675f850280d2cbaa0bbb01a7f066532d0e01
+  reference: |
+    await tab.refLocator({ ref: params.ref, element: params.element || 'element' });
+- rule: 'Code must use 2-space indentation, single quotes (avoidEscape: true), and
+    1tbs brace style with allowSingleLine: true'
+  source:
+    path: eslint.config.mjs
+    lines: 76-107, 188-192
+    commit: 1e81675f850280d2cbaa0bbb01a7f066532d0e01
+  reference: |
+    if (!params.function.includes('=>'))
+      params.function = `() => (${params.function})`;
+- rule: Arrow functions must use 'as-needed' parentheses (omit when single param,
+    include when multiple)
+  source:
+    path: eslint.config.mjs
+    lines: '109'
+    commit: 1e81675f850280d2cbaa0bbb01a7f066532d0e01
+  reference: |
+    // Single param: no parentheses
+    el => el.textContent
+    // Multiple params: parentheses required
+    (a, b) => a + b
+- rule: TypeScript files in packages/ must not use console methods or process.exit/stdout/stderr
+    directly.
+  source:
+    path: eslint.config.mjs
+    lines: 336-350
+    commit: 1e81675f850280d2cbaa0bbb01a7f066532d0e01
+  reference: |
+    // Use proper logging mechanisms, not console.log or process.stdout
+config_edits:
+- path: packages/playwright/src/mcp/terminal/SKILL.md
+  tier: 1
+  gold_added: '---
+
+    name: playwright-cli
+
+    description: Automates browser interactions for web testing, form filling, screenshots,
+    and data extraction. Use when the user needs to navigate websites, interact with
+    web pages, fill forms, take screenshots, test web applications, or extract information
+    from web pages.
+
+    allowed-tools: Bash(playwright-cli:*)
+
+    ---
+
+
+    # Browser Automation with playwright-cli
+
+
+    ## Quick start
+
+
+    ```bash
+
+    playwright-cli open https://playwright.dev
+
+    playwright-cli click e15
+
+    playwright-cli type "page.click"
+
+    playwright-cli press Enter
+
+    ```
+
+
+    ## Core workflow
+
+
+    1. Navigate: `playwright-cli open https://example.com`
+
+    2. Snapshot: `playwright-cli snapshot` (returns elements with refs like `ref=e1`,
+    `ref=e2`)
+
+    3. Interact using refs from the snapshot
+
+    4. Re-snapshot after navigation or significant DOM changes
+
+
+    ## Commands
+
+
+    ### Core
+
+
+    ```bash
+
+    playwright-cli open https://example.com/
+
+    playwright-cli close
+
+    playwright-cli type "search query"
+
+    playwright-cli click e3
+
+    playwright-cli dblclick e7
+
+    playwright-cli fill e5 "user@example.com"
+
+    playwright-cli drag e2 e8
+
+    playwright-cli hover e4
+
+    playwright-cli select e9 "option-value"
+
+    playwright-cli upload ./document.pdf
+
+    playwright-cli check e12
+
+    playwright-cli uncheck e12
+
+    playwright-cli snapshot
+
+    playwright-cli eval "document.title"
+
+    playwright-cli eval "el => el.textContent" e5
+
+    playwright-cli dialog-accept
+
+    playwright-cli dialog-accept "confirmation text"
+
+    playwright-cli dialog-dismiss
+
+    playwright-cli resize 1920 1080
+
+    ```
+
+
+    ### Navigation
+
+
+    ```bash
+
+    playwright-cli go-back
+
+    playwright-cli go-forward
+
+    playwright-cli reload
+
+    ```
+
+
+    ### Keyboard
+
+
+    ```bash
+
+    playwright-cli press Enter
+
+    playwright-cli press ArrowDown
+
+    playwright-cli keydown Shift
+
+    playwright-cli keyup Shift
+
+    ```
+
+
+    ### Mouse
+
+
+    ```bash
+
+    playwright-cli mousemove 150 300
+
+    playwright-cli mousedown
+
+    playwright-cli mousedown right
+
+    playwright-cli mouseup
+
+    playwright-cli mouseup right
+
+    playwright-cli mousewheel 0 100
+
+    ```
+
+
+    ### Save as
+
+
+    ```bash
+
+    playwright-cli screenshot
+
+    playwright-cli screenshot e5
+
+    playwright-cli pdf
+
+    ```
+
+
+    ### Tabs
+
+
+    ```bash
+
+    playwright-cli tab-list
+
+    playwright-cli tab-new
+
+    playwright-cli tab-new https://example.com/page
+
+    playwright-cli tab-close
+
+    playwright-cli tab-close 2
+
+    playwright-cli tab-select 0
+
+    ```
+
+
+    ### DevTools
+
+
+    ```bash
+
+    playwright-cli console
+
+    playwright-cli console warning
+
+    playwright-cli network
+
+    playwright-cli run-code "await page.waitForTimeout(1000)"
+
+    playwright-cli tracing-start
+
+    playwright-cli tracing-stop
+
+    ```
+
+
+    ### Sessions
+
+
+    ```bash
+
+    playwright-cli --session=mysession open example.com
+
+    playwright-cli --session=mysession click e6
+
+    playwright-cli session-list
+
+    playwright-cli session-stop mysession
+
+    playwright-cli session-stop-all
+
+    playwright-cli session-delete
+
+    playwright-cli session-delete mysession
+
+    ```
+
+
+    ## Example: Form submission
+
+
+    ```bash
+
+    playwright-cli open https://example.com/form
+
+    playwright-cli snapshot
+
+
+    playwright-cli fill e1 "user@example.com"
+
+    playwright-cli fill e2 "password123"
+
+    playwright-cli click e3
+
+    playwright-cli snapshot
+
+    ```
+
+
+    ## Example: Multi-tab workflow
+
+
+    ```bash
+
+    playwright-cli ope'
+  gold_removed: ''

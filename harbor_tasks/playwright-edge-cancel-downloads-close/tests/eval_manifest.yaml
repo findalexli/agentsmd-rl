@@ -1,0 +1,103 @@
+version: '2.0'
+source:
+  repo: microsoft/playwright
+  pr: 40034
+  base_commit: 72310c757282e397fcd280e85602adcdf0d581ca
+  merge_commit: 883825e4d62aac69939b8f4c0f1cf41e72882079
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files have valid syntax
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TypeScript typecheck passes
+- id: test_repo_check_deps
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's dependency check passes
+- id: test_repo_lint_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's test linting passes
+- id: test_repo_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's build passes
+- id: download_cancel_method
+  type: fail_to_pass
+  origin: pr_diff
+  description: Download class has a cancel() method that delegates to cancelDownload
+    with uuid
+- id: context_close_cancels_downloads
+  type: fail_to_pass
+  origin: pr_diff
+  description: CRBrowserContext close method cancels all downloads before disposing
+    the browser context
+- id: cancel_uses_instance_uuid
+  type: fail_to_pass
+  origin: pr_diff
+  description: cancel() references this._uuid (instance field), not a closure-captured
+    variable
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: Download.cancel() has real logic, not an empty body
+- id: cancel_method_public_naming
+  type: fail_to_pass
+  origin: agent_config
+  description: 'cancel() follows CLAUDE.md naming convention: public method (no underscore)
+    since it''s used in other files'
+  source:
+    path: CLAUDE.md
+    lines: 99-102
+    commit: 72310c757282e397fcd280e85602adcdf0d581ca
+rubric:
+- rule: 'For exported classes: method() (public) — used in other files; _method()
+    (no private) — used by other code in the same file, but not outside the file'
+  source:
+    path: CLAUDE.md
+    lines: 99-102
+    commit: 72310c757282e397fcd280e85602adcdf0d581ca
+- rule: '`playwright-core` is the package for the browser automation engine (client,
+    server, dispatchers, protocol).'
+  source:
+    path: CLAUDE.md
+    lines: 3-5
+  evidence: The gold solution correctly implements the fix in `packages/playwright-core/src/server/chromium/crBrowser.ts`
+    and `packages/playwright-core/src/server/download.ts`, adhering to the architectural
+    bound
+  category: architecture
+- rule: 'playwright-core is the package for the Browser automation engine: client,
+    server, dispatchers, protocol'
+  source:
+    path: CLAUDE.md
+    lines: 3-6
+  evidence: The gold solution correctly modifies files within `packages/playwright-core/src/server/`
+    to fix the browser automation engine's handling of downloads.
+  category: architecture
+distractors:
+- rule: Browser engine patches belong in the `browser_patches/` directory.
+  collision_type: architecture_boundary
+  why_distracting: The issue describes an 'Edge browser crash', which might lead an
+    agent to believe a browser engine patch is necessary since `browser_patches/`
+    is explicitly designated for 'Browser engine patches'. However, the fix must be
+    implemented in Playwright's Chromium context management.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 31-32
+- rule: Tests needing `browser`/`browserType`/`context` should be placed in `tests/library/`.
+  collision_type: scope_ambiguity
+  why_distracting: The config provides detailed instructions on where to add tests
+    for context lifecycle (`tests/library/`). An agent might waste time trying to
+    write an automated test for this Edge-specific crash, which is not required by
+    the gold solution and may be difficult to reliably reproduce in the standard test
+    environment.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 70-76
+hierarchy_analysis: The configuration consists of a single, flat `CLAUDE.md` file
+  at the root level. There is no hierarchy or overriding of rules.

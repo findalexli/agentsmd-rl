@@ -1,62 +1,56 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests check many specifics not mentioned in instruction.md: test_global_json_valid checks for 'tools', 'dotnet', 'msbuild-sdks' keys in global.json; test_nuget_config_valid checks root tag is 'configuration'; test_build_scripts_executable checks for shebang in build.sh; test_solution_file_exists checks for 'Microsoft Visual Studio Solution File' string; test_editorconfig_exists checks 'root = true'; test_git_repo_clean requires all changes committed; test_copilot_instructions_valid checks '---' "
+      "outcome": "pass",
+      "reason": "All required file paths, skill names, parameter names, literal strings like 'ALWAYS use this skill', category names, and structural elements (YAML frontmatter, ValidateSet, CmdletBinding) are explicitly named in instruction.md."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "Instruction.md gives extremely specific implementation details: 'use File.WriteAllText to write these files as triple-quoted raw string literals containing XML with <Project> as the root element', 'Must set $ErrorActionPreference = \"Stop\"', 'Must include [CmdletBinding()] attribute', 'Must start with YAML frontmatter (--- at the first line)', 'Must include the text \"ALWAYS use this skill\"'. These are exact implementation directives, not descriptions of broken behavior."
+      "outcome": "pass",
+      "reason": "Instruction describes what to create and required properties but doesn't provide exact code/line replacements; agent must still construct the content."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests like test_powershell_script_valid assert on specific implementation details: script must start with '#' or '<#', must contain 'param(' literal, must contain 'ValidateSet', must contain 'ErrorActionPreference'. test_copilot_instructions_valid requires '---' in first 10 chars. test_skill_md_yaml_frontmatter checks for exact frontmatter structure. A correct alternative (e.g., using a different error handling mechanism or different comment style) would fail."
+      "outcome": "pass",
+      "reason": "Tests check for structural features (ValidateSet presence, param block, specific strings like 'ALWAYS') rather than gold-specific variable names or line positions, allowing alternative correct implementations."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Nearly all tests are text-matching: checking file contents with string searches like 'assert \"param(\" in content', 'assert \"ValidateSet\" in content', 'assert \"---\" in content[:10]', 'assert \"class\" in src'. The only execution-based tests are git commands (test_git_repo_clean, test_git_no_merge_conflicts) which test repo state, not the agent's code behavior. No test actually runs the PowerShell script, builds the C# code, or tests MSBuild isolation behavior."
+      "reason": "The visible tests are almost entirely file reads + substring/regex checks (e.g., 'param(' in content, 'ValidateSet' in content, 'ALWAYS' in text); no tests execute the PowerShell script or the C# test setup logic."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests like test_powershell_script_valid require the file to exist and contain specific content (param block, ValidateSet, etc.) \u2014 a stub empty file or pass-through wouldn't satisfy these. test_csharp_syntax_valid requires balanced braces/parens. These require non-trivial file creation/modification."
+      "reason": "Tests require specific content (e.g., File.WriteAllText calls count >=3, ValidateSet presence, YAML frontmatter) that a stub couldn't trivially satisfy without implementing the required changes."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "The instruction specifies MSBuild isolation via creating empty Directory.Build.props/targets in the test directory root with File.WriteAllText, but no test verifies this behavior was actually implemented in BaseBuildTest.cs (test_not_stub only checks for >=3 File.* operations which likely already pass). The instruction mentions 'dotnet test' automation workflow but no test verifies the script actually works."
+      "outcome": "pass",
+      "reason": "Required behaviors (SKILL.md frontmatter, PS1 param block with ValidateSet, copilot-instructions skill reference, integration-tests instructions) are each covered by tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive names (test_csharp_syntax_valid, test_powershell_script_valid, etc.), docstrings explaining purpose, and comments grouping them into categories ([static] pass_to_pass, [repo_tests] pass_to_pass)."
+      "reason": "Tests are grouped with section headers like '# Gates (pass_to_pass, static)' and '# Gates (pass_to_pass, repo_tests)' with descriptive docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task produces documentation files, scripts, and C# code modifications \u2014 not structured data like JSON/CSV/API/DB output."
+      "reason": "Task produces markdown/PowerShell/C# files, not a structured data API/JSON/CSV output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and commands appear consistent between instruction.md and tests. Category names (Build, WindowsTemplates, macOSTemplates, Blazor, MultiProject, Samples, AOT, RunOnAndroid, RunOniOS) match across all files."
+      "reason": "Paths like .github/skills/run-integration-tests/SKILL.md and scripts/Run-IntegrationTests.ps1 are consistent across instruction and tests."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "Instruction.md names the exact file to modify (BaseBuildTest.cs), the exact method (SetUpNuGetPackages), and gives precise implementation: 'use File.WriteAllText to write these files as triple-quoted raw string literals containing XML with <Project> as the root element'. This goes well beyond describing what's broken."
+      "outcome": "pass",
+      "reason": "Instruction names files to modify (BaseBuildTest.cs, copilot-instructions.md) but this is expected since creating/updating those files is the task itself, not localization of a hidden bug."
     },
     "config_edit_scope_bounded": {
-      "outcome": "pass",
-      "reason": "The gold patch creates new files and makes localized additions to existing config files (copilot-instructions.md, integration-tests.instructions.md). The diffs are scoped additions, not full-file rewrites."
+      "outcome": "not_applicable",
+      "reason": "This is a code/doc creation task, not an agent.md config edit task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "behavior_in_tests",
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 4,
-  "fail_count": 6
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 1
 }

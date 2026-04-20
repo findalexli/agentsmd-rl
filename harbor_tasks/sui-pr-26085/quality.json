@@ -1,63 +1,60 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert very specific patterns like 'o.borrow()' in test_fold_ref_macro_exists, 'o.borrow_mut()' in test_fold_mut_macro_exists, exact variable name 'o' used internally. The instruction mentions 'use o.borrow()' in implementation notes but doesn't specify the local variable must be named 'o'. Also test_repo_cargo_xlint and test_repo_cargo_fmt are pass-to-pass infrastructure tests not mentioned in instruction.md."
+      "outcome": "pass",
+      "reason": "Instruction names file paths, macro signatures, and specific test patterns like `*x = 100`, `*x == 5`, `*x == 6`, `option::some(5u64).fold!`, `option::none<u64>().fold!` that tests assert on."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction gives exact implementation details: 'fold_ref implementation must use o.borrow()', 'fold_mut implementation must use o.borrow_mut()', exact signatures, exact test patterns like '*x = 100', 'option::some(5u64).fold!', and specific closure patterns. This effectively dictates the solution rather than describing desired behavior."
+      "reason": "Instruction provides exact signatures, tells the agent to use `o.borrow()`, `o.borrow_mut()`, `destroy_some()`, `destroy_none()`, and even specifies the exact test literals like `*x = 100` and `*x == 5`/`*x == 6` \u2014 effectively dictating the implementation."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests like test_fold_ref_macro_exists assert 'o.borrow()' as a literal string in the source file, meaning an alternative correct implementation using a different local variable name (e.g., 'opt.borrow()') would fail. Similarly test_fold_mut_macro_exists requires 'o.borrow_mut()' literally. test_is_none_or_macro_exists checks for 'is_none()' string presence. These are implementation-detail checks that reject valid alternatives."
+      "outcome": "pass",
+      "reason": "Tests check for macro existence and test function names but alternative correct implementations matching the signatures would still pass."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_map_mut_macro_exists, test_is_none_or_macro_exists, test_fold_macro_exists, test_fold_ref_macro_exists, test_fold_mut_macro_exists, test_map_mut_functionality, test_is_none_or_functionality, test_fold_functionality, test_fold_ref_functionality, test_fold_mut_functionality) are ALL text-matching tests using 'assert X in content' on file contents. None of them actually execute the Move code. The only execution-based tests are pass-to-pass cargo check/clippy/fmt tests."
+      "reason": "Most f2p tests (test_map_mut_macro_exists, test_is_none_or_macro_exists, test_fold_macro_exists, etc.) just do `open(...).read()` and `assert 'x' in content`; only a few subprocess tests run actual Rust tooling (cargo check/fmt), but none execute the Move tests themselves."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "A stub implementation that simply adds the correct function signatures and string patterns to the source files (without correct logic) and adds test functions containing the required string patterns (without them being correct tests) would pass all fail-to-pass tests, since those tests only check for string presence in files, not actual execution."
+      "reason": "Tests like `test_map_mut_functionality` only check that strings like `*x = 100`, `option::some(5u64)` appear in the test file \u2014 a stub copying the literals without a working implementation could pass since no Move test execution is triggered."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "The instruction requires that the functions actually work correctly (e.g., map_mut returns Some(f(value)) for Some, None for None), but no test actually executes the Move code to verify this behavior. The cargo check tests only verify compilation, not runtime correctness."
+      "outcome": "pass",
+      "reason": "Each of the 5 macros has existence and functionality checks covering Some/None and mutation cases."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with clear docstrings explaining what each test verifies, grouped by macro function (map_mut, is_none_or, fold, fold_ref, fold_mut) with separate existence and functionality tests."
+      "reason": "Tests are named per-macro with docstrings distinguishing fail-to-pass vs pass-to-pass."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data like JSON/CSV/API/DB."
+      "reason": "No structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "Paths and commands appear correct."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact implementation details like 'fold_ref implementation must use o.borrow()', 'fold_mut implementation must use o.borrow_mut()', and exact test patterns like '*x = 100' and 'option::some(5u64).fold!'. This goes beyond describing desired behavior and prescribes exact code."
+      "reason": "Instruction explicitly specifies 'fold_ref implementation must use `o.borrow()`' and 'fold_mut implementation must use `o.borrow_mut()`', naming the exact API calls rather than describing behavior."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "Code-only task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
     "no_solution_leakage",
-    "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
     "test_not_tautological"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 2,
-  "fail_count": 7
+  "pass_count": 5,
+  "fail_count": 4
 }

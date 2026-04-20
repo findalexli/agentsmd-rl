@@ -1,62 +1,56 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert very specific implementation details not fully specified in instruction.md. For example, test_rpc_visitor_imports_type_name_layout greps for the exact string 'use crate::base_types::type_name_layout;', test_rpc_visitor_handles_type_name greps for '0x1::type_name::TypeName' as a comment in rpc_visitor/mod.rs, and test_sui_display_uses_type_name_in_atoms checks that 'type_name_layout()' appears within 5 lines after 'move_utf8_str_layout(),' in value.rs. The instruction mentions the pa"
+      "outcome": "pass",
+      "reason": "Instruction names the files (rpc_visitor/mod.rs, sui-display/src/v2/value.rs, base_types), the struct 0x1::type_name::TypeName, the field 'name', and the existing layout functions to mirror."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md essentially describes the full solution: add a type_name_layout() function to base_types, import it in rpc_visitor/mod.rs and sui-display/src/v2/value.rs, and add it to the special-case handling following the pattern of move_ascii_str_layout/move_utf8_str_layout/url_layout. It names exact file paths, exact function names to create, and the exact pattern to follow. This leaves very little reasoning for the agent."
+      "outcome": "pass",
+      "reason": "Instruction describes what needs to be recognized/added but doesn't provide the exact code; it just points to the pattern to follow."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests grep for exact implementation details: 'use crate::base_types::type_name_layout;' in mod.rs, 'use sui_types::base_types::type_name_layout;' in value.rs, 'type_name_layout()' appearing in specific positions. An alternative correct fix (e.g., inline the layout check without a separate function, name the function differently like 'std_type_name_layout', or use a different import style) would fail these tests despite being functionally correct."
+      "reason": "Tests assert exact strings like 'use crate::base_types::type_name_layout;', 'use sui_types::base_types::type_name_layout;', and function name 'type_name_layout()' \u2014 a correct alternative using a different name (e.g., 'type_name_struct_layout' or glob import) would fail."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Most fail-to-pass tests (test_rpc_visitor_imports_type_name_layout, test_rpc_visitor_handles_type_name, test_sui_display_imports_type_name_layout, test_sui_display_uses_type_name_in_atoms) use grep to check for specific text strings in source files rather than executing code or testing behavior. Only test_type_name_layout_exists actually compiles and would run code, though even it only tests compilation not runtime behavior."
+      "outcome": "pass",
+      "reason": "Tests include cargo build/test subprocess executions (test_type_name_layout_exists builds an example that calls type_name_layout()) and run cargo test suites, though several tests are grep-based."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests require actual code changes - a stub/empty implementation wouldn't have the correct import statements, function definitions, or layout specifications that the tests check for. test_type_name_layout_exists requires a compilable function with correct struct tag fields."
+      "reason": "test_type_name_layout_exists asserts specific struct tag address, module name, field name and count via a compiled example, so a stub returning default layout would fail."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "The instruction says 'a 0x1::type_name::TypeName value should serialize as a plain JSON string in RPC output, not as {\"name\": \"...\"}', but no test actually verifies this end-to-end serialization behavior. The tests only check for textual presence of imports and function calls, not that TypeName values are actually unwrapped to strings."
+      "outcome": "pass",
+      "reason": "Tests verify the layout function exists, is imported in both modules, and is used in special-case handling, matching the instruction's required behavior."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names and docstrings that clearly indicate whether they are fail-to-pass or pass-to-pass, and what each test verifies."
+      "reason": "Tests are individually named and docstringed with fail-to-pass / pass-to-pass labels."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task doesn't produce structured data output; it modifies internal serialization behavior of a Rust crate."
+      "reason": "Not a structured data task."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "Paths and identifiers appear consistent across instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md names exact files (crates/sui-types/src/object/rpc_visitor/mod.rs, crates/sui-display/src/v2/value.rs, base_types), exact function names to create (type_name_layout), and the exact pattern to follow (move_ascii_str_layout, move_utf8_str_layout, url_layout). This goes well beyond describing what's broken and essentially prescribes the implementation."
+      "outcome": "pass",
+      "reason": "Instruction names the two files to modify, but localization is arguably part of the task description and not a buggy-line-level hint."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "Code-only task, no config edits."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "behavior_in_tests",
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 3,
-  "fail_count": 6
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 1
 }

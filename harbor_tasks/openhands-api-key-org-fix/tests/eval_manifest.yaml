@@ -1,0 +1,133 @@
+version: '2.0'
+checks:
+- id: test_api_key_org_id_used_when_available
+  type: fail_to_pass
+  origin: pr_diff
+  description: When API key has org_id binding, conversation should be saved under
+    that org, not user's current org
+- id: test_legacy_api_key_falls_back_to_user_org
+  type: fail_to_pass
+  origin: pr_diff
+  description: Legacy API keys without org binding should use user's current org as
+    fallback
+- id: test_cookie_auth_uses_user_current_org
+  type: fail_to_pass
+  origin: pr_diff
+  description: Browser/cookie authentication should continue to use user's current_org_id
+- id: test_code_imports_and_syntax
+  type: fail_to_pass
+  origin: pr_diff
+  description: Verify the modified module has valid Python syntax and imports correctly
+- id: test_repo_syntax_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified Python file has valid syntax and can be compiled
+- id: test_repo_ast_parse
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified Python file can be parsed into AST without errors
+- id: test_repo_enterprise_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Key enterprise module Python files have valid syntax
+- id: test_repo_class_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified file has expected classes and methods
+- id: test_repo_ruff_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified file passes ruff linter checks (CI lint parity)
+- id: test_repo_enterprise_storage_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Related enterprise storage test file has valid syntax
+- id: test_repo_import_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified file has syntactically valid import statements
+- id: test_repo_enterprise_ruff_check_target
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified file passes ruff linting with enterprise config (CI lint-enterprise-python
+    parity)
+- id: test_repo_enterprise_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified file is properly formatted per enterprise ruff config
+- id: test_repo_enterprise_pytest_unit
+  type: pass_to_pass
+  origin: repo_tests
+  description: Enterprise pytest unit tests for storage module pass (CI test-enterprise
+    parity)
+rubric:
+- rule: Code uses defensive hasattr() checks before accessing potentially missing
+    attributes on user_auth objects
+  source:
+    path: enterprise/server/utils/saas_app_conversation_info_injector.py
+    lines: 354-365
+    commit: 06cd53d752b022a7ae3676ab17c029f1f810c892
+  evidence: The gold solution uses `hasattr(self.user_context, 'user_auth')` and `hasattr(user_auth,
+    'get_api_key_org_id')` before accessing these attributes. This defensive programming
+    approach handles both API key and cookie-based authentication.
+  category: code_quality
+- rule: Ensure code passes pre-commit hooks (Ruff formatting, trailing whitespace,
+    missing newlines) before pushing changes.
+  source:
+    path: AGENTS.md
+    lines: 16-26
+  evidence: The patch maintains correct Python indentation and formatting, avoiding
+    trailing whitespace or missing newlines, which aligns with the pre-commit hook
+    requirements mentioned in the config.
+  category: tooling
+- rule: Run pre-commit hooks (e.g., `pre-commit run --config ./dev_config/python/.pre-commit-config.yaml`)
+    to ensure lint errors and formatting issues are fixed before pushing.
+  source:
+    path: AGENTS.md
+    lines: 16-20
+  evidence: The patch introduces cleanly formatted Python code with proper indentation
+    and no trailing whitespace, adhering to the repository's linting standards.
+  category: tooling
+distractors:
+- rule: 'Backend: Located in the `openhands` directory'
+  collision_type: architecture_boundary
+  why_distracting: The config states that the backend is located in the `openhands`
+    directory, but the target file for this PR is in `enterprise/server/utils/`. An
+    agent might get confused about the repository structure, attempt to search for
+    the file inside `openhands/`, or incorrectly assume the file needs to be moved
+    to comply with the architecture guidelines.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 58-62
+- rule: Store PR-specific artifacts like design documents or analysis notes in a `.pr/`
+    directory.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might waste time creating a `.pr/analysis.md` or `.pr/notes.md`
+    file to document its investigation of the bug, which is unnecessary for a straightforward
+    bug fix and distracts from simply patching the code.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 35-43
+- rule: Use cross-repo-testing skill when testing cloud workspace features or SDK
+    against OH Cloud.
+  source:
+    path: .agents/skills/cross-repo-testing/SKILL.md
+    lines: 1-5
+  collision_type: scope_ambiguity
+  why_distracting: The issue mentions 'OpenHands SaaS/Enterprise edition' and 'API
+    key authentication'. The cross-repo-testing skill is triggered by 'test SDK against
+    OH Cloud' or 'e2e test a cloud workspace feature'. An agent might incorrectly
+    assume it needs to invoke this skill to test the SaaS API key feature, wasting
+    time on irrelevant cross-repo testing setups.
+  severity: low
+hierarchy_analysis: The configuration consists of a single root-level `AGENTS.md`
+  file. There is no complex hierarchy to navigate, but there is a slight contradiction
+  between the stated repository structure (backend in `openhands`) and the actual
+  location of the enterprise code (`enterprise/`).
+source:
+  repo: All-Hands-AI/OpenHands
+  pr: 13568
+  base_commit: 06cd53d752b022a7ae3676ab17c029f1f810c892
+  merge_commit: 889754abfd214fa74138db496e06955edb323022

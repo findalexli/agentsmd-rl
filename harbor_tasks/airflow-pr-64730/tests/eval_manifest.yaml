@@ -1,0 +1,96 @@
+source:
+  type: github_pr
+  repo: apache/airflow
+  pr_number: 64730
+  base_commit: a02fbaa00cc51bce42c4375ca65febbe5589d6b2
+  merge_commit: 59ddf5698ab7ada2edce24f284c827db5242b170
+  title: "Add workers.celery.serviceAccount & workers.kubernetes.serviceAccount"
+
+checks:
+  # Fail-to-pass: Kubernetes worker service account
+  - id: test_kubernetes_service_account_create
+    type: fail_to_pass
+    origin: pr_behavior
+    description: "workers.kubernetes.serviceAccount.create should create separate kubernetes worker SA"
+
+  - id: test_kubernetes_service_account_annotations
+    type: fail_to_pass
+    origin: pr_behavior
+    description: "workers.kubernetes.serviceAccount.annotations should apply to kubernetes worker SA"
+
+  - id: test_kubernetes_service_account_automount_token
+    type: fail_to_pass
+    origin: pr_behavior
+    description: "workers.kubernetes.serviceAccount.automountServiceAccountToken should control token mounting"
+
+  # Fail-to-pass: Separate service accounts for Celery and Kubernetes
+  - id: test_separate_celery_and_kubernetes_service_accounts
+    type: fail_to_pass
+    origin: pr_behavior
+    description: "CeleryKubernetesExecutor should support separate service accounts for each executor type"
+
+  # Pass-to-pass: Celery worker service account (already works via merge on base)
+  - id: test_celery_service_account_name
+    type: pass_to_pass
+    origin: pr_behavior
+    description: "workers.celery.serviceAccount.name should set celery worker SA name"
+
+  - id: test_celery_service_account_annotations
+    type: pass_to_pass
+    origin: pr_behavior
+    description: "workers.celery.serviceAccount.annotations should apply to celery worker SA"
+
+  # Pass-to-pass: Legacy compatibility
+  - id: test_legacy_workers_service_account_still_works
+    type: pass_to_pass
+    origin: pr_behavior
+    description: "Legacy workers.serviceAccount configuration should still work"
+
+  # Pass-to-pass: Basic helm rendering
+  - id: test_helm_template_renders
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Helm template should render without errors"
+
+  - id: test_helm_template_with_celery_executor
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Helm template with CeleryExecutor should render"
+
+  - id: test_helm_template_with_kubernetes_executor
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Helm template with KubernetesExecutor should render"
+
+  # Pass-to-pass: Repo CI checks
+  - id: test_helm_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Helm lint passes on the chart"
+
+  - id: test_chart_schema_validation
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Chart schema validation passes"
+
+  - id: test_helm_template_celery_kubernetes_executor
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Helm template with CeleryKubernetesExecutor renders"
+
+rubric:
+  - id: backward_compatibility
+    rule: "Helm chart changes maintain backward compatibility with existing configurations"
+    description: "The legacy workers.serviceAccount should continue to work alongside new options"
+    source:
+      file: chart/values.yaml
+      path: chart/values.yaml
+      commit: a02fbaa00cc51bce42c4375ca65febbe5589d6b2
+
+  - id: component_labeling
+    rule: "Service accounts should have appropriate component labels for identification"
+    description: "Worker service accounts should have component=worker labels"
+    source:
+      file: chart/templates/_helpers.yaml
+      path: chart/templates/_helpers.yaml
+      commit: a02fbaa00cc51bce42c4375ca65febbe5589d6b2

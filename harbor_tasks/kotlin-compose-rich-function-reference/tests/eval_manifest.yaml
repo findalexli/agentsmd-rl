@@ -1,0 +1,100 @@
+source_pr:
+  owner: JetBrains
+  repo: kotlin
+  number: 5665
+  title: "[CMP] fix CMP-9456"
+  merge_commit: 69cbd60896dac3318b90105c799e8d684953ed44
+  base_commit: 56dd547ef4b6c5339be9b3cbbdf0b208acdcf9fb
+
+checks:
+  # Fail-to-pass tests - these verify the fix is implemented
+  - id: test_fun_interface_lowering_has_native_check
+    type: fail_to_pass
+    origin: pr_code_change
+    description: "ComposableFunInterfaceLowering checks for Native platform with IrRichCallableReferencesInKlibs"
+
+  - id: test_fun_interface_lowering_uses_ir_rich_impl
+    type: fail_to_pass
+    origin: pr_code_change
+    description: "ComposableFunInterfaceLowering uses IrRichFunctionReferenceImpl for non-JVM platforms"
+
+  - id: test_type_remapper_handles_rich_function_reference
+    type: fail_to_pass
+    origin: pr_code_change
+    description: "ComposableTypeTransformer overrides visitRichFunctionReference"
+
+  - id: test_composer_param_handles_rich_function_reference
+    type: fail_to_pass
+    origin: pr_code_change
+    description: "ComposerParamTransformer overrides visitRichFunctionReference and transforms overriddenFunctionSymbol"
+
+  - id: test_type_remapper_method_body
+    type: fail_to_pass
+    origin: pr_code_change
+    description: "ComposableTypeTransformer visitRichFunctionReference has correct method body with needsComposableRemapping check"
+
+  - id: test_composer_param_method_body
+    type: fail_to_pass
+    origin: pr_code_change
+    description: "ComposerParamTransformer visitRichFunctionReference updates overriddenFunctionSymbol correctly"
+
+  # Pass-to-pass tests (repo_tests) - these run actual CI commands
+  - id: test_repo_kotlin_compiler_available
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Kotlin compiler is available and functional (version 2.0.21)"
+
+  - id: test_repo_java_available
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Java runtime is available for Kotlin compiler (Java 21)"
+
+  - id: test_repo_git_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Git repository is valid and has expected base commit checked out"
+
+  - id: test_repo_file_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Expected source files exist and are readable"
+
+  - id: test_repo_kotlin_files_non_empty
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All Kotlin source files are non-empty"
+
+  - id: test_repo_gradlew_available
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Gradle wrapper is available for builds"
+
+  # Pass-to-pass tests (static) - file content validation
+  - id: test_syntax_validity
+    type: pass_to_pass
+    origin: static
+    description: "Kotlin files have valid structure (balanced braces, no syntax errors)"
+
+  - id: test_all_lowerings_have_package
+    type: pass_to_pass
+    origin: static
+    description: "All lowering files have correct package declaration"
+
+  - id: test_repo_no_syntax_errors
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Kotlin files can be read as UTF-8 without errors"
+
+# Rubric for soft/subjective rules from agent configs
+rubric:
+  - rule: "Reference YouTrack issues (KT-XXXXX or CMP-XXXXX) in commit messages when applicable"
+    source: "file=.ai/guidelines.md,lines=commit_rules"
+    description: "Commit message should reference the CMP-9456 issue"
+
+  - rule: "When working with IR lowerings, follow the pattern of other lowering passes in the same directory"
+    source: "file=compiler/AGENTS.md,lines=ir_lowerings"
+    description: "New visitRichFunctionReference overrides should follow existing patterns"
+
+  - rule: "Add appropriate imports for new IR expression types"
+    source: "file=.ai/guidelines.md,lines=imports"
+    description: "Missing imports for IrRichFunctionReferenceImpl and selectSAMOverriddenFunction"

@@ -1,0 +1,111 @@
+version: '2.0'
+source:
+  repo: THUDM/slime
+  pr: 1731
+  base_commit: 08b201bd576e02fba08dae22e5c9324643e88884
+  merge_commit: 183e525f60fcf435f82f273e9eb69702d3ce431a
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Target file must parse without syntax errors
+- id: hf_named_tensors_released_in_loop
+  type: fail_to_pass
+  origin: pr_diff
+  description: Both long_lived_tensors and hf_named_tensors released in weight chunk
+    loop
+- id: ipc_collect_in_loop
+  type: fail_to_pass
+  origin: pr_diff
+  description: torch.cuda.ipc_collect() called inside weight chunk for-loop
+- id: ipc_collect_after_barrier
+  type: fail_to_pass
+  origin: pr_diff
+  description: torch.cuda.ipc_collect() called after dist.barrier()
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: update_weights has substantial body (not a stub)
+- id: send_hf_params_exists
+  type: pass_to_pass
+  origin: static
+  description: _send_hf_params method still exists
+- id: send_to_colocated_engine_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: _send_to_colocated_engine retains tuple return signature
+- id: ray_and_dist_integration
+  type: pass_to_pass
+  origin: static
+  description: ray.get and dist.barrier calls remain in source
+- id: repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff linting passes on target directory
+- id: repo_black_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's black formatting passes on target directory
+- id: repo_isort_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's isort import ordering passes on target directory
+- id: repo_autoflake_unused_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's autoflake check for unused imports passes on target directory
+- id: repo_python_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Target file has valid Python syntax (py_compile)
+- id: repo_pyproject_toml_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: pyproject.toml is valid TOML and parseable
+rubric: []
+distractors:
+- rule: For sample removal, prefer sample.remove_sample=True over deleting objects.
+  source:
+    path: .claude/skills/add-dynamic-filter/SKILL.md
+    lines: '70'
+  source_text: '- For sample removal, prefer `sample.remove_sample=True` over deleting
+    objects.'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might see the 'del' keyword being used in the gold diff
+    to free GPU tensors (long_lived_tensors, hf_named_tensors) and incorrectly apply
+    this rule to avoid deleting objects. This rule strictly applies to domain 'Sample'
+    objects during filtering, not Python memory management for tensors.
+  severity: high
+- rule: Avoid dropping samples by deletion
+  source:
+    path: .claude/skills/add-dynamic-filter/SKILL.md
+    lines: '92'
+  source_text: '- Dropping samples by deletion instead of mask flagging'
+  collision_type: scope_ambiguity
+  why_distracting: Listed as a common mistake, this might further convince an agent
+    that the 'del long_lived_tensors, hf_named_tensors' modification in the gold diff
+    is bad practice, confusing sample dropping logic with explicit garbage collection.
+  severity: medium
+- rule: Avoid blocking-heavy logic in high-frequency paths
+  source:
+    path: .claude/skills/add-rollout-function/SKILL.md
+    lines: '99'
+  source_text: '- Using blocking-heavy logic in high-frequency rollout paths without
+    batching/concurrency control'
+  collision_type: architecture_boundary
+  why_distracting: The gold diff adds 'torch.cuda.ipc_collect()', which forces synchronization/cleanup.
+    An agent might think this violates the rule against blocking-heavy logic. However,
+    the update_weight_from_tensor.py path is executed during discrete model weight
+    synchronization steps, not within the high-frequency asynchronous rollout generation
+    loop.
+  severity: medium
+- rule: Dropping samples by deletion instead of mask flagging
+  source:
+    path: .claude/skills/add-dynamic-filter/SKILL.md
+    lines: '92'
+  source_text: '- Dropping samples by deletion instead of mask flagging'
+  collision_type: scope_ambiguity
+  why_distracting: This rule applies to the rollout sample processing pipeline, but
+    an agent focused on memory cleanup might misapply this 'Common Mistake' to avoid
+    using the `del` keyword for tensor memory management.
+  severity: low

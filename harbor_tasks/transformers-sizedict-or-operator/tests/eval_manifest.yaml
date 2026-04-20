@@ -1,0 +1,176 @@
+version: '2.0'
+source:
+  repo: huggingface/transformers
+  pr: 44884
+  base_commit: b7164eca8675e5223cf73fb430a6aaf6ceafc9cc
+  merge_commit: 7cd9b985e0698d4f625a18be0125231b6b930390
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: image_utils.py must parse without syntax errors
+- id: test_repo_import_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Transformers module can be imported without syntax errors
+- id: test_repo_sizedict_basic
+  type: pass_to_pass
+  origin: repo_tests
+  description: SizeDict basic operations work (instantiation, dict conversion, equality)
+- id: test_repo_image_utils_ast
+  type: pass_to_pass
+  origin: repo_tests
+  description: image_utils.py parses without AST errors
+- id: test_repo_get_size_dict
+  type: pass_to_pass
+  origin: repo_tests
+  description: get_size_dict works and returns compatible dict with SizeDict
+- id: test_repo_sizedict_attributes
+  type: pass_to_pass
+  origin: repo_tests
+  description: SizeDict attribute access works for all standard fields
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - ruff check passes on image_utils.py
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - ruff format check passes on image_utils.py
+- id: test_repo_typing_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - ty type checker runs on image_utils.py without errors
+- id: test_repo_sizedict_pickle
+  type: pass_to_pass
+  origin: repo_tests
+  description: SizeDict can be pickled and unpickled
+- id: test_repo_sizedict_repr
+  type: pass_to_pass
+  origin: repo_tests
+  description: SizeDict repr is valid and contains expected fields
+- id: sizedict_or_dict
+  type: fail_to_pass
+  origin: pr_diff
+  description: SizeDict | dict returns a SizeDict with all fields merged
+- id: dict_or_sizedict
+  type: fail_to_pass
+  origin: pr_diff
+  description: dict | SizeDict returns a plain dict with all entries merged
+- id: sizedict_or_sizedict
+  type: fail_to_pass
+  origin: pr_diff
+  description: SizeDict | SizeDict returns a merged SizeDict
+- id: or_override_conflict
+  type: fail_to_pass
+  origin: pr_diff
+  description: Right-side values override left-side on key conflict
+- id: or_unsupported_type
+  type: pass_to_pass
+  origin: pr_diff
+  description: SizeDict | non-dict raises TypeError (preserved behavior)
+- id: equality_with_dict
+  type: pass_to_pass
+  origin: repo_tests
+  description: SizeDict equality comparison with dict still works
+- id: getitem_and_contains
+  type: pass_to_pass
+  origin: repo_tests
+  description: SizeDict __getitem__ and __contains__ still work
+- id: dict_conversion
+  type: pass_to_pass
+  origin: repo_tests
+  description: SizeDict dict() conversion still works
+- id: minimal_diff
+  type: pass_to_pass
+  origin: agent_config
+  description: Fix should be brief — fewer than 40 lines of non-comment code added
+  source:
+    path: .github/copilot-instructions.md
+    lines: '15'
+    commit: b7164eca8675e5223cf73fb430a6aaf6ceafc9cc
+- id: minimal_files_changed
+  type: pass_to_pass
+  origin: agent_config
+  description: Only image_utils.py (and optionally one test file) should be modified
+  source:
+    path: .github/copilot-instructions.md
+    lines: '15'
+    commit: b7164eca8675e5223cf73fb430a6aaf6ceafc9cc
+- id: no_bare_type_ignore
+  type: pass_to_pass
+  origin: agent_config
+  description: 'No bare ''# type: ignore'' without specific error code in added lines'
+  source:
+    path: .ai/skills/add-or-fix-type-checking/SKILL.md
+    lines: 180-186
+    commit: b7164eca8675e5223cf73fb430a6aaf6ceafc9cc
+- id: no_new_test_files
+  type: pass_to_pass
+  origin: agent_config
+  description: Tests must be added to existing test files, not new ones
+  source:
+    path: .github/copilot-instructions.md
+    lines: '16'
+    commit: b7164eca8675e5223cf73fb430a6aaf6ceafc9cc
+rubric:
+- rule: PRs should be as brief as possible. Bugfix PRs in particular can often be
+    only one or two lines long, and do not need large comments, docstrings or new
+    functions in this case. Aim to minimize the size of the diff.
+  source:
+    path: .github/copilot-instructions.md
+    lines: '15'
+    commit: b7164eca8675e5223cf73fb430a6aaf6ceafc9cc
+- rule: Do not add helper methods or abstractions just to satisfy the type checker,
+    especially for only one or two occurrences.
+  source:
+    path: .ai/skills/add-or-fix-type-checking/SKILL.md
+    lines: '196'
+    commit: b7164eca8675e5223cf73fb430a6aaf6ceafc9cc
+- rule: Do not use cast() when @overload or generics can eliminate the need at the
+    source.
+  source:
+    path: .ai/skills/add-or-fix-type-checking/SKILL.md
+    lines: '195'
+    commit: b7164eca8675e5223cf73fb430a6aaf6ceafc9cc
+- rule: '`make typing`: runs the ty type checker and model structure rules'
+  source:
+    path: CLAUDE.md
+    lines: 3-3
+  evidence: The gold solution includes explicit return type annotations (`-> "SizeDict"`
+    and `-> dict`) for the new dunder methods, ensuring compatibility with the repository's
+    type checker.
+  category: tooling
+- rule: Run the ty type checker and model structure rules via `make typing`
+  source:
+    path: AGENTS.md
+    lines: 3-3
+  evidence: The gold solution includes return type annotations (`-> "SizeDict"` and
+    `-> dict`) for the newly added `__or__` and `__ror__` methods, aligning with the
+    repository's emphasis on passing type checkers.
+  category: tooling
+distractors:
+- rule: If coordination evidence cannot be found, do not proceed to PR-ready output.
+    In blocked cases, return a short explanation of what is missing.
+  collision_type: meta_confusion
+  why_distracting: The task requires a small, isolated addition of two dunder methods
+    to a single class. The agent might misinterpret this as a 'low-value busywork
+    PR' or 'tiny edit' and refuse to implement it.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 54-57
+- rule: Do not open one-off PRs for tiny edits (single typo, isolated lint cleanup,
+    one mutable default argument, etc.).
+  collision_type: scope_ambiguity
+  why_distracting: The task requires a small, isolated addition of two dunder methods
+    to a single class. The agent might misinterpret this as a 'low-value busywork
+    PR' or 'tiny edit' and refuse to implement it.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 38-40
+hierarchy_analysis: The repository contains identical `AGENTS.md` and `CLAUDE.md`
+  files at the root level. These files define strict meta-rules regarding agent behavior
+  and PR submission processes that conflict with the implicit benchmark goal of unconditionally
+  generating the requested code.

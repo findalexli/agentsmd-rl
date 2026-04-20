@@ -1,0 +1,150 @@
+version: '2.0'
+source:
+  repo: oven-sh/bun
+  pr: 28426
+  base_commit: 73361607d70bd77041d0fc20e45a6dbe2373a677
+  merge_commit: 2d4c2beb23085873380840c9bd18eeca29645843
+checks:
+- id: test_hostname_crash_fixed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Hostname assertf removed and replaced with proper error return
+- id: test_unix_crash_fixed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Unix path assertf removed and replaced with proper error return
+- id: test_throw_tests_added
+  type: fail_to_pass
+  origin: pr_diff
+  description: Agent added tests verifying throw on truthy-but-empty hostname/unix
+- id: test_handlers_not_stubbed
+  type: pass_to_pass
+  origin: static
+  description: Handlers.zig is substantial, not gutted or replaced with stub
+- id: test_hostname_unix_branches_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: Both hostname and unix handling branches still exist
+- id: test_socket_test_file_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: socket.test.ts not truncated or deleted
+- id: test_repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's JS linting passes (oxlint on src/js)
+- id: test_repo_prettier_socket_test
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's prettier formatting passes on socket.test.ts
+- id: test_repo_ban_words
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's banned words check passes
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TypeScript typecheck passes (tsc --noEmit)
+- id: test_repo_node_works
+  type: pass_to_pass
+  origin: repo_tests
+  description: Node.js is available and functional in the repo
+- id: test_repo_bun_works
+  type: pass_to_pass
+  origin: repo_tests
+  description: Bun is available and functional in the repo
+- id: test_repo_package_json_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's package.json lint passes (exact versions check)
+- id: test_no_hardcoded_ports
+  type: pass_to_pass
+  origin: agent_config
+  description: 'New tests use port: 0, not hardcoded ports'
+  source:
+    path: CLAUDE.md
+    lines: '97'
+    commit: 73361607d70bd77041d0fc20e45a6dbe2373a677
+- id: test_no_settimeout_in_new_tests
+  type: pass_to_pass
+  origin: agent_config
+  description: New tests do not use setTimeout — await conditions instead
+  source:
+    path: AGENTS.md
+    lines: '102'
+    commit: 73361607d70bd77041d0fc20e45a6dbe2373a677
+- id: test_no_panic_absence_tests
+  type: pass_to_pass
+  origin: agent_config
+  description: New tests don't check for absence of 'panic' or 'uncaught exception'
+  source:
+    path: AGENTS.md
+    lines: '99'
+    commit: 73361607d70bd77041d0fc20e45a6dbe2373a677
+rubric:
+- rule: Code changes in src/bun.js/api/bun/socket/Handlers.zig and test/js/bun/net/socket.test.ts
+    follow repository conventions.
+- rule: 'Never use hardcoded port numbers. Always use `port: 0` to get a random port.'
+  source:
+    path: test/CLAUDE.md
+    lines: 17-18
+  evidence: 'The test explicitly passes `port: 0` in the `Bun.listen` and `Bun.connect`
+    calls.'
+  category: testing
+- rule: NEVER write tests that check for no "panic" or "uncaught exception" or similar
+    in the test output.
+  source:
+    path: CLAUDE.md
+    lines: 86-87
+  evidence: The test asserts that a specific error is thrown (`expect(...).toThrow('Expected
+    a non-empty "hostname"')`) rather than checking process output for panics.
+  category: testing
+- rule: 'Always use `port: 0` to get a random port. Never use hardcoded port numbers.'
+  source:
+    path: test/AGENTS.md
+    lines: 16-17
+  evidence: 'The gold solution explicitly passes `port: 0` in the `Bun.listen` and
+    `Bun.connect` calls within the new tests.'
+  category: testing
+- rule: If no valid issue number is provided, find the best existing file to modify
+    instead.
+  source:
+    path: AGENTS.md
+    lines: 27-29
+  evidence: The test is added to the existing `test/js/bun/net/socket.test.ts` file
+    rather than creating a new regression test file, as no issue number was provided.
+  category: testing
+- rule: 'Always use `port: 0`. Do not hardcode ports.'
+  source:
+    path: AGENTS.md
+    lines: 82-82
+  evidence: 'The test calls `Bun.listen({ hostname: hostname as any, port: 0, socket
+    })`, explicitly using `port: 0` instead of a hardcoded port.'
+  category: testing
+distractors:
+- rule: When spawning Bun processes, use `bunExe` and `bunEnv` from `harness`.
+  collision_type: scope_ambiguity
+  why_distracting: The bug report mentions a 'panic/crash', which might lead an agent
+    to think it needs to spawn a separate process using `Bun.spawn` to catch the crash.
+    However, the fix changes the crash to a synchronous JS exception, so a simple
+    `expect().toThrow()` in the same process is correct. Spawning a process would
+    overcomplicate the test and violate the rule against checking output for panics.
+  severity: medium
+  source:
+    path: test/AGENTS.md
+    lines: 40-58
+- rule: 'Prefer concurrent tests over sequential tests: When multiple tests in the
+    same file spawn processes or write files, make them concurrent'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to use `it.concurrent` for the new tests. However,
+    the rule specifically applies when tests 'spawn processes or write files'. Since
+    these tests only check synchronous validation logic, concurrency is unnecessary.
+  severity: low
+  source:
+    path: test/AGENTS.md
+    lines: 21-22
+hierarchy_analysis: 'The repository uses a moderate hierarchy with `AGENTS.md` and
+  `CLAUDE.md` files at the root and within `src/` and `test/` directories. The rules
+  are consistent across levels, with the root providing general testing guidelines
+  (like `port: 0` and avoiding panic checks) and the `test/` level providing more
+  specific process-spawning guidelines.'

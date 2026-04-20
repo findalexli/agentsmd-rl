@@ -1,62 +1,58 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert specific regex patterns like `r\"['\"]&:first-child['\"]:\\s*\\{[^}]*marginInlineEnd:\\s*token\\.marginSM\"` and `r\"\\{\\s*title\\s*&&\\s*\\(\"` which encode exact implementation details (e.g., `token.marginSM`, the `&:first-child` selector, the `title &&` conditional pattern). The instruction.md mentions 'right-side margin/padding using logical properties' and 'conditionally rendered' but never specifies `marginInlineEnd`, `token.marginSM`, `&:first-child`, or the exact `{title && (` pattern. Th"
+      "outcome": "pass",
+      "reason": "Instruction names the CSS rule '&:first-child', 'marginInlineEnd: token.marginSM', and the conditional title rendering, which covers the regex patterns tests check for."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "Instruction.md requirement #2 explicitly states 'The description styling should include appropriate right-side margin/padding (using logical properties for RTL support) when it is the first child (no title present before it) to reserve space for the close button.' This tells the developer exactly WHAT to change: add a CSS `&:first-child` rule with logical margin/padding. Requirement #1 similarly prescribes the exact fix: 'The title block in PureContent should only be rendered when a title prop i"
+      "reason": "Instruction explicitly states the exact CSS rule ('&:first-child' selector applying 'marginInlineEnd: token.marginSM') which is verbatim what the test regex searches for, leaving no reasoning about what to change."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "test_css_description_first_child_spacing asserts a specific regex requiring `&:first-child` with `marginInlineEnd: token.marginSM`. An alternative valid fix could use `paddingInlineEnd` instead of `marginInlineEnd`, or use a different token value, or use a CSS class-based approach rather than `&:first-child`. test_pure_content_conditional_title_rendering requires the exact pattern `{title && (` \u2014 an alternative using ternary `{title ? (...) : null}` would fail despite being functionally equivale"
+      "outcome": "pass",
+      "reason": "Tests accept any regex match of the '&:first-child' pattern with marginInlineEnd and any 'title &&' conditional, allowing reasonable alternative implementations."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The two fail-to-pass tests (test_css_description_first_child_spacing and test_pure_content_conditional_title_rendering) are purely text-matching: they open files and regex-search for specific string patterns. They do not import, call, render, or execute any code to verify the actual behavior. The pass-to-pass tests do run subprocesses (jest, eslint, biome), but the core fail-to-pass tests are entirely `assert pattern in open(path).read()` style."
+      "outcome": "pass",
+      "reason": "Beyond text regex checks, tests invoke npm test, jest suites, eslint, and biome to verify behavior and code quality."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "The fail-to-pass tests only check for text patterns in source files. Simply adding the exact string `'&:first-child': { marginInlineEnd: token.marginSM` to the style file and `{ title && (` to PurePanel.tsx (even as dead code or comments) would pass these tests without actually fixing the bug."
+      "outcome": "pass",
+      "reason": "F2P tests require specific code changes plus the full existing test suite to continue passing, which a stub cannot satisfy."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: (1) conditional title rendering, (2) description first-child spacing, (3) existing tests still pass. All three are covered by the test suite (tests 1-2 for the fixes, tests 3-7 for regression)."
+      "reason": "Both requirements (conditional title, first-child marginInlineEnd) and 'existing tests still pass' are covered by the test functions."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names and docstrings that clearly indicate FAIL-TO-PASS vs PASS-TO-PASS and explain what each test verifies."
+      "reason": "Tests have descriptive names, docstrings labeling FAIL-TO-PASS vs PASS-TO-PASS, and clear grouping."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a UI component bug, not producing structured data output."
+      "reason": "Task does not produce structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and commands in the task files are consistent and correctly spelled."
+      "reason": "Paths like components/notification/style/index.ts and PurePanel.tsx are consistent and correct."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly names both files to edit (PurePanel.tsx and style/index.ts) and describes the exact nature of the fix needed in each (conditional rendering pattern for title, first-child CSS rule for description). While naming the component directory is reasonable, specifying both exact files AND the exact approach to fix them is excessive leakage."
+      "reason": "Instruction specifies the exact CSS selector '&:first-child' and exact property 'marginInlineEnd: token.marginSM', which is the literal fix rather than describing the bug symptom only."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code fix task, not an agentmd-edits config task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "no_solution_leakage"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 3,
-  "fail_count": 6
+  "pass_count": 7,
+  "fail_count": 2
 }

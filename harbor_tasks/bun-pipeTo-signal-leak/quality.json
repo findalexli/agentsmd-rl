@@ -1,59 +1,59 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert on specific file paths (e.g., src/bun.js/bindings/webcore/AbortSignal.cpp, JSAbortAlgorithm.cpp, JSAbortAlgorithm.h, JSAbortSignalCustom.cpp, AbortSignal.h), specific class/method names (JSCallbackDataWeak, visitJSFunction, visitAbortAlgorithms, m_abortAlgorithms, m_abortAlgorithmsLock, addAbortAlgorithmToSignal, removeAbortAlgorithmFromSignal, std::exchange, memoryCost, handleEvent), and specific patterns (WTF_GUARDED_BY_LOCK, removeFirstMatching). None of these are mentioned in in"
+      "reason": "Tests assert on specific file paths (AbortSignal.cpp, JSAbortAlgorithm.cpp, JSAbortSignalCustom.cpp), specific symbols (JSCallbackDataWeak, visitAbortAlgorithms, m_abortAlgorithms, m_abortAlgorithmsLock, std::exchange, removeFirstMatching), none of which are mentioned in instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "instruction.md describes the symptom (memory leak) and root cause (reference cycle via abort algorithms) but does not specify which files to change, what lines to modify, or the specific fix (e.g., switching Strong to Weak callbacks, adding visitAbortAlgorithms)."
+      "reason": "instruction.md only describes the symptom and root cause in general terms (reference cycle, AbortSignal not GC'd) without prescribing specific code changes."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: test_jsabortalgorithm_uses_weak_callback_type checks for exactly 'JSCallbackDataWeak' vs 'JSCallbackDataStrong'; test_abortsignal_has_js_algorithm_storage checks for 'm_abortAlgorithmsLock' and 'WTF_GUARDED_BY_LOCK'; test_run_abort_steps_processes_algorithms requires 'std::exchange'; test_remove_abort_algorithm_removes_from_storage requires 'removeFirstMatching'. An alternative correct fix (e.g., breaking the cycle differently) would fail the"
+      "reason": "Tests mandate gold-specific implementation details: exact type name JSCallbackDataWeak (test_jsabortalgorithm_uses_weak_callback_type), specific method name visitAbortAlgorithms, specific member m_abortAlgorithms, use of std::exchange, and removeFirstMatching/removeIf/.erase. Alternative valid fixes (e.g., breaking the cycle differently, using a different weak wrapper, different storage) would fail."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "While tests use clang++ -E preprocessing (subprocess execution), most tests ultimately do string/regex matching on source or preprocessed output (e.g., count_pattern for 'new JSCallbackDataWeak', checking 'm_abortAlgorithms' in content). Tests like test_add_abort_algorithm_uses_new_storage simply check `'m_abortAlgorithms' in content` and `'.append(' in content` \u2014 pure text matching, not behavioral execution. No test actually compiles, runs code, or checks for memory leaks."
+      "outcome": "pass",
+      "reason": "Tests invoke clang++ -E via subprocess to preprocess files and inspect structural patterns, though they don't actually exercise runtime behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check for specific code patterns (JSCallbackDataWeak, visitJSFunction overrides, m_abortAlgorithms with Lock, visitAbortAlgorithms, etc.) that are not present in the base commit. A stub/no-op would not pass since these patterns must exist in the source files."
+      "reason": "Each test asserts presence of non-default patterns that wouldn't exist in a stub; they require actual code modifications."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "instruction.md says AbortSignal should be garbage collected when references are dropped. No test actually verifies garbage collection behavior or memory leak absence \u2014 tests only check structural code patterns."
+      "reason": "Instruction describes GC of AbortSignal when pipe never completes; tests don't actually verify GC behavior or pipeTo behavior \u2014 they only check structural patterns in C++ source."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_jsabortalgorithm_uses_weak_callback_type, test_abortsignal_has_gc_visitation_method, etc.), have docstrings explaining what they verify, and are tagged with [pr_diff] fail_to_pass markers."
+      "reason": "Tests have descriptive names, docstrings, and [pr_diff] fail_to_pass comments grouping them."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data like JSON/CSV/API/DB."
+      "reason": "Task is a C++ code fix, not structured data output."
     },
     "no_typos": {
-      "outcome": "pass",
-      "reason": "No obvious typos in filenames, paths, commands, or variable names in the task files."
+      "outcome": "fail",
+      "reason": "WEBCCORE_INCLUDES has a typo (extra 'C'); minor but present in test file."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "instruction.md describes the problem at an architectural level (reference cycle between AbortSignal and abort algorithms via closures) without naming specific files, lines, or the exact fix."
+      "reason": "instruction.md references pipeTo/AbortSignal at a conceptual level without naming specific files or lines."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "Not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests"
+    "behavior_in_tests",
+    "no_typos"
   ],
   "pass_count": 5,
   "fail_count": 4

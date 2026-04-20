@@ -1,0 +1,101 @@
+version: '2.0'
+source:
+  repo: Infisical/infisical
+  pr: 5880
+  base_commit: e928398a0919194fc2efd855aaf6700424b507d9
+  merge_commit: be1564af159824a370e5d414cbf90db402bf8e46
+checks:
+- id: npm_reads_backend_config
+  type: fail_to_pass
+  origin: pr_diff
+  description: npm config get min-release-age returns 7 in backend/
+- id: npm_reads_frontend_config
+  type: fail_to_pass
+  origin: pr_diff
+  description: npm config get min-release-age returns 7 in frontend/
+- id: backend_npmrc_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: backend/.npmrc exists with min-release-age=7
+- id: frontend_npmrc_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: frontend/.npmrc exists with min-release-age=7
+- id: backend_package_json_engine
+  type: fail_to_pass
+  origin: pr_diff
+  description: backend/package.json requires npm >= 11.10.0
+- id: frontend_package_json_engine
+  type: fail_to_pass
+  origin: pr_diff
+  description: frontend/package.json requires npm >= 11.10.0
+- id: claude_md_dependency_policy
+  type: fail_to_pass
+  origin: agent_config
+  description: CLAUDE.md documents the dependency policy with supply-chain context
+  source:
+    path: CLAUDE.md
+    lines: '62'
+    commit: e928398a0919194fc2efd855aaf6700424b507d9
+- id: claude_md_existing_sections_intact
+  type: pass_to_pass
+  origin: static
+  description: Existing CLAUDE.md sections remain intact
+- id: backend_package_json_scripts_intact
+  type: pass_to_pass
+  origin: static
+  description: backend/package.json core fields remain unchanged
+- id: test_repo_frontend_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Frontend TypeScript typecheck passes
+- id: test_repo_frontend_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Frontend ESLint passes
+rubric:
+- rule: Update the root CLAUDE.md file with high-level findings for cross-cutting
+    concerns when making significant changes.
+  source:
+    path: CLAUDE.md
+    lines: 61-64
+  category: documentation
+  evidence: The gold solution adds a 'Dependency Policy' section to the root CLAUDE.md
+    documenting the new npm minimum release age policy.
+config_edits:
+- path: CLAUDE.md
+  tier: 1
+  gold_added: '### Dependency Policy
+
+
+    Both `backend/` and `frontend/` enforce a minimum release age of 7 days for npm
+    packages (configured via `.npmrc` in each directory). This means `npm install`
+    will only resolve package versions published at least 7 days ago, as a supply-chain
+    security measure.'
+  gold_removed: ''
+distractors:
+- rule: Update `backend/CLAUDE.md` for backend changes, and `frontend/CLAUDE.md` for
+    frontend changes.
+  source:
+    path: CLAUDE.md
+    lines: 61-64
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to update the backend and frontend CLAUDE.md
+    files because the changes affect both directories. However, the instruction specifically
+    requests updating the root CLAUDE.md for this cross-cutting policy, and updating
+    all three would be redundant and waste effort.
+  severity: medium
+- rule: New backend dependencies should be evaluated carefully — they affect container
+    size, FIPS compliance, and the encryption boundary.
+  source:
+    path: CLAUDE.md
+    lines: 36-39
+  collision_type: meta_confusion
+  why_distracting: The agent might misinterpret the addition of a dependency policy
+    as adding a new dependency itself, and attempt to document FIPS compliance or
+    container size impacts, which is irrelevant to configuring npm's release age.
+  severity: low
+hierarchy_analysis: There is only one level of configuration provided (the root CLAUDE.md).
+  The rule regarding updating CLAUDE.md files is directly applicable, but the agent
+  must carefully scope its documentation updates to the root file as requested by
+  the prompt, rather than applying the rule to all child CLAUDE.md files.

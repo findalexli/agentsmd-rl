@@ -1,62 +1,59 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction mentions all three files tested (useMergedPreviewConfig.ts, index.tsx, PreviewGroup.tsx), the useMergedMask hook, the maskClosable concept, and the ConfigProvider/Image/PreviewGroup levels. The specific patterns tested (destructuring 3 elements, Omit type, dependency arrays) are discoverable from the described behavior and file paths."
+      "reason": "instruction.md names the three files tested (useMergedPreviewConfig.ts, index.tsx, PreviewGroup.tsx) and mentions useMergedMask returning closable state and maskClosable concept."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly states 'The useMergedMask hook from components/_util/hooks already returns the closable state, but it may not be properly passed through to the preview component' \u2014 this directly reveals the fix mechanism (destructure the third return value from useMergedMask and pass it through). It also names the exact hook file and describes the exact propagation path needed."
+      "outcome": "pass",
+      "reason": "Instruction describes the bug and hints at where to look but doesn't give exact code changes."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific implementation details: test_maskclosable_destructured_from_usemergedmask requires exactly 3-element destructuring from useMergedMask; test_maskclosable_passed_to_return_object requires 'maskClosable' key in returned object; test_maskclosable_in_hook_return_type requires 'maskClosable?: boolean' in type signature; test_image_preview_type_omits_maskclosable requires Omit with 'maskClosable'. An alternative fix (e.g., handling closable differently in the component, using"
+      "reason": "Tests assert on specific implementation details: test_maskclosable_destructured_from_usemergedmask requires exactly 3-element array destructuring from useMergedMask, test_image_preview_type_omits_maskclosable requires Omit<...maskClosable...> pattern specifically, and test_maskclosable_in_dependency_array requires useMemo with mergedMaskClosable in deps \u2014 alternative correct fixes (e.g., using Pick, not using useMemo, or accessing via indexed return) would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Tests test_maskclosable_in_hook_return_type, test_maskclosable_destructured_from_usemergedmask, test_maskclosable_passed_to_return_object, test_maskclosable_in_dependency_array, test_image_preview_type_omits_maskclosable, and test_previewgroup_type_omits_maskclosable are ALL pure text-matching (regex on file contents). Only test_lint_passes, test_biome_*, and test_image_unit/demo_tests_pass execute code. The core behavioral tests are all 'assert pattern in open(path).read()' style."
+      "reason": "Tests 1-6 are all regex/string matches on source files (e.g., re.search(r'maskClosable\\?\\s*:\\s*boolean', content)); only lint/jest tests execute code, and those don't directly verify the mask.closable behavior."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "The existing unit tests (test_image_unit_tests_pass, test_image_demo_tests_pass) likely pass on the unpatched code since they test pre-existing functionality. The text-matching tests (test_maskclosable_*) do require changes, but they test source text patterns, not actual runtime behavior of mask.closable. A developer could add the text patterns without correctly wiring the functionality."
+      "outcome": "pass",
+      "reason": "Tests require specific structural code patterns that a stub wouldn't satisfy."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "The instruction says 'clicking on the preview mask should NOT close the preview' when closable is false, but no test actually renders a component and simulates a click on the mask to verify this runtime behavior. The core expected behavior is untested."
+      "reason": "Instruction describes behavioral expectation ('Clicking on the preview mask should NOT close the preview' when closable:false) but no test simulates a click or verifies modal state \u2014 only source-text patterns are checked."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_maskclosable_in_hook_return_type, test_maskclosable_destructured_from_usemergedmask, etc.) and each has a descriptive assertion message explaining what it checks."
+      "reason": "Tests have descriptive names and clear assertion messages."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a UI component bug, not producing structured data output."
+      "reason": "No structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and commands in instruction.md and tests are consistent and correctly spelled."
+      "reason": "Paths and names appear consistent."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly names the exact file 'components/image/hooks/useMergedPreviewConfig.ts' and states 'The useMergedMask hook from components/_util/hooks already returns the closable state, but it may not be properly passed through to the preview component' \u2014 this pinpoints both the location and nature of the fix needed."
+      "outcome": "pass",
+      "reason": "Files are mentioned as 'where to look' which is acceptable scoping, no specific lines identified."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "Code task, not config edits."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests",
-    "instruction_no_hint_leakage"
+    "behavior_in_tests"
   ],
-  "pass_count": 3,
-  "fail_count": 6
+  "pass_count": 6,
+  "fail_count": 3
 }

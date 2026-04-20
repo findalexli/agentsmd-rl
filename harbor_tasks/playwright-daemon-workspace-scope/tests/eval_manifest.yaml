@@ -1,0 +1,180 @@
+version: '2.0'
+source:
+  repo: microsoft/playwright
+  pr: 39144
+  base_commit: 08752e9a9be05e5d11173977c8651cf105c1aace
+  merge_commit: c4a4efa50a02f404829c8cf8a169d5b70e8e35ae
+checks:
+- id: commands_ts_valid_structure
+  type: pass_to_pass
+  origin: static
+  description: commands.ts exports commandsArray with valid command declarations
+- id: repo_mcp_cli_parsing
+  type: pass_to_pass
+  origin: repo_tests
+  description: MCP CLI parsing tests pass
+- id: repo_mcp_cli_help
+  type: pass_to_pass
+  origin: repo_tests
+  description: MCP CLI help tests pass
+- id: repo_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo builds successfully
+- id: repo_check_deps
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo dependency checks pass
+- id: repo_eslint_on_modified_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint passes on modified files
+- id: session_kill_all_command_registered
+  type: fail_to_pass
+  origin: pr_diff
+  description: kill-all renamed to session-kill-all in command registry
+- id: install_replaces_install_skills
+  type: fail_to_pass
+  origin: pr_diff
+  description: install-skills replaced by 'install' workspace init command
+- id: find_workspace_dir_function
+  type: fail_to_pass
+  origin: pr_diff
+  description: findWorkspaceDir walks up directories looking for .playwright marker
+- id: config_default_path_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: Default config path changed to .playwright/cli.config.json
+- id: workspace_hash_replaces_installation_hash
+  type: fail_to_pass
+  origin: pr_diff
+  description: ClientInfo uses workspaceDirHash instead of installationDirHash
+- id: skill_md_session_kill_all
+  type: fail_to_pass
+  origin: agent_config
+  description: SKILL.md updated to reference session-kill-all command
+  source:
+    path: packages/playwright/src/skill/SKILL.md
+    lines: 190-195
+    commit: 08752e9a9be05e5d11173977c8651cf105c1aace
+- id: skill_md_delete_data_in_config_section
+  type: fail_to_pass
+  origin: agent_config
+  description: SKILL.md Configuration section documents delete-data command
+  source:
+    path: packages/playwright/src/skill/SKILL.md
+    lines: 175-185
+    commit: 08752e9a9be05e5d11173977c8651cf105c1aace
+- id: session_management_md_kill_all_renamed
+  type: fail_to_pass
+  origin: agent_config
+  description: session-management.md uses session-kill-all throughout
+  source:
+    path: packages/playwright/src/skill/references/session-management.md
+    lines: 42-48
+    commit: 08752e9a9be05e5d11173977c8651cf105c1aace
+- id: session_management_md_config_path
+  type: fail_to_pass
+  origin: agent_config
+  description: session-management.md references .playwright/ config path
+  source:
+    path: packages/playwright/src/skill/references/session-management.md
+    lines: 120-130
+    commit: 08752e9a9be05e5d11173977c8651cf105c1aace
+rubric:
+- rule: Updated skill documentation is consistent with the style and format of existing
+    documentation in SKILL.md
+  source:
+    path: packages/playwright/src/skill/SKILL.md
+    lines: 1-10
+    commit: 08752e9a9be05e5d11173977c8651cf105c1aace
+- rule: Register CLI commands in commands.ts
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: 28-28
+  source_text: '- Register command in `packages/playwright/src/mcp/terminal/commands.ts`'
+  evidence: The gold diff explicitly follows this by modifying the `commandsArray`
+    in `packages/playwright/src/mcp/terminal/commands.ts` to register the new `installBrowser`
+    command.
+  category: architecture
+  verification: llm_judge
+- rule: CLI commands are based on MCP tools, but only implement them if needed
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: 24-24
+  source_text: '- CLI commands are based on MCP tools. Implement the corresponding
+    MCP tool as per `Adding MCP Tools` section above, if needed.'
+  evidence: 'The gold diff introduces the `install` command and renames `killAll`
+    to `session-kill-all`, but deliberately sets `toolName: ''''` for both, correctly
+    bypassing MCP tool creation since they are local CLI operations and do not need
+    to be exposed.'
+  category: architecture
+  verification: llm_judge
+config_edits:
+- path: packages/playwright/src/skill/SKILL.md
+  tier: 1
+  gold_added: '# Close the browser
+
+    playwright-cli close
+
+    # Delete user data for the default session
+
+    playwright-cli delete-data
+
+    # Close all browsers
+
+    playwright-cli session-close-all
+
+    # Forcefully kill all browser processes
+
+    playwright-cli session-kill-all'
+  gold_removed: 'playwright-cli close                      # stop the default session
+
+    playwright-cli session-close-all          # stop all sessions
+
+    playwright-cli delete-data                # delete user data for default session
+
+    playwright-cli kill-all                   # forcefully kill all daemon processes
+    (for stale/zombie processes)'
+distractors:
+- rule: Add MCP Tool capability and register it
+  source:
+    path: .claude/skills/playwright-mcp-dev/SKILL.md
+    lines: 9-11
+  source_text: '- Create a new tool in `packages/playwright/src/mcp/browser/tools/your-tool.ts`
+
+    - Register the tool in `packages/playwright/src/mcp/browser/tools.ts`
+
+    - Add ToolCapability in `packages/playwright/src/mcp/config.d.ts`'
+  collision_type: architecture_boundary
+  why_distracting: An agent tasked with adding the new `install` command might blindly
+    follow these steps to create an MCP tool for it. However, the `install` command
+    is an internal workspace initialization tool that should not be exposed via MCP.
+    Following these rules would lead to implementing an unnecessary and architecturally
+    incorrect tool.
+  severity: high
+- rule: Preserve existing documented commands
+  source:
+    path: packages/playwright/src/skill/SKILL.md
+    lines: 156-157
+  source_text: 'playwright-cli install-browser
+
+    playwright-cli install-skills'
+  collision_type: meta_confusion
+  why_distracting: This file is the documentation for the tool being developed, not
+    a constraint for the developer. An agent might treat these documented commands
+    as an immutable API contract and refuse to refactor them, whereas the PR explicitly
+    renames `install-browser` and changes `install-skills` logic.
+  severity: medium
+- rule: Preserve kill-all command
+  source:
+    path: packages/playwright/src/skill/SKILL.md
+    lines: 192-192
+  source_text: 'playwright-cli kill-all                   # forcefully kill all daemon
+    processes (for stale/zombie processes)'
+  collision_type: scope_ambiguity
+  why_distracting: Similar to the install commands, an agent might see `kill-all`
+    in the documentation and believe it must not be altered, conflicting with the
+    diff which intentionally renames it to `session-kill-all` to match other session
+    command naming conventions.
+  severity: medium

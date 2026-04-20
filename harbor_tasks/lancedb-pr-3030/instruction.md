@@ -2,32 +2,27 @@
 
 ## Problem
 
-LanceDB's hybrid search crashes with `IndexError: list index out of range` when applying hard filters that result in zero matches. This happens in the `_combine_hybrid_results` method in `python/python/lancedb/query.py`.
+LanceDB's hybrid search crashes with `IndexError: list index out of range` when applying hard filters that result in zero matches.
 
-The crash occurs because empty result tables are passed through the full reranker pipeline, which expects at least one result to process.
+The crash occurs because empty result tables are passed through the full reranker pipeline, which expects at least one result to process. This happens when both `vector_results` and `fts_results` have `num_rows == 0`.
 
 ## Symptoms
 
 - Search crashes with `IndexError: list index out of range`
-- Crash happens in `lancedb/query.py` in the `_combine_hybrid_results` method
+- Crash happens in `python/python/lancedb/query.py`
 - Occurs when both vector search and full-text search return zero results after filtering
 
-## Task
+## Expected Behavior
 
-Modify the `_combine_hybrid_results` method to handle empty result sets gracefully. When both `vector_results` and `fts_results` have zero rows, the method should return early with a properly constructed empty table that:
+The code should gracefully handle empty result sets. When both `vector_results` and `fts_results` have zero rows:
 
-1. Has the `_relevance_score` column (required by downstream code)
-2. Properly merges the schemas from both input tables
-3. Respects the `with_row_ids` flag (drops `_rowid` column if `with_row_ids=False`)
+1. Return early before the reranking logic executes
+2. Return a properly constructed empty table that:
+   - Has the `_relevance_score` column (required by downstream code)
+   - Properly merges the schemas from both input tables using `vector_results.schema` and `fts_results.schema`
+   - Respects the `with_row_ids` flag by dropping the `_rowid` column when `with_row_ids=False`
+   - Uses `pa.unify_schemas()` for schema merging
 
 ## Key Files
 
-- `python/python/lancedb/query.py` - Contains the `_combine_hybrid_results` method
-
-## Hints
-
-- Look for the `_combine_hybrid_results` static method in the `LanceHybridQueryBuilder` class
-- The method receives `vector_results` and `fts_results` as PyArrow tables
-- PyArrow's `pa.unify_schemas()` can merge schemas from two tables
-- The `_relevance_score` column should be of type `pa.float32()`
-- Test your fix by creating empty tables and calling the method directly
+- `python/python/lancedb/query.py`

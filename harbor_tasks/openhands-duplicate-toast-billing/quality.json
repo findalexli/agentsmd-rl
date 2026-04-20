@@ -1,61 +1,58 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert specific details not mentioned in instruction.md: test_useeffect_dependency_structure checks for exact strings like 'const amount = searchParams.get(\"amount\");' and 'const sessionId = searchParams.get(\"session_id\");' before useEffect. test_no_searchparams_in_dependencies checks dependency array contents. test_frontend_lint, test_frontend_build, test_frontend_typecheck, test_frontend_translation_completeness, test_repo_toast_handlers, test_repo_billing_visibility, test_repo_plan_clic"
+      "outcome": "pass",
+      "reason": "Instruction names the file (billing.tsx), the query params (checkout, amount, session_id), and quotes the exact test case names that must pass."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md's 'Code Structure Requirements' section explicitly states the fix: 'the component extracts the amount and session_id URL query parameters as local constants before the useEffect that handles checkout callbacks, and uses those extracted primitives (not the query parameter object) in the effect's dependency array.' This describes exactly WHAT to change and HOW, not just what's broken."
+      "reason": "The 'Code Structure Requirements' section explicitly states the fix: extract `amount` and `session_id` as local constants before the `useEffect` and use those primitives in the dependency array \u2014 this is precisely what solve.sh does."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "test_useeffect_dependency_structure asserts exact strings 'const amount = searchParams.get(\"amount\");' and 'const sessionId = searchParams.get(\"session_id\");' must appear before useEffect. An alternative correct fix using e.g. 'const amt = searchParams.get(\"amount\")' or using useMemo, or a useRef-based guard, would fail these tests despite being correct solutions to the duplicate toast problem."
+      "outcome": "pass",
+      "reason": "Tests invoke the test runner by name and check behavior (toast called once, credits tracked once); any correct fix stabilizing effect deps would pass."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "test_useeffect_dependency_structure and test_no_searchparams_in_dependencies are purely text-matching tests that read billing.tsx and assert on string contents (e.g., 'assert \"const amount = searchParams.get(\\\"amount\\\");\" in before_useeffect'). They do not execute the code or test behavior."
+      "outcome": "pass",
+      "reason": "Tests execute npm run test, lint, build, typecheck subprocesses rather than reading source text."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests (test_useeffect_dependency_structure, test_no_searchparams_in_dependencies) check for specific code patterns that don't exist in the base commit. A stub/no-op wouldn't pass since the base code has searchParams in the dependency array and doesn't extract primitives before useEffect. The behavioral f2p tests (toast once, track credits once) run actual test suites that would fail on the buggy base code."
+      "reason": "The 'exactly once' assertions require proper implementation; stub components wouldn't render PaymentForm or fire trackCreditsPurchased correctly."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All four behaviors explicitly listed in instruction.md (success toast once, error toast once, credits tracking once, renders payment form) are tested via test_checkout_success_toast_once, test_checkout_cancel_toast_once, test_track_credits_called_once, and test_billing_component_renders respectively."
+      "reason": "All four required behaviors (success toast, error toast, credits tracking, renders payment form) map to dedicated test invocations."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings (e.g., 'Success toast displays exactly once on checkout success (regression test)') and logically grouped by concern."
+      "reason": "Each test is named and documented with a docstring explaining pass_to_pass vs f2p purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a UI component bug, not producing structured data output."
+      "reason": "No structured data output produced."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "Paths and commands appear consistent (frontend/src/routes/billing.tsx, npm run test, etc.)."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names the exact file ('frontend/src/routes/billing.tsx') and describes the exact code pattern to implement: 'extracts the amount and session_id URL query parameters as local constants before the useEffect' and 'uses those extracted primitives (not the query parameter object) in the effect's dependency array.' This gives away the localization and implementation approach."
+      "reason": "Instruction dictates the exact structural fix (extract amount/session_id before useEffect and put primitives in dep array), which is the gold patch itself."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "Code-only task, no agentmd/config edits."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "no_solution_leakage"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 5
+  "pass_count": 7,
+  "fail_count": 2
 }

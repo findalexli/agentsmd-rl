@@ -1,0 +1,193 @@
+version: '2.0'
+source:
+  repo: lobehub/lobe-chat
+  pr: 11746
+  base_commit: 17544558908a97902ef5bf1f564254288f0cf649
+  merge_commit: ad34072d9c25642e430519d4907d7836b3e476f9
+checks:
+- id: ensure_worker_sets_src
+  type: fail_to_pass
+  origin: pr_diff
+  description: pdfjs module sets GlobalWorkerOptions.workerSrc before Document renders
+- id: old_worker_files_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Unreliable side-effect worker files (worker.ts, pdf.worker.ts) are
+    deleted
+- id: pdf_viewer_imports_unified
+  type: fail_to_pass
+  origin: pr_diff
+  description: PDF FileViewer imports from unified @/libs/pdfjs, not react-pdf directly
+- id: pdf_preview_imports_unified
+  type: fail_to_pass
+  origin: pr_diff
+  description: SharePdf/PdfPreview imports from unified @/libs/pdfjs, not react-pdf
+    directly
+- id: claude_md_linear_section_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLAUDE.md Linear Issue Management section restructured with trigger
+    conditions and workflow
+- id: pdf_viewers_still_use_document
+  type: pass_to_pass
+  origin: static
+  description: Both PDF viewers still render Document component (no regression)
+- id: repo_eslint_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint check passes (npm run lint:ts)
+- id: repo_stylelint_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Stylelint check passes (npm run lint:style)
+- id: repo_no_circular_deps
+  type: pass_to_pass
+  origin: repo_tests
+  description: No circular dependencies in main src (npm run lint:circular:main)
+- id: repo_component_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Component unit tests pass (vitest run src/components)
+- id: repo_hooks_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: React hooks tests pass (vitest run src/hooks)
+- id: repo_sharemodal_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: ShareModal tests pass (vitest run src/features/ShareModal)
+- id: repo_features_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Feature tests pass (vitest run src/features)
+- id: repo_services_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Service layer tests pass (vitest run src/services)
+rubric:
+- rule: 'CLAUDE.md updates: Linear Issue Management section should be restructured
+    with explicit trigger conditions and numbered workflow steps'
+  source:
+    path: CLAUDE.md
+    lines: 61-79
+  evidence: The gold solution restructures the Linear Issue Management section with
+    clear **Trigger conditions** (bullet list) and **Workflow:** (numbered steps 1-2-3),
+    replacing the old paragraph-style description.
+  category: documentation
+- rule: Third-party integrations belong in src/libs
+  source:
+    path: .cursor/rules/project-structure.mdc
+    lines: '141'
+  source_text: '- Third-party Integrations: `src/libs` — analytics, oidc etc.'
+  evidence: The gold diff extracts the `react-pdf` dependency usage and encapsulates
+    it in a newly created wrapper file at `src/libs/pdfjs/index.tsx`, correctly isolating
+    the third-party integration from UI feature components.
+  category: architecture
+  verification: llm_judge
+- rule: Keep 'type' for utility types, 'interface' for object shapes
+  source:
+    path: .cursor/rules/typescript.mdc
+    lines: '14'
+  source_text: '- prefer `interface` over `type` for object shapes (e.g., React component
+    props). Keep `type` for unions, intersections, and utility types.'
+  evidence: The diff defines `export type DocumentProps = ComponentProps<typeof PdfDocument>;`.
+    It correctly uses `type` here rather than `interface` because `ComponentProps`
+    is a TypeScript utility type.
+  category: typing
+  verification: llm_judge
+- rule: Use semantically meaningful variables
+  source:
+    path: .cursor/rules/typescript.mdc
+    lines: '30'
+  source_text: '- Use semantically meaningful variable, function, and class names.'
+  evidence: 'The diff renames the unused mapping parameter `el` to `_` in `Array.from({
+    length: numPages }, (_, index) => {`. The underscore is the semantically meaningful
+    standard convention for an ignored variable.'
+  category: naming
+  verification: llm_judge
+config_edits:
+- path: CLAUDE.md
+  tier: 1
+  gold_added: '## Linear Issue Management
+
+    **Trigger conditions** - when ANY of these occur, apply Linear workflow:
+
+
+    - User mentions issue ID like `LOBE-XXX`
+
+    - User says "linear", "link linear", "linear issue"
+
+    - Creating PR that references a Linear issue
+
+
+    **Workflow:**
+
+
+    1. Use `ToolSearch` to confirm `linear-server` MCP exists (search `linear` or
+    `mcp__linear-server__`)
+
+    2. If found, read `.cursor/rules/linear.mdc` and follow the workflow
+
+    3. If not found, skip Linear integration (treat as not installed)'
+  gold_removed: '## Linear Issue Management (search tools first; ignore if not installed)
+
+    ClaudeCode may not inject MCP tools until they are discovered/used.\
+
+    Before applying Linear workflows, **use tool search** to confirm `linear-server`
+    exists (e.g. search `linear` / `mcp__linear-server__`). If not found, treat it
+    as not installed.\
+
+    Then read `@.cursor/rules/linear.mdc` when working with Linear issues.'
+distractors:
+- rule: Before applying Linear workflows, use tool search to confirm linear-server
+    exists
+  collision_type: meta_confusion
+  why_distracting: The file contains instructions to 'use tool search to confirm linear-server
+    exists' and 'read @.cursor/rules/linear.mdc'. An agent might interpret this as
+    an instruction to execute during the current task, rather than text to be rewritten
+    as documentation.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 64-68
+- rule: Follow [Linear rules in CLAUDE.md](CLAUDE.md#linear-issue-management-ignore-if-not-installed-linear-mcp)
+    when working with Linear issues.
+  collision_type: scope_ambiguity
+  why_distracting: AGENTS.md contains a markdown link to the specific heading in CLAUDE.md
+    that is being changed. The agent might try to update AGENTS.md to keep the link
+    intact, but the instructions only requested updating CLAUDE.md.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 54-55
+- rule: Component Selection Priority
+  source:
+    path: .cursor/rules/react.mdc
+    lines: '11'
+  source_text: '- Component selection priority: src/components > installed component
+    packages > lobe-ui > antd'
+  collision_type: architecture_boundary
+  why_distracting: Since `react-pdf` is an installed component package, an agent might
+    incorrectly prioritize importing its components directly in `src/features/...`
+    (as was previously done) rather than abstracting them behind a new `src/libs`
+    integration module.
+  severity: medium
+- rule: Defer Non-Critical Third-Party Libraries
+  source:
+    path: .agents/vercel-react-best-practices/AGENTS.md
+    lines: 441-443
+  source_text: '### 2.3 Defer Non-Critical Third-Party Libraries
+
+
+    **Impact: MEDIUM (loads after hydration)**'
+  collision_type: would_cause_bug
+  why_distracting: An agent might attempt to use Next.js `next/dynamic` to lazy-load
+    the heavy `react-pdf` library to optimize bundle size. However, PDF.js relies
+    on a specific global worker assignment. Dynamically importing it without the static
+    worker initialization wrapper would break PDF rendering entirely.
+  severity: high
+hierarchy_analysis: The workspace has two root-level configuration files (`AGENTS.md`
+  and `CLAUDE.md`). The task requires the agent to modify `CLAUDE.md` itself, which
+  is a meta-referential action. The agent must distinguish between the rules it should
+  follow to complete the task and the rules it is supposed to rewrite as part of the
+  task.

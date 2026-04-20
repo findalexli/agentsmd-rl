@@ -1,0 +1,116 @@
+name: litellm-entity-usage-export-fix
+version: 1.0
+
+task:
+  description: >
+    Fix entity usage export display bug in LiteLLM dashboard.
+    Entity exports for non-team entity types (tags, orgs, customers, agents, users)
+    were showing incorrect entity IDs - team names extracted from api_key_breakdown
+    metadata were appearing instead of the actual entity key.
+  owner: BerriAI
+  repo: litellm
+  pr_number: 25153
+
+metadata:
+  difficulty: medium
+  time_estimate_minutes: 45
+  tags:
+    - frontend
+    - typescript
+    - ui
+    - bugfix
+  language: TypeScript
+
+source:
+  base_commit: a5322c6efcd579c0ee8af7bae0f27fb07e350fd1
+  merge_commit: 55734ee272
+  files:
+    - ui/litellm-dashboard/src/components/EntityUsageExport/utils.ts
+    - ui/litellm-dashboard/src/components/EntityUsageExport/utils.test.ts
+
+checks:
+  - id: test_extract_team_id_from_api_key_breakdown_removed
+    type: fail_to_pass
+    origin: code_structure
+    description: Buggy extractTeamIdFromApiKeyBreakdown function removed from utils.ts
+
+  - id: test_resolve_entity_display_added
+    type: fail_to_pass
+    origin: code_structure
+    description: New resolveEntityDisplay function added to utils.ts
+
+  - id: test_entity_usage_export_test_file_updated
+    type: fail_to_pass
+    origin: code_structure
+    description: Test file updated with renamed fallback test
+
+  - id: test_test_file_uses_entity_keys_not_entity1_entity2
+    type: fail_to_pass
+    origin: code_structure
+    description: Test data updated from entity1/entity2 to team-1/team-2 keys
+
+  - id: test_new_fallback_test_runs_and_passes
+    type: fail_to_pass
+    origin: repo_tests
+    description: New test 'should fall back to the entity key...' runs and passes
+
+  - id: test_alias_test_runs_and_passes
+    type: fail_to_pass
+    origin: repo_tests
+    description: New test 'should use entity key as alias...' runs and passes
+
+  - id: test_vitest_suite_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: Full vitest suite for EntityUsageExport passes
+
+  - id: test_vitest_entity_usage_export_all_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: All 83 tests across 6 EntityUsageExport files pass
+
+  - id: test_vitest_utils_module_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: 63 utils.test.ts tests pass
+
+rubric:
+  - source: CLAUDE.md
+    rule: Uses Black formatter, Ruff linter, MyPy type checker
+    description: Code style follows project conventions (formatting, linting)
+    weight: 1
+
+  - source: CLAUDE.md
+    rule: Async/await patterns throughout; Type hints required for all public APIs
+    description: TypeScript types used correctly, async patterns followed
+    weight: 1
+
+  - source: CLAUDE.md
+    rule: "Avoid imports within methods — place all imports at the top of the file"
+    description: Imports at module level, not inline in functions
+    weight: 1
+
+  - source: CLAUDE.md
+    rule: "Keep monkeypatch stubs in sync with real signatures — when a function gains a new optional parameter, update every fake_/stub_ in tests"
+    description: Test mocks updated when functions change
+    weight: 1
+
+  - source: CLAUDE.md
+    rule: "Test all branches of name→ID resolution"
+    description: All code paths for entity display resolution tested
+    weight: 2
+
+  - source: CLAUDE.md
+    rule: "UI / Backend Consistency: When wiring a new UI entity type to an existing backend endpoint, verify the backend API contract"
+    description: Entity export correctly uses entity key instead of extracting team_id
+    weight: 3
+
+  - source: AGENTS.md
+    rule: "Use proper TypeScript types; Update type definitions when changing interfaces"
+    description: Types reflect the entity key → display ID mapping correctly
+    weight: 1
+
+  - source: AGENTS.md
+    rule: "Add tests for new functionality; Ensure tests are maintainable"
+    description: Test file updated to cover new resolveEntityDisplay behavior
+    weight: 2

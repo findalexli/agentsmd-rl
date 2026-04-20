@@ -1,61 +1,57 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all critical file paths (e.g., TESTDATA_FILE, KaFirDataClassConverters.kt, KaFirDiagnostics.kt, KaFirDiagnosticsImpl.kt, scripting test paths), exact diagnostic name UNNAMED_PROPERTY_WITH_IMPLICIT_UNIT_TYPE, class names like UnnamedPropertyWithImplicitUnitTypeImpl, literal strings like 'underscore property is inferred to', 'KT-84618', 'RUN_PIPELINE_TILL: BACKEND', 'UnnamedLocalVariables', function names testWithImplicit/testWithExplicit, and the warning marker format. All a"
+      "reason": "Instruction names the diagnostic identifier, error message text, issue KT-84618, test file path, function names, converter/interface/impl class names, and scripting paths \u2014 all matching the test assertions."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction specifies exact implementation details: the converter class name 'UnnamedPropertyWithImplicitUnitTypeImpl', exact file paths to modify, exact diagnostic marker format, exact function names for test data, the exact scripting fix ('return Int instead of Unit'). These go beyond describing what's broken and tell the agent exactly WHAT to change and HOW."
+      "outcome": "pass",
+      "reason": "Instruction describes what should be done (add warning, create test data, update analysis API) without specifying code changes like specific line edits or internal helper names like isUnitOrFlexibleUnit."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact class name 'UnnamedPropertyWithImplicitUnitTypeImpl' in test_analysis_api_converter_exists, exact method names 'isUnitOrFlexibleUnit' and 'ImplicitTypeRef' in test_checker_contains_unit_warning_logic, exact regex pattern 'UNNAMED_PROPERTY_WITH_IMPLICIT_UNIT_TYPE\\s+by\\s+warning' in test_new_diagnostic_in_diagnostics_list. An alternative correct implementation using different internal helper function names or different type-checking appro"
+      "reason": "test_checker_contains_unit_warning_logic asserts the string 'isUnitOrFlexibleUnit' appears in the checker file, which is a gold-specific helper; an alternative correct fix using a different type check (e.g., type.isUnit or ConeClassLikeType comparison) would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every single test is a grep/regex check on file contents (e.g., `assert 'UNNAMED_PROPERTY_WITH_IMPLICIT_UNIT_TYPE' in content`, `assert re.search(pattern, content)`). No test compiles code, runs the compiler, or executes any behavior. All tests follow the pattern of reading files and checking for string presence."
+      "reason": "All visible tests are grep-based file content checks (e.g., 'assert \"UNNAMED_PROPERTY_WITH_IMPLICIT_UNIT_TYPE\" in content'); no test actually compiles code or executes the checker."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "A stub that simply creates the test data file with the expected strings, adds the diagnostic name to the listed files, and writes the expected class names would pass all tests without implementing any actual compiler diagnostic logic. The tests only check file contents, not compiler behavior."
+      "outcome": "pass",
+      "reason": "Tests check for multiple specific strings across multiple files (diagnostic list, messages, analysis API, test data with warning markers), which a no-op stub cannot satisfy."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors specified in instruction.md are tested: diagnostic definition as warning, error message content, test data file structure with proper markers/directives/functions, Analysis API integration (converter, interface, implementation), and scripting compatibility update."
+      "reason": "Tests cover the diagnostic definition, warning (not error) kind, message text, test data directives, KT-84618 reference, analysis API files, and scripting update."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings explaining what each verifies (e.g., test_new_diagnostic_in_diagnostics_list, test_checker_contains_unit_warning_logic, test_testdata_implicit_cases_have_warnings). The file has a clear section header for 'FAIL-TO-PASS TESTS'."
+      "reason": "Tests are clearly named per behavior (test_new_diagnostic_in_diagnostics_list, test_checker_contains_unit_warning_logic, etc.) with docstrings describing fail-to-pass rationale."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "Task is a compiler code change, not structured data production."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, variable names, diagnostic names, and commands in the instruction appear correct and consistent with the test expectations."
+      "reason": "Paths and identifiers in instruction.md match the test assertions (e.g., KaFirDataClassConverters.kt, withUnitType.kt, KT-84618)."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction names exact files to modify (FirUnnamedPropertyChecker.kt, KaFirDataClassConverters.kt, KaFirDiagnostics.kt, KaFirDiagnosticsImpl.kt, FirDiagnosticsList.kt), exact internal implementation class names (UnnamedPropertyWithImplicitUnitTypeImpl), and exact implementation patterns. This goes well beyond what's needed for the task domain."
+      "outcome": "pass",
+      "reason": "Instruction names the feature area and expected file locations but does not identify the buggy line/checker internals; localization of FirUnnamedPropertyChecker is left to the agent."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code implementation task, not a config-edit task."
+      "reason": "This is a code-change task, not an agentmd-edits config task."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 4,
-  "fail_count": 5
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 2
 }

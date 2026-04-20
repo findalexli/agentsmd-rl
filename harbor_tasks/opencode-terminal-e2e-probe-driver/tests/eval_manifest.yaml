@@ -1,0 +1,188 @@
+version: '2.0'
+source:
+  repo: anomalyco/opencode
+  pr: 17144
+  base_commit: c9c0318e0e5c2fcd80fc1c32a1ccfe360f182f90
+  merge_commit: 328c6de80d51704c09bdd962df2ddf5b9d7c82ea
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: testing/terminal.ts exists and is valid TypeScript
+- id: terminal_attr_constant
+  type: fail_to_pass
+  origin: pr_diff
+  description: terminalAttr exports 'data-pty-id' from testing/terminal.ts
+- id: terminal_probe_state_tracking
+  type: fail_to_pass
+  origin: pr_diff
+  description: terminalProbe tracks connected, rendered, and settled state
+- id: terminal_probe_drop
+  type: fail_to_pass
+  origin: pr_diff
+  description: terminalProbe.drop() removes the terminal entry from state
+- id: terminal_probe_noop_without_window
+  type: pass_to_pass
+  origin: static
+  description: Probe methods are safe no-ops when window is undefined
+- id: test_repo_typecheck_app
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's packages/app typecheck passes (bun run typecheck)
+- id: test_repo_typecheck_turbo
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's turbo typecheck passes across monorepo
+- id: test_repo_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's unit tests for packages/app pass (bun test)
+- id: test_repo_prettier_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's prettier check for packages/app/src passes
+- id: agents_md_documents_helpers
+  type: fail_to_pass
+  origin: pr_diff
+  description: e2e/AGENTS.md documents waitTerminalReady and runTerminal helpers
+- id: agents_md_terminal_testing_section
+  type: fail_to_pass
+  origin: pr_diff
+  description: e2e/AGENTS.md includes terminal testing guidelines section
+rubric:
+- rule: E2E test files must import test and expect from '../fixtures', not from '@playwright/test'
+    directly
+  source:
+    path: packages/app/e2e/AGENTS.md
+    lines: 99-107
+    commit: c9c0318e0e5c2fcd80fc1c32a1ccfe360f182f90
+- rule: Code should avoid 'else' statements - prefer early returns instead
+  source:
+    path: AGENTS.md
+    lines: 82-98
+    commit: c9c0318e0e5c2fcd80fc1c32a1ccfe360f182f90
+  note: Gold solution uses early returns in terminalID - no else statements
+- rule: Prefer single-word variable names for locals, params (task-required multi-word
+    function names are an exception)
+  source:
+    path: AGENTS.md
+    lines: 21-32
+    commit: c9c0318e0e5c2fcd80fc1c32a1ccfe360f182f90
+  note: Gold solution uses single-word locals (term, next, id, state) and required
+    multi-word function names (waitTerminalReady, runTerminal)
+- rule: Avoid `else` statements. Prefer early returns.
+  source:
+    path: AGENTS.md
+    lines: 62-70
+  evidence: In `actions.ts`, the `terminalID` function uses an early return (`if (id)
+    return id`) followed by a throw, completely avoiding an `else` block.
+  category: style
+  outcome: The gold solution correctly avoids else statements.
+- rule: Avoid unnecessary destructuring. Use dot notation to preserve context.
+  source:
+    path: AGENTS.md
+    lines: 44-51
+  evidence: In `actions.ts`, the `terminalHas` function accepts an `input` object
+    and accesses its properties via dot notation (`input.term`, `input.token`) rather
+    than destructuring them in the parameter list or
+  category: style
+- rule: 'Test Structure: `actions.ts` - Reusable action helpers.'
+  source:
+    path: packages/app/e2e/AGENTS.md
+    lines: 23-30
+  evidence: The new `waitTerminalReady` and `runTerminal` functions are added directly
+    to `packages/app/e2e/actions.ts`, adhering to the defined test structure where
+    reusable action helpers belong in this file.
+  category: architecture
+- rule: Rely on type inference when possible; avoid explicit type annotations or interfaces
+    unless necessary for exports or clarity
+  source:
+    path: AGENTS.md
+    lines: 13-14
+  evidence: In `actions.ts`, local variables are declared without explicit type annotations
+    where the type is obvious from the assignment (e.g., `const next = term ?? ...`,
+    `const id = await terminalID(next)`).
+  category: style
+- rule: Prefer single word variable names where possible / Use single word names by
+    default for new locals (except when task requires specific multi-word function
+    names)
+  source:
+    path: AGENTS.md
+    lines: 23-31
+  evidence: In `actions.ts`, local variables are named with single words like `term`,
+    `next`, `id`, `state`, and `timeout`. Note that `waitTerminalReady` and `runTerminal`
+    are required by the task and should not be penalized.
+  category: naming
+- rule: Avoid using the `any` type
+  source:
+    path: AGENTS.md
+    lines: 13-14
+  evidence: When accessing the custom test probe on the window object, the gold solution
+    casts it using `(window as E2EWindow)` instead of falling back to `any`.
+  category: style
+- rule: Avoid else statements. Prefer early returns.
+  source:
+    path: AGENTS.md
+    lines: 82-90
+  evidence: In `actions.ts`, `terminalID` uses `if (id) return id` followed by a `throw`
+    statement, avoiding an `else` block.
+  category: style
+- rule: Prefer single word names for variables and functions.
+  source:
+    path: AGENTS.md
+    lines: 25-35
+  evidence: In `actions.ts`, local variables are named `id`, `term`, `next`, `state`,
+    and `timeout`, strictly following the single-word naming convention.
+  category: naming
+config_edits:
+- path: packages/app/e2e/AGENTS.md
+  tier: 1
+  gold_added: '- `waitTerminalReady(page, { term? })` - Wait for a mounted terminal
+    to connect and finish rendering output
+
+    - `runTerminal(page, { cmd, token, term?, timeout? })` - Type into the terminal
+    via the browser and wait for rendered output
+
+    ### Terminal Tests
+
+
+    - In terminal tests, type through the browser. Do not write to the PTY through
+    the SDK.
+
+    - Use `waitTerminalReady(page, { term? })` and `runTerminal(page, { cmd, token,
+    term?, timeout? })` from `actions.ts`.
+
+    - These helpers use the fixture-enabled test-only terminal driver and wait for
+    output after the terminal writer settles.
+
+    - Avoid `waitForTimeout` and custom DOM or `data-*` readiness checks.'
+  gold_removed: ''
+distractors:
+- rule: Avoid mocks as much as possible. Test actual implementation, do not duplicate
+    logic into tests
+  collision_type: rule_conflict
+  why_distracting: The prompt explicitly requires building a 'test-only probe system'
+    and a 'fixture-enabled test-only terminal driver' that hooks into the terminal
+    component. An agent might refuse to add test-specific probe logic to the production
+    `terminal.tsx` component, thinking it violates the rule against mocks and testing
+    actual implementation.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 111-112
+- rule: 'Selectors: Use data-component, data-action, or semantic roles'
+  collision_type: architecture_boundary
+  why_distracting: The agent might try to expose the terminal's readiness state (connected,
+    settled write count) via `data-*` attributes on the DOM element to comply with
+    this selector rule, rather than exposing it via the `window` object as explicitly
+    requested by the prompt.
+  severity: medium
+  source:
+    path: packages/app/e2e/AGENTS.md
+    lines: 104-105
+hierarchy_analysis: The task involves a deep hierarchy (Level 0, Level 2, Level 3)
+  and is explicitly meta-referential, as the prompt requires the agent to edit `packages/app/e2e/AGENTS.md`
+  (Level 3) to document the new testing pattern. The agent must navigate the root
+  style rules (single-word locals, no destructuring, early returns) while implementing
+  a test-only probe that seemingly conflicts with the root testing rules ('Avoid mocks').
+  The agent must also correctly update its own future instructions.

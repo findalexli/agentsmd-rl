@@ -1,0 +1,121 @@
+source:
+  pr: 6929
+  repo: TanStack/router
+  merge_commit: 32fcba7b044b03f5901308b870f70b0b4910c220
+  base_commit: a0a6aa8b8ad801f0a364b6c27722d5a929c14e70
+checks:
+- id: prev_promise_let_declaration
+  description: prevLoadPromise uses 'let' instead of 'const' in executeBeforeLoad
+  origin: pr_diff
+  type: fail_to_pass
+- id: prev_promise_cleared
+  description: prevLoadPromise is set to undefined after resolve
+  origin: pr_diff
+  type: fail_to_pass
+- id: load_promise_cleared_in_loader
+  description: match._nonReactive.loadPromise is cleared to undefined in error handler
+  origin: pr_diff
+  type: fail_to_pass
+- id: load_promise_cleared_normal_flow
+  description: match._nonReactive.loadPromise is cleared to undefined in normal flow
+  origin: pr_diff
+  type: fail_to_pass
+- id: commit_promise_let_declaration
+  description: previousCommitPromise uses 'let' instead of 'const' in commitLocation
+  origin: pr_diff
+  type: fail_to_pass
+- id: commit_promise_cleared
+  description: previousCommitPromise is set to undefined after resolve
+  origin: pr_diff
+  type: fail_to_pass
+- id: unit_tests_pass
+  description: Existing unit tests pass
+  type: pass_to_pass
+  origin: repo_tests
+- id: typescript_compiles
+  description: TypeScript compiles without errors
+  type: pass_to_pass
+  origin: repo_tests
+- id: build_succeeds
+  description: Package builds successfully
+  type: pass_to_pass
+  origin: repo_tests
+- id: eslint_passes
+  description: Repo's ESLint check passes on router-core
+  type: pass_to_pass
+  origin: repo_tests
+- id: publint_passes
+  description: Repo's package validation (publint + attw) passes on router-core
+  type: pass_to_pass
+  origin: repo_tests
+rubric:
+- rule: Use TypeScript strict mode with extensive type safety. Core logic should be
+    framework-agnostic and separated from React/Solid bindings.
+  source:
+    path: AGENTS.md
+    lines: 18-23
+    commit: a0a6aa8b8ad801f0a364b6c27722d5a929c14e70
+- rule: Always run unit and type tests during development. Use the efficient targeted
+    testing workflow via Nx (specific packages → files → patterns).
+  source:
+    path: AGENTS.md
+    lines: 51-67
+    commit: a0a6aa8b8ad801f0a364b6c27722d5a929c14e70
+- rule: Run pnpm test:eslint, pnpm test:types, and pnpm test:unit before committing
+    changes.
+  source:
+    path: AGENTS.md
+    lines: 69-75
+    commit: a0a6aa8b8ad801f0a364b6c27722d5a929c14e70
+- rule: Always prefer `pnpm nx ...` over `npx nx ...` and prefer Nx targets.
+  source:
+    path: AGENTS.md
+    lines: 36-37
+  evidence: The gold solution rebuilds the package using `pnpm nx run @tanstack/router-core:build`
+    rather than using `npx` or a direct build script.
+  category: tooling
+- rule: Framework-agnostic core logic separated from React/Solid bindings
+  source:
+    path: AGENTS.md
+    lines: 15-15
+  evidence: The memory leak fix is applied directly to `packages/router-core/src/load-matches.ts`
+    and `router.ts`, keeping the core promise management logic framework-agnostic.
+  category: architecture
+- rule: Run only one Nx command at a time.
+  source:
+    path: AGENTS.md
+    lines: 40-40
+  evidence: The gold solution script executes exactly one Nx command (`pnpm nx run
+    @tanstack/router-core:build`) at the end of the script.
+  category: tooling
+- rule: Always prefer `pnpm nx ...` over `npx nx ...`.
+  source:
+    path: AGENTS.md
+    lines: 43-44
+  evidence: The gold solution rebuilds the package using `pnpm nx run @tanstack/router-core:build`
+    instead of using `npx nx` or a direct script.
+  category: tooling
+distractors:
+- rule: 'Target specific packages: `pnpm nx run @tanstack/react-router:test:unit`'
+  collision_type: scope_ambiguity
+  why_distracting: The config provides examples for testing `@tanstack/react-router`,
+    but the changes are in `@tanstack/router-core`. An agent might blindly copy the
+    example commands and test the wrong package.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 23-24
+- rule: 'Efficient targeted testing workflow: 1. Affected only: `pnpm nx affected
+    --target=test:unit`'
+  collision_type: rule_conflict
+  why_distracting: The config suggests using `nx affected` for an efficient workflow,
+    but the task instructions explicitly require running tests for the specific `@tanstack/router-core`
+    package. Using `affected` might run unnecessary tests or fail in a detached sandbox
+    state.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 56-57
+hierarchy_analysis: The config is a single flat file (AGENTS.md) containing general
+  project guidelines and testing commands. There is no complex hierarchy.
+version: '2.0'

@@ -1,61 +1,56 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert specific test function names like TestConcurrentAppendSameLabels, TestStripeSeries_SetUnlessAlreadySet, TestSetUnlessAlreadySetConcurrentSameLabels, TestSetUnlessAlreadySetConcurrentGC that the agent must CREATE (they don't exist yet). The instruction mentions these names in the 'Verification' section's go test command, but does not specify what these tests should actually assert or their implementation. More critically, test_setunlessalreadyset_method_exists does a grep for the exa"
+      "outcome": "pass",
+      "reason": "instruction.md names the test functions (TestConcurrentAppendSameLabels, TestStripeSeries_SetUnlessAlreadySet, TestSetUnlessAlreadySetConcurrentSameLabels, TestSetUnlessAlreadySetConcurrentGC), the file paths (tsdb/agent/db.go, tsdb/agent/series.go), and the required method name (SetUnlessAlreadySet is implied via 'check-then-insert' but the exact name is referenced by tests)."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly states the exact new method signature ('getOrCreate(ref chunks.HeadSeriesRef, l labels.Labels)'), names the exact new method to add ('SetUnlessAlreadySet' on stripeSeries), specifies its exact return signature (canonical series + boolean), and lists exactly which callers to update (Append, AppendHistogram, etc.). This is effectively telling the agent WHAT to change rather than just describing what's broken."
+      "outcome": "pass",
+      "reason": "Instruction describes what's broken and behavioral requirements without specifying exact line changes or the method name verbatim (describes behavior of the new method)."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_setunlessalreadyset_method_exists greps for the literal string 'SetUnlessAlreadySet' in series.go. An alternative correct fix could use a different method name (e.g., 'GetOrCreate', 'InsertIfAbsent', 'AtomicGetOrSet') and still fix the race condition, but would fail this test. The tests enforce gold-specific implementation details like the exact method name."
+      "reason": "test_setunlessalreadyset_method_exists greps for the literal string 'SetUnlessAlreadySet' in series.go, and multiple tests require specific test function names like TestStripeSeries_SetUnlessAlreadySet \u2014 alternative valid fixes using different naming would fail."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "test_setunlessalreadyset_method_exists uses `grep 'SetUnlessAlreadySet' tsdb/agent/series.go` \u2014 this is pure text matching with no execution. However, most other tests do execute code via `go test` and `go build` subprocesses. Since at least one test is purely text-based, this is a partial failure, but the majority do verify behavior through execution."
+      "outcome": "pass",
+      "reason": "Tests execute go test, go build, go vet, go mod verify as subprocesses to verify actual behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests (TestConcurrentAppendSameLabels, TestStripeSeries_SetUnlessAlreadySet, etc.) require the agent to write actual Go test code that compiles and passes, plus the code itself must compile (test_method_signature_updated). A stub/no-op would not produce these test functions or make the build succeed with the signature change."
+      "reason": "Tests run actual Go tests that exercise concurrent append behavior; stubs would not pass race-condition tests."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: one series in memory, one WAL record, same canonical ref, cleanup of losing refs, atomic check-then-insert, no multiple stripe locks. The tests cover concurrent append (one series), SetUnlessAlreadySet basic and concurrent behavior, GC safety (no deadlock), existing tests still pass, and build/vet checks."
+      "reason": "Tests cover the concurrent append behavior, the new method, GC deadlock safety, and signature change via build."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names and docstrings explaining what each test verifies (e.g., 'Fail-to-pass: Verifies concurrent appends for same label set produce exactly one series')."
+      "reason": "Tests are named clearly with docstrings labeling fail-to-pass vs pass-to-pass."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task produces Go source code changes, not structured data like JSON/CSV/API/DB."
+      "reason": "No structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos in filenames or commands."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction names exact files (tsdb/agent/db.go, tsdb/agent/series.go, tsdb/agent/db_append_v2.go), exact method signatures ('getOrCreate(ref chunks.HeadSeriesRef, l labels.Labels)'), exact new method name ('SetUnlessAlreadySet'), and exact caller methods to update. This goes far beyond describing the bug and essentially prescribes the solution architecture."
+      "outcome": "pass",
+      "reason": "Instruction names the files to modify but this is part of the task scope, not buggy-line localization."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "Code-only task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 4,
-  "fail_count": 5
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 1
 }

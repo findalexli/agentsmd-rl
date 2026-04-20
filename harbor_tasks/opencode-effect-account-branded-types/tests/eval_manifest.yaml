@@ -1,0 +1,191 @@
+version: '2.0'
+source:
+  repo: anomalyco/opencode
+  pr: 17072
+  base_commit: 2aae0d3493ac51aa2fd3929c6db0814ab795b04b
+  merge_commit: 981c7b9e375b7d9ac57d2d6a3179451139b2b99b
+checks:
+- id: branded_types_exported
+  type: fail_to_pass
+  origin: pr_diff
+  description: RefreshToken, DeviceCode, UserCode branded types are exported and constructable
+- id: schema_class_in_service
+  type: fail_to_pass
+  origin: pr_diff
+  description: service.ts uses Schema.Class for complex data types (not Schema.Struct)
+- id: login_uses_duration
+  type: fail_to_pass
+  origin: pr_diff
+  description: Login schema uses Duration fields for expiry and interval, with branded
+    types for codes
+- id: repo_uses_layer_effect
+  type: fail_to_pass
+  origin: pr_diff
+  description: AccountRepo uses Layer.effect with Effect.gen and AccountRepo.of pattern
+- id: agents_md_has_effect_guide
+  type: fail_to_pass
+  origin: pr_diff
+  description: packages/opencode/AGENTS.md includes an Effect guide section with schema,
+    service, and error patterns
+- id: agents_md_branded_schema_rule
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md documents branded schema (Schema.brand) usage for single-value
+    types
+- id: drizzle_snake_case
+  type: pass_to_pass
+  origin: agent_config
+  description: Drizzle schema uses snake_case field names per root AGENTS.md convention
+  source:
+    path: AGENTS.md
+    lines: 100-102
+    commit: 2aae0d3493ac51aa2fd3929c6db0814ab795b04b
+- id: repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TypeScript typecheck passes
+- id: repo_unit_tests_keybind
+  type: pass_to_pass
+  origin: repo_tests
+  description: Keybind unit tests pass - fast, reliable subset
+- id: repo_unit_tests_account_repo
+  type: pass_to_pass
+  origin: repo_tests
+  description: Account repo unit tests pass - tests account database operations
+- id: repo_unit_tests_account_service
+  type: pass_to_pass
+  origin: repo_tests
+  description: Account service unit tests pass - tests account service layer
+- id: repo_unit_tests_storage_db
+  type: pass_to_pass
+  origin: repo_tests
+  description: Storage/db unit tests pass - tests database layer used by account module
+- id: repo_unit_tests_auth
+  type: pass_to_pass
+  origin: repo_tests
+  description: Auth unit tests pass - tests auth normalization utilities
+- id: repo_unit_tests_acp_agent_interface
+  type: pass_to_pass
+  origin: repo_tests
+  description: ACP agent interface tests pass - tests agent SDK compliance
+- id: repo_unit_tests_acp_event_subscription
+  type: pass_to_pass
+  origin: repo_tests
+  description: ACP event subscription tests pass - tests agent event handling
+- id: repo_unit_tests_cli_github_remote
+  type: pass_to_pass
+  origin: repo_tests
+  description: CLI github remote tests pass - tests CLI utility functions
+- id: repo_unit_tests_cli_github_action
+  type: pass_to_pass
+  origin: repo_tests
+  description: CLI github action tests pass - tests GitHub action utilities
+- id: repo_unit_tests_cli_import
+  type: pass_to_pass
+  origin: repo_tests
+  description: CLI import tests pass - tests share URL/import utilities
+rubric:
+- rule: packages/opencode/AGENTS.md must include an Effect guide section documenting
+    Schema patterns (Schema.Class for multi-field types, Schema.brand for single-value
+    types)
+  source:
+    path: packages/opencode/AGENTS.md
+  reference: '# opencode Effect guide\n\n## Schemas\n- Use `Schema.Class` for data
+    types with multiple fields.\n- Use branded schemas (`Schema.brand`) for single-value\n    types.'
+- rule: packages/opencode/AGENTS.md Effect guide must document Layer.effect pattern
+    with ServiceName.of() for service implementations
+  source:
+    path: packages/opencode/AGENTS.md
+  reference: '## Services\n- In `Layer.effect`, always return service implementations
+    with `ServiceName.of({ ... })`, never a plain object.'
+config_edits:
+- path: packages/opencode/AGENTS.md
+  tier: 1
+  gold_added: '# opencode Effect guide
+
+
+    Instructions to follow when writing Effect.
+
+
+    ## Schemas
+
+
+    - Use `Schema.Class` for data types with multiple fields.
+
+    - Use branded schemas (`Schema.brand`) for single-value types.
+
+
+    ## Services
+
+
+    - Services use `ServiceMap.Service<ServiceName, ServiceName.Service>()("@console/<Name>")`.
+
+    - In `Layer.effect`, always return service implementations with `ServiceName.of({
+    ... })`, never a plain object.
+
+
+    ## Errors
+
+
+    - Use `Schema.TaggedErrorClass` for typed errors.
+
+    - For defect-like causes, use `Schema.Defect` instead of `unknown`.
+
+    - In `Effect.gen`, prefer `yield* new MyError(...)` over `yield* Effect.fail(new
+    MyError(...))` for direct early-failure branches.
+
+
+    ## Effects
+
+
+    - Use `Effect.gen(function* () { ... })` for composition.
+
+    - Use `Effect.fn("ServiceName.method")` for named/traced effects and `Effect.fnUntraced`
+    for internal helpers.
+
+    - `Effect.fn` / `Effect.fnUntraced` accept pipeable operators as extra arguments,
+    so avoid unnecessary `flow` or outer `.pipe()` wrappers.
+
+
+    ## Time
+
+
+    - Prefer `DateTime.nowAsDate` over `new Date(yield* Clock.currentTimeMillis)`
+    when you need a `Date`.
+
+
+    ## Errors
+
+
+    - In `Effect.gen/fn`, prefer `yield* new MyError(...)` over `yield* Effect.fail(new
+    MyError(...))` for direct early-failure branches.
+
+    ## Naming - Prefer single word variable names where possible (e.g., `pid`, `cfg`,
+    `err`, `opts`, `dir`). - Multi-word names are allowed only when a single word
+    would be unclear or ambiguous.'
+  gold_removed: ''
+distractors:
+- rule: Use single word names by default... Do not introduce new camelCase compounds
+    when a short single-word alternative is clear.
+  collision_type: rule_conflict
+  why_distracting: The config strictly forbids multi-word camelCase compounds and
+    mandates single-word names, but the task explicitly requires creating branded
+    types named `RefreshToken`, `DeviceCode`, `UserCode`, `AccessToken`, and `AccountID`.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 20-33
+- rule: Rely on type inference when possible; avoid explicit type annotations or interfaces
+    unless necessary for exports or clarity
+  collision_type: rule_conflict
+  why_distracting: The config advises avoiding explicit type annotations, but the
+    task requires adding explicit `$type<...>()` annotations to the Drizzle schema
+    to enforce the new branded types.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 14-15
+hierarchy_analysis: The agent must navigate a 3-level hierarchy. Crucially, the task
+  requires the agent to edit the level 2 config file (`packages/opencode/AGENTS.md`)
+  to add new rules based on the refactor, making this a meta-referential task where
+  the agent writes its own future instructions.

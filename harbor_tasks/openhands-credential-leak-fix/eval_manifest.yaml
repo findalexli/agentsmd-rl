@@ -1,0 +1,92 @@
+source_pr:
+  owner: All-Hands-AI
+  repo: OpenHands
+  number: 13718
+  merge_commit: a458c9b785a1b016e9f8c4e190a0fd9960c6e58e
+  base_commit: a65ddc3db6294cd6f1e0a56a849603ecad85a338
+
+checks:
+  # Fail-to-pass: Core functionality tests
+  - id: test_redact_text_secrets_exists
+    type: fail_to_pass
+    origin: pr_functional
+    description: The redact_text_secrets function must exist and be callable
+
+  - id: test_redact_api_keys_in_text
+    type: fail_to_pass
+    origin: pr_functional
+    description: API keys must be redacted from text containing them
+
+  - id: test_redact_sensitive_dict_entries
+    type: fail_to_pass
+    origin: pr_functional
+    description: Dict entries with sensitive keys must be redacted
+
+  - id: test_redact_url_query_params
+    type: fail_to_pass
+    origin: pr_functional
+    description: Sensitive URL query parameters must be redacted
+
+  - id: test_event_callback_logging_uses_redaction
+    type: fail_to_pass
+    origin: pr_functional
+    description: EventCallbackProcessor logging must use redact_text_secrets
+
+  - id: test_set_title_callback_logging_uses_redaction
+    type: fail_to_pass
+    origin: pr_functional
+    description: SetTitleCallbackProcessor logging must use redact_text_secrets
+
+  - id: test_redact_api_key_literals_patterns
+    type: fail_to_pass
+    origin: pr_functional
+    description: Specific API key patterns must be redacted
+
+  # Pass-to-pass: Repository integrity tests (static checks)
+  - id: test_repo_structure_intact
+    type: pass_to_pass
+    origin: static
+    description: The repository structure must be intact
+
+  - id: test_python_syntax_valid
+    type: pass_to_pass
+    origin: static
+    description: Python files must have valid syntax
+
+  # Pass-to-pass: Actual repo CI tests (subprocess.run commands)
+  - id: test_repo_utils_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's utils unit tests pass
+
+  - id: test_repo_app_server_models
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's app_server models test passes
+
+  - id: test_repo_pytest_collection
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's pytest can collect tests without errors
+
+rubric:
+  # From AGENTS.md - code quality and testing rules
+  - rule: "Pre-commit hooks should pass if applicable"
+    source: "AGENTS.md:35-55"
+    type: soft
+
+  - rule: "Backend changes should include appropriate pytest tests"
+    source: "AGENTS.md:62-63"
+    type: soft
+
+  - rule: "Import patterns should follow existing codebase conventions"
+    source: "AGENTS.md:85-90"
+    type: soft
+
+  - rule: "New utility modules should be placed in appropriate utils directories"
+    source: "openhands/utils/ structure"
+    type: soft
+
+  - rule: "Security fixes should avoid exposing secrets in logs"
+    source: "PR description: credential leak vulnerability"
+    type: hard

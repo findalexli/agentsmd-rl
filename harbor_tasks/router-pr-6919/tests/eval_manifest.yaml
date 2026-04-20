@@ -1,0 +1,80 @@
+source:
+  repo: TanStack/router
+  pr_number: 6919
+  base_commit: 80c3196246952c437c4ed8cf892b293800e24f3b
+  merge_commit: 6069eba64369dbddb0d8dccdb4407f0e1a82259e
+
+checks:
+  - id: test_get_unique_program_identifier_function_exists
+    type: fail_to_pass
+    origin: pr_behavior
+    description: The getUniqueProgramIdentifier function must be exported from utils.ts
+
+  - id: test_get_unique_program_identifier_handles_collisions
+    type: fail_to_pass
+    origin: pr_behavior
+    description: The getUniqueProgramIdentifier must increment suffix to avoid naming collisions
+
+  - id: test_plugins_types_file_exists
+    type: fail_to_pass
+    origin: pr_behavior
+    description: The plugins.ts file must define the plugin interface types
+
+  - id: test_react_refresh_plugin_exists
+    type: fail_to_pass
+    origin: pr_behavior
+    description: The react-refresh-route-components.ts plugin must exist
+
+  - id: test_react_refresh_plugin_hoists_component_identifiers
+    type: fail_to_pass
+    origin: pr_behavior
+    description: The react-refresh plugin must hoist component, pendingComponent, errorComponent, notFoundComponent
+
+  - id: test_framework_plugins_returns_react_plugin
+    type: fail_to_pass
+    origin: pr_behavior
+    description: getReferenceRouteCompilerPlugins returns react-refresh plugin for React target with HMR
+
+  - id: test_compilers_accepts_compiler_plugins
+    type: fail_to_pass
+    origin: pr_behavior
+    description: compileCodeSplitReferenceRoute must accept compilerPlugins option
+
+  - id: test_router_code_splitter_uses_plugins
+    type: fail_to_pass
+    origin: pr_behavior
+    description: router-code-splitter-plugin must use getReferenceRouteCompilerPlugins
+
+  - id: test_router_hmr_plugin_uses_plugins
+    type: fail_to_pass
+    origin: pr_behavior
+    description: router-hmr-plugin must use getReferenceRouteCompilerPlugins for React target
+
+  - id: test_repo_plugin_eslint
+    type: pass_to_pass
+    origin: repo_tests
+    description: The router-plugin ESLint check must pass
+
+  - id: test_repo_plugin_build
+    type: pass_to_pass
+    origin: repo_tests
+    description: The router-plugin package must build successfully
+
+  - id: test_repo_plugin_build_validation
+    type: pass_to_pass
+    origin: repo_tests
+    description: The router-plugin build validation (publint + attw) must pass
+
+  - id: test_repo_plugin_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: The router-plugin unit tests must pass
+
+  - id: test_repo_plugin_type_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: The router-plugin type check must pass
+
+rubric:
+  - id: code_changes_only
+    rule: This PR only modifies source code files and does not require config or documentation file changes

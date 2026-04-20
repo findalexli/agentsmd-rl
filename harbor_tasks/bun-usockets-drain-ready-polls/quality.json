@@ -1,49 +1,49 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the exact file paths (epoll_kqueue.c, internal.h), function names (us_internal_drain_ready_polls, us_loop_run, us_loop_run_bun_tick, us_internal_dispatch_ready_polls), the constant LIBUS_MAX_READY_POLLS, the drain counter value 48, the decrement pattern, saturation check (num_ready_polls == LIBUS_MAX_READY_POLLS), zero timeout structs, KEVENT_FLAG_IMMEDIATE, and the replacement of hardcoded 1024. All test-asserted specifics are discoverable from the instruction."
+      "reason": "instruction.md names all key identifiers: us_internal_drain_ready_polls, us_loop_t, epoll_kqueue.c, internal.h, LIBUS_MAX_READY_POLLS, bun_epoll_pwait2, kevent64, KEVENT_FLAG_IMMEDIATE, us_internal_dispatch_ready_polls, us_loop_run, us_loop_run_bun_tick, drain counter 48, and zero timespec {0,0}."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly tells the agent exactly what to implement: the function name, signature ('static void us_internal_drain_ready_polls(struct us_loop_t *loop)'), drain counter initialized to 48 with --drain_count pattern, exact saturation check, exact zero timeout struct, exact placement of calls. This is a complete implementation specification, not a problem description."
+      "reason": "Instruction.md dictates the exact implementation: function signature, counter value 48, `--drain_count` pattern, saturation check `num_ready_polls == LIBUS_MAX_READY_POLLS`, `struct timespec zero = {0, 0}`, and KEVENT_FLAG_IMMEDIATE \u2014 this is prescriptive fix specification, not just describing the bug."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: the exact function name 'us_internal_drain_ready_polls' with exact signature (test_drain_function_exists), exact variable naming patterns like 'drain_count' (test_drain_has_iteration_cap), the specific decrement pattern '--drain_count' (same test), and exact call ordering between dispatch and drain (test_drain_called_after_dispatch_in_both_functions). An alternative correct fix using different function names, variable names, or a do-while loo"
+      "reason": "Tests assert on gold-specific details: exact function name `us_internal_drain_ready_polls`, counter initialization regex `int ... count... = \\d+`, `--count` decrement pattern, and `num_ready_polls == LIBUS_MAX_READY_POLLS` literal \u2014 alternative valid implementations (e.g., using a for loop, different counter name, or different saturation check) would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every test reads the C source file as text and uses regex/string matching (e.g., 'assert \"LIBUS_MAX_READY_POLLS\" in body', regex for function signatures, string find for function names). No test compiles, links, or executes the code. This is purely textual assertion."
+      "reason": "All tests are regex/substring inspection of the C source file (_read_source, re.search) with no compilation or execution \u2014 the task description even acknowledges 'the usockets code ... cannot be compiled independently'."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub/no-op implementation would fail because the tests check for specific code patterns: the drain function with a while loop, dispatch calls inside it, re-poll calls, saturation checks, iteration caps, and proper call ordering in existing functions. Simply adding an empty function would not pass test_drain_logic_implemented."
+      "reason": "A stub that just adds an empty function would fail test_drain_logic_implemented, test_drain_uses_zero_timeout, test_drain_has_iteration_cap, and test_drain_checks_saturation."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in the instruction are tested: hardcoded 1024 removal, drain function existence with correct signature, drain logic (while loop, dispatch call, re-poll), zero timeout usage, iteration cap, saturation check, and drain called after dispatch in both functions."
+      "reason": "Tests cover all behaviors named in instruction: drain function signature, saturation check, zero timeout, iteration cap with counter 48 pattern, replacement of 1024 with LIBUS_MAX_READY_POLLS, and drain-after-dispatch ordering."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive names (test_hardcoded_1024_removed, test_drain_function_exists, etc.), docstrings explaining each test's purpose, and section comments categorizing them as gates vs fail-to-pass vs pass-to-pass."
+      "reason": "Tests are grouped with section comment headers ('Gates', 'Fail-to-pass') and each has docstrings describing intent."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task produces C source code modifications, not structured data like JSON/CSV/API/DB."
+      "reason": "Task modifies C source, no structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, function names, variable names, and constants are consistently and correctly spelled throughout the instruction and tests."
+      "reason": "Paths (packages/bun-usockets/src/eventing/epoll_kqueue.c, internal.h) and identifiers match between instruction and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies the exact function signature, exact file locations, exact variable names (drain_count = 48), exact patterns (--drain_count), and exact placement of calls. This goes well beyond naming the buggy file \u2014 it provides a complete implementation blueprint."
+      "reason": "Instruction names the exact file `packages/bun-usockets/src/eventing/epoll_kqueue.c` and the exact functions to modify (`us_loop_run`, `us_loop_run_bun_tick`), and even prescribes the new function name and counter value \u2014 eliminating localization work."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "Code-only task, not a config edit."
     }
   },
   "tier_a_fails": [

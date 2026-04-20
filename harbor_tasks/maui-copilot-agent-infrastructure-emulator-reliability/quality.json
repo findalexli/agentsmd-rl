@@ -1,62 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert specific function names like 'Write-Warn' (test_write_warn_executes) but instruction.md never specifies the function should be named 'Write-Warn' \u2014 it only says 'a consistent warning helper'. Tests also check for 'Write-Warn' usage in BuildAndRunHostApp.ps1 (test_host_app_uses_write_warn) and specific strings like 'claude-opus-4.6' replacements, 'git checkout HEAD -- .' in post-gate.md, 'git clean -fd --exclude=CustomAgentLogsTmp/' \u2014 while some of these are mentioned in instruction."
+      "outcome": "pass",
+      "reason": "Instruction names all files, the Write-Warn helper pattern (following Write-Success/Error/Info), the 2\u219210 minute timeout, the claude-opus-4.5\u21924.6 model change, the git checkout/clean commands, and the 5\u21926 models reference."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md explicitly states the exact fixes: 'replace claude-opus-4.5 with claude-opus-4.6', 'Running git checkout HEAD -- . to restore tracked files', 'Running git clean -fd --exclude=CustomAgentLogsTmp/', 'timeout should be increased to at least 10 minutes', and specifies exact stop rules text. These are not just describing what's broken but prescribing the exact solution content."
+      "outcome": "pass",
+      "reason": "Instruction describes problems and required commands/behaviors but doesn't give exact line-level edits; the agent must still implement Write-Warn, restructure Review-PR.ps1, etc."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: test_write_warn_executes requires a function named exactly 'Write-Warn'; test_host_app_uses_write_warn checks for the literal string 'Write-Warn' in the file; test_review_pr_has_git_checkout checks for 'git checkout HEAD' in Review-PR.ps1; test_emulator_timeout_increased checks for specific timeout value >=600. An alternative valid implementation using 'Write-Warning-Custom' or a different cleanup mechanism would fail."
+      "outcome": "pass",
+      "reason": "Tests check for function existence/output, timeout >= 600, model string replacement, and command presence \u2014 alternative correct fixes would satisfy these."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Many f2p tests are pure text searches: test_host_app_uses_write_warn checks 'Write-Warn' in file text, test_review_pr_has_git_checkout checks 'git checkout HEAD' in file text, test_post_gate_has_cleanup_rules checks strings in file text, test_post_gate_env_blocker_rules checks strings in file text, test_try_fix_skill_state_warning checks string in file text, test_model_updated_plan/shared_rules check string replacement. Only test_write_warn_executes and test_emulator_timeout_increased actually e"
+      "outcome": "pass",
+      "reason": "Tests execute PowerShell (pwsh), call Write-Warn, check function exports, run git commands \u2014 not purely text grep."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for specific content that doesn't exist in the base commit \u2014 e.g., Write-Warn function must be created and executable, specific text must be added to markdown files, timeout value must be changed. A stub/no-op would not pass these since the base files lack the required content."
+      "reason": "f2p tests require actual implementation (Write-Warn must produce 'hello check' output, functions must be exported, timeout must change)."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "instruction.md specifies Review-PR.ps1 needs working tree restoration between phases and removal of external pipe mechanism for log capture, but tests only check for 'git checkout HEAD' string presence \u2014 they don't verify the pipe mechanism was removed or that phase restoration actually works. The BuildAndRunSandbox.ps1 warning helper change mentioned in instruction.md is not tested at all."
+      "outcome": "pass",
+      "reason": "Tests cover Write-Warn, host app warning usage, timeout, model updates, post-gate cleanup rules, and SKILL.md warnings."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are clearly grouped into 'Pass-to-pass (static)', 'Pass-to-pass (repo_tests)', and 'Fail-to-pass' sections with descriptive docstrings and meaningful function names."
+      "reason": "Tests are grouped with clear section comments (Pass-to-pass static, repo_tests, Fail-to-pass behavioral) and descriptive names."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves script hardening and documentation updates, not structured data output."
+      "reason": "Task doesn't produce structured data outputs."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, commands, and variable names in instruction.md and tests appear correct and consistent with the repository structure."
+      "reason": "Paths and filenames in instruction match those referenced in tests."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md names exact files, exact commands to add ('git checkout HEAD -- .', 'git clean -fd --exclude=CustomAgentLogsTmp/'), exact model version replacements ('claude-opus-4.5' to 'claude-opus-4.6'), and exact timeout value ('10 minutes'). This goes beyond describing what's broken and prescribes the solution implementation."
+      "outcome": "pass",
+      "reason": "Instruction names files (appropriate since task is about updating specific infrastructure files) but not exact buggy lines; localization is part of the domain."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold patch shows localized, targeted edits to markdown and script files \u2014 line-level replacements and insertions, not full-file rewrites. The changes don't contradict other files."
+      "reason": "Gold diff shows localized edits to markdown/config files, not full-file rewrites, and changes are consistent across files."
     }
   },
-  "tier_a_fails": [
-    "behavior_in_task_description",
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "behavior_in_tests",
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 4,
-  "fail_count": 6
+  "tier_c_fails": [],
+  "pass_count": 10,
+  "fail_count": 0
 }

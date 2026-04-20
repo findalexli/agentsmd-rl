@@ -1,62 +1,57 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file paths (transferValue.ts, copy-paste.ts), the function (transferValue, collateObjectValue), the i18n keys (read-only-fields-skipped.description, read-only-fields-skipped-truncated.description), the targetRootPath check, resolveConditionalProperty, currentUser context, warning level, fieldNames/count args, and the threshold of 3. All specifics asserted in tests are discoverable from the instruction."
+      "reason": "Instruction names both file paths, the two i18n keys, the argument names {{fieldNames}} and {{count}}, and the threshold of 3 \u2014 all the literals tests check for."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction specifies exact implementation details: detect targetRootPath.length === 0, use resolveConditionalProperty for readOnly evaluation, push warnings to errors array with specific i18n keys, use threshold of 3, specific argument names (fieldNames, count). This goes well beyond describing what's broken \u2014 it prescribes exactly how to fix it."
+      "outcome": "pass",
+      "reason": "Instruction describes the required behavior without prescribing specific variable names, line numbers, or function signatures."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests grep source files for gold-specific implementation details: test_static_readonly_fields_skipped checks for 'resolveConditionalProperty' and 'targetRootPath.length === 0'; test_readonly_context_type_defined checks for 'readOnlyContext'; test_collateObjectValue_accepts_readOnlyContext checks for 'readOnlyContext' appearing >=2 times; test_skipped_field_names_tracking checks for 'skipped' and 'readOnly' and 'fieldNames'. An alternative correct fix using different variable names (e.g., 'roCont"
+      "reason": "Tests assert on gold-specific implementation details: 'resolveConditionalProperty' literal in source, exact string \"level: 'warning'\" with single quotes, and 'targetRootPath.length === 0' literal \u2014 a correct alternative using e.g. `!targetRootPath.length` or a different conditional-evaluation helper would fail test_static_readonly_fields_skipped_during_document_paste."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "6 of 11 tests (test_static_readonly_fields_skipped, test_i18n_strings_exist, test_readonly_context_type_defined, test_collateObjectValue_accepts_readOnlyContext, test_skipped_field_names_tracking, test_readonly_field_warning_generation) are purely text-grep checks using 'in content' pattern matching on source files. They never import, call, or execute the code being tested. Only 3 tests (unit tests, typecheck, oxlint) actually execute code."
+      "reason": "Most f2p tests (test_static_readonly_fields_skipped_during_document_paste, test_i18n_strings_exist, test_readonly_context_type_defined, test_collateObjectValue_accepts_readOnlyContext, test_skipped_field_names_tracking, test_readonly_field_warning_generation) are purely `open(path).read()` substring checks with no execution of the behavior."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "The text-grep fail-to-pass tests (e.g., test_static_readonly_fields_skipped, test_i18n_strings_exist) can be passed by simply inserting comment strings containing the expected keywords (e.g., '// targetRootPath.length === 0 resolveConditionalProperty readOnly level: warning errors.push') without implementing any actual logic. No behavioral execution validates the fix works."
+      "outcome": "pass",
+      "reason": "The tests require specific substrings like the i18n keys and threshold logic which a no-op stub wouldn't contain; also pass-to-pass runs actual vitest suite."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "The instruction requires that read-only fields preserve existing target values during paste and that warnings are generated. While text-grep tests check for code patterns, no test actually verifies the behavioral outcome (e.g., that a paste operation with read-only fields returns preserved values and warning messages). The unit test suite (test_transferValue_unit_tests_pass) is pass-to-pass and only verifies existing tests pass."
+      "outcome": "pass",
+      "reason": "Document-level detection, readOnly evaluation, warning generation, i18n keys, and threshold-based truncation are all covered."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_static_readonly_fields_skipped_during_document_paste, etc.), have docstrings explaining fail-to-pass vs pass-to-pass, and the module docstring explains the overall purpose."
+      "reason": "Tests are individually named with docstrings describing fail-to-pass vs pass-to-pass intent."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task does not produce structured data like JSON/CSV/API/DB output; it modifies TypeScript source code."
+      "reason": "No structured data output produced by task."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, commands, variable names, and i18n keys in the instruction are consistent with the test expectations and solution."
+      "reason": "File paths, commands, and i18n keys in instruction match those used by tests."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction names the exact files to modify, the exact function (transferValue, collateObjectValue), the exact condition (targetRootPath.length === 0), the exact utility (resolveConditionalProperty), and the exact threshold (3). This is detailed implementation guidance, not just identifying the buggy area."
+      "outcome": "pass",
+      "reason": "Instruction points to the relevant files (which is part of scoping) but does not give line numbers or literal code replacements."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "This is a code task, not an agentmd-edits config task."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "behavior_in_tests",
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 3,
-  "fail_count": 6
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 2
 }

@@ -1,0 +1,154 @@
+version: '2.0'
+source:
+  repo: astral-sh/ruff
+  pr: 24444
+  base_commit: 398e2a79c488cf2ae59512ea31e00626d7dd8833
+  merge_commit: 2deaa47e5f3006e81d13567ba8f74ae930bfa080
+checks:
+- id: cargo_check
+  type: pass_to_pass
+  origin: static
+  description: ty_python_semantic crate compiles without errors
+- id: or_else_method_semantics
+  type: fail_to_pass
+  origin: pr_diff
+  description: Truthiness::or_else lazy method exists and has correct semantics
+- id: lazy_deleted_reachability_eval
+  type: fail_to_pass
+  origin: pr_diff
+  description: deleted_reachability uses or_else for lazy evaluation in place_from_bindings_impl
+- id: declarations_boundness_evaluator
+  type: fail_to_pass
+  origin: pr_diff
+  description: DeclarationsBoundnessEvaluator enum defined to defer reachability evaluation
+- id: is_non_exported_standalone
+  type: fail_to_pass
+  origin: pr_diff
+  description: is_non_exported extracted as standalone function from closure
+- id: existing_crate_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing ty_python_semantic tests still pass
+- id: cargo_fmt
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's code formatting passes
+- id: cargo_clippy
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's clippy linting passes
+- id: cargo_doc
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's documentation builds without warnings
+- id: cargo_lib_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: ty_python_semantic library tests pass
+- id: cargo_mdtest
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Markdown-based tests pass
+- id: no_local_imports
+  type: pass_to_pass
+  origin: agent_config
+  description: Rust imports are at the top of the file, not inside functions
+  source:
+    path: AGENTS.md
+    lines: '76'
+    commit: 398e2a79c488cf2ae59512ea31e00626d7dd8833
+rubric:
+- rule: Rust imports should always go at the top of the file, never locally in functions.
+  source:
+    path: AGENTS.md
+    lines: 64-64
+  evidence: The gold solution adds `use itertools::Either;` and `use ruff_index::IndexVec;`
+    at the top of `crates/ty_python_semantic/src/place.rs` rather than locally within
+    the functions being optimized.
+  category: style
+  verification: llm_judge
+- rule: Put Rust imports at the top of the file.
+  source:
+    path: repo/AGENTS.md
+    lines: 76-76
+  source_text: '- Rust imports should always go at the top of the file, never locally
+    in functions.'
+  evidence: The new imports `use itertools::Either;` and `use ruff_index::IndexVec;`
+    are added at the very beginning of the `crates/ty_python_semantic/src/place.rs`
+    file.
+  category: imports
+  verification: llm_judge
+- rule: Avoid writing significant new code and look for existing utilities first.
+  source:
+    path: repo/AGENTS.md
+    lines: 78-78
+  source_text: '- Avoid writing significant amounts of new code. This is often a sign
+    that we''re missing an existing method or mechanism that could help solve the
+    problem. Look for existing utilities first.'
+  evidence: The diff uses `Either` from the `itertools` crate (`Either::Left`, `Either::Right`)
+    to conditionally handle iterators rather than defining a custom enum, saving boilerplate.
+  category: architecture
+  verification: llm_judge
+- rule: Use comments purposefully to explain invariants.
+  source:
+    path: repo/AGENTS.md
+    lines: 82-82
+  source_text: '- Use comments purposefully. Don''t use comments to narrate code,
+    but do use them to explain invariants and why something unusual was done a particular
+    way.'
+  evidence: 'The diff preserves and refines a comment in `DeclarationsBoundnessEvaluator::evaluate`
+    explaining why `Definedness::PossiblyUndefined` is returned: ''For declarations,
+    it is important to consider the possibility that they might only be bound in one
+    control flow path...'''
+  category: style
+  verification: llm_judge
+distractors:
+- rule: Rust imports should always go at the top of the file, never locally in functions.
+  collision_type: rule_not_applicable
+  why_distracting: This is a code style rule from AGENTS.md line 76, not a config/documentation
+    change. The gold solution correctly places imports at the top of place.rs (verified
+    by test_no_local_imports). However, the rubric judge only evaluates config file
+    changes, not code style compliance. This rule is already enforced by test_no_local_imports.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 76
+- rule: Try hard to avoid patterns that require `panic!`, `unreachable!`, or `.unwrap()`.
+    Instead, try to encode those constraints in the type system.
+  collision_type: rule_conflict
+  why_distracting: The rule explicitly instructs to avoid `unreachable!` and instead
+    encode constraints in the type system, even if it requires large refactors. However,
+    the gold solution uses `unreachable!("If we have at least one declaration...")`
+    because encoding this specific reachability invariant in the type system would
+    require an out-of-scope architectural overhaul for a simple optimization PR.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 59-59
+- rule: All changes must be tested. If you're not testing your changes, you're not
+    done.
+  collision_type: rule_conflict
+  why_distracting: The rule demands that all changes must be tested. However, this
+    PR is a pure performance optimization (lazy evaluation) that does not change observable
+    behavior, so adding new tests is unnecessary and would waste agent effort.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 53-53
+- rule: Avoid using panic!, unreachable!, or .unwrap().
+  source:
+    path: repo/AGENTS.md
+    lines: 79-79
+  source_text: '- Try hard to avoid patterns that require `panic!`, `unreachable!`,
+    or `.unwrap()`. Instead, try to encode those constraints in the type system. Don''t
+    be afraid to write code that''s more verbose or requires largeish refactors if
+    it enables you to avoid these unsafe calls.'
+  collision_type: scope_ambiguity
+  why_distracting: An agent might see the `unreachable!` macro being moved within
+    the diff and attempt a large-scale refactor to encode the invariant in the type
+    system. This would be wasted effort and out of scope, as the current change is
+    focused on struct encapsulation and lazy evaluation, not removing existing panics.
+  severity: medium
+hierarchy_analysis: The configuration is flat, contained entirely within AGENTS.md
+  (referenced by CLAUDE.md). The primary challenge is not hierarchy traversal, but
+  resolving direct conflicts between strict rules and pragmatic implementation constraints.

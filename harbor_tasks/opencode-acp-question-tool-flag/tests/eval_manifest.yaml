@@ -1,0 +1,124 @@
+version: '2.0'
+source:
+  repo: anomalyco/opencode
+  pr: 13562
+  base_commit: 86e545a23ecdb2c1840ab01e82eca292117c6bbc
+  merge_commit: 9d3c81a68391399e46fab5307b03984511f92b09
+checks:
+- id: typescript_parseable
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files are syntactically valid
+- id: repo_typescript_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo TypeScript typecheck passes
+- id: repo_tool_registry_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo tool registry unit tests pass
+- id: repo_question_tool_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo question tool unit tests pass
+- id: repo_acp_agent_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo ACP agent interface tests pass
+- id: repo_acp_event_subscription_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo ACP event subscription tests pass
+- id: flag_constant_defined
+  type: fail_to_pass
+  origin: pr_diff
+  description: flag.ts exports OPENCODE_ENABLE_QUESTION_TOOL using truthy()
+- id: question_gating_behavior
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Question tool gating: ACP needs flag, app/cli/desktop always work'
+- id: translator_md_lists_env_var
+  type: fail_to_pass
+  origin: pr_diff
+  description: translator.md agent config includes OPENCODE_ENABLE_QUESTION_TOOL in
+    env var list
+- id: acp_readme_documents_opt_in
+  type: fail_to_pass
+  origin: pr_diff
+  description: acp/README.md documents the Question Tool Opt-In feature with env var
+- id: acp_readme_enable_example
+  type: fail_to_pass
+  origin: pr_diff
+  description: acp/README.md shows OPENCODE_ENABLE_QUESTION_TOOL=1 enable command
+- id: existing_client_behavior_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: app/cli/desktop clients still get QuestionTool without flag
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: Modified code has real conditional logic, not stubs
+rubric:
+- rule: Prefer single word names for variables and functions. Only use multiple words
+    if necessary.
+  source:
+    path: packages/opencode/src/tool/registry.ts
+    lines: 95-100
+    commit: 86e545a23ecdb2c1840ab01e82eca292117c6bbc
+  reference: The gold solution names the extracted boolean variable `question` rather
+    than a multi-word name like `enableQuestionTool` or `shouldEnableQuestion`.
+  category: naming
+- rule: Prefer `const` over `let`. Use ternaries or early returns instead of reassignment.
+  source:
+    path: packages/opencode/src/tool/registry.ts
+    lines: 95-100
+    commit: 86e545a23ecdb2c1840ab01e82eca292117c6bbc
+  reference: The gold solution declares the `question` variable using `const`.
+  category: style
+- rule: Avoid unnecessary destructuring. Use dot notation to preserve context.
+  source:
+    path: packages/opencode/src/tool/registry.ts
+    lines: 95-100
+  reference: The gold solution accesses the flags using dot notation (`Flag.OPENCODE_CLIENT`
+    and `Flag.OPENCODE_ENABLE_QUESTION_TOOL`) rather than destructuring them from
+    the `Flag` object.
+  category: style
+- rule: Prefer single word variable names where possible
+  source:
+    path: packages/opencode/src/tool/registry.ts
+    lines: 95-100
+  reference: The gold solution names the extracted boolean variable `question` rather
+    than a multi-word name like `enableQuestionTool` or `shouldEnableQuestion`.
+  category: naming
+- rule: Prefer `const` over `let`.
+  source:
+    path: packages/opencode/src/tool/registry.ts
+    lines: 95-100
+  reference: The gold solution declares the `question` variable using `const`.
+  category: style
+- rule: Rely on type inference when possible; avoid explicit type annotations
+  source:
+    path: packages/opencode/src/tool/registry.ts
+    lines: 95-100
+  reference: The `question` variable is declared without an explicit boolean type
+    annotation, relying on inference from the logical expression.
+  category: style
+config_edits:
+- path: .opencode/agent/translator.md
+  tier: 2
+  gold_added: OPENCODE_ENABLE_QUESTION_TOOL' .opencode/agent/translator.md
+  gold_removed: ''
+distractors:
+- rule: Reduce total variable count by inlining when a value is only used once.
+  collision_type: rule_conflict
+  why_distracting: The gold solution extracts the complex boolean condition into a
+    `question` variable to keep the array construction readable, even though it is
+    only used once. Strictly following the inline rule would result in a very long,
+    hard-to-read ternary expression inline.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 30-38
+hierarchy_analysis: The root `AGENTS.md` provides general style guidelines that apply
+  to the TypeScript edits. The child `packages/opencode/AGENTS.md` is loaded but only
+  contains database-specific rules which are irrelevant to this PR.

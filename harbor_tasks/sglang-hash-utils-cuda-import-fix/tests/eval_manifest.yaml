@@ -1,0 +1,153 @@
+version: '2.0'
+source:
+  repo: sgl-project/sglang
+  pr: 22214
+  base_commit: 5e2b0f860c020bfa49ad280203b98941500757f1
+  merge_commit: 49cb7d546ebce7e88615cd582d7e05202513a0c5
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified Python files must parse without errors
+- id: import_hash_utils_from_utils
+  type: fail_to_pass
+  origin: pr_diff
+  description: Hash functions can be imported from utils module (lightweight, no CUDA
+    deps)
+- id: hash_functions_correctness
+  type: fail_to_pass
+  origin: pr_diff
+  description: Hash functions produce expected output for various inputs
+- id: hash_bigram_mode
+  type: fail_to_pass
+  origin: pr_diff
+  description: Hash function supports EAGLE bigram mode with tuple tokens
+- id: import_sites_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: Import sites use utils module instead of hicache_storage
+- id: hicache_storage_functions_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Hash functions are removed from hicache_storage module
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: New hash functions have real implementation logic
+- id: modified_files_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified Python files must have valid syntax (py_compile check)
+- id: modified_files_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified Python files must pass ruff syntax/import checks
+- id: hash_functions_work_on_base
+  type: pass_to_pass
+  origin: repo_tests
+  description: Hash functions produce correct output on base commit (regression check)
+- id: modified_files_black_formatting
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified Python files pass black formatting check
+- id: modified_files_isort
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified Python files pass isort import sorting check
+- id: repo_ruff_full_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified Python files pass ruff F401/F821 check (matches CI)
+rubric: []
+distractors:
+- rule: Adding a new model requires creating a pipeline extending ComposedPipelineBase
+    and defining stages.
+  source:
+    path: python/sglang/multimodal_gen/.claude/CLAUDE.md
+    lines: 74-77
+  source_text: '1. Create pipeline in `runtime/pipelines/` extending `ComposedPipelineBase`
+
+    2. Define stages via `create_pipeline_stages()` (TextEncoding → Denoising → Decoding)
+
+    3. Add config in `configs/pipeline_configs/`
+
+    4. Register in `registry.py` via `register_configs()`'
+  collision_type: scope_ambiguity
+  why_distracting: This rule applies exclusively to the multimodal_gen subsystem.
+    An agent making structural or caching changes in the core srt module might mistakenly
+    think they need to integrate their changes into this ComposedPipelineBase architecture.
+  severity: medium
+- rule: Logic that doesn't need a server/engine launch should be tested with mocks
+    in test/registered/unit/
+  source:
+    path: .claude/skills/write-sglang-test/SKILL.md
+    lines: 16-16
+  source_text: 5. **Prefer mock over real server** — when testing logic that doesn't
+    need a server / engine launch (middleware, request routing, config validation,
+    argument parsing), use `unittest.mock.patch` / `MagicMock` and place tests in
+    `test/registered/unit/`.
+  collision_type: scope_ambiguity
+  why_distracting: An agent moving a simple utility function like get_hash_str to
+    utils.py might think it must also add a mocked unit test for it in test/registered/unit/,
+    but for a simple refactor of existing internal caching logic, writing a new test
+    is unnecessary effort that wasn't done in the gold diff.
+  severity: low
+- rule: Kernel Framework Selection
+  source:
+    path: .claude/skills/add-jit-kernel/SKILL.md
+    lines: 20-22
+  source_text: '- **JIT (`jit_kernel`)**: prefer this first for kernels that do **not**
+    depend on CUTLASS or another large C++ project. It is the default choice for lightweight
+    kernels that benefit from rapid iteration and first-use compilation.
+
+    - **AOT (`sgl-kernel`)**: prefer this when the kernel **does** depend on CUTLASS
+    or another large C++ project, or when it should live in `sgl-kernel/` and participate
+    in the wheel build / torch op registration flow.
+
+    - **Exception**: kernels that depend on `flashinfer`, or on CUTLASS that is already
+    provided through `flashinfer`, can still be implemented as `jit_kernel`.'
+  collision_type: scope_ambiguity
+  why_distracting: This rule applies to writing new CUDA/C++ kernels, but the gold
+    diff is simply modifying pure Python logic in the mem_cache subsystem. An agent
+    might mistakenly think it needs to use or modify kernel frameworks for the hash
+    string operations.
+  severity: low
+- rule: Test Framework Usage
+  source:
+    path: .claude/skills/write-sglang-test/SKILL.md
+    lines: 12-12
+  source_text: 1. **Always use `CustomTestCase`** — never raw `unittest.TestCase`.
+    It ensures `tearDownClass` runs even when `setUpClass` fails, preventing resource
+    leaks in CI.
+  collision_type: scope_ambiguity
+  why_distracting: The diff performs a minor refactoring of python cache logic and
+    doesn't add or modify any tests. Trying to apply testing conventions to this specific
+    diff is out of scope.
+  severity: low
+- rule: Multimodal Model Registration
+  source:
+    path: python/sglang/multimodal_gen/.claude/CLAUDE.md
+    lines: 74-77
+  source_text: '1. Create pipeline in `runtime/pipelines/` extending `ComposedPipelineBase`
+
+    2. Define stages via `create_pipeline_stages()` (TextEncoding → Denoising → Decoding)
+
+    3. Add config in `configs/pipeline_configs/`
+
+    4. Register in `registry.py` via `register_configs()`'
+  collision_type: architecture_boundary
+  why_distracting: This pipeline convention is exclusively for the multimodal_gen/diffusion
+    subsystem, whereas the gold diff is modifying the LLM runtime (`srt`) mem_cache
+    logic.
+  severity: medium
+- rule: Benchmark Configuration Baselines
+  source:
+    path: .claude/skills/sglang-auto-benchmark/references/cookbook-llm/README.md
+    lines: 7-8
+  source_text: "- Keep `mem_fraction_static` and `schedule_policy` at the cookbook\
+    \ baseline by\n  default; search higher-ROI knobs first."
+  collision_type: scope_ambiguity
+  why_distracting: This applies specifically to writing auto-benchmark YAML configurations
+    for cookbook LLMs, which is completely unrelated to the python cache controller
+    logic changes being made in the gold diff.
+  severity: low

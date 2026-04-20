@@ -1,0 +1,98 @@
+source:
+  pr: pulumi/pulumi#22385
+  title: "Remove state lock for refresh --preview-only for diy backend"
+  merge_commit: 81f23d079f47915e2682cf11e5635e7fa0049100
+  base_commit: 310f36beb5c3f5e8e920fc8af22d4da7804e5997
+  affected_files:
+    - pkg/backend/diy/backend.go
+
+checks:
+  # Fail-to-pass tests - verify the bug fix
+  - id: test_refresh_preview_only_no_lock_behavioral
+    type: fail_to_pass
+    origin: behavioral
+    description: Lock() is called after PreviewOnly check, not before
+
+  - id: test_refresh_function_structure
+    type: fail_to_pass
+    origin: behavioral
+    description: Refresh function has correct control flow with Lock in non-preview branch
+
+  # Pass-to-pass tests - verify code quality per agent config
+  - id: test_pkg_backend_diy_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: pkg/backend/diy compiles without errors
+
+  - id: test_pkg_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Unit tests pass (per pkg/AGENTS.md)
+
+  - id: test_go_lint
+    type: pass_to_pass
+    origin: agent_config
+    source:
+      file: CLAUDE.md
+      lines: "Command canon section - 'mise exec -- make lint'"
+    description: Go code passes linting
+
+  - id: test_no_generated_file_modifications
+    type: pass_to_pass
+    origin: agent_config
+    source:
+      file: CLAUDE.md
+      lines: "Forbidden actions section - 'Do not edit generated proto files by hand'"
+    description: No generated proto files were modified
+
+  # Pass-to-pass tests - actual CI commands from the repo
+  - id: test_repo_go_build_backend_diy
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo CI - go build for pkg/backend/diy compiles
+
+  - id: test_repo_go_vet_backend_diy
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo CI - go vet for pkg/backend/diy passes
+
+  - id: test_repo_go_test_diy_backend
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo CI - unit tests for pkg/backend/diy pass
+
+  - id: test_repo_go_fmt_backend_diy
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo CI - go fmt for pkg/backend/diy produces no changes
+
+  - id: test_repo_go_mod_tidy_pkg
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo CI - go mod tidy for pkg module produces no changes
+
+rubric:
+  # Soft/subjective rules from agent configs
+  - rule: "Do not skip linting"
+    source:
+      file: CLAUDE.md
+      section: "Forbidden actions"
+    description: Code changes should include proper linting
+
+  - rule: "Do not make sweeping changes, refactor unrelated code, or add unnecessary abstractions"
+    source:
+      file: CLAUDE.md
+      section: "Forbidden actions"
+    description: Changes should be minimal and focused
+
+  - rule: "Copyright headers for new files should always be stamped with the current year"
+    source:
+      file: CLAUDE.md
+      section: "Key invariants"
+    description: If new files are created, they need proper copyright headers
+
+  - rule: "Changes to go.mod in one module may require updates in others"
+    source:
+      file: CLAUDE.md
+      section: "Key invariants"
+    description: Ensure all Go modules remain consistent if dependencies change

@@ -1,0 +1,168 @@
+version: '2.0'
+source:
+  repo: vercel/next.js
+  pr: 91701
+  base_commit: 883d93c8935afb2b8124ab324a10fa36cbd7a88c
+  merge_commit: 6a8a31a7f42bb7d133aed5a6d854d069883aa57b
+checks:
+- id: test_app_page_server_imports_have_transition
+  type: fail_to_pass
+  origin: pr_diff
+  description: Server-side imports in app-page.ts annotated with next-server-utility
+    transition
+- id: test_fillmetadata_transition_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: fillMetadataSegment import no longer has next-server-utility transition
+- id: test_app_module_graphs_option_param
+  type: fail_to_pass
+  origin: pr_diff
+  description: app_module_graphs uses Option<Vc<EvaluatableAssets>> instead of separate
+    params
+- id: test_shared_multiple_in_chunk_group_entry
+  type: fail_to_pass
+  origin: pr_diff
+  description: SharedMultiple variant exists in ChunkGroupEntry enum
+- id: test_shared_multiple_in_chunk_group
+  type: fail_to_pass
+  origin: pr_diff
+  description: SharedMultiple variant exists in ChunkGroup enum
+- id: test_shared_multiple_in_chunk_group_key
+  type: fail_to_pass
+  origin: pr_diff
+  description: SharedMultiple variant exists in ChunkGroupKey enum
+- id: test_shared_multiple_pattern_matching
+  type: fail_to_pass
+  origin: pr_diff
+  description: SharedMultiple handled in pattern-match arms (entries, count, debug_str,
+    compute)
+- id: test_route_handlers_no_empty_assets
+  type: fail_to_pass
+  origin: pr_diff
+  description: Route handlers pass None instead of EvaluatableAssets::empty() to app_module_graphs
+- id: test_modified_files_exist
+  type: pass_to_pass
+  origin: static
+  description: All four modified files exist with substantial content
+- id: test_no_relative_require_in_app_page
+  type: pass_to_pass
+  origin: agent_config
+  description: app-page.ts must not use require() with relative paths
+  source:
+    path: AGENTS.md
+    lines: '407'
+    commit: 883d93c8935afb2b8124ab324a10fa36cbd7a88c
+- id: test_no_react_server_dom_webpack_in_app_page
+  type: pass_to_pass
+  origin: agent_config
+  description: app-page.ts must not directly import from react-server-dom-webpack/*
+  source:
+    path: AGENTS.md
+    lines: '398'
+    commit: 883d93c8935afb2b8124ab324a10fa36cbd7a88c
+- id: test_existing_transitions_preserved
+  type: pass_to_pass
+  origin: static
+  description: Pre-existing transition annotations (RouteKind, entry-base) still present
+- id: test_repo_git_status
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo is a valid git repository with expected commit checked out
+- id: test_repo_file_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo has expected file structure for the PR changes
+- id: test_repo_app_page_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified app-page.ts has valid JavaScript/TypeScript syntax
+- id: test_repo_chunk_group_info_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: Chunk group info Rust file has expected enum structure
+- id: test_repo_next_api_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: Next API Rust file has expected app_module_graphs function
+- id: test_repo_loader_tree_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: App page loader tree has expected metadata import pattern
+- id: test_repo_app_page_syntax_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: app-page.ts TypeScript syntax is valid'
+- id: test_repo_turbopack_chunk_group_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: Turbopack chunk_group_info.rs has expected enum structure'
+- id: test_repo_turbopack_chunk_group_file_size
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: SharedMultiple variant exists in chunk group enums'
+- id: test_repo_app_rs_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: next-api/src/app.rs has expected function structure'
+- id: test_repo_next_api_client_runtime_entries
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: next-api/src/app.rs has client_runtime_entries usage'
+- id: test_repo_app_page_imports_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: app-page.ts has expected import structure with transitions'
+
+# CI-based pass_to_pass tests added during p2p enrichment
+- id: test_repo_app_page_template_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: app-page.ts has valid TypeScript syntax (node --check)'
+- id: test_repo_build_templates_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: All build templates have valid TypeScript syntax'
+- id: test_repo_chunk_group_info_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: chunk_group_info.rs has valid Rust structure with expected enums'
+- id: test_repo_app_rs_function_signatures
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: app.rs has expected function signatures'
+- id: test_repo_app_page_loader_tree_structure_full
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo CI: app_page_loader_tree.rs has expected structure'
+rubric:
+- rule: Code changes target packages/next/src/ directory (source) not packages/next/dist/
+    (compiled output)
+  reference: Modified packages/next/src/build/templates/app-page.ts
+  category: architecture
+- rule: Rust changes are in appropriate crates/ and turbopack/crates/ directories
+  reference: Modified crates/next-api/src/app.rs, crates/next-core/src/app_page_loader_tree.rs,
+    turbopack/crates/turbopack-core/src/module_graph/chunk_group_info.rs
+  category: architecture
+distractors:
+- rule: Start `pnpm --filter=next dev` in a separate terminal session before making
+    edits
+  collision_type: scope_ambiguity
+  why_distracting: The PR involves changes to Rust crates (crates/next-api, turbopack/crates/turbopack-core)
+    in addition to packages/next. Running the dev server for just the next package
+    might not correctly rebuild the Rust workspace or could conflict with cargo builds.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 74-76
+- rule: Prefer `pnpm --filter=next build` when edits are limited to core Next.js files
+  collision_type: scope_ambiguity
+  why_distracting: The agent might misinterpret 'core Next.js files' to include the
+    crates/next-core and crates/next-api Rust files, but the rule specifically contrasts
+    this with 'when changes span multiple packages' which requires pnpm build-all.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 96-98
+hierarchy_analysis: The config consists of identical root-level AGENTS.md and CLAUDE.md
+  files containing generic repository instructions. There is no deep hierarchy or
+  task-specific guidance.

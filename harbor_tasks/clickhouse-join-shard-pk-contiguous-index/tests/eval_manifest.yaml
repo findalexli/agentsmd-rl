@@ -1,0 +1,123 @@
+version: '2.0'
+checks:
+- id: test_fix_contiguous_index_renumbering
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Fix renumbers part_index_in_query contiguously using local_idx instead
+    of
+
+    preserving gaps from filterPartsByQueryConditionCache. Verifies the specific
+
+    pattern: part_index_in_query = added_parts + local_idx
+
+    '
+- id: test_fix_comment_explains_issue
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Fix includes explanatory comment about why contiguous renumbering
+    is needed
+
+    and the interaction with filterPartsByQueryConditionCache
+
+    '
+- id: test_target_file_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: Target file exists in expected location
+- id: test_code_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: C++ code compiles without syntax errors
+- id: test_no_raw_pointers_in_fix_area
+  type: pass_to_pass
+  origin: pr_diff
+  description: Fix area doesn't introduce unsafe raw pointer usage
+- id: test_preserves_analysis_result_access
+  type: fail_to_pass
+  origin: pr_diff
+  description: Fix correctly accesses analysis_result->parts_with_ranges by index
+- id: test_allman_brace_style
+  type: pass_to_pass
+  origin: agent_config
+  source:
+    lines: 44-45
+    path: .claude/CLAUDE.md
+  description: Fix follows ClickHouse Allman brace style (opening brace on new line)
+- id: test_no_trailing_whitespace_in_target
+  type: pass_to_pass
+  origin: static
+  description: Target file has no trailing whitespace (ClickHouse style check)
+- id: test_no_tabs_in_target
+  type: pass_to_pass
+  origin: static
+  description: Target file uses spaces, not tabs (ClickHouse style check)
+- id: test_file_not_executable
+  type: pass_to_pass
+  origin: static
+  description: Target file has correct permissions - not executable
+- id: test_no_bom_in_target
+  type: pass_to_pass
+  origin: static
+  description: Target file has no UTF-8/UTF-16 BOM (ClickHouse style check)
+- id: test_target_file_in_git
+  type: pass_to_pass
+  origin: repo_tests
+  description: Target file is tracked by git with correct mode (100644)
+- id: test_no_duplicate_includes_in_target
+  type: pass_to_pass
+  origin: static
+  description: Target file has no duplicate
+- id: test_repo_ci_scripts_compile
+  type: pass_to_pass
+  origin: repo_tests
+  description: Python CI scripts syntax check passes (pass_to_pass)
+- id: test_repo_shell_scripts_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo shell scripts syntax check passes (pass_to_pass)
+- id: test_repo_style_check_scripts_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: CI style check script syntax check passes (pass_to_pass)
+- id: test_repo_various_checks_script_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Various checks script syntax check passes (pass_to_pass)
+- id: test_repo_submodules_check_script_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Submodules check script syntax check passes (pass_to_pass)
+- id: test_repo_check_style_py_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: check_style.py syntax check passes (pass_to_pass)
+- id: test_repo_cpp_code_style_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: C++ style check script runs without errors (pass_to_pass)
+- id: test_repo_submodules_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Submodules check script runs without errors (pass_to_pass)
+- id: test_repo_ci_jobs_scripts_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: All CI job scripts have valid syntax (pass_to_pass)
+- id: test_repo_git_whitespace_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git whitespace check passes (pass_to_pass)
+rubric:
+- rule: Use Allman-style braces (opening brace on new line) per CLAUDE.md
+- rule: Avoid raw pointers where ownership is unclear per copilot-instructions.md
+- rule: Explain complex logic with comments per copilot-instructions.md
+- rule: 'Use local_idx for loop counter (matching fix pattern), not arbitrary names.
+
+    Per copilot-instructions.md: avoid magic constants and unclear variable names.
+
+    '
+source:
+  repo: ClickHouse/ClickHouse
+  pr: 101960
+  base_commit: f4eb1501802bc9f274870d147ae82979956939e6
+  merge_commit: 5f35e27d1a1192a54aabe56b74664bc8452f71ec

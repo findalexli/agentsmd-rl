@@ -1,0 +1,136 @@
+checks:
+- id: f2p_init_container_string
+  description: Init containers with legacy string image format still work
+  type: fail_to_pass
+  origin: pr_diff
+- id: f2p_init_container_structured_tag
+  description: Init container with structured image format using tag renders correctly
+  type: fail_to_pass
+  origin: pr_diff
+- id: f2p_init_container_structured_digest
+  description: Init container with structured image format using digest renders correctly
+  type: fail_to_pass
+  origin: pr_diff
+- id: f2p_digest_precedence
+  description: When both tag and digest specified, digest should take precedence
+  type: fail_to_pass
+  origin: pr_diff
+- id: f2p_pull_policy
+  description: pullPolicy is properly passed through for structured images
+  type: fail_to_pass
+  origin: pr_diff
+- id: f2p_multiple_mixed
+  description: Multiple init containers with string and structured formats work together
+  type: fail_to_pass
+  origin: pr_diff
+- id: f2p_python_schema
+  description: InitContainerImage and InitContainerWithStructuredImage classes are
+    properly defined
+  type: fail_to_pass
+  origin: pr_diff
+- id: f2p_schema_updated
+  description: JSON schema files include InitContainerImage and InitContainerWithStructuredImage
+    definitions
+  type: fail_to_pass
+  origin: pr_diff
+- id: f2p_helpers_tpl
+  description: Helm template helpers for init container image processing are defined
+  type: fail_to_pass
+  origin: pr_diff
+- id: f2p_deployment_template
+  description: deployment-user.yaml uses the dagster.initContainer helper
+  type: fail_to_pass
+  origin: pr_diff
+- id: p2p_repo_schema_tests
+  description: Run the repo's own schema_tests/test_user_deployments.py tests (65
+    tests)
+  origin: repo_tests
+  type: pass_to_pass
+- id: p2p_repo_helm_lint
+  description: Run helm lint on dagster-user-deployments chart
+  origin: repo_tests
+  type: pass_to_pass
+- id: p2p_repo_helm_lint_main
+  description: Run helm lint on main dagster chart with subcharts and strict mode
+  origin: repo_tests
+  type: pass_to_pass
+- id: p2p_repo_schema_all
+  description: Run all compatible schema tests (user_deployments, dagit, daemon, celery)
+    - 161 tests
+  origin: repo_tests
+  type: pass_to_pass
+- id: p2p_repo_schema_dagit
+  description: Run dagit schema tests (~40 tests)
+  origin: repo_tests
+  type: pass_to_pass
+- id: p2p_repo_schema_daemon
+  description: Run dagster-daemon schema tests (~30 tests)
+  origin: repo_tests
+  type: pass_to_pass
+- id: p2p_repo_helm_lint_user_deployments
+  description: Run helm lint on dagster-user-deployments chart with strict mode
+  origin: repo_tests
+  type: pass_to_pass
+- id: p2p_repo_ruff
+  description: Run ruff linter on Helm schema code (repo CI requirement)
+  origin: repo_tests
+  type: pass_to_pass
+rubric:
+- rule: Helm chart changes follow the existing schema patterns in helm/dagster/schema/
+- rule: After ANY Python code changes, ALWAYS run `make ruff` - this is mandatory
+    and must never be skipped.
+  source:
+    path: CLAUDE.md
+    lines: 11-12
+  evidence: The gold solution modifies Python files (`kubernetes.py`, `user_deployments.py`)
+    to add the required schema models. To comply with the repository's strict CI requirements,
+    the agent must run `make ruf
+  category: tooling
+distractors:
+- rule: ALWAYS check this before writing data structures - use @record instead of
+    @dataclass.
+  collision_type: rule_conflict
+  why_distracting: The instruction explicitly requires adding an `InitContainerImage`
+    Pydantic model for Helm schema validation. The agent must ignore the general repository
+    rule to 'use @record instead of @dataclass' for data structures, as Helm schema
+    definitions in this codebase rely on Pydantic.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 10-11
+- rule: 'CRITICAL: After ANY Python code changes, ALWAYS run `make ruff` - this is
+    mandatory and must never be skipped.'
+  source:
+    path: CLAUDE.md
+    lines: 9-9
+  source_text: '- **CRITICAL**: After ANY Python code changes, ALWAYS run `make ruff`
+    - this is mandatory and must never be skipped.'
+  collision_type: scope_ambiguity
+  why_distracting: The strong wording ('CRITICAL', 'mandatory', 'must never be skipped')
+    might cause an agent to blindly run `make ruff` after modifying the Helm charts,
+    even though the rule explicitly mentions Python code changes and no Python files
+    were touched.
+  severity: medium
+- rule: 'make ruff # Format, lint, and autofix code - MANDATORY AFTER ANY CODE CHANGES'
+  source:
+    path: CLAUDE.md
+    lines: 22-23
+  source_text: '# Code quality - RUN AFTER EVERY PYTHON EDIT
+
+    make ruff                    # Format, lint, and autofix code - MANDATORY AFTER
+    ANY CODE CHANGES'
+  collision_type: scope_ambiguity
+  why_distracting: The inline comment says 'MANDATORY AFTER ANY CODE CHANGES', which
+    an agent might interpret broadly as applying to Helm chart code changes as well,
+    leading it to run a Python linter unnecessarily.
+  severity: medium
+hierarchy_analysis: The repository has a single root-level CLAUDE.md file containing
+  general Python coding conventions. The agent must recognize that the specific task
+  instructions (which dictate using a Pydantic model for Helm schema validation) override
+  the general repository convention to use `@record`.
+version: '2.0'
+source:
+  repo: dagster-io/dagster
+  pr: 33296
+  base_commit: f0c823c061cb859c0f6ab8fe1944a2f48e182eb3
+  merge_commit: 2bf0f9b68618e6a0f9010512fded4d9dc869b1bd

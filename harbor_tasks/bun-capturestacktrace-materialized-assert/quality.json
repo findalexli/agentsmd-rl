@@ -1,49 +1,49 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert on specific file path 'src/bun.js/bindings/FormatStackTraceForJS.cpp', function name 'errorConstructorFuncCaptureStackTrace', and specific API calls like 'hasMaterializedErrorInfo', 'setStackFrames', 'computeErrorInfoToJSValue', 'putDirect', 'putDirectCustomAccessor', 'DeletePropertyModeScope', 'deleteProperty', 'jsDynamicCast', 'RETURN_IF_EXCEPTION'. While instruction.md mentions many API calls, it does not mention 'computeErrorInfoToJSValue' (test_eager_stack_property_setting chec"
+      "reason": "Tests assert on the specific file path `src/bun.js/bindings/FormatStackTraceForJS.cpp` and function name `errorConstructorFuncCaptureStackTrace`, but instruction.md never names the file path or function symbol the agent must modify."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md's 'Implementation Requirements' essentially describe the solution structure: must use at least 4 specific JSC API calls from a given set, must handle materialized vs non-materialized states, must not violate the specific ASSERT. Combined with requiring 'hasMaterializedErrorInfo', 'setStackFrames', 'putDirect', 'deleteProperty', etc., this heavily constrains the solution to the exact gold patch approach of branching on hasMaterializedErrorInfo and using putDirect in the materialize"
+      "reason": "Instruction.md enumerates nearly the exact API calls used in the gold patch (hasMaterializedErrorInfo, materializeErrorInfoIfNeeded, computeErrorInfo, setStackFrames, DeletePropertyModeScope, putDirectCustomAccessor) and mentions the exact assertion `ASSERT(!m_errorInfoMaterialized)`, effectively prescribing the implementation approach."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact counts: test_stack_handling_separation requires exactly 1 setStackFrames call; test_eager_stack_property_setting requires putdirect_count >= 2 and compute_error_info_count >= 1; test_error_info_branching_behavior requires has_error_info_check and has_else_branch. An alternative correct fix (e.g., always materializing then using putDirect without branching, or using a different API combination) would fail these structural tests even if it correctly fixes the bug."
+      "reason": "test_stack_handling_separation asserts `setstackframes_count == 1` exactly, and tests require branching via hasMaterializedErrorInfo with an else branch \u2014 alternative correct fixes (e.g. two setStackFrames calls with different args, or a single path that conditionally materializes) would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Despite being wrapped in subprocess calls, the tests fundamentally do static code analysis \u2014 they parse the C++ source text with regex to count API calls, check for if/else structures, and verify string patterns. No test actually compiles or executes the C++ code. Tests like test_error_info_branching_behavior, test_stack_handling_separation, test_eager_stack_property_setting all use _analyze_code_behavior() which is pure text analysis via regex. This is textual pattern matching, not behavioral v"
+      "reason": "Tests execute subprocesses but only to regex-analyze source text (counting putDirect, setStackFrames occurrences, checking for `else` braces); no test actually builds bun or runs the JS reproduction from instruction.md."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub or no-op implementation would not pass since tests check for specific structural properties (hasMaterializedErrorInfo check, else branch, exact setStackFrames count=1, putDirect count>=2, computeErrorInfo count>=1) that require actual substantive code changes."
+      "reason": "A stub would fail since tests require specific API call counts, hasMaterializedErrorInfo branching, and line-count thresholds."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "instruction.md says 'Error.captureStackTrace(err) must produce a correct .stack value regardless of whether err.stack was previously accessed' but no test actually verifies this runtime behavior \u2014 all tests are static code analysis. The core behavioral requirement (correct stack traces) is never tested."
+      "reason": "Instruction.md's core behavioral claim (the JS repro returning a correct stack after prior .stack access) is never executed; tests only pattern-match C++ source."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive function names (test_error_info_branching_behavior, test_stack_handling_separation, etc.), docstrings explaining rationale, and helper functions grouped logically."
+      "reason": "Tests are grouped with section comments (Gate, Fail-to-pass) and named descriptively (test_error_info_branching_behavior, test_stack_handling_separation)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "Task doesn't produce structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No apparent typos in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "No typos detected in paths or identifiers."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly names the internal assert 'ASSERT(!m_errorInfoMaterialized)' and specific JSC API functions like 'hasMaterializedErrorInfo', 'setStackFrames', 'materializeErrorInfoIfNeeded', 'computeErrorInfo', 'getFramesForCaller', 'DeletePropertyModeScope', 'putDirectCustomAccessor' \u2014 these are implementation-level details that heavily constrain the solution approach and leak the fix structure."
+      "reason": "Instruction.md names the exact JSC assertion `ASSERT(!m_errorInfoMaterialized)` and enumerates internal helpers like `materializeErrorInfoIfNeeded`, `hasMaterializedErrorInfo`, `DeletePropertyModeScope` \u2014 these are hints that directly localize the fix."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "Not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [

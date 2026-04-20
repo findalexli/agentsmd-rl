@@ -1,61 +1,59 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert specific file paths like 'frontend/src/utils/toast-duration.ts' and 'frontend/src/utils/custom-toast-handlers.tsx', and check for exact strings like 'if (!message)' and 'return minDuration' and 'error || i18n.t'. While instruction.md mentions these patterns, it does not mention the test file modifications needed for use-handle-plan-click.test.tsx and use-sandbox-recovery.test.tsx (initReactI18next mock), which are tested in test_frontend_unit_tests. Also, the exact file path 'src/ut"
+      "outcome": "pass",
+      "reason": "instruction.md mentions the key strings 'STATUS$ERROR', 'error || i18n.t', 'if (!message)', 'return minDuration', 'string | null | undefined', and '#/i18n' import, which are what the text-inspection tests check."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly states the exact fix: 'it should return the minimum duration immediately using a null check pattern like `if (!message)` followed by `return minDuration`', 'The fallback should be implemented using the `||` operator pattern: `error || i18n.t(\"STATUS$ERROR\")`', and 'The type signatures for affected functions should accept `string | null | undefined`'. These are exact implementation instructions, not just descriptions of broken behavior."
+      "reason": "Instruction explicitly dictates the fix patterns: 'if (!message) followed by return minDuration', 'error || i18n.t(\"STATUS$ERROR\")', and the exact type signature 'string | null | undefined' \u2014 leaving nothing for the agent to reason about."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_calculateToastDuration_type_signature and test_displayErrorToast_type_signature do pure text matching: they assert exact strings like 'message: string | null | undefined', 'if (!message)', 'return minDuration', 'error || i18n.t', and 'error: string | null | undefined' in source files. An alternative correct fix using e.g. 'message == null' or 'message ?? minDuration' or a ternary would fail these text-based assertions even if functionally correct."
+      "reason": "Tests assert exact string matches like 'if (!message)', 'error || i18n.t', and 'error: string | null | undefined' \u2014 alternative valid fixes (e.g., 'if (message == null)', ternary, or different parameter name) would fail."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "test_displayErrorToast_type_signature and test_calculateToastDuration_type_signature are purely text-matching tests (assert 'if (!message)' in content, assert 'error || i18n.t' in content, etc.) with no execution. While test_calculateToastDuration_null_handling and test_calculateToastDuration_normal_operation do execute code, the type signature tests are entirely text-based."
+      "outcome": "pass",
+      "reason": "Tests execute calculateToastDuration via npx tsx and run npm test/lint/typecheck subprocesses, though some tests do text inspection."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "test_calculateToastDuration_null_handling calls calculateToastDuration(null, 4000, 8000) and asserts result === 4000. A stub returning a constant default wouldn't pass both this and test_calculateToastDuration_normal_operation which checks that long messages return values in range [3000, 10000]. The function must actually implement the logic."
+      "reason": "test_calculateToastDuration_null_handling actually executes the function with null/undefined and checks return value equals minDuration, which requires the fix."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "instruction.md requires null check with if(!message)/return minDuration, fallback with error || i18n.t('STATUS$ERROR'), updated type signatures, and passing lint/test/build/typecheck/translation checks. All of these are tested: null handling behavior, type signatures, lint, typecheck, translation completeness, and unit tests."
+      "reason": "Null handling, type signature, i18n fallback, lint, typecheck, and translation completeness are all tested as described in the instruction."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_calculateToastDuration_null_handling, test_displayErrorToast_type_signature, etc.), have docstrings explaining fail-to-pass vs pass-to-pass designation, and are logically grouped by the component they test."
+      "reason": "Tests have descriptive names and docstrings distinguishing f2p vs p2p."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a bug in toast notification handlers, not producing structured data output."
+      "reason": "Task does not produce structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in instruction.md or tests."
+      "reason": "No typos observed in paths or commands."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md specifies exact implementation patterns: 'null check pattern like `if (!message)` followed by `return minDuration`', 'implemented using the `||` operator pattern: `error || i18n.t(\"STATUS$ERROR\")`', the exact import path '#/i18n', and exact type signature 'string | null | undefined'. This goes well beyond naming the buggy module."
+      "reason": "Instruction spells out the exact code patterns ('if (!message)', 'error || i18n.t(\"STATUS$ERROR\")') and exact type signature, which is solution leakage beyond merely identifying the module."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits task."
+      "reason": "Code-only task, not an agentmd-edits task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
     "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 5
+  "pass_count": 6,
+  "fail_count": 3
 }

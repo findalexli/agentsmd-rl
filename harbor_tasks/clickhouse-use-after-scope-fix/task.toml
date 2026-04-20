@@ -4,16 +4,17 @@ description = "Fix a use-after-scope bug in parallel Object type deserialization
 time_limit = "900"  # 15 minutes
 required_tools = ["ninja", "clang++"]
 
+source_repo = "ClickHouse/ClickHouse"
+source_pr_number = 102073
+source_base_commit = "cafce4334d43cfade5382a9bde6910e787d69437"
+source_merge_commit = "0ac8d1fb82e45ca6c903f5549d564e867fb422dd"
 [tags]
 categories = ["memory-safety", "concurrency", "exception-safety", "c++"]
 paradigms = ["bugfix", "raii"]
 
-[source]
-repo = "ClickHouse/ClickHouse"
-pr_number = 102073
-base_commit = "cafce4334d43cfade5382a9bde6910e787d69437"
-merge_commit = "0ac8d1fb82e45ca6c903f5549d564e867fb422dd"
-
 [target]
 file = "src/DataTypes/Serializations/SerializationObject.cpp"
 language = "cpp"
+
+[verifier]
+env = { GEMINI_API_KEY = "${GEMINI_API_KEY:-}", ANTHROPIC_API_KEY = "${ANTHROPIC_API_KEY:-}" }

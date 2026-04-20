@@ -1,0 +1,111 @@
+version: '2.0'
+source:
+  repo: PrimeIntellect-ai/prime-rl
+  pr: 2123
+  base_commit: 18594ab2f5c43bdf80424731e5e268d67311056e
+  merge_commit: f090c3e8f3027a69d0cff9f8f775bc806f895288
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified files (eval_utils.py, vf_utils.py) must parse without errors
+- id: failed_rollouts_normal_metrics
+  type: fail_to_pass
+  origin: pr_diff
+  description: evaluate_env computes failed_rollouts = total_inputs - len(outputs)
+    and includes in monitor metrics
+- id: failed_rollouts_all_fail
+  type: fail_to_pass
+  origin: pr_diff
+  description: When all rollouts fail, failure count is still logged to monitor
+- id: failed_groups_aggregate_warning
+  type: fail_to_pass
+  origin: pr_diff
+  description: generate() counts None groups and logs aggregate summary warning with
+    failure count
+- id: failed_rollouts_varied_counts
+  type: fail_to_pass
+  origin: pr_diff
+  description: evaluate_env correctly computes failure count with different input/output
+    sizes (20 in, 15 out = 5 failed)
+- id: compute_eval_ckpt_step_regression
+  type: pass_to_pass
+  origin: repo_tests
+  description: compute_eval_ckpt_step pure function regression with known I/O pairs
+- id: evaluate_env_not_stub
+  type: pass_to_pass
+  origin: static
+  description: evaluate_env has real monitoring and metrics logic, not just pass/return
+- id: evaluate_delegates_to_generate
+  type: pass_to_pass
+  origin: pr_diff
+  description: evaluate() in vf_utils calls generate() — structural regression
+- id: no_bare_except
+  type: pass_to_pass
+  origin: agent_config
+  description: No bare except blocks — must specify exception type
+  source:
+    path: AGENTS.md
+    lines: '5'
+    commit: 18594ab2f5c43bdf80424731e5e268d67311056e
+- id: no_process_comments
+  type: pass_to_pass
+  origin: agent_config
+  description: No process-explanatory comments referencing old code
+  source:
+    path: AGENTS.md
+    lines: '7'
+    commit: 18594ab2f5c43bdf80424731e5e268d67311056e
+- id: repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff lint check passes on orchestrator module
+- id: repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff format check passes on orchestrator module
+- id: repo_py_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: All Python files in orchestrator module have valid syntax
+rubric:
+- rule: Errors should never pass silently.
+  source:
+    path: AGENTS.md
+    lines: 19-20
+  evidence: The gold solution explicitly logs warnings and reports metrics to the
+    monitor for failed rollouts and failed groups, adhering to the principle that
+    errors (failed rollouts) should not pass silently.
+  category: architecture
+- rule: Do not add unnecessary comments. Especially do not try to explain code change
+    that reflect your work process.
+  source:
+    path: AGENTS.md
+    lines: 7-9
+  evidence: The gold solution implements the logic without adding any explanatory
+    comments about the changes made, keeping the code clean.
+  category: style
+distractors:
+- rule: Avoid try/except blocks unless it's really necessary. It's fine that a program
+    fails if something goes wrong as this helps us to catch non-obvious bugs.
+  collision_type: rule_conflict
+  why_distracting: The rule states 'It's fine that a program fails if something goes
+    wrong'. An agent might interpret this as an instruction to raise an exception
+    or let the program crash when rollouts fail, which directly conflicts with the
+    task's explicit instruction to gracefully track failures in metrics and continue.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 5-7
+- rule: How to write and use TOML configs in prime-rl.
+  source:
+    path: .claude/skills/toml-config/SKILL.md
+    lines: 1-3
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to use the toml-config skill to add a configuration
+    flag for enabling/disabling failure tracking, which is unnecessary and out of
+    scope for this specific bug fix.
+  severity: low
+hierarchy_analysis: The configuration is flat, with CLAUDE.md simply pointing to AGENTS.md.
+  The rules provided are mostly generic Python guidelines (e.g., Zen of Python) rather
+  than project-specific architectural constraints.

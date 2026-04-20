@@ -30,24 +30,30 @@ All changelog entries with PR references should have author attribution, like:
 
 The fix must enable the script to:
 
-1. **Resolve authors for PR references** — fetch author information for PR
-   numbers found in changelog entries. The GitHub API endpoint for pull request
-   data is `https://api.github.com/repos/TanStack/router/pulls/{prNumber}`.
+1. **Resolve authors for PR references** — implement a function named
+   `resolveAuthorForPR` that fetches author information for PR numbers found in
+   changelog entries. The GitHub API endpoint for pull request data is
+   `https://api.github.com/repos/TanStack/router/pulls/{prNumber}`.
 
-2. **Cache PR author lookups** — avoid duplicate API calls by caching resolved
-   PR authors.
+2. **Cache PR author lookups** — use a cache variable named `prAuthorCache` to
+   avoid duplicate API calls when resolving PR authors.
 
-3. **Match PR reference patterns** — parse lines for PR references like
-   `([#6891](url))` to extract the PR number.
+3. **Match PR reference patterns** — use a regex pattern `/\[#(\d+)\]/` to
+   extract PR numbers from lines containing patterns like `([#6891](url))`.
+   Store the match result in a variable named `prMatch`.
 
 4. **Attempt PR resolution before commit hash resolution** — since changeset
    entries use PR links (not commit hashes) for actual changes, PR-based
-   attribution should be tried first.
+   attribution should be tried first. Store the commit hash match result in a
+   variable named `commitMatch`, and ensure `prMatch` is checked before
+   `commitMatch` in the logic flow.
 
 5. **Consistent author format** — append ` by @${username}` when a username
    is found, using the same format as commit hash resolution.
 
+6. **Preserve non-list items** — lines not starting with `- ` (list items) must
+   pass through unchanged. Use `startsWith('- ')` to check the prefix.
+
 ## Constraints
 
 - The script must continue to pass ESLint and Prettier checks.
-- Lines not starting with `- ` (list items) must pass through unchanged.

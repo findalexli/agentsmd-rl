@@ -1,0 +1,190 @@
+version: '2.0'
+source:
+  repo: huggingface/transformers
+  pr: 44881
+  base_commit: 6a056a16a856097cb0400ce9a48e96ab9d469e30
+  merge_commit: 9ef15d7016bd5fb307e961b2e8e56f14748913da
+checks:
+- id: test_syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified files (processing_utils.py, chat_template_utils.py, processing_smolvlm.py,
+    processing_voxtral.py) must parse without errors
+- id: test_template_variable_extraction_subprocess
+  type: fail_to_pass
+  origin: pr_diff
+  description: A function in chat_template_utils extracts undeclared Jinja2 variables
+    from template strings, handling custom vars, loop exclusion, empty templates,
+    and nested conditionals
+- id: test_extraction_is_dynamic
+  type: fail_to_pass
+  origin: pr_diff
+  description: Extraction is dynamic (not a hardcoded list) — different templates
+    yield different variable sets
+- id: test_kwargs_separation_behavior
+  type: fail_to_pass
+  origin: pr_diff
+  description: Template introspection correctly separates template-level kwargs (messages,
+    add_generation_prompt) from processor kwargs (padding, max_length)
+- id: test_processing_utils_imports_extraction
+  type: fail_to_pass
+  origin: pr_diff
+  description: ProcessorMixin.apply_chat_template imports the extraction function
+    for kwarg routing
+- id: test_extraction_cached
+  type: fail_to_pass
+  origin: pr_diff
+  description: Extraction function caches results (via lru_cache or equivalent) for
+    performance
+- id: test_render_jinja_template_backward_compat
+  type: pass_to_pass
+  origin: repo_tests
+  description: render_jinja_template still works correctly for single and batched
+    conversations
+- id: test_chat_template_utils_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's chat_template_utils unit tests pass (24 tests in tests/utils/test_chat_template_utils.py)
+- id: test_get_json_schema_function
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's get_json_schema function works correctly in chat_template_utils
+- id: test_compile_jinja_template
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's _compile_jinja_template function works correctly in chat_template_utils
+- id: test_ruff_style_check
+  type: pass_to_pass
+  origin: agent_config
+  description: Modified Python files pass ruff linting (enforced by CI via make style)
+  source:
+    path: AGENTS.md
+    lines: '2'
+    commit: 6a056a16a856097cb0400ce9a48e96ab9d469e30
+- id: test_ruff_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified Python files pass ruff format check (enforced by CI via make
+    style)
+config_edits:
+- path: CLAUDE.md
+  tier: 1
+  gold_added: 'Validation Task: transformers-processor-chat-template-kwargs'
+  gold_removed: ''
+rubric:
+- rule: We try to avoid direct inheritance between model-specific files in `src/transformers/models/`.
+  source:
+    path: src/transformers/processing_utils.py
+    lines: 1-10
+  reference: 'The gold solution implements the apply_chat_template fix independently
+    in both
+
+    src/transformers/models/smolvlm/processing_smolvlm.py and
+
+    src/transformers/models/voxtral/processing_voxtral.py, each handling their own
+
+    processor_kwargs without sharing a new base class.
+
+    '
+  evidence: The gold solution modifies processing_smolvlm.py and processing_voxtral.py
+    independently without introducing a new shared base class, following the rule
+    to avoid direct inheritance between model-specific files.
+  category: architecture
+- rule: When writing tests, add them to existing files unless adding a completely
+    new model.
+  source:
+    path: .github/copilot-instructions.md
+    lines: '16'
+  source_text: '- When writing tests, they should be added to an existing file. The
+    only exception is for PRs to add a new model, when a new test directory should
+    be created for that model.'
+  evidence: The gold diff refrains from adding new test files to validate the `processor_kwargs`
+    functionality. Instead, it amends kwargs handling within existing test suites
+    (`tests/models/aria/test_processing_aria.py` and `tests/test_processing_common.py`).
+  category: Testing
+  verification: llm_judge
+distractors:
+- rule: If coordination evidence cannot be found, do not proceed to PR-ready output.
+  collision_type: meta_confusion
+  why_distracting: The agent is operating in a headless benchmark environment where
+    it cannot gather coordination evidence or issue links. Following this rule would
+    cause the agent to refuse to generate the fix.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 58-60
+- rule: 'Pure code-agent PRs are not allowed: a human submitter must understand and
+    be able to defend the change end-to-end.'
+  collision_type: meta_confusion
+  why_distracting: The agent might refuse to write the code because it knows it is
+    an AI and there is no human submitter in the loop to defend the change.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 48-50
+- rule: 'Use cast() or # type: ignore to bypass type checker errors as a last resort.'
+  source:
+    path: .ai/skills/add-or-fix-type-checking/SKILL.md
+    lines: 169-186
+  source_text: "k. **Use `cast()` as a last resort before `# type: ignore`**.\n  \
+    \     Use when you've structurally validated the type but the checker can't see\
+    \ it:\n       pattern-matched AST nodes, known-typed dict values, or validated\
+    \ API responses.\n       ```python\n       # After structural validation confirms\
+    \ the type:\n       stmt = cast(cst.Assign, node.body[0])\n       annotations\
+    \ = cast(list[Annotation], [])\n       ```\n       Do not use `cast()` for module\
+    \ attribute narrowing — use type guards.\n       Do not use `cast()` when `@overload`\
+    \ or generics can solve it at the source.\n\n    l. **Use `# type: ignore` only\
+    \ for third-party stub defects**. This means\n       cases where the third-party\
+    \ package's type stubs are wrong or incomplete\n       and there is no way to\
+    \ narrow or cast around it. Examples:\n       - A kwarg that exists at runtime\
+    \ but is missing from the stubs\n       - A method that exists but isn't declared\
+    \ in the stubs\n       Always add the specific error code: `# type: ignore[call-arg]`,\
+    \ not bare\n       `# type: ignore`."
+  collision_type: would_cause_bug
+  why_distracting: 'Since the deprecated typed kwargs syntax (`Unpack[AllKwargsForChatTemplate]`)
+    was failing due to mismatched processor arguments, an agent might classify it
+    as a purely type-checking related bug and use `cast` or `# type: ignore` to suppress
+    the type errors. This avoids structurally fixing the kwargs collision (separating
+    Jinja template kwargs from processing kwargs explicitly).'
+  severity: high
+- rule: Do not edit generated code when a modular_<name>.py file is present, and use
+    make fix-repo to propagate changes from modular files.
+  source:
+    path: .github/copilot-instructions.md
+    lines: 27-29
+  source_text: "- \"Modular\" files. These files briefly define models by composing\
+    \ them using inheritance from other models. They are not meant to be used directly.\
+    \ Instead, the style tools\n  automatically generate a complete modeling file,\
+    \ like `modeling_bert.py`, from the modular file like `modular_bert.py`. If a\
+    \ model has a modular file, the modeling file\n  should never be edited directly!\
+    \ Instead, changes should be made in the modular file, and then you should run\
+    \ `make fixup` to update the modeling file automatically."
+  collision_type: scope_ambiguity
+  why_distracting: The agent might erroneously conclude that `processing_smolvlm.py`
+    and `processing_voxtral.py` (which reside inside the `/models` directory) are
+    generated files, prompting it to search for a non-existent `modular_smolvlm.py`
+    file or try to edit a generic parent template instead of modifying the specific
+    processor code directly.
+  severity: medium
+- rule: Avoid editing `# Copied from` blocks directly, and use make fixup to propagate
+    changes instead.
+  source:
+    path: .github/copilot-instructions.md
+    lines: 24-26
+  source_text: "- \"Copied from\" syntax. Functions or entire classes can have a comment\
+    \ at the top like this: `# Copied from transformers.models.llama.modeling_llama.rotate_half`\
+    \ or `# Copied from transformers.models.t5.modeling_t5.T5LayerNorm with T5->MT5`\n\
+    \  These comments are actively checked by the style tools, and copies will automatically\
+    \ be updated when the base code is updated. If you need to update a copied function,\
+    \ you should\n  either update the base function and use `make fixup` to propagate\
+    \ the change to all copies, or simply remove the `# Copied from` comment if that\
+    \ is inappropriate."
+  collision_type: scope_ambiguity
+  why_distracting: An agent may waste effort scanning for `# Copied from` directives
+    to ensure changes propagate to other models. The specific processing edits in
+    the PR are applied directly to standalone models without copied blocks.
+  severity: low
+hierarchy_analysis: The config files AGENTS.md and CLAUDE.md contain identical rules
+  at the root level. The agent must navigate these instructions and recognize that
+  the strict fail-closed policies for real-world PRs must be bypassed to complete
+  the benchmark task.

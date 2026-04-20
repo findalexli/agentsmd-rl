@@ -1,0 +1,222 @@
+version: '2.0'
+source:
+  repo: angular/angular
+  pr: 67875
+  base_commit: c1261b02dbe1d995d5a6fccb5556aca4d67b529f
+  merge_commit: 43ef7171b324f3dc1beb34d16d687276229fe375
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files parse without syntax errors
+- id: repo_git_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo is a valid git repository with expected commit checked out (git
+    status, git rev-parse)
+- id: typescript_files_parseable
+  type: pass_to_pass
+  origin: static
+  description: All modified TypeScript files have valid syntax structure (brace/parentheses
+    balance, exports)
+- id: markdown_files_valid
+  type: pass_to_pass
+  origin: static
+  description: All modified Markdown files are valid UTF-8 and have proper structure
+- id: change_detection_files_exist
+  type: pass_to_pass
+  origin: static
+  description: All change detection related files exist and have expected structure
+- id: typescript_syntax_tsc
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript files have valid syntax when checked with tsc --noEmit --skipLibCheck
+- id: jsdoc_comments_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: JSDoc comments in modified files are well-formed (grep for balanced
+    /** */)
+- id: markdown_frontmatter
+  type: pass_to_pass
+  origin: static
+  description: Markdown files have valid structure (balanced fences, no null bytes)
+- id: clang_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified TypeScript files checked with clang-format --dry-run (repo
+    formatting rules)
+- id: repo_copyright_headers
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified source files have required Google copyright headers (grep)
+- id: repo_file_validity
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files are valid ASCII/UTF-8 text files (file command)
+- id: git_log_commit
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git repository has expected commit history (git log)
+- id: test_repo_tslint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TSLint passes on all source files (pnpm tslint)
+- id: test_repo_check_tooling_setup
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's tooling setup compiles correctly (pnpm check-tooling-setup)
+- id: test_repo_ts_circular_deps
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo has no circular dependencies (pnpm ts-circular-deps:check)
+- id: test_repo_ng_dev_skills
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's agent skills configuration is valid (pnpm ng-dev ai skills validate)
+- id: test_repo_ng_dev_pullapprove
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's PullApprove configuration is valid (pnpm ng-dev pullapprove
+    verify)
+- id: test_repo_ng_dev_ngbot
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's NgBot configuration is valid (pnpm ng-dev ngbot verify)
+- id: constants_onpush_default_note
+  type: fail_to_pass
+  origin: pr_diff
+  description: OnPush JSDoc in constants.ts notes it is enabled by default
+- id: directives_eager_reference
+  type: fail_to_pass
+  origin: pr_diff
+  description: directives.ts JSDoc references Eager instead of Default and notes OnPush
+    is default
+- id: skipping_subtrees_onpush_default
+  type: fail_to_pass
+  origin: pr_diff
+  description: skipping-subtrees.md describes OnPush as the default strategy
+- id: advanced_config_onpush_default
+  type: fail_to_pass
+  origin: pr_diff
+  description: advanced-configuration.md describes OnPush as the default strategy
+- id: signals_readme_no_callout
+  type: fail_to_pass
+  origin: pr_diff
+  description: signals tutorial README no longer has the OnPush callout
+- id: airules_no_onpush_instruction
+  type: fail_to_pass
+  origin: agent_config
+  description: airules.md no longer instructs setting OnPush in @Component
+  source:
+    path: adev/src/context/airules.md
+    lines: '89'
+    commit: c1261b02dbe1d995d5a6fccb5556aca4d67b529f
+- id: guidelines_no_onpush_instruction
+  type: fail_to_pass
+  origin: agent_config
+  description: guidelines.md no longer instructs setting OnPush in @Component
+  source:
+    path: adev/src/context/guidelines.md
+    lines: '95'
+    commit: c1261b02dbe1d995d5a6fccb5556aca4d67b529f
+- id: angular20_mdc_no_onpush_instruction
+  type: fail_to_pass
+  origin: agent_config
+  description: angular-20.mdc no longer instructs always setting OnPush
+  source:
+    path: adev/src/context/angular-20.mdc
+    lines: '67'
+    commit: c1261b02dbe1d995d5a6fccb5556aca4d67b529f
+rubric:
+- rule: Documentation updates are consistent with the style of surrounding content
+    in each file
+  source:
+    path: adev/src/content/best-practices/runtime-performance/skipping-subtrees.md
+    lines: 1-10
+    commit: c1261b02dbe1d995d5a6fccb5556aca4d67b529f
+- rule: 'Sentence case for headings: Capitalize only the first word and proper nouns
+    in titles and headings.'
+  source:
+    path: .agent/skills/adev-writing-guide/SKILL.md
+    lines: 34-35
+  evidence: 'The gold solution uses sentence case for the updated heading: `### An
+    event is handled by a component with \`Eager\` change detection`.'
+  category: style
+  verification: llm_judge
+- rule: 'Code formatting: Use code font for code-related text (filenames, variables,
+    commands).'
+  source:
+    path: .agent/skills/adev-writing-guide/SKILL.md
+    lines: 42-43
+  evidence: The gold solution wraps the strategy names `Eager` and `OnPush` in backticks
+    within the markdown text.
+  category: style
+  verification: llm_judge
+- rule: Use code font for code-related text (filenames, variables, commands).
+  source:
+    path: .agent/skills/adev-writing-guide/SKILL.md
+    lines: 38-38
+  source_text: '- **Code formatting:** Use code font for code-related text (filenames,
+    variables, commands).'
+  evidence: The diff applies backticks to format the code-related term 'Eager' as
+    code font, changing 'default change detection' to '`Eager` change detection' and
+    'without `OnPush` strategy' to 'with the `Eager` strategy'.
+  category: style
+  verification: llm_judge
+- rule: Aim for one idea per sentence. Keep sentences short.
+  source:
+    path: .agent/skills/adev-writing-guide/SKILL.md
+    lines: 28-28
+  source_text: '- **Conciseness:** Aim for one idea per sentence. Keep sentences short.'
+  evidence: 'The diff splits a longer sentence about ChangeDetectionStrategy.OnPush
+    into two shorter, more concise sentences: ''...is the default strategy (since
+    v22). This mode reduces the amount of checking...'''
+  category: style
+  verification: llm_judge
+config_edits:
+- path: adev/src/content/tutorials/signals/steps/1-creating-your-first-signal/README.md
+  tier: 2
+  gold_added: ''
+  gold_removed: '<docs-callout helpful title="About ChangeDetectionStrategy.OnPush">
+
+
+    You might notice `ChangeDetectionStrategy.OnPush` in the component decorator throughout
+    this tutorial. This is a performance optimization for Angular components that
+    use signals. For now, you can safely ignore it—just know it helps your app run
+    faster when using signals! You can learn more in the [change detection strategies
+    API docs](/api/core/ChangeDetectionStrategy).
+
+
+    </docs-callout>'
+- path: adev/src/context/angular-20.mdc
+  tier: 1
+  gold_added: ''
+  gold_removed: '* **`ChangeDetectionStrategy.OnPush`:** Always set `changeDetection:
+    ChangeDetectionStrategy.OnPush` in the `@Component` decorator for performance
+    benefits by reducing unnecessary change detection cycles.'
+distractors:
+- rule: 'Testing - Zoneless & Async-First: ALWAYS use the ''Act, Wait, Assert'' pattern'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to write or update tests for the change detection
+    strategy using the zoneless testing rules, but this PR is strictly a documentation,
+    JSDoc, and configuration update.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 15-25
+- rule: 'Strategies: Default: Checks everything. OnPush: Checks only if inputs change,
+    events fire, or signals update.'
+  source:
+    path: .agent/skills/reference-core/SKILL.md
+    lines: 56-59
+  collision_type: rule_conflict
+  why_distracting: The skill document states that 'Default' checks everything and
+    'OnPush' is a specific strategy. The PR instruction explicitly changes this mental
+    model so that OnPush is the default and the old Default is now Eager. Following
+    the skill document would contradict the PR instruction.
+  severity: high
+hierarchy_analysis: The agent is instructed to modify its own configuration files
+  (e.g., `adev/src/context/angular-20.mdc`, `adev/src/context/airules.md`) to remove
+  outdated instructions about `OnPush`. This is a highly meta-referential task where
+  the agent must understand that the instructions it usually follows are the target
+  of the modification.

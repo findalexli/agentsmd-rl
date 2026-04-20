@@ -66,28 +66,28 @@ rubric:
     lines: '45'
     commit: 06cd53d752b022a7ae3676ab17c029f1f810c892
 distractors:
-- rule: If you've made changes to the backend, you should run pre-commit run --config
-    ./dev_config/python/.pre-commit-config.yaml
-  collision_type: scope_ambiguity
-  why_distracting: The rule specifies running a specific pre-commit config for backend
-    changes, but later defines the backend as being located in the `openhands` directory.
-    The agent is editing `enterprise/server/`, creating ambiguity about whether this
-    pre-commit rule applies to the enterprise directory.
-  severity: low
+- rule: 'Backend: Located in the `openhands` directory'
+  collision_type: architecture_boundary
+  why_distracting: The rule states the backend is located in the `openhands` directory,
+    but the file to modify is in `enterprise/server/utils/`. The agent might hesitate
+    to modify the enterprise directory or look for the wrong file.
+  severity: medium
   source:
     path: AGENTS.md
-    lines: 20-21
-- rule: Store design documents, analysis, and temporary artifacts in a `.pr/` directory
-  collision_type: scope_ambiguity
-  why_distracting: The agent might waste time and tokens creating a `.pr/analysis.md`
-    or `.pr/notes.md` file to document its debugging process, which is unnecessary
-    for this straightforward bug fix.
-  severity: low
+    lines: 58-59
+- rule: Use cross-repo-testing skill when changes span the SDK and OpenHands server
+    repos.
   source:
-    path: AGENTS.md
-    lines: 38-40
-hierarchy_analysis: The config is a flat, single-file structure (`AGENTS.md`) containing
-  generic repository guidelines. There is no hierarchy to navigate or resolve.
+    path: .agents/skills/cross-repo-testing/SKILL.md
+    lines: 1-5
+  collision_type: scope_ambiguity
+  why_distracting: The agent might assume that since this bug involves API keys and
+    SaaS metadata, it needs to perform cross-repo testing with the SDK. However, this
+    is a purely backend fix in the enterprise server and does not require cross-repo
+    testing.
+  severity: low
+hierarchy_analysis: The config is a single flat file (AGENTS.md) with generic repository
+  instructions. There is no complex hierarchy.
 version: '2.0'
 source:
   repo: All-Hands-AI/OpenHands

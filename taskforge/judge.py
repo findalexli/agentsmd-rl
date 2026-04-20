@@ -48,9 +48,15 @@ def load_manifest_rubric(manifest_path: str) -> list[dict]:
                 "rule": r.get("rule", ""),
                 "source": r.get("source"),
                 "reference": r.get("reference"),
+                "evidence": r.get("evidence"),
+                "category": r.get("category"),
+                "verification": r.get("verification"),
+                "source_text": r.get("source_text"),
             })
         elif isinstance(r, str):
-            rules.append({"rule": r, "source": None, "reference": None})
+            rules.append({"rule": r, "source": None, "reference": None,
+                          "evidence": None, "category": None,
+                          "verification": None, "source_text": None})
     return rules
 
 
@@ -247,72 +253,59 @@ Respond with ONLY a JSON array:
 # ── Track 3: Rubric LLM judge ───────────────────────────────────────────
 
 def call_judge(rules: list[dict], diff: str, api_key: str) -> list[dict]:
-    """Evaluate whether the agent made the right config file edits.
+    """Track 3: Evaluate whether the agent's code changes follow conventions.
 
-    Core question: "As a result of these code changes, did the agent also
-    make the appropriate edits to the agent config / documentation files?
-    Here's the reference edit from the gold solution."
+    Core question: "Looking at the agent's diff, did the code changes follow
+    the conventions/rules from the repo's config files (CLAUDE.md, AGENTS.md)?"
+
+    Each rule comes from a config file and describes a convention the gold
+    solution follows. The judge checks the agent's FULL diff against each rule.
     """
     import urllib.request
 
-    # Extract the agent's config file changes using the same parser as gold
-    agent_config_hunks = extract_config_hunks(diff)
-
-    # Build per-file comparison: gold reference vs agent's actual diff
     eval_items = []
     for i, r in enumerate(rules):
-        source_path = "unknown"
+        source_info = ""
         if isinstance(r.get("source"), dict):
-            source_path = r["source"].get("path", "unknown")
+            src = r["source"]
+            source_info = f"  Convention source: {src.get('path', '?')}"
+            if src.get("lines"):
+                source_info += f", lines {src['lines']}"
 
-        # Gold reference: what the correct solution adds
-        gold_ref = r.get("reference", "")
-
-        # Agent's actual edit to this file (find best match)
-        agent_edit = ""
-        for agent_path, agent_hunk in agent_config_hunks.items():
-            if source_path in agent_path or agent_path in source_path:
-                agent_edit = extract_added_lines(agent_hunk)
-                break
-        # Broader match: same filename anywhere in path
-        if not agent_edit:
-            fname = source_path.rsplit("/", 1)[-1] if "/" in source_path else source_path
-            for agent_path, agent_hunk in agent_config_hunks.items():
-                if fname in agent_path:
-                    agent_edit = extract_added_lines(agent_hunk)
-                    break
-
-        item = f"Check {i+1}: {r['rule']}\n  Target file: {source_path}"
-        if gold_ref:
-            item += f"\n  Gold solution added:\n    {gold_ref[:500]}"
-        if agent_edit:
-            item += f"\n  Agent added:\n    {agent_edit[:500]}"
-        else:
-            item += f"\n  Agent added: (nothing — file not modified)"
+        item = f"Rule {i+1}: {r['rule']}"
+        if source_info:
+            item += f"\n{source_info}"
+        if r.get("source_text"):
+            item += f"\n  Config text: {r['source_text'][:300]}"
+        if r.get("evidence"):
+            item += f"\n  Gold evidence: {r['evidence'][:400]}"
+        elif r.get("reference"):
+            item += f"\n  Gold reference: {r['reference'][:400]}"
+        if r.get("category"):
+            item += f"\n  Category: {r['category']}"
         eval_items.append(item)
 
     eval_text = "\n\n".join(eval_items)
 
-    # Summary of which files the agent touched
-    if agent_config_hunks:
-        touched = ", ".join(sorted(agent_config_hunks.keys()))
-    else:
-        touched = "(none)"
+    prompt = f"""You are evaluating whether a coding agent's code changes follow specific conventions from the repository's config files (CLAUDE.md, AGENTS.md, etc.).
 
-    prompt = f"""You are evaluating whether a coding agent made the right documentation/config file edits alongside a code change.
+The agent was given a bug-fix task. Below are conventions from the repo's config that the gold (correct) solution follows. For each rule, examine the agent's diff and decide: does the agent's code follow this convention?
 
-The agent was given a task that requires both CODE changes and DOCUMENTATION updates (to files like CLAUDE.md, AGENTS.md, README.md, SKILL.md, etc.). Below is a side-by-side comparison of what the gold solution added vs what the agent actually added to each config file.
-
-Config files the agent modified: {touched}
-
+Rules to evaluate:
 {eval_text}
 
-For each check, decide: did the agent make a SEMANTICALLY EQUIVALENT edit to the right file?
-- Same meaning in different words = PASS
-- Right information in the right file but different structure = PASS
-- Agent didn't touch the file at all = FAIL
-- Agent touched the file but added unrelated/wrong content = FAIL
-- Agent added partial information (some but not all key points) = FAIL if major points missing, PASS if minor wording differs
+Agent's full diff:
+```diff
+{diff[:40000]}
+```
+
+For each rule, decide:
+- PASS: The agent's code changes clearly follow this convention
+- PASS: The convention is about something the agent didn't need to touch (not applicable)
+- FAIL: The agent's code visibly violates this convention (e.g., used `else` when the rule says "avoid else")
+- FAIL: The convention directly applies to the agent's changes but was not followed
+
+Be generous — minor style differences are fine. Focus on whether the spirit of the convention was respected in the agent's actual code changes.
 
 Respond with ONLY a JSON array:
 [{{"rule_num": N, "pass": true/false, "reason": "one sentence"}}]"""

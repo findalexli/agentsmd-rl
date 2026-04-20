@@ -1,0 +1,57 @@
+{
+  "model": "claude-opus-4-7",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "Instruction names both files (MonthsList.tsx, YearsList.tsx), the callbacks (getMonthControlProps/getYearControlProps), and the expected behavior (children override default format) - all the specifics tests check."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction describes the bug and expected behavior without specifying the exact code change (e.g., doesn't say 'use controlProps?.children ??')."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "The test requires the children expression to contain 'dayjs' and 'format' literally; a correct fix that destructures before the JSX (e.g., `const label = controlProps?.children ?? dayjs(...).format(...)` and then `<PickerControl>{label}</PickerControl>`) would pass the has_default_format check, but a fix using a pre-computed variable like `<PickerControl>{children}</PickerControl>` would fail since 'dayjs'/'format' wouldn't appear in the JSX children expression."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Tests use TypeScript AST parsing but still only inspect the source text of the children expression for substrings ('??', 'dayjs', 'format') rather than executing component behavior - no rendering or runtime verification of the children override."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub returning default value would not satisfy the check for '??' pattern combined with dayjs format in the children expression."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "Tests check both MonthsList and YearsList for the fix, plus lint/prettier checks mentioned in Verification section."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests grouped into TestFixApplied and TestCodeQuality classes with descriptive docstrings."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "No structured data output in this task."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "Paths and commands appear correct and consistent."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The files are explicitly listed because the instruction treats them as the locus of the fix - this is acceptable scope disclosure rather than hint leakage."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "Code-only task, no config edits."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 2
+}

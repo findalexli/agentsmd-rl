@@ -1,0 +1,140 @@
+version: '2.0'
+source:
+  repo: huggingface/transformers
+  pr: 45049
+  base_commit: d65c2b138a3d27a3321f7bbced0efc9bfb5a9688
+  merge_commit: 12b6b57cac0397db0afda56f3ab0101729bc5f0f
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: configuration_utils.py must parse without syntax errors
+- id: legacy_rope_kwargs_converted
+  type: fail_to_pass
+  origin: pr_diff
+  description: Config without rope_parameters attr but with rope_scaling+rope_theta
+    kwargs gets conversion applied
+- id: warning_emitted_for_legacy_rope
+  type: fail_to_pass
+  origin: pr_diff
+  description: Warning/log emitted when legacy RoPE kwargs used on config lacking
+    rope_parameters
+- id: config_with_rope_parameters_attr
+  type: pass_to_pass
+  origin: repo_tests
+  description: Config class defining rope_parameters still works with rope_scaling+rope_theta
+    kwargs
+- id: config_without_rope_kwargs
+  type: pass_to_pass
+  origin: repo_tests
+  description: Config without any RoPE kwargs initializes normally
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: __post_init__ method has real logic, not a stub
+- id: ruff_check
+  type: pass_to_pass
+  origin: agent_config
+  description: Changed file passes ruff linting
+  source:
+    path: CLAUDE.md
+    lines: '2'
+    commit: d65c2b138a3d27a3321f7bbced0efc9bfb5a9688
+- id: ruff_format
+  type: pass_to_pass
+  origin: agent_config
+  description: Changed file passes ruff format check
+  source:
+    path: CLAUDE.md
+    lines: '2'
+    commit: d65c2b138a3d27a3321f7bbced0efc9bfb5a9688
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff check passes on the target file
+- id: test_repo_python_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Target file compiles without syntax errors via py_compile
+- id: test_repo_config_common_kwargs
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ConfigTestUtils::test_config_common_kwargs_is_complete passes
+- id: test_repo_config_from_string
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ConfigTestUtils::test_config_from_string passes
+- id: test_repo_check_config_attributes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's check_config_attributes script passes - validates config attributes
+    are used
+- id: test_repo_check_config_docstrings
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's check_config_docstrings script passes - validates config docstrings
+- id: test_repo_check_inits
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's check_inits script passes - validates __init__ structure
+- id: test_repo_check_copies
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's check_copies script passes - validates Copied from consistency
+rubric:
+- rule: PRs should be as brief as possible. Bugfix PRs in particular can often be
+    only one or two lines long, and do not need large comments, docstrings or new
+    functions in this case. Aim to minimize the size of the diff.
+  source:
+    path: .github/copilot-instructions.md
+    lines: '15'
+    commit: d65c2b138a3d27a3321f7bbced0efc9bfb5a9688
+- rule: Do not edit a `# Copied from` block, as it will be reverted by `make fix-repo`.
+  source:
+    path: CLAUDE.md
+    lines: '66'
+    commit: d65c2b138a3d27a3321f7bbced0efc9bfb5a9688
+- rule: Use getattr()/setattr() for dynamic model/config attributes. For runtime-injected
+    fields, use getattr(obj, 'field', default) for reads and setattr(obj, 'field',
+    value) for writes.
+  source:
+    path: .ai/skills/add-or-fix-type-checking/SKILL.md
+    lines: 162-167
+    commit: d65c2b138a3d27a3321f7bbced0efc9bfb5a9688
+distractors:
+- rule: If coordination evidence cannot be found, do not proceed to PR-ready output.
+    In blocked cases, return a short explanation of what is missing.
+  collision_type: meta_confusion
+  why_distracting: The rule mandates fail-closed behavior (refusing to output PR-ready
+    code) if coordination evidence is missing. Since the benchmark prompt does not
+    provide issue links or approval, an agent strictly following this rule would refuse
+    to generate the patch.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 46-49
+- rule: 'Pure code-agent PRs are not allowed: a human submitter must understand and
+    be able to defend the change end-to-end. Do not raise PRs without human validation.'
+  collision_type: meta_confusion
+  why_distracting: The rule states pure code-agent PRs are not allowed and requires
+    human validation. An agent might output a placeholder or refuse to write the code,
+    waiting for human intervention.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 36-44
+- rule: Manage code duplication in src/transformers/models/ using `# Copied from`
+    or `modular_<name>.py` files.
+  collision_type: scope_ambiguity
+  why_distracting: The rule discusses avoiding direct inheritance and managing copies
+    in `src/transformers/models/`. The agent might incorrectly try to apply these
+    modularity rules or look for `# Copied from` tags in `configuration_utils.py`,
+    which is a core utility, not a model-specific file.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 51-56
+hierarchy_analysis: The config hierarchy is flat, consisting of identical AGENTS.md
+  and CLAUDE.md files at the root level. The primary challenge is that the config
+  files contain strict meta-rules about agent behavior and PR submission processes
+  that conflict with the benchmark's implicit goal of generating a code patch autonomously.

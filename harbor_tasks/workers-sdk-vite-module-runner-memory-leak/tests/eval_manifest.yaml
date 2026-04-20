@@ -1,0 +1,90 @@
+version: '2.0'
+source:
+  repo: cloudflare/workers-sdk
+  pr: 13087
+  base_commit: 9fcdfca775d3d412abe7547d0833414599bab221
+  merge_commit: 94243850d6240ef50dadd1a4820f5c8f8c65769b
+checks:
+- id: typescript_syntax
+  type: pass_to_pass
+  origin: static
+  description: Modified file must parse and contain expected structure
+- id: repo_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's build for vite-plugin passes
+- id: repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's typecheck for vite-plugin passes
+- id: repo_runner_worker_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's runner-worker unit tests pass
+- id: cleanup_on_error
+  type: fail_to_pass
+  origin: pr_diff
+  description: pendingCallbacks and callbackResults must be cleaned up when executeCallback
+    throws
+- id: caller_cleans_up_pending_callbacks
+  type: fail_to_pass
+  origin: pr_diff
+  description: runInRunnerObject must clean up pendingCallbacks within its own body
+- id: error_handling_around_rpc_call
+  type: fail_to_pass
+  origin: pr_diff
+  description: runInRunnerObject must wrap the RPC call in try/catch or try/finally
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: runInRunnerObject has real logic, not just pass/return
+rubric:
+- rule: Always use curly braces for control flow statements (try/catch/finally, if/else,
+    loops, etc.)
+  source:
+    path: AGENTS.md
+    lines: '95'
+    commit: 9fcdfca775d3d412abe7547d0833414599bab221
+- rule: No floating promises - async calls must be awaited or explicitly voided
+  source:
+    path: AGENTS.md
+    lines: '94'
+    commit: 9fcdfca775d3d412abe7547d0833414599bab221
+- rule: Use `import type { X }` for type-only imports
+  source:
+    path: AGENTS.md
+    lines: '91'
+    commit: 9fcdfca775d3d412abe7547d0833414599bab221
+- rule: No non-null assertions (`!`) - use type narrowing instead
+  source:
+    path: AGENTS.md
+    lines: '93'
+    commit: 9fcdfca775d3d412abe7547d0833414599bab221
+- rule: '`src/workers/` contains 4 internal worker entries including `runner-worker`'
+  source:
+    path: packages/vite-plugin-cloudflare/AGENTS.md
+    lines: 8-9
+  evidence: The gold solution modifies `packages/vite-plugin-cloudflare/src/workers/runner-worker/module-runner.ts`,
+    correctly identifying it as the location for the `runner-worker` internal worker
+    entry.
+  category: architecture
+- rule: Internal worker entries are located in `src/workers/`
+  source:
+    path: packages/vite-plugin-cloudflare/AGENTS.md
+    lines: 7-7
+  evidence: The fix is applied to `src/workers/runner-worker/module-runner.ts`, which
+    aligns with the architectural definition of internal worker entries.
+  category: architecture
+distractors:
+- rule: 'Unit tests: `.spec.ts` in `__tests__/`'
+  collision_type: scope_ambiguity
+  why_distracting: The config specifies where to put unit tests, which might prompt
+    an agent to write a test for the memory leak. However, the gold solution only
+    provides the code fix without adding new tests.
+  severity: low
+  source:
+    path: packages/vite-plugin-cloudflare/AGENTS.md
+    lines: 23-23
+hierarchy_analysis: The hierarchy consists of a root AGENTS.md providing monorepo
+  context, a CLAUDE.md pointer, and a package-specific AGENTS.md. The rules are mostly
+  structural and command-oriented, with no conflicts regarding this specific bug fix.

@@ -1,63 +1,56 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests check for specific implementation details not mentioned in instruction.md. For example, test functions (truncated but visible in the test file) check for specific variable names like 'shown', 'pos', 'cursor', 'idx' in the pacing function body, specific regex patterns like TEXT_RENDER_SNAP, and the function name 'createPacedValue' is not explicitly required (instruction says 'Create a new pacing function' but tests search for specific function signatures). Also, tests check for absence of '"
+      "outcome": "pass",
+      "reason": "Instruction names the file path, the functions (createThrottledValue, TextPartDisplay, ReasoningPartDisplay), PART_MAPPING keys, required imports, and the threshold (\u226450ms) that tests check for."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction essentially describes the exact implementation: 'Uses createSignal for reactive state', 'Uses setTimeout or requestAnimationFrame for scheduling', 'Accepts a second parameter (e.g., live?: () => boolean)', 'Reveals text in small increments', 'Uses substring/slice operations with position tracking (variables like pos, shown, cursor, or idx)', 'pacing should use step-based increments calculated with Math.min, Math.ceil, or Math.floor', 'render pacing interval must be no more than 5"
+      "outcome": "pass",
+      "reason": "Instruction describes the problem and constraints (incremental reveal, flush on non-streaming) without giving exact replacement code."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests use _find_pacing_func which searches for a function containing 'createSignal' AND ('setTimeout' or 'requestAnimationFrame') in its body, then checks params and body for specific patterns. The tests enforce specific variable naming (from a list including 'pos', 'shown', 'cursor', 'idx'), specific function structure (must be a named function or const arrow function), and check for 'Math.min' or 'Math.ceil' or 'Math.floor' usage. An alternative correct implementation using e.g. requestAnimati"
+      "outcome": "pass",
+      "reason": "Tests check for structural properties (createSignal + setTimeout/raf, second param name from a list of options, substring with position variable from a list) rather than gold-specific names."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every test in the visible portion reads the file as text and performs string/regex matching (e.g., checking 'createSignal' in src, counting braces, checking for trailing whitespace, verifying import patterns). No test actually imports, compiles, or executes the TypeScript code. All tests are purely text-based assertions on file content."
+      "reason": "Tests rely entirely on static regex/text inspection of the source file (e.g., _find_pacing_func, checking for 'createSignal', 'setTimeout', identifier presence); no code is executed or imported."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "test_file_valid checks for 'PART_MAPPING' and 'createSignal' in the source - both already exist in the original unpatched file. test_not_stub checks >=100 lines - the original file is already much longer. test_repo_typecheck checks balanced braces - the original file already has balanced braces. Several pass_to_pass tests would pass without any changes to the file."
+      "outcome": "pass",
+      "reason": "A stub couldn't pass since tests require a specific factory-function shape with createSignal+timer, a live param, and substring/step logic applied to both PART_MAPPING entries."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "The instruction requires 'Streamed text should reveal in small, steady increments that feel like real-time typing' and 'When the response is complete, text should flush immediately' - these behavioral requirements about actual rendering behavior are never tested since all tests are static text analysis. No test verifies the actual streaming/pacing behavior."
+      "outcome": "pass",
+      "reason": "Tests cover required imports, \u226450ms interval, pacing function signature with live param, incremental slice/substring use, and application to both text and reasoning parts."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings, grouped by category (static pass_to_pass, repo_tests), and each test function has a clear purpose indicated by its name and docstring."
+      "reason": "Tests are grouped with section comments (Gates, pass_to_pass) and have descriptive names and docstrings per check."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task produces TypeScript/TSX code, not structured data like JSON/CSV/API/DB schemas."
+      "reason": "Task is a UI code change, not producing structured data."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No obvious typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "File paths, identifiers, and import names are consistent and correct."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md names the exact file (packages/ui/src/components/message-part.tsx), the exact function to replace (createThrottledValue), the exact constant (TEXT_RENDER_THROTTLE_MS = 100), and the exact components to modify (TextPartDisplay, ReasoningPartDisplay). It also specifies exact implementation details like variable names, math functions to use, and the replacement interval threshold."
+      "outcome": "pass",
+      "reason": "Instruction names the file and functions to modify, which is appropriate scoping; localization is not the task."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "Not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "behavior_in_tests",
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 2,
-  "fail_count": 7
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 1
 }

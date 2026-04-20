@@ -1,0 +1,94 @@
+# Evaluation manifest for mantinedev/mantine#8437
+# Menu.Sub openDelay prop
+
+pr_metadata:
+  owner: mantinedev
+  repo: mantine
+  pr_number: 8437
+  base_commit: 0c52227db887ce0b48fe59fa3422638b0448e1e1
+  merge_commit: e1b18a18d5ab9986e7950cf937561b8f51df95ad
+
+task:
+  title: "[@mantine/core] Menu.Sub: add openDelay prop"
+  description: "Add openDelay prop to MenuSub component to allow controlling hover open timing"
+
+checks:
+  - id: test_open_delay_prop_in_typescript_interface
+    type: fail_to_pass
+    origin: pr_diff
+    description: "openDelay prop is declared in MenuSubProps interface with type number"
+    test_class: test_outputs
+
+  - id: test_open_delay_passed_to_use_delayed_hover
+    type: fail_to_pass
+    origin: pr_diff
+    description: "openDelay is passed to useDelayedHover instead of hardcoded 0"
+    test_class: test_outputs
+
+  - id: test_open_delay_default_value_defined
+    type: fail_to_pass
+    origin: pr_diff
+    description: "openDelay has a default value of 0 in defaultProps"
+    test_class: test_outputs
+
+  - id: test_open_delay_behavioral_analysis
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Behavioral test: Python analysis confirms openDelay prop is properly wired"
+    test_class: test_outputs
+
+  - id: test_demo_files_use_open_delay
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Demo files use the openDelay prop on Menu.Sub"
+    test_class: test_outputs
+
+  - id: test_story_file_uses_open_delay
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Story file uses the openDelay prop on Menu.Sub"
+    test_class: test_outputs
+
+  - id: test_menusub_file_exists
+    type: pass_to_pass
+    origin: static
+    description: "MenuSub.tsx exists at expected path"
+    test_class: test_outputs
+
+  - id: test_menusub_has_use_delayed_hover
+    type: pass_to_pass
+    origin: static
+    description: "MenuSub uses useDelayedHover hook"
+    test_class: test_outputs
+
+  - id: test_demo_file_exists
+    type: pass_to_pass
+    origin: static
+    description: "Menu demo.sub.tsx exists at expected path"
+    test_class: test_outputs
+
+  - id: test_story_file_exists
+    type: pass_to_pass
+    origin: static
+    description: "Menu.story.tsx exists at expected path"
+    test_class: test_outputs
+
+  - id: test_menu_test_file_exists
+    type: pass_to_pass
+    origin: static
+    description: "Menu.test.tsx exists at expected path"
+    test_class: test_outputs
+
+  - id: test_menu_tests_use_testing_library
+    type: pass_to_pass
+    origin: static
+    description: "Menu tests use @mantine-tests/core"
+    test_class: test_outputs
+
+  - id: test_menu_sub_context_exists
+    type: pass_to_pass
+    origin: static
+    description: "MenuSub.context.tsx exists at expected path"
+    test_class: test_outputs
+
+rubric: []

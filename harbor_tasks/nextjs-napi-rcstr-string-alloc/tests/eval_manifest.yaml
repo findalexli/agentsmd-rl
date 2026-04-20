@@ -1,0 +1,129 @@
+version: '2.0'
+source:
+  repo: vercel/next.js
+  pr: 92014
+  base_commit: eab7a23533d9009f24694016d2bdbdc1318df52d
+  merge_commit: d84e3bb56ecfdd9ff6ab5ee479e85be2780b8ba9
+checks:
+- id: files_exist_and_not_stub
+  type: pass_to_pass
+  origin: static
+  description: Modified files exist with real Rust code (anti-stub gate)
+- id: napi_asset_path_fields_rcstr
+  type: fail_to_pass
+  origin: pr_diff
+  description: NapiAssetPath.path and .content_hash use RcStr, From impl avoids allocation
+- id: napi_issue_fields_rcstr
+  type: fail_to_pass
+  origin: pr_diff
+  description: NapiIssue.file_path and .documentation_link use RcStr; severity/stage
+    remain String
+- id: napi_additional_issue_source_description_rcstr
+  type: fail_to_pass
+  origin: pr_diff
+  description: NapiAdditionalIssueSource.description uses RcStr
+- id: napi_source_fields_rcstr
+  type: fail_to_pass
+  origin: pr_diff
+  description: NapiSource.ident and .file_path use RcStr
+- id: napi_diagnostic_fields_rcstr
+  type: fail_to_pass
+  origin: pr_diff
+  description: NapiDiagnostic.category, .name, and .payload use RcStr
+- id: napi_route_pathname_rcstr
+  type: fail_to_pass
+  origin: pr_diff
+  description: NapiRoute.pathname uses RcStr, from_route accepts RcStr, caller uses
+    .clone()
+- id: from_impls_avoid_allocation
+  type: fail_to_pass
+  origin: pr_diff
+  description: From impls for NapiIssue, NapiDiagnostic, NapiSource avoid allocating
+    conversions
+- id: napi_bindings_compile
+  type: fail_to_pass
+  origin: pr_diff
+  description: Modified next-napi-bindings crate compiles after RcStr changes (behavioral
+    check)
+- id: helper_structs_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: Helper structs NapiIssueSource, NapiSourcePos, NapiIssueSourceRange
+    still exist
+- id: rcstr_import_sorted
+  type: fail_to_pass
+  origin: agent_config
+  description: turbo_rcstr::RcStr import in ASCII sort order (cargo fmt convention)
+  source:
+    path: CLAUDE.md
+    lines: '414'
+    commit: eab7a23533d9009f24694016d2bdbdc1318df52d
+- id: test_repo_cargo_fmt
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Rust code passes cargo fmt check (requires Rust toolchain)
+- id: test_repo_cargo_check_napi
+  type: pass_to_pass
+  origin: repo_tests
+  description: next-napi-bindings crate compiles with cargo check (requires Rust toolchain)
+- id: test_repo_cargo_clippy_napi
+  type: pass_to_pass
+  origin: repo_tests
+  description: next-napi-bindings crate passes cargo clippy (requires Rust toolchain)
+- id: test_repo_cargo_pkgid_napi
+  type: pass_to_pass
+  origin: repo_tests
+  description: next-napi-bindings crate is recognized by cargo pkgid
+- id: test_repo_cargo_read_manifest_napi
+  type: pass_to_pass
+  origin: repo_tests
+  description: next-napi-bindings Cargo.toml is valid JSON with expected fields
+- id: test_rust_toolchain_configured
+  type: pass_to_pass
+  origin: static
+  description: Rust toolchain config exists with required components for CI
+- id: test_napi_bindings_crate_structure
+  type: pass_to_pass
+  origin: static
+  description: next-napi-bindings crate has valid structure
+- id: test_workspace_cargo_toml_valid
+  type: pass_to_pass
+  origin: static
+  description: Workspace Cargo.toml has valid structure with napi-bindings crate
+- id: test_napi_npm_packages_structure
+  type: pass_to_pass
+  origin: static
+  description: NAPI npm platform packages have valid structure
+- id: test_modified_files_in_git
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files endpoint.rs project.rs utils.rs are tracked in git
+- id: test_cargo_toml_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Cargo.toml for next-napi-bindings is valid TOML with expected structure
+rubric:
+- rule: Rust code changes follow cargo fmt conventions with ASCII sort order for imports
+  reference: The gold solution adds `use turbo_rcstr::RcStr;` imports in ASCII sort order
+    (uppercase R before lowercase t) in endpoint.rs (between `use tracing` and `use turbo_tasks`)
+    and utils.rs (between `use serde` and `use turbo_tasks`), matching cargo fmt conventions.
+  source:
+    path: crates/next-napi-bindings/src/next_api/endpoint.rs
+    lines: "23"
+    commit: d84e3bb56ecfdd9ff6ab5ee479e85be2780b8ba9
+distractors:
+- rule: Start `pnpm --filter=next dev` in a separate terminal session before making
+    edits to Next.js source.
+  collision_type: scope_ambiguity
+  why_distracting: The rule instructs starting the Next.js dev server for iterative
+    development. However, this task involves refactoring Rust NAPI bindings where
+    running the JS dev server is unnecessary and could distract the agent with background
+    process management.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 72-76
+hierarchy_analysis: The config hierarchy consists of a single level with identical
+  symlinked files (`AGENTS.md` and `CLAUDE.md`). The rules are generic monorepo guidelines
+  (build commands, dev server instructions) that do not specifically guide or conflict
+  with the Rust NAPI refactoring task.

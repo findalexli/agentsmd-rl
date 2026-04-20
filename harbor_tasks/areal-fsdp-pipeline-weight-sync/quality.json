@@ -1,62 +1,57 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests check for specific names like `_PendingWeightUpdateBucket` (exact dataclass name), `_update_weights_from_distributed` (exact method name), `_wait` pattern in method names combined with `bucket`, `_update_bucket_weights_from_distributed` (exact sync wrapper name), `_init_weight_update_from_distributed` (exact method name). While instruction.md mentions `_PendingWeightUpdateBucket` by name and describes `_wait` helpers, several test specifics like the exact method name `_update_weights_from_"
+      "outcome": "pass",
+      "reason": "instruction.md names _PendingWeightUpdateBucket, handles, fut, _update_bucket_weights_from_distributed, _init_weight_update_from_distributed, FSDPEngine, file path areal/engine/fsdp_engine.py, _wait helper requirement, and torch.cuda.Stream() \u2014 all literals tests check for are present."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly names the exact dataclass (`_PendingWeightUpdateBucket`), its exact fields (`handles`, `fut`), the exact pattern (try/finally with `_wait` helper), `torch.cuda.Stream()` creation, and the async method naming convention. It essentially describes the complete implementation architecture rather than just describing what's broken. Section 'Required implementation components' is a detailed specification of the solution, not a problem description."
+      "outcome": "pass",
+      "reason": "Instruction describes required components and patterns (dataclass, async method, deferred wait, try/finally) without giving exact code or line-level fixes."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: test_pending_state_dataclass checks for a @dataclass with fields named 'handles' and 'fut'; test_pipelined_main_loop checks for a method with both 'bucket' and 'weight' in the name plus a 'stream' parameter; test_error_safety checks for try/finally with a self._wait* call. An alternative correct fix using e.g. an asyncio.Task wrapper, a different naming scheme (e.g. `_async_broadcast`), or a context manager pattern instead of try/finally woul"
+      "reason": "Tests assert specific names like `_PendingWeightUpdateBucket` (test_pending_state_dataclass), field names `handles` and `fut`, and require a method containing both 'async' and 'bucket/weight' with a `stream` parameter \u2014 alternative correct pipelining implementations using different names would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "All fail-to-pass tests (test_pipelined_main_loop, test_async_bucket_method, test_pending_state_dataclass, test_error_safety, test_cuda_stream_creation, test_backward_compat_sync_wrapper) use AST analysis to check code structure rather than executing the code and verifying runtime behavior. They check for the presence of AST nodes (method names, parameters, decorators, try/finally blocks) rather than actually running the pipelining logic or verifying concurrent execution. This is essentially soph"
+      "reason": "Tests are primarily AST analysis (ast.walk looking for ClassDef, FunctionDef, keyword 'async_op') and ruff/compile checks \u2014 no tests actually invoke the pipelined broadcast to verify overlap behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The tests do require substantial structural changes - a stub wouldn't pass because tests check for specific AST patterns like a dataclass with 3+ fields, methods with >=8 meaningful AST nodes, try/finally blocks, async_op=True keywords, and Stream() instantiation. A trivial `pass` or `return None` implementation would fail these checks."
+      "reason": "A pass/stub body would fail tests like test_async_bucket_method which requires >=8 meaningful AST nodes and async_op=True keyword, and test_pipelined_main_loop which requires the main loop to call both async and wait methods."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "The instruction requires 'broadcast of bucket i must run concurrently with preparation of bucket i+1' and 'at most one bucket in flight at any time to bound memory usage', but no test verifies actual concurrent execution or memory bounding. Tests only check structural AST patterns, not runtime pipelining behavior."
+      "outcome": "pass",
+      "reason": "Tests cover each required component: dataclass, async method, deferred wait pattern, wait helper, stream creation, backward-compat wrappers."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear sections (Gates/pass_to_pass and fail-to-pass), descriptive function names (test_pipelined_main_loop, test_async_bucket_method, etc.), and docstrings explaining what each test checks."
+      "reason": "Tests are grouped with section comments 'Gates (pass_to_pass, static)' and 'Fail-to-pass (pr_diff) - behavioral tests' and named descriptively."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task does not produce structured data like JSON/CSV/API/DB outputs."
+      "reason": "No structured data output; task is a code refactor."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No obvious typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "Filenames, method names, and literals are consistent between instruction and tests."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly names the exact dataclass `_PendingWeightUpdateBucket`, its exact field names (`handles`, `fut`), the exact file to modify (`areal/engine/fsdp_engine.py`), and the exact existing method names (`_update_bucket_weights_from_distributed`, `_init_weight_update_from_distributed`). This goes well beyond identifying the buggy module and essentially provides the implementation blueprint."
+      "outcome": "pass",
+      "reason": "Instruction names the file to modify (areal/engine/fsdp_engine.py) which is the task domain scope, not line-level leakage."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "Code-only task, not a config edit."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
-    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "behavior_in_tests",
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 3,
-  "fail_count": 6
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 2
 }

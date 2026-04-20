@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "Instruction names all key paths (prompt-input.tsx, settings-general.tsx, e2e specs), data-action strings ('prompt-permissions', 'settings-auto-accept-permissions'), and identifiers (acceptLabel, toggleAccept, usePermission via 'permission context', Switch, SettingsRow)."
+      "reason": "Instruction names prompt-input.tsx, settings-general.tsx, e2e spec files, data-action selectors 'prompt-permissions' and 'settings-auto-accept-permissions', Switch/SettingsRow components, acceptLabel/toggleAccept identifiers, and permission context usage \u2014 all test assertions map to these."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "Instruction describes what to move and required attributes/behavior but doesn't provide code or line-level edits."
+      "reason": "Instruction describes what to move and required attributes/behavior but does not provide actual code or specific line replacements."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "Tests check for required data-action strings, Switch usage, usePermission import/call, and either toggleAutoAccept or enable/disableAutoAccept pair \u2014 allowing reasonable implementation variants."
+      "reason": "Tests check for data-action strings (specified in instruction), Switch component with checked/onChange, usePermission import, and toggleAutoAcceptDirectory/toggleAutoAccept functions which are existing context API \u2014 alternative correct implementations would use same context API."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests parse TS AST via node, run bun typecheck and bun test for unit/e2e suites, not just string matching."
+      "reason": "Tests use TypeScript AST parsing via ts.createSourceFile and run bun typecheck and bun test subprocesses, not just string grep."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "F2P tests require real AST changes (removal of data-action, addition of Switch with checked/onChange, usePermission call, directory/session handlers) that a stub couldn't satisfy."
+      "reason": "F2P tests require both removal from prompt-input.tsx AND addition to settings-general.tsx with specific Switch+data-action+usePermission \u2014 a stub cannot satisfy both simultaneously."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "Removal from prompt-input, addition to settings with correct data-action and permission context usage, and e2e updates all covered."
+      "reason": "Tests cover removal from composer, addition to settings with correct data-action, Switch usage, permission context, session/directory toggling, and e2e updates via repo_tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are grouped under section comments (Gates, Fail-to-pass, Pass-to-pass repo_tests) with descriptive docstrings."
+      "reason": "Tests grouped under 'Gates', 'Fail-to-pass', 'Pass-to-pass' comment headers with descriptive docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "No structured data output."
+      "reason": "No structured data output; this is a UI refactor task."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "Filenames and identifiers match across instruction, tests, and solution."
+      "reason": "Paths and identifiers match across instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "Task inherently requires naming the files being refactored; no line-number leakage."
+      "reason": "Instruction names the files/components to touch, which is appropriate for a refactor-move task where localization is the stated problem, not a hidden bug."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "Code-only task."
+      "reason": "Code refactor task, not a config edit."
     }
   },
   "tier_a_fails": [],

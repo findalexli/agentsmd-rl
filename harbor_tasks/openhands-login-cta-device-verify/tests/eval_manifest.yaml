@@ -1,0 +1,96 @@
+rubric:
+- rule: Use <a> tag for external URLs, react-router <Link> for internal app routes
+    only
+  source:
+    path: frontend/src/components/features/auth/login-cta.tsx
+    lines: 71-91
+    commit: eba1f60c1d34ae68d34171a753d5e6b3ab5ad0be
+  reference: 'isDeviceVerifySource ? ( <a href={ENTERPRISE_URL} target="_blank" rel="noopener
+    noreferrer" /> ) : ( <Link to={INFORMATION_REQUEST_PATH} /> )'
+  category: code_quality
+- rule: Run `cd frontend && npm run lint:fix && npm run build` when making changes
+    to the frontend to ensure no lint errors.
+  source:
+    path: frontend/src/components/features/auth/login-cta.tsx
+    lines: 1-97
+  category: tooling
+checks:
+- id: test_login_cta_has_source_prop
+  type: fail_to_pass
+  origin: pr_diff
+  description: LoginCTA component has LoginCTAProps type with source prop
+- id: test_login_cta_renders_external_link_for_device_verify
+  type: fail_to_pass
+  origin: pr_diff
+  description: LoginCTA renders external <a> tag with enterprise URL for device_verify
+    source
+- id: test_device_verify_uses_login_cta
+  type: fail_to_pass
+  origin: pr_diff
+  description: Device verify page imports and uses LoginCTA instead of EnterpriseBanner
+- id: test_device_verify_passes_correct_props
+  type: fail_to_pass
+  origin: pr_diff
+  description: Device verify page passes source='device_verify' to LoginCTA
+- id: test_layout_classes_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: Layout classes updated for stretch behavior and consistent styling
+- id: test_repo_frontend_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Frontend unit tests pass (vitest)
+- id: test_repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Frontend linter passes (npm run lint)
+- id: test_repo_typescript_compile
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript typecheck passes (npm run typecheck)
+- id: test_repo_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Frontend production build succeeds (npm run build)
+- id: test_repo_translation_completeness
+  type: pass_to_pass
+  origin: repo_tests
+  description: Translation completeness check passes
+- id: test_repo_tests_login_cta
+  type: pass_to_pass
+  origin: repo_tests
+  description: LoginCTA and device-verify specific tests pass
+- id: test_repo_prettier_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Frontend code formatting follows Prettier rules
+distractors:
+- rule: Store PR-specific artifacts like design documents or investigation notes in
+    a `.pr/` directory.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might waste time creating a `.pr/design.md` or `.pr/notes.md`
+    to document the changes to the LoginCTA component, which is unnecessary for a
+    straightforward component update.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 35-42
+- rule: This skill should be used when the user asks to 'test a cross-repo feature',
+    'deploy a feature branch to staging', 'test SDK against OH Cloud', 'e2e test a
+    cloud workspace feature'...
+  source:
+    path: .agents/skills/cross-repo-testing/SKILL.md
+    lines: 1-5
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to invoke cross-repo testing or e2e testing
+    for this frontend component change, which is unnecessary and out of scope.
+  severity: medium
+hierarchy_analysis: The configuration consists of a single, flat `AGENTS.md` file
+  at the repository root containing generic repository guidelines. There is no complex
+  hierarchy or overriding of rules.
+version: '2.0'
+source:
+  repo: All-Hands-AI/OpenHands
+  pr: 0
+  base_commit: eba1f60c1d34ae68d34171a753d5e6b3ab5ad0be
+  merge_commit: 05a3916c98105f47953e3481c73df09dac1ad925

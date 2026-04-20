@@ -1,0 +1,89 @@
+source:
+  repo: sanity-io/sanity
+  pr_number: 12498
+  merge_commit: 00644f5a36b4b40acca63d1e42d4d19f39d932f4
+  base_commit: e9f037f5afd5b6bf3feae79ea0f0f8390e2d4d65
+
+targets:
+  primary_file:
+    - packages/sanity/src/core/store/_legacy/authStore/sessionId.ts
+    - packages/sanity/src/core/store/_legacy/authStore/createAuthStore.ts
+
+checks:
+  # Pass-to-pass checks (repo quality)
+  - id: test_build_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo builds successfully with pnpm build
+
+  - id: test_typescript_types
+    type: pass_to_pass
+    origin: repo_tests
+    description: TypeScript type checking passes
+
+  - id: test_repo_oxlint
+    type: pass_to_pass
+    origin: repo_tests
+    description: Oxlint passes
+
+  - id: test_repo_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: Code format check passes
+
+  - id: test_repo_exports
+    type: pass_to_pass
+    origin: repo_tests
+    description: Export tests pass
+
+  - id: test_repo_depcheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: Dependency check passes
+
+  # Fail-to-pass checks (functional behavior)
+  - id: test_clear_session_id_exported
+    type: fail_to_pass
+    origin: agent_config
+    description: clearSessionId function is exported from sessionId.ts
+    source:
+      file: AGENTS.md
+      lines: "CI Checks - What Must Pass section"
+      rule: Code changes must include proper exports for new functionality
+
+  - id: test_clear_session_id_imported_in_auth_store
+    type: fail_to_pass
+    origin: agent_config
+    description: clearSessionId is imported in createAuthStore.ts
+    source:
+      file: AGENTS.md
+      lines: "CI Checks - What Must Pass section"
+      rule: New functions must be properly imported where used
+
+  - id: test_clear_session_id_called_in_handle_callback
+    type: fail_to_pass
+    origin: agent_config
+    description: clearSessionId is called after getSessionId in handleCallbackUrl
+    source:
+      file: AGENTS.md
+      lines: "CI Checks - What Must Pass section"
+      rule: Code changes must properly integrate the fix
+
+  - id: test_session_id_function_behavior
+    type: fail_to_pass
+    origin: agent_config
+    description: clearSessionId properly wraps consumeSessionId
+    source:
+      file: AGENTS.md
+      lines: "CI Checks - What Must Pass section"
+      rule: Functions should have correct implementation
+
+rubric:
+  # For source-code-only tasks, the judge verifies proper documentation of
+  # workarounds via inline comments in the code itself.
+  - rule: "Document workarounds with inline comments referencing the upstream issue"
+    description: Code workarounds should include explanatory comments with GitHub issue links
+    reference: |
+      // workaround for https://github.com/vercel/next.js/issues/91819
+      // Provides a workaround for https://github.com/vercel/next.js/issues/91819
+      // Can be removed once that's fixed

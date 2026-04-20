@@ -1,0 +1,113 @@
+version: '2.0'
+source:
+  repo: vercel/next.js
+  pr: 92481
+  base_commit: e513488d0d3bc19ae9b16b08ef43add7e4faab7c
+  merge_commit: dfa1201ab8a229bcbdaadc9cf29d5a291024621c
+checks:
+- id: source_file_valid
+  type: pass_to_pass
+  origin: static
+  description: Source file exists with TurboPersistence struct and core structure
+- id: test_repo_module_files_exist
+  type: pass_to_pass
+  origin: static
+  description: All declared Rust module files exist in turbo-persistence crate
+- id: test_repo_source_integrity
+  type: pass_to_pass
+  origin: static
+  description: Source files are not truncated/corrupted (line count check)
+- id: test_repo_no_tabs
+  type: pass_to_pass
+  origin: static
+  description: Source files use spaces for indentation (Rust style convention)
+- id: test_repo_valid_utf8
+  type: pass_to_pass
+  origin: static
+  description: Source files are valid UTF-8 encoding
+- id: test_repo_rust_syntax_valid
+  type: pass_to_pass
+  origin: static
+  description: Rust source files have valid syntax structure (balanced braces, valid
+    strings)
+- id: test_repo_imports_structure
+  type: pass_to_pass
+  origin: static
+  description: Rust imports follow standard structure with std imports present
+- id: test_repo_git_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git repository is valid and has expected base commit
+- id: struct_has_atomic_bool
+  type: fail_to_pass
+  origin: pr_diff
+  description: TurboPersistence struct contains an AtomicBool field for is_empty state
+- id: isempty_lock_free
+  type: fail_to_pass
+  origin: pr_diff
+  description: is_empty() uses atomic load instead of acquiring RwLock read lock
+- id: atomic_synced_on_mutation
+  type: fail_to_pass
+  origin: pr_diff
+  description: AtomicBool is updated at both meta_files mutation points (load_directory
+    and commit)
+distractors:
+- rule: If you are changing Next.js source or integration tests, start `pnpm --filter=next
+    dev` in a separate terminal session before making edits
+  collision_type: scope_ambiguity
+  why_distracting: The agent is modifying a Rust crate (`turbo-persistence`), not
+    the Next.js JS/TS framework source. Running the Next.js dev server is unnecessary
+    for a Rust-only lock contention fix and would waste time.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 79-81
+- rule: 'For type errors only: Use `pnpm --filter=next types` instead of `pnpm --filter=next
+    build`'
+  collision_type: scope_ambiguity
+  why_distracting: This command checks TypeScript types, but the agent is working
+    on Rust code where `cargo check` or `cargo clippy` is needed. Running the TS typechecker
+    will not help validate the Rust changes.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 96-97
+- rule: Help V8 make correct speculative assumptions
+  source:
+    path: .agents/skills/v8-jit/SKILL.md
+    lines: 32-33
+  source_text: 'The key principle: **help V8 make correct speculative assumptions
+    by keeping
+
+    types, shapes, and control flow predictable.**'
+  collision_type: scope_ambiguity
+  why_distracting: The PR optimizes a 'hot path' by avoiding an RwLock read, but it
+    is written in Rust for Turbopack. This rule is specifically for JavaScript V8
+    performance, not Rust atomic operations.
+  severity: low
+- rule: No closures allocated inside tight loops
+  source:
+    path: .agents/skills/v8-jit/SKILL.md
+    lines: '428'
+  source_text: '- [ ] No closures allocated inside tight loops'
+  collision_type: scope_ambiguity
+  why_distracting: The PR mentions 'hot path' optimization. An agent might mistakenly
+    try to apply JS/V8 hot path rules like avoiding closures or predictable control
+    flow to this Rust codebase.
+  severity: low
+- rule: All cached functions must be async
+  source:
+    path: .claude-plugin/plugins/cache-components/skills/cache-components/SKILL.md
+    lines: '388'
+  source_text: 1. **Always use `async`** - All cached functions must be async
+  collision_type: meta_confusion
+  why_distracting: The PR conceptually implements caching by using an AtomicBool to
+    mirror a lock-guarded property (`is_empty`). An agent might mistakenly think this
+    caching is related to Next.js Cache Components and incorrectly demand the function
+    be asynchronous.
+  severity: high
+hierarchy_analysis: The configuration consists of a single flat set of rules at the
+  repository root (`AGENTS.md` and `CLAUDE.md` are identical). The rules are heavily
+  biased towards the JavaScript/TypeScript parts of the Next.js monorepo, offering
+  no specific guidance for the Rust (`turbopack`/`crates`) ecosystem.
+rubric: []

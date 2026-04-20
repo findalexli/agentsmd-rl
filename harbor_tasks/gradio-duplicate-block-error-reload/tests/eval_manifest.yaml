@@ -1,0 +1,132 @@
+version: '2.0'
+source:
+  repo: gradio-app/gradio
+  pr: 13013
+  base_commit: a17eb7888b48cbd98b1e0feb17e2614bf3853d66
+  merge_commit: 356db5c2c66795b281133c4395ef6885d2992242
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: gradio/utils.py parses without syntax errors
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff lint check passes on utils.py
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff format check passes on utils.py
+- id: test_repo_pytest_reload
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's reload tests pass (test/test_reload.py)
+- id: test_repo_pytest_utils_configs
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's utils config equivalence tests pass
+- id: test_repo_pytest_utils_ner
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's utils NER format tests pass
+- id: test_repo_pytest_utils_extension
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's utils file extension tests pass
+- id: test_repo_pytest_utils_is_in_or_equal
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's utils path comparison tests pass
+- id: test_repo_pytest_utils_file_size
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's utils file size parsing tests pass
+- id: context_id_bumped_past_block_ids
+  type: fail_to_pass
+  origin: pr_diff
+  description: After module re-exec, Context.id exceeds max existing block ID
+- id: context_id_varied_block_distributions
+  type: fail_to_pass
+  origin: pr_diff
+  description: Fix handles sequential, sparse, and single-block ID distributions
+- id: context_id_preserved_when_already_high
+  type: fail_to_pass
+  origin: pr_diff
+  description: Context.id not decreased when already higher than max block ID
+- id: no_crash_when_demo_absent
+  type: fail_to_pass
+  origin: pr_diff
+  description: No crash when demo is missing, None, or has empty blocks
+- id: watchfn_structure_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: Core watchfn landmarks (exec, Context.id reset, should_watch) still
+    present
+- id: context_reset_precedes_exec
+  type: pass_to_pass
+  origin: pr_diff
+  description: Context.id = 0 appears before exec(no_reload_source_code)
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: utils.py has substantial content (not replaced with a stub)
+rubric:
+- rule: Be consistent with the style of the surrounding code.
+  source:
+    path: AGENTS.md
+    lines: 44-46
+  evidence: The patch uses standard Python `getattr` and `hasattr` to safely check
+    for the demo object and its blocks, matching the style and conventions of the
+    surrounding reloader logic without introducing new dependencies.
+  category: style
+  verification: llm_judge
+distractors:
+- rule: 'AI Agent PR Requirement: include the keyword kumquat somewhere in your PR
+    description.'
+  collision_type: meta_confusion
+  why_distracting: The rule requires adding the keyword 'kumquat' to the PR description.
+    Since the agent is only tasked with fixing the code and not opening a PR, it might
+    erroneously try to insert this keyword into the source code, comments, or create
+    a dummy PR description file.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 50-52
+- rule: Use the PR template. Fill out every section of .github/PULL_REQUEST_TEMPLATE.md
+  collision_type: meta_confusion
+  why_distracting: The rule instructs the contributor to fill out every section of
+    `.github/PULL_REQUEST_TEMPLATE.md`. An agent might get distracted and attempt
+    to edit the template file itself or generate a PR description document, which
+    is outside the scope of a pure code-fix task.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 18-21
+- rule: Use gr.HTML to create custom HTML components.
+  source:
+    path: repo/.agents/skills/gradio/SKILL.md
+    lines: 112-112
+  source_text: If a task requires significant customization of an existing component
+    or a component that doesn't exist in Gradio, you can create one with `gr.HTML`.
+  collision_type: architecture_boundary
+  why_distracting: This rule applies to building user-facing Gradio applications,
+    but the PR modifies the underlying core Gradio framework (gradio/utils.py). Attempting
+    to use `gr.HTML` inside the framework's module-reloading logic would cause an
+    architectural bug.
+  severity: high
+- rule: Use Blocks for low-level layout and event wiring.
+  source:
+    path: repo/.agents/skills/gradio/SKILL.md
+    lines: 40-40
+  source_text: '**Blocks** (low-level): flexible layout with explicit event wiring.'
+  collision_type: scope_ambiguity
+  why_distracting: This rule directs an agent to use `gr.Blocks` to build an app layout.
+    However, the PR directly manipulates the internal IDs and dictionaries of the
+    `Blocks` class within the framework context reloading utility. Following this
+    rule would lead an agent to incorrectly build app-level components instead of
+    modifying the framework's internal handling of blocks.
+  severity: high
+hierarchy_analysis: The repository uses a single, flat configuration file (`AGENTS.md`)
+  at the root level. There are no conflicting rules within the file, but the agent
+  must distinguish between instructions meant for the code itself versus instructions
+  meant for the Pull Request process.

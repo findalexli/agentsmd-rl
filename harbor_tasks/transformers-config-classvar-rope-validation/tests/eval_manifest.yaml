@@ -1,0 +1,171 @@
+version: '2.0'
+source:
+  repo: huggingface/transformers
+  pr: 44943
+  base_commit: eb3d67aaafe368863afc77e4b60fa60c2077c8b5
+  merge_commit: ed003b4482aabdf8377250f22826dd31f378269c
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified files must parse without syntax errors
+- id: validate_rope_empty_dict_no_crash
+  type: fail_to_pass
+  origin: pr_diff
+  description: validate_rope handles empty rope_parameters dict without crashing or
+    mutating
+- id: validate_rope_empty_dict_multiple_configs
+  type: fail_to_pass
+  origin: pr_diff
+  description: validate_rope handles empty dict on multiple sequential configs
+- id: transformers_version_not_classvar
+  type: fail_to_pass
+  origin: pr_diff
+  description: transformers_version must be an instance field, not ClassVar, with
+    per-instance isolation
+- id: architectures_not_classvar
+  type: fail_to_pass
+  origin: pr_diff
+  description: architectures must be an instance field, not ClassVar, with per-instance
+    isolation
+- id: auto_docstring_parameter_filtering
+  type: fail_to_pass
+  origin: pr_diff
+  description: _process_regular_parameters, _process_parameters_section, and auto_method_docstring
+    accept allowed_params
+- id: auto_docstring_filtering_behavior
+  type: fail_to_pass
+  origin: pr_diff
+  description: allowed_params actually filters out parameters not in the set
+- id: validate_rope_none_still_works
+  type: pass_to_pass
+  origin: pr_diff
+  description: validate_rope still returns cleanly when rope_parameters is None
+- id: validate_rope_dispatches_for_real_config
+  type: pass_to_pass
+  origin: pr_diff
+  description: validate_rope still validates non-empty rope configs (anti-stub)
+- id: upstream_config_kwargs_complete
+  type: fail_to_pass
+  origin: repo_tests
+  description: config_common_kwargs completeness check accounts for transformers_version
+    as instance field
+- id: check_config_attributes_allowlist
+  type: fail_to_pass
+  origin: agent_config
+  description: ATTRIBUTES_TO_ALLOW must include transformers_version and architectures
+  source:
+    path: CLAUDE.md
+    lines: '5'
+    commit: eb3d67aaafe368863afc77e4b60fa60c2077c8b5
+- id: ruff_lint_clean
+  type: pass_to_pass
+  origin: agent_config
+  description: Changed files must pass ruff lint
+  source:
+    path: CLAUDE.md
+    lines: '2'
+    commit: eb3d67aaafe368863afc77e4b60fa60c2077c8b5
+- id: no_bare_type_ignore
+  type: pass_to_pass
+  origin: agent_config
+  description: '# type: ignore comments must include specific error codes'
+  source:
+    path: .ai/skills/add-or-fix-type-checking/SKILL.md
+    lines: 180-186
+    commit: eb3d67aaafe368863afc77e4b60fa60c2077c8b5
+- id: ruff_format_clean
+  type: pass_to_pass
+  origin: repo_tests
+  description: Changed files must be properly formatted (ruff format check)
+- id: transformers_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: Core transformers modules must import without errors
+- id: ruff_format_all_modified
+  type: pass_to_pass
+  origin: repo_tests
+  description: All modified Python files pass ruff format check
+- id: ruff_lint_all_modified
+  type: pass_to_pass
+  origin: repo_tests
+  description: All modified Python files pass ruff lint check
+- id: syntax_all_modified
+  type: pass_to_pass
+  origin: static
+  description: All modified Python files have valid syntax
+- id: test_repo_rope_basic_functionality
+  type: pass_to_pass
+  origin: repo_tests
+  description: RotaryEmbeddingConfigMixin module loads and basic operations work
+- id: test_repo_rope_validate_none
+  type: pass_to_pass
+  origin: repo_tests
+  description: RoPE validation handles None rope_parameters gracefully
+
+rubric:
+- rule: Do not edit a `# Copied from` block, as it will be reverted by `make fix-repo`.
+  source:
+    path: CLAUDE.md
+    lines: '66'
+    commit: eb3d67aaafe368863afc77e4b60fa60c2077c8b5
+- rule: 'Never use `assert` for type narrowing. Asserts are stripped by `python -O`
+    and must not be relied on for correctness. Use `if ...: raise` instead.'
+  source:
+    path: .ai/skills/add-or-fix-type-checking/SKILL.md
+    lines: '189'
+    commit: eb3d67aaafe368863afc77e4b60fa60c2077c8b5
+- rule: Keep shared Protocols and type aliases in `src/transformers/_typing.py`
+  source:
+    path: .ai/skills/add-or-fix-type-checking/SKILL.md
+    lines: '204'
+    commit: eb3d67aaafe368863afc77e4b60fa60c2077c8b5
+- rule: PRs should be as brief as possible. Aim to minimize the size of the diff.
+  source:
+    path: .github/copilot-instructions.md
+    lines: '15'
+    commit: eb3d67aaafe368863afc77e4b60fa60c2077c8b5
+- rule: Do not add helper methods or abstractions just to satisfy the type checker,
+    especially for only 1-2 occurrences.
+  source:
+    path: .ai/skills/add-or-fix-type-checking/SKILL.md
+    lines: 196-197
+    commit: eb3d67aaafe368863afc77e4b60fa60c2077c8b5
+- rule: Do not pollute base classes with domain-specific fields; use Protocols.
+  source:
+    path: .ai/skills/add-or-fix-type-checking/SKILL.md
+    lines: '198'
+    commit: eb3d67aaafe368863afc77e4b60fa60c2077c8b5
+- rule: Do not edit a `# Copied from` block... Ideally you should edit the code it's
+    copying from and propagate the change
+  source:
+    path: CLAUDE.md
+    lines: 62-62
+  evidence: The gold solution modifies the docstring generation logic in `src/transformers/utils/auto_docstring.py`
+    to filter inherited parameters dynamically, rather than manually editing the docstrings
+    of indiv
+  category: architecture
+distractors:
+- rule: If coordination evidence cannot be found, do not proceed to PR-ready output.
+  collision_type: meta_confusion
+  why_distracting: The rule instructs the agent to 'fail-closed' and not proceed to
+    PR-ready output if coordination evidence is missing. Since the benchmark prompt
+    does not provide an issue link or coordination evidence, an agent might refuse
+    to generate the patch.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 49-52
+- rule: 'Pure code-agent PRs are not allowed: a human submitter must understand and
+    be able to defend the change end-to-end. Do not raise PRs without human validation.'
+  collision_type: meta_confusion
+  why_distracting: The rule states that pure code-agent PRs are not allowed and requires
+    human validation. An agent might output a refusal or ask for human intervention
+    instead of completing the coding task.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 39-47
+hierarchy_analysis: The configuration consists of two identical root-level files (AGENTS.md
+  and CLAUDE.md). They provide generic repository contribution guidelines and agent
+  behavioral constraints rather than code-specific rules.

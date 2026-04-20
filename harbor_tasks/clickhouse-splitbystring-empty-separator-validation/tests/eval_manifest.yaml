@@ -1,0 +1,207 @@
+checks:
+- id: test_empty_separator_validation_compiles
+  type: fail_to_pass
+  origin: pr_diff
+  description: Source code checks for empty separator strings and compiles without
+    errors
+- id: test_error_message_updated_compiles
+  type: fail_to_pass
+  origin: pr_diff
+  description: Error message updated to 'the separators argument cannot be empty'
+    and code compiles
+- id: test_clickhouse_style_checks
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified file passes ClickHouse style checks via repo's check_cpp.sh
+    script
+- id: test_no_tabs_in_source
+  type: pass_to_pass
+  origin: repo_tests
+  description: No tab characters in source file (via grep check)
+- id: test_no_trailing_whitespace
+  type: pass_to_pass
+  origin: repo_tests
+  description: No trailing whitespace in source file (via grep check)
+- id: test_no_multiple_empty_lines
+  type: pass_to_pass
+  origin: static
+  description: Code has no more than two consecutive empty lines (ClickHouse style
+    check)
+- id: test_allman_brace_style
+  type: pass_to_pass
+  origin: agent_config
+  source:
+    path: .claude/CLAUDE.md
+    lines: ''
+  description: C++ code uses Allman-style braces (opening brace on new line)
+- id: test_no_curly_brace_on_same_line
+  type: pass_to_pass
+  origin: repo_tests
+  description: Opening braces are on new lines via grep - same line check
+- id: test_indentation_multiple_of_four
+  type: pass_to_pass
+  origin: static
+  description: Indentation uses multiples of 4 spaces (ClickHouse style check)
+- id: test_whitespace_after_control_before_paren
+  type: pass_to_pass
+  origin: repo_tests
+  description: Control statements have whitespace before opening paren via grep check
+- id: test_no_duplicate_includes
+  type: pass_to_pass
+  origin: static
+  description: 'No duplicate #include directives (ClickHouse style check)'
+- id: test_no_unnecessary_namespace_comments
+  type: pass_to_pass
+  origin: repo_tests
+  description: No unnecessary // namespace comments via grep check
+- id: test_repo_style_cpp_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: ClickHouse C++ style check via check_cpp.sh script
+- id: test_repo_no_conflict_markers
+  type: pass_to_pass
+  origin: repo_tests
+  description: No Git conflict markers in source files via grep
+- id: test_repo_no_dos_newlines
+  type: pass_to_pass
+  origin: repo_tests
+  description: No DOS/Windows newlines (CRLF) in source files via grep
+- id: test_repo_no_utf8_bom
+  type: pass_to_pass
+  origin: repo_tests
+  description: No UTF-8 BOM (Byte Order Mark) in source files via grep
+- id: test_repo_no_trailing_whitespace_crlf
+  type: pass_to_pass
+  origin: repo_tests
+  description: No CRLF line endings detected via file command
+- id: test_repo_clang_syntax_only
+  type: pass_to_pass
+  origin: repo_tests
+  description: C++ syntax check using clang-15 -fsyntax-only
+distractors:
+- rule: When writing text such as documentation, comments, or commit messages, wrap
+    literal names from ClickHouse SQL language, classes and functions, or literal
+    excerpts from log messages inside inline code blocks
+  collision_type: scope_ambiguity
+  why_distracting: The agent might interpret the C++ exception message as 'text' and
+    attempt to use markdown backticks around the tokenizer name instead of the single
+    quotes specified in the instruction and used in the surrounding code.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 5-5
+- rule: Wrap literal names from ClickHouse SQL language, classes and functions in
+    inline code blocks.
+  source:
+    path: .claude/CLAUDE.md
+    lines: '5'
+  source_text: 'When writing text such as documentation, comments, or commit messages,
+    wrap literal names from ClickHouse SQL language, classes and functions, or literal
+    excerpts from log messages inside inline code blocks, such as: `MergeTree`.'
+  collision_type: scope_ambiguity
+  why_distracting: 'An agent might mistakenly apply this to C++ error message string
+    literals (like the one modified in the gold diff: "Incorrect parameter of tokenizer
+    ''{}'': the empty string cannot be used as a separator"), incorrectly adding backticks
+    around words like "tokenizer" or the format specifier. The rule only applies to
+    documentation, comments, and commit messages.'
+  severity: medium
+- rule: Write names of functions and methods as f instead of f().
+  source:
+    path: .claude/CLAUDE.md
+    lines: '9'
+  source_text: When writing text such as documentation, comments, or commit messages,
+    write names of functions and methods as `f` instead of `f()` - we prefer it for
+    mathematical purity when it refers a function itself rather than its application.
+  collision_type: would_cause_bug
+  why_distracting: An agent might see `SplitByStringTokenizer::getExternalName()`
+    being used in the new exception parameters and incorrectly remove the `()`. Since
+    this is a C++ function call being passed to an exception formatting argument,
+    removing the parentheses would cause a compilation error.
+  severity: high
+- rule: Backward compatibility settings for new validation
+  source:
+    path: .claude/skills/review/SKILL.md
+    lines: 189-190
+  source_text: "- **Backward compatibility**\n  New versions must be configurable\
+    \ to behave like older versions via `compatibility` settings. Ensure `SettingsChangesHistory.cpp`\
+    \ is updated when settings change. **New validation / enforcement on existing\
+    \ data:** if a PR adds a check that throws at `CREATE TABLE`, query execution,\
+    \ or server startup, and that check applies to objects created before the PR,\
+    \ it is a backward-incompatibility — the constraint may be violated by legitimate\
+    \ existing setups. It should either be gated behind a setting or applied only\
+    \ to newly created objects."
+  collision_type: rule_conflict
+  why_distracting: The PR introduces a new exception check at query execution for
+    empty string separators. An agent might mistakenly flag this as a backward-incompatibility
+    and demand a compatibility setting to restore the old behavior. However, the old
+    behavior for empty strings was fundamentally broken (likely causing infinite loops
+    or crashes) and should not be preserved.
+  severity: high
+- rule: Experimental gate for new features/behaviors
+  source:
+    path: .claude/skills/review/SKILL.md
+    lines: 185-186
+  source_text: "- **Experimental gate**\n  New features/behaviors must be gated behind\
+    \ an **experimental** setting (e.g. `allow_experimental_simd_acceleration`) until\
+    \ proven safe. The gate can later be made ineffective at GA."
+  collision_type: scope_ambiguity
+  why_distracting: The PR changes behavior by explicitly throwing an exception for
+    invalid empty string separators instead of silently accepting them. An agent might
+    misinterpret this bug fix as a 'new behavior' and improperly demand it be gated
+    behind an experimental setting.
+  severity: medium
+- rule: Wrap literal names in code blocks
+  source:
+    path: .claude/CLAUDE.md
+    lines: 5-5
+  source_text: 'When writing text such as documentation, comments, or commit messages,
+    wrap literal names from ClickHouse SQL language, classes and functions, or literal
+    excerpts from log messages inside inline code blocks, such as: `MergeTree`.'
+  collision_type: scope_ambiguity
+  why_distracting: The PR adds an exception message string containing `{}` which formats
+    the tokenizer class name. An agent might erroneously apply this text/documentation
+    rule to the C++ exception string literal and suggest formatting it with markdown
+    backticks (e.g. suggesting `"... '`{}`' ..."`), which is inappropriate for console
+    error messages.
+  severity: low
+hierarchy_analysis: The single AGENTS.md file contains general repository guidelines
+  that are mostly irrelevant to this specific C++ code change.
+version: '2.0'
+source:
+  repo: ClickHouse/ClickHouse
+  pr: 102094
+  base_commit: 4735a442e4fd8d0b317a2171945fbcaf8cfa7ec7
+  merge_commit: ''
+rubric:
+- rule: When writing C++ code, always use Allman-style braces (opening brace on a
+    new line).
+  source:
+    path: .claude/CLAUDE.md
+    lines: '145'
+  source_text: When writing C++ code, always use Allman-style braces (opening brace
+    on a new line). This is enforced by the style check in CI.
+  evidence: The gold diff correctly follows this by placing the opening brace `{`
+    on a new line after the `for` loop.
+  category: style
+  verification: llm_judge
+- rule: Allman-style braces
+  source:
+    path: .claude/CLAUDE.md
+    lines: 143-143
+  source_text: When writing C++ code, always use Allman-style braces (opening brace
+    on a new line). This is enforced by the style check in CI.
+  evidence: 'The gold diff correctly places the opening brace of the new for-loop
+    body on a new line: `+        {`.'
+  category: style
+  verification: llm_judge
+- rule: Clear and informative error messages
+  source:
+    path: .claude/skills/review/SKILL.md
+    lines: 95-95
+  source_text: '- Check that error messages are clear, informative, and help the user
+    understand what went wrong and how to fix it.'
+  evidence: The gold diff adds a precise exception message ('the empty string cannot
+    be used as a separator') and refines an existing one for clarity (changing 'separators
+    cannot be empty' to 'the separators argument cannot be empty').
+  category: error_handling
+  verification: llm_judge

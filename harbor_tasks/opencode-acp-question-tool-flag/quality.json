@@ -1,61 +1,57 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all key specifics tested: OPENCODE_ENABLE_QUESTION_TOOL constant, truthy() helper, flag.ts and registry.ts file paths, 'const question' variable, QuestionTool, client types app/cli/desktop, ACP README path with '### Question Tool Opt-In' section, translator.md path, and the OPENCODE_ENABLE_QUESTION_TOOL=1 usage example. All asserted strings and paths are discoverable from the instruction."
+      "reason": "Instruction names all files, the flag name OPENCODE_ENABLE_QUESTION_TOOL, the truthy() helper, the 'question' local variable, the README section title, and the translator.md env var location."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly says 'Introduce a local const question variable that evaluates this combined condition' and specifies exactly which helper (truthy()) to use, which file to put it in, and the exact export pattern. It dictates implementation details rather than just describing desired behavior."
+      "outcome": "pass",
+      "reason": "Instruction describes what to add and the combined condition but doesn't dictate exact lines or full code."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_question_gating_behavior uses regex to match 'const question\\s*=' requiring a specific variable name. test_flag_constant_defined asserts the exact string 'export const OPENCODE_ENABLE_QUESTION_TOOL' and 'truthy(\"OPENCODE_ENABLE_QUESTION_TOOL\")'. An alternative correct implementation using a different variable name (e.g., 'const includeQuestion' or 'const enableQuestion') or inlining the condition would fail these tests despite being functionally correct."
+      "reason": "test_question_gating_behavior requires a literal `const question = ...` variable in registry.ts via regex `const question\\s*=`, rejecting valid alternatives like `let question` or inlining the condition; instruction does say to introduce 'const question' but this still constrains name/kind."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Most fail_to_pass tests are text-matching: test_flag_constant_defined checks strings in file content, test_question_gating_behavior reads source files and regex-matches patterns (the 'simulation' doesn't execute actual code, just reimplements the logic), test_translator_md_lists_env_var and test_acp_readme_documents_question_tool check file text. Only the pass_to_pass tests (typecheck, unit tests) actually execute code."
+      "reason": "Tests primarily read file contents and check substrings (e.g., 'OPENCODE_ENABLE_QUESTION_TOOL' in flag_content, regex on registry.ts); the node script simulates the logic in JS rather than importing/executing the actual registry code."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "test_question_gating_behavior simulates the gating logic independently of the actual code \u2014 it reads source text and then runs its own JavaScript simulation function simulateQuestion() that hardcodes the expected behavior. The test doesn't import or execute the actual registry logic. A developer could add the right text patterns without the code actually working correctly, and the test would pass."
+      "outcome": "pass",
+      "reason": "f2p tests check for specific strings and simulate gating combinations that would fail without the flag/variable additions."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All four requirements from the instruction are tested: flag definition (test_flag_constant_defined), tool gating (test_question_gating_behavior), documentation (test_acp_readme_documents_question_tool), and translator config (test_translator_md_lists_env_var)."
+      "reason": "Flag definition, gating, README section, and translator.md env var are all covered by tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized into sections (Gates/static, fail-to-pass/behavioral, config updates) with descriptive function names and docstrings explaining each test's purpose."
+      "reason": "Tests are grouped with comment headers (Gates, Fail-to-pass, config update tests) and named descriptively."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB schemas."
+      "reason": "No structured data output is part of the task."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and tests."
+      "reason": "Paths, flag names, and commands appear consistent across instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction specifies exact implementation details: 'define a new exported constant OPENCODE_ENABLE_QUESTION_TOOL using the truthy() helper', 'Introduce a local const question variable', exact file paths and sections. This goes beyond describing what's broken to prescribing exactly how to fix it at a code-pattern level."
+      "outcome": "pass",
+      "reason": "Instruction points to relevant files which is appropriate for this feature task; no exact line numbers given."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold patch makes localized edits: single-line additions to flag.ts, registry.ts, translator.md, and a bounded section insertion in README.md. No full-file rewrites."
+      "reason": "translator.md and README edits are small, localized additions."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 5,
-  "fail_count": 5
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 2
 }

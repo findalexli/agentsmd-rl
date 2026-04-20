@@ -1,0 +1,122 @@
+version: '2.0'
+source:
+  repo: oven-sh/bun
+  pr: 28300
+  base_commit: 923690e923b2f13e0815e8cf342748082058bede
+  merge_commit: 89c9124fa36c3e6f9726d94ea0e5e68854238310
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: client-fixture.mjs must parse as valid JavaScript
+- id: null_content_type_handled
+  type: fail_to_pass
+  origin: pr_diff
+  description: Null content-type header must not cause TypeError crash
+- id: retry_on_transient_failures
+  type: fail_to_pass
+  origin: pr_diff
+  description: loadPage() must retry fetch on transient connection errors
+- id: valid_response_loads
+  type: pass_to_pass
+  origin: repo_tests
+  description: Normal response with valid content-type still loads correctly
+- id: valid_response_with_charset
+  type: pass_to_pass
+  origin: repo_tests
+  description: Response with 'text/html; charset=utf-8' content-type loads correctly
+- id: unhandled_rejection_handler
+  type: fail_to_pass
+  origin: pr_diff
+  description: Process must register unhandledRejection handler to prevent silent
+    crashes
+- id: exit_code_propagation
+  type: fail_to_pass
+  origin: pr_diff
+  description: Client exit code must be forwarded to OutputLineStream in bake-harness.ts
+- id: no_dynamic_import_in_client_fixture
+  type: pass_to_pass
+  origin: agent_config
+  description: client-fixture.mjs must not use unnecessary dynamic import() — only
+    static top-level imports allowed
+  source:
+    path: test/CLAUDE.md
+    lines: 218-220
+    commit: 923690e923b2f13e0815e8cf342748082058bede
+- id: test_repo_prettier_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's JavaScript/TypeScript files must pass prettier format check
+    (from .github/workflows/format.yml)
+- id: test_repo_oxlint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's JavaScript/TypeScript files must pass oxlint correctness checks
+    (from .github/workflows/lint.yml)
+- id: test_bake_harness_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: bake-harness.ts must parse as valid TypeScript (syntax check from CI
+    typecheck)
+rubric:
+- rule: Do not write flaky tests. Never wait for time to pass — always wait for the
+    condition to be met.
+  source:
+    path: test/CLAUDE.md
+    lines: '21'
+    commit: 923690e923b2f13e0815e8cf342748082058bede
+- rule: 'Never use hardcoded port numbers. Always use port: 0 to get a random port.'
+  source:
+    path: test/CLAUDE.md
+    lines: '21'
+    commit: 923690e923b2f13e0815e8cf342748082058bede
+- rule: Prefer async/await over callbacks.
+  source:
+    path: test/CLAUDE.md
+    lines: '104'
+    commit: 923690e923b2f13e0815e8cf342748082058bede
+- rule: 'Prefer concurrent tests over sequential tests: when multiple tests in the
+    same file spawn processes or write files, make them concurrent with test.concurrent
+    or describe.concurrent unless it is very difficult to make them concurrent.'
+  source:
+    path: test/CLAUDE.md
+    lines: '22'
+    commit: 923690e923b2f13e0815e8cf342748082058bede
+- rule: Use `proc.exited` to await and capture the exit code of a spawned Bun process.
+  source:
+    path: test/CLAUDE.md
+    lines: 30-34
+  evidence: The gold solution accesses the exit code of the spawned process using
+    the `proc.exited` promise (`proc.exited.then(...)`), matching the pattern shown
+    in the single-file test example.
+  category: testing
+distractors:
+- rule: never wait for time to pass in tests. Always wait for the condition to be
+    met instead of waiting for an arbitrary amount of time.
+  collision_type: rule_conflict
+  why_distracting: The rule forbids waiting for time to pass in tests, but the client
+    fixture needs a `setTimeout` backoff to retry fetching when the dev server port
+    isn't ready yet. An agent strictly following this might omit the delay, causing
+    retries to exhaust instantly, or attempt complex IPC that overcomplicates the
+    fixture.
+  severity: high
+  source:
+    path: test/CLAUDE.md
+    lines: 16-18
+- rule: 'CRITICAL: Do not set a timeout on tests. Bun already has timeouts.'
+  collision_type: meta_confusion
+  why_distracting: The agent might confuse the instruction 'Do not set a timeout on
+    tests' with the use of `setTimeout` for the retry backoff, leading it to avoid
+    adding the necessary delay between fetch attempts.
+  severity: medium
+  source:
+    path: test/CLAUDE.md
+    lines: 98-99
+hierarchy_analysis: The hierarchy includes root-level `CLAUDE.md` and `AGENTS.md`,
+  as well as `test/CLAUDE.md` and `test/AGENTS.md`. The test-specific configs provide
+  more granular guidance on testing style, such as avoiding flaky tests and preferring
+  async/await. The conflict arises because the general rule against waiting for time
+  to pass in tests (from `test/CLAUDE.md`) conflicts with the specific need for a
+  retry backoff in a network client fixture. The agent must recognize that a retry
+  backoff is an exception to the 'no arbitrary waits' rule because the condition (server
+  ready) can only be checked by polling.

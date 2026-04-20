@@ -1,0 +1,128 @@
+checks:
+- id: test_type_name_layout_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: type_name_layout() function exists and returns correct layout for 0x1::type_name::TypeName
+- id: test_rpc_visitor_imports_type_name_layout
+  type: fail_to_pass
+  origin: pr_diff
+  description: RPC visitor imports type_name_layout from base_types
+- id: test_rpc_visitor_handles_type_name
+  type: fail_to_pass
+  origin: pr_diff
+  description: RPC visitor checks for type_name_layout() in special case handling
+- id: test_sui_display_imports_type_name_layout
+  type: fail_to_pass
+  origin: pr_diff
+  description: sui-display imports type_name_layout from base_types
+- id: test_sui_display_uses_type_name_in_atoms
+  type: fail_to_pass
+  origin: pr_diff
+  description: sui-display includes type_name_layout in special layouts list for Atom
+    conversion
+- id: test_rpc_visitor_ascii_string
+  type: pass_to_pass
+  origin: repo_tests
+  description: RPC visitor json_ascii_string test still passes
+- id: test_rpc_visitor_utf8_string
+  type: pass_to_pass
+  origin: repo_tests
+  description: RPC visitor json_utf8_string test still passes
+- id: test_rpc_visitor_url
+  type: pass_to_pass
+  origin: repo_tests
+  description: RPC visitor json_url test still passes
+- id: test_cargo_fmt_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo code formatting passes cargo fmt check
+- id: test_sui_types_lib_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: sui-types crate library tests pass (regression check for base_types
+    and rpc_visitor)
+- id: test_sui_display_lib_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: sui-display crate library tests pass (regression check for value.rs)
+- id: test_base_types_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: base_types module unit tests pass
+- id: test_rpc_visitor_json_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: RPC visitor JSON serialization tests pass
+- id: test_json_address
+  type: pass_to_pass
+  origin: repo_tests
+  description: RPC visitor address serialization test passes
+- id: test_json_uid
+  type: pass_to_pass
+  origin: repo_tests
+  description: RPC visitor UID serialization test passes
+- id: test_cargo_xlint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo passes cargo xlint license header checks
+- id: test_git_checks
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo passes git checks for whitespace, filenames, and submodules
+rubric:
+- source:
+    path: CLAUDE.md
+  rule: New files must include license header
+- source:
+    path: CLAUDE.md
+  rule: Use -p flag to run crate-specific tests for faster feedback
+- source:
+    path: CLAUDE.md
+  rule: Run cargo xclippy after finishing development
+- rule: sui-types/ contains Core type definitions
+  source:
+    path: CLAUDE.md
+    lines: 56-58
+  evidence: The gold solution adds the TypeName layout and constants to crates/sui-types/src/base_types.rs,
+    aligning with the architectural definition of sui-types.
+  category: architecture
+distractors:
+- rule: Always consult CLAUDE.md files in sub-crates.
+  collision_type: meta_confusion
+  why_distracting: The rule instructs the agent to always consult crate-specific CLAUDE.md
+    files. Since the agent is modifying `sui-types` and `sui-display`, it might waste
+    time and API calls searching for local config files that do not exist in this
+    context.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 8-10
+- rule: All new files must start with the following license in comments at the top
+    of the file
+  collision_type: scope_ambiguity
+  why_distracting: The rule requires adding a license header to all new files. The
+    agent might mistakenly create a new file for the TypeName layout instead of adding
+    it to the existing `base_types.rs` as instructed, or it might try to add a license
+    to the existing files if it misinterprets 'new files'.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 18-21
+- rule: Protocol configuration and versioning for Sui network changes
+  source:
+    path: .claude/skills/protocol-config/SKILL.md
+    lines: 1-10
+  collision_type: architecture_boundary
+  why_distracting: The agent might mistakenly believe that changing how TypeName is
+    serialized in RPC outputs requires a protocol config change or versioning, but
+    RPC/Display changes are outside the consensus protocol boundary.
+  severity: medium
+hierarchy_analysis: The hierarchy is flat, consisting only of root-level AGENTS.md
+  and CLAUDE.md. The root configs mention crate-specific configs, but none are present
+  in the context, which could lead to a wild goose chase.
+version: '2.0'
+source:
+  repo: MystenLabs/sui
+  pr: 26070
+  base_commit: ceb0bf788b8711eca37a448854db0421beb8d612
+  merge_commit: 82942c59ebb94f4f4c8ae494fed945e5f8eb4ee5

@@ -1,0 +1,173 @@
+version: '2.0'
+source:
+  repo: anomalyco/opencode
+  pr: 19028
+  base_commit: 1398674e531acc845e062b219f718cac1cd89a44
+  merge_commit: 15dc33d1a38f3beb30fdc1a2bd2a0f3dd124a3a8
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files parse without errors
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo TypeScript typecheck passes
+- id: test_repo_tui_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: TUI CLI tests pass — covers modified thread.ts and related TUI functionality
+- id: test_repo_tui_prompt_part_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: TUI prompt part tests pass — covers TUI components
+- id: test_repo_tui_config_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: TUI config tests pass — covers TUI configuration
+- id: test_repo_tui_transcript_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: TUI transcript tests pass — covers TUI functionality
+- id: test_repo_snapshot_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Snapshot tests pass — covers file snapshot functionality
+- id: test_repo_tool_read_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Tool read tests pass — covers core file reading functionality
+- id: test_repo_tool_edit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Tool edit tests pass — covers core file editing functionality
+- id: test_repo_config_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Main config tests pass — covers configuration loading
+- id: worker_has_snapshot_rpc
+  type: fail_to_pass
+  origin: pr_diff
+  description: Worker RPC has snapshot method that calls writeHeapSnapshot
+- id: thread_implements_onsnapshot
+  type: fail_to_pass
+  origin: pr_diff
+  description: Thread implements onSnapshot callback coordinating TUI and server snapshots
+- id: app_accepts_onsnapshot_prop
+  type: fail_to_pass
+  origin: pr_diff
+  description: TUI App component accepts onSnapshot prop and passes it to heap snapshot
+    command
+- id: changelog_command_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: .opencode/command/changelog.md has updated instructions with TUI/Desktop/Core/Misc
+    sections
+- id: not_stub
+  type: fail_to_pass
+  origin: pr_diff
+  description: RPC snapshot method has real implementation, not just a stub
+rubric:
+- rule: Config update follows the structure and style of existing .opencode command
+    files
+  source:
+    path: .opencode/command/changelog.md
+    lines: 1-5
+    commit: 1398674e531acc845e062b219f718cac1cd89a44
+- rule: Avoid unnecessary destructuring. Use dot notation to preserve context.
+  source:
+    path: AGENTS.md
+    lines: 60-67
+  evidence: In `packages/opencode/src/cli/cmd/tui/app.tsx`, the `App` component is
+    updated to accept a `props` object and accesses `props.onSnapshot` using dot notation
+    rather than destructuring the props.
+  category: style
+- rule: Prefer single word names for variables and functions.
+  source:
+    path: AGENTS.md
+    lines: 26-44
+  evidence: In `packages/opencode/src/cli/cmd/tui/thread.ts`, the variables storing
+    the snapshot file paths are named `tui` and `server` instead of multi-word names
+    like `tuiSnapshotPath` or `serverPath`.
+  category: naming
+- rule: Prefer single word variable names where possible. Use single word names by
+    default for new locals, params, and helper functions.
+  source:
+    path: AGENTS.md
+    lines: 18-32
+  evidence: The gold solution uses single-word variable names like `tui`, `server`,
+    `result`, and `files` instead of multi-word names like `tuiSnapshotPath` or `snapshotFiles`.
+  category: naming
+- rule: Prefer `const` over `let`.
+  source:
+    path: AGENTS.md
+    lines: 74-82
+  evidence: In `thread.ts` and `worker.ts`, the gold solution uses `const` for all
+    new variables (`tui`, `server`, `result`, `files`).
+  category: style
+config_edits:
+- path: .opencode/command/changelog.md
+  tier: 2
+  gold_added: 'create UPCOMING_CHANGELOG.md
+
+    it should have sections
+
+    ```
+
+    # TUI
+
+
+    # Desktop
+
+
+    # Core
+
+
+    # Misc
+
+    ```
+
+
+    go through each PR merged since the last tag
+
+    for each PR spawn a subagent to summarize what the PR was about. focus on user
+    facing changes. if it was entirely internal or code related you can ignore it.
+    also skip docs updates. each subagent should append its summary to UPCOMING_CHANGELOG.md
+    into the appropriate section.
+
+    once that is done, read UPCOMING_CHANGELOG.md and group it into sections for better
+    readability. make sure all PR references are preserved'
+  gold_removed: 'go through each PR merged since the last tag
+
+    for each PR spawn a subagent to summarize what the PR was about. focus on user
+    facing changes. if it was entirely internal or code related you can ignore it.
+    also skip docs updates. each subagent should append its summary to UPCOMING_CHANGELOG.md
+
+    once that is done, read UPCOMING_CHANGELOG.md and group it into sections for better
+    readability. make sure all PR references are preserved'
+distractors:
+- rule: Use Effect.gen(function* () { ... }) for composition.
+  collision_type: scope_ambiguity
+  why_distracting: The TUI RPC worker and thread use standard async/await and Promises.
+    Trying to effectify the new `snapshot` method using `Effect.gen` would break the
+    existing RPC interface or require unnecessary refactoring.
+  severity: high
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: 14-15
+- rule: Prefer FileSystem.FileSystem instead of raw fs/promises for effectful file
+    I/O.
+  collision_type: architecture_boundary
+  why_distracting: The agent might try to use Effect's FileSystem to handle the file
+    writing, but `writeHeapSnapshot` from `node:v8` is a native API that writes directly
+    to disk and only accepts a string path. Wrapping it in FileSystem is unnecessary
+    and architecturally incorrect.
+  severity: medium
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: 38-39
+hierarchy_analysis: The project has a root `AGENTS.md` and a package-specific `packages/opencode/AGENTS.md`.
+  The package-specific config introduces strict Effect rules. The agent must realize
+  that despite being in the `opencode` package, the specific TUI RPC code being edited
+  uses standard Promises, so the Effect rules should be ignored for this specific
+  scope.

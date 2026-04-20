@@ -1,60 +1,59 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert very specific literal strings like \"isRolldown = 'rolldownVersion' in vite\", \"bundlerOptionsKey = isRolldown\", \"import * as vite from 'vite'\", \"build?.rolldownOptions ?? build?.rollupOptions\", \"import { bundlerOptionsKey, getBundlerOptions } from './utils'\", and \"getBundlerOptions(serverEnv?.build)?.input\". The instruction.md does not specify these exact variable names, import styles, or implementation patterns. For example, the instruction says 'Export a computed key' but never nam"
+      "outcome": "pass",
+      "reason": "instruction.md names all required symbols (isRolldown, bundlerOptionsKey, getBundlerOptions), exact imports, file paths, and the rolldownVersion detection string that tests assert on."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly says 'Vite exposes a marker in its module that identifies when Rolldown is in use. Detect this at runtime', 'Export a computed key that resolves to the correct property name (rolldownOptions or rollupOptions)', and 'Also export a helper that reads the bundler options from a build config'. This describes WHAT to implement in significant detail, not just what's broken. It also specifies exact file paths and what to add to each file."
+      "reason": "instruction.md dictates the exact implementation: 'import * as vite from \"vite\"', exact import strings like `import { bundlerOptionsKey, getBundlerOptions } from './utils'`, and prescribes checking rolldownOptions first then rollupOptions \u2014 leaving no reasoning about what to change."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact implementation details: variable name 'isRolldown', exact expression \"isRolldown = 'rolldownVersion' in vite\", exact import style \"import * as vite from 'vite'\", exact function name 'getBundlerOptions', exact pattern \"build?.rolldownOptions ?? build?.rollupOptions\", exact import statement \"import { bundlerOptionsKey, getBundlerOptions } from './utils'\". An alternative correct fix using different names (e.g., 'useRolldown', 'bundlerKey', 'readBundlerConfig') or different detect"
+      "reason": "Tests assert exact strings like `build?.rolldownOptions ?? build?.rollupOptions` and `import { bundlerOptionsKey, getBundlerOptions } from './utils'` \u2014 an alternative correct fix using different syntax (e.g., if/else, different import grouping, or `||` instead of `??`) would fail."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The f2p tests (test_utils_exports_bundler_detection, test_utils_imports_vite, test_getBundlerOptions_uses_rolldownOptions_fallback, etc.) are ALL purely string-matching tests using 'assert \"...\" in content' on file contents. None of them import, call, or execute the code. The p2p tests (build, types, eslint) do execute subprocesses, but every f2p test is text-matching only."
+      "outcome": "pass",
+      "reason": "Tests include subprocess execution of build, typecheck, eslint, and unit tests in addition to text checks."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "Since f2p tests only check for string presence in source files, a stub implementation that simply contains the right strings as comments or dead code would pass. For example, writing '// isRolldown = \"rolldownVersion\" in vite' and '// bundlerOptionsKey = isRolldown' as comments would satisfy the string assertions without implementing any actual functionality."
+      "outcome": "pass",
+      "reason": "f2p tests verify specific code patterns that a stub/no-op cannot satisfy, and p2p tests actually run build/test commands."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: bundler detection utilities in utils.ts (tested), updated plugin.ts (tested), updated preview-server-plugin/plugin.ts (tested), build passes (tested), types pass (tested), eslint passes (tested). All explicitly required behaviors are covered."
+      "reason": "All three files' changes described in instruction.md are tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names and docstrings explaining what each test verifies, grouped logically by file (utils, plugin, preview-server-plugin) and type (f2p vs p2p)."
+      "reason": "Tests are named descriptively with docstrings and grouped by concern (utils, plugin, preview-server, tooling)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task produces code changes, not structured data like JSON/CSV/API/DB."
+      "reason": "Task is code-only, no structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, commands, variable names, and property names in the instruction and tests are consistent and correctly spelled."
+      "reason": "File paths and commands match repo structure."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction names the three files to modify, which is reasonable given the task domain. It doesn't specify exact line numbers or exact code to write, though it does describe the approach in detail (covered under no_solution_leakage)."
+      "outcome": "fail",
+      "reason": "Instruction names exact files, exact exported identifiers, exact import statements, and exact fallback ordering \u2014 essentially dictating the patch rather than describing the bug."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "Code-only task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
     "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [],
-  "pass_count": 4,
-  "fail_count": 5
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 3
 }

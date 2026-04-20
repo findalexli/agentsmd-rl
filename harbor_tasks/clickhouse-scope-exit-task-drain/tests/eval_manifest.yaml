@@ -1,0 +1,119 @@
+source:
+  repo: ClickHouse/ClickHouse
+  pr_number: 102070
+  base_commit: 0c2c314bd89908fc1e1073bba304895c85d488e8
+  merge_commit: e06363fc00bde1ad3fbb92234e0a2cbf3b205e86
+  target_file: src/DataTypes/Serializations/SerializationObject.cpp
+
+checks:
+  # Fail-to-pass tests (behavioral - these should fail on base, pass on fix)
+  - id: test_scope_exit_present
+    type: fail_to_pass
+    origin: behavioral
+    description: SCOPE_EXIT block for draining tasks must be present
+    file: test_outputs.py
+
+  - id: test_task_drain_comment_present
+    type: fail_to_pass
+    origin: behavioral
+    description: Explanatory comment about task draining must be present
+    file: test_outputs.py
+
+  - id: test_try_execute_and_wait_pattern
+    type: fail_to_pass
+    origin: behavioral
+    description: Both tryExecute() and wait() must be called on tasks in SCOPE_EXIT
+    file: test_outputs.py
+
+  # Pass-to-pass tests (regression - these should pass on both base and fix)
+  - id: test_file_compiles_syntax
+    type: pass_to_pass
+    origin: repo_tests
+    description: Target file should have valid C++ syntax
+    file: test_outputs.py
+
+  - id: test_deserialize_function_exists
+    type: pass_to_pass
+    origin: static
+    description: deserializeBinaryBulkStatePrefix function must exist
+    file: test_outputs.py
+
+  - id: test_task_vector_exists
+    type: pass_to_pass
+    origin: static
+    description: The tasks vector must be present for SCOPE_EXIT to reference
+    file: test_outputs.py
+
+  - id: test_clang_format_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: CI - clang-15 is available for style/syntax checks
+    file: test_outputs.py
+
+  - id: test_file_is_valid_cpp
+    type: pass_to_pass
+    origin: repo_tests
+    description: CI - file command verifies C++ source file type
+    file: test_outputs.py
+
+  - id: test_git_tracks_target_file
+    type: pass_to_pass
+    origin: repo_tests
+    description: CI - git ls-files verifies target file is tracked
+    file: test_outputs.py
+
+  - id: test_serialization_object_unit_tests_compile
+    type: pass_to_pass
+    origin: repo_tests
+    description: CI - SerializationObject unit test file exists and is valid C++
+    file: test_outputs.py
+
+  - id: test_object_serialization_includes_present
+    type: pass_to_pass
+    origin: repo_tests
+    description: CI - Required header includes for SerializationObject exist
+    file: test_outputs.py
+
+  - id: test_cmake_lists_exists
+    type: pass_to_pass
+    origin: repo_tests
+    description: CI - CMakeLists.txt exists in serialization directory
+    file: test_outputs.py
+
+  # Agent config derived checks
+  - id: test_follows_clickhouse_style
+    type: fail_to_pass
+    origin: agent_config
+    source: ".claude/CLAUDE.md"
+    description: Fix must follow ClickHouse naming conventions (use 'exception' not 'crash', wrap type names in code blocks)
+
+rubric:
+  # From .claude/CLAUDE.md
+  - rule: "Use code blocks for literal names (MergeTree, functions, etc.)"
+    source: ".claude/CLAUDE.md"
+    description: Code literals should be wrapped in backticks
+
+  - rule: "Say 'exception' rather than 'crash' for logical errors"
+    source: ".claude/CLAUDE.md"
+    description: Use proper terminology for error conditions
+
+  - rule: "Do not use rebase or amend - add new commits instead"
+    source: ".claude/CLAUDE.md"
+    description: Follow ClickHouse git workflow
+
+  # From .github/copilot-instructions.md
+  - rule: "False positives are worse than missed nits - prefer high precision"
+    source: ".github/copilot-instructions.md"
+    description: Focus on real problems not style nits
+
+  - rule: "All data deletion events must be logged"
+    source: ".github/copilot-instructions.md"
+    description: Data lifecycle events need logging
+
+  - rule: "Any format must be versioned"
+    source: ".github/copilot-instructions.md"
+    description: Serialization formats need version management
+
+  - rule: "Do not delete or relax existing tests - new behavior requires new tests"
+    source: ".github/copilot-instructions.md"
+    description: Test coverage must be maintained

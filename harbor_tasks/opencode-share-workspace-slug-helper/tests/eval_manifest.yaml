@@ -1,0 +1,143 @@
+version: '2.0'
+source:
+  repo: anomalyco/opencode
+  pr: 16446
+  base_commit: be9b4d1bcde39341c7813b66c5c19150a01bb8c2
+  merge_commit: b7e208b4f1e6641a1cbb1e13f59789c7b7f4c60a
+checks:
+- id: typescript_parses
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript files have valid syntax
+- id: spec_files_parse
+  type: pass_to_pass
+  origin: static
+  description: Modified spec files have valid TypeScript syntax
+- id: actions_has_slug_from_url
+  type: fail_to_pass
+  origin: pr_diff
+  description: actions.ts exports slugFromUrl function with correct regex
+- id: actions_has_wait_slug
+  type: fail_to_pass
+  origin: pr_diff
+  description: actions.ts exports waitSlug async function with polling logic
+- id: duplicated_helpers_removed_from_specs
+  type: fail_to_pass
+  origin: pr_diff
+  description: Duplicated slugFromUrl/waitSlug functions removed from spec files
+- id: specs_import_shared_helpers
+  type: fail_to_pass
+  origin: pr_diff
+  description: Spec files import waitSlug from ../actions
+- id: agents_md_documents_new_helpers
+  type: fail_to_pass
+  origin: agent_config
+  description: AGENTS.md documents the new slugFromUrl and waitSlug helpers
+  source:
+    path: packages/app/e2e/AGENTS.md
+    lines: '175'
+    commit: be9b4d1bcde39341c7813b66c5c19150a01bb8c2
+- id: agents_md_documents_routing_guidance
+  type: fail_to_pass
+  origin: agent_config
+  description: AGENTS.md includes guidance on using shared helpers for routing
+  source:
+    path: packages/app/e2e/AGENTS.md
+    lines: '175'
+    commit: be9b4d1bcde39341c7813b66c5c19150a01bb8c2
+- id: session_id_from_url_still_present
+  type: pass_to_pass
+  origin: static
+  description: sessionIDFromUrl function still present in actions.ts
+- id: repo_e2e_actions_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - TypeScript typecheck passes on e2e actions.ts
+- id: repo_e2e_typecheck_all
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - TypeScript typecheck passes on e2e directory
+- id: repo_prettier_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - Prettier formatting check passes on modified files
+- id: repo_biome_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - Biome lint check passes on e2e actions.ts
+- id: repo_tsc_spec_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - TypeScript syntax check on modified spec files
+- id: repo_biome_lint_specs
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - Biome lint check passes on modified spec files
+- id: repo_prettier_check_agents_md
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - Prettier formatting check passes on AGENTS.md
+- id: repo_prettier_check_specs
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - Prettier formatting check passes on all modified spec files
+rubric:
+- rule: E2E spec files must use shared helper functions from '../actions' rather than
+    defining duplicate local helpers
+  source:
+    path: packages/app/e2e/AGENTS.md
+    lines: '171'
+  reference: When validating routing, use shared helpers from `../actions`.
+- rule: Document new helper functions in the E2E testing guide and place reusable
+    actions in `actions.ts`.
+  source:
+    path: packages/app/e2e/AGENTS.md
+    lines: 40-50
+  reference: The gold solution adds `slugFromUrl` and `waitSlug` to `actions.ts` and
+    documents them in `packages/app/e2e/AGENTS.md` under the Helper Functions section.
+  category: documentation
+- rule: 'Helper Functions: Actions (`actions.ts`): Reusable action helpers'
+  source:
+    path: packages/app/e2e/AGENTS.md
+    lines: 36-46
+  reference: The gold solution moves the `slugFromUrl` and `waitSlug` functions into
+    `packages/app/e2e/actions.ts`, following the architectural guideline that reusable
+    action helpers belong in this file.
+  category: architecture
+config_edits:
+- path: packages/app/e2e/AGENTS.md
+  tier: 1
+  gold_added: '- `sessionIDFromUrl(url)` - Read session ID from URL\n\n    - `slugFromUrl(url)`
+    - Read workspace slug from URL\n\n    - `waitSlug(page, skip?)` - Wait for resolved
+    workspace slug\n\n    4. When validating routing, use shared helpers from `../actions`.
+    Workspace URL\n    slugs can be canonicalized on Windows, so assert against canonical
+    or resolved\n    workspace slugs.\n\n    5. Clean up any created resources\n\n    6.
+    Use specific selectors (avoid CSS classes)\n\n    7. Test one feature per test
+    file'
+  gold_removed: 4. Clean up any created resources\n\n    5. Use specific selectors
+    (avoid CSS classes)\n\n    6. Test one feature per test file
+distractors:
+- rule: Prefer `const` over `let`. Use ternaries or early returns instead of reassignment.
+  collision_type: would_cause_bug
+  why_distracting: The `waitSlug` helper must track state across multiple polling
+    iterations to ensure the slug has settled. This requires using `let` and reassigning
+    `prev` and `next` variables. Avoiding reassignment would make it impossible to
+    track the previous value across `expect.poll` calls.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 68-78
+- rule: Use single word names by default for new locals, params, and helper functions.
+  collision_type: rule_conflict
+  why_distracting: The task explicitly requires creating helper functions named `slugFromUrl`
+    and `waitSlug`. An agent strictly following the single-word naming rule might
+    try to name them `slug` and `wait`, which would violate the explicit task instructions.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 28-35
+hierarchy_analysis: The task involves editing `packages/app/e2e/AGENTS.md`, which
+  is a Level 3 config file. This means the agent is modifying its own instructions
+  for future tasks. The Level 0 config enforces strict rules on naming and variable
+  reassignment, but the specific requirements of the E2E polling logic (tracking state
+  across polls) and the explicit task instructions override these general style rules.

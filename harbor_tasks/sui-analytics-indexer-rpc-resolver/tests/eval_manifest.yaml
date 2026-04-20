@@ -1,0 +1,122 @@
+checks:
+- id: repo_format_check
+  description: Repo code formatting passes
+  type: pass_to_pass
+  origin: repo_tests
+- id: repo_license_headers
+  description: Repo license headers are valid
+  type: pass_to_pass
+  origin: repo_tests
+- id: repo_git_checks
+  description: Repo git checks pass
+  type: pass_to_pass
+  origin: repo_tests
+- id: repo_clippy
+  description: Repo clippy lints pass
+  type: pass_to_pass
+  origin: repo_tests
+- id: repo_cargo_check
+  description: Repo compilation check for sui-analytics-indexer passes
+  type: pass_to_pass
+  origin: repo_tests
+- id: repo_cargo_check_tests
+  description: Repo cargo check --tests for sui-analytics-indexer passes
+  type: pass_to_pass
+  origin: repo_tests
+- id: repo_cargo_manifest
+  description: Repo Cargo.toml for sui-analytics-indexer is valid
+  type: pass_to_pass
+  origin: repo_tests
+- id: compilation
+  description: Crate compiles successfully after migration
+  type: fail_to_pass
+  origin: pr_diff
+- id: eviction_module_exists
+  description: SystemPackageEviction handler module exists with correct structure
+  type: fail_to_pass
+  origin: pr_diff
+- id: old_cache_removed
+  description: Old PackageCache module is removed
+  type: fail_to_pass
+  origin: pr_diff
+- id: package_store_not_in_lib
+  description: package_store is no longer declared in lib.rs
+  type: fail_to_pass
+  origin: pr_diff
+- id: handlers_use_new_resolver
+  description: Handlers use PackageStoreWithLruCache instead of PackageCache
+  type: fail_to_pass
+  origin: pr_diff
+- id: object_processor_rpc_client
+  description: ObjectProcessor has new rpc_client field and get_original_package_id
+    method
+  type: fail_to_pass
+  origin: pr_diff
+- id: cargo_toml_updated
+  description: Cargo.toml has sui-rpc-resolver and removed old dependencies
+  type: fail_to_pass
+  origin: pr_diff
+- id: indexer_uses_rpc_store
+  description: indexer.rs uses RpcPackageStore with cache and registers SystemPackageEviction
+  type: fail_to_pass
+  origin: pr_diff
+- id: pipeline_signature
+  description: pipeline.rs has updated function signature with rpc_url parameter
+  type: fail_to_pass
+  origin: pr_diff
+rubric:
+- rule: 'All new files must start with the Mysten Labs license header: // Copyright
+    (c) Mysten Labs, Inc. and // SPDX-License-Identifier: Apache-2.0'
+  source:
+    path: CLAUDE.md
+    lines: 17-20
+    commit: 591ac7c96a2877709479724edeea7038d01f064b
+- rule: 'Never use #[allow(dead_code)], #[allow(unused)], or any other linting suppressions
+    - fix the underlying issues instead'
+  source:
+    path: CLAUDE.md
+    lines: '113'
+    commit: 591ac7c96a2877709479724edeea7038d01f064b
+- rule: Code must pass cargo xclippy without warnings or suppressions
+  source:
+    path: CLAUDE.md
+    lines: 59-60
+    commit: 591ac7c96a2877709479724edeea7038d01f064b
+- rule: All new files must start with the Mysten Labs copyright and Apache-2.0 license
+    header.
+  source:
+    path: CLAUDE.md
+    lines: 16-20
+  evidence: 'The newly created file `crates/sui-analytics-indexer/src/handlers/system_package_eviction.rs`
+    starts exactly with the required `// Copyright (c) Mysten Labs, Inc.` and `//
+    SPDX-License-Identifier: Apa'
+  category: style
+- rule: 'All new files must start with the following license in comments at the top
+    of the file: Copyright (c) Mysten Labs, Inc. SPDX-License-Identifier: Apache-2.0'
+  source:
+    path: CLAUDE.md
+    lines: 18-20
+  evidence: The newly created file `crates/sui-analytics-indexer/src/handlers/system_package_eviction.rs`
+    starts with the exact copyright and SPDX license header specified in the config.
+  category: documentation
+distractors:
+- rule: 'Storage Layer: Uses RocksDB for persistent storage'
+  collision_type: architecture_boundary
+  why_distracting: The architecture section states that the storage layer uses RocksDB
+    for persistent storage. The agent might try to retain RocksDB usage for the new
+    package cache or implement a RocksDB layer for `sui-rpc-resolver`, conflicting
+    with the instruction to remove the old package cache and use the built-in caching
+    of `sui-rpc-resolver`.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 65-66
+hierarchy_analysis: The hierarchy is flat, with only root-level `CLAUDE.md` and `AGENTS.md`
+  files applying to the task. The agent must apply the root-level license header rule
+  to the newly created file.
+version: '2.0'
+source:
+  repo: MystenLabs/sui
+  pr: 26041
+  base_commit: 591ac7c96a2877709479724edeea7038d01f064b
+  merge_commit: 8a866b804e6b1008de776e12df7a5f629e0fdf41

@@ -1,60 +1,59 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all key identifiers tested: resolveGatewayRequestedOperatorScopes, authorizeOperatorScopesForMethod, authorizeGatewayBearerRequestOrReply, http-auth-helpers, method-scopes, applyOwnerOnlyToolPolicy, tool-policy module, 'agent' method argument, 403 status, 'forbidden' type, 'missing scope' message, the 8 deny list tool names (exec, spawn, shell, fs_write, fs_delete, fs_move, apply_patch, nodes), the minimum 10 entries, the original entries (sessions_spawn, sessions_send, cro"
+      "reason": "Instruction names all function names (resolveGatewayRequestedOperatorScopes, authorizeOperatorScopesForMethod, applyOwnerOnlyToolPolicy), file paths, deny list tools, 'agent' method, 'forbidden' type, 'missing scope' message, and 10+ entry requirement."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly dictates the exact implementation: 'Import resolveGatewayRequestedOperatorScopes from ./http-auth-helpers', 'Call authorizeOperatorScopesForMethod(\"agent\", requestedScopes)', 'Call applyOwnerOnlyToolPolicy(tools, false)', 'Apply owner-only filtering before the gateway deny filtering step'. This specifies exactly what code to write and in what order, leaving no reasoning about the fix for the developer."
+      "reason": "Instruction effectively dictates the implementation: exact function names to import, exact argument values (`authorizeOperatorScopesForMethod(\"agent\", requestedScopes)`, `applyOwnerOnlyToolPolicy(tools, false)`), exact error type string 'forbidden', exact message substring 'missing scope', exact list of 7 tools to add \u2014 leaving almost no reasoning about WHAT to change."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific implementation details: test_owner_only_filtering_order requires a specific variable assignment pattern 'const <varname> = applyOwnerOnlyToolPolicy' and then that variable used in '.filter(...gatewayDenySet.has'. test_scope_authorization_called requires literal 'resolveGatewayRequestedOperatorScopes(req)' call syntax. An alternative correct fix (e.g., inlining the call, using different variable names in destructuring, or wrapping in a helper) would fail these regex-bas"
+      "reason": "test_owner_only_filtering_order requires a specific variable pattern `const <var> = applyOwnerOnlyToolPolicy(...)` followed by `<var>.filter(...!gatewayDenySet.has)`, rejecting valid alternatives like inline chaining or different variable-assignment styles."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Tests for handler authorization (test_scope_authorization_imports, test_scope_authorization_called, test_scope_authorization_returns_403, test_owner_only_filtering_import, test_owner_only_filtering_called, test_owner_only_filtering_order) all use Path.read_text() and regex/string matching on source code. They never execute the handler or test actual HTTP responses. Only the deny list tests actually transpile and execute code."
+      "outcome": "pass",
+      "reason": "Tests transpile and execute dangerous-tools.ts via Node to inspect the actual exported array; handler tests are text-based but deny-list tests execute code."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The deny list tests (test_deny_list_blocks_execution_tools, test_deny_list_blocks_fs_mutation_tools, test_deny_list_blocks_node_relay, test_deny_list_sufficient_entries) actually transpile and evaluate the module, requiring real entries. The source-inspection tests require specific strings/patterns that wouldn't exist in a stub. A default/empty implementation wouldn't pass."
+      "reason": "Deny-list tests execute the module and check membership; handler tests require specific imports and call sites that a stub could not satisfy while also passing the behavioral deny-list tests."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md are tested: scope verification (imports, calls, 403 response), owner-only filtering (import, call with false, ordering before deny), deny list additions (all 8 tools, minimum 10 entries), and preservation of existing entries."
+      "reason": "All three bug areas (scope auth, owner-only filtering, deny list) are covered by corresponding tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with section comments (Gates, Fail-to-pass deny list, Fail-to-pass handler authorization, Pass-to-pass regression), descriptive function names, and docstrings explaining each check."
+      "reason": "Tests are grouped with header comments (Gates, Fail-to-pass deny list, handler authorization wiring, Pass-to-pass)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task involves security code changes, not structured data output."
+      "reason": "No structured data output; task is code-behavior."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, function names, or tool names across instruction.md and tests."
+      "reason": "Filenames and identifiers in instruction match those used in tests and solution."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact file paths (src/gateway/tools-invoke-http.ts, src/security/dangerous-tools.ts), exact function names to import, exact modules to import from, exact call signatures, and exact ordering \u2014 this goes well beyond naming the buggy area and provides a near-complete implementation specification."
+      "reason": "Instruction names exact symbols and literal argument values ('agent', false) and lists the 7 exact tool names to add \u2014 this is prescriptive implementation guidance beyond describing what's broken."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits task."
+      "reason": "Code-only task, no config edits."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 4
+  "pass_count": 6,
+  "fail_count": 3
 }

@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "Instruction names router module, WorkspaceRouterMiddleware export, InstanceRoutes, Instance.provide, InstanceBootstrap, directory query param, x-opencode-directory header, worktree adaptor fetch throwing, old middleware removal, and server.ts import \u2014 all assertions in tests are derivable."
+      "reason": "Instruction names all key paths (router in server/, instance.ts, workspace-router-middleware.ts, worktree.ts, server.ts), the exported name WorkspaceRouterMiddleware, Instance.provide, InstanceBootstrap, InstanceRoutes, the 'directory' query param, and 'x-opencode-directory' header."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "Instruction describes what's broken and expected behavior (branches, consolidation) without giving specific code diffs or line changes."
+      "reason": "Instruction describes what needs to happen (consolidate routing + bootstrapping, three branches, cleanup) without giving exact code or line-level edits."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "Tests check for AST patterns (Instance.provide calls, InstanceBootstrap, query('directory'), 'x-opencode-directory' literal, adaptor.fetch) which any reasonable implementation following the spec would include."
+      "reason": "Tests check for AST patterns (Instance.provide call, InstanceBootstrap ref, adaptor/routes fetch, 'directory' query, 'x-opencode-directory' literal) and allow router placement via glob; alternative correct implementations would still match."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests use bun to import modules and parse TypeScript AST via the typescript compiler, actually loading and analyzing code structure rather than grep."
+      "reason": "Tests dynamically import router.ts (await import), check function type, and use TypeScript AST parsing rather than raw grep."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "Tests require \u22652 Instance.provide calls with InstanceBootstrap, removal from instance.ts, deletion of old file, and specific header/query literals \u2014 a stub can't satisfy these."
+      "reason": "A stub export would fail the AST checks (Instance.provide, InstanceBootstrap, adaptor.fetch, routes().fetch, directory resolution) and the instance.ts removal test, so real implementation required."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "Each required behavior in instruction (single entry point, directory resolution, three branches, delegation, cleanup) has a corresponding test."
+      "reason": "Tests cover router export, Instance.provide with InstanceBootstrap, removal from instance.ts, three routing branches, old middleware deletion, server.ts import update, and directory resolution."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests grouped under clear section headers 'Fail-to-pass' and 'Pass-to-pass' with descriptive names and docstrings."
+      "reason": "Tests have descriptive names, docstrings, and a section header '# Fail-to-pass (pr_diff)' grouping them."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task is code refactoring, not structured data production."
+      "reason": "Task is a code refactor, no structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths and identifiers are consistent throughout instruction and tests."
+      "reason": "Filenames and identifiers (WorkspaceRouterMiddleware, InstanceBootstrap, x-opencode-directory) appear consistent."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "Instruction names the files to investigate (appropriate as localization is part of setup), but doesn't name specific lines to change."
+      "reason": "Instruction references files by role and names, not specific line numbers; localization reasoning still required."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "Code-only task, no config edits involved."
+      "reason": "Code-only task, no config edits."
     }
   },
   "tier_a_fails": [],

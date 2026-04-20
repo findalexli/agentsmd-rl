@@ -1,0 +1,170 @@
+version: '2.0'
+source:
+  repo: microsoft/playwright
+  pr: 38934
+  base_commit: 3cdf7ca18324b9a0aa0ec80d818c2f9602b0ef60
+  merge_commit: 56d7bbfd89e10f304bb6f26547ef8a33fc34d3e6
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript and Markdown files exist and are non-empty
+- id: enter_key_waits_for_completion
+  type: fail_to_pass
+  origin: pr_diff
+  description: Pressing Enter triggers waitForCompletion to wait for navigation
+- id: enter_key_auto_snapshots
+  type: fail_to_pass
+  origin: pr_diff
+  description: Pressing Enter calls setIncludeSnapshot for automatic page state capture
+- id: skill_md_no_separate_snapshot_step
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md core workflow does not list Snapshot as a separate numbered
+    step
+- id: skill_md_workflow_step_count
+  type: fail_to_pass
+  origin: pr_diff
+  description: Core workflow has at most 3 steps after removing manual snapshot step
+- id: non_enter_keys_press_directly
+  type: pass_to_pass
+  origin: static
+  description: Non-Enter keys call keyboard.press directly without waitForCompletion
+- id: press_tool_still_exported
+  type: pass_to_pass
+  origin: static
+  description: press tool is still part of the default export array
+- id: press_sequentially_submit_unchanged
+  type: pass_to_pass
+  origin: static
+  description: pressSequentially with submit still uses waitForCompletion and setIncludeSnapshot
+- id: keyboard_file_structure
+  type: pass_to_pass
+  origin: static
+  description: Keyboard.ts has valid structure with required exports
+- id: skill_md_structure
+  type: pass_to_pass
+  origin: static
+  description: SKILL.md has valid structure with required sections
+- id: repo_npm_install
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo npm install succeeds
+- id: repo_eslint_keyboard
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint passes on keyboard.ts
+- id: repo_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo build succeeds
+- id: repo_check_deps
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo dependency check passes
+- id: repo_lint_packages
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo package linting passes
+- id: repo_test_types
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo test types check passes
+- id: repo_tsc
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript compilation passes
+- id: repo_lint_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Test file linting passes
+rubric:
+- rule: SKILL.md core workflow instructions are clear and concise, consistent with
+    existing style
+  source:
+    path: packages/playwright/src/mcp/terminal/SKILL.md
+    lines: 1-10
+    commit: 3cdf7ca18324b9a0aa0ec80d818c2f9602b0ef60
+- rule: SKILL.md core workflow no longer lists snapshot as a separate numbered step
+  source:
+    path: packages/playwright/src/mcp/terminal/SKILL.md
+    lines: 20-24
+    commit: 56d7bbfd89e10f304bb6f26547ef8a33fc34d3e6
+  reference: '2. Interact using refs from the snapshot
+
+    3. Re-snapshot after significant changes'
+- rule: SKILL.md core workflow has 3 or fewer steps instead of 4
+  source:
+    path: packages/playwright/src/mcp/terminal/SKILL.md
+    lines: 20-24
+    commit: 56d7bbfd89e10f304bb6f26547ef8a33fc34d3e6
+  reference: '2. Interact using refs from the snapshot
+
+    3. Re-snapshot after significant changes'
+config_edits:
+- path: packages/playwright/src/mcp/terminal/SKILL.md
+  tier: 1
+  gold_added: '2. Interact using refs from the snapshot
+
+    3. Re-snapshot after significant changes'
+  gold_removed: '2. Snapshot: `playwright-cli snapshot` (returns elements with refs
+    like `ref=e1`, `ref=e2`)
+
+    3. Interact using refs from the snapshot
+
+    4. Re-snapshot after navigation or significant DOM changes'
+distractors:
+- rule: Do not take screenshots unless absolutely necessary
+  source:
+    path: packages/playwright/src/agents/playwright-test-planner.agent.md
+    lines: '39'
+  source_text: '   - Do not take screenshots unless absolutely necessary'
+  collision_type: rule_conflict
+  why_distracting: The PR explicitly adds a snapshot via `response.setIncludeSnapshot();`
+    when pressing Enter. An AI might follow this planner agent rule and avoid implementing
+    the snapshot feature.
+  severity: high
+- rule: For inherently dynamic data, utilize regular expressions to produce resilient
+    locators
+  source:
+    path: packages/playwright/src/agents/playwright-test-healer.agent.md
+    lines: '39'
+  source_text: '   - For inherently dynamic data, utilize regular expressions to produce
+    resilient locators'
+  collision_type: scope_ambiguity
+  why_distracting: This rule applies to writing reliable Playwright tests. The PR
+    modifies the core `keyboard.ts` framework code which relies on internal element
+    abstractions, not test locators.
+  severity: low
+- rule: Never wait for networkidle or use other discouraged or deprecated apis
+  source:
+    path: packages/playwright/src/agents/playwright-test-healer.agent.md
+    lines: '55'
+  source_text: '- Never wait for networkidle or use other discouraged or deprecated
+    apis'
+  collision_type: scope_ambiguity
+  why_distracting: Intended for end-users writing tests. Framework code often needs
+    to handle waits inherently (e.g., the PR uses `waitForCompletion`). An AI might
+    mistakenly avoid adding waiting logic.
+  severity: medium
+- rule: File should contain single test
+  source:
+    path: packages/playwright/src/agents/playwright-test-generator.agent.md
+    lines: '41'
+  source_text: '  - File should contain single test'
+  collision_type: scope_ambiguity
+  why_distracting: This dictates test file structure for generated test code. An AI
+    modifying TypeScript files in the framework repository might assume this applies
+    to all files.
+  severity: medium
+- rule: Includes a comment with the step text before each step execution. Do not duplicate
+    comments if step requires multiple actions.
+  source:
+    path: packages/playwright/src/agents/playwright-test-generator.agent.md
+    lines: 45-46
+  source_text: "  - Includes a comment with the step text before each step execution.\
+    \ Do not duplicate comments if step requires\n    multiple actions."
+  collision_type: scope_ambiguity
+  why_distracting: This rule enforces a specific commenting style for generated Playwright
+    tests. An AI might erroneously apply this style to the framework's internal tools.
+  severity: low

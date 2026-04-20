@@ -1,61 +1,56 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all three files (grid.tsx, dashboardApp.ts, DEPS.list), the API endpoint /api/sessions/list, the clientInfo and sessions fields, the createClientInfo import from '../cli-client/registry', the 'Global' fallback, currentWorkspace variable usage, and localeCompare sorting. All assert'd specifics in tests (file paths, string literals like 'Global', schema keys like sessions/clientInfo, import path '../cli-client/registry.ts') are discoverable from the instruction."
+      "reason": "All file paths, import paths ('../cli-client/registry'), response fields (sessions, clientInfo), and 'Global' default are named in instruction.md."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction essentially dictates the exact implementation: 'const currentWorkspace = clientInfo?.workspaceDir || \"Global\"', use 'key === currentWorkspace', import createClientInfo from '../cli-client/registry', response must include { sessions, clientInfo }. This goes beyond describing what's broken and specifies exactly what code to write."
+      "outcome": "pass",
+      "reason": "Instruction describes what behavior is needed without giving exact code changes."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact source patterns like 'currentWorkspace = clientInfo?.workspaceDir || \"Global\"' (regex match), 'key === currentWorkspace' (string inclusion), exact import statement \"import { createClientInfo } from '../cli-client/registry'\", and exact sendJSON pattern 'sendJSON(response, { sessions, clientInfo })'. An alternative correct fix using different variable names (e.g., 'activeWorkspace'), different fallback syntax (e.g., ternary operator), or different response construction would fai"
+      "reason": "test_grid_workspace_ordering requires exact regex match for 'currentWorkspace = clientInfo?.workspaceDir || \"Global\"' and literal 'key === currentWorkspace'; test_dashboard_api_sends_client_info requires exact sendJSON shape '{ sessions, clientInfo }' \u2014 alternative valid implementations (different variable names, inline expressions, different property ordering) would fail."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_grid_workspace_ordering, test_dashboard_api_sends_client_info, test_deps_declares_cli_client_import) are purely text/pattern matching: they read source files and check for specific strings/regex patterns. None import or execute the actual code. test_grid_workspace_ordering does simulate sorting logic but with its own reimplementation, not by calling the actual code."
+      "outcome": "pass",
+      "reason": "Tests run node scripts that simulate sort logic and also run npm build/lint/tsc, not just string checks."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "test_deps_declares_cli_client_import only checks if a string exists in a file. test_dashboard_api_sends_client_info only checks source text patterns. test_grid_workspace_ordering checks source text and then simulates its own sorting logic (not the actual code). A stub that simply contains the right text patterns without correct runtime behavior would pass all f2p tests."
+      "outcome": "pass",
+      "reason": "f2p tests require specific source patterns plus simulated sort behavior giving different outputs; a stub wouldn't satisfy."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All three behavioral requirements from the instruction (API includes clientInfo, grid sorts current workspace first with Global fallback, DEPS.list updated) are tested by corresponding test functions."
+      "reason": "Tests cover API response, grid sorting, default Global behavior, and DEPS.list update."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-grouped with section comments (fail_to_pass, pass_to_pass, config-derived, repo_tests), each function has a descriptive name and docstring explaining what it checks."
+      "reason": "Tests grouped with section comments (fail_to_pass, pass_to_pass, repo_tests) with docstrings."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The instruction documents the API response schema: the /api/sessions/list response must include both 'sessions' and 'clientInfo' fields, with clientInfo containing workspaceDir."
+      "reason": "The response schema { sessions, clientInfo } is documented in instruction.md."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and tests."
+      "reason": "Paths and names are consistent."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction specifies exact implementation details: 'use it to identify the current workspace group', 'When clientInfo.workspaceDir is undefined, treat Global as the current workspace', 'Use the identified current workspace value (not the raw clientInfo?.workspaceDir property)' \u2014 this last point specifically tells the agent to create a local variable rather than use the property directly, which is the exact bug fix."
+      "outcome": "pass",
+      "reason": "Files to look at are listed but exact lines/code not given; localization is appropriate given scope."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The DEPS.list change is a single line addition, and the gold patch is localized across three files with minimal changes. No full-file rewrites."
+      "reason": "DEPS.list edit is a single-line addition, bounded."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 6,
-  "fail_count": 5
+  "tier_c_fails": [],
+  "pass_count": 10,
+  "fail_count": 1
 }

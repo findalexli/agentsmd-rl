@@ -1,0 +1,169 @@
+task_name: "langchain-todo-middleware-speedup"
+description: "Speed up TodoListMiddleware initialization by replacing dynamic function creation with StructuredTool.from_function"
+
+source:
+  repo: "langchain-ai/langchain"
+  pr_number: 36311
+  base_commit: "89cd0caa54d541e33ae87224c8e277bcbb026020"
+  merge_commit: "954a23094d15b91ae2137cbfabd3870cb8853a5e"
+  pr_title: "chore(langchain): speed up todo list middleware init"
+
+checks:
+  # Sanity check (pass_to_pass)
+  - id: test_todo_file_exists
+    type: pass_to_pass
+    origin: sanity
+    description: "Target file exists in the repository"
+
+  # Import pattern checks (fail_to_pass)
+  - id: test_imports_no_type_checking_for_runtime
+    type: fail_to_pass
+    origin: agent_config
+    description: "Runtime and Awaitable/Callable should be imported directly, not under TYPE_CHECKING"
+    source:
+      file: "CLAUDE.md"
+      section: "Core development principles"
+
+  - id: test_imports_structured_tool
+    type: fail_to_pass
+    origin: agent_config
+    description: "StructuredTool should be imported from langchain_core.tools"
+    source:
+      file: "CLAUDE.md"
+      section: "Code quality standards"
+
+  - id: test_imports_pydantic
+    type: fail_to_pass
+    origin: code_quality
+    description: "Pydantic BaseModel and Field should be imported for input schema"
+
+  - id: test_imports_tool_runtime
+    type: fail_to_pass
+    origin: code_quality
+    description: "ToolRuntime should be imported from langchain.tools"
+
+  - id: test_no_future_annotations
+    type: fail_to_pass
+    origin: code_quality
+    description: "from __future__ import annotations should be removed"
+
+  # Structural checks (fail_to_pass)
+  - id: test_write_todos_input_model_exists
+    type: fail_to_pass
+    origin: code_quality
+    description: "WriteTodosInput Pydantic model should be defined with todos field"
+
+  - id: test_standalone_write_todos_function
+    type: fail_to_pass
+    origin: code_quality
+    description: "_write_todos standalone function should use ToolRuntime type"
+
+  - id: test_structured_tool_in_init
+    type: fail_to_pass
+    origin: code_quality
+    description: "TodoListMiddleware.__init__ should use StructuredTool.from_function with args_schema"
+
+  # Behavioral checks (fail_to_pass)
+  - id: test_todo_list_middleware_instantiation
+    type: fail_to_pass
+    origin: code_quality
+    description: "TodoListMiddleware should be instantiable and have correct tools attribute"
+
+  - id: test_tool_is_structured_tool
+    type: fail_to_pass
+    origin: code_quality
+    description: "The tool should be a StructuredTool instance with correct properties"
+
+  - id: test_write_todos_input_schema
+    type: fail_to_pass
+    origin: code_quality
+    description: "WriteTodosInput should be a valid Pydantic model with todos field"
+
+  # Performance check (fail_to_pass)
+  - id: test_initialization_performance
+    type: fail_to_pass
+    origin: code_quality
+    description: "TodoListMiddleware initialization should be fast (no dynamic function creation overhead)"
+
+  # Repo tests (pass_to_pass)
+  - id: test_repo_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Existing repo unit tests should pass"
+
+  - id: test_repo_todo_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Todo middleware unit tests should pass"
+
+  - id: test_repo_middleware_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "All middleware unit tests should pass"
+
+  - id: test_repo_lint_package
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Package code lint checks should pass"
+
+  - id: test_repo_lint_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Test code lint checks should pass"
+
+rubric:
+  - rule: "Use type hints and return types for all Python code"
+    type: soft
+    description: "All Python code must include type hints and return types"
+    source:
+      file: "CLAUDE.md"
+      section: "Code quality standards"
+
+  - rule: "Use descriptive, self-explanatory variable names"
+    type: soft
+    description: "Variable and function names should be clear and descriptive"
+    source:
+      file: "CLAUDE.md"
+      section: "Code quality standards"
+
+  - rule: "Follow existing patterns in the codebase"
+    type: soft
+    description: "Changes should follow existing patterns in the codebase being modified"
+    source:
+      file: "CLAUDE.md"
+      section: "Code quality standards"
+
+  - rule: "Maintain stable public interfaces"
+    type: soft
+    description: "Preserve function signatures, argument positions, and names for exported/public methods"
+    source:
+      file: "CLAUDE.md"
+      section: "Core development principles"
+
+  - rule: "Use Google-style docstrings with Args section"
+    type: soft
+    description: "All public functions should use Google-style docstrings"
+    source:
+      file: "CLAUDE.md"
+      section: "Documentation standards"
+
+  - rule: "Focus on why rather than what in descriptions"
+    type: soft
+    description: "Documentation should explain why, not just what"
+    source:
+      file: "CLAUDE.md"
+      section: "Documentation standards"
+
+  - rule: "Types go in function signatures, NOT in docstrings"
+    type: soft
+    description: "Do not repeat type information in docstrings"
+    source:
+      file: "CLAUDE.md"
+      section: "Documentation standards"
+
+  - rule: "Ensure American English spelling"
+    type: soft
+    description: "Use American English spelling (behavior, not behaviour)"
+    source:
+      file: "CLAUDE.md"
+      section: "Documentation standards"

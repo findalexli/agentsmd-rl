@@ -1,63 +1,61 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert on the specific file path 'crates/sui-json-rpc/src/authority_state.rs' (TARGET_FILE), function names 'get_object_read' and 'get_owned_coins', the variable name 'coin_reservations_enabled', and the exact pattern 'if !coin_reservations_enabled { HashMap::new()'. While instruction.md mentions the variable name and HashMap pattern, it never explicitly names the target file 'crates/sui-json-rpc/src/authority_state.rs'. The agent must discover this file path on its own."
+      "reason": "Tests assert on the specific file path 'crates/sui-json-rpc/src/authority_state.rs' and function names 'get_object_read' and 'get_owned_coins', but instruction.md never names the target file or these functions."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly states the exact fix: 'Define a boolean variable named coin_reservations_enabled', 'Use the pattern if !coin_reservations_enabled { HashMap::new() }', 'Access the protocol configuration via the epoch store's protocol_config() method', and the exact && operator combination with ObjectRead::NotExists. This is not just describing what's broken \u2014 it's prescribing the exact implementation."
+      "reason": "Instruction explicitly dictates variable name 'coin_reservations_enabled', the exact pattern 'if !coin_reservations_enabled { HashMap::new() }', and the use of '&&' combined with ObjectRead::NotExists \u2014 these are implementation details of the fix."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: the exact variable name 'coin_reservations_enabled' (test_get_owned_coins_has_protocol_gating), the exact pattern 'if !coin_reservations_enabled { HashMap::new()' via regex, and the specific regex pattern combining NotExists with && and enable_coin_reservation_obj_refs(). An alternative correct fix using a different variable name (e.g., 'reservations_on') or different control flow (e.g., match statement, early return with different structure)"
+      "reason": "Tests assert on the specific variable name 'coin_reservations_enabled' and exact pattern 'if !coin_reservations_enabled\\s*\\{\\s*HashMap::new\\(\\)', rejecting valid alternatives like different variable names or equivalent logic such as 'if coin_reservations_enabled { build_map } else { HashMap::new() }'."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Tests test_get_object_read_has_protocol_gating and test_get_owned_coins_has_protocol_gating are purely text-matching: they read the source file and use regex/string assertions like 'assert \"coin_reservations_enabled\" in content' and regex searches on file content. While test_cargo_check and test_clippy_passes do execute subprocesses, the core behavioral tests (f2p tests) are text-only inspections, not behavioral verification."
+      "reason": "test_get_object_read_has_protocol_gating and test_get_owned_coins_has_protocol_gating only do regex/substring checks on source file content; only cargo check/clippy/fmt actually execute code, and none test runtime behavior of the gating."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "The f2p tests (test_get_object_read_has_protocol_gating and test_get_owned_coins_has_protocol_gating) only check for the presence of specific strings/patterns in the source file. A trivial implementation that adds a dead-code comment containing 'coin_reservations_enabled', 'enable_coin_reservation_obj_refs()', 'if !coin_reservations_enabled { HashMap::new()' and the NotExists pattern as a string literal in a comment would pass these regex tests without actually fixing the bug."
+      "outcome": "pass",
+      "reason": "The text-matching tests require specific strings like 'enable_coin_reservation_obj_refs()' and 'coin_reservations_enabled' plus patterns that a stub wouldn't produce."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "instruction.md requires that 'When enable_coin_reservation_obj_refs() returns false, object reads should NOT return fake coins' and 'owned coin queries should NOT include fake coins', and the reverse when true. These actual behavioral requirements are not tested \u2014 only string patterns in source code are checked. The e2e tests from the gold solution patch are not included in test_outputs.py."
+      "reason": "Instruction requires runtime behavior (returning NotExists when disabled, no fake coins in owned coin queries), but tests only grep source code; no behavioral RPC test is present in test_outputs.py."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_cargo_check, test_get_object_read_has_protocol_gating, etc.), have docstrings explaining what they verify, and are logically grouped by concern."
+      "reason": "Tests are named descriptively with docstrings explaining each check."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task is about modifying Rust source code, not producing structured data output like JSON/CSV/API/DB schemas."
+      "reason": "No structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in instruction.md or test files."
+      "reason": "No typos detected in paths or commands."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md prescribes exact implementation details: specific variable name 'coin_reservations_enabled', exact code pattern 'if !coin_reservations_enabled { HashMap::new() }', exact method chain 'epoch store's protocol_config() method', and the exact && operator combination. While it doesn't name the file, it specifies the solution at line-level granularity."
+      "outcome": "pass",
+      "reason": "Instruction does not name specific file paths or line numbers; it describes 'the JSON-RPC path' at a domain level."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config-edit task."
+      "reason": "Code-only task."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests",
-    "instruction_no_hint_leakage"
+    "behavior_in_tests"
   ],
-  "pass_count": 2,
-  "fail_count": 7
+  "pass_count": 4,
+  "fail_count": 5
 }

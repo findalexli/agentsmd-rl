@@ -1,0 +1,54 @@
+{
+  "model": "claude-opus-4-7",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "Instruction names PrismaPgAdapterFactory, pg.ts, connectionString property, externalPool=null, and the exact example URL matching the test assertions."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction describes what the result should look like (config as PoolConfig with connectionString) without giving exact code edits."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check config is an object with connectionString property and adapter's underlyingDriver.options.connectionString \u2014 any correct implementation would satisfy these."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests invoke Node subprocesses that instantiate PrismaPg, call connect(), and inspect runtime behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "Tests require actual normalization logic; a stub wouldn't produce config.connectionString matching the input URL."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "String URL acceptance, config normalization, externalPool=null (implicit via connect() success), and existing tests pass are all verified."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Each test has a descriptive name and docstring explaining f2p vs p2p and the buggy/fixed behavior."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task is code behavior, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "Paths like packages/adapter-pg/src/pg.ts and commands are consistent between instruction and tests."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction names the target file, which is appropriate since localization is not the challenge; no exact line numbers or code shown."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "Code-only task, no config edits."
+    }
+  },
+  "tier_a_fails": [],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
+}

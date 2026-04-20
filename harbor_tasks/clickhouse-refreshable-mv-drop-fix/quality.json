@@ -1,61 +1,57 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert exact strings like 'Don't ignore DROP for refreshable materialized views' (test_refreshable_view_check_present), exact variable name 'is_refreshable_view', exact cast 'dynamic_cast<StorageMaterializedView *>(table.get())', exact regex pattern 'if\\s*\\(\\s*!secondary_query\\s*&&\\s*!is_refreshable_view' (test_logic_condition_includes_refreshable_check). The instruction.md does not specify these exact variable names, cast syntax, comment text, or condition ordering. It only says generical"
+      "outcome": "pass",
+      "reason": "instruction.md names the target file src/Interpreters/InterpreterDropQuery.cpp, the include header StorageMaterializedView.h, mentions comment must contain TRUNCATE and refresh, and the is_refreshable_view logic."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md's 'What the Tests Check' section explicitly tells the agent to include '#include <Storages/StorageMaterializedView.h>', add a comment with 'TRUNCATE' and 'refresh', use logic to detect refreshable materialized views, and modify the condition controlling DROP-to-TRUNCATE conversion. Combined with specifying the exact file and method (executeToTableImpl), this essentially prescribes the solution rather than just describing the bug."
+      "outcome": "pass",
+      "reason": "Instruction describes what's broken and what conditions must hold, but doesn't give the exact code diff."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact variable name 'is_refreshable_view', exact comment text 'Don\\'t ignore DROP for refreshable materialized views', exact cast syntax 'dynamic_cast<StorageMaterializedView *>(table.get())', exact regex 'if\\s*\\(\\s*!secondary_query\\s*&&\\s*!is_refreshable_view'. An alternative correct fix using different variable names (e.g., 'skip_truncate_conversion'), different detection methods (e.g., checking table engine name), or different condition or"
+      "reason": "Tests assert on gold-specific implementation details: exact variable name 'is_refreshable_view', exact regex '!secondary_query\\s*&&\\s*!is_refreshable_view' (order-specific), exact 'dynamic_cast<StorageMaterializedView *>(table.get())' (a valid alternative using checkAndGetTable or typeid would fail), and exact comment phrase \"Don't ignore DROP for refreshable materialized views\"."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The core f2p tests (test_storage_materialized_view_include, test_refreshable_view_check_present, test_logic_condition_includes_refreshable_check, test_comment_explains_rationale) are all purely text-matching assertions using 'assert X in content' or regex on file content. They never compile, execute, or test behavioral outcomes of the fix. The compilation test (test_code_compiles_with_clang) only checks for syntax errors, not behavior."
+      "reason": "The core fix tests (test_storage_materialized_view_include, test_refreshable_view_check_present, test_logic_condition_includes_refreshable_check, test_comment_explains_rationale) are all string/regex grep on source; no test actually compiles or runs ClickHouse to verify behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for specific strings and patterns (include directive, dynamic_cast, is_refreshable_view variable, specific comment text, regex pattern in condition) that are not present in the original file. A stub or no-op would not pass these tests."
+      "reason": "Tests require specific substrings and a regex match on the condition ordering, which a stub cannot satisfy without implementing the fix structure."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction specifies four checks (include directive, comment with TRUNCATE/refresh, logic to detect refreshable views, condition excluding refreshable views) and all four are tested in test_storage_materialized_view_include, test_comment_explains_rationale, test_refreshable_view_check_present, and test_logic_condition_includes_refreshable_check respectively."
+      "reason": "Tests cover the include, the detection logic, the condition update, and the explanatory comment, matching instruction requirements."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_target_file_exists, test_storage_materialized_view_include, test_refreshable_view_check_present, etc.), have docstrings, and the file has a module-level docstring explaining the purpose."
+      "reason": "Tests have descriptive names and docstrings grouped by purpose (fix verification, style checks, repo-wide checks)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves editing a C++ source file, not producing structured data output."
+      "reason": "No structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "Filenames and identifiers consistent between instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md names the exact file ('src/Interpreters/InterpreterDropQuery.cpp') and exact method ('executeToTableImpl()'), plus specifies exact implementation patterns to look for (the include, dynamic_cast, isRefreshable(), specific comment text). This goes well beyond describing the bug."
+      "outcome": "pass",
+      "reason": "Instruction names the file and method, which is reasonable for localization; it doesn't name exact lines."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying a C++ source file, not a config edit task."
+      "reason": "Code-only task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
-    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 4,
-  "fail_count": 5
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 2
 }

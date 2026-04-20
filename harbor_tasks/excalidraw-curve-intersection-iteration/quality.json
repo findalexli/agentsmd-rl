@@ -1,59 +1,57 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert on specific literals like 'solveWithAnalyticalJacobian(c, l, t0, s0, 1e-2, 4)', 'lineSegmentIntersectionPoints', 'lineSegment(bezierEquation(c, 0), bezierEquation(c, 1 / 20))', and the exact file path 'packages/math/src/curve.ts'. The instruction.md never mentions these function names, the iteration limit parameter, the fallback code pattern, or the specific file path. An agent reading only instruction.md cannot discover these specifics."
+      "reason": "Tests assert specific literal strings like 'solveWithAnalyticalJacobian(c, l, t0, s0, 1e-2, 4)' and removal of 'lineSegmentIntersectionPoints' import, but instruction.md never mentions these function names, iteration counts, or imports."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "instruction.md describes the problem (convergence issues in curve intersection) and asks the agent to identify and fix the issue, without specifying the exact change (e.g., changing iteration count from 3 to 4 or removing fallback code)."
+      "reason": "Instruction describes the problem (convergence issues) without specifying the exact fix (changing iteration count from 3 to 4)."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert exact string patterns like 'solveWithAnalyticalJacobian(c, l, t0, s0, 1e-2, 4)' via regex, and assert absence of 'lineSegmentIntersectionPoints' anywhere in the file. An alternative correct fix (e.g., using iterLimit=5, or a different convergence approach entirely, or keeping the import but fixing the algorithm differently) would fail these tests despite being functionally correct."
+      "reason": "test_iteration_count_increased hardcodes the literal 'solveWithAnalyticalJacobian(c, l, t0, s0, 1e-2, 4)' and test_fallback_code_removed requires removal of specific fallback code; an equally valid fix (e.g., iterLimit=5, or keeping fallback with fixed tolerance) would fail."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "test_iteration_count_increased, test_fallback_code_removed, and test_unused_import_removed are purely text-matching tests (reading file content and checking string/regex patterns). While some tests do run subprocesses (typecheck, lint, build, vitest), the core fail-to-pass tests (test_iteration_count_increased, test_fallback_code_removed) are entirely 'assert X in open(path).read()' style."
+      "outcome": "pass",
+      "reason": "Several tests execute subprocesses (yarn test:typecheck, vitest, build:math) in addition to string checks."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "test_curve_intersection_accuracy runs 'yarn test:math -- curve' but explicitly says 'they may not exist, that's OK' and only fails on actual FAIL output. The primary f2p tests (test_iteration_count_increased, test_fallback_code_removed) are text-matching only - they check file content, not behavior. A trivial sed replacement changing '3' to '4' and removing lines would pass without understanding the convergence fix."
+      "outcome": "pass",
+      "reason": "The build, typecheck, and vitest curve tests actually execute code and would catch a stub."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: fixing convergence, removing unnecessary code, maintaining type safety, passing the test suite. Tests cover iteration count change, fallback removal, typecheck, lint, prettier, build, and curve tests - all behaviors mentioned in instruction.md."
+      "reason": "Instruction asks for typecheck, lint, prettier, build, and curve tests to pass, all of which are tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_iteration_count_increased, test_fallback_code_removed, etc.), each has a docstring explaining purpose, and they are logically grouped by concern (code changes vs. repo checks)."
+      "reason": "Tests have descriptive names and docstrings explaining each check."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data like JSON/CSV/API/DB."
+      "reason": "No structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across the task files."
+      "reason": "No typos observed in paths or commands."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "instruction.md only says 'Examine the curve intersection logic in the math package' without naming exact files, line numbers, or specific function names. It describes the problem domain without localizing the bug precisely."
+      "reason": "Instruction points to the math package generally, which is reasonable given the task domain, without naming the specific file or line."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "Code-only task."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 5,
-  "fail_count": 4
+  "pass_count": 7,
+  "fail_count": 2
 }

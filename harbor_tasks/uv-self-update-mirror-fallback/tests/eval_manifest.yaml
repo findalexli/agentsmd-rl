@@ -1,0 +1,145 @@
+version: '2.0'
+source:
+  repo: astral-sh/uv
+  pr: 14936
+  base_commit: 7228ad62b9de7f9b5d887ef4b2be9bb033a04191
+checks:
+- id: uv_mirror_url
+  type: fail_to_pass
+  origin: pr_diff
+  description: Binary::Uv manifest_urls arm constructs URL from VERSIONS_MANIFEST_MIRROR
+- id: uv_mirror_order
+  type: fail_to_pass
+  origin: pr_diff
+  description: Binary::Uv lists mirror URL before canonical GitHub URL
+- id: manifest_parse_fallback
+  type: fail_to_pass
+  origin: pr_diff
+  description: ManifestParse errors trigger URL fallback in should_try_next_url
+- id: manifest_utf8_fallback
+  type: fail_to_pass
+  origin: pr_diff
+  description: ManifestUtf8 errors trigger URL fallback in should_try_next_url
+- id: ruff_urls_intact
+  type: pass_to_pass
+  origin: pr_diff
+  description: Binary::Ruff still has both mirror and canonical URLs
+- id: existing_fallback_intact
+  type: pass_to_pass
+  origin: pr_diff
+  description: Download and ManifestFetch still trigger fallback in should_try_next_url
+- id: stream_fallback_intact
+  type: pass_to_pass
+  origin: pr_diff
+  description: Stream errors still trigger fallback in should_try_next_url
+- id: no_panic_unreachable
+  type: pass_to_pass
+  origin: agent_config
+  description: No panic! or unreachable! in manifest_urls or should_try_next_url
+  source:
+    path: CLAUDE.md
+    lines: '7'
+    commit: 7228ad62b9de7f9b5d887ef4b2be9bb033a04191
+- id: no_unsafe_blocks
+  type: pass_to_pass
+  origin: agent_config
+  description: No unsafe code blocks in manifest_urls or should_try_next_url
+  source:
+    path: CLAUDE.md
+    lines: '7'
+    commit: 7228ad62b9de7f9b5d887ef4b2be9bb033a04191
+- id: no_allow_attribute
+  type: pass_to_pass
+  origin: agent_config
+  description: 'No #[allow()] in modified functions — prefer #[expect()]'
+  source:
+    path: CLAUDE.md
+    lines: '10'
+    commit: 7228ad62b9de7f9b5d887ef4b2be9bb033a04191
+- id: uv_arm_not_stub
+  type: fail_to_pass
+  origin: static
+  description: Binary::Uv arm has >= 2 parse(format!()) calls, not a stub
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Python code passes ruff linting
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Python code passes ruff format check
+- id: test_repo_typos
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo passes typos spell check
+- id: test_repo_validate_pyproject
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's pyproject.toml passes validation
+- id: test_repo_shellcheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Shell scripts pass shellcheck validation
+- id: test_repo_cargo_shear
+  type: pass_to_pass
+  origin: repo_tests
+  description: Cargo dependencies are checked with cargo-shear
+- id: test_repo_rust_manifest_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Rust manifest URLs are properly formatted in source
+- id: test_repo_readme_transform
+  type: pass_to_pass
+  origin: repo_tests
+  description: README transformation script runs without errors
+rubric: []
+distractors:
+- rule: AVOID using `panic!`, `unreachable!`, `.unwrap()`, unsafe code, and clippy
+    rule ignores
+  collision_type: rule_conflict
+  why_distracting: The existing code uses `.unwrap()` for URL parsing in the `manifest_urls`
+    method. Trying to follow this rule by removing `.unwrap()` would require changing
+    the method signature to return a `Result`, causing a cascading refactor across
+    the codebase.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 8-8
+- rule: ALWAYS attempt to add a test case for changed behavior
+  collision_type: scope_ambiguity
+  why_distracting: Testing network fallback logic and malformed manifest responses
+    requires complex mocking of the Astral mirror and GitHub. The agent might waste
+    significant time trying to write integration tests for this, whereas the gold
+    solution correctly scopes the fix to just the implementation.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 3-3
+- rule: PREFER patterns like `if let` to handle fallibility
+  source:
+    path: CLAUDE.md
+    lines: '8'
+  source_text: '- PREFER patterns like `if let` to handle fallibility'
+  collision_type: would_cause_bug
+  why_distracting: An agent modifying the URL parsing logic might use `if let Ok(url)
+    = ...` instead of `.unwrap()` to elegantly handle the `Result` from `parse`. Since
+    these are statically defined URLs, silently ignoring failures with `if let` would
+    swallow a fatal parsing bug and cause the binary download step to fail inexplicably
+    without errors.
+  severity: high
+- rule: PREFER [`TypeName`] references when writing Rust doc comments
+  source:
+    path: CLAUDE.md
+    lines: '19'
+  source_text: '- PREFER [`TypeName`] references when writing Rust doc comments'
+  collision_type: rule_conflict
+  why_distracting: The diff updates a doc comment to mention 'malformed manifest responses'
+    in plain English. An agent following this rule might try to forcefully inject
+    type links like `[`Error::ManifestParse`]` into the comment, which would conflict
+    with the simpler, narrative style chosen for this method's documentation.
+  severity: low
+hierarchy_analysis: The config hierarchy is flat with a single `CLAUDE.md` file. The
+  agent must recognize that local consistency (using `.unwrap()` like the rest of
+  the `manifest_urls` method) overrides the global rule to avoid `.unwrap()`. Additionally,
+  the agent must use judgment to skip adding a test case despite the 'ALWAYS' directive,
+  as testing network fallback logic is out of scope for this simple bug fix.

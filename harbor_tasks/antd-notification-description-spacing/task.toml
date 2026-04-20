@@ -6,12 +6,10 @@ time_estimate = "20m"
 
 tags = ["react", "typescript", "css-in-js", "ui", "bugfix"]
 
-[source]
-repo = "https://github.com/ant-design/ant-design"
-pr = 57590
-base_commit = "501436e5f45e533679f797ee0ee58e2a391e566d"
-merge_commit = "1d36dfec5be5174376fe54f34a7abd1a7a128e38"
-
+source_repo = "https://github.com/ant-design/ant-design"
+source_pr = 57590
+source_base_commit = "501436e5f45e533679f797ee0ee58e2a391e566d"
+source_merge_commit = "1d36dfec5be5174376fe54f34a7abd1a7a128e38"
 [environment]
 dockerfile = "./environment/Dockerfile"
 
@@ -22,3 +20,6 @@ script = "./solution/solve.sh"
 [tests]
 script = "./tests/test.sh"
 outputs = "./tests/test_outputs.py"
+
+[verifier]
+env = { GEMINI_API_KEY = "${GEMINI_API_KEY:-}", ANTHROPIC_API_KEY = "${ANTHROPIC_API_KEY:-}" }

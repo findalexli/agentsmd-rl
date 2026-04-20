@@ -1,0 +1,56 @@
+{
+  "model": "claude-opus-4-7",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "Instruction names the file path, error codes -32600 and -32700, and the NDJSON protocol behavior that tests check for."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction describes the problem and expected behavior without prescribing specific code changes like 'use readline.createInterface'."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_ndjson_write_format asserts the literal string 'JSON.stringify(payload)' in the bundle, which forces a specific variable name 'payload'; a correct fix using e.g. JSON.stringify(message) would fail."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests build a bundle via esbuild and run tsc/oxlint/oxfmt subprocesses, though assertions are mostly textual on the bundle."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "Tests require removing Content-Length/Buffer.concat/readContentLength and preserving JSON.stringify and error codes \u2014 a stub server would fail these."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "NDJSON output, removal of Content-Length parsing, error code preservation, and build/lint all tested."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests have descriptive names and docstrings per function."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Not a structured data task."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "Paths and command names look correct."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction names the file but localization to that file is the task domain itself."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "Code-only task."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 1
+}

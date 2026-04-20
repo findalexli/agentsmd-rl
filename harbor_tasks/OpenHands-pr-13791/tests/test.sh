@@ -1,7 +1,16 @@
 #!/bin/bash
 set -e
 
-# Install pytest if not already installed
+# Install required dependencies
+cd /workspace/openhands/enterprise
+pip install -e . -q 2>/dev/null || pip install slack-sdk httpx pydantic -q 2>/dev/null || true
+
+# Also try to install from repo requirements if they exist
+if [ -f /workspace/openhands/requirements.txt ]; then
+    pip install -r /workspace/openhands/requirements.txt -q 2>/dev/null || true
+fi
+
+# Install pytest and test dependencies
 pip install pytest pytest-asyncio pytest-mock freezegun -q 2>/dev/null || true
 
 # Run the test_outputs.py file

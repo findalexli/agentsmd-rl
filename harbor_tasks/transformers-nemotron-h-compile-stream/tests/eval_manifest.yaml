@@ -1,0 +1,166 @@
+version: '2.0'
+source:
+  repo: huggingface/transformers
+  pr: 44854
+  base_commit: 20a233bdc5c0fae8fa116184f105adf498d44ba2
+  merge_commit: e87125508b9dad4a52894b131a53d4e93f4507ae
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: AST syntax check - both modeling and modular files parse without errors
+- id: block_forward_no_stream_context
+  type: fail_to_pass
+  origin: pr_diff
+  description: NemotronHBlock.forward must not create a stream context (cuda.stream
+    or nullcontext)
+- id: mixer_stream_with_compile_guard
+  type: fail_to_pass
+  origin: pr_diff
+  description: NemotronHMamba2Mixer.forward must have CUDA stream management guarded
+    by is_torchdynamo_compiling
+- id: modular_block_no_stream_context
+  type: fail_to_pass
+  origin: pr_diff
+  description: Modular NemotronHBlock.forward must also not have the stream context
+    pattern
+- id: no_contextlib_import
+  type: fail_to_pass
+  origin: pr_diff
+  description: Neither modeling nor modular file should import contextlib after stream
+    context removal
+- id: modular_mixer_has_forward_override
+  type: fail_to_pass
+  origin: pr_diff
+  description: Modular NemotronHMamba2Mixer must override forward with compile guard
+    and cuda stream
+- id: is_fast_path_available_sentinel
+  type: fail_to_pass
+  origin: pr_diff
+  description: Both files must define is_fast_path_available = False at module level
+- id: required_classes_preserved
+  type: pass_to_pass
+  origin: static
+  description: AST check - core class structure (NemotronHBlock, Mixer, PreTrained,
+    ForCausalLM) must be intact
+- id: block_forward_not_stub
+  type: fail_to_pass
+  origin: pr_diff
+  description: NemotronHBlock.forward has real implementation (residual add, mixer/norm
+    calls, return)
+- id: ruff_lint
+  type: pass_to_pass
+  origin: agent_config
+  description: Ruff lint passes on both modified files
+  source:
+    path: CLAUDE.md
+    lines: '2'
+    commit: 20a233bdc5c0fae8fa116184f105adf498d44ba2
+- id: test_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: "Ruff format check passes on modified files (repo CI: make style)"
+- id: test_modular_structure
+  type: pass_to_pass
+  origin: static
+  description: File content check - modeling file has required modular auto-generated
+    header
+- id: test_repo_py_compile_modeling
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - python -m py_compile modeling_nemotron_h.py
+- id: test_repo_py_compile_modular
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - python -m py_compile modular_nemotron_h.py
+- id: test_repo_nemotron_h_import_sort
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - ruff check --select I001 (import sorting) on modified files
+- id: test_repo_nemotron_h_py_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - python -m py_compile on both modified files
+- id: test_repo_nemotron_h_modeling_conventions
+  type: pass_to_pass
+  origin: static
+  description: AST check - modeling file follows HF naming conventions with required
+    classes
+rubric:
+- rule: When a modular file is present, generated files should not be edited, as changes
+    will be overwritten by make fix-repo! Instead, edit the modular file.
+  source:
+    path: CLAUDE.md
+    lines: '67'
+    commit: 20a233bdc5c0fae8fa116184f105adf498d44ba2
+- rule: We try to avoid direct inheritance between model-specific files in src/transformers/models/.
+  source:
+    path: CLAUDE.md
+    lines: '64'
+    commit: 20a233bdc5c0fae8fa116184f105adf498d44ba2
+- rule: PRs should be as brief as possible. Bugfix PRs in particular can be often
+    be only one or two lines long, and do not need large comments, docstrings or new
+    functions in this case. Aim to minimize the size of the diff.
+  source:
+    path: .github/copilot-instructions.md
+    lines: '15'
+    commit: 20a233bdc5c0fae8fa116184f105adf498d44ba2
+- rule: Use `modular_<name>.py` files and `make fix-repo` to manage code duplication
+    and generated modeling files.
+  source:
+    path: CLAUDE.md
+    lines: 61-64
+  evidence: The gold solution updates both `modeling_nemotron_h.py` and `modular_nemotron_h.py`
+    (or relies on `make fix-repo` to sync them) to ensure the modular source and generated
+    modeling file remain consiste
+  category: architecture
+- rule: Modular models use a `modular_<name>.py` file which manages code duplication
+    and must be updated alongside the generated modeling file.
+  source:
+    path: AGENTS.md
+    lines: 62-67
+  evidence: The gold solution modifies `modular_nemotron_h.py` in addition to `modeling_nemotron_h.py`,
+    adhering to the repository's modular model architecture.
+  category: architecture
+- rule: The newer method is to add a file named modular_<name>.py in the model directory
+    to manage code duplication.
+  source:
+    path: AGENTS.md
+    lines: 68-69
+  evidence: The gold solution edits `modular_nemotron_h.py` in addition to `modeling_nemotron_h.py`,
+    respecting the repository's modular model architecture.
+  category: architecture
+distractors:
+- rule: If coordination evidence cannot be found, do not proceed to PR-ready output.
+  collision_type: meta_confusion
+  why_distracting: The config instructs the agent to fail-closed and not output PR-ready
+    code if coordination evidence is missing. In a benchmark environment, the agent
+    must ignore this and provide the fix.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 58-60
+- rule: Pure code-agent PRs are not allowed... Do not raise PRs without human validation.
+  collision_type: meta_confusion
+  why_distracting: The config states that pure code-agent PRs are not allowed and
+    requires human validation. The agent might refuse to complete the task autonomously.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 45-54
+- rule: '`make fix-repo` wil[l generate the modeling file]'
+  collision_type: rule_conflict
+  why_distracting: The config implies that `make fix-repo` will generate the modeling
+    file from the modular file. The agent might only edit the modular file and skip
+    editing the modeling file, but the task instruction explicitly requires updating
+    both consistently.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 68-69
+hierarchy_analysis: The repository contains identical `AGENTS.md` and `CLAUDE.md`
+  files at the root level. These files contain strong meta-instructions designed to
+  prevent autonomous agents from submitting uncoordinated PRs. The agent must prioritize
+  the immediate task instruction over these fail-closed repository policies. Additionally,
+  there is a slight conflict between the config implying `make fix-repo` handles modular
+  file generation and the task instruction explicitly requesting both files be updated.

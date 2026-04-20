@@ -1,0 +1,153 @@
+version: "1.0"
+source:
+  pr_url: "https://github.com/dagster-io/dagster/pull/33312"
+  title: "[nux] add build-strategy flag to dg plus deploy"
+  base_commit: "2bf0f9b68618e6a0f9010512fded4d9dc869b1bd"
+  merge_commit: "df1242a193faf092f59bc35521750084d46883f2"
+  owner: "dagster-io"
+  repo: "dagster"
+  files_changed:
+    - "python_modules/libraries/dagster-dg-cli/dagster_dg_cli/cli/plus/deploy/commands.py"
+    - "python_modules/libraries/dagster-dg-cli/dagster_dg_cli/cli/plus/deploy/deploy_session.py"
+
+# Test verification
+checks:
+  # FAIL-TO-PASS: Tests that fail on base commit and pass with fix
+  - id: test_build_strategy_option_exists
+    type: fail_to_pass
+    origin: behavior
+    description: "--build-strategy option is defined with correct choices and default"
+
+  - id: test_build_strategy_on_deploy_group
+    type: fail_to_pass
+    origin: behavior
+    description: "--build-strategy is applied to deploy group command with correct parameter"
+
+  - id: test_build_strategy_on_build_and_push
+    type: fail_to_pass
+    origin: behavior
+    description: "--build-strategy is applied to build-and-push subcommand"
+
+  - id: test_build_strategy_enum_import
+    type: fail_to_pass
+    origin: behavior
+    description: "BuildStrategy enum is imported and converted from string parameter"
+
+  - id: test_build_artifact_signature_updated
+    type: fail_to_pass
+    origin: behavior
+    description: "build_artifact and _build_artifact_for_project function signatures updated"
+
+  - id: test_build_strategy_passed_to_build_impl
+    type: fail_to_pass
+    origin: behavior
+    description: "build_strategy parameter is passed to build_impl call"
+
+  - id: test_hybrid_pex_validation
+    type: fail_to_pass
+    origin: behavior
+    description: "Validation exists: HYBRID agents cannot use pex build strategy"
+
+  - id: test_build_strategy_passed_to_inner_functions
+    type: fail_to_pass
+    origin: behavior
+    description: "build_strategy is passed to _build_artifact_for_project in all call sites"
+
+  - id: test_build_strategy_type_hint_updated
+    type: fail_to_pass
+    origin: behavior
+    description: "TYPE_CHECKING block updated to include BuildStrategy import"
+
+  - id: test_build_strategy_passed_from_commands
+    type: fail_to_pass
+    origin: behavior
+    description: "build_strategy_enum is passed from deploy_group to build_artifact"
+
+  - id: test_hardcoded_docker_removed
+    type: fail_to_pass
+    origin: behavior
+    description: "Hardcoded BuildStrategy.docker replaced with parameter in build_impl"
+
+  - id: test_cli_help_includes_build_strategy
+    type: fail_to_pass
+    origin: behavior
+    description: "CLI help text includes --build-strategy option with choices"
+
+  - id: test_build_and_push_help_includes_build_strategy
+    type: fail_to_pass
+    origin: behavior
+    description: "build-and-push subcommand help includes --build-strategy option"
+
+  # PASS-TO-PASS: Repo tests that should continue to work
+  - id: test_ruff_formatting
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ruff formatting and linting passes"
+
+  - id: test_check_ruff
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's ruff check passes without auto-fixing (CI-style)"
+
+  - id: test_import_dagster_dg_cli
+    type: pass_to_pass
+    origin: repo_tests
+    description: "dagster_dg_cli package imports successfully"
+
+  - id: test_import_deploy_commands
+    type: pass_to_pass
+    origin: repo_tests
+    description: "deploy commands module (modified code) imports successfully"
+
+  - id: test_import_deploy_session
+    type: pass_to_pass
+    origin: repo_tests
+    description: "deploy session module (modified code) imports successfully"
+
+  - id: test_import_perf
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Import performance test - expensive libraries not imported at startup"
+
+# Rubric for agent behavior assessment
+# Extracted from CLAUDE.md coding conventions relevant to CLI code changes
+rubric:
+  - rule: "Use @record for dataclasses and immutable objects"
+    source: ".claude/coding_conventions.md"
+    relevance: "Data structures in Dagster should use @record decorator"
+
+  - rule: "Use built-in generic types for annotations (list[str], dict[str, Any])"
+    source: ".claude/coding_conventions.md"
+    relevance: "Type hints should use Python 3.9+ built-in generics"
+
+  - rule: "Never use typing.Dict, typing.List, typing.Set, typing.Tuple"
+    source: ".claude/coding_conventions.md"
+    relevance: "Use dict, list, set, tuple instead of typing variants"
+
+  - rule: "Use top-level imports; only function-scoped imports for lazy loading expensive modules"
+    source: ".claude/coding_conventions.md"
+    relevance: "dagster_cloud_cli imports should be lazy-loaded in CLI commands"
+
+  - rule: "Use click.echo() instead of print() for CLI output"
+    source: ".claude/coding_conventions.md"
+    relevance: "CLI output should use click.echo for proper handling"
+
+  - rule: "After any code changes, ALWAYS run make ruff"
+    source: "CLAUDE.md"
+    relevance: "Code formatting and linting is mandatory after changes"
+
+  - rule: "Use uv instead of pip for package management"
+    source: "CLAUDE.md"
+    relevance: "Package installation should use uv"
+
+  - rule: "Bias towards functional-style programming with lightweight immutable objects"
+    source: ".claude/coding_conventions.md"
+    relevance: "Prefer immutable patterns over mutation"
+
+  - rule: "Do not create imports into __init__.py files for internal classes"
+    source: ".claude/coding_conventions.md"
+    relevance: "Internal code should use absolute imports"
+
+  - rule: "Never use global singleton objects for services or stateful components"
+    source: ".claude/coding_conventions.md"
+    relevance: "Pass service instances explicitly as parameters"

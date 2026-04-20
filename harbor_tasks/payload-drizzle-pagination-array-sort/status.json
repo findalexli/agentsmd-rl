@@ -4,13 +4,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-16T01:52:27.611328",
-  "total_time": 5528.47,
-  "sandbox_id": "id91g530llzdm8ri3us0p",
-  "backend": "minimax",
+  "validated_at": "2026-04-16T12:53:17.209405",
+  "total_time": 96.54,
+  "sandbox_id": "ivw6jnml1x0j095hswswz",
+  "backend": "anthropic",
   "pipeline": "pipeline",
   "start_at": "judge",
-  "error": "The sandbox was not found: This error is likely due to sandbox timeout. You can modify the sandbox timeout by passing 'timeout' when starting the sandbox or calling '.set_timeout' on the sandbox with the desired timeout.",
   "nodes": {
     "scaffold": {
       "status": "ok",
@@ -45,25 +44,27 @@
     },
     "quality_gate": {
       "status": "DELETE",
-      "model": "claude-sonnet-4-6",
-      "backend": "oauth",
-      "time": 0.38,
+      "model": "claude-opus-4-7",
+      "backend": "anthropic",
+      "time": 0.2,
       "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', \"A:[A] pass_to_pass_coverage @ eval_manifest.yaml: no p2p regression guards \u2014 agent can delete failing code path and 'win'\", 'lint_tier_b:2', 'B:[B] no_network_during_tests @ tests/test.sh:8: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 26.28,
+      "time": 14.65,
       "tier_a_fails": [
-        "behavior_in_task_description",
         "no_solution_leakage",
         "solution_uniqueness_guard",
-        "tests_verify_behavior_not_text",
-        "test_not_tautological",
-        "anti_cheating_measures"
+        "tests_verify_behavior_not_text"
       ],
       "tier_b_fails": [],
-      "pass_count": 1,
-      "fail_count": 9
+      "pass_count": 4,
+      "fail_count": 5
+    },
+    "tests_rewrite": {
+      "status": "error",
+      "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":520,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 400 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"invalid_request_error\\\",\\\"message\\\":\\\"\\\\\\\"thinking.type.enabled\\\\\\\" is not supported for this model. Use \\\\\\\"thinking.type.adapt",
+      "time": 1.79
     }
   },
   "history": [
@@ -98,6 +99,14 @@
       "backend": "minimax",
       "time": 5528.47,
       "at": "2026-04-16T01:52:27.611328"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "anthropic",
+      "time": 96.54,
+      "at": "2026-04-16T12:53:17.209405"
     }
   ]
 }

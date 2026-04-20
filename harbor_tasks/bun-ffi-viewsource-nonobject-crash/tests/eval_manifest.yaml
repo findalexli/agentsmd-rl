@@ -1,0 +1,209 @@
+version: '2.0'
+source:
+  repo: oven-sh/bun
+  pr: 28361
+  base_commit: 0de7a806d108a56a2c9f87d5974c52384059c397
+  merge_commit: 70a2a77763eb1ab2ca30ada85a116f3554bc124f
+checks:
+- id: ffi_struct_integrity
+  type: pass_to_pass
+  origin: static
+  description: ffi.zig has balanced braces and all core FFI identifiers present
+- id: value_guard_rejects_non_objects
+  type: fail_to_pass
+  origin: pr_diff
+  description: generateSymbols condition rejects non-object symbol descriptor values
+- id: arg_types_cleanup_in_error_paths
+  type: fail_to_pass
+  origin: pr_diff
+  description: arg_types freed in error-return paths before clearAndFree (memory leak
+    fix)
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: generateSymbols retains substantive symbol-parsing logic
+- id: no_std_apis_in_diff
+  type: fail_to_pass
+  origin: agent_config
+  description: No prohibited std.* APIs (std.fs, std.posix, std.os) in agent changes
+  source:
+    path: src/CLAUDE.md
+    lines: '16'
+    commit: 0de7a806d108a56a2c9f87d5974c52384059c397
+- id: no_inline_import_in_diff
+  type: fail_to_pass
+  origin: agent_config
+  description: No inline @import() inside function bodies in agent changes
+  source:
+    path: src/CLAUDE.md
+    lines: '11'
+    commit: 0de7a806d108a56a2c9f87d5974c52384059c397
+- id: test_js_files_valid_syntax
+  type: pass_to_pass
+  origin: static
+  description: Repo's JavaScript/TypeScript files have valid syntax
+- id: test_tsconfig_valid
+  type: pass_to_pass
+  origin: static
+  description: Repo's tsconfig.json is valid
+- id: test_ffi_zig_parse_structure
+  type: pass_to_pass
+  origin: static
+  description: ffi.zig has valid Zig structure (balanced braces, valid keywords)
+- id: test_repo_file_structure
+  type: pass_to_pass
+  origin: static
+  description: Critical repo files exist and are non-empty
+- id: test_zig_no_banned_patterns
+  type: pass_to_pass
+  origin: static
+  description: Zig source doesn't contain banned patterns from CLAUDE.md
+- id: test_js_lint_oxlint
+  type: pass_to_pass
+  origin: static
+  description: Repo's JavaScript/TypeScript passes oxlint (skipped due to config incompatibility)
+- id: test_repo_oxlint_config_valid
+  type: pass_to_pass
+  origin: static
+  description: Repo's oxlint.json is valid JSON
+- id: test_repo_prettier_config_valid
+  type: pass_to_pass
+  origin: static
+  description: Repo's .prettierrc is valid JSON
+- id: test_repo_package_json_valid
+  type: pass_to_pass
+  origin: static
+  description: Repo's package.json is valid
+- id: test_repo_claude_md_exists
+  type: pass_to_pass
+  origin: static
+  description: Repo's CLAUDE.md exists and has expected content
+- id: test_repo_prettier_ffi_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: FFI test files pass prettier formatting check (npx prettier --check)
+- id: test_repo_prettier_scripts
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's JavaScript/TypeScript scripts pass prettier check
+- id: test_repo_package_json_parseable
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's package.json is valid JSON (verified via Node.js subprocess)
+- id: test_repo_tsconfig_json_parseable
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's tsconfig.json is valid JSON (verified via Node.js subprocess)
+- id: test_oxlint_ffi_source
+  type: pass_to_pass
+  origin: repo_tests
+  description: FFI TypeScript source passes oxlint (npx oxlint src/js/bun/ffi.ts)
+- id: test_oxlint_scripts
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo scripts pass oxlint (npx oxlint scripts/build.mjs)
+- id: test_prettier_config_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo config files pass prettier formatting (npx prettier --check .prettierrc
+    tsconfig.json)
+- id: test_ffi_test_files_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: FFI test files have valid structure (verified via Node.js)
+- id: test_repo_bunfig_valid_toml
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo bunfig.toml is valid and readable (subprocess python3 read check)
+- id: test_repo_flake_lock_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo flake.lock is valid JSON (verified via Node.js subprocess)
+- id: test_oxlint_internal_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Internal test files pass oxlint (npx oxlint test/internal/ban-words.test.ts)
+- id: test_prettier_package_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo package files pass prettier formatting (npx prettier --check package.json)
+- id: test_repo_meta_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo meta.json is valid JSON (verified via Node.js subprocess)
+- id: test_repo_prettier_readme
+  type: pass_to_pass
+  origin: repo_tests
+  description: README.md passes prettier formatting (npx prettier --check README.md)
+- id: test_repo_prettier_contributing
+  type: pass_to_pass
+  origin: repo_tests
+  description: CONTRIBUTING.md passes prettier formatting (npx prettier --check CONTRIBUTING.md)
+- id: test_oxlint_ffi_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: FFI test files pass oxlint (npx oxlint test/js/bun/ffi/*.test.ts)
+- id: test_oxlint_bun_apis
+  type: pass_to_pass
+  origin: repo_tests
+  description: Bun API source files pass oxlint (npx oxlint src/js/bun/sqlite.ts sql.ts)
+- id: test_node_compat_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Node.js compatibility files pass oxlint (npx oxlint src/js/node/fs.ts)
+rubric:
+- rule: In Zig code, be careful with allocators and use defer for cleanup where applicable.
+  source:
+    path: src/bun.js/api/ffi.zig
+    lines: 960-1201
+    commit: 0de7a806d108a56a2c9f87d5974c52384059c397
+  reference: "The gold solution adds arg_types cleanup loops in three error-return\
+    \ paths:\nfor (symbols.values()) |*function_| {\n    function_.arg_types.deinit(allocator);\n\
+    }\nThis properly deinitializes the arg_types array before clearAndFree in error\
+    \ paths.\n"
+- rule: Always use `bun.*` APIs instead of `std.*`
+  source:
+    path: src/bun.js/api/ffi.zig
+    lines: 1055-1058
+    commit: 0de7a806d108a56a2c9f87d5974c52384059c397
+  reference: 'When deinitializing the `arg_types` array to fix the memory leak, the
+
+    gold solution uses `bun.default_allocator` (or the locally available `allocator`
+
+    alias) rather than introducing a `std` allocator.
+
+    '
+- rule: Always use `bun.*` APIs instead of `std.*`.
+  source:
+    path: src/AGENTS.md
+    lines: 18-20
+  evidence: 'The gold solution uses `bun.default_allocator` to deinitialize `arg_types`
+    in one of the functions, adhering to the convention of using Bun''s specific APIs
+    and allocators rather than standard library '
+  category: tooling
+distractors:
+- rule: NEVER write tests that check for no "panic" or "uncaught exception" or similar
+    in the test output.
+  collision_type: scope_ambiguity
+  why_distracting: The issue explicitly describes a bug where the program crashes
+    (panics) instead of throwing a TypeError. An agent might be tempted to write a
+    test that simply checks that no panic occurs when passing a non-object, but the
+    rule strictly forbids writing tests that check for 'no panic'. The agent must
+    instead test for the specific TypeError.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 68-69
+- rule: Always use `bun.*` APIs instead of `std.*`.
+  collision_type: architecture_boundary
+  why_distracting: The agent needs to fix memory leaks by deinitializing `arg_types`.
+    It might try to import and use standard Zig allocators (like `std.heap.page_allocator`)
+    to manage this memory, but it must use the existing `allocator` or `bun.default_allocator`
+    as per the codebase conventions.
+  severity: low
+  source:
+    path: src/AGENTS.md
+    lines: 15-16
+hierarchy_analysis: The configuration hierarchy consists of a root-level file (`AGENTS.md`/`CLAUDE.md`)
+  focusing on testing and build commands, and a source-level file (`src/AGENTS.md`/`src/CLAUDE.md`)
+  focusing on Zig-specific conventions. They are complementary rather than conflicting.

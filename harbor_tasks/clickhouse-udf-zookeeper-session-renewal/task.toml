@@ -1,6 +1,12 @@
 name = "clickhouse-udf-zookeeper-session-renewal"
 description = "Fix crash in UDF refresh caused by stale ZooKeeper session in retry loop"
 version = "1.0.0"
+source_repo = "ClickHouse/ClickHouse"
+source_pr_number = 102173
+source_base_commit = "255e0773744e57c9b6435e713a6f8417ee690ea5"
+source_merge_commit = "de2627596adb1fd0909ee4a5603f6b8b31aa8347"
+source_target_file = "src/Functions/UserDefined/UserDefinedSQLObjectsZooKeeperStorage.cpp"
+source_distinctive_line = "Renew the session on retry"
 
 [env]
 image = "task-env"
@@ -12,11 +18,5 @@ difficulty = "hard"
 time_estimate = "45m"
 tags = ["c++", "concurrency", "zookeeper", "crash-fix", "distributed-systems"]
 
-[source]
-repo = "ClickHouse/ClickHouse"
-pr_number = 102173
-base_commit = "255e0773744e57c9b6435e713a6f8417ee690ea5"
-merge_commit = "de2627596adb1fd0909ee4a5603f6b8b31aa8347"
-
-target_file = "src/Functions/UserDefined/UserDefinedSQLObjectsZooKeeperStorage.cpp"
-distinctive_line = "Renew the session on retry"
+[verifier]
+env = { GEMINI_API_KEY = "${GEMINI_API_KEY:-}", ANTHROPIC_API_KEY = "${ANTHROPIC_API_KEY:-}" }

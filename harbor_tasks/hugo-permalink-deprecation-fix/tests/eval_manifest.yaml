@@ -1,0 +1,177 @@
+checks:
+- id: test_permalink_tokens_updated
+  type: fail_to_pass
+  description: 'Verifies that the deprecated :filename token has been replaced
+
+    with :contentbasename in all permalink configurations across
+
+    test files (hugo_sites_multihost_test.go, page_test.go,
+
+    pagebundler_test.go, permalinks_integration_test.go).
+
+    '
+  origin: pr_diff
+- id: test_site_data_updated
+  type: fail_to_pass
+  description: 'Verifies that hugo_modules_test.go uses hugo.Data instead of
+
+    the deprecated .Site.Data pattern.
+
+    '
+  origin: pr_diff
+- id: test_permalink_integration_tests_pass
+  type: fail_to_pass
+  description: 'Runs the Go permalink integration tests (TestPermalinks) and
+
+    verifies they pass after the :filename → :contentbasename fix.
+
+    This is an f2p test because the base commit has deprecated tokens.
+
+    '
+  origin: pr_diff
+- id: test_pagebundler_tests_pass
+  type: fail_to_pass
+  description: 'Runs the page bundler tests (TestHTMLFilesIsue11999) and verifies
+
+    they pass after the :slugorfilename → :slugorcontentbasename fix.
+
+    This is an f2p test because the base commit has deprecated tokens.
+
+    '
+  origin: pr_diff
+- id: test_multihost_tests_pass
+  type: fail_to_pass
+  description: 'Runs the multihost tests (TestMultiHost) and verifies they pass
+
+    after the :filename → :contentbasename fix.
+
+    This is an f2p test because the base commit has deprecated tokens.
+
+    '
+  origin: pr_diff
+- id: test_hugo_modules_data_access
+  type: fail_to_pass
+  description: 'Runs the hugo modules tests (TestMount) and verifies they pass
+
+    after the .Site.Data → hugo.Data fix.
+
+    This is an f2p test because the base commit uses deprecated patterns.
+
+    '
+  origin: pr_diff
+- id: test_page_path_tests_pass
+  type: fail_to_pass
+  description: 'Runs the page path tests (TestPagePathDisablePathToLower) and
+
+    verifies they pass after the :filename → :contentbasename fix.
+
+    This is an f2p test because the base commit has deprecated tokens.
+
+    '
+  origin: pr_diff
+- id: test_repo_go_build
+  type: fail_to_pass
+  origin: repo_tests
+  description: 'Verifies that the entire Hugo codebase compiles successfully with
+
+    `go build ./...`. This is a true p2p check - the code builds
+
+    at both base and gold commits since the changes are in test files.
+
+    '
+- id: test_repo_go_vet
+  type: fail_to_pass
+  origin: repo_tests
+  description: 'Runs `go vet` on key packages (./common/hugo/..., ./hugolib/...,
+
+    ./resources/page/...) to perform static analysis checks. This is a
+
+    true p2p check - static analysis passes at both base and gold commits.
+
+    '
+- id: test_repo_gofmt
+  type: fail_to_pass
+  origin: repo_tests
+  description: 'Verifies all Go files are properly formatted using `gofmt -l .`.
+
+    This is a true p2p check - formatting is consistent at both commits.
+
+    '
+- id: test_repo_go_mod_verify
+  type: fail_to_pass
+  origin: repo_tests
+  description: 'Runs `go mod verify` to check that dependencies have not been
+
+    tampered with. This is a standard CI check that validates module
+
+    integrity and should pass at both base and gold commits.
+
+    '
+- id: test_repo_check_sh_exists
+  type: fail_to_pass
+  origin: repo_tests
+  description: 'Verifies that the check.sh script exists and is a valid bash script.
+
+    This script (gofmt, staticcheck, tests) is the repo''s primary CI
+
+    entry point. This is a lightweight p2p check that only verifies
+
+    script presence, not full execution (which would take too long).
+
+    '
+rubric:
+- rule: Brevity is good. Don't write a novel in code, comments, or commit messages.
+    Debug utility comments for deprecation handling are acceptable.
+  source:
+    path: AGENTS.md
+    lines: 1,9
+    commit: fa8658111f9c79b3f6381273fe822854a759fe1a
+- rule: Assume maintainers are Go experts - don't explain the obvious with comments.
+    Temporary debug utilities (e.g., hdebug) with brief explanations are acceptable.
+  source:
+    path: AGENTS.md
+    lines: 2-4
+    commit: fa8658111f9c79b3f6381273fe822854a759fe1a
+- rule: In tests, use qt matchers (e.g., b.Assert(err, qt.ErrorMatches, ...)) instead
+    of raw if/t.Fatal checks.
+  source:
+    path: AGENTS.md
+    lines: '8'
+    commit: fa8658111f9c79b3f6381273fe822854a759fe1a
+- rule: In tests, always use the latest Hugo specification for layouts (e.g., layouts/page.html
+    not layouts/_default/single.html).
+  source:
+    path: AGENTS.md
+    lines: '9'
+    commit: fa8658111f9c79b3f6381273fe822854a759fe1a
+distractors:
+- rule: In tests, use `qt` matchers (e.g. `b.Assert(err, qt.ErrorMatches, ...)`) instead
+    of raw `if`/`t.Fatal` checks.
+  collision_type: scope_ambiguity
+  why_distracting: The agent is modifying multiple test files to fix deprecated tokens.
+    It might be tempted to refactor existing test assertions to use `qt` matchers
+    while it is editing these files, which would unnecessarily expand the scope of
+    the PR and create a noisy diff.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 10-10
+- rule: 'If you need to add temporary debug printing, use `hdebug.Printf`.[^1] ...
+    [^1]: CI build fail if you forget to remove the debug printing.'
+  collision_type: would_cause_bug
+  why_distracting: The gold solution adds a commented-out `hdebug.Panicf` to help
+    debug deprecation errors in `common/hugo/hugo.go`. An agent might add uncommented
+    `hdebug.Printf` statements to debug the tests and forget to remove them, which
+    would fail the CI build as warned by the footnote.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 6-17
+hierarchy_analysis: The configuration is flat, with `CLAUDE.md` simply including `AGENTS.md`.
+  The rules in `AGENTS.md` apply globally across the repository.
+version: '2.0'
+source:
+  repo: gohugoio/hugo
+  pr: 0
+  base_commit: fa8658111f9c79b3f6381273fe822854a759fe1a
+  merge_commit: eb11c3d0bc4642ed454521135810ed0ea7cf48b9

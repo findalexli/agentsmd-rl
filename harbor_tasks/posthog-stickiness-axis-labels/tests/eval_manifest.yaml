@@ -1,0 +1,131 @@
+version: '2.0'
+source:
+  repo: PostHog/posthog
+  pr: 53655
+  base_commit: 314b93aa807030d5ef1c9bb17d44cb3609f10cb3
+  merge_commit: 534dd4b5ea92ef64268f319e6eb2793a9e47dbe6
+checks:
+- id: prefix_day_ticks
+  type: fail_to_pass
+  origin: pr_diff
+  description: createXAxisTickCallback returns 'Day N' when numericTickPrefix='Day'
+    with numeric allDays
+- id: prefix_week_and_month_ticks
+  type: fail_to_pass
+  origin: pr_diff
+  description: numericTickPrefix works for 'Week' and 'Month' prefixes, not just 'Day'
+- id: linegraph_stickiness_wiring
+  type: fail_to_pass
+  origin: pr_diff
+  description: LineGraph.tsx passes numericTickPrefix to createXAxisTickCallback and
+    references isStickiness
+- id: no_prefix_returns_plain_numbers
+  type: pass_to_pass
+  origin: pr_diff
+  description: Without numericTickPrefix, numeric allDays still return plain number
+    strings
+- id: dayjs_import_convention
+  type: pass_to_pass
+  origin: agent_config
+  description: dates.ts imports dayjs from 'lib/dayjs', not directly from 'dayjs'
+    package
+  source:
+    path: AGENTS.md
+    lines: '95'
+    commit: 314b93aa807030d5ef1c9bb17d44cb3609f10cb3
+- id: test_repo_lint_js
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's JavaScript/TypeScript linting (oxlint) passes on base commit
+- id: test_repo_jest_dates
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Jest tests for dates.ts module pass on base commit
+- id: test_repo_lint_css
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's CSS/SCSS linting (stylelint) passes on base commit
+- id: test_repo_markdown_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's markdown linting (markdownlint-cli2) passes on base commit
+- id: test_repo_build_products
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's frontend product build passes on base commit
+- id: test_prefix_day_ticks
+  type: fail_to_pass
+  origin: pr_diff
+  description: createXAxisTickCallback returns 'Day N' when numericTickPrefix='Day'
+    with numeric allDays
+- id: test_prefix_week_and_month_ticks
+  type: fail_to_pass
+  origin: pr_diff
+  description: numericTickPrefix works for 'Week' and 'Month' prefixes, not just 'Day'
+- id: test_linegraph_stickiness_wiring
+  type: fail_to_pass
+  origin: pr_diff
+  description: LineGraph.tsx passes numericTickPrefix to createXAxisTickCallback and
+    references isStickiness
+- id: test_no_prefix_returns_plain_numbers
+  type: pass_to_pass
+  origin: pr_diff
+  description: Without numericTickPrefix, numeric allDays still return plain number
+    strings
+- id: test_dayjs_import_convention
+  type: pass_to_pass
+  origin: agent_config
+  description: dates.ts imports dayjs from 'lib/dayjs', not directly from 'dayjs'
+    package
+  source:
+    path: AGENTS.md
+    lines: '95'
+    commit: 314b93aa807030d5ef1c9bb17d44cb3609f10cb3
+rubric:
+- rule: Code changes implement the numericTickPrefix feature correctly with proper TypeScript typing and test coverage
+  description: |
+    The solution must:
+    1. Add numericTickPrefix?: string to CreateXAxisTickCallbackArgs interface in dates.ts
+    2. Update the return function to prefix values when numericTickPrefix is provided
+    3. Wire isStickiness logic in LineGraph.tsx to pass the formatted prefix
+    4. Add test cases in dates.test.ts for the new functionality
+    5. Maintain backward compatibility when numericTickPrefix is not provided
+  source:
+    path: frontend/src/lib/charts/utils/dates.ts
+  reference: |
+    Target files and expected changes:
+
+    FILE: frontend/src/lib/charts/utils/dates.ts
+    - Add to interface: numericTickPrefix?: string
+    - Update return: (value) => (numericTickPrefix ? `${numericTickPrefix} ${String(value)}` : String(value))
+
+    FILE: frontend/src/scenes/insights/views/LineGraph/LineGraph.tsx
+    - Add isStickiness to destructured values from insightVizDataLogic
+    - Pass numericTickPrefix to createXAxisTickCallback when isStickiness is true
+
+    FILE: frontend/src/lib/charts/utils/dates.test.ts
+    - Add test: 'formats numbers with a prefix when provided'
+    - Test verifies callback(1, 0) returns 'Day 1' when numericTickPrefix is 'Day'
+distractors:
+- rule: Django serializers are the source of truth for frontend API types
+  collision_type: architecture_boundary
+  why_distracting: The agent might assume that the stickiness interval data needs
+    to be formatted on the backend and try to modify Django serializers to return
+    formatted strings, rather than handling the presentation logic in the frontend
+    line graph component.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 61-63
+- rule: 'Scope convention: use `llma` for LLM analytics changes'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might misinterpret the scope of the PR and use the `llma`
+    scope in the commit message, which is strictly reserved for LLM analytics, not
+    general stickiness insights.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 38-38
+hierarchy_analysis: The configuration hierarchy is flat, consisting of Level 0 `.cursorrules`
+  and `AGENTS.md` files. The rules are mostly generic repository guidelines and boilerplate
+  instructions that do not conflict with each other.

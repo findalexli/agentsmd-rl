@@ -1,0 +1,140 @@
+version: '2.0'
+source:
+  repo: vercel/next.js
+  pr: 91603
+  base_commit: 56d75a0b77f2ceda8ea747810275da8e0a9a3d71
+  merge_commit: 3ddfcace6636081e56bc64e0283b08e6cf5dae4a
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified TypeScript file must parse without errors
+- id: encoded_single_dynamic
+  type: fail_to_pass
+  origin: pr_diff
+  description: Encoded single dynamic placeholder %5BprojectSlug%5D is recognized
+- id: encoded_multiple_dynamic
+  type: fail_to_pass
+  origin: pr_diff
+  description: Multiple encoded placeholders in same path both recognized
+- id: encoded_mixed_segments
+  type: fail_to_pass
+  origin: pr_diff
+  description: Mixed encoded and non-encoded dynamic segments both recognized
+- id: encoded_catchall_segment
+  type: fail_to_pass
+  origin: pr_diff
+  description: Encoded catchall segment %5B...slug%5D is recognized as dynamic
+- id: encoded_optional_catchall
+  type: fail_to_pass
+  origin: pr_diff
+  description: Encoded optional catchall %5B%5B...slug%5D%5D is recognized
+- id: normal_dynamic_segments
+  type: pass_to_pass
+  origin: pr_diff
+  description: Non-encoded dynamic segments still work
+- id: static_segments
+  type: pass_to_pass
+  origin: pr_diff
+  description: Static segments are parsed correctly with no false dynamic matches
+- id: malformed_encoding_no_crash
+  type: pass_to_pass
+  origin: pr_diff
+  description: Malformed URL encoding does not crash
+- id: no_hardcoded_secrets
+  type: pass_to_pass
+  origin: agent_config
+  description: No hardcoded secret values in modified file
+  source:
+    path: AGENTS.md
+    lines: 302-309
+    commit: 56d75a0b77f2ceda8ea747810275da8e0a9a3d71
+- id: no_require_calls
+  type: pass_to_pass
+  origin: agent_config
+  description: No bare require() calls in shared lib file — use ES imports for DCE
+    safety
+  source:
+    path: AGENTS.md
+    lines: '396'
+    commit: 56d75a0b77f2ceda8ea747810275da8e0a9a3d71
+- id: test_repo_typescript_syntax_app_router
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's router TypeScript files parse without errors
+- id: test_repo_imports_resolvable
+  type: pass_to_pass
+  origin: repo_tests
+  description: Router module imports are resolvable without runtime errors
+- id: test_repo_eslint_app_router
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint passes on router files
+- id: test_repo_prettier_app_router
+  type: pass_to_pass
+  origin: repo_tests
+  description: Prettier formatting check passes on router files
+- id: test_repo_unit_interception_routes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Interception routes unit tests pass
+- id: test_repo_unit_is_dynamic
+  type: pass_to_pass
+  origin: repo_tests
+  description: Is-dynamic route unit tests pass
+- id: test_repo_unit_validate_app_paths
+  type: pass_to_pass
+  origin: repo_tests
+  description: App paths validation unit tests pass - directly tests parseAppRoute
+    from modified app.ts
+- id: test_repo_unit_extract_pathname_segments
+  type: pass_to_pass
+  origin: repo_tests
+  description: Extract pathname route param segments unit tests pass - directly imports
+    parseAppRoute from modified app.ts
+rubric:
+- rule: Source code is in `packages/next/src/` and compiled output goes to `packages/next/dist/`.
+  source:
+    path: CLAUDE.md
+    lines: 25-31
+  evidence: The patch correctly targets the source file `packages/next/src/shared/lib/router/routes/app.ts`
+    instead of modifying the compiled output in `packages/next/dist/`.
+  category: architecture
+- rule: Source code is in packages/next/src/.
+  source:
+    path: AGENTS.md
+    lines: 28-28
+  evidence: The patch correctly targets the source file in `packages/next/src/shared/lib/router/routes/app.ts`
+    rather than attempting to modify the compiled output in `dist/`.
+  category: architecture
+- rule: Source code for the main Next.js framework is located in packages/next/src/.
+  source:
+    path: AGENTS.md
+    lines: 25-26
+  evidence: The gold solution modifies a file within the packages/next/src/ directory,
+    adhering to the defined source code location.
+  category: architecture
+distractors:
+- rule: Start pnpm --filter=next dev in a separate terminal session before making
+    edits.
+  collision_type: meta_confusion
+  why_distracting: The instruction to start a background dev server (pnpm --filter=next
+    dev) is intended for human interactive development. An agent attempting to start
+    a long-running background process might hang the evaluation environment or waste
+    execution time.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 62-66
+- rule: Always run a full bootstrap build after switching branches using pnpm build-all.
+  collision_type: scope_ambiguity
+  why_distracting: Running a full bootstrap build (pnpm build-all) is unnecessary
+    for a localized router bug fix and would consume significant time and resources
+    during agent evaluation.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 85-89
+hierarchy_analysis: The config hierarchy consists of identical AGENTS.md and CLAUDE.md
+  files at the root level. They provide generic repository onboarding instructions
+  rather than specific coding conventions.

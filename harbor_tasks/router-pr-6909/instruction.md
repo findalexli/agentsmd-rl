@@ -4,55 +4,48 @@ The GitHub release changelog generation in `scripts/create-github-release.mjs` c
 
 ## Problem
 
-The current implementation:
-1. Extracts changelog entries from each package's `CHANGELOG.md` file
-2. Groups entries under `#### package-name` headings
-3. Resolves authors by looking up commit hashes in git history using `resolveAuthorForCommit` function and `authorCache`
-4. Uses `appendAuthors` function to process changelog lines
+The current implementation has these issues:
 
-This approach results in release notes that are organized around package structure rather than the nature of the changes. Users want to quickly see "what features were added" or "what bugs were fixed" rather than wade through package-by-package listings.
+1. **Reads CHANGELOG.md files**: The script extracts changelog entries from each package's `CHANGELOG.md` file using `fs.readFileSync(changelogPath)`. This approach should not be used.
+
+2. **Package-based grouping**: Groups entries under `#### package-name` headings, which focuses on package structure rather than the nature of changes.
+
+3. **Commit-based author resolution**: Uses `resolveAuthorForCommit` function and `authorCache` to look up commit authors by hash. This approach should be removed.
+
+4. **appendAuthors processing**: Uses `appendAuthors` function to process changelog lines. This function and all calls to it should be removed.
+
+5. **Merge commits included**: Merge commits are not being filtered out from the git history.
+
+6. **No conventional commit parsing**: The script doesn't parse conventional commit format (`type(scope): message`) to categorize changes.
 
 ## Goal
 
 Refactor the changelog generation to use **conventional commits** with **semantic grouping**:
 
-1. Parse the git log directly using conventional commit format (`type(scope): message`)
-   - The script must use `git log` with `--pretty=format:"%h %ae %s"` to get commit hash, author email, and subject
-   - The script must filter out merge commits using `--no-merges`
-   - Skip release commits (`ci: changeset release`)
+1. **Parse git log directly**: Use `git log` with `--pretty=format:"%h %ae %s"` to get commit hash, author email, and subject between releases.
 
-2. Group commits by their type (feat, fix, perf, refactor, docs, chore, test, ci)
-   - The script must define a `typeOrder` array containing exactly these types in this priority order: `['feat', 'fix', 'perf', 'refactor', 'docs', 'chore', 'test', 'ci']`
-   - The script must define a `typeLabels` object mapping each type to these exact human-readable headings:
-     - `feat: 'Features'`
-     - `fix: 'Fix'`
-     - `perf: 'Performance'`
-     - `refactor: 'Refactor'`
-     - `docs: 'Documentation'`
-     - `chore: 'Chore'`
-     - `test: 'Tests'`
-     - `ci: 'CI'`
-   - The script must create a `groups` object and populate commits by type using `groups[type]`
-   - Non-conventional commits must be grouped as `other`
+2. **Filter merge commits**: Exclude merge commits using `--no-merges`.
 
-3. Sort type sections by importance (features and fixes must appear before docs and chores)
-   - The script must implement a `typeIndex` function that returns the index of a type in `typeOrder`
-   - The script must sort types using `typeIndex(a) - typeIndex(b)`
+3. **Parse conventional commits**: Extract the commit type (feat, fix, perf, refactor, docs, chore, test, ci) and scope from commit messages following the pattern `type(scope): message`.
 
-4. Use `### ${label}` headings (e.g., `### Features`, `### Fix`) instead of package-based headings
-   - The script must NOT use the old `#### ${pkg.name}` pattern
+4. **Group by type**: Group commits by their conventional commit type:
+   - feat → "Features"
+   - fix → "Fix"
+   - perf → "Performance"
+   - refactor → "Refactor"
+   - docs → "Documentation"
+   - chore → "Chore"
+   - test → "Tests"
+   - ci → "CI"
+   - Non-conventional commits go to an "other" category
 
-5. Continue to attribute commits to their PR authors where applicable
-   - The script must keep the `resolveAuthorForPR` function
-   - The script must keep `prAuthorCache` for caching PR author lookups
-   - The script must remove the `resolveAuthorForCommit` function
-   - The script must remove `authorCache` (the cache for commit-based lookups)
-   - The script must remove the `appendAuthors` function and any calls to it
+5. **Sort by importance**: Sort the type sections so that feat and fix appear before docs, chore, test, and ci.
 
-6. Stop reading from `CHANGELOG.md` files
-   - The script must NOT call `fs.readFileSync(changelogPath)`
+6. **Generate markdown with type headings**: Use `### ${label}` headings (e.g., `### Features`, `### Fix`) instead of `#### ${pkg.name}` package headings.
 
-The result should be a cleaner, more scannable changelog that highlights the semantic nature of changes rather than the package structure.
+7. **Skip release commits**: Filter out commits with message starting with `ci: changeset release`.
+
+8. **Preserve PR author resolution**: Keep `resolveAuthorForPR` function and `prAuthorCache` for looking up PR authors via GitHub API.
 
 ## Files to Modify
 
@@ -60,7 +53,8 @@ The result should be a cleaner, more scannable changelog that highlights the sem
 
 ## Implementation Notes
 
-- Parse conventional commits using a regex pattern like `/^(\w+)(?:\(([^)]*)\))?:\s*(.*)$/` to extract type, scope, and message
-- Store the regex match result in a variable named `conventionalMatch`
 - The script runs after a changeset release commit is pushed
-- PR author resolution via GitHub API for PR numbers must be preserved
+- For commits with PR references like `(#1234)`, look up the author using the PR number
+- For commits without PR references, use the commit author email
+- Skip merge commits and the automated release commit itself
+- The changelog should list commits with their scope prefix (if any), message, commit hash, and author attribution

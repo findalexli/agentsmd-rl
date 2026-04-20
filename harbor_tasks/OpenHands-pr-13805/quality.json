@@ -1,63 +1,60 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: exact import sources like 'integrations.resolver_org_router' for resolve_org_for_repo, 'storage.saas_conversation_store' for SaasConversationStore, the exact function name 'start_conversation' replacing 'create_new_conversation', 'uuid4().hex' for conversation ID generation, 'get_resolver_instance' method call, and 'git_provider' keyword in ConversationMetadata. The instruction says to 'study those resolvers' but "
+      "outcome": "pass",
+      "reason": "Instruction names all required imports, function names, test class/method names, and patch targets that the tests assert on."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "Instruction.md says 'The existing conversation creation code in the Jira resolver should be replaced entirely with the same approach used by those other integrations' and to 'study those resolvers to understand the imports, conversation store, org resolution, conversation metadata, and conversation service API they use.' This essentially tells the agent exactly what to change (replace create_new_conversation with the pattern from other resolvers including conversation store, org resolution, etc."
+      "reason": "Instruction essentially enumerates the fix: which imports to add/remove, to call resolve_org_for_repo, use uuid4().hex, call SaasConversationStore.get_resolver_instance, call start_conversation, and not call create_new_conversation \u2014 leaving little reasoning about WHAT to change."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests enforce gold-specific implementation details: test_generates_uuid_conversation_id checks for literal 'uuid4().hex' string, test_uses_start_conversation_not_create_new asserts exact import of 'start_conversation' and absence of 'create_new_conversation', test_calls_get_resolver_instance checks for exact method name 'get_resolver_instance', test_imports_resolve_org_router checks exact module path 'integrations.resolver_org_router'. A correct alternative implementation using different ID gene"
+      "outcome": "pass",
+      "reason": "Tests check for the required functions/classes/kwarg (git_provider) which any correct implementation would share."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Nearly all fail-to-pass tests use AST parsing or string matching on source code (e.g., test_generates_uuid_conversation_id checks 'uuid4().hex' in source, test_imports_* walk AST for import statements, test_calls_* search for function call names). Only test_repo_lint_jira_view and test_repo_syntax_jira_view execute the code. No tests actually import and call the routing functions or verify runtime behavior."
+      "reason": "F2P tests only parse AST and check for imports/calls/strings (e.g., `uuid4().hex` in source); no tests actually execute create_or_update_conversation behavior."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "The tests only check for the presence of imports, function calls, and string patterns in source code. A stub file that contains the right import statements, a call to resolve_org_for_repo that does nothing, ConversationMetadata(..., git_provider=None), uuid4().hex in a comment, and start_conversation() with no real logic would pass all fail-to-pass tests. No test verifies actual routing behavior."
+      "outcome": "pass",
+      "reason": "Tests require specific imports and call patterns that a stub returning None couldn't satisfy without implementing the routing."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "Instruction.md requires specific test methods (test_routes_to_claimed_org_when_user_is_member, test_falls_back_to_personal_workspace_when_no_claim) in TestJiraV0ConversationRouting class. The hidden tests only check that these names exist in the test file (test_test_file_has_routing_tests) but don't execute them to verify the actual routing behavior described in the instruction."
+      "reason": "Instruction requires routing behavior (claimed org vs personal workspace), but the hidden oracle only checks AST/text patterns and test-file contents, not runtime routing behavior."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are organized with clear sections (FAIL-TO-PASS and PASS-TO-PASS comments), descriptive function names, and docstrings explaining what each test verifies."
+      "reason": "Tests are grouped with section comments ('Fail-to-Pass Tests', 'Pass-to-Pass Tests') and descriptive names."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "No structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No obvious typos found in instruction.md filenames, paths, or variable names."
+      "reason": "Paths and names are consistent across instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "Instruction.md explicitly names the imports pattern ('conversation store, org resolution, conversation metadata, and conversation service API'), the exact function create_or_update_conversation context, and tells the agent to study specific resolver files. While it doesn't give line numbers, it narrows the solution space significantly beyond just describing the bug."
+      "reason": "Instruction names the exact file (`enterprise/integrations/jira/jira_view.py`), exact function, and exact replacement APIs, effectively pre-localizing the fix."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "Code-only task, no config edits."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
     "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 2,
-  "fail_count": 7
+  "pass_count": 5,
+  "fail_count": 4
 }

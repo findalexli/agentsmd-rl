@@ -1,0 +1,157 @@
+version: '2.0'
+source:
+  repo: PrimeIntellect-ai/prime-rl
+  pr: 1747
+  base_commit: 31b48b8b10db390d835909a6fd976f29d9880c81
+  merge_commit: 5cdada64575330a37488cf156e49d9914cf7c369
+checks:
+- id: agents_md_exists
+  type: pass_to_pass
+  origin: static
+  description: AGENTS.md must exist and be readable
+- id: agents_md_frontmatter_valid
+  type: pass_to_pass
+  origin: static
+  description: AGENTS.md has valid YAML frontmatter if present
+- id: test_repo_toml_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TOML config files are valid
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Python linting passes
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Python formatting passes
+- id: test_repo_python_syntax_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: All Python source files have valid syntax
+- id: test_repo_skill_md_frontmatter
+  type: pass_to_pass
+  origin: repo_tests
+  description: Any SKILL.md files have valid YAML frontmatter
+- id: skills_directory_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: skills/ directory must exist
+- id: inference_server_skill_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: skills/inference-server/SKILL.md must exist with proper content
+- id: toml_config_skill_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: skills/toml-config/SKILL.md must exist with proper content
+- id: claude_skills_symlink_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: .claude/skills symlink must point to ../skills
+- id: agents_md_documents_skills_section
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md must have a Skills section documenting the skills system
+- id: agents_md_documents_skill_maintenance
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md must explain skill maintenance responsibilities
+- id: agents_md_references_toml_config_skill
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md must reference the toml-config skill for CLI usage
+rubric:
+- rule: Documentation should be sparse and targeted - avoid unnecessary explanatory
+    comments about the work process
+  source:
+    path: AGENTS.md
+    lines: 7-8
+    commit: 31b48b8b10db390d835909a6fd976f29d9880c81
+  reference: The gold solution removes verbose documentation from AGENTS.md and replaces
+    it with a reference to the skills directory, keeping AGENTS.md sparse.
+- rule: All code should be runnable with `uv run` or `uv run <command>`.
+  source:
+    path: skills/inference-server/SKILL.md
+  reference: uv run inference @ path/to/config.toml
+- rule: Config files use `@` syntax and CLI overrides use `--key value` format.
+  source:
+    path: skills/inference-server/SKILL.md
+  reference: uv run inference @ path/to/config.toml --model.name Qwen/Qwen3-0.6B
+- rule: Config files use `@` syntax and CLI flags can override config values.
+  source:
+    path: skills/toml-config/SKILL.md
+  reference: 'uv run inference @ config.toml --model.name Qwen/Qwen3-0.6B --server.port
+    8001
+
+    '
+- rule: 'Config files use `@` syntax: `uv run sft @ path/to/config.toml`'
+  source:
+    path: AGENTS.md
+    lines: 38-39
+  evidence: The gold solution correctly documents the `@` syntax for loading configs
+    in both `inference-server/SKILL.md` and `toml-config/SKILL.md`.
+  category: documentation
+- rule: Config files use `@` syntax
+  source:
+    path: AGENTS.md
+    lines: 42-42
+  evidence: The `skills/inference-server/SKILL.md` file documents the `@` syntax for
+    loading configs (`uv run inference @ path/to/config.toml`), adhering to the CLI
+    Usage rule defined in AGENTS.md.
+  category: documentation
+config_edits:
+- path: AGENTS.md
+  tier: 1
+  gold_added: '- See the `toml-config` skill in `skills/` for full details on TOML
+    structure, CLI overrides, and available commands.
+
+
+    ## Skills
+
+
+    Skills live in `skills/` and are symlinked to `.claude/skills/`. They teach agents
+    how to handle specific workflows (e.g. starting the inference server, writing
+    configs). When you make changes to the codebase, check if any skills need to be
+    updated to stay accurate.
+
+
+    You are responsible for maintaining the skills folder. When a workflow fails and
+    you fix it – whether with help from the user or through trial and error – you
+    must update the skills to make implicit knowledge explicit. You are also responsible
+    for keeping the skills up to date whenever you or anyone else modifies the code.'
+  gold_removed: '- Boolean flags don''t need `true`: use `--model.optim_cpu_offload`
+    not `--model.optim_cpu_offload true`, use `--no-model.optim_cpu_offload` to pass
+    False.
+
+    - Override config values with CLI flags: `--model.name Qwen/Qwen3-0.6B --training.max_steps
+    100`'
+- path: skills/inference-server/SKILL.md
+  tier: 1
+  gold_added: '---\nname: inference-server\ndescription: Start and test the prime-rl
+    inference server...'
+  gold_removed: ''
+distractors:
+- rule: 'Boolean flags don''t need `true`: use `--model.optim_cpu_offload` not `--model.optim_cpu_offload
+    true`, use `--no-model.optim_cpu_offload` to pass False. Override config values
+    with CLI flags...'
+  source:
+    path: AGENTS.md
+    lines: 33-34
+  collision_type: meta_confusion
+  why_distracting: The agent is instructed to replace detailed bullet points in the
+    CLI Usage section with a reference to the new skill. Because these are existing
+    agent instructions, the agent might hesitate to delete them or might try to keep
+    them while adding the reference, leading to duplicated instructions.
+  severity: high
+- rule: Write tests as plain functions with pytest fixtures. Don't use class-based
+    tests.
+  source:
+    path: AGENTS.md
+    lines: 37-38
+  collision_type: scope_ambiguity
+  why_distracting: The AGENTS.md file mandates writing tests as plain functions with
+    pytest fixtures. The task requires documenting how to test the inference server.
+    An agent might try to document a pytest approach instead of the requested `curl`
+    example.
+  severity: medium

@@ -1,63 +1,58 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert very specific names not mentioned in instruction.md: 'ProcessEventsAwaiterAsync' (test_process_events_method_renamed checks the old name 'ProcessEventsAsync' must not exist), 'PendingEvent' as a readonly record struct (test_pending_event_struct_used), '_eventEmitterTask' field name pattern, 'List<EventHandler> Handlers' as the exact property type/name (test_handlers_directly_exposed). The instruction says 'renamed to reflect its emitter role' and 'processing method should be renamed"
+      "reason": "Tests assert specific names like 'PendingEvent' struct, 'Handlers' property of type 'List<EventHandler>', and TaskFactory with DenyChildAttach option, but instruction.md does not name 'PendingEvent' or 'Handlers' explicitly \u2014 it only vaguely says 'exposed via a public property' and 'event data structure should... store the method name directly as a field'."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly describes the exact changes: 'Task creation should use a TaskFactory with specific options (DenyChildAttach, None, Default)', 'The internal task field should be renamed to reflect its emitter role', 'The processing method should be renamed to indicate it returns an awaiter-style task', 'handlers should be exposed via a public property', 'Handler iteration should use a thread-safe copying pattern (such as ToArray())'. These are specific implementation instructions, not "
+      "outcome": "pass",
+      "reason": "Instruction describes what to remove/refactor (drain mechanism, sequence tracking, AddHandler/RemoveHandler) but doesn't give exact code; agent must still figure out implementation."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific variable names: test_handlers_directly_exposed checks for exactly 'List<EventHandler> Handlers' property; test_event_emitter_task_refactored checks '_processEventsTask' is absent and looks for Task fields; test_pending_event_struct_used checks for 'PendingEvent' as a readonly record struct; test_process_events_method_renamed checks 'ProcessEventsAsync' is gone. An alternative correct fix using 'PendingItem' instead of 'PendingEvent', or 'IList<EventHandler>' instead of"
+      "reason": "test_pending_event_struct_used asserts the struct must be named 'PendingEvent', test_handlers_directly_exposed requires property named exactly 'Handlers' of type 'List<EventHandler>', and test_process_events_method_renamed asserts exactly one async processing method exists \u2014 alternative valid names/structures would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Nearly all tests are purely text-based: they read the file content and check for string patterns (e.g., 'DrainAsync' in content, regex for 'PendingEvent', checking property declarations via regex). The only behavioral test is test_code_compiles which runs dotnet build. The fail-to-pass tests are all 'assert X in/not in content' patterns with no execution."
+      "reason": "Tests primarily use regex/string inspection of EventDispatcher.cs source (extract_methods, extract_field_names, 'in content' checks) rather than executing the code; though run_dotnet_build exists, the f2p assertions shown are textual."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "A stub or trivially modified file that simply removes the old names and adds the expected strings (e.g., adding 'PendingEvent' record struct, 'ProcessEventsAwaiterAsync' method name, 'List<EventHandler> Handlers' property) without implementing correct logic would pass all text-matching tests. The compilation test provides some guard, but the f2p tests themselves are purely textual."
+      "outcome": "pass",
+      "reason": "Tests check for absence of old names AND presence of specific new structures, so a stub couldn't pass without actually refactoring."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "The instruction requires 'Proper async task lifecycle management', 'Thread-safe handler iteration', and correct subscription flow ordering (session provider called before adding handler), but tests only check text patterns, not actual runtime behavior of these features."
+      "outcome": "pass",
+      "reason": "Required simplifications (drain removal, sequence tracking removal, handler exposure, TaskFactory usage, method rename) are each tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-grouped with descriptive names and docstrings, separated into fail-to-pass and pass-to-pass categories with clear comments."
+      "reason": "Tests are grouped under 'FAIL-TO-PASS TESTS' header with descriptive names and docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data output like JSON/CSV/API/DB."
+      "reason": "Task is a code refactor, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No obvious typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "Paths and identifiers appear consistent."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction specifies exact implementation details: 'TaskFactory with specific options (DenyChildAttach, None, Default)', 'renamed to reflect its emitter role', 'renamed to indicate it returns an awaiter-style task', 'ToArray()', 'store the method name directly as a field'. These are solution-level hints, not problem descriptions."
+      "outcome": "pass",
+      "reason": "Instruction names the file to modify which is appropriate since the task is about that specific class; doesn't pinpoint exact lines."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying a single C# file, not a config edit task."
+      "reason": "Code-only task."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
-    "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "behavior_in_tests",
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 2,
-  "fail_count": 7
+  "tier_c_fails": [],
+  "pass_count": 6,
+  "fail_count": 3
 }

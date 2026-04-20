@@ -1,0 +1,91 @@
+version: '2.0'
+source:
+  repo: gradio-app/gradio
+  pr: 12968
+  base_commit: 4a0fe6e5aec1df710bd843f2f328d43fb7cfa7ef
+  merge_commit: fe955348f24115744015d85639e170b8518b28c1
+checks:
+- id: effect_returns_cleanup
+  type: fail_to_pass
+  origin: pr_diff
+  description: $effect must return a cleanup function instead of using onDestroy
+- id: effect_remounts_on_rerun
+  type: fail_to_pass
+  origin: pr_diff
+  description: Effect must re-mount component on every run, not guard with !comp
+- id: no_inspect_debug
+  type: fail_to_pass
+  origin: pr_diff
+  description: $inspect(node) debug call must be removed from MountComponents.svelte
+- id: unmount_spelling
+  type: fail_to_pass
+  origin: pr_diff
+  description: The 'umount' typo must be fixed to 'unmount' in the runtime type
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: MountCustomComponent.svelte must have real mounting logic
+- id: repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ESLint passes (pnpm lint)
+- id: repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TypeScript typecheck passes (pnpm ts:check)
+- id: repo_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's code formatting passes (pnpm format:check)
+- id: repo_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's unit tests pass (pnpm test:run)
+- id: repo_client_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's client tests pass (pnpm --filter @gradio/client test)
+rubric:
+- rule: Code change removes $inspect debug call from MountComponents.svelte before
+    committing.
+  reference: The $inspect(node) debug call is removed from MountComponents.svelte.
+  category: correctness
+- rule: Code change fixes the umount typo to unmount in type definitions.
+  reference: The umount typo is corrected to unmount in the runtime type definition
+    in MountCustomComponent.svelte.
+  category: correctness
+- rule: Code change uses Svelte 5 runes consistently ($effect with cleanup return
+    instead of onDestroy).
+  reference: The gold solution uses Svelte 5 runes ($effect with return cleanup) instead
+    of onDestroy.
+  category: style
+- rule: Be consistent with the style of the surrounding code.
+  source:
+    path: AGENTS.md
+    lines: 38-38
+  evidence: The gold solution uses Svelte 5 runes (`$effect`, `$derived`, `$props`)
+    and standard Svelte syntax, matching the existing component style.
+  category: style
+distractors:
+- rule: Use the PR template. Fill out every section of `.github/PULL_REQUEST_TEMPLATE.md`
+  collision_type: meta_confusion
+  why_distracting: The agent might attempt to modify the `.github/PULL_REQUEST_TEMPLATE.md`
+    file directly to add a description and AI disclosure, misunderstanding the instruction
+    as a directive to edit the template file rather than use it during PR creation.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 19-22
+- rule: Target an issue. Every non-trivial PR should reference an existing GitHub
+    issue. If one doesn't exist, create it first.
+  collision_type: meta_confusion
+  why_distracting: The agent might try to write a script to interact with the GitHub
+    API to create an issue, or halt the task asking for an issue number, which is
+    out of scope for the evaluation environment.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 17-17
+hierarchy_analysis: Only one config file (`AGENTS.md`) is present at the root level.
+  It contains generic repository guidelines and PR instructions. No deep hierarchy
+  or conflicts exist.

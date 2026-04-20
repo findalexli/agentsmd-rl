@@ -1,0 +1,213 @@
+version: '2.0'
+source:
+  repo: openclaw/openclaw
+  pr: 57778
+  base_commit: 1a75906a6fe5191ea573758017834f200056500b
+  merge_commit: 17d0be02f2800a2bc4524c7d5b587d7fd9f6f28c
+checks:
+- id: typescript_syntax
+  type: pass_to_pass
+  origin: static
+  description: Modified file must parse without TypeScript errors
+- id: no_hardcoded_sender_is_owner_true
+  type: fail_to_pass
+  origin: pr_diff
+  description: agentCommandFromIngress must not receive senderIsOwner as literal true
+- id: sender_is_owner_flows_from_params
+  type: fail_to_pass
+  origin: pr_diff
+  description: runResponsesAgentCommand receives senderIsOwner from callers and passes
+    it through
+- id: call_sites_pass_non_owner
+  type: fail_to_pass
+  origin: pr_diff
+  description: Both streaming and non-streaming call sites pass senderIsOwner as non-owner
+- id: handler_exported
+  type: pass_to_pass
+  origin: repo_tests
+  description: handleOpenResponsesHttpRequest remains exported
+- id: ingress_call_preserved
+  type: pass_to_pass
+  origin: repo_tests
+  description: agentCommandFromIngress call preserved in the file
+- id: model_override_preserved
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'allowModelOverride: true still present'
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: File not gutted and helper has real body (>= 3 statements)
+- id: strict_boolean_typing
+  type: fail_to_pass
+  origin: agent_config
+  description: senderIsOwner uses strict boolean typing
+  source:
+    path: CLAUDE.md
+    lines: '144'
+    commit: 1a75906a6fe5191ea573758017834f200056500b
+- id: no_ts_nocheck
+  type: pass_to_pass
+  origin: agent_config
+  description: No @ts-nocheck or inline lint suppressions added
+  source:
+    path: CLAUDE.md
+    lines: '146'
+    commit: 1a75906a6fe5191ea573758017834f200056500b
+- id: no_explicit_any
+  type: pass_to_pass
+  origin: agent_config
+  description: No explicit any type in helper params or senderIsOwner
+  source:
+    path: CLAUDE.md
+    lines: '147'
+    commit: 1a75906a6fe5191ea573758017834f200056500b
+- id: no_sentinel_default
+  type: fail_to_pass
+  origin: agent_config
+  description: senderIsOwner must not use silent sentinel default (?? true/false)
+  source:
+    path: CLAUDE.md
+    lines: '152'
+    commit: 1a75906a6fe5191ea573758017834f200056500b
+- id: test_repo_lint_modified_file
+  type: pass_to_pass
+  origin: repo_tests
+  description: Linter passes on the modified file
+- id: test_repo_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's formatter passes on the modified file
+- id: test_repo_parity_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's parity tests pass
+- id: test_repo_prompt_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's OpenResponses prompt tests pass
+- id: test_repo_ingress_owner_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ingress agent owner context lint check passes
+- id: test_repo_auth_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's auth tests pass
+- id: test_repo_http_auth_helpers_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's HTTP auth helpers tests pass
+- id: test_repo_http_endpoint_helpers_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's HTTP endpoint helpers tests pass
+- id: test_repo_http_common_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's HTTP common utils tests pass
+- id: test_repo_method_scopes_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's method scopes tests pass
+- id: test_repo_auth_mode_policy_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's auth mode policy tests pass
+- id: test_repo_http_utils_request_context_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's HTTP utils request context tests pass
+- id: test_repo_http_utils_model_override_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's HTTP utils model override tests pass
+- id: test_repo_role_policy_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's role policy tests pass
+- id: test_repo_origin_check_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's origin check tests pass
+- id: test_repo_probe_auth_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's probe auth tests pass
+- id: test_repo_input_allowlist_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's input allowlist tests pass
+- id: test_repo_connection_auth_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's connection auth tests pass
+- id: test_repo_credentials_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's credentials tests pass
+- id: test_repo_gateway_misc_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's gateway misc tests pass
+rubric:
+- rule: Add brief code comments for tricky or non-obvious logic.
+  source:
+    path: CLAUDE.md
+    lines: '163'
+    commit: 1a75906a6fe5191ea573758017834f200056500b
+- rule: Gateway protocol changes are contract changes. Prefer additive evolution.
+  source:
+    path: src/gateway/protocol/CLAUDE.md
+    lines: 19-21
+    commit: 1a75906a6fe5191ea573758017834f200056500b
+- rule: If introducing a new optional field or nullable semantic in core logic, prefer
+    an explicit union or dedicated type when the value changes behavior.
+  source:
+    path: CLAUDE.md
+    lines: '153'
+    commit: 1a75906a6fe5191ea573758017834f200056500b
+- rule: Prefer discriminated unions when parameter shape changes runtime behavior.
+  source:
+    path: CLAUDE.md
+    lines: '149'
+    commit: 1a75906a6fe5191ea573758017834f200056500b
+- rule: In chat replies, file references must be repo-root relative only; never absolute
+    paths or `~/...`.
+  source:
+    path: CLAUDE.md
+    lines: 4-5
+  evidence: The bash script targets the file using the repo-root relative path `src/gateway/openresponses-http.ts`.
+  category: style
+- rule: File references must be repo-root relative only.
+  source:
+    path: AGENTS.md
+    lines: 3-4
+  evidence: The bash script targets the file using the repo-root relative path 'src/gateway/openresponses-http.ts',
+    adhering to the pathing convention.
+  category: style
+distractors:
+- rule: Do not edit files covered by security-focused CODEOWNERS rules unless a listed
+    owner explicitly asked for the change.
+  collision_type: meta_confusion
+  why_distracting: The bug is a privilege escalation vulnerability. The agent might
+    refuse to fix it or halt to ask for permission, mistakenly believing it violates
+    the security CODEOWNERS rule, rather than treating the prompt as the explicit
+    request.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 4-6
+- rule: 'Messaging channels: always consider all built-in + extension channels when
+    refactoring shared logic (routing, allowlists, pairing, command gating).'
+  collision_type: scope_ambiguity
+  why_distracting: The bug involves command gating and message channels. The agent
+    might unnecessarily audit or refactor all built-in channels (Telegram, Discord,
+    etc.) instead of isolating the fix to the HTTP ingress.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 18-22
+hierarchy_analysis: The config hierarchy is flat, consisting of identical AGENTS.md
+  and CLAUDE.md files at the root level. There are no deep overrides or conflicting
+  rules between different levels of the hierarchy.

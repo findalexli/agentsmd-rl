@@ -1,0 +1,54 @@
+{
+  "model": "claude-opus-4-7",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "instruction.md names the exact test string 'calls onChange when cleared with backspace in uncontrolled mode', the test file path, and the jest command used in the acceptance criteria."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "Instructions describe the bug and hint at areas (handleTimeChange, setTimeString, clear, validity tracking) without dictating exact code changes."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests assert on observable behavior (onChange called once with '') and that the named test exists/passes; no assertion on internal variable names like wasInvalidBefore."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests execute jest via subprocess to run actual test cases, not grep file contents."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p requires a test to exist AND pass; a stub can't satisfy toHaveBeenCalledWith('') in the uncontrolled-mode flow without the fix."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The backspace-clearing onChange('') behavior described in instruction is tested by the new jest test; other acceptance criteria (existing tests pass) are covered by full-suite runs."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Each test function has a docstring describing its purpose and category (fail-to-pass vs pass-to-pass)."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task is a code bug fix, no structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "Paths and commands appear correct and consistent with the repo layout."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction points to use-time-picker.ts as a hint area but does not give exact lines or code; this is consistent with the task domain."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "Not a config-edits task."
+    }
+  },
+  "tier_a_fails": [],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
+}

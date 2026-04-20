@@ -1,0 +1,195 @@
+version: '2.0'
+source:
+  repo: huggingface/transformers
+  pr: 0
+  base_commit: b0bba2d832f3cfd94b339a407f2b3e5b90ce3499
+checks:
+- id: syntax_valid
+  type: pass_to_pass
+  origin: static
+  description: Modified files (import_utils.py, __init__.py) parse without syntax
+    errors
+- id: function_importable
+  type: fail_to_pass
+  origin: pr_diff
+  description: is_flash_attn_greater_or_equal_2_10 is importable from transformers.utils
+- id: delegation_with_versions
+  type: fail_to_pass
+  origin: pr_diff
+  description: Function returns correct bool for multiple flash_attn versions (>=2.1.0
+    True, <2.1.0 False)
+- id: returns_false_without_flash_attn
+  type: fail_to_pass
+  origin: pr_diff
+  description: Returns False (bool) when flash_attn is not installed
+- id: deprecation_warning_emitted
+  type: fail_to_pass
+  origin: pr_diff
+  description: Function emits FutureWarning or DeprecationWarning on call
+- id: existing_version_check_works
+  type: pass_to_pass
+  origin: pr_diff
+  description: is_flash_attn_greater_or_equal still works and returns bool
+- id: utils_core_exports
+  type: pass_to_pass
+  origin: pr_diff
+  description: Core utility functions (is_torch_available, is_flash_attn_2_available)
+    still importable
+- id: no_bare_type_ignore
+  type: pass_to_pass
+  origin: agent_config
+  description: 'Any # type: ignore added in the diff includes a specific error code'
+  source:
+    path: .ai/skills/add-or-fix-type-checking/SKILL.md
+    lines: 185-186
+    commit: b0bba2d832f3cfd94b339a407f2b3e5b90ce3499
+- id: ruff_style_clean
+  type: pass_to_pass
+  origin: agent_config
+  description: Modified files pass ruff style/lint check (make style runs ruff, necessary
+    to pass code style checks)
+  source:
+    path: AGENTS.md
+    lines: '2'
+    commit: b0bba2d832f3cfd94b339a407f2b3e5b90ce3499
+- id: test_repo_inits_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository init files check passes (utils/checkers.py inits)
+- id: test_repo_imports_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository public imports check passes (utils/checkers.py imports)
+- id: test_repo_init_isort_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository init import ordering check passes (utils/checkers.py init_isort)
+- id: test_repo_auto_mappings_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository auto mappings check passes (utils/checkers.py auto_mappings)
+- id: test_repo_modeling_structure_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository modeling file structure check passes (utils/checkers.py
+    modeling_structure)
+- id: test_repo_dummies_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository dummy objects check passes (utils/checkers.py dummies)
+- id: test_repo_config_docstrings_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository config docstrings check passes (check_config_docstrings.py)
+- id: test_repo_config_attributes_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository config attributes check passes (check_config_attributes.py)
+rubric: []
+distractors:
+- rule: If coordination evidence cannot be found, do not proceed to PR-ready output.
+    In blocked cases, return a short explanation of what is missing.
+  collision_type: meta_confusion
+  why_distracting: The repository has a strict 'fail-closed' policy for AI agents.
+    An agent might refuse to generate the patch and instead output a message asking
+    for an issue link or coordination evidence, failing the benchmark task.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 53-56
+- rule: Do not open one-off PRs for tiny edits (single typo, isolated lint cleanup,
+    one mutable default argument, etc.).
+  collision_type: scope_ambiguity
+  why_distracting: The agent might misclassify this small backward-compatibility fix
+    (adding a 5-line helper function) as a 'tiny edit' and refuse to implement it
+    based on the repository's policy against low-value busywork.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 38-40
+- rule: 'Copies and Modular Models: We try to avoid direct inheritance between model-specific
+    files in `src/transformers/models/`. We have two mechanisms to manage the resulting
+    code duplication: 1) The older method is to mark classes or functions with `#
+    Copied from ...`. 2) The newer method is to add a file named `modular_<name>.py`.'
+  source:
+    path: .ai/AGENTS.md
+    lines: 62-67
+  source_text: '## Copies and Modular Models
+
+
+    We try to avoid direct inheritance between model-specific files in `src/transformers/models/`.
+    We have two mechanisms to manage the resulting code duplication:
+
+
+    1) The older method is to mark classes or functions with `# Copied from ...`.
+    Copies are kept in sync by `make fix-repo`. Do not edit a `# Copied from` block,
+    as it will be reverted by `make fix-repo`. Ideally you should edit the code it''s
+    copying from and propagate the change, but you can break the `# Copied from` link
+    if needed.
+
+    2) The newer method is to add a file named `modular_<name>.py` in the model directory.
+    `modular` files **can** inherit from other models. `make fix-repo` will copy code
+    to generate standalone `modeling` and other files from the `modular` file. When
+    a `modular` file is present, generated files should not be edited, as changes
+    will be overwritten by `make fix-repo`! Instead, edit the `modular` file. See
+    [docs/source/en/modular_transformers.md](docs/source/en/modular_transformers.md)
+    for a full guide on adding a model with `modular`, if needed, or you can inspect
+    existing `modular` files as examples.'
+  collision_type: scope_ambiguity
+  why_distracting: The PR modifies utility functions in `src/transformers/utils`,
+    not model-specific files in `src/transformers/models/`. An agent might mistakenly
+    look for `# Copied from` comments or modular files when modifying these utils.
+  severity: low
+- rule: Use `getattr()` for third-party packages missing type stubs (for example `getattr(safetensors,
+    "__version__", "unknown")`).
+  source:
+    path: .ai/skills/add-or-fix-type-checking/SKILL.md
+    lines: 162-167
+  source_text: "   j. **Use `getattr()` / `setattr()` for dynamic model/config attributes**.\n\
+    \      For runtime-injected fields (for example config/model flags), use\n   \
+    \   `getattr(obj, \"field\", default)` for reads and `setattr(obj, \"field\",\
+    \ value)`\n      for writes. Also use `getattr()` for third-party packages missing\
+    \ type stubs\n      (for example `getattr(safetensors, \"__version__\", \"unknown\"\
+    )`).\n      Avoid `getattr(torch, \"npu\")` style — use type guards instead (see\
+    \ above)."
+  collision_type: rule_conflict
+  why_distracting: The PR adds an import utility function that checks the version
+    of a third-party package (`flash_attn`). An agent might mistakenly think it should
+    implement the version check using `getattr(flash_attn, '__version__', 'unknown')`
+    based on this rule, rather than using the existing internal `is_flash_attn_greater_or_equal`
+    utility which handles it correctly.
+  severity: medium
+- rule: Do not open one-off PRs for tiny edits
+  source:
+    path: CLAUDE.md
+    lines: 42-44
+  source_text: '### No low-value busywork PRs
+
+    - Do not open one-off PRs for tiny edits (single typo, isolated lint cleanup,
+    one mutable default argument, etc.).
+
+    - Mechanical cleanups are acceptable but not as first contributions.'
+  collision_type: scope_ambiguity
+  why_distracting: An agent might incorrectly categorize adding a single deprecated
+    alias wrapper as a 'tiny edit' or 'one-off PR', and refuse to make the change
+    or create the PR. However, this is a critical API backwards-compatibility fix
+    for external users.
+  severity: high
+- rule: Bugfix PRs do not need new functions; minimize diff size
+  source:
+    path: .github/copilot-instructions.md
+    lines: 15-15
+  source_text: '- PRs should be as brief as possible. Bugfix PRs in particular can
+    often be only one or two lines long, and do not need large comments, docstrings
+    or new functions in this case. Aim to minimize the size of the diff.'
+  collision_type: would_cause_bug
+  why_distracting: An agent might attempt to minimize the diff and avoid adding a
+    'new function' by instead just replacing internal references to the missing function.
+    This would fail to restore the missing public API function, breaking external
+    consumers.
+  severity: high
+hierarchy_analysis: The repository contains identical root-level agent instruction
+  files (`AGENTS.md` and `CLAUDE.md`). These files contain strict meta-instructions
+  dictating how AI agents should behave, specifically instructing them to refuse work
+  if certain human-coordination criteria are not met. The agent must navigate these
+  constraints to fulfill the user's direct coding request.

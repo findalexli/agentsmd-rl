@@ -1,0 +1,165 @@
+checks:
+- id: null_route_guard_in_init_action
+  type: pass_to_pass
+  description: Verify the Http::init action has a null guard after $route = $utopia->getRoute()
+    that throws GENERAL_ROUTE_NOT_FOUND
+  origin: pr_diff
+- id: null_route_guard_in_shutdown_action
+  type: fail_to_pass
+  description: Verify the shutdown action has a null guard after $route = $utopia->getRoute()
+    that throws GENERAL_ROUTE_NOT_FOUND
+  origin: pr_diff
+- id: no_direct_route_dereference_without_check
+  type: pass_to_pass
+  description: Verify that $route is not directly dereferenced without a preceding
+    null guard
+  origin: pr_diff
+- id: php_syntax_valid
+  type: pass_to_pass
+  description: Verify the PHP file has valid syntax after modifications
+  origin: pr_diff
+- id: correct_exception_constant_used
+  type: pass_to_pass
+  description: Verify that GENERAL_ROUTE_NOT_FOUND is used consistently in both guards
+  origin: pr_diff
+- id: repo_composer_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's composer.json passes validation (composer validate)
+- id: repo_php_syntax_all
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's PHP files have valid syntax (php -l)
+- id: repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's PHP files pass PSR-12 linting (pint)
+- id: repo_static_analysis
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's PHP files pass PHPStan static analysis
+- id: repo_static_analysis_full
+  type: pass_to_pass
+  origin: repo_tests
+  description: Full PHPStan analysis on src, app, bin, tests
+- id: repo_unit_cors
+  type: pass_to_pass
+  origin: repo_tests
+  description: CORS unit tests pass (related to API handling)
+- id: repo_unit_detector
+  type: pass_to_pass
+  origin: repo_tests
+  description: Detector unit tests pass (client/device detection used in API)
+- id: repo_unit_collections
+  type: pass_to_pass
+  origin: repo_tests
+  description: Collections validation unit tests pass
+- id: repo_unit_branch_domain
+  type: pass_to_pass
+  origin: repo_tests
+  description: Branch domain validation unit tests pass (routing logic)
+rubric:
+- rule: 'Follow PSR-12 formatting enforced by Pint: proper brace placement, indentation,
+    and spacing.'
+  source:
+    path: AGENTS.md
+    lines: '98'
+    commit: 951a96ae01bceaabe6e2fb936686b7953209ce19
+- rule: Use appropriate exception throwing with AppwriteException for error conditions
+    instead of allowing fatal errors.
+  source:
+    path: AGENTS.md
+    lines: 96-120
+    commit: 951a96ae01bceaabe6e2fb936686b7953209ce19
+- rule: Write end-to-end tests in `tests/e2e/` for service endpoints.
+  source:
+    path: AGENTS.md
+    lines: 27-28
+  evidence: The gold solution adds `testConsoleRootWithoutRouteDoesNotFatal` to `tests/e2e/General/HTTPTest.php`
+    to verify the 404 behavior.
+  category: testing
+- rule: tests/e2e/ -- end-to-end tests per service
+  source:
+    path: AGENTS.md
+    lines: 27-28
+  evidence: The gold solution adds a test case `testConsoleRootWithoutRouteDoesNotFatal`
+    in `tests/e2e/General/HTTPTest.php` to verify the fix, aligning with the E2E testing
+    structure.
+  category: testing
+- rule: Pint (PSR-12) formatting
+  source:
+    path: AGENTS.md
+    lines: 18-18
+  evidence: The gold solution correctly indents the `throw` statement with 4 spaces
+    inside the `if` block, adhering to PSR-12 formatting standards.
+  category: style
+- rule: Format code according to PSR-12 standards.
+  source:
+    path: AGENTS.md
+    lines: 26-26
+  source_text: '- PHPUnit 12, Pint (PSR-12), PHPStan level 3'
+  evidence: The added null checks follow PSR-12 control structure formatting, with
+    a space after `if`, spaces around the strict equality operator `===`, and the
+    opening brace placed on the same line.
+  category: style
+  verification: llm_judge
+distractors:
+- rule: Action pattern (HTTP endpoints) using dedicated classes extending Action
+  collision_type: scope_ambiguity
+  why_distracting: The config outlines a strict class-based Action pattern for HTTP
+    endpoints (extending `Action` with `__construct` and `action` methods). `api.php`
+    uses inline `->action(function (...) { ... })` definitions. An agent might attempt
+    to refactor `api.php` to match the documented class pattern, which would violate
+    the instruction to keep the fix minimal.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 48-68
+- rule: HTTP directory structure and module organization
+  source:
+    path: src/Appwrite/Platform/AGENTS.md
+    lines: 13-20
+  source_text: 'A module consists of:
+
+
+    - `Module.php` - Simple register class registering all module''s services (from
+    `Services` directory)
+
+    - `Workers` directory - Contains behavior for module-specific workers
+
+    - `Tasks` directory - Contains behavior for module-specific CLI tasks
+
+    - `Http` directory - Contains HTTP endpoints for the module
+
+    - `Services` directory - Contains register classes for all relevant types of services'
+  collision_type: architecture_boundary
+  why_distracting: The AI might attempt to refactor the `app/controllers/shared/api.php`
+    file into the new Module architecture (`src/Appwrite/Platform/Modules/*/Http`)
+    because it handles HTTP endpoints, but this PR is strictly a bug fix for a null
+    route in an existing shared controller.
+  severity: medium
+- rule: HTTP directory rules
+  source:
+    path: src/Appwrite/Platform/AGENTS.md
+    lines: 29-33
+  source_text: '### HTTP directory structure
+
+
+    Inside module''s `Http` directory, there are multiple rules to follow:
+
+
+    1. Directly in `Http` directory, there should only be directories for services
+    (and hooks, check point number 2'
+  collision_type: scope_ambiguity
+  why_distracting: The AI might see rules about HTTP directories and try to apply
+    them to `app/controllers/shared/api.php`, but this file is outside the `src/Appwrite/Platform/Modules`
+    scope.
+  severity: low
+hierarchy_analysis: The configuration is effectively a flat single file, as CLAUDE.md
+  simply redirects to AGENTS.md.
+version: '2.0'
+source:
+  repo: appwrite/appwrite
+  pr: 11809
+  base_commit: 951a96ae01bceaabe6e2fb936686b7953209ce19
+  merge_commit: d200b07466ae8db6ce9b100f8c41b3569f46cf28

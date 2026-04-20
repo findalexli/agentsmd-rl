@@ -1,59 +1,56 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert specific implementation details not mentioned in instruction.md: test_use_action_swr_uses_fallback_data checks for 'fallbackData', 'revalidateOnMount', and that 'useSWRMutation' is NOT used (replaced with 'useSWR'). The instruction says 'prevent unnecessary network requests' but never mentions fallbackData, revalidateOnMount, or switching from useSWRMutation to useSWR. Also, test_linear_mdc_exists_with_rules checks for 'Completion Comment' and 'In Review' which are mentioned in inst"
+      "outcome": "pass",
+      "reason": "Instruction names src/libs/swr/index.ts, useActionSWR, English-only comments, .cursor/rules/linear.mdc, CLAUDE.md, alwaysApply: true, 'Linear Issue Management', 'Completion Comment', 'Per-Issue Completion Rule', 'In Review', and the forbidden strings in CLAUDE.md."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction does not explicitly state to use fallbackData or revalidateOnMount, but it does strongly constrain the solution space by saying 'Prevent unnecessary network requests when a component mounts with an empty cache, while still sharing loading state across components that use the same key.' However, the CLAUDE.md restructuring section is extremely prescriptive \u2014 it specifies exact file paths, exact section headings, exact strings that must/must not appear. This is borderline but the S"
+      "outcome": "pass",
+      "reason": "Instruction describes the broken behavior (auto-fetches on mount, no shared loading) without prescribing fallbackData/revalidateOnMount as the fix; agent must reason about SWR API choice."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_use_action_swr_uses_fallback_data asserts specific implementation details: 'fallbackData' must appear in the function, 'revalidateOnMount' must appear, 'useSWRMutation' must NOT appear, and 'useSWR' must appear. An alternative correct fix could use a different SWR configuration option (e.g., using a custom fetcher that returns undefined, or using `dedupingInterval`, or a ref-based guard) and would fail. The test locks in one specific implementation approach."
+      "reason": "test_use_action_swr_uses_fallback_data asserts specific implementation details: forbids 'useSWRMutation' and requires literals 'useSWR', 'fallbackData', 'revalidateOnMount' \u2014 valid alternative fixes (e.g., using SWR's isLoading with a different config, or a custom hook) would fail, and these specifics aren't named in instruction.md."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "test_use_action_swr_uses_fallback_data is purely text-matching (checking for string literals 'fallbackData', 'revalidateOnMount', 'useSWR' in file content). test_swr_comments_english_only is character inspection. test_claude_md_references_linear_mdc and test_linear_mdc_exists_with_rules are string-in-file checks. While test_repo_swr_unit_tests, test_repo_swr_lint, and test_repo_swr_prettier do execute subprocesses, the core behavioral test (test_use_action_swr_uses_fallback_data) is entirely tex"
+      "outcome": "pass",
+      "reason": "Tests run npx vitest, eslint, and prettier as subprocesses; behavior-level tests exist beyond pure string checks."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests (test_repo_swr_unit_tests, test_repo_swr_lint, test_repo_swr_prettier) run actual test suites, linting, and formatting checks that would fail on a stub. test_use_action_swr_uses_fallback_data checks for specific implementation changes that wouldn't be present in the original code (which uses useSWRMutation). A no-op or stub would fail these."
+      "reason": "Tests assert specific literals and run the repo's own vitest suite, which wouldn't pass with a stub."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors from instruction.md are tested: preventing auto-fetch (via fallbackData/revalidateOnMount checks), shared loading state (via useSWR usage), English-only comments, CLAUDE.md restructuring, and linear.mdc creation with required content."
+      "reason": "All instruction requirements (SWR fix, English-only comments, CLAUDE.md refactor, linear.mdc structure) map to tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings explaining what each test verifies. They are logically grouped by concern (SWR module, CLAUDE.md, linear.mdc)."
+      "reason": "Tests are individually named with docstrings matching each check."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB."
+      "reason": "No structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "Paths and names look consistent across instruction and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names `src/libs/swr/index.ts` which is natural for the task domain. It describes what's broken (auto-fetch on mount, no shared loading state) without specifying exact line numbers or the exact fix (fallbackData/revalidateOnMount)."
+      "reason": "Instruction points at the hook and module, which is the task domain, not a specific buggy line."
     },
     "config_edit_scope_bounded": {
-      "outcome": "pass",
-      "reason": "The CLAUDE.md edit is a localized restructuring (moving Linear rules to external file and adding a reference), not a full-file rewrite. The linear.mdc creation is a new file with specific bounded content."
+      "outcome": "not_applicable",
+      "reason": "Not an agentmd-edits-only task; CLAUDE.md diff scope is reasonable and specified."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 6,
-  "fail_count": 4
+  "pass_count": 8,
+  "fail_count": 1
 }

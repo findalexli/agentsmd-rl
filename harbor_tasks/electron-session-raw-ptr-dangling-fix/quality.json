@@ -1,61 +1,60 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "Every test assertion references file paths, variable names, function names, and literal strings that are explicitly described in instruction.md's 'Expected Code State After Fix' sections (e.g., raw_ptr<ElectronBrowserContext>, browser_context_{browser_context}, DCHECK(browser_context != nullptr), browser_.reset(), js_env_.reset(), test name 'does not crash on exit with live session wrappers', import { once } from 'node:events')."
+      "reason": "All file paths, identifiers like 'browser_context_', 'raw_ptr<ElectronBrowserContext>', 'DCHECK(browser_context != nullptr)', the test name, and the import statement are named in instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly states the exact fix in detail: 'browser_context_ should be declared as raw_ptr<ElectronBrowserContext>', 'The constructor should initialize browser_context_ as browser_context_{browser_context}', 'Dispose() should capture browser_context() in a local variable declared as ElectronBrowserContext* const browser_context = this->browser_context()', 'set browser_context_ = nullptr before calling keep_alive_.Clear()', etc. This leaves no reasoning for the agent \u2014 it's a dicta"
+      "reason": "instruction.md dictates exact code: 'browser_context_{browser_context}', 'ElectronBrowserContext* const browser_context = this->browser_context()', 'if (!browser_context)', 'browser_context_ = nullptr', 'DCHECK(browser_context != nullptr);', 'browser_.reset()', 'js_env_.reset()', and the exact import line \u2014 this is a prescriptive recipe, not a problem description."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details like exact variable declarations ('ElectronBrowserContext* const browser_context = this->browser_context()'), exact null check patterns ('if (!browser_context)'), exact return statement format ('return browser_context_'), and exact initialization syntax ('browser_context_{browser_context}'). An alternative correct fix (e.g., using std::optional, a different local variable name, or a different null-check style) would fail these tests."
+      "reason": "Tests assert exact strings like 'ElectronBrowserContext* const browser_context = session->browser_context();' and 'browser_context_{browser_context}' which would reject semantically equivalent alternatives (e.g., non-const local, different init syntax)."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every single test reads source files and performs string/regex matching (e.g., 'assert ... in content', 're.search(..., content)'). No test compiles, executes, or runs any code. This is purely textual assertion, not behavioral verification."
+      "reason": "All tests use read_file() and string/regex matches on source files; none compile or execute Electron or the spec test."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "A stub implementation that simply writes the expected strings into the files (without any actual compilation or runtime behavior) would pass all tests. For example, test_raw_ptr_used_for_browser_context just checks 'raw_ptr<ElectronBrowserContext> browser_context_' appears in the file text. No test verifies the fix actually prevents the crash."
+      "outcome": "pass",
+      "reason": "Each assertion requires specific non-default source changes that a stub couldn't satisfy."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors described in instruction.md (raw_ref removal, raw_ptr usage, null checks in Dispose, nullification in OnBeforeMicrotasksRunnerDispose, DCHECK in WebContents/URL loader, browser_.reset()/js_env_.reset(), regression test in cpp-heap-spec.ts) are covered by corresponding test functions."
+      "reason": "Tests cover each instructed change: raw_ref removal, raw_ptr usage, null check, nullification, DCHECKs, resets, and spec test additions."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (e.g., test_raw_ref_removed_from_session_header, test_dispose_has_null_check), have docstrings explaining the rationale, and are grouped with section comments ('FAIL TO PASS TESTS')."
+      "reason": "Tests have descriptive names, docstrings, and a FAIL TO PASS section header."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves C++/TypeScript code changes, not structured data output like JSON/CSV/API/DB."
+      "reason": "Task is a C++/TS code fix, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, function names, and commands in instruction.md match those referenced in tests and solution without typos."
+      "reason": "File paths and identifiers appear consistent between instruction and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md specifies exact code changes at the level of individual lines and variable declarations (e.g., 'browser_context_ should be declared as raw_ptr<ElectronBrowserContext>', 'The constructor should initialize browser_context_ as browser_context_{browser_context}'). This goes far beyond identifying the buggy file/module \u2014 it dictates the exact implementation."
+      "reason": "instruction.md names exact lines to modify (e.g., 'add browser_.reset() and js_env_.reset() in PostMainMessageLoopRun()', 'set browser_context_ = nullptr before calling keep_alive_.Clear()'), removing localization work."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-editing task, not a config-editing task."
+      "reason": "Code-only task."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 5
+  "pass_count": 5,
+  "fail_count": 4
 }

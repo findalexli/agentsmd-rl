@@ -1,61 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert specific implementation details not mentioned in instruction.md: 'return () =>' cleanup pattern, absence of 'onDestroy', absence of module-level 'let comp', absence of '&& !comp' guard, '$inspect' removal from MountComponents.svelte, and the 'umount' -> 'unmount' typo fix. The instruction mentions 'correct spelling' and 'no debug logging' vaguely but never names '$inspect', 'onDestroy', 'umount', 'let comp', or the cleanup return pattern."
+      "outcome": "pass",
+      "reason": "Instruction names both files (MountCustomComponent.svelte, MountComponents.svelte) and describes all four behavioral requirements (remount on reload, cleanup, no debug logging, correct type name spelling)."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what's broken (custom components don't update on reload, cleanup issues, debug logging, typo) but doesn't specify exact code changes like 'replace onDestroy with $effect return' or 'remove $inspect(node)'."
+      "reason": "Instruction describes what's broken (components don't update, debug logging, typo in type names) without prescribing specific code changes like '$effect cleanup function' or 'remove $inspect'."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests assert gold-specific implementation details: test_effect_returns_cleanup requires 'return () =>' pattern and '.unmount(' call; test_effect_remounts_on_rerun forbids 'let comp' variable and '&& !comp' guard. An alternative correct fix (e.g., using onDestroy with a different re-mount strategy, or using a variable named 'instance' with different guard logic) would fail these tests even if functionally correct."
+      "outcome": "pass",
+      "reason": "Tests use behavioral analysis via svelte_analyzer helpers rather than asserting specific variable names, allowing multiple valid implementations that properly cleanup, remount, remove debug logging, and fix spelling."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "All fail-to-pass tests (test_effect_returns_cleanup, test_effect_remounts_on_rerun, test_no_inspect_debug, test_unmount_spelling) are purely text-based checks using regex/string matching on file contents. None import, compile, or execute the Svelte components. Every test is essentially 'assert X in open(path).read()' pattern."
+      "outcome": "pass",
+      "reason": "Tests parse Svelte component structure via analyze_svelte_component and also execute repo commands (pnpm lint, ts:check, format:check, test:run)."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "A developer could write a file containing the expected strings ('return () =>', '.unmount(', 'unmount', '$effect', 'target', 'mount') without implementing correct Svelte component behavior. The tests only check for presence/absence of text patterns, not actual runtime behavior. A stub with the right keywords would pass test_not_stub and all f2p tests."
+      "outcome": "pass",
+      "reason": "test_not_stub enforces substantial content with $effect and runtime type having mount; the f2p tests check for cleanup behavior, re-mount semantics, and specific type name, which a stub couldn't satisfy."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All four behaviors mentioned in instruction.md are tested: re-mounting on reload (test_effect_remounts_on_rerun), cleanup before remounting (test_effect_returns_cleanup), no debug logging (test_no_inspect_debug), and correct spelling (test_unmount_spelling)."
+      "reason": "All four expected behaviors from instruction.md (remount, cleanup, no debug logs, correct spelling) are covered by dedicated tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear grouping comments (fail_to_pass, pass_to_pass, repo_tests), descriptive function names, and docstrings explaining each test's purpose."
+      "reason": "Tests grouped under clear section comments (fail-to-pass, pass-to-pass static, pass-to-pass repo_tests) with descriptive docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing Svelte component code, not producing structured data output."
+      "reason": "Task is a code fix, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, and commands in instruction.md and tests are correctly spelled."
+      "reason": "File paths and commands look correct; 'umount' appears only as the bug to fix."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md explicitly names the two exact files to investigate: 'js/core/src/MountCustomComponent.svelte' and 'js/core/src/MountComponents.svelte'. Combined with hints about 'no debug logging calls' and 'correct spelling', this significantly narrows the search space beyond what the task domain alone would suggest."
+      "outcome": "pass",
+      "reason": "Instruction lists files to investigate which is reasonable scope guidance, and doesn't pinpoint lines or specific tokens like 'umount' or '$inspect'."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task involving Svelte component fixes, not configuration file edits."
+      "reason": "This is a code-only task, not an agentmd-edits task."
     }
   },
-  "tier_a_fails": [
-    "behavior_in_task_description",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 4,
-  "fail_count": 5
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
 }

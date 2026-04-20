@@ -1,61 +1,57 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "All test-asserted specifics \u2014 file paths (get_chart_type_schema.py, __init__.py, app.py), function names (_get_chart_type_schema_impl, get_chart_type_schema), variable names (_CHART_TYPE_ADAPTERS, VALID_CHART_TYPES, _CHART_EXAMPLES), chart type keys (xy, table, pie, pivot_table, mixed_timeseries, handlebars, big_number), config class names (XYChartConfig, PieChartConfig, etc.), response keys (error, valid_chart_types, hint, chart_type, schema, examples), 'adapter is None' check, 'if include_exam"
+      "reason": "All test-asserted paths, symbol names, dict keys, and string literals (e.g., _CHART_TYPE_ADAPTERS, VALID_CHART_TYPES, _CHART_EXAMPLES, chart type strings, 'adapter is None', 'if include_examples') are named explicitly in instruction.md."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction is extremely prescriptive, essentially dictating the exact implementation: exact variable names, exact dict structure ('\"xy\": TypeAdapter(XYChartConfig)'), exact function signatures, exact conditional checks ('adapter is None', 'if include_examples'), exact import statements, and exact response schemas. A competent developer would not need to reason about WHAT to change \u2014 it's fully specified line-by-line."
+      "outcome": "pass",
+      "reason": "Instruction describes required symbols, signatures, and behaviors without providing the actual implementation code."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests use regex to match exact code patterns like r'[\"\\']xy[\"\\']\\s*:\\s*TypeAdapter\\(XYChartConfig\\)' (TestXYChartTypeAdapter), exact string checks like 'adapter is None' (TestInvalidTypeHandling), and 'if include_examples' (TestIncludeExamplesParameter). An alternative correct implementation using e.g. 'adapter = _CHART_TYPE_ADAPTERS.get(chart_type); if not adapter:' or 'if include_examples is True:' would fail these text-matching tests despite being functionally correct."
+      "reason": "Tests assert on specific code patterns like `re.search(r'\"xy\":\\s*TypeAdapter\\(XYChartConfig\\)', content)` and literal strings 'adapter is None' and 'if include_examples', which forbid semantically-equivalent alternatives (e.g., using `.get()`, `not adapter`, or `if include_examples is True`)."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every single test relies on reading file content as text and checking for string patterns (e.g., 'assert \"get_chart_type_schema\" in content', regex matches, AST node name checks). No test imports, calls, or executes the actual code. This is purely textual/structural verification with no behavioral testing."
+      "reason": "Tests are predominantly AST parsing and regex/substring checks on file content (e.g., `assert 'adapter is None' in content`, `re.search` patterns); they do not import and call the tool or verify runtime behavior."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "A stub file containing the right string patterns (function defs with correct names, variable assignments with correct names, string literals matching expected patterns) but no actual working logic would pass all tests. For example, a file with 'def _get_chart_type_schema_impl(chart_type, include_examples=True): pass' and the right string constants would satisfy the AST and text checks without implementing any real behavior."
+      "outcome": "pass",
+      "reason": "A stub returning None/empty would not pass, since tests require specific constants, function definitions, dict entries, and conditional logic patterns."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "The instruction specifies behavioral requirements like 'call adapter.json_schema() to produce the JSON Schema', 'Build a result dict containing chart_type and schema keys', correct error response structure, and the @tool decorator delegation pattern. None of these behaviors are actually tested \u2014 tests only check for text patterns in the source file."
+      "outcome": "pass",
+      "reason": "Tests cover module existence, exports, app registration, impl function, constants, adapters, error handling, examples, and license header as described."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized into named classes (TestGetChartTypeSchemaModuleExists, TestXYChartTypeAdapter, TestInvalidTypeHandling, etc.) with descriptive docstrings and method names."
+      "reason": "Tests are grouped into named TestClass groups with descriptive docstrings per test."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The instruction documents the exact response schemas for both valid and invalid chart type responses, including all required keys and their descriptions."
+      "reason": "Response dict schemas (chart_type/schema/examples keys and error/valid_chart_types/hint) are specified in instruction.md."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, variable names, or commands in the instruction or test files."
+      "reason": "Filenames, paths, and symbol names are consistent between instruction and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction specifies exact file paths and implementation details, but this is a 'create new file' task where the file locations are inherently part of the task specification, not debugging localization leakage."
+      "reason": "Instruction specifies files to create/modify as part of the task; no line-level bug pointers are leaked."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task (creating a new Python module and editing existing files), not a config-edit task."
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "behavior_in_tests"
-  ],
-  "pass_count": 5,
-  "fail_count": 5
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 2
 }

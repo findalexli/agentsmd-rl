@@ -1,0 +1,243 @@
+version: '2.0'
+source:
+  repo: oven-sh/bun
+  pr: 28491
+  base_commit: fe4a66e086bebd2c3c5a238effa801426d736278
+  merge_commit: f6528b58ed67c8fb8c80046114829d9ad79a292f
+checks:
+- id: test_target_files_exist
+  type: pass_to_pass
+  origin: static
+  description: All five target source files must exist and be non-empty
+- id: test_static_header_structure_valid
+  type: pass_to_pass
+  origin: static
+  description: Header files have valid structure (pragma once or include guards)
+- id: test_static_cpp_syntax_basic
+  type: pass_to_pass
+  origin: static
+  description: C++ source files have balanced braces and valid includes
+- id: test_static_code_patterns_consistent
+  type: pass_to_pass
+  origin: static
+  description: C++ files follow repo code style (consistent indentation)
+- id: test_static_include_patterns_valid
+  type: pass_to_pass
+  origin: static
+  description: C++ files use valid include syntax (angle brackets or quotes)
+- id: test_static_header_guards_valid
+  type: pass_to_pass
+  origin: static
+  description: Header files have valid include guards or pragma once
+- id: test_repo_shellcheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Shell scripts in the repo must pass shellcheck validation
+- id: test_repo_cpp_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified C++ files have valid syntax (clang-format can parse them)
+- id: test_repo_check_node_scripts
+  type: pass_to_pass
+  origin: repo_tests
+  description: Node compatibility check scripts must be syntactically valid
+- id: test_repo_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: Required repo directories and build files exist
+- id: test_cpp_pattern_compiles
+  type: fail_to_pass
+  origin: pr_diff
+  description: Compile and run a standalone C++ program validating the weak callback
+    null-guard, locked container, and memory-cost patterns used in the fix
+- id: test_weak_ref_replaces_strong
+  type: fail_to_pass
+  origin: pr_diff
+  description: JSAbortAlgorithm must not use JSCallbackDataStrong; a weak callback
+    mechanism must be present
+- id: test_gc_visitor_in_abort_algorithm
+  type: fail_to_pass
+  origin: pr_diff
+  description: JSAbortAlgorithm must have a GC visitor method that delegates to m_data
+- id: test_handle_event_null_guard
+  type: fail_to_pass
+  origin: pr_diff
+  description: handleEvent must guard against GC-collected weak callback with null
+    check
+- id: test_abort_signal_typed_container
+  type: fail_to_pass
+  origin: pr_diff
+  description: AbortSignal must store abort algorithms in a typed GC-visible container
+    with visitor
+- id: test_thread_safety
+  type: fail_to_pass
+  origin: pr_diff
+  description: Abort algorithm storage must be synchronized with lock member and usage
+- id: test_gc_visitor_walks_algorithms
+  type: fail_to_pass
+  origin: pr_diff
+  description: JSAbortSignal GC visitor must walk abort algorithms to keep weak callbacks
+    alive
+- id: test_typed_storage_path
+  type: fail_to_pass
+  origin: pr_diff
+  description: addAbortAlgorithmToSignal must use typed container, not type-erase
+    into lambda
+- id: test_remove_uses_new_container
+  type: fail_to_pass
+  origin: pr_diff
+  description: removeAbortAlgorithmFromSignal must use new locked typed container,
+    not old removeAlgorithm
+- id: test_memory_cost_includes_new_container
+  type: fail_to_pass
+  origin: pr_diff
+  description: memoryCost must account for the new abort algorithms container size
+- id: test_visit_children_for_gc_objects
+  type: fail_to_pass
+  origin: agent_config
+  description: Custom heap objects holding GC refs must implement visitChildren/visitor
+    pattern
+  source:
+    path: src/bun.js/bindings/v8/AGENTS.md
+    lines: '230'
+    commit: fe4a66e086bebd2c3c5a238effa801426d736278
+- id: test_file_no_settimeout
+  type: fail_to_pass
+  origin: agent_config
+  description: Regression test file must exist and must not use setTimeout (use Bun.sleep
+    or await patterns instead)
+  source:
+    path: test/AGENTS.md
+    lines: '21'
+    commit: fe4a66e086bebd2c3c5a238effa801426d736278
+- id: test_file_module_scope_imports
+  type: fail_to_pass
+  origin: agent_config
+  description: Regression test file must use module-scope static imports only, not
+    dynamic import() inside test bodies
+  source:
+    path: test/AGENTS.md
+    lines: '218'
+    commit: fe4a66e086bebd2c3c5a238effa801426d736278
+rubric:
+- rule: Web API tests (fetch, WebSocket, streams, etc.) should be placed in `test/js/web/`.
+  evidence: The test is placed in `test/js/web/streams/pipeTo-signal-leak.test.ts`,
+    following the instruction to put Web API tests in `test/js/web/`.
+  reference: test/js/web/streams/pipeTo-signal-leak.test.ts
+  category: testing
+- rule: Use bun:test for test files
+  source:
+    path: test/AGENTS.md
+    lines: 19-19
+  source_text: Use `bun:test` with files that end in `*.test.{ts,js,jsx,tsx,mjs,cjs}`.
+    If it's a test/js/node/test/{parallel,sequential}/\*.js without a .test.extension,
+    use `bun bd <file>` instead of `bun bd test <file>` since those expect exit code
+    0 and don't use bun's test runner.
+  evidence: The new test file is named `pipeTo-signal-leak.test.ts` and imports `describe,
+    expect, test` from `bun:test`.
+  category: testing patterns
+  verification: llm_judge
+- rule: Avoid dynamic import and require in tests
+  source:
+    path: test/AGENTS.md
+    lines: 218-220
+  source_text: '### Avoid dynamic import & require
+
+
+    **Only** use dynamic import or require when the test is specifically testing something
+    relataed to dynamic import or require. Otherwise, **always use module-scope import
+    statements**.'
+  evidence: The test `pipeTo-signal-leak.test.ts` uses static module-scope ES imports
+    like `import { heapStats } from "bun:jsc";` and `import { expectMaxObjectTypeCount
+    } from "harness";` rather than dynamic imports.
+  category: testing patterns
+  verification: llm_judge
+distractors:
+- rule: Prefer concurrent tests over sequential tests
+  collision_type: would_cause_bug
+  why_distracting: The rule suggests making tests concurrent, but a memory leak test
+    using `bun:jsc` `heapStats()` relies on global heap state. Running it concurrently
+    with other tests would pollute the heap measurements and cause flaky tests.
+  severity: high
+  source:
+    path: test/AGENTS.md
+    lines: 16-18
+- rule: For single-file tests, prefer `-e` over `tempDir` and spawn a process.
+  collision_type: scope_ambiguity
+  why_distracting: The rule provides a template for single-file tests that spawns
+    a Bun process using `-e`. However, the bug description specifies verifying the
+    leak via `bun:jsc` `heapStats()`, which should be done in-process. Spawning a
+    process is unnecessary and complicates the memory assertion.
+  severity: medium
+  source:
+    path: test/AGENTS.md
+    lines: 43-60
+- rule: Always use bun.* APIs instead of std.*
+  source:
+    path: src/CLAUDE.md
+    lines: 14-16
+  source_text: '## Prefer Bun APIs over `std`
+
+
+    **Always use `bun.*` APIs instead of `std.*`.** The `bun` namespace (`@import("bun")`)
+    provides cross-platform wrappers that preserve OS error info and never use `unreachable`.
+    Using `std.fs`, `std.posix`, or `std.os` directly is wrong in this codebase.'
+  collision_type: meta_confusion
+  why_distracting: This rule applies to Zig code, but the agent is writing C++. The
+    agent might incorrectly try to avoid C++ `std::` types like `std::pair` or `std::exchange`,
+    which are heavily and correctly used in the PR.
+  severity: high
+- rule: Create 3 JSC classes for new structures
+  source:
+    path: .claude/skills/implementing-jsc-classes-cpp/SKILL.md
+    lines: 8-14
+  source_text: '## Class Structure
+
+
+    For publicly accessible Constructor and Prototype, create 3 classes:
+
+
+    1. **`class Foo : public JSC::DestructibleObject`** - if C++ fields exist; otherwise
+    use `JSC::constructEmptyObject` with `putDirectOffset`
+
+    2. **`class FooPrototype : public JSC::JSNonFinalObject`**
+
+    3. **`class FooConstructor : public JSC::InternalFunction`**'
+  collision_type: scope_ambiguity
+  why_distracting: The PR modifies existing WebCore bindings (`AbortSignal`, `JSAbortAlgorithm`)
+    which use a custom wrapping architecture. An agent might think it needs to refactor
+    `AbortAlgorithm` into this standalone 3-class JSC pattern, breaking the WebCore
+    integration.
+  severity: high
+- rule: Use .$call instead of .call
+  source:
+    path: src/js/CLAUDE.md
+    lines: 54-56
+  source_text: '## $ Globals and Special Syntax
+
+
+    **CRITICAL**: Use `.$call` and `.$apply`, never `.call` or `.apply`:'
+  collision_type: scope_ambiguity
+  why_distracting: This rule is specific to JS builtins to prevent prototype tampering.
+    The PR deals with C++ callback execution (`handleEvent`). An agent might incorrectly
+    try to use `.$call` in C++ or the integration test.
+  severity: medium
+- rule: Never wait for time to pass in tests
+  source:
+    path: test/AGENTS.md
+    lines: 21-21
+  source_text: '- **Do not write flaky tests**. Unless explicitly asked, **never wait
+    for time to pass in tests**. Always wait for the condition to be met instead of
+    waiting for an arbitrary amount of time. **Never use hardcoded port numbers**.
+    Always use `port: 0` to get a random port.'
+  collision_type: would_cause_bug
+  why_distracting: The test uses `await Bun.sleep(0)` specifically to yield to the
+    event loop so microtasks can settle before GC. An agent blindly following this
+    rule might remove it or replace it with complex polling, causing the memory leak
+    test to be flaky or fail.
+  severity: high
+hierarchy_analysis: The config hierarchy has root-level `AGENTS.md` defining general
+  test placement, while `test/AGENTS.md` provides specific testing style rules. The
+  agent must synthesize the test placement rule from the root with the testing style
+  rules from the `test/` directory, while carefully ignoring the Zig-specific rules
+  in `src/AGENTS.md` since the fix requires C++ changes.

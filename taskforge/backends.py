@@ -158,6 +158,17 @@ class BackendPool:
         while True:
             now = time.monotonic()
 
+            # Auto-resurrect suspended/dead backends whose cooldown has expired.
+            # Instead of permanent death, backends get a second chance after
+            # their cooldown period (default 5 min). The next request will
+            # either succeed (resetting consecutive_429s) or fail again
+            # (triggering another suspension cycle).
+            for s in self._slots:
+                if not s.available and now >= s.cooldown_until > 0:
+                    s.available = True
+                    print(f"  [{_ts()}] {s.backend.name} RESURRECTED "
+                          f"(was suspended after {s.consecutive_429s} 429s)")
+
             # Prefer waiting for a cheap backend in short cooldown over
             # immediately falling back to an expensive one.
             # Note: _value check + await acquire() is safe in asyncio because
@@ -220,29 +231,31 @@ class BackendPool:
         s.consecutive_429s += 1
         s.total_429 += 1
 
-        # Auto-blacklist on persistent failure — if we've hit 429 100+ times in a
-        # row, the backend is effectively dead. Mark unavailable so the pool stops
-        # hammering it (other backends pick up the load; outer queue handles any
-        # items that needed this backend via retry).
-        if s.consecutive_429s > 100 and s.available:
+        # Suspend instead of blacklist — after 20 consecutive 429s, stop sending
+        # new work but schedule a resurrection probe in 5 minutes.
+        if s.consecutive_429s >= 20 and s.available:
             s.available = False
-            print(f"  [{_ts()}] {backend.name} AUTO-BLACKLISTED after "
-                  f"{s.consecutive_429s} consecutive 429s")
+            # Schedule resurrection probe — pool will re-check in 5 min
+            s.cooldown_until = time.monotonic() + 300
+            print(f"  [{_ts()}] {backend.name} SUSPENDED after "
+                  f"{s.consecutive_429s} consecutive 429s, will probe in 300s")
             return
 
-        # Exponential backoff with jitter — 10-20 min caps to let backends recover
-        if s.backend.cost_tier <= 1:
-            base = 30 * (2 ** (s.consecutive_429s - 1))
-            delay = min(base, 600) + random.uniform(0, 60)   # cap 10 min + jitter
-        else:
-            base = 60 * (2 ** (s.consecutive_429s - 1))
-            delay = min(base, 1200) + random.uniform(0, 120)  # cap 20 min + jitter
+        # Short exponential backoff — start at 10s, cap at 120s.
+        # Old: 30s * 2^n → 600s cap (pool stuck for 10 min per 429)
+        # New: 10s * 2^n → 120s cap (recover in ~2 min even after many 429s)
+        base = 10 * (2 ** min(s.consecutive_429s - 1, 4))  # 10, 20, 40, 80, 160→cap
+        delay = min(base, 120) + random.uniform(0, 15)
         s.cooldown_until = time.monotonic() + delay
-        print(f"  [{_ts()}] 429 on {backend.name}, cooldown {delay:.0f}s (consecutive: {s.consecutive_429s})")
+        print(f"  [{_ts()}] 429 on {backend.name}, cooldown {delay:.0f}s "
+              f"(consecutive: {s.consecutive_429s})")
 
     def report_dead(self, backend: Backend) -> None:
-        self._find(backend).available = False
-        print(f"  [{_ts()}] {backend.name} marked dead")
+        s = self._find(backend)
+        s.available = False
+        # Allow resurrection after 5 minutes instead of permanent death
+        s.cooldown_until = time.monotonic() + 300
+        print(f"  [{_ts()}] {backend.name} marked dead, will probe in 300s")
 
     def _find(self, backend: Backend) -> _Slot:
         for s in self._slots:

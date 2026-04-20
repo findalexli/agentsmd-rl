@@ -1,0 +1,76 @@
+source:
+  pr_url: "https://github.com/mantinedev/mantine/pull/8591"
+  base_commit: "50526dd9df22b8d51f9890d92604a7b53ee85dc1"
+  merge_commit: "62a99c0b7b36ff0530335d37eacf8536a8df410e"
+  target_files:
+    - "packages/@mantine/core/src/components/ScrollArea/ScrollArea.tsx"
+
+checks:
+  # Fail-to-pass tests
+  - id: test_overscroll_x_axis
+    type: fail_to_pass
+    origin: behavioral
+    description: "ScrollArea with scrollbars='x' produces 'value auto' for overscroll-behavior CSS variable"
+
+  - id: test_overscroll_y_axis
+    type: fail_to_pass
+    origin: behavioral
+    description: "ScrollArea with scrollbars='y' produces 'auto value' for overscroll-behavior CSS variable"
+
+  - id: test_overscroll_various_x_values
+    type: fail_to_pass
+    origin: behavioral
+    description: "Different overscrollBehavior values (none, auto) work with x-axis scrollbars"
+
+  - id: test_overscroll_various_y_values
+    type: fail_to_pass
+    origin: behavioral
+    description: "Different overscrollBehavior values (none, auto) work with y-axis scrollbars"
+
+  # Pass-to-pass tests
+  - id: test_repo_scrollarea_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Existing ScrollArea Jest tests still pass"
+
+  - id: test_repo_eslint_scrollarea
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ESLint passes on ScrollArea.tsx"
+
+  - id: test_repo_prettier_scrollarea
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Prettier formatting check passes on ScrollArea.tsx"
+
+  - id: test_repo_typecheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: "TypeScript typecheck passes at repo root"
+
+  - id: test_repo_stylelint_scrollarea
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Stylelint passes on ScrollArea CSS"
+
+  - id: test_repo_eslint_scrollarea_dir
+    type: pass_to_pass
+    origin: repo_tests
+    description: "ESLint passes on entire ScrollArea directory"
+
+  - id: test_repo_prettier_scrollarea_dir
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Prettier formatting check passes on all ScrollArea files"
+
+  - id: test_overscroll_xy_unchanged
+    type: pass_to_pass
+    origin: behavioral
+    description: "xy scrollbars and default scrollbars still produce single overscroll value"
+
+  - id: test_no_overscroll_no_change
+    type: pass_to_pass
+    origin: behavioral
+    description: "Without overscrollBehavior prop, overscroll CSS variable is not set"
+
+rubric: []

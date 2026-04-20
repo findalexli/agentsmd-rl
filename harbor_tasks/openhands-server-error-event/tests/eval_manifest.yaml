@@ -1,0 +1,188 @@
+checks:
+- id: test_typescript_compilation
+  type: pass_to_pass
+  origin: repo_tests
+  description: Frontend TypeScript compilation passes
+- id: test_frontend_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Frontend linting passes
+- id: test_repo_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Frontend build passes
+- id: test_repo_translation_completeness
+  type: pass_to_pass
+  origin: repo_tests
+  description: Translation completeness check passes
+- id: test_repo_websocket_handler_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: WebSocket handler tests pass
+- id: test_repo_error_message_banner_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Error message banner component tests pass
+- id: test_repo_use_websocket_hook_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: useWebSocket hook tests pass
+- id: test_repo_use_event_store_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: useEventStore tests pass
+- id: test_repo_ws_client_provider_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: WebSocket client provider tests pass
+- id: test_repo_conversation_store_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Conversation store tests pass
+- id: test_repo_i18n_duplicate_keys_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: i18n duplicate keys tests pass
+- id: test_repo_api_conversation_service_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: v1-conversation-service API tests pass
+- id: test_repo_websocket_url_utils_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: WebSocket URL utility tests pass
+- id: test_server_error_event_type_exists
+  type: fail_to_pass
+  origin: agent_config
+  source:
+    path: AGENTS.md
+    lines: ''
+  description: ServerErrorEvent type definition exists with correct structure
+- id: test_is_server_error_event_guard_exists
+  type: fail_to_pass
+  origin: agent_config
+  source:
+    path: AGENTS.md
+    lines: ''
+  description: isServerErrorEvent type guard exists and is correctly implemented
+- id: test_is_displayable_error_event_guard_exists
+  type: fail_to_pass
+  origin: agent_config
+  source:
+    path: AGENTS.md
+    lines: ''
+  description: isDisplayableErrorEvent combines both error types for unified handling
+- id: test_websocket_context_uses_displayable_error
+  type: fail_to_pass
+  origin: agent_config
+  source:
+    path: AGENTS.md
+    lines: ''
+  description: WebSocket context uses isDisplayableErrorEvent for error banner display
+- id: test_openhands_event_includes_server_error
+  type: fail_to_pass
+  origin: agent_config
+  source:
+    path: AGENTS.md
+    lines: ''
+  description: OpenHandsEvent union type includes ServerErrorEvent
+- id: test_mock_helper_includes_server_error
+  type: fail_to_pass
+  origin: agent_config
+  source:
+    path: AGENTS.md
+    lines: ''
+  description: Mock helper includes createMockServerErrorEvent function
+- id: test_websocket_handler_tests_exist
+  type: fail_to_pass
+  origin: agent_config
+  source:
+    path: AGENTS.md
+    lines: ''
+  description: Tests for ServerErrorEvent handling exist in the test suite
+rubric:
+- rule: Follow existing code style for event type definitions. Check neighboring files
+    for patterns.
+  source:
+    path: AGENTS.md
+    lines: 119-140
+    commit: a198599d917fca47c467715b43858fc30f8082d4
+- rule: Add corresponding type guard functions when adding new event types.
+  source:
+    path: AGENTS.md
+    lines: 299-310
+    commit: a198599d917fca47c467715b43858fc30f8082d4
+- rule: Run frontend linting with 'npm run lint:fix' and ensure build passes with
+    'npm run build' before submitting changes.
+  source:
+    path: AGENTS.md
+    lines: 16-24
+    commit: a198599d917fca47c467715b43858fc30f8082d4
+- rule: Ensure simple test errors have been fixed before pushing changes.
+  source:
+    path: AGENTS.md
+    lines: 16-19
+  evidence: The gold solution includes comprehensive unit tests in `frontend/__tests__/conversation-websocket-handler.test.tsx`
+    to verify the new `ServerErrorEvent` handling, aligning with the requirement to
+    ensu
+  category: testing
+- rule: Before pushing any changes, you MUST ensure that any lint errors or simple
+    test errors have been fixed.
+  source:
+    path: AGENTS.md
+    lines: 17-18
+  evidence: The gold solution includes comprehensive tests in `frontend/__tests__/conversation-websocket-handler.test.tsx`
+    to ensure the new `ServerErrorEvent` handling works correctly, aligning with the
+    requirem
+  category: testing
+- rule: If you've made changes to the frontend, you should run `cd frontend && npm
+    run lint:fix && npm run build ; cd ..`
+  source:
+    path: AGENTS.md
+    lines: 21-22
+  evidence: The gold solution modifies frontend TypeScript and React files, ensuring
+    they are syntactically valid and properly typed to pass the required frontend
+    build and linting steps.
+  category: tooling
+distractors:
+- rule: When working on a PR that requires design documents or temporary artifacts,
+    store them in a `.pr/` directory.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might interpret the instruction to add a new event type
+    and type guards as requiring a design document or planning notes, prompting it
+    to create a `.pr/` directory. However, this is a straightforward feature addition
+    that does not require temporary PR artifacts.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 60-70
+- rule: To set up the entire repo, including frontend and backend, run `make build`.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to run `make build` to set up the entire
+    repository (including the Python backend) before starting, which is unnecessary
+    since the task only requires modifying frontend TypeScript files and running frontend
+    tests.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 5-6
+- rule: Use this skill to test a cross-repo feature or when changes span the SDK and
+    OpenHands server repos.
+  source:
+    path: .agents/skills/cross-repo-testing/SKILL.md
+    lines: 1-5
+  collision_type: scope_ambiguity
+  why_distracting: The task involves handling an event sent by the backend in the
+    frontend, which might seem like a 'cross-repo feature' testing scenario. However,
+    the task only requires adding standard React/Jest unit tests in the frontend,
+    not cross-repo e2e testing.
+  severity: medium
+hierarchy_analysis: The configuration consists of a single, flat repository-level
+  file (`AGENTS.md`) containing generic boilerplate instructions. There is no complex
+  hierarchy, and no deeper file guidance overrides the root instructions.
+version: '2.0'
+source:
+  repo: All-Hands-AI/OpenHands
+  pr: 13643
+  base_commit: a198599d917fca47c467715b43858fc30f8082d4
+  merge_commit: 73ba66faeae1520fc2671b07677db4b5e3e235d3

@@ -1,0 +1,59 @@
+checks:
+- id: test_signature_limit_constant_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: MAX_NUMBER_OF_SIGNATURES constant must be defined with value 2
+- id: test_signature_validation_code_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: Signature count validation logic must be implemented
+- id: test_validation_occurs_before_signature_parsing
+  type: fail_to_pass
+  origin: pr_diff
+  description: Validation must happen before signature parsing for early rejection
+- id: test_error_is_invalid_argument
+  type: fail_to_pass
+  origin: pr_diff
+  description: Error must use FieldInvalid reason for proper gRPC InvalidArgument
+    status
+- id: test_code_has_proper_documentation
+  type: fail_to_pass
+  origin: pr_diff
+  description: Constant must have explanatory comment about sender/sponsor limit
+- id: test_cargo_fmt_check_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Code must be properly formatted according to rustfmt
+- id: test_cargo_xlint_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: License headers must be present in all source files
+- id: test_cargo_clippy_package_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Clippy lints must pass for sui-rpc-api crate
+- id: test_cargo_check_package_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: sui-rpc-api crate must compile without errors
+- id: test_target_file_has_license_header
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified file has required license header
+version: '2.0'
+source:
+  repo: MystenLabs/sui
+  pr: 26067
+  base_commit: 73efc3be4ccf819cc5dfb38c10d301396ad75c94
+  merge_commit: 812fef6896ffce29c5a9c1f352269a00f2d6e289
+rubric: []
+distractors:
+- rule: Use protocol-config for system-wide limits and parameters
+  source:
+    path: .claude/skills/protocol-config/SKILL.md
+    lines: 1-10
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to implement the MAX_NUMBER_OF_SIGNATURES
+    limit as a dynamic protocol configuration rather than a local constant, overcomplicating
+    the solution and violating the explicit instruction.
+  severity: medium

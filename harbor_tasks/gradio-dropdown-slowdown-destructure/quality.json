@@ -1,62 +1,57 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: test_effect_handles_all_value_branches requires specific patterns like 'choices_values.includes', 'Array.isArray(value)', 'allow_custom_value' in an $effect block with >=3 assignments each to input_text and selected_index. test_selected_indices_is_derived requires a $derived declaration for selected_indices. test_template_uses_selected_indices_variable requires {selected_indices} shorthand in template. The instruc"
+      "outcome": "pass",
+      "reason": "instruction.md names the file js/dropdown/shared/Dropdown.svelte and the variables input_text, selected_index, selected_indices, and describes the inline ternary pattern tested."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly states the fix: 'The fix requires restructuring how these variables are declared and updated to avoid this cascade' and describes the exact current buggy pattern ('combines input_text and selected_index in a single derivation') and the exact inline ternary to remove ('selected_index === null ? [] : [selected_index]'). It also says variables should be declared to 'avoid triggering redundant re-derivations when accessed' and 'use stable references instead of creating new"
+      "outcome": "pass",
+      "reason": "Instruction describes symptoms and hints at restructuring but doesn't provide the exact code replacement."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests enforce very specific implementation choices: test_input_text_standalone_state requires `let input_text = $state`, test_selected_index_standalone_state requires `let selected_index = $state`, test_selected_indices_is_derived requires `let selected_indices = $derived`, test_effect_handles_all_value_branches requires a specific $effect structure. An alternative correct fix (e.g., using separate $derived.by for each variable instead of $state+$effect, or using a different reactive pattern) wo"
+      "reason": "Tests enforce gold-specific implementation: test_selected_indices_is_derived requires $derived (an alternative using $state + $effect would fail), and test_effect_handles_all_value_branches requires an $effect with >=3 assignments to each variable - a valid alternative using separate $derived declarations for input_text and selected_index would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every fail-to-pass test reads the file as text and uses regex matching (re.search) to check for specific code patterns. No test actually runs the Svelte component, renders a dropdown, or measures performance. For example, test_no_array_destructure_from_derived just checks if a regex pattern exists in the source text. All tests are purely textual/structural analysis."
+      "reason": "All tests are regex-based static analysis of the Svelte source (e.g., re.search for 'let\\s+input_text\\s*...=\\s*\\$state') rather than executing the component or testing actual behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub or empty file would not pass the tests. The tests check for specific patterns that must be present (e.g., $state declarations, $effect blocks with specific branch logic, $derived for selected_indices) and specific patterns that must be absent (destructured $derived, inline ternary). A default/empty implementation wouldn't satisfy both the presence and absence requirements simultaneously."
+      "reason": "Tests require specific structural changes that a stub wouldn't satisfy; test_not_stub enforces substantial code retention."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "The instruction says 'Dropdown with hundreds of elements should open instantly without freezing' but no test verifies performance. The tests only check code structure/patterns, not the actual behavioral requirement of fast dropdown opening."
+      "outcome": "pass",
+      "reason": "Tests cover the declared expectations around input_text, selected_index, selected_indices declarations and template usage."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with descriptive names (test_no_array_destructure_from_derived, test_input_text_standalone_state, etc.), grouped into 'fail-to-pass' and 'pass-to-pass' sections with clear comments, and each has a docstring explaining its purpose."
+      "reason": "Tests are grouped under fail_to_pass and pass_to_pass sections with clear comments and docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a Svelte component's reactive variable declarations, not producing structured data output."
+      "reason": "Task doesn't produce structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, variable names, or commands in the instruction or test files."
+      "reason": "No visible typos in paths or names."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction names the exact file (js/dropdown/shared/Dropdown.svelte), the exact variables (input_text, selected_index, selected_indices), describes the exact buggy pattern ('combines input_text and selected_index in a single derivation'), and the exact inline ternary expression ('selected_index === null ? [] : [selected_index]'). It also describes the exact fix approach ('restructuring how these variables are declared')."
+      "outcome": "pass",
+      "reason": "Instruction names the file under investigation, which is appropriate scoping rather than leakage."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task modifying a Svelte component, not a configuration edit task."
+      "reason": "Code-only task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
-    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "behavior_in_tests",
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 3,
-  "fail_count": 6
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 2
 }

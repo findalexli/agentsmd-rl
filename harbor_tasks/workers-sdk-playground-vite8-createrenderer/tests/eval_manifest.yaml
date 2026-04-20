@@ -1,0 +1,139 @@
+version: '2.0'
+source:
+  repo: cloudflare/workers-sdk
+  pr: 13105
+  base_commit: 49d063396f4c87bc7323be84fbd961b010a09460
+  merge_commit: ff41b070947de43c1ab6b2e4ff65a960d3d7c974
+checks:
+- id: vite_config_valid_structure
+  type: pass_to_pass
+  origin: static
+  description: vite.config.ts must exist with valid structure (defineConfig, balanced
+    braces)
+- id: jsx_runtime_alias_preserved
+  type: pass_to_pass
+  origin: static
+  description: Existing react/jsx-runtime.js alias must be preserved
+- id: test_repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's linter (oxlint) passes on all files
+- id: test_repo_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's formatter (oxfmt) passes on all files
+- id: test_repo_workers_playground_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Workers-playground package check passes (typecheck and default-hashes)
+- id: test_repo_workers_playground_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Workers-playground package builds successfully with Vite 8
+- id: test_repo_workers_editor_shared_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Workers-editor-shared package builds successfully (prerequisite for
+    playground)
+- id: test_repo_vite_plugin_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Vite-plugin package builds successfully (dependency of workers-playground)
+- id: style_provider_cjs_alias
+  type: fail_to_pass
+  origin: pr_diff
+  description: '@cloudflare/style-provider must be aliased to its CJS build (lib/)
+    to avoid rolldown crash'
+- id: no_base_playground_option
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'base: ''/playground'' must not be used — causes Wrangler asset path
+    mismatch'
+- id: assets_dir_playground
+  type: fail_to_pass
+  origin: pr_diff
+  description: assetsDir must route assets under playground/ for correct Wrangler
+    deployment
+- id: changeset_for_workers_playground
+  type: fail_to_pass
+  origin: agent_config
+  description: A changeset must exist for @cloudflare/workers-playground package changes
+  source:
+    path: AGENTS.md
+    lines: 100,161
+    commit: 49d063396f4c87bc7323be84fbd961b010a09460
+rubric:
+- rule: Format with oxfmt using tabs, double quotes, semicolons, and trailing commas
+  source:
+    path: AGENTS.md
+    lines: '104'
+  source_text: '- Tabs (not spaces), double quotes, semicolons, trailing commas (es5)'
+  evidence: The modifications in `vite.config.ts` use tabs for indentation, double
+    quotes for strings (e.g., "@cloudflare/style-provider", "playground/assets"),
+    and trailing commas.
+  category: style
+  verification: llm_judge
+- rule: Changeset descriptions can use conventional commit prefixes
+  source:
+    path: AGENTS.md
+    lines: 166-167
+  source_text: 'The changeset descriptions can either use conventional commit prefixes
+    (e.g., "fix: remove unused option") or
+
+    start with a capital letter and describe the change directly (e.g., "Remove unused
+    option" not").'
+  evidence: The new changeset file `.changeset/workers-playground-fix-vite8-createrenderer.md`
+    uses the conventional commit prefix `fix:` in its description.
+  category: documentation
+  verification: llm_judge
+- rule: Use 'patch' bump for bug fixes in changesets
+  source:
+    path: AGENTS.md
+    lines: '172'
+  source_text: '- `patch`: bug fixes; `minor`: new features, deprecations, experimental
+    breaking changes; `major`: stable breaking changes only'
+  evidence: The changeset specifies a `patch` bump for `@cloudflare/workers-playground`
+    corresponding to the bug fix for Vite 8.
+  category: config
+  verification: llm_judge
+distractors:
+- rule: Change local dev behavior -> packages/miniflare/src/
+  collision_type: scope_ambiguity
+  why_distracting: The issue mentions a runtime crash in the Workers Playground application.
+    An agent might misinterpret this as a local dev behavior issue or runtime simulation
+    issue and look into `miniflare` instead of the explicitly mentioned `vite.config.ts`.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 48-49
+- rule: Miniflare-specific ESLint exceptions
+  source:
+    path: packages/miniflare/AGENTS.md
+    lines: 26-27
+  source_text: '- Many shared ESLint rules temporarily DISABLED: `curly`, `no-explicit-any`,
+    `consistent-type-imports`, `no-shadow`, `no-floating-promises`, others
+
+    - Comment in config: "temporarily enabled while we transition Miniflare to use
+    the standard workers-sdk eslint config"'
+  collision_type: scope_ambiguity
+  why_distracting: An agent might see this and incorrectly assume they can bypass
+    standard lint rules across the repository or in `workers-playground`, but these
+    exceptions only apply strictly to `miniflare`.
+  severity: medium
+- rule: External runtime dependencies allowlist
+  source:
+    path: AGENTS.md
+    lines: 114-115
+  source_text: '- Packages must bundle deps into distributables; runtime `dependencies`
+    are forbidden except for an explicit allowlist
+
+    - External (non-bundled) deps must be declared in `scripts/deps.ts` with `EXTERNAL_DEPENDENCIES`
+    and a comment explaining why'
+  collision_type: meta_confusion
+  why_distracting: Since the code adds an alias pointing to the CJS build of `@cloudflare/style-provider`,
+    an agent might confuse this Vite module resolution logic with adding a runtime
+    dependency and erroneously try to update `scripts/deps.ts`.
+  severity: medium
+hierarchy_analysis: The config hierarchy consists of a generic AGENTS.md file and
+  a CLAUDE.md file that simply points to it. There are no deep overrides or specific
+  rules applicable to the Vite configuration or the Workers Playground package.

@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "instruction.md names all required APIs (Bus.subscribe/subscribeAll, WorkspaceContext.provide, Instance.provide, Bus.InstanceDisposed, GlobalBus.on, AbortController.signal), module paths (@/bus, @/control-plane/workspace-context, @/control-plane/schema, @/project/instance), RPC methods (fetch, snapshot, server, checkUpgrade, reload, shutdown), and style constraints (no any, prefer const, no else, no try/catch) that tests assert."
+      "reason": "instruction.md names all key APIs tested: Bus.subscribe/subscribeAll, WorkspaceContext.provide, Instance.provide, Bus.InstanceDisposed, GlobalBus.on, AbortController/signal, createOpencodeClient removal, RPC exports (fetch, snapshot, server, checkUpgrade, reload, shutdown), and style constraints (no any, no else, no try/catch, const over let)."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "Instruction describes what's broken and what APIs should be used but doesn't provide exact code or line-level replacement; the agent must still write the Bus subscription + context wrapping logic."
+      "reason": "Instruction describes what APIs to use and what behavior is required but does not provide the exact code structure (e.g., the Promise/settle pattern, reconnection loop) from the gold patch."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "Tests check for API usage patterns (Bus.subscribe/subscribeAll either accepted, WorkspaceContext.provide, Instance.provide) and generic cleanup (AbortController + signal), not gold-specific variable names or structure."
+      "reason": "Tests check for presence of API calls (Bus.subscribe*, WorkspaceContext.provide, Instance.provide) and absence of old APIs, not specific variable names or line positions; alternative correct implementations would pass."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests execute a Node TypeScript AST analysis via subprocess, walking real AST nodes (CallExpression, NewExpression, PropertyAccessExpression) rather than string matching."
+      "reason": "Tests use TypeScript compiler API to walk the AST, not string matching \u2014 they inspect real call expressions, new expressions, and property accesses."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "Tests include a 'not_stub' check requiring >=15 meaningful AST nodes, and require specific call expressions like Bus.subscribe, WorkspaceContext.provide, Instance.provide \u2014 a stub cannot pass."
+      "reason": "A stub would fail bus_subscribe, workspace_provide, instance_provide checks and the not_stub >= 15 meaningful AST nodes check; removal of createOpencodeClient is also required."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "Tests cover Bus subscription, WorkspaceContext/Instance provide, SSE removal, InstanceDisposed handling, AbortController cleanup, RPC preservation, GlobalBus, and style constraints as described in instruction.md."
+      "reason": "All required elements (Bus, WorkspaceContext, Instance, InstanceDisposed, GlobalBus, AbortController, RPC exports, style constraints) are tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are grouped with section comments ('Gate', 'Fail-to-pass') and each has a descriptive docstring and [pr_diff]/[static] tags."
+      "reason": "Tests have clear names, section comment headers (Gate, Fail-to-pass), and docstrings explaining each check."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task is a code refactor, not a structured data producer."
+      "reason": "Task modifies code, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, module names, and API identifiers match the repo structure in Dockerfile and patch."
+      "reason": "Paths and module names match (e.g., packages/opencode/src/cli/cmd/tui/worker.ts, @/bus, @/control-plane/workspace-context)."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "Instruction names the file to modify (worker.ts) which is necessary context, but doesn't cite specific line numbers of the bug."
+      "reason": "File path is named but that's the only file to modify; no specific line numbers or exact replacement code given."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code edit task, not an agentmd-edits config task."
+      "reason": "This is a code-only task, not an agentmd-edits task."
     }
   },
   "tier_a_fails": [],

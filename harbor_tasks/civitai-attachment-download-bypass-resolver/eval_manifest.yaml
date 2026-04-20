@@ -1,0 +1,101 @@
+source:
+  pr: civitai/civitai#2071
+  base_commit: 47c3beedb50993e5f410e241e4940131bba9afb2
+  merge_commit: 231986ad933972b1e9c42ef1b4e4ce400a69b9c2
+
+checks:
+  - id: test_imports_getDownloadUrl
+    type: fail_to_pass
+    origin: task
+    description: Attachment endpoint imports getDownloadUrl from delivery-worker
+
+  - id: test_does_not_import_resolveDownloadUrl
+    type: fail_to_pass
+    origin: task
+    description: Attachment endpoint does NOT import resolveDownloadUrl
+
+  - id: test_download_call_uses_file_url_and_name
+    type: fail_to_pass
+    origin: task
+    description: Download function called with (file.url, file.name), not (fileId, file.url, file.name)
+
+  - id: test_fileId_not_in_download_call
+    type: fail_to_pass
+    origin: task
+    description: fileId is not passed as argument to the download URL function
+
+  - id: test_delivery_worker_module_integrity
+    type: pass_to_pass
+    origin: task
+    description: delivery-worker.ts exports both getDownloadUrl and resolveDownloadUrl
+
+  - id: test_delivery_worker_getDownloadUrl_signature
+    type: pass_to_pass
+    origin: task
+    description: getDownloadUrl has correct 2-parameter signature
+
+  - id: test_delivery_worker_resolveDownloadUrl_signature
+    type: pass_to_pass
+    origin: task
+    description: resolveDownloadUrl has correct 3-parameter signature
+
+  - id: test_attachment_endpoint_structure
+    type: pass_to_pass
+    origin: task
+    description: Attachment endpoint has valid structure with expected exports
+
+  - id: test_resolveDownloadUrl_has_fallback_to_getDownloadUrl
+    type: pass_to_pass
+    origin: task
+    description: resolveDownloadUrl falls back to getDownloadUrl for non-ModelFile records
+
+  - id: test_attachment_endpoint_file_valid_syntax
+    type: pass_to_pass
+    origin: task
+    description: Attachment endpoint file has balanced braces and no obvious syntax errors
+
+  - id: test_repo_eslint_modified_files
+    type: pass_to_pass
+    origin: repo_tests
+    description: ESLint passes on modified files (delivery-worker.ts and attachment endpoint)
+
+  - id: test_repo_prettier_modified_files
+    type: pass_to_pass
+    origin: repo_tests
+    description: Prettier formatting check passes on modified files
+
+  - id: test_repo_ts_parse_delivery_worker
+    type: pass_to_pass
+    origin: repo_tests
+    description: TypeScript parser accepts delivery-worker.ts without errors
+
+  - id: test_repo_ts_parse_attachment_endpoint
+    type: pass_to_pass
+    origin: repo_tests
+    description: TypeScript parser accepts attachment endpoint without errors
+
+  - id: test_repo_vitest_stable_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Stable subset of repo vitest unit tests pass
+
+rubric:
+  - rule: "Document that getDownloadUrl should be used for non-model file downloads and resolveDownloadUrl only for model file downloads"
+    source:
+      path: CLAUDE.md
+    origin: agent_config
+
+  - rule: "Document that the storage resolver's file_locations table only tracks ModelFile records"
+    source:
+      path: CLAUDE.md
+    origin: agent_config
+
+  - rule: "Document the convention: use type imports when possible"
+    source:
+      path: CLAUDE.md
+    origin: agent_config
+
+  - rule: "Document the download URL resolution pattern with specific guidance about storage resolver limitations and File vs ModelFile records"
+    source:
+      path: CLAUDE.md
+    origin: agent_config

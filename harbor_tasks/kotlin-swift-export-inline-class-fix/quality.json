@@ -1,61 +1,59 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all key file paths (SirInitFromKtSymbol.kt location, golden files, valueClass test data paths, SwiftExportExecutionTestGenerated.java), required class/function names (Foo, Bar, inlineClassWithRef, testValueClass), annotations (@TestMetadata(\"valueClass\")), and string patterns (createUninitializedInstance, 'as Any?'). The test checks for 'containingDeclaration' import and 'isInline' in bridges section, which are implied by the instruction's description of using Analysis API "
+      "reason": "Instruction names all required file paths, the import string, 'isInline', 'as Any?', class names Foo/Bar, function inlineClassWithRef, testValueClass() and @TestMetadata(\"valueClass\")."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly states the fix: 'append \" as Any?\" after the createUninitializedInstance<...>() call', 'use the Analysis API to check if the containing class is an inline class (value class)', and specifies exact file paths and patterns. It also tells exactly what golden file changes to make. This is a detailed solution description, not just a problem description."
+      "reason": "Instruction explicitly states the fix: 'add the string \" as Any?\" after createUninitializedInstance<...>() calls when the containing class is an inline class' and mandates the exact import and isInline usage, leaving no reasoning about WHAT to change."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_isInline_check_present asserts very specific implementation details: exact import 'import org.jetbrains.kotlin.analysis.api.components.containingDeclaration', the string 'isInline' must appear in a 'bridges' property section, and '\" as Any?\"' must be a literal string in the source. An alternative correct fix (e.g., using a different API to check value class status, or using a different casting approach) would fail these tests."
+      "reason": "Tests assert specific literal strings like '\" as Any?\"', the exact import 'org.jetbrains.kotlin.analysis.api.components.containingDeclaration', and isInline being inside the 'bridges' property section \u2014 an alternative correct fix using a different API or different casting approach would fail."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Most fail-to-pass tests are text/pattern checks: test_isInline_check_present reads file and checks string patterns, test_golden_files_contain_inline_cast uses regex on file content, test_value_class_test_data_exists checks file content strings, test_generated_test_class_has_valueclass checks string patterns. test_kotlin_compilation_sir_light_classes attempts actual compilation but catches TimeoutExpired and skips. The dominant testing approach is 'assert pattern in open(path).read()'."
+      "outcome": "pass",
+      "reason": "test_kotlin_compilation_sir_light_classes actually invokes gradle compileKotlin via subprocess, beyond string checks."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "test_value_class_test_data_exists and test_generated_test_class_has_valueclass can be satisfied by simply creating files with the right content strings without any actual bug fix. test_golden_files_contain_inline_cast can be passed by just doing sed replacements on golden files without fixing the actual code generator. The compilation test (test_kotlin_compilation_sir_light_classes) skips on timeout, making it unreliable."
+      "outcome": "pass",
+      "reason": "Tests require specific content changes in golden files, creation of test data files, and successful compilation, which a stub cannot satisfy."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All four required changes in instruction.md are tested: code generation fix (test_isInline_check_present, test_kotlin_compilation_sir_light_classes), golden file updates (test_golden_files_contain_inline_cast), test data creation (test_value_class_test_data_exists), and generated test class update (test_generated_test_class_has_valueclass)."
+      "reason": "All four instruction requirements (source fix, golden files, regression test data, generated test class) are covered by distinct test functions."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (FAIL-TO-PASS TESTS, PASS-TO-PASS TESTS), descriptive function names, and docstrings explaining each test's purpose."
+      "reason": "Tests are grouped under FAIL-TO-PASS and PASS-TO-PASS comment headers with descriptive names and docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB outputs."
+      "reason": "Task does not produce structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, function names, and variable names in the instruction and tests are consistent and correctly spelled."
+      "reason": "Paths and identifiers appear consistent between instruction, solution, and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies the exact module ('native/swift/sir-light-classes'), the exact technique ('use the Analysis API to check if the containing class is an inline class'), and the exact code change ('append \" as Any?\" after the createUninitializedInstance<...>() call'). This goes well beyond naming the buggy component."
+      "reason": "Instruction names the exact file SirInitFromKtSymbol.kt, the exact import to add, the exact string '\" as Any?\"' to insert, and the exact 'isInline' check \u2014 this removes localization and implementation design from the task."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-editing task, not a config-edit task."
+      "reason": "Not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 5
+  "pass_count": 6,
+  "fail_count": 3
 }

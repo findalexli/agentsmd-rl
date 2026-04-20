@@ -1,0 +1,132 @@
+checks:
+- id: f2p_install_together_exclude_newer
+  description: When pre_release=True, _install_airflow_and_optionally_providers_together
+    adds --pre and --exclude-newer with timestamp
+  type: fail_to_pass
+  origin: pr_diff
+- id: f2p_install_constraints_exclude_newer
+  description: When pre_release=True, _install_only_airflow_airflow_core_task_sdk_with_constraints
+    adds --pre and --exclude-newer with timestamp
+  type: fail_to_pass
+  origin: pr_diff
+- id: f2p_timestamp_is_current
+  description: The timestamp used should be the current time when the function runs
+  type: fail_to_pass
+  origin: pr_diff
+- id: p2p_no_prerelease_no_exclude_newer
+  description: When pre_release=False, command should NOT include --pre or --exclude-newer
+  type: pass_to_pass
+  origin: pr_diff
+- id: p2p_no_prerelease_constraints_no_exclude_newer
+  description: Second function also should NOT add flags when pre_release=False
+  type: pass_to_pass
+  origin: pr_diff
+- id: p2p_console_message_providers
+  description: Console message should mention 'providers' for first function
+  type: pass_to_pass
+  origin: pr_diff
+- id: p2p_repo_python_syntax
+  description: Python syntax check passes on install_airflow_and_providers.py
+  type: pass_to_pass
+  origin: repo_tests
+- id: p2p_repo_ast_parsing
+  description: AST parsing succeeds on install_airflow_and_providers.py
+  type: pass_to_pass
+  origin: repo_tests
+- id: p2p_repo_ruff_critical
+  description: Ruff critical checks (E9,F) pass on install_airflow_and_providers.py
+  type: pass_to_pass
+  origin: repo_tests
+- id: p2p_repo_ruff_format
+  description: Ruff format check passes on install_airflow_and_providers.py
+  type: pass_to_pass
+  origin: repo_tests
+- id: p2p_repo_ruff_imports
+  description: Ruff import checks (I) pass on install_airflow_and_providers.py
+  type: pass_to_pass
+  origin: repo_tests
+- id: p2p_repo_shellcheck_scripts
+  description: Shell scripts in in_container pass shellcheck
+  type: pass_to_pass
+  origin: repo_tests
+- id: p2p_repo_yaml_lint
+  description: Basic YAML linting passes on workflow files
+  type: pass_to_pass
+  origin: repo_tests
+- id: p2p_repo_uv_scripts_tests
+  description: Repo's scripts CI tests pass with uv
+  type: pass_to_pass
+  origin: repo_tests
+- id: p2p_repo_uv_common_prek_utils
+  description: Repo's common_prek_utils tests pass with uv
+  type: pass_to_pass
+  origin: repo_tests
+- id: p2p_repo_uv_ruff_format
+  description: Ruff format check passes with uv on target file
+  type: pass_to_pass
+  origin: repo_tests
+rubric:
+- rule: Include Apache License header on all new/modified Python files.
+  source:
+    path: CLAUDE.md
+    lines: '85'
+    commit: 9e2bf8110b4d273ff93c9dccc9023188cdf51af0
+- rule: Do not use assert statements in production code.
+  source:
+    path: CLAUDE.md
+    lines: '78'
+    commit: 9e2bf8110b4d273ff93c9dccc9023188cdf51af0
+distractors:
+- rule: 'Run scripts tests: uv run --project scripts pytest scripts/tests/ -xvs'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to run script tests to verify the change,
+    but testing container installation scripts often requires a full container build
+    or specific environment not easily mocked, leading to wasted effort.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 28-28
+- rule: Apply Airflow translation guidelines to user-facing text.
+  source:
+    path: .github/skills/airflow-translations/SKILL.md
+    lines: 1-2
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to apply translation guidelines to the
+    `console.print` messages added in the script, but this is an internal container
+    script that does not use Airflow's translation infrastructure.
+  severity: low
+- rule: Never run pytest, python, or airflow commands directly on the host — always
+    use breeze.
+  source:
+    path: AGENTS.md
+    lines: 10-10
+  source_text: '- **Never run pytest, python, or airflow commands directly on the
+    host** — always use `breeze`.'
+  collision_type: architecture_boundary
+  why_distracting: An agent might think it needs to modify the script's internal commands
+    to use `breeze` instead of running Python/Airflow directly. However, this script
+    is located in `scripts/in_container/`, meaning it is already designed to be executed
+    *inside* the Breeze container environment. Wrapping commands in `breeze` here
+    would break the containerized execution architecture.
+  severity: high
+- rule: Place temporary scripts in dev/ (mounted as /opt/airflow/dev/ inside Breeze).
+  source:
+    path: AGENTS.md
+    lines: 11-11
+  source_text: '- Place temporary scripts in `dev/` (mounted as `/opt/airflow/dev/`
+    inside Breeze).'
+  collision_type: scope_ambiguity
+  why_distracting: An agent might mistakenly believe that the script being modified
+    (`scripts/in_container/install_airflow_and_providers.py`) should be moved to the
+    `dev/` directory since it interacts with the container environment. However, this
+    is a permanent infrastructure script for building/running the container, not a
+    temporary developer script.
+  severity: medium
+hierarchy_analysis: Flat structure with identical AGENTS.md and CLAUDE.md files containing
+  general repository commands. No specific coding guidelines are present.
+version: '2.0'
+source:
+  repo: apache/airflow
+  pr: 64783
+  base_commit: 9e2bf8110b4d273ff93c9dccc9023188cdf51af0
+  merge_commit: ab94c71d68f46d98236e9e2506ac9251d673c60e

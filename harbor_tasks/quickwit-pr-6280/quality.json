@@ -1,0 +1,56 @@
+{
+  "model": "claude-opus-4-7",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "Instruction names both files, the function name `delete_metrics_splits`, and the required literal strings `sortschema::RowKeys` and `event_store_sortschema.proto`, as well as `FailedPrecondition`, CTE pattern, and `DELETE_SPLITS_QUERY`."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction describes broken behavior and required patterns (CTE, FailedPrecondition, warn) but doesn't provide the actual query SQL or code."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_delete_splits_query_uses_cte asserts the constant is literally named `DELETE_SPLITS_QUERY` and test_delete_splits_query_returns_struct requires a 4-tuple destructure `(w,w,w,w)` and use of `sqlx::query_as` - a correct alternative fix using e.g. a named struct via query_as!, or a different constant name, would fail."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests include cargo check and clippy subprocess runs in addition to text grepping."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "Tests require specific structural changes (CTE, tuple destructuring, FailedPrecondition path) that can't be satisfied by stubs."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "Tests cover CTE usage, FailedPrecondition, not-found warning, and doc comment update, matching instruction requirements."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests have descriptive names and docstrings explaining what each verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "No structured data output produced."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "Paths and names appear consistent between instruction and tests."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction names files that must be changed, which is standard, and doesn't point at specific line numbers."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "Code-only task."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 1
+}

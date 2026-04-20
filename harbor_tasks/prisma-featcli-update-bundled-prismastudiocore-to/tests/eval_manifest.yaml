@@ -1,0 +1,115 @@
+version: '2.0'
+source:
+  repo: prisma/prisma
+  pr: 29376
+  base_commit: 32fb24b53c2a46971f3093eee9934c18e0f47642
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Studio.ts must be valid TypeScript (no unterminated strings or brackets)
+- id: existing_bff_procedures_preserved
+  type: pass_to_pass
+  origin: static
+  description: Existing BFF procedures (query, sequence, sql-lint) must still be present
+- id: test_repo_prettier
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Prettier formatting check passes
+- id: test_repo_engines_override
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's engines override check passes
+- id: test_repo_lint_studio
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ESLint check on Studio.ts passes
+- id: test_repo_studio_vitest
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Studio vitest tests pass
+- id: test_studio_syntax_node_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Studio.ts must pass Node.js syntax validation
+- id: transaction_procedure_handler
+  type: fail_to_pass
+  origin: pr_diff
+  description: BFF must handle transaction procedure with executeTransaction and error
+    handling
+- id: favicon_endpoint
+  type: fail_to_pass
+  origin: pr_diff
+  description: Studio must serve a valid SVG favicon at /favicon.ico with link tag
+    in HTML
+- id: import_map_includes_radix_toggle
+  type: fail_to_pass
+  origin: pr_diff
+  description: Import map must include @radix-ui/react-toggle with React dep pinning
+- id: import_map_includes_chartjs
+  type: fail_to_pass
+  origin: pr_diff
+  description: Import map must include chart.js/auto via esm.sh
+- id: react_version_constant
+  type: fail_to_pass
+  origin: pr_diff
+  description: React version must be a constant, not hardcoded in multiple import
+    map URLs
+- id: agents_md_studio_import_map_docs
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md must document Studio import map alignment with new browser
+    imports
+- id: agents_md_react_pinning_docs
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md must document esm.sh React version pinning pattern
+rubric:
+- rule: AGENTS.md updates should be consistent with the existing bullet-point style
+    under the CLI commands section
+  source:
+    path: AGENTS.md
+    lines: 64-67
+    commit: 32fb24b53c2a46971f3093eee9934c18e0f47642
+- rule: Avoid adding useless code comments that do not add new information for the
+    reader
+  source:
+    path: AGENTS.md
+    lines: 108-114
+    commit: 32fb24b53c2a46971f3093eee9934c18e0f47642
+- rule: always edit AGENTS.md directly. When learning something new about the codebase
+    that would help with future tasks, update this file immediately.
+  source:
+    path: AGENTS.md
+    lines: 3-5
+  evidence: The gold solution adds new bullet points to AGENTS.md documenting the
+    Studio CLI compatibility patterns, import map alignment, and esm.sh React pinning,
+    fulfilling the instruction to update the file w
+  category: documentation
+- rule: When learning something new about the codebase that would help with future
+    tasks, update this file immediately.
+  source:
+    path: AGENTS.md
+    lines: 3-4
+  evidence: The gold solution directly modifies AGENTS.md to document the newly learned
+    Studio CLI compatibility patterns (import map alignment, esm.sh React pinning)
+    as instructed by the meta note.
+  category: documentation
+- rule: Keep examples aligned with new config-first workflow.
+  source:
+    path: AGENTS.md
+    lines: 67-68
+  evidence: The added documentation in AGENTS.md mentions passing a config object
+    that preserves loadedFromFile to keep SQLite URLs resolving relative to the config
+    file, aligning with the config-first workflow
+  category: documentation
+distractors:
+- rule: adapter changes typically require fixture/test updates
+  source:
+    path: AGENTS.md
+    lines: 10-11
+  collision_type: scope_ambiguity
+  why_distracting: The rule mentions that adapter changes typically require fixture/test
+    updates. While this PR touches the CLI and database connections, it is not a driver
+    adapter change, so an agent might mistakenly try to update adapter fixtures.
+  severity: low

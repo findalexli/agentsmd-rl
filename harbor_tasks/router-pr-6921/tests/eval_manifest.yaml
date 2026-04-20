@@ -1,0 +1,76 @@
+version: "1.0"
+
+source:
+  repo: TanStack/router
+  pr: 6921
+  base_commit: 79cd4d5afa22903f94655602d244f83bdc220641
+  merge_commit: 6f297a249424c0fd1c1a56aa4fc12c8217be7b6a
+
+checks:
+  # Fail-to-pass tests - these must fail on base commit and pass after fix
+  - id: test_loader_stale_reload_mode_type_exported
+    type: fail_to_pass
+    origin: behavioral
+    description: LoaderStaleReloadMode type is exported from router-core
+
+  - id: test_route_loader_object_type_exists
+    type: fail_to_pass
+    origin: behavioral
+    description: RouteLoaderObject type is defined for object-form loaders
+
+  - id: test_default_stale_reload_mode_option_exists
+    type: fail_to_pass
+    origin: behavioral
+    description: defaultStaleReloadMode option exists in RouterOptions
+
+  - id: test_load_matches_extracts_handler_from_object_loader
+    type: fail_to_pass
+    origin: behavioral
+    description: load-matches extracts handler from object-form loader
+
+  - id: test_should_reload_in_background_variable_exists
+    type: fail_to_pass
+    origin: behavioral
+    description: shouldReloadInBackground logic exists in load-matches
+
+  - id: test_blocking_stale_reload_mode_logic
+    type: fail_to_pass
+    origin: behavioral
+    description: Blocking stale reload mode check exists
+
+  - id: test_object_form_loader_in_test_file
+    type: fail_to_pass
+    origin: behavioral
+    description: Test file demonstrates object-form loader usage
+
+  # Pass-to-pass tests - repo CI/CD that must continue passing
+  - id: test_router_core_types_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: Router-core type checking passes
+
+  - id: test_router_core_build_succeeds
+    type: pass_to_pass
+    origin: repo_tests
+    description: Router-core package builds successfully
+
+  - id: test_router_core_unit_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: Router-core unit tests pass
+
+  - id: test_router_core_eslint_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: Router-core ESLint passes
+
+  - id: test_router_core_package_exports_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: Router-core package exports validation (publint + attw)
+
+rubric:
+  - id: code_only_change
+    rule: "This is a code-only change to router-core - no config file edits (CLAUDE.md, AGENTS.md, README.md) are required. The change adds LoaderStaleReloadMode type and object-form loader support in packages/router-core/src/."
+    reference: "No config file changes expected - this is purely a feature implementation in TypeScript source files."
+    weight: 1.0

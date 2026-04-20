@@ -1,0 +1,162 @@
+version: '2.0'
+source:
+  repo: zulip/zulip
+  pr: 37872
+  base_commit: 305c52c35a7dad3e6c9bde470e8f717186abaae5
+  merge_commit: 1a56a9fef3180b5588642ba6f0326f91b0097b00
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: fetch-zulip-web-public-messages parses without syntax errors
+- id: parse_near_url
+  type: fail_to_pass
+  origin: pr_diff
+  description: parse_zulip_url handles near/ID anchor format
+- id: parse_near_url_stream_variant
+  type: fail_to_pass
+  origin: pr_diff
+  description: parse_zulip_url handles near/ID with stream prefix
+- id: error_message_mentions_near
+  type: fail_to_pass
+  origin: pr_diff
+  description: Error message documents near/ID URL format
+- id: parse_with_url_still_works
+  type: pass_to_pass
+  origin: static
+  description: parse_zulip_url still handles the original with/ID format
+- id: parse_url_no_anchor
+  type: pass_to_pass
+  origin: static
+  description: parse_zulip_url handles URLs without any anchor
+- id: claude_md_zulip_chat_links
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLAUDE.md documents how to handle Zulip chat links
+- id: test_pylint_errors_only
+  type: pass_to_pass
+  origin: repo_tests
+  description: Pylint finds no errors in fetch-zulip-web-public-messages
+- id: test_pyflakes_clean
+  type: pass_to_pass
+  origin: repo_tests
+  description: Pyflakes finds no issues in fetch-zulip-web-public-messages
+- id: test_script_help_works
+  type: pass_to_pass
+  origin: repo_tests
+  description: fetch-zulip-web-public-messages --help runs without error
+- id: test_repo_ruff
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff linter passes on fetch-zulip-web-public-messages
+- id: test_repo_black
+  type: pass_to_pass
+  origin: repo_tests
+  description: Black format check passes on fetch-zulip-web-public-messages
+- id: test_repo_isort
+  type: pass_to_pass
+  origin: repo_tests
+  description: isort import order check passes on fetch-zulip-web-public-messages
+- id: test_repo_bandit
+  type: pass_to_pass
+  origin: repo_tests
+  description: Bandit security linter passes on fetch-zulip-web-public-messages
+- id: test_repo_script_imports_cleanly
+  type: pass_to_pass
+  origin: repo_tests
+  description: fetch-zulip-web-public-messages imports without errors
+- id: test_repo_pycodestyle
+  type: pass_to_pass
+  origin: repo_tests
+  description: pycodestyle (PEP 8) check passes on fetch-zulip-web-public-messages
+- id: test_repo_flake8
+  type: pass_to_pass
+  origin: repo_tests
+  description: Flake8 linter passes on fetch-zulip-web-public-messages
+- id: test_script_dry_run_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Script handles URL validation without unhandled exceptions
+rubric:
+- rule: CLAUDE.md must include a "Zulip Chat Links" section documenting that agents
+    should use the /fetch-zulip-messages skill for Zulip URLs, not WebFetch
+  source:
+    path: .claude/CLAUDE.md
+    lines: 378-383
+    commit: 305c52c35a7dad3e6c9bde470e8f717186abaae5
+  reference: '## Zulip Chat Links
+
+
+    When you encounter a Zulip narrow URL (e.g., from `chat.zulip.org` in a
+
+    GitHub issue, PR, or user message), use the `/fetch-zulip-messages` skill
+
+    to read the conversation. Do not use `WebFetch` — it cannot access Zulip
+
+    message content.'
+- rule: Be consistent with existing code. Look at surrounding code and follow the
+    same patterns.
+  source:
+    path: .claude/CLAUDE.md
+    lines: 70-71
+  evidence: The gold solution updates the regex by changing `(?:/with/(\d+))?` to
+    `(?:/(?:with|near)/(\d+))?` and updates the error message by changing `[/with/MSG_ID]`
+    to `[/with|near/MSG_ID]`, perfectly matchin
+  category: style
+- rule: Comments should have a line to themself except for CSS px math.
+  source:
+    path: .claude/CLAUDE.md
+    lines: 74-75
+  evidence: 'The updated comment `# Parse the narrow fragment: narrow/channel/ID-slug/topic/encoded-topic[/with|near/ID]`
+    is kept on its own line, rather than being moved to an inline comment.'
+  category: style
+config_edits:
+- path: .claude/CLAUDE.md
+  tier: 1
+  gold_added: '## Zulip Chat Links
+
+
+    When you encounter a Zulip narrow URL (e.g., from `chat.zulip.org` in a
+
+    GitHub issue, PR, or user message), use the `/fetch-zulip-messages` skill
+
+    to read the conversation. Do not use `WebFetch` — it cannot access Zulip
+
+    message content.'
+  gold_removed: ''
+distractors:
+- rule: Backend and API changes (with tests and API doc changes documented fully using
+    the tools/create-api-changelog double-entry changelog system)
+  collision_type: scope_ambiguity
+  why_distracting: The rule requires backend and API changes to be documented using
+    the `tools/create-api-changelog` system. An agent might mistakenly classify the
+    URL parser update as a backend/API change and attempt to generate a changelog,
+    but this script is an internal Claude skill tool, not part of the Zulip public
+    API.
+  severity: high
+  source:
+    path: .claude/CLAUDE.md
+    lines: 46-48
+- rule: Run tests before making a commit... ./tools/test-backend zerver.tests.test_relevant_module
+  collision_type: architecture_boundary
+  why_distracting: The rule instructs running specific test collections like `./tools/test-backend
+    zerver.tests.test_relevant_module`. An agent might waste time trying to find or
+    write tests in the `zerver` Django app for this script, but the script lives in
+    `.claude/skills/` and is completely separate from the main backend architecture.
+  severity: medium
+  source:
+    path: .claude/CLAUDE.md
+    lines: 58-61
+- rule: Fix backend test coverage gaps when modifying Python files.
+  source:
+    path: .claude/skills/fix-backend-coverage/SKILL.md
+    lines: 1-2
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to write backend tests for the modified `fetch-zulip-web-public-messages`
+    script to ensure test coverage, but this is an AI skill script outside the main
+    backend test suite.
+  severity: medium
+hierarchy_analysis: The task involves a flat single-file config (`.claude/CLAUDE.md`),
+  but it is highly meta-referential because the agent is explicitly instructed to
+  edit this exact config file to update its own future instructions. The agent must
+  apply the rules from the file while simultaneously modifying it.

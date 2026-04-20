@@ -1,0 +1,180 @@
+checks:
+- id: test_colorShadow_token_exists_in_interface
+  type: fail_to_pass
+  origin: pr_diff
+  description: ColorNeutralMapToken interface should have colorShadow property
+- id: test_colorShadow_in_dark_colors
+  type: fail_to_pass
+  origin: pr_diff
+  description: Dark theme colors.ts should define colorShadow with white default
+- id: test_colorShadow_in_default_colors
+  type: fail_to_pass
+  origin: pr_diff
+  description: Default (light) theme colors.ts should define colorShadow with black
+    default
+- id: test_generateNeutralColorMap_signature
+  type: fail_to_pass
+  origin: pr_diff
+  description: GenerateNeutralColorMap type should accept shadowColor parameter
+- id: test_alias_uses_colorShadow
+  type: fail_to_pass
+  origin: pr_diff
+  description: alias.ts should use colorShadow with FastColor to derive shadow colors
+- id: test_shadow_tokens_use_dynamic_color
+  type: fail_to_pass
+  origin: pr_diff
+  description: Shadow tokens should use dynamic getShadowColor helper, not hardcoded
+    rgba
+- id: test_repo_theme_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository's theme token unit tests continue to pass
+- id: test_repo_theme_all_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: All theme-related Jest tests pass (53 tests)
+- id: test_repo_typescript_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript typecheck passes without errors
+- id: test_npm_lint_theme
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint on theme files passes without errors
+- id: test_repo_node_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Node.js/SSR tests pass (974 tests) ensuring SSR compatibility
+- id: test_repo_dropdown_demo_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Dropdown component demo tests pass (19 tests with 38 snapshots)
+- id: test_repo_menu_demo_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Menu component demo tests pass (17 tests with 34 snapshots)
+- id: test_repo_lint_biome
+  type: pass_to_pass
+  origin: repo_tests
+  description: Biome linting check passes for code quality
+- id: test_repo_theme_util_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Theme utility tests pass for shadow token support
+- id: test_repo_version_generation
+  type: pass_to_pass
+  origin: repo_tests
+  description: Version file generation script works correctly
+- id: test_repo_token_statistic
+  type: pass_to_pass
+  origin: repo_tests
+  description: Token statistics collection script works correctly
+- id: test_repo_token_meta
+  type: pass_to_pass
+  origin: repo_tests
+  description: Token metadata generation script works correctly
+- id: test_repo_changelog_generation
+  type: pass_to_pass
+  origin: repo_tests
+  description: Component changelog generation script works correctly
+rubric:
+- rule: Use TypeScript with strict type checking
+  source:
+    path: CLAUDE.md
+- rule: Never use `any` type - define precise types instead
+  source:
+    path: CLAUDE.md
+- rule: Use interfaces (not type aliases) for object structures
+  source:
+    path: CLAUDE.md
+- rule: Support both light and dark themes
+  source:
+    path: CLAUDE.md
+- rule: Never hardcode colors, sizes, or spacing values
+  source:
+    path: CLAUDE.md
+- rule: Test files should use relative path imports
+  source:
+    path: CLAUDE.md
+- rule: Component props interfaces should be named ComponentNameProps
+  source:
+    path: .github/copilot-instructions.md
+- rule: Prefer union types over enums
+  source:
+    path: .github/copilot-instructions.md
+- rule: Use CSS logical properties for RTL support
+  source:
+    path: .github/copilot-instructions.md
+- rule: 采用 CSS-in-JS 架构，支持 Design Token 主题系统、暗色模式
+  source:
+    path: CLAUDE.md
+    lines: 10-12
+  evidence: The gold solution fixes the shadow issue by extending the Design Token
+    system (adding `colorShadow` to `ColorMap.ts` and `colors.ts`) rather than hardcoding
+    CSS values, properly supporting the dark mo
+  category: architecture
+- rule: Test files in `__tests__` must use relative paths for internal imports and
+    avoid absolute paths or aliases.
+  source:
+    path: AGENTS.md
+    lines: 43-49
+  evidence: 'In `components/theme/__tests__/token.test.tsx`, the gold solution adds
+    a new test case using existing variables (`theme.darkAlgorithm`) without introducing
+    any forbidden absolute imports (like `antd` '
+  category: testing
+- rule: Develop using TypeScript and React.
+  source:
+    path: AGENTS.md
+    lines: 8-8
+  source_text: '- 使用 TypeScript 和 React 开发'
+  evidence: 'The diff modifies TypeScript files (`.ts` and `.tsx`), adding type annotations
+    such as `shadowColor?: string` in `components/theme/themes/ColorMap.ts`.'
+  category: architecture
+  verification: llm_judge
+- rule: Support Design Token theme system and dark mode.
+  source:
+    path: AGENTS.md
+    lines: 10-10
+  source_text: '- 支持 Design Token 主题系统、暗色模式、RTL 布局、SSR、国际化（150+ 语言）'
+  evidence: The diff adds a `colorShadow` token to the Design Token system (`ColorNeutralMapToken`),
+    implements dark mode shadow colors in `components/theme/themes/dark/colors.ts`,
+    and adds a test specifically for shadow tokens adapting to the dark theme (`theme.darkAlgorithm`).
+  category: architecture
+  verification: llm_judge
+distractors:
+- rule: 'Changelog 规范: 必须同时提供中英文两个版本'
+  collision_type: scope_ambiguity
+  why_distracting: The config provides detailed instructions for updating the changelog
+    when fixing bugs. An agent might waste effort modifying CHANGELOG.zh-CN.md and
+    CHANGELOG.en-US.md, but the gold solution scopes the fix strictly to the code
+    and tests.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 100-104
+- rule: 'Demo 导入规范: 一律使用绝对路径导入'
+  collision_type: rule_conflict
+  why_distracting: The config mandates absolute imports for Demo files. An agent might
+    mistakenly apply this to the test file it modifies (`token.test.tsx`) if it needs
+    to import new utilities, conflicting with the Test import rules.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 30-32
+- rule: Help maintainers reply to Ant Design GitHub issues
+  source:
+    path: .claude/skills/issue-reply/SKILL.md
+    lines: 1-5
+  collision_type: meta_confusion
+  why_distracting: The prompt describes a 'Problem' and mentions 'verify the issue'.
+    The agent might mistakenly use the issue-reply skill to generate a comment instead
+    of implementing the code fix.
+  severity: low
+hierarchy_analysis: AGENTS.md and CLAUDE.md are identical and provide flat, repository-wide
+  guidelines. No deep hierarchy resolution is required.
+version: '2.0'
+source:
+  repo: ant-design/ant-design
+  pr: 57511
+  base_commit: 9702dbb57d3cb8ce4346b96c895e6fd6f43e56d3
+  merge_commit: c046f6e502de0ca1197c71b770a3bdf2e35c2a88

@@ -1,61 +1,57 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert specific implementation details like 'active.count()', 'findFirstSet', '@intCast' \u2014 these exact API names are not mentioned in instruction.md. The instruction mentions 'BitSet called active' and 'computeNtFilter takes a single u32 component index' but never names findFirstSet(), active.count(), or @intCast as required methods/constructs. A developer would need to discover these from the Zig BitSet API documentation, which is not cited."
+      "outcome": "pass",
+      "reason": "Instruction names GlobWalker.zig, setNameFilter, computeNtFilter, active BitSet, component_idx, and describes the required conditional behavior."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md explicitly states the exact fix logic: 'When only one component is active, compute the NT filter with that single index and pass it to setNameFilter' and 'When multiple components are active, setNameFilter must receive null'. This describes precisely WHAT to change, not just what's broken. The 'Required behavior' section is essentially pseudocode for the solution."
+      "outcome": "pass",
+      "reason": "Instruction describes required behavior without giving exact code; agent must figure out findFirstSet/@intCast/count() API calls."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific implementation details: 'active.count()' (test_active_count_used), 'findFirstSet' (test_findFirstSet_used), '@intCast' (test_intCast_used). An alternative correct fix could use active.iterator() to count and get the first set bit, or use a different BitSet method, or use @as() instead of @intCast, and would fail these tests despite being functionally correct."
+      "reason": "Tests require literal strings 'active.count()', 'findFirstSet', '@intCast', and if/else \u2014 a correct fix using e.g. 'active.count() > 1' with inverted branches passes, but one using switch or a helper method, or iterating active.iterator().next(), would fail despite being correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every test reads the source file as text and checks for string presence (e.g., assert 'active.count()' in context, assert 'findFirstSet' in context). No test compiles the code, runs it, or checks any runtime behavior. This is purely textual pattern matching."
+      "reason": "All tests in test_outputs.py only read the file and do substring checks (read_source_file, 'in context'); none compile or execute the code."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub or no-op would not pass \u2014 the original buggy file contains 'component_idx' which would fail test_buggy_component_idx_not_in_setNameFilter_context, and lacks 'active.count()', 'findFirstSet', etc. The tests do require actual changes to the source file."
+      "reason": "A stub would fail because tests require specific strings in the setNameFilter context that don't exist in the buggy code."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All five required behaviors listed in instruction.md are tested: no component_idx, derive from active BitSet, single component filter, multiple components null, setNameFilter preserved, computeNtFilter still called."
+      "reason": "Tests cover buggy removal, active BitSet usage, null for multi-active, conditional, preservation of setNameFilter/computeNtFilter."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized into named classes (TestBuggyPatternRemoved, TestFixUsesActiveBitSet, TestMultiActiveConditional, etc.) with descriptive docstrings on each test method."
+      "reason": "Tests are grouped into named classes like TestBuggyPatternRemoved, TestFixUsesActiveBitSet, TestMultiActiveConditional."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task is a code bug fix, not producing structured data output."
+      "reason": "Task is code fix, no structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, variable names, or commands in any of the task files."
+      "reason": "Paths and identifiers appear correct."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md names the exact file (src/glob/GlobWalker.zig), the exact buggy call (setNameFilter(this.computeNtFilter(component_idx))), the exact variable that was removed (component_idx), the replacement variable (active BitSet), and effectively specifies the exact fix logic with if/else on count."
+      "outcome": "pass",
+      "reason": "Instruction names the file and function but that is appropriate scope; does not give exact line or code."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "Code-only task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
-    "no_solution_leakage",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 4,
-  "fail_count": 5
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 2
 }

@@ -4,12 +4,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-16T10:57:32.687406",
-  "total_time": 69.93,
-  "sandbox_id": "il2qi2z9cyaekhmiwb0fv",
-  "backend": "anthropic",
+  "validated_at": "2026-04-16T19:50:34.019856",
+  "total_time": 4239.75,
+  "sandbox_id": "iu8cv44ok98vzadi6r9t7",
+  "backend": "minimax",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "validate",
   "nodes": {
     "p2p_enrich": {
       "status": "completed",
@@ -38,9 +38,9 @@
       "gold_reward": 1.0,
       "attempts": 1,
       "notes": "All 4 validation checks passed. Docker build successful, NOP test correctly failed (reward=0) on buggy base code with 5 expected fail_to_pass tests failing, Gold test passed (reward=1) with all 12 tests passing, Rubric judge ICR=1.0.",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 93.37
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 233.1
     },
     "rubric_judge": {
       "status": "pass",
@@ -51,29 +51,24 @@
     },
     "quality_gate": {
       "status": "passed",
-      "model": "claude-opus-4-7",
-      "backend": "anthropic",
-      "time": 0.27,
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.47,
       "notes": "flags=[]"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 13.76,
-      "tier_a_fails": [],
+      "time": 16.13,
+      "tier_a_fails": [
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text"
+      ],
       "tier_b_fails": [],
-      "pass_count": 10,
-      "fail_count": 0
+      "pass_count": 9,
+      "fail_count": 2
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 177.07,
-      "at": "2026-04-15T03:16:28.124366"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -105,6 +100,14 @@
       "backend": "anthropic",
       "time": 69.93,
       "at": "2026-04-16T10:57:32.687406"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 4239.75,
+      "at": "2026-04-16T19:50:34.019856"
     }
   ]
 }

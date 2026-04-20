@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "Instruction names getActivePluginRegistry, resolveRuntimePluginRegistry, runtime module, loader module, allowGatewaySubagentBinding param, and resolvePluginTools function \u2014 all identifiers the tests assert on."
+      "reason": "Instruction names the key identifiers tested: getActivePluginRegistry, resolveRuntimePluginRegistry, ./runtime module, allowGatewaySubagentBinding, and resolvePluginTools export."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "Instruction describes the behavior (check active registry first, fall back to loader) without dictating exact code, helper names like resolvePluginToolRegistry, or line numbers."
+      "reason": "Instruction describes the broken behavior and required semantics but doesn't dictate exact code; agent must decide how to structure the conditional/helper."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "Tests check for the import of getActivePluginRegistry, absence of direct `= resolveRuntimePluginRegistry(` call in resolvePluginTools body, and behavioral reuse of active registry \u2014 all consistent with alternative correct fixes (inline conditional, helper function, etc.)."
+      "reason": "Tests check for import of getActivePluginRegistry and that resolveRuntimePluginRegistry isn't called directly at the assignment site in resolvePluginTools \u2014 both requirements are stated in the instruction's structural requirements, so alternative correct fixes would comply."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "test_subagent_uses_active_registry runs vitest actually calling resolvePluginTools with mocked loader and real runtime, plus repo unit tests and oxlint run as subprocesses."
+      "reason": "test_subagent_uses_active_registry runs vitest which imports and calls resolvePluginTools with mocks, verifying real behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub returning [] would fail expect(tools.map((t) => t.name)).toEqual([\"optional_tool\"]); the behavioral test requires actual active-registry reuse."
+      "reason": "The behavioral vitest test asserts the active registry's tool is returned and loader mock isn't called; a stub couldn't satisfy this."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The active-registry-first requirement, loader fallback, and import requirement from instruction.md are all exercised by the tests."
+      "reason": "Tests cover the import requirement, the delegation requirement, and the runtime behavior of reusing the active registry."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are grouped with header comments (Gates, fail-to-pass, repo CI/CD) and each has a docstring explaining intent."
+      "reason": "Tests are organized with section comment headers (Gates, Fail-to-pass, Repo CI gates) and descriptive names/docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task is a code fix, not structured data production."
+      "reason": "Task is a code fix, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "Paths (src/plugins/tools.ts, ./runtime.js, ./loader.js) and identifiers match consistently across instruction, tests, and solution."
+      "reason": "Paths (src/plugins/tools.ts, ./runtime.js) and symbol names are consistent across instruction, tests, and gold patch."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "Instruction references the domain (runtime module, loader module, plugin tool resolver) without citing exact file paths or line numbers for the fix."
+      "reason": "Instruction says 'the function that resolves plugin tools' and names runtime/loader modules semantically without citing exact line/file like src/plugins/tools.ts."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd/config edit."
+      "reason": "Code-only task."
     }
   },
   "tier_a_fails": [],

@@ -1,49 +1,49 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the files (frontend/src/utils/status.ts, frontend/__tests__/utils/status.test.ts), the function (getStatusCode), the exact comment string ('PRIORITY 2.5: Handle conversation starting state'), the exact test description ('show Starting when conversation status is STARTING even with disconnected websocket'), and the key logic (conversationStatus === 'STARTING' before WebSocket check). All assert targets in test_outputs.py are discoverable from instruction.md."
+      "reason": "Instruction names the file paths, function name `getStatusCode`, the required comment string 'PRIORITY 2.5: Handle conversation starting state', and the test description string."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly says to 'Add a priority check for conversationStatus === \"STARTING\"', place it 'BEFORE the WebSocket status check', include the exact comment 'PRIORITY 2.5: Handle conversation starting state', and add a test with an exact description string. This is essentially the complete solution specification, not just a description of what's broken."
+      "reason": "Instruction explicitly states to add a check for `conversationStatus === \"STARTING\"` before the WebSocket check, with the exact comment text \u2014 this essentially dictates the fix rather than describing the bug."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on the exact literal string 'PRIORITY 2.5: Handle conversation starting state' in the source code (test_priority_comment_in_code), the exact test description string (test_new_test_case_added), and exact ordering via string index comparison (test_conversation_starting_priority_with_disconnected_websocket). An alternative correct fix using a different comment or different ordering approach would fail these tests."
+      "reason": "Tests assert on literal strings like 'conversationStatus === \"STARTING\"' and 'PRIORITY 2.5: Handle conversation starting state', forcing exact textual match rather than any correct behavioral implementation."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests (test_conversation_starting_priority_with_disconnected_websocket, test_conversation_starting_priority_with_connected_websocket, test_conversation_starting_check_in_code, test_priority_comment_in_code, test_new_test_case_added) all use string matching on file contents (e.g., 'assert \"PRIORITY 2.5\" in status_code_func', 'assert \"conversationStatus === \\\"STARTING\\\"\" in status_code_func'). None of them import or call the actual getStatusCode function. The pass-to-pass tests do"
+      "reason": "All f2p tests use `open(...).read()` and substring/position checks; none import or call `getStatusCode`. Only the p2p tests (npm run) execute behavior, but the f2p validation is purely textual."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub/default implementation would not contain the string 'conversationStatus === \"STARTING\"' or the comment 'PRIORITY 2.5: Handle conversation starting state' in the getStatusCode function body. The tests check for specific code additions that require actual implementation work."
+      "reason": "The p2p test `test_repo_status_tests` runs the actual status.test.ts including the new test case, which would fail if a stub always returned a default value."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors specified in the instruction are tested: the priority check for STARTING (tests 1-3), the comment (test 4), the new test case description (test 5), and pass-to-pass tests verify existing functionality isn't broken."
+      "reason": "Tests cover the STARTING priority, comment presence, ordering relative to DISCONNECTED, and the new test case name as required."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names and docstrings, clearly separated into fail-to-pass and pass-to-pass sections with a comment delimiter."
+      "reason": "Tests have clear docstrings categorizing FAIL-TO-PASS vs PASS-TO-PASS with section comment dividers."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task modifies TypeScript source code and tests; it does not produce structured data like JSON/CSV/API/DB."
+      "reason": "No structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All file paths, function names, commands, and variable names in the instruction and tests are correct and consistent."
+      "reason": "Paths and function names consistent between instruction and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction names the exact function (getStatusCode), the exact file (frontend/src/utils/status.ts), the exact check to add ('conversationStatus === \"STARTING\"'), its exact placement ('BEFORE the WebSocket status check'), and an exact comment string ('PRIORITY 2.5: Handle conversation starting state'). This goes well beyond identifying the buggy module."
+      "reason": "Instruction names the exact file `frontend/src/utils/status.ts`, function `getStatusCode`, literal comment text, and ordering \u2014 fully specifying the localization and wording of the fix."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agent config edit task."
+      "reason": "Code-only task."
     }
   },
   "tier_a_fails": [

@@ -1,0 +1,289 @@
+version: '2.0'
+source:
+  repo: biomejs/biome
+  pr: 9613
+  base_commit: eb57e3a1df36bf1bbe612f84a68ded658d9b7d00
+  merge_commit: 9e3df0c40f45297fad3321344353b135e8d36f75
+checks:
+- id: test_justfile_syntax
+  type: pass_to_pass
+  origin: static
+  description: justfile is parseable and retains existing recipes
+- id: test_justfile_valid_structure
+  type: pass_to_pass
+  origin: static
+  description: justfile has valid structure with balanced braces
+- id: test_existing_skills_intact
+  type: pass_to_pass
+  origin: static
+  description: Other existing skill files remain present
+- id: test_skill_files_valid_frontmatter
+  type: pass_to_pass
+  origin: static
+  description: All skill files have valid YAML frontmatter with required fields
+- id: test_readme_valid_structure
+  type: pass_to_pass
+  origin: static
+  description: Skills README.md has required sections and valid table formatting
+- id: test_cargo_toml_valid
+  type: pass_to_pass
+  origin: static
+  description: Cargo.toml has valid workspace structure and dependencies
+- id: test_justfile_new_changeset_empty_recipe
+  type: fail_to_pass
+  origin: pr_diff
+  description: justfile defines new-changeset-empty recipe invoking pnpm changeset
+    --empty
+- id: test_changeset_skill_valid_frontmatter
+  type: fail_to_pass
+  origin: pr_diff
+  description: changeset/SKILL.md exists with valid YAML frontmatter and references
+    just new-changeset-empty
+- id: test_pull_request_skill_valid_frontmatter
+  type: fail_to_pass
+  origin: pr_diff
+  description: pull-request/SKILL.md exists with valid YAML frontmatter and required
+    sections
+- id: test_changeset_skill_has_writing_guidelines
+  type: fail_to_pass
+  origin: pr_diff
+  description: changeset/SKILL.md includes writing guidelines covering change types
+    and format
+- id: test_biome_developer_code_comments_section
+  type: fail_to_pass
+  origin: pr_diff
+  description: biome-developer/SKILL.md has Code Comments section with DO/DON'T guidance
+    and examples
+- id: test_testing_codegen_changeset_section_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: testing-codegen/SKILL.md no longer has Create Changeset section and
+    references new skill
+- id: test_readme_lists_new_skills
+  type: fail_to_pass
+  origin: pr_diff
+  description: Skills README.md lists changeset and pull-request skills with updated
+    testing-codegen description
+rubric:
+- rule: New skill files follow the established frontmatter format (name, description,
+    compatibility)
+  source:
+    path: .claude/skills/README.md
+    lines: 150-165
+    commit: eb57e3a1df36bf1bbe612f84a68ded658d9b7d00
+- rule: Code Comments guidance is general and not tied to specific issues or PRs
+  source:
+    path: .claude/skills/biome-developer/SKILL.md
+    lines: 140-178
+    commit: 9e3df0c40f45297fad3321344353b135e8d36f75
+- rule: Dedicated changeset skill created at .claude/skills/changeset/SKILL.md
+  source:
+    path: .claude/skills/changeset/SKILL.md
+    lines: 1-128
+    commit: 9e3df0c40f45297fad3321344353b135e8d36f75
+- rule: Dedicated pull-request skill created at .claude/skills/pull-request/SKILL.md
+  source:
+    path: .claude/skills/pull-request/SKILL.md
+    lines: 1-127
+    commit: 9e3df0c40f45297fad3321344353b135e8d36f75
+- rule: biome-developer SKILL.md gains a Code Comments guidance section
+  source:
+    path: .claude/skills/biome-developer/SKILL.md
+    lines: 140-178
+    commit: 9e3df0c40f45297fad3321344353b135e8d36f75
+- rule: Skills README.md updated to list changeset and pull-request skills
+  source:
+    path: .claude/skills/README.md
+    lines: 30-32
+    commit: 9e3df0c40f45297fad3321344353b135e8d36f75
+- rule: testing-codegen SKILL.md no longer contains Create Changeset section
+  source:
+    path: .claude/skills/testing-codegen/SKILL.md
+    lines: 1-13
+    commit: 9e3df0c40f45297fad3321344353b135e8d36f75
+- rule: testing-codegen references new changeset skill instead of CONTRIBUTING.md
+  source:
+    path: .claude/skills/testing-codegen/SKILL.md
+    lines: '425'
+    commit: 9e3df0c40f45297fad3321344353b135e8d36f75
+- rule: 'Changeset change types: patch for bug fixes, minor for new features (targets
+    next), major for breaking changes (targets next).'
+  source:
+    path: .claude/skills/changeset/SKILL.md
+    lines: 45-50
+  reference: |
+    - `patch` — Bug fixes.
+    - `minor` — New features. PR must target the `next` branch.
+    - `major` — Breaking user API changes. PR must target the `next` branch.
+  category: documentation
+- rule: 'Bug fix changesets must start with `Fixed [#NUMBER](issue link): ...`'
+  source:
+    path: .claude/skills/changeset/SKILL.md
+    lines: 75-82
+  reference: |
+    ### Bug Fixes
+
+    Start with a link to the issue:
+
+    ```markdown
+    Fixed [#4444](https://github.com/biomejs/biome/issues/4444): [`useOptionalChain`](https://biomejs.dev/linter/rules/use-optional-chain/) now detects negated logical OR chains.
+    ```
+  category: documentation
+- rule: Document the correct change types and their target branches (main vs next).
+  source:
+    path: .claude/skills/changeset/SKILL.md
+    lines: 45-50
+  reference: |
+    ## Choose the Correct Change Type
+
+    - `patch` — Bug fixes.
+    - `minor` — New features. PR must target the `next` branch.
+    - `major` — Breaking user API changes. PR must target the `next` branch.
+  category: documentation
+- rule: Document the requirement to disclose AI assistance in pull requests.
+  source:
+    path: .claude/skills/pull-request/SKILL.md
+    lines: 16-20
+  reference: |
+    ## AI Assistance Disclosure
+
+    If AI was used in any capacity to produce the PR, **you must disclose it** in
+    the PR description.
+  category: documentation
+- rule: Document the requirement to write concise PR summaries and reject verbose
+    ones.
+  source:
+    path: .claude/skills/pull-request/SKILL.md
+    lines: 100-110
+  reference: |
+    Keep it brief. Examples:
+
+    - "Added new tests from the bug report."
+    - "Extended existing snapshot tests to cover the new edge case."
+  category: documentation
+- rule: Changeset guidelines (types, formatting, user-facing requirement) must be
+    accurately documented for agents.
+  source:
+    path: .claude/skills/changeset/SKILL.md
+    lines: 1-50
+  reference: |
+    ## Purpose
+
+    Use this skill when a PR introduces user-facing changes that require a changeset.
+
+    ## Create a Changeset
+
+    **Do not create changeset files manually.** Use:
+
+    ```shell
+    just new-changeset-empty
+    ```
+
+    ## Choose the Correct Change Type
+
+    - `patch` — Bug fixes.
+    - `minor` — New features. PR must target the `next` branch.
+  category: documentation
+- rule: AI assistance must be disclosed in pull requests.
+  source:
+    path: .claude/skills/pull-request/SKILL.md
+    lines: 16-20
+  reference: |
+    ## AI Assistance Disclosure
+
+    If AI was used in any capacity to produce the PR, **you must disclose it** in
+    the PR description.
+  category: documentation
+config_edits:
+- path: .claude/skills/README.md
+  tier: 2
+  gold_added: |
+    | **[changeset](./changeset/SKILL.md)** | Create and write proper changesets for the CHANGELOG | Any agent |
+    | **[pull-request](./pull-request/SKILL.md)** | Create PRs with proper titles, descriptions, and branch targeting | Any agent |
+  gold_removed: ''
+- path: .claude/skills/changeset/SKILL.md
+  tier: 1
+  gold_added: |
+    ---
+    name: changeset
+    description: Guide for creating and writing proper changesets for Biome PRs.
+    compatibility: Designed for coding agents working on the Biome codebase.
+    ---
+
+    ## Purpose
+
+    Use this skill when a PR introduces user-facing changes that require a changeset.
+
+    ## Create a Changeset
+
+    **Do not create changeset files manually.** Use:
+
+    ```shell
+    just new-changeset-empty
+    ```
+
+    ## Choose the Correct Change Type
+
+    - `patch` — Bug fixes.
+    - `minor` — New features. PR must target the `next` branch.
+    - `major` — Breaking user API changes. PR must target the `next` branch.
+  gold_removed: ''
+- path: .claude/skills/pull-request/SKILL.md
+  tier: 1
+  gold_added: |
+    ---
+    name: pull-request
+    description: Guide for creating proper pull requests for the Biome project.
+    compatibility: Designed for coding agents working on the Biome codebase.
+    ---
+
+    ## Purpose
+
+    Use this skill when creating a pull request for the Biome repository.
+
+    ## AI Assistance Disclosure
+
+    If AI was used in any capacity to produce the PR, **you must disclose it** in
+    the PR description.
+
+    ## Choose the Target Branch
+
+    | Change type | Target branch |
+    | --- | --- |
+    | Bug fix (code or docs) | `main` |
+    | New **nursery** rule | `main` |
+
+    ## PR Title
+
+    Use **conventional commit format**. The title becomes the squash-merge commit
+    message.
+  gold_removed: ''
+- path: .claude/skills/testing-codegen/SKILL.md
+  tier: 1
+  gold_added: '- Changeset guide: `../changeset/SKILL.md`'
+  gold_removed: ''
+distractors:
+- rule: Create a changeset for user-facing changes, assume YES if unsure.
+  collision_type: meta_confusion
+  why_distracting: The rule states 'If UNSURE -> Assume YES and create changeset'.
+    An agent might blindly create a `.changeset/*.md` file for this PR. However, this
+    PR only updates agent skills and internal documentation, which is explicitly 'NOT
+    User-Facing' (lines 85-89) and does not require a changeset.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 68-75
+- rule: Always follow the structure in .github/PULL_REQUEST_TEMPLATE.md.
+  collision_type: meta_confusion
+  why_distracting: The rule emphasizes following the structure in `.github/PULL_REQUEST_TEMPLATE.md`.
+    An agent might mistakenly try to modify the actual PR template file or create
+    a dummy PR description file, rather than creating the requested `.claude/skills/pull-request/SKILL.md`
+    documentation.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 18-20
+hierarchy_analysis: The agent must read Level 0 guidelines (AGENTS.md, CLAUDE.md)
+  and synthesize them into Level 1/2 skill files (.claude/skills/*). It must understand
+  that it is writing instructions for future agents, not executing the instructions
+  for the current PR.

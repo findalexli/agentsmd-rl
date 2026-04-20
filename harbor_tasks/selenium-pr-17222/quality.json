@@ -1,49 +1,49 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert very specific implementation details not mentioned in instruction.md: exact constant name 'DEFAULT_STOP_GRACE_PERIOD' with value 60, exact method signature 'private Duration getStopGracePeriod()', exact field names 'containerStopTimeout' and 'videoContainerStopTimeout', exact Require.nonNull strings like 'Container stop timeout', exact field name 'stopGracePeriod' in DockerSessionFactory, exact ConfigValue name 'stop-grace-period', and the specific fix of using 'readFully' instead o"
+      "reason": "Tests assert specific literal strings like 'stop-grace-period must be a non-negative', 'Require.nonNull(\"Container stop timeout\", containerStopTimeout)', 'Require.nonNull(\"Video container stop timeout\", videoContainerStopTimeout)', 'Require.nonNull(\"Container stop grace period\", stopGracePeriod)', field names 'containerStopTimeout'/'videoContainerStopTimeout'/'stopGracePeriod', constant name 'DEFAULT_STOP_GRACE_PERIOD', and method name 'getStopGracePeriod' \u2014 none of these specific names/strings "
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what's broken (hardcoded timeouts, missing exception safety, skipBytes bug) and what to add (a configurable flag) but does not specify exact code changes like 'change line X to Y' or 'replace skipBytes with readFully'."
+      "reason": "Instruction describes problems and required outcomes (configurable flag, try-finally, fix skipBytes) without giving exact code."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific implementation details: exact variable names (containerStopTimeout, videoContainerStopTimeout, stopGracePeriod), exact constant names (DEFAULT_STOP_GRACE_PERIOD), exact method signatures ('private Duration getStopGracePeriod()'), exact Require.nonNull strings, and exact fix approach (readFully vs skipBytes). Alternative valid implementations using different names (e.g., 'browserStopTimeout', 'shutdownGracePeriod') or different approaches (e.g., readNBytes, a loop aroun"
+      "reason": "Tests require exact identifier names like 'containerStopTimeout', 'videoContainerStopTimeout', 'DEFAULT_STOP_GRACE_PERIOD', 'getStopGracePeriod', 'stopGracePeriod', and literal error messages like 'stop-grace-period must be a non-negative'; alternative valid fixes using different naming would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every single test is purely text-based pattern matching on source files using regex and string containment checks (e.g., `assert 'DEFAULT_STOP_GRACE_PERIOD' in source`, `re.search(pattern, source)`). No test imports, compiles, or executes any Java code to verify behavior."
+      "reason": "All tests only read source files and assert substring/regex matches (e.g., `source = (...).read_text()` then `assert 'foo' in source`); no code execution or behavioral verification."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check for specific additions (new fields, methods, constants, try-finally patterns, readFully usage) that don't exist in the base code at the checked-out commit, so a stub/no-op wouldn't pass them."
+      "reason": "Tests check for concrete code changes that a stub implementation could not satisfy (constant values, method signatures, try-finally blocks, readFully replacement)."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All three requirements from instruction.md are tested: configurable stop grace period (tests for flag, constant, method, factory parameter), exception safety via try-finally in stop() method, and stream parsing fix (readFully instead of skipBytes)."
+      "reason": "Each of the three problems in instruction.md (configurable flag, try-finally, skipBytes fix) is covered by at least one test."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings, clearly separated into 'Fail-to-Pass' and 'Pass-to-Pass' sections with comments, and each test focuses on a specific aspect."
+      "reason": "Tests are grouped with '=== Fail-to-Pass Tests ===' and '=== Pass-to-Pass Tests ===' section comments and descriptive names."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves modifying Java source code, not producing structured data output like JSON/CSV/API/DB."
+      "reason": "Task modifies Java code, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, variable names, commands, and flag names in instruction.md and tests are consistent and correct."
+      "reason": "Filenames and flag names appear consistent."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "Instruction explicitly names the exact method ('DockerSession.stop()'), exact hardcoded values ('Duration.ofMinutes(1)', 'Duration.ofSeconds(10)'), and the exact buggy method ('DockerSession.parseMultiplexedStream()') with the specific problematic call ('skipBytes()'). While files are listed, pointing to specific methods and exact problematic calls goes beyond domain-obvious file identification."
+      "outcome": "pass",
+      "reason": "Instruction names the relevant files and method (DockerSession.stop, parseMultiplexedStream) but task explicitly directs agent to these areas; no line-number leakage."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-editing task, not a configuration-editing task."
+      "reason": "Code-only task, not a config edit task."
     }
   },
   "tier_a_fails": [
@@ -52,9 +52,7 @@
     "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 5,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 6,
+  "fail_count": 3
 }

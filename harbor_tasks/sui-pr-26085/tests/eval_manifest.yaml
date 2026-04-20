@@ -2,7 +2,7 @@ source:
   repo: MystenLabs/sui.git
   pr: 0
   base_commit: 63cb7f767409e0589a9d5265e55a727cb8a020b5
-  merge_commit: 
+  merge_commit: ''
 checks:
 - id: test_map_mut_macro_exists
   type: fail_to_pass
@@ -65,15 +65,55 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: sui-move crate passes cargo check
-- id: test_repo_cargo_xlint
-  type: pass_to_pass
-  origin: repo_tests
-  description: Repo passes cargo xlint license check
-- id: test_repo_cargo_clippy_sui_framework
-  type: pass_to_pass
-  origin: repo_tests
-  description: sui-framework crate passes cargo clippy
-rubric: []
+rubric:
+- rule: Do NOT comment the obvious, including simple variable assignments, standard
+    library usage, self-descriptive function calls, and basic control flow.
+  source:
+    path: CLAUDE.md
+    lines: 118-130
+  source_text: '**Do NOT comment the obvious** - comments should not simply repeat
+    what the code does.
+
+    **When to comment**:
+
+    - Non-obvious algorithms or business logic
+
+    - Temporary exclusions, timeouts, or thresholds and their reasoning
+
+    - Complex calculations where the "why" isn''t immediately clear
+
+    - Subtle race conditions or threading considerations
+
+    - Assumptions about external state or preconditions
+
+
+    **When NOT to comment**:
+
+    - Simple variable assignments
+
+    - Standard library usage
+
+    - Self-descriptive function calls
+
+    - Basic control flow (if/for/while)'
+  evidence: The gold diff strictly adheres to this by providing clear API doc comments
+    (///) but entirely omitting inline comments for its internal logic. It does not
+    comment on simple variable assignments like `let o = $o;`, nor does it comment
+    on basic control flow and self-descriptive function calls like `if (o.is_some())
+    some($f(o.borrow_mut())) else none()`.
+  category: documentation
+  verification: llm_judge
+- rule: 'NEVER use linting suppressions like #[allow(dead_code)] or #[allow(unused)]'
+  source:
+    path: CLAUDE.md
+    lines: '113'
+  source_text: '- **NEVER use `#[allow(dead_code)]`, `#[allow(unused)]`, or any other
+    linting suppressions** - fix the underlying issues instead'
+  evidence: The gold diff follows this rule strictly by ensuring all newly introduced
+    variables, logic, and tests in the Move implementation are actively utilized,
+    intentionally avoiding the addition of any compiler or lint suppressions.
+  category: style
+  verification: llm_judge
 distractors:
 - rule: Use `#[cfg(test)]` for test-only code used within the same crate.
   collision_type: would_cause_bug
@@ -94,6 +134,19 @@ distractors:
   source:
     path: CLAUDE.md
     lines: 15-18
+- rule: Use `#[tokio::test]` for async tests, not `#[test]`
+  source:
+    path: CLAUDE.md
+    lines: '114'
+  source_text: '- **All unit tests must work properly** - use `#[tokio::test]` for
+    async tests, not `#[test]`'
+  collision_type: would_cause_bug
+  why_distracting: This rule targets Rust async tests within the repository, but the
+    gold diff is modifying Move code (`option_tests.move`) where `#[test]` is the
+    native and correct annotation for unit tests. An agent might mistakenly substitute
+    `#[test]` with `#[tokio::test]` in the Move tests, which would cause immediate
+    compilation failures.
+  severity: high
 hierarchy_analysis: The config hierarchy is flat, consisting of root-level AGENTS.md
   and CLAUDE.md files. The primary challenge is filtering out Rust-specific instructions
   when working on Move code.

@@ -1,52 +1,53 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "The instruction names all key identifiers tested: LoaderStaleReloadMode type, RouteLoaderObject type (implied by 'object-form loader syntax'), defaultStaleReloadMode option, the four files to modify (route.ts, router.ts, load-matches.ts, index.ts), and the concepts of 'background' and 'blocking' modes. The specific variable name 'shouldReloadInBackground' and 'routeLoader?.handler' are internal implementation details not mentioned, but these are covered under solution_uniqueness_guard."
+      "outcome": "fail",
+      "reason": "Tests assert on specific identifiers like 'RouteLoaderObject' (test_route_loader_object_type_exists), 'shouldReloadInBackground' variable (test_should_reload_in_background_variable_exists), and 'routeLoader?.handler' (test_load_matches_extracts_handler_from_object_loader) which are not mentioned in instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes WHAT to implement (a new configurable option with two modes) and WHERE (listing files to modify), but does not specify exact code changes, line numbers, or specific implementation patterns like variable names or control flow."
+      "reason": "Instruction describes what behavior to add without dictating exact variable names or line changes."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: test_load_matches_extracts_handler_from_object_loader greps for exact string 'routeLoader?.handler', and test_should_reload_in_background_variable_exists greps for exact variable name 'shouldReloadInBackground'. An alternative correct implementation could use different variable names (e.g., 'reloadInBg', 'isBackgroundReload') or different object access patterns (e.g., 'loader.handler' instead of 'routeLoader?.handler') and would fail these te"
+      "reason": "Tests grep for gold-specific internals: 'shouldReloadInBackground', 'RouteLoaderObject', and 'routeLoader?.handler' \u2014 an alternative correct implementation using different names (e.g., 'blockOnStaleReload', 'LoaderConfig', or destructuring) would fail despite being functionally correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The fail-to-pass tests are almost entirely text-matching (grep for strings in source files): test_loader_stale_reload_mode_type_exported, test_route_loader_object_type_exists, test_default_stale_reload_mode_option_exists, test_load_matches_extracts_handler_from_object_loader, test_should_reload_in_background_variable_exists, test_blocking_stale_reload_mode_logic all use grep. Only the pass-to-pass tests (build, type-check, unit tests) execute code, but those test existing behavior, not the new f"
+      "reason": "Most f2p tests are grep-based string searches (test_loader_stale_reload_mode_type_exported, test_route_loader_object_type_exists, test_should_reload_in_background_variable_exists, etc.); only pass_to_pass tests execute builds/unit tests."
     },
     "test_not_tautological": {
       "outcome": "fail",
-      "reason": "All fail-to-pass tests can be satisfied by simply adding the grepped strings as comments or dead code. For example, adding '// LoaderStaleReloadMode' to index.ts, '// RouteLoaderObject' to route.ts, '// defaultStaleReloadMode' to router.ts, and comments containing 'routeLoader?.handler', 'shouldReloadInBackground', and 'blocking' to load-matches.ts would pass all f2p tests without implementing any actual functionality."
+      "reason": "F2P tests are grep checks that only verify strings exist in files; a stub that simply adds the string 'shouldReloadInBackground' or 'RouteLoaderObject' as a comment would satisfy them without implementing behavior."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "The instruction explicitly requires that 'Navigation waits for stale loader reloads to complete before resolving' in blocking mode, and that background mode 'shows stale data immediately while reloading happens asynchronously'. No test actually verifies this runtime behavior - tests only check for string presence in source files."
+      "reason": "The instruction describes behavior (navigation waits for stale reloads when blocking) but no test actually invokes router navigation to verify blocking-vs-background runtime behavior."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are grouped into 'Fail-to-Pass Tests' and 'Pass-to-Pass Tests' sections with clear comments, descriptive function names, and docstrings explaining what each test verifies."
+      "reason": "Tests are grouped with section comments 'Fail-to-Pass Tests' and 'Pass-to-Pass Tests' and have descriptive names."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "No structured data output involved."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "All filenames, paths, variable names, and commands in the instruction and tests are consistent and correctly spelled."
+      "reason": "Paths, filenames, and commands appear consistent and correct."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction lists files to modify which is reasonable for a feature implementation task, but doesn't specify exact line numbers or implementation patterns. The files listed are the natural places one would need to modify."
+      "reason": "Instruction names the files to modify which is appropriate scoping, but does not give exact lines or variable names."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code implementation task, not a config-edit task."
+      "reason": "Code-only task, not a config edit task."
     }
   },
   "tier_a_fails": [
+    "behavior_in_task_description",
     "solution_uniqueness_guard",
     "tests_verify_behavior_not_text",
     "test_not_tautological"
@@ -55,6 +56,6 @@
   "tier_c_fails": [
     "behavior_in_tests"
   ],
-  "pass_count": 5,
-  "fail_count": 4
+  "pass_count": 4,
+  "fail_count": 5
 }

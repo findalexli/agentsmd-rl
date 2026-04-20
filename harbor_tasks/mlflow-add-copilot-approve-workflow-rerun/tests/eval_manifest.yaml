@@ -1,0 +1,124 @@
+version: '2.0'
+source:
+  repo: mlflow/mlflow
+  pr: 22330
+  base_commit: 39f35acce9e63788371bfaaa2c57cafef10a02ec
+  merge_commit: 4173076f2df42da7413d8a989af530f794cd9da2
+checks:
+- id: approve_sh_syntax
+  type: fail_to_pass
+  origin: pr_diff
+  description: approve.sh must exist and have valid bash syntax
+- id: approve_sh_exits_on_missing_args
+  type: fail_to_pass
+  origin: pr_diff
+  description: approve.sh must fail when called without required arguments
+- id: approve_sh_rerun_not_approve_api
+  type: fail_to_pass
+  origin: pr_diff
+  description: Script must use the /rerun API endpoint, not /approve
+- id: approve_sh_filters_copilot_action_required
+  type: fail_to_pass
+  origin: pr_diff
+  description: Script must filter for action_required conclusion and Copilot actor
+- id: approve_sh_handles_empty_results
+  type: fail_to_pass
+  origin: pr_diff
+  description: Script must handle the case where no matching workflow runs are found
+- id: skill_md_approve_in_allowed_tools
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md must list approve.sh in allowed-tools frontmatter
+- id: skill_md_documents_approve_workflow
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md must document how to use the approve workflow script
+- id: test_repo_bash_syntax_copilot
+  type: pass_to_pass
+  origin: repo_tests
+  description: All shell scripts in .claude/skills/copilot have valid bash syntax
+- id: test_repo_ruff_claude
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff linting passes on .claude directory
+- id: test_repo_bash_syntax_all_claude
+  type: pass_to_pass
+  origin: repo_tests
+  description: All shell scripts in .claude have valid bash syntax
+- id: test_repo_ruff_format_claude
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff format check passes on .claude directory
+- id: test_repo_mlflow_typo_claude
+  type: pass_to_pass
+  origin: repo_tests
+  description: No MLflow typos in .claude directory
+rubric:
+- rule: Only add comments that explain non-obvious logic or provide additional context
+  source:
+    path: CLAUDE.md
+    lines: 13-14
+  category: documentation
+  evidence: 'The approve.sh script includes a comment explaining the non-obvious workaround:
+    "The /approve API fails with ''not a fork pull request''. Use /rerun instead."'
+- rule: Document skill usage with a markdown heading and a bash code block demonstrating
+    the command
+  source:
+    path: .claude/skills/copilot/SKILL.md
+    lines: 18-22
+  evidence: The gold solution updates SKILL.md by adding a new section '## Approving
+    workflows' with a bash code block, exactly matching the formatting of the existing
+    '## Polling for completion' section.
+  category: documentation
+  verification: llm_judge
+config_edits:
+- path: .claude/skills/copilot/SKILL.md
+  tier: 1
+  gold_added: '- Bash(bash .claude/skills/copilot/approve.sh *)'' .claude/skills/copilot/SKILL.md
+
+    ## Approving workflows
+
+
+    Approve workflows to run once the PR is finalized:
+
+
+    ```bash
+
+    bash .claude/skills/copilot/approve.sh "<owner>/<repo>" <pr_number>
+
+    ```'
+  gold_removed: ''
+distractors:
+- rule: Start the Full Development Environment (Recommended)
+  source:
+    path: CLAUDE.md
+    lines: 28-35
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to start the MLflow dev server to test its
+    changes, but this task is purely about creating a standalone bash script for GitHub
+    API interactions. Starting the dev server would waste time and resources.
+  severity: medium
+- rule: Testing (uv run pytest tests/)
+  source:
+    path: CLAUDE.md
+    lines: 74-85
+  collision_type: architecture_boundary
+  why_distracting: The agent might attempt to write Python tests using pytest for
+    the new bash script, which is outside the scope of the task and the established
+    pattern for these Claude skill scripts.
+  severity: medium
+- rule: Analyze failed GitHub Action jobs for a pull request
+  source:
+    path: .claude/skills/analyze-ci/SKILL.md
+    lines: 1-2
+  collision_type: scope_ambiguity
+  why_distracting: The analyze-ci skill deals with GitHub Action jobs, which might
+    lead the agent to integrate the rerun logic there or use its conventions, but
+    the task explicitly requires adding the script to the copilot skill.
+  severity: low
+hierarchy_analysis: The repository has a single root-level CLAUDE.md file that is
+  heavily focused on Python development, MLflow architecture, and local dev servers.
+  Since this task involves writing a bash script for GitHub API interactions within
+  the `.claude/skills` directory, most of the root config is irrelevant. The agent
+  must rely primarily on the explicit task instructions and the patterns established
+  in the sibling `poll.sh` file rather than the Python-centric repository guidelines.

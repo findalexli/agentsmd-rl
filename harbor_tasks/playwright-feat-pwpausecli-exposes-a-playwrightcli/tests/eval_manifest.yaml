@@ -1,0 +1,187 @@
+version: '2.0'
+source:
+  repo: microsoft/playwright
+  pr: 39408
+  base_commit: 982b9b279557229b12d049ebd3063da408ba5253
+checks:
+- id: test_repo_tsc
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo TypeScript typecheck passes
+- id: test_repo_check_deps
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo dependency check passes
+- id: test_repo_lint_packages
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo package linting passes
+- id: test_repo_lint_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo test linting passes
+- id: test_repo_test_types
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo test types check passes
+- id: modified_files_exist
+  type: pass_to_pass
+  origin: static
+  description: Key modified TypeScript source files exist and are non-empty
+- id: decorate_server_exported
+  type: fail_to_pass
+  origin: pr_diff
+  description: decorateServer is exported from network.ts so daemon.ts can import
+    it
+- id: session_config_exported
+  type: fail_to_pass
+  origin: pr_diff
+  description: sessionConfigFromArgs is exported from cli/client/program.ts
+- id: finish_callbacks_is_set
+  type: fail_to_pass
+  origin: pr_diff
+  description: _onDidFinishTestFunctionCallbacks uses a Set to support multiple callbacks
+- id: pwpause_cli_overrides
+  type: fail_to_pass
+  origin: pr_diff
+  description: PWPAUSE=cli sets timeout=0 and actionTimeout=5000 in program.ts
+- id: run_daemon_for_context_exported
+  type: fail_to_pass
+  origin: pr_diff
+  description: runDaemonForContext is defined and exported from browserBackend.ts
+- id: daemon_accepts_no_shutdown
+  type: fail_to_pass
+  origin: pr_diff
+  description: startMcpDaemonServer accepts noShutdown parameter to keep daemon alive
+- id: skill_md_updated
+  type: fail_to_pass
+  origin: agent_config
+  description: SKILL.md allowed-tools includes npx/npm and links to playwright-tests
+    reference
+  source:
+    path: packages/playwright/src/skill/SKILL.md
+    lines: 1-4
+    commit: 982b9b279557229b12d049ebd3063da408ba5253
+- id: playwright_tests_reference_created
+  type: fail_to_pass
+  origin: agent_config
+  description: playwright-tests.md reference doc documents PWPAUSE=cli debugging workflow
+  source:
+    path: packages/playwright/src/skill/SKILL.md
+    lines: 274-277
+    commit: 982b9b279557229b12d049ebd3063da408ba5253
+rubric:
+- rule: The playwright-tests.md reference file should be created and document PWPAUSE=cli
+    and playwright-cli --session
+  source:
+    path: packages/playwright/src/skill/references/playwright-tests.md
+    lines: 1-40
+    commit: 982b9b279557229b12d049ebd3063da408ba5253
+- rule: The SKILL.md description should be concise and accurately reflect the expanded
+    scope of the tool
+  source:
+    path: packages/playwright/src/skill/SKILL.md
+    lines: 1-4
+    commit: 982b9b279557229b12d049ebd3063da408ba5253
+- rule: Each directory has a DEPS.list constraining its imports
+  source:
+    path: /workspace/repo/.claude/skills/playwright-dev/library.md
+    lines: 22-24
+  source_text: '## Dependency Rules (DEPS.list)
+
+
+    Each directory has a `DEPS.list` constraining its imports. These are enforced
+    by `npm run flint`.'
+  evidence: The gold diff explicitly updates `packages/playwright/src/mcp/test/DEPS.list`
+    to add an allowance for `[browserBackend.ts]` to import `../../cli/**`, maintaining
+    compliance with the directory import constraints instead of violating them.
+  category: architecture
+  verification: llm_judge
+- rule: Update the SKILL file and place reference docs in the references directory
+  source:
+    path: /workspace/repo/.claude/skills/playwright-dev/mcp-dev.md
+    lines: 399-403
+  source_text: '## SKILL File
+
+
+    The skill file is located at `packages/playwright/src/skill/SKILL.md`. It contains
+    documentation for all available CLI commands and MCP tools. Update it whenever
+    you add new commands or tools.
+
+
+    Reference docs live in `packages/playwright/src/skill/references/`:'
+  evidence: The gold diff modifies `packages/playwright/src/skill/SKILL.md` to add
+    a new documentation section for running and debugging tests, and creates a corresponding
+    reference document exactly in `packages/playwright/src/skill/references/playwright-tests.md`.
+  category: documentation
+  verification: llm_judge
+config_edits:
+- path: packages/playwright/src/skill/SKILL.md
+  tier: 1
+  gold_added: 'description: Automate browser interactions, test web pages and work
+    with Playwright tests.
+
+    allowed-tools: Bash(playwright-cli:*) Bash(npx:*) Bash(npm:*)
+
+    * **Running and Debugging Playwright tests** [references/playwright-tests.md](references/playwright-tests.md)'
+  gold_removed: 'description: Automates browser interactions for web testing, form
+    filling, screenshots, and data extraction. Use when the user needs to navigate
+    websites, interact with web pages, fill forms, take screenshots, test web applications,
+    or extract information from web pages.
+
+    allowed-tools: Bash(playwright-cli:*)'
+distractors:
+- rule: Adding CLI Commands by implementing MCP tool first
+  source:
+    path: /workspace/repo/.claude/skills/playwright-dev/mcp-dev.md
+    lines: 191-197
+  source_text: '## Adding CLI Commands
+
+
+    CLI commands are thin wrappers over MCP tools. They live in the daemon and map
+    CLI args to MCP tool calls.
+
+
+    ### Step 1: Implement the MCP Tool
+
+
+    Implement the corresponding MCP tool first (see section above). CLI commands call
+    MCP tools via `toolName`/`toolParams`.'
+  collision_type: scope_ambiguity
+  why_distracting: The diff implements `PWPAUSE=cli` which integrates the MCP daemon
+    into the test runner. An agent might mistakenly think this feature involves adding
+    a new CLI command or MCP tool and try to edit `packages/playwright/src/cli/daemon/commands.ts`
+    or `tools.ts`, but the change merely uses the existing daemon programmatically.
+  severity: high
+- rule: Define API in docs/src/api/class-xxx.md
+  source:
+    path: /workspace/repo/.claude/skills/playwright-dev/api.md
+    lines: 5-7
+  source_text: '## Step 1: Define API in Documentation
+
+
+    Define (or update) API in `docs/src/api/class-xxx.md`. For the new methods, params
+    and options use the version from package.json (without `-next`).'
+  collision_type: scope_ambiguity
+  why_distracting: The diff exports new functions (`decorateServer` and `sessionConfigFromArgs`)
+    that look like API changes. An agent following this rule might try to document
+    these in `docs/src/api/`, but these are internal helper exports for the CLI/daemon,
+    not part of the public Playwright API.
+  severity: high
+- rule: Adding Config Options to MCP config.d.ts
+  source:
+    path: /workspace/repo/.claude/skills/playwright-dev/mcp-dev.md
+    lines: 315-319
+  source_text: '## Adding Config Options
+
+
+    When you need to add a new config option, update these files in order:
+
+
+    ### 1. Type definition: `packages/playwright/src/mcp/config.d.ts`'
+  collision_type: scope_ambiguity
+  why_distracting: The diff handles `PWPAUSE=cli`, which is an environment-driven
+    configuration for the test runner. An agent might misinterpret this as an MCP
+    configuration option and try to add it to the MCP configuration pipeline in `config.d.ts`
+    and `CLIOptions`.
+  severity: medium

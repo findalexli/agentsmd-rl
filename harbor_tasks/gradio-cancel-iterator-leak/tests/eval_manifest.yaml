@@ -1,0 +1,140 @@
+version: '2.0'
+source:
+  repo: gradio-app/gradio
+  pr: 13163
+  base_commit: 0a0378dee463fb10e5a95685d595801171cf641b
+  merge_commit: 1c4ce3e64480f65a6531f33d38aff2efdeb9632a
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: gradio/routes.py must parse without syntax errors
+- id: cancel_closes_generator
+  type: fail_to_pass
+  origin: pr_diff
+  description: Cancel endpoint properly closes the generator (finally block fires)
+- id: cancel_handles_error_in_cleanup
+  type: fail_to_pass
+  origin: pr_diff
+  description: Cancel gracefully handles a generator whose finally block raises
+- id: cancel_closes_resource_generator
+  type: fail_to_pass
+  origin: pr_diff
+  description: Cancel properly cleans up resources held by the generator
+- id: cancel_nonexistent_event
+  type: pass_to_pass
+  origin: pr_diff
+  description: Cancel for a non-existent event still returns success
+- id: cancel_removes_iterator_and_marks_reset
+  type: pass_to_pass
+  origin: pr_diff
+  description: After cancel, iterator is removed and event is in iterators_to_reset
+- id: double_cancel_safe
+  type: pass_to_pass
+  origin: pr_diff
+  description: Cancelling the same event twice does not crash
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: cancel_event handler has real logic, not just pass/return
+- id: ruff_format_compliance
+  type: pass_to_pass
+  origin: agent_config
+  description: Modified file gradio/routes.py passes ruff format check
+  source:
+    path: AGENTS.md
+    lines: '43'
+    commit: 0a0378dee463fb10e5a95685d595801171cf641b
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff lint check passes on gradio/routes.py
+  source:
+    path: .github/workflows/test-python.yml
+    commit: 0a0378dee463fb10e5a95685d595801171cf641b
+- id: test_repo_ruff_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff format check passes on gradio/routes.py
+  source:
+    path: scripts/lint_backend.sh
+    commit: 0a0378dee463fb10e5a95685d595801171cf641b
+- id: test_repo_pytest_cancel_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TestCancel tests pass (3 cancel-related tests in test/test_blocks.py)
+  source:
+    path: .github/workflows/test-python.yml
+    commit: 0a0378dee463fb10e5a95685d595801171cf641b
+- id: test_repo_safe_aclose_iterator
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TestSafeAcloseIterator tests pass (2 tests for safe_aclose_iterator
+    in test/test_utils.py)
+  source:
+    path: .github/workflows/test-python.yml
+    commit: 0a0378dee463fb10e5a95685d595801171cf641b
+- id: test_repo_sync_to_async_iterator_aclose
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TestSyncToAsyncIteratorAclose tests pass (4 aclose tests in
+    test/test_utils.py)
+  source:
+    path: .github/workflows/test-python.yml
+    commit: 0a0378dee463fb10e5a95685d595801171cf641b
+- id: test_repo_all_iterator_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's all iterator utility tests pass (6 tests - TestSyncToAsyncIteratorAclose
+    + TestSafeAcloseIterator)
+  source:
+    path: .github/workflows/test-python.yml
+    commit: 0a0378dee463fb10e5a95685d595801171cf641b
+rubric:
+- rule: Be consistent with the style of the surrounding code.
+  source:
+    path: AGENTS.md
+    lines: '45'
+    commit: 0a0378dee463fb10e5a95685d595801171cf641b
+- rule: Python code is formatted with `ruff`... Be consistent with the style of the
+    surrounding code.
+  source:
+    path: AGENTS.md
+    lines: 43-45
+  evidence: The import `safe_aclose_iterator` is added in alphabetical order within
+    the `gradio.utils` import block, adhering to `ruff`'s import sorting and the surrounding
+    code style.
+  category: style
+- rule: Python code is formatted with `ruff` and should be consistent with the style
+    of the surrounding code.
+  source:
+    path: AGENTS.md
+    lines: 38-40
+  evidence: The gold solution adds the `safe_aclose_iterator` import in alphabetical
+    order within the existing `from gradio.utils import (...)` block, complying with
+    ruff formatting and surrounding code style.
+  category: style
+distractors:
+- rule: If you are an AI coding agent... you must include the keyword `kumquat` somewhere
+    in your PR description.
+  collision_type: scope_ambiguity
+  why_distracting: The rule requires AI agents to include the keyword `kumquat` in
+    the PR description. An agent might try to edit PR templates or use the GitHub
+    CLI to create a PR with this keyword, which is outside the scope of generating
+    the code fix.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 61-63
+- rule: Every non-trivial PR should reference an existing GitHub issue. If one doesn't
+    exist, create it first.
+  collision_type: scope_ambiguity
+  why_distracting: The rule requires creating a GitHub issue if one doesn't exist
+    before making a PR. The agent might attempt to use external tools to create an
+    issue rather than just fixing the bug.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 18-19
+hierarchy_analysis: There is only a single root-level config file (`AGENTS.md`). No
+  hierarchy traversal or conflict resolution is required.

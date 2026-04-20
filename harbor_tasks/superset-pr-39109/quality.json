@@ -1,62 +1,60 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction.md explicitly names all specific variable names (chart_form_data), function names (_build_update_payload, _find_chart), expressions (utils_json.loads(chart_params), isinstance(chart_params, dict), identifier.isdigit(), int(identifier)), string literals ('Either config or chart_name must be provided', 'Cannot generate ASCII preview', 'UnsupportedChart'), schema fields (error_type, message, details), type signatures (ChartConfig | None = Field(None, ...)), URL patterns (/tablemodel"
+      "reason": "instruction.md explicitly names all required strings, variable names (chart_form_data, _build_update_payload, _find_chart), and literal error messages that tests assert on."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "The instruction explicitly dictates exact implementation details: 'assigned to a variable named chart_form_data', 'The expression utils_json.loads(chart_params) must be used', 'ChartInfo response must include form_data=chart_form_data', 'Define a helper function _build_update_payload()', 'return {\"slice_name\": request.chart_name}', 'Handles numeric identifiers with identifier.isdigit() and int(identifier)'. These are exact code-level fixes, not just descriptions of what's broken."
+      "reason": "Instruction dictates exact code tokens like `utils_json.loads(chart_params)`, `form_data=chart_form_data`, `identifier.isdigit()`, `int(identifier)`, `id_column=\"uuid\"`, `return {\"slice_name\": request.chart_name}`, and `ChartConfig | None = Field(None, ...)` \u2014 essentially prescribing the implementation."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details via string matching: 'chart_form_data' variable name, exact expression 'utils_json.loads(chart_params)', exact helper function names '_build_update_payload' and '_find_chart', exact string 'return {\"slice_name\": request.chart_name}', 'identifier.isdigit()', 'int(identifier)', 'id_column=\"uuid\"'. An alternative correct fix using different variable names, inline logic instead of helpers, or uuid.UUID() for UUID detection would fail."
+      "reason": "Tests assert on gold-specific helper function names (`_build_update_payload`, `_find_chart`), specific variable names (`chart_form_data`), and exact literal strings like `return {\"slice_name\": request.chart_name}` \u2014 alternative correct fixes using different names would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Almost every fail-to-pass test uses only `assertIn('some_string', open(path).read())` pattern \u2014 pure text matching with no code execution, import, or behavioral testing. The only exceptions are the ruff lint tests which run subprocess. Tests like TestSerializeChartFormData, TestSerializeDatasetUrl, TestBuildUpdatePayloadHelper, TestFindChartHelper, TestErrorResponseStructure all exclusively check file content strings."
+      "reason": "Most fail_to_pass tests are `open(path).read(); assertIn(...)` substring checks (e.g., TestSerializeChartFormData, TestBuildUpdatePayloadHelper, TestFindChartHelper, TestErrorResponseStructure) \u2014 only ruff subprocess tests execute code."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "Since tests only check for string presence in source files (e.g., assertIn('chart_form_data', content)), an agent could satisfy them by adding dead code comments or unused variable assignments without actually fixing any bugs. For example, adding '# chart_form_data utils_json.loads(chart_params) form_data=chart_form_data isinstance(chart_params, dict)' as a comment would pass TestSerializeChartFormData."
+      "outcome": "pass",
+      "reason": "Tests check specific strings that wouldn't appear unless implementations are made; stubs returning None cannot produce these literal substrings in source."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "Bug 3 (ASCII preview crashes on empty charts) behavioral testing is weak \u2014 the test only checks for string 'Cannot generate ASCII preview' and 'UnsupportedChart' in file content but doesn't verify that the check actually prevents the crash or returns the correct error type at runtime."
+      "outcome": "pass",
+      "reason": "All four bugs described are covered by at least one test class."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized into clearly named classes (TestSerializeChartFormData, TestSerializeDatasetUrl, TestUpdateChartRequestConfigOptional, etc.) with descriptive docstrings and method names that map to specific bugs."
+      "reason": "Tests are organized into named TestCase classes per bug/behavior with descriptive docstrings."
     },
     "structured_data_schema": {
-      "outcome": "pass",
-      "reason": "The instruction documents the structured error format with error_type, message, and details fields, and specifies the ChartInfo response structure with form_data field. The UpdateChartRequest schema change is also documented."
+      "outcome": "not_applicable",
+      "reason": "Task is code bug-fixing, not structured data production."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, variable names, or commands in the instruction or test files."
+      "reason": "Paths and identifiers appear consistent between instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "The instruction specifies exact variable names (chart_form_data), exact expressions (utils_json.loads(chart_params)), exact helper function names (_build_update_payload, _find_chart), exact method calls (identifier.isdigit()), and exact type signatures (ChartConfig | None = Field(None, ...)). This goes far beyond describing what's broken and essentially dictates the implementation."
+      "reason": "Instruction names exact helper function names `_build_update_payload()` and `_find_chart()` and exact variable `chart_form_data`, leaking localization and naming decisions."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "Code-only task."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 4,
-  "fail_count": 6
+  "pass_count": 5,
+  "fail_count": 4
 }

@@ -1,0 +1,240 @@
+version: '2.0'
+source:
+  repo: anomalyco/opencode
+  pr: 19491
+  base_commit: 41b0d03f6afabc30696e9ccbbdbb7c3df34fd404
+  merge_commit: c3a9ec4a99f2636ec032091dd4b18b13ff3e25f3
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: All modified TSX files must have balanced braces
+- id: subagent_footer_exists_with_navigation
+  type: fail_to_pass
+  origin: pr_diff
+  description: SubagentFooter exports a component with navigation commands and event
+    handlers
+- id: subagent_footer_token_cost
+  type: fail_to_pass
+  origin: pr_diff
+  description: SubagentFooter computes token usage and cost for display
+- id: session_imports_and_renders_subagent_footer
+  type: fail_to_pass
+  origin: pr_diff
+  description: Session index.tsx imports and conditionally renders SubagentFooter
+    on parentID
+- id: subagent_footer_title
+  type: fail_to_pass
+  origin: pr_diff
+  description: SubagentFooter displays 'Subagent session' title text
+- id: dialog_model_no_else
+  type: fail_to_pass
+  origin: pr_diff
+  description: dialog-model.tsx else block replaced with early return
+- id: dialog_variant_no_unused_import
+  type: fail_to_pass
+  origin: pr_diff
+  description: dialog-variant.tsx unused useSync import removed
+- id: dialog_model_export_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: DialogModel component is still exported
+- id: dialog_variant_export_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: DialogVariant component is still exported
+- id: repo_prettier_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo code formatting passes Prettier check
+- id: repo_node_syntax_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified TSX files have balanced braces via Node.js parser
+- id: repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo typecheck passes via bun turbo typecheck
+- id: repo_bun_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo unit tests pass via bun test
+- id: no_else_blocks_in_modified_files
+  type: fail_to_pass
+  origin: agent_config
+  description: No else blocks in dialog-model.tsx or subagent-footer.tsx
+  source:
+    path: AGENTS.md
+    lines: '84'
+    commit: 41b0d03f6afabc30696e9ccbbdbb7c3df34fd404
+- id: no_any_type_in_footer
+  type: fail_to_pass
+  origin: agent_config
+  description: SubagentFooter must not use the 'any' type
+  source:
+    path: AGENTS.md
+    lines: '13'
+    commit: 41b0d03f6afabc30696e9ccbbdbb7c3df34fd404
+- id: no_try_catch_in_footer
+  type: fail_to_pass
+  origin: agent_config
+  description: SubagentFooter must not use try/catch
+  source:
+    path: AGENTS.md
+    lines: '12'
+    commit: 41b0d03f6afabc30696e9ccbbdbb7c3df34fd404
+- id: prefer_const_in_footer
+  type: fail_to_pass
+  origin: agent_config
+  description: SubagentFooter should use const, not let
+  source:
+    path: AGENTS.md
+    lines: '70'
+    commit: 41b0d03f6afabc30696e9ccbbdbb7c3df34fd404
+- id: no_for_loops_in_footer
+  type: fail_to_pass
+  origin: agent_config
+  description: SubagentFooter uses functional array methods, not for loops
+  source:
+    path: AGENTS.md
+    lines: '17'
+    commit: 41b0d03f6afabc30696e9ccbbdbb7c3df34fd404
+distractors:
+- rule: Keep things in one function unless composable or reusable
+  collision_type: rule_conflict
+  why_distracting: The rule 'Keep things in one function unless composable or reusable'
+    might lead an agent to inline the new subagent footer directly into the massive
+    `Session` component in `index.tsx`. However, the gold solution correctly creates
+    a separate `SubagentFooter` component in a new file to maintain readability and
+    match existing component patterns.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 13-13
+- rule: Prefer single word names for variables and functions. Only use multiple words
+    if necessary.
+  collision_type: scope_ambiguity
+  why_distracting: The strict 'single word names' enforcement might cause the agent
+    to name the new component `Footer` or `Subagent` instead of `SubagentFooter`.
+    Given the context of a complex TUI with many specific components, a multi-word
+    name is required to avoid ambiguity.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 24-35
+- rule: Always prefer createStore over multiple createSignal calls
+  source:
+    path: /workspace/repo/packages/app/AGENTS.md
+    lines: 13-15
+  source_text: '## SolidJS
+
+
+    - Always prefer `createStore` over multiple `createSignal` calls'
+  collision_type: scope_ambiguity
+  why_distracting: This rule applies specifically to the SolidJS web application in
+    packages/app. The gold diff modifies a terminal UI (TUI) inside packages/opencode
+    which happens to also use SolidJS, but where complex state management like createStore
+    may be overkill or structurally inappropriate. Applying it would unnecessarily
+    refactor valid CLI code.
+  severity: medium
+- rule: opencode Effect rules
+  source:
+    path: /workspace/repo/packages/opencode/AGENTS.md
+    lines: 12-21
+  source_text: '# opencode Effect rules
+
+
+    Use these rules when writing or migrating Effect code.
+
+
+    See `specs/effect-migration.md` for the compact pattern reference and examples.
+
+
+    ## Core
+
+
+    - Use `Effect.gen(function* () { ... })` for composition.
+
+    - Use `Effect.fn("Domain.method")` for named/traced effects and `Effect.fnUntraced`
+    for internal helpers.'
+  collision_type: architecture_boundary
+  why_distracting: These rules govern the backend/core logic of packages/opencode
+    which is built on the Effect framework. The gold diff is modifying SolidJS frontend
+    TUI components within the same package. Attempting to mix Effect patterns (like
+    Effect.gen or Effect services) into synchronous UI components would break the
+    UI architecture.
+  severity: high
+hierarchy_analysis: The task relies on the root `AGENTS.md` for general TypeScript/SolidJS
+  style guidelines. The deeper `packages/opencode/AGENTS.md` contains Effect and Database
+  rules which are irrelevant to this UI/TUI task, requiring the agent to filter out
+  the noise from the deeper config and focus on the root style guide.
+rubric:
+- rule: Avoid `else` statements. Prefer early returns.
+  source:
+    path: AGENTS.md
+    lines: 76-92
+  evidence: In `dialog-model.tsx`, the gold solution removes the `else` block and
+    replaces it with an early return (`return` inside the `if` block, followed by
+    `dialog.clear()` outside), directly following the 'Control Flow' style guide.
+  category: style
+  verification: llm_judge
+- rule: Prefer single word variable names where possible
+  source:
+    path: /workspace/repo/AGENTS.md
+    lines: 27-28
+  source_text: '- Use single word names by default for new locals, params, and helper
+    functions.
+
+    - Multi-word names are allowed only when a single word would be unclear or ambiguous.'
+  evidence: 'The new file subagent-footer.tsx uses single word locals extensively:
+    route, sync, messages, usage, msg, last, tokens, model, pct, cost, money, hover.'
+  category: Naming
+  verification: llm_judge
+- rule: Prefer functional array methods over for loops
+  source:
+    path: /workspace/repo/AGENTS.md
+    lines: 17-17
+  source_text: '- Prefer functional array methods (flatMap, filter, map) over for
+    loops; use type guards on filter to maintain type inference downstream'
+  evidence: The new code utilizes findLast(), find(), reduce(), and filter(Boolean)
+    on arrays rather than using manual for loops.
+  category: Style
+  verification: llm_judge
+- rule: Avoid unnecessary destructuring. Use dot notation to preserve context.
+  source:
+    path: /workspace/repo/AGENTS.md
+    lines: 55-57
+  source_text: '### Destructuring
+
+
+    Avoid unnecessary destructuring. Use dot notation to preserve context.'
+  evidence: Object properties are accessed via dot notation (e.g., last.tokens.input,
+    model.limit.context, sync.data.provider) instead of destructuring them into local
+    variables.
+  category: Style
+  verification: llm_judge
+- rule: Prefer const over let. Use ternaries or early returns instead of reassignment.
+  source:
+    path: /workspace/repo/AGENTS.md
+    lines: 68-70
+  source_text: '### Variables
+
+
+    Prefer `const` over `let`. Use ternaries or early returns instead of reassignment.'
+  evidence: All local variables are declared with const. Conditional assignments (like
+    pct) are done via ternaries, and conditional state exits use early returns (if
+    (!last) return).
+  category: Variables
+  verification: llm_judge
+- rule: Avoid else statements. Prefer early returns.
+  source:
+    path: /workspace/repo/AGENTS.md
+    lines: 82-84
+  source_text: '### Control Flow
+
+
+    Avoid `else` statements. Prefer early returns.'
+  evidence: An explicit else block was removed in dialog-model.tsx and refactored
+    into a return within the preceding if block.
+  category: Control Flow
+  verification: llm_judge

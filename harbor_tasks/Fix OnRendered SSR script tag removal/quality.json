@@ -1,60 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all relevant file paths (packages/react-router/src/Match.tsx, packages/react-router/tests/Scripts.test.tsx, packages/solid-router/src/Match.tsx), function names (OnRendered), literal strings ('isServer ?? router.isServer', 'suppressHydrationWarning', 'onRendered', '<script></script>'), prop names (resetKey, prevHrefRef), and imports (useLayoutEffect from './utils'). The test assertions check for these same elements."
+      "reason": "Instruction names the specific files (Match.tsx, Scripts.test.tsx, solid-router Match.tsx), required strings ('isServer ?? router.isServer', 'useLayoutEffect(() => {', 'prevHrefRef', 'resetKey', 'type: onRendered', 'needs to run'/'committed'), and commands for tests."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly tells the agent exactly what to implement: 'return null instead of rendering a <script> tag', 'Use the expression `isServer ?? router.isServer`', 'Import useLayoutEffect from ./utils', 'Use a ref named prevHrefRef', 'accept `{ resetKey }: { resetKey: number }`', 'Include resetKey in the effect dependency array'. This is a complete specification of the fix, not a description of what's broken."
+      "outcome": "pass",
+      "reason": "Instruction describes required properties/constraints but does not provide exact code; agent must still reason about the implementation structure."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: test_onrendered_emits_event_via_effect checks for exact string 'useLayoutEffect(() => {' (specific formatting), 'prevHrefRef' (specific variable name), 'type: 'onRendered'' as literal string. An alternative correct fix using e.g. useEffect, a differently-named ref, or slightly different formatting would fail these text-matching tests."
+      "outcome": "pass",
+      "reason": "Tests check for semantic tokens (useLayoutEffect, return null, prevHrefRef, router.emit) that any correct fix matching the instruction would include; no brittle variable/line assertions."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Tests test_onrendered_returns_null_no_script_tag, test_onrendered_emits_event_via_effect, test_ssr_output_no_sentinel_script, test_typescript_types_correct, and test_solid_router_consistency are purely text-matching tests (reading files and checking for string presence). While test_build_succeeds and test_unit_tests_pass do execute subprocesses, the f2p tests are entirely 'assert X in open(path).read()' pattern."
+      "outcome": "pass",
+      "reason": "Tests invoke subprocess builds and unit tests (test_build_succeeds, test_unit_tests_pass, pass_to_pass tests run pnpm nx) in addition to text checks."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for specific content changes (e.g., 'return null' in Match.tsx, removal of '<script></script>' sentinel from test expectations, 'useLayoutEffect' presence). A stub/no-op implementation that doesn't modify the files would fail these checks since the base commit has <script> tags and suppressHydrationWarning. The build and unit test executions also verify real behavior."
+      "reason": "Stubs cannot satisfy build+unit test runs (test_unit_tests_pass, test_p2p_repo_unit_tests_ssr) which require the SSR output to actually drop the sentinel script tag."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors required by instruction.md are tested: no script rendering (test_onrendered_returns_null_no_script_tag), server-side detection (same test checks isServer), layout effect usage (test_onrendered_emits_event_via_effect), prevHrefRef tracking (same), resetKey prop (test_typescript_types_correct), SSR test update (test_ssr_output_no_sentinel_script), solid-router comment (test_solid_router_consistency), build and unit tests pass."
+      "reason": "Tests cover: returns null/no script, useLayoutEffect, prevHrefRef, router.emit with onRendered, isServer check, resetKey, SSR test update, solid-router comment update, build+unit pass."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named, grouped logically (f2p tests for source changes, build/test verification, p2p tests for CI checks), and have descriptive docstrings explaining what each test verifies."
+      "reason": "Tests have descriptive names, docstrings, and a clear section divider for pass-to-pass repo tests."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves code changes to React components and tests, not structured data output."
+      "reason": "Task modifies source code, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, commands, variable names, and function names in the instruction and tests are consistent and correct."
+      "reason": "Paths and commands referenced (packages/react-router/src/Match.tsx, pnpm nx run...) are consistent and correct."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction names exact files, exact function (OnRendered), exact variable names (prevHrefRef), exact expressions ('isServer ?? router.isServer'), exact import paths ('useLayoutEffect from ./utils'), and exact prop signatures ('{ resetKey }: { resetKey: number }'). This goes well beyond identifying the buggy module."
+      "outcome": "pass",
+      "reason": "Instruction names the file Match.tsx but localization to that component is inherent to the task; no line numbers or exact code given."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config edit task."
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
     }
   },
-  "tier_a_fails": [
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 5,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
 }

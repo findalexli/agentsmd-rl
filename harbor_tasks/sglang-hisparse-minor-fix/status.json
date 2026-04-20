@@ -4,10 +4,10 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-16T02:56:31.794678",
-  "total_time": 4542.55,
-  "sandbox_id": "iq6bicubxtj8273kpxs5y",
-  "backend": "minimax",
+  "validated_at": "2026-04-16T11:41:44.673232",
+  "total_time": 103.57,
+  "sandbox_id": "igudsemk9tma49kz33w1g",
+  "backend": "anthropic",
   "pipeline": "pipeline",
   "start_at": "judge",
   "nodes": {
@@ -72,34 +72,29 @@
     },
     "quality_gate": {
       "status": "DELETE",
-      "model": "MiniMax-M2.7",
-      "backend": "minimax",
-      "time": 0.33,
+      "model": "claude-opus-4-7",
+      "backend": "anthropic",
+      "time": 0.26,
       "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:111: test `test_batch_is_full_reset_after_hisparse` has 1 assert(s), a', 'lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:21: unpinned pip deps: pytest, pytest-json-ctrf']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 20.52,
+      "time": 16.24,
       "tier_a_fails": [
-        "no_solution_leakage",
         "solution_uniqueness_guard",
-        "tests_verify_behavior_not_text",
-        "test_not_tautological"
+        "tests_verify_behavior_not_text"
       ],
       "tier_b_fails": [],
-      "pass_count": 4,
-      "fail_count": 5
+      "pass_count": 7,
+      "fail_count": 2
+    },
+    "tests_rewrite": {
+      "status": "error",
+      "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":420,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 400 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"invalid_request_error\\\",\\\"message\\\":\\\"\\\\\\\"thinking.type.enabled\\\\\\\" is not supported for this model. Use \\\\\\\"thinking.type.adapt",
+      "time": 2.22
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 1646.58,
-      "at": "2026-04-12T02:42:05.798171"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -131,6 +126,14 @@
       "backend": "minimax",
       "time": 4542.55,
       "at": "2026-04-16T02:56:31.794678"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "anthropic",
+      "time": 103.57,
+      "at": "2026-04-16T11:41:44.673232"
     }
   ]
 }

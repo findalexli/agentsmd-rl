@@ -1,0 +1,177 @@
+version: '2.0'
+source:
+  repo: anomalyco/opencode
+  pr: 19404
+  base_commit: af2ccc94ebc632d0014f54ea5c5e6c2e26b5dda5
+  merge_commit: a93374c48f724ebbc99886ac5d607a3990090b75
+checks:
+- id: file_valid
+  type: pass_to_pass
+  origin: static
+  description: message-part.tsx exists with PART_MAPPING and createSignal markers
+- id: test_repo_tsgo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript typecheck passes using repo's tsgo on packages/ui
+  notes: Runs npx tsgo --noEmit in packages/ui directory (CI typecheck equivalent)
+- id: test_repo_prettier_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Code formatting passes using repo's prettier config
+  notes: Runs npx prettier --check on message-part.tsx (CI lint equivalent)
+- id: test_repo_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Unit tests for UI package pass using bun test
+  notes: Runs bun test in packages/ui directory (CI test equivalent)
+- id: throttle_interval_reduced
+  type: fail_to_pass
+  origin: pr_diff
+  description: Render pacing interval reduced from ~100ms to <=50ms
+- id: pacing_is_streaming_aware
+  type: fail_to_pass
+  origin: pr_diff
+  description: Pacing function accepts and uses streaming/live state
+- id: incremental_reveal
+  type: fail_to_pass
+  origin: pr_diff
+  description: Text revealed in small increments via position tracking, not whole-buffer
+    dump
+- id: both_displays_use_pacing
+  type: pass_to_pass
+  origin: pr_diff
+  description: Both TextPartDisplay and ReasoningPartDisplay use the pacing mechanism
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: message-part.tsx is not stubbed or truncated (>=100 lines)
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: static
+  description: Repo TypeScript files have valid syntax (balanced braces/parens/brackets)
+  notes: Since bun/tsgo are not available in Docker, uses structural validation
+- id: test_repo_required_imports
+  type: pass_to_pass
+  origin: static
+  description: message-part.tsx has required SolidJS imports for pacing implementation
+- id: test_repo_part_mapping_structure
+  type: pass_to_pass
+  origin: static
+  description: PART_MAPPING object has valid structure with text and reasoning keys
+- id: test_repo_tsx_valid_syntax
+  type: pass_to_pass
+  origin: static
+  description: Repo TSX files have valid JSX structure (balanced expressions, valid
+    TS constructs)
+  notes: 'CI typecheck equivalent: verifies JSX expression balance and TS keywords'
+- id: test_repo_lint_basic
+  type: pass_to_pass
+  origin: static
+  description: Basic lint checks pass (no trailing whitespace, consistent indentation)
+  notes: 'CI lint equivalent: checks code style rules'
+- id: test_repo_imports_resolve
+  type: pass_to_pass
+  origin: static
+  description: All imports in message-part.tsx use valid, resolvable path patterns
+  notes: 'CI build equivalent: verifies imports use known patterns'
+- id: test_repo_component_signatures
+  type: pass_to_pass
+  origin: static
+  description: Component functions have valid TypeScript signatures with props parameter
+  notes: 'CI typecheck equivalent: verifies component function structure'
+- id: no_any_type
+  type: pass_to_pass
+  origin: agent_config
+  description: Changed code must not introduce any type annotations
+  source:
+    path: AGENTS.md
+    lines: '13'
+    commit: af2ccc94ebc632d0014f54ea5c5e6c2e26b5dda5
+- id: no_try_catch
+  type: pass_to_pass
+  origin: agent_config
+  description: Changed code must avoid try/catch blocks
+  source:
+    path: AGENTS.md
+    lines: '12'
+    commit: af2ccc94ebc632d0014f54ea5c5e6c2e26b5dda5
+- id: no_else_blocks
+  type: pass_to_pass
+  origin: agent_config
+  description: Changed code must avoid else statements, prefer early returns
+  source:
+    path: AGENTS.md
+    lines: '84'
+    commit: af2ccc94ebc632d0014f54ea5c5e6c2e26b5dda5
+- id: no_multiple_create_signals
+  type: pass_to_pass
+  origin: agent_config
+  description: Pacing function must not use multiple createSignal calls; prefer createStore
+    for multiple signals
+  source:
+    path: packages/app/AGENTS.md
+    lines: '15'
+    commit: af2ccc94ebc632d0014f54ea5c5e6c2e26b5dda5
+rubric:
+- rule: Prefer single word names for variables and functions. Only use multiple words
+    if necessary.
+  source:
+    path: AGENTS.md
+    lines: 21-32
+    commit: af2ccc94ebc632d0014f54ea5c5e6c2e26b5dda5
+- rule: Reduce total variable count by inlining when a value is only used once.
+  source:
+    path: AGENTS.md
+    lines: '44'
+    commit: af2ccc94ebc632d0014f54ea5c5e6c2e26b5dda5
+- rule: Prefer const over let. Use ternaries or early returns instead of reassignment.
+  source:
+    path: AGENTS.md
+    lines: '70'
+    commit: af2ccc94ebc632d0014f54ea5c5e6c2e26b5dda5
+- rule: Rely on type inference when possible; avoid explicit type annotations or interfaces
+    unless necessary for exports or clarity.
+  source:
+    path: AGENTS.md
+    lines: '16'
+    commit: af2ccc94ebc632d0014f54ea5c5e6c2e26b5dda5
+- rule: Use single word names by default for new locals, params, and helper functions.
+  source:
+    path: AGENTS.md
+    lines: 22-34
+  evidence: The gold solution introduces helper functions `step`, `next`, `clear`,
+    `sync`, `run` and variables `shown`, `live`, `end`, `max`, `size`, all of which
+    strictly adhere to the single-word naming constra
+  category: naming
+- rule: Avoid `else` statements. Prefer early returns.
+  source:
+    path: AGENTS.md
+    lines: 65-75
+  evidence: In `run` and `createEffect`, the gold solution uses multiple `if (...)
+    { ...; return }` statements to handle edge cases (like `!live?.()` or text shrinking)
+    instead of using `if/else` blocks.
+  category: style
+distractors:
+- rule: Prefer `const` over `let`. Use ternaries or early returns instead of reassignment.
+  collision_type: would_cause_bug
+  why_distracting: The pacing algorithm inherently requires tracking mutable state
+    (`shown` text and `timeout` handle) across asynchronous `setTimeout` callbacks.
+    Attempting to strictly avoid `let` and reassignment here would force the agent
+    into unnatural recursive patterns or cause bugs in the pacing logic.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 56-67
+- rule: Keep things in one function unless composable or reusable
+  collision_type: scope_ambiguity
+  why_distracting: The pacing logic involves calculating step sizes and finding snap
+    boundaries. Extracting `step` and `next` as helper functions keeps `createPacedValue`
+    readable. An agent strictly following 'keep things in one function' might inline
+    these, bloating the main function unnecessarily.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 10-11
+hierarchy_analysis: The configuration is a flat, single-file (`AGENTS.md`) setup containing
+  generic style guidelines. There is no complex inheritance or overriding between
+  multiple config files.

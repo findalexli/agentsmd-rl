@@ -1,63 +1,60 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert specific function names like 'none_to_none_str' and '_convert_none' must be removed from config.py, and check for the exact string 'exclude_none=True' in each entrypoint file. The instruction.md mentions these generally but does not explicitly name '_convert_none' as a function to remove, and does not specify that 'exclude_none=True' must appear as a literal string in each entrypoint. Also, test_get_all_fields_preserved checks that 'get_all_fields' still exists in config.py, which i"
+      "outcome": "pass",
+      "reason": "instruction.md names src/prime_rl/entrypoints/ files, src/prime_rl/utils/config.py, tomli_w.dump, exclude_none on model_dump, and the 'None' literal string - all referenced by tests."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md explicitly says 'The fix should instead use Pydantic's exclude_none parameter on model_dump calls to prevent None fields from appearing in the dict in the first place, and the legacy conversion helpers should be removed.' This directly states the implementation approach, not just the bug."
+      "reason": "instruction.md explicitly states the fix: 'use Pydantic's exclude_none parameter on model_dump calls' and 'the legacy conversion helpers should be removed' - this is exactly what the tests check for."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests like test_sft_write_config_excludes_none, test_rl_write_config_excludes_none, and test_inference_write_config_excludes_none check for the exact literal string 'exclude_none=True' in the source files. An alternative correct fix (e.g., filtering None values with a dict comprehension, or using a custom serializer) would fail these tests despite being behaviorally correct."
+      "reason": "Tests assert on the exact string 'exclude_none=True' in source (test_sft_write_config_excludes_none, test_rl_write_config_excludes_none, test_inference_write_config_excludes_none), and require removal of specific helper names 'none_to_none_str' and '_convert_none'. An alternative correct fix (e.g., custom dict filter, or using exclude_none=True via a different call style) that produces TOML without None would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "The core fail-to-pass tests (test_sft_write_config_excludes_none, test_rl_write_config_excludes_none, test_inference_write_config_excludes_none) are pure text searches: they check if 'exclude_none=True' appears as a substring in the source file. test_none_helpers_removed and test_entrypoints_no_import_none_helper are AST-based but still static analysis, not behavioral execution. test_rl_write_subconfigs_excludes_none is behavioral but tests a simulation, not the actual code. No test actually imp"
+      "reason": "Most f2p tests are grep-style text checks: test_sft/rl/inference_write_config_excludes_none only check 'exclude_none=True' in source text; test_none_helpers_removed and test_entrypoints_no_import_none_helper are AST text inspection. Only test_rl_write_subconfigs_excludes_none actually executes code, and it doesn't execute repo code - it simulates the fix."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "test_rl_write_subconfigs_excludes_none constructs its own test using model_dump(exclude_none=True) directly in the test script \u2014 it doesn't test the actual repo code at all. It's a self-contained tautology that always passes regardless of what changes were made to the codebase."
+      "outcome": "pass",
+      "reason": "A pass/stub cannot satisfy checks that require removing specific functions and adding 'exclude_none=True' strings in specific files."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "instruction.md says 'running the entrypoints to write config files should produce TOML output with no \"None\" string literals', but no test actually runs write_config from the entrypoints and inspects the TOML output for 'None' strings. The behavioral requirement is only partially tested via static source analysis."
+      "outcome": "pass",
+      "reason": "Tests cover the entrypoints mentioned (rl, sft, inference) and the helper removal in config.py as described."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear docstrings, section comments (Gates, Fail-to-pass, Pass-to-pass), and descriptive function names."
+      "reason": "Tests are grouped under commented section headers (Gates, Fail-to-pass, Pass-to-pass) with descriptive names and [pr_diff]/[static] tags."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task involves TOML config serialization but doesn't produce a structured data output with a defined schema that needs documentation."
+      "reason": "Task is a code refactor, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across the task files."
+      "reason": "No typos found in paths or identifiers."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "instruction.md names the exact file 'src/prime_rl/utils/config.py' and the specific helper functions 'none_to_none_str' and '_convert_none', and specifies using 'Pydantic's exclude_none parameter on model_dump calls'. This goes beyond describing what's broken and localizes the exact fix."
+      "reason": "instruction.md names the exact files ('src/prime_rl/utils/config.py', 'src/prime_rl/entrypoints/'), the exact API to use ('exclude_none parameter on model_dump'), and exact action ('legacy conversion helpers should be removed') - localization and fix are fully given."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits task."
+      "reason": "Code-only task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
     "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests",
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 2,
-  "fail_count": 7
+  "pass_count": 5,
+  "fail_count": 4
 }

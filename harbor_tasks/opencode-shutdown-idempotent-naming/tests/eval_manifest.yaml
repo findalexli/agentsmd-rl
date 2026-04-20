@@ -1,0 +1,146 @@
+version: '2.0'
+source:
+  repo: anomalyco/opencode
+  pr: 15924
+  base_commit: 2a0be8316be7ae6ec78f5d221851fc1cc0cdddb2
+  merge_commit: 3ebebe0a96de5ec4757de12a21cb9f933e0fbba0
+checks:
+- id: typescript_compiles
+  type: pass_to_pass
+  origin: static
+  description: thread.ts TypeScript compiles without errors
+- id: worker_typescript_compiles
+  type: pass_to_pass
+  origin: static
+  description: worker.ts TypeScript compiles without errors
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's bun turbo typecheck passes (CI gate)
+- id: test_repo_cli_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's CLI tests pass (bun test test/cli/)
+- id: test_repo_util_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's utility tests pass (bun test test/util/)
+- id: test_repo_prettier
+  type: pass_to_pass
+  origin: repo_tests
+  description: Code formatting passes prettier check
+- id: stop_function_is_idempotent
+  type: fail_to_pass
+  origin: pr_diff
+  description: stop() function uses 'stopped' flag for idempotent shutdown
+- id: stop_unregisters_process_listeners
+  type: fail_to_pass
+  origin: pr_diff
+  description: stop() unregisters uncaughtException, unhandledRejection, SIGUSR2 listeners
+- id: stop_calls_worker_terminate
+  type: fail_to_pass
+  origin: pr_diff
+  description: stop() calls worker.terminate() to force cleanup
+- id: worker_shutdown_simplified
+  type: fail_to_pass
+  origin: pr_diff
+  description: worker.ts shutdown() removes Promise.race timeout (now caller's responsibility)
+- id: helper_functions_extracted
+  type: fail_to_pass
+  origin: pr_diff
+  description: target() and input() helper functions extracted from inline IIFEs
+- id: short_variable_names
+  type: fail_to_pass
+  origin: agent_config
+  description: Code uses short variable names per AGENTS.md (root, file, network,
+    external)
+  source:
+    path: AGENTS.md
+    lines: 24-26
+    commit: 2a0be8316be7ae6ec78f5d221851fc1cc0cdddb2
+- id: agents_md_has_naming_enforcement
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md adds Naming Enforcement section with mandatory single-word
+    rule
+- id: agents_md_naming_rules_bullet_points
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md Naming Enforcement has specific bullet point rules
+- id: import_with_timeout
+  type: pass_to_pass
+  origin: static
+  description: thread.ts imports withTimeout and uses it for bounded shutdown
+- id: no_iife_import
+  type: pass_to_pass
+  origin: agent_config
+  description: thread.ts removes iife import (replaced with helper functions per AGENTS.md
+    style)
+  source:
+    path: AGENTS.md
+    lines: 24-26
+    commit: 2a0be8316be7ae6ec78f5d221851fc1cc0cdddb2
+- id: error_handler_reused
+  type: pass_to_pass
+  origin: static
+  description: Error handler extracted as reusable function, used for both exception
+    types
+rubric:
+- rule: Code changes must use single-word variable and function names where possible
+  source:
+    path: AGENTS.md
+    lines: 14,20-21
+    commit: 2a0be8316be7ae6ec78f5d221851fc1cc0cdddb2
+- rule: Prefer single word names for variables and functions. Only use multiple words
+    if necessary.
+  source:
+    path: AGENTS.md
+    lines: 19-21
+  evidence: The gold solution renames multi-word variables to single words (e.g.,
+    `baseCwd` to `root`, `workerPath` to `file`, `networkOpts` to `network`, `shouldStartServer`
+    to `external`) to comply with the nam
+  category: naming
+- rule: Prefer single word variable names where possible
+  source:
+    path: AGENTS.md
+    lines: 22-23
+  evidence: The instruction explicitly asks to simplify variable names per AGENTS.md
+    style, and the gold solution renames multi-word variables like `baseCwd` to `root`
+    and `workerPath` to `file`.
+  category: naming
+config_edits:
+- path: AGENTS.md
+  tier: 1
+  gold_added: '### Naming Enforcement (Read This)'
+  gold_removed: ''
+distractors:
+- rule: Keep things in one function unless composable or reusable
+  collision_type: rule_conflict
+  why_distracting: The rule advises keeping things in one function, but the PR instruction
+    explicitly requires extracting the inline IIFEs into separate `target()` and `input()`
+    helper functions.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 11-11
+- rule: Avoid `try`/`catch` where possible
+  collision_type: rule_conflict
+  why_distracting: The rule advises avoiding try/catch, but the PR instruction explicitly
+    requires using a try/finally block to ensure the `stop()` function is called during
+    shutdown.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 12-12
+- rule: Reduce total variable count by inlining when a value is only used once.
+  collision_type: rule_conflict
+  why_distracting: The rule advises inlining values used only once, which contradicts
+    the PR instruction to extract the inline IIFEs into named helper functions.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 31-31
+hierarchy_analysis: The repository uses a flat single-file config (AGENTS.md). However,
+  the agent must carefully weigh the PR instructions against the config rules, as
+  the PR explicitly overrides several general style guidelines (extracting functions
+  vs inlining, using try/finally vs avoiding it).
