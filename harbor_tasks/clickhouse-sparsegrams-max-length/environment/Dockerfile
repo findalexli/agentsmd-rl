@@ -17,7 +17,7 @@ RUN mkdir -p /workspace/clickhouse /logs/verifier
 # The sparseGrams fix is in the tokenizer implementation
 # Use shallow clone with specific revision to save space
 RUN cd /workspace && \
-    git clone --depth=1 https://github.com/ClickHouse/ClickHouse.git clickhouse && \
+    git clone --depth=1 --filter=blob:none https://github.com/ClickHouse/ClickHouse.git clickhouse && \
     cd clickhouse && \
     git fetch --depth=1 origin 64b0a83ca8c950b0efa6a5972ec0f1ce3d622fd6 && \
     git checkout 64b0a83ca8c950b0efa6a5972ec0f1ce3d622fd6

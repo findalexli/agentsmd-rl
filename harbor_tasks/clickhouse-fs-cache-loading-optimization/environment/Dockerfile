@@ -24,7 +24,7 @@ RUN pip3 install pytest
 
 # Clone the repository at base commit with minimal history
 ARG BASE_COMMIT=d7c936ef1d4d82e0a33ab84a78f6a544a99846df
-RUN git clone --depth=1 --single-branch https://github.com/ClickHouse/ClickHouse.git /workspace/ClickHouse && \
+RUN git clone --depth=1 --single-branch --filter=blob:none https://github.com/ClickHouse/ClickHouse.git /workspace/ClickHouse && \
     cd /workspace/ClickHouse && \
     git fetch --depth=1 origin ${BASE_COMMIT} && \
     git checkout ${BASE_COMMIT}

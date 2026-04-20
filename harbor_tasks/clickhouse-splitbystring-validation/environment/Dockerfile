@@ -26,7 +26,7 @@ RUN mkdir -p /logs/verifier
 
 # Clone ClickHouse repo at base commit (shallow clone to save space)
 WORKDIR /workspace
-RUN git clone --depth=1 https://github.com/ClickHouse/ClickHouse.git ClickHouse \
+RUN git clone --depth=1 --filter=blob:none https://github.com/ClickHouse/ClickHouse.git ClickHouse \
     && cd ClickHouse \
     && git fetch --depth=1 origin 7dad4d8f7af43976fa63a062d20225aad04842c8 \
     && git checkout 7dad4d8f7af43976fa63a062d20225aad04842c8

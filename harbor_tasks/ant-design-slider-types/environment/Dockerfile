@@ -23,7 +23,7 @@ WORKDIR /workspace/ant-design
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 
 # Install dependencies
-RUN npm install
+RUN npm install --legacy-peer-deps
 
 # Create verifier logs directory
 RUN mkdir -p /logs/verifier

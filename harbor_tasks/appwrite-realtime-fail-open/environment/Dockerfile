@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y \
 RUN pip3 install pytest --break-system-packages || pip3 install pytest
 
 # Install Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/bin --filename=composer
 
 # Set working directory
 WORKDIR /workspace

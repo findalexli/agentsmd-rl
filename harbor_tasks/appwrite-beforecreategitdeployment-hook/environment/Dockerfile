@@ -19,7 +19,7 @@ RUN pecl install swoole-6.0.2 && docker-php-ext-enable swoole
 RUN pecl install mongodb && docker-php-ext-enable mongodb
 
 # Install Composer
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/bin --filename=composer
 
 # Set working directory
 WORKDIR /workspace

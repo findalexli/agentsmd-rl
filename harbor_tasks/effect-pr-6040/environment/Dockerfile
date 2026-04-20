@@ -19,7 +19,6 @@ RUN pnpm install --frozen-lockfile
 
 RUN mkdir -p /logs/verifier
 
-COPY ../tests/test.sh /tests/test.sh
 RUN chmod +x /tests/test.sh
 
 WORKDIR /workspace/effect

@@ -26,8 +26,6 @@ RUN cd ant-design && \
 RUN mkdir -p /logs/verifier
 
 # Copy test files (from parent directory context)
-COPY ../tests/test_outputs.py /workspace/tests/
-COPY ../tests/test.sh /workspace/tests/
 RUN chmod +x /workspace/tests/test.sh
 
 WORKDIR /workspace/ant-design

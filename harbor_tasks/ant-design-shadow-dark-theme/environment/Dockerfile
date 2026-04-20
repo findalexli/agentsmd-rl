@@ -19,7 +19,7 @@ RUN git clone --filter=blob:none https://github.com/ant-design/ant-design.git an
 WORKDIR /workspace/ant-design
 
 # Install dependencies (use npm install since package-lock.json may not exist)
-RUN npm install
+RUN npm install --legacy-peer-deps
 
 # Generate version file needed by tests
 RUN npm run version

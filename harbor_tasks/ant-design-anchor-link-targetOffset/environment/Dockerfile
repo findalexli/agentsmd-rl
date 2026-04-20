@@ -20,7 +20,7 @@ RUN git clone --filter=blob:none https://github.com/ant-design/ant-design.git an
 
 # Install dependencies
 WORKDIR /workspace/ant-design
-RUN npm install
+RUN npm install --legacy-peer-deps
 
 # Create logs directory for verifier
 RUN mkdir -p /logs/verifier

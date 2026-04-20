@@ -31,9 +31,6 @@ RUN pnpm install
 RUN pnpm run build:all 2>&1 || true
 
 # Copy test files from parent directory
-COPY ../tests/test_outputs.py /workspace/task/tests/
-COPY ../test.sh /workspace/task/
-COPY ../solve.sh /workspace/task/
 
 # Make scripts executable
 RUN chmod +x /workspace/task/test.sh /workspace/task/solve.sh

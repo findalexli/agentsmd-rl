@@ -10,7 +10,7 @@ RUN docker-php-ext-install zip mbstring xml pdo pdo_mysql pdo_pgsql
 RUN pecl install mongodb && docker-php-ext-enable mongodb
 
 # Install Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/bin --filename=composer
 
 # Install Python for test runner
 RUN apt-get update && apt-get install -y python3 python3-pip && rm -rf /var/lib/apt/lists/*

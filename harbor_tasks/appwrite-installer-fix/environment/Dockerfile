@@ -16,7 +16,7 @@ RUN apt-get update && apt-get install -y \
 RUN pecl install swoole-6.0.0 --enable-swoole-curl=no --enable-swoole-pgsql=no && docker-php-ext-enable swoole
 
 # Install Composer
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/bin --filename=composer
 
 # Create logs directory
 RUN mkdir -p /logs/verifier
