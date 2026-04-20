@@ -246,10 +246,12 @@ async def main():
                         help="Run on ALL tasks (not just unvalidated)")
     parser.add_argument("--input", type=str, default=None,
                         help="JSONL file of PRs to scaffold (each line: {pr_ref, repo})")
+    parser.add_argument("--task-file", type=str, default=None,
+                        help="Text file of task names (one per line) to process")
     parser.add_argument("--agentmd", action="store_true",
                         help="Scaffold as agentmd_edits (code + config tasks)")
     parser.add_argument("--start-at", type=str, default=None,
-                        choices=["scaffold", "qgate", "rubric", "enrich", "improve", "validate"],
+                        choices=["scaffold", "qgate", "rubric", "enrich", "improve", "validate", "judge"],
                         help="DAG entry point for existing tasks (default: validate)")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
@@ -282,6 +284,27 @@ async def main():
                 print(f"  ... and {len(pr_items) - 20} more")
             return
         items = None
+    elif args.task_file:
+        task_names = set()
+        with open(args.task_file) as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    task_names.add(line)
+        # Resolve task names to (name, base_dir) tuples
+        items = []
+        for d in ["harbor_tasks", "harbor_tasks_agentmd_edits"]:
+            base = ROOT / d
+            if not base.exists():
+                continue
+            for task in sorted(base.iterdir()):
+                if task.name in task_names and task.is_dir():
+                    items.append((task.name, base))
+                    task_names.discard(task.name)
+        if task_names:
+            print(f"WARNING: {len(task_names)} tasks not found: {list(task_names)[:5]}...")
+        print(f"Found {len(items)} tasks from task file")
+        pr_items = None
     else:
         if args.all:
             items = find_all_tasks()
