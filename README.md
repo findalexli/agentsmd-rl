@@ -337,21 +337,26 @@ python -m taskforge.pipeline scaffold-from-prs --input scouted.jsonl --workers 8
 - 6,167 code+config (63 passing, under development)
 
 **Quality tiers (code-only, based on 20-rubric quality audit via Opus 4.7):**
-- **399 tier-A clean** — all quality rubrics pass (no solution leakage, no tautological tests, behavioral tests)
-- **223 tier-A with full 4-track** — tier-A clean + rubric rules + distractors across 52 repos (RL-ready)
+- **399 tier-A clean (RL-ready)** — all task-quality rubrics pass (no solution leakage, no tautological tests, behavioral tests, deterministic Dockerfiles)
 - 713 tier-A flagged — oracle works but known quality issues (leaky instructions, weak tests)
+- 19 failing oracle — build or test failures
 
-### RL-Ready Subset: 223 Tier-A Tasks with Full 4-Track Coverage
+### RL-Ready Subset: 399 Tier-A Tasks
 
-The highest quality subset — quality-audited, oracle-verified, with rubric + distractor rules across **52 repos**.
+The RL-ready subset requires only task-quality gates (the 20-rubric registry in `taskforge/rubrics.py`): no solution leakage, behavioral tests, deterministic builds. Convention-following rubrics (Tracks 3/4) are logged as monitoring signals but are **not** a gate for RL readiness — see [Research Insights](#research-insights).
 
-**Stats:**
-- 960 rubric rules (4.3/task avg) — conventions from CLAUDE.md, AGENTS.md, SKILL.md
-- 550 distractors (2.5/task avg) — rules that SEEM relevant but shouldn't apply
+**399 tasks across 80+ repos**, oracle-verified (nop=0, gold=1).
 
-**Top repos** (10 of 52): gradio (21), transformers (20), opencode (18), AReaL (16), next.js (10), ruff (10), bun (9), uv (9), openclaw (8), playwright (8)
+**Top repos** (10 of 80+): gradio (21), transformers (20), opencode (18), AReaL (16), next.js (10), ruff (10), bun (9), uv (9), openclaw (8), playwright (8)
 
-**Rubric categories:** style (15%), architecture (13%), documentation (5%), testing (4%), naming (4%), tooling (3%)
+### Monitoring: Convention-Following Rubrics (Tracks 3 & 4)
+
+Rubric and distractor rules are generated for diagnostics and model comparison, not reward. They help understand *how* agents solve tasks but don't reliably discriminate solved vs unsolved (see [postmortem](research/rubric-reward-postmortem.md)).
+
+**Coverage (across 914 tasks with rubric data):**
+- 3,489 positive rubric rules (3.8/task avg) — conventions from CLAUDE.md, AGENTS.md, SKILL.md
+- 1,710 negative rubric / distractors (2.6/task avg) — collision-typed and severity-graded
+- 952 tasks with self-contained LLM judge in test.sh (Gemini structured output)
 
 **Distractor collision types:**
 
@@ -363,23 +368,8 @@ The highest quality subset — quality-audited, oracle-verified, with rubric + d
 | `rule_conflict` | 70 | 13% | Two valid rules conflict, agent must choose |
 | `would_cause_bug` | 21 | 4% | Following the rule introduces an error |
 
-**Distractor severity:** high (32%), medium (47%), low (20%)
-
-**Sample rubric rules** (conventions the gold solution follows):
-- _"After ANY Python code changes, ALWAYS run `make ruff`"_ — from `CLAUDE.md`
-- _"Do not use browser-only APIs without environment guards"_ — from `SKILL.md`
-- _"Keep framework-agnostic core logic separated from React/Solid bindings"_ — from `AGENTS.md`
-
-**Sample distractors** (conventions that SEEM relevant but shouldn't apply):
-- _"ALWAYS check this before writing data structures — use @record instead of @dataclass"_ — `rule_conflict`, severity: high
-- _"Framework-agnostic core logic separated from React/Solid bindings"_ — `architecture_boundary`, severity: high
-- _"Critical: Always run unit and type tests during development"_ — `scope_ambiguity`, severity: medium
-
 **Evaluation infrastructure:**
-- 3,489 positive rubric rules (3.8/task avg), source-traced to config files
-- 1,710 negative rubric / distractors (2.6/task avg), collision-typed and severity-graded
-- 612 tasks with full 4-track coverage (rubric + distractors + passing oracle)
-- Rubric generation via Gemini 3.1 Pro structured output (constrained decoding) + Codex CLI extraction (100% line accuracy)
+- Rubric generation via Gemini 3.1 Pro structured output + Codex CLI extraction (100% line accuracy)
 - Rubric validation via Kimi→Gemini→Kimi cross-validation loop
 - Standalone LLM judge deployed into 952 tasks — `harbor run` produces all 4 tracks without external wrappers
 - Agent eval runner (`scripts/run_agent_eval.py`) for batch evaluation with pluggable backends
