@@ -118,6 +118,28 @@ Python package for building and validating tasks:
 - [negative_rubrics_plan.md](research/negative_rubrics_plan.md) — distractor conventions research plan
 - [pipeline-v2-plan.md](research/pipeline-v2-plan.md) — cost analysis and optimization plan
 
+## Pre-Built Docker Images
+
+Task environments are distributed as pre-built images on GitHub Container Registry to avoid Docker Hub rate limits (100 pulls/6hr) and slow rebuilds.
+
+```bash
+# Pull a task image directly
+docker pull ghcr.io/findalexli/agentsmd-rl/<task-name>:latest
+
+# Harbor auto-pulls when docker_image is set in task.toml
+harbor run -p harbor_tasks/<task> -a claude-code -m claude-opus-4-6 -y
+```
+
+Images are built via GitHub Actions (`gh workflow run push-images.yml`) — no local Docker builds needed. Each image is tagged with both a Dockerfile content hash (for cache-busting) and `:latest`. Harbor falls back to building from `environment/Dockerfile` if no pre-built image is configured.
+
+| Registry | Why |
+|----------|-----|
+| **ghcr.io** (chosen) | Free for public packages, no pull rate limits, native GitHub Actions auth |
+| Docker Hub | 100 pulls/6hr unauthenticated — breaks parallel eval runs |
+| ECR Public | 50 GB free storage, too small for 400+ images |
+
+See `scripts/push_images.py` for the build+push script and `.github/workflows/push-images.yml` for the CI workflow.
+
 ## Running Tasks
 
 Requires [Harbor](https://github.com/laude-institute/harbor):

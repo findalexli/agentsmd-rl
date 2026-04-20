@@ -1,0 +1,198 @@
+name: Build and Push Task Images
+
+on:
+  workflow_dispatch:
+    inputs:
+      task_dir:
+        description: 'Task directory (harbor_tasks or harbor_tasks_agentmd_edits)'
+        required: true
+        default: 'harbor_tasks'
+        type: choice
+        options:
+          - harbor_tasks
+          - harbor_tasks_agentmd_edits
+      tier_a_only:
+        description: 'Only push tier-A quality-audited tasks'
+        required: true
+        default: true
+        type: boolean
+      batch_index:
+        description: 'Batch index to build (0-based, each batch = 50 tasks). Leave empty for all.'
+        required: false
+        type: string
+      update_toml:
+        description: 'Update task.toml with docker_image field after push'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  REGISTRY: ghcr.io
+  OWNER: ${{ github.repository_owner }}
+
+jobs:
+  # First job: discover tasks and split into batches
+  discover:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.tasks.outputs.matrix }}
+      total: ${{ steps.tasks.outputs.total }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Shallow clone — we only need Dockerfiles and metadata
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - id: tasks
+        run: |
+          TIER_FLAG=""
+          if [ "${{ inputs.tier_a_only }}" = "true" ]; then
+            TIER_FLAG="--tier-a"
+          fi
+
+          OUTPUT=$(python scripts/push_images.py \
+            --task-dir "${{ inputs.task_dir }}" \
+            $TIER_FLAG \
+            --list-tasks)
+
+          TOTAL=$(echo "$OUTPUT" | python -c "import sys,json; print(json.load(sys.stdin)['total'])")
+          echo "total=$TOTAL" >> "$GITHUB_OUTPUT"
+
+          # Build matrix from batches
+          if [ -n "${{ inputs.batch_index }}" ]; then
+            # Single batch requested
+            IDX=${{ inputs.batch_index }}
+            echo "matrix={\"include\":[{\"batch_start\":$((IDX * 50)),\"batch_size\":50}]}" >> "$GITHUB_OUTPUT"
+          else
+            # All batches
+            BATCHES=$(echo "$OUTPUT" | python -c "
+          import sys, json
+          data = json.load(sys.stdin)
+          batches = data['batches']
+          matrix = {'include': [{'batch_start': b['start'], 'batch_size': b['size']} for b in batches]}
+          print(json.dumps(matrix))
+          ")
+            echo "matrix=$BATCHES" >> "$GITHUB_OUTPUT"
+          fi
+
+          echo "### Task Discovery" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Directory:** ${{ inputs.task_dir }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Tier-A only:** ${{ inputs.tier_a_only }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Total tasks:** $TOTAL" >> "$GITHUB_STEP_SUMMARY"
+
+  # Second job: build and push in parallel batches
+  push:
+    needs: discover
+    runs-on: ubuntu-latest
+    if: needs.discover.outputs.total != '0'
+    strategy:
+      matrix: ${{ fromJson(needs.discover.outputs.matrix) }}
+      fail-fast: false  # Don't cancel other batches if one fails
+      max-parallel: 4   # 4 concurrent runners (GitHub free tier)
+    permissions:
+      contents: read
+      packages: write  # Required for ghcr.io push
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Log in to ghcr.io
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Build and push batch
+        run: |
+          TIER_FLAG=""
+          if [ "${{ inputs.tier_a_only }}" = "true" ]; then
+            TIER_FLAG="--tier-a"
+          fi
+
+          TOML_FLAG=""
+          if [ "${{ inputs.update_toml }}" = "true" ]; then
+            TOML_FLAG="--update-toml"
+          fi
+
+          python scripts/push_images.py \
+            --task-dir "${{ inputs.task_dir }}" \
+            $TIER_FLAG \
+            --owner "${{ env.OWNER }}" \
+            --batch-start ${{ matrix.batch_start }} \
+            --batch-size ${{ matrix.batch_size }} \
+            --skip-existing \
+            $TOML_FLAG \
+            --out results-${{ matrix.batch_start }}.jsonl
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: push-results-${{ matrix.batch_start }}
+          path: results-${{ matrix.batch_start }}.jsonl
+
+  # Third job: aggregate results
+  summary:
+    needs: [discover, push]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Download all results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: push-results-*
+          merge-multiple: true
+
+      - name: Summarize
+        run: |
+          echo "### Push Results" >> "$GITHUB_STEP_SUMMARY"
+
+          PUSHED=0
+          FAILED=0
+          SKIPPED=0
+
+          for f in results-*.jsonl; do
+            [ -f "$f" ] || continue
+            while IFS= read -r line; do
+              STATUS=$(echo "$line" | python3 -c "import sys,json; print(json.load(sys.stdin).get('status',''))")
+              case "$STATUS" in
+                pushed) PUSHED=$((PUSHED + 1)) ;;
+                exists) SKIPPED=$((SKIPPED + 1)) ;;
+                *) FAILED=$((FAILED + 1)) ;;
+              esac
+            done < "$f"
+          done
+
+          echo "- **Pushed:** $PUSHED" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Skipped (already exists):** $SKIPPED" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Failed:** $FAILED" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "$FAILED" -gt 0 ]; then
+            echo "#### Failures" >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+            for f in results-*.jsonl; do
+              [ -f "$f" ] || continue
+              python3 -c "
+          import json, sys
+          for line in open('$f'):
+              r = json.loads(line)
+              if r.get('status') not in ('pushed', 'exists'):
+                  print(f\"{r['task']}: {r.get('status')} — {r.get('error','')[:100]}\")
+          " 2>/dev/null || true
+            done
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+          fi
