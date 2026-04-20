@@ -161,6 +161,7 @@ class StartAt(str, Enum):
     RUBRIC = "rubric"
     ENRICH = "enrich"
     IMPROVE = "improve"
+    FIX_QUALITY = "fix_quality"  # combined improve + instruction reconcile
     VALIDATE = "validate"
     JUDGE = "judge"          # retrofit entry: skip validate, trust prior nop=0/gold=1
 
@@ -1262,6 +1263,19 @@ async def node_improve_tests(sandbox: AsyncSandbox) -> tuple[str, str]:
     return await _run_agent(sandbox, "improve_tests.md")
 
 
+async def node_fix_task_quality(sandbox: AsyncSandbox) -> tuple[str, str]:
+    """Node 4+6c combined: Fix tests AND instruction in a single coordinated pass.
+
+    Replaces the sequential improve_tests → validate → judge → instruction_reconcile
+    pipeline for tasks with quality issues in both tests and instruction.
+
+    Reads: quality.json, instruction.md, test_outputs.py, solve.sh, Dockerfile, eval_manifest.yaml
+    Writes: updated test_outputs.py, instruction.md, eval_manifest.yaml, reconcile_status.json
+    Returns: (status, error)
+    """
+    return await _run_agent(sandbox, "fix_task_quality.md")
+
+
 async def node_validate_and_fix(sandbox: AsyncSandbox) -> tuple[str, str]:
     """Node 5: Validate + fix — Docker oracle (nop=0, gold=1) with one repair attempt.
 
@@ -1911,7 +1925,27 @@ async def run_task(
             _refresh_timeout(sandbox)
 
             # ── Node 4: Improve Tests (conditional) ───────────────
-            if start_at.should_run(StartAt.IMPROVE):
+            # If start_at is FIX_QUALITY, skip the old improve node and use the
+            # combined fix_task_quality agent instead (fixes tests + instruction
+            # together, then validates). Skips to VALIDATE after.
+            if start_at == StartAt.FIX_QUALITY:
+                t0 = time.monotonic()
+                s, err = await node_fix_task_quality(sandbox)
+                elapsed = time.monotonic() - t0
+                result.improve_status = s
+                result.improve_time = round(elapsed, 2)
+
+                await update_sandbox_status(sandbox, "fix_quality", _stamp(
+                    "fix_quality", s, elapsed))
+                logger.info("[%s] fix_quality: %s (%.1fs)", result.task_name, s, elapsed)
+
+                if s == "rate_limited":
+                    if pool and backend:
+                        pool.report_429(backend)
+                    result.error = f"rate limited during fix_quality: {err}"
+                    raise _RateLimited(result.error)
+
+            elif start_at.should_run(StartAt.IMPROVE):
                 needs_improve, reason = await node_check_test_quality(sandbox)
                 if needs_improve:
                     t0 = time.monotonic()
