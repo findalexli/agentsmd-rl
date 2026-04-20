@@ -111,10 +111,12 @@ Python package for building and validating tasks:
 
 ### `research/`
 
+- [rubric-reward-postmortem.md](research/rubric-reward-postmortem.md) — why LLM-generated rubrics failed as reward signal, trace-derived alternative
 - [agent-manifest-confounding.md](research/agent-manifest-confounding.md) — agent configs as unmeasured confounders
-- [benchmark_construction_log.md](research/benchmark_construction_log.md) — detailed build log (phases 1-12)
-- [pipeline-v2-plan.md](research/pipeline-v2-plan.md) — cost analysis and optimization plan
 - [test-design-audit.md](research/test-design-audit.md) — test.sh design audit (SWE-bench Verified critique)
+- [benchmark_construction_log.md](research/benchmark_construction_log.md) — detailed build log (phases 1-12)
+- [negative_rubrics_plan.md](research/negative_rubrics_plan.md) — distractor conventions research plan
+- [pipeline-v2-plan.md](research/pipeline-v2-plan.md) — cost analysis and optimization plan
 
 ## Running Tasks
 
@@ -178,6 +180,32 @@ Key: Opus solves 3x more tasks. Kimi is 25% faster but produces no diff on the h
 
 **Track 1 (programmatic tests) is the primary discriminator.** Tracks 3 and 4 have known quality issues that make their scores unreliable signals — see "Rubric Quality Audit" section.
 
+## Research Insights
+
+Key findings from building this benchmark, documented in `research/`:
+
+### LLM-generated rubrics don't work as reward signal
+
+We tried three generators (Gemini, Kimi validation loop, Codex/GPT-5.4) to extract convention-following rubrics from agent config files. After generating 3,489 rules across 914 tasks and running a controlled 8-task evaluation, we found that **rubric scores do not discriminate between agents that solve the task and agents that don't**. ~50% of rules are tautological (describe what any correct solution does), and the core problem — distinguishing "pre-existing convention" from "description of the gold solution" — is irreducibly circular when deriving rules from the gold diff.
+
+**Decision:** Binary outcome reward only. Rubrics demoted to monitoring/diagnostics.
+**Future direction:** Derive rubrics from multi-agent trace diffs (what do successful agents do that failed ones don't?) instead of from the gold diff.
+[Full analysis →](research/rubric-reward-postmortem.md)
+
+### Agent instruction files are unmeasured confounders
+
+Repos with CLAUDE.md/AGENTS.md files are systematically different from repos without them — more active, better documented, stricter CI. This means any performance difference between "tasks from config repos" and "tasks from non-config repos" could be explained by repo quality, not agent instruction awareness. We control for this by sourcing ALL tasks from config repos and varying only the instructions shown to the agent.
+[Full analysis →](research/agent-manifest-confounding.md)
+
+### SWE-bench-style test design is fragile
+
+Following [OpenAI's critique of SWE-bench Verified](https://openai.com/index/why-we-no-longer-evaluate-swe-bench-verified/), we audited test design across 100+ tasks and found that structural assertions (exact variable names, AST patterns, grep for specific strings) reject valid alternative solutions. Our design principle: test BEHAVIOR not STRUCTURE. Structural checks are supplementary only (<=40% weight), and every fail-to-pass test must invoke the actual code path.
+[Full analysis →](research/test-design-audit.md)
+
+### Generating hard, non-trivial rubrics is an open problem
+
+Even after fixing extraction accuracy (Codex achieves 100% line accuracy), the fundamental challenge remains: most repo conventions are either trivially followed by any competent agent (formatting, imports) or too ambiguous to judge automatically (architecture decisions). The ~4% of rules that genuinely test convention *discrimination* — where an agent must choose between competing conventions — are the ones that matter for RL training, and we don't yet have a reliable way to generate them at scale.
+
 ## Training
 
 ```bash
@@ -208,12 +236,14 @@ This matches every major SWE benchmark (SWE-bench, Terminal Bench, SWE-smith, R2
 
 ### Four-track evaluation
 
-| Track | What | Method | Coverage |
-|-------|------|--------|----------|
-| 1. Code correctness | Did the agent fix the bug? | `test.sh` → nop=0, gold=1 | 1,131/1,136 (99%) |
-| 2. Config edits | Did the agent update config files correctly? | Gold diff vs agent diff (Gemini semantic comparison) | Class B only |
-| 3. Positive rubric | Does the agent follow relevant conventions? | Gemini 3.1 Pro judges diff vs rubric rules | 914 tasks (3,489 rules) |
-| 4. Distractors | Does the agent IGNORE irrelevant conventions? | Gemini checks agent didn't apply collision rules | 646 tasks (1,710 rules) |
+| Track | What | Method | Role | Coverage |
+|-------|------|--------|------|----------|
+| 1. Code correctness | Did the agent fix the bug? | `test.sh` → nop=0, gold=1 | **Reward signal** | 1,131/1,136 (99%) |
+| 2. Config edits | Did the agent update config files correctly? | Gold diff vs agent diff (Gemini semantic comparison) | Monitoring | Class B only |
+| 3. Positive rubric | Does the agent follow relevant conventions? | Gemini 3.1 Pro judges diff vs rubric rules | Monitoring | 914 tasks (3,489 rules) |
+| 4. Distractors | Does the agent IGNORE irrelevant conventions? | Gemini checks agent didn't apply collision rules | Monitoring | 646 tasks (1,710 rules) |
+
+**Only Track 1 contributes to the RL reward.** Tracks 2-4 are logged for diagnostics and model comparison but do not affect training gradients. See [Research Insights](#research-insights) for why.
 
 Tracks 3 and 4 run automatically inside the harbor container via `standalone_judge.py` (deployed to 952 tasks). No external wrapper needed — `harbor run` produces all tracks.
 
@@ -384,14 +414,11 @@ Distractors are well-formed (99%+ field coverage) but mostly implausible — no 
 
 **Root cause**: The rubric generation prompt asks "find rules the gold solution follows" without distinguishing pre-existing conventions from descriptions of what the PR does. Gemini correctly identifies that the gold uses `Info().get_secret()` and reports it as a "convention" — but it's just the task instruction restated.
 
-**Required fixes (TODO):**
-1. **Anti-tautology gate**: Reject rules semantically equivalent to instruction.md
-2. **Dedup gate**: Collapse rules with >85% text similarity
-3. **Track 1 redundancy gate**: Exclude rules already covered by programmatic checks
-4. **Source verification gate**: Verify cited lines contain content related to the rule
-5. **Distractor scope filter**: Only use config files from same package/directory as PR-modified files
+**Decision: outcome-only reward, rubrics as monitoring.**
 
-Until these gates are implemented, **Track 1 is the only reliable evaluation signal.** Tracks 3 and 4 should be treated as experimental.
+We attempted multiple fixes — Codex/GPT-5.4 extraction (fixed line drift, 100% accuracy), Kimi→Gemini→Kimi validation loop (caught 25-75% of hallucinations), anti-tautology gates (caught obvious cases). These improved precision but didn't solve the core problem: tautological rules are *technically correct*, they just don't test anything meaningful. The boundary between "convention the solution follows" and "description of the solution" is irreducibly fuzzy.
+
+Track 1 (binary outcome from programmatic tests) is the sole RL reward signal. Tracks 3 and 4 are logged for diagnostics — useful for understanding *how* an agent solved a task, not *whether* it did. See [research/rubric-reward-postmortem.md](research/rubric-reward-postmortem.md) for the full analysis and future direction (trace-derived rubrics from multi-agent runs).
 
 **Pipeline improvements (Apr 2026):**
 - Retry stack redesign: eliminated 120x retry amplification (was 10×4×3 calls per rate limit)
