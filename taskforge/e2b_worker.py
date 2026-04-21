@@ -541,6 +541,40 @@ async def download_task_files(sandbox: AsyncSandbox, dest: Path) -> list[str]:
     return downloaded
 
 
+GHCR_OWNER = os.environ.get("GH_OWNER", "findalexli")
+GHCR_REPO = "agentsmd-rl"
+
+
+def _ghcr_image_ref(task_name: str) -> str:
+    """Compute the ghcr.io image reference for a task."""
+    import re
+    name = task_name.lower()
+    name = re.sub(r'[^a-z0-9._-]', '-', name)
+    name = re.sub(r'-+', '-', name).strip('-')
+    return f"ghcr.io/{GHCR_OWNER.lower()}/{GHCR_REPO}/{name}:latest"
+
+
+async def prepull_task_image(sandbox: AsyncSandbox, task_name: str) -> bool:
+    """Pull pre-built task image from ghcr.io and tag as task-env.
+
+    If the image exists on ghcr.io, pulls it and tags as 'task-env' so
+    subsequent `docker build` in the agent/validate step is a cache hit.
+    Returns True if image was pulled, False otherwise.
+    """
+    ref = _ghcr_image_ref(task_name)
+    code, stdout, stderr = await run_cmd(
+        sandbox,
+        f"docker pull {ref} 2>&1 && docker tag {ref} task-env",
+        timeout=300,
+    )
+    if code == 0:
+        logger.info("[%s] Pre-pulled %s as task-env", task_name, ref)
+        return True
+    # Image doesn't exist or pull failed — agent will build from Dockerfile
+    logger.debug("[%s] No pre-built image at %s, will build from Dockerfile", task_name, ref)
+    return False
+
+
 async def upload_taskforge_modules(sandbox: AsyncSandbox) -> None:
     """Upload taskforge Python modules to sandbox for in-sandbox operations."""
     await run_cmd(sandbox, "mkdir -p /workspace/taskforge")
@@ -1328,13 +1362,17 @@ async def node_validate_docker_only(
     Reads: /workspace/task/environment/Dockerfile, tests/test.sh, solution/solve.sh
     Returns: (nop_reward, gold_reward, error_detail)
     """
-    # Build the task's Docker image
-    code, stdout, stderr = await run_cmd(
-        sandbox,
-        "cd /workspace/task/environment && docker build -t task-env .",
-    )
+    # Build the task's Docker image (pre-pulled image makes this a cache hit)
+    # Check if task-env already exists (from prepull_task_image)
+    code, _, _ = await run_cmd(sandbox, "docker image inspect task-env >/dev/null 2>&1", timeout=5)
     if code != 0:
-        return -1, -1, f"docker build failed: {stderr[-500:]}"
+        # No pre-pulled image, build from Dockerfile
+        code, stdout, stderr = await run_cmd(
+            sandbox,
+            "cd /workspace/task/environment && docker build -t task-env .",
+        )
+        if code != 0:
+            return -1, -1, f"docker build failed: {stderr[-500:]}"
 
     # NOP test (no fix applied, expect reward=0)
     await run_cmd(sandbox, "rm -f /logs/verifier/reward.txt")
@@ -1840,6 +1878,9 @@ async def run_task(
                     return result
                 await upload_task_files(sandbox, dest)
                 result.scaffold_status = "skipped"
+
+                # Pre-pull ghcr.io image if available (skips slow Docker build)
+                await prepull_task_image(sandbox, task_ref)
             else:
                 # is_new but start_at > SCAFFOLD — error, new tasks must scaffold
                 result.error = f"new PR requires start_at=scaffold, got {start_at.value}"
