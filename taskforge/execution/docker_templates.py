@@ -35,6 +35,12 @@ _RUNTIME_TEMPLATES: dict[str, RuntimeTemplate] = {
     "go": RuntimeTemplate("go", "golang:1.22-bookworm", ("python3", "python3-pip")),
     "golang": RuntimeTemplate("go", "golang:1.22-bookworm", ("python3", "python3-pip")),
     "rust": RuntimeTemplate("rust", "rust:1.84-bookworm", ("python3", "python3-pip")),
+    "julia": RuntimeTemplate(
+        "julia",
+        "julia:1.10-bookworm",
+        ("python3", "python3-pip"),
+        notes="matches julia_base-style rows on Julia 1.10",
+    ),
     "java": RuntimeTemplate(
         "java", "eclipse-temurin:17-jdk", ("python3", "python3-pip", "maven")
     ),
@@ -197,6 +203,8 @@ def select_runtime_template(
         return _RUNTIME_TEMPLATES["go"]
     if "rust" in base:
         return _RUNTIME_TEMPLATES["rust"]
+    if "julia" in base:
+        return _RUNTIME_TEMPLATES["julia"]
     if "java" in base or "jdk" in base:
         return _RUNTIME_TEMPLATES["java"]
     if "clojure" in base:

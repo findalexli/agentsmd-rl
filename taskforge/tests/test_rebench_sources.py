@@ -561,6 +561,7 @@ def test_runtime_selection_is_conservative():
         "eclipse-temurin:21-jdk"
     )
     assert select_runtime_template("clojure").setup_commands
+    assert select_runtime_template("julia").image == "julia:1.10-bookworm"
     assert select_runtime_template("php").image == "php:8.3.16"
     assert "libzip-dev" in select_runtime_template("", "php_8.3.16").setup_packages
     c_runtime = select_runtime_template("", "c:latest")
@@ -572,6 +573,12 @@ def test_log_parser_registry_parses_common_rebench_logs():
     pytest_log = "tests/test_p.py::test_new PASSED [ 50%]\ntests/test_p.py::test_old FAILED [100%]\n"
     go_log = "--- PASS: TestThing (0.00s)\n--- FAIL: TestOther (0.00s)\n"
     jq_log = "PASS: nccopy tst_filter_order\nFAIL: tst_hdf5\n"
+    julia_log = (
+        "Test Summary:        | Pass  Fail  Error  Total  Time\n"
+        "Docstrings           |    8                  8  0.1s\n"
+        "Interface extraction |    2     1            3  0.1s\n"
+        "Bad inputs           |          1     1      2  0.1s\n"
+    )
     csharp_log = "  Passed My.Tests.Pass [1 ms]\n  Failed My.Tests.Fail [2 ms]\n"
     dart_log = (
         '{"type":"testStart","test":{"id":1,"name":"adds values"}}\n'
@@ -616,6 +623,18 @@ def test_log_parser_registry_parses_common_rebench_logs():
     assert parse_with_parser("gotest", go_log)["TestOther"] == TestStatus.FAILED.value
     assert (
         parse_with_parser("parse_log_jq", jq_log)["tst_hdf5"] == TestStatus.FAILED.value
+    )
+    assert (
+        parse_with_parser("parse_log_julia", julia_log)["Docstrings"]
+        == TestStatus.PASSED.value
+    )
+    assert (
+        parse_with_parser("parse_log_julia", julia_log)["Interface extraction"]
+        == TestStatus.FAILED.value
+    )
+    assert (
+        parse_with_parser("parse_log_julia", julia_log)["Bad inputs"]
+        == TestStatus.FAILED.value
     )
     assert (
         parse_with_parser("parse_log_csharp", csharp_log)["My.Tests.Fail"]

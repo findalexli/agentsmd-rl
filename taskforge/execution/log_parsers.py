@@ -120,6 +120,56 @@ def parse_log_jq(log: str) -> dict[str, str]:
     return statuses
 
 
+def parse_log_julia(log: str) -> dict[str, str]:
+    """Parse Julia `Test Summary:` tables."""
+
+    statuses: dict[str, str] = {}
+    test_line_re = re.compile(r"^(\s*)(.+?)\s+\|(.+)$")
+    in_summary = False
+    has_fail_column = False
+    has_error_column = False
+
+    for raw_line in log.splitlines():
+        line = _strip_ansi(raw_line).rstrip()
+        if "Test Summary:" in line:
+            in_summary = True
+            header = line.split("|", 1)[1] if "|" in line else line
+            has_fail_column = "Fail" in header
+            has_error_column = "Error" in header
+            continue
+        if not in_summary:
+            continue
+
+        match = test_line_re.match(line)
+        if not match:
+            continue
+        test_name = match.group(2).strip()
+        columns_text = match.group(3)
+        numeric_parts = [part for part in columns_text.split() if part.isdigit()]
+        if len(numeric_parts) < 2:
+            continue
+
+        total = int(numeric_parts[-1])
+        status = TestStatus.PASSED.value
+        if len(numeric_parts) == 2:
+            first_count = int(numeric_parts[0])
+            leading_spaces = len(columns_text) - len(columns_text.lstrip())
+            if leading_spaces >= 10 or first_count != total:
+                status = TestStatus.FAILED.value
+        elif len(numeric_parts) == 3:
+            middle_count = int(numeric_parts[1])
+            if middle_count > 0 and (has_fail_column or has_error_column):
+                status = TestStatus.FAILED.value
+        else:
+            fail_count = int(numeric_parts[1])
+            error_count = int(numeric_parts[2])
+            if fail_count or error_count:
+                status = TestStatus.FAILED.value
+
+        statuses[test_name] = status
+    return statuses
+
+
 def parse_java_mvn(log: str) -> dict[str, str]:
     """Parse Maven Surefire text output."""
 
@@ -600,6 +650,7 @@ NAME_TO_PARSER: dict[str, Parser] = {
     "parse_log_cargo": parse_log_cargo,
     "jq": parse_log_jq,
     "parse_log_jq": parse_log_jq,
+    "parse_log_julia": parse_log_julia,
     "junit": parse_log_junit_xml,
     "maven": parse_java_mvn,
     "gradle": parse_log_junit_xml,
