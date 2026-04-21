@@ -386,7 +386,7 @@ async def create_worker_sandbox(
         await run_cmd(sandbox, "chown -R worker:worker /workspace /logs/verifier", timeout=10)
         await run_cmd(sandbox, "usermod -aG docker worker 2>/dev/null || true", timeout=5)
 
-        # Start litellm proxy if using Gemini as main backend
+        # Start litellm proxy if backend uses localhost:4000 (Gemini or Chutes)
         if backend_env and backend_env.get("ANTHROPIC_BASE_URL") == "http://localhost:4000":
             await _ensure_litellm_proxy(sandbox)
 
@@ -410,7 +410,11 @@ async def create_worker_sandbox(
 
 
 async def _ensure_litellm_proxy(sandbox: AsyncSandbox) -> bool:
-    """Start litellm proxy for Gemini routing if not already running."""
+    """Start litellm proxy for OpenAI-format backend routing if not already running.
+
+    Supports Gemini (gemini/ prefix) and Chutes (openai/ prefix with api_base).
+    The proxy translates requests so claude -p sees Anthropic format.
+    """
     code, stdout, _ = await run_cmd(
         sandbox,
         'curl -s -o /dev/null -w "%{http_code}" http://localhost:4000/health 2>/dev/null || echo 000',
@@ -419,28 +423,58 @@ async def _ensure_litellm_proxy(sandbox: AsyncSandbox) -> bool:
     if stdout.strip() == "200":
         return True
 
+    # Determine which backend to configure
+    chutes_key = os.environ.get("CHUTES_API_KEY", "")
+    chutes_model = os.environ.get("CHUTES_MODEL", "moonshotai/Kimi-K2.5-TEE")
+    chutes_enabled = os.environ.get("CHUTES_ENABLED", "") == "1"
     gemini_key = os.environ.get("GEMINI_API_KEY", "")
-    if not gemini_key:
-        logger.warning("No GEMINI_API_KEY — cannot start litellm proxy for Gemini routing")
+
+    if chutes_key and chutes_enabled:
+        # Chutes — OpenAI-compatible endpoint
+        litellm_config = (
+            'litellm_settings:\n'
+            '  drop_params: true\n'
+            'model_list:\n'
+            '  - model_name: "claude-opus-4-6"\n'
+            '    litellm_params:\n'
+            f'      model: "openai/{chutes_model}"\n'
+            f'      api_key: "{chutes_key}"\n'
+            '      api_base: "https://llm.chutes.ai/v1"\n'
+            '  - model_name: "claude-sonnet-4-6"\n'
+            '    litellm_params:\n'
+            f'      model: "openai/{chutes_model}"\n'
+            f'      api_key: "{chutes_key}"\n'
+            '      api_base: "https://llm.chutes.ai/v1"\n'
+            '  - model_name: "opus"\n'
+            '    litellm_params:\n'
+            f'      model: "openai/{chutes_model}"\n'
+            f'      api_key: "{chutes_key}"\n'
+            '      api_base: "https://llm.chutes.ai/v1"\n'
+        )
+        backend_label = f"Chutes ({chutes_model})"
+    elif gemini_key:
+        litellm_config = (
+            'litellm_settings:\n'
+            '  drop_params: true\n'
+            'model_list:\n'
+            '  - model_name: "claude-opus-4-6"\n'
+            '    litellm_params:\n'
+            '      model: "gemini/gemini-3.1-pro-preview-customtools"\n'
+            f'      api_key: "{gemini_key}"\n'
+            '  - model_name: "claude-sonnet-4-6"\n'
+            '    litellm_params:\n'
+            '      model: "gemini/gemini-3.1-pro-preview-customtools"\n'
+            f'      api_key: "{gemini_key}"\n'
+            '  - model_name: "opus"\n'
+            '    litellm_params:\n'
+            '      model: "gemini/gemini-3.1-pro-preview-customtools"\n'
+            f'      api_key: "{gemini_key}"\n'
+        )
+        backend_label = "Gemini 3.1 Pro"
+    else:
+        logger.warning("No CHUTES_API_KEY or GEMINI_API_KEY — cannot start litellm proxy")
         return False
 
-    litellm_config = (
-        'litellm_settings:\n'
-        '  drop_params: true\n'
-        'model_list:\n'
-        '  - model_name: "claude-opus-4-6"\n'
-        '    litellm_params:\n'
-        '      model: "gemini/gemini-3.1-pro-preview-customtools"\n'
-        f'      api_key: "{gemini_key}"\n'
-        '  - model_name: "claude-sonnet-4-6"\n'
-        '    litellm_params:\n'
-        '      model: "gemini/gemini-3.1-pro-preview-customtools"\n'
-        f'      api_key: "{gemini_key}"\n'
-        '  - model_name: "opus"\n'
-        '    litellm_params:\n'
-        '      model: "gemini/gemini-3.1-pro-preview-customtools"\n'
-        f'      api_key: "{gemini_key}"\n'
-    )
     await sandbox.files.write("/tmp/litellm_config.yaml", litellm_config.encode())
     await run_cmd(
         sandbox,
@@ -456,7 +490,7 @@ async def _ensure_litellm_proxy(sandbox: AsyncSandbox) -> bool:
             timeout=5,
         )
         if stdout.strip() == "200":
-            logger.info("Sandbox %s: litellm proxy -> Gemini 3.1 Pro ready", sandbox.sandbox_id)
+            logger.info("Sandbox %s: litellm proxy -> %s ready", sandbox.sandbox_id, backend_label)
             return True
 
     logger.warning("Sandbox %s: litellm proxy failed to start after 40s", sandbox.sandbox_id)

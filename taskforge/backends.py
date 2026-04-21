@@ -537,6 +537,21 @@ def backends_from_env(env_file: Path | None = None) -> list[Backend]:
             cost_tier=1,
         ))
 
+    # Chutes.ai — OpenAI-compatible serverless GPU provider
+    # Has MiniMax-M2.5-TEE, Kimi-K2.5-TEE, DeepSeek, GLM-5.1, etc.
+    # Uses litellm proxy inside E2B sandbox to translate OpenAI → Anthropic format.
+    # Different rate limits from Fireworks — good for parallel workloads.
+    if _get("CHUTES_API_KEY") and _enabled("CHUTES_ENABLED"):
+        chutes_model = _get("CHUTES_MODEL") or "moonshotai/Kimi-K2.5-TEE"
+        backends.append(Backend(
+            name="chutes",
+            base_url="http://localhost:4000",  # litellm proxy started inside sandbox
+            api_key="dummy",  # litellm doesn't need auth from localhost
+            model_map={"opus": "opus", "sonnet": "sonnet", "haiku": "haiku"},
+            max_concurrent=int(_get("CHUTES_MAX_CONCURRENT") or 5),
+            cost_tier=1,
+        ))
+
     # Gemini 3.1 Pro via litellm proxy inside sandbox
     # DISABLED as main agent — thinking tokens too expensive ($0.47/task vs $0.05 for Kimi)
     # Gemini is used ONLY for rubric judge (1 API call/task via judge.py)
