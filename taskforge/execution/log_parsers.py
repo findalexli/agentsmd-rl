@@ -259,6 +259,57 @@ def parse_log_swift(log: str) -> dict[str, str]:
     return statuses
 
 
+def parse_log_cpp_v3(log: str) -> dict[str, str]:
+    """Parse C++ runner output used by SWE-rebench `parse_log_cpp_v3` rows."""
+
+    statuses: dict[str, str] = {}
+    botan_re = re.compile(
+        r"^(.*?)\s+ran\s+(\d+)\s+tests\s+in\s+[\d.]+\s+(?:msec|sec)\s+(.+)$",
+        re.IGNORECASE,
+    )
+    line_re = re.compile(r"^(?:\[[0-9]+/[0-9]+\]\s*)?(.*?)\s*\.\.\.\s*(\w+)$")
+    failed_re = re.compile(r"\bFAILED\b|\bFAIL\b|\bFailure\b", re.IGNORECASE)
+    skipped_re = re.compile(r"\bSKIPPED\b", re.IGNORECASE)
+    passed_re = re.compile(r"\bOK\b|\bPASSED\b", re.IGNORECASE)
+
+    for raw_line in log.splitlines():
+        line = _strip_ansi(raw_line).strip()
+        if not line:
+            continue
+
+        if match := botan_re.match(line):
+            name, count, tail = match.group(1).strip(), match.group(2), match.group(3)
+            key = f"{name} ran {count} tests {tail.strip()}"
+            statuses[key] = (
+                TestStatus.FAILED.value
+                if failed_re.search(tail)
+                else TestStatus.PASSED.value
+            )
+            continue
+
+        if match := line_re.match(line):
+            name = match.group(1).strip()
+            status_token = match.group(2)
+            if skipped_re.search(status_token) or skipped_re.search(line):
+                statuses[name] = TestStatus.SKIPPED.value
+            elif failed_re.search(status_token) or failed_re.search(line):
+                statuses[name] = TestStatus.FAILED.value
+            elif passed_re.search(status_token) or passed_re.search(line):
+                statuses[name] = TestStatus.PASSED.value
+            else:
+                statuses[name] = TestStatus.FAILED.value
+            continue
+
+        if skipped_re.search(line):
+            statuses[line] = TestStatus.SKIPPED.value
+        elif failed_re.search(line):
+            statuses[line] = TestStatus.FAILED.value
+        elif passed_re.search(line):
+            statuses[line] = TestStatus.PASSED.value
+
+    return statuses
+
+
 def parse_java_mvn(log: str) -> dict[str, str]:
     """Parse Maven Surefire text output."""
 
@@ -750,6 +801,7 @@ NAME_TO_PARSER: dict[str, Parser] = {
     "parse_log_gradlew_v1": parse_log_gradlew_v1,
     "parse_log_junit": parse_log_junit,
     "parse_log_csharp": parse_log_csharp,
+    "parse_log_cpp_v3": parse_log_cpp_v3,
     "parse_log_dart": parse_log_dart,
     "parse_log_elixir": parse_log_elixir,
     "parse_log_php_v1": parse_log_php_v1,

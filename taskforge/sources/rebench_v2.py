@@ -413,6 +413,7 @@ def parse_with_parser(name: str, log: str) -> dict[str, str]:
         "parse_log_gradlew_v1": parse_log_gradlew_v1,
         "parse_log_junit": parse_log_junit,
         "parse_log_csharp": parse_log_csharp,
+        "parse_log_cpp_v3": parse_log_cpp_v3,
         "parse_log_dart": parse_log_dart,
         "parse_log_elixir": parse_log_elixir,
         "parse_log_php_v1": parse_log_php_v1,
@@ -626,6 +627,51 @@ def parse_log_swift(log: str) -> dict[str, str]:
         line = strip_ansi(raw_line).strip()
         if match := pattern.match(line):
             statuses[match.group(1)] = PASSED if match.group(2) == "passed" else FAILED
+    return statuses
+
+
+def parse_log_cpp_v3(log: str) -> dict[str, str]:
+    statuses: dict[str, str] = {}
+    botan_re = re.compile(
+        r"^(.*?)\s+ran\s+(\d+)\s+tests\s+in\s+[\d.]+\s+(?:msec|sec)\s+(.+)$",
+        re.IGNORECASE,
+    )
+    line_re = re.compile(r"^(?:\[[0-9]+/[0-9]+\]\s*)?(.*?)\s*\.\.\.\s*(\w+)$")
+    failed_re = re.compile(r"\bFAILED\b|\bFAIL\b|\bFailure\b", re.IGNORECASE)
+    skipped_re = re.compile(r"\bSKIPPED\b", re.IGNORECASE)
+    passed_re = re.compile(r"\bOK\b|\bPASSED\b", re.IGNORECASE)
+
+    for raw_line in log.splitlines():
+        line = strip_ansi(raw_line).strip()
+        if not line:
+            continue
+
+        if match := botan_re.match(line):
+            name, count, tail = match.group(1).strip(), match.group(2), match.group(3)
+            key = f"{name} ran {count} tests {tail.strip()}"
+            statuses[key] = FAILED if failed_re.search(tail) else PASSED
+            continue
+
+        if match := line_re.match(line):
+            name = match.group(1).strip()
+            status_token = match.group(2)
+            if skipped_re.search(status_token) or skipped_re.search(line):
+                statuses[name] = SKIPPED
+            elif failed_re.search(status_token) or failed_re.search(line):
+                statuses[name] = FAILED
+            elif passed_re.search(status_token) or passed_re.search(line):
+                statuses[name] = PASSED
+            else:
+                statuses[name] = FAILED
+            continue
+
+        if skipped_re.search(line):
+            statuses[line] = SKIPPED
+        elif failed_re.search(line):
+            statuses[line] = FAILED
+        elif passed_re.search(line):
+            statuses[line] = PASSED
+
     return statuses
 
 
