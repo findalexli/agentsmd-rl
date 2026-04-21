@@ -1179,9 +1179,8 @@ print(commit)
             # Separate chown so checkout failure is detected
             clone_code, _, clone_err = await run_cmd(
                 sandbox,
-                f"git init /workspace/repo && "
+                f"git clone --filter=blob:none --no-checkout https://github.com/{repo_url}.git /workspace/repo && "
                 f"cd /workspace/repo && "
-                f"git remote add origin https://github.com/{repo_url}.git && "
                 f"git fetch --depth=1 origin {repo_commit} && "
                 f"git checkout {repo_commit}",
                 timeout=180,
@@ -1827,7 +1826,7 @@ async def run_task(
             # classify_task_fast only runs when agentmd=True.
             # Always-on because: (a) it's <2s deterministic, (b) we want retrofit
             # mode (--start-at validate) to still get programmatic lint protection.
-            if True:
+            if agentmd:
                 t0 = time.monotonic()
                 verdict, flags = await node_qgate(sandbox, agentmd=agentmd)
                 elapsed = time.monotonic() - t0
@@ -2684,12 +2683,14 @@ async def async_main(args):
     # Per-run failure log (structured JSONL for resumability).
     failed_log_dir = ROOT / "pipeline_logs"
     failed_log_dir.mkdir(exist_ok=True)
-    failed_log_path = Path(args.failed_log) if args.failed_log else (
+    failed_log_arg = getattr(args, "failed_log", None)
+    failed_log_path = Path(failed_log_arg) if failed_log_arg else (
         failed_log_dir / f"failed_tasks_{int(time.time())}.jsonl"
     )
     logger.info("Failed-task log: %s", failed_log_path)
 
-    claim_dir = Path(args.claim_dir) if args.claim_dir else None
+    claim_dir_arg = getattr(args, "claim_dir", None)
+    claim_dir = Path(claim_dir_arg) if claim_dir_arg else None
     if claim_dir:
         logger.info("Cross-process claim dir: %s", claim_dir)
 

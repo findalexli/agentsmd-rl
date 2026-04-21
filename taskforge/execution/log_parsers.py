@@ -1,0 +1,462 @@
+"""Small normalized test-log parser registry.
+
+This is a taskforge-facing wrapper, not a wholesale replacement for
+SWE-rebench-V2's parser library. Add parsers here only when imported tasks need
+them, and keep return values normalized.
+"""
+
+from __future__ import annotations
+
+import json
+import re
+import xml.etree.ElementTree as ET
+from enum import Enum
+from typing import Any, Callable
+
+
+class TestStatus(str, Enum):
+    PASSED = "PASSED"
+    FAILED = "FAILED"
+    SKIPPED = "SKIPPED"
+    __test__ = False
+
+
+Parser = Callable[[str], dict[str, str]]
+
+
+def parse_log_pytest(log: str) -> dict[str, str]:
+    """Parse common pytest verbose output."""
+
+    statuses: dict[str, str] = {}
+    pattern = re.compile(
+        r"^(?P<name>\S+::\S.*?)\s+(?P<status>PASSED|FAILED|SKIPPED|ERROR)\b"
+    )
+    for raw_line in log.splitlines():
+        line = _strip_ansi(raw_line).strip()
+        match = pattern.match(line)
+        if not match:
+            continue
+        status = match.group("status")
+        statuses[match.group("name")] = (
+            TestStatus.FAILED.value if status == "ERROR" else status
+        )
+    return statuses
+
+
+def parse_log_gotest(log: str) -> dict[str, str]:
+    """Parse `go test -v` output."""
+
+    statuses: dict[str, str] = {}
+    pattern = re.compile(r"^--- (PASS|FAIL|SKIP): (.+?) \(")
+    for raw_line in log.splitlines():
+        line = _strip_ansi(raw_line).strip()
+        match = pattern.match(line)
+        if not match:
+            continue
+        status, name = match.groups()
+        statuses[name] = {
+            "PASS": TestStatus.PASSED.value,
+            "FAIL": TestStatus.FAILED.value,
+            "SKIP": TestStatus.SKIPPED.value,
+        }[status]
+    return statuses
+
+
+def parse_log_jest(log: str) -> dict[str, str]:
+    """Parse common Jest/Vitest textual output."""
+
+    statuses: dict[str, str] = {}
+    for raw_line in log.splitlines():
+        line = _strip_ansi(raw_line).strip()
+        if line.startswith(("✓ ", "√ ")):
+            statuses[line[2:].strip()] = TestStatus.PASSED.value
+        elif line.startswith(("✕ ", "× ", "✖ ")):
+            statuses[line[2:].strip()] = TestStatus.FAILED.value
+        elif line.startswith(("○ skipped ", "○ ")):
+            statuses[line[2:].replace("skipped ", "", 1).strip()] = (
+                TestStatus.SKIPPED.value
+            )
+        elif line.startswith(("PASS ", "FAIL ")):
+            status, name = line.split(maxsplit=1)
+            statuses[name.strip()] = (
+                TestStatus.PASSED.value if status == "PASS" else TestStatus.FAILED.value
+            )
+    return statuses
+
+
+def parse_log_cargo(log: str) -> dict[str, str]:
+    """Parse Rust `cargo test` output."""
+
+    statuses: dict[str, str] = {}
+    pattern = re.compile(r"^test (?P<name>.+?) \.\.\. (?P<status>ok|FAILED|ignored)$")
+    for raw_line in log.splitlines():
+        line = _strip_ansi(raw_line).strip()
+        match = pattern.match(line)
+        if not match:
+            continue
+        status = match.group("status")
+        statuses[match.group("name")] = {
+            "ok": TestStatus.PASSED.value,
+            "FAILED": TestStatus.FAILED.value,
+            "ignored": TestStatus.SKIPPED.value,
+        }[status]
+    return statuses
+
+
+def parse_log_jq(log: str) -> dict[str, str]:
+    """Parse jq-style `PASS: name` / `FAIL: name` output."""
+
+    statuses: dict[str, str] = {}
+    pattern = re.compile(r"^\s*(PASS|FAIL):\s(.+)$")
+    for raw_line in log.splitlines():
+        line = _strip_ansi(raw_line).strip()
+        match = pattern.match(line)
+        if not match:
+            continue
+        status, name = match.groups()
+        statuses[name] = (
+            TestStatus.PASSED.value if status == "PASS" else TestStatus.FAILED.value
+        )
+    return statuses
+
+
+def parse_java_mvn(log: str) -> dict[str, str]:
+    """Parse Maven Surefire text output."""
+
+    statuses: dict[str, str] = {}
+    any_failure = False
+    any_success = False
+    summary_re = re.compile(
+        r"Tests run:\s*(?P<run>\d+),\s*Failures:\s*(?P<failures>\d+),\s*"
+        r"Errors:\s*(?P<errors>\d+),\s*Skipped:\s*(?P<skipped>\d+)"
+        r"(?:,[^-]*-\s+in\s+(?P<class>\S+))?"
+    )
+    failure_re = re.compile(
+        r"^(?P<method>[^\s(]+)\((?P<class>[^)]+)\)\s+.*<<<\s+"
+        r"(?:FAILURE|ERROR)!"
+    )
+
+    for raw_line in log.splitlines():
+        line = _strip_ansi(raw_line).strip()
+        if match := summary_re.search(line):
+            tests_run = int(match.group("run"))
+            failures = int(match.group("failures"))
+            errors = int(match.group("errors"))
+            skipped = int(match.group("skipped"))
+            class_name = match.group("class")
+            status = TestStatus.PASSED.value
+            if failures or errors:
+                status = TestStatus.FAILED.value
+                any_failure = True
+            elif skipped == tests_run:
+                status = TestStatus.SKIPPED.value
+            else:
+                any_success = True
+            if class_name:
+                statuses[class_name] = status
+            continue
+        if match := failure_re.match(line):
+            class_name = match.group("class")
+            method_name = match.group("method")
+            statuses[class_name] = TestStatus.FAILED.value
+            statuses[f"{class_name}.{method_name}"] = TestStatus.FAILED.value
+            any_failure = True
+
+    if any_failure:
+        statuses["---NO TEST NAME FOUND YET---"] = TestStatus.FAILED.value
+    elif any_success:
+        statuses["---NO TEST NAME FOUND YET---"] = TestStatus.PASSED.value
+    return statuses
+
+
+def parse_java_mvn_v2(log: str) -> dict[str, str]:
+    """Parse Maven module status lines such as `module ... SUCCESS`."""
+
+    statuses: dict[str, str] = {}
+    line_re = re.compile(
+        r"^\[INFO\]\s+(?P<name>.+?)\s+\.\.+\s+"
+        r"(?P<status>SUCCESS|FAILURE|SKIPPED)(?:\s|\[|$)"
+    )
+    summary_re = re.compile(
+        r"Tests run:\s*(\d+),\s*Failures:\s*(\d+),\s*Errors:\s*(\d+),\s*Skipped:\s*(\d+)"
+    )
+
+    for raw_line in log.splitlines():
+        line = _strip_ansi(raw_line).strip()
+        match = line_re.match(line)
+        if match:
+            status_word = match.group("status")
+            statuses[match.group("name")] = {
+                "SUCCESS": TestStatus.PASSED.value,
+                "FAILURE": TestStatus.FAILED.value,
+                "SKIPPED": TestStatus.SKIPPED.value,
+            }[status_word]
+            continue
+
+        summary_match = summary_re.search(line)
+        if summary_match:
+            tests_run, failures, errors, skipped = map(int, summary_match.groups())
+            status = TestStatus.PASSED.value
+            if failures or errors:
+                status = TestStatus.FAILED.value
+            elif skipped == tests_run:
+                status = TestStatus.SKIPPED.value
+            statuses.setdefault("__suite__", status)
+
+    return statuses
+
+
+def parse_log_csharp(log: str) -> dict[str, str]:
+    """Parse common xUnit.net textual output."""
+
+    statuses: dict[str, str] = {}
+    passed_re = re.compile(r"^\s+Passed\s+(.+?)\s+\[.+?\]$")
+    failed_re = re.compile(r"^\s+Failed\s+(.+?)\s+\[.+?\]$")
+    skipped_re = re.compile(r"^\s+Skipped\s+(.+?)(?:\s+\[.+?\])?$")
+    xunit_fail_re = re.compile(r"^\[xUnit\.net\s+[\d:.]+\]\s+(.+?)\s+\[FAIL\]$")
+
+    for raw_line in log.splitlines():
+        line = _strip_ansi(raw_line).rstrip()
+        if match := xunit_fail_re.match(line):
+            statuses[match.group(1)] = TestStatus.FAILED.value
+        elif match := failed_re.match(line):
+            statuses[match.group(1)] = TestStatus.FAILED.value
+        elif match := skipped_re.match(line):
+            statuses[match.group(1)] = TestStatus.SKIPPED.value
+        elif match := passed_re.match(line):
+            statuses.setdefault(match.group(1), TestStatus.PASSED.value)
+
+    return statuses
+
+
+def parse_log_dart(log: str) -> dict[str, str]:
+    """Parse Dart JSON test protocol events."""
+
+    statuses: dict[str, str] = {}
+    test_id_to_name: dict[int, str] = {}
+
+    for event in _iter_dart_protocol_events(log):
+        event_type = event.get("type")
+        if event_type == "testStart":
+            test_info = event.get("test")
+            if not isinstance(test_info, dict):
+                continue
+            test_id = test_info.get("id")
+            test_name = test_info.get("name")
+            if isinstance(test_id, int) and isinstance(test_name, str):
+                if not test_name.startswith("loading "):
+                    test_id_to_name[test_id] = test_name
+        elif event_type == "testDone":
+            test_id = event.get("testID")
+            if not isinstance(test_id, int) or event.get("hidden", False):
+                continue
+            test_name = test_id_to_name.get(test_id)
+            status = _dart_done_status(event)
+            if test_name and status:
+                statuses[test_name] = status
+
+    return statuses
+
+
+def parse_log_elixir(log: str) -> dict[str, str]:
+    """Parse ExUnit output."""
+
+    statuses: dict[str, str] = {}
+    skipped_re = re.compile(r"^\*\s+test\s+(.*?)\s+\(skipped\)\s+\[L#\d+\]$")
+    passed_timed_re = re.compile(
+        r"^\*\s+test\s+(.*?)\s+\([0-9]+(?:\.[0-9]+)?ms\)\s+\[L#\d+\]$"
+    )
+    passed_basic_re = re.compile(r"^\*\s+test\s+(.*?)\s+\[L#\d+\]$")
+    failure_header_re = re.compile(r"^\d+\)\s+test\s+(.*?)\s+\([^)]+\)$")
+
+    for raw_line in log.splitlines():
+        line = _strip_ansi(raw_line).strip()
+        if match := skipped_re.match(line):
+            statuses[match.group(1)] = TestStatus.SKIPPED.value
+        elif match := failure_header_re.match(line):
+            statuses[match.group(1)] = TestStatus.FAILED.value
+        elif match := passed_timed_re.match(line):
+            statuses.setdefault(match.group(1), TestStatus.PASSED.value)
+        elif match := passed_basic_re.match(line):
+            statuses.setdefault(match.group(1), TestStatus.PASSED.value)
+
+    return statuses
+
+
+def parse_log_js_4(log: str) -> dict[str, str]:
+    """Parse simple symbol-prefixed JavaScript runner output."""
+
+    statuses: dict[str, str] = {}
+    pass_symbols = ("\u2714", "\u2713")
+    fail_symbols = ("\u2718", "\u2716", "\u2715", "\u00d7")
+    skip_symbols = ("\u25cb", "\u25cc", "\u25e6", "\u26aa")
+    skip_markers = ("(skipped)", "[skip]", "[skipped]", "[pending]", "[todo]")
+
+    for raw_line in log.splitlines():
+        line = _strip_ansi(raw_line).strip()
+        if not line:
+            continue
+
+        symbol = line[0]
+        payload = line[1:].strip() if len(line) > 1 else ""
+        if symbol in pass_symbols:
+            if name := _normalize_js_test_name(payload):
+                statuses.setdefault(name, TestStatus.PASSED.value)
+        elif symbol in fail_symbols:
+            if name := _normalize_js_test_name(payload):
+                statuses[name] = TestStatus.FAILED.value
+        elif symbol in skip_symbols:
+            if name := _normalize_js_test_name(payload):
+                statuses[name] = TestStatus.SKIPPED.value
+        elif any(marker in line.lower() for marker in skip_markers):
+            candidate = line
+            for marker in skip_markers:
+                candidate = candidate.replace(marker, "")
+            if name := _normalize_js_test_name(candidate):
+                statuses[name] = TestStatus.SKIPPED.value
+
+    return statuses
+
+
+def parse_log_lein(log: str) -> dict[str, str]:
+    """Parse Leiningen test namespace output."""
+
+    statuses: dict[str, str] = {}
+    current_namespace: str | None = None
+    lein_re = re.compile(r"^lein test (.+)$")
+
+    for raw_line in log.splitlines():
+        line = _strip_ansi(raw_line).strip()
+        if not line:
+            continue
+        if match := lein_re.match(line):
+            payload = match.group(1).strip()
+            tokens = payload.split()
+            if tokens and tokens[0] == ":only":
+                target = " ".join(tokens[1:]).strip()
+                current_namespace = target.split("/", 1)[0].strip() or None
+                if current_namespace:
+                    statuses.setdefault(current_namespace, TestStatus.PASSED.value)
+            else:
+                for token in tokens:
+                    current_namespace = token.strip() or None
+                    if current_namespace:
+                        statuses.setdefault(current_namespace, TestStatus.PASSED.value)
+            continue
+        if line.startswith(("FAIL in", "ERROR in")) and current_namespace:
+            statuses[current_namespace] = TestStatus.FAILED.value
+
+    return statuses
+
+
+def parse_log_junit_xml(log: str) -> dict[str, str]:
+    """Parse JUnit XML text if a runner prints or cats XML reports."""
+
+    statuses: dict[str, str] = {}
+    xml_chunks = re.findall(r"(<testsuite[\s\S]*?</testsuite>)", log)
+    for chunk in xml_chunks or [log]:
+        try:
+            root = ET.fromstring(chunk)
+        except ET.ParseError:
+            continue
+        for case in root.iter("testcase"):
+            name = case.attrib.get("name", "").strip()
+            classname = case.attrib.get("classname", "").strip()
+            full_name = f"{classname}.{name}".strip(".") if classname else name
+            if not full_name:
+                continue
+            if case.find("skipped") is not None:
+                statuses[full_name] = TestStatus.SKIPPED.value
+            elif case.find("failure") is not None or case.find("error") is not None:
+                statuses[full_name] = TestStatus.FAILED.value
+            else:
+                statuses[full_name] = TestStatus.PASSED.value
+    return statuses
+
+
+NAME_TO_PARSER: dict[str, Parser] = {
+    "pytest": parse_log_pytest,
+    "parse_log_pytest": parse_log_pytest,
+    "go": parse_log_gotest,
+    "gotest": parse_log_gotest,
+    "parse_log_gotest": parse_log_gotest,
+    "jest": parse_log_jest,
+    "parse_log_jest": parse_log_jest,
+    "vitest": parse_log_jest,
+    "parse_log_vitest": parse_log_jest,
+    "cargo": parse_log_cargo,
+    "parse_log_cargo": parse_log_cargo,
+    "jq": parse_log_jq,
+    "parse_log_jq": parse_log_jq,
+    "junit": parse_log_junit_xml,
+    "maven": parse_java_mvn,
+    "gradle": parse_log_junit_xml,
+    "parse_java_mvn": parse_java_mvn,
+    "parse_java_mvn_v2": parse_java_mvn_v2,
+    "parse_log_csharp": parse_log_csharp,
+    "parse_log_dart": parse_log_dart,
+    "parse_log_elixir": parse_log_elixir,
+    "parse_log_js_4": parse_log_js_4,
+    "parse_log_lein": parse_log_lein,
+}
+
+
+def get_parser(name: str) -> Parser:
+    """Return a parser by upstream or taskforge parser name."""
+
+    key = name.strip()
+    parser = NAME_TO_PARSER.get(key)
+    if parser is None:
+        raise KeyError(f"unknown log parser: {name}")
+    return parser
+
+
+def parse_with_parser(name: str, log: str) -> dict[str, str]:
+    return get_parser(name)(log)
+
+
+def _strip_ansi(text: str) -> str:
+    return re.sub(r"\x1b\[[0-9;]*m", "", text)
+
+
+_JS_DURATION_SUFFIX_RE = re.compile(
+    r"\s*(?:\(\s*)?\d+(?:\.\d+)?\s*(?:ms|s)\s*(?:\))?\s*$",
+    re.IGNORECASE,
+)
+
+
+def _normalize_js_test_name(payload: str) -> str:
+    payload = payload.strip()
+    if payload.startswith("[") and "]:" in payload:
+        payload = payload.split("]:", 1)[1].strip()
+    if payload.startswith(":"):
+        payload = payload[1:].strip()
+    return _JS_DURATION_SUFFIX_RE.sub("", payload).strip()
+
+
+def _iter_dart_protocol_events(log: str) -> list[dict[str, Any]]:
+    events: list[dict[str, Any]] = []
+    for raw_line in log.splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+        try:
+            decoded = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(decoded, dict):
+            events.append(decoded)
+        elif isinstance(decoded, list):
+            events.extend(item for item in decoded if isinstance(item, dict))
+    return events
+
+
+def _dart_done_status(event: dict[str, Any]) -> str | None:
+    if event.get("skipped", False):
+        return TestStatus.SKIPPED.value
+    result = event.get("result")
+    if result == "success":
+        return TestStatus.PASSED.value
+    if result in {"failure", "error"}:
+        return TestStatus.FAILED.value
+    return None
