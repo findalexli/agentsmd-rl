@@ -38,6 +38,42 @@ _RUNTIME_TEMPLATES: dict[str, RuntimeTemplate] = {
     "java": RuntimeTemplate(
         "java", "eclipse-temurin:17-jdk", ("python3", "python3-pip", "maven")
     ),
+    "java11": RuntimeTemplate(
+        "java",
+        "maven:3.9-eclipse-temurin-11",
+        ("python3", "python3-pip", "ant", "unzip"),
+        notes="matches java_11-style rows that need Maven/Ant on JDK 11",
+    ),
+    "java17": RuntimeTemplate(
+        "java",
+        "maven:3.9-eclipse-temurin-17",
+        ("python3", "python3-pip", "ant", "unzip"),
+        notes="matches java_17-style rows that need Maven/Ant on JDK 17",
+    ),
+    "java21": RuntimeTemplate(
+        "java",
+        "maven:3.9-eclipse-temurin-21",
+        ("python3", "python3-pip", "ant", "unzip"),
+        notes="matches java_21-style rows that need Maven/Ant on JDK 21",
+    ),
+    "kotlin": RuntimeTemplate(
+        "kotlin",
+        "eclipse-temurin:21-jdk",
+        ("python3", "python3-pip", "wget", "unzip", "zip", "maven"),
+        notes="minimal JDK 21 runtime for Gradle-wrapper Kotlin tasks",
+    ),
+    "kotlin11": RuntimeTemplate(
+        "kotlin",
+        "eclipse-temurin:11-jdk",
+        ("python3", "python3-pip", "wget", "unzip", "zip", "maven"),
+        notes="minimal JDK 11 runtime for Gradle-wrapper Kotlin tasks",
+    ),
+    "kotlin21": RuntimeTemplate(
+        "kotlin",
+        "eclipse-temurin:21-jdk",
+        ("python3", "python3-pip", "wget", "unzip", "zip", "maven"),
+        notes="minimal JDK 21 runtime for Gradle-wrapper Kotlin tasks",
+    ),
     "clojure": RuntimeTemplate(
         "clojure",
         "eclipse-temurin:21-jdk",
@@ -135,11 +171,24 @@ def select_runtime_template(
     remain in metadata; taskforge chooses an auditable base image.
     """
 
+    base = base_image_name.strip().lower()
+    if "kotlin" in base:
+        if "jdk-11" in base or "jdk_11" in base:
+            return _RUNTIME_TEMPLATES["kotlin11"]
+        if "jdk-21" in base or "jdk_21" in base:
+            return _RUNTIME_TEMPLATES["kotlin21"]
+        return _RUNTIME_TEMPLATES["kotlin"]
+    if "java_11" in base or "jdk-11" in base or "jdk_11" in base:
+        return _RUNTIME_TEMPLATES["java11"]
+    if "java_17" in base or "jdk-17" in base or "jdk_17" in base:
+        return _RUNTIME_TEMPLATES["java17"]
+    if "java_21" in base or "jdk-21" in base or "jdk_21" in base:
+        return _RUNTIME_TEMPLATES["java21"]
+
     key = (language or "").strip().lower()
     if key in _RUNTIME_TEMPLATES:
         return _RUNTIME_TEMPLATES[key]
 
-    base = base_image_name.strip().lower()
     if "node" in base:
         return _RUNTIME_TEMPLATES["node"]
     if "python" in base:

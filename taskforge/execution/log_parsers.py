@@ -124,6 +124,7 @@ def parse_java_mvn(log: str) -> dict[str, str]:
     """Parse Maven Surefire text output."""
 
     statuses: dict[str, str] = {}
+    current_test_name = "---NO TEST NAME FOUND YET---"
     any_failure = False
     any_success = False
     summary_re = re.compile(
@@ -135,9 +136,22 @@ def parse_java_mvn(log: str) -> dict[str, str]:
         r"^(?P<method>[^\s(]+)\((?P<class>[^)]+)\)\s+.*<<<\s+"
         r"(?:FAILURE|ERROR)!"
     )
+    explicit_test_re = re.compile(r"^.*-Dtest=(\S+).*$")
+    build_result_re = re.compile(r"^.*BUILD (SUCCESS|FAILURE)$")
 
     for raw_line in log.splitlines():
         line = _strip_ansi(raw_line).strip()
+        if match := explicit_test_re.match(line):
+            current_test_name = match.group(1)
+            continue
+        if match := build_result_re.match(line):
+            if match.group(1) == "SUCCESS":
+                statuses[current_test_name] = TestStatus.PASSED.value
+                any_success = True
+            else:
+                statuses[current_test_name] = TestStatus.FAILED.value
+                any_failure = True
+            continue
         if match := summary_re.search(line):
             tests_run = int(match.group("run"))
             failures = int(match.group("failures"))
@@ -204,6 +218,49 @@ def parse_java_mvn_v2(log: str) -> dict[str, str]:
             statuses.setdefault("__suite__", status)
 
     return statuses
+
+
+def parse_log_gradle_custom(log: str) -> dict[str, str]:
+    """Parse plain Gradle lines emitted as `<test name> PASSED|FAILED`."""
+
+    statuses: dict[str, str] = {}
+    pattern = re.compile(r"^([^>].+?)\s+(PASSED|FAILED)(?:\s+\(\d+(?:\.\d+)?s\))?$")
+    for raw_line in log.splitlines():
+        line = _strip_ansi(raw_line).strip()
+        if match := pattern.match(line):
+            test_name, status = match.groups()
+            statuses[test_name] = (
+                TestStatus.PASSED.value
+                if status == "PASSED"
+                else TestStatus.FAILED.value
+            )
+    return statuses
+
+
+def parse_log_gradlew_v1(log: str) -> dict[str, str]:
+    """Parse Gradle JUnit XML cat output."""
+
+    statuses: dict[str, str] = {}
+    for root in _iter_xml_roots(log):
+        for case in root.iter("testcase"):
+            name = case.attrib.get("name", "").strip()
+            classname = case.attrib.get("classname", "").strip()
+            if not name:
+                continue
+            full_name = f"{name} ({classname})" if classname else name
+            if case.find("skipped") is not None:
+                statuses[full_name] = TestStatus.SKIPPED.value
+            elif case.find("failure") is not None or case.find("error") is not None:
+                statuses[full_name] = TestStatus.FAILED.value
+            else:
+                statuses[full_name] = TestStatus.PASSED.value
+    return statuses
+
+
+def parse_log_junit(log: str) -> dict[str, str]:
+    """Parse SBT/JUnit XML output as `classname name` keys."""
+
+    return _parse_junit_testcases_from_text(log, joiner=" ")
 
 
 def parse_log_csharp(log: str) -> dict[str, str]:
@@ -548,6 +605,10 @@ NAME_TO_PARSER: dict[str, Parser] = {
     "gradle": parse_log_junit_xml,
     "parse_java_mvn": parse_java_mvn,
     "parse_java_mvn_v2": parse_java_mvn_v2,
+    "parse_log_maven": parse_java_mvn,
+    "parse_log_gradle_custom": parse_log_gradle_custom,
+    "parse_log_gradlew_v1": parse_log_gradlew_v1,
+    "parse_log_junit": parse_log_junit,
     "parse_log_csharp": parse_log_csharp,
     "parse_log_dart": parse_log_dart,
     "parse_log_elixir": parse_log_elixir,
@@ -576,6 +637,58 @@ def parse_with_parser(name: str, log: str) -> dict[str, str]:
 
 def _strip_ansi(text: str) -> str:
     return re.sub(r"\x1b\[[0-9;]*m", "", text)
+
+
+def _iter_xml_roots(log: str) -> list[ET.Element]:
+    roots: list[ET.Element] = []
+    xml_blocks = re.findall(
+        r"(<\?xml[\s\S]*?</testsuite>|<testsuite[\s\S]*?</testsuite>|<testsuites[\s\S]*?</testsuites>)",
+        log,
+    )
+    for chunk in xml_blocks or [log]:
+        try:
+            roots.append(ET.fromstring(chunk))
+        except ET.ParseError:
+            continue
+    return roots
+
+
+def _parse_junit_testcases_from_text(log: str, *, joiner: str) -> dict[str, str]:
+    statuses: dict[str, str] = {}
+    open_tag_re = re.compile(r"<testcase\b([^>]*)>", re.DOTALL)
+    attr_re = re.compile(r'(\w+)="([^"]*)"')
+
+    pos = 0
+    while match := open_tag_re.search(log, pos):
+        raw_attrs = match.group(1) or ""
+        attrs = dict(attr_re.findall(raw_attrs))
+        name = attrs.get("name", "").strip()
+        classname = attrs.get("classname", "").strip()
+        if not name:
+            pos = match.end()
+            continue
+
+        is_self_closing = raw_attrs.strip().endswith("/")
+        content = ""
+        if is_self_closing:
+            pos = match.end()
+        else:
+            close_pos = log.find("</testcase>", match.end())
+            if close_pos == -1:
+                content = log[match.end() : match.end() + 4096]
+                pos = match.end()
+            else:
+                content = log[match.end() : close_pos]
+                pos = close_pos + len("</testcase>")
+
+        full_name = f"{classname}{joiner}{name}".strip() if classname else name
+        if "<skipped" in content:
+            statuses[full_name] = TestStatus.SKIPPED.value
+        elif "<failure" in content or "<error" in content:
+            statuses[full_name] = TestStatus.FAILED.value
+        else:
+            statuses[full_name] = TestStatus.PASSED.value
+    return statuses
 
 
 _JS_DURATION_SUFFIX_RE = re.compile(

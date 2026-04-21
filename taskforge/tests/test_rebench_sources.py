@@ -255,6 +255,54 @@ def test_rendered_scorer_parses_maven_surefire_classes(tmp_path: Path):
     assert json.loads(report_path.read_text())["unexpected"] == {}
 
 
+def test_rendered_scorer_normalizes_jvm_lambda_identities(tmp_path: Path):
+    subprocess = pytest.importorskip("subprocess")
+    class_name = "com.example.PropertiesFileTransformerTest"
+    expected_name = (
+        "[1] foo.properties, "
+        "com.example.PropertiesFileTransformerTest$Companion$$Lambda/0x00007f3ed0533748@14292d71, "
+        "{foo=bar} "
+        f"({class_name})"
+    )
+    actual_name = (
+        "[1] foo.properties, "
+        "com.example.PropertiesFileTransformerTest$Companion$$Lambda/0x0000002001533980@48e74764, "
+        "{foo=bar}"
+    )
+    record = _record()
+    record["language"] = "kotlin"
+    record["FAIL_TO_PASS"] = [expected_name]
+    record["PASS_TO_PASS"] = []
+    record["install_config"]["log_parser"] = "parse_log_gradlew_v1"
+    record["install_config"]["base_image_name"] = "kotlin-jdk-21"
+    task_dir = render_task(candidate_from_record(record), tmp_path / "tasks")
+    log_path = tmp_path / "gradle.xml"
+    reward_path = tmp_path / "gradle.reward.txt"
+    report_path = tmp_path / "gradle.score.json"
+    log_path.write_text(
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<testsuite name="suite">\n'
+        f'  <testcase classname="{class_name}" name="{actual_name}"/>\n'
+        "</testsuite>\n"
+    )
+
+    subprocess.run(
+        [
+            sys.executable,
+            str(task_dir / "tests" / "score_rebench_log.py"),
+            str(log_path),
+            str(task_dir / "tests" / "rebench_metadata.json"),
+            str(reward_path),
+            str(report_path),
+            "0",
+        ],
+        check=True,
+    )
+
+    assert reward_path.read_text() == "1\n"
+    assert json.loads(report_path.read_text())["missing"] == []
+
+
 def test_rendered_scorer_reports_jest_cross_failures(tmp_path: Path):
     subprocess = pytest.importorskip("subprocess")
     record = _record()
@@ -500,6 +548,18 @@ def test_runtime_selection_is_conservative():
         "mcr.microsoft.com/dotnet/sdk:"
     )
     assert "maven" in select_runtime_template("java").setup_packages
+    assert select_runtime_template("java", "java_11:latest").image.startswith(
+        "maven:3.9-eclipse-temurin-11"
+    )
+    assert select_runtime_template("", "java_21:latest").image.startswith(
+        "maven:3.9-eclipse-temurin-21"
+    )
+    assert select_runtime_template("kotlin", "kotlin-jdk-11").image.startswith(
+        "eclipse-temurin:11-jdk"
+    )
+    assert select_runtime_template("kotlin", "kotlin-jdk-21").image.startswith(
+        "eclipse-temurin:21-jdk"
+    )
     assert select_runtime_template("clojure").setup_commands
     assert select_runtime_template("php").image == "php:8.3.16"
     assert "libzip-dev" in select_runtime_template("", "php_8.3.16").setup_packages
@@ -531,6 +591,8 @@ def test_log_parser_registry_parses_common_rebench_logs():
     )
     lein_log = "lein test app.core-test\nFAIL in (thing) (core_test.clj:1)\n"
     mvn_log = (
+        "+ mvn -Dtest=pkg.TargetTest test\n"
+        "[INFO] BUILD SUCCESS\n"
         "Running pkg.PassingTest\n"
         "Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.01 sec - in pkg.PassingTest\n"
         "Running pkg.FailingTest\n"
@@ -538,6 +600,14 @@ def test_log_parser_registry_parses_common_rebench_logs():
         "testThing(pkg.FailingTest)  Time elapsed: 0.01 sec  <<< FAILURE!\n"
     )
     mvn_v2_log = "[INFO] Piranha - HTTP - Implementation ........ FAILURE [  1.241 s]\n"
+    gradle_log = "com.example.ParserTest parses input PASSED (0.12s)\ncom.example.ParserTest rejects bad input FAILED\n"
+    gradle_xml_log = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<testsuite name="suite">\n'
+        '  <testcase classname="com.example.ParserTest" name="parses input"/>\n'
+        '  <testcase classname="com.example.ParserTest" name="rejects bad input"><failure/></testcase>\n'
+        "</testsuite>\n"
+    )
 
     assert (
         parse_with_parser("pytest", pytest_log)["tests/test_p.py::test_new"]
@@ -616,6 +686,32 @@ def test_log_parser_registry_parses_common_rebench_logs():
             "Piranha - HTTP - Implementation"
         ]
         == TestStatus.FAILED.value
+    )
+    assert (
+        parse_with_parser("parse_log_maven", mvn_log)["---NO TEST NAME FOUND YET---"]
+        == TestStatus.FAILED.value
+    )
+    assert (
+        parse_with_parser("parse_log_maven", mvn_log)["pkg.TargetTest"]
+        == TestStatus.PASSED.value
+    )
+    assert (
+        parse_with_parser("parse_log_gradle_custom", gradle_log)[
+            "com.example.ParserTest rejects bad input"
+        ]
+        == TestStatus.FAILED.value
+    )
+    assert (
+        parse_with_parser("parse_log_gradlew_v1", gradle_xml_log)[
+            "rejects bad input (com.example.ParserTest)"
+        ]
+        == TestStatus.FAILED.value
+    )
+    assert (
+        parse_with_parser("parse_log_junit", gradle_xml_log)[
+            "com.example.ParserTest parses input"
+        ]
+        == TestStatus.PASSED.value
     )
 
 
