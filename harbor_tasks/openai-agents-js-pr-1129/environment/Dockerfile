@@ -11,7 +11,7 @@ RUN npm install -g pnpm@10
 WORKDIR /workspace
 
 # Clone monorepo with filter to skip blob downloads (only metadata)
-RUN git clone \
+RUN git clone --depth=1 --filter=blob:none \
     --filter=blob:none \
     --depth=100 \
     https://github.com/openai/openai-agents-js \

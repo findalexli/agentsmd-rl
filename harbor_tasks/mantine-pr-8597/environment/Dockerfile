@@ -12,7 +12,7 @@ WORKDIR /workspace
 
 # Clone repo (shallow)
 RUN git clone --depth=1 https://github.com/mantinedev/mantine.git repo 2>/dev/null || \
-    git clone https://github.com/mantinedev/mantine.git repo
+    git clone --depth=1 --filter=blob:none https://github.com/mantinedev/mantine.git repo
 
 WORKDIR /workspace/repo
 

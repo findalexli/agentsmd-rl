@@ -14,7 +14,7 @@ WORKDIR /workspace
 
 # Clone and checkout base commit directly
 # Use full clone to ensure we can reach any commit
-RUN git clone https://github.com/biomejs/biome.git biome_repo && \
+RUN git clone --depth=1 --filter=blob:none https://github.com/biomejs/biome.git biome_repo && \
     cd biome_repo && \
     git fetch origin 467fd87daec3d8c1fe64850a82480364480b313e && \
     git checkout 467fd87daec3d8c1fe64850a82480364480b313e

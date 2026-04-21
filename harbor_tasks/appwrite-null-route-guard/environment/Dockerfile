@@ -28,7 +28,7 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/bin -
 WORKDIR /workspace
 
 # Clone the appwrite repository at the base commit
-RUN git clone https://github.com/appwrite/appwrite.git && \
+RUN git clone --depth=1 --filter=blob:none https://github.com/appwrite/appwrite.git && \
     cd appwrite && \
     git checkout 951a96ae01bceaabe6e2fb936686b7953209ce19
 

@@ -8,7 +8,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Clone mantine repo (full clone)
-RUN git clone https://github.com/mantinedev/mantine.git mantine_repo
+RUN git clone --depth=1 --filter=blob:none https://github.com/mantinedev/mantine.git mantine_repo
 
 WORKDIR /workspace/mantine_repo
 

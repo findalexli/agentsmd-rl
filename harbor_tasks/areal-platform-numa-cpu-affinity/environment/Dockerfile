@@ -9,7 +9,7 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && \
 ARG REPO_URL=https://github.com/inclusionAI/AReaL.git
 ARG BASE_COMMIT=682d5640a3497dd69e6ea2b98d2a0f45f34df578
 
-RUN git clone "$REPO_URL" /repo && \
+RUN git clone --depth=1 --filter=blob:none "$REPO_URL" /repo && \
     cd /repo && \
     git checkout "$BASE_COMMIT"
 

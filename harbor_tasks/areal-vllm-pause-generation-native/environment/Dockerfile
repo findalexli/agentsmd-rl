@@ -9,7 +9,7 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update && \
 ARG REPO=https://github.com/inclusionAI/AReaL.git
 ARG COMMIT=45e805ba8d274ec2c3cbb0699658449c2c6e163a
 
-RUN git clone "$REPO" /workspace/AReaL && \
+RUN git clone --depth=1 --filter=blob:none "$REPO" /workspace/AReaL && \
     cd /workspace/AReaL && \
     git checkout "$COMMIT" && \
     git config user.email "agent@test" && \

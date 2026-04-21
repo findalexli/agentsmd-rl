@@ -19,7 +19,7 @@ WORKDIR /workspace
 ENV BASE_COMMIT=2dd9b7cf76c31df5d7e26e5199e3c362c3e94f95
 
 # Clone React repo at base commit (sanitized snapshot)
-RUN git clone https://github.com/facebook/react.git /workspace/react && \
+RUN git clone --depth=1 --filter=blob:none https://github.com/facebook/react.git /workspace/react && \
     cd /workspace/react && \
     git fetch --depth=1 origin ${BASE_COMMIT} && \
     git checkout ${BASE_COMMIT} && \

@@ -8,7 +8,7 @@ RUN git config --global user.email "test@test.com" && \
     git config --global user.name "Test"
 
 ARG REPO_COMMIT=c2b3e42ad64521c018443f7efe294658a0b1da3b
-RUN git clone https://github.com/sgl-project/sglang.git /workspace && \
+RUN git clone --depth=1 --filter=blob:none https://github.com/sgl-project/sglang.git /workspace && \
     cd /workspace && \
     git checkout ${REPO_COMMIT}
 

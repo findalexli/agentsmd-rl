@@ -6,7 +6,7 @@ RUN rm -rf /var/lib/apt/lists/* && apt-get update &&     apt-get install -y --no
 ARG REPO_URL=https://github.com/inclusionAI/AReaL.git
 ARG BASE_COMMIT=fdca82dc09e76052fd6ee2fe22afcdc5ff044743
 
-RUN git clone "$REPO_URL" /repo &&     cd /repo &&     git checkout "$BASE_COMMIT"
+RUN git clone --depth=1 --filter=blob:none "$REPO_URL" /repo &&     cd /repo &&     git checkout "$BASE_COMMIT"
 
 RUN mkdir -p /logs/verifier
 

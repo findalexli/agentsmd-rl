@@ -19,7 +19,7 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --de
 ENV PATH="/root/.cargo/bin:${PATH}"
 
 # Clone the repository at the base commit
-RUN git clone https://github.com/quickwit-oss/quickwit.git /workspace/quickwit
+RUN git clone --depth=1 --filter=blob:none https://github.com/quickwit-oss/quickwit.git /workspace/quickwit
 WORKDIR /workspace/quickwit
 RUN git fetch origin e2d9623d1cb64cf0bc85f2a0f0dd858c42651d50 && git checkout e2d9623d1cb64cf0bc85f2a0f0dd858c42651d50
 

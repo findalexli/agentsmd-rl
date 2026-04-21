@@ -13,7 +13,7 @@ WORKDIR /workspace/excalidraw
 
 # Clone the repo and checkout base commit
 # Need to fetch specific commit, so we can't use --depth=1
-RUN git clone https://github.com/excalidraw/excalidraw.git . && \
+RUN git clone --depth=1 --filter=blob:none https://github.com/excalidraw/excalidraw.git . && \
     git checkout d6f0f34fe91a7fab25106f2b31b074c132815d36
 
 # Install dependencies

@@ -16,7 +16,7 @@ RUN curl -Lo /usr/local/bin/bazel https://github.com/bazelbuild/bazelisk/release
 WORKDIR /workspace
 
 # Clone the selenium repo at base commit
-RUN git clone --no-checkout https://github.com/SeleniumHQ/selenium.git /workspace/selenium \
+RUN git clone --depth=1 --filter=blob:none --no-checkout https://github.com/SeleniumHQ/selenium.git /workspace/selenium \
     && cd /workspace/selenium \
     && git checkout 1303596bccafc9f39708d8ac61b52424c7d00394
 

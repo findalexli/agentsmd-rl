@@ -11,7 +11,7 @@ RUN git config --global user.email "test@test.com" && \
 ARG REPO_URL=https://github.com/THUDM/slime.git
 ARG BASE_COMMIT=5996c6881e484fe0985ff3c8b8c8ce1af4e32632
 
-RUN git clone "$REPO_URL" /workspace/slime && \
+RUN git clone --depth=1 --filter=blob:none "$REPO_URL" /workspace/slime && \
     cd /workspace/slime && \
     git checkout "$BASE_COMMIT"
 

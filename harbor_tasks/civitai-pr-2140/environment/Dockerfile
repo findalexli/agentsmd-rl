@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y curl git && \
 WORKDIR /workspace
 
 # Clone the repository at the base commit
-RUN git clone https://github.com/civitai/civitai.git civitai
+RUN git clone --depth=1 --filter=blob:none https://github.com/civitai/civitai.git civitai
 WORKDIR /workspace/civitai
 RUN git fetch --depth=1 origin 1ef47bec41ce9f6f4b0f7ee89921a0ca263ac7df && \
     git checkout 1ef47bec41ce9f6f4b0f7ee89921a0ca263ac7df

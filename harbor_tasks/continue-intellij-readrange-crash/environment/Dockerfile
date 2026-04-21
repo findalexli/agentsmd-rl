@@ -22,7 +22,7 @@ RUN curl -sL "https://services.gradle.org/distributions/gradle-8.14.3-bin.zip" -
 
 WORKDIR /workspace
 
-RUN git clone https://github.com/continuedev/continue.git
+RUN git clone --depth=1 --filter=blob:none https://github.com/continuedev/continue.git
 
 WORKDIR /workspace/continue
 

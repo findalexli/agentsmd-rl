@@ -15,7 +15,7 @@ RUN VERIFY_CHECKSUM=false curl https://raw.githubusercontent.com/helm/helm/main/
 RUN mkdir -p /workspace/dagster /workspace/task /logs/verifier
 
 # Clone dagster repo at base commit
-RUN git clone https://github.com/dagster-io/dagster.git /workspace/dagster && \
+RUN git clone --depth=1 --filter=blob:none https://github.com/dagster-io/dagster.git /workspace/dagster && \
     cd /workspace/dagster && \
     git checkout f0c823c061cb859c0f6ab8fe1944a2f48e182eb3
 

@@ -12,7 +12,7 @@ WORKDIR /workspace
 
 # Clone the repository at base commit
 ARG BASE_COMMIT
-RUN git clone https://github.com/ant-design/ant-design.git ant-design && \
+RUN git clone --depth=1 --filter=blob:none https://github.com/ant-design/ant-design.git ant-design && \
     cd ant-design && \
     git checkout ${BASE_COMMIT}
 
