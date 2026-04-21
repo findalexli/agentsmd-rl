@@ -417,6 +417,7 @@ def parse_with_parser(name: str, log: str) -> dict[str, str]:
         "parse_log_elixir": parse_log_elixir,
         "parse_log_php_v1": parse_log_php_v1,
         "parse_log_phpunit": parse_log_phpunit,
+        "parse_log_swift": parse_log_swift,
         "parse_log_js": parse_log_js,
         "parse_log_js_2": parse_log_js_2,
         "parse_log_js_3": parse_log_js_3,
@@ -613,6 +614,18 @@ def parse_log_php_v1(log: str) -> dict[str, str]:
             name = clean(token)
             if name and name not in statuses:
                 statuses[name] = SKIPPED
+    return statuses
+
+
+def parse_log_swift(log: str) -> dict[str, str]:
+    statuses: dict[str, str] = {}
+    pattern = re.compile(
+        r"^Test Case '([^']+)'\s+(passed|failed)\s+\([0-9.]+\s+seconds\)$"
+    )
+    for raw_line in log.splitlines():
+        line = strip_ansi(raw_line).strip()
+        if match := pattern.match(line):
+            statuses[match.group(1)] = PASSED if match.group(2) == "passed" else FAILED
     return statuses
 
 

@@ -241,6 +241,24 @@ def parse_log_php_v1(log: str) -> dict[str, str]:
     return statuses
 
 
+def parse_log_swift(log: str) -> dict[str, str]:
+    """Parse Swift XCTest completion lines."""
+
+    statuses: dict[str, str] = {}
+    pattern = re.compile(
+        r"^Test Case '([^']+)'\s+(passed|failed)\s+\([0-9.]+\s+seconds\)$"
+    )
+    for raw_line in log.splitlines():
+        line = _strip_ansi(raw_line).strip()
+        if match := pattern.match(line):
+            statuses[match.group(1)] = (
+                TestStatus.PASSED.value
+                if match.group(2) == "passed"
+                else TestStatus.FAILED.value
+            )
+    return statuses
+
+
 def parse_java_mvn(log: str) -> dict[str, str]:
     """Parse Maven Surefire text output."""
 
@@ -736,6 +754,7 @@ NAME_TO_PARSER: dict[str, Parser] = {
     "parse_log_elixir": parse_log_elixir,
     "parse_log_php_v1": parse_log_php_v1,
     "parse_log_phpunit": parse_log_phpunit,
+    "parse_log_swift": parse_log_swift,
     "parse_log_js": parse_log_js,
     "parse_log_js_2": parse_log_js_2,
     "parse_log_js_3": parse_log_js_3,

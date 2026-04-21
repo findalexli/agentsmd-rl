@@ -564,6 +564,10 @@ def test_runtime_selection_is_conservative():
     assert select_runtime_template("julia").image == "julia:1.10-bookworm"
     assert select_runtime_template("php").image == "php:8.3.16"
     assert "libzip-dev" in select_runtime_template("", "php_8.3.16").setup_packages
+    assert select_runtime_template("swift").image.endswith("swift:5.10-jammy")
+    assert select_runtime_template("", "swift_base").image.startswith(
+        "--platform=linux/amd64"
+    )
     c_runtime = select_runtime_template("", "c:latest")
     assert c_runtime.image == "ubuntu:22.04"
     assert "autoconf" in c_runtime.setup_packages
@@ -602,6 +606,10 @@ def test_log_parser_registry_parses_common_rebench_logs():
         "  ⨯ it rejects invalid input  0.01s\n"
         "  - it skips external service  0.00s\n"
         "Tests: 1 failed, 1 skipped, 1 passed\n"
+    )
+    swift_log = (
+        "Test Case 'UT_SpyFactory.testDeclaration' passed (0.012 seconds)\n"
+        "Test Case 'UT_SpyFactory.testDeclarationArguments' failed (0.009 seconds)\n"
     )
     lein_log = "lein test app.core-test\nFAIL in (thing) (core_test.clj:1)\n"
     mvn_log = (
@@ -702,6 +710,16 @@ def test_log_parser_registry_parses_common_rebench_logs():
     assert (
         parse_with_parser("parse_log_php_v1", php_v1_log)["it skips external service"]
         == TestStatus.SKIPPED.value
+    )
+    assert (
+        parse_with_parser("parse_log_swift", swift_log)["UT_SpyFactory.testDeclaration"]
+        == TestStatus.PASSED.value
+    )
+    assert (
+        parse_with_parser("parse_log_swift", swift_log)[
+            "UT_SpyFactory.testDeclarationArguments"
+        ]
+        == TestStatus.FAILED.value
     )
     assert (
         parse_with_parser("parse_log_lein", lein_log)["app.core-test"]

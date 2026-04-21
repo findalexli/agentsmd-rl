@@ -149,6 +149,28 @@ _RUNTIME_TEMPLATES: dict[str, RuntimeTemplate] = {
         ),
         "installs PHP extensions and Composer 2.2 for php_8.3.16-style tasks",
     ),
+    "swift": RuntimeTemplate(
+        "swift",
+        "--platform=linux/amd64 swift:5.10-jammy",
+        (
+            "python3",
+            "python3-pip",
+            "wget",
+            "unzip",
+            "zip",
+            "cmake",
+            "ninja-build",
+            "clang",
+            "libssl-dev",
+            "libsqlite3-dev",
+            "zlib1g-dev",
+            "libicu-dev",
+            "libxml2-dev",
+            "libcurl4-openssl-dev",
+            "tzdata",
+        ),
+        notes="matches upstream swift_base rows on Swift 5.10 amd64",
+    ),
     "c": RuntimeTemplate(
         "c",
         "ubuntu:22.04",
@@ -217,6 +239,8 @@ def select_runtime_template(
         return _RUNTIME_TEMPLATES["elixir"]
     if "php" in base:
         return _RUNTIME_TEMPLATES["php"]
+    if "swift" in base:
+        return _RUNTIME_TEMPLATES["swift"]
     if base.startswith("c:") or base.startswith("cpp:"):
         return _RUNTIME_TEMPLATES["c"]
 
