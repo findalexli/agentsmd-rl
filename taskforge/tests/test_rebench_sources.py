@@ -301,6 +301,94 @@ def test_rendered_scorer_reports_jest_cross_failures(tmp_path: Path):
     }
 
 
+def test_rendered_scorer_supports_js_parser_variants(tmp_path: Path):
+    subprocess = pytest.importorskip("subprocess")
+    cases = [
+        (
+            "parse_log_js",
+            "  \u2714 should pass (12ms)\n  \u2716 should fail \n",
+            "should fail",
+        ),
+        (
+            "parse_log_js_2",
+            "  \u2714 should pass (12ms)\n  1) should fail\n\n  1) suite\n       should fail:\n",
+            "should fail",
+        ),
+        (
+            "parse_log_js_3",
+            "ok 1 - root suite {\nnot ok 2 - nested fail\n}\n",
+            "root suite :: nested fail",
+        ),
+    ]
+
+    for parser_name, log_text, expected_name in cases:
+        record = _record()
+        record["instance_id"] = f"owner__repo-{parser_name}"
+        record["language"] = "js"
+        record["FAIL_TO_PASS"] = [expected_name]
+        record["PASS_TO_PASS"] = []
+        record["install_config"]["log_parser"] = parser_name
+        task_dir = render_task(candidate_from_record(record), tmp_path / "tasks")
+        log_path = tmp_path / f"{parser_name}.log"
+        reward_path = tmp_path / f"{parser_name}.reward.txt"
+        report_path = tmp_path / f"{parser_name}.score.json"
+        log_path.write_text(log_text)
+
+        subprocess.run(
+            [
+                sys.executable,
+                str(task_dir / "tests" / "score_rebench_log.py"),
+                str(log_path),
+                str(task_dir / "tests" / "rebench_metadata.json"),
+                str(reward_path),
+                str(report_path),
+                "1",
+            ],
+            check=True,
+        )
+
+        report = json.loads(report_path.read_text())
+        assert reward_path.read_text() == "0\n"
+        assert report["unexpected"] == {expected_name: TestStatus.FAILED.value}
+
+
+def test_rendered_scorer_normalizes_phpunit_timing(tmp_path: Path):
+    subprocess = pytest.importorskip("subprocess")
+    record = _record()
+    record["language"] = "php"
+    record["FAIL_TO_PASS"] = ["Annotation Parser > Parses content [1.38 ms]"]
+    record["PASS_TO_PASS"] = ["Annotation Parser > Keeps old behavior [0.04 ms]"]
+    record["install_config"]["log_parser"] = "parse_log_phpunit"
+    record["install_config"]["base_image_name"] = "php_8.3.16"
+    task_dir = render_task(candidate_from_record(record), tmp_path / "tasks")
+    log_path = tmp_path / "phpunit.log"
+    reward_path = tmp_path / "phpunit.reward.txt"
+    report_path = tmp_path / "phpunit.score.json"
+    log_path.write_text(
+        "Annotation Parser (Tests\\AnnotationParserTest)\n"
+        " ✔ Parses content [0.07 ms]\n"
+        " ✔ Keeps old behavior [0.05 ms]\n"
+    )
+
+    subprocess.run(
+        [
+            sys.executable,
+            str(task_dir / "tests" / "score_rebench_log.py"),
+            str(log_path),
+            str(task_dir / "tests" / "rebench_metadata.json"),
+            str(reward_path),
+            str(report_path),
+            "0",
+        ],
+        check=True,
+    )
+
+    report = json.loads(report_path.read_text())
+    assert reward_path.read_text() == "1\n"
+    assert report["missing"] == []
+    assert report["unexpected"] == {}
+
+
 def test_rebench_cli_imports_json(tmp_path: Path):
     input_path = tmp_path / "rows.json"
     output_dir = tmp_path / "tasks"
@@ -413,6 +501,8 @@ def test_runtime_selection_is_conservative():
     )
     assert "maven" in select_runtime_template("java").setup_packages
     assert select_runtime_template("clojure").setup_commands
+    assert select_runtime_template("php").image == "php:8.3.16"
+    assert "libzip-dev" in select_runtime_template("", "php_8.3.16").setup_packages
     c_runtime = select_runtime_template("", "c:latest")
     assert c_runtime.image == "ubuntu:22.04"
     assert "autoconf" in c_runtime.setup_packages
@@ -431,6 +521,14 @@ def test_log_parser_registry_parses_common_rebench_logs():
     )
     elixir_log = "* test accepts input [L#42]\n1) test rejects invalid (AppTest)\n"
     js_log = "\u2714 should pass (12ms)\n\u2716 should fail\n\u2715 also fails\n"
+    js_mocha_log = "  ✔ should pass (12ms)\n  - should skip\n  1) should fail:\n"
+    js_tap_log = "ok 1 - root suite {\nok 2 - nested pass\nnot ok 3 - nested fail\n}\n"
+    phpunit_log = (
+        "Annotation Parser (Tests\\AnnotationParserTest)\n"
+        " ✔ Parses content [1.38 ms]\n"
+        " ✘ Rejects invalid [0.04 ms]\n"
+        " ↩ Skips missing [0.01 ms]\n"
+    )
     lein_log = "lein test app.core-test\nFAIL in (thing) (core_test.clj:1)\n"
     mvn_log = (
         "Running pkg.PassingTest\n"
@@ -472,6 +570,30 @@ def test_log_parser_registry_parses_common_rebench_logs():
     assert (
         parse_with_parser("parse_log_js_4", js_log)["also fails"]
         == TestStatus.FAILED.value
+    )
+    assert (
+        parse_with_parser("parse_log_js", js_mocha_log)["should fail"]
+        == TestStatus.FAILED.value
+    )
+    assert (
+        parse_with_parser("parse_log_js_2", js_mocha_log)["should skip"]
+        == TestStatus.SKIPPED.value
+    )
+    assert (
+        parse_with_parser("parse_log_js_3", js_tap_log)["root suite :: nested fail"]
+        == TestStatus.FAILED.value
+    )
+    assert (
+        parse_with_parser("parse_log_phpunit", phpunit_log)[
+            "Annotation Parser > Rejects invalid"
+        ]
+        == TestStatus.FAILED.value
+    )
+    assert (
+        parse_with_parser("parse_log_phpunit", phpunit_log)[
+            "Annotation Parser > Skips missing"
+        ]
+        == TestStatus.SKIPPED.value
     )
     assert (
         parse_with_parser("parse_log_lein", lein_log)["app.core-test"]

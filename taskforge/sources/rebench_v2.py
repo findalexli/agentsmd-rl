@@ -336,11 +336,13 @@ def main(argv: list[str]) -> int:
     log = log_path.read_text(encoding="utf-8", errors="replace")
     metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
     parser_name = metadata.get("install_config", {}).get("log_parser", "")
-    parsed = parse_with_parser(parser_name, log)
+    parsed = normalize_status_map(parse_with_parser(parser_name, log))
 
-    expected = list(metadata.get("FAIL_TO_PASS", [])) + list(
-        metadata.get("PASS_TO_PASS", [])
-    )
+    expected = [
+        normalize_test_name(name)
+        for name in list(metadata.get("FAIL_TO_PASS", []))
+        + list(metadata.get("PASS_TO_PASS", []))
+    ]
     expected_set = set(expected)
     missing: list[str] = []
     unexpected: dict[str, str] = {}
@@ -408,6 +410,10 @@ def parse_with_parser(name: str, log: str) -> dict[str, str]:
         "parse_log_csharp": parse_log_csharp,
         "parse_log_dart": parse_log_dart,
         "parse_log_elixir": parse_log_elixir,
+        "parse_log_phpunit": parse_log_phpunit,
+        "parse_log_js": parse_log_js,
+        "parse_log_js_2": parse_log_js_2,
+        "parse_log_js_3": parse_log_js_3,
         "parse_log_js_4": parse_log_js_4,
         "parse_log_lein": parse_log_lein,
     }
@@ -628,6 +634,138 @@ def parse_log_elixir(log: str) -> dict[str, str]:
     return statuses
 
 
+def parse_log_phpunit(log: str) -> dict[str, str]:
+    statuses: dict[str, str] = {}
+    suite: str | None = None
+    suite_re = re.compile(r"^(.+?)\s+\(.+\)$")
+    test_re = re.compile(r"^\s*([✔✘↩])\s*(.*?)\s*$")
+    for raw_line in log.splitlines():
+        line = strip_ansi(raw_line).rstrip()
+        if match := suite_re.match(line.strip()):
+            suite = match.group(1).strip() or None
+            continue
+        if match := test_re.match(line):
+            symbol, raw_name = match.groups()
+            name = strip_timing_suffix(raw_name)
+            if not name:
+                continue
+            full_name = f"{suite or 'None'} > {name}"
+            statuses[full_name] = {
+                "✔": PASSED,
+                "✘": FAILED,
+                "↩": SKIPPED,
+            }[symbol]
+    return statuses
+
+
+def parse_log_js(log: str) -> dict[str, str]:
+    statuses: dict[str, str] = {}
+    passed_re = re.compile(r"^\s*✔\s+(.*?)$")
+    failed_symbol_re = re.compile(r"^\s*[✖✘]\s+(.*?)$")
+    skipped_re = re.compile(r"^\s*-\s+(.*?)$")
+    failed_re = re.compile(r"^\s*\[W\]\s*\d+\)\s+(.*?)$")
+    failed_header_re = re.compile(r"^\s*\d+\)\s+(.*?):$")
+    for raw_line in log.splitlines():
+        line = strip_ansi(raw_line).strip()
+        if not line:
+            continue
+        if match := skipped_re.match(line):
+            if name := strip_js_duration_suffix(match.group(1)):
+                statuses[name] = SKIPPED
+            continue
+        if match := failed_header_re.match(line):
+            if name := strip_js_duration_suffix(match.group(1)):
+                statuses[name] = FAILED
+            continue
+        if match := failed_re.match(line):
+            if name := strip_js_duration_suffix(match.group(1).rstrip()):
+                statuses[name] = FAILED
+            continue
+        if match := failed_symbol_re.match(line):
+            if name := strip_js_duration_suffix(match.group(1)):
+                statuses[name] = FAILED
+            continue
+        if match := passed_re.match(line):
+            if name := strip_js_duration_suffix(match.group(1)):
+                statuses.setdefault(name, PASSED)
+    return statuses
+
+
+def parse_log_js_2(log: str) -> dict[str, str]:
+    statuses: dict[str, str] = {}
+    passed_re = re.compile(r"^\s*✔\s+(.*?)$")
+    failed_re = re.compile(r"^\s*\d+\)\s+(.*?)$")
+    skipped_re = re.compile(r"^\s*-\s+(.*?)$")
+    lines = [strip_ansi(raw_line).rstrip() for raw_line in log.splitlines()]
+    for index, raw_line in enumerate(lines):
+        next_line = ""
+        for candidate in lines[index + 1 :]:
+            if candidate.strip():
+                next_line = candidate
+                break
+        line = strip_ansi(raw_line).strip()
+        if not line:
+            continue
+        if match := skipped_re.match(line):
+            if name := strip_js_duration_suffix(match.group(1)):
+                statuses[name] = SKIPPED
+            continue
+        if match := failed_re.match(line):
+            summary_name = next_line.strip().removesuffix(":")
+            raw_name = (
+                summary_name
+                if next_line.startswith("     ") and summary_name
+                else match.group(1)
+            )
+            if name := strip_js_duration_suffix(raw_name):
+                statuses[name] = FAILED
+            continue
+        if match := passed_re.match(line):
+            if name := strip_js_duration_suffix(match.group(1)):
+                statuses.setdefault(name, PASSED)
+    return statuses
+
+
+def parse_log_js_3(log: str) -> dict[str, str]:
+    statuses: dict[str, str] = {}
+    stack: list[str] = []
+    tap_line_re = re.compile(
+        r"^(?P<status>not ok|ok)\s+\d+\s+-\s+(?P<name>.*?)(?:\s+#.*)?$"
+    )
+    for raw_line in log.splitlines():
+        line = strip_ansi(raw_line).strip()
+        if not line:
+            continue
+        if line.replace("}", "") == "":
+            for _ in range(line.count("}")):
+                if stack:
+                    stack.pop()
+            continue
+        opens_context = line.endswith("{")
+        if opens_context:
+            line = line[:-1].rstrip()
+        match = tap_line_re.match(line)
+        if not match:
+            continue
+        raw_name = match.group("name")
+        name = strip_js_duration_suffix(re.split(r"\s+#", raw_name, maxsplit=1)[0])
+        if not name:
+            continue
+        full_name = " :: ".join((*stack, name)) if stack else name
+        skip_marker = any(
+            token in raw_name.lower() for token in ("# skip", "# skipped", "# todo")
+        )
+        if skip_marker:
+            statuses[full_name] = SKIPPED
+        else:
+            status_value = PASSED if match.group("status") == "ok" else FAILED
+            if status_value == FAILED or full_name not in statuses:
+                statuses[full_name] = status_value
+        if opens_context:
+            stack.append(name)
+    return statuses
+
+
 def parse_log_js_4(log: str) -> dict[str, str]:
     statuses: dict[str, str] = {}
     pass_symbols = ("\u2714", "\u2713")
@@ -724,7 +862,39 @@ def normalize_js_test_name(payload: str) -> str:
         payload = payload.split("]:", 1)[1].strip()
     if payload.startswith(":"):
         payload = payload[1:].strip()
-    return JS_DURATION_SUFFIX_RE.sub("", payload).strip()
+    return strip_js_duration_suffix(payload)
+
+
+def strip_js_duration_suffix(name: str) -> str:
+    return JS_DURATION_SUFFIX_RE.sub("", name.strip()).strip()
+
+
+TIMING_NORMALIZE_RES = (
+    re.compile(r"\s*\[\s*\d+(?:\.\d+)?\s*(?:ms|s)\s*\]\s*$", re.IGNORECASE),
+    re.compile(r"\s+in\s+\d+(?:\.\d+)?\s+(?:msec|sec)\b", re.IGNORECASE),
+    re.compile(r"\s*\(\s*\d+(?:\.\d+)?\s*(?:ms|s)\s*\)\s*$", re.IGNORECASE),
+)
+
+
+def normalize_test_name(name: str) -> str:
+    for pattern in TIMING_NORMALIZE_RES:
+        name = pattern.sub("", name)
+    return name.strip()
+
+
+def normalize_status_map(statuses: dict[str, str]) -> dict[str, str]:
+    normalized: dict[str, str] = {}
+    for name, status in statuses.items():
+        normalized_name = normalize_test_name(name)
+        if not normalized_name:
+            continue
+        if status == FAILED or normalized_name not in normalized:
+            normalized[normalized_name] = status
+    return normalized
+
+
+def strip_timing_suffix(name: str) -> str:
+    return normalize_test_name(name)
 
 
 def iter_dart_protocol_events(log: str) -> list[dict[str, object]]:

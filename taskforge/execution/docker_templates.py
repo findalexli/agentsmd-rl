@@ -87,6 +87,26 @@ _RUNTIME_TEMPLATES: dict[str, RuntimeTemplate] = {
         ),
         ("mix local.hex --force && mix local.rebar --force",),
     ),
+    "php": RuntimeTemplate(
+        "php",
+        "php:8.3.16",
+        (
+            "python3",
+            "python3-pip",
+            "wget",
+            "unzip",
+            "libgd-dev",
+            "libzip-dev",
+            "libgmp-dev",
+            "libftp-dev",
+            "libcurl4-openssl-dev",
+        ),
+        (
+            "docker-php-ext-install gd zip gmp ftp curl pcntl",
+            "curl -sS https://getcomposer.org/installer | php -- --2.2 --install-dir=/usr/local/bin --filename=composer",
+        ),
+        "installs PHP extensions and Composer 2.2 for php_8.3.16-style tasks",
+    ),
     "c": RuntimeTemplate(
         "c",
         "ubuntu:22.04",
@@ -138,6 +158,8 @@ def select_runtime_template(
         return _RUNTIME_TEMPLATES["dart"]
     if "elixir" in base:
         return _RUNTIME_TEMPLATES["elixir"]
+    if "php" in base:
+        return _RUNTIME_TEMPLATES["php"]
     if base.startswith("c:") or base.startswith("cpp:"):
         return _RUNTIME_TEMPLATES["c"]
 
