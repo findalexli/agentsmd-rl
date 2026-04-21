@@ -596,6 +596,13 @@ def test_log_parser_registry_parses_common_rebench_logs():
         " ✘ Rejects invalid [0.04 ms]\n"
         " ↩ Skips missing [0.01 ms]\n"
     )
+    php_v1_log = (
+        "PASS  Tests\\Feature\\ExampleTest\n"
+        "  ✓ it parses values  0.03s\n"
+        "  ⨯ it rejects invalid input  0.01s\n"
+        "  - it skips external service  0.00s\n"
+        "Tests: 1 failed, 1 skipped, 1 passed\n"
+    )
     lein_log = "lein test app.core-test\nFAIL in (thing) (core_test.clj:1)\n"
     mvn_log = (
         "+ mvn -Dtest=pkg.TargetTest test\n"
@@ -682,6 +689,18 @@ def test_log_parser_registry_parses_common_rebench_logs():
         parse_with_parser("parse_log_phpunit", phpunit_log)[
             "Annotation Parser > Skips missing"
         ]
+        == TestStatus.SKIPPED.value
+    )
+    assert (
+        parse_with_parser("parse_log_php_v1", php_v1_log)["it parses values"]
+        == TestStatus.PASSED.value
+    )
+    assert (
+        parse_with_parser("parse_log_php_v1", php_v1_log)["it rejects invalid input"]
+        == TestStatus.FAILED.value
+    )
+    assert (
+        parse_with_parser("parse_log_php_v1", php_v1_log)["it skips external service"]
         == TestStatus.SKIPPED.value
     )
     assert (

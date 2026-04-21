@@ -170,6 +170,77 @@ def parse_log_julia(log: str) -> dict[str, str]:
     return statuses
 
 
+def parse_log_php_v1(log: str) -> dict[str, str]:
+    """Parse Pest/PHPUnit symbol lines used by SWE-rebench PHP v1 rows."""
+
+    statuses: dict[str, str] = {}
+    cross_mark = chr(0x2A2F)
+
+    def clean(name: str) -> str:
+        name = name.rstrip()
+        name = re.sub(r"\s{2,}\d+(?:\.\d+)?s\s*$", "", name)
+        name = re.sub(r"\s+\d+(?:\.\d+)?s\s*$", "", name)
+        return name.strip()
+
+    pass_line_re = re.compile(r"^\s*(?:✓|✔)\s+(?P<name>.+?)\s{2,}\d+\.?\d*s\b.*$")
+    pass_line_no_timing_re = re.compile(r"^\s*(?:✓|✔)\s+(?P<name>.+?)\s*$")
+    fail_line_re = re.compile(
+        rf"^\s*(?:{cross_mark}|x)\s+(?P<name>.+?)\s{{2,}}\d+\.?\d*s\b.*$",
+        re.IGNORECASE,
+    )
+    fail_line_no_timing_re = re.compile(
+        rf"^\s*(?:{cross_mark}|x)\s+(?P<name>.+?)\s*$", re.IGNORECASE
+    )
+    skipped_line_re = re.compile(r"^\s*-\s+(?P<name>.+?)\s{2,}\d+\.?\d*s\b.*$")
+    skipped_line_no_timing_re = re.compile(r"^\s*-\s+(?P<name>.+?)\s*$")
+    suite_fail_re = re.compile(r"^\s*FAIL(?:ED)?\s+(?P<name>\S.+)$", re.IGNORECASE)
+    inline_skipped_marker = re.compile(r"\(skipped\)|\bSKIPPED\b", re.IGNORECASE)
+
+    for raw_line in log.splitlines():
+        line = _strip_ansi(raw_line).rstrip()
+        if not line:
+            continue
+        stripped = line.strip()
+        if stripped.startswith(("___", "---", "Tests:", "Duration:")):
+            continue
+
+        if match := suite_fail_re.match(line):
+            name = clean(match.group("name"))
+            if name:
+                statuses[name] = TestStatus.FAILED.value
+            continue
+
+        matched = False
+        for pattern, status in (
+            (fail_line_re, TestStatus.FAILED.value),
+            (fail_line_no_timing_re, TestStatus.FAILED.value),
+            (skipped_line_re, TestStatus.SKIPPED.value),
+            (skipped_line_no_timing_re, TestStatus.SKIPPED.value),
+            (pass_line_re, TestStatus.PASSED.value),
+            (pass_line_no_timing_re, TestStatus.PASSED.value),
+        ):
+            match = pattern.match(line)
+            if not match:
+                continue
+            name = clean(match.group("name"))
+            if name:
+                if status == TestStatus.PASSED.value:
+                    statuses.setdefault(name, status)
+                else:
+                    statuses[name] = status
+            matched = True
+            break
+        if matched:
+            continue
+
+        if inline_skipped_marker.search(line):
+            token = re.sub(rf"^\s*(?:✓|✔|{cross_mark}|x|-)\s+", "", line)
+            name = clean(token)
+            if name and name not in statuses:
+                statuses[name] = TestStatus.SKIPPED.value
+    return statuses
+
+
 def parse_java_mvn(log: str) -> dict[str, str]:
     """Parse Maven Surefire text output."""
 
@@ -663,6 +734,7 @@ NAME_TO_PARSER: dict[str, Parser] = {
     "parse_log_csharp": parse_log_csharp,
     "parse_log_dart": parse_log_dart,
     "parse_log_elixir": parse_log_elixir,
+    "parse_log_php_v1": parse_log_php_v1,
     "parse_log_phpunit": parse_log_phpunit,
     "parse_log_js": parse_log_js,
     "parse_log_js_2": parse_log_js_2,
