@@ -1,20 +1,26 @@
-FROM python:3.11-slim
+FROM node:22-slim
 
-WORKDIR /workspace/example-repo
+# Install Python for test runner
+RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install pytest
+RUN pip3 install pytest --break-system-packages
+
+# Clone the repo at base commit (before PR #7077)
+WORKDIR /workspace
+RUN git clone --filter=blob:none https://github.com/TanStack/router.git router
+
+WORKDIR /workspace/router
+RUN git checkout d1174179082d896a9674532994a4d6b38238c37e
 
 # Install dependencies
-RUN pip install --no-cache-dir \
-    pytest \
-    ruff \
-    mypy \
-    requests
+RUN npm install
 
-# Clone the repo at base commit (this would normally be done by the task runner)
-# For demo purposes, we'll create a minimal repo structure
-RUN mkdir -p src tests
+# Create logs directory
+RUN mkdir -p /logs/verifier
 
-# The repo will be mounted or cloned here at runtime
-# We don't COPY here - the repo is mounted via docker run -v
-
-# Default command runs the tests
-CMD ["bash", "/tests/test.sh"]
+WORKDIR /workspace/router

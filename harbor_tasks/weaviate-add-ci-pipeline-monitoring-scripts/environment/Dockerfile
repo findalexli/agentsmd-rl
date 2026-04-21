@@ -1,16 +1,22 @@
-FROM node:20-slim
+FROM golang:1.25-alpine
 
-# Install Python for pytest
-RUN apt-get update && apt-get install -y python3 python3-pip && rm -rf /var/lib/apt/lists/*
+# Install Python for the test runner and basic tools
+RUN apk add --no-cache python3 py3-pip py3-pytest git patch bash curl
 
-# Install pytest
-RUN pip3 install pytest --break-system-packages
+# Create necessary directories
+RUN mkdir -p /logs/verifier
 
-# Set working directory
-WORKDIR /workspace/sample_repo
+# Clone weaviate repo at base commit (before PR #10542)
+WORKDIR /workspace
+RUN git clone --filter=blob:none https://github.com/weaviate/weaviate.git weaviate && \
+    cd weaviate && \
+    git checkout 57d1e03321fd1648889b5c3fae5261cf5a7a0217
 
-# Copy the repo
-COPY sample_repo/ /workspace/sample_repo/
+WORKDIR /workspace/weaviate
 
-# Install npm dependencies
-RUN npm install
+# Configure git
+RUN git config --global user.email "agent@test.com" && \
+    git config --global user.name "Test Agent"
+
+# Download Go module dependencies
+RUN go mod download

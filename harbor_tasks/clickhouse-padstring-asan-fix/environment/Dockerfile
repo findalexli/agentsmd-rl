@@ -2,7 +2,9 @@
 
 FROM ubuntu:22.04
 
-# Install dependencies for ClickHouse build and testing
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install dependencies for ClickHouse build verification and testing
 RUN apt-get update && apt-get install -y \
     git \
     cmake \
@@ -25,23 +27,19 @@ RUN update-alternatives --install /usr/bin/clang clang /usr/bin/clang-15 100 \
     && update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-15 100 \
     && update-alternatives --install /usr/bin/clang-format clang-format /usr/bin/clang-format-15 100
 
-# Create working directory and repo structure
-WORKDIR /workspace/ClickHouse
-ARG BASE_COMMIT
-
-# Download just the files we need from the base commit
-RUN mkdir -p src/Functions base \
-    && curl -sL "https://raw.githubusercontent.com/ClickHouse/ClickHouse/${BASE_COMMIT}/src/Functions/padString.cpp" -o src/Functions/padString.cpp \
-    && curl -sL "https://raw.githubusercontent.com/ClickHouse/ClickHouse/${BASE_COMMIT}/.clang-format" -o .clang-format 2>/dev/null || echo "No .clang-format"
-
-# Create minimal base headers needed for syntax checking
-RUN mkdir -p base/glibc-compatibility \
-    && touch base/glibc-compatibility/empty.h
-
-# Set up build directory structure
-RUN mkdir -p /workspace/ClickHouse/build && mkdir -p /logs/verifier
-
 # Install pytest
 RUN pip3 install pytest
+
+# Clone ClickHouse repo (sparse checkout for the files we need)
+WORKDIR /workspace
+RUN git clone --depth=1 --filter=blob:none --sparse \
+    https://github.com/ClickHouse/ClickHouse.git && \
+    cd ClickHouse && \
+    git sparse-checkout set src/Functions base/glibc-compatibility && \
+    git fetch --depth=1 origin 6958fcb996ad34fe65d3d26d08de9cefd4788351 && \
+    git checkout 6958fcb996ad34fe65d3d26d08de9cefd4788351
+
+# Set up build directory structure and logs
+RUN mkdir -p /workspace/ClickHouse/build && mkdir -p /logs/verifier
 
 WORKDIR /workspace/ClickHouse

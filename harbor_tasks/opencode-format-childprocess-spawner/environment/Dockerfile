@@ -1,21 +1,21 @@
-FROM python:3.11-slim
+FROM node:22-slim
 
-# Install git and basic tools
-RUN apt-get update && apt-get install -y \
-    git \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
+ENV DEBIAN_FRONTEND=noninteractive
+ENV LANG=C.UTF-8
 
-# Set working directory to match where the repo will be mounted
-WORKDIR /workspace/taskforge
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        git curl ca-certificates python3 python3-pip && \
+    rm -rf /var/lib/apt/lists/*
 
-# Copy the taskforge code
-COPY taskforge/ /workspace/taskforge/taskforge/
+# Clone repo at base commit (before PR #19457)
+RUN git clone --filter=blob:none https://github.com/anomalyco/opencode.git /workspace/opencode && \
+    cd /workspace/opencode && \
+    git checkout c8909908f50afc3622d354cd8fd7a83dc3445706 && \
+    git config user.email "agent@test" && \
+    git config user.name "Agent"
 
-# Install Python dependencies
-RUN pip install --no-cache-dir pydantic pyyaml pytest
+WORKDIR /workspace/opencode
 
-# Tests will be mounted at runtime via -v
-RUN mkdir -p /tests /logs/verifier
-
-ENV PYTHONPATH=/workspace/taskforge
+# Verifier output directory (Harbor bind-mounts this)
+RUN mkdir -p /logs/verifier

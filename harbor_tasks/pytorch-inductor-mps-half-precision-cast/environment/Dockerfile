@@ -1,26 +1,27 @@
-FROM python:3.11-slim
+FROM python:3.12-slim
 
-# Install git and basic tools
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    git \
+ENV DEBIAN_FRONTEND=noninteractive
+ENV LANG=C.UTF-8
+ENV LC_ALL=C.UTF-8
+
+RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y --no-install-recommends \
+    git curl ca-certificates build-essential tmux \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python testing tools and build tools
-RUN pip install --no-cache-dir pytest ruff mypy hatchling
+RUN mkdir -p /workspace /logs/verifier
 
-# Copy repo into container so it's writable
-COPY repo /workspace/repo
+WORKDIR /workspace
 
-# Set up the repo directory
-WORKDIR /workspace/repo
+# Clone pytorch at the base commit (before PR #177193)
+RUN git init /workspace/pytorch && \
+    cd /workspace/pytorch && \
+    git remote add origin https://github.com/pytorch/pytorch.git && \
+    git fetch --depth=1 origin 036b25f5a29dc58cbc62e7b976efb860ff128c3f && \
+    git checkout FETCH_HEAD
 
-# Set PYTHONPATH so the repo package can be found
-ENV PYTHONPATH=/workspace/repo/src
+ENV PYTHONPATH="/workspace/pytorch"
 
-# Set REPO path for solve.sh and other scripts
-ENV REPO=/workspace/repo
+RUN git config --global user.email "agent@test.com" && \
+    git config --global user.name "Test Agent"
 
-# The test files will be mounted at /tests
-
-# Default command runs the tests
-CMD ["bash", "/tests/test.sh"]
+WORKDIR /workspace/pytorch

@@ -1,19 +1,32 @@
+# syntax=docker/dockerfile:1
+
 FROM python:3.12-slim
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV LANG=C.UTF-8
 
-RUN apt-get update &&     apt-get install -y --no-install-recommends         git curl ca-certificates build-essential make &&     rm -rf /var/lib/apt/lists/*
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        git curl ca-certificates build-essential make && \
+    rm -rf /var/lib/apt/lists/*
 
-# Copy local repo at base commit
-COPY repo /workspace/transformers
+# Clone transformers repo at base commit
+WORKDIR /workspace
+RUN git clone --depth=1 --filter=blob:none \
+    https://github.com/huggingface/transformers.git && \
+    cd transformers && \
+    git fetch --depth=1 origin 28af8184fb00a0e9bc778c3defdec39bbe7e8839 && \
+    git checkout 28af8184fb00a0e9bc778c3defdec39bbe7e8839
 
 WORKDIR /workspace/transformers
 
 ENV PYTHONPATH="/workspace/transformers/src"
 
 # Install dependencies needed for tests
-RUN pip install --no-cache-dir     pytest pytest-json-ctrf     ruff tomli     numpy regex packaging requests filelock typing_extensions huggingface_hub safetensors
+RUN pip install --no-cache-dir \
+    pytest pytest-json-ctrf \
+    ruff tomli \
+    numpy regex packaging requests filelock typing_extensions huggingface_hub safetensors
 
 # Verifier output directory (Harbor bind-mounts this)
 RUN mkdir -p /logs/verifier
