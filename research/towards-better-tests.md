@@ -1,149 +1,175 @@
-# Towards Better Tests: Why Test Quality Improvement Requires a Strong Model
+# Towards Better Tests
 
-**Date**: 2026-04-22
-**Duration**: ~14h overnight pipeline + 2h follow-up A/B/C experiment
-**Models tested**: MiniMax-M2.7 (native), Kimi-K2.6 (via ARK), GLM-5.1 (via ARK)
-**Task**: Rewrite weak tests (grep-based string matching) into strong tests (behavioral subprocess execution) across the harbor benchmark.
+*Diagnosis of the narrow-test problem in agent-native benchmarks, and an
+experimental verdict on which LLMs can fix it.*
+
+**Dates**: 2026-03-28 (original audit) → 2026-04-22 (experimental validation)
+**Supersedes**: `test-design-audit.md` (merged into this document)
+**Related**: `rubric-reward-postmortem.md`, `agent-manifest-confounding.md`
+
+---
 
 ## TL;DR
 
-We set out to use a cheap model to bulk-improve the test quality of ~500 harbor
-benchmark tasks. The cheap model (MiniMax-M2.7) processed 646 tasks over 14 hours
-and produced **0 genuine test-rewriting improvements** in a 22-task audit. When
-we switched to stronger models (Kimi-K2.6 and GLM-5.1 via the ARK Coding Plan),
-we observed **2 genuine improvements in 3 audited tasks**. The ability to
-convert grep-based assertions to behavioral subprocess tests is a capability
-threshold that cheap models do not cross, but frontier models do.
+SWE-bench-style benchmarks (ours included) have a systemic quality problem:
+most tests assert on the *shape* of source code (grep, AST, regex) rather than
+on runtime *behavior*. OpenAI's
+[analysis of SWE-bench Verified](https://openai.com/index/why-we-no-longer-evaluate-swe-bench-verified/)
+attributed 59% of model failures to narrow/wide tests — tests that reject
+correct alternatives or check things outside the problem statement.
 
-**Implication for benchmark construction**: Batch quality-improvement pipelines
-must budget for frontier-class models on the rewriting step. MiniMax-class
-models are only useful as oracle-health scanners, not quality editors.
+We audited our own tasks and found the same pattern. We then tried to fix it
+automatically: running MiniMax-M2.7 over 646 tasks overnight produced **0
+genuine test rewrites** across 22 audited samples. Switching to Kimi-K2.6 and
+GLM-5.1 (via ARK Coding Plan) produced **2 genuine rewrites in 3 audited
+samples** — a clear capability-threshold difference.
 
-## The Problem
+The takeaway: test-rewriting is a frontier-model task. Budget accordingly.
 
-Many of our harbor tasks have tests like this:
+---
 
-```python
-def test_fix_applied():
-    content = Path("src/url_parser.ts").read_text()
-    assert "catchError" in content
-    assert "ERR_INVALID_URL" in content
-```
+## Part 1 — The Problem
 
-The tier-A linter flags these as `tests_verify_behavior_not_text`:
-the test passes whenever the source file *contains* certain strings, which
-means a stub like `// catchError ERR_INVALID_URL` would pass. It's not a real
-oracle — it's a grep.
+### OpenAI's two failure modes
 
-The target is a behavioral test:
+From OpenAI's SWE-bench Verified postmortem:
 
-```python
-def test_fix_applied():
-    r = subprocess.run(
-        ["bun", "-e", "console.log(new URL('not-a-url'))"],
-        capture_output=True, text=True, cwd=REPO,
-    )
-    assert "ERR_INVALID_URL" in r.stderr, (
-        f"Expected URL error, got: {r.stderr}"
-    )
-```
+1. **Tests reject correct solutions** (59.4% of audited failures)
+   - **Narrow tests** (35.5%): enforce specific implementation details, reject valid alternatives
+   - **Wide tests** (18.8%): check functionality not described in the problem statement
 
-This test actually runs the fix and checks its behavior. The conversion is
-straightforward for a human engineer but requires understanding the repo's
-build system, entry points, and reproduction steps.
+2. **Contamination**: all frontier models reproduce exact gold patches from training data
 
-## Experiment 1: Cheap Model (MiniMax-M2.7, 646 tasks, 14 hours)
+SWE-bench's gold standard design uses:
+- **Fail-to-pass tests**: tests that FAIL on buggy code, PASS after correct fix
+- **Pass-to-pass tests**: regression tests that PASS both before and after
 
-MiniMax-M2.7 via native API, backed by claude-code CLI. Ran 501 task
-modifications across 4 worker processes.
+Our original tests were mostly **structural/AST checks** with some behavioral
+mocks. The audit below, conducted in March 2026 on 6 representative tasks,
+showed the same narrow-test pathologies OpenAI described.
 
-### Outcome
+### Audit: 6 representative tasks
 
+#### 1. `sglang-detokenizer-unbound-fix`
+- **Current**: 3 AST/text checks + 1 behavioral mock (TEST 4)
+- **Narrow**: TEST 1 requires exactly `manager = None` assignment; valid alternatives (inline init, try/except wrapping, `locals().get(...)`) are rejected
+- **Silver lining**: TEST 4 already executes the except block with a mock that raises. That's SWE-bench quality.
+- **Fix**: keep TEST 4, replace or soften TESTS 1–2 with a second behavioral test.
+
+#### 2. `sglang-benchmark-empty-prompt`
+- **Current**: 2 structural (AST `max(1,...)` + regex extract)
+- **Narrow**: Requires literal `max(1, ...)`; rejects equivalent refactors (`min_val=1` variable, if-guard pattern)
+- **Fix**: Replace with fail-to-pass that calls the loop with edge-case inputs and asserts all lengths ≥ 1.
+
+#### 3. `sglang-hfrunner-hang-fix` ❌ *worst*
+- **Current**: 4 structural, 0 behavioral
+- **Narrow (severe)**: Requires `timeout` kwarg on `queue.get`; rejects `asyncio.wait_for`, polling-loop, `select`/`poll`. Requires string `is_alive`; rejects `exitcode is not None`. Requires `RuntimeError`; rejects `ChildProcessError`, `OSError`, `SystemExit`.
+- **Fix**: Needs complete rewrite. Should mock a subprocess that dies and verify `forward()` returns/raises within a bounded time.
+
+#### 4. `sglang-lscpu-topology-fix` ✅ *best*
+- **Current**: 1 structural + 3 behavioral (mock subprocess with malformed/normal/empty inputs)
+- **Quality**: Tests 2–3 are close to SWE-bench quality.
+- **Fix**: Minor — soften TEST 1 to check behavior not AST pattern.
+
+#### 5. `vllm-tool-parser-indexerror` ❌ *also worst*
+- **Current**: 4 text/regex checks, 0 behavioral
+- **Narrow (severe)**: TEST 4 literally requires the variable name `should_check` — this is the exact `pylint-dev__pylint-4551` anti-pattern OpenAI flagged (enforcing a variable name that's in the gold patch but not in the problem description).
+- **Fix**: Complete rewrite. Construct a mock streaming scenario where the original `IndexError` occurs, assert it doesn't crash.
+
+#### 6. `vllm-triton-cache-autotuning`
+- **Current**: 3 AST/text + 1 behavioral exec
+- **Narrow**: Requires `os.environ.setdefault(...)`; rejects `if X not in os.environ: os.environ[X] = ...` and `os.environ.get(...)` patterns that have identical semantics.
+- **Fix**: Replace with two behavioral tests — "var is set when absent" and "pre-set value is preserved".
+
+### Cross-cutting issues
+
+**Structural vs behavioral counts across the 6-task audit:**
+
+| Test Type | Count | SWE-bench Equivalent | Quality |
+|---|---|---|---|
+| AST pattern check | 14 | None | Low (narrow) |
+| Text/regex search | 8 | None | Low (narrow) |
+| Anti-stub | 6 | Pass-to-pass (partial) | Medium |
+| Behavioral mock | 7 | Fail-to-pass | **High** |
+| Behavioral exec | 2 | Fail-to-pass | **High** |
+
+Only 9 of 30 checks are behavioral. The rest are narrow and fragile.
+
+**Fail-to-pass coverage:**
+
+| Task | Genuine fail-to-pass test? |
+|---|---|
+| sglang-detokenizer-unbound-fix | ✅ Yes (TEST 4) |
+| sglang-benchmark-empty-prompt | Partial (regex sim) |
+| sglang-hfrunner-hang-fix | ❌ No (all structural) |
+| sglang-lscpu-topology-fix | ✅ Yes (Tests 2–4) |
+| vllm-tool-parser-indexerror | ❌ No (all structural) |
+| vllm-triton-cache-autotuning | Partial (exec extraction) |
+
+**Contamination risk**: All 6 tasks come from merged PRs in public repos
+(sglang 44k⭐, vllm 50k⭐). Any model trained on post-merge GitHub data has
+likely seen the exact patches. Opus 4.6 scoring 1.0 on all 6 might partly
+reflect this — see mitigation in §6.
+
+---
+
+## Part 2 — Can an LLM Fix It? Experimental Verdict
+
+Given ~500 tasks with narrow tests, can we use an LLM to rewrite them in
+bulk? We ran two experiments: one cheap, one strong.
+
+### Experiment 1: MiniMax-M2.7 (646 tasks, 14 hours)
+
+Ran `fix_task_quality.md` prompt (see `taskforge/prompts/`) across 4 worker
+processes on Anthropic-compatible MiniMax API.
+
+**Output**:
 - 356 tasks passed oracle validation (nop=0, gold=1)
 - 232 FAILed oracle validation
-- 258 DELETEd by quality gate (unrecoverable test designs)
-- 501 total tasks touched (240 test files, 222 instruction files modified)
+- 258 DELETEd by quality gate (unrecoverable tautological tests)
+- 501 total tasks modified (240 test files, 222 instruction files)
 
-### Quality Audit: 22-Task Sample
-
-Random-sampled tasks across two independent audit passes and classified
-the actual code changes by pathology:
+**Audit — 22 sampled tasks classified by pathology**:
 
 | Pathology | Count | % | Description |
 |---|---|---|---|
-| **P3**: Tests still grep | 12 | 55% | Agent rewrote docstrings to claim "behavioral" but left grep assertions unchanged |
-| **P5**: No change needed | 7 | 32% | Task already passing, agent correctly skipped |
-| **P1**: Cosmetic | 2 | 9% | Renamed functions, reformatted — same logic |
+| **P3**: Tests still grep | 12 | 55% | Docstring rewritten to claim "behavioral" but grep assertions unchanged |
+| **P5**: No change needed | 7 | 32% | Task already passing, agent skipped |
+| **P1**: Cosmetic | 2 | 9% | Rename/reformat, same logic |
 | **P2**: Prescriptive instruction | 1 | 5% | Changed symptom description to fix prescription |
-| **P4**: Real improvement | **1** | **5%** | Added actual `subprocess.run()` test (airflow task only) |
-| **P6**: Regression | 3 | 14% | Instruction became more prescriptive, narrowing solution space |
+| **P4**: Real improvement | **1** | **5%** | Added actual `subprocess.run()` test (airflow task) |
+| **P6**: Regression | 3 | 14% | Instruction narrowed solution space |
 
-*Percentages sum >100% because some tasks exhibited multiple pathologies.*
+*Percentages exceed 100% because tasks can exhibit multiple pathologies.*
 
-### Concrete P3 Examples from MiniMax
+**Concrete P3 examples**:
 
-**`bun-domurl-invalid-url-crash`**: Quality judge flagged `tests_verify_behavior_not_text`.
-MiniMax's fix: rewrote test docstring from "check file" to "verify crash behavior"
-but the assertion is still `assert 'ERR_INVALID_URL' in file_content`. Zero
-`subprocess.run(['bun', ...])`.
+- `bun-domurl-invalid-url-crash`: docstring says "verify crash behavior"; assertion still `assert 'ERR_INVALID_URL' in file_content`. No `subprocess.run(['bun', ...])`.
+- `appwrite-vectordb-race-condition`: docstring says "BEHAVIOR verification"; test does `assert re.search(r'try\s*\{.*?catch', content)`. No concurrency simulation.
+- `oxc-pr-21022`: helper named `verify_js_uses_buffer_proto_methods()`; implementation is `'utf8Slice.call' in content`. Surface compliance, zero substance.
 
-**`appwrite-vectordb-race-condition`**: Agent changed docstring to "BEHAVIOR
-verification" but test still does `assert re.search(r'try\s*\{.*?catch', content)`
-— pure regex on source code. The test name says "race condition" but the test
-does not simulate concurrency.
-
-**`oxc-pr-21022`**: MiniMax created a helper `verify_js_uses_buffer_proto_methods()`
-that sounds behavioral but the implementation body is `'utf8Slice.call' in content`
-— still grep. Surface-level compliance, no substance.
-
-### Why MiniMax-M2.7 Fails
-
-Converting grep tests to behavioral tests requires:
-
-1. **Understanding the repo's build system** (npm / cargo / go / pip / cabal)
-2. **Knowing import paths** — `from module.subpackage import TargetClass`
-3. **Constructing a minimal reproduction** — what input triggers the bug?
-4. **Handling execution environment** — DB? network? config files?
-5. **Writing correct assertions on output** — what does "correct behavior" look like?
-
-MiniMax-M2.7 consistently takes the easy path: rewrite the docstring to *say*
-"behavioral" while leaving the grep assertion intact. It optimizes for the
-appearance of compliance rather than actual compliance.
-
-## Experiment 2: Strong Models (Kimi-K2.6 + GLM-5.1, c=2 each, 20 tasks)
-
-To test whether a stronger model can cross the capability threshold, we ran
-a controlled A/B/C experiment via the ARK Coding Plan endpoint (Volcengine's
-Anthropic-compatible API multiplexing multiple models).
+### Experiment 2: Kimi-K2.6 and GLM-5.1 (20 tasks, 2 hours)
 
 Same prompt, same pipeline, same E2B sandboxes — only the model identifier
-changed. Each model got 10 random tasks from the same pool that was fed to
-MiniMax.
+changed. Via the ARK Coding Plan endpoint. ARK rate limits clipped the run
+at 3 fully-completed tasks, but enough to see the difference.
 
-### Outcome
-
-ARK rate limits clipped the experiment early (47 rate-limit events across
-90 minutes at c=4 total), but we captured enough completed tasks for a
-clear quality comparison.
-
-| Model | Completed (fix_quality:ok) | PASS validations | Avg duration | Sandbox timeouts |
+| Model | fix_quality:ok | PASS | Avg duration | Sandbox timeouts |
 |---|---|---|---|---|
 | MiniMax-M2.7 (baseline) | ~390/501 | 356 | ~15 min | 25 |
 | **Kimi-K2.6** | 3 | 2 | ~23 min | 0 |
 | **GLM-5.1** | 1 | 1 | ~40 min | 1 |
 
-### Quality Audit: Strong-Model Completions
+**Kimi-K2.6 on `langchain-filter-messages-docstring-fix` — P4 genuine rewrite**
 
-**Kimi-K2.6 on `langchain-filter-messages-docstring-fix` (P4: REAL IMPROVEMENT)**
-
-Before (MiniMax would leave this alone):
+Before:
 ```python
 bad_patterns = [r"incl_names\s*=", r"incl_types\s*=", r"excl_ids\s*="]
 for pattern in bad_patterns:
     assert re.search(pattern, docstring) is None
 ```
 
-After (Kimi rewrote):
+After (Kimi):
 ```python
 blocks = re.findall(r"```python\s*\n(.*?)```", docstring, re.DOTALL)
 example_code = [b for b in blocks if "filter_messages(" in b][0]
@@ -152,15 +178,15 @@ import sys; sys.path.insert(0, "{REPO / 'libs' / 'core'}")
 from langchain_core.messages import filter_messages, SystemMessage, HumanMessage, AIMessage
 {textwrap.dedent(example_code)}
 """
-# Runs via subprocess, fails with TypeError if parameter names are wrong
+subprocess.run(['python', '-c', script], ...)
+# Fails with TypeError if parameter names are wrong
 ```
 
-The test now **extracts the docstring example, builds a Python script,
-and executes it via subprocess**. If the docstring uses wrong parameter
-names (the bug), the script raises `TypeError`. This is precisely what
-"behavioral" means.
+The test now extracts the docstring code example, builds a Python script,
+and executes it via subprocess. If the bug is present, it raises `TypeError`.
+This is exactly what "behavioral" means.
 
-**GLM-5.1 on `openclaw-gemini-provider-aliases` (P4: REAL IMPROVEMENT)**
+**GLM-5.1 on `openclaw-gemini-provider-aliases` — P4 genuine rewrite**
 
 Before:
 ```python
@@ -170,7 +196,7 @@ matches = call_pattern.findall(content)
 assert not re.search(r'providerId\s*:\s*["\']google["\']', call_args)
 ```
 
-After (GLM rewrote):
+After (GLM):
 ```python
 r = _run(["npx", "vitest", "run",
     "extensions/google/provider-models.test.ts",
@@ -180,136 +206,170 @@ assert re.search(r"alias provider", r.stdout, re.IGNORECASE)
 assert "FAIL" not in r.stdout
 ```
 
-The test now **runs the repo's own TypeScript test suite via vitest**
-and parses the output to confirm the alias-provider resolution behavior.
-This is not grepping the source code — it's executing it.
+The test now runs the repo's own TypeScript test suite via vitest and parses
+the output. Not grepping the source — executing it.
 
-**Kimi-K2.6 on `maui-android-fix-collectionview-selection-crash` (P1+P4 MIXED)**
+**Kimi-K2.6 on `maui-android-fix-collectionview-selection-crash` — P1+P4 mixed**
 
-The existing test already used `subprocess.run(['dotnet', 'build', ...])` — so
-Kimi didn't need to add subprocess calls. What it DID add was a
-`_extract_on_bind_view_holder()` helper that parses C# method bodies using
-brace-counting — a real structural improvement over simple `'method_name' in content`
-grep. Mostly reformatting on the outer tests, but a genuine contribution on
-the helper.
+The existing test already used `subprocess.run(['dotnet', 'build', ...])`, so
+Kimi didn't need to add subprocess calls. What it DID add: a helper
+`_extract_on_bind_view_holder()` that parses C# method bodies using
+brace-counting — a real structural improvement over simple string search.
 
-### Scorecard Across Models
+### Scorecard
 
 | Metric | MiniMax-M2.7 | Kimi-K2.6 | GLM-5.1 |
 |---|---|---|---|
-| Tasks audited | 22 | 2 completed | 1 completed |
+| Tasks audited | 22 | 2 | 1 |
 | Genuine P4 improvements | **0** | **1** | **1** |
 | P4 rate | **0%** | **50%** | **100%** (n=1) |
 | P1/P3 cosmetic-only | 14/22 (64%) | 1/2 (50%) | 0/1 |
 | Avg fix_quality duration | ~15 min | ~23 min | ~40 min |
-| Cost per task (est) | ~$0.17 | ~$0.50-1 | ~$1-2 |
+| Cost per task (est) | ~$0.17 | ~$0.50–1 | ~$1–2 |
 
-Small sample for Kimi/GLM, but the directionality is unambiguous: frontier-class
-models produce genuine behavioral tests that MiniMax consistently fails to write.
+Small sample on the strong-model side, but the directionality is unambiguous:
+frontier-class models produce behavioral tests that MiniMax consistently
+fails to write.
 
-## What Went Wrong With MiniMax: Speculation
+---
 
-MiniMax-M2.7 is trained for speed and cost. Our prompt (`fix_task_quality.md`)
-asks it to do one of the hardest refactoring tasks: convert a passive assertion
-on source text to an active execution of the code. This requires the model to:
+## Part 3 — Why Cheap Models Fail
 
-- Look up the repo's README or package.json for the build command
-- Find the module's entry point
-- Guess a reproduction recipe for the bug the PR fixes
-- Write multi-line subprocess invocations with correct `cwd`, `env`, `timeout`
+Converting `assert 'catchError' in source_code` to a behavioral test requires:
 
-When MiniMax lacks confidence to do this, it takes the next-best action that
-satisfies the surface of the prompt: it rewrites the docstring to sound
-behavioral and tweaks the test name. The assertions stay grep-based because
-rewriting them requires the full reasoning chain above, which MiniMax-M2.7 can't
-sustain.
+1. Understanding the repo's build system (npm / cargo / go / pip / cabal)
+2. Knowing import paths (`from module.subpackage import TargetClass`)
+3. Constructing a minimal reproduction — what input triggers the bug?
+4. Handling execution environment (DB, network, config files)
+5. Writing correct assertions on output
 
-Kimi-K2.6 and GLM-5.1, both larger models with more reasoning capacity, handle
-the full chain. They return tests that actually run the code.
+MiniMax-M2.7 is trained for speed and cost. When it lacks confidence to
+sustain that reasoning chain, it takes the next-best action: rewrite the
+docstring to *sound* behavioral and tweak the test name. Assertions stay
+grep-based because rewriting them is the hard part.
 
-## Recommendations
+Kimi-K2.6 and GLM-5.1, both larger models with more reasoning capacity,
+handle the full chain. They return tests that actually run the code.
+
+**Parallel with rubric generation**: We saw the same "surface compliance, no
+substance" pattern when using cheap LLMs to generate rubrics. See
+`rubric-reward-postmortem.md`. In both cases, the failure mode is identical:
+the model optimizes for looking-like-done rather than being-done, because
+the deeper task exceeds its reasoning budget.
+
+---
+
+## Part 4 — Recommendations
 
 ### For future quality-improvement passes
 
-1. **Budget for frontier models on the rewriting step**. MiniMax is fine for
-   instruction-only fixes (rewording symptoms, removing redundancy) but cannot
-   do the test rewrite. Estimate: **~$500-1000 for a 100-200 task Opus or Kimi pass**
-   on the highest-value tasks (those flagged `tests_verify_behavior_not_text`).
+1. **Budget for frontier models on the rewriting step.** MiniMax is fine for
+   instruction-only fixes (rewording symptoms, removing redundancy) but
+   cannot do the test rewrite. Estimated **~$500–1000 for a 100–200 task
+   Opus or Kimi pass** on the highest-value tasks (those flagged
+   `tests_verify_behavior_not_text`).
 
-2. **Separate the two concerns**. Use a cheap model for instruction rewording
-   (symptom description, removing solution leakage) and a strong model for
-   test rewriting. They are separable tasks that do not need the same compute.
+2. **Separate the two concerns.** Use a cheap model for instruction
+   rewording (symptom description, removing solution leakage) and a strong
+   model for test rewriting. Different skill thresholds, different budgets.
 
-3. **Audit methodology**. After any batch pipeline, sample 10-15 tasks with
-   `git diff` + `quality.json` cross-reference. The pathology taxonomy (P1-P6)
-   in this doc catches systemic issues quickly. Should be standard practice.
+3. **Audit methodology as standard practice.** After any batch pipeline,
+   sample 10–15 tasks with `git diff` + `quality.json` cross-reference. The
+   P1–P6 taxonomy catches systemic pathologies in under an hour.
 
-4. **ARK account TPM caps matter**. ARK Coding Plan (Volcengine) has
-   aggressive per-account throttling. At c=4 total across 2 models, we saw
-   47 rate limits in 90 minutes. Batch runs need Fireworks Kimi, native
-   MiniMax, or Anthropic direct — not ARK.
+4. **ARK account TPM caps matter.** ARK Coding Plan has aggressive
+   throttling — 47 rate limits in 90 minutes at c=4 total. Not usable for
+   batch. Fireworks Kimi, MiniMax native, or Anthropic direct are required
+   for production pipelines.
 
 ### For the benchmark itself
 
-1. **Don't revert the MiniMax batch**. Net diff is slightly negative lines
-   (simplified on average), and most changes are semantically neutral. The
-   14% regression rate is worth spot-checking but not wholesale reverting.
+1. **Adopt fail-to-pass as the primary test tier.** Every task should have
+   at least one test that:
+   - Runs the actual buggy code path (via extraction + mock, not full import)
+   - Demonstrates the failure (crash, wrong output, hang)
+   - Verifies the fix resolves it
 
-2. **Tag the pre-pipeline state** (`git tag pre-fix-quality-audit`) so we
-   can always diff back and measure what changed.
+2. **Demote structural tests to partial-credit supplementary checks.**
+   AST/text tests provide partial signal but should never be the sole pass
+   criteria. ≤30% of total weight.
 
-3. **Track the cosmetic-only tasks** (~240 test files that were modified
-   but left grep assertions intact) as candidates for a future strong-model
-   pass. Don't re-run MiniMax on them.
+3. **Add pass-to-pass regression tests.** For each task, identify existing
+   functionality that should NOT break. Run those checks both on buggy and
+   fixed code. Both should pass.
 
-4. **The 356 oracle PASSes are real**. Every one passed `nop=0, gold=1`.
-   What's weaker than expected is the underlying test rigor — but for the
-   binary-reward RL training signal, that's fine.
+4. **Accept multiple valid implementations.** Where structural checks are
+   necessary, use OR conditions generously. If the problem says "handle the
+   error", accept try/except, if-guard, `hasattr`, `getattr` with default,
+   etc.
 
-## Lessons for the field
+5. **Don't revert the MiniMax batch.** Net diff is slightly negative lines
+   (simplified on average), most changes are semantically neutral. The 14%
+   regression rate is worth spot-checking but not wholesale reverting. The
+   pre-pipeline state is tagged as `pre-fix-quality-audit` if needed.
 
-1. **There is a capability threshold for automated test-rewriting**. It
-   sits between MiniMax-M2.7 (cannot) and Kimi-K2.6 (can, ~50% rate). This
-   is a useful data point for benchmarking future models.
+6. **Track cosmetic-only tasks for a future strong-model pass.** ~240 test
+   files were modified by MiniMax with grep assertions intact. Don't
+   re-process with MiniMax — save them for Opus/Kimi.
 
-2. **"LLM wrote tests" is not a quality claim**. Without auditing the actual
-   diffs, a pipeline can produce a lot of surface compliance without substance.
-   Our 356 "PASSes" looked great until we opened the files.
+### Contamination mitigation
 
-3. **Rubric-as-reward failed for the same reason**. LLM-generated rubrics
-   also look plausible on the surface but fail under adversarial examination.
-   See `rubric-reward-postmortem.md` for the parallel story on the rubric
-   generation side.
+- Run OpenAI's contamination probe: give the model the task ID / repo name
+  and ask it to reproduce the gold patch from memory alone. If it can, the
+  task is contaminated for that model.
+- Test with models trained before the PR merge date.
+- Prefer private repos or very recent (< 1 week old) PRs for new tasks.
+- **sglang/vllm public PRs are high contamination risk.** Be careful with
+  Dockerfiles that might let the agent query a newer version of the repo.
 
-4. **The ARK Coding Plan is interesting but not ready for batch**. It
-   multiplexes Kimi, GLM, MiniMax, DeepSeek through one endpoint — but the
-   per-account rate limits make c>4 impractical. Useful for targeted
-   experiments, not production pipelines.
+---
 
-## Appendix: Experimental Setup
+## Part 5 — Lessons for the field
 
-### Prompt (same across all models)
+1. **There is a capability threshold for automated test-rewriting.** It
+   sits between MiniMax-M2.7 (cannot) and Kimi-K2.6 (can, ~50% rate). A
+   useful data point for benchmarking future models.
 
-Located at `taskforge/prompts/fix_task_quality.md`. Gives the agent:
-- The full repo cloned at base commit
-- The quality.json with judge findings
-- Instructions to fix BOTH tests and instruction.md in one pass
+2. **"LLM wrote tests" is not a quality claim.** Without auditing the
+   actual diffs, a pipeline can produce a lot of surface compliance without
+   substance. Our 356 "PASSes" looked great until we opened the files.
+
+3. **The same pattern recurs across meta-tasks.** Rubric generation, test
+   rewriting, instruction polishing — cheap models produce plausible-looking
+   surface changes while leaving the hard core untouched. Budget for strong
+   models on the core, cheap models on the surface.
+
+4. **ARK Coding Plan is interesting but not ready for batch.** Multiplexes
+   Kimi, GLM, MiniMax, DeepSeek through one Anthropic-compatible endpoint —
+   but per-account rate limits make c > 4 impractical. Useful for targeted
+   A/B experiments.
+
+---
+
+## Appendix — Experimental Setup
+
+### Prompt
+`taskforge/prompts/fix_task_quality.md`. Gives the agent:
+- Full repo cloned at base commit
+- `quality.json` with judge findings
+- Instructions to fix BOTH tests AND instruction.md in one pass
 - Explicit examples of behavioral test patterns (`subprocess.run(...)`)
 
 ### Pipeline
 - Orchestrator: `scripts/validate_batch.py --start-at fix_quality`
 - Sandbox: E2B (`harbor-worker-v3` template)
-- Runtime per task: 10-60 minutes (fix_quality → validate → post-judge → optional rewrite round)
+- Per-task runtime: 10–60 min (fix_quality → validate → post-judge → optional rewrite)
 - Backends: see `taskforge/backends.py`
 
 ### Hardware / cost
-- Orchestration: local WSL2, 15GB RAM, 10-22 concurrent workers
-- Sandboxes: 30-60 E2B VMs in flight at peak
-- LLM cost: ~$85 for 501 MiniMax tasks + ~$20 for Kimi/GLM pilot = **~$105 total**
-- Frontier model Opus pass for 200 tasks would be ~$1000 — still under a
-  typical ML experiment's compute line item.
+- Orchestration: local WSL2, 15 GB RAM, 10–22 concurrent workers
+- Sandboxes: 30–60 E2B VMs at peak
+- LLM cost: ~$85 MiniMax (501 tasks) + ~$20 Kimi/GLM pilot = **~$105 total**
+- Frontier-model Opus pass for 200 tasks would be ~$1000 — under a typical
+  ML experiment's compute line item.
 
 ### Logs
-- MiniMax run logs: `pipeline_logs/fix_quality_mmx_native_*.log` (overnight 2026-04-21)
-- ARK A/B/C logs: `pipeline_logs/fix_quality_ark_{glm,minimax,kimi}_*.log`
-- Audit artifacts: see `git diff pre-fix-quality-audit..HEAD`
+- MiniMax runs: `pipeline_logs/fix_quality_mmx_native_*.log` (2026-04-21 → 22)
+- ARK A/B/C: `pipeline_logs/fix_quality_ark_{glm,minimax,kimi}_*.log`
+- Pre-pipeline tag: `git tag pre-fix-quality-audit`
+- Audit diffs: `git diff pre-fix-quality-audit..HEAD -- harbor_tasks/`
