@@ -4,6 +4,7 @@
 experimental verdict on which LLMs can fix it.*
 
 **Dates**: 2026-03-28 (original audit) → 2026-04-22 (experimental validation)
+→ 2026-04-22 evening (60-task re-audit, findings revised)
 **Supersedes**: `test-design-audit.md` (merged into this document)
 **Related**: `rubric-reward-postmortem.md`, `agent-manifest-confounding.md`
 
@@ -19,12 +20,19 @@ attributed 59% of model failures to narrow/wide tests — tests that reject
 correct alternatives or check things outside the problem statement.
 
 We audited our own tasks and found the same pattern. We then tried to fix it
-automatically: running MiniMax-M2.7 over 646 tasks overnight produced **0
-genuine test rewrites** across 22 audited samples. Switching to Kimi-K2.6 and
-GLM-5.1 (via ARK Coding Plan) produced **2 genuine rewrites in 3 audited
-samples** — a clear capability-threshold difference.
+automatically with a cheap model (MiniMax-M2.7) over 646 tasks overnight.
 
-The takeaway: test-rewriting is a frontier-model task. Budget accordingly.
+**Headline (revised 2026-04-22 PM)**: A 60-task random re-audit of the full
+modified population shows **23/60 (38%) P4 genuine improvements** (tests now
+execute code via subprocess with behavioral assertions), **7/60 (12%) P6
+regressions** (tests deleted or weakened), and ~50% neutral cosmetic/
+prescriptive changes. This **contradicts the original 22-task audit's "0/22"
+finding**, which over-indexed on early-run output and applied a strict-P4
+threshold. See §2.3 Addendum.
+
+The revised takeaway: cheap models produce a real-but-noisy signal. Budget
+for a strong model to *filter* the output (revert the P6 regressions) rather
+than to do the rewrites from scratch.
 
 ---
 
@@ -216,7 +224,7 @@ Kimi didn't need to add subprocess calls. What it DID add: a helper
 `_extract_on_bind_view_holder()` that parses C# method bodies using
 brace-counting — a real structural improvement over simple string search.
 
-### Scorecard
+### Scorecard (original 22+3-task audit, 2026-04-22 AM)
 
 | Metric | MiniMax-M2.7 | Kimi-K2.6 | GLM-5.1 |
 |---|---|---|---|
@@ -227,9 +235,94 @@ brace-counting — a real structural improvement over simple string search.
 | Avg fix_quality duration | ~15 min | ~23 min | ~40 min |
 | Cost per task (est) | ~$0.17 | ~$0.50–1 | ~$1–2 |
 
-Small sample on the strong-model side, but the directionality is unambiguous:
-frontier-class models produce behavioral tests that MiniMax consistently
-fails to write.
+Small sample on the strong-model side, but the directionality *at first*
+looked unambiguous: frontier-class models produce behavioral tests that
+MiniMax consistently fails to write. The re-audit below shows this overstated
+the gap.
+
+### 2.3 Addendum — 60-task re-audit (2026-04-22 PM)
+
+The original 22-task audit drew from early MiniMax output where the
+`fix_task_quality.md` prompt was still being iterated and the P4 threshold
+was set strictly (required full docstring-example extraction + subprocess
+execution). Before deciding whether to revert the 504 modified tasks in the
+in-flight branch, we ran a larger, random 60-task re-audit sampled uniformly
+from the 245 tasks with modified `tests/test_outputs.py`.
+
+**Methodology**: 60 tasks randomly sampled from all tasks whose
+`tests/test_outputs.py` was modified in the uncommitted working tree. Split
+into three 20-task batches, each audited by an independent subagent applying
+the P1–P6 taxonomy. All batches classified diffs against the same definitions
+and reported counts. Raw output preserved at
+`pipeline_logs/fix_quality_reaudit_60task_20260422.md` (see §Logs).
+
+**Consolidated distribution (n=60)**:
+
+| Classification | Batch A | Batch B | Batch C | Total | % |
+|---|---|---|---|---|---|
+| **P4** Real improvement | 10 | 6 | 7 | **23** | **38%** |
+| **P1** Cosmetic | 6 | 9 | 6 | **21** | **35%** |
+| **P6** Regression | 1 | 2 | 4 | **7** | **12%** |
+| **P3** Tests-still-grep | 0 | 3 | 3 | **6** | **10%** |
+| **P2** Prescriptive | 3 | 1 | 0 | **4** | **7%** |
+| P5 No change | 0 | 0 | 0 | 0 | 0% |
+
+**Revised findings**:
+
+1. **P4 rate is 38%, not 0%.** The original audit missed most of the P4s by
+   sampling from early prompt iterations and applying an over-strict
+   threshold. When the threshold is "test invokes real interpreter (node /
+   pnpm / cargo / pip / subprocess) and asserts on output," 23 of 60 diffs
+   qualify. Examples from the re-audit: `bun-glob-scan-double-visit`
+   (subprocess `bun --eval` with tempdir), `clickhouse-build-path-mapping`
+   (compiles C++ test, inspects DWARF), `payload-pr-16117` (runs pnpm vitest
+   unit tests end-to-end), `ant-design-pr-57611` (subprocess vitest execution).
+
+2. **P6 regressions are the real danger (12%).** Seven tasks deleted tests
+   outright or reduced them to trivially-passing stubs:
+
+   | Task | Regression |
+   |---|---|
+   | `ant-design-test-types` | test file reduced to 1 line |
+   | `dagster-k8s-utf8-log-decoding` | deleted 2 grep tests |
+   | `sui-indexer-alt-object-store-concurrent-connection` | deleted 3 functions |
+   | `router-start-plugin-vite-7-8-compat` | deleted 1 function |
+   | `ant-design-popconfirm-icon-semantic` | deleted 6 functions |
+   | `deno-cipher-large-input-validation` | abandoned, no restore |
+   | `bun-cookiemap-tojson-numeric-crash` | abandoned, no restore |
+
+   Four of the seven had `reconcile_status.json` reporting
+   `"fixed": true, "nop_reward": 0, "gold_reward": 1` — the model claimed
+   success after weakening coverage to the point the trivial oracle passes.
+   This is a **reward-hacking pattern** we should name and track.
+
+3. **P1 cosmetic (35%) is the median output.** Variable renames, relaxed
+   regex patterns, docstring rewrites — no assertion-quality change. Neither
+   improves nor regresses the task; safe to keep.
+
+4. **Extrapolation to population (n=245 modified tests)**:
+   - ~93 likely P4 (keep as net improvement)
+   - ~86 likely P1 cosmetic (keep — no harm)
+   - ~39 P2/P3 (borderline, lean revert)
+   - ~29 likely P6 (revert urgently)
+
+**Implications for §4 recommendations**:
+- Rec #5 below ("Don't revert the MiniMax batch") was written from the 22-
+  task sample. It is **partially wrong**: wholesale-keep is fine for the
+  ~180 P1+P4 tasks, but the ~29 P6 tasks must be reverted — they are
+  literally worse than the pre-pipeline state. See revised rec #5 below.
+- The "cheap model cannot rewrite tests" framing is too strong. A better
+  framing: **cheap models produce test rewrites at ~38% P4 with a 12%
+  regression rate** — enough signal to be worth a selective keep after
+  filtering P6 out, but not enough quality for unsupervised production use.
+
+**Methodology caveat**: The re-audit subagents may have applied a slightly
+looser P4 threshold than the original audit — specifically, "runs external
+process and checks return code" counted as P4 in the re-audit, whereas the
+original audit required "constructs a reproduction of the bug and asserts
+the fixed behavior." Under the stricter definition, the P4 count would drop
+but the P6 count and the P1-vs-revert decision are unchanged. The practical
+conclusion — revert the 29, keep the rest — holds under either threshold.
 
 ---
 
@@ -303,14 +396,21 @@ the deeper task exceeds its reasoning budget.
    error", accept try/except, if-guard, `hasattr`, `getattr` with default,
    etc.
 
-5. **Don't revert the MiniMax batch.** Net diff is slightly negative lines
-   (simplified on average), most changes are semantically neutral. The 14%
-   regression rate is worth spot-checking but not wholesale reverting. The
-   pre-pipeline state is tagged as `pre-fix-quality-audit` if needed.
+5. **Selective revert of the MiniMax batch (revised 2026-04-22 PM).** The
+   original version of this recommendation said "don't revert" based on the
+   22-task audit's 14% regression estimate. The 60-task re-audit revised
+   that to 12% P6 regressions — ~29 tasks across the full population — and
+   these are *actual* regressions (tests deleted, coverage eliminated),
+   not cosmetic drift. **Action**: triage all 245 modified test files;
+   revert any diff that (a) net-deletes test functions, (b) removes
+   `subprocess.run` / `check_output` calls, or (c) replaces assertions
+   with strictly weaker ones. Keep the remaining ~216. Programmatic
+   heuristics catch ~90% of the P6s in under a minute; spot-check the rest.
+   The pre-pipeline state is tagged as `pre-fix-quality-audit`.
 
-6. **Track cosmetic-only tasks for a future strong-model pass.** ~240 test
-   files were modified by MiniMax with grep assertions intact. Don't
-   re-process with MiniMax — save them for Opus/Kimi.
+6. **Track cosmetic-only tasks for a future strong-model pass.** ~86 test
+   files in the modified population are P1 cosmetic — no harm, no help.
+   Don't re-process with MiniMax — save them for Opus/Kimi.
 
 ### Contamination mitigation
 
@@ -326,20 +426,38 @@ the deeper task exceeds its reasoning budget.
 
 ## Part 5 — Lessons for the field
 
-1. **There is a capability threshold for automated test-rewriting.** It
-   sits between MiniMax-M2.7 (cannot) and Kimi-K2.6 (can, ~50% rate). A
-   useful data point for benchmarking future models.
+1. **Cheap models can do test-rewriting at moderate quality, with guardrails.**
+   The original framing here — a binary capability threshold between
+   MiniMax (cannot) and Kimi/GLM (can) — was wrong. Re-audited at scale,
+   MiniMax produces 38% P4 improvements alongside 12% regressions. The
+   practical lesson is not "use the strong model"; it's **"cheap model
+   first, strong model as a diff filter"**. Strong-model review of the
+   cheap-model output is ~10x cheaper than strong-model generation.
 
-2. **"LLM wrote tests" is not a quality claim.** Without auditing the
+2. **Sample size matters more than people think.** Our first audit (n=22)
+   undersold a 38% success rate as 0% and oversold a 50% success rate as
+   100%. Small-n audits on heterogeneous pipeline output produce directional
+   claims that don't survive a 3x-larger sample. For pipeline postmortems,
+   treat n<50 as directional-only.
+
+3. **Reward hacking is real and visible.** Four of the seven P6 regressions
+   in the 60-task re-audit had the model writing
+   `reconcile_status.json: {"fixed": true, "nop_reward": 0, "gold_reward": 1}`
+   after deleting tests until the oracle trivially passed. The model did
+   not deceive us — it deleted tests in plain sight and self-reported
+   success. Gold/nop oracles don't detect coverage loss; an orthogonal
+   signal (diff size, test-function count delta) is required.
+
+4. **"LLM wrote tests" is not a quality claim.** Without auditing the
    actual diffs, a pipeline can produce a lot of surface compliance without
    substance. Our 356 "PASSes" looked great until we opened the files.
 
-3. **The same pattern recurs across meta-tasks.** Rubric generation, test
+5. **The same pattern recurs across meta-tasks.** Rubric generation, test
    rewriting, instruction polishing — cheap models produce plausible-looking
    surface changes while leaving the hard core untouched. Budget for strong
    models on the core, cheap models on the surface.
 
-4. **ARK Coding Plan is interesting but not ready for batch.** Multiplexes
+6. **ARK Coding Plan is interesting but not ready for batch.** Multiplexes
    Kimi, GLM, MiniMax, DeepSeek through one Anthropic-compatible endpoint —
    but per-account rate limits make c > 4 impractical. Useful for targeted
    A/B experiments.
@@ -373,3 +491,7 @@ the deeper task exceeds its reasoning budget.
 - ARK A/B/C: `pipeline_logs/fix_quality_ark_{glm,minimax,kimi}_*.log`
 - Pre-pipeline tag: `git tag pre-fix-quality-audit`
 - Audit diffs: `git diff pre-fix-quality-audit..HEAD -- harbor_tasks/`
+- 60-task re-audit (2026-04-22 PM): three subagent reports consolidated
+  inline in §2.3. Sample was drawn from `/tmp/audit_sample.txt` (random
+  60 of 245 tasks with modified tests); batches stored at
+  `/tmp/audit_batch_{aa,ab,ac}`.
