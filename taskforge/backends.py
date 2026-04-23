@@ -516,24 +516,19 @@ def backends_from_env(env_file: Path | None = None) -> list[Backend]:
             cost_tier=1,
         ))
 
-    # Kimi K2.5 via Fireworks — Anthropic-compatible API, supports subprocess
-    # DISABLED 2026-04-13: account suspended (412 PRECONDITION_FAILED)
-    # Re-enable by setting FIREWORKS_ENABLED=1 after restoring billing
-    if _get("FIREWORKS_API_KEY") and _enabled("FIREWORKS_ENABLED"):
+    # ARK Coding Plan (Volcengine) — Anthropic-compatible endpoint that
+    # multiplexes kimi-k2.6, minimax-m2.7, glm-5.1/4.7, deepseek-v3.2,
+    # doubao-seed-*. Pick model via ARK_CODING_MODEL env var.
+    # Docs: https://ark.cn-beijing.volces.com/api/coding
+    if _get("ARK_CODING_API_KEY") and _enabled("ARK_CODING_ENABLED"):
+        ark_model = _get("ARK_CODING_MODEL") or "kimi-k2.6"
         backends.append(Backend(
-            name="fireworks",
-            base_url=_get("FIREWORKS_BASE_URL") or "https://api.fireworks.ai/inference",
-            api_key=_get("FIREWORKS_API_KEY"),
-            model_map={
-                "opus": "accounts/fireworks/routers/kimi-k2p5-turbo",
-                "sonnet": "accounts/fireworks/routers/kimi-k2p5-turbo",
-                "haiku": "accounts/fireworks/routers/kimi-k2p5-turbo",
-            },
-            # Retrofit run 1: 127× 429 at max_concurrent=100 → 26× 429 at 50 —
-            # provider-side limit is tighter than our semaphore. MiniMax
-            # (listed before) takes first pick of tier-1 spillover.
-            # Override at launch time with FIREWORKS_MAX_CONCURRENT=N.
-            max_concurrent=int(_get("FIREWORKS_MAX_CONCURRENT") or 50),
+            name=f"ark-{ark_model}",
+            base_url="https://ark.cn-beijing.volces.com/api/coding",
+            api_key=_get("ARK_CODING_API_KEY"),
+            auth_type="x-api-key",  # sets both ANTHROPIC_API_KEY and ANTHROPIC_AUTH_TOKEN
+            model_map={"opus": ark_model, "sonnet": ark_model, "haiku": ark_model},
+            max_concurrent=int(_get("ARK_CODING_MAX_CONCURRENT") or 5),
             cost_tier=1,
         ))
 
@@ -550,20 +545,6 @@ def backends_from_env(env_file: Path | None = None) -> list[Backend]:
             model_map={"opus": "opus", "sonnet": "sonnet", "haiku": "haiku"},
             max_concurrent=int(_get("CHUTES_MAX_CONCURRENT") or 5),
             cost_tier=1,
-        ))
-
-    # Gemini 3.1 Pro via litellm proxy inside sandbox
-    # DISABLED as main agent — thinking tokens too expensive ($0.47/task vs $0.05 for Kimi)
-    # Gemini is used ONLY for rubric judge (1 API call/task via judge.py)
-    # To re-enable: set GEMINI_AS_AGENT=1 in env
-    if _get("GEMINI_API_KEY") and _get("GEMINI_AS_AGENT"):
-        backends.append(Backend(
-            name="gemini",
-            base_url="http://localhost:4000",  # litellm proxy started inside sandbox
-            api_key="dummy",  # litellm doesn't need auth from localhost
-            model_map={"opus": "opus", "sonnet": "sonnet", "haiku": "haiku"},
-            max_concurrent=50,
-            cost_tier=0,
         ))
 
     # Anthropic API key — direct, full API access, pay-per-token
