@@ -137,9 +137,13 @@ def test_foo():
 """
 
 BEHAVIORAL = """
+import subprocess
+
 def test_bar():
-    x = get_bar()
-    assert x == 42
+    # Real subprocess call to satisfy tests_have_subprocess rubric
+    r = subprocess.run(["python3", "-c", "print(42)"], capture_output=True)
+    assert r.returncode == 0
+    assert r.stdout.strip() == b"42"
 """
 
 MIXED_WITH_HEREDOC = '''
