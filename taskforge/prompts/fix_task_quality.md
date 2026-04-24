@@ -36,15 +36,23 @@ Focus on any rubric with `"outcome": "fail"`. Issues fall into two buckets:
 - `tests_verify_behavior_not_text` — tests use grep/string matching instead of executing code
 - `test_not_tautological` — tests pass on trivial stubs (e.g., `return None`)
 - `solution_uniqueness_guard` — tests reject valid alternative fixes (too coupled to gold patch)
+- `tests_have_subprocess` (2026-04-24) — `test_outputs.py` has zero `subprocess.run`/`Popen`/`check_output`/`os.system` calls. Must add at least one that executes the fixed code.
+- `substring_assertions_are_instructed` (2026-04-24) — tests assert on a multi-word literal that isn't in instruction.md. Either relax the assertion to regex/semantic, or add the literal to the instruction.
 
 **Instruction issues** (fix in instruction.md):
 - `behavior_in_task_description` — instruction.md omits specifics the tests check
   (file paths, function names, literal strings, error messages, schema keys)
 - `no_solution_leakage` — instruction spoils the fix (names file:line, contains patch snippet)
-- `instruction_no_hint_leakage` — instruction gives away the bug's location when
-  localization is part of the task
+- `instruction_no_path_leak` (2026-04-24, warn) — instruction names the exact file paths the gold diff modifies. Remove when localization should be part of the task; keep only if genuinely unavoidable.
+- `lint_requirement_stated` (2026-04-24, warn) — tests invoke linters/formatters (ruff, prettier, clippy, etc.) but instruction doesn't mention them. Run `scripts/fix_lint_requirement.py --tasks <name> --apply` to auto-append a `## Code Style Requirements` section.
 
-**Both** — many tasks have issues in BOTH buckets. Fix them together so they stay consistent.
+**Scaffold-integrity issues** (fix in Dockerfile / solve.sh / test.sh):
+- `oracle_no_external_fetch` — solve.sh curls/git-shows the gold from external. Inline the patch as a HEREDOC.
+- `gold_diff_non_trivial` — gold is a 1–3 line no-op; likely abandon or beef up.
+- `test_deps_in_dockerfile` — tests invoke a binary not installed in the image. Add to Dockerfile (pip for Python linters; apt for cargo/bun/etc.).
+- `reward_is_pure_pytest` — test.sh has grep gate / early exit / JSON reward / wrong path / silent `|| true`. Run `scripts/fix_reward_purity.py --tasks <name> --apply` for mechanical fixes.
+
+**Both/all** — many tasks have issues in multiple buckets. Fix them together so they stay consistent.
 
 ## Step 2: Read all task files
 

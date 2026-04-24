@@ -102,10 +102,16 @@ Replace all `{{PLACEHOLDER}}` tokens across files.
 ### 5. Fill in the files (this order)
 
 #### Dockerfile
-- Choose base image: `python:3.12-slim` / `node:22-slim` / `rust:1.85-slim`
+- Choose base image with **exact tag** (NEVER `:latest`): `python:3.12-slim` / `node:22-slim` / `rust:1.85-slim`
 - For non-Python repos, ensure `python3` is available (needed by pytest runner)
 - Clone with `--filter=blob:none` (default) or `--depth=N` for large repos
 - Install ONLY deps needed by test_outputs.py — no torch, no GPU libs
+- **Every binary `test_outputs.py` invokes via `subprocess.run([...])` must
+  be installed in the final image.** Enumerate them and verify via
+  `docker run task-env command -v <binary>`. Linters like `ruff`, `black`,
+  `mypy`, `isort`, `prettier`, `clippy`, `gofmt` are NOT implicit in most
+  base images — `pip install` or `apt-get install` them explicitly.
+  Rubric `test_deps_in_dockerfile` auto-rejects missing tools.
 - Always `mkdir -p /logs/verifier`
 
 #### solve.sh
@@ -113,6 +119,9 @@ Replace all `{{PLACEHOLDER}}` tokens across files.
 - The gold patch must modify the agent config files too (README.md, CLAUDE.md, etc.)
 - Set idempotency grep to a distinctive line from the patch
 - Ensure `cd /workspace/{{REPO_SHORT}}` at the top
+- **FORBIDDEN: external fetches.** Never `curl`/`wget`/`gh pr diff`/
+  `git show <sha>`/`git fetch pull/N` the gold patch. Inline it as a
+  HEREDOC. Rubric `oracle_no_external_fetch` auto-rejects this.
 
 #### task.toml
 - Set `name = "<repo-short>-<descriptive-slug>"` (e.g., `name = "playwright-chorecli-add-network-route"`)
@@ -216,6 +225,13 @@ def test_agents_md_documents_new_module():
 #### test.sh — DO NOT MODIFY
 
 The template test.sh is standardized boilerplate. Do not add task-specific logic here.
+
+**Hard rules (rubric `reward_is_pure_pytest`, auto-rejected):**
+- Reward MUST go to `/logs/verifier/reward.txt` as literal `0` or `1`.
+- Reward MUST derive from pytest's exit code (`$?`). No grep/awk/sed on
+  pytest output. No `exit` before the `--- LLM Judge ---` block. No
+  `|| true` on pytest or plugin installs.
+- No JSON-valued reward (`{reward: 1.0, status: "success"}`).
 
 #### eval_manifest.yaml
 

@@ -102,6 +102,15 @@ Replace all `{{PLACEHOLDER}}` tokens across files:
 - For non-Python repos, ensure `python3` is available (needed by pytest runner)
 - Clone with `--filter=blob:none` (default) or `--depth=N` for large repos
 - Install ONLY deps needed by test_outputs.py — no torch, no GPU libs
+- **Enumerate every binary test_outputs.py calls via `subprocess.run([...])`
+  and verify it is installed in the final image.** Check via `docker run
+  task-env command -v <binary>`. Missing tools make tests error with
+  `FileNotFoundError` and look like an agent failure. Rubric
+  `test_deps_in_dockerfile` auto-rejects scaffolds with missing tools.
+  Base-image implicits are fine: `FROM node:*` includes npm/npx/pnpm/yarn;
+  `FROM rust:*` includes cargo/clippy/rustfmt; `FROM python:*` includes
+  python/pip. Linters (`ruff`, `black`, `mypy`, `isort`, etc.) are NOT
+  implicit and must be explicitly `pip install`ed.
 - **Do NOT** `COPY solution/` or `COPY tests/` — harness mounts them externally. Including them leaks the answer.
 - Always `mkdir -p /logs/verifier`
 
@@ -109,6 +118,17 @@ Replace all `{{PLACEHOLDER}}` tokens across files:
 - Paste the gold patch into the HEREDOC (single-quoted `<<'PATCH'`)
 - Set idempotency grep to a distinctive line from the patch
 - Ensure `cd /workspace/{{REPO_SHORT}}` at the top
+- **FORBIDDEN: fetching gold from an external source.** Never use any of
+  these in solve.sh:
+    - `curl … github.com/…/pull/N.diff` or `…/N.patch`
+    - `wget … github.com`
+    - `gh pr diff`
+    - `git show <sha>` of the merge commit
+    - `git fetch … pull/N` + `git cherry-pick`
+    - `git apply https://…`
+  These make the oracle trivially game-able (an agent with network could do
+  the same) and are auto-rejected by `taskforge.task_lint.lint_solve_sh`
+  via rubric `oracle_no_external_fetch`.
 
 #### task.toml
 - Set `name = "<repo-short>-<descriptive-slug>"` (e.g., `name = "ruff-dedent-formfeed-strip"`)
@@ -163,6 +183,21 @@ def test_build():
 
 The template test.sh is standardized boilerplate. It installs pytest, runs test_outputs.py, and writes binary reward. Do not add task-specific logic here.
 
+**Hard rules enforced by `reward_is_pure_pytest` rubric (auto-rejected):**
+- Reward MUST be written to `/logs/verifier/reward.txt` — never `reward.json`,
+  `reward.bin`, `/tests/reward`, or any other path. Harbor only reads `.txt`.
+- Reward value MUST be the literal string `0` or `1` — never a JSON object
+  like `{"reward": 1.0, "status": "success"}`.
+- Reward MUST come from pytest's exit code directly: `if [ $? -eq 0 ]; then
+  echo 1 > /logs/verifier/reward.txt; else echo 0 > /logs/verifier/reward.txt; fi`.
+  Do NOT pipe pytest output to `grep/awk/sed` and decide reward from matched
+  strings. Output text can contain "failed" in non-failure contexts; only the
+  exit code is trustworthy.
+- NO `exit` statement before the LLM-judge block (the `--- LLM Judge ---`
+  section). An early exit makes the judge unreachable dead code.
+- NO `|| true` on pytest / pytest-plugin installs. If pytest doesn't install,
+  the task is broken — surface it by failing loud, not silently.
+
 #### eval_manifest.yaml
 
 - Fill in source PR metadata
@@ -186,7 +221,24 @@ By now you know exactly what test_outputs.py checks. The instruction MUST descri
 
 **Checklist before finishing:**
 - [ ] Every literal/SHA/path/name your tests assert on is in the instruction OR cited to a URL
+- [ ] **Every multi-word literal tests assert on MUST appear verbatim in
+      instruction.md.** Example failure: test asserts `"is larger than 5 MB.
+      Large files should not be committed to git"` (exact sentence with
+      period) but instruction only says "warning must mention size limit
+      and remediation" — Opus writes `"…5 MB; download…"` and fails.
+      Rubric `substring_assertions_are_instructed` flags this.
 - [ ] The *fix* is not named (no `change X to Y`, no `replace foo() with bar()`, no file:line reference to the broken line unless localization is genuinely part of the task)
+- [ ] **Do not cite the exact paths of gold-diff code files** unless
+      localization is genuinely impossible otherwise. Describing symptoms
+      by input/output is preferable. Naming paths makes localization
+      trivial and reduces the task's difficulty signal. Rubric
+      `instruction_no_path_leak` tracks this (as a warning).
+- [ ] **If tests invoke linters/formatters (ruff, black, prettier, eslint,
+      clippy, cargo fmt, gofmt, mypy, etc.), add a `## Code Style
+      Requirements` section to instruction.md listing them.** Otherwise
+      agents write semantically-correct fixes that fail on style. Rubric
+      `lint_requirement_stated` auto-flags this; `scripts/fix_lint_requirement.py`
+      can auto-append the section.
 - [ ] Structured outputs (JSON/CSV): exact schema keys/types documented
 - [ ] No PR-body boilerplate, no "this PR fixes…" phrasing
 - [ ] HTML comment guidelines from the template deleted
@@ -267,12 +319,20 @@ After Docker validation passes, verify **every** item below. If any fails, fix a
 - [ ] **test_not_tautological**: no f2p passes on `return None` / empty function / stub
 - [ ] **pass_to_pass_coverage**: ≥1 p2p from repo CI/CD
 - [ ] **no_hidden_solution_artifacts**: `COPY solution/` and `COPY tests/` NOT in Dockerfile; `.dockerignore` covers them (Harbor's runtime already hides solution/ at agent-run time — this check guards against it being baked into the image)
+- [ ] **oracle_no_external_fetch** (new 2026-04-24): solve.sh does NOT curl/wget/git-show/gh-pr-diff the gold patch. Patch is inlined as a HEREDOC.
+- [ ] **tests_have_subprocess** (new 2026-04-24): `tests/test_outputs.py` contains at least one `subprocess.run(...)` / `check_output(...)` / `Popen(...)` call that executes real code.
+- [ ] **gold_diff_non_trivial** (new 2026-04-24): gold patch is not a 1–3 line no-op (e.g., method rename with no semantic change) or a pure docs/CHANGELOG edit.
+- [ ] **reward_is_pure_pytest** (new 2026-04-24): test.sh writes reward from `$?` of pytest to `/logs/verifier/reward.txt` as literal `0`/`1`; no grep gates, no early exit, no silent `|| true` on pytest install.
+- [ ] **test_deps_in_dockerfile** (new 2026-04-24): every binary tests invoke via subprocess is installed in the Dockerfile (base-image implicits accepted).
+- [ ] **every_gold_test_passes** (new 2026-04-24): on the gold run, EVERY individual pytest test passes (not just aggregate reward=1). Read `/logs/verifier/ctrf.json` and verify no `"status": "failed"` entries.
 
 **Tier B — important:**
 - [ ] **dockerfile_determinism**: base image has a version tag (NEVER `:latest`); no `curl | bash` of moving target
 - [ ] **no_network_during_tests**: test.sh has no `pip install`, `apt-get install`, `npm install`, or `curl` at test time
 - [ ] **pinned_dependencies**: every `pip install` has `==X.Y.Z`
 - [ ] **f2p_p2p_classification_correct**: all f2p actually fail at base, all p2p actually pass at base
+- [ ] **lint_requirement_stated** (new 2026-04-24): if tests invoke linters/formatters, instruction.md has a "## Code Style Requirements" section naming them.
+- [ ] **instruction_no_path_leak** (new 2026-04-24, warn-only): instruction avoids citing exact gold-diff file paths when localization should be part of the task's difficulty.
 
 **Anti-pattern scan** (from §4 above): none of the 10 anti-patterns present.
 
