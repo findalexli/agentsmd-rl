@@ -392,6 +392,12 @@ def lint_manifest(task_dir: Path) -> list[Finding]:
             detail=f"yaml parse error: {e}",
         )]
 
+    if not isinstance(m, dict):
+        return [Finding(
+            rubric="f2p_p2p_classification_correct", tier="B", severity="fail",
+            path="eval_manifest.yaml", line=0, snippet=str(type(m).__name__),
+            detail=f"eval_manifest.yaml parses as {type(m).__name__}, expected dict",
+        )]
     checks = m.get("checks", []) or []
     f2p = [c for c in checks if c.get("type") == "fail_to_pass"]
     p2p = [c for c in checks if c.get("type") == "pass_to_pass"]
