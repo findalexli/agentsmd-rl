@@ -342,6 +342,53 @@ RUBRICS: tuple[Rubric, ...] = (
         ),
     ),
     Rubric(
+        name="every_gold_test_passes",
+        tier="A",
+        description=(
+            "When the gold solution is applied, EVERY individual pytest test must "
+            "pass. The aggregate reward check (nop=0, gold=1) isn't enough — a "
+            "task can have gold-reward 1 via a weakened test.sh while specific "
+            "tests inside have bugs (calling scripts with wrong args, asserting "
+            "on punctuation that gold doesn't match, etc)."
+        ),
+        artifacts=("tests/test_outputs.py", "solution/solve.sh"),
+        verification="programmatic",
+        source=(
+            "2026-04-24 scaffold audit: ruff-primer passed oracle but had 1 "
+            "broken test (test calls script with wrong arg count, asserts on "
+            "error msg that never appears) — no correct implementation could "
+            "pass it"
+        ),
+        failure_example=(
+            "ruff-primer-setup-script-claude-md: test_script_rejects_unknown_project "
+            "calls script with 1 arg, script requires 2, argparse exits 'error: "
+            "required: directory' but test asserts 'not found' in stderr"
+        ),
+    ),
+    Rubric(
+        name="reward_is_pure_pytest",
+        tier="A",
+        description=(
+            "tests/test.sh must compute reward from pytest's exit code ALONE and "
+            "write it to /logs/verifier/reward.txt. No grep-on-output gates, no "
+            "early `exit` that kills the judge block, no reward in alternate paths "
+            "(reward.json, /tests/reward, etc.), no `|| true` masking silent "
+            "dependency install failures."
+        ),
+        artifacts=("tests/test.sh",),
+        verification="programmatic",
+        source=(
+            "2026-04-24 scaffold audit: 4/9 broken eval tasks had reward computed "
+            "outside pytest (grep gates, early exits, wrong reward path)"
+        ),
+        failure_example=(
+            "airflow-migration-0097 writes to /logs/verifier/reward (no .txt) after "
+            "greping pytest output for 'failed|error'; airflow-git-hook-security "
+            "writes reward.json (wrong path+format) with early `exit $exit_code` "
+            "that makes the judge block unreachable"
+        ),
+    ),
+    Rubric(
         name="instruction_no_path_leak",
         tier="A",
         description=(

@@ -11,6 +11,7 @@ with a concrete pointer (file, line, snippet) so downstream steps can repair.
 """
 from __future__ import annotations
 
+import json
 import re
 from dataclasses import dataclass
 from pathlib import Path
@@ -179,7 +180,115 @@ def lint_test_sh(task_dir: Path) -> list[Finding]:
                 snippet=line_text.strip()[:100],
                 detail=f"network call at test time: `{m.group(1).strip()}`",
             ))
+
+    # ─── reward_is_pure_pytest (Change 1) ───────────────────────────────────
+    # The reward MUST be pytest's exit code, written to /logs/verifier/reward.txt,
+    # with value literally "0" or "1". Anything else — grep gates, early exits,
+    # wrong path, wrong format — makes the oracle unreliable.
+    findings.extend(_lint_reward_computation(text))
+
     return findings
+
+
+# Wrong reward-file paths or formats (must be /logs/verifier/reward.txt with "0"/"1")
+_REWARD_WRONG_PATH_RE = re.compile(
+    r"/logs/verifier/reward(?!\.txt\b)(?:\.json|\.yaml|\.yml|\b)",
+)
+# Grep/awk/sed deciding reward based on pytest output text
+_REWARD_GREP_GATE_RE = re.compile(
+    r"(?:pytest|python\s+-m\s+pytest|python3?\s+-m\s+pytest)[^\n|]*\|[^\n]*"
+    r"(?:grep|awk|sed|egrep|fgrep)\b",
+    re.IGNORECASE,
+)
+# Silent-failure pip/apt install on critical deps (|| true catches pip ENOTFOUND etc.)
+_SILENT_INSTALL_RE = re.compile(
+    r"(?:pip\d?\s+install|apt(?:-get)?\s+install|npm\s+install)[^\n]*\|\|\s*true\b",
+    re.IGNORECASE,
+)
+# Reward written with JSON-ish content ({reward: 1.0}, {"reward": 1})
+_REWARD_JSON_VALUE_RE = re.compile(
+    r"echo\s+['\"]\s*\{[^}\n]*(?:reward|status)[^}\n]*\}",
+    re.IGNORECASE,
+)
+# Early `exit` that could terminate before the judge block runs.
+# Allowed: `exit 0` / `exit 1` at the very end (last non-blank/non-comment line).
+_EXIT_STMT_RE = re.compile(r"^\s*exit\s+(?:\$\?|\$exit_code|\$\{[^}]+\}|\d+|\$\w+)\s*$",
+                           re.MULTILINE)
+
+
+def _lint_reward_computation(text: str) -> list[Finding]:
+    """Enforce reward_is_pure_pytest rubric (2026-04-24 Change 1)."""
+    out: list[Finding] = []
+
+    # 1. Wrong reward-file path or missing .txt
+    for m in _REWARD_WRONG_PATH_RE.finditer(text):
+        # Only flag if this is actually on a write line (echo/cat/tee into the path)
+        line_start = text.rfind("\n", 0, m.start()) + 1
+        line_end = text.find("\n", m.end())
+        line = text[line_start:line_end if line_end != -1 else len(text)]
+        if any(tok in line for tok in ("echo ", "cat ", "tee ", "printf ", "cp ", "> ")):
+            ln = text[: m.start()].count("\n") + 1
+            out.append(Finding(
+                rubric="reward_is_pure_pytest", tier="A", severity="fail",
+                path="tests/test.sh", line=ln, snippet=line.strip()[:120],
+                detail="reward written to non-canonical path — Harbor only reads /logs/verifier/reward.txt",
+            ))
+            break  # one hit is enough
+
+    # 2. Grep/awk/sed gate on pytest output that decides reward
+    m = _REWARD_GREP_GATE_RE.search(text)
+    if m:
+        ln = text[: m.start()].count("\n") + 1
+        out.append(Finding(
+            rubric="reward_is_pure_pytest", tier="A", severity="fail",
+            path="tests/test.sh", line=ln, snippet=m.group(0)[:120],
+            detail="pytest output piped to grep/awk/sed — reward must come from pytest exit code, not output text",
+        ))
+
+    # 3. Reward echoed as JSON (should be literal "0" or "1")
+    m = _REWARD_JSON_VALUE_RE.search(text)
+    if m:
+        ln = text[: m.start()].count("\n") + 1
+        out.append(Finding(
+            rubric="reward_is_pure_pytest", tier="A", severity="fail",
+            path="tests/test.sh", line=ln, snippet=m.group(0)[:120],
+            detail='reward must be literal "0" or "1", not a JSON object',
+        ))
+
+    # 4. `|| true` on install of pytest/plugin/core deps — silent failure
+    for m in _SILENT_INSTALL_RE.finditer(text):
+        ln = text[: m.start()].count("\n") + 1
+        snippet = m.group(0).lower()
+        # Allow `|| true` on OPTIONAL deps (pyyaml for judge). Flag on pytest + plugins.
+        if any(dep in snippet for dep in ("pytest", "pytest-json-ctrf", "pytest-json-report")):
+            out.append(Finding(
+                rubric="reward_is_pure_pytest", tier="A", severity="fail",
+                path="tests/test.sh", line=ln, snippet=m.group(0)[:120],
+                detail="critical pytest/plugin install with `|| true` — silent dep failure makes reward unreliable",
+            ))
+
+    # 5. Early `exit` that prevents judge block from running.
+    # Find all exit statements. Find the line where the judge block starts
+    # ("--- LLM Judge ---" or "standalone_judge.py" first appears). If any
+    # `exit` appears BEFORE that line, it short-circuits the judge.
+    judge_marker = text.find("LLM Judge")
+    if judge_marker < 0:
+        judge_marker = text.find("standalone_judge.py")
+    if judge_marker > 0:
+        judge_line = text[:judge_marker].count("\n") + 1
+        for m in _EXIT_STMT_RE.finditer(text):
+            ln = text[: m.start()].count("\n") + 1
+            if ln < judge_line:
+                out.append(Finding(
+                    rubric="reward_is_pure_pytest", tier="A", severity="fail",
+                    path="tests/test.sh", line=ln, snippet=m.group(0).strip()[:100],
+                    detail=(
+                        f"`exit` at line {ln} terminates script before LLM judge "
+                        f"block at line {judge_line} — judge never runs"
+                    ),
+                ))
+                break
+    return out
 
 
 # ═════════════════════════════ test_outputs.py checks ═════════════════════════
@@ -441,6 +550,45 @@ _SUBPROCESS_CALL_RE = re.compile(
     r"\b(?:subprocess\.run|subprocess\.check_output|subprocess\.Popen|"
     r"os\.system|os\.popen|pexpect\.spawn)\s*\(",
 )
+
+
+# ══════════════════════ Post-validation pytest-pass check ════════════════════
+
+def check_all_gold_tests_passed(ctrf_path: Path) -> list[Finding]:
+    """Post-validation gate (Change 4): every individual pytest test in the
+    gold run must PASS. Reads a CTRF JSON file (what `pytest --ctrf <path>`
+    emits) and returns a Finding per failed test.
+
+    Call this from e2b_worker.node_validate_and_fix AFTER the gold trial
+    completes, passing the path to that trial's /logs/verifier/ctrf.json.
+
+    Scaffold-time: if any test failed in the gold run, the task is broken
+    (test has a bug, or gold doesn't cover what the test demands) — quarantine.
+
+    Returns empty list if ctrf.json is missing or all tests passed.
+    """
+    if not ctrf_path.exists():
+        return []
+    try:
+        data = json.loads(ctrf_path.read_text())
+    except Exception:
+        return []
+    # CTRF schema: results.tests = [{"name": ..., "status": "passed"|"failed"|"skipped", ...}]
+    tests = (data.get("results") or {}).get("tests") or []
+    out: list[Finding] = []
+    for t in tests:
+        if t.get("status") == "failed":
+            out.append(Finding(
+                rubric="every_gold_test_passes", tier="A", severity="fail",
+                path="tests/test_outputs.py", line=0,
+                snippet=t.get("name", "<unknown>")[:100],
+                detail=(
+                    f"gold solve produced FAILED test `{t.get('name')}` — "
+                    f"either the test has a bug (wrong invocation, brittle "
+                    f"assertion) or gold doesn't cover what the test demands"
+                ),
+            ))
+    return out
 
 
 def lint_tests_subprocess(task_dir: Path) -> list[Finding]:
