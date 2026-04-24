@@ -21,7 +21,7 @@ else
     printf x00x00x00x00 > /logs/verifier/reward.bin
     echo "0" > /logs/verifier/reward.txt
     echo "Some tests failed."
-    exit 1
+    # exit 1   # auto-disabled (prevented judge block from running)
 fi
 
 # --- LLM Judge (Track 3 + Track 4) ---

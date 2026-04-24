@@ -20,9 +20,9 @@ fi
 
 # Exit with the original exit code
 if echo "$output" | grep -q "FAILED"; then
-    exit 1
+    :   # exit 1 auto-disabled — judge block below must still run
 else
-    exit 0
+    :   # exit 0 auto-disabled — judge block below must still run
 fi
 
 # --- LLM Judge (Track 3 + Track 4) ---

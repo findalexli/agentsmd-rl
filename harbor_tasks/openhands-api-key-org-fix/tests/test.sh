@@ -14,7 +14,7 @@ pytest test_outputs.py -v --tb=short 2>&1 | tee /logs/verifier/test_output.log |
 if grep -q "FAILED" /logs/verifier/test_output.log; then
     echo "0" > /logs/verifier/reward.txt
     echo "Tests FAILED"
-    exit 1
+    # exit 1   # auto-disabled (prevented judge block from running)
 elif grep -q "passed" /logs/verifier/test_output.log; then
     # Count passed vs total
     passed=$(grep -oP '\d+ passed' /logs/verifier/test_output.log | grep -oP '\d+' | head -1)
@@ -23,18 +23,18 @@ elif grep -q "passed" /logs/verifier/test_output.log; then
     if [ -z "$passed" ] || [ -z "$total" ]; then
         echo "0" > /logs/verifier/reward.txt
         echo "Could not determine test results"
-        exit 1
+        # exit 1   # auto-disabled (prevented judge block from running)
     fi
 
     # Calculate reward as passed/total
     reward=$(python3 -c "print($passed / $total)")
     echo "$reward" > /logs/verifier/reward.txt
     echo "Tests PASSED: $passed/$total (reward: $reward)"
-    exit 0
+    # exit 0   # auto-disabled (prevented judge block from running)
 else
     echo "0" > /logs/verifier/reward.txt
     echo "No test results found"
-    exit 1
+    # exit 1   # auto-disabled (prevented judge block from running)
 fi
 
 # --- LLM Judge (Track 3 + Track 4) ---

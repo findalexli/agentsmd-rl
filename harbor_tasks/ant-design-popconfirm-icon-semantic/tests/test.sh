@@ -11,7 +11,7 @@ if python3 -m pytest /tests/test_outputs.py -v 2>&1; then
 else
     echo "0" > /logs/verifier/reward.txt
     echo "FAILURE: Some tests failed"
-    exit 1
+    # exit 1   # auto-disabled (prevented judge block from running)
 fi
 
 # --- LLM Judge (Track 3 + Track 4) ---

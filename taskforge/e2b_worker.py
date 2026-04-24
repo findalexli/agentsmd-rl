@@ -1400,7 +1400,7 @@ async def node_validate_docker_only(
     await run_cmd(sandbox, "docker rm task-solved")
 
     # GOLD test (fix applied, expect reward=1)
-    await run_cmd(sandbox, "rm -f /logs/verifier/reward.txt")
+    await run_cmd(sandbox, "rm -f /logs/verifier/reward.txt /logs/verifier/ctrf.json")
     code, stdout, stderr = await run_cmd(
         sandbox,
         "docker run --rm "
@@ -1409,6 +1409,32 @@ async def node_validate_docker_only(
         "task-env-gold bash /tests/test.sh",
     )
     gold_reward = await _read_reward(sandbox)
+
+    # Change 4 (every_gold_test_passes): when ctrf.json is present, verify
+    # EVERY individual test passed on gold, not just the aggregate reward.
+    # Catches cases where test.sh is weakened / has bugs such that it writes
+    # reward=1 despite some pytest tests failing inside.
+    if gold_reward == 1.0:
+        code, ctrf_txt, _ = await run_cmd(
+            sandbox, "cat /logs/verifier/ctrf.json 2>/dev/null || true", timeout=5,
+        )
+        if ctrf_txt.strip().startswith("{"):
+            try:
+                import json as _json
+                data = _json.loads(ctrf_txt)
+                tests = (data.get("results") or {}).get("tests") or []
+                failed_names = [
+                    t.get("name", "?") for t in tests if t.get("status") == "failed"
+                ]
+                if failed_names:
+                    # Gold claims pass but ctrf reveals individual failures → broken scaffold
+                    return nop_reward, -1, (
+                        f"gold reward=1 but ctrf.json shows {len(failed_names)} "
+                        f"failed test(s): {failed_names[:3]} — scaffold bug "
+                        f"(brittle test or weakened test.sh)"
+                    )
+            except Exception:
+                pass  # malformed ctrf — don't over-reject
 
     return nop_reward, gold_reward, ""
 

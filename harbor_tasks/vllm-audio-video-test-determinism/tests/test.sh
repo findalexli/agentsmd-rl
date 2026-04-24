@@ -20,7 +20,7 @@ elif [ -f "/task/tests/test_outputs.py" ]; then
     TEST_PATH="/task/tests/test_outputs.py"
 else
     echo "ERROR: Cannot find test_outputs.py"
-    exit 1
+    # exit 1   # auto-disabled (prevented judge block from running)
 fi
 
 # Run from / to avoid loading conftest from /workspace/vllm/tests

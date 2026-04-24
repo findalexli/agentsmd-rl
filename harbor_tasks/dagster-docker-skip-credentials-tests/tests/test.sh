@@ -7,6 +7,7 @@ mkdir -p /logs/verifier
 # Install required dependencies for conftest.py
 pip install boto3 -q
 pip install /workspace/dagster/python_modules/dagster-test -q 2>/dev/null || true
+pip install /workspace/dagster/python_modules/libraries/dagster-postgres -q 2>/dev/null || true
 
 # Install pytest if not already installed
 pip install pytest -q

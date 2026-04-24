@@ -7,6 +7,9 @@ mkdir -p /logs/verifier
 # Change to the code directory where tests run
 cd /workspace/storybook/code
 
+# Compile status.tsx to JS so Python tests can require() it via node
+npx esbuild     core/src/manager/utils/status.tsx     --bundle     --platform=node     --format=cjs     --outfile=/tmp/status.compiled.js     --external:storybook/*     --external:@storybook/*     --external:react     --external:react-dom     --external:memoizerific     --external:polished     2>/dev/null || true
+
 # Install pytest if not already available
 pip3 install pytest --break-system-packages 2>/dev/null || pip3 install pytest --break-system-packages || true
 

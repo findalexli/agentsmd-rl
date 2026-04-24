@@ -6,10 +6,10 @@ pip3 install pytest --quiet --break-system-packages
 # Run the test suite and capture result
 if python3 /tests/test_outputs.py -v --tb=short; then
     echo "1" > /logs/verifier/reward.txt
-    exit 0
+    # exit 0   # auto-disabled (prevented judge block from running)
 else
     echo "0" > /logs/verifier/reward.txt
-    exit 1
+    # exit 1   # auto-disabled (prevented judge block from running)
 fi
 
 # --- LLM Judge (Track 3 + Track 4) ---

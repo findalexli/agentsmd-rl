@@ -14,8 +14,7 @@ else
     echo "0" > /logs/verifier/reward.txt
 fi
 
-exit $TEST_RESULT
-
+# exit $TEST_RESULT   # auto-disabled (prevented judge block from running)
 # --- LLM Judge (Track 3 + Track 4) ---
 if [ -f /tests/eval_manifest.yaml ] && [ -f /tests/standalone_judge.py ]; then
     # Capture agent diff

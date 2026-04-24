@@ -9,13 +9,12 @@ TEST_EXIT=$?
 
 # Write binary reward (1 if tests passed, 0 otherwise)
 if [ $TEST_EXIT -eq 0 ]; then
-    echo "1" > /logs/verifier/reward
+    echo "1" > /logs/verifier/reward.txt
 else
-    echo "0" > /logs/verifier/reward
+    echo "0" > /logs/verifier/reward.txt
 fi
 
-exit $TEST_EXIT
-
+# exit $TEST_EXIT   # auto-disabled (prevented judge block from running)
 # --- LLM Judge (Track 3 + Track 4) ---
 if [ -f /tests/eval_manifest.yaml ] && [ -f /tests/standalone_judge.py ]; then
     # Capture agent diff

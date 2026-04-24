@@ -10,10 +10,10 @@ python3 -m pytest test_outputs.py -v --tb=short 2>&1 | tee /logs/verifier/test_o
 
 # Write binary reward file (0 or 1 based on test success)
 if [ ${PIPESTATUS[0]} -eq 0 ]; then
-    echo "1" > /logs/verifier/reward
+    echo "1" > /logs/verifier/reward.txt
     echo "Tests passed"
 else
-    echo "0" > /logs/verifier/reward
+    echo "0" > /logs/verifier/reward.txt
     echo "Tests failed"
 fi
 

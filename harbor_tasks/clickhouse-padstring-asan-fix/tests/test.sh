@@ -14,15 +14,14 @@ python3 -m pytest test_outputs.py -v --tb=short 2>&1 | tee /logs/verifier/test_o
 EXIT_CODE=${PIPESTATUS[0]}
 
 if [ $EXIT_CODE -eq 0 ]; then
-    echo "1" > /logs/verifier/reward
+    echo "1" > /logs/verifier/reward.txt
     echo "=== All tests passed ==="
 else
-    echo "0" > /logs/verifier/reward
+    echo "0" > /logs/verifier/reward.txt
     echo "=== Some tests failed ==="
 fi
 
-exit $EXIT_CODE
-
+# exit $EXIT_CODE   # auto-disabled (prevented judge block from running)
 # --- LLM Judge (Track 3 + Track 4) ---
 if [ -f /tests/eval_manifest.yaml ] && [ -f /tests/standalone_judge.py ]; then
     # Capture agent diff

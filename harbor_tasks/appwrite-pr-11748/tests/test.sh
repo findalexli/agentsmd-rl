@@ -14,10 +14,10 @@ pytest test_outputs.py -v --tb=short 2>&1 | tee /logs/verifier/test_output.log
 # Check result and write reward
 if [ ${PIPESTATUS[0]} -eq 0 ]; then
     echo '{"reward": 1, "message": "All tests passed"}' > /logs/verifier/reward.json
-    exit 0
+    # exit 0   # auto-disabled (prevented judge block from running)
 else
     echo "{\"reward\": 0, \"message\": \"Some tests failed\"}" > /logs/verifier/reward.json
-    exit 1
+    # exit 1   # auto-disabled (prevented judge block from running)
 fi
 
 # --- LLM Judge (Track 3 + Track 4) ---

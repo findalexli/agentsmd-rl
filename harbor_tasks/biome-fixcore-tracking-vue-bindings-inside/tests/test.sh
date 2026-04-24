@@ -3,6 +3,15 @@
 # All test logic lives in test_outputs.py.
 set +e
 
+# Install Rust if not present (needed for cargo build/check)
+if ! command -v cargo &>/dev/null; then
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable 2>/dev/null
+    export PATH="$HOME/.cargo/bin:$PATH"
+fi
+
+# Install C compiler (needed by Rust linker)
+apt-get update -qq && apt-get install -y -qq gcc build-essential >/dev/null 2>&1 || true
+
 # Ensure python3 + pip + pytest are available on any base image
 if ! python3 -c "import pytest" 2>/dev/null; then
     # Install python3 + pip if missing (node:slim, rust:slim)

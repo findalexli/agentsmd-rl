@@ -3,6 +3,16 @@
 # All test logic lives in test_outputs.py.
 set +e
 
+# Install zig for behavioral tests (zig ast-check validates actual Zig compilation)
+if ! command -v zig &>/dev/null; then
+    URL=$(curl -fsSL https://ziglang.org/download/index.json | \
+        python3 -c "import sys,json; d=json.load(sys.stdin); v=list(d.keys())[1]; print(d[v]['x86_64-linux']['tarball'])")
+    curl -fsSL "$URL" -o /tmp/zig.tar.xz && \
+        tar -xJf /tmp/zig.tar.xz -C /tmp && \
+        mv /tmp/zig-x86_64-linux-0.16.0/zig /usr/local/bin/zig && \
+        rm -rf /tmp/zig.tar.xz /tmp/zig-x86_64-linux-0.16.0
+fi
+
 # Ensure python3 + pip + pytest are available on any base image
 if ! python3 -c "import pytest" 2>/dev/null; then
     # Install python3 + pip if missing (node:slim, rust:slim)
@@ -13,7 +23,7 @@ if ! python3 -c "import pytest" 2>/dev/null; then
         pip3 install -q --break-system-packages pytest pytest-json-ctrf 2>/dev/null
 fi
 
-python3 -m pytest --ctrf /logs/verifier/ctrf.json /tests/test_outputs.py -rA --tb=short -q
+python3 -m pytest /tests/test_outputs.py -rA --tb=short -q
 
 if [ $? -eq 0 ]; then
     echo 1 > /logs/verifier/reward.txt

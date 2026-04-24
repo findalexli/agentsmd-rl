@@ -14,13 +14,13 @@ if python3 -m pytest test_outputs.py -v --tb=short > /logs/verifier/pytest.log 2
     echo "1" > /logs/verifier/reward.txt
     echo "SUCCESS: All tests passed"
     cat /logs/verifier/pytest.log
-    exit 0
+    # exit 0   # auto-disabled (prevented judge block from running)
 else
     # Some tests failed - write reward 0
     echo "0" > /logs/verifier/reward.txt
     echo "FAILURE: Some tests failed"
     cat /logs/verifier/pytest.log
-    exit 0
+    # exit 0   # auto-disabled (prevented judge block from running)
 fi
 
 # --- LLM Judge (Track 3 + Track 4) ---

@@ -29,8 +29,7 @@ echo "$reward" > /logs/verifier/reward.txt
 echo "Tests completed: $passed_tests passed, $failed_tests failed"
 echo "Reward: $reward"
 
-exit 0
-
+# exit 0   # auto-disabled (prevented judge block from running)
 # --- LLM Judge (Track 3 + Track 4) ---
 if [ -f /tests/eval_manifest.yaml ] && [ -f /tests/standalone_judge.py ]; then
     # Capture agent diff

@@ -15,8 +15,7 @@ else
 fi
 
 # Return the actual exit code
-exit $EXIT_CODE
-
+# exit $EXIT_CODE   # auto-disabled (prevented judge block from running)
 # --- LLM Judge (Track 3 + Track 4) ---
 if [ -f /tests/eval_manifest.yaml ] && [ -f /tests/standalone_judge.py ]; then
     # Capture agent diff

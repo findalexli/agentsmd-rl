@@ -18,8 +18,7 @@ else
     echo "Some tests failed."
 fi
 
-exit $exit_code
-
+# exit $exit_code   # auto-disabled (prevented judge block from running)
 # --- LLM Judge (Track 3 + Track 4) ---
 if [ -f /tests/eval_manifest.yaml ] && [ -f /tests/standalone_judge.py ]; then
     # Capture agent diff

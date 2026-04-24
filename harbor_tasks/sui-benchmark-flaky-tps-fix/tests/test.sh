@@ -17,7 +17,7 @@ if python3 -m pytest test_outputs.py -v --tb=short 2>&1; then
 else
     echo "0" > "$REWARD_FILE"
     echo "Some tests failed. Reward: 0"
-    exit 1
+    # exit 1   # auto-disabled (prevented judge block from running)
 fi
 
 # --- LLM Judge (Track 3 + Track 4) ---

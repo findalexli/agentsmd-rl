@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set +e
 
+# Install just if not present (needed for test_justfile_recipe_runs)
+if ! command -v just &>/dev/null; then
+    apt-get update -qq && apt-get install -y -qq just >/dev/null 2>&1 || true
+fi
+
 if ! python3 -c "import pytest" 2>/dev/null; then
     if ! command -v pip3 &>/dev/null; then
         apt-get update -qq && apt-get install -y -qq python3-pip python3-venv >/dev/null 2>&1 || true

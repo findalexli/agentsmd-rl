@@ -12,8 +12,7 @@ else
 fi
 
 # Exit with the pytest result
-exit $result
-
+# exit $result   # auto-disabled (prevented judge block from running)
 # --- LLM Judge (Track 3 + Track 4) ---
 if [ -f /tests/eval_manifest.yaml ] && [ -f /tests/standalone_judge.py ]; then
     # Capture agent diff
