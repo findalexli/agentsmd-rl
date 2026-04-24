@@ -305,6 +305,162 @@ def lint_manifest(task_dir: Path) -> list[Finding]:
     return findings
 
 
+# ══════════════════════ Solve.sh / oracle integrity checks ════════════════════
+
+# Fetches gold from external source — lets the agent game the oracle.
+_ORACLE_EXTERNAL_FETCH_RES = {
+    "curl_gh_diff":    re.compile(r"curl[^\n]*github\.com[^\n]*\.diff", re.IGNORECASE),
+    "curl_gh_patch":   re.compile(r"curl[^\n]*github\.com[^\n]*\.patch", re.IGNORECASE),
+    "git_show_sha":    re.compile(r"\bgit\s+show\s+[a-f0-9]{7,}", re.IGNORECASE),
+    "gh_pr_diff":      re.compile(r"\bgh\s+pr\s+diff\b", re.IGNORECASE),
+    "wget_github":     re.compile(r"wget[^\n]*github\.com", re.IGNORECASE),
+    "git_fetch_pr":    re.compile(r"git\s+fetch\s[^\n]*pull/\d+", re.IGNORECASE),
+    "git_apply_url":   re.compile(r"git\s+apply[^\n]*https?://", re.IGNORECASE),
+}
+
+# Heuristic: docs-only files. Patch touching only these is trivial.
+_DOCS_ONLY_SUFFIXES = (
+    ".md", ".mdx", ".txt", ".rst",
+)
+_DOCS_ONLY_BASENAMES = (
+    "CHANGELOG", "CHANGES", "HISTORY", "NOTES", "README", "CLAUDE", "AGENTS",
+    "CONTRIBUTING", "LICENSE", "NOTICE", "AUTHORS",
+)
+
+_PATCH_FILE_RE = re.compile(r"^(?:---|\+\+\+)\s+[ab]/([^\s\n]+)", re.MULTILINE)
+_PATCH_ADD_RE  = re.compile(r"^\+(?!\+\+).*$", re.MULTILINE)
+
+
+def _docs_only(path: str) -> bool:
+    """True if this path is documentation/config, not runtime code."""
+    # Strip to basename
+    base = path.rsplit("/", 1)[-1]
+    stem = base.split(".")[0].upper()
+    return any(path.lower().endswith(s) for s in _DOCS_ONLY_SUFFIXES) \
+        or stem in _DOCS_ONLY_BASENAMES
+
+
+def lint_solve_sh(task_dir: Path) -> list[Finding]:
+    """Check solve.sh for broken-oracle + trivial-gold patterns."""
+    sv = task_dir / "solution" / "solve.sh"
+    if not sv.exists():
+        return []
+    text = sv.read_text(errors="ignore")
+    findings: list[Finding] = []
+
+    # oracle_no_external_fetch — hard Tier-A fail
+    for tag, pat in _ORACLE_EXTERNAL_FETCH_RES.items():
+        m = pat.search(text)
+        if m:
+            line = text[: m.start()].count("\n") + 1
+            findings.append(Finding(
+                rubric="oracle_no_external_fetch", tier="A", severity="fail",
+                path="solution/solve.sh", line=line,
+                snippet=m.group(0)[:120],
+                detail=f"solve.sh fetches gold via `{tag}` — agent can game the oracle",
+            ))
+            break  # one hit is enough
+
+    # gold_diff_non_trivial — count added lines and touched files (from embedded patch heredoc)
+    files = _PATCH_FILE_RE.findall(text)
+    adds = _PATCH_ADD_RE.findall(text)
+    # Filter out the diff's own '+++' line noise (already excluded by lookahead)
+    # and whitespace-only additions
+    nonblank_adds = [a for a in adds if a[1:].strip()]
+    unique_files = sorted(set(files))
+    code_files = [f for f in unique_files if not _docs_only(f)]
+    if unique_files and len(nonblank_adds) < 15 and not code_files:
+        findings.append(Finding(
+            rubric="gold_diff_non_trivial", tier="A", severity="fail",
+            path="solution/solve.sh", line=0,
+            snippet=", ".join(unique_files[:3]),
+            detail=(
+                f"gold patch is trivial: {len(nonblank_adds)} non-blank added lines "
+                f"across {len(unique_files)} docs-only file(s) — no code differentiation"
+            ),
+        ))
+    elif unique_files and len(nonblank_adds) < 4:
+        # Strong signal regardless of file type
+        findings.append(Finding(
+            rubric="gold_diff_non_trivial", tier="A", severity="fail",
+            path="solution/solve.sh", line=0,
+            snippet=", ".join(unique_files[:3]),
+            detail=f"gold patch adds only {len(nonblank_adds)} non-blank lines",
+        ))
+    return findings
+
+
+def lint_instruction_leakage(task_dir: Path) -> list[Finding]:
+    """Check instruction.md for direct naming of gold-patch target files."""
+    instr = task_dir / "instruction.md"
+    sv = task_dir / "solution" / "solve.sh"
+    if not (instr.exists() and sv.exists()):
+        return []
+    itxt = instr.read_text(errors="ignore")
+    stxt = sv.read_text(errors="ignore")
+    # Extract paths modified by the gold diff
+    files = sorted({f for f in _PATCH_FILE_RE.findall(stxt)})
+    findings: list[Finding] = []
+    hits: list[str] = []
+    for f in files:
+        # Only flag for "real" code paths; skip README-style leakage
+        if _docs_only(f):
+            continue
+        # Match full path OR the basename if path has ≥2 segments (very specific)
+        if f in itxt:
+            hits.append(f)
+        else:
+            parts = f.split("/")
+            if len(parts) >= 2 and parts[-1] in itxt and "/" in parts[-1] in itxt:
+                hits.append(parts[-1])
+    if hits:
+        # Always warn (not fail): ~54% of the corpus names gold-diff paths in
+        # narrative (e.g. "The file foo.py contains the Bar class"). This is
+        # endemic and often legitimate context-setting. Treat as a signal for
+        # filtering clean eval samples, not a hard quarantine trigger. New
+        # scaffolded tasks should avoid this via prompt guardrails instead.
+        code_files_in_diff = [
+            f for f in _PATCH_FILE_RE.findall(stxt) if not _docs_only(f)
+        ]
+        total_code = len(set(code_files_in_diff))
+        findings.append(Finding(
+            rubric="instruction_no_path_leak", tier="A", severity="warn",
+            path="instruction.md", line=0,
+            snippet=", ".join(hits[:3]),
+            detail=(
+                f"instruction.md names {len(hits)}/{total_code} gold-diff code file(s): "
+                f"{hits[:3]} — localization partially spoiled"
+            ),
+        ))
+    return findings
+
+
+# ══════════════════════ tests_have_subprocess gate ═══════════════════════════
+
+_SUBPROCESS_CALL_RE = re.compile(
+    r"\b(?:subprocess\.run|subprocess\.check_output|subprocess\.Popen|"
+    r"os\.system|os\.popen|pexpect\.spawn)\s*\(",
+)
+
+
+def lint_tests_subprocess(task_dir: Path) -> list[Finding]:
+    """Require at least one genuine subprocess invocation in test_outputs.py."""
+    tp = task_dir / "tests" / "test_outputs.py"
+    if not tp.exists():
+        return []
+    text = tp.read_text(errors="ignore")
+    if _SUBPROCESS_CALL_RE.search(text):
+        return []
+    return [Finding(
+        rubric="tests_have_subprocess", tier="A", severity="fail",
+        path="tests/test_outputs.py", line=0, snippet="",
+        detail=(
+            "no subprocess.run/check_output/Popen/os.system — tests cannot execute "
+            "the fixed code; grep-only tests don't verify behavior"
+        ),
+    )]
+
+
 # ═════════════════════════════ Orchestrator ══════════════════════════════════
 
 def lint_task(task_dir: Path) -> list[Finding]:
@@ -314,6 +470,9 @@ def lint_task(task_dir: Path) -> list[Finding]:
     findings.extend(lint_test_sh(task_dir))
     findings.extend(lint_test_outputs(task_dir))
     findings.extend(lint_manifest(task_dir))
+    findings.extend(lint_solve_sh(task_dir))
+    findings.extend(lint_instruction_leakage(task_dir))
+    findings.extend(lint_tests_subprocess(task_dir))
     # Dedupe: drop repeated findings at same (path, line, rubric, detail) — common
     # when Dockerfile has `pip install X || pip install X` fallback pattern
     seen: set[tuple[str, int, str, str]] = set()

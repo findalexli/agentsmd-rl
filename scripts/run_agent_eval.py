@@ -37,7 +37,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 HARBOR_TASKS = ROOT / "harbor_tasks"
-SCRATCH_DIR = Path("/tmp/agent_eval_tasks")
+SCRATCH_DIR = Path(os.environ.get("EVAL_SCRATCH_DIR", "/tmp/agent_eval_tasks"))
 
 DIFF_CAPTURE_SNIPPET = r"""
 # --- agent_eval: capture diff BEFORE tests may mutate repo ---
@@ -90,6 +90,16 @@ BACKEND_CFG = {
         "api_key_env": "GLM_API_KEY",
         "model": "glm-4.6",
     },
+    "glm5": {
+        "base_url": "https://api.z.ai/api/anthropic",
+        "api_key_env": "GLM_API_KEY",
+        "model": "glm-5.1",
+    },
+    "kimi": {
+        "base_url": "https://ark.cn-beijing.volces.com/api/coding",
+        "api_key_env": "ARK_CODING_API_KEY",
+        "model": "kimi-k2.6",
+    },
     "fireworks": {
         "base_url": "https://api.fireworks.ai/inference",
         "api_key_env": "FIREWORKS_API_KEY",
@@ -115,9 +125,11 @@ class TrialResult:
     job_dir: str = ""
 
 
-def shadow_copy_task(task: str) -> Path:
+def shadow_copy_task(task: str, scratch_root: Path | None = None,
+                     backend_label: str = "") -> Path:
+    root = scratch_root or SCRATCH_DIR
     src = HARBOR_TASKS / task
-    dst = SCRATCH_DIR / task
+    dst = root / task
     if dst.exists():
         shutil.rmtree(dst)
     shutil.copytree(src, dst)
@@ -129,6 +141,14 @@ def shadow_copy_task(task: str) -> Path:
     else:
         out = ["#!/usr/bin/env bash\n", DIFF_CAPTURE_SNIPPET] + lines
     test_sh.write_text("".join(out))
+    # When multiple eval backends run in parallel on the same task, they
+    # would collide on the E2B template hash (Dockerfile identical → same
+    # hash → E2B cancels all but first builder). Append a LABEL that varies
+    # per backend so each gets its own template.
+    if backend_label:
+        df = dst / "environment" / "Dockerfile"
+        if df.exists():
+            df.write_text(df.read_text().rstrip() + f"\nLABEL eval_backend=\"{backend_label}\"\n")
     return dst
 
 
@@ -303,7 +323,11 @@ async def run_one(
         print(f"[{time.strftime('%H:%M:%S')}] START {task} ({backend})")
         result = TrialResult(task=task, ok=False)
         try:
-            task_path = shadow_copy_task(task)
+            task_path = shadow_copy_task(
+                task,
+                scratch_root=SCRATCH_DIR,
+                backend_label=backend,
+            )
             job_name = f"{run_id}-{task}"
             job_dir = log_prefix / job_name
             rc, tail = await run_harbor(
@@ -375,11 +399,29 @@ async def main():
     p.add_argument("--tasks", required=True, help="Path to tasks.txt (one task per line)")
     p.add_argument("--out", required=True, help="Output JSONL path")
     p.add_argument("--concurrency", type=int, default=4)
-    p.add_argument("--backend", choices=["minimax", "anthropic", "glm", "fireworks"], default="minimax")
+    p.add_argument("--backend", choices=["minimax", "anthropic", "glm", "glm5", "kimi", "fireworks"], default="minimax")
     p.add_argument("--env", choices=["e2b", "docker"], default="e2b")
     p.add_argument("--timeout", type=int, default=1800, help="Per-task timeout in seconds")
     p.add_argument("--run-id", default=None)
+    p.add_argument("--pin-claude-version", default="2.1.119",
+                   help="Assert claude-code CLI is exactly this version. Pass '' to skip.")
     args = p.parse_args()
+
+    # Pin claude-code version so reruns are reproducible and multi-backend
+    # comparisons share an agent framework. Skippable via --pin-claude-version=''.
+    if args.pin_claude_version:
+        try:
+            cc_out = subprocess.run(
+                ["claude", "--version"], capture_output=True, text=True, timeout=10
+            ).stdout.strip()
+        except Exception as e:
+            sys.exit(f"Could not run `claude --version`: {e}")
+        if args.pin_claude_version not in cc_out:
+            sys.exit(
+                f"claude-code version mismatch: expected {args.pin_claude_version}, "
+                f"got {cc_out!r}. Run `claude update` or pass --pin-claude-version=''."
+            )
+        print(f"  claude_code_version={cc_out}")
 
     env = load_env()
     cfg = BACKEND_CFG[args.backend]
@@ -431,6 +473,11 @@ async def main():
         results = await asyncio.gather(*coros, return_exceptions=False)
 
     summary = summarize(results)
+    summary["backend"] = args.backend
+    summary["model"] = cfg["model"]
+    summary["base_url"] = cfg["base_url"] or "(anthropic default)"
+    if args.pin_claude_version:
+        summary["claude_code_version"] = args.pin_claude_version
     summary_path = out_path.with_suffix(".summary.json")
     summary_path.write_text(json.dumps(summary, indent=2))
     print("\n━━━ SUMMARY ━━━")

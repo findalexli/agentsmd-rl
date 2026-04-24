@@ -291,6 +291,72 @@ RUBRICS: tuple[Rubric, ...] = (
         verification="llm_judge",
         source="Our own 4-track architecture",
     ),
+
+    # ═════ Tier A — programmatic gates added 2026-04-24 from 50-task audit ═════
+    Rubric(
+        name="oracle_no_external_fetch",
+        tier="A",
+        description=(
+            "solve.sh must contain the gold patch inline. It must not curl/wget/git-show/"
+            "gh-pr-diff to fetch the fix from an external source — the agent could do "
+            "the same and trivially game the oracle."
+        ),
+        artifacts=("solution/solve.sh",),
+        verification="programmatic",
+        source="Harbor audit 2026-04-24 (15/1117 tasks = 1.3% broken oracles)",
+        failure_example=(
+            "airflow-worker-serviceaccount-split: solve.sh does "
+            "`curl -sL github.com/apache/airflow/pull/64730.diff | git apply -`"
+        ),
+    ),
+    Rubric(
+        name="tests_have_subprocess",
+        tier="A",
+        description=(
+            "tests/test_outputs.py must contain at least one real subprocess invocation "
+            "(subprocess.run / check_output / Popen / os.system) that executes the "
+            "fixed code. Grep-only tests may supplement but never stand alone."
+        ),
+        artifacts=("tests/test_outputs.py",),
+        verification="programmatic",
+        source="Harbor audit 2026-04-24 (6% grep-only tests in random sample)",
+        failure_example=(
+            "areal-rpc-error-response-key: all tests only regex-search for .get() "
+            "patterns in source — no runtime verification"
+        ),
+    ),
+    Rubric(
+        name="gold_diff_non_trivial",
+        tier="A",
+        description=(
+            "Gold patch must be non-trivial: ≥15 non-whitespace added lines, OR touch a "
+            "non-docs code file. Docs/CHANGELOG/README-only patches don't differentiate "
+            "model capability."
+        ),
+        artifacts=("solution/solve.sh",),
+        verification="programmatic",
+        source="Harbor audit 2026-04-24 (8% trivial tasks in random 50-sample)",
+        failure_example=(
+            "bun-dns-lookup-non-object-crash: 1-line method swap isCell→isObject; "
+            "tests only do `git log`"
+        ),
+    ),
+    Rubric(
+        name="instruction_no_path_leak",
+        tier="A",
+        description=(
+            "instruction.md must not cite the exact file path(s) the gold patch modifies. "
+            "Localization is part of the task's difficulty; naming the target file makes "
+            "the bug trivially findable."
+        ),
+        artifacts=("instruction.md", "solution/solve.sh"),
+        verification="programmatic",
+        source="Harbor audit 2026-04-24 (~10% of eval 30 had direct path leaks)",
+        failure_example=(
+            "areal-data-proxy-batch-endpoint: instruction names app.py + rpc_server.py, "
+            "exactly the two files the gold diff touches"
+        ),
+    ),
 )
 
 
