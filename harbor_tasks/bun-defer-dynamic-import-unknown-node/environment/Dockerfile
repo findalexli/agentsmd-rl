@@ -16,8 +16,9 @@ WORKDIR /workspace
 RUN git clone --filter=blob:none --no-checkout https://github.com/oven-sh/bun.git /workspace/bun && \
     cd /workspace/bun && \
     git sparse-checkout init --cone && \
-    git sparse-checkout set src/CLAUDE.md src/linker.zig src/logger.zig src/s3/credentials.zig && \
-    git checkout 9a72bbfae2d086779739de54043a8e8bbd7ee9ed
+    git sparse-checkout set src/CLAUDE.md src/linker.zig src/logger.zig src/s3/credentials.zig test/regression/issue/25707.test.ts && \
+    git checkout 9a72bbfae2d086779739de54043a8e8bbd7ee9ed && \
+    git config core.sparseCheckout false
 
 # Create logs directory for test output
 RUN mkdir -p /logs/verifier

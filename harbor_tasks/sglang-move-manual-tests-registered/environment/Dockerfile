@@ -22,3 +22,6 @@ ENV PYTHONPATH="/workspace/sglang/python"
 
 # Verifier output directory (Harbor bind-mounts this)
 RUN mkdir -p /logs/verifier
+
+# auto-installed (scaffold Change 2A retrofit 2026-04-24)
+RUN pip install --no-cache-dir --break-system-packages black codespell isort pre-commit ruff 2>/dev/null || pip install --no-cache-dir black codespell isort pre-commit ruff

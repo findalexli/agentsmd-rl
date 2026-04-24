@@ -20,3 +20,6 @@ RUN git init /workspace/beam && \
     git config user.name "Agent"
 
 WORKDIR /workspace/beam
+
+# auto-installed (scaffold Change 2A retrofit 2026-04-24)
+RUN pip install --no-cache-dir --break-system-packages flake8 pycodestyle pylint 2>/dev/null || pip install --no-cache-dir flake8 pycodestyle pylint

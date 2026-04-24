@@ -21,3 +21,6 @@ WORKDIR /workspace
 ENV PYTHONPATH="/workspace"
 RUN git config --global user.email "test@test.com" && \
     git config --global user.name "Test"
+
+# auto-installed (scaffold Change 2A retrofit 2026-04-24)
+RUN pip install --no-cache-dir --break-system-packages flake8 ruff 2>/dev/null || pip install --no-cache-dir flake8 ruff

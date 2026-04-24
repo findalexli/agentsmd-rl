@@ -26,3 +26,6 @@ RUN ln -sf /tests /workspace/task/tests
 RUN pip install --no-cache-dir pytest pyyaml
 
 WORKDIR /workspace
+
+# auto-installed (scaffold Change 2A retrofit 2026-04-24)
+RUN pip install --no-cache-dir --break-system-packages ruff 2>/dev/null || pip install --no-cache-dir ruff

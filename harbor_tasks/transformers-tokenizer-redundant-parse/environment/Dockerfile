@@ -25,3 +25,6 @@ RUN git config --global user.email "agent@test.local" && \
     git config --global user.name "Agent"
 
 ENV PYTHONPATH=/repo/src
+
+# auto-installed (scaffold Change 2A retrofit 2026-04-24)
+RUN pip install --no-cache-dir --break-system-packages ruff 2>/dev/null || pip install --no-cache-dir ruff

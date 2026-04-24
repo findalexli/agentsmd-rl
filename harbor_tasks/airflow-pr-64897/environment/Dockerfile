@@ -25,3 +25,6 @@ RUN mkdir -p /logs/verifier
 
 # Set PYTHONPATH to include the openlineage provider source
 ENV PYTHONPATH=/workspace/airflow/providers/openlineage/src:$PYTHONPATH
+
+# auto-installed (scaffold Change 2A retrofit 2026-04-24)
+RUN pip install --no-cache-dir --break-system-packages ruff 2>/dev/null || pip install --no-cache-dir ruff

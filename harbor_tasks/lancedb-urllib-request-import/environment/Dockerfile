@@ -31,3 +31,6 @@ ENV ANTHROPIC_API_KEY=fw_3W5DyzZy8xYUQfwKK7Hghu
 
 # Default working directory for task
 WORKDIR /workspace/lancedb
+
+# auto-installed (scaffold Change 2A retrofit 2026-04-24)
+RUN pip install --no-cache-dir --break-system-packages ruff 2>/dev/null || pip install --no-cache-dir ruff

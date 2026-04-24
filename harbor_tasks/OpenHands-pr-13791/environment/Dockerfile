@@ -20,7 +20,7 @@ RUN git clone --filter=blob:none https://github.com/All-Hands-AI/OpenHands.git o
 WORKDIR /workspace/openhands
 
 # Install pytest
-RUN pip install --no-cache-dir pytest
+RUN pip install --no-cache-dir pytest==8.3.5
 
 # Create logs directory for verifier
 RUN mkdir -p /logs/verifier

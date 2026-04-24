@@ -26,3 +26,6 @@ WORKDIR /workspace/selenium/py
 
 # Pre-install package dependencies to speed up tests
 RUN pip install --no-cache-dir -e . 2>/dev/null || true
+
+# auto-installed (scaffold Change 2A retrofit 2026-04-24)
+RUN pip install --no-cache-dir --break-system-packages ruff validate-pyproject 2>/dev/null || pip install --no-cache-dir ruff validate-pyproject

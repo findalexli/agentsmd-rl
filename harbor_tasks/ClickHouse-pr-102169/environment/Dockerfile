@@ -57,3 +57,6 @@ RUN git clone --depth=1 --single-branch --filter=blob:none https://github.com/Cl
 RUN mkdir -p /logs/verifier
 
 WORKDIR /workspace/ClickHouse
+
+# auto-installed (scaffold Change 2A retrofit 2026-04-24)
+RUN pip install --no-cache-dir --break-system-packages codespell 2>/dev/null || pip install --no-cache-dir codespell

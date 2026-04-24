@@ -24,3 +24,6 @@ RUN pip install --no-cache-dir pyyaml
 RUN git config user.email "agent@test.com" && git config user.name "Agent"
 
 ENV PYTHONPATH=/workspace/sglang/python
+
+# auto-installed (scaffold Change 2A retrofit 2026-04-24)
+RUN pip install --no-cache-dir --break-system-packages black codespell isort pre-commit ruff 2>/dev/null || pip install --no-cache-dir black codespell isort pre-commit ruff

@@ -14,4 +14,13 @@ RUN git init /workspace/bun && \
 
 RUN mkdir -p /logs/verifier
 
+# Install bun v1.2.0 binary for behavioral tests
+RUN apt-get update -qq && apt-get install -y -qq unzip >/dev/null 2>&1 || true && \
+    curl -fsSL https://github.com/oven-sh/bun/releases/download/bun-v1.2.0/bun-linux-x64.zip -o /tmp/bun.zip && \
+    unzip -o /tmp/bun.zip -d /tmp/ && \
+    chmod +x /tmp/bun-linux-x64/bun && \
+    mkdir -p /workspace/bun/tmp && \
+    cp /tmp/bun-linux-x64/bun /workspace/bun/tmp/bun && \
+    rm /tmp/bun.zip && rm -rf /tmp/bun-linux-x64
+
 WORKDIR /workspace/bun

@@ -19,10 +19,13 @@ WORKDIR /workspace/AReaL
 
 # Install minimal deps needed for testing (no torch/GPU packages)
 # Tests extract config dataclasses from source and call them directly
-RUN pip install --no-cache-dir pyyaml
+RUN pip install --no-cache-dir pyyaml==6.0.2 pytest==8.3.5 pytest-json-ctrf==0.4.1
 
 # Configure git for any agent that wants to commit
 RUN git config --global user.email "agent@test.local" && \
     git config --global user.name "Test Agent"
 
 ENV PYTHONPATH="/workspace/AReaL:${PYTHONPATH:-}"
+
+# auto-installed (scaffold Change 2A retrofit 2026-04-24)
+RUN pip install --no-cache-dir --break-system-packages ruff 2>/dev/null || pip install --no-cache-dir ruff

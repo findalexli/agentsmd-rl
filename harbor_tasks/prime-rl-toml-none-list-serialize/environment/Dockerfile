@@ -27,3 +27,6 @@ RUN pip install --no-cache-dir pydantic tomli_w pyyaml pytest pytest-json-ctrf
 RUN pip install --no-cache-dir "pydantic-config @ git+https://github.com/samsja/pydantic_config.git@main"
 
 ENV PYTHONPATH="/workspace/prime-rl/src:${PYTHONPATH:-}"
+
+# auto-installed (scaffold Change 2A retrofit 2026-04-24)
+RUN pip install --no-cache-dir --break-system-packages ruff 2>/dev/null || pip install --no-cache-dir ruff

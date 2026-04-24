@@ -22,3 +22,6 @@ RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/wh
 RUN mkdir -p /logs/verifier
 
 WORKDIR /workspace
+
+# auto-installed (scaffold Change 2A retrofit 2026-04-24)
+RUN pip install --no-cache-dir --break-system-packages ruff 2>/dev/null || pip install --no-cache-dir ruff

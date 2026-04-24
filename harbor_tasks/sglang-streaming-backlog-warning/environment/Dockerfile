@@ -23,3 +23,6 @@ RUN git config user.email "agent@test.local" && git config user.name "Agent"
 RUN pip install --no-cache-dir pydantic aiohttp requests fastapi uvicorn psutil numpy
 
 ENV PYTHONPATH="/repo/python:${PYTHONPATH:-}"
+
+# auto-installed (scaffold Change 2A retrofit 2026-04-24)
+RUN pip install --no-cache-dir --break-system-packages black isort pre-commit ruff 2>/dev/null || pip install --no-cache-dir black isort pre-commit ruff

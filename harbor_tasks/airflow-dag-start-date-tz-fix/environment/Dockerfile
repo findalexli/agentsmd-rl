@@ -22,3 +22,6 @@ RUN mkdir -p /logs/verifier
 
 # The PR only modifies two example DAG files - no additional deps needed
 # The test will directly import and check the DAG definitions
+
+# auto-installed (scaffold Change 2A retrofit 2026-04-24)
+RUN pip install --no-cache-dir --break-system-packages ruff 2>/dev/null || pip install --no-cache-dir ruff

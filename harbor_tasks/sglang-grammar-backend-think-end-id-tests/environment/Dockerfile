@@ -24,3 +24,6 @@ WORKDIR /workspace/sglang
 # No heavy deps needed — tests use AST analysis and text-based verification,
 # not runtime imports (sglang imports torch at top-level)
 ENV PYTHONPATH="/workspace/sglang/python:${PYTHONPATH}"
+
+# auto-installed (scaffold Change 2A retrofit 2026-04-24)
+RUN pip install --no-cache-dir --break-system-packages black codespell isort ruff 2>/dev/null || pip install --no-cache-dir black codespell isort ruff

@@ -17,3 +17,6 @@ RUN mkdir -p /logs/verifier
 WORKDIR /workspace
 
 ENV PYTHONPATH="/workspace/python:${PYTHONPATH}"
+
+# auto-installed (scaffold Change 2A retrofit 2026-04-24)
+RUN pip install --no-cache-dir --break-system-packages black codespell isort ruff 2>/dev/null || pip install --no-cache-dir black codespell isort ruff

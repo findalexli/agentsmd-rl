@@ -22,3 +22,6 @@ RUN pip install --no-cache-dir git+https://github.com/hauntsaninja/mypy_primer.g
 
 # Verifier output directory (Harbor bind-mounts this)
 RUN mkdir -p /logs/verifier
+
+# auto-installed (scaffold Change 2A retrofit 2026-04-24)
+RUN pip install --no-cache-dir --break-system-packages typos validate-pyproject 2>/dev/null || pip install --no-cache-dir typos validate-pyproject

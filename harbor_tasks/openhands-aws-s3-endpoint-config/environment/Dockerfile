@@ -19,3 +19,6 @@ RUN pip install --no-cache-dir pytest
 RUN mkdir -p /logs/verifier
 
 WORKDIR /workspace/openhands
+
+# auto-installed (scaffold Change 2A retrofit 2026-04-24)
+RUN pip install --no-cache-dir --break-system-packages mypy ruff validate-pyproject 2>/dev/null || pip install --no-cache-dir mypy ruff validate-pyproject

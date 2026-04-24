@@ -22,3 +22,6 @@ WORKDIR /repo
 RUN git config user.email "test@test.com" && git config user.name "Test"
 
 # tests/ and solution/ are bind-mounted at runtime
+
+# auto-installed (scaffold Change 2A retrofit 2026-04-24)
+RUN pip install --no-cache-dir --break-system-packages black isort pre-commit ruff 2>/dev/null || pip install --no-cache-dir black isort pre-commit ruff

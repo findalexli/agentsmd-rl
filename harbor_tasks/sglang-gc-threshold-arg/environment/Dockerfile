@@ -22,3 +22,6 @@ ENV PYTHONPATH="/workspace/sglang/python:${PYTHONPATH:-}"
 
 # Configure git user
 RUN git config --global user.email "test@test.com"     && git config --global user.name "Test"
+
+# auto-installed (scaffold Change 2A retrofit 2026-04-24)
+RUN pip install --no-cache-dir --break-system-packages black isort ruff 2>/dev/null || pip install --no-cache-dir black isort ruff
