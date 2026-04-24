@@ -41,3 +41,9 @@ The same issue affects both `aarch64-apple-darwin-freethreaded` and `x86_64-appl
 ## Expected behavior
 
 The parser should recognize `-freethreaded` as a platform suffix on macOS (in addition to the already-handled `-debug` suffix), strip it from the platform string, and include `"freethreaded"` in `build_options` — so that `variant` is correctly set to `Variant.FREETHREADED` and `triple` matches the non-freethreaded counterpart. The existing `-debug` suffix handling must continue to work correctly as a regression constraint: debug artifacts should still have `"debug"` in `build_options` and `variant == Variant.DEBUG`. Linux platform triples (e.g. `x86_64-unknown-linux-gnu`, `aarch64-unknown-linux-gnu`, `x86_64_v3-unknown-linux-gnu`) must remain unaffected with `variant` set to `None`.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `pyright (Python type checker)`

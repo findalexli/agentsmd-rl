@@ -42,3 +42,9 @@ Your implementation must include test functions that will be invoked by the test
 - A test function named `test_terms_query_single_term` must exist and pass via `cargo test -p quickwit-query --lib test_terms_query_single_term`
 
 The test oracle runs these specific test function names to verify the fix.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `cargo clippy (Rust linter)`

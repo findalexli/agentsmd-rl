@@ -86,3 +86,9 @@ The framework-specific `fileRoute.ts` files (in react-router, solid-router, and 
 - [ ] All framework `fileRoute.ts` files use `RouteLoaderEntry`
 - [ ] All existing tests continue to pass
 - [ ] TypeScript compilation succeeds
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

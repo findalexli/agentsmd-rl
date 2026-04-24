@@ -4,32 +4,23 @@ The `GetDiscriminator` extension method in `dotnet/src/webdriver/BiDi/Json/JsonE
 
 ## Problem Description
 
-When processing JSON objects with nested structures, the discriminator extraction logic incorrectly positions the reader when skipping non-matching properties. The current implementation skips to the end of a property value but then advances incorrectly, causing it to miss properties or fail on nested objects and arrays.
+When processing JSON objects with nested structures, the discriminator extraction logic incorrectly positions the reader when skipping non-matching properties. The current implementation calls `Skip()` before `Read()` when advancing past property values, which causes the reader to end up in the wrong position. This can cause the parser to miss properties or throw exceptions when dealing with nested objects and arrays.
 
-Additionally, the current approach creates unnecessary string allocations when comparing property names.
+Additionally, the current approach extracts property names as strings and compares them, which creates unnecessary string allocations.
 
 ## Requirements
 
 The `GetDiscriminator` method in `dotnet/src/webdriver/BiDi/Json/JsonExtensions.cs` must meet the following requirements:
 
-1. **Property Name Comparison**: The method must use `Utf8JsonReader.ValueTextEquals()` for comparing property names against the `name` parameter, rather than extracting strings and doing string comparison.
+1. **Property Name Comparison**: The method must use `Utf8JsonReader.ValueTextEquals()` for comparing property names against the `name` parameter, rather than extracting strings and doing string comparison. This avoids unnecessary string allocations.
 
-2. **Reader Advancement Logic**: When processing properties that don't match the target discriminator name, the method must correctly skip the property value by:
-   - Advancing to the property value
-   - Skipping the value (which may be a nested object or array)
-   - Advancing to the next property or end of object
+2. **Reader Advancement Logic**: When processing properties that don't match the target discriminator name, the method must correctly skip the property value by using the proper `Read()`/`Skip()`/`Read()` sequence. The `Read()` must be called to advance to the property value BEFORE calling `Skip()`, and `Read()` must be called again after `Skip()` to position past the skipped value.
 
-3. **Required Comments**: The code must contain inline comments explaining the reader advancement operations using these exact phrases:
-   - `"move past StartObject to first PropertyName"`
-   - `"move to the property value"`
-   - `"skip the value (including nested objects/arrays)"`
-   - `"move to the next PropertyName or EndObject"`
+3. **Comments**: The code should include comments explaining the reader advancement operations, particularly why the `Read()` calls are needed around `Skip()`. Follow the commenting style in `dotnet/AGENTS.md`.
 
-4. **Prohibited Patterns**: The implementation must NOT contain:
-   - The pattern `propertyName == name` for property name comparison
-   - The variable assignment pattern `string? propertyName = readerClone.GetString()`
+4. **Prohibited Patterns**: The implementation must not use `propertyName == name` for comparison or create a `string? propertyName` variable via `GetString()`.
 
-5. **Code Style**: The code must follow the conventions in `dotnet/AGENTS.md`, including that comments should explain *why* operations are performed, not just *what* is happening.
+5. **Code Style**: The code must follow the conventions in `dotnet/AGENTS.md`.
 
 ## Verification
 

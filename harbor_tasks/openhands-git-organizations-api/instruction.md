@@ -49,3 +49,9 @@ The implementation should include tests similar to existing patterns in the code
 ## References
 
 Look at existing endpoints in the enterprise server routes for patterns on how to structure the endpoint, handle authentication, and return responses. The response should be a JSON object with `provider` and `organizations` keys.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

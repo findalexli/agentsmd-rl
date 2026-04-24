@@ -26,9 +26,15 @@ Lines like `[label]: /url invalid` should be parsed as regular paragraphs. Only 
 
 ## Verification
 
-The task is verified by running a checker that parses markdown input and inspects the syntax tree. The checker outputs:
-- `LINK_REF_DEF` when the syntax tree contains a `MD_LINK_REFERENCE_DEFINITION` node
-- `NOT_LINK_REF_DEF` otherwise
+The task is verified by running a checker that parses markdown input and inspects the syntax tree. The checker is invoked as:
+
+```
+cargo run --example check_link_ref -p biome_markdown_parser -- "input text"
+```
+
+The checker outputs one of two strings:
+- `LINK_REF_DEF` — when the syntax tree contains a link reference definition node
+- `NOT_LINK_REF_DEF` — when the syntax tree does NOT contain a link reference definition node
 
 The following inputs must produce `NOT_LINK_REF_DEF`:
 - `[label]: /url invalid`
@@ -41,3 +47,11 @@ The following inputs must produce `LINK_REF_DEF`:
 - `[e]: /url 'title'`
 - `[f]: /url (title)`
 - `[g]: /url`
+
+The checker binary is already present in the environment at `crates/biome_markdown_parser/examples/check_link_ref.rs` and can be run with the command above.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `cargo clippy (Rust linter)`

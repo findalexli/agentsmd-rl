@@ -23,3 +23,11 @@ The script should validate its input and exit with a non-zero status if the file
 - `scripts/` — other build-related Python scripts in this directory for style reference (e.g., `scripts/patch-dist-manifest-checksums.py`)
 - `.github/workflows/build-release-binaries.yml` — the release workflow that builds the sdist; the new script should be invoked after `maturin sdist`
 - `crates/uv-build/Cargo.toml` — the crate whose sdist has the broken lockfile
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`
+- `cargo clippy (Rust linter)`
+- `cargo fmt (Rust formatter)`

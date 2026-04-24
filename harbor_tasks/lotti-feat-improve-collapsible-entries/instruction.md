@@ -52,3 +52,9 @@ Since the date now appears in the expanded header:
 - `lib/features/journal/ui/widgets/entry_details_widget.dart`
 - `lib/features/journal/ui/widgets/entry_details/header/entry_detail_header.dart`
 - `lib/widgets/misc/collapsible_section.dart`
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `mypy (Python type checker)`

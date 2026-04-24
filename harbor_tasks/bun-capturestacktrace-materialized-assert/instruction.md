@@ -25,10 +25,11 @@ foo();
 
 ## Implementation Requirements
 
-- The function implementing `Error.captureStackTrace` must handle both materialized and non-materialized error states correctly.
-- When error info has already been materialized, the implementation must not violate JSC's internal invariants (specifically, it must not cause `ASSERT(!m_errorInfoMaterialized)` failures).
-- The function must have at least 35 non-blank, non-comment lines.
-- Must use at least 4 distinct JSC API calls from this set: `jsDynamicCast`, `RETURN_IF_EXCEPTION`, `putDirect`, `deleteProperty`, `setStackFrames`, `hasMaterializedErrorInfo`, `materializeErrorInfoIfNeeded`, `computeErrorInfo`, `getFramesForCaller`, `DeletePropertyModeScope`, `putDirectCustomAccessor`.
+- The file to modify is `src/bun.js/bindings/FormatStackTraceForJS.cpp`.
+- The function to modify is `errorConstructorFuncCaptureStackTrace`.
+- The function must handle both states: when error info has already been materialized (e.g., `.stack` was accessed), and when it has not yet been materialized.
+- The function must not violate JSC internal invariants — specifically, it must not cause assertion failures in `computeErrorInfo` during garbage collection when error info was previously materialized.
+- The function body must have at least 35 non-blank, non-comment lines.
 - Code must use spaces for indentation (no tabs).
-- File must include `#include "root.h"`.
-- File must end with a newline and have no trailing whitespace.
+- The file must include `#include "root.h"` as a local include.
+- The file must end with a newline and have no trailing whitespace.

@@ -2,15 +2,19 @@
 
 ## Problem
 
-The dagster-k8s library in the Dagster repository at `/workspace/dagster` has a bug in its Kubernetes pod log stream processing. When Kubernetes returns log data as a stream of byte chunks, multi-byte UTF-8 characters can be split across chunk boundaries. The current code decodes each chunk independently, causing a `UnicodeDecodeError` when it encounters an incomplete UTF-8 byte sequence at a chunk boundary.
+The dagster-k8s library in the Dagster repository at `/workspace/dagster` has a bug in its Kubernetes pod log stream processing. When Kubernetes returns log data as a stream of byte chunks, multi-byte UTF-8 characters can be split across chunk boundaries. The current implementation decodes each chunk independently, causing errors or data corruption when an incomplete UTF-8 byte sequence appears at a chunk boundary.
+
+## Task
+
+Find the code responsible for processing Kubernetes log streams and fix it to correctly handle multi-byte UTF-8 characters that span chunk boundaries. The solution should maintain state across chunks during decoding and handle any remaining invalid sequences gracefully using the Unicode replacement character (U+FFFD,) instead of raising exceptions.
 
 ## Expected Behavior
 
-The log stream processor parses Kubernetes-formatted log lines (RFC timestamp followed by a space and the message content) and yields `LogItem` objects with `timestamp` and `log` fields. It must correctly reassemble and decode UTF-8 multi-byte characters even when their bytes are distributed across multiple chunks.
+The log stream processor parses Kubernetes-formatted log lines (RFC timestamp followed by a space and the message content) and yields objects with `timestamp` and `log` fields. It must correctly reassemble and decode UTF-8 multi-byte characters even when their bytes are distributed across multiple chunks.
 
 The following scenarios must all work:
 
-1. **Ellipsis split across two chunks**: Stream yields `b"2024-03-22T02:17:29.885548Z hello " + b"\xe2"` then `b"\x80\xa6 world\n"`. Expected: one `LogItem` with `timestamp="2024-03-22T02:17:29.885548Z"` and `log="hello … world"`.
+1. **Ellipsis split across two chunks**: Stream yields `b"2024-03-22T02:17:29.885548Z hello " + b"\xe2"` then `b"\x80\xa6 world\n"`. Expected: one object with `timestamp="2024-03-22T02:17:29.885548Z"` and `log="hello … world"`.
 
 2. **Ellipsis split across three chunks**: The ellipsis character (U+2026, encoded as bytes `e2 80 a6`) arriving one byte per chunk. Expected: `log="start … end"` with timestamp `"2024-03-22T02:17:29.885548Z"`.
 
@@ -18,9 +22,9 @@ The following scenarios must all work:
 
 4. **CJK character split**: "中" (bytes `e4 b8 ad`) split after two bytes. Expected: `log="中 test"` with timestamp `"2024-03-22T02:17:29.885548Z"`.
 
-5. **Incomplete UTF-8 at stream end**: Stream yields `b"2024-03-22T02:17:29.885548Z hello " + b"\xe2\x80"` with no trailing newline and no final byte. Expected: the incomplete sequence is handled gracefully using Unicode replacement character `U+FFFD` (�) or discarded, without raising an exception.
+5. **Incomplete UTF-8 at stream end**: Stream yields `b"2024-03-22T02:17:29.885548Z hello " + b"\xe2\x80"` with no trailing newline and no final byte. Expected: the incomplete sequence is handled gracefully using Unicode replacement character `U+FFFD` () or discarded, without raising an exception.
 
-6. **Multiple lines with split characters**: Two consecutive log lines (timestamps `"2024-03-22T02:17:29.885548Z"` and `"2024-03-22T02:17:30.885548Z"`), each with a split UTF-8 character, produce two separate `LogItem` objects. Expected: first has `log="line1 …"`, second has `log="line2 €"`.
+6. **Multiple lines with split characters**: Two consecutive log lines (timestamps `"2024-03-22T02:17:29.885548Z"` and `"2024-03-22T02:17:30.885548Z"`), each with a split UTF-8 character, produce two separate objects. Expected: first has `log="line1 …"`, second has `log="line2 €"`.
 
 7. **Single-chunk logs unchanged**: Log lines arriving in complete, non-split chunks must continue to work as before, including multi-line logs.
 

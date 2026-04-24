@@ -17,11 +17,18 @@ After repeated 409 responses from the server, clients experience:
 
 ## Correct Behavior
 
-- The `-next` suffix pattern must not appear in handle construction code
-- When a 409 response lacks a handle header, the client should emit a warning containing: "Received 409 response without a shape handle header" and "proxy or CDN stripping required headers"
-- The `#reset()` method must be called in a way that properly handles missing handles (passing `undefined` rather than fabricating a string)
-- Retried requests without a handle header must use a unique cache-busting strategy (e.g., query parameter with a time-based + random value) to ensure URL uniqueness
+When handling 409 responses:
+
+1. **No `-next` suffix**: The code must not construct handles by appending `-next` to existing handles when the server's 409 response lacks a handle header
+
+2. **Warning emission**: When a 409 response lacks the handle header, the client must emit a warning containing the exact phrases:
+   - "Received 409 response without a shape handle header"
+   - "proxy or CDN stripping required headers"
+
+3. **Proper handle absence**: When no handle header is present, the reset mechanism must be called without fabricating a string handle (passing `undefined` rather than constructing one)
+
+4. **Unique cache busting**: Retried requests without a handle header must use a unique cache-busting strategy to ensure URL uniqueness (e.g., time-based + random value appended to the URL)
 
 ## What to Look For
 
-The fix involves the `ShapeStream` class in `packages/typescript-client/src/client.ts`. Look for code that constructs handles by appending `-next` when processing 409 responses.
+The fix involves the `ShapeStream` class in `packages/typescript-client/src/client.ts`. The buggy handle-construction pattern appends `-next` to handles when the server 409 response lacks a header — this pattern must be removed and replaced with a cache-busting approach.

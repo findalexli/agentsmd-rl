@@ -18,3 +18,9 @@ These changes ensure positional embedding tensors are created directly on the ta
 ## Files to Investigate
 
 - `src/transformers/models/xlnet/modeling_xlnet.py` — the `XLNetModel` class, specifically the `relative_positional_encoding` and `forward` methods
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

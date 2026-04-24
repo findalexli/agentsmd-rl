@@ -29,3 +29,9 @@ After the fix:
 - Models starting with `litellm_proxy/` should use the user's base URL when provided
 - Models starting with `openhands/` should continue to work as before
 - Regular models should not be affected by the provider's base URL
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

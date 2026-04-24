@@ -22,3 +22,10 @@ The old error message text `"separators cannot be empty"` must no longer appear 
 ## Task
 
 Fix the splitByString tokenizer's input validation so that empty separator strings are properly rejected and the correct error messages are produced.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `mypy (Python type checker)`
+- `typos (spell-check)`

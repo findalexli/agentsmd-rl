@@ -20,6 +20,8 @@ The old npm script that just stops services should be **removed** from `package.
 
 - `package.json` — the docker npm scripts
 - `scripts/` — existing Node.js helper scripts for cross-platform operations
-- `test/docker-compose.yml` — Docker Compose config with named containers
+- `test/docker-compose.yml` — Docker Compose config with named containers (`postgres-payload-test`, `mongodb-payload-test`)
+
+The cleanup script must be named **`scripts/docker-clean.js`** (a Node.js file using `child_process` to run docker commands). The named containers to remove are **`postgres-payload-test`** and **`mongodb-payload-test`** (plus any other test containers from the compose file).
 
 After fixing the code, update the relevant documentation to reflect any renamed commands. The project's agent instructions and contributor guide reference the Docker workflow commands.

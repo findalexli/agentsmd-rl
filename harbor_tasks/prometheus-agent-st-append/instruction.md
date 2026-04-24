@@ -20,6 +20,10 @@ For example, if you create a test DB using `createTestAgentDB` with `EnableSTSto
 2. Fix the issue so that start timestamps are included when sample records are written to the WAL
 3. Ensure the fix works for varying ST values (e.g., `[1234, 2234, 3234, 4234, 5234]`) and different label sets (e.g., labels like `__name__=test_metric` or `__name__=test_varying`)
 
+## How Verification Works
+
+The tests verify ST persistence by writing temporary Go test files directly to the `tsdb/agent` package directory. These test files create a test agent DB via `createTestAgentDB`, append samples using `AppenderV2` with specific ST values (such as `[1000, 2000, 3000, 4000, 5000]`), commit the appender, close the DB, then read back the WAL using `wlog.NewSegmentsReader` and decode `record.SamplesV2` entries to verify each `record.RefSample.ST` field matches the expected values.
+
 ## Verification
 
 After fixing, ensure all of these pass:

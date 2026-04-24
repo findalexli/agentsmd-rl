@@ -28,3 +28,9 @@ After your changes:
 - `go vet ./backend/diy/...` should pass
 - `go fmt ./backend/diy/...` should produce no changes
 - The `Refresh` function should only acquire the state lock when performing an actual refresh (not preview-only)
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `golangci-lint (Go linter)`

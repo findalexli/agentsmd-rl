@@ -26,3 +26,9 @@ The code should gracefully handle empty result sets. When both `vector_results` 
 ## Key Files
 
 - `python/python/lancedb/query.py`
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

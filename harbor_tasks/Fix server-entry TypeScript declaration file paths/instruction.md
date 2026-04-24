@@ -50,3 +50,9 @@ Fix the `server-entry` package export types path so published packages include t
 ## Agent Context
 
 This is a TanStack Router monorepo using pnpm workspaces. Build with `pnpm build` in each package directory. The `publint` and `@arethetypeswrong/cli` (attw) packages are used for package validation.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`

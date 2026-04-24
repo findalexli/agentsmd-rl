@@ -25,3 +25,9 @@ There is already a canonical `formatDurationCompact` implementation in `src/infr
 1. Spawn a subagent with a short task (~30 seconds)
 2. Run `/subagents list` during execution
 3. Observe the runtime column — it shows "1m" instead of "30s"
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

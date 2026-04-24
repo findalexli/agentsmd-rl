@@ -6,7 +6,7 @@ When using Node.js's `child_process.spawnSync()` (or `spawn()`, `exec()`, etc.) 
 
 For example, `spawnSync('echo', ['a&b'], { shell: true })` does not output the literal string `a&b`. Instead, the shell interprets `&` as a command separator, leading to incorrect behavior — the argument gets split, a second unintended command may run, or the process produces wrong output.
 
-The bug is in Deno's Node.js compatibility polyfill layer for child_process. The shell argument escaping logic on the Windows code path fails to recognize the full set of characters that are special to cmd.exe.
+The bug is in the file `ext/node/polyfills/internal/child_process.ts`, in the `escapeShellArg` function. The shell argument escaping logic on the Windows code path fails to recognize the full set of characters that are special to cmd.exe.
 
 ## Expected Behavior
 
@@ -31,3 +31,4 @@ Arguments containing characters that are already properly handled (spaces, doubl
 - The fix should only affect the Windows code path.
 - After fixing, `deno lint` and `deno fmt --check` must pass on the modified file.
 - Existing child_process spec tests in the repo must continue to pass.
+- The relevant spec test is at `tests/specs/node/child_process_shell_escape/main.ts`.

@@ -32,13 +32,15 @@ Remove the `playwright-cli` script from the root `package.json` scripts section 
 
 ### 3. Update SKILL.md documentation
 
-The file `packages/playwright/src/skill/SKILL.md` documents the CLI. Update the `## Installation` section to:
+The file `packages/playwright/src/skill/SKILL.md` documents the CLI. Update the `## Installation` section (replace the entire section content) to:
 
 - Recommend trying `npx playwright-cli --version` first to check if a local version is available
 - Show how to use `npx playwright-cli` for commands when the local version works
 - Document global installation (`npm install -g @playwright/cli@latest`) as a fallback when npx doesn't work
 
 The documentation should reflect a local-first approach: try npx first, then fall back to global install if needed.
+
+**Important**: Replace the entire `## Installation` section content with the new local-first approach described above.
 
 ## Files to create/modify
 

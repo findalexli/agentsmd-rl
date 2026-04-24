@@ -21,3 +21,9 @@ The script should use a cross-platform approach to check if an executable is on 
 ## Files to investigate
 
 - `scripts/check_system_python.py` — the `pylint` PATH verification section after package installation
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

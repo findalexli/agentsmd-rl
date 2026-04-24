@@ -30,3 +30,9 @@ The TypeScript implementation that registers the Bash tool must:
 - Still export the BashTool class or object
 - Still reference a DESCRIPTION constant and set a tool description property
 - Still reference the maximum line and byte constants (MAX_LINES/MAX_BYTES or maxLines/maxBytes)
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`

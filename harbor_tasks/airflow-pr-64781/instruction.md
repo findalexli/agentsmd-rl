@@ -28,3 +28,9 @@ The `upgrade` function must execute commands in this order:
 
 3. Finally, commands that run inside the CI container must execute. The only such command is:
    - `update-uv-lock`: `prek --all-files --show-diff-on-failure --color always --verbose update-uv-lock --stage manual`
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

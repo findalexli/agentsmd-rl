@@ -25,3 +25,9 @@ The implementation must:
 The codebase contains a `buildPlatforms` array with full platform specifications including `features: ["docker"]` fields. The `getImageKey()` function uses the `features` array to determine the image name suffix. Platform objects in this codebase have the structure: `{ os, arch, distro, release, features: [...] }`.
 
 The `linux-aarch64-build-cpp` step in the CI configuration uses a platform object with `features: ["docker"]` and generates the correct image name. The binary-size step should use equivalent platform configuration.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`

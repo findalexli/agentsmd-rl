@@ -33,3 +33,9 @@ to their original session IDs.
 Create a bare `InteractionWithTokenLogpReward` (no completion or response), populate its
 tensor cache and reward, serialize it, then deserialize — the `interaction_id` will be
 `None` even though it was present in the serialized data.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

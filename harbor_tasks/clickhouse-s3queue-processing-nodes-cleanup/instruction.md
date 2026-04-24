@@ -1,27 +1,36 @@
-# Task: Fix S3Queue Processing Node Cleanup Race Condition
+# Task: Fix Race Condition in S3Queue Processing Node Cleanup
 
 ## Problem
 
-The `cleanupPersistentProcessingNodes()` function in `src/Storages/ObjectStorageQueue/ObjectStorageQueueMetadata.cpp` has a race condition. When cleaning up stale ZooKeeper processing nodes, the current code collects stale node paths, then removes them — but does not verify that nodes haven't been modified between the read and delete steps. A node modified or recreated concurrently could be incorrectly cleaned up.
+When S3Queue cleans up stale ZooKeeper processing nodes, there's a potential race condition: a node might be modified or recreated between when we read its metadata and when we try to delete it. Currently, nodes are collected for removal without tracking their version numbers, which means concurrent modifications go undetected.
 
 ## Current Behavior
 
-The function currently uses `Strings nodes_to_remove` to collect only the paths of stale nodes. During removal, it calls `tryRemove` with just the node path and only handles `Coordination::Error::ZNONODE` as a non-fatal error. This means concurrent modifications go undetected, and stale or recreated nodes can be incorrectly deleted.
+The stale node cleanup logic only tracks node paths and calls `tryRemove` with just the path. If a node is modified between read and delete, the deletion proceeds anyway because there's no version checking. The code only handles `ZNONODE` errors, not version mismatches.
 
 ## Required Behavior
 
-Fix the race condition by implementing version-aware optimistic concurrency control. The corrected `cleanupPersistentProcessingNodes()` function must satisfy all of the following:
+Implement optimistic concurrency control for the cleanup process:
 
-- **Store versions alongside paths**: Replace the `Strings nodes_to_remove` declaration with `std::vector<std::pair<String, int32_t>>` to hold each node's path and its ZooKeeper stat version number. When adding stale nodes to the collection, include both the path and the version from the stat object. The old `Strings nodes_to_remove;` declaration must not remain in the function.
+1. **Track node versions**: When identifying stale nodes, record both the node path AND its ZooKeeper stat version number (from the `version` field of the stat object).
 
-- **Pass version to removal**: When calling `tryRemove`, pass both the node path and its recorded version so ZooKeeper can reject the delete if the node was modified.
+2. **Use versioned deletions**: Pass the recorded version to `tryRemove` so ZooKeeper can reject the operation if the node was modified.
 
-- **Handle version mismatch**: Treat `Coordination::Error::ZBADVERSION` as a non-fatal condition alongside `Coordination::Error::ZNONODE`. When either error occurs, log at trace level: `"Processing node {} was already removed or recreated, skipping"` with the node path, then continue without throwing.
+3. **Handle version conflicts**: When `tryRemove` returns a version mismatch error (indicating the node was modified), treat it as a non-fatal condition - log a trace message indicating the node was already removed or recreated, then continue without throwing.
 
-- **Log removal attempts**: Before each removal, log at trace level: `"Removing stale processing node: {}"` with the node path.
+4. **Log removal attempts**: Before attempting to remove each node, log a trace message with the node path.
 
-- **Track successful removals**: Count how many nodes are successfully removed (when the removal result is `Coordination::Error::ZOK`). The final `LOG_DEBUG` message must use the format `"Removed {}/{} stale processing nodes"` with the removed count and total count.
+5. **Track actual removals**: Count how many nodes are successfully removed versus how many were attempted. The final debug log should show both the count of successfully removed nodes and the total number of stale nodes that were targeted.
+
+## Affected Code
+
+The cleanup logic is in the S3Queue metadata handling source file. Find the function responsible for cleaning up persistent processing nodes and apply the changes there.
 
 ## Verification
 
-Your fix will be verified by checking the source file for the patterns described above. Ensure the corrected code in `cleanupPersistentProcessingNodes()` implements all the described behavior.
+Your fix will be verified by checking that:
+- The data structure for tracking nodes to remove stores version information
+- The removal call uses version-aware deletion
+- Version mismatch errors are handled gracefully alongside missing node errors
+- Removal attempts and skips are logged at trace level
+- The final summary log shows removed count vs total count

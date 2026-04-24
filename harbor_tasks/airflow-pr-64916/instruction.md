@@ -26,3 +26,9 @@ When the initial git commit fails due to pre-commit hook errors:
 ## File
 
 `dev/breeze/src/airflow_breeze/commands/ci_commands.py` — the `upgrade` function handles CI environment upgrades.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `black (Python formatter)`

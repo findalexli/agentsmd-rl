@@ -25,7 +25,12 @@ When a fatal exception occurs in a `clean_exit`-decorated function:
 - The error should be logged
 - `wandb.finish(exit_code=1)` should be called
 - The distributed process group should be destroyed (via the `finally` block)
-- The process must call `sys.exit(1)` to raise `SystemExit(1)`, ensuring:
+- The process must terminate with exit code 1 (not 0), ensuring:
   - The `finally` block executes before process termination
-  - The process exits with code 1 (not 0)
-  - The process does not hang in async contexts
+  - The async event loop does not swallow the exception and cause the process to hang indefinitely
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

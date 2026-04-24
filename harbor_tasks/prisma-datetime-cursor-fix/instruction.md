@@ -1,26 +1,32 @@
 # Task
 
-Cursor-based pagination on `DateTime` columns is broken for certain database
-configurations. When a cursor row is fetched and its `createdAt` value is used
-in the next page query, the comparison silently fails and the cursor has no
-effect — the query returns the wrong rows.
+Cursor-based pagination on `DateTime` columns silently returns the wrong rows
+when the cursor is applied. The query executes without error but the cursor has
+no effect — rows that should be excluded by the cursor boundary are still
+returned.
 
-The bug is in the query variable resolution logic. The scope value for a
-`DateTime` cursor is a string (how it arrives from the calling layer), but the
-pagination comparison expects a `Date` object. The two values compare as not
-equal even when they represent the same point in time.
+The root cause: a string-to-date conversion is missing in the query variable
+resolution path for `DateTime` typed placeholders. The scope value arrives as a
+JavaScript string, but the database comparison expects a `Date` object. The two
+compare as not equal even when they represent the same date.
 
-## Where to look
+When a placeholder passed to `evaluateArg()` has the shape:
+```typescript
+{
+  prisma__type: 'param',
+  prisma__value: { name: string, type: 'DateTime' }
+}
+```
+and the corresponding scope entry is a string such as `'2025-01-03'`, the
+function must return a `Date` instance rather than the bare string.
 
-`packages/client-engine-runtime/src/interpreter/render-query.ts`
+**Note:** The fix must apply only when `type` is `"DateTime"` — other
+placeholder types (e.g., `"String"`, `"Int"`, `"Float"`, `"Boolean"`,
+`"Json"`) must remain unaffected and return their scope value unchanged.
 
-The `evaluateArg` function resolves query placeholder variables from the scope.
-It handles two kinds of expressions: value placeholders (`isPrismaValuePlaceholder`)
-and generator calls (`isPrismaValueGenerator`). The placeholder branch simply
-assigns the scope value to `arg` — but it does not account for the case where
-the placeholder is typed as `DateTime` and the scope value is a JavaScript
-string.
+## Code Style Requirements
 
-Fix the placeholder branch so that `DateTime` string values are converted to
-`Date` objects before being used. Make sure the fix does not affect other
-placeholder types.
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`
+- `eslint (JS/TS linter)`

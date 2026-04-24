@@ -68,3 +68,9 @@ CLAUDE.md
 ## Reference
 
 Based on PR #87943 which adds Claude Code configuration to help AI assistants work effectively with the Next.js codebase. The configuration should follow Graphite-based git workflow patterns and pnpm-based build system conventions.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`

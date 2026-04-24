@@ -14,9 +14,9 @@ The naming is misleading because these functions handle any pointer type (thin o
 
 Fix the misleading function names in `compiler/rustc_const_eval/src/interpret/place.rs`:
 
-1. Rename `ref_to_mplace` to better reflect that it handles immediate pointer values (pointers passed directly, not stored in memory), not just references.
+1. The function currently called `ref_to_mplace` should be renamed to clearly indicate it handles immediate pointer values (pointers passed directly, not stored in memory), not just references.
 
-2. Rename `mplace_to_ref` to better reflect that it produces immediate pointer values. Additionally, add a `ptr_ty` parameter that lets callers specify the pointer type to create; when not provided, default to `*mut T` for backward compatibility.
+2. The function currently called `mplace_to_ref` should be renamed to clearly indicate it produces pointer values, not references. Additionally, add a parameter that lets callers specify the pointer type to create; when not provided, default to `*mut T` for backward compatibility.
 
 ## Files to Update
 
@@ -38,7 +38,7 @@ Update the doc comments on the functions to clarify they work with pointers (thi
 ## Verification
 
 Your changes should:
-1. Remove all occurrences of the old function names (`ref_to_mplace`, `mplace_to_ref`)
+1. Remove all occurrences of the old function names
 2. Have all callers using the new function names
-3. Include the `ptr_ty` parameter in the renamed `mplace_to_*` function (the parameter type should be `Option<Ty<'tcx>>`)
+3. Include a pointer type parameter in the renamed `mplace_to_*` function (the parameter type should be `Option<Ty<'tcx>>`)
 4. Update all relevant documentation

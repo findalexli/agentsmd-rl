@@ -37,3 +37,10 @@ Add test cases that verify:
 The test descriptions should include the phrases:
 - "should close the right panel when unpinning the currently active tab"
 - "should not close the right panel when unpinning a non-active tab"
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`
+- `eslint (JS/TS linter)`

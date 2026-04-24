@@ -38,4 +38,15 @@ objectReadable.pipe(byteTransform);
 
 ## Relevant code
 
-The issue is in the `pipe` method implementation in `src/js/internal/streams/readable.ts`, specifically in the `ondata` callback that handles chunks flowing from source to destination.
+The `Readable.prototype.pipe` implementation and its `ondata` helper function are located in `src/js/internal/streams/readable.ts`. The `ondata` function is responsible for pulling data from the readable and writing it to the destination; this is where write errors must be caught and forwarded.
+
+## Notes
+
+- When a stream pipe operation encounters an error during write operations, the error must be caught and forwarded to the stream's error handling mechanism, matching Node.js behavior
+- Follow the existing patterns in the codebase for error handling in stream operations
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`

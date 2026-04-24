@@ -43,3 +43,9 @@ npm run jest -- --testPathPatterns Tooltip --passWithNoTests
 ```
 
 All 44 existing tests should pass.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

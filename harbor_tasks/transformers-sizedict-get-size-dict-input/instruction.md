@@ -26,3 +26,9 @@ Instead of returning the dict, the function attempts to convert the `SizeDict` t
 ## Expected behavior
 
 `get_size_dict()` should accept `SizeDict` inputs and correctly convert them to a plain dictionary for downstream use.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

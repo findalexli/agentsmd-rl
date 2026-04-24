@@ -36,12 +36,7 @@ The file has an error handling block that checks `status.code() == Code::Already
 
 The existing test `test_k8s_mcmr_integration_repl_02_initialized_init_again` in `rust/wal3/tests/repl_02_initialized_init_again.rs` currently uses `result.is_err()` to check that the second initialization fails. Update this assertion to verify the **specific error variant** that means "already initialized".
 
-Specifically, the test must use the expression:
-```rust
-matches!(result, Err(Error::AlreadyInitialized))
-```
-
-You will need to import the `Error` type from the `wal3` crate in the test file. The test must NOT use `result.is_err()` after this change.
+Import the `Error` type from the `wal3` crate in the test file and use `matches!` to verify the exact error variant. The test must NOT use `result.is_err()` after this change.
 
 ### repl_06 test
 
@@ -52,3 +47,10 @@ Create a new test in `rust/wal3/tests/repl_06_parallel_open_or_initialize.rs` wi
 - The variable `num_writers = 32` (exactly this expression, with spaces as shown)
 
 The test should verify that when multiple concurrent `open_or_initialize` calls race to initialize the same log, all calls complete successfully (the winner initializes, and the others receive an "already initialized" response that is handled as success, not retry).
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `cargo clippy (Rust linter)`
+- `cargo fmt (Rust formatter)`

@@ -552,6 +552,222 @@ _SUBPROCESS_CALL_RE = re.compile(
 )
 
 
+# ══════════════════════ test_deps_in_dockerfile (Change 2A) ═════════════════
+
+# Binaries we can safely assume are on any Linux base image + common
+# python/js/go/rust CI runtimes. Not flagged when tests call these.
+_BUILTIN_BINARIES = frozenset({
+    "bash", "sh", "dash", "zsh",
+    "python", "python3", "pip", "pip3", "pipx",
+    "true", "false", ":",
+    "echo", "printf", "cat", "head", "tail", "tee", "sort", "uniq",
+    "grep", "egrep", "fgrep", "rg", "sed", "awk", "tr", "cut", "wc",
+    "find", "xargs", "ls", "pwd", "cd", "mkdir", "rm", "cp", "mv",
+    "ln", "chmod", "chown", "touch", "stat", "file", "which", "command",
+    "git", "curl", "wget",
+    "tar", "gzip", "gunzip", "unzip", "zip",
+    "env", "test", "diff", "tput",
+    "jq", "yq",
+})
+
+# Extract the first arg of each subprocess.run / check_output / Popen /
+# os.system call from test_outputs.py. We only parse the literal list form
+# subprocess.run(["cargo", ...]) — string form `os.system("cargo build")`
+# handled by separate regex.
+_SUBPROC_LIST_BIN_RE = re.compile(
+    r"""subprocess\.(?:run|check_output|Popen|call|check_call)
+        \s*\(\s*\[\s*["']([^"']+)["']""",
+    re.VERBOSE,
+)
+_SUBPROC_STRING_BIN_RE = re.compile(
+    r"""os\.(?:system|popen)\s*\(\s*["']\s*([a-zA-Z_][a-zA-Z0-9_-]*)""",
+)
+
+
+def _extract_test_binaries(tests_text: str) -> set[str]:
+    """Return set of binary names tests invoke (excluding builtins)."""
+    found: set[str] = set()
+    for m in _SUBPROC_LIST_BIN_RE.finditer(tests_text):
+        found.add(m.group(1))
+    for m in _SUBPROC_STRING_BIN_RE.finditer(tests_text):
+        found.add(m.group(1))
+    return {b for b in found if b and b not in _BUILTIN_BINARIES}
+
+
+# Base-image implicit binaries: if Dockerfile does `FROM <key>`, the image
+# ships with these binaries pre-installed. Keys match via `startswith`.
+_BASE_IMAGE_TOOLS: dict[str, tuple[str, ...]] = {
+    "node":       ("node", "npm", "npx", "yarn", "pnpm"),
+    "oven/bun":   ("bun", "node", "npm", "npx"),
+    "python":     ("python", "python3", "pip", "pip3"),
+    "rust":       ("cargo", "rustc", "rustup", "rustfmt", "clippy"),
+    "golang":     ("go", "gofmt"),
+    "go":         ("go", "gofmt"),
+    "ruby":       ("ruby", "gem", "bundle"),
+    "openjdk":    ("java", "javac"),
+    "ghcr.io/astral-sh/uv": ("uv", "uvx"),
+    "mcr.microsoft.com/dotnet/sdk": ("dotnet",),
+    "denoland/deno": ("deno",),
+}
+
+
+def _implicit_base_tools(df_text: str) -> set[str]:
+    """Return tools implicitly provided by the Dockerfile's base image."""
+    tools: set[str] = set()
+    for line in df_text.splitlines():
+        line = line.strip()
+        if not line.upper().startswith("FROM "):
+            continue
+        image_part = line[5:].strip().split()[0].lower()
+        for key, binaries in _BASE_IMAGE_TOOLS.items():
+            if image_part.startswith(key.lower()):
+                tools.update(binaries)
+    return tools
+
+
+def lint_test_deps_in_dockerfile(task_dir: Path) -> list[Finding]:
+    """Change 2A: every tool tests invoke via subprocess must appear in Dockerfile."""
+    tp = task_dir / "tests" / "test_outputs.py"
+    df = task_dir / "environment" / "Dockerfile"
+    if not (tp.exists() and df.exists()):
+        return []
+    tools = _extract_test_binaries(tp.read_text(errors="ignore"))
+    if not tools:
+        return []
+    df_text_raw = df.read_text(errors="ignore")
+    df_text = df_text_raw.lower()
+    implicit = _implicit_base_tools(df_text_raw)
+    missing: list[str] = []
+    for tool in sorted(tools):
+        # Base image implicitly includes this (e.g., FROM node:* → npx)
+        if tool in implicit:
+            continue
+        # Match as whole word anywhere in Dockerfile (RUN, FROM, COPY, etc.)
+        if re.search(rf"\b{re.escape(tool.lower())}\b", df_text):
+            continue
+        # Also accept `FROM <tool>:...` (base image named after the tool)
+        if re.search(rf"^\s*FROM\s+{re.escape(tool.lower())}[:/\s]",
+                     df_text, re.MULTILINE):
+            continue
+        missing.append(tool)
+    if not missing:
+        return []
+    return [Finding(
+        rubric="test_deps_in_dockerfile", tier="A", severity="fail",
+        path="environment/Dockerfile", line=0,
+        snippet=", ".join(missing[:5]),
+        detail=(
+            f"tests call {len(missing)} binar{'y' if len(missing)==1 else 'ies'} "
+            f"not installed in Dockerfile: {missing[:5]}"
+        ),
+    )]
+
+
+# ══════════════════════ substring_assertions_are_instructed (Change 3) ══════
+
+# Match `assert "LITERAL" in something`, `assert '...' in something`,
+# `assert "LITERAL" not in something`, and the reverse `assert x in "literal"`.
+# Case-insensitive pattern; we extract the literal side.
+_ASSERT_STR_IN_RE = re.compile(
+    r"""\bassert\s+
+        (?:
+            (?P<q1>["'])(?P<lit1>[^"'\n]{6,})(?P=q1)\s+
+            (?:not\s+)?in\s+\w+
+        |
+            \w+\s+(?:not\s+)?in\s+
+            (?P<q2>["'])(?P<lit2>[^"'\n]{6,})(?P=q2)
+        )""",
+    re.VERBOSE,
+)
+
+
+def lint_substring_assertions_instructed(task_dir: Path) -> list[Finding]:
+    """Change 3: literal strings in `assert "X" in output` must appear in instruction.md."""
+    tp = task_dir / "tests" / "test_outputs.py"
+    ip = task_dir / "instruction.md"
+    if not (tp.exists() and ip.exists()):
+        return []
+    tests_text = tp.read_text(errors="ignore")
+    instr_text = ip.read_text(errors="ignore")
+
+    literals: set[str] = set()
+    for m in _ASSERT_STR_IN_RE.finditer(tests_text):
+        lit = m.group("lit1") or m.group("lit2") or ""
+        lit = lit.strip()
+        # Filter:
+        # - must contain whitespace (indicates it's prose, not an identifier)
+        # - ≥6 chars already enforced by regex
+        # - not a common short string / symbol-like
+        if not lit or " " not in lit:
+            continue
+        if lit.startswith("/") or lit.startswith("--"):  # path / flag — noise
+            continue
+        literals.add(lit)
+
+    missing = [lit for lit in literals if lit not in instr_text]
+    if not missing:
+        return []
+    return [Finding(
+        rubric="substring_assertions_are_instructed", tier="A", severity="warn",
+        path="tests/test_outputs.py", line=0,
+        snippet=missing[0][:80],
+        detail=(
+            f"{len(missing)} test literal(s) not in instruction.md: "
+            f"{[l[:40] for l in missing[:3]]} — agent may produce equivalent "
+            f"wording that test rejects"
+        ),
+    )]
+
+
+# ══════════════════════ lint_requirement_stated (Change 5) ═══════════════════
+
+# Linters + formatters that agents must satisfy. Match both binary-invocation
+# and subprocess-argv-list patterns.
+_LINT_TOOLS = {
+    "ruff":      re.compile(r"\bruff\b(?:\s*,|\s+(?:check|format|--))"),
+    "black":     re.compile(r"\bblack\b(?:\s*,|\s+(?:--|[\w/.]))"),
+    "prettier":  re.compile(r"\bprettier\b"),
+    "eslint":    re.compile(r"\beslint\b"),
+    "stylelint": re.compile(r"\bstylelint\b"),
+    "clippy":    re.compile(r"cargo\s+clippy\b|\bclippy\b"),
+    "cargo_fmt": re.compile(r"cargo\s+fmt\b|\brustfmt\b"),
+    "gofmt":     re.compile(r"\bgofmt\b"),
+    "golangci":  re.compile(r"\bgolangci-?lint\b"),
+    "mypy":      re.compile(r"\bmypy\b"),
+    "pyright":   re.compile(r"\bpyright\b"),
+    "pylint":    re.compile(r"\bpylint\b"),
+    "typos":     re.compile(r"\btypos\b"),
+}
+
+
+def lint_lint_requirement_stated(task_dir: Path) -> list[Finding]:
+    """Change 5: if tests use linters, instruction must say so."""
+    tp = task_dir / "tests" / "test_outputs.py"
+    ip = task_dir / "instruction.md"
+    if not (tp.exists() and ip.exists()):
+        return []
+    tests_text = tp.read_text(errors="ignore")
+    instr_text = ip.read_text(errors="ignore").lower()
+    used: list[str] = []
+    for tool, pat in _LINT_TOOLS.items():
+        if pat.search(tests_text):
+            # Instruction should mention this tool by name
+            name = tool.replace("_", " ")
+            if name.lower() not in instr_text and tool.lower() not in instr_text:
+                used.append(tool)
+    if not used:
+        return []
+    return [Finding(
+        rubric="lint_requirement_stated", tier="B", severity="warn",
+        path="instruction.md", line=0,
+        snippet=", ".join(used[:5]),
+        detail=(
+            f"tests invoke {len(used)} linter(s)/formatter(s) not mentioned "
+            f"in instruction: {used[:5]} — agents won't know style is graded"
+        ),
+    )]
+
+
 # ══════════════════════ Post-validation pytest-pass check ════════════════════
 
 def check_all_gold_tests_passed(ctrf_path: Path) -> list[Finding]:
@@ -621,6 +837,9 @@ def lint_task(task_dir: Path) -> list[Finding]:
     findings.extend(lint_solve_sh(task_dir))
     findings.extend(lint_instruction_leakage(task_dir))
     findings.extend(lint_tests_subprocess(task_dir))
+    findings.extend(lint_test_deps_in_dockerfile(task_dir))
+    findings.extend(lint_substring_assertions_instructed(task_dir))
+    findings.extend(lint_lint_requirement_stated(task_dir))
     # Dedupe: drop repeated findings at same (path, line, rubric, detail) — common
     # when Dockerfile has `pip install X || pip install X` fallback pattern
     seen: set[tuple[str, int, str, str]] = set()

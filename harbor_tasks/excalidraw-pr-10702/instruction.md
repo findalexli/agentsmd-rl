@@ -1,29 +1,29 @@
-# Bound arrow elements not updated after element mutations
+# Bound Arrow Elements Not Updated After Element Mutations
 
-In Excalidraw, shape elements can have bound arrows attached to them. When a shape is moved or resized, its bound arrows must be repositioned to stay attached. The codebase provides an `updateBoundElements` function in `packages/element/src/binding.ts` for this purpose.
+In Excalidraw, shape elements can have bound arrows attached to them. When a shape is moved or resized, its bound arrows must be repositioned to stay attached. The `updateBoundElements` function handles this.
 
-Two code paths mutate elements but fail to call `updateBoundElements` afterward, causing bound arrows to become detached:
+## Bug
 
-## 1. Element distribution
+Two code paths mutate elements but do not update bound arrows afterward, causing arrows to become detached from their target shapes:
 
-When distributing elements (evenly spacing selected elements along an axis), the elements are moved but their bound arrows are not updated.
+1. **Element distribution** - When selected elements are evenly spaced, they are moved but any bound arrows remain in their old positions.
 
-The `distributeElements` function currently lacks access to the `Scene` object needed to call `updateBoundElements`. The `Scene` type is available from `./Scene`.
+2. **Text container resizing** - When text overflows or shrinks inside a container in WYSIWYG mode, the container height changes but bound arrows are not repositioned.
 
-To batch bound-element updates correctly when multiple elements move simultaneously, `updateBoundElements` should be called with the option `{ simultaneouslyUpdated: group }` where `group` contains all elements being distributed together.
+## Expected Behavior
 
-The expected behavior after fix includes:
-- `updateBoundElements` is imported from `"./binding"` with an import pattern like `from "./binding"`
-- The Scene type is imported with a pattern like `import type { Scene }`
-- `distributeElements` accepts a `scene: Scene` parameter
-- Elements are mutated via `scene.mutateElement` instead of `newElementWith`
-- After each element mutation, `updateBoundElements(element, scene, { simultaneouslyUpdated: group })` is called
-- The caller in `packages/excalidraw/actions/actionDistribute.tsx` passes `app.scene` to `distributeElements`
+After the fix, bound arrows should remain correctly attached to their target elements after both distribution operations and text container resizing operations.
 
-## 2. WYSIWYG text container resizing
+The fix involves calling `updateBoundElements` at appropriate points in both code paths. The function is already available in the codebase.
 
-When editing text inside a container in WYSIWYG mode, if the text overflows or shrinks, the container height is updated via `app.scene.mutateElement(container, { height: targetContainerHeight })`, but bound arrows attached to the container are not updated.
+## Implementation Requirements
 
-The expected behavior after fix includes:
-- `updateBoundElements` is imported from `@excalidraw/element`
-- After each `app.scene.mutateElement(container, { height: targetContainerHeight })` call, `updateBoundElements(container, app.scene)` is called
+### Distribution Code Path
+
+- The `distributeElements` function (in `packages/element/src/distribute.ts`) must accept a `Scene` parameter as part of its signature.
+- The action in `packages/excalidraw/actions/actionDistribute.tsx` must pass the Scene object to `distributeElements` when calling it.
+
+### WYSIWYG Code Path
+
+- The `textWysiwyg.tsx` file (in `packages/excalidraw/wysiwyg/`) must import the `updateBoundElements` function.
+- After mutating a text container's height, the code must call `updateBoundElements` on that container.

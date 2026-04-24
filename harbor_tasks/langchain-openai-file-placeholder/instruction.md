@@ -47,3 +47,9 @@ that verify:
 - The fix should be minimal and focused
 - Follow the existing code style in the file
 - The warning should still be issued to inform users about the missing filename
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

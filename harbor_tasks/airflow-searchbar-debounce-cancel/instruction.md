@@ -28,3 +28,9 @@ When the user clicks the clear button:
 - The component uses lodash's debounce function for the onChange handler
 - Look at how the clear button handler interacts with the debounced function
 - Consider what happens to pending debounced calls when the user clears the input
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`

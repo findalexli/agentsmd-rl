@@ -24,3 +24,10 @@ The test's wait strategy in `tests/v1/engine/test_abort_final_step.py` needs to 
 ## Relevant Code
 
 - `tests/v1/engine/test_abort_final_step.py` — the `test_abort_during_final_step` async test function, specifically the section after `await gen_task` where the status file is read and asserted on.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`
+- `typos (spell-check)`

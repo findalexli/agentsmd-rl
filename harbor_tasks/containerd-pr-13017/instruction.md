@@ -8,18 +8,16 @@ The `/blobs/` endpoint always returns `application/octet-stream` as the content 
 
 ## Expected Behavior
 
-- **404 Not Found** from `/manifests/` → should fall back to `/blobs/` (backward compatibility with legacy registries)
-- **5xx Server Errors** from `/manifests/` → should return the error immediately, **do NOT fall back to `/blobs/`**
+- **404 Not Found** from `/manifests/` -> should fall back to `/blobs/` (backward compatibility with legacy registries)
+- **5xx Server Errors** from `/manifests/` -> should return the error immediately, **do NOT fall back to `/blobs/`**
 
-The resolver should return errors of type `remoteerrors.ErrUnexpectedStatus` with the appropriate `StatusCode` field (500, 502, 503) when these transient errors occur, without falling back to `/blobs/`.
+When 5xx errors occur, the resolver should return errors of type `ErrUnexpectedStatus` with the appropriate HTTP status code (500, 502, 503) from the package `github.com/containerd/containerd/v2/core/remotes/errors`.
 
 ## Where to Fix
 
-The bug is in the Docker remote resolver code (`core/remotes/docker/`). The resolver tries multiple paths when resolving a reference. When the `/manifests/` path fails, it falls back to `/blobs/`. The problem is that this fallback currently happens for ALL errors, including transient server errors (5xx), when it should only happen for "not found" type errors.
+The bug is in `core/remotes/docker/resolver.go`. Look at the path resolution loop where the resolver tries multiple paths when resolving a reference. The `/manifests/` path is tried first, then the resolver falls back to `/blobs/`. The problem is that this fallback currently happens for ALL errors, including transient server errors (5xx), when it should only happen for "not found" type errors (4xx).
 
-The code tracks error severity using a priority value (`firstErrPriority`). The fallback to `/blobs/` should only occur when this priority value is ≤ 2, meaning the error was a 404 (not found). When the priority exceeds 2 (indicating a transient 5xx error), the resolver should return the error immediately without falling back.
-
-Specifically, the condition `firstErrPriority > 2` marks an error as severe enough to prevent fallback.
+The code tracks error severity using a priority system. Errors with higher priority (transient server errors like 5xx) should prevent fallback to `/blobs/`, while lower priority errors (like 404) should allow fallback for backward compatibility.
 
 ## Symptoms
 
@@ -41,3 +39,9 @@ You can verify your fix by:
 
 - Issue #13007 describes the content store pollution symptom
 - The resolver handles both `/manifests/` and `/blobs/` endpoints
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `gofmt (Go formatter)`

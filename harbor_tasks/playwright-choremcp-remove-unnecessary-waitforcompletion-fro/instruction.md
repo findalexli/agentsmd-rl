@@ -24,3 +24,9 @@ After fixing the code, update the project's skill documentation to reflect the `
 - `packages/playwright-core/src/tools/backend/mouse.ts` — contains the `browser_mouse_move_xy` tool handler
 - `packages/playwright-core/src/tools/backend/snapshot.ts` — contains `browser_hover` and `browser_select_option` tool handlers
 - `packages/playwright-core/src/tools/cli-client/skill/SKILL.md` — CLI skill documentation
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

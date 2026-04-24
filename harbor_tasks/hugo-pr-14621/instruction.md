@@ -36,8 +36,28 @@ The fix must:
 2. Remain backward compatible with existing explicit `loaders` configurations
 3. Be documented with explanatory comments in the relevant code
 
+## Implementation Details
+
+The fix requires adding a package-level constant containing common static file
+extensions that should use the file loader in CSS builds. This constant must be
+defined in `internal/js/esbuild/resolve.go` and referenced from the esbuild
+options handling code.
+
+The constant name to define is `defaultCSSFileLoaderExts`, and it must include
+at least the following file extensions: `.png`, `.woff`, `.svg`.
+
 ## Verification
 
 The existing integration test `TestCSSBuildLoadersDefault` in the `tpl/css` package
 must pass after the fix is applied. The esbuild package and tpl/css package must
 both compile successfully, and `go vet` must report no issues.
+
+The test `test_css_loader_extension_constant_exists` verifies that the constant
+`defaultCSSFileLoaderExts` exists in `internal/js/esbuild/resolve.go` and contains
+the expected file extension strings.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `gofmt (Go formatter)`

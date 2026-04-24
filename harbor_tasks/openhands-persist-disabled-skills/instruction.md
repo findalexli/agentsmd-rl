@@ -24,3 +24,9 @@ In the enterprise SaaS application, toggling skills in Settings > Skills appears
 - Examine the models in `enterprise/storage/` to understand how settings map to database columns
 - Look at how other JSON columns are defined in those models
 - Check existing migrations in `enterprise/migrations/versions/` for the numbering and structure pattern
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

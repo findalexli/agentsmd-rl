@@ -26,3 +26,10 @@ The changes are localized to:
 - `tests/unit_tests/test_chat_models.py` — if the old class names appear there, update them too
 
 Do not add new message types or change the wrapping logic — only update the class names it references.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`
+- `mypy (Python type checker)`

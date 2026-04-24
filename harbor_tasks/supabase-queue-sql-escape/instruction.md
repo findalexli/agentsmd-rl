@@ -6,7 +6,7 @@ The database queue message operations in Supabase Studio construct SQL queries b
 
 For example, sending a message with a payload like `{"key": "it's a value"}` will produce malformed SQL because the embedded single quote terminates the string literal prematurely. A malicious user could exploit this with a payload like `'; DROP TABLE users; --`.
 
-The vulnerable operations are in `apps/studio/data/database-queues/` and include the send, query (infinite/paginated), archive, and delete mutation files. Each constructs SQL using `executeSql` with raw `${...}` template interpolation for user-provided values like queue names, payloads, delays, message IDs, and timestamps.
+The vulnerable operations live in the `apps/studio/data/database-queues/` area of the codebase. They handle send, query (infinite/paginated), archive, and delete mutations. Each constructs SQL using `executeSql` with raw `${...}` template interpolation for user-provided values.
 
 ## Available Escaping Function
 
@@ -16,8 +16,6 @@ The codebase provides a `literal()` function in the `@supabase/pg-meta/src/pg-fo
 - **Objects**: serializes to JSON with a `::jsonb` cast suffix
 - **`null`**: returns the SQL keyword `NULL` (unquoted)
 - **Numbers**: returns the plain numeric string without quotes — e.g., `42` becomes `42`
-
-This function should be imported as `import { literal } from '@supabase/pg-meta/src/pg-format'`.
 
 ## Constraints
 

@@ -42,3 +42,9 @@ When the hit describes an awk inline program, `describeInterpreterInlineEval` re
 - `awk -F "," '{print $1}' data.csv` — the `-F ","` value flag should be skipped; the positional `{print $1}` is the inline program
 - `awk -- '{print $1}'` — the `--` separator means `{print $1}` is a positional program
 - `awk --` with nothing following — should NOT detect anything (no inline program present)
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

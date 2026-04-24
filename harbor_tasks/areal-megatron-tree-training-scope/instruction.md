@@ -13,3 +13,9 @@ All operations that depend on tree-training bridge patching — including bridge
 ## Files to Look At
 
 - `areal/engine/megatron_engine.py` — Contains the `MegatronEngine.initialize()` method where the tree-training context manager and model construction occur
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

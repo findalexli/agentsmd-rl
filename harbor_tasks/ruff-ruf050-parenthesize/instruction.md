@@ -59,3 +59,10 @@ Add test cases to the RUF050.py fixture file covering multiline expressions that
 - `pass` statements in if bodies
 
 The fixture file must remain syntactically valid Python and include all existing test cases plus the new multiline expression cases.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `cargo clippy (Rust linter)`
+- `cargo fmt (Rust formatter)`

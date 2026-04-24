@@ -51,3 +51,9 @@ The CSS should reference the transient `$disabled` prop to determine the styling
 - Do not modify test files
 - Do not change the external API (props) of the Button component
 - Do not break existing visual styling
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`

@@ -23,8 +23,14 @@ Additionally, in `src/Common/Dwarf.cpp`, the `getFullFileName` function handles 
 1. **CMakeLists.txt**: The compiler should emit debug info where:
    - `DW_AT_comp_dir` is set to `.` (current directory), regardless of build directory location
    - Source file paths are relative without any leading `./` or build-directory prefix
+   
+   The fix requires updating the compiler flags in the `ENABLE_BUILD_PATH_MAPPING` section to:
+   - Add `-fdebug-compilation-dir=.` — fixes `DW_AT_comp_dir` to "."
+   - Change `-ffile-prefix-map=${PROJECT_SOURCE_DIR}=.` to `-ffile-prefix-map=${PROJECT_SOURCE_DIR}/=` — the trailing `/` ensures the separator is stripped, leaving bare relative paths
 
-2. **src/Common/Dwarf.cpp**: The `getFullFileName` function in the DWARF parser should produce consistent relative paths, treating a directory entry of `.` (current directory) as equivalent to an empty directory - it adds no meaningful prefix and should not cause path inconsistencies between `.cpp` and `.h` files.
+2. **src/Common/Dwarf.cpp**: The `getFullFileName` function in the `Dwarf::LineNumberVM` class should produce consistent relative paths, treating a directory entry of `.` (current directory) as equivalent to an empty directory. The fix should:
+   - Extract the include directory to an intermediate variable (not calling `getIncludeDirectory()` directly in the `Path()` constructor)
+   - Check if the directory equals `.` and treat it as empty (e.g., by using an empty `std::string_view{}` instead)
 
 ## Files to Modify
 

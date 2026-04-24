@@ -14,7 +14,7 @@ For example:
 
 - `python_modules/dagster/dagster/_core/asset_graph_view/serializable_entity_subset.py`
 
-Look at the `is_compatible_with_partitions_def` method around line 132. The method already handles some partition subset types with special validation (like checking `has_partition_key` for range-based subsets), but `DefaultPartitionsSubset` is missing this validation when paired with `TimeWindowPartitionsDefinition`.
+The code that checks compatibility between partition subsets and partitions definitions is missing proper validation for `DefaultPartitionsSubset` when paired with `TimeWindowPartitionsDefinition`. The method that handles this compatibility check already performs special validation for certain subset types (like checking `has_partition_key` for range-based subsets), but the `DefaultPartitionsSubset` + `TimeWindowPartitionsDefinition` case lacks this validation.
 
 ## Expected Behavior
 

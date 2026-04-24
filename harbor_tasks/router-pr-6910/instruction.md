@@ -22,3 +22,9 @@ The `deepEqual` function is defined in `packages/solid-router/src/useRouterState
 - Promise-like values can be detected by checking if they have a `.then` method that is a function
 - Consider handling both native Promises and custom thenable objects
 - The fix should be early in the comparison logic to avoid trying to iterate over promise properties
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

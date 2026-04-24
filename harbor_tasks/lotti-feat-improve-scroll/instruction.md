@@ -29,3 +29,9 @@ The existing `ProjectTasksPanel` used in other contexts (like the settings detai
 - `lib/features/projects/ui/widgets/project_mobile_detail_content.dart` — the detail view scroll container that currently uses `SingleChildScrollView`
 - `lib/features/projects/ui/widgets/project_tasks_panel.dart` — the task list panel widget; add the new `ProjectTasksSliverPanel` class here
 - `lib/features/projects/README.md` — feature documentation; keep it up to date with architectural changes per project conventions
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `black (Python formatter)`

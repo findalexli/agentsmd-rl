@@ -22,3 +22,9 @@ The project's `.claude/CLAUDE.md` should be updated to give agents guidance on h
 
 - `.claude/skills/fetch-zulip-messages/fetch-zulip-web-public-messages` — the URL parsing script with the `parse_zulip_url` function
 - `.claude/CLAUDE.md` — the main agent instruction file for the project
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `pylint (Python linter)`

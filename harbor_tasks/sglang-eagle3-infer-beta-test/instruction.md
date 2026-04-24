@@ -24,3 +24,9 @@ All related EAGLE test files should continue to compile without errors.
 - Do not retain old class names like `TestEagleServerBase`, `TestEagleServerPage`, or `TestEagleLargeBS`
 - Do not retain the old score threshold value `0.22`
 - Do not use the old algorithm value `EAGLE`
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `black (Python formatter)`

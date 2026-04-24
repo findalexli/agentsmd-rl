@@ -1,12 +1,29 @@
-# Refactor AWS S3 endpoint URL handling in OpenHands
+# Fix AWS S3 (Minio) Endpoint URL Handling for Feature Branches
 
-In the OpenHands repository, the file `openhands/app_server/event/aws_event_service.py` defines the `AwsEventServiceInjector` class. Currently, the boto3 S3 client within this class reads the endpoint URL directly from `os.getenv('AWS_S3_ENDPOINT')`. This approach has two shortcomings: there is no HTTP/HTTPS protocol conversion based on a `AWS_S3_SECURE` environment variable, and the endpoint URL cannot be overridden per injector instance.
+## Problem Description
 
-## Desired behavior
+The AWS Event Service in OpenHands does not properly handle custom S3/Minio endpoint URLs for feature branch deployments. The S3 client's endpoint URL is currently read directly from `os.getenv('AWS_S3_ENDPOINT')`, which lacks:
+
+1. HTTP/HTTPS protocol conversion based on the `AWS_S3_SECURE` environment variable
+2. Per-instance override capability (the URL is fixed at module load time)
+
+## File to Modify
+
+`openhands/app_server/event/aws_event_service.py`
+
+## Symptoms
+
+The `AwsEventServiceInjector` class currently passes `os.getenv('AWS_S3_ENDPOINT')` directly to `boto3.client('s3', endpoint_url=...)`. This causes issues because:
+
+- When `AWS_S3_SECURE` is set to `false`, the endpoint may still use HTTPS (or vice versa)
+- When the endpoint URL lacks a protocol prefix, the S3 client may fail or behave unexpectedly
+- The endpoint cannot be overridden per injector instance
+
+## Required Behavior
 
 ### Endpoint URL computation
 
-A module-level function `_get_default_aws_endpoint_url` should handle endpoint URL computation with protocol conversion:
+A function should compute the default endpoint URL with the following logic:
 
 - Read `AWS_S3_ENDPOINT` via `os.getenv('AWS_S3_ENDPOINT')`. Return `None` if not set.
 - Read `AWS_S3_SECURE` via `os.getenv('AWS_S3_SECURE', 'true')`. Default is `'true'`.
@@ -15,13 +32,13 @@ A module-level function `_get_default_aws_endpoint_url` should handle endpoint U
 
 ### Pydantic field on the injector
 
-The `AwsEventServiceInjector` class should expose an `endpoint_url` field of type `str | None`, using `Field` (imported from `pydantic`) with `default_factory=_get_default_aws_endpoint_url`. This enables per-instance endpoint override while computing the default from the environment at model instantiation time.
+The injector class should expose an `endpoint_url` field of type `str | None`, using Pydantic's `Field` with a `default_factory` pointing to the endpoint URL computation function. This enables per-instance endpoint override while computing the default from the environment at model instantiation time.
 
 ### S3 client endpoint sourcing
 
-The boto3 S3 client within `AwsEventServiceInjector` should use the instance's `endpoint_url` attribute as its `endpoint_url` parameter, rather than reading from `os.getenv` directly.
+The boto3 S3 client within the injector should use the instance's `endpoint_url` attribute as its `endpoint_url` parameter, rather than calling `os.getenv` directly.
 
-### Behavioral examples
+## Behavioral examples
 
 Given `AWS_S3_ENDPOINT='https://minio.example.com:9000'` and `AWS_S3_SECURE='true'`, the function should return `'https://minio.example.com:9000'`.
 

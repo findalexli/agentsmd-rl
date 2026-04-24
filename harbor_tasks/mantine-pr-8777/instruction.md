@@ -44,3 +44,10 @@ getHeatColor({ value: 5, min: 5, max: 5, colors: ['1', '2', '3', '4'] })
 // Expected: '4'
 // Bug behavior: undefined (colors[NaN])
 ```
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`
+- `eslint (JS/TS linter)`

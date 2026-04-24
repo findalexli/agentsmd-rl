@@ -11,42 +11,32 @@ AReaL contains two categories of resource leaks that cause test failures. All mo
 
 ---
 
-## Bug 1 — Socket leak in `is_port_free()` (`areal/utils/network.py`)
-
-### Affected function
-
-- `is_port_free(port: int) → bool` in `areal/utils/network.py`
+## Bug 1 — Socket leak when port binding fails
 
 ### Symptom
 
-`is_port_free` creates TCP and UDP sockets and calls `bind()` on each. When `bind()` raises an `OSError`, the function returns `False` immediately — but the socket file descriptor is never closed. This leaks a file descriptor every time the port is already in use (the common failure case). Sockets that succeed are closed correctly.
+The codebase contains a utility function that checks whether a network port is available by attempting to bind to it with both TCP and UDP sockets. When the bind operation fails (because the port is already in use), the function returns `False` immediately — but the socket file descriptor is never closed. This leaks a file descriptor every time the port is already in use (the common failure case).
 
 ### Required behavior
 
-- When `bind()` raises `OSError` on either socket, that socket **must** be closed before returning.
+- When a bind operation raises an `OSError`, the socket must be closed before returning.
 - Both TCP and UDP code paths must clean up their socket on bind failure.
-- Sockets that succeed must also be closed (existing behavior, not a change).
+- Sockets that bind successfully must also be closed (existing behavior, not a change).
+- The function should continue to return `True` if the port is free, `False` otherwise.
 
 ---
 
-## Bug 2 — Traceback destruction in trainer `__exit__` methods
-
-### Affected classes
-
-- `RLTrainer` in `areal/trainer/rl_trainer.py`
-- `SFTTrainer` in `areal/trainer/sft_trainer.py`
-
-Both classes implement `__exit__(self, exc_type, exc_value, traceback)` as a context manager hook.
+## Bug 2 — Traceback destruction in trainer context managers
 
 ### Symptom
 
-When an exception is propagating out of a `with RLTrainer():` or `with SFTTrainer():` block, the `__exit__` method re-raises it using `raise exc_value`. This replaces the original traceback with a new one that points at the `raise` statement inside `__exit__`, making debugging difficult because the true origin of the exception is lost.
+Two trainer classes in the codebase implement context manager `__exit__` methods. When an exception is propagating out of a `with` block using these trainers, the `__exit__` method re-raises the exception using `raise exc_value`. This replaces the original traceback with a new one that points at the `raise` statement inside `__exit__`, making debugging difficult because the true origin of the exception is lost.
 
 ### Required behavior
 
-- `__exit__` must not re-raise the exception.
+- `__exit__` must not re-raise the exception manually.
 - It must return a falsy value (`False`, `None`, etc.) so that Python re-raises the original exception with its full traceback intact.
-- Cleanup via `self.close()` must still run regardless of whether an exception is propagating.
+- Cleanup operations must still run regardless of whether an exception is propagating.
 
 ---
 
@@ -67,4 +57,4 @@ All modified files must:
 - Have no bare `print()` calls used for logging
 - Pass `ruff check` and `ruff format --check`
 - End with a single newline and have no trailing whitespace
-- Contain at least 3 real statements in `is_port_free` and each `__exit__` (not just `pass` stubs)
+- Contain at least 3 real statements in the fixed functions (not just `pass` stubs)

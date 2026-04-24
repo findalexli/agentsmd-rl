@@ -35,3 +35,10 @@ The `extra_body` dictionary unconditionally includes `top_k=-1` and `min_p=0.0`,
 - `logprobs` is always `True` in the result
 - `min_tokens` and `repetition_penalty` are preserved in `extra_body` when set
 - `max_tokens` is passed through in the result
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`
+- `mypy (Python type checker)`

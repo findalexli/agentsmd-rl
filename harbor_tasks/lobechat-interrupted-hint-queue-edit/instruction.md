@@ -42,3 +42,9 @@ Additionally, when messages are queued during AI generation, users can delete qu
 - `.agents/skills/electron-testing/record-electron-demo.sh` — screen recording script (to create)
 
 After implementing the code changes, update the relevant documentation and skill files to reflect the new capabilities.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

@@ -13,3 +13,9 @@ The `get_state_dict_dtype` function iterates through all tensors in the state di
 ## File to Modify
 
 - `src/transformers/modeling_utils.py` -- the `get_state_dict_dtype` function
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

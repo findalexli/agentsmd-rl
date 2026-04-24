@@ -20,3 +20,9 @@ The `handleOpenAiEmbeddingsHttpRequest` function in `src/gateway/embeddings-http
 ## Verification
 
 After the fix, the `handleGatewayPostJsonEndpoint` call in `handleOpenAiEmbeddingsHttpRequest` must include `requiredOperatorMethod: "chat.send"` alongside the existing `pathname: "/v1/embeddings"` option.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

@@ -8,7 +8,7 @@ The TypeScript client already has fast-loop detection that handles this case. Th
 
 ## Symptom
 
-A buggy proxy or CDN that returns `200 OK` with the same `last_offset` value repeatedly — but never sends an `up-to-date` control message — causes the client to poll forever without detecting that no progress is being made.
+A buggy proxy or CDN that returns `200 OK` with the same `last_offset` value repeatedly — but never sends an `up-to-date` control message — causes the client to poll forever without detecting that no progress is being made. After the first detection the client clears its caches and retries; after several consecutive detections it raises an error instead of continuing indefinitely.
 
 ## What to implement
 
@@ -21,36 +21,31 @@ Implement fast-loop detection in the Elixir client that mirrors the TypeScript c
 
 The fast-loop detection must:
 
-1. Track recent request offsets within a sliding window of **500 ms**. When **5 or more** requests occur at the same offset within that window, a fast-loop condition is detected.
+1. Track recent request offsets within a sliding window. When enough requests occur at the same offset within that window, a fast-loop condition is detected.
 2. On first detection: immediately clear the shape handle and reset the offset (backoff = 0) so the client can re-subscribe from scratch.
 3. On subsequent detections: apply exponential backoff before retrying.
-4. After **5 consecutive** fast-loop detections without any progress, raise a `Client.Error` instead of continuing to poll.
+4. After several consecutive fast-loop detections without any progress, raise a `Client.Error` instead of continuing to poll.
 5. When the stream transitions to live/up-to-date mode, reset all fast-loop tracking state.
 
 ### Required interface
 
 The implementation must expose the following in `ShapeState`:
 
-- A function `check_fast_loop/1` with spec `@spec check_fast_loop(t())` — takes the current shape state and returns either an updated state or signals that a fast-loop condition was detected.
+- A function `check_fast_loop/1` — takes the current shape state and returns either an updated state or signals that a fast-loop condition was detected (via `{:ok, state}`, `{:backoff, ms, state}`, or `{:error, message}`).
 - A function `clear_fast_loop/1` — resets all fast-loop tracking state.
 
-The `ShapeState` struct must be extended with:
-- `recent_requests: []` — list tracking recent request offsets within the sliding window
-- `fast_loop_consecutive_count: 0` — counter for consecutive fast-loop detections
+The `ShapeState` struct must be extended with fields to track recent requests and consecutive detection count.
 
-Module attributes for the detection thresholds:
-- `@fast_loop_window_ms 500`
-- `@fast_loop_threshold 5`
-- `@fast_loop_max_count 5`
+Module attributes define the detection thresholds (window size, request count threshold, max consecutive count).
 
 ### Stream integration
 
-In `stream.ex`, the fetch path must call `check_fast_loop(stream)` to invoke detection on each iteration. When transitioning to live/up-to-date mode, it must call `ShapeState.clear_fast_loop` to reset tracking.
+In `stream.ex`, the fetch path must call `check_fast_loop` to invoke detection on each iteration. When transitioning to live/up-to-date mode, it must call `clear_fast_loop` to reset tracking.
 
 ## Verification
 
 After implementation:
-- Run `mix test test/electric/client/shape_state_test.exs` — this test file should report **8 tests**, all passing
+- A test file `test/electric/client/shape_state_test.exs` should exist with 8 passing tests
 - Run `mix test` in `packages/elixir-client` — all existing tests must continue to pass
 - Run `mix format --check-formatted` — formatting should be clean
 - Run `mix compile --force --all-warnings --warnings-as-errors` — no warnings

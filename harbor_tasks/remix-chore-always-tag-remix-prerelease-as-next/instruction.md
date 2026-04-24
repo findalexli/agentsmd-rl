@@ -35,3 +35,9 @@ The `remix` package's prerelease system couples the version suffix (e.g. `alpha`
 - `scripts/publish.ts` — rename tag variable to `remixPrereleaseChannel`, ensure `--tag next` is used
 - `AGENTS.md` — update prerelease documentation to use `channel` terminology and explain `next` dist-tag
 - `CONTRIBUTING.md` — update prerelease section headers and JSON examples
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

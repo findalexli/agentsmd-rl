@@ -12,9 +12,9 @@ The MariaDB adapter in `packages/adapter-mariadb/src/mariadb.ts` loses precision
 
 ## Technical Details
 
-The MariaDB adapter uses a text-based query protocol (`query()`) for database operations. This text protocol causes precision loss for large decimal values. The fix requires using the binary protocol variant (`execute()`) for query operations instead.
+The `performIO` method in the `MariaDbQueryable` class handles query execution. Transaction operations use a different code path that is unaffected.
 
-The `performIO` method in the `MariaDbQueryable` class handles query execution and is where the protocol selection occurs. Transaction operations use a different code path.
+The MariaDB driver supports two protocols for query execution: a text-based protocol and a binary protocol. The current implementation uses one of these protocols, which causes precision loss for large decimal values when exchanging data with the database.
 
 ## Relevant Files
 

@@ -8,7 +8,7 @@ option to `GraphPickler.Options` that controls what happens when a raw
 `torch.fx.Node` object is encountered in node metadata during pickling:
 
 - **Default behavior** (`ignore_raw_node=False`): an `AssertionError` is
-  raised with the message `"Unexpected raw Node during pickling"`.
+  raised when a raw Node appears in node metadata during pickling.
 - **Opt-in behavior** (`ignore_raw_node=True`): the raw `Node` is silently
   replaced with `None` during serialization, and it round-trips as `None`
   after deserialization.
@@ -22,32 +22,25 @@ features but has no tests that exercise the `ignore_raw_node` option.
 ## What needs to happen
 
 Add test coverage in `test/fx/test_graph_pickler.py` for the
-`ignore_raw_node` option. The tests should verify:
+`ignore_raw_node` option. You need to verify:
 
 1. That pickling a `GraphModule` whose `node.meta` contains a raw
    `torch.fx.Node` reference raises `AssertionError` by default.
 2. That with `Options(ignore_raw_node=True)`, pickling succeeds and the raw
    node reference deserializes as `None` after a round-trip.
 
-The test should construct a simple traced graph module, inject a raw `Node`
-reference into the metadata of one of its nodes (using `node.meta["key"] = node`
-or similar assignment to `node.meta`), and exercise the
-`GraphPickler.dumps()` / `GraphPickler.loads()` round-trip.
+Construct a simple traced graph module, inject a raw `Node` reference into
+the metadata of one of its nodes, and exercise the `GraphPickler.dumps()` /
+`GraphPickler.loads()` round-trip.
 
-### Required test patterns
+### Test requirements
 
-The test class(es) and methods you add must satisfy the following structural
-requirements (the test oracle enforces these via AST inspection):
-
-| Check | Required pattern |
-|-------|-----------------|
-| Error assertion | Use `self.assertRaises(AssertionError, ...)` or `self.assertRaisesRegex(AssertionError, ...)` to catch the default-raise error, combined with a call to `self.GraphPickler.dumps(...)` |
-| Round-trip verification | Call `self.GraphPickler.loads(...)` to verify deserialization after a successful dump with `ignore_raw_node=True` |
-| Raw node injection | Assign a raw `Node` reference into `node.meta` (e.g., `call_node.meta["raw_ref"] = call_node` or similar subscript assignment to `.meta`) |
-| Test class name | The test class(es) must contain the string `ignore_raw_node` in the class name (used by the AST scanner to find your tests) |
-| Minimum test count | At least 2 test methods are required |
-| Assertions | Each test method must contain at least one assertion (e.g., `self.assertIsNone`, `self.assertIsNotNone`, `self.assertRaises`, `self.assertIn`) |
-| Statement count | Each test method must contain at least 3 statements |
+- Test class name should contain `ignore_raw_node` (e.g., `TestIgnoreRawNode`)
+- At least 2 test methods are required
+- Each test method must contain at least one assertion
+- The test class should inherit from `TestCase` (from `torch.testing._internal.common_utils`)
+- Use `assertRaises` or `assertRaisesRegex` to catch `AssertionError` for the default behavior
+- For the round-trip test, call both `dumps()` and `loads()` with `ignore_raw_node=True`
 
 ### Test file requirements
 

@@ -34,3 +34,9 @@ You must add a unit test named `test_snapshot_from_lockfile_v5_with_linked_packa
 - The lockfile key for `@myorg/shared@1.0.0` in this case will be `@myorg/shared@1.0.0_zod@4.3.6`
 - Assert that the linked package (`@myorg/shared`) has `dist: None` in the resulting snapshot
 - Assert that the non-linked peer dep (`zod`) has `dist: Some(...)`
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `cargo clippy (Rust linter)`

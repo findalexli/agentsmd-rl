@@ -40,3 +40,9 @@ The component's publishing and Hub-upload methods already accept a `head` argume
 - `gradio/components/html.py` — HTML component implementation
 - `.agents/skills/gradio/SKILL.md` — Component API reference
 - `guides/03_building-with-blocks/06_custom-HTML-components.md` — Usage guide
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

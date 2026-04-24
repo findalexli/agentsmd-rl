@@ -35,3 +35,9 @@ The solution must satisfy all of the following structural requirements:
 - The stream context is only needed for the CUDA kernel path, not for the general block forward flow
 - Removing contextlib means the stream management logic that used `nullcontext` must be reimplemented differently
 - Both the modular and the generated modeling file need to be updated consistently
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

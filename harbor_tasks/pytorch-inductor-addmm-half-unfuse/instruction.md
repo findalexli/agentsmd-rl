@@ -15,6 +15,6 @@ However, for `bfloat16` and `float16` dtypes, this splitting introduces an extra
 
 ## Expected Behavior
 
-- The `unfuse_bias_add_to_pointwise` function in `torch/_inductor/fx_passes/post_grad.py` should not apply the optimization for `bfloat16` or `float16` inputs, so that half-precision computations produce numerically correct results matching eager mode
-- The optimization must continue to be applied for `float32` and `float64` inputs — these should not be affected by the fix
-- The input dtype can be determined from the `inp` parameter's metadata (`inp.meta["val"].dtype`)
+- The `unfuse_bias_add_to_pointwise` function in `torch/_inductor/fx_passes/post_grad.py` must skip the unfusing optimization for half-precision dtypes (`bfloat16` and `float16`), ensuring numerical results match eager mode
+- The optimization must continue to apply for `float32` and `float64` inputs without any changes to their behavior
+- Hint: the dtype of the input tensor is accessible via metadata on the `inp` argument

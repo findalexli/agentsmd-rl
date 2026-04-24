@@ -51,3 +51,10 @@ The test file must be updated to include:
 3. Click to unpin that tab
 4. **Bug:** The tab button disappears but the panel stays open
 5. **Expected:** Both the tab button and panel should be hidden
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`
+- `eslint (JS/TS linter)`

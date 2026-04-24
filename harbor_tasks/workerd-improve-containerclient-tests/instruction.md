@@ -24,3 +24,10 @@ The container-client tests in `src/workerd/server/tests/container-client/test.js
 
 - `src/workerd/server/tests/container-client/test.js` — the container-client test suite (Durable Object tests)
 - `src/workerd/server/tests/container-client/README.md` — instructions for running these tests locally
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`
+- `prettier (JS/TS/JSON/Markdown formatter)`

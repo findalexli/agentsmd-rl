@@ -27,3 +27,10 @@ Look for the conventional commit parsing logic and the type ordering/type labels
 ## Testing
 
 The parsing logic can be tested by simulating commit messages with and without the `!` marker. Breaking changes should be routed to a 'breaking' bucket while regular changes go to their type-specific buckets.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`
+- `eslint (JS/TS linter)`

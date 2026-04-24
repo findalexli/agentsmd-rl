@@ -34,3 +34,9 @@ The fix must satisfy the following behavioral requirements that the test suite w
 2. **Adoption in self-update**: The `self_update.rs` file must call `.stderr_important()` at 3 or more sites for important messages (update notifications, offline errors, rate-limit warnings, version info, etc.) so they are visible even with `--quiet`.
 
 3. **No regression**: The existing `stderr()` method must continue to return `Stderr::Disabled` for both `Quiet` and `Silent` modes, ensuring routine informational messages remain suppressed in quiet mode.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `cargo clippy (Rust linter)`

@@ -21,3 +21,9 @@ In `slime/ray/rollout.py`, the function that launches the router configures seve
 2. Instantiate the data source — crashes trying to load from an invalid path
 3. Even if initialization is bypassed, querying the data source length raises a `TypeError`
 4. Loading a checkpoint with shuffling enabled raises an `AttributeError` on the uninitialized dataset
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `black (Python formatter)`

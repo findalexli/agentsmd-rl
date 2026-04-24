@@ -49,3 +49,9 @@ After making changes, run the tests to verify:
 2. No deprecation errors containing `:slugorfilename" permalink token was deprecated` appear
 3. No `ERROR deprecated` messages appear in test output
 4. The `check.sh` script contains `go test -failfast`
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `gofmt (Go formatter)`

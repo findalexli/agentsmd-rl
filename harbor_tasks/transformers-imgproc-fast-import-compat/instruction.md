@@ -42,3 +42,9 @@ from transformers.image_processing_utils_fast import BaseImageProcessorFast
 from transformers.image_processing_utils_fast import divide_to_patches
 # ImportError: No module named 'transformers.image_processing_utils_fast'
 ```
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

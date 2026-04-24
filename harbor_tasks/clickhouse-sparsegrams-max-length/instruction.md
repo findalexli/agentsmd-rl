@@ -18,7 +18,9 @@ After the fix:
 
 ## Technical Context
 
-The sparseGrams tokenizer is implemented in `src/Functions/sparseGramsImpl.h`. The tokenizer maintains a convex hull data structure and computes token lengths during iteration. The length calculation involves the difference between `right_symbol_index` and `possible_left_symbol_index`, plus an offset derived from the n-gram length parameters.
+The sparseGrams tokenizer is implemented in `src/Functions/sparseGramsImpl.h`. The tokenizer maintains a convex hull data structure and computes token lengths during iteration. The length calculation involves `right_symbol_index - possible_left_symbol_index` plus an offset derived from n-gram length parameters.
+
+The length calculation offset is currently incorrect — it does not properly account for the configured `min_ngram_length` value, causing tokens to exceed the specified maximum length.
 
 ## Verification
 

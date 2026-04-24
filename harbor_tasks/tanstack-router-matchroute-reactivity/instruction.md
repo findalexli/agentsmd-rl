@@ -53,3 +53,9 @@ Run the type tests:
 ```bash
 CI=1 NX_DAEMON=false pnpm nx run @tanstack/solid-router:test:types --outputStyle=stream --skipRemoteCache
 ```
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

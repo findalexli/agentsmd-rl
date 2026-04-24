@@ -7,7 +7,7 @@ The `isLineSegment` function in the math package has a bug where it doesn't corr
 ## Location
 
 - **File**: `packages/math/src/segment.ts`
-- **Function**: `isLineSegment` (around line 40-45)
+- **Function**: `isLineSegment`
 
 ## Expected Behavior
 

@@ -64,3 +64,9 @@ const adapter = await factory.connect()
 - Do not modify any test files
 - The `pg` library's `Pool` constructor accepts `{ connectionString: string }` as a config — use this internally
 - `externalPool` should be `null` when constructed from a string
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

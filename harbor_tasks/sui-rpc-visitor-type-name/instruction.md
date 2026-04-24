@@ -24,3 +24,9 @@ Specifically, the RPC visitor tests for `json_ascii_string`, `json_utf8_string`,
 
 - `TypeName` is defined in the Move standard library at `0x1::type_name::TypeName` with a single field `name` of type `0x1::ascii::String`.
 - TypeName does not introduce a leading `0x` for hexadecimal addresses in its string representation.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `cargo fmt (Rust formatter)`

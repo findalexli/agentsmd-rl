@@ -63,3 +63,9 @@ After your changes:
 2. `npm run lint` should pass type checking
 3. `npm run format` should pass formatting checks
 4. `npm test -- resolveReviews.test.ts --run` should pass all 5 test cases
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

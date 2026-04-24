@@ -8,12 +8,12 @@ Users want to be able to configure HPA settings specifically for Celery workers 
 
 ## Expected Behavior
 
-1. A new `workers.celery.hpa` configuration section should be available with the same options as `workers.hpa`:
-   - `enabled`
-   - `minReplicaCount`
-   - `maxReplicaCount`
-   - `metrics`
-   - `behavior`
+1. A new `workers.celery.hpa` configuration section should be available with these options:
+   - `enabled` (boolean)
+   - `minReplicaCount` (integer)
+   - `maxReplicaCount` (integer)
+   - `metrics` (array)
+   - `behavior` (object)
 
 2. Values set in `workers.celery.hpa.*` should override values in `workers.hpa.*`
 
@@ -21,13 +21,12 @@ Users want to be able to configure HPA settings specifically for Celery workers 
 
 4. The `values.schema.json` should be updated to include the new configuration structure
 
-## Files to Investigate
+## Files to Modify
 
-- `chart/values.yaml` - Default values configuration
-- `chart/values.schema.json` - JSON schema for values validation
-- `chart/templates/NOTES.txt` - Template for chart notes (deprecation warnings)
-- `chart/templates/workers/worker-deployment.yaml` - Worker deployment template
-- `chart/templates/workers/worker-hpa.yaml` - HPA template
+- `chart/values.yaml` — add the new `workers.celery.hpa` section with the 5 options above
+- `chart/values.schema.json` — add schema for `workers.celery.hpa`
+- `chart/templates/NOTES.txt` — add deprecation warnings for old `workers.hpa.*` usage
+- Helm templates under `chart/templates/workers/` may need updates to support the new config path
 
 ## Notes
 

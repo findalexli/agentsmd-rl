@@ -44,3 +44,9 @@ The function returns markdown string. The module must also export `MAX_HISTORY_R
 ## Files
 
 - `scripts/ci/utils/diffusion/generate_diffusion_dashboard.py` — the dashboard generation script
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `black (Python formatter)`

@@ -50,6 +50,7 @@ The rule should be extended to also flag non-tuple RHS values when the format st
 
 The implementation must:
 
+- Modify `crates/ruff_linter/src/rules/pyflakes/rules/strings.rs` — specifically the function `percent_format_positional_count_mismatch`
 - Not use `panic!` or `.unwrap()` in the modified code
 - Not contain local `use` statements inside the modified function
 - Not use `unreachable!` macro in the modified function

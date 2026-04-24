@@ -1,29 +1,17 @@
-# Build error in GlobWalker: undeclared identifier `component_idx`
+# Build error in GlobWalker: undeclared identifier
 
 ## Problem
 
-The glob walker in `src/glob/GlobWalker.zig` fails to compile with an error about an undeclared identifier `component_idx` near a `setNameFilter` call in the Windows-specific directory iteration code.
+The glob walker in `src/glob/GlobWalker.zig` fails to compile. The Windows-specific directory iteration code references a variable that no longer exists after a recent refactor.
 
 ## Context
 
-The `GlobWalker_` function's directory iteration logic on Windows applies an NT kernel-level filename filter via `setNameFilter` to optimize directory scans. This filter is computed by `computeNtFilter`, which operates on a single pattern component index and returns an `?[]const u16` (optional UTF-16 slice).
+The `GlobWalker_` function's directory iteration logic on Windows uses a kernel-level filename filter via `setNameFilter` for optimization. This filter is computed by `computeNtFilter`, which takes a pattern component index.
 
-A recent refactor replaced the single component index tracking variable with a `BitSet` called `active` that tracks multiple active pattern component indices simultaneously (to correctly handle `**` glob patterns that can match across multiple components at once). The `setNameFilter` call still references the old single-index variable, which no longer exists in scope.
+A recent refactor replaced the single component index tracking variable with a BitSet called `active` (to correctly handle `**` glob patterns). The Windows iteration code still references the old variable.
 
 ## What needs to happen
 
-The `setNameFilter` call needs to be updated to work with the new `active` BitSet instead of the removed single-index variable.
+Fix the compilation error.
 
-Key considerations:
-
-- `computeNtFilter` takes a single `u32` component index
-- When multiple pattern indices are active (e.g., after a `**` segment), a single-component kernel filter could hide directory entries that other active indices need to match
-- The NT filter is purely a pre-filter optimization — `matchPatternImpl` still runs on every returned entry for correctness (per the existing doc comment on `computeNtFilter`)
-
-Required behavior:
-
-- The fix must derive the component index from the `active` BitSet (not reference the removed `component_idx` variable)
-- When only one component is active, compute the NT filter with that single index and pass it to `setNameFilter`
-- When multiple components are active, `setNameFilter` must receive `null` as the filter value to skip single-component filtering
-- The `setNameFilter` call itself must be preserved (not removed)
-- The `computeNtFilter` function must still be called near `setNameFilter` (not just left as an unused definition)
+The glob walker must correctly handle multiple active pattern components (e.g., `**` segments). The `setNameFilter` call must be preserved. `computeNtFilter` must still be called near it.

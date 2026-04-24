@@ -32,3 +32,10 @@ Two URLs that refer to the same source should always produce equal `VersionId` v
 ## API Under Test
 
 The test suite calls `VersionId::from_url` with URLs parsed via `DisplaySafeUrl::parse(url).unwrap()`. Your implementation must ensure this API produces equal `VersionId` values for archive URLs that differ only in hash fragments, while preserving subdirectory semantics.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `cargo clippy (Rust linter)`
+- `cargo fmt (Rust formatter)`

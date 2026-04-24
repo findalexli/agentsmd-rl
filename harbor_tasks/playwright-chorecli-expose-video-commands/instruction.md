@@ -11,13 +11,12 @@ The terminal CLI (`playwright-cli`) also has no `video-start` / `video-stop` com
 ### 1. New video browser tools
 
 Create a `video.ts` module in `packages/playwright/src/mcp/browser/tools/` that defines two tools:
-
-- `browser_start_video` — starts video recording; exported as `startVideo` (or `start_video`)
-- `browser_stop_video` — stops video recording; exported as `stopVideo` (or `stop_video`)
+- One tool named `browser_start_video` that starts video recording
+- One tool named `browser_stop_video` that stops video recording
 
 Both tools must use the capability name `'devtools'`.
 
-Import the video module in `packages/playwright/src/mcp/browser/tools.ts` and spread its exports into the `browserTools` array (e.g., `...video`).
+Import the video module in `packages/playwright/src/mcp/browser/tools.ts` and spread its exports into the `browserTools` array.
 
 ### 2. Rename `tracing` capability to `devtools`
 
@@ -25,16 +24,13 @@ The existing tracing tools in `packages/playwright/src/mcp/browser/tools/tracing
 
 Update the `ToolCapability` type in `packages/playwright/src/mcp/config.d.ts` — replace `'tracing'` with `'devtools'` in the union type.
 
-Add backward compatibility so that `--caps=tracing` still works by mapping it to `devtools`. Specifically, `program.ts` must contain a check that looks for `'tracing'` in the capabilities list (using `.includes('tracing')`) and maps it to `'devtools'`.
+Add backward compatibility so that `--caps=tracing` still works by mapping it to `devtools`.
 
 ### 3. New terminal CLI commands
 
 Add commands in `packages/playwright/src/mcp/terminal/commands.ts` using `declareCommand`:
-
 - `video-start` — maps to tool name `browser_start_video`, no arguments
 - `video-stop` — maps to tool name `browser_stop_video`, accepts an optional `--filename` option
-
-These must be declared with the exact pattern `declareCommand({ name: 'video-start', ... toolName: 'browser_start_video' ... })` and included in the `commandsArray` export with the variable names `videoStart` and `videoStop`.
 
 ### 4. CLI help update
 
@@ -53,3 +49,9 @@ The terminal CLI skill documentation at `packages/playwright/src/mcp/terminal/SK
 - `packages/playwright/src/mcp/program.ts` — CLI option handling and backward compat
 - `packages/playwright/src/mcp/terminal/commands.ts` — terminal command declarations
 - `packages/playwright/src/mcp/terminal/SKILL.md` — CLI skill documentation
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

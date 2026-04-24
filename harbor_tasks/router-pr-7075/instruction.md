@@ -4,8 +4,6 @@
 
 When using TanStack Router's preload functionality with nested routes, there's a bug where child route handlers continue executing even after a parent route's `beforeLoad` handler throws an error during preload.
 
-The bug is in the preload loop implementation in `packages/router-core/src/load-matches.ts`.
-
 ## Expected Behavior
 
 When a parent route's `beforeLoad` handler throws an error during preloading:
@@ -29,14 +27,14 @@ Create a router with nested routes where:
 
 Call `router.preloadRoute({ to: '/parent/child' })` and observe that the child handlers are invoked even though the parent failed.
 
-## Implementation Notes
+## Root Cause
 
-The fix must properly track the position of errors in the route match chain to determine which handlers should execute. The preload loop needs to respect error boundaries - when a match in the chain encounters an error, subsequent child matches in that chain should not have their handlers invoked.
+The preload loop in `packages/router-core/src/load-matches.ts` does not properly stop when encountering a match that has failed its beforeLoad hook. When a parent match's beforeLoad fails, subsequent child matches in the chain are still being processed and their handlers are being invoked. An error boundary tracking field (which match first failed) is not being properly consulted when deciding whether to continue processing subsequent matches or invoke their handlers.
 
-Specifically:
+Specifically, when a beforeLoad throws during preload, child route handlers continue to execute. The fix requires tracking the index of the first match that encounters an error (`firstBadMatchIndex`) and using it to prevent further handler invocation. The `headMaxIndex` value used to limit head handler execution must be derived from this error boundary, not from the default last-match calculation.
 
-1. **Loop termination condition**: The preload loop's break condition must check for both the existing error state AND whether any match (including the current one) has failed, stopping processing when an error boundary is reached.
+## Code Style Requirements
 
-2. **Head handler limit**: The calculation that determines which matches get their head handlers invoked must properly account for where in the match chain an error occurred, ensuring head handlers only run for matches up to and including the first failed match, not for subsequent child matches.
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
 
-The fix requires tracking which match index first encounters an error, and the loop must respect this boundary when deciding which matches to process further.
+- `eslint (JS/TS linter)`

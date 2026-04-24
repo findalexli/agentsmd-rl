@@ -42,3 +42,9 @@ After your fix, these patterns should be present in the code:
 ## Reference
 
 The working `delete_splits` function (non-metrics version) in the same file already implements this pattern correctly and can be used as a reference for the expected error handling behavior.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `cargo clippy (Rust linter)`

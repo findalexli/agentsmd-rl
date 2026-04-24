@@ -10,13 +10,16 @@ The vulnerable code is in `src/DataTypes/Serializations/SerializationObject.cpp`
 
 ## What You Need to Fix
 
-The function schedules parallel tasks that capture references to stack-local variables. There is no mechanism to ensure these tasks complete before the function's stack frame is destroyed — particularly on exception paths.
+The function schedules parallel tasks (`tasks` vector) that capture references to stack-local variables. There is no mechanism to ensure these tasks complete before the function's stack frame is destroyed — particularly on exception paths.
+
+The fix should use RAII patterns (such as the `SCOPE_EXIT` macro) to ensure all scheduled tasks are drained before any stack-local references become invalid. The cleanup should call `tryExecute()` and `wait()` on each scheduled task to ensure pool threads do not dereference dangling references to stack locals.
 
 ## Constraints
 
 - Follow ClickHouse coding conventions (Allman-style braces, RAII patterns)
 - Do not use sleep or synchronization primitives — tasks must be actively drained
 - The fix must handle all exit paths including exceptions
+- The `SCOPE_EXIT` block should iterate over the `tasks` vector to drain each task
 
 ## Verification
 

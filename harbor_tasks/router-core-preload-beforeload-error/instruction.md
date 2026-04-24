@@ -50,3 +50,10 @@ pnpm nx run @tanstack/router-core:test:unit -- tests/load.test.ts -t "skip child
 - This is a **preload** bug - normal navigation works correctly
 - The `serialError` field only tracks serialization errors, not beforeLoad errors
 - The route matching loop needs to account for both serial errors AND beforeLoad errors when deciding whether to continue processing child routes
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`
+- `eslint (JS/TS linter)`

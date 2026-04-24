@@ -31,3 +31,9 @@ The sui-benchmark stress binary currently runs benchmarks but has no way to enfo
 
 ## Verification
 - Use `cargo check --package sui-benchmark` to verify your changes compile
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `cargo fmt (Rust formatter)`

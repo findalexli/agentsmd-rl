@@ -21,3 +21,9 @@ In `slime/utils/processing_utils.py`, the `build_processor_kwargs` function does
 - `slime/backends/megatron_utils/checkpoint.py`
 - `slime/backends/megatron_utils/data.py`
 - `slime/utils/processing_utils.py`
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `black (Python formatter)`

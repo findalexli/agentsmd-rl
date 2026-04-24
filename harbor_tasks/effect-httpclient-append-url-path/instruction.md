@@ -1,6 +1,6 @@
 # Fix URL Path Joining in HttpClientRequest.appendUrl
 
-The `HttpClientRequest.appendUrl` function in `packages/platform/src/internal/httpClientRequest.ts` has a bug where it does not properly join URL paths, producing malformed URLs in certain cases.
+The `appendUrl` function in the platform package has a bug where it does not properly join URL paths, producing malformed URLs in certain cases.
 
 ## The Bug
 
@@ -35,3 +35,9 @@ After fixing, the tests in `packages/platform/test/HttpClient.test.ts` should pa
 ```bash
 pnpm --filter @effect/platform vitest run --testNamePattern 'appendUrl'
 ```
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

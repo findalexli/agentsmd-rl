@@ -46,3 +46,9 @@ The implementation must contain substantive logic — it should not be a trivial
 ## Relevant Files
 
 - `gradio/utils.py` — contains the `get_type_hints` function
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

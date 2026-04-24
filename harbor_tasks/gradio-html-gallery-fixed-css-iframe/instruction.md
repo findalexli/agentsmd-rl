@@ -63,3 +63,9 @@ Update `guides/03_building-with-blocks/06_custom-HTML-components.md` to document
 2. Components whose template includes `@children` receive default child content (a button with text "Click Me") so they render meaningfully
 3. Iframe rendering includes proper theme support (dark/light mode classes applied to the `<html>` element) and the component's head scripts
 4. Guide documents how to share components via `push_to_hub` including the `head` parameter for external dependencies and authentication via HuggingFace token or CLI login
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`

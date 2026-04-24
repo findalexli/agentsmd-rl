@@ -2,39 +2,31 @@
 
 ## Problem
 
-The plugin crashes when loaded in a Vite 8+ project with an error related to accessing bundler configuration. This happens because Vite 8 replaced `build.rollupOptions` with `build.rolldownOptions` when it adopted the Rolldown bundler, but the plugin uses hardcoded references to `rollupOptions`.
+The plugin crashes when loaded in a Vite 8+ project with an error related to accessing bundler configuration. Vite 8 changed how it stores bundler options compared to Vite 7, but the plugin uses hardcoded property names that don't exist in Vite 8.
 
 ## Symptom
 
-When the plugin runs in a Vite 8 environment, configuration access fails because:
-- **Vite 7** uses Rollup and stores bundler config under `build.rollupOptions`
-- **Vite 8** uses Rolldown and stores the same config under `build.rolldownOptions`
-
-The plugin needs to detect which bundler is active at runtime and use the correct property name.
+When the plugin runs in a Vite 8 environment, configuration access fails because the property name used by the plugin doesn't exist on the build config object. The plugin needs to detect which Vite version is running and use the correct property name at runtime.
 
 ## Required Changes
 
-You must implement and use these specific utilities (exact names required):
-
 ### 1. In `packages/start-plugin-core/src/utils.ts`
 
-Export these utilities:
-- `isRolldown` - a boolean detecting if Rolldown is active by checking if `'rolldownVersion'` exists in the vite module (use `import * as vite from 'vite'` for the import)
-- `bundlerOptionsKey` - a computed key that resolves to `'rolldownOptions'` when `isRolldown` is true, otherwise `'rollupOptions'`
-- `getBundlerOptions(build)` - a helper function that reads bundler options from a build config, checking `build?.rolldownOptions` first, then falling back to `build?.rollupOptions`
+Add runtime detection of the active bundler and export helper utilities:
+- Detect whether the project is using Vite 7 or Vite 8
+- Export a function that returns the correct bundler options key for the current environment
 
 ### 2. In `packages/start-plugin-core/src/plugin.ts`
 
-Update the plugin to:
-- Import `bundlerOptionsKey` and `getBundlerOptions` from `'./utils'` (exact import: `import { bundlerOptionsKey, getBundlerOptions } from './utils'`)
-- Replace hardcoded `rollupOptions` property access with computed `[bundlerOptionsKey]` for both client and server build configurations
-- Use `getBundlerOptions()` when reading server bundler options
+Update the plugin to use dynamic property access for build configuration:
+- Import the bundler utilities from utils
+- Replace hardcoded property access with dynamic lookup for both client and server build configurations
 
 ### 3. In `packages/start-plugin-core/src/preview-server-plugin/plugin.ts`
 
-Update the preview server plugin to:
-- Import `getBundlerOptions` from `'../utils'` (exact import: `import { getBundlerOptions } from '../utils'`)
-- Use `getBundlerOptions(serverEnv?.build)?.input` to read the server input instead of direct property access
+Update the preview server plugin to use the bundler helper:
+- Import the bundler utilities from utils
+- Use the helper function to read the server input from bundler options instead of direct property access
 
 ## Expected Results
 

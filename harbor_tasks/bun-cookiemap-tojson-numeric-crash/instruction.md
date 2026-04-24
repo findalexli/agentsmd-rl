@@ -20,13 +20,7 @@ The implementation must:
 
 ## Implementation Details
 
-The tests verify specific implementation patterns:
-
-- **Property insertion**: The method must use property insertion that handles numeric string keys without crashing. Tests look for method calls on the result object variable and classify them as safe or unsafe based on method name.
-
-- **Key deduplication**: Deduplication must use a native C++ container (such as `HashSet`, `std::set`, `std::unordered_set`, or `WTF::HashSet`) to track seen cookie names, rather than querying the JSObject for property existence. Tests look for declarations of these container types and their `.add()` and `.isNewEntry` usage patterns.
-
-- **Two insertions**: At least two safe property insertions must occur, one per loop.
+The bug manifests when numeric string keys are used with certain property-setting methods on the JS object — those methods crash on numeric keys. Both the property insertion and the deduplication must work correctly with numeric string keys.
 
 ## Files
 

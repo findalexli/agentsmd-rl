@@ -37,3 +37,9 @@ python -m pytest tests/unit_tests/language_models/chat_models/test_base.py -v
 ```
 
 All existing tests should continue to pass after removing the feature-specific tests.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `mypy (Python type checker)`

@@ -63,3 +63,9 @@ npm test -- --testPathPattern=popconfirm/__tests__/semantic
 ```
 
 All repository tests (lint, TypeScript, unit tests) should also pass after your changes.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

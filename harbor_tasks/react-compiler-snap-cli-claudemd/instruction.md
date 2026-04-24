@@ -60,3 +60,10 @@ The document should be substantive (at least 200 characters).
 - `compiler/packages/snap/src/fixture-utils.ts` — filter reading function and type
 - `compiler/packages/snap/src/runner.ts` — CLI option parsing and main entry point
 - `compiler/packages/snap/src/runner-watch.ts` — watch mode with keyboard handling and file watchers
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`
+- `eslint (JS/TS linter)`

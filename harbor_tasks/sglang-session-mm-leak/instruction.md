@@ -28,3 +28,9 @@ In `session_controller.py`, the `Session.create_req()` method adjusts multimodal
 - When a session closes, all multimodal feature tensors held by its requests are released
 - The feature release logic should be a reusable method, not copy-pasted inline code
 - Offset adjustments should not produce negative values when the start offset is already 0
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `black (Python formatter)`

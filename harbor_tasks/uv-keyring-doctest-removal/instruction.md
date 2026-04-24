@@ -22,3 +22,10 @@ These broken examples are compiled as doctests by the `doc_comment::doctest!` ma
 - `crates/uv-keyring/src/lib.rs` — contains the `doctest!` macro that compiles README as a doctest
 - `crates/uv-keyring/src/mock.rs` — module doc comment with broken code examples
 - `crates/uv-keyring/Cargo.toml` — dev-dependencies (includes `doc-comment` crate)
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `cargo clippy (Rust linter)`
+- `cargo fmt (Rust formatter)`

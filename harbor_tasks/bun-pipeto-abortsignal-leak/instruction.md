@@ -57,14 +57,12 @@ The following code quality checks will be performed:
 - **Code style**: Each target file may have at most 5 lines containing tab characters.
 - **Header structure**: Header files must use either `#pragma once` or traditional include guards (`#ifndef`/`#define`/`#endif`).
 
-## Required Patterns in C++ Code
+## Required Implementation Patterns
 
-The C++ implementation must include the following patterns (the tests verify their presence):
+The C++ implementation must include the following patterns:
 
 ### Weak Callback Mechanism
-The `JSAbortAlgorithm` class must use a weak callback mechanism instead of a strong one. Tests check that:
-- No `JSCallbackDataStrong` type appears in the implementation
-- A weak callback type (such as `JSCallbackDataWeak` or equivalent) is used in member/constructor context
+The `JSAbortAlgorithm` class must use a weak callback mechanism instead of a strong one. Tests check that no strong callback type appears in the implementation and that a weak callback type is used.
 
 ### GC Visitor Method
 `JSAbortAlgorithm` must have a visitor method that allows the GC to trace through its callback reference.
@@ -76,9 +74,7 @@ The `handleEvent` method must guard against the case where the callback has been
 `AbortSignal` must store abort algorithms in a typed container separate from any type-erased lambda storage, with a visitor method for GC tracing.
 
 ### Thread Safety
-The algorithm storage must use proper locking. Tests verify:
-- A lock/mutex member variable exists
-- At least two lock usages appear in the implementation
+The algorithm storage must use proper locking. Tests verify a lock/mutex member variable exists and that locking is used when accessing the container.
 
 ### GC Visitor Walks Algorithms
 The `JSAbortSignalCustom` GC visitor must iterate or call through to the abort algorithm visitor so callbacks remain reachable during GC.
@@ -87,4 +83,4 @@ The `JSAbortSignalCustom` GC visitor must iterate or call through to the abort a
 The `memoryCost()` method must include accounting for the new abort algorithms container.
 
 ### Separate Storage Path
-Algorithms must be stored via a method that appends to the new container, NOT via the old type-erased `addAlgorithm` path. Similarly, removal must operate on the new container with proper locking.
+Algorithms must be stored via a separate path from the old type-erased `addAlgorithm` mechanism. Similarly, removal must operate on the new container with proper locking.

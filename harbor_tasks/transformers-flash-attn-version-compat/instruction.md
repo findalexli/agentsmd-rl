@@ -29,3 +29,9 @@ The removed helper should be restored so that existing imports continue to work.
 from transformers.utils import is_flash_attn_greater_or_equal_2_10
 # ImportError: cannot import name 'is_flash_attn_greater_or_equal_2_10' from 'transformers.utils'
 ```
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

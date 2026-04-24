@@ -3,27 +3,23 @@
 ## Summary
 
 The Inductor scheduler's mix-order reduction fusion path can trigger an assertion
-error when a pointwise node is fused into one side of a `FusedMixOrderReductions`
-and the resulting fused node loses its contiguity property.
+error when fusing certain node combinations in `FusedMixOrderReductions`.
 
 ## Context
 
 `FusedMixOrderReductions` (in `torch/_inductor/scheduler.py`) requires that at
 least one of its two sub-nodes is contiguous (see the assertion in `__init__`).
-The `sub_node_can_fuse` method currently checks whether the scheduler allows the
-fusion and whether it would introduce producer/consumer cycles — but it does
-**not** verify that the contiguity invariant is preserved after the fusion.
+During mix-order reduction scheduling, fusing a contiguous reduction with a
+non-contiguous pointwise node can produce a fused node that violates this
+contiguity requirement, causing the assertion to fire.
 
 ## How it fails
 
-1. `node1` starts out contiguous (a reduction). A non-contiguous pointwise node
-   arrives that is eligible for fusion with `node1`.
-2. `sub_node_can_fuse` approves the fusion because it only looks at ancestry and
-   score thresholds.
-3. `fuse_with` calls `backend.fuse(node1, pointwise)`, producing a **non-contiguous**
-   fused node.
-4. `FusedMixOrderReductions.__init__` is called with **both** sub-nodes now
-   non-contiguous → the assertion fires.
+1. A contiguous reduction node (`node1`) is part of an active `FusedMixOrderReductions`.
+2. A non-contiguous pointwise node (`node2`) is eligible for fusion with `node1`.
+3. The fusion is approved, producing a fused node that is non-contiguous.
+4. `FusedMixOrderReductions.__init__` receives both sub-nodes as non-contiguous
+   → the assertion fires.
 
 ## Reproduction pattern
 
@@ -38,11 +34,12 @@ the mix-order heuristic kicks in and triggers the assert.
 ## Relevant code
 
 - `torch/_inductor/scheduler.py` — `FusedMixOrderReductions` class
-  - `sub_node_can_fuse` (around line 2140)
-  - `fuse_with` (around line 2195)
-  - `MixOrderReduction.is_contiguous_node` (around line 379)
+  - `MixOrderReduction.is_contiguous_node` — checks whether a node is contiguous
+  - `sub_node_can_fuse` — determines whether a node can be fused
+  - `fuse_with` — performs the fusion
+  - `__init__` — enforces the contiguity invariant via assertion
 
 ## Expected behavior
 
-The fusion should be rejected before it reaches `FusedMixOrderReductions.__init__`,
-so that the contiguity invariant is never violated.
+The scheduler must prevent fusions that would result in a non-contiguous
+`FusedMixOrderReductions`, so that the contiguity invariant is never violated.

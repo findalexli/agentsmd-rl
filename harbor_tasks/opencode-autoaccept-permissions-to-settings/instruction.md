@@ -26,3 +26,9 @@ The e2e tests in `packages/app/e2e/` also need updating to find the toggle in th
 - `packages/app/src/components/settings-general.tsx` — the settings page where the toggle should be added
 - `packages/app/e2e/prompt/prompt-shell.spec.ts` — e2e test that interacts with the auto-accept toggle
 - `packages/app/e2e/session/session-composer-dock.spec.ts` — e2e test for composer dock and auto-accept
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`

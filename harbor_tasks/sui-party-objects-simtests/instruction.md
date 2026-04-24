@@ -42,7 +42,7 @@ The new test must:
 
 1. Use the `#[sim_test]` attribute
 2. Create a test environment using `create_test_env().await`
-3. Add an address to the coin deny list using the `deny_list_v2_add` function from the SUI framework `coin` module
+3. Add an address to the coin deny list using the deny list management function from the SUI framework `coin` module
 4. Advance the epoch by calling `trigger_reconfiguration` so the deny list change takes effect
 5. Build a programmable transaction block (PTB) that:
    - Splits a regulated coin
@@ -56,13 +56,11 @@ The new test must:
 
 ## Imports Required
 
-The new test requires the following imports in `per_epoch_config_stress_tests.rs`:
+The new test requires additional imports in `per_epoch_config_stress_tests.rs`:
 
-1. `StructTag` from `move_core_types::language_storage` (alongside the existing `TypeTag` import, in a grouped import: `use move_core_types::language_storage::{StructTag, TypeTag};`)
-
-2. `ExecutionErrorKind` from `sui_types::execution_status` (grouped with existing imports where `TransactionEffectsAPI` is imported)
-
-3. `SUI_FRAMEWORK_ADDRESS` alongside `SUI_DENY_LIST_OBJECT_ID` and `SUI_FRAMEWORK_PACKAGE_ID` from `sui_types` (update the existing grouped import to: `use sui_types::{SUI_DENY_LIST_OBJECT_ID, SUI_FRAMEWORK_ADDRESS, SUI_FRAMEWORK_PACKAGE_ID};`)
+1. `StructTag` type alongside `TypeTag` (both from `move_core_types::language_storage`)
+2. `ExecutionErrorKind` from `sui_types::execution_status` 
+3. `SUI_FRAMEWORK_ADDRESS` constant alongside existing SUI types constants
 
 ## Verification
 
@@ -72,15 +70,14 @@ After making changes:
 3. License headers and lints should pass: `cargo xlint`
 4. Clippy should pass: `cargo clippy -p sui-e2e-tests`
 
-## Expected Test Structure
+## Expected Test Behavior
 
-The new test should call these functions/methods as part of its implementation:
-- `deny_list_v2_add` (SUI framework coin module)
-- `trigger_reconfiguration` (on test cluster)
-- `single_owner` (SUI framework party module)
-- `public_party_transfer` (SUI framework transfer module)
-- `execute_transaction_may_fail` (wallet API)
-- `effects.status().is_err()` (to verify transaction failure)
-- `ExecutionErrorKind::AddressDeniedForCoin` (to verify the specific error)
-
-The test should reference `DENY_ADDRESS` and verify the `AddressDeniedForCoin` error includes the denied address.
+The new test should:
+- Use `deny_list_v2_add` from the SUI framework coin module to add an address to the deny list
+- Call `trigger_reconfiguration` on the test cluster to advance the epoch
+- Use `single_owner` from the SUI framework party module to create a party object
+- Use `public_party_transfer` from the SUI framework transfer module for the transfer
+- Use `execute_transaction_may_fail` to execute the transaction
+- Verify the transaction failed with `effects.status().is_err()`
+- Verify the error is `ExecutionErrorKind::AddressDeniedForCoin` for the denied address
+- Reference `DENY_ADDRESS` to identify the denied address

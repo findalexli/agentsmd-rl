@@ -18,8 +18,4 @@ After the fix, all of the following must hold:
 3. **Credits tracking fires exactly once** on checkout success — the test case named `"track credits on checkout success"` must pass
 4. The component still renders the payment form — the test case `"renders the payment form"` must pass
 
-## Code Structure Requirements
-
-The tests verify that the component extracts the `amount` and `session_id` URL query parameters as local constants before the `useEffect` that handles checkout callbacks, and uses those extracted primitives (not the query parameter object) in the effect's dependency array. This ensures the effect runs exactly once per checkout completion.
-
 Do not modify the test file.

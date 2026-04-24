@@ -23,3 +23,9 @@ Additionally, there is a related resilience issue in the URL fallback logic. Whe
 - `uv self update` relies solely on GitHub's CDN and does not attempt the Astral mirror first
 - When a mirror returns a malformed or corrupted manifest, the update fails immediately instead of trying the next available URL
 - The `ruff` binary handles both these cases correctly, but `uv` does not
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `typos (spell-check)`

@@ -28,3 +28,9 @@ The changes span three files:
 - Encoder engines should launch with the correct server entry point and skip inapplicable post-init steps
 - Engine startup should be phased: encoders first, then non-encoder groups with encoder URLs injected into prefill groups
 - Config override keys should be normalized so both hyphenated and underscored styles work
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `black (Python formatter)`

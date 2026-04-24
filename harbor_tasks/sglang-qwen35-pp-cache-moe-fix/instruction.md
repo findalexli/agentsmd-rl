@@ -45,3 +45,10 @@ This occurs when a PP rank tries to load expert weights for a layer it doesn't o
 1. Mamba cache pools should only allocate memory for layers within the current PP rank's `[start_layer, end_layer)` range.
 2. Weight loading should skip any layer whose ID falls outside the current rank's range — no `KeyError` should occur.
 3. The `start_layer` for cache pools should be passed from the model runner, derived from the PP rank configuration.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`
+- `black (Python formatter)`

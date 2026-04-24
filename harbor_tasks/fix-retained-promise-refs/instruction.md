@@ -4,40 +4,43 @@ During navigation cycles in the router core, promise references are captured but
 
 ## The Problem
 
-When the router handles navigation, several promise variables are assigned references to existing promises. After these promises resolve, the variables continue to hold references, preventing garbage collection:
+When the router handles navigation, promise variables are assigned references to existing promises. After these promises resolve, the variables continue to hold references, preventing garbage collection:
 
-1. **Previous load promise references**: A variable named `prevLoadPromise` captures `match._nonReactive.loadPromise` and calls `.resolve()` on it, but the variable is never cleared, retaining the reference.
+1. **Previous load promise references**: When capturing `match._nonReactive.loadPromise` before assigning a new controlled promise, the captured reference is never cleared after the controlled promise resolves.
 
-2. **Match load promise references**: The `match._nonReactive.loadPromise` property is assigned a new promise but is never cleared after resolution in error handlers or normal completion paths.
+2. **Match load promise references**: The `match._nonReactive.loadPromise` property is assigned a new promise but is never cleared after resolution, causing the promise object to be retained.
 
-3. **Commit promise references**: A variable named `previousCommitPromise` captures `this.commitLocationPromise` and calls `.resolve()` on it, but the variable is never cleared, retaining the reference.
+3. **Commit promise references**: When capturing `this.commitLocationPromise` before assigning a new controlled promise, the captured reference is never cleared after the controlled promise resolves.
 
-## Required Fix Pattern
+## Required Fix
 
-To properly release these references and allow garbage collection, implement the following specific patterns:
+To properly release these references and allow garbage collection:
 
-1. **Variable `prevLoadPromise` must be declared with `let` and cleared**: The source code must contain the pattern:
-   - `let prevLoadPromise = match._nonReactive.loadPromise`
-   - `prevLoadPromise = undefined` (after the resolve call)
+1. **Local promise capture variables must be reassignable**: Any local variable that captures a promise reference (to call `.resolve()` on it) must be declared with `let` so it can be reassigned to `undefined` after the resolve callback fires.
 
-2. **Variable `previousCommitPromise` must be declared with `let` and cleared**: The source code must contain the pattern:
-   - `let previousCommitPromise = this.commitLocationPromise`
-   - `previousCommitPromise = undefined` (after the resolve call)
+2. **Promise references must be cleared after resolution**: After calling `.resolve()` on a captured promise reference, the variable must be reassigned to `undefined` to release the reference.
 
-3. **Property `match._nonReactive.loadPromise` must be cleared in at least two locations**: The source code must contain `match._nonReactive.loadPromise = undefined` appearing at least twice - once in an error handler path and once in a normal completion path.
+3. **The `match._nonReactive.loadPromise` property must be cleared in multiple locations**: The property must be set to `undefined` after resolution in both error-handler paths and normal-completion paths.
 
-The pattern should be:
+The pattern for controlled promises is:
 ```typescript
-let somePromise = existingPromise
-somePromise?.resolve()
-somePromise = undefined  // Clear the reference
+let capturedPromise = existingPromise  // must be reassignable
+controlledPromise = createControlledPromise(() => {
+  capturedPromise?.resolve()
+  capturedPromise = undefined  // clear after resolve
+})
 ```
 
 And for match properties:
 ```typescript
 match._nonReactive.loadPromise?.resolve()
-match._nonReactive.loadPromise = undefined  // Clear the property
+match._nonReactive.loadPromise = undefined  // clear the property
 ```
+
+## Affected Files
+
+- `packages/router-core/src/load-matches.ts` — `executeBeforeLoad` function and `loadRouteMatch` function
+- `packages/router-core/src/router.ts` — `commitLocation` method
 
 ## Verification
 
@@ -45,3 +48,9 @@ After implementing the fix:
 1. Build the package: `pnpm nx run @tanstack/router-core:build`
 2. Run type checks: `pnpm nx run @tanstack/router-core:test:types`
 3. Run unit tests: `pnpm nx run @tanstack/router-core:test:unit`
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

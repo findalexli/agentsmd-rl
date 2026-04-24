@@ -16,4 +16,11 @@ The `refreshObjects()` method in `UserDefinedSQLObjectsZooKeeperStorage.cpp` use
 - `getObjectNamesAndSetWatch()` to fetch object names and register watches
 - `tryLoadObject()` to load individual UDF objects
 - `setAllObjects()` to update stored objects
-- `retries_ctl.isRetry()` to detect retry attempts
+
+## Requirements for the fix
+
+1. **Fresh session on retry**: When a retry occurs, obtain a fresh ZooKeeper session via `zookeeper_getter` instead of using the potentially expired handle that was passed to the function
+
+2. **Object names inside retry loop**: Move the `getObjectNamesAndSetWatch()` call inside the retry loop so object names are re-fetched with the fresh session on each retry attempt
+
+3. **Consistent handle usage**: All ZooKeeper operations inside the retry loop (both `getObjectNamesAndSetWatch` and `tryLoadObject`) must use the same current/fresh session handle

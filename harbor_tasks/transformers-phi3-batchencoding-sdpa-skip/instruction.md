@@ -34,3 +34,9 @@ The CI logs indicate these models fail during the SDPA flash attention dispatch 
 - All four Phi-3 test methods should pass without producing argument-related errors
 - The SDPA test should handle the Pi0, Parakeet encoder/CTC, and Evolla model families appropriately
 - Existing skip entries for modernbert, gemma3, pixtral, sam, kosmos-2, and mllama must be preserved
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

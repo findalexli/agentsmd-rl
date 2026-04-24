@@ -37,3 +37,9 @@ After migration:
 - No bare `parentSpanId` property accesses should remain (v1 API)
 - All files should use the v2 SDK factory functions and constants
 - All TypeScript test files must have valid syntax and compile successfully
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`

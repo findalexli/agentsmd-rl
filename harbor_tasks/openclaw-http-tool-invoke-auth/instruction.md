@@ -47,3 +47,9 @@ The deny list must maintain at least 10 entries total (the original entries plus
 - `src/security/dangerous-tools.ts` — shared deny list constants
 - `src/gateway/http-auth-helpers.ts` — scope resolution utilities
 - `src/gateway/method-scopes.ts` — scope authorization logic
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

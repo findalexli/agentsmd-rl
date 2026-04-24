@@ -4,32 +4,42 @@ The Prometheus project needs to improve fuzzing coverage for the PromQL expressi
 
 ## Your Task
 
-Implement functionality that:
+The goal is to generate a libFuzzer dictionary file (`fuzzParseExpr.dict`) that the `FuzzParseExpr` fuzzer can use to produce more interesting test inputs. The dictionary should contain all valid PromQL tokens that the fuzzer can emit.
 
-1. **Exports PromQL keywords**: Add a `Keywords()` function in `promql/parser/lex.go` that returns all keyword strings recognized by the PromQL lexer. This should include aggregation operators (sum, avg, count, etc.), modifier keywords (by, without, etc.), histogram descriptor keys, and counter-reset hint values.
+### Required Exported Functions
 
-2. **Generates dictionary tokens**: Add a `GetDictForFuzzParseExpr()` function in `util/fuzzing/corpus.go` that returns a slice of strings containing:
-   - All PromQL keywords (via the new `Keywords()` function)
-   - All built-in function names from `parser.Functions`
-   - Operator and syntax tokens from `parser.ItemTypeStr` (excluding display-only placeholders like `<space>`)
-   - Special numeric literals: +Inf, -Inf, NaN
+Implement two exported Go functions:
 
-3. **Generates dictionary files**: Add a `generateDictFile()` function in `util/fuzzing/corpus_gen/main.go` that:
-   - Takes a fuzz name and slice of tokens
-   - Sorts tokens deterministically
-   - Writes each token as a quoted string on its own line to a `.dict` file in the parent directory
-   - Returns any errors encountered
+1. **`promql/parser.Keywords() []string`** — returns all keyword strings recognized by the PromQL lexer, including aggregation operators (`sum`, `avg`, `count`, `min`, `max`), modifier keywords (`by`, `without`), histogram descriptor keys, and counter-reset hint values.
 
-4. **Integrates into corpus generation**: Update the main function in `util/fuzzing/corpus_gen/main.go` to call `GetDictForFuzzParseExpr()` and generate the dictionary file alongside the existing seed corpus generation.
+2. **`util/fuzzing.GetDictForFuzzParseExpr() []string`** — returns all libFuzzer dictionary tokens for `FuzzParseExpr`, derived from PromQL keywords, built-in function names, operator symbols, and special numeric literals (`+Inf`, `-Inf`, `NaN`).
 
-## Requirements
+Both functions must have proper Go doc comments.
 
-- All exported functions must have proper Go doc comments starting with the function name and ending with a period
-- The solution must compile and integrate with the existing corpus generation infrastructure
-- The dictionary should be comprehensive, covering all PromQL keywords, functions, operators, and special literals
+### Expected Dictionary Contents
 
-## Relevant Files
+The generated `fuzzParseExpr.dict` file should include:
 
-- `promql/parser/lex.go` - PromQL lexer with keyword maps
-- `util/fuzzing/corpus.go` - fuzzing utilities and corpus generation
-- `util/fuzzing/corpus_gen/main.go` - corpus generator tool
+1. **PromQL keywords** — all keyword strings recognized by the lexer (aggregation operators like `sum`, `avg`, `count`, modifier keywords like `by`, `without`, histogram descriptor keys, and counter-reset hint values)
+
+2. **Built-in function names** — all PromQL built-in functions (e.g., `rate`, `sum`, `avg`, `increase`, `histogram_quantile`)
+
+3. **Operators and syntax tokens** — lexer tokens for operators and syntactic elements
+
+4. **Special numeric literals** — `+Inf`, `-Inf`, `NaN`
+
+### Integration
+
+The corpus generation tool (`util/fuzzing/corpus_gen/`) should generate the dictionary file alongside the existing seed corpus. The output should be a `.dict` file in libFuzzer format, with one quoted string per line, sorted alphabetically for deterministic output.
+
+### Requirements
+
+- All exported functions must have proper Go doc comments
+- The solution must compile without errors
+- The corpus generator should produce the dictionary file when run
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `gofmt (Go formatter)`

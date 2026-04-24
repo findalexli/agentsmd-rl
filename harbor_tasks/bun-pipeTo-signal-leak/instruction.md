@@ -6,65 +6,43 @@ When `ReadableStream.prototype.pipeTo` is called with an `AbortSignal` option an
 
 ## Root Cause
 
-A Strong reference cycle prevents collection:
-```
-AbortSignal -> JSAbortAlgorithm -> Strong<callback> -> closure -> pipeState.signal -> JSAbortSignal -> Ref<AbortSignal>
-```
+A reference cycle prevents garbage collection: the AbortSignal holds a strong reference to the JavaScript abort callback, which captures a reference back to the signal, forming a cycle that keeps both alive even when no external references remain.
 
-The `JSAbortAlgorithm` class stores a `JSCallbackDataStrong*` (via `m_data`), which strongly holds the JavaScript callback. This callback captures references back to the signal, creating a cycle that prevents GC even when no external references to the signal remain.
+## Correct Behavior
 
-## Expected Behavior
-
-When all JavaScript references to an AbortSignal are dropped and the pipe never completes, the AbortSignal should be garbage collected. To break the cycle:
-
-1. `JSAbortAlgorithm` must use **weak references** (`JSCallbackDataWeak`) instead of strong references (`JSCallbackDataStrong`)
-2. The weak callback must be visited during GC so it doesn't get collected prematurely
-3. `handleEvent` must check if the weak callback is still valid (non-null) before using it
+When all JavaScript references to an AbortSignal are dropped and the pipe never completes, the AbortSignal must be garbage collected.
 
 ## Implementation Requirements
 
-Modify the following files in `/workspace/bun/src/bun.js/bindings/webcore/`:
+The fix must satisfy all of the following constraints:
 
-### 1. JSAbortAlgorithm.h and JSAbortAlgorithm.cpp
+1. **Break the strong-reference cycle** — JavaScript abort callbacks must not hold strong references back to the signal. The implementation must use a weak callback data type (not a strong one) so the GC can collect the callback independently.
 
-**JSAbortAlgorithm.h changes:**
-- Change `callbackData()` return type from `JSCallbackDataStrong*` to `JSCallbackDataWeak*`
-- Change `m_data` member type from `JSCallbackDataStrong*` to `JSCallbackDataWeak*`
-- Add two `visitJSFunction` override methods:
-  - `void visitJSFunction(JSC::AbstractSlotVisitor&) override`
-  - `void visitJSFunction(JSC::SlotVisitor&) override`
+2. **Support GC traversal** — The GC must be able to traverse through the signal to find and mark any JavaScript callbacks attached to it. The implementation must provide a `visitJSFunction` method on abort algorithms and a `visitAbortAlgorithms` method on the signal that the GC visitor can call.
 
-**JSAbortAlgorithm.cpp changes:**
-- In the constructor, initialize `m_data` with `new JSCallbackDataWeak(vm, callback, this)` instead of `new JSCallbackDataStrong`
-- In `handleEvent`, check if `callback` is null before using it. If null, return `CallbackResultType::UnableToExecute`
-- Implement the two `visitJSFunction` methods to delegate to `m_data->visitJSFunction(visitor)`
+3. **Handle invalid callbacks gracefully** — When a callback has been garbage collected, the signal must not attempt to invoke it. The `handleEvent` implementation must null-check the callback before use.
 
-### 2. AbortSignal.h
+4. **Use lock-protected storage** — The signal must store JavaScript abort algorithms in a collection protected by a lock. The storage must use `Vector<std::pair<uint32_t, Ref<AbortAlgorithm>>>` guarded by a `Lock` member, with `Locker` used around all accesses.
 
-Add to the `AbortSignal` class:
-- A new member `visitAbortAlgorithms` template method: `template<typename Visitor> void visitAbortAlgorithms(Visitor&)`
-- A new storage member for JS abort algorithms: `Vector<std::pair<uint32_t, Ref<AbortAlgorithm>>> m_abortAlgorithms`
-- A lock member for thread safety: `Lock m_abortAlgorithmsLock`
-- Include `<wtf/Lock.h>` if not already present
+5. **Atomic algorithm extraction in runAbortSteps** — The `runAbortSteps` function must atomically extract all algorithms from storage (using `std::exchange` or similar) before iterating and invoking them.
 
-### 3. AbortSignal.cpp
+6. **Account for all memory** — The `memoryCost` function must include the size of the JavaScript abort algorithm storage (`m_abortAlgorithms.sizeInBytes()`).
 
-Modify the implementation:
-- In `runAbortSteps`: Use `std::exchange` to atomically extract and process `m_abortAlgorithms`, calling `handleEvent` on each
-- In `addAbortAlgorithmToSignal`: Use `m_abortAlgorithms.append()` with proper locking instead of `addAlgorithm()`
-- In `removeAbortAlgorithmFromSignal`: Use `m_abortAlgorithms.removeFirstMatching()` with locking instead of `removeAlgorithm()`
-- In `memoryCost`: Add `m_abortAlgorithms.sizeInBytes()` to the returned size
-- Add explicit template instantiations for `visitAbortAlgorithms<JSC::AbstractSlotVisitor>` and `visitAbortAlgorithms<JSC::SlotVisitor>`
+7. **Implement add/remove primitives** — The implementation must provide `addAbortAlgorithmToSignal` and `removeAbortAlgorithmFromSignal` functions that operate on the lock-protected storage with a `Locker` pattern and `append`/`removeFirstMatching` operations.
 
-### 4. JSAbortSignalCustom.cpp
+## Affected Files
 
-In `visitAdditionalChildrenInGCThread`, add a call to `wrapped().visitAbortAlgorithms(visitor)` to ensure the weak JS callbacks are visited during GC.
+The fix involves these files in the WebCore bindings directory:
+- `src/bun.js/bindings/webcore/JSAbortAlgorithm.cpp` and `JSAbortAlgorithm.h`
+- `src/bun.js/bindings/webcore/AbortSignal.cpp` and `AbortSignal.h`
+- `src/bun.js/bindings/webcore/JSAbortSignalCustom.cpp`
 
 ## Verification
 
 After the fix:
-- `JSCallbackDataWeak` should be instantiated exactly once (in JSAbortAlgorithm)
-- `JSCallbackDataStrong` should not be used in JSAbortAlgorithm
-- The `visitJSFunction` methods must have the `override` specifier
-- `m_abortAlgorithms` must be protected by `m_abortAlgorithmsLock`
-- `handleEvent` must null-check the callback before dereferencing
+- The `JSAbortAlgorithm` class must use `JSCallbackDataWeak` (not `JSCallbackDataStrong`)
+- The `JSAbortAlgorithm` class must declare `visitJSFunction` methods for GC marking
+- The `AbortSignal` class must declare `visitAbortAlgorithms` template method
+- `runAbortSteps` must use atomic extraction (`std::exchange` or `std::move`) before iteration
+- `memoryCost` must call `sizeInBytes` on the abort algorithm storage
+- No memory leak when `pipeTo` is called with an AbortSignal that never completes

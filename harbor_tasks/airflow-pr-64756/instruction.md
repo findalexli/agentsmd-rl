@@ -4,29 +4,33 @@ The `GitHook` class in `providers/git/src/airflow/providers/git/hooks/git.py` ha
 
 ## 1. Shell Injection via Unquoted SSH Arguments
 
-The SSH command builder interpolates filesystem paths and user-supplied strings directly into shell command arguments without any escaping. The following values are vulnerable to injection via shell metacharacters (spaces, `;`, `|`, `$(…)`, etc.):
+The `_build_ssh_command` method constructs an SSH command by directly interpolating filesystem paths and user-supplied strings into shell command arguments without any escaping. This makes the following values vulnerable to shell injection via metacharacters (spaces, `;`, `|`, `$(…)`, etc.):
 
-- `key_path` — the `-i` flag argument
-- `self.known_hosts_file` — the `UserKnownHostsFile=` option value
-- `self.ssh_config_file` — the `-F` flag argument
-- `self.host_proxy_cmd` — the `ProxyCommand=` option value
+- The `-i` flag argument (SSH private key path)
+- The `UserKnownHostsFile=` option value
+- The `-F` flag argument (SSH config file path)
+- The `ProxyCommand=` option value
 
-Each of these four values must be properly shell-escaped before being embedded in the SSH command string to prevent arbitrary command execution.
+When these values contain shell metacharacters, arbitrary commands can be executed. Each of these four values must be properly shell-escaped before being embedded in the SSH command string. The Python `shlex` module provides a `quote()` function for this purpose.
 
 ## 2. Credentials Not URL-Encoded in HTTPS URLs
 
-When building HTTPS clone URLs with embedded credentials, `self.user_name` and `self.auth_token` are inserted raw into the URL. Characters such as `@`, `/`, `:`, or `#` in a username or token break the URL structure.
+The `_process_git_auth_url` method builds HTTPS clone URLs with embedded credentials by inserting `self.user_name` and `self.auth_token` directly into the URL. Special characters such as `@`, `/`, `:`, or `#` in a username or token can break the URL structure or be misinterpreted.
 
-The `quote` function from `urllib.parse` must be imported under the alias `urlquote` and used to encode both `self.user_name` and `self.auth_token` with `safe=""` before they are embedded into the URL.
+Additionally, the `.replace()` call that replaces the protocol prefix with the credential-bearing URL replaces **all** occurrences. When the original URL contains the protocol prefix more than once (e.g., in a query parameter), every occurrence gets replaced, corrupting the URL. Only the first occurrence should be replaced.
 
-Additionally, the `.replace()` call that swaps `"https://"` (and similarly `"http://"`) for the credential-bearing URL replaces **all** occurrences in the string. When the original URL contains the protocol prefix more than once (e.g., in a query parameter or path component), every occurrence gets replaced, corrupting the URL. The replacement must be limited to the first match only — pass `count=1` to `.replace()`.
+The fix must URL-encode the credentials using `urllib.parse.quote` (with `safe=""`) before embedding them and limit the protocol replacement to a single occurrence.
 
 ## 3. Unvalidated `strict_host_key_checking` Parameter
 
-The `strict_host_key_checking` connection parameter is passed directly to SSH without any validation. SSH only recognizes the values `"yes"`, `"no"`, `"accept-new"`, `"off"`, and `"ask"`. Any other value causes confusing SSH errors instead of being caught early.
+The `strict_host_key_checking` connection parameter is passed directly to SSH without validation. SSH recognizes only specific values: `"yes"`, `"no"`, `"accept-new"`, `"off"`, and `"ask"`. Invalid values cause confusing SSH errors instead of being caught early with a clear error message.
 
-Define the accepted values in a class-level attribute named `_VALID_STRICT_HOST_KEY_CHECKING` (as a `set` or `frozenset`). When the provided value is not in this set, raise a `ValueError` whose message includes the word `strict_host_key_checking`.
+The fix should define the accepted values and raise a `ValueError` with a message containing "strict_host_key_checking" when an invalid value is provided.
 
 ## 4. Boolean Logic Error in Local-Path Detection
 
-The conditional branch that handles local filesystem paths (triggering `os.path.expanduser()`) is guarded by two negated `startswith` checks — one for `"git@"` and one for `"https://"`. These two negated conditions are joined with `or`, making the overall disjunction true whenever **either** check fails. Since no string can start with both `"git@"` and `"https://"` simultaneously, at least one negated check always succeeds, so the condition is always true. Remote SSH and HTTPS URLs are therefore misclassified as local paths, and `os.path.expanduser()` is applied to them instead of being reserved for genuine local filesystem paths.
+The conditional branch that handles local filesystem paths contains a logic error. The current condition uses `or` between two negated checks: `not self.repo_url.startswith("git@")` and `not self.repo_url.startswith("https://")`.
+
+Since no string can start with both `"git@"` and `"https://"` simultaneously, at least one of these negated checks is always true, making the entire condition always true. As a result, remote SSH and HTTPS URLs are misclassified as local paths, and `os.path.expanduser()` is incorrectly applied to them.
+
+The fix should use the correct logical operator so that local path handling is only applied when the URL is neither an SSH git URL nor an HTTPS URL.

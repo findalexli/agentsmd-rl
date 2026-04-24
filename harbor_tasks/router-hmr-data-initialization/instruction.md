@@ -43,3 +43,9 @@ CI=1 NX_DAEMON=false pnpm nx run @tanstack/router-plugin:test:unit --outputStyle
 `packages/router-plugin/src/core/code-splitter/plugins/react-stable-hmr-split-route-components.ts`
 
 This file contains the `buildStableSplitComponentStatements` template. The template generates code that reads from and writes to HMR data using keys like `%%hotDataKey%%`.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

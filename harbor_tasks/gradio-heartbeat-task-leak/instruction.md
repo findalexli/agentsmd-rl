@@ -21,3 +21,9 @@ In all three cases, the heartbeat coroutine continues running indefinitely becau
 ## Expected Behavior
 
 The heartbeat task should be properly cancelled in every exit path of the SSE stream — disconnect, normal completion, and exception handling — so that no background tasks are leaked.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

@@ -58,3 +58,9 @@ Add the `focusTrap` prop to the API documentation in both languages:
 ### 4. Fix inline preview focus behavior
 
 In `components/image/demo/_semantic.tsx`, the inline preview configuration should set `focusTrap: false` to prevent keyboard focus from being trapped within the inline preview, which would interfere with tab navigation through the page.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

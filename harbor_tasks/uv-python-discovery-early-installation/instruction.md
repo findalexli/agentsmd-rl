@@ -19,3 +19,11 @@ Refactor the internal discovery functions so that `PythonInstallation` is constr
 - The public entry point for finding Python installations must remain public and continue to return `Result<PythonInstallation, Error>`
 
 The relevant code is in the Python discovery pipeline. The `PythonInstallation` struct has `source` and `interpreter` fields that should be populated directly rather than via tuple conversion.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`
+- `cargo clippy (Rust linter)`
+- `cargo fmt (Rust formatter)`

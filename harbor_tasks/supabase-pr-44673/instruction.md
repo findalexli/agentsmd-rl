@@ -27,6 +27,8 @@ The fix should ensure that:
 - The existing test suite in `apps/www/lib/blog-images.test.ts` uses vitest
 - Run tests with: `pnpm vitest --run lib/blog-images.test.ts` from the `apps/www` directory
 - The test file imports `getAbsoluteBlogSocialImage` from `./blog-images`
+- Add a test named `appends a cache-busting param to dynamic OG function URLs` that verifies the cache-busting behavior for OG function URLs
+- Add a test named `does not append a cache-busting param to static image URLs` that verifies static images pass through unchanged
 
 ## What Not to Do
 

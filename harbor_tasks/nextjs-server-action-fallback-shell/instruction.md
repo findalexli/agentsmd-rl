@@ -29,3 +29,10 @@ Server action requests should bypass the fallback rendering block entirely and r
 
 - `packages/next/src/build/templates/app-page.ts` — the `handler` function, specifically the `staticPathKey` computation around lines 615-627
 - Look at how `ssgCacheKey` handles this case (around line 570) for a pattern that already correctly accounts for the request type
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`
+- `eslint (JS/TS linter)`

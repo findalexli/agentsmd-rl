@@ -25,3 +25,9 @@ Any code changes must follow the project's CLAUDE.md conventions:
 - Avoid `.unwrap()`, `panic!`, `unreachable!`, and `unsafe` blocks in new code
 - Use descriptive variable names (not single-character names)
 - Use `#[expect(...)]` instead of `#[allow(...)]` for any clippy suppressions
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `cargo fmt (Rust formatter)`

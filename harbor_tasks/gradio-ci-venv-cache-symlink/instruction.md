@@ -19,3 +19,9 @@ There is also a flaky frontend test in `js/textbox/Textbox.test.ts`. The test fo
 
 - `.github/actions/install-all-deps/action.yml` — the composite action that sets up Python, creates a venv, and restores/saves the cache
 - `js/textbox/Textbox.test.ts` — the Textbox component test file with the flaky copy test
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

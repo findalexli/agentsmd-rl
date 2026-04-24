@@ -22,3 +22,10 @@ All imports of the encoder CUDA graph modules should resolve correctly so that `
 - `vllm/model_executor/models/qwen3_vl.py` — model with encoder CUDA graph protocol methods
 - `vllm/model_executor/models/interfaces.py` — interface definitions with type-checking imports
 - `tests/v1/cudagraph/test_encoder_cudagraph.py` — test file for encoder CUDA graph functionality
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`
+- `typos (spell-check)`

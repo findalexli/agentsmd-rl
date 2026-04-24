@@ -32,3 +32,9 @@ After the fix, calling a function with the wrong number of arguments should retu
 - Root `CLAUDE.md`: Run tests with `cargo nextest run -p move-vm-runtime --lib -- function_arg_tests`
 - Root `CLAUDE.md`: Always run `cargo xclippy` after finishing development
 - Root `CLAUDE.md`: Use 10+ minute timeouts for Sui codebase compilation/tests
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `cargo fmt (Rust formatter)`

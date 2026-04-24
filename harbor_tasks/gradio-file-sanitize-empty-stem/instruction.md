@@ -15,3 +15,9 @@ When a user uploads a file whose name (before the extension) consists entirely o
 - Files with valid extensions should be accepted regardless of how their stem looks after sanitization.
 - The filename sanitization should never produce a bare dotfile (e.g., `.txt`, `.pdf`, `.csv`) when the original filename had a valid extension.
 - For filenames where some stem characters survive sanitization (e.g., `a#.txt`, `1#2.csv`, `hello#world.py`), only the invalid characters should be removed.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

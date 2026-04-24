@@ -40,3 +40,9 @@ When modifying `script/changelog.ts` and `script/version.ts`, you MUST follow th
 - The `.opencode/command/changelog.md` prompt must not instruct the LLM to fetch GitHub releases or find PRs. The command should consume pre-computed structured data piped from `script/changelog.ts` rather than having the LLM gather this information itself.
 
 - The generated changelog file (name contains "UPCOMING_CHANGELOG") must be listed in `.gitignore` so it is not accidentally committed.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`

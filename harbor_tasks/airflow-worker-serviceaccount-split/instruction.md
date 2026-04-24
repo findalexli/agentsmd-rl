@@ -32,15 +32,16 @@ The following template files must be created or modified:
 
 1. **NEW FILE: `chart/templates/workers/worker-kubernetes-serviceaccount.yaml`**
    - Must define a ServiceAccount resource for Kubernetes executor pods
+   - This ServiceAccount should be created when using KubernetesExecutor and workers.kubernetes.serviceAccount.create is true
 
-2. **`chart/templates/_helpers.yaml`** must contain:
-   - A helper named `_serviceAccountNameGen` for generating service account names with support for nested configuration paths
-   - A helper named `worker.kubernetes.serviceAccountName` that references the kubernetes-specific configuration
-   - The existing `_serviceAccountName` helper must support a `.subKey` parameter to handle nested sections like `workers.kubernetes`
+2. **`chart/templates/_helpers.yaml`** must be updated to:
+   - Add a new `_serviceAccountNameGen` helper function that generates service account names based on `create` flag, `name`, and a `key`/`nameSuffix`
+   - Refactor the existing `_serviceAccountName` helper to accept an optional `.subKey` parameter for nested configuration paths (like `workers.kubernetes`)
+   - Add a new `worker.kubernetes.serviceAccountName` helper that calls `_serviceAccountName` with `key="workers"`, `subKey="kubernetes"`, and `nameSuffix="worker-kubernetes"`
 
 3. **`chart/files/pod-template-file.kubernetes-helm-yaml`** must:
    - Check for `.Values.workers.kubernetes.serviceAccount.create`
-   - Use the `worker.kubernetes.serviceAccountName` helper when rendering service account names
+   - Use the `worker.kubernetes.serviceAccountName` helper (from `_helpers.yaml`) when rendering service account names for pods
 
 4. **`chart/templates/NOTES.txt`** must include deprecation warnings for these four fields:
    - `workers.serviceAccount.automountServiceAccountToken`
@@ -53,6 +54,7 @@ The following template files must be created or modified:
 When the new kubernetes-specific fields are not explicitly set, they must fallback to the old `workers.serviceAccount` values:
 - `workers.kubernetes.serviceAccount.annotations` defaults to `workers.serviceAccount.annotations`
 - `workers.kubernetes.serviceAccount.automountServiceAccountToken` defaults to `workers.serviceAccount.automountServiceAccountToken`
+- The Celery worker service account should continue to use the existing worker service account helper
 
 ### Documentation
 
@@ -71,9 +73,9 @@ helm template test-release chart
 ```
 
 The tests will verify:
-1. New templates and helpers exist with the exact names specified above
+1. New templates exist and render correctly
 2. Schema and values are valid
-3. Both celery and kubernetes service accounts render correctly
-4. Backward compatibility with deprecated fields works
+3. Both celery and kubernetes service accounts render correctly with custom names and annotations
+4. Backward compatibility with deprecated fields works (when new fields aren't set, old values are used)
 5. Deprecation warnings are present in NOTES.txt
-6. The `_serviceAccountName` helper supports the `.subKey` parameter for nested configuration
+6. The pod-template-file correctly uses the kubernetes service account when configured

@@ -35,3 +35,10 @@ After making the changes:
 4. `docs/tsgo.md` must not exist
 5. `cli/tsc/README.md` must contain the transferred documentation
 6. The linting script must recognize `cli`, `tests`, `tools` (and other existing directories) as valid top-level entries
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `cargo clippy (Rust linter)`
+- `cargo fmt (Rust formatter)`

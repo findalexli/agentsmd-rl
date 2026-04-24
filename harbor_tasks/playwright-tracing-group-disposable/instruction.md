@@ -14,11 +14,9 @@ Currently this pattern doesn't work because `group()` doesn't return a disposabl
 
 ### 1. Fix the Core Implementation
 
-The `group()` method in the Tracing client implementation (located in the playwright-core package) returns `Promise<void>`. It needs to instead return a `DisposableStub` object that calls the existing `groupEnd()` method when disposed.
+The `group()` method in the Tracing client implementation (located in the playwright-core package) returns `Promise<void>`. It needs to instead return a disposable object that calls the existing `groupEnd()` method when disposed.
 
-You must:
-- Import `DisposableStub` from `'./disposable'` in the tracing module
-- Return `new DisposableStub(() => this.groupEnd())` from the `group()` method
+The Playwright codebase provides a `DisposableStub` class (imported from the `'./disposable'` module) that creates disposable objects by passing a callback to run on disposal. Use this to implement the disposable return value.
 
 ### 2. Update Type Definitions
 
@@ -28,11 +26,7 @@ The `group()` method signature should return `Promise<Disposable>` instead of `P
 
 ### 3. Update API Documentation
 
-In the Tracing class API documentation file (in the docs/src/api directory), add the return type annotation for the `group` method:
-
-Add the line: `returns: <[Disposable]>`
-
-Follow the format pattern used by other methods in the same file for documenting return types.
+In the Tracing class API documentation file (in the docs/src/api directory), add the return type annotation for the `group` method. The format follows the pattern used by other methods in the same file — look at nearby method signatures to see the correct syntax for documenting return types.
 
 ### 4. Update CLAUDE.md
 
@@ -46,3 +40,9 @@ The solution should:
 2. Automatically call `groupEnd()` when the disposable is disposed
 3. Pass TypeScript compilation
 4. Pass lint checks
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

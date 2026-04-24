@@ -38,3 +38,9 @@ Your solution will be verified by:
 - Confirming no `new Function()` calls remain in the config parsing path
 - Confirming the config editor uses a JSON-compatible language mode
 - Running the existing repository test suite to ensure no regressions
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

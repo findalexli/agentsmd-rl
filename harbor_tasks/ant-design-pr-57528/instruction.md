@@ -1,35 +1,26 @@
-# Popconfirm Icon Semantic Styling Not Supported
+# Popconfirm Icon Semantic Styling Support
 
-The Popconfirm component in Ant Design supports semantic styling through `classNames` and `styles` props. When using these props, the confirmation icon element cannot be styled through this semantic API.
+The Popconfirm component supports semantic styling through `classNames` and `styles` props. However, the confirmation icon element does not currently receive these semantic values when using `classNames.icon` or `styles.icon`.
 
 ## Problem
 
-When using the Popconfirm component with semantic styling, developers expect to apply custom classes and styles to the icon element using the `classNames` and `styles` props. Currently, the `icon` slot is not included in the Popconfirm semantic type definitions, and the icon element does not receive these semantic class or style values during rendering.
+When using the Popconfirm component with semantic styling, developers cannot apply custom classes or styles to the confirmation icon element. The `icon` slot is missing from the Popconfirm semantic type definitions, and the icon element in the rendered output does not receive the semantic class or style values.
 
 ## Expected Behavior
 
 The Popconfirm component must support `classNames.icon` and `styles.icon` properties for semantic styling of the confirmation icon element.
 
-### Type Definition Requirements
+### Requirements
 
-A type called `PopconfirmSemanticType` must be defined and exported in `components/popconfirm/index.tsx`. This type must:
-1. Define `classNames` with an `icon?: string` field
-2. Define `styles` with an `icon?: React.CSSProperties` field
-3. Be a proper object type definition (not a type alias), using the syntax `export type PopconfirmSemanticType = { ... }`
-4. Use bracket indexing to extend the base semantic types from Popover (e.g., `PopoverSemanticType['classNames']`)
+1. **Type definitions must include icon support**: The semantic type definitions should include an `icon` property in both `classNames` and `styles`, allowing developers to pass custom classes and inline styles to the icon element.
 
-The type must also import `PopoverSemanticType` (not `PopoverSemanticAllType`) from the popover module and use it as a base.
+2. **Rendering must apply semantic values**: When `classNames.icon` is provided, the icon element's class attribute should include the custom class. When `styles.icon` is provided, the icon element should receive those inline styles.
 
-A related type `PopconfirmSemanticAllType` must combine Popconfirm-specific semantic types with base Popover types, and `PurePanel.tsx` must import this type instead of `PopoverSemanticAllType`.
-
-### Rendering Requirements
-
-In the Popconfirm panel, the icon element must:
-1. Apply custom classes from `classNames?.icon` to the icon element's className
-2. Apply inline styles from `styles?.icon` to the icon span element
-3. Use `clsx` to combine the base icon class with any semantic icon class
-4. Safely access the semantic values (accounting for when they might be undefined)
+3. **Backward compatibility**: The fix must not break existing functionality. All existing Jest tests, ESLint checks, and Biome linting should continue to pass.
 
 ## Testing
 
-After implementing the fix, the Popconfirm component should still pass all existing Jest tests, ESLint checks, and Biome linting.
+After implementing the fix:
+- The Popconfirm component should pass all existing Jest tests
+- ESLint checks should pass for modified files
+- Biome linting should pass for modified files

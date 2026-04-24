@@ -46,3 +46,9 @@ Per CLAUDE.md requirements:
 - Run `cargo check -p sui-core` to verify compilation
 - Run `cargo clippy -p sui-core` to verify linting (no `#[allow(...)]` suppressions allowed)
 - Set appropriate timeouts (at least 10 minutes for this large codebase)
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `cargo fmt (Rust formatter)`

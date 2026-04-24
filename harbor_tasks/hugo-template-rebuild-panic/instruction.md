@@ -49,3 +49,9 @@ This check should occur before registering a template name and should not be con
 ### Implementation Notes
 
 The panic occurs in the template parsing code path during live reload. Investigate how templates are parsed and registered during rebuilds, particularly when template files are updated. Look for places where duplicate template detection might be conditionally skipped.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `gofmt (Go formatter)`

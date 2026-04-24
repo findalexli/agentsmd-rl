@@ -12,20 +12,14 @@ In stress tests with `ignore_drop_queries_probability` enabled:
 3. The view survives and keeps refreshing periodically
 4. The server becomes unresponsive due to accumulated background tasks
 
-The comment in the fix must explain: "`TRUNCATE` doesn't stop the periodic refresh task, so the orphaned view would keep refreshing indefinitely, consuming background pool threads and potentially overwhelming the server."
-
 ## Requirements
 
-The fix must be implemented in `src/Interpreters/InterpreterDropQuery.cpp`.
+The fix must ensure that when a refreshable materialized view is being dropped, the `DROP TABLE` statement is NOT converted to `TRUNCATE TABLE`.
 
-When a refreshable materialized view is being dropped, the `DROP TABLE` statement must NOT be converted to `TRUNCATE TABLE`. The implementation must:
+The implementation should:
 1. Check if the table being dropped is a refreshable materialized view
 2. Skip the DROP-to-TRUNCATE conversion for such views
-3. Include a comment starting with "Don't ignore `DROP` for refreshable materialized views"
-
-The implementation should use a boolean variable named `is_refreshable_view` that:
-1. Is determined by checking if the table is a materialized view and if it has a refreshable property
-2. Is used in the condition alongside `settings[Setting::ignore_drop_queries_probability]` such that the conversion only happens when `!is_refreshable_view`
+3. Include a comment explaining why refreshable views need special handling
 
 ## Agent Configuration Rules
 

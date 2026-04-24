@@ -40,3 +40,10 @@ After fixing, you can verify by:
 - The fix should handle the empty-file case with a simple `trim() === ""` check on the file contents
 - A subsequent call to `getConfigYamlPath()` on an already-populated file should not modify it
 - The `config.json` file (legacy) should still be checked: if it exists but `config.yaml` does not, `config.yaml` should still be created
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`
+- `eslint (JS/TS linter)`

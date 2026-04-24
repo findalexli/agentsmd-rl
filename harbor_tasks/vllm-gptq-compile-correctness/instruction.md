@@ -21,3 +21,9 @@ Additionally, the inductor-backend comparison section above the eager loop never
 
 - `vllm/model_executor/model_loader/weight_utils.py` — `initialize_single_dummy_weight` function (~line 1345)
 - `tests/compile/fullgraph/test_basic_correctness.py` — `test_compile_correctness` function (~line 100)
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

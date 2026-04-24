@@ -36,3 +36,9 @@ The configuration should be available at two levels:
 - `packages/router-core/src/router.ts` - Add router-level option
 - `packages/router-core/src/load-matches.ts` - Implement the conditional blocking logic
 - `packages/router-core/src/index.ts` - Export new types
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

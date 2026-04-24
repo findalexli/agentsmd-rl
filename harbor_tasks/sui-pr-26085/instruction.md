@@ -77,3 +77,10 @@ cargo test -p sui-framework -- option
 ```
 
 All option-related tests should pass.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `cargo clippy (Rust linter)`
+- `cargo fmt (Rust formatter)`

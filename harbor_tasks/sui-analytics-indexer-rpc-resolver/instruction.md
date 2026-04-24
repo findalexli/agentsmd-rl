@@ -67,3 +67,9 @@ After the migration:
 - The new approach handles system package cache invalidation more reliably
 - Some handlers will need to use `Resolver::new()` instead of `resolver_for_epoch()`
 - The `ObjectProcessor` needs a local RPC client since it needs to resolve original package IDs
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `cargo clippy (Rust linter)`

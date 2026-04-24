@@ -19,3 +19,9 @@ The error message should:
 ## Files to Investigate
 
 - `superset/mcp_service/utils/token_utils.py` - Contains `generate_size_reduction_suggestions` and `_get_tool_specific_suggestions` functions that generate error messages
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

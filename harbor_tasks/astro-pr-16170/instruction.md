@@ -23,3 +23,9 @@ After fixing, verify that:
 2. When a request body exists, it's properly forwarded with appropriate streaming configuration
 3. The package builds successfully
 4. Existing tests pass
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

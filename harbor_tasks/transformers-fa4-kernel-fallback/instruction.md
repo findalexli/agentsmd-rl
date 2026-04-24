@@ -18,3 +18,9 @@ When `flash_attention_4` is requested but not natively available, the library sh
 
 - `src/transformers/modeling_utils.py` — contains the `_check_and_adjust_attn_implementation` method that iterates over `FLASH_ATTENTION_COMPATIBILITY_MATRIX.keys()` to handle kernel fallbacks
 - `src/transformers/modeling_flash_attention_utils.py` — contains the `FLASH_ATTN_KERNEL_FALLBACK` dictionary that maps Flash Attention implementation names to their kernel community package names
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

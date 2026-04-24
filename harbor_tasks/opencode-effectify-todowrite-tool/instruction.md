@@ -29,3 +29,9 @@ Convert `TodoWriteTool` to use the Effect-based pattern with these specific requ
 - `packages/opencode/src/tool/registry.ts` — wires up all tools
 - `packages/opencode/src/session/todo.ts` — the `Todo` service
 - Test files in `packages/opencode/test/` that verify layer setup
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`

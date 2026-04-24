@@ -22,3 +22,9 @@ Additionally, `ModernVBertForMaskedLM.__init__` in `src/transformers/models/mode
 - Text sub-configs should NOT define `tie_word_embeddings` — it is not a valid field for these models
 - Composite configs should not need hacks to propagate embedding tying settings
 - `ModernVBertForMaskedLM.__init__` should have a proper type annotation on its `config` parameter
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

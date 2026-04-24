@@ -18,3 +18,10 @@ Similarly, a free-threaded CPython 3.13 build should include `abi3t` entries for
 ## Files to Look At
 
 - `crates/uv-platform-tags/src/tags.rs` — the `from_env` method on `Tags` generates the ordered list of compatible platform tags, including the `abi3`/`abi3t` section
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `cargo clippy (Rust linter)`
+- `cargo fmt (Rust formatter)`

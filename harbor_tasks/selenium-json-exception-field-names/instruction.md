@@ -12,7 +12,7 @@ This message doesn't tell the user *which* fields are conflicting, making debugg
 
 ## Expected Behavior
 
-The error message should identify the conflicting fields with their full class and field names. The new error message format should be:
+The error message should identify the conflicting fields with their full class and field names. When a duplicate field is detected, the message should show something like:
 
 ```
 Duplicate JSON field name detected while collecting field writers:
@@ -20,40 +20,21 @@ Duplicate JSON field name detected while collecting field writers:
     FieldWriter(org.openqa.selenium.json.JsonTest$ParentFieldBean.value)
 ```
 
-Note: The exact field names and class names will vary depending on the beans involved in the conflict.
+The agent should look at the existing test (`shouldThrowWhenDuplicateFieldNamesExistWithFieldSetting` in `JsonTest.java`) to understand the exact expected format.
 
 ## Files to Modify
 
-The error is thrown when merging duplicate field writers during JSON deserialization. Two source files in the Selenium JSON package need updates:
+The error is thrown when merging duplicate field writers during JSON deserialization. Two source files in the Selenium JSON package likely need updates:
 
-1. `java/src/org/openqa/selenium/json/InstanceCoercer.java` - the main coercer class
-2. `java/src/org/openqa/selenium/json/SimplePropertyDescriptor.java` - the property descriptor class
+1. `java/src/org/openqa/selenium/json/InstanceCoercer.java` - handles field writer creation and merging
+2. `java/src/org/openqa/selenium/json/SimplePropertyDescriptor.java` - property descriptor class
 
-## Required Changes
+## Constraints
 
-### InstanceCoercer.java
-
-Add `toString()` methods to these inner classes:
-
-- **FieldWriter** - toString() should include the declaring class name and field name (e.g., `ClassName.fieldName`)
-- **SimplePropertyWriter** - toString() should include the property descriptor info
-- **TypeAndWriter** - toString() should delegate to `writer.toString()`
-
-Also update the duplicate field merge function to include field comparison information in the error message using a format like `FieldWriter(X) vs FieldWriter(Y)`.
-
-### SimplePropertyDescriptor.java
-
-Add `toString()` method that returns the class simple name and field name (e.g., `ClassName.fieldName`).
-
-## Expected Error Message Format
-
-```
-Duplicate JSON field name detected while collecting field writers:
-    FieldWriter(org.openqa.selenium.json.JsonTest$ChildFieldBean.value) vs
-    FieldWriter(org.openqa.selenium.json.JsonTest$ParentFieldBean.value)
-```
-
-The error message should include the full class path and field name for each conflicting field writer.
+- The existing test `shouldThrowWhenDuplicateFieldNamesExistWithFieldSetting` in `//java/test/org/openqa/selenium/json:JsonTest` must pass after the fix
+- Maintain API compatibility - this changes internal error messages only
+- Follow the existing code style in the Selenium Java codebase
+- See `java/AGENTS.md` for code conventions (logging, deprecation, javadoc)
 
 ## Testing
 
@@ -63,9 +44,3 @@ bazel test //java/test/org/openqa/selenium/json:JsonTest
 ```
 
 The relevant test method is `shouldThrowWhenDuplicateFieldNamesExistWithFieldSetting()`.
-
-## Constraints
-
-- Maintain API compatibility - this is a refactoring that changes internal error messages only
-- Follow the existing code style in the Selenium Java codebase
-- See `java/AGENTS.md` for code conventions (logging, deprecation, javadoc)

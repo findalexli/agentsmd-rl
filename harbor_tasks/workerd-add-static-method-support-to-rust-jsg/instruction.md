@@ -28,3 +28,9 @@ After implementing the code changes, update the relevant documentation to reflec
 - `src/rust/AGENTS.md` — conventions for JSG resource types
 - `src/rust/jsg-macros/README.md` — documentation for the proc macros
 - `docs/reference/rust-review-checklist.md` — Rust review checklist covering JSG patterns
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `cargo fmt (Rust formatter)`

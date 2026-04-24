@@ -22,3 +22,10 @@ The issue is in the Connections page UI component:
 - Look at the HTML attributes on the `<Link>` component
 - Consider what security attributes are recommended for links that open in new tabs
 - Check that attribute values follow correct HTML syntax
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`
+- `eslint (JS/TS linter)`

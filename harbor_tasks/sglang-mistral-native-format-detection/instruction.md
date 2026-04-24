@@ -33,3 +33,10 @@ After fixing the bug:
 - `Mistral-7B-Instruct-v0.3`, `Codestral-Mamba-22B-v0.1`, `Pixtral-12B-2409`, `Mistral-Small-3-24B`, `Mistral-Nemo-Instruct-2407` — with both `params.json` and `config.json` present → format detection returns `False`
 - Any model with only `params.json` (no `config.json`) → format detection returns `True`
 - Any model with neither file or only `config.json` → format detection returns `False`
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`
+- `black (Python formatter)`

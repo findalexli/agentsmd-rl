@@ -28,3 +28,9 @@ The tests verify the following structural constraints:
 - `crates/uv/src/commands/project/run.rs` — `RunCommand` enum and command execution
 - `crates/uv/src/lib.rs` — `run()` and `run_project()` functions
 - `crates/uv/src/commands/mod.rs` — module re-exports
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `cargo fmt (Rust formatter)`

@@ -18,3 +18,9 @@ from transformers.utils.generic import check_model_inputs
 ## Relevant files
 
 - `src/transformers/utils/generic.py` — contains `merge_with_config_defaults` (the renamed function, around line 863)
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

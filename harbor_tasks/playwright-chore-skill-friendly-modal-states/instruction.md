@@ -34,3 +34,9 @@ The `evaluate` command also requires users to wrap all expressions in arrow func
 - `packages/playwright/src/mcp/browser/response.ts` — calls `renderModalStates`
 - `packages/playwright/src/mcp/program.ts` — daemon mode config setup
 - `utils/build/build.js` — build copy rules
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

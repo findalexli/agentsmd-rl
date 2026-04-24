@@ -1,43 +1,31 @@
-# Task: Add extension point for deployment validation
+# VCS GitHub Deployment Validation Hook
 
-## Problem
+## Goal
 
-The VCS GitHub Deployment class lacks an extension point for custom validation logic. Cloud-specific implementations need to inject checks (such as billing and block validation) between project validation and database operations, but no such hook exists today.
+Add an extensible hook method to the GitHub Deployment class that allows subclasses (such as Appwrite Cloud implementations) to inject custom logic before database operations during deployment creation.
 
-## Your Task
+## Requirements
 
-Add a protected hook method named `beforeCreateGitDeployment` to the `Deployment.php` file that subclasses can override to inject custom validation logic. The hook must be called within the `createGitDeployments` method after the `PROJECT_NOT_FOUND` validation check but before the DSN/database initialization.
+1. **Method signature**: A protected method with exactly 4 parameters: the project document, repository document, database instance, and authorization context. The method returns void.
 
-The hook method must have this exact signature:
+2. **Placement**: The method must be called from within `createGitDeployments` at the insertion point that lies after the project existence validation (the `PROJECT_NOT_FOUND` check) and before the database connection is instantiated (`new DSN`).
 
-```php
-protected function beforeCreateGitDeployment(Document $project, Document $repository, Database $dbForPlatform, Authorization $authorization): void
-```
+3. **Implementation**: The base class implementation should be a no-op (empty body) so that subclasses can override it with custom behavior.
 
-## Key Requirements
+4. **Naming convention**: The method name follows the `before<Operation>` pattern used for extensibility hooks in this codebase.
 
-- Method name: `beforeCreateGitDeployment`
-- Parameters (in this order): `Document $project`, `Document $repository`, `Database $dbForPlatform`, `Authorization $authorization`
-- Return type: `void`
-- Visibility: `protected` (to allow subclass overrides)
-- Implementation: empty body (no-op base implementation)
-- Call syntax: `$this->beforeCreateGitDeployment($project, $repository, $dbForPlatform, $authorization)`
-- Placement: after the `PROJECT_NOT_FOUND` exception check, before the DSN creation line
-- Follow existing code conventions in the file for formatting and style
+## Target file
 
-## Relevant Files
+`src/Appwrite/Platform/Modules/VCS/Http/GitHub/Deployment.php`
 
-- `src/Appwrite/Platform/Modules/VCS/Http/GitHub/Deployment.php` - The main file to examine and modify
+## Context
 
-## Agent Configuration Context
+Appwrite Cloud extensions need to perform custom validation or setup before deployment creation. Currently there is no extension point at this stage in the `createGitDeployments` flow. Adding this hook enables Cloud-specific subclasses to inject logic without modifying the core deployment logic.
 
-This repository has agent configuration files at the root level. Please review them for coding conventions:
-- `CLAUDE.md` - Main project conventions (Action pattern, PSR-12 formatting, module structure)
-- `AGENTS.md` - Project overview and commands
-- `src/Appwrite/Platform/AGENTS.md` - Module structure and naming conventions
+## Verification
 
-## Notes
-
-- This is a PHP 8.3+ project using the Swoole runtime
-- The codebase follows PSR-12 formatting (enforced by Pint)
-- HTTP endpoint classes follow a specific Action pattern
+Your implementation will be checked for:
+- The method exists with the correct name, parameter count, and protected visibility
+- The method is called at the correct point in `createGitDeployments` (between the project validation check and the database instantiation)
+- The base class implementation is empty
+- PHP syntax remains valid and Composer autoload continues to work

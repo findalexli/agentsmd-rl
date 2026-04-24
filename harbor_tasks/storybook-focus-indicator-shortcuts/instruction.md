@@ -6,6 +6,10 @@ When using global keyboard shortcuts (Alt+A for addon panel, Alt+S for sidebar) 
 
 This is an accessibility issue - users navigating via keyboard don't get the same visual feedback as mouse users.
 
+## Context
+
+The focus indicator system uses `focusOnUIElement` API to show visual feedback when UI regions appear. The addon panel and sidebar button components currently handle focus animation internally using a `useRegionFocusAnimation` hook. Keyboard shortcuts trigger the same toggle functions but don't show the focus indicator.
+
 ## Files to Modify
 
 1. `code/core/src/manager-api/modules/shortcuts.ts` - Keyboard shortcut handlers
@@ -13,7 +17,7 @@ This is an accessibility issue - users navigating via keyboard don't get the sam
 3. `code/core/src/manager/components/preview/tools/addons.tsx` - Addon panel button
 4. `code/core/src/manager/components/preview/tools/menu.tsx` - Sidebar button
 
-## Required Behavior
+## Expected Behavior
 
 ### Keyboard Shortcuts
 
@@ -25,21 +29,19 @@ When the keyboard shortcut for toggling the sidebar (Alt+S) fires and the sideba
 
 ### Panel Component
 
-The Panel component's root element should use a constant reference for its `id` prop instead of a hardcoded string.
+The Panel component's root element should use a constant reference for its `id` prop instead of a hardcoded string. This ensures consistency with the focus management system.
 
 ### Button Event Handling
 
-The `showPanel` function in addons.tsx should accept a `forceFocus` parameter of type `boolean` and pass it to `focusOnUIElement`.
+The `showPanel` function in addons.tsx should accept a parameter that controls whether focus animation is forced. The `showSidebar` function in menu.tsx should have the same capability.
 
-The `showSidebar` function in menu.tsx should accept a `forceFocus` parameter of type `boolean` and pass it to `focusOnUIElement`.
-
-Button event handlers should behave as follows:
-- `onClick` handler should call the show function with `false` (mouse clicks don't need forced focus)
-- `onKeyDown` handler (for Enter/Space) should call the show function with `true` (keyboard activation needs forced focus)
+Button event handlers should distinguish between mouse clicks and keyboard activation:
+- `onClick` - Mouse clicks don't need forced focus since the button itself provides visual feedback
+- `onKeyDown` - Keyboard activation (Enter/Space) should force focus animation since the button loses focus
 
 ### Code Cleanup
 
-Remove any imports or usage of `useRegionFocusAnimation` from addons.tsx and menu.tsx.
+The `useRegionFocusAnimation` hook is no longer needed in addons.tsx and menu.tsx since focus animation is handled by the shortcut handlers.
 
 ## API Information
 

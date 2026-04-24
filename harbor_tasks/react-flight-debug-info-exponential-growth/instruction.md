@@ -4,7 +4,7 @@
 
 React's Flight client (React Server Components streaming protocol) is experiencing memory issues and potential hangs when processing deeply nested component trees. The issue appears to be in how debug info entries accumulate on outlined debug chunks during model parsing.
 
-In development mode, when Flight resolves chunk references, debug info entries from referenced chunks are being accumulated on parent chunks. With deep component trees (e.g., 20+ levels of nested components), this accumulation becomes exponential because each outlined chunk's accumulated entries are copied to every chunk that references it. This can cause the dev server to hang and run out of memory.
+In development mode, when Flight resolves chunk references, debug info entries from referenced chunks are being accumulated on parent chunks. With deep component trees (e.g., 20+ levels of nested components), this accumulation becomes exponential because each outlined chunk's accumulated entries are copied to every chunk that references it. This causes the dev server to hang and run out of memory.
 
 ## Context
 
@@ -30,10 +30,9 @@ The debug chunks themselves are metadata that's never rendered - they don't need
 - Debug info should not accumulate exponentially on debug chunks
 - References resolved during debug info resolution should not trigger debug info transfer
 - Deep component trees (20+ levels) should process without memory issues
-- A module-level boolean flag (`isInitializingDebugInfo`) controls whether `transferReferencedDebugInfo` is invoked during debug chunk initialization
-- The flag must be declared as `let isInitializingDebugInfo` with Flow type annotation `boolean`
-- Both `initializeDebugChunk` and `resolveIOInfo` must save the previous flag value with `prevIsInitializingDebugInfo` and use a `finally` block to restore it after setting it to `true`
-- `getOutlinedModel` must check `isInitializingDebugInfo` before calling `transferReferencedDebugInfo`
+- A module-level boolean flag controls whether `transferReferencedDebugInfo` is invoked during debug chunk initialization
+- Both `initializeDebugChunk` and `resolveIOInfo` must use a try/finally pattern to save and restore this flag around their operations
+- `getOutlinedModel` must check this flag before calling `transferReferencedDebugInfo`
 
 ## Regression Test
 

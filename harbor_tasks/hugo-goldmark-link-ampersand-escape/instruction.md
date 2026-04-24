@@ -42,3 +42,9 @@ Also run the full goldmark test suite to ensure no regressions:
 ```bash
 go test -v ./markup/goldmark/...
 ```
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `gofmt (Go formatter)`

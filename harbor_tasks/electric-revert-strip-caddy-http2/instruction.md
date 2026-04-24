@@ -24,3 +24,10 @@ The `examples/tanstack-db-web-starter/` project needs HTTP/2 proxy support integ
    - Include the **`caddy trust`** command as a setup step
 
 Read the project's `AGENTS.md` and `examples/tanstack-db-web-starter/AGENTS.md` for coding conventions and architecture patterns before starting.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`
+- `eslint (JS/TS linter)`

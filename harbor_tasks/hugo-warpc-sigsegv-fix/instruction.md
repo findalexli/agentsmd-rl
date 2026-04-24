@@ -15,3 +15,9 @@ After the fix, calling `Close()` on a `Dispatchers` struct should not cause a SI
 ## Related
 
 Fixes issue #14536
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `gofmt (Go formatter)`

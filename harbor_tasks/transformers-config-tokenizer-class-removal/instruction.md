@@ -25,3 +25,9 @@ The `PreTrainedConfig` base class in `src/transformers/configuration_utils.py` d
 - `MT5Config()` and `UMT5Config()` should not serialize a default `tokenizer_class` value
 - The `configuration_utils` module should not need to import tokenizer base classes
 - Users can still pass `tokenizer_class` as a kwarg if needed (handled by `**kwargs`)
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

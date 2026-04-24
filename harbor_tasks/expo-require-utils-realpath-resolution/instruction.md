@@ -13,33 +13,27 @@ node_modules/expo/react-native.config.js -> .pnpm/expo@version/node_modules/expo
 
 When `evalModule` is called with this symlinked path, internal module resolution (like requiring `expo-modules-autolinking/exports`) fails with `MODULE_NOT_FOUND` because the `Module._nodeModulePaths` are computed against the unresolved symlink path instead of the real path.
 
-## Required Implementation
+## Required Behavior
 
-The fix must implement the following specific behavior:
+The implementation must ensure that:
 
-1. **Create a helper function named `toRealDirname`** that:
-   - Takes a file path string as input
-   - Uses `fs.realpathSync` to resolve any symlinks in the path
-   - Returns the directory name of the resolved path
-   - Handles `ENOENT` errors gracefully: when the file doesn't exist, try resolving the directory instead of the file
+1. **Module resolution works correctly for symlinked paths** - When a file path is a symlink, the `node_modules` lookup should use the actual filesystem location that the symlink resolves to, not the symlink path itself.
 
-2. **Modify the `compileModule` function** to:
-   - Call `toRealDirname(filename)` to get a `basePath` variable
-   - Pass this `basePath` to `Module._nodeModulePaths(basePath)` instead of `path.dirname(filename)`
+2. **Symlink resolution must happen before computing module paths** - The module path resolution must consider the real path of the file, not just its location in the symlink tree.
 
-3. **Error handling requirements**:
-   - If `realpathSync` fails with `ENOENT` (file doesn't exist), resolve the directory instead
-   - If resolving fails with other errors, return the original directory unchanged
+3. **Error handling for non-existent paths** - If a file doesn't exist but its parent directory does, resolution should continue gracefully rather than throwing an error.
+
+4. **Existing API surface must be preserved** - The public API (`evalModule`, `compileModule`, `loadModule`) must maintain their current signatures and behavior for non-symlinked paths.
 
 ## Constraints
 
-- The function `toRealDirname` must be present in the file
-- The variable `basePath` must be used when calling `Module._nodeModulePaths`
-- The code must handle `ENOENT` errors in a try-catch block within `toRealDirname`
+- The module path resolution must use the real filesystem path, not the symlink path
+- The code must handle `ENOENT` errors gracefully for paths that don't exist
+- No new dependencies may be added to the package
 
 ## Files to Modify
 
-- `packages/@expo/require-utils/src/load.ts` - Add realpath resolution
+- `packages/@expo/require-utils/src/load.ts` - Add symlink resolution for module paths
 
 The build files (`build/load.js`, `build/load.js.map`) will be regenerated during the build process.
 

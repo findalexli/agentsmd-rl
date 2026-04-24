@@ -25,3 +25,9 @@ When the active theme is not found in the themes map, the code should:
 - The `kv` object is already available in scope (from `useKV()`)
 - The saved theme key in KV is `"theme"`
 - The fix should be in the `createMemo` callback that produces the resolved theme values
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`

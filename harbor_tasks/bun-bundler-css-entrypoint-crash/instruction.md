@@ -21,16 +21,34 @@ await Bun.build({
 
 ## Relevant Code
 
-The issue is in the bundler's chunk computation logic in `src/bundler/linker_context/computeChunks.zig`.
+The issue is in `src/bundler/linker_context/computeChunks.zig`.
 
-The `computeChunks` function creates JS chunks for entry points and later iterates over entry point bits to assign source files to chunks. The problem is in how entry point IDs are mapped to chunk indices — when some entry points are CSS-only (no JS chunk is created for them), there's a mismatch between the entry point ID space and the JS chunk array size, leading to an out-of-bounds access.
+The `computeChunks` function creates JS chunks for entry points and later iterates over entry point bits to assign source files to chunks. The problem is in how entry point IDs are mapped to chunk indices — when some entry points are CSS-only (no JS chunk is created for them), there's a mismatch between the entry point ID space and the JS chunk array size, leading to an out-of-bounds access in the `Handler.next` method.
 
-Look at the `Handler` struct and its `next` method near the bottom of `computeChunks`, and how JS chunks are created for entry points in the main loop above it.
+Look at the `Handler` struct and its `next` method near the bottom of `computeChunks.zig`.
 
-## Reproduction
+## The Fix
 
-Create a project with at least two JS/TS entry points and one CSS entry point, then bundle them together. The crash is deterministic when CSS entry points cause gaps in the JS chunk index space.
+CSS-only entry points (those with no JS output) must be handled gracefully — they must not cause an out-of-bounds access when `Handler.next` tries to look up a chunk index.
+
+The solution adds an indirection layer:
+
+1. A u32-based mapping structure is introduced (one of: a `[]u32` slice allocated to `entry_points.len`, a `u32` array field, or a `HashMap(u32, u32)`) that stores the mapping from entry point ID to chunk index.
+
+2. When a JS chunk is created via `js_chunks.getOrPut()`, the mapping is updated at the entry point's index.
+
+3. In `Handler.next`, the chunk index must be obtained by looking up the entry point ID through this mapping — not by using the entry point ID directly as a chunks array index.
+
+4. A sentinel or guard value is used to mark CSS-only entry points that have no JS chunk. When `Handler.next` encounters such a sentinel, it must return early rather than proceeding to index into the chunks array.
+
+The `Handler.next` method must NOT use the entry point ID parameter directly as a `chunks[]` index — doing so causes the out-of-bounds crash when CSS-only entry points are present.
 
 ## Related Issues
 
 This affects users who use glob patterns to specify entry points (e.g., `./public/**/*` which may include CSS files) and users who explicitly list CSS files as entry points alongside JS files.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`

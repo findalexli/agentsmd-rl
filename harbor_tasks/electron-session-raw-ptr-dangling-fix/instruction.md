@@ -1,77 +1,50 @@
 # Fix Dangling Pointer Crash in Electron Session Shutdown
 
-## Problem
+## Symptom
 
-Electron crashes during shutdown when `Session` objects have live wrappers. The crash is a use-after-free: during the process exit path, the underlying `ElectronBrowserContext` is destroyed while `Session` still holds a reference to it via a non-nullable reference wrapper (`raw_ref`). When `Session::Dispose()` later tries to access `browser_context()`, it dereferences a dangling pointer.
+Electron crashes during shutdown when `Session` objects have live wrappers. The crash occurs because `Session::Dispose()` accesses `browser_context()` after the underlying `ElectronBrowserContext` has been destroyed — a use-after-free during the process exit path.
 
-The core issue is that `raw_ref` cannot be nullified — it is a non-nullable reference — so once the pointed-to object is destroyed, any access through it is undefined behavior.
+## Scope
 
-## Symptoms
+The issue spans these files:
+- `shell/browser/api/electron_api_session.h`
+- `shell/browser/api/electron_api_session.cc`
+- `shell/browser/api/electron_api_web_contents.cc`
+- `shell/browser/electron_browser_main_parts.cc`
+- `shell/common/api/electron_api_url_loader.cc`
+- `spec/cpp-heap-spec.ts`
 
-- Process crashes during exit when session wrappers are still live
-- Use-after-free when `Session::Dispose()` accesses `browser_context()` after the browser context has been destroyed
-- The issue manifests when CppGC-traced references are accessed during the shutdown sequence
+## Expected Behavior After Fix
 
-## Files Involved
+### `electron_api_session.h`
+- `browser_context_` uses a nullable pointer type
+- `browser_context()` accessor returns the member directly
 
-The fix spans these files:
+### `electron_api_session.cc`
+- Constructor initializes `browser_context_` directly with the pointer value (not via a wrapping API)
+- `Dispose()` captures `browser_context` locally, checks for null before use, and returns early if null
+- `OnBeforeMicrotasksRunnerDispose()` nullifies `browser_context_` before `keep_alive_.Clear()` completes
 
-- `shell/browser/api/electron_api_session.h` — Session class header, where `browser_context_` is declared
-- `shell/browser/api/electron_api_session.cc` — Session constructor, `Dispose()`, and `OnBeforeMicrotasksRunnerDispose()`
-- `shell/browser/api/electron_api_web_contents.cc` — WebContents constructor, which obtains `browser_context` from a session
-- `shell/browser/electron_browser_main_parts.cc` — `PostMainMessageLoopRun()` shutdown sequence for `browser_` and `js_env_`
-- `shell/common/api/electron_api_url_loader.cc` — URL loader, which obtains `browser_context` from a session
-- `spec/cpp-heap-spec.ts` — Where the regression test should be added
+### `electron_api_web_contents.cc`
+- Captures `browser_context` from session in a local variable after obtaining from `session->browser_context()`
+- Uses `DCHECK` to verify the captured pointer is not null
 
-## Expected Code State After Fix
+### `electron_api_url_loader.cc`
+- After obtaining `browser_context` from session, uses `DCHECK` to verify it is not null
 
-### `shell/browser/api/electron_api_session.h`
-
-- The `#include "base/memory/raw_ref.h"` line should be removed since `raw_ref` is no longer used
-- `browser_context_` should be declared as `raw_ptr<ElectronBrowserContext>` (the existing `const raw_ref<ElectronBrowserContext>` declaration should not be present)
-- The `browser_context()` accessor should return `browser_context_` directly (not through `&browser_context_.get()`)
-
-### `shell/browser/api/electron_api_session.cc`
-
-- The constructor should initialize `browser_context_` as `browser_context_{browser_context}` — directly with the pointer argument, not via `raw_ref<ElectronBrowserContext>::from_ptr()`
-- `Dispose()` should:
-  - Capture `browser_context()` in a local variable declared as `ElectronBrowserContext* const browser_context = this->browser_context()`
-  - Check `if (!browser_context)` and `return` early if null
-  - Use the local `browser_context` variable for all subsequent access (not `browser_context()`)
-- `OnBeforeMicrotasksRunnerDispose()` should set `browser_context_ = nullptr` before calling `keep_alive_.Clear()`
-
-### `shell/browser/api/electron_api_web_contents.cc`
-
-- The WebContents constructor should capture the session's browser context once in a local variable: `ElectronBrowserContext* const browser_context = session->browser_context()`
-- Add `DCHECK(browser_context != nullptr)` after the capture
-- Use the local `browser_context` variable consistently instead of calling `session->browser_context()` multiple times
-
-### `shell/common/api/electron_api_url_loader.cc`
-
-- In `SimpleURLLoaderWrapper::Create`, inside the `if (session)` block after `browser_context = session->browser_context()`, add `DCHECK(browser_context != nullptr)`
-
-### `shell/browser/electron_browser_main_parts.cc`
-
-- In `PostMainMessageLoopRun()`, add `browser_.reset()` and `js_env_.reset()` to ensure proper destruction order during shutdown
+### `electron_browser_main_parts.cc`
+- `PostMainMessageLoopRun()` resets `browser_` and `js_env_`
 
 ### `spec/cpp-heap-spec.ts`
+- Contains a regression test verifying that a process with live session wrappers does not crash on exit
+- Imports `once` from `node:events`
 
-- Add `import { once } from 'node:events';` at the top of the file
-- Add a test case in the `describe('session module', ...)` block with the name `'does not crash on exit with live session wrappers'` that:
-  - Creates multiple sessions (default session, a partition session, and a persist partition session)
-  - Accesses `.cookies` on each session to ensure CppGC-managed objects are live
-  - Stores session references in `globalThis` to prevent pre-shutdown garbage collection
-  - Calls `app.quit()` via `setTimeout`
-  - Waits for the process exit using `const [code] = await once(rc.process, 'exit')`
-  - Asserts `expect(code).to.equal(0)` — the process should exit cleanly without crashing
+## Verification
 
-## Testing
-
-Your fix will be verified by checking that:
-- The `raw_ref` type is replaced with `raw_ptr` for the `browser_context_` member
-- Null checks are present in `Dispose()` before accessing the browser context
-- `browser_context_` is nullified during cleanup in `OnBeforeMicrotasksRunnerDispose()`
-- DCHECK assertions are added in `WebContents` and the URL loader when obtaining `browser_context` from a session
-- The shutdown sequence properly resets `browser_` and `js_env_`
-- The regression test is added to `cpp-heap-spec.ts` with the correct import and test structure
-- All modified files remain syntactically valid (balanced braces, proper C++ structure, valid TypeScript)
+Your fix will be verified by checking:
+- `browser_context_` uses a nullable pointer type
+- Null checks are present before accessing `browser_context` in `Dispose()`
+- `browser_context_` is nullified during cleanup
+- `DCHECK` assertions verify `browser_context` is not null when obtained from session
+- The shutdown sequence resets browser and js_env resources
+- The regression test exists and has the correct import

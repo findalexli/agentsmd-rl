@@ -21,3 +21,9 @@ This function needs to be fully removed from the codebase: the implementation, i
 - `references/v3-catalog/src/trigger/sdkUsage.ts` — example/reference code that uses SDK methods
 - `.cursor/rules/writing-tasks.mdc` — agent instructions for writing tasks, documents available SDK methods
 - `docs/triggering.mdx` — public documentation for triggering tasks
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`

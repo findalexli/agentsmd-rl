@@ -59,3 +59,9 @@ Verify your fix by:
 The gold file at `testdata/examples/externalglobals/externalglobals.gold.v` contains the expected output format with `globals.get #unittest.unittest`.
 
 Key verification: After the fix, the generated Coq output for `globals.get` calls should use the format `#unittest.unittest` instead of just `#unittest` when accessing globals from external packages.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `gofmt (Go formatter)`

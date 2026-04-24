@@ -41,3 +41,9 @@ After minification, Alpine.js directives must be preserved:
 ## Related Issue
 
 This fixes issue #14669 where Alpine.js directives in SVGs were being stripped by the minifier.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `gofmt (Go formatter)`

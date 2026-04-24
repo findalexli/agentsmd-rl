@@ -13,3 +13,9 @@ The Gradio documentation website's mobile navigation menu (`js/_website/src/lib/
 5. **Desktop elements must be preserved**: The existing desktop header must remain intact — including the logo image (with alt text containing "logo"), navigation links to `/docs` and `/guides`, and the Community section text.
 
 The header component needs to be reworked so that mobile users get a proper full-screen overlay menu with clear navigation sections, accessible controls, and access to search/theme utilities — while keeping the existing desktop header behavior intact.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`

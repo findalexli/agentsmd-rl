@@ -12,3 +12,11 @@ File: `python/sglang/test/runners.py`, in the `HFRunner` class, `forward()` meth
 
 - If the subprocess is healthy and produces output, `forward()` returns the result from the queue as before.
 - If the subprocess dies before producing output, `forward()` must raise a `RuntimeError` whose message includes the subprocess exit code, rather than hanging indefinitely.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`
+- `black (Python formatter)`
+- `typos (spell-check)`

@@ -13,27 +13,27 @@ Functions: `copyFileTo` and `writeString` on the `testRunner` struct
 
 ## Symptom
 
-After a test helper writes a file (e.g., after calling `os.WriteFile`), the fsnotify watcher may read the file before the write completes, seeing an empty or truncated file. This causes the watcher to process stale or empty content instead of the newly written data, leading to intermittent test failures where valid targets are not detected.
+After a test helper writes a file using `os.WriteFile`, the fsnotify watcher may read the file before the write completes, seeing an empty or truncated file. This causes the watcher to process stale or empty content instead of the newly written data, leading to intermittent test failures where valid targets are not detected.
 
 ## Requirements
 
-1. File writes performed by the test helpers must not be observable in an intermediate state by a concurrent reader — the write must complete atomically from the perspective of the watcher.
-2. The fix must work correctly on Linux, macOS, and Windows.
-3. The code must compile and pass: `go test ./discovery/file/ -run "TestInitialUpdate|TestFileUpdate|TestNoopFileUpdate"`
-4. The code must pass `go vet ./discovery/file/...` and `go fmt ./discovery/file/...`
+The solution must satisfy the following, which are verified by automated tests:
 
-## What the Tests Check
+1. A helper function named `atomicWrite` must exist on the `testRunner` type, accepting a destination path and data
+2. The helper must use `os.CreateTemp` and `os.Rename` for atomic file replacement
+3. The helper must create temporary files in the directory returned by `t.TempDir()` (not in `t.dir`)
+4. The helper must implement retry logic with at least 5 retries and use `time.Sleep` with `Millisecond` duration for cross-platform Windows compatibility
+5. `copyFileTo` and `writeString` must call `t.atomicWrite` instead of `os.WriteFile`
+6. File writes performed by the test helpers must not be observable in an intermediate state by a concurrent reader
+7. The code must compile and pass: `go test ./discovery/file/ -run "TestInitialUpdate|TestFileUpdate|TestNoopFileUpdate"`
+8. The code must pass `go vet ./discovery/file/...` and `go fmt ./discovery/file/...`
 
-The tests verify that the following patterns exist in `discovery/file/file_test.go`:
+## Hints
 
-- A helper function with receiver `*testRunner` named `func (t *testRunner) atomicWrite`
-- The function uses `os.CreateTemp` and `os.Rename`
-- `copyFileTo` calls `t.atomicWrite(dst, content)`
-- `writeString` calls `t.atomicWrite(file, []byte(data))`
-- The function has a retry loop using `for retries := 0; ; retries++`
-- The retry limit is `retries >= 5`
-- The sleep between retries is `time.Sleep(50 * time.Millisecond)`
-- Temp files are created in a directory from `os.CreateTemp(t.TempDir()`
+- Atomic file replacement using a temporary file and rename avoids the race condition where a concurrent reader sees partial content
+- Creating temp files outside the watched directory avoids triggering spurious fsnotify events that could cause file handle conflicts on Windows
+- Windows file systems may hold file handles open longer than expected after read operations, causing rename to fail until the handle is released
+- The fsnotify watcher must always see a complete, intact file when reading after a write completes
 
 ## Verification
 

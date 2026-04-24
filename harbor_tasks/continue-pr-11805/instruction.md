@@ -31,3 +31,9 @@ After the fix, the following should hold:
 - Both integration points apply this merging before sending requests
 - TypeScript compiles without errors
 - Existing vitest tests pass
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`

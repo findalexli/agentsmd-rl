@@ -27,3 +27,9 @@ The 5 invalid version strings that must each be tested:
 - The test bodies must still use `await using proc = Bun.spawn(...)` with `await proc.exited`
 - The file must still use `bunExe()`, `bunEnv`, and `tempDir` from the test harness
 - The `describe.concurrent` pattern must be preserved
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`

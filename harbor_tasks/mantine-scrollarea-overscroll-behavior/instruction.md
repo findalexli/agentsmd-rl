@@ -33,3 +33,11 @@ The `overscroll-behavior` CSS property controls what happens when you reach the 
 - `overscroll-behavior: x-behavior y-behavior`
 
 Setting one axis to `auto` allows scroll events to propagate to the parent container for that axis.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`
+- `eslint (JS/TS linter)`
+- `stylelint (CSS linter)`

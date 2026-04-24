@@ -58,3 +58,10 @@ Refactor the changelog generation to use **conventional commits** with **semanti
 - For commits without PR references, use the commit author email
 - Skip merge commits and the automated release commit itself
 - The changelog should list commits with their scope prefix (if any), message, commit hash, and author attribution
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`
+- `eslint (JS/TS linter)`

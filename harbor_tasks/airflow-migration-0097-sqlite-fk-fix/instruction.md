@@ -21,3 +21,9 @@ The `disable_sqlite_fkeys()` context manager issues `PRAGMA foreign_keys=off` wh
 ## Your Task
 
 Fix the `upgrade()` function in migration 0097 so that it works correctly on SQLite, ensuring that foreign key constraints are properly disabled when needed during the migration.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

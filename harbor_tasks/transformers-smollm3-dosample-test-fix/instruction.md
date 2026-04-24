@@ -34,3 +34,9 @@ The following conditions must all be satisfied for the tests to pass:
 - Check the model's `generation_config.json` on the Hub to understand its defaults
 - Consider whether the parameters passed to `generate()` fully override the model's default generation behavior
 - The fix should ensure greedy decoding is explicitly and reliably requested
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

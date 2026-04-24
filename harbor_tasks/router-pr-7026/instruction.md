@@ -45,3 +45,9 @@ The `createFileRoute` and `createLazyFileRoute` functions should only be availab
 - The `Router` class export must continue to work correctly
 - Both react-router and solid-router packages need the same fix
 - After making changes, rebuild the affected packages with `pnpm nx run @tanstack/react-router:build` and `pnpm nx run @tanstack/solid-router:build`
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

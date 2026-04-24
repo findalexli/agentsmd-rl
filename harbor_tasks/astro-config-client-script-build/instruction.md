@@ -8,44 +8,33 @@ When importing `astro:config/client` inside a `<script>` tag in an Astro compone
 failed to resolve import "virtual:astro:routes" from "virtual:astro:manifest"
 ```
 
-This error occurs because `virtual:astro:manifest` (which provides `astro:config/server`) imports server-only virtual modules (`virtual:astro:routes`, `virtual:astro:pages`) that are not available in client builds. The `astro:config/client` virtual module is trying to import from `virtual:astro:manifest` to get configuration values, which pulls in these unavailable server dependencies.
+### Root Cause
+
+The client handler in `packages/astro/src/manifest/virtual-module.ts` currently imports from `SERIALIZED_MANIFEST_ID` (`virtual:astro:manifest`). Since `virtual:astro:manifest` imports server-only virtual modules (`virtual:astro:routes`, `virtual:astro:pages`) that are unavailable in client builds, the build fails.
+
+The manifest plugin in `packages/astro/src/manifest/serialized.ts` does not restrict itself to server environments, so it serves the module in client builds where the server-only imports are unavailable.
+
+The Vite plugin call in `packages/astro/src/core/create-vite.ts` does not pass required parameters to the manifest plugin.
 
 ## Required Behavior
 
-1. **The `astro:config/client` virtual module must work in client builds without causing the "failed to resolve import 'virtual:astro:routes' from 'virtual:astro:manifest'" error.** The `astro:config/client` module should not import from `virtual:astro:manifest` since that pulls in server-only dependencies.
+1. **`astro:config/client` must not import from `virtual:astro:manifest`.** The client handler in `packages/astro/src/manifest/virtual-module.ts` should generate config values directly without importing `SERIALIZED_MANIFEST_ID`.
 
-2. **The `virtual:astro:manifest` module must be restricted to server-only environments.** The plugin that serves `virtual:astro:manifest` should implement `applyToEnvironment(environment)` and only serve the module in these environments:
-   - `ASTRO_VITE_ENVIRONMENT_NAMES.astro`
-   - `ASTRO_VITE_ENVIRONMENT_NAMES.ssr`
-   - `ASTRO_VITE_ENVIRONMENT_NAMES.prerender`
+2. **`virtual:astro:manifest` must be server-only.** The manifest plugin in `packages/astro/src/manifest/serialized.ts` must restrict itself to server environments so it does not serve in client builds.
 
-3. **The `astro:config/client` virtual module must export these properties**: `base`, `i18n`, `trailingSlash`, `site`, `compressHTML`, `build`, `image`
+3. **Config values must be serializable for client code.** String values must be serialized properly to handle special characters.
 
-4. **Config values must be properly serialized for client code.** String values (`base` and `site`) must be serialized using `JSON.stringify()` in the generated code to handle special characters.
+4. **i18n routing config must match server format.** The i18n routing configuration should use the same format as the server manifest.
 
-5. **i18n configuration must match the serialized manifest format.** The i18n routing configuration should use these utilities from `../core/app/common.js` to ensure the client config matches the format used by the server manifest:
-   - `fromRoutingStrategy`
-   - `toFallbackType`
-   - `toRoutingStrategy`
+5. **`virtualModulePlugin` must accept parameters.** The plugin in `packages/astro/src/manifest/virtual-module.ts` must receive a settings object parameter.
 
-## Implementation Requirements
+6. **The plugin call must pass required arguments.** In `packages/astro/src/core/create-vite.ts`, the `astroVirtualManifestPlugin` call must pass required arguments.
 
-The following specific implementation details must be present:
-
-- `virtualModulePlugin` must accept a `settings` parameter: `export default function virtualModulePlugin({ settings })`
-- `createVite` must pass settings to the plugin: `astroVirtualManifestPlugin({ settings })`
-- The client config handler must pre-compute config values and return them directly
-
-## Files Likely Involved
-
-Based on the error and Astro's architecture, you will likely need to modify:
-- `packages/astro/src/manifest/virtual-module.ts` - Virtual module plugin code
-- `packages/astro/src/manifest/serialized.ts` - Serialized manifest plugin code
-- `packages/astro/src/core/create-vite.ts` - Vite creation code that wires up plugins
+7. **`astro:config/client` must export all required properties.** The client config module must export: `base`, `i18n`, `trailingSlash`, `site`, `compressHTML`, `build`, `image`
 
 ## Verification
 
 To verify the fix:
-1. Create an Astro component with a `<script>` tag that imports from `astro:config/client`
-2. Run `astro build` - it should complete successfully without "failed to resolve import" errors
-3. The client script should have access to the config values at runtime
+1. Build an Astro component that uses `astro:config/client` in a `<script>` tag using `pnpm run build`
+2. The build should complete successfully without "failed to resolve import" errors
+3. The repo unit tests should pass (including `serializeManifest.test.js`)

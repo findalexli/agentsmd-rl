@@ -45,3 +45,10 @@ Should be updated to:
 ```
 pnpm new-test -- --args true my-feature e2e
 ```
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`
+- `eslint (JS/TS linter)`

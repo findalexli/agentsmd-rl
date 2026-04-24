@@ -34,3 +34,9 @@ The test suite verifies the fix by checking for these specific patterns in the m
 - The early return must include the comment `return; // Keep budget error visible`
 - The `handleNonErrorEvent(event)` call must replace direct `removeErrorMessage()` calls in the non-error event handling paths (at least 2 call sites)
 - The nested `isBudgetOrCreditError(event.error)` check combined with `setErrorMessage(I18nKey.STATUS$ERROR_LLM_OUT_OF_CREDITS)` must be removed from `AgentErrorEvent` handling sections
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`

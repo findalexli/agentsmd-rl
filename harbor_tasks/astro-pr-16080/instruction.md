@@ -22,3 +22,9 @@ The `renderPage()` function in the Astro SSR runtime handles rendering of non-As
 `.html` page components are created by vite-plugin-html and have the `astro:html` marker property set to `true` on their factory function. The raw HTML content is returned as a plain JavaScript string from the component factory.
 
 The Astro SSR runtime includes utilities for handling HTML string safety. The expected output for an `.html` page with a script tag should contain `<script` (unescaped), not `&lt;script` (HTML-escaped).
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

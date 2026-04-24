@@ -2,26 +2,19 @@
 
 ## Problem
 
-The `scripts/create-github-release.mjs` file contains a **shell injection vulnerability** in how it retrieves package content from previous git commits.
+The `scripts/create-github-release.mjs` file contains a **shell injection vulnerability**.
 
-The code executes a `git show` command using `execSync` with a template literal that includes the `relPath` variable. The `relPath` value comes from filesystem glob results and is interpolated directly into the shell command string. If a maliciously crafted directory name (e.g., containing shell metacharacters like `;`, `|`, `$()`, etc.) were present in the filesystem, it could execute arbitrary commands during the release process.
+The code uses `execSync` with a template literal to run a `git show` command. The `relPath` variable comes from filesystem glob results and is interpolated directly into the shell command string. If a malicious directory name (containing shell metacharacters like `;`, `|`, `$()`, etc.) exists in the filesystem, it could execute arbitrary commands during the release process.
 
-## Requirements
+## Security Requirement
 
-Your fix must satisfy all of the following:
+Your fix must use a command execution function from Node.js's `child_process` module that passes arguments as an array (rather than a template literal string) to prevent shell injection. User-controlled path data (such as `relPath` from filesystem glob results) must be passed as separate array elements, never interpolated into a shell command string.
 
-1. **Import statement must include `execFileSync`** from `node:child_process` using exactly this format:
-   ```
-   import { execSync, execFileSync } from 'node:child_process'
-   ```
-
-2. **The `git show` command execution must use `execFileSync`** instead of `execSync`. The call must pass the command and its arguments separately:
-   - First argument to `execFileSync`: `'git'`
-   - Second argument: an array where the first element is `'show'`
-
-3. **No shell interpolation with `relPath`** - the `relPath` variable must not appear inside a template literal passed to `execSync`
-
-4. **Maintain existing functionality** - the script must continue to retrieve package.json content from the previous release commit and parse it as JSON
+The script must:
+- Use `execFileSync` imported from `node:child_process` with array-style arguments
+- Continue to retrieve package.json content from the previous release commit
+- Parse that content as JSON
+- Maintain existing functionality
 
 ## Constraints
 
@@ -29,3 +22,10 @@ Your fix must satisfy all of the following:
 - Do NOT modify any other files
 - Only modify `scripts/create-github-release.mjs`
 - The script must remain syntactically valid JavaScript
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`
+- `eslint (JS/TS linter)`

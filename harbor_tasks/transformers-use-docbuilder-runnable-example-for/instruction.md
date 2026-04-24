@@ -35,3 +35,9 @@ The code examples themselves crash due to bugs — incorrect object construction
 - `src/transformers/dependency_versions_table.py` — the dependency version lookup table
 - `CONTRIBUTING.md` — contributor guide (documentation build section around line 390-410)
 - `docs/source/en/testing.md` — testing guide for the project
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

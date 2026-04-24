@@ -28,3 +28,9 @@ Additionally, the quant workspace creator always attempts to create a trtllm wor
 - Use `get_node_count` from `vllm.distributed.parallel_state` to query the number of nodes at runtime
 - Create a function named `_resolve_fi_ar_backend` that implements the backend resolution logic and returns the resolved backend string
 - The quant workspace function must check node count before attempting workspace creation
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

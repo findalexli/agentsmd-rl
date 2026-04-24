@@ -28,3 +28,9 @@ There are several related issues across the metrics pipeline:
 - `slime/ray/rollout.py` — router address retrieval
 - `slime/utils/wandb_utils.py` — W&B metrics forwarding setup
 - `slime/rollout/sglang_rollout.py` — `GenerateState` class
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `black (Python formatter)`

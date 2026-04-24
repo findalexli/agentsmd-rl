@@ -8,31 +8,37 @@ When ClickHouse's ZooKeeper (Keeper) session experiences transient hiccups (conn
 
 The fix must ensure that transient Keeper errors during UDF loading are handled gracefully with retry logic, instead of causing the entire UDF registry to be cleared.
 
+### Specific Implementation Details
+
+The file to modify is: `src/Functions/UserDefined/UserDefinedSQLObjectsZooKeeperStorage.cpp`
+
 ### Behavioral Requirements
 
-1. **Add necessary includes**: The implementation must include headers that provide:
-   - Hardware error detection functionality
-   - Retry control infrastructure
+1. **Add necessary includes**: Add these two includes near the existing Keeper includes:
+   - `#include <Common/ZooKeeper/ZooKeeperCommon.h>` - provides `Coordination::isHardwareError()` function
+   - `#include <Common/ZooKeeper/ZooKeeperRetries.h>` - provides `ZooKeeperRetriesControl` class
 
-2. **Handle Keeper exceptions in object loading**: When loading individual UDF objects:
-   - Catch Keeper exceptions specifically (not just generic exceptions)
-   - Distinguish between hardware errors and other Keeper errors
-   - Re-throw hardware errors so the caller can handle retry logic
-   - Treat non-hardware Keeper errors as missing objects
-   - Log hardware errors with the object name
+2. **Handle Keeper exceptions in object loading** (`tryLoadObject` method): When loading individual UDF objects:
+   - Add a catch block specifically for `const zkutil::KeeperException & e` BEFORE the generic `catch (...)` block
+   - Inside this catch block, check if the error is a hardware error using `Coordination::isHardwareError(e.code)`
+   - If it's a hardware error: log a WARNING message that includes both the object name (via `backQuote(object_name)`) and the exception message (`e.message()`), then re-throw with `throw;`
+   - If it's NOT a hardware error: log the exception and return `nullptr` (treat as missing object)
 
-3. **Implement retry logic in batch refresh**: When refreshing all UDF objects:
-   - Use a retry control mechanism with configurable parameters
-   - Configure maximum retry attempts, initial backoff delay, and maximum backoff delay
-   - Wrap the object loading loop in a retry loop
-   - Clear results inside the retry loop to ensure partial results are discarded on retry
+3. **Implement retry logic in batch refresh** (`refreshObjects` method): When refreshing all UDF objects:
+   - Define three static constexpr UInt64 constants for retry configuration (e.g., `max_retries`, `initial_backoff_ms`, `max_backoff_ms`)
+   - Instantiate a `ZooKeeperRetriesControl` object with a descriptive name (like `"refreshObjects"`), the logger, and a `ZooKeeperRetriesInfo` struct containing the retry parameters
+   - Wrap the object loading loop in a `retryLoop` call that:
+     - Clears the results vector at the start of each retry attempt (using `.clear()`)
+     - Iterates through all object names and loads each one
+     - Lets hardware errors propagate so the retry control can catch and retry them
 
-4. **Add explanatory comments**: Code comments must explain:
-   - That transient Keeper hiccups are handled with retry/backoff
-   - That hardware errors are re-thrown for retry handling
+4. **Add explanatory comments**: Add comments explaining:
+   - That transient Keeper hiccups are handled with retry/backoff instead of aborting the refresh
+   - That hardware errors are re-thrown so the retry control can handle them
+   - That the goal is to avoid reaching `setAllObjects` with a partial set when retries are exhausted
 
 ## Context
 
 The codebase has existing infrastructure for Keeper retries. The `isHardwareError()` function and `ZooKeeperRetriesControl` class are available in the Common/ZooKeeper headers.
 
-The relevant code is located in the ClickHouse source file handling user-defined SQL objects with ZooKeeper storage.
+When hardware errors occur during `tryLoadObject`, they should be re-thrown so the `ZooKeeperRetriesControl` in `refreshObjects` can catch them and retry automatically. If retries are exhausted, the exception propagates to the caller, preventing `setAllObjects` from being called with a partial set of objects.

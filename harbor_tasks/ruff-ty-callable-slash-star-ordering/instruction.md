@@ -26,3 +26,9 @@ Follow the development guidelines from `AGENTS.md`:
 - Keep imports at the top of the file, not locally inside functions or impl blocks (AGENTS.md:76).
 - Avoid `panic!` and `.unwrap()` — prefer encoding constraints in the type system or using proper error handling (AGENTS.md:79).
 - If you must suppress a Clippy lint, prefer `#[expect()]` over `#[allow()]` where possible (AGENTS.md:81).
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `cargo fmt (Rust formatter)`

@@ -48,3 +48,10 @@ cargo-dist supports embedding SHA-256 checksums into its generated installer scr
 - `scripts/patch-dist-manifest-checksums.py` (new)
 - `.github/workflows/release.yml`
 - `.github/workflows/ci.yml`
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`
+- `typos (spell-check)`

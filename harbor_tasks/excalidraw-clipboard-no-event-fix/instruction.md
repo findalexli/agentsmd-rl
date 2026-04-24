@@ -2,39 +2,34 @@
 
 ## Problem
 
-The clipboard copy functionality in Excalidraw silently fails when copying content without a native `ClipboardEvent` object. When `clipboardEvent` is unavailable, the code exits without attempting fallback mechanisms.
+The clipboard copy functionality in Excalidraw silently fails when copying content without a native `ClipboardEvent` object. When `clipboardEvent` is unavailable, the code exits before attempting any fallback mechanisms.
+
+## Symptom
+
+When `copyTextToSystemClipboard` is called without a `ClipboardEvent` argument:
+1. The function returns early without trying `navigator.clipboard.writeText`
+2. No error is thrown, but the clipboard content is not written
+3. The fallback copy method (`copyTextViaExecCommand`) is never reached
+
+This can be verified by calling `copyTextToSystemClipboard({[MIME_TYPES.text]: "hello"}, null)` — the text is not copied to clipboard.
 
 ## Expected Behavior
 
-The `copyTextToSystemClipboard` function in `packages/excalidraw/clipboard.ts` should fall back through these mechanisms when `clipboardEvent` is not available:
+The `copyTextToSystemClipboard` function should:
+1. If `clipboardEvent` is provided and works, return early (success)
+2. If no `clipboardEvent` or it fails, fall back to `navigator.clipboard.writeText`
+3. If `navigator.clipboard.writeText` succeeds, return (success)
+4. If it fails, fall back to `document.execCommand`
 
-1. Try `navigator.clipboard.writeText` with the text/plain entry
-2. If that succeeds, return (do not continue to other copy methods)
-3. If that fails, fall back to `document.execCommand`
+## File
 
-## Required Changes
-
-### Variable declaration
-
-The variable that finds the text/plain entry should use `const`, not `let`. The variable name is `plainTextEntry` and it finds the entry by matching `MIME_TYPES.text`.
-
-### Return statement placement
-
-There is a `return;` statement that should be inside the `if (clipboardEvent)` block (after processing), not outside it. Moving it inside allows the fallback mechanisms to execute when no clipboard event is available.
-
-### After navigator.clipboard.writeText
-
-After a successful `navigator.clipboard.writeText` call, the code should return rather than continuing. The old code set the entry to `undefined`; this should be removed and replaced with a `return;` statement.
+`packages/excalidraw/clipboard.ts` — function `copyTextToSystemClipboard`
 
 ## Verification
 
-Run type checking after making changes:
+After fixing, run:
 ```bash
 yarn test:typecheck
-```
-
-Run all tests:
-```bash
 yarn test:code
 yarn test:other
 yarn vitest run packages/excalidraw/clipboard.test.ts

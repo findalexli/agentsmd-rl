@@ -24,23 +24,32 @@ with fixture reuse and must be removed.
 ## Expected behavior
 
 1. Fixtures that are expensive to create should be scoped to the module level
-   (`scope="module"`), so they are created once per file rather than once per test.
-   The `local_scheduler` fixture must be changed to use `tmp_path_factory` parameter
-   instead of `tmp_path` to be compatible with module scope.
+   (`scope="module"` or `scope="session"`), so they are created once per file
+   rather than once per test. The fixtures to update are:
+   - `local_scheduler` (in `test_controller_integration.py`)
+   - `gateway_controller` (in `test_controller_integration.py`)
+   - `gateway_controller_full_init` (in `test_controller_integration.py`)
+
+   When changing fixture scope to module or session, the function parameters must
+   be compatible with module scope. Specifically:
+   - `local_scheduler` must accept `tmp_path_factory` instead of `tmp_path`
+   - `gateway_controller` and `gateway_controller_full_init` must NOT have
+     `tmp_path` as a parameter (function-scoped fixtures cannot be used with
+     module-scoped fixtures)
 
 2. Each of the three test files should have a module-level `pytestmark` variable
-   assigned to a `pytest.mark.<marker>` expression, where `<marker>` is the identifier
-   registered for this test suite. The marker must be accessible as `pytest.mark.<marker>`
-   at runtime when the assignment is evaluated.
+   assigned to `pytest.mark.sglang`. When the assignment `pytestmark = pytest.mark.sglang`
+   is evaluated at runtime, it must resolve to `pytest.mark.sglang`.
 
 3. Per-class `@pytest.mark.slow` decorators should be removed from all test classes,
    as the module-level marker replaces them.
 
 4. Controller fixture settings need sufficient values to avoid throttling when fixtures
-   are shared across multiple tests:
-   - `gateway_controller` fixture: `consumer_batch_size` argument must be >= 3
-   - `gateway_controller_full_init` fixture: `max_head_offpolicyness` argument must be >= 100
+   are shared across multiple tests. The following parameters must meet minimum values:
+   - `max_head_offpolicyness` must be >= 100 (in both `gateway_controller` and
+     `gateway_controller_full_init`)
+   - `consumer_batch_size` must be >= 3 (in `gateway_controller`)
 
 5. Tests that cannot be shared across module-scoped fixtures due to stateful
    trajectory filtering must be removed from the controller integration tests.
-   Specifically, any test method whose name contains `should_accept_fn` must be removed.
+   Any test method whose name contains the string `should_accept_fn` must be removed.

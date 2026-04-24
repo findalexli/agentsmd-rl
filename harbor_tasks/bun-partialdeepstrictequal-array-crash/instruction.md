@@ -21,22 +21,13 @@ assert.partialDeepStrictEqual(["foo", "bar", "baz"], ["foo", "baz"]);
 
 ## Error Details
 
-The error message specifically mentions `expectedCounts.@set is not a function` (or similar for `@delete`). This occurs when processing array arguments. The crash prevents array comparisons from working at all.
+The error message mentions `expectedCounts.@set is not a function` (or similar for `@delete`). This occurs in the `compareBranch` function when processing array arguments. The crash prevents array comparisons from working at all.
 
-## Affected Code
-
-The implementation lives in `src/js/node/assert.ts` in the `compareBranch` function.
-
-## Expected Behavior
-
-`assert.partialDeepStrictEqual` should work with array inputs the same way it works with object inputs, without throwing `TypeError: expectedCounts.@set is not a function`.
-
-## Constraints (from src/js/CLAUDE.md)
+## Constraints (from src/js/CLAUDE.md and src/js/AGENTS.md)
 
 - Modules under `src/js/` are NOT ES modules — use `require()`, not `import`
 - Use `.$call` and `.$apply`, never `.call` or `.apply`
 - `require()` calls must use string literals only, not dynamic expressions
-- Do not delete existing SafeMap prototype references (SafeMapPrototypeHas, SafeMapPrototypeGet)
-- Do not delete the compareBranch function or its array comparison logic
-- The partialDeepStrictEqual function must still exist
+- Do not delete existing code references that appear to be working
+- Do not delete functions or their core comparison logic
 - The file must pass syntax validation and formatting checks

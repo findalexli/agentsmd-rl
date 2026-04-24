@@ -15,3 +15,9 @@ The entrypoints in `src/prime_rl/entrypoints/` call helper functions from `src/p
 ## Validation
 
 After fixing, running the entrypoints to write config files should produce TOML output with no `"None"` string literals and no fields present for values that were `None` in the original config.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

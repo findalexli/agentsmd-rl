@@ -20,3 +20,9 @@ When an event is cancelled via the `/cancel` endpoint:
 - Any resources held by the generator must be properly released
 - The cancellation should still succeed even if the cleanup code raises an exception
 - After cancellation, the iterator should be removed from active tracking
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

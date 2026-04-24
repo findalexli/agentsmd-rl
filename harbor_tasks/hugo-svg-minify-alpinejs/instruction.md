@@ -17,15 +17,11 @@ The minifier should preserve these attributes unchanged (input should equal outp
 
 ## Technical Context
 
-The underlying minification is done by the `github.com/tdewolff/minify/v2` library. Version `v2.24.11` of this library added support for preserving custom XML namespaces in SVG via a new configuration option that accepts a list of namespace strings to keep.
-
-Two namespace values need to be preserved:
-- `""` (empty string) - for shorthand directives like `:href`, `:cx`, etc.
-- `"x-bind"` - for explicit x-bind directives like `x-bind:href`, `x-bind:r`, etc.
+The underlying minification is done by the `github.com/tdewolff/minify/v2` library. A recent version of this library added support for preserving custom XML namespaces in SVG via a new configuration option. This option allows specifying a list of namespace prefix strings to keep during minification.
 
 The Hugo project uses this library for SVG minification in the `minifiers/` package. You will need to:
-1. Update the `github.com/tdewolff/minify/v2` dependency to version `v2.24.11` or later
-2. Configure the SVG minifier in Hugo to keep both `""` and `"x-bind"` namespaces
+1. Update the `github.com/tdewolff/minify/v2` dependency to a version that includes namespace preservation support
+2. Configure the SVG minifier in Hugo to preserve the namespaces used by Alpine.js directives
 
 ## Verification
 
@@ -36,3 +32,9 @@ After implementing the fix, verify:
 4. `<circle :cx="x">` minifies unchanged (input equals output)
 5. The Hugo project compiles successfully
 6. All existing minifier tests continue to pass
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `gofmt (Go formatter)`

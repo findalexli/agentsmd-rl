@@ -20,10 +20,12 @@ The SLURM templates and entrypoint scripts also need updating to pass the new KV
 
 5. The SLURM Jinja2 templates should use separate `PREFILL_KV_CFG` and `DECODE_KV_CFG` variables, with prefill nodes optionally using `MultiConnector` when KV offloading is enabled.
 
-## Files to Look At
+## Areas to Investigate
 
-- `src/prime_rl/configs/inference.py` -- config classes for inference deployment
-- `src/prime_rl/entrypoints/inference.py` -- SLURM script generation for inference
-- `src/prime_rl/entrypoints/rl.py` -- SLURM script generation for RL training
-- `src/prime_rl/templates/inference.sbatch.j2` -- disaggregated inference SLURM template
-- `src/prime_rl/templates/multi_node_rl.sbatch.j2` -- multi-node RL SLURM template
+The config definitions for inference deployment live in the `src/prime_rl/configs/` directory. SLURM script generation entry points are in `src/prime_rl/entrypoints/`. Jinja2 templates for SLURM jobs are in `src/prime_rl/templates/`.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

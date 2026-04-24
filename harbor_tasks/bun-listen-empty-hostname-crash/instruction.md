@@ -32,15 +32,21 @@ The source file `src/bun.js/api/bun/socket/Handlers.zig` must:
 
 ## What "proper error handling" means
 
-The error should be a descriptive TypeError. When the fix is correct, code like this:
+The error should be a descriptive TypeError with a message containing the substring "Expected a non-empty" followed by the field name (e.g., "Expected a non-empty \"hostname\"" or "Expected a non-empty \"unix\" path"). When the fix is correct, code like this:
 
 ```js
 Bun.listen({ hostname: [], port: 0, socket: { data() {}, open() {}, close() {} } });
 ```
 
-...will throw an exception that can be caught, rather than crashing the process.
+...will throw a TypeError with a message containing "Expected a non-empty \"hostname\"", rather than crashing the process.
 
 ## Files
 
 - `src/bun.js/api/bun/socket/Handlers.zig` — contains the socket configuration parsing code
 - `test/js/bun/net/socket.test.ts` — the existing test file (add your new tests here, keep existing tests intact)
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`

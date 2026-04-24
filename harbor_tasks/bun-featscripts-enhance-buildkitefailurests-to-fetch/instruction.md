@@ -33,3 +33,9 @@ The `scripts/buildkite-failures.ts` script shows BuildKite CI failures for the b
 
 - `scripts/buildkite-failures.ts` — the CI failure analysis script that needs enhancement
 - `CLAUDE.md` — project instructions for developers and AI agents; should document the enhanced script
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`

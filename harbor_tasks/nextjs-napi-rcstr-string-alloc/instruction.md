@@ -21,3 +21,10 @@ The struct field types should use `RcStr` instead of `String` where the source d
 - Check what types the `From<...>` impls convert from — if the source field is `RcStr`, the struct field should match.
 - The `turbo_rcstr::RcStr` import may need to be added in files that don't already have it.
 - Make sure function signatures that construct these structs also accept `RcStr` where they previously took `String`.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `cargo clippy (Rust linter)`
+- `cargo fmt (Rust formatter)`

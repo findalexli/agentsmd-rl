@@ -13,3 +13,9 @@ This causes SQLGlot to fail parsing the SQL because it receives unparsed Jinja s
 ## Details
 
 The `adhoc_column_to_sqla` method accepts a `template_processor` parameter for rendering Jinja templates before SQL processing. Investigate the query generation code paths — specifically how adhoc column filters are converted to SQL expressions — to find where the template processor is not being passed through, causing Jinja templates to remain unrendered in that code path.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

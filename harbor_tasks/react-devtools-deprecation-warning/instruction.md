@@ -51,3 +51,9 @@ The `ReactBuildType` type union must be exported from `packages/react-devtools-s
 - `packages/react-devtools-extensions/src/background/setExtensionIconAndPopup.js`
 - `packages/react-devtools-shared/src/backend/types.js`
 - `packages/react-devtools-shared/src/hook.js`
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

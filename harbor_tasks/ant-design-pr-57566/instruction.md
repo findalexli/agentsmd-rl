@@ -24,3 +24,9 @@ Specifically, the implementation must ensure that:
 4. The ellipsis merging logic accounts for whether native measurement is required when determining if ellipsis is active
 5. The IntersectionObserver setup properly reflects whether native ellipsis measurement is needed
 6. The IntersectionObserver dependency array properly reflects the conditions under which native measurement is required
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

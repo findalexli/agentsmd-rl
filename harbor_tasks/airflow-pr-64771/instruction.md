@@ -17,3 +17,10 @@ The dropdown always shows all available versions regardless of whether a DagRun 
 ## Relevant Files
 
 - `airflow-core/src/airflow/ui/src/components/DagVersionSelect.tsx` - The component that needs to be fixed
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`
+- `eslint (JS/TS linter)`

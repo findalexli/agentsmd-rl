@@ -61,3 +61,9 @@ After the fix, the following actions must be accessible with their respective sc
 - `bulk` - for bulk updates
 
 Note that setting scope mappings overrides any defaults, so all actions requiring access must be explicitly included.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

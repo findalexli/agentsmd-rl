@@ -33,3 +33,9 @@ The example currently creates `VLLMCompletionsModelHandler` and `VLLMChatModelHa
 
 - Other vLLM examples (e.g. `vllm_gemma_batch.py`) already pass server kwargs via `vllm_server_kwargs` — follow the same pattern
 - vLLM server CLI flags: `--max-num-seqs` and `--gpu-memory-utilization` (see [vLLM docs](https://docs.vllm.ai/en/latest/serving/openai_compatible_server.html))
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `pylint (Python linter)`

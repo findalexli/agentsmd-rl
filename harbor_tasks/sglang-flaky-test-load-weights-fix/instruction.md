@@ -46,3 +46,9 @@ The test should be more deterministic. Making the configuration stable (by hardc
 - This is a GPU-dependent integration test.
 - The fix should stabilize the configuration that causes the hang by making `remote_instance_weight_loader_start_seed_via_transfer_engine` unconditional (hardcoded to `False`) rather than dependent on random backend selection.
 - The FIXME comment must exactly match: `# FIXME: refactor this test to have less random behavior`
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `black (Python formatter)`

@@ -39,3 +39,9 @@ Users should be able to wrap `useBlocker` in custom hooks and export them withou
 - The issue is related to how TypeScript handles type declarations that reference internal types
 - The fix should be consistent across all router packages (React, Solid, Vue)
 - Documentation in `docs/router/api/router/useBlockerHook.md` should reflect any API changes
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

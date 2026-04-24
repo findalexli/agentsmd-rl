@@ -29,3 +29,10 @@ launching groups asynchronously) would silently break routing without any clear 
 Each engine group must always be connected to the correct router for its model, regardless
 of how many models are configured or in what order groups are started. The dependency on
 the router coordinates should not rely on mutable closure state.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`
+- `black (Python formatter)`

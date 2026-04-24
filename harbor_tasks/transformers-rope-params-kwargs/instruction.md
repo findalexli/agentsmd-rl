@@ -16,3 +16,9 @@ When a `PreTrainedConfig` subclass receives `rope_scaling` and `rope_theta` as c
 3. **Backward compatibility**: Configs that already define `rope_parameters` as a class attribute must continue to work unchanged.
 
 4. **Non-stub requirement**: The fix must not be a minimal stub. The code implementing the fix must contain substantive logic — at least 5 non-trivial statements, where "non-trivial" means the statement is not a `pass` statement and is not a bare expression statement (such as a standalone docstring).
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

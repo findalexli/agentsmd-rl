@@ -14,7 +14,7 @@ The root cause is a race condition in how body chunks are delivered:
 
 ## Expected Behavior
 
-The race condition in `FetchTasklet.zig` should be prevented. When `onProgressUpdate` runs and the buffer has been drained by the streaming callback while the response indicates more data is coming, the code should skip processing that empty chunk and return early, rather than calling `onBodyReceived()` with empty data. This prevents the zero-length chunk from reaching the stream's internal state and causing the stall.
+The race condition in `FetchTasklet.zig` should be prevented. When an empty non-terminal chunk arrives while the buffer has been drained by the streaming callback, processing should not continue and the pipeline should not stall.
 
 The terminal branch (when `has_more` is false) should NOT be affected - a zero-length final chunk is valid and should be processed normally.
 
@@ -23,3 +23,9 @@ When fixing this, include a comment explaining the race interaction between the 
 ## File
 
 - `src/bun.js/webcore/fetch/FetchTasklet.zig` - Contains the streaming body handling logic
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`

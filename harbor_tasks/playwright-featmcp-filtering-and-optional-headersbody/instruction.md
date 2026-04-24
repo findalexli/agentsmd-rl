@@ -21,11 +21,25 @@ The `browser_network_requests` tool should accept these new optional parameters:
 
 The corresponding CLI `network` command must also expose these as `--filter`, `--request-headers`, and `--request-body` flags, mapping them to the appropriate MCP tool parameters.
 
-When headers or body are included, render them under the request line (e.g. "Request headers:" / "Request body:" sections).
+When headers or body are included, render them under the request line with these exact labels:
+- `Request headers:` — followed by header key-value pairs (one per line, indented with 4 spaces like `    header-name: value`)
+- `Request body:` — followed by the raw POST/PUT data as a single line
 
 ## Documentation Update
 
-The project does not yet have a `.github/copilot-instructions.md` file. As part of this change, create one with guidelines for how automated PR reviewers should behave — focusing reviews on semantically meaningful issues (bugs, incorrect logic, security) rather than style, formatting, or naming nitpicks. Keep it concise.
+The project does not yet have a `.github/copilot-instructions.md` file. As part of this change, create one with exactly these guidelines for automated PR reviewers:
+
+```
+## PR Review Guidelines
+
+When reviewing pull requests:
+
+- Only comment on semantically meaningful issues: bugs, incorrect logic, security problems, or API contract violations.
+- Skip style, formatting, naming, and whitespace observations unless they cause functional problems.
+- Keep each comment short — one or two sentences maximum.
+- Do not write long descriptions or summaries of what the code does.
+- Do not suggest refactors or improvements unrelated to the PR's stated goal.
+```
 
 ## Files to Look At
 

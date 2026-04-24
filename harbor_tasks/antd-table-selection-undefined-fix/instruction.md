@@ -9,13 +9,13 @@ The Ant Design Table component crashes with a runtime error when:
 
 The crash occurs because `mergedSelectedKeys` becomes `undefined` and subsequent code tries to iterate over it using `forEach` or pass it to functions expecting an array.
 
+The file to fix is `components/table/hooks/useSelection.tsx`.
+
 ## Expected Behavior
 
-The Table must not crash when `selectedRowKeys` transitions from `[]` to `undefined` while `preserveSelectedRowKeys` is enabled. The component should handle this transition gracefully.
+The Table must not crash when `selectedRowKeys` transitions from `[]` to `undefined` while `preserveSelectedRowKeys` is enabled. The component should handle this transition gracefully, treating `undefined` as an empty array where necessary.
 
-## What to Fix
-
-The fix must ensure the selection state is always treated as an array even when the underlying value is `undefined`. Specifically, introduce a local constant (e.g., `mergedSelectedKeyList`) that holds `mergedSelectedKeys ?? EMPTY_LIST` and use it in place of raw `mergedSelectedKeys` throughout the hook. The regression tests that validate this fix are:
+The regression tests that validate this fix are:
 - "works with preserveSelectedRowKeys after receive selectedRowKeys from [] to undefined"
 - "works with selectionType radio receive selectedRowKeys from [] to undefined"
 - "cache with preserveSelectedRowKeys" (Table rowSelection test)

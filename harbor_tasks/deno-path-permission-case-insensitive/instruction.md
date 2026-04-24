@@ -10,14 +10,30 @@ This means a deny rule like `--deny-read=C:\Users\Admin\Secret` can be bypassed 
 
 On Windows, path permission checks should be case-insensitive. A deny rule for `C:\Users\Admin\Secret` must also block access via `c:\users\admin\secret` or any other case variant. On non-Windows platforms, behavior should remain unchanged (case-sensitive).
 
-The permission system lives in `runtime/permissions/lib.rs`.
+## Location
 
-## Requirements
+The permission system lives in `runtime/permissions/lib.rs` in the `deno_runtime` crate. This is where path comparison logic is implemented.
 
-The fix requires the following structural elements in `runtime/permissions/lib.rs`:
+## Required Code Changes
 
-1. **A helper function** that produces a canonical path for comparison, accepting a `&Path` and returning a `PathBuf`. On Windows it normalizes case (using ASCII case folding); on other platforms it returns the path unchanged.
+The fix requires adding a case-insensitive path representation to the path descriptor types:
 
-2. **Both `PathQueryDescriptor` and `PathDescriptor` structs** must store this canonical path alongside the original path, in a field of type `PathBuf`.
+- A `cmp_path: PathBuf` field added to both `PathDescriptor` and `PathQueryDescriptor`. On Windows, this stores a lowercased copy of the path; on other platforms it is identical to the original path.
+- A `comparison_path(path: &Path) -> PathBuf` helper function that returns the lowercased path on Windows and a direct clone on other platforms.
+- The `cmp_path` field is used in `PartialEq`, `Hash`, `starts_with`, and the ordering comparisons, replacing direct use of the `path` field.
 
-3. **All comparison operations** — equality (`PartialEq`), hashing (`Hash`), prefix checking (`starts_with`), and ordering (`cmp_allow_allow`, `cmp_allow_deny`) — must use the canonical path field, not the raw path field, when performing comparisons.
+## Note on Testing
+
+The bug fix only changes behavior on Windows. Tests run on Linux, so correctness is verified via:
+- The Rust code compiles cleanly
+- The crate's unit test suite passes
+- Code uses the case-insensitive path representation for all comparisons (enforced by the test suite)
+
+On Linux/macOS, the `cmp_path` field is identical to the original path (the case-fold only happens on Windows). This structural change is verified through compilation and the existing test suite.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `cargo clippy (Rust linter)`
+- `cargo fmt (Rust formatter)`

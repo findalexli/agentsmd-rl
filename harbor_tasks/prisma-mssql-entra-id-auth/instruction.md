@@ -75,3 +75,9 @@ When authentication is parsed, the result must conform to this schema:
 3. Validate that required options are present for each authentication type; throw descriptive errors otherwise
 4. Detect and reject duplicate connection string parameters with a descriptive error
 5. Update the README to document Entra ID authentication options and connection string usage (include `sqlserver://` example and `PrismaMssql` constructor example)
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`

@@ -46,3 +46,9 @@ This is a Python backend fix in a Flask/SQLAlchemy application. The codebase use
 - MyPy for type checking
 
 Refer to `CLAUDE.md` and `AGENTS.md` in the repository root for additional coding standards.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

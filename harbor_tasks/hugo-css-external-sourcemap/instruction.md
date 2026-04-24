@@ -43,3 +43,9 @@ The repository has existing tests that validate this behavior:
 - Run `go test -v ./internal/js/esbuild/...` to test source map functionality
 
 The tests should pass after your fix and fail without it.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `gofmt (Go formatter)`

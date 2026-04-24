@@ -28,3 +28,10 @@ The project's `CLAUDE.md` currently contains a large inline section for Linear i
 5. Keep the section heading in `CLAUDE.md` but replace the full rules with a single line pointing to the external file
 
 Follow the pattern of other rule files in `.cursor/rules/` (if they exist) for the frontmatter format.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`
+- `eslint (JS/TS linter)`

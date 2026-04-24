@@ -36,3 +36,10 @@ The fix must conform to the following conventions used in this codebase:
 - Attach the handler to the Box element: `onWheel={handleWheel}`
 - Name the boundary detection variables `isAtTop`, `isAtBottom`, and `canScrollHorizontally`
 - The condition checking horizontal scroll eligibility must include `ctx.scrollbarXEnabled`, `ctx.viewport`, and `event.shiftKey`
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`
+- `eslint (JS/TS linter)`

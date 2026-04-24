@@ -2,36 +2,40 @@
 
 ## Problem
 
-Several test files in the Hugo repository are using deprecated tokens and APIs that cause test failures or deprecation warnings:
+Several test files in the Hugo repository are using deprecated tokens and APIs. When running the test suite, these deprecated usages cause deprecation errors and test failures.
 
-1. **Permalink tokens**: The `:filename` token in permalink configurations has been deprecated and replaced with `:contentbasename`. Similarly, `:slugorfilename` has been replaced with `:slugorcontentbasename`.
+You can observe these failures by running the Go tests - they will emit deprecation warnings or fail outright when encountering the deprecated patterns.
 
-2. **Data access**: The `.Site.Data` template function has been deprecated and replaced with `hugo.Data`.
+## Affected Files and Tests
 
-These deprecated tokens cause the Go tests to fail with deprecation errors.
+The following test files contain deprecated tokens that need to be identified and updated:
 
-## Affected Files
+- `hugolib/hugo_sites_multihost_test.go` - permalink configuration
+- `hugolib/page_test.go` - permalink configuration
+- `hugolib/pagebundler_test.go` - permalink configuration
+- `hugolib/hugo_modules_test.go` - template data access
+- `resources/page/permalinks_integration_test.go` - permalink configuration
 
-The following test files need to be updated:
+## Verification Requirements
 
-- `hugolib/hugo_sites_multihost_test.go` - Uses `:filename` in permalink config
-- `hugolib/page_test.go` - Uses `:filename` in permalink config
-- `hugolib/pagebundler_test.go` - Uses `:slugorfilename` in permalink config
-- `hugolib/hugo_modules_test.go` - Uses `.Site.Data` in template
-- `resources/page/permalinks_integration_test.go` - Uses `:filename` in multiple places
+After fixing, the following must be true:
 
-## Your Task
+### Permalink Tokens
+- Files must use `:contentbasename` instead of the deprecated `:filename` token
+- Files must use `:slugorcontentbasename` instead of the deprecated `:slugorfilename` token
+- The permalink configuration maps should reflect these updated tokens
 
-Update all deprecated tokens in these test files to use their modern equivalents:
-- Replace `:filename` with `:contentbasename`
-- Replace `:slugorfilename` with `:slugorcontentbasename`
-- Replace `.Site.Data` with `hugo.Data`
+### Template Data Access
+- Templates must use `hugo.Data` instead of the deprecated `.Site.Data` pattern
 
-You may also need to update expected output paths in test assertions that depend on these permalink configurations.
+### Expected File Paths
+Some tests verify specific URL paths are generated. The correct URL paths that should be produced include:
+- `public/sectionwithfilefilename/withfilefilename/index.html`
+- `public/sectionnofilefilename/nofilefilename/index.html`
 
 ## How to Test
 
-After making changes, run the affected Go tests:
+After making changes, verify the deprecated patterns have been removed by running the affected Go tests:
 
 ```bash
 cd /workspace/hugo
@@ -52,11 +56,17 @@ go test -run TestMount ./hugolib/...
 go test -run TestPagePathDisablePathToLower ./hugolib/...
 ```
 
-All tests should pass without deprecation errors.
+Tests should pass without deprecation errors.
 
 ## Hints
 
-- Search for the deprecated tokens (`:filename`, `:slugorfilename`, `.Site.Data`) to find all occurrences
-- Look for expected file paths in test assertions that might need updating when permalink tokens change
-- The Hugo project uses `qt` matchers for test assertions - maintain this style if you need to modify assertions
+- Search for deprecated tokens in the affected files to understand what needs changing
+- The deprecated tokens in these test files are related to filename handling and site data access
+- Look for expected file paths in test assertions that may need updating when permalink configurations change
 - Run `./check.sh ./path/to/package/...` when iterating on changes
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `gofmt (Go formatter)`

@@ -19,3 +19,9 @@ The server should not log a warning for normal chunk batching during streaming. 
 ## Relevant code
 
 - `python/sglang/srt/managers/tokenizer_manager.py` — look at the `_wait_one_response` async method, specifically the section that drains `state.out_list` for streaming requests.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `black (Python formatter)`

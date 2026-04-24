@@ -16,22 +16,22 @@ The plugin currently hardcodes references to `rollupOptions` in several places. 
 The plugin must work with both Vite 7.x and Vite 8.x. Implement runtime bundler detection and configuration key selection:
 
 ### Detection Logic
-- Detect whether Rolldown is in use by checking the vite module
+- Detect whether Rolldown is in use by checking the vite module for a Rolldown-specific property
 
 ### Configuration Keys
 - The implementation must handle both `rolldownOptions` (Vite 8) and `rollupOptions` (Vite 7) keys
 - When reading configuration, check for `rolldownOptions` first, then fall back to `rollupOptions`
 
-### Utility Functions
-Create utility functions in a shared utilities module to centralize the bundler compatibility logic:
-- A function that detects if Rolldown is the active bundler
-- A function that returns the correct configuration key name based on the detected bundler
-- A function that reads bundler options from a build config using the appropriate key
+### Utility Module
+Create a shared utilities module at `packages/start-plugin-core/src/utils.ts` that centralizes the bundler compatibility logic:
+- Bundler detection: determine at runtime whether the active bundler is Rolldown or Rollup (detect by checking for `rolldownVersion` property in the vite module)
+- Key selection: provide the correct configuration key based on detected bundler — either `rolldownOptions` (Vite 8) or `rollupOptions` (Vite 7)
+- Options reading: export a function that reads bundler options from a build config using the appropriate key
 
-### Integration Requirements
-- Use computed property access for dynamic key selection instead of hardcoded `rollupOptions:` in build configuration objects
-- Remove all hardcoded `rollupOptions:` references in build config sections
-- Update the preview server plugin to use the utility function for reading server input
+### File Paths and Integration Points
+- The main plugin at `packages/start-plugin-core/src/plugin.ts` must import from `./utils`
+- The preview server plugin at `packages/start-plugin-core/src/preview-server-plugin/plugin.ts` must import from `../utils`
+- Both plugins must use the utility module's option reader (not direct property access) to read `build.rolldownOptions.input` or `build.rollupOptions.input`
 
 ## Validation
 

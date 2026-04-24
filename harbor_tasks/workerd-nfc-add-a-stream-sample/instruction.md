@@ -53,3 +53,9 @@ The module must export the following six functions using `export function` decla
 
 - `samples/eventsource/` — a similar sample with README, config.capnp, and worker.js for reference on structure
 - `CLAUDE.md` — project guidance mentioning sample configurations in `samples/` directory
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`

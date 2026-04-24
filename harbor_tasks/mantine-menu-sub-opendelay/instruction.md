@@ -18,3 +18,9 @@ After implementation, the `Menu.Sub` component source file must contain all of t
 - The Menu component source is located under `packages/@mantine/core/src/components/Menu/`
 - Follow existing code patterns and style conventions in the codebase
 - The implementation must pass TypeScript type checking and ESLint
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`

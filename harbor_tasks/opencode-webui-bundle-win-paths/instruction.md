@@ -23,3 +23,9 @@ The `createEmbeddedWebUIBundle` function must produce output that satisfies all 
 ## Coding Style Requirements
 
 The project has an `AGENTS.md` file at the repo root with coding style conventions. Your fix must comply with the rules listed in AGENTS.md for lines 70, 17, 13, 12, 84, and 15 (rules cover: const-only declarations, no imperative loops, no `any` type, no try/catch, no `else` statements, and using Bun.Glob for file scanning).
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`

@@ -53,3 +53,9 @@ When Pillow **is** installed, `PILImageResampling` must be accessible as an attr
 ## File Content
 
 The file must retain substantial content (more than 8000 characters), including the `class BaseVideoProcessor` definition, `def preprocess`, `def _preprocess`, `def sample_frames`, and `BASE_VIDEO_PROCESSOR_DOCSTRING`.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

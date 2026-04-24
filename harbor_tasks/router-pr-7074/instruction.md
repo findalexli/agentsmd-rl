@@ -60,3 +60,9 @@ pnpm nx run @tanstack/router-plugin:test:unit
 ```
 
 All tests should pass, including any tests related to HMR code generation.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

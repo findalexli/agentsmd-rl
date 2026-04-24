@@ -45,3 +45,9 @@ Your changes should:
 2. Remove all use of `as any` for type casting in the affected code
 3. Remove the `@ts-ignore` comment
 4. Maintain the existing runtime behavior of the component
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

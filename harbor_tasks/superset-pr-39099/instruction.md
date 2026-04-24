@@ -33,3 +33,9 @@ The `drop_fks_for_table()` function should also be refactored to use this same h
 ## Files to Examine
 
 - `superset/migrations/shared/utils.py` - Contains the migration utility functions
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

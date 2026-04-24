@@ -47,3 +47,9 @@ Create a script that:
 ## Files to Modify
 
 Create the file `scripts/benchmarks/common/upsert-pr-comment.mjs` with the complete implementation.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`

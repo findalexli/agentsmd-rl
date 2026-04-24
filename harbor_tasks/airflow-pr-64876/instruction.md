@@ -34,3 +34,9 @@ Both UPDATE statements (`UPDATE log SET event` and `UPDATE dag SET is_stale`) mu
 ## Expected Behavior
 
 After the fix, the migration should complete successfully on SQLite without FOREIGN KEY constraint errors, even when existing DAG runs and task instances reference the `dag` table. The data updates should be applied correctly before any schema alterations that require the columns to be non-NULL.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

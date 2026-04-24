@@ -37,3 +37,9 @@ The DNS resolver implementation is in `src/bun.js/api/bun/dns.zig`, specifically
 ## Discovery
 
 To find valid methods for checking object types in Bun's Zig codebase, search under `src/bun.js/` for `fn isXxx` patterns that return `bool`. Methods that return `true` only for objects (not strings, numbers, or other primitives) are suitable.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`

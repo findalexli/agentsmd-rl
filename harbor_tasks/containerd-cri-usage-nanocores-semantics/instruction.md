@@ -27,7 +27,7 @@ The implementation must satisfy all of the following:
 
 4. **Error paths**: All error return paths must use `return nil, fmt.Errorf(...)` rather than `return 0, fmt.Errorf(...)`.
 
-5. **Test helper function**: A helper function `uint64Ptr` with signature `func uint64Ptr(v uint64) *uint64` must be available in the test file to construct pointer values for test expectations.
+5. **Test helper function**: The test file needs a helper function to construct `*uint64` pointer values for test expectations (e.g., a function like `func uint64Ptr(v uint64) *uint64 { return &v }` or equivalent).
 
 6. **Test expectations**: The test `TestContainerMetricsCPUNanoCoreUsage` must expect `nil` for `expectedNanoCoreUsageFirst` when there is no previous data to compute a rate, not `0`.
 
@@ -46,3 +46,9 @@ After the fix:
 - `go test -run TestContainerMetricsCPUNanoCoreUsage ./internal/cri/server/...` should pass
 - `go vet ./internal/cri/server/...` should pass
 - The CRI server core unit tests should pass
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `gofmt (Go formatter)`

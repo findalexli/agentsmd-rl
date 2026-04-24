@@ -34,3 +34,9 @@ Per the project's CLAUDE.md rules ("When creating or moving files, update the re
 - `packages/dashboard/src/grid.tsx` — React component that renders the session grid and handles workspace group ordering
 - `packages/playwright-core/src/tools/dashboard/dashboardApp.ts` — Backend HTTP handler for the dashboard API, including `/api/sessions/list`
 - `packages/playwright-core/src/tools/dashboard/DEPS.list` — Import boundary declarations for the dashboard module
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

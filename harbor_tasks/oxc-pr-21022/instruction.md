@@ -2,46 +2,50 @@
 
 ## Problem
 
-The oxc project's JavaScript deserializers use `TextDecoder` for UTF-8 string decoding from raw buffers. This is slower than `Buffer.prototype.utf8Slice`, which benchmarks show is ~5% faster.
+The oxc project's JavaScript deserializers use TextDecoder for UTF-8 string decoding from raw buffers. Benchmarks show Buffer.prototype methods are faster for this use case. The current implementation creates a TextDecoder instance and uses it for decode operations.
 
 ## Goal
 
-Replace `TextDecoder`-based UTF-8 decoding with `Buffer.prototype.utf8Slice` across the codebase.
+Replace TextDecoder-based UTF-8 decoding with Buffer.prototype methods across the codebase.
 
 ## Files to Modify
 
 1. **Rust code generator**: `tasks/ast_tools/src/generators/raw_transfer.rs`
-2. **Generated JS files** (produced by the Rust generator):
-   - `napi/parser/src-js/generated/deserialize/js.js`
-   - `napi/parser/src-js/generated/deserialize/js_parent.js`
-   - `napi/parser/src-js/generated/deserialize/js_range.js`
-   - `napi/parser/src-js/generated/deserialize/js_range_parent.js`
-   - `napi/parser/src-js/generated/deserialize/ts.js`
-   - `napi/parser/src-js/generated/deserialize/ts_parent.js`
-   - `napi/parser/src-js/generated/deserialize/ts_range.js`
-   - `napi/parser/src-js/generated/deserialize/ts_range_parent.js`
+   - This generates the JS deserializer files
+2. **Generated JS files**: The deserializer files in:
+   - `napi/parser/src-js/generated/deserialize/` (multiple files)
    - `apps/oxlint/src-js/generated/deserialize.js`
 3. **Direct implementation**: `apps/oxlint/src-js/plugins/source_code.ts`
 
-## Required Patterns
+## Required Changes
 
-After the fix, files must contain:
+### Rust Code Generator (`raw_transfer.rs`)
 
-- **Rust generator**: Must use `utf8Slice, latin1Slice` destructured from `Buffer.prototype`; must use `utf8Slice.call(uint8, pos, end)` for string decoding; must not have `decodeStr` or `textDecoder` in the string deserializer body
-- **Generated JS files**: Must contain `{ utf8Slice, latin1Slice } = Buffer.prototype`; must use `utf8Slice.call(uint8, pos, end)` for UTF-8 decoding; must not contain `new TextDecoder`, `decodeStr(`, or `textDecoder`
-- **source_code.ts**: Must destructure `{ utf8Slice } = Buffer.prototype`; must use `utf8Slice.call(buffer, sourceStartPos, sourceStartPos + sourceByteLen)`; must not use `new TextDecoder` or `textDecoder`
-- **Comments** in all files should reference `utf8Slice`, not `TextDecoder`
+The string deserializer section currently uses TextDecoder for UTF-8 decoding. This should be updated to use Buffer.prototype methods available in Node.js instead.
+
+### Generated JS Files
+
+The generated deserializers currently use TextDecoder patterns for string decoding. After the fix, they should use Buffer.prototype methods for UTF-8 string decoding instead.
+
+### source_code.ts
+
+The source text initialization currently uses TextDecoder. After the fix, it should use Buffer.prototype methods.
 
 ## Verification
 
 After changes:
-1. Rust generator compiles: `cargo check -p oxc_ast_tools`
-2. Generated files contain the required patterns above
-3. No `TextDecoder` or `decodeStr` remains in the string deserialization code
+1. Rust compiles: `cargo check -p oxc_ast_tools`
+2. Generated files do not contain `new TextDecoder`, `decodeStr`, or `textDecoder` in string deserialization code
+3. Run `cargo test -p oxc_ast_tools` to verify the generator works
 
 ## Notes
 
-- The `utf8Slice` method is available on `Buffer.prototype` in Node.js
+- `utf8Slice` and `latin1Slice` are built-in Buffer methods available in Node.js
 - The change produces functionally equivalent output but faster
-- The Rust generator (`raw_transfer.rs`) is the source of truth; the generated files are derived from it
-- You may regenerate the JS files using `cargo run -p oxc_ast_tools` after modifying the Rust generator
+- The Rust generator (`raw_transfer.rs`) is the source of truth; run `cargo run -p oxc_ast_tools` to regenerate JS files
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `cargo fmt (Rust formatter)`

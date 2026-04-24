@@ -52,3 +52,9 @@ Multiple readers obtained from the same source should:
 1. Each provide access to the complete original content
 2. Not share position state between them
 3. Be fully independent of each other
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `gofmt (Go formatter)`

@@ -41,7 +41,7 @@ The `metrics.ts` module must define two TypeScript interfaces:
 
 ### Instrumented Handlers
 
-In `McpService`, both `tools/list` and `tools/call` handlers must record operation duration using the `MetricsServiceHistogram.record()` method. The timing must use `performance.now()` from `node:perf_hooks` to capture high-resolution wall-clock time, stored in a variable that captures the start time before the operation begins. The duration must be computed as the difference between the current time and the start time, divided by 1000 to convert to seconds, and recorded in a `finally` block to ensure it fires even on error.
+In `McpService`, both `tools/list` and `tools/call` handlers must record operation duration using the `MetricsServiceHistogram.record()` method. Use high-resolution timing (e.g., `performance.now()`) captured before the operation begins. Record the duration in a `finally` block to ensure it fires even on error, converted to seconds.
 
 For the `tools/call` handler, the `error.type` attribute must be determined as follows:
 - When an exception is thrown, use the error's `name` property
@@ -49,7 +49,7 @@ For the `tools/call` handler, the `error.type` attribute must be determined as f
 
 The operation duration histogram is created via `metrics.createHistogram<McpServerOperationAttributes>()`, passing `'mcp.server.operation.duration'` as the metric name and an object with `advice: { explicitBucketBoundaries: bucketBoundaries }`.
 
-In the streamable router, session duration is measured using `performance.now()` in the same manner as the operation handlers. The session duration histogram is created via `metrics.createHistogram<McpServerSessionAttributes>()`, passing `'mcp.server.session.duration'` as the metric name. Session attributes must include `'mcp.protocol.version'` (from `LATEST_PROTOCOL_VERSION` in `@modelcontextprotocol/sdk/types.js`) and `'network.transport'` set to `'tcp'`.
+In the streamable router, session duration is measured from request start to connection close/error. The session duration histogram is created via `metrics.createHistogram<McpServerSessionAttributes>()`, passing `'mcp.server.session.duration'` as the metric name. Session attributes must include `'mcp.protocol.version'` (from `LATEST_PROTOCOL_VERSION` in `@modelcontextprotocol/sdk/types.js`) and `'network.transport'` set to `'tcp'`.
 
 ### Metrics Service Integration
 

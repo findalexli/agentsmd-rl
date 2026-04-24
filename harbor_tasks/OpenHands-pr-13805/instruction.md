@@ -2,48 +2,66 @@
 
 ## Problem
 
-The Jira integration's `create_or_update_conversation` function in `enterprise/integrations/jira/jira_view.py` always creates conversations in the user's personal workspace. When a repository belongs to a Git organization that has been claimed by an organization (and the requesting user is a member), the conversation should be routed to that organization's workspace instead.
+The Jira integration creates conversations for issues, but currently all conversations are created in the user's personal workspace regardless of repository ownership. This causes problems when a repository belongs to a Git organization that has been claimed by an organization in the system - the conversation should be created in that organization's workspace instead.
 
-## Requirements for jira_view.py
+When a repository belongs to a Git organization that has been claimed by an organization, and the requesting user is a member of that organization, the Jira resolver should route the conversation to that organization's workspace. If no organization has claimed the git organization, the conversation should fall back to the user's personal workspace.
 
-The file `enterprise/integrations/jira/jira_view.py` must contain the following imports and logic in its `create_or_update_conversation` function:
+## Requirements
 
-### Required Imports
+### Functional Requirements
 
-The file must include these imports:
-- `resolve_org_for_repo` from `integrations.resolver_org_router`
-- `SaasConversationStore` from `storage.saas_conversation_store`
-- `ConversationMetadata` from the `conversation_metadata` module
-- `start_conversation` from the `conversation_service` module
-- `uuid4` from the `uuid` module
+1. **Organization Resolution**: The system must determine if a repository belongs to a Git organization that has been claimed by an organization in the system. This requires calling the organization resolution function with the git provider, repository name, and user ID.
 
-The file must **not** import `create_new_conversation`.
+2. **Membership Check**: The requesting user must be a member of the claimed organization for the routing to occur.
 
-### Routing Logic
+3. **Routing Behavior**:
+   - When repository belongs to a claimed Git organization AND user is a member → route to organization's workspace
+   - When no organization has claimed the Git organization → fall back to personal workspace
+   - When user is not a member of claimed organization → fall back to personal workspace
 
-The `create_or_update_conversation` function must:
-- Call `resolve_org_for_repo` to determine the target organization for a given repository
-- Generate the conversation ID using `uuid4().hex`
-- Create a `ConversationMetadata` instance that includes a `git_provider` keyword argument
-- Obtain a conversation store via `SaasConversationStore.get_resolver_instance`
-- Call `start_conversation` to create the conversation
+4. **Conversation Metadata**: The conversation metadata must include the git provider information (e.g., 'github', 'gitlab') so the system knows which provider was used to resolve the repository. The metadata must include a `git_provider` field.
 
-The file must **not** call `create_new_conversation` anywhere.
+5. **Conversation ID Generation**: Conversation IDs must be generated as UUID4 hex strings (32-character hexadecimal format), using `uuid4().hex`.
 
-### Routing Behavior
+6. **API Transition**: The implementation must use the `start_conversation` function from the conversation service API (not `create_new_conversation`).
 
-- When the repository belongs to a Git organization that has been claimed by an organization, and the requesting user is a member of that organization, the conversation should be routed to the claimed organization's workspace
-- Otherwise, the conversation should be created in the user's personal workspace
+### Implementation Details
 
-## Test Requirements
+The following imports and function calls are required in `jira_view.py`:
+
+- Import `resolve_org_for_repo` from `integrations.resolver_org_router`
+- Import `SaasConversationStore` from `storage.saas_conversation_store`
+- Import `ConversationMetadata` from `openhands.storage.data_models.conversation_metadata`
+- Import `uuid4` from `uuid` module
+- Import `start_conversation` from `openhands.server.services.conversation_service` (replacing any `create_new_conversation` import)
+- Call `resolve_org_for_repo` with `provider`, `full_repo_name`, and `keycloak_user_id` parameters
+- Call `SaasConversationStore.get_resolver_instance()` with configuration, user ID, and resolved org ID
+- Create a `ConversationMetadata` instance with a `git_provider` field
+- Use `uuid4().hex` to generate the conversation ID
+
+### Test Requirements
 
 Add routing tests to `enterprise/tests/unit/integrations/jira/test_jira_view.py` with:
 - A test class named `TestJiraV0ConversationRouting`
-- A test method named `test_routes_to_claimed_org_when_user_is_member` — verifies that when a repo belongs to a claimed org and the user is a member, the conversation is routed to that org's workspace
-- A test method named `test_falls_back_to_personal_workspace_when_no_claim` — verifies that when no org has claimed the git org, the conversation goes to the personal workspace
-- Import `ProviderType` from a module whose name contains `service_types`
-- Use `unittest.mock.patch` to mock the new dependencies, with patch targets pointing to the Jira view module under test
+- A test method named `test_routes_to_claimed_org_when_user_is_member` — verifies routing to claimed org workspace when user is member
+- A test method named `test_falls_back_to_personal_workspace_when_no_claim` — verifies fallback to personal workspace when no claim exists
+- Import `ProviderType` from `openhands.integrations.service_types`
+- Import `UserAuth` from `openhands.server.user_auth.user_auth`
+- Use `unittest.mock.patch` to mock dependencies, with patch targets pointing to `integrations.jira.jira_view` module under test
 - Use `AsyncMock` for async function mocks
-- The test file must reference `resolve_org_for_repo`, `SaasConversationStore.get_resolver_instance`, and include the patch decorator `@patch('integrations.jira.jira_view.start_conversation')`
+- Patch targets must include:
+  - `integrations.jira.jira_view.resolve_org_for_repo`
+  - `integrations.jira.jira_view.SaasConversationStore.get_resolver_instance`
+  - `integrations.jira.jira_view.start_conversation`
+  - `integrations.jira.jira_view.ProviderHandler`
+  - `integrations.jira.jira_view.integration_store`
+
+The routing tests should verify that when `resolve_org_for_repo` returns an organization ID, the `SaasConversationStore.get_resolver_instance` is called with that org ID, and when `resolve_org_for_repo` returns `None`, the store is called with `None` for the org ID.
 
 Do NOT modify any other files.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

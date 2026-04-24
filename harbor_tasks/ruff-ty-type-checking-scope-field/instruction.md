@@ -1,25 +1,30 @@
-# Remove per-scope TYPE_CHECKING tracking in ty
+# Remove per-scope TYPE_CHECKING tracking in ty_python_semantic
 
 ## Problem
 
-The `Scope` struct currently stores a boolean `in_type_checking_block` field that tracks whether the scope was defined inside an `if TYPE_CHECKING:` block. This is redundant because the same information can be derived by checking ancestor scopes and their use-def maps for TYPE_CHECKING block ranges.
+The `Scope` struct in `crates/ty_python_semantic/src/semantic_index/scope.rs` currently stores a boolean field `in_type_checking_block` that tracks whether the scope was defined inside an `if TYPE_CHECKING:` block. This field is redundant because the same information can be derived by querying ancestor scopes and their use-def maps.
 
-This redundant state adds unnecessary storage overhead per scope and complicates the semantic index builder. The information is already available via the `is_range_in_type_checking_block` mechanism on use-def maps.
+Additionally, some callers in `function.rs` and `overloaded_function.rs` directly access this per-scope field via a getter method, rather than going through the proper semantic index interface.
+
+## Symptom
+
+Running `cargo check -p ty_python_semantic` reports that the `in_type_checking_block` field on `Scope` is unused or redundant. The `SemanticIndex` already exposes `is_range_in_type_checking_block` which can be used to determine if a position falls within a TYPE_CHECKING block by checking the use-def map of any scope in the parent chain.
+
+The codebase needs to be cleaned up to remove this redundant per-scope state and ensure all access to TYPE_CHECKING block detection goes through the semantic index's `is_in_type_checking_block` method.
 
 ## Expected Behavior
 
-Refactor the TYPE_CHECKING detection to eliminate the per-scope boolean:
+All existing TYPE_CHECKING detection must continue to work correctly. Any code that checks whether the current position is inside a TYPE_CHECKING block should produce the same results as before. Specifically:
 
-- The `Scope` struct should no longer store the `in_type_checking_block` field
-- The `Scope` struct should no longer expose an `in_type_checking_block()` getter method
-- The `is_in_type_checking_block` method on `SemanticIndex` should derive the information by checking ancestor scopes and their use-def maps, rather than reading a stored flag from the scope
-- Any code that previously called `.in_type_checking_block()` directly on a scope must be updated to use the `SemanticIndex::is_in_type_checking_block` method instead
-- All existing TYPE_CHECKING detection must continue to work correctly (cargo check, clippy, tests, fmt must all pass)
+- `cargo check -p ty_python_semantic` must pass without warnings about unused fields
+- `cargo clippy -p ty_python_semantic --all-targets --all-features -- -D warnings` must pass
+- `cargo test -p ty_python_semantic --lib` must pass
+- `cargo fmt -- --check` must pass
 
 ## Files to Look At
 
 - `crates/ty_python_semantic/src/semantic_index/scope.rs` — The `Scope` struct definition
 - `crates/ty_python_semantic/src/semantic_index.rs` — The `is_in_type_checking_block` method
 - `crates/ty_python_semantic/src/semantic_index/builder.rs` — Where scopes are constructed
-- `crates/ty_python_semantic/src/types/infer/builder/function.rs` — Caller that checks TYPE_CHECKING for function bodies
-- `crates/ty_python_semantic/src/types/infer/builder/post_inference/overloaded_function.rs` — Caller that checks TYPE_CHECKING for overloaded functions
+- `crates/ty_python_semantic/src/types/infer/builder/function.rs` — Code that checks TYPE_CHECKING for function bodies
+- `crates/ty_python_semantic/src/types/infer/builder/post_inference/overloaded_function.rs` — Code that checks TYPE_CHECKING for overloaded functions

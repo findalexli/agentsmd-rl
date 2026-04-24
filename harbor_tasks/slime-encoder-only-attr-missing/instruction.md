@@ -11,3 +11,9 @@ When `encoder_only` is absent or falsy, the function should proceed with the def
 ## File to Modify
 
 - `slime/backends/sglang_utils/sglang_engine.py` -- the `launch_server_process()` function
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `black (Python formatter)`

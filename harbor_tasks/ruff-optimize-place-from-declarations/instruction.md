@@ -47,3 +47,10 @@ The logic determining whether a declaration is non-exported (currently inline) m
 ## Coding Guidelines
 
 Per AGENTS.md: Rust `use` imports must go at the top of the file, never inside function bodies.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `cargo clippy (Rust linter)`
+- `cargo fmt (Rust formatter)`

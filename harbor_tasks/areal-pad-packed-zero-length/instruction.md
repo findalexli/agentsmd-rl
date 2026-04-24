@@ -6,7 +6,7 @@ In `areal/utils/data.py`, the function `pad_packed_tensor_dict` pads a packed di
 
 ## Problem
 
-When the batch's `total_length` already equals `pad_to_length` — i.e., no padding is actually needed — the function still appends an entry to `cu_seqlens` via `F.pad(cu_seqlens, (0, 1), value=pad_to_length)`. This creates a zero-length dummy sequence at the end of the batch.
+When the batch's `total_length` already equals `pad_to_length` — i.e., no padding is actually needed — the function still appends an entry to `cu_seqlens`. This creates a zero-length dummy sequence at the end of the batch.
 
 Downstream consumers that iterate over sequences using consecutive `cu_seqlens` entries (e.g., `cu_seqlens[i]` to `cu_seqlens[i+1]`) encounter a sequence of length 0. Some operations, such as `nn.Conv1d`, raise a `RuntimeError` when given a zero-length input slice.
 
@@ -23,4 +23,10 @@ When no padding is needed (`pad_length == 0`), the function should return the da
 
 ## Files to investigate
 
-- `areal/utils/data.py` — `pad_packed_tensor_dict` function (around line 800)
+- `areal/utils/data.py` — `pad_packed_tensor_dict` function
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

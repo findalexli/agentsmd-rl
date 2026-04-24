@@ -34,3 +34,9 @@ The fix must satisfy all of the following:
 5. **No `any` type**: The followup persistence block must not use TypeScript's `any` type (neither `as any` nor `: any` annotations).
 
 6. **No try/catch, else, or for loops** in the followup persistence block. Use functional array methods instead of for loops, prefer early returns over else statements, and avoid try/catch where possible.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`

@@ -48,3 +48,10 @@ The test currently expects metadata to contain `{"includeme", "andme", "nooverri
 - You may need to remove some helper code that was used for the filtering/propagation logic
 - The fix should NOT change where config items are stored - they should remain in `configurable`
 - Run the repo's test suite after making changes: `make test` in `libs/langgraph/`
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`
+- `mypy (Python type checker)`

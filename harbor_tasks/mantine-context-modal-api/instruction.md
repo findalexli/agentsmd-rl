@@ -62,3 +62,10 @@ A type named `ContextModalInnerProps` should be defined with conditional logic:
 ## Testing
 
 Run `pnpm test --filter @mantine/modals` to verify your changes work correctly. The TypeScript compiler should also pass without errors.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`
+- `eslint (JS/TS linter)`

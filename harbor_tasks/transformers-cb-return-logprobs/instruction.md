@@ -45,3 +45,9 @@ The following attribute names, method signatures, and behaviors must be implemen
 - The output tensor infrastructure needs to accommodate an additional row of data alongside token IDs.
 - Consider that log probabilities are floats while token IDs are integers — the output storage currently uses integer tensors.
 - When `RequestStatus` is `DECODING`, the request is actively generating new tokens and receiving logprobs.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

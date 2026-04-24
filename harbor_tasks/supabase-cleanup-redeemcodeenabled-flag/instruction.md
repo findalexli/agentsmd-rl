@@ -22,3 +22,9 @@ The credit code redemption feature should always be visible and available to all
 ## Notes
 
 - The feature should work exactly as it does when the flag is enabled — the CreditCodeRedemption component must still render its Dialog UI, and the redeem page must still render the organization listing
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`

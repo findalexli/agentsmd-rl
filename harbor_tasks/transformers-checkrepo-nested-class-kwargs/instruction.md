@@ -22,3 +22,9 @@ The `get_model_modules()` function in the same file is called multiple times dur
 ## Reproduction
 
 Create a modeling file with a nested class inheriting from `PreTrainedModel` whose `forward()` method lacks `**kwargs`. Running `python utils/check_repo.py` will incorrectly report this nested class as failing the check.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

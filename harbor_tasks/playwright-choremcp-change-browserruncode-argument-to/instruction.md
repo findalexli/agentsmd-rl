@@ -19,3 +19,9 @@ The `code` parameter should accept a JavaScript function expression that takes `
 
 - `packages/playwright/src/mcp/browser/tools/runCode.ts` — the MCP tool implementation
 - Agent definition files in `examples/` and `packages/` directories
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

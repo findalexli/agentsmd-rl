@@ -25,3 +25,10 @@ Additionally, the local MCP server currently registers several Prisma Data Platf
 - `packages/cli/src/MCP.ts` — the MCP server implementation to be moved
 - `packages/cli/src/bin.ts` — imports `Mcp` from `./MCP` (needs path update)
 - `packages/cli/package.json` — keywords list
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`
+- `eslint (JS/TS linter)`

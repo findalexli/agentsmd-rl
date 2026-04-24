@@ -27,3 +27,9 @@ Add support for an `itemContent` semantic key in the Calendar component's `class
 - Custom styles are applied as inline styles to the date-content element
 - Both date cells (month view) and month cells (year view) support this customization
 - TypeScript types are properly updated in `CalendarSemanticType`
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

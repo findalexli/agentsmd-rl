@@ -14,7 +14,7 @@ The bug is in `MessagePortChannel::postMessageToRemote` in `src/bun.js/bindings/
 
 When only the AbortController (not the AbortSignal) is retained by JavaScript, and GC runs, the reason object can be collected. After that, `controller.signal.reason` returns `undefined` instead of the original abort reason.
 
-The `visitChildrenImpl` method in `src/bun.js/bindings/webcore/JSAbortController.cpp` marks the opaque root but does not visit the signal's reason field, so the GC can collect it. The fix adds a visit call for the reason — the call chain is `signal().reason().visit(visitor)` and it appears alongside the existing `Base::visitChildren` and `addWebCoreOpaqueRoot` calls.
+The `visitChildrenImpl` method in `src/bun.js/bindings/webcore/JSAbortController.cpp` marks the opaque root but does not visit the signal's reason field, so the GC can collect it. The fix adds a visit call for the reason object so the GC knows to preserve it.
 
 **File:** `src/bun.js/bindings/webcore/JSAbortController.cpp`
 
@@ -22,7 +22,7 @@ The `visitChildrenImpl` method in `src/bun.js/bindings/webcore/JSAbortController
 
 The global channel map stores raw `BroadcastChannel*` pointers. When a worker-owned channel is being destroyed while the main thread dispatches a message, the main thread can dereference a dangling pointer. The race window is between the channel's destructor running on the worker thread and the pointer assignment on the main thread.
 
-The map is declared as `UncheckedKeyHashMap<BroadcastChannelIdentifier, BroadcastChannel*>` in `src/bun.js/bindings/webcore/BroadcastChannel.cpp`. The value type must be changed to a thread-safe weak pointer template wrapper so that dereferencing the retrieved pointer is safe. The `.get()` method must be called when retrieving a channel from the map. The channel must still be registered in the map (via `.add()` or `.set()`), and the existing `Locker` pattern for the map must be retained.
+The map is declared as `UncheckedKeyHashMap<BroadcastChannelIdentifier, BroadcastChannel*>` in `src/bun.js/bindings/webcore/BroadcastChannel.cpp`. The value type must be changed to use a thread-safe weak pointer so that dereferencing the retrieved pointer is safe. The channel must still be registered in the map (via `.add()` or `.set()`), and the existing `Locker` pattern for the map must be retained.
 
 **File:** `src/bun.js/bindings/webcore/BroadcastChannel.cpp`
 
@@ -30,7 +30,7 @@ The map is declared as `UncheckedKeyHashMap<BroadcastChannelIdentifier, Broadcas
 
 Mutation operations (add, remove, clear, replace, removeFirstEventListenerCreatedFromMarkup) lack per-instance thread ownership validation. Unlike a global main-thread check, the correct approach records the owning thread on first mutation, then asserts subsequent mutations come from the same thread. GC sweeper threads must be exempt from this check.
 
-In `src/bun.js/bindings/webcore/EventListenerMap.cpp`, each mutator must have a thread affinity check that runs before the `Locker`. In `src/bun.js/bindings/webcore/EventListenerMap.h`, a helper function and a member variable are needed to record and validate the owning thread — the helper must consult `mayBeGCThread()` or `isGCThread()` for the exemption. At least 4 of the 5 mutators need this check.
+In `src/bun.js/bindings/webcore/EventListenerMap.cpp`, each mutator must have a thread affinity check that runs before the `Locker`. In `src/bun.js/bindings/webcore/EventListenerMap.h`, a helper function and a member variable are needed to record and validate the owning thread. At least 4 of the 5 mutators need this check.
 
 **Files:**
 - `src/bun.js/bindings/webcore/EventListenerMap.h`

@@ -2,30 +2,36 @@
 
 ## Problem
 
-The UI is showing thinking indicators (ThinkingBlockPeek component) even when the thinking content is empty or contains only whitespace. This creates visual clutter and confusion for users.
+The application shows thinking indicators (via the `ThinkingBlockPeek` component) even when the thinking content is empty or contains only whitespace characters. This creates visual clutter in the UI.
 
-## Affected Files
+## Symptoms
 
-- `gui/src/components/StepContainer/StepContainer.tsx`
-- `gui/src/pages/gui/Chat.tsx`
+- When viewing chat messages, thinking blocks appear even when there's no meaningful thinking content to display
+- Empty thinking sections (containing only spaces, tabs, or newlines) still render UI elements
+- Messages with `role === "thinking"` that have empty content still show thinking indicators
 
 ## Expected Behavior
 
-When thinking content is empty or contains only whitespace characters (spaces, tabs, newlines), the ThinkingBlockPeek component should not be rendered at all.
+The `ThinkingBlockPeek` component should only render when there is actual thinking content to display. Content that is empty or contains only whitespace should not trigger the thinking indicator to appear.
 
-### Requirements
+The fix should check whether the thinking content is empty or whitespace-only, and if so, skip rendering the thinking block entirely (e.g., by returning `null` from the rendering logic).
 
-1. **Whitespace Detection**: The code must detect when thinking content is empty or whitespace-only. Any check should use a trimming operation to determine if content is meaningful.
+## Technical Context
 
-2. **Thinking Indicator in StepContainer**: In StepContainer.tsx, the reasoning text check must account for whitespace-only content. If the trimmed reasoning text is empty, the thinking indicator should not render.
+- The UI is a React/TypeScript application located in the `gui/` directory
+- The `ThinkingBlockPeek` component is used to display thinking content to users
+- Message objects have a `role` field that can be set to `"thinking"`
+- Thinking content may be accessed through a `reasoning?.text` field on message items
+- In `Chat.tsx`, the `renderChatMessage(message)` function generates the content string for a message
 
-3. **Thinking Indicator in Chat**: In Chat.tsx, when handling messages with `role === "thinking"`, the code must verify that the thinking content has meaningful text before rendering ThinkingBlockPeek. If the content is empty or whitespace-only after trimming, return `null` instead of rendering.
+## Files to Modify
 
-4. **Avoid Duplicate Rendering**: If the thinking content is extracted to a variable for the emptiness check, use that same variable when passing content to ThinkingBlockPeek rather than re-computing it.
+1. `gui/src/components/StepContainer/StepContainer.tsx` — Where `ThinkingBlockPeek` is rendered for step items with reasoning
+2. `gui/src/pages/gui/Chat.tsx` — Where thinking messages are handled for the chat view
 
 ## Validation
 
 After fixing:
-- ESLint checks must pass (`yarn lint`)
+- ESLint checks must pass (`yarn lint` in the `gui/` directory)
 - Prettier formatting must be correct for modified files
 - Core unit tests must pass

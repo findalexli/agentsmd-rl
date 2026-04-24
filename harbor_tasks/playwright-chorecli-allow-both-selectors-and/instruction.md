@@ -34,3 +34,9 @@ The selector value should be quoted for clarity:
 - `packages/playwright-core/src/tools/backend/tab.ts` — element resolution code that handles selectors
 - `packages/playwright-core/src/utils/isomorphic/locatorParser.ts` — utility module with locator parsing functions
 - `packages/playwright-core/src/tools/cli-client/skill/SKILL.md` — CLI skill documentation
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

@@ -26,3 +26,9 @@ After your changes:
 - All `.pyc` files and `__pycache__` directories should still be removed from standard locations
 - Files inside `node_modules` should remain untouched
 - Files inside hidden directories (`.git`, `.venv`, etc.) should remain untouched
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

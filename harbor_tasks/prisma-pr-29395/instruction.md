@@ -35,3 +35,10 @@ The implementation must satisfy the following:
 
 - `SqlQuery` from `@prisma/driver-adapter-utils` — the query object passed to `queryRaw`
 - The `pg.Client#query()` config accepts a `name` property for prepared statement identification
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`
+- `eslint (JS/TS linter)`

@@ -43,3 +43,11 @@ The `insta` crate version in the workspace `Cargo.toml` may need to be updated t
 - `.github/workflows/test.yml` — CI test workflow containing the `cargo-test-linux` and `cargo-test-windows` jobs
 - `Cargo.toml` — workspace dependency versions (check the `insta` version)
 - `scripts/` — existing project scripts
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`
+- `cargo fmt (Rust formatter)`
+- `typos (spell-check)`

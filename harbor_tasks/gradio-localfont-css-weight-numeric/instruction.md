@@ -38,3 +38,9 @@ print(result["css"])
 ```
 
 The generated CSS currently contains `font-weight: Regular;` and `font-weight: Bold;` instead of `font-weight: 400;` and `font-weight: 700;`. The `src: url(...)` paths also reference the file using the text weight name rather than separating the file-path weight from the CSS weight.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

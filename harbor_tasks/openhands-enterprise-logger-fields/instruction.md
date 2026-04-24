@@ -43,3 +43,9 @@ PYTHONPATH=".:$PYTHONPATH" poetry run pytest tests/unit/test_logger.py
 ```
 
 The fix should also pass the project's linting, type checking, and existing unit tests.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `mypy (Python type checker)`

@@ -17,3 +17,9 @@ This matches the Dead Letter Queue pattern described in the Beam concepts docume
 ## Files to Look At
 
 - `sdks/python/apache_beam/ml/gcp/recommendations_ai.py` — the `CreateCatalogItem` PTransform and its `expand()` method
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `pylint (Python linter)`

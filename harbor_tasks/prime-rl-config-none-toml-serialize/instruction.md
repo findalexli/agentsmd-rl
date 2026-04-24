@@ -37,3 +37,9 @@ The entrypoints should use this `none_to_none_str` helper when serializing confi
 - `src/prime_rl/entrypoints/inference.py`
 - `src/prime_rl/entrypoints/rl.py`
 - `src/prime_rl/entrypoints/sft.py`
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

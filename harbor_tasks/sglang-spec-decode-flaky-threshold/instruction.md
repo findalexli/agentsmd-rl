@@ -17,3 +17,9 @@ The test should use a comparison that accepts scores equal to the threshold. The
 ## Files to Look At
 
 - `test/registered/spec/test_standalone_speculative_decoding.py` — contains the `TestStandaloneSpeculativeDecodingBase` and `TestStandaloneV2SpeculativeDecodingBase` classes with their `accuracy_threshold` class attribute and `test_gsm8k` method
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `typos (spell-check)`

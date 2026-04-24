@@ -11,7 +11,7 @@ For example:
 
 ## Expected Behavior
 
-Both dataclasses should validate the `mode` field in their `__post_init__` method and raise a `ValueError` with a descriptive message if an invalid mode is provided:
+Both dataclasses should validate the `mode` field and raise a `ValueError` with a descriptive message if an invalid mode is provided:
 
 **WandBConfig valid modes:** `online`, `offline`, `disabled`, `shared`
 **SwanlabConfig valid modes:** `cloud`, `local`, `disabled`, `offline`
@@ -23,11 +23,15 @@ The error message should clearly indicate:
 
 ## Files to Look At
 
-- `areal/api/cli_args.py` — Contains the `WandBConfig` and `SwanlabConfig` dataclasses (around lines 1968-2015). Look for where these classes are defined and where validation should be added.
+- `areal/api/cli_args.py` — Contains the `WandBConfig` and `SwanlabConfig` dataclasses. You will need to find where these classes are defined and add appropriate validation.
 
 ## Notes
 
 - The classes use `@dataclass` decorator
-- `SwanlabConfig` already has a `__post_init__` method that handles `api_key` initialization — you'll need to add validation there
-- `WandBConfig` does not currently have a `__post_init__` method — you'll need to add one
-- The `mode` field type hint was `str | None` in SwanlabConfig but should be just `str` after the fix (matching the validation behavior)
+- The `mode` field may need its type hint updated to match the validation behavior
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

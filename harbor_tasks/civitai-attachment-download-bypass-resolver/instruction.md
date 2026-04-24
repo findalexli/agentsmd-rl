@@ -29,3 +29,10 @@ The attachment endpoint currently uses the first approach, but attachments shoul
 
 - `src/pages/api/download/attachments/[fileId].ts` — the attachment download endpoint
 - `src/utils/delivery-worker.ts` — download URL resolution utilities (exports both approaches)
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`
+- `eslint (JS/TS linter)`

@@ -50,3 +50,10 @@ When properly implemented, the generator should produce correct paths with token
 ## Notes
 
 The issue occurs because the generator uses token values as literal strings in regular expression patterns without escaping. When tokens contain regex metacharacters like `+`, `*`, `?`, etc., the resulting regex patterns match incorrectly or fail to strip the token from the path.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`
+- `eslint (JS/TS linter)`

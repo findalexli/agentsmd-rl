@@ -27,3 +27,9 @@ The skill needs proper YAML frontmatter (`name`, `description`, `argument-hint` 
 - `tools/` — existing tool directory structure for reference
 - `.claude/` — this directory may need to be created for the skill
 - `pkg/CLAUDE.md` — Go coding conventions (import style, comment format)
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `gofmt (Go formatter)`

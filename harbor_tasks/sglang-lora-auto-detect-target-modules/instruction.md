@@ -48,3 +48,9 @@ The existing `get_normalized_target_modules` function must be updated to:
 - **`init_lora_shapes()`**: Must no longer raise a `ValueError` containing the text `"cannot be resolved automatically"`. When an adapter uses `target_modules="all-linear"` or `"all"` and no CLI override is provided, the method should resolve the modules by calling `auto_detect_lora_target_modules` on the base model.
 - **Import**: `get_normalized_target_modules` must be imported from `sglang.srt.lora.utils` in `lora_manager.py`.
 - **`init_lora_modules()`**: `get_layer_id()` returns `None` for modules outside the standard `model.layers.N.xxx` hierarchy (e.g., `lm_head`). The code must guard against this — modules with a `None` layer ID must be handled gracefully to prevent an `IndexError`.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `black (Python formatter)`

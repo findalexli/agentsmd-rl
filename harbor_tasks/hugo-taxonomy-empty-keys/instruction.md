@@ -51,3 +51,9 @@ After the fix:
 - Empty taxonomy values should be filtered out during config parsing
 - `.Ancestors` should work correctly even with malformed config
 - The existing test `TestDisableKindsEmptySliceAncestors` should pass
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `gofmt (Go formatter)`

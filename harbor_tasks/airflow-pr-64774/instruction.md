@@ -44,3 +44,9 @@ The solution must satisfy the following observable properties:
 - The `--exclude-newer` flag must be present in the source at least twice (once for each installation function path)
 - The source must contain a datetime import: either `from datetime import datetime` or `import datetime`
 - When pre-release installation is enabled, the console output must contain the exact phrase **"airflow and providers"**
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

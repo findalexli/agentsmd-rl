@@ -24,3 +24,11 @@ The consequence is that draft tokens at positions > 0 (i.e., after the first dra
 ## Files to investigate
 
 - `vllm/v1/worker/gpu/spec_decode/eagle/speculator.py` — the `EagleSpeculator` class's `propose()` method, specifically the control flow around the FULL cudagraph path vs. attention metadata rebuilding
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`
+- `mypy (Python type checker)`
+- `typos (spell-check)`

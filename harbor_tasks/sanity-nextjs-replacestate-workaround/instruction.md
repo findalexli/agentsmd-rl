@@ -12,17 +12,14 @@ Implement a workaround for this Next.js bug that ensures the session ID is prope
 
 The implementation must satisfy these requirements:
 
-1. In `packages/sanity/src/core/store/_legacy/authStore/sessionId.ts`, export a function named `clearSessionId` with the exact signature:
-   ```typescript
-   export function clearSessionId(): void
-   ```
-   This function should be a simple wrapper that calls the existing `consumeSessionId()` function.
+1. In `packages/sanity/src/core/store/_legacy/authStore/sessionId.ts`:
+   - Add a new exported function (choose an appropriate name) that clears the session ID by re-invoking the session consumption logic
 
-2. In `packages/sanity/src/core/store/_legacy/authStore/createAuthStore.ts`, import `clearSessionId` from `./sessionId` alongside the existing `getSessionId` import.
+2. In `packages/sanity/src/core/store/_legacy/authStore/createAuthStore.ts`:
+   - Import the new function alongside the existing `getSessionId` import
+   - In the `handleCallbackUrl` function, call the new clearing function after `getSessionId()` to ensure the session ID is cleared again as a workaround for the double `replaceState` bug
 
-3. In the `handleCallbackUrl` function within `createAuthStore.ts`, after calling `getSessionId()` to obtain the session ID, call `clearSessionId()` to ensure the session ID is cleared again as a workaround for the double `replaceState` bug.
-
-4. Include a comment referencing `https://github.com/vercel/next.js/issues/91819` near the workaround code to document why this extra clearing is necessary.
+3. Add a comment referencing `https://github.com/vercel/next.js/issues/91819` near the workaround code to document why this extra clearing is necessary
 
 ## Relevant Files
 

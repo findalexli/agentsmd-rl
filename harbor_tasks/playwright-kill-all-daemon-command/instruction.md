@@ -22,3 +22,9 @@ The command should work cross-platform (Linux/macOS via `ps aux`, Windows via Po
 - `.claude/skills/playwright-mcp-dev/SKILL.md` — development instructions for adding CLI commands
 
 After implementing the command, update the relevant skill documentation and references to include the new `kill-all` command. The project's development guidelines require documentation updates when adding new CLI commands.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

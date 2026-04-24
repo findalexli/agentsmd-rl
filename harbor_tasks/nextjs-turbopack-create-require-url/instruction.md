@@ -47,3 +47,10 @@ The fix must satisfy the following constraints. These are not hints about how to
 ## Files to Investigate
 
 The relevant source files are in the turbopack-ecmascript crate and the turbopack-tracing tests directory. The agent should explore the codebase to understand how WellKnownFunctionKind variants are defined and how require() calls are resolved.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`
+- `eslint (JS/TS linter)`

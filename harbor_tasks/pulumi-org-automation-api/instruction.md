@@ -58,3 +58,9 @@ Both language SDKs need integration test coverage for the org methods:
 ## Verification
 
 After implementing, run `go build ./...` in `sdk/go/` to verify Go code compiles. Python syntax can be checked with `python3 -m py_compile` on the modified files.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `gofmt (Go formatter)`

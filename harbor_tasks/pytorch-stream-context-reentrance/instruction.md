@@ -1,43 +1,39 @@
-# Fix torch.Stream context manager reentrance
+# Fix torch.Stream Context Manager Reentrance
 
 ## Bug Description
 
-The `torch.Stream` context manager in `torch/csrc/Stream.cpp` does not support nested or reentrant usage. When the same stream is used as a context manager multiple times (either nested with itself or interleaved with other streams), the program crashes or produces incorrect behavior.
-
-Specifically, the `__enter__` method contains an assertion with the message `"Stream's context should not be initialized."` that prevents reentrant use entirely. Additionally, the destructor does not clean up its context, potentially causing memory leaks.
-
-The following valid patterns currently fail:
+The `torch.Stream` context manager in `torch/csrc/Stream.cpp` crashes when the same stream is used as a context manager multiple times in a nested or reentrant fashion:
 
 ```python
 import torch
 s0 = torch.Stream()
-
-# Reentrant: same stream used twice
-with s0, s0:
+with s0, s0:  # crashes
     pass
-
-# Nested: interleaved streams
-s1 = torch.Stream()
-with s0:
-    with s1:
-        with s0:
-            pass
 ```
 
-## Required Behavior
+Additionally, `THPStream_dealloc` does not release `self->context`, potentially causing memory leaks.
 
-1. **Reentrance must work**: The `THPStream_enter` function must allow a stream to be entered as a context manager even when it is already the current stream, without crashing.
+## Expected Behavior
 
-2. **Nested context managers must work**: Entering a stream that is already active as a context manager should save and restore state correctly, supporting arbitrarily deep nesting.
+1. **Reentrance must work**: Entering a stream that is already the current stream must not crash — it should succeed and behave correctly.
+2. **Arbitrarily deep nesting must work**: Multiple streams can be entered in sequence, and each `__exit__` must correctly restore the previous stream state.
+3. **`self->context` must be released in the destructor**: The dealloc function must clean up `self->context` to prevent leaks.
 
-3. **Context must be cleaned up**: The `THPStream_dealloc` destructor must release `self->context` to prevent memory leaks, following standard CPython deallocation ordering.
+## Discovery
 
-4. **Error handling preserved**: The `HANDLE_TH_ERRORS` / `END_HANDLE_TH_ERRORS` macros must remain in both enter and exit functions.
+Read `torch/csrc/Stream.cpp` — the file contains `THPStream_enter`, `THPStream_exit`, and `THPStream_dealloc`. The current implementation stores context in `self->context` as a single Python object.
+
+Also read `test/test_accelerator.py` for expected stream context manager semantics.
 
 ## Files to Modify
 
 - `torch/csrc/Stream.cpp`
 
-## Discovery
+## Requirements
 
-The test file at `/workspace/pytorch/test/test_accelerator.py` contains tests for stream context manager behavior. Read it to understand the expected semantics. The C++ implementation in `torch/csrc/Stream.cpp` contains the functions `THPStream_enter`, `THPStream_exit`, and `THPStream_dealloc` that must be fixed.
+1. The `TORCH_CHECK` assertion with message `"Stream's context should not be initialized."` must be removed or replaced — it incorrectly blocks legitimate reentrant use.
+2. Context state must be stored in a way that supports arbitrarily deep nesting of stream context managers.
+3. `THPStream_enter` must save the current stream state before switching; `THPStream_exit` must restore it.
+4. When the stream is already current, entering must be handled gracefully (not crash).
+5. `THPStream_dealloc` must release `self->context` before freeing the object.
+6. Both enter and exit must use `HANDLE_TH_ERRORS` / `END_HANDLE_TH_ERRORS` macros for exception handling.

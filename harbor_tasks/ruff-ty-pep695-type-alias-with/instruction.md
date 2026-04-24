@@ -61,3 +61,9 @@ The implementation must pass:
 - `cargo check -p ty_python_semantic`
 - `cargo test -p ty_python_semantic --test mdtest with/sync`
 - `cargo clippy -p ty_python_semantic -- -D warnings`
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `cargo fmt (Rust formatter)`

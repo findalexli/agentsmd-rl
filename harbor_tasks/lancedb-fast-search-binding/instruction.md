@@ -30,3 +30,9 @@ The `fast_search()` method should:
 - Look at how other query builders (like `LanceVectorQueryBuilder`) implement `fast_search()` for reference
 - The `Query` model already has a `fast_search` field defined
 - The method should follow the same builder pattern as other methods like `phrase_query()`
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

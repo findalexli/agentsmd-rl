@@ -36,3 +36,9 @@ The source uses a `longestCommonSubstring` utility for determining text-name ove
 ## File to Look At
 
 - `packages/injected/src/ariaSnapshot.ts` — contains the `textContributesInfo` function that decides whether text children appear in the rendered snapshot
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

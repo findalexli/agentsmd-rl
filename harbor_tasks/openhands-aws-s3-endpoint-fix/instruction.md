@@ -34,3 +34,10 @@ The implementation should correctly handle these environment variable combinatio
 - `AWS_S3_ENDPOINT=http://minio.example.com:9000`, `AWS_S3_SECURE=true` → `https://minio.example.com:9000`
 - `AWS_S3_ENDPOINT=https://minio.example.com:9000`, `AWS_S3_SECURE=false` → `http://minio.example.com:9000`
 - `AWS_S3_ENDPOINT` not set → `None`
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`
+- `mypy (Python type checker)`

@@ -17,3 +17,9 @@ Additionally, the CLI's console output during `install` and workspace setup is p
 - `packages/playwright/src/mcp/terminal/program.ts` — CLI command implementations, including `install` and workspace setup output
 - `packages/playwright/src/skill/SKILL.md` — Skill documentation that agents and users read for CLI usage; must stay in sync with actual commands
 - `tests/mcp/cli-misc.spec.ts` — Test expectations for CLI install output
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

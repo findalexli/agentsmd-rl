@@ -25,3 +25,10 @@ The parser must not crash on malformed encodings such as unclosed brackets (`%5B
 1. The solution must use ES imports only — no bare `require()` calls (see AGENTS.md guidelines).
 2. The solution must not contain hardcoded secret values such as API keys, tokens, or credentials (see AGENTS.md guidelines).
 3. The fix must not break existing non-encoded dynamic segment parsing, static segment parsing, or introduce crashes on malformed input.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`
+- `eslint (JS/TS linter)`

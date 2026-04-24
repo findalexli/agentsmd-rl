@@ -11,26 +11,21 @@ This scenario occurs when:
 
 ## Symptoms
 
-The crash occurs in the scheduler's DAG run creation logic for asset-triggered DAGs. The relevant code maintains:
-- A dict grouping ADRQ rows by dag_id
-- A dict tracking per-DAG scheduling status
-- A collection of serialized DAGs fetched from the database
-
-After fetching serialized DAGs, the code iterates over results and accesses the status dict by dag_id. However, some dag_ids present in the ADRQ grouping and status dicts have no corresponding serialized entry, causing a `KeyError` on access.
+When the scheduler processes asset-triggered DAGs, it builds in-memory dictionaries grouping ADRQ rows and tracking scheduling status. After fetching serialized DAGs from the database, it iterates over the results and accesses the status dictionary by dag_id. If some dag_ids in the ADRQ grouping have no corresponding serialized entry, the access raises a `KeyError`.
 
 ## Requirements
 
 Fix the scheduler so that DAGs with ADRQ entries but no serialized representation are gracefully handled:
 
-1. **Detect orphaned DAGs.** After obtaining the serialized DAGs, determine which dag_ids have ADRQ entries but are absent from the serialized results. Compute this using set difference between the ADRQ grouping keys and the serialized dag IDs.
+1. **Detect orphaned DAGs.** After obtaining serialized DAGs from the database, identify which dag_ids have ADRQ entries but are absent from the serialized results. Compute this as a set difference between the dag_ids with ADRQ entries and the dag_ids from serialized DAGs.
 
-2. **Log skipped DAGs.** When orphaned DAGs are detected, emit an INFO-level log message containing the phrase `"not found in the serialized_dag table"`. Log the affected dag_ids in sorted order for deterministic output.
+2. **Log skipped DAGs.** When orphaned DAGs are detected, emit an INFO-level log message. The message must indicate these DAGs are not found in the serialized_dag table. Log the affected dag_ids in sorted order for deterministic output.
 
-3. **Clean up in-memory state only.** Remove orphaned dag_ids from the in-memory grouping and status dicts. Do NOT delete any ADRQ database rows — they must persist for re-evaluation on subsequent scheduler runs.
+3. **Clean up in-memory state only.** Remove orphaned dag_ids from the in-memory dictionaries that track ADRQ groupings and scheduling status. Do NOT delete any ADRQ database rows — they must persist for re-evaluation on subsequent scheduler runs.
 
 4. **Existing functionality preserved.** DAGs with proper serialization continue to be processed normally.
 
-## Constraints
+## Technical Constraints
 
 - Follow Airflow coding standards (no `assert` in production code, `session` parameters are keyword-only and must not call `commit()`)
 - Minimal, focused fix

@@ -1,4 +1,4 @@
-# Fix Vue/Svelte directive variable tracking in Biome linter
+# Fix Vue/Svelte Directive Variable Tracking in Biome Linter
 
 ## Problem
 
@@ -9,39 +9,56 @@ Biome's `noUnusedVariables` lint rule incorrectly reports variables as unused wh
 
 The linter's embedded-language extraction does not currently process directive attributes, so JavaScript expressions inside them are invisible to the variable usage tracker.
 
-## Requirements
+### Implementation Notes
 
-### Vue Directive Tracking
+The biome_html_syntax crate requires a new module (named `directive_ext`) that provides an `initializer()` method on `AnySvelteDirective` to access the directive's value clause.
 
-The embedded-node extraction logic must recognize and parse all 4 Vue directive AST types:
+The HTML file handler (`crates/biome_service/src/file_handlers/html.rs`) must be updated to handle these Vue directive AST types: `VueDirective`, `VueVOnShorthandDirective`, `VueVBindShorthandDirective`, and `VueVSlotShorthandDirective`. Each must be tagged as `EmbeddingKind::Vue` embedded content.
 
-- `VueDirective` (handles `v-if`, `v-show`, `v-on:click`, etc.)
-- `VueVOnShorthandDirective` (handles `@click`, `@input`, etc.)
-- `VueVBindShorthandDirective` (handles `:prop`, `:disabled`, etc.)
-- `VueVSlotShorthandDirective` (handles `#slot`, `#default`, etc.)
+For Svelte, `AnySvelteDirective` must be handled and tagged as `EmbeddingKind::Svelte` embedded content.
 
-Each must be detected via `cast_ref`, have its `.initializer()` extracted, and be parsed as embedded JavaScript tagged with `EmbeddingKind::Vue`. Vue directive values are quoted strings (e.g., `@click="handler"`), so the inner string content must be extracted (not the raw token with quotes). Proper offset calculation using `TextSize` is required so that error positions map correctly back to the source.
+Two helper functions are required for directive value parsing:
+- One that extracts values from quoted-string directives using `inner_string_text()` (Vue style)
+- One that extracts values from text-expression directives using `as_html_attribute_single_text_expression()` (Svelte style)
 
-### Svelte Directive Tracking
+Both helpers accept an `HtmlAttributeInitializerClause` parameter.
 
-All 8 variants of the `AnySvelteDirective` enum must be handled:
+### Requirements
 
-- `SvelteBindDirective`
-- `SvelteClassDirective`
-- `SvelteInDirective`
-- `SvelteOutDirective`
-- `SvelteStyleDirective`
-- `SvelteTransitionDirective`
-- `SvelteUseDirective`
-- `SvelteAnimateDirective`
+### Vue Directive Support
 
-A `directive_ext` module must be added to the `biome_html_syntax` crate (declared in its `lib.rs`) that provides a way to obtain the `HtmlAttributeInitializerClause` from any `AnySvelteDirective` variant. This module must match on all 8 variants and chain through `.value()` and `.initializer()` for each. The extracted content should be parsed as embedded JavaScript tagged with `EmbeddingKind::Svelte`.
+The embedded-node extraction logic must handle Vue directive AST types. Vue directives come in 4 forms:
 
-Unlike Vue, Svelte directives use curly-brace text expressions (e.g., `bind:value={x}`), so the implementation must extract text expressions rather than quoted strings.
+- Shorthand `@` for events (e.g., `@click`)
+- Shorthand `:` for bindings (e.g., `:disabled`)
+- Shorthand `#` for slots (e.g., `#default`)
+- Full form (e.g., `v-if`, `v-show`)
+
+Vue directive values are quoted strings — the inner content (without quotes) must be extracted and parsed as embedded JavaScript tagged with the Vue embedding kind.
+
+### Svelte Directive Support
+
+The embedded-node extraction logic must handle Svelte directive AST types. Svelte directives have 8 variants:
+
+- `SvelteBindDirective` — `bind:value={x}`
+- `SvelteClassDirective` — `class:active={x}`
+- `SvelteInDirective` — `in:animation={x}`
+- `SvelteOutDirective` — `out:animation={x}`
+- `SvelteStyleDirective` — `style:color={x}`
+- `SvelteTransitionDirective` — `transition:name={x}`
+- `SvelteUseDirective` — `use:action={x}`
+- `SvelteAnimateDirective` — `animate:name={x}`
+
+Unlike Vue quoted strings, Svelte directives use curly-brace text expressions — the expression content (without braces) must be extracted and parsed as embedded JavaScript tagged with the Svelte embedding kind.
 
 ### Helper Functions
 
-At least 2 helper functions must exist that accept an `HtmlAttributeInitializerClause` parameter — one for parsing Vue-style quoted string values (using `inner_string_text()` and `TextSize` offset calculation) and one for parsing Svelte-style text expression values (using `expression()` and the existing text expression parsing infrastructure).
+Two helper functions are needed for directive value parsing:
+
+- One for extracting values from quoted-string directives (Vue style)
+- One for extracting values from text-expression directives (Svelte style)
+
+Both helpers accept an attribute initializer clause parameter.
 
 ### Documentation Updates
 
@@ -51,7 +68,7 @@ Add new items to the project's do's and don'ts:
 
 - Warn against claiming patterns are "widely used" or "common" without evidence
 - Warn against implementing legacy/deprecated syntax without checking with the user first
-- Recommend inspecting AST structure (e.g., using the parser crate's `quick_test`) before implementing
+- Recommend inspecting AST structure before implementing
 - Reference the `.claude/skills/` directory for technical implementation details
 
 #### `.claude/skills/testing-codegen/SKILL.md`
@@ -65,9 +82,9 @@ Add a section on quick testing for parser development covering:
 
 Create a developer skill file with YAML frontmatter (including a `name:` field) that documents:
 
-- String extraction patterns (mention `inner_string_text` or similar text extraction methods)
-- AST inspection techniques (mention `quick_test`, `dbg!`, or similar AST inspection tools)
-- Embedded language handling (mention `EmbeddingKind` or embedded language concepts)
+- String extraction patterns for syntax nodes
+- AST inspection techniques
+- Embedded language handling
 
 Markdown tables in skill files must use proper formatting with spaces around separators (e.g., `| --- | --- |` not `|---|---|`).
 

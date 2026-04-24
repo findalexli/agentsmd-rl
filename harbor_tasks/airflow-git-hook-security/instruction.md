@@ -52,3 +52,9 @@ Run the git hook tests to verify your changes:
 ```bash
 uv run --project providers/git pytest providers/git/tests/unit/git/hooks/test_git.py -xvs
 ```
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

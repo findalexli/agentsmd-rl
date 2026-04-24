@@ -33,3 +33,10 @@ This also produces `NULL` in the `DISTINCT ON` projection instead of projecting 
 For both query patterns above, the compiled SQL must produce valid `DISTINCT ON` CTEs where the `SELECT` list includes all source table columns (i.e., a full column projection). The `NULL` literal must not appear as the select-list expression in the `DISTINCT ON` clause.
 
 Fix the PRQL compiler so that `DISTINCT ON` SQL generation produces valid, semantically correct PostgreSQL output for these query patterns.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `cargo clippy (Rust linter)`
+- `cargo fmt (Rust formatter)`

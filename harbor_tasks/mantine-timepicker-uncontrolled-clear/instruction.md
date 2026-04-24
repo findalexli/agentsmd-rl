@@ -25,3 +25,10 @@ Given an uncontrolled TimePicker with `defaultValue="12:34"`:
 - `handleTimeChange` needs to handle the case where a field becomes invalid after user input
 - `setTimeString` and `clear` may need validity tracking updates
 - The solution should work for both `12h` and `24h` formats with and without seconds
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`
+- `eslint (JS/TS linter)`

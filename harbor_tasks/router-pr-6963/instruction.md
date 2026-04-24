@@ -45,3 +45,10 @@ The script uses these specific variable names and structures:
 - `scripts/create-github-release.mjs` - The release script that parses commits and generates changelog
 
 Look at how conventional commits are parsed (the regex pattern), how the `typeOrder` array controls section ordering, how `typeLabels` provides section titles, and how commits are grouped into buckets by type.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`
+- `eslint (JS/TS linter)`

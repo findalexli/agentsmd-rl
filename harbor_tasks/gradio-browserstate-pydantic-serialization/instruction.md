@@ -15,3 +15,10 @@ For example, storing `Person(name="Dan", age=20)` results in the string `"name='
 - Plain types (str, int, dict, list, bool, float, None) must pass through unchanged
 - Nested Pydantic models must be recursively converted to nested dicts
 - The file `gradio/components/browser_state.py` must remain syntactically valid Python
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`
+- `mypy (Python type checker)`

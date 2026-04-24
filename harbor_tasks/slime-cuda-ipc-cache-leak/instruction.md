@@ -21,3 +21,9 @@ The test oracle verifies:
 - At least one `torch.cuda.ipc_collect()` call occurs after the second `dist.barrier()` (post-loop cleanup).
 - Both `long_lived_tensors` and `hf_named_tensors` are released (via `del` or assignment to `None`) inside the weight chunk loop.
 - `_send_to_colocated_engine` returns a tuple.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `black (Python formatter)`

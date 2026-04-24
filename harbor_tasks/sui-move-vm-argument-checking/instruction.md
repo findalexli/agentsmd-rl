@@ -52,3 +52,9 @@ cargo test --lib function_arg
 - The error codes (`NUMBER_OF_ARGUMENTS_MISMATCH`, `INTERNAL_TYPE_ERROR`) are defined in the `StatusCode` enum
 - Use the `partial_vm_error!` macro to create errors, finished with `.finish(Location::Module(...))`
 - The function metadata (parameter count, type parameter count) is accessible via `function.to_ref()`
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `cargo clippy (Rust linter)`

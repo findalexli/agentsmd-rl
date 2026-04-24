@@ -42,3 +42,9 @@ The `onRendered` event handler should not contain any logic that clears the scro
 ## Actual Behavior
 
 The scroll position is lost on forward navigation. The page resets to the top because the scroll cache is incorrectly cleared before restoration can occur.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

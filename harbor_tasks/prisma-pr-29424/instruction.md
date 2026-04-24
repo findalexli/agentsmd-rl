@@ -43,3 +43,9 @@ Run the tests with:
 pnpm --filter @prisma/cli test template-scaffold.vitest
 pnpm --filter @prisma/cli test Bootstrap.vitest
 ```
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`

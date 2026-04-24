@@ -31,3 +31,10 @@ The following specific behavioral requirements must be met:
 3. **Environment variable mutation in `test_routing_strategy_integration`** (located in `tests/kernels/moe/test_routing_simulator.py`):
    - The test must not directly mutate `environment_variables` via subscript assignment (e.g., `envs.environment_variables[key] = value`).
    - Environment variable overrides must use patterns that are automatically restored at test teardown (such as `monkeypatch.setitem`).
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`
+- `typos (spell-check)`

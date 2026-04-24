@@ -46,3 +46,9 @@ The solution will be verified against the following checks:
 6. The import statement beginning with `from prime_rl.utils.vf` must not reference `get_is_truncated`.
 
 7. Error metrics must be logged, including the overall error rate and distribution of error types.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

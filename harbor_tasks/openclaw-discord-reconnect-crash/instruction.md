@@ -15,3 +15,9 @@ The `reconnect-exhausted` event type should be treated as a graceful stop event 
 ## File to Modify
 
 - `extensions/discord/src/monitor/provider.lifecycle.ts`
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

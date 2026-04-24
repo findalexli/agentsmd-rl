@@ -28,3 +28,9 @@ The parent class initialization must still be invoked, with `hf_config` being pa
 ## File to Modify
 
 - `slime_plugins/mbridge/deepseek_v32.py`
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `black (Python formatter)`

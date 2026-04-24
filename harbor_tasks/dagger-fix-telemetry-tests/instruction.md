@@ -25,3 +25,9 @@ The telemetry test suite captures error origin information by parsing error mess
 ## Expected Behavior
 
 After the fix, error messages should contain both the exit code information and the original underlying error message (when present), allowing telemetry parsing code to extract error origins. The separator between the exit code and original message should be two newline characters (`\n\n`).
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `gofmt (Go formatter)`

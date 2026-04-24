@@ -40,3 +40,9 @@ Additionally, the main loading loop has an efficiency issue: constant values (in
 ## Target file
 
 `python/sglang/multimodal_gen/runtime/loader/fsdp_load.py`
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `black (Python formatter)`

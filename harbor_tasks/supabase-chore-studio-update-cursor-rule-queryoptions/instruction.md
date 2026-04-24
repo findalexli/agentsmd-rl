@@ -31,3 +31,9 @@ The current `useThirdPartyAuthIntegrationsQuery` hook wraps `useQuery` with cust
 - `apps/studio/components/interfaces/Auth/ThirdPartyAuthForm/index.tsx` — component consuming the query
 - `apps/studio/types/react-query.ts` — shared React Query type helpers
 - `.cursor/rules/studio/queries/RULE.md` — Cursor rule for studio data fetching conventions
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`

@@ -42,3 +42,9 @@ Additionally, in `js/html/Index.svelte`, the value derivation uses the `||` oper
 - Watch callbacks should only fire for changes coming from Python event listeners (backend), not for changes made from JavaScript
 - Watch callbacks should fire after template re-render so `props` reflect updated values inside the callback
 - Errors in watch callbacks should be caught and logged, not crash the component
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

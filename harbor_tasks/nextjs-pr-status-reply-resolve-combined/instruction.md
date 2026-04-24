@@ -36,3 +36,9 @@ Additionally, the current `replyToThread()` function uses a GraphQL mutation (`a
 - `scripts/pr-status.js` — the PR status script containing `replyToThread()`, `resolveThread()`, `generateThreadMd()`, and `main()`
 - `.agents/skills/pr-status-triage/SKILL.md` — skill definition with workflow steps and quick commands
 - `.agents/skills/pr-status-triage/workflow.md` — detailed workflow including the "Resolving Review Threads" section
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`

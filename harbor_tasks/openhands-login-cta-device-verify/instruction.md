@@ -49,3 +49,9 @@ Run the following to verify your changes:
 - `cd frontend && npm run build` - Production build
 
 The tests expect the `LoginCTA` component to be found by `data-testid="login-cta"` on the device verification page when the feature flag is enabled.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`

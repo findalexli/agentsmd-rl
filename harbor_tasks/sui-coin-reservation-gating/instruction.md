@@ -32,3 +32,9 @@ After your fix:
 Run these commands to verify:
 - `cargo check -p sui-json-rpc` - must compile
 - `cargo clippy --package sui-json-rpc -- -D warnings` - must pass
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `cargo fmt (Rust formatter)`

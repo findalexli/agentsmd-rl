@@ -49,3 +49,10 @@ The script must include:
 - Changesets writes version headers as `## <version>` in CHANGELOG.md files
 - The script should only use ESM imports (`fs`, `path`, `execSync`, `globSync`)
 - The GitHub token is available via `GH_TOKEN` or `GITHUB_TOKEN` environment variables
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`
+- `eslint (JS/TS linter)`

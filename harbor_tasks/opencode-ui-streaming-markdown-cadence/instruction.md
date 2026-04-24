@@ -52,3 +52,9 @@ The implementation must use these SolidJS primitives from `solid-js`:
   - `createThrottledValue()` — the current throttle implementation (to be replaced)
   - `TextPartDisplay` component (`PART_MAPPING["text"]`)
   - `ReasoningPartDisplay` component (`PART_MAPPING["reasoning"]`)
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`

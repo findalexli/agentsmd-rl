@@ -11,12 +11,12 @@ The Workspace filter is controlled by `showCurrentWorkspaceOnly` state and the F
 - Workspace and Favorites filters must be independent toggle filters (both can be active at the same time)
 - Sort options (Newest, Oldest, Most Relevant) must remain as mutually exclusive radio options within VSCodeRadioGroup
 - The HistoryView.tsx file must have at least 5 `<VSCodeRadio` elements
-- After the fix, the file should contain a line with both `marginTop` and `flex` properties set, with `marginTop` set to `-8`
+- After the fix, the file should contain a flex container div with both `marginTop` and `flex` properties, using a negative top margin to align the filter controls
 - Both `showCurrentWorkspaceOnly` and `showFavoritesOnly` filter controls must appear after the closing `</VSCodeRadioGroup>` tag
 
 ## Visual Alignment Issue
 
-The filter controls currently appear misaligned relative to the sort options above them. The fix must address this visual alignment while allowing the filters to function as independent toggles.
+The filter controls currently appear misaligned relative to the sort options above them. The fix must address this visual alignment using a flex container with negative top margin while allowing the filters to function as independent toggles.
 
 ## Files to Look At
 

@@ -21,3 +21,9 @@ The test uses `tokenizer.batch_decode()` to decode single tensor outputs from `g
 1. In Qwen2's `test_speculative_generation`: The tokenizer should use `Qwen/Qwen2-0.5B` to match the model. The expected output should use the `Expectations` wrapper with device-specific keys following the `("cuda", <memory_in_gb>)` format.
 
 2. In T5's `test_compile_static_cache`: All calls to `batch_decode()` for single-item outputs should be changed to use `decode()`.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

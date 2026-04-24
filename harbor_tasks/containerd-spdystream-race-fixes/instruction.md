@@ -43,3 +43,9 @@ The fix involves these files:
 - Look at the spdystream changelog for v0.5.0 to understand the fixes
 - The key issues are around the `pingLock` (formerly `pingIdLock`), `finishLock`, and timer usage patterns
 - After updating go.mod, use `go mod vendor` to bring in the updated code
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `gofmt (Go formatter)`

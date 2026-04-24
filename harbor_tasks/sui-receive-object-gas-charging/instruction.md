@@ -12,21 +12,25 @@ Add per-byte gas charging to the `receive_object` native function, similar to ho
 
 ### 1. Protocol config (`crates/sui-protocol-config/src/lib.rs`)
 
-Add two new cost parameter fields to `ProtocolConfig`:
-- A field for per-byte object size charging
-- A field for per-byte type size charging
+Add two new cost parameter fields to `ProtocolConfig` for per-byte charging:
+- `transfer_receive_object_cost_per_byte: Option<u64>` — for object size based charging
+- `transfer_receive_object_type_cost_per_byte: Option<u64>` — for type size based charging
 
-For protocol version 119, set the per-byte object cost to `Some(1)` and the per-byte type cost to `Some(2)`.
+For protocol version 119, set the per-byte costs to:
+- `transfer_receive_object_cost_per_byte = Some(1)`
+- `transfer_receive_object_type_cost_per_byte = Some(2)`
 
 ### 2. Native cost params (`sui-execution/latest/sui-move-natives/src/transfer.rs`)
 
-Add two new fields to `TransferReceiveObjectInternalCostParams` for internal gas cost tracking.
+Extend the `TransferReceiveObjectInternalCostParams` struct with new fields for internal gas cost tracking:
+- `transfer_receive_object_internal_cost_per_byte: InternalGas`
+- `transfer_receive_object_internal_type_cost_per_byte: InternalGas`
 
 Add gas charging logic within `receive_object_internal` that:
-- Charges based on the type size before processing
-- Charges based on the object size before returning
+- Charges based on the type size (using `child_ty.size()`) before processing
+- Charges based on the object size (using `abstract_memory_size` with `SizeConfig`) before returning
 
-Import `SizeConfig` and `ValueView` from `move_vm_runtime::shared::views` for size calculations.
+Import the necessary types from `move_vm_runtime::shared::views` for size calculations.
 
 ### 3. Wire up protocol config (`sui-execution/latest/sui-move-natives/src/lib.rs`)
 
@@ -44,3 +48,9 @@ After changes:
 - `cargo test -p sui-protocol-config` passes
 - `cargo test -p sui-move-natives-latest` passes
 - All other cargo checks (clippy, fmt, doc, xlint, etc.) pass
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `cargo fmt (Rust formatter)`

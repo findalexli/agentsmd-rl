@@ -11,3 +11,9 @@ This unconditional masking causes valid tokens to be incorrectly excluded. For e
 - Trust region masking is gated by advantage sign: positive advantages only gate high-side violations, negative advantages only gate low-side violations
 - Config field names use the DPPO-style prefix. Specifically, `DefaultLossConfig` must have fields named `dppo_mask_low` and `dppo_mask_high`. The old IPO-style field names (`ipo_mask_low`, `ipo_mask_high`) must no longer exist.
 - Metrics exposed by the loss function correctly reflect which tokens were masked and why (tracked via `is_masked` metric)
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

@@ -63,3 +63,9 @@ Additionally, the root `turbo.json` does not pass through `SCCACHE_*` and `RUSTC
 - `packages/next-swc/package.json` — npm scripts for the next-swc package
 - `turbo.json` — root turbo configuration (global env settings)
 - `scripts/` — directory for build and maintenance scripts
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `cargo clippy (Rust linter)`

@@ -30,3 +30,10 @@ After the fix:
 ## Context
 
 The relevant code is in the compiler's `snap` package. Existing strategies follow the naming pattern `remove<Structure>` (e.g., `removeStatements`, `removeCallArguments`, `removeArrayElements`, `removeObjectProperties`, `removeJSXAttributes`).
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`
+- `eslint (JS/TS linter)`

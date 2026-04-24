@@ -27,3 +27,9 @@ When a sitemap is generated with alternate language URLs (e.g., for multilingual
 - Look at how the root XML element is created
 - Check what namespace declarations are present vs. what prefixes are used in the document
 - The `xhtml:link` elements are used for alternate language references per the sitemap protocol
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

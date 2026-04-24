@@ -35,3 +35,10 @@ The codebase has accumulated technical debt that needs addressing:
 - `ui/desktop/src/App.tsx` — Main React application component
 - `ui/desktop/src/components/` — React components directory
 - `ui/desktop/src/hooks/` — React hooks directory
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `cargo clippy (Rust linter)`
+- `cargo fmt (Rust formatter)`

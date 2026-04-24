@@ -4,7 +4,7 @@
 
 Running `ruff check --select UP012` on Python files containing certain string literals with octal escape sequences causes ruff to panic with a thread crash. For example, checking a file containing `"$IMURAW\0".encode("ascii")` triggers an internal panic.
 
-Additionally, strings that combine octal escapes with named Unicode escapes (like `\N{DIGIT ONE}`) may incorrectly trigger UP012 when they shouldn't, because the escape sequence parser loses track of its position after processing the octal.
+Additionally, strings that combine octal escapes with named Unicode escapes (like `\N{DIGIT ONE}`) may incorrectly trigger UP012 when they shouldn't.
 
 ## Expected Behavior
 
@@ -14,7 +14,7 @@ Additionally, strings that combine octal escapes with named Unicode escapes (lik
 
 ## Files to Look At
 
-- `crates/ruff_linter/src/rules/pyupgrade/rules/unnecessary_encode_utf8.rs` — contains the `literal_contains_string_only_escapes` function that parses escape sequences in string literals for the UP012 rule
+- `crates/ruff_linter/src/rules/pyupgrade/rules/unnecessary_encode_utf8.rs` — the UP012 rule implementation
 
 ## Development Guidelines
 

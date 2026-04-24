@@ -10,7 +10,7 @@ Currently, the parser only inspects the first `Content-Length` header, silently 
 
 ### 1. Fix the HTTP Parser Security Issue
 
-Locate the HTTP parser code that handles the `Content-Length` header validation. The parser should use a bloom filter check (`mightHave`) to detect whether Content-Length headers are present before attempting to read them.
+Locate the HTTP parser code that handles the `Content-Length` header validation.
 
 Modify the parser to enforce RFC 9112 section 6.3 for duplicate Content-Length headers:
 
@@ -18,7 +18,7 @@ Modify the parser to enforce RFC 9112 section 6.3 for duplicate Content-Length h
 - **Reject** with HTTP 400 when any Content-Length header has an empty value
 - **Accept** requests when duplicate Content-Length headers have identical values
 
-The fix should use an error code constant named `HTTP_PARSER_ERROR_INVALID_CONTENT_LENGTH` (or similar) when rejecting invalid Content-Length headers. The parser should reference RFC 9112 or RFC 9110 for Content-Length validation.
+The parser should reference RFC 9112 or RFC 9110 for Content-Length validation.
 
 ### 2. Add Tests
 

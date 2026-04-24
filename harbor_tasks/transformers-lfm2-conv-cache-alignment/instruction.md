@@ -36,3 +36,9 @@ The forward methods (`slow_forward` and `cuda_kernels_forward`) should use `has_
 - The `reset()` method on the cache should also clear any new state tracking
 - Changes need to be consistent across all three files and both forward paths (`slow_forward` and `cuda_kernels_forward`)
 - The `last_conv_layer` can be computed as the last occurrence of "conv" in the `layer_types` list
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

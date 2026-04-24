@@ -22,3 +22,9 @@ Queue operations (appending to the back and removing from the front) should be *
 
 - `client/python/gradio_client/client.py`
 - `client/python/gradio_client/utils.py`
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

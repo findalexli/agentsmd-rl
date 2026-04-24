@@ -2,16 +2,11 @@
 
 ## Problem
 
-The `start-plugin-core` package has a bug where it tries to detect the Vite version at the plugin's import time. This detection fails in pnpm workspaces because:
-
-- The plugin might resolve one version of Vite for its own dependencies
-- But the consumer project might be using a different Vite version
-- This causes the plugin to set the wrong bundler options key for the consumer's Vite version
-- The result is build failures with "Could not resolve entry module" errors
+The `start-plugin-core` package has a bug that causes builds to fail when used in pnpm workspaces with certain Vite version configurations. The issue stems from how the plugin determines which bundler options key to use at import time. When the resolved Vite version differs between the plugin's dependencies and the consumer's project, the wrong bundler options key gets set, resulting in "Could not resolve entry module" build failures.
 
 ## What You Need To Do
 
-Fix the bundler options handling in the `start-plugin-core` package so that it works correctly with both Vite 7 and Vite 8, regardless of which version the plugin itself resolves.
+Fix the bundler options handling in the `start-plugin-core` package so that builds succeed correctly regardless of which Vite version the consumer project uses.
 
 ### Specific Requirements
 
@@ -19,21 +14,19 @@ Fix the bundler options handling in the `start-plugin-core` package so that it w
    - Remove the `bundlerOptionsKey` export
    - Remove the `isRolldown` export
    - Keep the `getBundlerOptions` function
-   - Remove any Vite version detection logic (checking for `rolldownVersion` in vite)
+   - Remove any Vite version detection logic that checks for version-specific properties
 
 2. **In `packages/start-plugin-core/src/plugin.ts`:**
    - Remove any import or reference to `bundlerOptionsKey`
    - Import `getBundlerOptions` from `./utils`
-   - For the client environment build configuration, create a variable named exactly `bundlerOptions` containing the build input configuration, then set both `rollupOptions: bundlerOptions` and `rolldownOptions: bundlerOptions` using the same object reference
-   - For the server environment build configuration, do the same: create a `bundlerOptions` variable and use it for both `rollupOptions` and `rolldownOptions`
-   - This ensures Vite 7 reads `rollupOptions` and Vite 8 reads `rolldownOptions`, with both pointing to the same configuration object
+   - For the client environment build configuration, set both `rollupOptions` and `rolldownOptions` to the same configuration object
+   - For the server environment build configuration, do the same: set both `rollupOptions` and `rolldownOptions` to the same configuration object
 
 ## Expected Behavior
 
 After the fix:
 - Builds should succeed whether the consumer uses Vite 7 or Vite 8
-- The code must use a variable named `bundlerOptions` to hold the shared configuration
-- Both `rollupOptions: bundlerOptions` and `rolldownOptions: bundlerOptions` must be present for both client and server environments
+- Both `rollupOptions` and `rolldownOptions` must be set for both client and server environments
 - Using the same object reference for both options avoids Vite 8 deprecation warnings
 - TypeScript compilation, ESLint, and unit tests must continue to pass
 

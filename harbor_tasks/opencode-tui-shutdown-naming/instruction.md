@@ -28,3 +28,9 @@ After fixing the code, update `AGENTS.md` to add a **Naming Enforcement** sectio
 - List multi-word examples to avoid (e.g., `inputPID`, `existingClient`, `connectTimeout`, `workerPath`)
 
 The section header must contain the phrase "Naming Enforcement" and the mandatory rule text must contain the exact string "THIS RULE IS MANDATORY".
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`

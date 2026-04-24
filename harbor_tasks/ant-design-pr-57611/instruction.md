@@ -32,3 +32,9 @@ This feature should work at multiple levels:
 3. `ConfigProvider`: `<ConfigProvider image={{ preview: { mask: { closable: false } } }}>`
 
 Component-level configuration should override ConfigProvider settings.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

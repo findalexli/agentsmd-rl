@@ -72,3 +72,9 @@ Add a new mandatory naming enforcement subsection under the existing Naming sect
 - The Bun runtime provides withTimeout utility at @/util/timeout
 - The codebase prefers single-word variable names as documented in the agent coding guidelines
 - Always use .unref?.() on setTimeout calls that shouldn't block process exit
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`

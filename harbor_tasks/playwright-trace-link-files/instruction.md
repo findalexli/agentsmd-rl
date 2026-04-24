@@ -2,29 +2,29 @@
 
 ## Problem
 
-The Playwright trace handling has several issues:
+The Playwright trace handling has several issues that prevent proper functionality:
 
-1. **Opening raw .trace files fails**: When the trace opening functionality receives a `.trace` file instead of a `.zip` archive, it attempts to extract it as a zip, which fails. The system needs to distinguish between `.zip` archives and raw `.trace` files, handling each appropriately. For raw `.trace` files, the system should create a `.link` file containing the path to the trace file, which can then be read by the trace loading functionality to locate the actual trace.
+1. **Opening raw .trace files fails**: When the trace viewer receives a `.trace` file directly, it attempts to extract it as a zip archive, which fails. Users need to be able to open `.trace` files directly without manual conversion.
 
-2. **TraceLoader.load() requires `unzipProgress` callback**: The `load()` method currently requires an `unzipProgress` callback parameter. This makes it inconvenient when progress tracking isn't needed — callers still have to pass a no-op function. The `unzipProgress` parameter should be optional (using TypeScript optional parameter syntax `unzipProgress?`).
+2. **TraceLoader.load() requires unzipProgress callback**: The `load()` method requires a callback parameter for tracking unzip progress. Callers that don't need progress tracking must still provide a no-op function, which is inconvenient.
 
-3. **No trace file filtering**: `TraceLoader.load()` loads all `.trace` files found in a directory. It should accept an optional `traceFile` parameter (using TypeScript optional parameter syntax `traceFile?`) to load only a specific trace file.
+3. **No trace file filtering**: `TraceLoader.load()` loads all `.trace` files found in a directory. Users may want to load only a specific trace file by name.
 
-4. **CLI unhandled promise rejection**: The CLI entry point does not catch errors from the main program call, causing unhandled promise rejections instead of clean error messages and exit. The fix should add error handling using `.catch(logErrorAndExit)` where `logErrorAndExit` is an error handler function that logs errors and exits the process.
+4. **CLI unhandled promise rejection**: When the CLI entry point encounters an error, the error results in an unhandled promise rejection rather than a clean error message and proper process exit.
 
-5. **Unsafe traceLegend access**: The tracing stop functionality accesses the `traceLegend` property without first verifying that tracing was actually started. The fix should add validation that checks `if (!traceLegend)` and throws an error with message "Tracing is not started" before accessing the property.
+5. **Unsafe traceLegend access**: The tracing stop functionality crashes if tracing was never started, because it accesses a `traceLegend` property without first checking whether tracing is active.
 
 ## Expected Behavior
 
-1. When opening a trace file that ends with `.trace` (not `.zip`), the system should:
-   - Create a `.link` file in the trace directory containing the full path to the trace file
-   - When loading, if a `.link` file exists, read it to get the actual trace file path and use `path.dirname()` to get the trace directory and `path.basename()` to get the trace file name
+1. When opening a trace file that ends with `.trace` (not `.zip`), the system should create a `.link` file in the trace directory containing the path to the trace file. When loading, if a `.link` file exists, the system should read it to locate the actual trace file.
 
-2. `TraceLoader.load()` should have the signature: `load(backend: TraceLoaderBackend, traceFile?: string, unzipProgress?: UnzipProgress)` making both `traceFile` and `unzipProgress` optional parameters.
+2. `TraceLoader.load()` should work without requiring an unzip progress callback — the parameter should be optional.
 
-3. The CLI should catch errors from the main program call with `.catch(logErrorAndExit)` where `logErrorAndExit` handles error logging and process exit.
+3. `TraceLoader.load()` should accept an optional parameter to filter which trace file to load, rather than loading all trace files in a directory.
 
-4. The tracing stop functionality should validate that `traceLegend` exists before accessing it, throwing "Tracing is not started" if tracing was not started.
+4. The CLI should handle errors from the main program gracefully, logging the error and exiting the process cleanly.
+
+5. When stopping tracing, if tracing was never started, the system should throw an error with a message indicating that tracing is not active.
 
 ## Files Likely Involved
 
@@ -35,3 +35,9 @@ Trace handling functionality is typically found in:
 - Backend tracing modules
 
 Look for files related to trace handling, CLI program initialization, and tracing backend operations.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

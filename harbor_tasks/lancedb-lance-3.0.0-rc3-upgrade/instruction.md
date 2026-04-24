@@ -47,3 +47,10 @@ After your changes, `cargo check` should pass without errors.
 - Focus on making the minimal changes needed for compilation to succeed
 - The Lance crate's error handling patterns have changed between rc.2 and rc.3
 - Consult the Lance documentation or source code for the correct new API patterns
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `cargo clippy (Rust linter)`
+- `cargo fmt (Rust formatter)`

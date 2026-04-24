@@ -23,3 +23,9 @@ These generated files have "DO NOT EDIT DIRECTLY" headers, but for this task you
 ## Note on Test Requirements
 
 The test suite checks for specific patterns in the modified files. The patterns include exact variable declarations and condition forms. Reviewing the test file at `tests/test_outputs.py` will clarify what patterns the tests expect.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `cargo fmt (Rust formatter)`

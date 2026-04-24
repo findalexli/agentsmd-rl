@@ -36,3 +36,9 @@ Terminal e2e tests must wait for actual terminal output readiness — not just D
 - `packages/app/e2e/fixtures.ts` — where the init script seeding goes
 - `packages/app/e2e/selectors.ts` — contains `terminalSelector`
 - `packages/app/e2e/AGENTS.md` — e2e testing guide to update
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`

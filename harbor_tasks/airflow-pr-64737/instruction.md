@@ -23,15 +23,25 @@ Fix the race condition so that each expired deadline is processed by exactly one
 
 The fix must:
 
-1. **Use row-level database locking** when querying for expired deadlines, ensuring that once one scheduler replica locks a row, other replicas cannot access that same row until the lock is released.
+1. **Use row-level database locking** - wrap the Deadline query with a function named `with_row_locks` that applies `FOR UPDATE` row-level locking.
 
-2. **Skip locked rows rather than blocking** - scheduler replicas should not wait on each other; if a row is already locked by another replica, the query should skip it and move on.
+2. **Skip locked rows rather than blocking** - the lock call must include `skip_locked=True` so scheduler replicas skip rows locked by other replicas instead of waiting.
 
-3. **Use a sufficiently strong lock mode** - weaker lock modes like `FOR KEY SHARE` do not conflict with themselves and would still permit concurrent replicas to process the same row. A stronger lock like `FOR UPDATE` is needed.
+3. **Use exclusive lock mode** - the lock call must include `key_share=False` to ensure the lock mode is exclusive and conflicts with itself, preventing concurrent replicas from processing the same row.
 
-4. **Target the Deadline model specifically** - the locking must be applied to the `Deadline` table/entity to ensure proper row-level granularity.
+4. **Target the Deadline model** - the lock call must specify `of=Deadline` to apply locking at the Deadline row granularity.
 
-5. **Preserve code clarity** - extract the query into a named variable (rather than inline) and add an explanatory comment describing why the locking is necessary (mentioning HA schedulers and prevention of duplicate callbacks).
+5. **Pass session parameter** - the lock call must receive `session=session` to determine database dialect for appropriate locking behavior.
+
+6. **Extract query to a named variable** - store the Deadline SELECT query in a variable before passing it to the locking function (not inline).
+
+7. **Add an explanatory comment** - include a comment explaining why row locking is needed for HA/concurrent scheduler deployments.
+
+## Implementation Details
+
+- The relevant file is: `airflow-core/src/airflow/jobs/scheduler_job_runner.py`
+- The Deadline query to be wrapped is a `select(Deadline)` call chain
+- The locking is applied using the `with_row_locks(query, session=session, skip_locked=True, key_share=False, of=Deadline)` pattern
 
 ## Expected Behavior
 

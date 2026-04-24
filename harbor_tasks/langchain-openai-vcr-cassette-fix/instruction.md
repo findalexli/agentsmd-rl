@@ -45,3 +45,9 @@ The tests should pass without making real API calls.
 - URIs are redacted to `**REDACTED**` during recording
 - Test input strings must match the cassettes exactly for playback to work
 - Look for cassette files in the `tests/cassettes/` directory to find the recorded strings
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `typos (spell-check)`

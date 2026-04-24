@@ -33,3 +33,9 @@ The `--latest` flag is always passed unconditionally to `gh release create`, but
 ## File to Modify
 
 - `scripts/create-github-release.mjs`
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`

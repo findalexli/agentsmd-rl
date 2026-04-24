@@ -13,9 +13,52 @@ When a user is editing text in the WYSIWYG editor and the theme changes from lig
 2. The editor should apply the appropriate dark mode filter to the stroke color when in dark mode
 3. When switching back to light mode, the original stroke color should be restored
 
-To detect theme changes, the implementation must track the current theme state and compare it when state changes occur to determine if the theme has changed. The theme change detection mechanism should use the `app.onChangeEmitter` API to subscribe to state changes. When a change is detected that affects the theme, the `updateWysiwygStyle` function should be called to refresh the editor's styling.
+## Implementation Requirements
 
-The implementation must also properly clean up any subscriptions when the WYSIWYG editor is closed to prevent memory leaks.
+The fix requires the following code changes in `packages/excalidraw/wysiwyg/textWysiwyg.tsx`:
+
+### 1. Theme State Tracking Variable
+
+After the `textPropertiesUpdated` function ends (before the `updateWysiwygStyle` function), add a variable to track the current theme state:
+
+```typescript
+let LAST_THEME = app.state.theme;
+```
+
+This variable stores the current theme so it can be compared when state changes.
+
+### 2. Update Theme Tracking in Style Function
+
+At the beginning of the `updateWysiwygStyle` function (before any other logic), update the theme tracking variable:
+
+```typescript
+LAST_THEME = app.state.theme;
+```
+
+### 3. Subscribe to State Changes
+
+Before the `// handle updates of textElement properties of editing element` comment, add a subscription to detect theme changes:
+
+```typescript
+// FIXME after we start emitting updates from Store for appState.theme
+const unsubOnChange = app.onChangeEmitter.on((elements) => {
+  if (app.state.theme !== LAST_THEME) {
+    updateWysiwygStyle();
+  }
+});
+```
+
+This subscribes to the app's change emitter and calls `updateWysiwygStyle()` whenever the theme changes.
+
+### 4. Cleanup Subscription
+
+In the cleanup section (before `unbindOnScroll();`), add the cleanup call:
+
+```typescript
+unsubOnChange();
+```
+
+This prevents memory leaks by unsubscribing when the editor is closed.
 
 ## Development Notes
 

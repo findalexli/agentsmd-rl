@@ -30,3 +30,9 @@ Additionally, part of the test (simple mode tests) is currently commented out wi
   - Use qt matchers in tests
   - Use latest Hugo layout specifications
   - Run `./check.sh` when done
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `gofmt (Go formatter)`

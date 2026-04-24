@@ -23,3 +23,9 @@ The global config cache must use `Effect.cachedInvalidateWithTTL` with the follo
 ## Relevant files
 
 - `packages/opencode/src/config/config.ts` — the `Config` namespace with `loadGlobal`, `getGlobal`, and `invalidate` functions
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`

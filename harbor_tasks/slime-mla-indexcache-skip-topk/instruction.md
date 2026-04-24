@@ -36,3 +36,9 @@ The `DeepseekV2DecoderLayer.forward` method and `DeepseekV2Model` also need upda
 - All of these changes are within the sglang.patch file.
 
 The topk index caching logic (frequency-based or pattern-based skipping) should remain functional for NSA-enabled models.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

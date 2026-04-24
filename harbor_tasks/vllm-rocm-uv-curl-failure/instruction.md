@@ -26,3 +26,9 @@ immediately with a clear error, not proceed with a broken environment.
 - Think about how to ensure `curl` failures propagate properly
 - Consider transient network issues that could benefit from retry logic
 - The fix should verify that UV was actually installed successfully
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

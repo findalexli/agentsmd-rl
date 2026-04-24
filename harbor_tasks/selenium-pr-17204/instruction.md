@@ -41,3 +41,10 @@ The fix must track whether the Service owns its log output stream. This requires
 ## Location
 
 The issue is in `py/selenium/webdriver/common/service.py`, specifically in the `stop()` method and how log streams are handled during initialization.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`
+- `mypy (Python type checker)`

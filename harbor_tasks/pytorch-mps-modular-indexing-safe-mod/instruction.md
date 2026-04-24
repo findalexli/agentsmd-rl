@@ -23,11 +23,9 @@ header is `c10/metal/utils.h`.
 
 ## Observed Symptom
 
-When `_print_ModularIndexing` in the `MetalExprPrinter` class receives an
-expression with `div=65536` and a non-power-of-two `mod` value (e.g., 3, 5, 6),
-it currently emits bare arithmetic like `((idx) / (65536)) % (6)`. The Metal
-compiler applies a buggy optimization to this fused pattern, producing incorrect
-results at runtime.
+When `_print_ModularIndexing` in the `MetalExprPrinter` class produces the
+fused division-modulo pattern for certain parameter combinations, the Metal
+compiler applies a buggy optimization, producing incorrect results at runtime.
 
 Cases where `div=1`, or where both `div` and `mod` are powers of two (e.g.,
 `div=256, mod=16` or `div=65536, mod=8`), are unaffected and produce correct
@@ -37,13 +35,18 @@ results.
 
 ### 1. Buggy-pattern workaround
 
-For `_print_ModularIndexing` cases where `div=65536` and `mod` is not a
-power of two (specifically tested with `mod` values 3, 5, and 6):
+For `_print_ModularIndexing` cases where the divisor is a power of two and
+the modulo is not a power of two, the generated code must not trigger the
+Metal compiler bug.
 
-- The output must **not** be the bare pattern `((idx)/(65536))%(mod)` that
-  triggers the Metal compiler bug.
-- The output must include a **function call** (i.e., an identifier followed
-  by parenthesized arguments) rather than relying solely on the `%` operator.
+Specifically, for cases like `div=65536, mod=6` (or similar combinations
+where the divisor is a power of two and the modulo is not):
+
+- The output must not be a bare fused expression that triggers the Metal
+  compiler bug.
+- The output must include a function call (an identifier followed by
+  parenthesized arguments) rather than relying solely on the `%` operator
+  in the problematic pattern.
 - The output must still reference both the base variable and the mod value.
 
 ### 2. Non-buggy patterns preserved
@@ -59,18 +62,15 @@ value in the output, and containing the division when `div > 1`):
 The `_print_FloorDiv` method must also continue working correctly (e.g.,
 producing output containing `floor` for `FloorDiv(100, 4)`).
 
-### 3. Safe modulo utility function in the Metal header
+### 3. Metal utility header must provide workaround mechanism
 
-`c10/metal/utils.h` must contain a new function that prevents the Metal
-compiler from applying the buggy fusion. This function must satisfy:
+`c10/metal/utils.h` must contain a function that prevents the Metal
+compiler from applying the buggy fusion. This function must:
 
-- Its name must be one of: `safe_mod`, `mod_safe`, `safe_modulo`, or
-  `safe_remainder`.
-- It must perform a modulo/remainder operation (its definition must contain
-  `%` or `remainder`).
-- It must include an optimization barrier near its definition (within 300
-  characters). Acceptable barrier mechanisms include: `volatile`, `optnone`,
-  `__attribute__`, `asm(`, or `noinline`.
+- Perform a modulo or remainder operation (its definition must use `%`
+  or `remainder`).
+- Include an optimization barrier mechanism near its definition to
+  prevent the Metal compiler from fusing the operations.
 
 ### 4. Existing code integrity
 

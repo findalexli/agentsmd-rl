@@ -29,3 +29,10 @@ After implementing the code changes, update the crate's README to document the i
 - `turbopack/crates/turbo-persistence/src/lookup_entry.rs` — lookup entry value routing
 - `turbopack/crates/turbo-persistence/src/arc_slice.rs` — `ArcSlice` utility (needs `slice_from_subslice` method)
 - `turbopack/crates/turbo-persistence/README.md` — on-disk format documentation
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `cargo clippy (Rust linter)`
+- `cargo fmt (Rust formatter)`

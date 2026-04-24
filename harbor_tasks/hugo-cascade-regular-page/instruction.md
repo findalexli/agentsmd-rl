@@ -61,3 +61,9 @@ Run tests in the `hugolib` package to verify:
 go test -run TestCascade ./hugolib/
 go test ./hugolib/
 ```
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `gofmt (Go formatter)`

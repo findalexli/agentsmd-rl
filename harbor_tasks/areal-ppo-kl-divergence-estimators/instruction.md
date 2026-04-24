@@ -41,3 +41,9 @@ The implemented estimators can be verified against these expected values for
 - direct should equal `[-0.5, -0.5, -0.5]`
 - taylor should equal `[0.125, 0.125, 0.125]`
 - dual should be non-negative for all valid inputs
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

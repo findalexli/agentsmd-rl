@@ -19,3 +19,10 @@ unsupported value `{version}` for `python-version`; expected one of `{list of su
 Configuration files are parsed using the options metadata layer. The `python-version` field in the environment options is deserialized from TOML configuration. When deserializing, you should check whether the parsed version exists in the set of supported Python versions (from `PythonVersion::iter()`), and return an error if it does not.
 
 The `Options::from_toml_str` method is the entry point for parsing TOML configuration strings, and it accepts a `ValueSource` parameter to indicate where the configuration came from.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `cargo clippy (Rust linter)`
+- `cargo fmt (Rust formatter)`

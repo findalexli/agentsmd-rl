@@ -22,7 +22,13 @@ Accessing `server.url` when the URL is invalid should throw a proper JavaScript 
 
 ## Requirements
 
-When the fix is applied:
 1. Accessing `server.url` with an invalid URL must throw a JavaScript exception instead of crashing
 2. The fix must be a pure insertion — no existing lines may be modified or removed
-3. The fix must be applied to the C++ binding function that converts BunString to a JS URL object. The function has a throw scope and performs a C-style cast after creating the JS object. A guard is needed to return early if an exception is pending, preventing the cast from executing on an invalid value.
+3. The exception-handling code for the URL conversion function must prevent control flow from continuing with an invalid JSValue after the DOMURL object creation fails, which currently causes a null dereference crash
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`
+- `typos (spell-check)`

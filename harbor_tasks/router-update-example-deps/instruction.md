@@ -49,3 +49,9 @@ You can test your script by:
 2. Verifying `node --check scripts/update-example-deps.mjs` passes
 3. Creating a test example with outdated workspace dependencies and running the script
 4. Running the repo's existing test suite (`pnpm test:eslint`, `pnpm test:types`, `pnpm test:unit`)
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`

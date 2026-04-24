@@ -18,3 +18,11 @@ Each async output (both for decoding and pooling) should have its own independen
 
 - `vllm/v1/worker/gpu/async_utils.py` — Contains async output classes that handle async D→H copy and synchronization via CUDA events
 - `vllm/v1/worker/gpu/model_runner.py` — Contains the GPUModelRunner class that manages per-step execution
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`
+- `mypy (Python type checker)`
+- `typos (spell-check)`

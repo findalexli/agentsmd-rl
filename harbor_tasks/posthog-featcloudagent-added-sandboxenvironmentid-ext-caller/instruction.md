@@ -13,10 +13,10 @@ Modify `products/tasks/backend/models.py` in the `Task.create_and_run()` method 
 1. Accept an optional keyword-only parameter named `sandbox_environment_id` with type `str | None` defaulting to `None`
 
 2. When `sandbox_environment_id` is provided (not None):
-   - Look up the corresponding `SandboxEnvironment` record using `SandboxEnvironment.objects.filter(team=team, id=sandbox_environment_id).first()` and assign the result to a variable named `sandbox_env`
-   - If the lookup returns no result (i.e., `sandbox_env` is None or falsy), raise `ValueError` with the exact message: `Invalid sandbox_environment_id: {sandbox_environment_id}`
-   - Ensure `extra_state` is initialized using the pattern `extra_state = extra_state or {}` before adding values to it
-   - Store the environment's ID in `extra_state` under the key `sandbox_environment_id` using the exact expression `str(sandbox_env.id)` (convert the environment's ID to string using the str() function)
+   - Look up the corresponding `SandboxEnvironment` record by filtering on both the provided ID and the team, ensuring the environment belongs to the current team (not another team's environment)
+   - If the lookup finds no matching environment, raise a `ValueError` with a message that helps the caller identify which ID was invalid
+   - Before storing values in `extra_state`, ensure it is initialized to an empty dict if not already provided
+   - Store the environment's string ID in `extra_state` under the key `sandbox_environment_id` so temporal workflows and downstream code can reference it
 
 ### Documentation Update
 
@@ -26,10 +26,16 @@ After updating the code, update `docs/published/handbook/engineering/ai/sandboxe
 2. Include a usage example showing:
    - Creating a `SandboxEnvironment` with `SandboxEnvironment.objects.create()`
    - Configuring `network_access_level` and `allowed_domains`
-   - Passing `sandbox_environment_id=str(env.id)` to `create_and_run()`
+   - Passing `sandbox_environment_id` to `create_and_run()` with the environment's ID converted to string
 
 ## Files to Look At
 
 - `products/tasks/backend/models.py` — the `Task.create_and_run()` static method that needs the new parameter
 - `docs/published/handbook/engineering/ai/sandboxed-agents.md` — engineering handbook documenting the sandboxed agent API
 - `AGENTS.md` — project conventions including queryset filtering rules
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

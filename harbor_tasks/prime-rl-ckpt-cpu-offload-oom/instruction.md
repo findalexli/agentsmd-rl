@@ -12,17 +12,19 @@ After checkpoint loading completes with CPU-offloaded optimizers, the reserved-m
 
 ## Relevant Code Location
 
-- File: `src/prime_rl/trainer/ckpt.py`
-- Class: `AppState`
-- Method: `load_state_dict`
-
-The `load_state_dict` method in the `AppState` class handles checkpoint state restoration for training.
+The code that handles checkpoint state restoration for training. It manages optimizer state loading and uses a `state_dict` dictionary to track checkpoint data. The bug is in the code path that processes CPU-offloaded optimizers — look for where `state_dict` is used after optimizer states are moved back to CPU.
 
 ## What the Tests Check
 
-The test suite verifies that `load_state_dict` in `AppState` (in `src/prime_rl/trainer/ckpt.py`):
-1. Imports the `gc` module
-2. Calls `gc.collect()` and `torch.cuda.empty_cache()` to reclaim GPU memory
-3. Gates this cleanup on the presence of `CPUOffloadOptimizer` in the optimizers list
-4. Calls `state_dict.clear()` as part of the cleanup
-5. Contains at least 5 substantive statements (not a stub)
+The test suite verifies that after checkpoint loading completes:
+1. The module imports `gc` to break circular reference chains
+2. GPU memory is reclaimed via `gc.collect()` and `torch.cuda.empty_cache()`
+3. This cleanup runs only when needed, not on every call
+4. Stale references in the `state_dict` container are explicitly cleared
+5. The method contains real implementation logic (not a stub returning `None`)
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

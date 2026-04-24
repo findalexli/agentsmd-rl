@@ -67,3 +67,9 @@ After implementing the code changes, update the relevant documentation in `src/w
 - Document the `JSG_TRY` and `JSG_CATCH` macros with usage examples showing `JSG_TRY(js)` syntax
 - Update the exception handling guidance to reflect current best practices (`js.error()`, `js.throwException()`)
 - Include usage examples showing the recommended patterns
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

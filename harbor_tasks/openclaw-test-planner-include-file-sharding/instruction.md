@@ -26,3 +26,9 @@ Run the test planner tests:
 ```
 pnpm test -- test/scripts/test-planner.test.ts test/scripts/test-parallel.test.ts
 ```
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

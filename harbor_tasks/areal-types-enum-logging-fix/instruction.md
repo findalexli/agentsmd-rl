@@ -43,3 +43,9 @@ The `clevr_count_70k_reward_fn` function needs an explicit `-> float` return typ
 
 - `areal/experimental/openai/types.py`
 - `areal/reward/clevr_count_70k.py`
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

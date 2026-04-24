@@ -30,3 +30,9 @@ When such a schema is detected, the display should return the literal string `"f
 For plain objects without file characteristics (no `path` property, no `gradio.FileData` meta), continue displaying as `dict(...)` with the property names.
 
 The helper function `value_is_file` in `gradio_client.utils` should also correctly identify whether a schema represents a file type for API info purposes.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

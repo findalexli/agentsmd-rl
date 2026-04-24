@@ -35,3 +35,9 @@ The monitor interface needs to support logging evaluation samples, following the
 - `src/prime_rl/utils/monitor/wandb.py` — `WandbMonitor` (W&B logging)
 - `src/prime_rl/utils/monitor/prime.py` — `PrimeMonitor`
 - `src/prime_rl/orchestrator/eval_utils.py` — `evaluate_env` function
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

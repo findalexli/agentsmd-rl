@@ -2,20 +2,17 @@
 
 ## Bug Description
 
-In the OpenHands repository, the user context menu popup does not appear for users in OSS mode (unauthenticated or without feature flags). The popup should appear on hover over the user avatar area, but it is completely absent from the DOM for these users instead of being present but hidden via CSS opacity transitions.
+In the OpenHands repository at `frontend/src/components/features/sidebar/user-actions.tsx`, the user context menu popup does not appear for users in OSS mode (unauthenticated or without feature flags). The popup should appear on hover over the user avatar area in the sidebar, but it is completely absent from the DOM for these users instead of being present but hidden via CSS.
 
-The relevant component is at `frontend/src/components/features/sidebar/user-actions.tsx`.
+The component currently uses a hook that conditionally gates user feature visibility. Due to this gating, `<UserContextMenu>` is not rendered at all for OSS users — the component is removed from the DOM rather than being hidden via CSS.
 
 ## Expected Behavior
 
-After the fix, the component should behave as follows:
+After the fix:
 
-1. **Context menu always in the DOM**: The context menu popup must be present in the DOM for all users regardless of authentication state or feature flags. This means:
-   - The `UserContextMenu` component must be rendered unconditionally with `key={menuResetCount}`.
-   - It must be wrapped in a `<div>` that uses `className={cn(...)}` containing the exact opacity transition classes `"opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto"`.
-   - There must be no conditional rendering guard (e.g., based on a variable like `shouldShowUserActions`) wrapping the context menu or its parent `<div>`.
+1. **Context menu always in the DOM**: The `UserContextMenu` component at `frontend/src/components/features/sidebar/user-actions.tsx` must be present in the DOM for all users regardless of authentication state. The visibility should be controlled through CSS (using `opacity`, `pointer-events`, and Tailwind's `group-hover:` pattern), not by conditional removal from the DOM.
 
-2. **No feature-flag gating hook**: The file should not reference the hook `useShouldShowUserFeatures` anywhere — neither as an import nor as a call. The context menu visibility is handled purely through CSS, not through conditional removal from the DOM.
+2. **CSS-controlled visibility**: When the user hovers over the avatar area (near the `<UserAvatar>` component), the context menu should become visible through CSS hover states. When not hovered, it should be hidden via CSS `opacity` and `pointer-events` rather than removed from the DOM.
 
 3. **Required imports preserved**: The component must still import and use:
    - `UserContextMenu` component
@@ -32,3 +29,9 @@ After making changes, verify that all of the following pass (run in the `fronten
 - Frontend build: `npm run build`
 - Unit tests for `UserContextMenu` component
 - Unit tests for `Sidebar` component
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`

@@ -18,3 +18,9 @@ CSS flexbox text truncation with ellipsis requires specific conditions:
 ## Task
 
 Fix the text truncation in `components/cascader/style/columns.ts` so that long menu item text displays with ellipsis when it exceeds the available width.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

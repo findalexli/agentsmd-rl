@@ -36,3 +36,9 @@ The line graph component must:
 - Determine when a chart represents stickiness data by accessing the appropriate value from `insightVizDataLogic`
 - Pass a prefix to the tick formatting function when rendering stickiness data
 - Derive the prefix from the current interval by capitalizing the interval name (`day` → `Day`, `week` → `Week`, `month` → `Month`)
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `stylelint (CSS linter)`

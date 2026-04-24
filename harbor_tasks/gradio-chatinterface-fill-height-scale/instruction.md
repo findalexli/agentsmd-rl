@@ -33,3 +33,10 @@ The chatbot area should expand to fill the browser viewport, but instead stays a
 ## Scope
 
 This issue involves the backend ChatInterface component and the frontend initialization code that handles app configuration and layout.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`
+- `prettier (JS/TS/JSON/Markdown formatter)`

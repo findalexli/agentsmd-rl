@@ -27,3 +27,9 @@ In `scheduler.py`, after a `hisparse_coordinator` is assigned to a running batch
 - `python/sglang/jit_kernel/csrc/hisparse.cuh`
 - `python/sglang/srt/managers/schedule_batch.py`
 - `python/sglang/srt/managers/scheduler.py`
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `black (Python formatter)`

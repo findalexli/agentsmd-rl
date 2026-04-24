@@ -29,3 +29,10 @@ The `AGENTS.md` file in the repository root contains examples of the `pnpm new-t
 
 1. Fix the code: Ensure data requests and cached HTML responses include `Content-Length` and `ETag` headers
 2. Fix the docs: Update `pnpm new-test` command syntax in `AGENTS.md` to use `-- --args` before any arguments
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`
+- `eslint (JS/TS linter)`

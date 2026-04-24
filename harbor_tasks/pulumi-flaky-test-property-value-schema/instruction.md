@@ -35,3 +35,9 @@ go test -run 'TestPropertyValueSchema/serialized' ./resource/stack/... -count=10
 ```
 
 The test should pass reliably without flaking.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `gofmt (Go formatter)`

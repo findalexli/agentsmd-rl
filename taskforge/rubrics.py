@@ -342,6 +342,75 @@ RUBRICS: tuple[Rubric, ...] = (
         ),
     ),
     Rubric(
+        name="test_deps_in_dockerfile",
+        tier="A",
+        description=(
+            "Every binary that tests/test_outputs.py invokes via subprocess (cargo, "
+            "bun, ruff, pnpm, node, etc.) must be installed in the Dockerfile. "
+            "Missing deps cause FileNotFoundError / 'command not found' at test "
+            "time — indistinguishable from model failure in aggregate reward."
+        ),
+        artifacts=("tests/test_outputs.py", "environment/Dockerfile"),
+        verification="programmatic",
+        source=(
+            "2026-04-24 scaffold audit: 3/9 broken eval tasks (deno-chore, "
+            "uv-self-update, bun-build-make) had cargo/bun missing from Dockerfile "
+            "despite tests requiring them"
+        ),
+        failure_example=(
+            "deno-chore-remove-some-top-level: tests call cargo check / cargo test "
+            "but the Dockerfile base image doesn't install Rust. 10/16 tests error "
+            "with FileNotFoundError; aggregate reward=0 regardless of agent fix"
+        ),
+    ),
+    Rubric(
+        name="substring_assertions_are_instructed",
+        tier="A",
+        description=(
+            "Every multi-word literal string an agent is expected to EMIT (via "
+            "`assert \"LITERAL\" in output` patterns in tests) must appear "
+            "verbatim in instruction.md. Otherwise the agent can't guess the "
+            "exact wording a test demands and correct implementations fail "
+            "on punctuation / sentence-structure mismatches."
+        ),
+        artifacts=("tests/test_outputs.py", "instruction.md"),
+        verification="programmatic",
+        source=(
+            "2026-04-24 scaffold audit: ClickHouse-pr-102080 asserts on the exact "
+            "sentence 'is larger than 5 MB. Large files should not be committed "
+            "to git' — Opus wrote ';' separator, MiniMax wrote ',' — both correct "
+            "warnings rejected"
+        ),
+        failure_example=(
+            "ClickHouse-pr-102080 test: `assert \"is larger than 5 MB. Large files "
+            "should not be committed to git\" in output` — instruction only says "
+            "warning must mention \"is larger than 5 MB\" and \"download them at "
+            "test time\", never the full sentence"
+        ),
+    ),
+    Rubric(
+        name="lint_requirement_stated",
+        tier="B",
+        description=(
+            "If tests/test_outputs.py invokes linters/formatters (ruff, black, "
+            "prettier, clippy, eslint, gofmt, mypy, pyright), instruction.md must "
+            "tell the agent that code MUST pass those linters. Otherwise the "
+            "agent writes semantically-correct code that fails on style."
+        ),
+        artifacts=("tests/test_outputs.py", "instruction.md"),
+        verification="programmatic",
+        source=(
+            "2026-04-24 scaffold audit: areal-openai-proxy-empty-session tests use "
+            "`ruff format --check` but instruction never mentions formatting. "
+            "Opus+MiniMax produced correct fixes that failed on formatting"
+        ),
+        failure_example=(
+            "areal-openai-proxy-empty-session: test_repo_ruff_format runs `ruff "
+            "format --check` and expects 0 errors. Instruction has zero mentions "
+            "of ruff/format. Agent doesn't know to auto-format."
+        ),
+    ),
+    Rubric(
         name="every_gold_test_passes",
         tier="A",
         description=(

@@ -34,3 +34,10 @@ When the solution runs:
 - It should output which examples were updated (one per line, e.g., `Updated examples/foo/package.json`)
 - It should output `Done` followed by a summary when complete (e.g., `Done. Updated N example(s).`)
 - The `changeset:version` script in `package.json` should call this script
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`
+- `eslint (JS/TS linter)`

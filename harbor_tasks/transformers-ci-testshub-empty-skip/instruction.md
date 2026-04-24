@@ -17,3 +17,9 @@ When no other CI test jobs have any matching test files (i.e., the PR doesn't to
 ## Relevant code
 
 Look at `create_test_list_from_filter()` in `utils/tests_fetcher.py`, around line 1106. The bug is in how `tests_hub` is handled relative to the other jobs.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

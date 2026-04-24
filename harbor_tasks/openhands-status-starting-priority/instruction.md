@@ -33,3 +33,10 @@ npm test -- status.test.ts
 - User sees "Disconnected" when resuming a conversation
 - Server correctly returns "STARTING" but it's not displayed
 - The `getStatusCode` function prioritizes WebSocket status over conversation status
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`
+- `eslint (JS/TS linter)`

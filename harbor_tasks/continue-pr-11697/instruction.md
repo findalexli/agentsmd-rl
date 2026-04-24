@@ -32,3 +32,9 @@ Find the code in the CLI that resolves local review files (currently only readin
 - Ensure agents directory takes precedence when duplicate filenames exist
 - Update relevant doc comments to mention both directories
 - Create the test file at `extensions/cli/src/commands/review/resolveReviews.test.ts`
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

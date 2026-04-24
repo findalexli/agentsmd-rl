@@ -24,4 +24,10 @@ The date parsing happens for two fields:
 - `item.x[0]` - the start date field
 - `item.x[1]` - the end date field
 
-Both the `min` and `max` scale calculations use these values. The `dayjs` library is available in this codebase for date handling.
+Both the `min` and `max` scale calculations use these values.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`

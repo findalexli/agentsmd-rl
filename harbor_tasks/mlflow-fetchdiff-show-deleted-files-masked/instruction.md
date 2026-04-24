@@ -16,3 +16,10 @@ After fixing the code, update the fetch-diff skill documentation (`.claude/skill
 
 - `.claude/skills/src/skills/commands/fetch_diff.py` — the diff processing code
 - `.claude/skills/fetch-diff/SKILL.md` — skill documentation with output format examples
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`
+- `mypy (Python type checker)`

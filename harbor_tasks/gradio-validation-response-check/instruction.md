@@ -11,3 +11,9 @@ When `process_validation_response` receives a dict with `is_valid` set to `False
 ## Files to Look At
 
 - `gradio/queueing.py` — Contains the `process_validation_response` function that processes validation results from event handlers
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

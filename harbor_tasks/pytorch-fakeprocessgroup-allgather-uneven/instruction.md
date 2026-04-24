@@ -21,4 +21,10 @@ dist.all_gather(output_tensors, input_tensor)  # CRASH: shape mismatch
 
 ## Expected Behavior
 
-The `allgather` operation should complete successfully without crashing. Output tensors whose first dimension matches the input tensor should be filled normally, while output tensors with a different first-dimension size should be left unmodified.
+The `allgather` operation should complete successfully without crashing when output tensors have different first-dimension sizes than the input tensor. Tensors that cannot be filled due to shape mismatch should be handled gracefully — the operation should not fail, but should process each tensor appropriately.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

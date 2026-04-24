@@ -42,3 +42,9 @@ The repository uses Go's testing framework. Run:
 - `go vet ./...` for static analysis
 
 Look at existing deprecation implementations (like `.Site.Sites`) for the pattern to follow.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `gofmt (Go formatter)`

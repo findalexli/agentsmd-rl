@@ -53,3 +53,9 @@ The migration filename should follow the pattern `104_add_disabled_skills_to_use
 3. Create the appropriate Alembic migration file if needed
 
 The fix should be minimal and focused - only adding what's needed to make the existing SaaS settings persistence work correctly for the `disabled_skills` field.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

@@ -34,3 +34,9 @@ Your fix should:
 ## References
 
 - Original issue: https://github.com/gohugoio/hugo/issues/4621
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `gofmt (Go formatter)`

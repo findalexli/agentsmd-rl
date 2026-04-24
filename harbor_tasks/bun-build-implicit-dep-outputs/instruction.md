@@ -38,39 +38,35 @@ After modifying the build graph:
 3. Dependency library outputs (`depOutputs`) should trigger invalidation for PCH, C, and no-PCH C++ compilation
 4. Documentation should correctly describe which dependency types use implicit vs order-only inputs and why
 
-## Required Documentation Content
+## Documentation Requirements
 
-The verification checks for these literal strings in the modified files:
+The modified `CLAUDE.md` must correctly explain the ninja dependency types used for different categories of inputs. Specifically:
 
-**CLAUDE.md Gotchas section** must contain:
-- "PCH, cc, and no-PCH cxx" (or a pattern matching all three)
-- "implicit dep on `depOutputs`"
+**Gotchas section** — must explain that dependency library outputs (like `libJavaScriptCore.a`) use implicit dependencies, not order-only, because local sub-builds rewrite forwarding headers as undeclared side effects and only the library itself serves as a reliable invalidation signal.
 
-**CLAUDE.md Ninja primer section** must show:
-- An example with `deps/zstd/libzstd.a` as an implicit dependency (using `|`)
-- Must NOT show the old pattern with `||` and `.ref` files
+**Ninja primer section** — must include an example showing that library outputs use implicit dependencies (`|`), not order-only (`||`).
 
-**CLAUDE.md depfile section** must explain:
-- "implicit" dependencies for dep outputs
-- "forwarding headers" or "undeclared side effect" of WebKit sub-builds
+**depfile section** — must explain the distinction between codegen headers (order-only, tracked via depfile) and dep outputs (implicit, used as invalidation signal), including the WebKit forwarding header side effect explanation.
 
-**bun.ts depOutputs comment** must:
-- Mention "implicit-dep signal"
-- NOT mention "PCH order-only-deps"
+**`bun.ts` depOutputs comment** — must describe the role of `depOutputs` as an invalidation signal for compilation edges, not just for PCH.
 
-**compile.ts interface documentation** must:
-- `implicitInputs`: mention "dep outputs" as "invalidation signal"
-- `orderOnlyInputs`: redirect dep outputs to `implicitInputs` and clarify use for "codegen" headers
+**`compile.ts` CompileOpts documentation** — must explain the purpose of `implicitInputs` (for dep outputs as invalidation signal) and `orderOnlyInputs` (for codegen headers that are declared ninja outputs with restat).
 
-## Required Code Patterns
+## Code Structure Requirements
 
-The verification checks for these patterns in `bun.ts`:
+The modified `bun.ts` must separate dependency tracking for order-only inputs from invalidation signals:
 
-1. A variable containing `codegen.cppAll` for order-only use (to be used with `orderOnlyInputs`)
-2. No variable combining both `depOutputs` and `codegen.cppAll` together
-3. C compilation (`compileC`) passing `depOutputs` via `implicitInputs` and the codegen variable via `orderOnlyInputs`
-4. No-PCH C++ compilation using the same pattern: `depOutputs` via `implicitInputs`, codegen variable via `orderOnlyInputs`
+1. There must be a variable used with `orderOnlyInputs` that contains only `codegen.cppAll` (not `depOutputs`)
+2. The old variable that combined `depOutputs` with `codegen` must be removed
+3. C compilation (`compileC`) must pass `depOutputs` via `implicitInputs` and the order-only codegen variable via `orderOnlyInputs`
+4. No-PCH C++ compilation must use the same pattern: `depOutputs` via `implicitInputs`, codegen variable via `orderOnlyInputs`
 
 ## Verification
 
 After modifying the build graph, run the build command twice after rebuilding a sub-build that updates forwarding headers. All affected C and no-PCH C++ source files should recompile on the second run (the first main build after the sub-build), producing a consistent binary without requiring a third build.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`

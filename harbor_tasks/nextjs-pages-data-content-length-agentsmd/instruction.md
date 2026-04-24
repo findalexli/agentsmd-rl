@@ -31,3 +31,9 @@ The `AGENTS.md` file documents the `pnpm new-test` command syntax in two places:
 2. The **"Test Gotchas"** section — the smoke testing tip must also use the correct `pnpm new-test -- --args` syntax. Look for a line containing `Quick smoke testing` and verify it uses `-- --args` instead of just `--args`.
 
 Both sections currently use the buggy form `pnpm new-test --args` (missing the `--` separator). These must be corrected to `pnpm new-test -- --args` in both locations.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

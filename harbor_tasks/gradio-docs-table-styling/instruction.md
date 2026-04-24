@@ -25,3 +25,9 @@ Tables on docs pages should have:
 ## Reproduction
 
 Visit any documentation page that contains a markdown table. The table content is present but renders as plain unstyled HTML elements.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`

@@ -45,3 +45,9 @@ When a user tries to interact with elements using standard selectors, the system
 - `packages/playwright-core/src/tools/screenshot.ts` - screenshot tool schema
 - `packages/playwright-core/src/tools/verify.ts` - verify list/value tool schemas
 - `packages/playwright-core/src/skill/SKILL.md` - CLI skill documentation to be updated
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

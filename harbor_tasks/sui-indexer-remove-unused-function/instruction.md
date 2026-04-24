@@ -2,13 +2,13 @@
 
 ## Problem
 
-The `sui-indexer-alt-framework-store-traits` crate contains dead code that triggers warnings during compilation and static analysis. This appears to be vestigial code from a recent refactoring that should be removed to keep the codebase clean.
+The `sui-indexer-alt-framework-store-traits` crate contains dead code that triggers warnings during compilation and static analysis. A recent refactoring removed the `sequential_connect` method and the `anyhow::Context` import that were only used by it, leaving them unused. This vestigial code should be removed to keep the codebase clean.
 
 ## Your Task
 
 1. Navigate to the `sui-indexer-alt-framework-store-traits` crate source code
-2. Identify any unused methods, imports, or code that produces warnings
-3. Remove the dead code while preserving all functionality that is actually used
+2. Remove the unused `sequential_connect` method from the `SequentialStore` trait
+3. Remove the unused `anyhow::Context` import
 4. Ensure the crate remains fully functional after cleanup
 
 ## Verification

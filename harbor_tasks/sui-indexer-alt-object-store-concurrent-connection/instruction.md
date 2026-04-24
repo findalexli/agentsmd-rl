@@ -2,57 +2,61 @@
 
 ## Problem Description
 
-The `ObjectStoreConnection` in `crates/sui-indexer-alt-object-store/src/lib.rs` currently has stub implementations for the `ConcurrentConnection` trait methods. These stubs either return `Ok(None)` or bail with "Pruning not supported by this store". Additionally, the `init_watermark` method ignores its `checkpoint_hi_inclusive` parameter and delegates to an incomplete implementation.
+The `ObjectStoreConnection` in the sui-indexer-alt-object-store crate has stub implementations for the `ConcurrentConnection` trait methods. These stubs either return `Ok(None)` or error with "Pruning not supported by this store". Additionally, the `init_watermark` method ignores its checkpoint parameter and delegates to an incomplete implementation.
 
-You need to implement proper functionality for:
+## What Needs to Be Fixed
 
-1. **`ConcurrentConnection::reader_watermark()`** - Should return the current reader watermark (checkpoint_hi_inclusive and reader_lo values)
+The following trait methods are not working correctly:
 
-2. **`ConcurrentConnection::pruner_watermark()`** - Should return the pruner watermark with proper `wait_for_ms` calculation based on `pruner_timestamp_ms + delay - now`
+1. **`reader_watermark()`** - Currently returns `Ok(None)` instead of actual watermark data with checkpoint and reader position information
 
-3. **`ConcurrentConnection::set_reader_watermark()`** - Should update the reader_lo field in the watermark
+2. **`pruner_watermark()`** - Currently returns `Ok(None)` instead of actual watermark data with a computed wait time based on how long until pruning can proceed
 
-4. **`ConcurrentConnection::set_pruner_watermark()`** - Should update the pruner_hi field in the watermark
+3. **`set_reader_watermark()`** - Currently returns an error instead of updating the reader position in the watermark
 
-5. **`Connection::init_watermark()`** - Should properly use the `checkpoint_hi_inclusive` parameter to create/initialize watermarks
+4. **`set_pruner_watermark()`** - Currently returns an error instead of updating the pruner position in the watermark
 
-## Key Requirements
+5. **`init_watermark()`** - Currently ignores the `checkpoint_hi_inclusive` parameter instead of using it to properly initialize watermark positions
 
-### Watermark Format Migration
-The existing watermark format stores `checkpoint_hi_inclusive` as a required `u64`. The new format makes it `Option<u64>` and adds three new fields:
-- `reader_lo: u64` - The lowest checkpoint available for reading
-- `pruner_hi: u64` - The highest checkpoint that has been pruned
-- `pruner_timestamp_ms: u64` - Timestamp when pruning last ran
+## Watermark Data
 
-Your implementation must:
-1. Handle both the old format (for backwards compatibility) using `#[serde(default)]`
-2. Migrate old format watermarks to the new format when encountered
-3. Use `reader_lo <= checkpoint_hi_inclusive` as a visibility check for read operations
+The watermark stores information about how far indexer processing has progressed. The key fields are:
+- `checkpoint_hi_inclusive` - The highest checkpoint that has been committed
+- `reader_lo` - The lowest checkpoint available for reading (must be <= checkpoint for visibility)
+- `pruner_hi` - The highest checkpoint that has been pruned
+- `pruner_timestamp_ms` - Timestamp of last pruning operation
 
-### Helper Functions
-You'll need to implement:
-- `watermark_path(pipeline: &str) -> ObjectPath` - Returns path like `_metadata/watermarks/{pipeline}.json`
-- `get_watermark_for_read()` - For reading watermarks with visibility check (reader_lo <= checkpoint)
-- `get_watermark_for_write()` - For reading watermarks with e_tag/version for conditional writes
-- `set_watermark()` - For writing watermarks with proper concurrency control
+The existing watermark format needs to be extended with new fields to track reader and pruner positions. The system must handle backwards compatibility with watermarks that don't yet have these new fields.
 
-### Concurrency Control
-All watermark writes must use proper concurrency control via the object store's `PutMode::Update` with e_tag and version to prevent lost updates.
+## Implementation Notes
 
-## Testing
+- Watermarks are stored as JSON files at path `_metadata/watermarks/{pipeline}.json`
+- Reads must filter out watermarks where the checkpoint is less than `reader_lo` (visibility check)
+- Writes must use proper concurrency control (e_tag/version) to prevent lost updates
+- Wait time calculations must use `u128` for intermediate arithmetic to avoid overflow, then convert to `i64` using saturating subtraction
 
-The crate has comprehensive unit tests. Run them with:
+## Verification
+
+Run the unit tests:
 ```bash
 cargo test -p sui-indexer-alt-object-store --lib
 ```
 
-Key test cases to verify your implementation:
-- `test_reader_watermark_roundtrip` - Tests reading and setting reader watermarks
-- `test_pruner_watermark_wait_for_ms` - Tests pruner watermark wait time calculation
-- `test_init_watermark_migrates_legacy_format` - Tests migration from old format
-- `test_init_watermark_returns_existing_on_conflict` - Tests idempotent initialization
+The implementation must make the following test cases pass. Each test exercises a specific behavior that must work correctly:
 
-## Files to Modify
+### Reader Watermark Tests
+- **`test_reader_watermark_roundtrip`** — Reading then writing the reader watermark returns the written value (read/write roundtrip)
+- **`test_set_pruner_watermark`** — Setting the pruner watermark updates the stored value
+
+### Pruner Watermark Tests
+- **`test_pruner_watermark_wait_for_ms`** — Computing wait time for pruning uses correct u128 intermediate arithmetic to avoid overflow
+
+### Init Watermark Tests
+- **`test_init_watermark_fresh_with_checkpoint`** — Initializing watermark with a checkpoint value properly sets `checkpoint_hi_inclusive`
+- **`test_init_watermark_migrates_legacy_format`** — Watermarks stored in the old format (without reader_lo/pruner_hi fields) are migrated correctly on first read
+- **`test_init_watermark_returns_existing_on_conflict`** — When a watermark already exists (AlreadyExists error), the existing value is returned rather than an error
+
+## File to Modify
 
 - `crates/sui-indexer-alt-object-store/src/lib.rs` - Main implementation file
 
@@ -62,3 +66,9 @@ Key test cases to verify your implementation:
 - Use `u128` for intermediate calculations to avoid overflow, then `saturating_sub` and `i64::try_from`
 - The `InMemory` object store from `object_store::memory::InMemory` is useful for testing
 - Review the trait definitions in `sui_indexer_alt_framework_store_traits` to understand the expected types
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `cargo fmt (Rust formatter)`

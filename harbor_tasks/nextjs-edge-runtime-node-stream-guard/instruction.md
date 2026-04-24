@@ -27,3 +27,9 @@ The project's error registry `packages/next/errors.json` uses a JSON schema that
 - At least **1** of those must mention `Readable`, `stream`, or `webToReadable`
 
 New error codes should follow the existing sequential numbering pattern.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`

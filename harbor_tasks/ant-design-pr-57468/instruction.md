@@ -24,3 +24,9 @@ Users should be able to scroll through time options using touch gestures on mobi
 ## Technical Context
 
 The TimePicker uses CSS-in-JS styling via `@ant-design/cssinjs`. The time panel columns have specific overflow styling that controls scrolling behavior. The issue appears to be related to how CSS pseudo-selectors interact with touch events.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

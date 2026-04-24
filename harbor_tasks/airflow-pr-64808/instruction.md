@@ -26,3 +26,10 @@ to `uv sync` with `--group`, even those that are optional extras. The correct be
 The dependency groups currently defined in the Airflow `pyproject.toml` include: `dev`, `docs`,
 `docs-gen`, `leveldb`. The optional extras currently defined include: `graphviz`, `otel`,
 `all-core`, `async`, `kerberos`, and many provider-specific extras.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`
+- `mypy (Python type checker)`

@@ -22,3 +22,9 @@ The test file at `packages/ui/src/elements/ClipboardAction/mergeFormStateFromCli
 4. Paste into a new block of the same type
 5. **Expected:** The new block shows the same number of items (3)
 6. **Actual (bug):** The new block shows double the items (6)
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

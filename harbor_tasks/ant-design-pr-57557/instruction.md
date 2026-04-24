@@ -17,11 +17,13 @@ The correct behavior should be: both `dropdownMenuColumnStyle` and `popupMenuCol
 
 ### 1. Deprecation Warning Mappings (in `components/cascader/index.tsx`)
 
-The deprecation mapping object in the component should map both properties to the same final replacement API. Both `dropdownMenuColumnStyle` and `popupMenuColumnStyle` should have entries in the deprecation mapping that point to this replacement. The replacement API uses the pattern `styles.popup.listItem` (a `styles.popup.*` token).
+The deprecation mapping object in the component should map both properties to the same final replacement API. Both `dropdownMenuColumnStyle` and `popupMenuColumnStyle` should have entries in the deprecation mapping that point to a consistent final replacement.
+
+The replacement API follows the pattern used by other similar props in the same deprecation mapping (e.g., `dropdownClassName` maps to `classNames.popup.root`, `dropdownStyle` maps to `styles.popup.root`).
 
 ### 2. JSDoc Comments (in `components/cascader/index.tsx`)
 
-The TypeScript interface should have JSDoc `@deprecated` tags on both `popupMenuColumnStyle` and `dropdownMenuColumnStyle` that reference the same replacement API (using the same literal string format for both).
+The TypeScript interface should have JSDoc `@deprecated` tags on both `popupMenuColumnStyle` and `dropdownMenuColumnStyle` that reference the same final replacement API.
 
 ### 3. English API Documentation (in `components/cascader/index.en-US.md`)
 
@@ -42,3 +44,16 @@ Currently, the deprecation chain creates a two-step migration:
 2. `popupMenuColumnStyle` → was not deprecated (no warning mapping exists)
 
 This means developers following the first warning would end up using another deprecated API instead of going directly to the final replacement.
+
+## Test Verification
+
+The repository contains tests in `components/cascader/__tests__/index.test.tsx` that verify the deprecation warnings. After the fix, these tests should pass:
+- Tests related to "legacy dropdownMenuColumnStyle" should emit a deprecation warning pointing to the final replacement
+- Tests related to "deprecated popupMenuColumnStyle" should emit a deprecation warning pointing to the final replacement
+- Tests should verify that the new styles-based API takes precedence over the deprecated props
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

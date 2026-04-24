@@ -14,3 +14,9 @@ The notification panel should render correctly regardless of whether a title is 
 
 - `components/notification/PurePanel.tsx`
 - `components/notification/style/index.ts`
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

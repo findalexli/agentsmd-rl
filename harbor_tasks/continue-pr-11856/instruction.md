@@ -2,31 +2,32 @@
 
 ## Symptom
 
-The OpenRouter provider in `core/llm/toolSupport.ts` has issues with recognizing certain models as tool-supporting:
+The OpenRouter provider has issues with recognizing certain models as tool-supporting:
 
 1. **Gemini 3 models not recognized**: Models like `google/gemini-3-pro-preview` are not detected as supporting tools, even though they should be.
 
-2. **Suffix handling broken**: Models with OpenRouter-specific suffixes like `meta-llama/llama-3.2-3b-instruct:free` fail to match because the `:free` (or `:extended`, `:beta`) suffix is not stripped before pattern matching.
+2. **Suffix handling broken**: Models with OpenRouter-specific suffixes like `meta-llama/llama-3.2-3b-instruct:free` fail to match because the suffix is not stripped before pattern matching.
 
-3. **Autocomplete endpoint misconfiguration**: In `CompletionProvider.ts` and `NextEditProvider.ts`, OpenRouter models are incorrectly forced to use the legacy `/completions` endpoint instead of `/chat/completions`.
+3. **Autocomplete endpoint misconfiguration**: OpenRouter models are incorrectly forced to use the legacy `/completions` endpoint instead of `/chat/completions`. The condition in `core/autocomplete/CompletionProvider.ts` that forces the legacy endpoint affects OpenAI-based providers including OpenRouter.
 
-4. **Gemini thought signatures missing**: When using Gemini models via OpenRouter, tool calls may produce 400 errors because the `thought_signature` field is missing.
-
-## Relevant Files
-
-- `core/llm/toolSupport.ts` - OpenRouter tool support detection logic
-- `core/llm/llms/OpenRouter.ts` - OpenRouter LLM class
-- `core/autocomplete/CompletionProvider.ts` - Completion provider
-- `core/nextEdit/NextEditProvider.ts` - Next edit provider
+4. **Gemini thought signatures missing**: When using Gemini models via OpenRouter, tool calls may produce 400 errors because a required field is missing. The `core/llm/llms/OpenRouter.ts` file handles chat completion modifications.
 
 ## Expected Behavior
 
 - `google/gemini-3-pro-preview` should be recognized as a tool-supporting model
-- `meta-llama/llama-3.2-3b-instruct:free` should have the `:free` suffix stripped and then match `meta-llama/llama-3.2-3b-instruct`
+- `meta-llama/llama-3.2-3b-instruct:free` should have the `:free` suffix stripped and then match
 - OpenRouter should not be forced to use the legacy `/completions` endpoint
-- Gemini tool calls via OpenRouter should include `thought_signature` to prevent 400 errors
+- Gemini tool calls via OpenRouter should include the necessary signature field to prevent 400 errors
 
-## Notes
+## Relevant Files
 
-- Tests exist in `core/llm/toolSupport.test.ts` for the `openrouter` provider
-- The `PROVIDER_TOOL_SUPPORT` record maps provider names to detection functions
+- `core/llm/toolSupport.ts` — handles model tool-support detection for OpenRouter
+- `core/autocomplete/CompletionProvider.ts` — determines whether to use legacy completions endpoint
+- `core/llm/llms/OpenRouter.ts` — OpenRouter provider implementation with chat body modifications
+- `core/nextEdit/NextEditProvider.ts` — also determines whether to use legacy completions endpoint
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`

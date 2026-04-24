@@ -29,4 +29,11 @@ When a null value is passed to any of these type parsers, they should gracefully
 
 ## Hint
 
-Look at how `normalize_bool` already handles null values and apply similar null guards to the other parser functions.
+When a null value is passed to a type parser, calling string methods like `.replace()` or `.slice()` on it will throw a `TypeError`. Each affected parser function needs a null guard that returns null early when the input is null.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`
+- `eslint (JS/TS linter)`

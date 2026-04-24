@@ -45,3 +45,9 @@ The repository uses pytest for backend testing. After implementing the changes:
 - The old endpoint should remain functional with a deprecation flag
 - The `User` alias should work for existing code
 - All user context classes should have the `get_user_git_info` method
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `mypy (Python type checker)`

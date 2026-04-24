@@ -42,3 +42,10 @@ The implementation must satisfy these verified behaviors:
 - **Test fixture directory**: `test/e2e/app-dir/segment-cache/staleness/app/per-page-config/`
 
 The test must deterministically pass every time after the fix is applied.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`
+- `eslint (JS/TS linter)`

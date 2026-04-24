@@ -35,3 +35,9 @@ The existing `attempt_connection()` function in the same file must continue to w
 ### TypeScript side (`js/tootils/src/app-launcher.ts`)
 
 The `launchGradioApp()` function needs an HTTP-based readiness check that polls the server with HTTP requests rather than relying solely on stdout log messages. The file must contain code that makes HTTP requests using one of Node.js's built-in HTTP APIs — the source must include at least one of the patterns `http.request`, `http.get`, or `fetch(`.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

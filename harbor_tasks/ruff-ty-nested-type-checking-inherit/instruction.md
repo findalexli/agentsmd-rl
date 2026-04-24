@@ -15,3 +15,9 @@ Nested conditional clauses inside `if TYPE_CHECKING:` blocks should inherit the 
 ## Files to Look At
 
 - `crates/ty_python_semantic/src/semantic_index/builder.rs` — The semantic index builder where `in_type_checking_block` state is managed during AST visitation
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `cargo fmt (Rust formatter)`

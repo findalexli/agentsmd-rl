@@ -24,3 +24,9 @@ Additionally, the `--extension` option for connecting to a browser extension is 
    - Map the CLI `cdp` option to `cdpEndpoint` in the MCP config for browser isolation logic
 
 6. CLI documentation in `packages/playwright-core/src/tools/cli-client/skill/SKILL.md` must document `--extension` under the attach command section (e.g., `playwright-cli attach --extension`), and must not document `playwright-cli open --extension` in the open command section.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

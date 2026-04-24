@@ -25,3 +25,9 @@ After applying the fix:
 - The status is broadcast by ingesters during cluster membership exchanges
 - During a rolling deployment, old and new versions coexist temporarily
 - The control plane relies on accurate ingester status to route shards appropriately
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `cargo clippy (Rust linter)`

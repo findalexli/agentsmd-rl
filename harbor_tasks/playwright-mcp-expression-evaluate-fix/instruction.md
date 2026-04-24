@@ -33,3 +33,9 @@ The test file `tests/mcp/evaluate.spec.ts` contains existing tests for the evalu
 - Run `npm run build` after making changes
 - Run `npm run flint` before committing to check TypeScript compilation
 - MCP tests use `npm run ctest-mcp <filter>` for Chromium-only tests
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

@@ -9,3 +9,9 @@ The two affected clients live in `slime/utils/http_utils.py`:
 **Correct behavior:** Both clients must communicate intra-cluster without using the system proxy, regardless of environment variable settings.
 
 **File to modify:** `slime/utils/http_utils.py`
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `black (Python formatter)`

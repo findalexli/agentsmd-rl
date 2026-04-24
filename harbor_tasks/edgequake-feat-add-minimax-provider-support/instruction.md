@@ -28,3 +28,9 @@ MiniMax should be available as a fully integrated LLM provider:
 - `README.md` — architecture diagram listing LLM providers
 - `docs/operations/configuration.md` — environment variable reference tables
 - `.env.example` — configuration documentation for users
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `cargo clippy (Rust linter)`

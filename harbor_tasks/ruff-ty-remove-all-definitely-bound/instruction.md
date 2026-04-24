@@ -18,3 +18,10 @@ After removing the dead code, the crate should compile cleanly with no warnings.
 
 - `crates/ty_python_semantic/src/types/infer.rs` — contains the `ExpressionInferenceExtra` struct with the dead field
 - `crates/ty_python_semantic/src/types/infer/builder.rs` — contains the `TypeInferenceBuilder` struct with the dead field and all related logic
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `cargo clippy (Rust linter)`
+- `cargo fmt (Rust formatter)`

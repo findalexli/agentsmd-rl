@@ -35,3 +35,9 @@ The model type is declared in the `model.type` field of `tokenizer.json`: `BPE`,
 - The `post_processor`, `padding`, and `truncation` Rust objects don't depend on the vocabulary — they can be extracted from a much lighter representation of the tokenizer.
 - Not all tokenizer model types behave the same when constructed with minimal data — some require a real vocabulary to initialize correctly.
 - Some older `tokenizer.json` formats omit the `"type"` field in the `"model"` section, so a fallback path is needed for those cases.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

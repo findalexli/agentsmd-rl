@@ -28,3 +28,9 @@ When the number of concurrent pre-auth requests (body reads in progress) exceeds
 
 - `extensions/synology-chat/src/webhook-handler.ts` — the handler entry point
 - `extensions/synology-chat/src/test-http-utils.ts` — the mock response helper
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

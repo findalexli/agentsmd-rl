@@ -50,3 +50,9 @@ The script must detect GitHub Actions jobs with conclusion values of `failure`, 
 ## Files to Look At
 
 - `scripts/pr-status.js` — The CI analysis script. Key areas: job fetching/pagination with retry logic, job filtering, job categorization, report generation, and flaky test detection.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `typos (spell-check)`

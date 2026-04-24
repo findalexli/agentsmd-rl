@@ -26,3 +26,9 @@ The same issue also affects the ISR fallback code path where a cached HTML entry
 ## Expected behavior
 
 `/_next/data/` JSON responses and ISR fallback HTML responses should include `Content-Length` and `ETag` headers, matching the behavior of earlier versions. The responses should not use chunked transfer encoding for these static/known-length payloads.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`

@@ -19,11 +19,11 @@ Fix the performance problem and the layout issue described above. The solution m
 The Results component (`apps/studio/components/interfaces/SQLEditor/UtilityPanel/Results.tsx`) must be refactored so that:
 
 - There is exactly **one** `<ContextMenu_Shadcn_>` element rendered at the component level, outside of `renderCell`. The `renderCell` callback must **not** contain any `ContextMenu_Shadcn_` or `ContextMenu_Shadcn` elements.
-- The component uses `useRef` to manage shared state for the context menu:
-  - A ref named `contextMenuCellRef` to store the column and value of the cell that was right-clicked
-  - A ref named `triggerRef` for a hidden trigger element that is repositioned to the cursor location on right-click
-- A function named `handleContextMenu` is defined using `useCallback` to coordinate opening the shared context menu at the cursor position.
-- The `columns` array is memoized using `useMemo`.
+- The component uses React refs to manage shared state for the context menu:
+  - A ref to store the column and value of the cell that was right-clicked
+  - A ref for a hidden trigger element that is repositioned to the cursor location on right-click
+- A callback handler coordinates opening the shared context menu at the cursor position.
+- The `columns` array is memoized.
 - Cell values are formatted for display using `formatCellValue` (imported from `./Results.utils`).
 - Clipboard values are formatted using `formatClipboardValue` (also imported from `./Results.utils`).
 
@@ -56,7 +56,7 @@ Create the following test files:
 
 - **`apps/studio/tests/components/SQLEditor/Results.utils.test.ts`** — must contain `describe('formatClipboardValue'` and/or `describe('formatCellValue'` blocks testing the utility functions' behavior.
 
-- **`apps/studio/tests/components/SQLEditor/Results.test.tsx`** — must verify that only a single context menu is rendered regardless of how many rows are displayed. The test must use a variable named `contextMenuMountCount` that tracks how many times `ContextMenu_Shadcn_` mounts, and assert `expect(contextMenuMountCount).toBe(1)`.
+- **`apps/studio/tests/components/SQLEditor/Results.test.tsx`** — must verify that only a single context menu is rendered regardless of how many rows are displayed. The test must track how many times `ContextMenu_Shadcn_` mounts and assert that exactly one instance exists.
 
 ### 5. Code Formatting
 

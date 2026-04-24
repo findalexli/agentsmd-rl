@@ -49,3 +49,10 @@ After making changes, verify:
 1. The TypeScript code compiles without errors
 2. The hook structure follows the pattern described above
 3. The fix specifically handles the React Strict Mode scenario
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`
+- `eslint (JS/TS linter)`

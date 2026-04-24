@@ -28,3 +28,9 @@ result = demo("Some text to summarize")
   - The error handler should contain at least 2 if-branches and at least 3 raise statements.
   - Errors containing "401" or "You must provide an api_key" must produce messages matching the regex `(?i)(unauthorized|signed in)`.
   - HTTP 429 errors must raise a `TooManyRequestsError`.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

@@ -27,3 +27,11 @@ The root cause is how Transformers v5's `ProcessorMixin` decides which processor
 ## What Needs to Change
 
 The processor classes need their constructors updated so that Transformers v5 can discover the multimodal components through signature introspection. The model info classes that instantiate these processors also need corresponding updates to provide the components correctly.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`
+- `mypy (Python type checker)`
+- `typos (spell-check)`

@@ -7,7 +7,7 @@ The GraphQL API has a bug where Display v2 format objects fail to render for old
 ## Symptoms
 
 - Display v2 formats fail to render for objects with older versions
-- The root version bound from the rendered object is incorrectly applied to the Display registry lookup
+- The rendered object's version is incorrectly used to constrain the Display registry lookup
 - Newer Display v2 formats cannot be found because the lookup is constrained by the rendered object's version
 
 ## File to Modify
@@ -23,5 +23,5 @@ The GraphQL API has a bug where Display v2 format objects fail to render for old
 
 ## Notes
 
-- The `Scope` type controls version bounding for object lookups and is defined in `crates/sui-indexer-alt-graphql/src/scope.rs`
-- Do NOT modify test files (`.move` and `.snap` files)
+- Do NOT modify files other than `display.rs`
+- The code must pass: `scripts/git-checks.sh`, `cargo xlint`, `cargo clippy -p sui-indexer-alt-graphql`

@@ -23,4 +23,10 @@ The cleanup function should:
 
 - `dev/breeze/src/airflow_breeze/utils/path_utils.py`
 
-Look at the `cleanup_python_generated_files()` function around line 415.
+Look at the `cleanup_python_generated_files()` function.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

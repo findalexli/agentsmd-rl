@@ -23,3 +23,9 @@ You can verify your implementation by:
 1. Building the stress binary: `cargo build --package sui-benchmark --bin stress`
 2. Checking the help output: `cargo run --package sui-benchmark --bin stress -- --help` (should show `--min-tps`)
 3. Running cargo check: `cargo check --package sui-benchmark`
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `cargo fmt (Rust formatter)`

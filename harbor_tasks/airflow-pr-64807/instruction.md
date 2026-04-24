@@ -6,29 +6,19 @@ Other operators like `GlueJobOperator`, `SparkSubmitOperator`, `LivyOperator`, a
 
 ## The Problem
 
-The OpenLineage utilities in `providers/openlineage/src/airflow/providers/openlineage/utils/spark.py` lack functions to inject OpenLineage configuration into EMR Serverless job configurations. Additionally, the `EmrServerlessStartJobOperator` in `providers/amazon/src/airflow/providers/amazon/aws/operators/emr.py` cannot access these utilities from the compat layer at `providers/common/compat/src/airflow/providers/common/compat/openlineage/utils/spark.py`.
+When `EmrServerlessStartJobOperator` starts a job, the resulting OpenLineage events from the Spark job cannot be correlated with the parent Airflow task run. Additionally, the Spark job may not know how to communicate with the OpenLineage backend that Airflow is using.
 
-Specifically, the following functions need to be implemented:
+## What Needs to Happen
 
-1. **`inject_parent_job_information_into_emr_serverless_properties(configuration_overrides, context)`** - Injects OpenLineage parent job information (namespace, job name, run ID) into the EMR Serverless `spark-defaults` configuration. The function should:
-   - Accept `configuration_overrides` (dict or None) and `context` parameters
-   - Return a new dict with the nested `applicationConfiguration` structure updated
-   - NOT mutate the original `configuration_overrides` dict
-   - Skip injection if `spark.openlineage.parentJobNamespace` is already present in properties
+1. **Inject parent job information**: When enabled, the operator should inject OpenLineage parent job information (namespace, job name, run ID) into the EMR Serverless job configuration so the Spark job can emit a `parentRunFacet` linking back to the Airflow task.
 
-2. **`inject_transport_information_into_emr_serverless_properties(configuration_overrides, context)`** - Injects OpenLineage transport configuration so the Spark job sends events to the same backend as Airflow. The function should:
-   - Accept `configuration_overrides` (dict or None) and `context` parameters
-   - Return a new dict with the nested `applicationConfiguration` structure updated
-   - Skip injection if `spark.openlineage.transport.type` is already present in properties
+2. **Inject transport information**: When enabled, the operator should inject OpenLineage transport configuration (backend URL, API key, etc.) into the EMR Serverless job configuration so the Spark job sends its OpenLineage events to the same backend as Airflow.
 
-3. **`_get_or_create_spark_defaults_properties(configuration_overrides)`** - A helper function that:
-   - Locates or creates the `spark-defaults` entry within `applicationConfiguration`
-   - Returns the `properties` dict of the `spark-defaults` entry
-   - Creates the full nested structure if `applicationConfiguration` doesn't exist
+3. **Follow existing patterns**: The implementation should follow the same patterns used by other operators (GlueJobOperator, SparkSubmitOperator, etc.) that already support this feature.
 
-## Expected Configuration Schema
+## EMR Serverless Configuration Structure
 
-EMR Serverless uses a nested configuration structure. The `configuration_overrides` dict has this schema:
+EMR Serverless uses a nested configuration structure passed via `configuration_overrides`. Spark properties are configured under the `spark-defaults` classification:
 
 ```python
 {
@@ -44,7 +34,6 @@ EMR Serverless uses a nested configuration structure. The `configuration_overrid
                 # ... other spark properties
             }
         },
-        # ... other classifications like spark-env
     ],
     "monitoringConfiguration": {
         # preserved as-is
@@ -59,26 +48,24 @@ Key requirements:
 - Other configuration keys like `monitoringConfiguration` must be preserved
 - Property keys for OpenLineage follow the pattern `spark.openlineage.*`
 
-## Required Integration Points
+## Expected Behavior
 
-1. **OpenLineage spark utilities** (`providers/openlineage/src/airflow/providers/openlineage/utils/spark.py`):
-   - Implement the three functions above
-   - Follow the pattern of existing functions like `inject_parent_job_information_into_spark_properties`
-   - Reuse existing helpers `_get_parent_job_information_as_spark_properties`, `_get_transport_information_as_spark_properties`, `_is_parent_job_information_present_in_spark_properties`, and `_is_transport_information_present_in_spark_properties`
+When the injection features are enabled:
 
-2. **Compat layer** (`providers/common/compat/src/airflow/providers/common/compat/openlineage/utils/spark.py`):
-   - Export the new EMR Serverless functions
-   - Add them to the `__all__` list
-   - Provide fallback implementations that log warnings when OpenLineage is unavailable
+1. The operator should accept optional boolean parameters to enable injection of parent job info and transport info (following the pattern of `openlineage.spark_inject_parent_job_info` and `openlineage.spark_inject_transport_info` config options)
 
-3. **EMR Serverless operator** (`providers/amazon/src/airflow/providers/amazon/aws/operators/emr.py`):
-   - Import the new functions from the compat layer
-   - Add optional boolean parameters `openlineage_inject_parent_job_info` and `openlineage_inject_transport_info`
-   - When enabled, call the injection functions in the `execute` method before starting the job
-   - Use the modified `configuration_overrides` when calling the EMR Serverless API
+2. If `configuration_overrides` is None, the injection should create the full nested structure
 
-## Files to Modify
+3. If `configuration_overrides` already contains an `applicationConfiguration` with a `spark-defaults` entry, the OpenLineage properties should be merged into its existing `properties` dict while preserving other properties
 
-- `providers/openlineage/src/airflow/providers/openlineage/utils/spark.py` - Add the three EMR Serverless injection functions
-- `providers/common/compat/src/airflow/providers/common/compat/openlineage/utils/spark.py` - Export the new functions with fallback implementations
-- `providers/amazon/src/airflow/providers/amazon/aws/operators/emr.py` - Integrate the injection into `EmrServerlessStartJobOperator`
+4. If OpenLineage properties are already present (e.g., `spark.openlineage.parentJobNamespace` already exists), injection should be skipped for that category
+
+5. The original `configuration_overrides` dict should NOT be mutated - a new dict should be returned
+
+6. The compat layer should export the new functions with fallback implementations that log warnings when OpenLineage is unavailable
+
+## Where to Look
+
+The OpenLineage utilities for Spark property injection are in the providers package. The compat layer for backward compatibility is also in the providers package. The `EmrServerlessStartJobOperator` is in the Amazon provider.
+
+Look at how `GlueJobOperator` or `SparkSubmitOperator` implement similar functionality for reference - they use utility functions to inject OpenLineage information into their respective configuration formats.

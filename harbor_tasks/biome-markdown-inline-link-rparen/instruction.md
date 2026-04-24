@@ -28,3 +28,9 @@ The snapshot at `crates/biome_markdown_parser/tests/md_test_suite/ok/inline_link
 - After fix: `R_PAREN@67..68 ")"` (whitespace in title content)
 
 After fixing the code, run `cargo insta review` to update the snapshot, then verify the test passes.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `cargo clippy (Rust linter)`

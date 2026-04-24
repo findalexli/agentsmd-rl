@@ -33,3 +33,10 @@ The implementation must satisfy all of the following:
 7. No bare `.unwrap()` calls may be introduced in the new service-handling code.
 
 8. The `VulnerabilityServiceFormat` enum must be imported at the top of files that use it (not locally imported within functions).
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `cargo clippy (Rust linter)`
+- `cargo fmt (Rust formatter)`

@@ -31,15 +31,15 @@ The following files must be updated so they no longer reference `./scripts/clipp
 
 ### 3. Decompose the `build_session` function
 
-The `build_session` function in `crates/goose-cli/src/session/builder.rs` must be refactored so that its logic is delegated to the following named helper functions:
+The `build_session` function in `crates/goose-cli/src/session/builder.rs` must be refactored so that its logic is delegated to smaller, focused helper functions. The decomposition should include at least five helper functions that handle:
 
-- `resolve_provider_and_model` — resolves the provider name and model configuration from session config, saved data, and recipe settings
-- `resolve_session_id` — determines the session ID (for new, resumed, or hidden sessions)
-- `handle_resumed_session_workdir` — handles working directory changes when resuming a session
-- `resolve_and_load_extensions` — resolves which extensions to load and loads them onto the agent
-- `configure_session_prompts` — configures system prompts for the session
+- Resolving the provider name and model configuration from session config, saved data, and recipe settings
+- Determining the session ID (for new, resumed, or hidden sessions)
+- Handling working directory changes when resuming a session
+- Resolving which extensions to load and loading them onto the agent
+- Configuring system prompts for the session
 
-Each of these must exist as a standalone `fn` declaration in the file, and `build_session` must call each of them. After refactoring, `builder.rs` must have at least 10 function declarations with valid syntax and balanced braces.
+Each helper must exist as a standalone `fn` declaration in the file, and `build_session` must call each of them. After refactoring, `builder.rs` must have at least 10 function declarations with valid syntax and balanced braces.
 
 ## Files to Look At
 
@@ -47,3 +47,9 @@ Each of these must exist as a standalone `fn` declaration in the file, and `buil
 - `scripts/clippy-lint.sh` and `scripts/clippy-baseline.sh` — custom scripts to remove
 - `clippy.toml` — should be created with clippy configuration
 - `AGENTS.md`, `.github/copilot-instructions.md`, `HOWTOAI.md`, `CONTRIBUTING.md`, `Justfile` — documentation and config files to update
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `cargo fmt (Rust formatter)`

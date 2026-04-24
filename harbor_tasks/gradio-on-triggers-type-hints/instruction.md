@@ -36,3 +36,9 @@ The new type should be named `Trigger` (a type alias defined in `gradio/events.p
 - Both files remain syntactically valid Python
 - `EventListenerCallable` remains importable from `gradio.events` (backward compatibility)
 - Runtime behavior is unchanged (this is a type annotation fix only)
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

@@ -44,3 +44,9 @@ The preview server plugin needs to access the bundler input configuration. It sh
 - Vite 8 exposes a property in the vite module that distinguishes it from Vite 7
 - The fix must remain backward compatible with Vite 7
 - When both configuration keys are present in the config, prefer the Vite 8 key
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

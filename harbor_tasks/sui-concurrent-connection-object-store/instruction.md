@@ -70,3 +70,10 @@ Run `cargo test -p sui-indexer-alt-object-store` to check your implementation.
 - Look at the existing `committer_watermark` and `set_committer_watermark` implementations for patterns on how to interact with the object store
 - The `object_store` crate provides the underlying storage interface
 - Check the `sui_indexer_alt_framework_store_traits` crate for trait definitions
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `cargo clippy (Rust linter)`
+- `cargo fmt (Rust formatter)`

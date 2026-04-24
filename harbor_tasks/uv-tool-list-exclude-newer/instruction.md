@@ -18,3 +18,10 @@ The CLI flag should take precedence over filesystem configuration, and both shou
 - `crates/uv/src/settings.rs` — `ToolListSettings` struct and its `resolve()` method
 - `crates/uv/src/commands/tool/list.rs` — The `list()` function that checks for outdated tools
 - `crates/uv/src/lib.rs` — Top-level command dispatch, wires settings into `list()`
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `cargo clippy (Rust linter)`
+- `cargo fmt (Rust formatter)`

@@ -19,9 +19,16 @@ This affects any project whose `requires-python` doesn't map to a version that t
    - Avoid using `.unwrap()`, `panic!()`, or `unreachable!()` patterns in the function handling requires-python resolution
    - Rust imports should always go at the top of files, never locally inside functions
 
+## CI Requirements
+
+After applying your fix, the following commands must pass:
+- `cargo fmt --check` — code formatting
+- `cargo check -p ty_project` — type checking
+- `cargo clippy -p ty_project --all-targets --all-features` — linting
+
 ## Function to Modify
 
-- `resolve_requires_python` in `crates/ty_project/src/metadata/pyproject.rs` — the function that resolves `requires-python` specifiers
+The `requires-python` resolution logic lives in the `crates/ty_project/src/metadata/pyproject.rs` file, in the function that resolves `requires-python` specifiers.
 
 ## Technical Context
 

@@ -38,3 +38,10 @@ The `conflict_marker_reachability` function must propagate the per-edge extras i
 
 - `crates/uv-resolver/src/universal_marker.rs` — contains the extra/conflict resolution function that needs a scope package parameter and logic for unencoded extra lookup
 - `crates/uv-resolver/src/lock/export/mod.rs` — contains the `Edge` enum that needs dependency extras fields, and `conflict_marker_reachability` that needs to propagate them
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `cargo clippy (Rust linter)`
+- `cargo fmt (Rust formatter)`

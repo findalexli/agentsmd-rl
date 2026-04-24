@@ -2,9 +2,9 @@
 
 ## Problem
 
-The Playwright CLI client at `packages/playwright-core/src/tools/cli-client/` depends on the external `minimist` npm package for command-line argument parsing. In `program.ts`, parsing is done via `require('minimist')` followed by extensive post-processing that manually converts values to strings, removes unspecified boolean options (to avoid default `false` values), and detects `--bool=value` usage to emit errors. Both `program.ts` and `session.ts` independently define their own local `MinimistArgs` type rather than sharing one.
+The Playwright CLI client at `packages/playwright-core/src/tools/cli-client/` uses the external `minimist` npm package for command-line argument parsing. There are issues with how the external package integrates with the TypeScript types in this codebase: boolean options that are not explicitly passed are incorrectly defaulting to `false`, and boolean options passed with `=value` are not handled correctly. The two main source files each define their own local `MinimistArgs` type rather than sharing one.
 
-This external dependency should be replaced with a local, vendored TypeScript implementation that incorporates the post-processing directly into the parser, so the call sites become simple.
+Replace the external dependency with a local, vendored TypeScript implementation that handles all the required parsing behavior correctly.
 
 ## Requirements
 
@@ -23,7 +23,7 @@ The vendored module should export a `minimist` function and a `MinimistArgs` typ
 
 ### Integration
 
-- `program.ts` should import `minimist` and `MinimistArgs` from the local `'./minimist'` module instead of using `require('minimist')`. The manual post-processing workarounds currently applied after the `require` call should no longer be necessary.
+- `program.ts` should import `minimist` and `MinimistArgs` from the local `'./minimist'` module.
 - `session.ts` should use the shared `MinimistArgs` type from the local module rather than defining its own copy.
 - The `@types/minimist` entry in `devDependencies` of the root `package.json` is no longer needed once the vendored module provides its own TypeScript types.
 
@@ -34,8 +34,14 @@ The vendored module should export a `minimist` function and a `MinimistArgs` typ
 
 ## Relevant files
 
-- `packages/playwright-core/src/tools/cli-client/program.ts` — CLI entry point, currently uses `require('minimist')` with post-processing
+- `packages/playwright-core/src/tools/cli-client/program.ts` — CLI entry point, uses external minimist
 - `packages/playwright-core/src/tools/cli-client/session.ts` — session management, defines its own `MinimistArgs` type
 - `packages/playwright-core/src/tools/cli-client/DEPS.list` — import boundary declarations
 - `package.json` — root package, contains `@types/minimist` in devDependencies
 - `CLAUDE.md` — project-level conventions including commit message rules
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

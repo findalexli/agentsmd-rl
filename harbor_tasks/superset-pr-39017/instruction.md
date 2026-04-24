@@ -54,3 +54,9 @@ The serializer functions must extract certification fields from model objects us
 
 - `serialize_chart_object` in `chart/schemas.py` must include `certified_by=getattr(chart, "certified_by", ...)` and `certification_details=getattr(chart, "certification_details", ...)` keyword arguments
 - `serialize_dataset_object` in `dataset/schemas.py` must include `certified_by=getattr(dataset, "certified_by", ...)` and `certification_details=getattr(dataset, "certification_details", ...)` keyword arguments
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

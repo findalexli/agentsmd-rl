@@ -19,17 +19,14 @@ The fix must ensure that custom matchers can be registered even when the input o
 
 1. **All three registration targets must be handled**: `expect_proto`, `expect_constructor`, and `expect_static_proto`
 
-2. **Safe property-setting methods**: Use one of these approaches on all three targets:
-   - `putMayBeIndex()` — a method that handles both string keys and numeric index keys
-   - `initFast()` with a boolean parameter to skip index properties during iteration
-   - `isIndex()` or `parseIndex()` checks with `continue`/`break`/`return` to skip index properties
+2. **Safe property-setting methods**: Use a method on all three targets that handles numeric/index keys safely rather than bare property-setting calls that assert on index-like keys.
 
 3. **Core logic must be preserved**: The solution must retain:
    - Property iteration using `JSPropertyIterator`
    - Wrapper function creation via `Bun__JSWrappingFunction__create`
    - The `applyCustomMatcher` callback setup
 
-4. **Unsafe methods to avoid**: Do not use bare `.put()` calls for registering properties on the targets, as this method internally asserts that property names are not valid array indices.
+4. **Avoid unsafe methods**: Do not use bare `.put()` calls for registering properties on the targets, as this method internally asserts that property names are not valid array indices. Use a method that gracefully handles numeric index keys.
 
 ## Acceptable read-only methods
 

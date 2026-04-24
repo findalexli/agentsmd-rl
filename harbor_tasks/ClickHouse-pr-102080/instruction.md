@@ -2,29 +2,24 @@
 
 ## Problem
 
-The ClickHouse monorepo's CI needs a style check that detects git-tracked files larger than 5 MB. Such files should be flagged as violations unless they match a whitelist of known legitimate test data.
+The ClickHouse CI needs a style check that detects git-tracked files larger than 5 MB. Large files permanently bloat the repository for every contributor and cannot be removed without rewriting git history. Binary blobs (JARs, archives, .so files, datasets) should be downloaded at test time or built from source instead of being committed.
 
 ## Task
 
-Append a large file detection section to the end of `ci/jobs/scripts/check_style/various_checks.sh`.
+Add a large file detection check to the shell script in `ci/jobs/scripts/check_style/various_checks.sh` that:
 
-## Requirements
+1. Enumerates all git-tracked files using `git ls-files`
+2. Identifies any file exceeding 5 MB (5,242,880 bytes)
+3. Excludes files matching a whitelist of known legitimate test data (see below)
+4. Prints a warning for each violation containing:
+   - The filename
+   - The phrase "is larger than 5 MB"
+   - The phrase "download them at test time or build from source"
+5. Works correctly on both GNU/Linux and BSD/macOS systems
 
-### Functionality
+## Whitelist Patterns
 
-The check must:
-
-1. Enumerate all git-tracked files and determine their sizes
-2. Flag any file exceeding 5 MB as a violation
-3. Exclude files matching a whitelist of known large test data (see below)
-4. Print a warning for each violation
-5. Work correctly on both GNU (Linux) and BSD (macOS) systems
-
-The `stat` command syntax differs between GNU and BSD platforms, so the check must detect which variant is available at runtime.
-
-### Whitelist Patterns
-
-These file patterns must be exempt from violation reporting:
+The following files are legitimate large test data and should not be flagged:
 
 - `multi_column_bf.gz.parquet`
 - `libcatboostmodel.so_aarch64`
@@ -33,23 +28,15 @@ These file patterns must be exempt from violation reporting:
 - `paimon-rest-catalog/chunk_`
 - `ghdata_sample.json`
 
-### Warning Message
+## Requirements
 
-Each violation warning must contain the text:
+- The check should use feature detection to handle platform differences (GNU stat vs BSD stat have different flag formats)
+- Consider using efficient bulk processing for large repositories (the ClickHouse repo has thousands of files)
+- Add comments explaining the check's purpose and any non-obvious logic
+- The check runs with `ROOT_PATH` available as an environment variable
 
-```
-is larger than 5 MB. Large files should not be committed to git
-```
+## Code Style Requirements
 
-along with the suggestion `download them at test time or build from source`.
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
 
-### CI Test Suite Identifiers
-
-The CI test suite validates this check by searching the script for specific identifiers. To pass validation, the script must contain all of the following:
-
-- A comment containing the text `Large files checked into git`
-- The threshold expression `MAX_FILE_SIZE=$((5 * 1024 * 1024))`
-- An array named `LARGE_FILE_WHITELIST` holding the exclusion patterns
-- Variables named `STAT_FMT_FLAG` and `STAT_FMT` for the detected stat configuration
-- The `git ls-files` command for enumerating tracked files
-- A GNU stat probe using `stat -c '%s %n' /dev/null` (the detection logic must reference both `-c` and `-f` flag variants)
+- `mypy (Python type checker)`

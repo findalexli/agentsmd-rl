@@ -70,3 +70,10 @@ Your changes should:
 3. Fix the OpenRouter model ID
 4. Maintain valid Python syntax in all modified files
 5. Preserve the ability to import the `_PROFILES` dictionary from each module
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`
+- `mypy (Python type checker)`

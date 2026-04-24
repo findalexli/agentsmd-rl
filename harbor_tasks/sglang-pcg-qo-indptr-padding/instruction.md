@@ -47,3 +47,9 @@ replay, the input tensors are padded to a static size (`static_num_tokens`) to f
 captured CUDA graph, but `qo_indptr[-1]` reflects only the actual (unpadded) token
 count. The fix must make `qo_indptr[-1]` account for the padding tokens while
 preserving correct causal attention masks for real requests.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `typos (spell-check)`

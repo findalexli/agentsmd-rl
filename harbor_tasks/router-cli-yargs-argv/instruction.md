@@ -27,3 +27,9 @@ When running the CLI with `--help`, you should see usage information with the av
 The yargs library requires its arguments to be passed explicitly. The `hideBin` function from `yargs/helpers` strips the node path and script path from `process.argv` before passing the remaining arguments to yargs. Without this step, yargs receives an empty argument list and produces no output.
 
 Your fix should ensure yargs receives the CLI arguments properly, for example using the pattern `yargs(hideBin(process.argv))`.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

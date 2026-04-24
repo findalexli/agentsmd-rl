@@ -53,3 +53,9 @@ Add two entries to the `DEFAULT_DATASET_COLUMNS` list:
 - SQLAlchemy doesn't know about Python `@property` descriptors — they look like regular attributes on the model class but aren't `ColumnProperty` or `RelationshipProperty`
 - Pydantic's `alias` parameter on `Field` controls the external (JSON) name, but `populate_by_name=True` is needed for the alias to work bidirectionally
 - A `@model_serializer` with `mode="wrap"` lets you post-process the default serialization without replacing it entirely
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

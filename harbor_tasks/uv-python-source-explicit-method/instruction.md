@@ -35,3 +35,11 @@ The classification logic should be refactored so that:
 2. The method has appropriate visibility for use across the crate
 3. The method includes documentation explaining what "explicit" means
 4. The installation preference logic no longer contains inline variant-matching for the explicitness check — it should delegate to the new query method on `PythonSource` instead
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`
+- `cargo clippy (Rust linter)`
+- `typos (spell-check)`

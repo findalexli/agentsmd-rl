@@ -2,31 +2,31 @@
 
 ## Problem
 
-Requests to `GET /console/` (and potentially other unmatched routes) are entering `app/controllers/shared/api.php` with a null route object. The middleware assumes route matching has already succeeded and directly dereferences `$route`, causing a fatal error:
+Requests to `GET /console/` (and potentially other unmatched routes) are causing a fatal error:
 
 ```
 Call to a member function getLabel() on null
 ```
 
+The API middleware assumes route matching has always succeeded and attempts to call methods on the route object without first verifying it exists. When a request reaches the middleware without a matched route, this causes a server error instead of a proper 404 response.
+
 ## Your Task
 
-Modify `app/controllers/shared/api.php` to guard against null routes before dereferencing them.
+Investigate the API middleware code to find where route objects are being used without null checks, then add proper error handling:
 
-### Requirements
+1. When no route is matched, the middleware should detect this condition before attempting to access route properties or methods
+2. Return a proper 404-style error response using `AppwriteException::GENERAL_ROUTE_NOT_FOUND` when no route is matched
+3. Ensure all code paths that access `$route` after retrieving it from `$utopia->getRoute()` are protected
 
-1. **First location**: In the `Http::init()` action, after `$route = $utopia->getRoute();`, add a null check before any use of `$route`. If `$route` is null, throw an `AppwriteException` with error code `GENERAL_ROUTE_NOT_FOUND`.
-
-2. **Second location**: In the shutdown action, after the second occurrence of `$route = $utopia->getRoute();`, add the same null guard before `$route` is used.
-
-### Validation
+## Validation
 
 After your changes:
-- Unmatched console requests should fail cleanly with a 404-style error instead of generating a server error
-- The `GENERAL_ROUTE_NOT_FOUND` error type should be returned for unmatched routes
-- PHP syntax should remain valid (`php -l app/controllers/shared/api.php`)
+- Requests to `/console/` should return a 404 status code with `type: general_route_not_found`
+- PHP syntax should remain valid (`php -l` on the modified file passes)
+- The existing code style should be maintained
 
-### Notes
+## Notes
 
-- Do not modify any other files
-- Follow the existing code style in the file (4-space indentation, brace placement)
-- The fix should be minimal - only add the two null guards as described
+- Keep the fix minimal - only add the necessary null-safety guards
+- Follow the existing code style (4-space indentation, brace placement)
+- The exception constant `GENERAL_ROUTE_NOT_FOUND` is the appropriate error type for unmatched routes

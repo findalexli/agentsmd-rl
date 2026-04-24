@@ -51,3 +51,9 @@ Three specific cleanup locations need to be addressed:
   - `previousCommitPromise` should be declared with `let` and set to `undefined` after it resolves during commit location handling
 - Maintain existing functionality - routes should still load correctly
 - Ensure the fix passes TypeScript type checking and linting
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

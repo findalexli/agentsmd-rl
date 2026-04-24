@@ -11,3 +11,10 @@ The `Language Models Tests (Extra Standard) 2` CI suite fails with memory-relate
 ## Expected behavior
 
 Model inspection/logging operations (like `log_model_inspection`) should not run inside the device context — they should only run within the dtype context. Only model initialization (like `initialize_model`) should happen within the device context scope. The `set_default_torch_dtype` context manager must properly wrap dtype-sensitive operations while the device context wraps only device-specific operations.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`
+- `typos (spell-check)`

@@ -18,3 +18,9 @@ The embedding/retrieval VLM models (`ColPaliForRetrieval`, `ColQwen2ForRetrieval
 - `src/transformers/models/colqwen2/modular_colqwen2.py` -- the modular source for ColQwen2
 - `src/transformers/models/colmodernvbert/modeling_colmodernvbert.py` -- `ColModernVBertForRetrieval`
 - `src/transformers/conversion_mapping.py` -- `_build_checkpoint_conversion_mapping()` for weight renaming rules
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

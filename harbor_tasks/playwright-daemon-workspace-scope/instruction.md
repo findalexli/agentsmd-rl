@@ -24,3 +24,9 @@ Additionally, the CLI configuration file is looked up as `playwright-cli.json` i
 - `packages/playwright/src/mcp/terminal/program.ts` — Session management, daemon scoping, and install logic
 - `packages/playwright/src/skill/SKILL.md` — Skill file documenting all CLI commands
 - `packages/playwright/src/skill/references/session-management.md` — Session management reference docs
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

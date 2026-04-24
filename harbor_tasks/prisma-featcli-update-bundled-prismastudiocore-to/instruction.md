@@ -47,3 +47,10 @@ After making the code changes, update `AGENTS.md` to document these Studio CLI c
 
 - `packages/cli/src/Studio.ts` — The CLI-hosted Studio server, including BFF procedure routing and the HTML shell template with its import map.
 - `AGENTS.md` — The project's agent knowledge base (also symlinked as `CLAUDE.md`). The "CLI commands" section documents Studio-related patterns.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`
+- `eslint (JS/TS linter)`

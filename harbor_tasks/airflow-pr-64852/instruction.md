@@ -32,3 +32,9 @@ Theme(tokens={"colors": colors}, globalCss={"body": {...}})
 ```
 
 The API response should also properly serialize themes that have optional fields, excluding `None` values from the JSON output.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

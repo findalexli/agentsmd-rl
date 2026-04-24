@@ -48,3 +48,11 @@ yarn jest use-focus-within --testPathPattern=use-focus-within
 ```
 
 The test file demonstrates the expected behavior with multiple focus/blur cycles that should properly increment counters.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`
+- `eslint (JS/TS linter)`
+- `stylelint (CSS linter)`

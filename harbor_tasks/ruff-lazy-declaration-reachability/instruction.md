@@ -20,7 +20,7 @@ Both call sites currently use the pattern `!iter.method(|d| d.is_undefined_or(..
 
 1. The method should evaluate the cheap predicate **before** the expensive reachability constraint, and short-circuit as soon as a match is found (lazy evaluation)
 2. The method name should be changed to reflect that it returns true when ANY declaration matches (not ALL)
-3. Call sites must preserve their current semantics — the De Morgan transformation (`!all(!x)` → `any(x)`) should be applied correctly
+3. Call sites must preserve their current semantics — apply the De Morgan transformation (`!all(!x)` → `any(x)`) so the outer negation is removed and the inner predicate is inverted
 4. The crate compiles without errors (`cargo check -p ty_python_semantic`)
 5. No calls to the old method name remain in the crate source
 6. All repo tests pass (cargo test, cargo clippy, cargo fmt)

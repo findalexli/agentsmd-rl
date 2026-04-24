@@ -32,3 +32,11 @@ After fixing the code, update the agent skill documentation to help prevent this
 2. `.agents/skills/spa-routes/SKILL.md` — Must document the desktop router parity requirement, explicitly mentioning `desktopRouter.config.desktop` and using terms like "both", "parity", or "drift" to describe the need to edit both the web and desktop router config files when adding routes.
 
 3. `.agents/skills/code-review/SKILL.md` — Must include a SPA/routing section that mentions `desktopRouter` and uses terms like "SPA" or "routing" to describe checking that desktop and web router pairs stay synchronized.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`
+- `eslint (JS/TS linter)`
+- `stylelint (CSS linter)`

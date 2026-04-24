@@ -19,3 +19,10 @@ The `normalizeNextConfigZodErrors` function in `packages/next/src/server/config.
 ## Files to Look At
 
 - `packages/next/src/server/config.ts` — contains `normalizeNextConfigZodErrors`, which processes Zod validation errors for the Next.js config and provides specific migration guidance for deprecated experimental keys
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`
+- `eslint (JS/TS linter)`

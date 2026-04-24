@@ -15,3 +15,9 @@ The error occurs during DAG parsing when Airflow tries to convert the `start_dat
 Users who set `AIRFLOW__CORE__DEFAULT_TIMEZONE` to any timezone with a positive UTC offset (like `Asia/Shanghai`, `Asia/Tokyo`, or `Australia/Sydney`) cannot load these example DAGs.
 
 Fix the DAG files so they work correctly regardless of the configured default timezone.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

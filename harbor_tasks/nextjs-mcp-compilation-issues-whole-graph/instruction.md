@@ -39,3 +39,10 @@ The existing `whole_app_module_graphs` method on `Project` must remain functiona
 The changes span two crates, each containing a file named `project.rs`:
 - The `next-api` crate — contains the `Project` type, `whole_app_module_graphs`, and the `whole_app_module_graph_operation` function
 - The `next-napi-bindings` crate (under `src/next_api/`) — contains the compilation issues collection function
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `cargo clippy (Rust linter)`
+- `cargo fmt (Rust formatter)`

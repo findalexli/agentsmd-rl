@@ -29,3 +29,10 @@ After the fix, the bridge should correctly handle GLM-4.7-Flash models:
 - Safetensor loading uses the standard SafeTensorIO class, not FP8 dequantization
 - Shared weight mappings are computed dynamically using the model's actual layer count
 - MTP parameter names are converted correctly with the dynamic layer index
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`
+- `black (Python formatter)`

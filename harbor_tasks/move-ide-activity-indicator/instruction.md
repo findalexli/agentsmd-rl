@@ -69,3 +69,11 @@ Fatal errors cause the server process to exit. The client detects this as the `S
 - The CLAUDE.md file in the repo root contains development guidelines
 - The server uses the `lsp-server` crate for LSP protocol handling
 - The client uses `vscode-languageclient` for LSP client functionality
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`
+- `cargo clippy (Rust linter)`
+- `cargo fmt (Rust formatter)`

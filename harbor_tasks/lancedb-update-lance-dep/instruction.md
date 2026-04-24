@@ -27,3 +27,9 @@ You need to update the Lance dependency version in the following files:
   - `lance-linalg`, `lance-namespace`, `lance-namespace-impls`, `lance-table`
   - `lance-testing`, `lance-datafusion`, `lance-encoding`, `lance-arrow`
 - The new version may have removed some dependencies (like the `lance-geo` crate and related geo-spatial dependencies), so the Cargo.lock will likely shrink
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `cargo fmt (Rust formatter)`

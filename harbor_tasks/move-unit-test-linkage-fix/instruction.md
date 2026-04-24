@@ -26,3 +26,9 @@ After making changes:
 1. Run `cargo check -p move-unit-test` to verify the code compiles
 2. The changes should only affect the `setup_test_storage` function
 3. No other parts of the codebase should need modification for this fix
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `cargo clippy (Rust linter)`

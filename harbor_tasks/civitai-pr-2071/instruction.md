@@ -37,3 +37,9 @@ After applying your fix:
 - `src/utils/delivery-worker.ts` — the delivery worker utility functions
 
 Look at the function signatures in `delivery-worker.ts` to understand which function resolves by URL rather than by ID.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`

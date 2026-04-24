@@ -16,3 +16,9 @@ The test should correctly handle the case where cookies with `SameSite=None` and
 
 - `tests/library/browsercontext-fetch.spec.ts` — the set-cookie test around line 1155 in the `SameSite` test function
 - `tests/bidi/expectations/moz-firefox-nightly-library.txt` — BiDi-specific test expectations that track known failures
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

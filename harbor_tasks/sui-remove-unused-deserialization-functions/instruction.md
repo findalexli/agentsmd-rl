@@ -31,3 +31,9 @@ The following files need to be modified:
 4. Update `value_test.rs` tests to use a helper function named `deser_annotated_value` for deserializing annotated values
 5. Ensure all tests in the `move-core-types` crate pass after the changes
 6. Ensure the code compiles without warnings
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `cargo clippy (Rust linter)`

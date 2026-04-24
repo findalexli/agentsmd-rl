@@ -40,3 +40,10 @@ The `has_errors()` method on the parse result must return `false` for all these 
 ## Important
 
 Do not look at the `solution/` directory or attempt to read or apply patches from it. Work only from the problem description and codebase investigation.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `cargo clippy (Rust linter)`
+- `cargo fmt (Rust formatter)`

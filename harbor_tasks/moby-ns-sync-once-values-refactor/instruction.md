@@ -31,3 +31,9 @@ After refactoring:
 - `go vet ./daemon/libnetwork/ns/...` should pass
 - `go test ./daemon/libnetwork/ns/...` should pass
 - `go build ./daemon/libnetwork/osl/...` should succeed
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `gofmt (Go formatter)`

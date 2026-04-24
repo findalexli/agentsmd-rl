@@ -24,3 +24,9 @@ When `partition_key` is set, it should appear in the output with its string valu
 ## Files to Investigate
 
 - `providers/openlineage/src/airflow/providers/openlineage/utils/utils.py` — contains the `DagRunInfo` class used for DagRun serialization
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

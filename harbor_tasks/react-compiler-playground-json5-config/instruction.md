@@ -17,11 +17,18 @@ The playground should include a unit test suite for the config parsing logic.
 
 ## Files to Examine
 
-- `compiler/apps/playground/lib/compilation.ts` — config parsing logic
-- `compiler/apps/playground/lib/defaultStore.ts` — default config template
-- `compiler/apps/playground/components/Editor/ConfigEditor.tsx` — config editor panel
-- `compiler/apps/playground/package.json` — dependencies
+- `compiler/apps/playground/lib/compilation.ts` — config parsing logic, specifically the `parseConfigOverrides` function which must be exported
+- `compiler/apps/playground/lib/defaultStore.ts` — default config template (uses TypeScript `satisfies` syntax which must be removed)
+- `compiler/apps/playground/components/Editor/ConfigEditor.tsx` — config editor panel (currently uses TypeScript language mode with path `config.ts`; must be changed to JSON language mode with path `config.json5`)
+- `compiler/apps/playground/package.json` — dependencies (must add a JSON-with-comments parsing library)
+- `compiler/apps/playground/__tests__/parseConfigOverrides.test.mjs` — unit test file that should exist and pass
 
 ## Security Note
 
 The fix must ensure that patterns like IIFEs, `eval()` calls, and function constructors in config values do NOT execute.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`

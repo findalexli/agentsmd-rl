@@ -22,3 +22,10 @@ Additionally, the project's `CLAUDE.md` should be updated to document a known is
 - `libs/agno_infra/agno/infra/operator.py` -- TEMPLATE_TO_NAME_MAP, TEMPLATE_TO_REPO_MAP, and user-facing prompt strings
 - `libs/agno_infra/pyproject.toml` -- package version
 - `CLAUDE.md` -- must include a GitHub Operations section
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`
+- `mypy (Python type checker)`

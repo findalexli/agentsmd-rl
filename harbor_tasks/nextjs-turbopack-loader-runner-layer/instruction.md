@@ -58,3 +58,9 @@ Both config-based loaders and import-assertion loaders should work together with
    import data from './file.ext' with { turbopackLoader: 'some-loader' }
    ```
 4. Run `next dev` — the dev server hangs with "Dependency tracking is disabled"
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `cargo fmt (Rust formatter)`

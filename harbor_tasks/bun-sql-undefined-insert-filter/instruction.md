@@ -20,33 +20,22 @@ The `sql()` template tag helper in Bun's SQL module treats `undefined` values as
 
 ## Implementation Requirements
 
-The solution must add a shared column-filtering function to `src/js/internal/sql/shared.ts` with **exact** signature:
+The solution must add a shared column-filtering helper to `src/js/internal/sql/shared.ts`. This helper should:
+- Accept the column list, the items being inserted, and an escape function
+- Inspect ALL items when determining which columns have defined values (for bulk inserts)
+- Return an object with two properties: an array of column names that have at least one defined value, and a SQL fragment for the column list
+- Generate SQL column list as a parenthesized, comma-separated list ending with ` VALUES`
 
-```typescript
-function buildDefinedColumnsAndQuery<T>(
-  columns: (keyof T)[],
-  items: T | T[],
-  escapeIdentifier: (name: string) => string,
-): { definedColumns: (keyof T)[]; columnsSql: string }
-```
-
-The function must:
-- Return an object with exactly two properties named `definedColumns` and `columnsSql`
-- `definedColumns` must be an array of column names that have at least one defined value
-- `columnsSql` must be a SQL fragment that starts with `(` and ends with ` VALUES`
-- For bulk inserts (when `items` is an array), check ALL items to determine which columns have defined values
-- For single objects, check if the value is not `undefined`
-
-All three SQL adapters must be updated:
+All three SQL adapters must be updated to use this shared helper:
 - `src/js/internal/sql/sqlite.ts`
 - `src/js/internal/sql/mysql.ts`
 - `src/js/internal/sql/postgres.ts`
 
 Each adapter must:
-- Import the shared function using: `const { ..., buildDefinedColumnsAndQuery } = require("internal/sql/shared")`
-- Use destructured variable names exactly `definedColumns` and `columnsSql` when receiving the result
-- Call `buildDefinedColumnsAndQuery(columns, items, this.escapeIdentifier.bind(this))`
-- Throw a `SyntaxError` with the exact message `"Insert needs to have at least one column with a defined value"` when no columns have defined values
+- Import the shared function using a `require()` call to `"internal/sql/shared"`
+- Call the helper with the column list, items, and the adapter's identifier escape function
+- Use the returned column list and SQL fragment in the generated INSERT statement
+- Throw a `SyntaxError` when no columns have defined values (empty insert is not valid)
 
 ## Documentation Requirement
 
@@ -70,3 +59,9 @@ The implementation must pass all of the following checks:
 2. **All three adapters updated**: SQLite, MySQL, and PostgreSQL adapters all import and use the shared filtering logic via the exact import pattern `require("internal/sql/shared")` and destructured names `definedColumns` and `columnsSql`.
 
 3. **Documentation update**: `test/CLAUDE.md` must include guidance recommending `.toEqual` for asserting on nested or complex object equality, with an example showing `toEqual(` usage.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`

@@ -54,3 +54,9 @@ Add a section with the heading `## Project Description` to `AGENTS.md` that desc
 
 ## Reference
 The existing `NodemailerImpl` in `src/server/services/email/impls/nodemailer/` demonstrates the expected implementation pattern.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

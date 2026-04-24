@@ -34,3 +34,9 @@ The client fixture has several error handling gaps that cause intermittent crash
 ## Coding Conventions
 
 - `test/bake/client-fixture.mjs` must not use unnecessary dynamic `import()` calls. Per `test/CLAUDE.md` (lines 218–220), only use dynamic import when specifically testing dynamic import behavior. All imports must be static top-level.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`

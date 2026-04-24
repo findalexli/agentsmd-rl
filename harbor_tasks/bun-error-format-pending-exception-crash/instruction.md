@@ -45,3 +45,9 @@ The fix must ensure that:
 
 3. The `createDOMExceptionInstance` function in `src/bun.js/bindings/JSGlobalObject.zig`
    should NOT be modified per the specification.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`

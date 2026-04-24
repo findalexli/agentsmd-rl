@@ -67,3 +67,9 @@ The following components must be present for tests to pass:
   creation, no `.item()` or `.tolist()` calls in weight-update methods.
 - Non-main ranks (rank != 0) must not break — they continue to participate in
   `_get_full_tensor` calls and barriers as before.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

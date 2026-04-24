@@ -27,3 +27,9 @@ should be abstracted via `current_platform`.
 All device-specific stream, event, and cache operations in `PerLayerOptimWrapper` should
 go through `current_platform` so the code works on any supported accelerator backend.
 The TODO comments requesting this abstraction should be resolved.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

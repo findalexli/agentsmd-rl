@@ -63,3 +63,9 @@ from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 - The build configuration file controls what files are included in package distributions
 - Some files may have imports that go through the lazy-loading namespace when they should use a direct path
 - Each browser stub file should define an `__all__` list to explicitly declare what it exports
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

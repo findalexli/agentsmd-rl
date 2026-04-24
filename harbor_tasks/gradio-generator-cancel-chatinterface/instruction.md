@@ -31,3 +31,9 @@ There are two related issues:
 - `SyncToAsyncIterator.aclose()` returns a coroutine when called
 - `safe_aclose_iterator()` properly awaits the aclose calls
 - Both files remain syntactically valid Python
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

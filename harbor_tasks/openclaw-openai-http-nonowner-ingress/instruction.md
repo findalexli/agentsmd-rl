@@ -18,3 +18,9 @@ The `/v1/chat/completions` endpoint should dispatch agent runs with non-owner co
 
 - `src/gateway/openai-http.ts` — the `buildAgentCommandInput` function
 - `src/gateway/openai-http.test.ts` — existing e2e test suite for the endpoint
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

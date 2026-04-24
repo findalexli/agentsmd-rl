@@ -56,3 +56,10 @@ After the fix is applied, the following should be true:
 - The `use-combobox.ts` hook uses these utilities to query elements
 - The utilities correctly traverse Shadow DOM boundaries to find elements
 - The TypeScript compilation succeeds without errors
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`
+- `eslint (JS/TS linter)`

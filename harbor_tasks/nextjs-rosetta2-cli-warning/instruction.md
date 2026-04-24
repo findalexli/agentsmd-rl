@@ -25,3 +25,9 @@ The `os` module must be imported using `import os from 'os'` (ESM import syntax)
 - The warning must NOT fire when `process.arch` is `'arm64'` (native ARM, no translation needed)
 - The warning must NOT fire on Linux or Windows, regardless of CPU model
 - The warning must NOT fire when running under ARM64 on Apple Silicon (native, no Rosetta)
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`

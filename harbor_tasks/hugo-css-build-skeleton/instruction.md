@@ -59,3 +59,9 @@ When `hugo.IsDevelopment` is false (production mode):
 After implementation:
 - Hugo should build successfully
 - The templates should produce valid output in both development and production environments
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `gofmt (Go formatter)`

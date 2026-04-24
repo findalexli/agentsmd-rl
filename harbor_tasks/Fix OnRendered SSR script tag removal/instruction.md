@@ -37,3 +37,9 @@ The corrected implementation should exhibit the following properties:
 
 - `pnpm nx run @tanstack/react-router:build` must exit with code 0
 - `pnpm nx run @tanstack/react-router:test:unit -- tests/Scripts.test.tsx` must exit with code 0
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

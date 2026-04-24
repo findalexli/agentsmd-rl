@@ -32,3 +32,9 @@ The build system must provide two distinct commands with these exact names:
 - `packages/next-swc/package.json` — next-swc package scripts
 - `packages/next-swc/turbo.json` — Turborepo task configuration for next-swc (should become `turbo.jsonc`)
 - `AGENTS.md` — developer documentation
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `prettier (JS/TS/JSON/Markdown formatter)`

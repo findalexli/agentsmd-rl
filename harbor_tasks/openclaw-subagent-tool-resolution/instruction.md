@@ -29,3 +29,9 @@ When `allowGatewaySubagentBinding` is `true`, the active plugin registry (if one
 ## Context
 
 The runtime module exports `getActivePluginRegistry()` which returns the currently active plugin registry or undefined if none exists. The loader module exports `resolveRuntimePluginRegistry()` which loads plugins from scratch. The sub-agent session context indicates whether gateway binding is allowed via the `allowGatewaySubagentBinding` parameter.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

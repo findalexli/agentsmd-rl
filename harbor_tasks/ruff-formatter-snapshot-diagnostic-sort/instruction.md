@@ -22,3 +22,10 @@ You can observe this in the snapshot file `crates/ruff_python_formatter/tests/sn
 
 - `crates/ruff_python_formatter/tests/fixtures.rs` — test fixture code that processes `formatted_unsupported_syntax_errors` and generates diagnostics
 - `crates/ruff_python_formatter/tests/snapshots/format@expression__nested_string_quote_style.py.snap` — the snapshot file that needs its error sections updated to reflect sorted order
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `cargo clippy (Rust linter)`
+- `cargo fmt (Rust formatter)`

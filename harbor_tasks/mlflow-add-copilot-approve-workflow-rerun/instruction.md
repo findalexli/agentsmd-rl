@@ -28,3 +28,9 @@ After creating the script, update the copilot skill instructions (`.claude/skill
 
 - `.claude/skills/copilot/poll.sh` — existing script to follow as a pattern
 - `.claude/skills/copilot/SKILL.md` — skill definition that needs updating
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `typos (spell-check)`

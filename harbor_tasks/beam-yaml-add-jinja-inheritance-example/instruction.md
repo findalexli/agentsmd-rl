@@ -20,12 +20,12 @@ The existing `include/` and `import/` examples serve as reference implementation
 
 ## Task
 
-Demonstrate Jinja2 template inheritance by creating a working inheritance-based example alongside the existing `include/` and `import/` examples. The example should:
+Create a Jinja2 template inheritance example in the directory `sdks/python/apache_beam/yaml/examples/transforms/jinja/inheritance/` with the following files:
 
-1. Provide a **base pipeline** that defines a WordCount-style pipeline (Read → Split → Explode → Format → Write) with one named `{% block %}` where child pipelines can inject additional transforms
-2. Provide a **child pipeline** that uses `{% extends %}` to inherit from the base and `{% block %}` to inject a `Combine` step
-3. Register in the test framework so the Jinja preprocessor tests exercise the new example
-4. Include a README explaining the inheritance pattern
+1. **`inheritance/base/base_pipeline.yaml`** — A **base pipeline** that defines a WordCount-style pipeline (Read → Split → Explode → Format → Write) with one named `{% block extra_steps %}` where child pipelines can inject additional transforms
+2. **`inheritance/wordCountInheritance.yaml`** — A **child pipeline** that uses `{% extends "inheritance/base/base_pipeline.yaml" %}` to inherit from the base and `{% block extra_steps %}` to inject a `Combine` step
+3. **`inheritance/README.md`** — A README explaining the inheritance pattern
+4. Register the test in the test framework so the Jinja preprocessor tests exercise the new example
 
 ## Existing Test Data Contracts
 
@@ -34,16 +34,17 @@ The test framework has established contracts for what template data functions mu
 - `word_count_jinja_parameter_data()` returns JSON containing keys for each transform variable (e.g., `readFromTextTransform`, `mapToFieldsSplitConfig`, `combineTransform`). The existing include/import examples use specific variable names that must remain functional.
 - `word_count_jinja_template_data('test_wordCountInclude_yaml')` returns a list of template paths including one that references `wordCountMacros.yaml`
 - `word_count_jinja_template_data('test_wordCountImport_yaml')` returns a list of template paths
+- `word_count_jinja_template_data('test_wordCountInheritance_yaml')` must return `['apache_beam/yaml/examples/transforms/jinja/inheritance/base/base_pipeline.yaml']`
 - `text_data()` returns text containing `KING LEAR` (used as test input for word count pipelines)
 
-Your new example must follow the same variable naming conventions so the test framework can provide appropriate values.
+Your new example must follow the same variable naming conventions so the test framework can provide appropriate values. The test identifier for your new example must be `test_wordCountInheritance_yaml`.
 
 ## Reference Files
 
-- `sdks/python/apache_beam/yaml/examples/transforms/jinja/include/` — reference for `{% include %}` pattern
+- `sdks/python/apache_beam/yaml/examples/transforms/jinja/include/` — reference for `{% include %}` pattern; also shows the `base/` subdirectory structure used by some examples
 - `sdks/python/apache_beam/yaml/examples/transforms/jinja/import/` — reference for `{% import %}` pattern
-- `sdks/python/apache_beam/yaml/examples/testing/examples_test.py` — shows how examples are registered in preprocessors
-- `sdks/python/apache_beam/yaml/examples/testing/input_data.py` — shows what template data functions return for existing examples
+- `sdks/python/apache_beam/yaml/examples/testing/examples_test.py` — shows how examples are registered in preprocessors (look for `test_wordCountInclude_yaml` and `test_wordCountImport_yaml` as patterns to follow for `test_wordCountInheritance_yaml`)
+- `sdks/python/apache_beam/yaml/examples/testing/input_data.py` — shows what template data functions return for existing examples (add a case for `test_wordCountInheritance_yaml` returning `inheritance/base/base_pipeline.yaml`)
 
 ## Notes
 

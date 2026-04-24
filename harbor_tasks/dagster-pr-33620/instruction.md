@@ -8,19 +8,11 @@ When using Dagster to orchestrate DLT pipelines, if an asset fails mid-execution
 
 This is problematic in development (where pipelines are run repeatedly) and in hybrid Dagster+ deployments with local agents.
 
-## Location
+## Requirements
 
-The issue is in the `_run` function in:
+Fix the dagster-dlt integration to clear local state before executing a pipeline. The fix must handle two different configurations:
 
-```
-python_modules/libraries/dagster-dlt/dagster_dlt/resource.py
-```
-
-## Expected Behavior
-
-Before running a DLT pipeline, Dagster should clear any local state to ensure a clean execution. The behavior should differ based on whether `restore_from_destination` is configured:
-
-- When `restore_from_destination` is enabled (the default): Clear all local state, since the destination has the authoritative data
+- When `restore_from_destination` is enabled (the default): Clear all local state, since the destination has the authoritative data and can restore the state
 - When `restore_from_destination` is disabled: Only clear pending packages, preserving incremental loading cursors that can't be recovered from the destination
 
 ## Verification

@@ -43,3 +43,9 @@ The session flag is also named `-b` (for "browser") which is confusing since the
 - `tests/mcp/cli-session.spec.ts` — CLI session tests
 
 After making the code changes, update the relevant skill documentation files to reflect the flag rename. The project's dev instructions specify that CLI command changes should be accompanied by documentation updates.
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

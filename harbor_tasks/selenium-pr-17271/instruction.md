@@ -25,3 +25,9 @@ The Selenium Manager binary selection logic in `py/selenium/webdriver/common/sel
 ## Files to Modify
 
 - `py/selenium/webdriver/common/selenium_manager.py` - The `_get_binary()` method contains the platform detection logic
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `ruff format and ruff check`

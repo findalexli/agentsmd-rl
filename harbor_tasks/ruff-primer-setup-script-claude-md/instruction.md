@@ -31,3 +31,9 @@ Don't forget to:
 
 - `scripts/` — existing scripts directory with its own `pyproject.toml`
 - `CLAUDE.md` — project-level agent instructions (see existing sections for style)
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `typos (spell-check)`

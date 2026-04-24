@@ -50,3 +50,10 @@ After the fix:
 - The default theme color map should include a dark-based `colorShadow` value
 - Shadow token definitions should derive their colors from the theme's `colorShadow` token
 - Alpha values should be preserved in the shadow definitions
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `black (Python formatter)`
+- `eslint (JS/TS linter)`

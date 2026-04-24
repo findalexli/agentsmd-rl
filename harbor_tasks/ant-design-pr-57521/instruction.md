@@ -25,3 +25,9 @@ For example, when a page has varying fixed header heights at different sections,
 
 - `components/anchor/Anchor.tsx` - Main Anchor component with `AntAnchor` interface and scroll logic
 - `components/anchor/AnchorLink.tsx` - AnchorLink component and `AnchorLinkBaseProps` interface
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

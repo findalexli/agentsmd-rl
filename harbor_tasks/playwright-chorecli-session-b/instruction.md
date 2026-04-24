@@ -27,3 +27,9 @@ After making the code changes, update the CLI skill documentation and references
 
 - `packages/playwright/src/skill/SKILL.md` — documents all CLI commands including session management
 - `packages/playwright/src/skill/references/session-management.md` — detailed session management reference documentation
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`

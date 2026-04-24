@@ -28,3 +28,9 @@ Local media roots should be derived only from explicit configuration (default ro
 - `src/agents/tools/media-tool-shared.ts` — media tool root resolution, calls into `local-roots.ts`
 - `src/media/local-roots.test.ts` — existing test coverage for local roots
 - `src/agents/tools/media-tool-shared.test.ts` — (may not exist yet) test coverage for media tool roots
+
+## Code Style Requirements
+
+Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
+
+- `eslint (JS/TS linter)`
