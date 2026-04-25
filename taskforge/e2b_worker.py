@@ -61,7 +61,10 @@ logger = logging.getLogger(__name__)
 ROOT = Path(__file__).resolve().parent.parent
 TEMPLATE_DIR = Path(__file__).resolve().parent / "e2b_template"
 TEMPLATE_ALIAS = "harbor-worker-v3"
-SANDBOX_TIMEOUT = 3600  # seconds — refreshed before each agent step
+SANDBOX_TIMEOUT = 5400  # seconds — refreshed before each agent step. Bumped
+# from 3600 because oneshot fix_task_quality routinely runs >1h on complex
+# repos (npm install, large repo clones, iterative Docker builds) — the old
+# value killed long-running agents at exactly the 1h mark.
 
 
 # ---------------------------------------------------------------------------
