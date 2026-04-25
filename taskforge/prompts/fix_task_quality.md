@@ -184,6 +184,15 @@ Before finishing, verify:
 4. No `NotImplementedError`, no `{{` placeholders
 5. Instruction.md describes symptom, not fix
 6. Every asserted specific in tests is recoverable from instruction.md
+7. **Clean up scratch files**: the only files allowed in `/workspace/task/tests/`
+   are `test.sh`, `test_outputs.py`, `eval_manifest.yaml`, `standalone_judge.py`.
+   Run: `ls /workspace/task/tests/ | grep -vE '^(test\.sh|test_outputs\.py|eval_manifest\.yaml|standalone_judge\.py)$' | xargs -I {} rm -f /workspace/task/tests/{}`
+   Any `test_*.py`/`*.txt`/`*_minimal.py`/`new_*.py` debug files you created during
+   exploration must be deleted — pytest auto-discovery will run them otherwise.
+8. **eval_manifest.yaml schema** must be `version: "2.0"` (string, not float).
+   Each check needs an `id`, `type`, `origin`. Distractors and rubric blocks
+   should follow the v2.0 structure described in the project's CLAUDE.md.
+   If the existing manifest is v1.0, upgrade it; do not regress to v1.0.
 
 ## Step 7: Validate
 
