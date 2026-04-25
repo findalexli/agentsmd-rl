@@ -503,10 +503,33 @@ async def _ensure_litellm_proxy(sandbox: AsyncSandbox) -> bool:
 
 
 async def upload_task_files(sandbox: AsyncSandbox, task_path: Path) -> None:
-    """Upload all task files from local dir to /workspace/task/ in sandbox."""
+    """Upload all task files from local dir to /workspace/task/ in sandbox.
+
+    Skips bulky build artifacts and stray clones of the upstream repo —
+    the sandbox already has the repo cloned at base_commit per the Dockerfile.
+    Uploading e.g. `gold-workspace/node_modules/` (40k+ files) starves
+    concurrency for tens of minutes per task and adds zero value: the gold
+    patch is in `solution/solve.sh`, which `git apply`s against the sandbox
+    repo directly.
+    """
+    EXCLUDE_DIR_PARTS = {
+        "node_modules", ".git", ".next", "target", "dist", "build",
+        ".venv", "__pycache__", ".pytest_cache",
+        # Stray gold-clones — the sandbox does its own clone
+        "gold-workspace", "gold_workspace", "gold_repo", "gold-repo",
+        "gold_workdir", "extracted",
+    }
     for f in task_path.rglob("*"):
         if f.is_file():
             rel = f.relative_to(task_path)
+            if any(part in EXCLUDE_DIR_PARTS for part in rel.parts):
+                continue
+            # Skip files >1 MB — likely a build artifact, not source
+            try:
+                if f.stat().st_size > 1_000_000:
+                    continue
+            except OSError:
+                continue
             remote_path = f"/workspace/task/{rel}"
             await sandbox.files.write(remote_path, f.read_bytes())
     await run_cmd(sandbox, "chmod +x /workspace/task/solution/solve.sh /workspace/task/tests/test.sh 2>/dev/null || true")

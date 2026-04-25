@@ -301,26 +301,24 @@ def _list_instruction_markdowns(repo: str, ref: str) -> list[str]:
     if paths is not None:
         matched = [p for p in paths if _INSTRUCTION_PATH_RE.search(p)]
     else:
-        # Path 2: code search
-        # Build a single OR query covering common filenames
-        query = (
-            f"repo:{repo} "
-            f"filename:CLAUDE.md OR filename:AGENTS.md OR "
-            f"filename:CONVENTIONS.md OR filename:SKILL.md OR "
-            f"filename:copilot-instructions.md OR filename:.cursorrules"
-        )
-        try:
+        # Tree API failed (huge repo, truncated) — probe standard paths via
+        # /contents endpoint (in the 5000/hr core bucket, not the 10/min
+        # code_search bucket).
+        candidates = [
+            "CLAUDE.md", "AGENTS.md", "CONVENTIONS.md",
+            ".claude/CLAUDE.md", ".cursorrules",
+            ".github/copilot-instructions.md",
+        ]
+        matched = []
+        for path in candidates:
             r = subprocess.run(
-                ["gh", "api", f"search/code?q={query.replace(' ', '+')}",
-                 "--jq", "[.items[].path]"],
-                capture_output=True, text=True, timeout=30,
+                ["gh", "api", "-X", "GET",
+                 f"repos/{repo}/contents/{path}",
+                 "--jq", ".name"],
+                capture_output=True, text=True, timeout=15,
             )
-            if r.returncode == 0:
-                matched = json.loads(r.stdout) or []
-            else:
-                matched = []
-        except Exception:
-            matched = []
+            if r.returncode == 0 and r.stdout.strip():
+                matched.append(path)
 
     cache_file.write_text(json.dumps(matched))
     return matched
