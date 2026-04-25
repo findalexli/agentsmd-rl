@@ -546,20 +546,34 @@ async def main_async(args: argparse.Namespace) -> None:
     print(f"Judging {len(names)} tasks with Gemini (concurrency={args.concurrency})…")
     sem = asyncio.Semaphore(args.concurrency)
 
-    # Build all prompts up-front so we can fail fast on missing files
+    # Build all prompts up-front in a thread pool — build_prompt may make
+    # subprocess.run gh calls for cache-miss markdowns, so parallelism helps.
+    import time as _t
+    _t0 = _t.monotonic()
+    build_sem = asyncio.Semaphore(args.concurrency * 2)
+
+    async def _build_one(n: str):
+        async with build_sem:
+            return n, await asyncio.to_thread(build_prompt, args.corpus / n)
+
     prompts: list[tuple[str, str, list[str]]] = []
     skipped: list[dict] = []
-    for n in names:
-        tdir = args.corpus / n
-        built = build_prompt(tdir)
+    completed_build = 0
+    for coro in asyncio.as_completed([_build_one(n) for n in names]):
+        n, built = await coro
+        completed_build += 1
         if built is None:
             skipped.append({"name": n, "verdict": "skip",
                             "reason": "missing instruction.md or solve.sh"})
             continue
         prompt, used = built
         prompts.append((n, prompt, used))
+        if completed_build % 100 == 0:
+            print(f"  built {completed_build}/{len(names)} prompts "
+                  f"({_t.monotonic()-_t0:.0f}s)", flush=True)
 
-    print(f"  built prompts: {len(prompts)}, skipped: {len(skipped)}")
+    print(f"  built prompts: {len(prompts)}, skipped: {len(skipped)} "
+          f"in {_t.monotonic()-_t0:.0f}s", flush=True)
 
     results: list[dict] = list(skipped)
     completed = 0
