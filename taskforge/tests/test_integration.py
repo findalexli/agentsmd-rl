@@ -107,9 +107,16 @@ class TestRealCorpusLint:
         )
 
     def test_contaminated_oracle_caught(self):
-        td = HARBOR / "airflow-worker-serviceaccount-split"
-        if not td.exists():
-            pytest.skip(f"{td.name} not in corpus")
+        # This task was quarantined to harbor_tasks_quarantine/ in commit
+        # 2026-04-24 — it has curl github.com/.../*.diff in solve.sh.
+        # Look there first, fall back to harbor_tasks/.
+        QUARANTINE = ROOT / "harbor_tasks_quarantine"
+        for parent in (QUARANTINE, HARBOR):
+            td = parent / "airflow-worker-serviceaccount-split"
+            if td.exists():
+                break
+        else:
+            pytest.skip("reference task not in corpus or quarantine")
         fs = [f for f in lint_solve_sh(td)
               if f.rubric == "oracle_no_external_fetch"]
         assert fs, "broken-oracle task no longer flagged by oracle_no_external_fetch"

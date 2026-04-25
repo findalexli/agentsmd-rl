@@ -1,0 +1,105 @@
+version: '2.0'
+source:
+  repo: gradio-app/gradio
+  pr: 12933
+  base_commit: 01352c78e560c3a6de728a4aec07027e96c27acc
+  merge_commit: 44a8a9fe1316f1c110638c3c40158a75b6c0d135
+checks:
+- id: file_is_valid_svelte
+  type: pass_to_pass
+  origin: static
+  description: Block.svelte must exist and be a valid Svelte component
+- id: hide_container_no_inherited_border_var
+  type: fail_to_pass
+  origin: pr_diff
+  description: hide-container must NOT set --block-border-width CSS variable (inherits
+    to children)
+- id: hide_container_uses_direct_border_zero
+  type: fail_to_pass
+  origin: pr_diff
+  description: hide-container must zero its own border directly, not via inherited
+    CSS variable
+- id: child_block_retains_border
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Simulated CSS inheritance: child .block inside hide-container retains
+    border'
+- id: hide_container_preserves_other_resets
+  type: pass_to_pass
+  origin: pr_diff
+  description: hide-container preserves its other CSS resets (margin, box-shadow,
+    background, padding, overflow)
+- id: block_class_preserves_styling
+  type: pass_to_pass
+  origin: pr_diff
+  description: .block CSS class retains core visual properties (box-shadow, border-color,
+    etc.)
+- id: svelte_template_integrity
+  type: pass_to_pass
+  origin: pr_diff
+  description: Key Svelte template bindings preserved (hide-container, fullscreen,
+    flex-grow, etc.)
+- id: repo_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo code formatting passes Prettier checks (pnpm format:check)
+- id: repo_block_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Block.svelte unit tests pass (pnpm test:run js/atoms/Block.test.ts)
+rubric:
+- rule: 'The fix must change .hide-container:not(.fullscreen) CSS to use border-width:
+    0 instead of --block-border-width: 0 to prevent CSS variable inheritance to child
+    blocks.'
+  source:
+    path: js/atoms/src/Block.svelte
+  category: fix_correctness
+- rule: 'The .block class CSS must declare its own border-width: var(--block-border-width)
+    to ensure child blocks retain their borders independent of parent container settings.'
+  source:
+    path: js/atoms/src/Block.svelte
+  category: fix_completeness
+- rule: 'Repository Structure: `js/` — frontend code (Svelte/TypeScript)'
+  source:
+    path: AGENTS.md
+    lines: 8-12
+  evidence: The gold solution correctly targets the frontend code in `js/atoms/src/Block.svelte`
+    to fix the UI bug, aligning with the repository structure documentation.
+  category: architecture
+- rule: Be consistent with the style of the surrounding code.
+  source:
+    path: AGENTS.md
+    lines: 38-40
+  evidence: The gold solution modifies the CSS within the existing `<style>` block
+    of the Svelte component and moves the inline style to the class definition, adhering
+    to the surrounding code style.
+  category: style
+distractors:
+- rule: Target an issue and use the PR template with AI disclosure.
+  collision_type: meta_confusion
+  why_distracting: The agent might attempt to create a GitHub issue, edit PR templates,
+    or add AI disclosures, which are irrelevant in a headless evaluation environment
+    focused only on code generation.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 18-25
+- rule: Run backend tests locally with `bash scripts/run_backend_tests.sh`.
+  collision_type: architecture_boundary
+  why_distracting: The agent is fixing a frontend CSS bug in a Svelte component. Running
+    backend Python tests is unnecessary and crosses architectural boundaries.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 31-32
+- rule: Frontend code is formatted with `prettier`. Run `bash scripts/format_frontend.sh`.
+  collision_type: scope_ambiguity
+  why_distracting: Running the global frontend formatter script might format untouched
+    files and pollute the diff, causing the evaluation to fail due to out-of-scope
+    changes.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 38-39
+hierarchy_analysis: The configuration is flat, consisting of a single AGENTS.md file
+  at the root. No hierarchy traversal is required.

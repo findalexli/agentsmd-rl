@@ -1,0 +1,59 @@
+{
+  "model": "claude-opus-4-7",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "Instruction names modeling_utils.py, resize_token_embeddings, _get_resized_lm_head, post_init, and the _is_hf_initialized flag \u2014 all specifics the tests check."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The 'Root Cause' section essentially states the fix: it explicitly identifies that the new nn.Linear 'does not carry the _is_hf_initialized flag' and that this causes post_init to reinitialize \u2014 directly pointing to setting this flag as the solution."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_fix_is_not_stub specifically requires assignment of `_is_hf_initialized` inside `_get_resized_lm_head`, rejecting alternative fixes such as modifying post_init, patching _get_resized_embeddings parent, or addressing the issue in resize_token_embeddings."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests execute subprocess Python that constructs models, calls resize_token_embeddings and post_init, and compares tensor equality."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests compare actual weight tensors before/after post_init; a stub cannot pass without preserving weights."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "Tests cover both expansion and shrinking of vocab and weight/bias preservation after post_init as described in the instruction."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are grouped with section comments (Gates, Fail-to-pass, Pass-to-pass) and descriptive names."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "No structured data output is required by the task."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos in paths or identifiers."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "Instruction's Root Cause explicitly names `_is_hf_initialized` flag and explains the mechanism, essentially giving away localization and fix strategy."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "Code-only task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 3
+}

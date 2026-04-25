@@ -1,0 +1,58 @@
+{
+  "model": "claude-opus-4-7",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "instruction.md names src/gateway/embeddings-http.ts, handleOpenAiEmbeddingsHttpRequest, handleGatewayPostJsonEndpoint, requiredOperatorMethod, 'chat.send', and pathname '/v1/embeddings' \u2014 all literals asserted in tests."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The 'Required Fix' and 'Verification' sections explicitly state to pass requiredOperatorMethod: \"chat.send\" in the handleGatewayPostJsonEndpoint options object, which is the exact fix."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests assert the canonical literal 'chat.send' and presence of requiredOperatorMethod in the handler; any correct fix enforcing the write scope via this documented mechanism would pass."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Beyond regex checks, tests run pnpm lint, vitest on embeddings-http.test.ts, and tsgo typecheck \u2014 executing code."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "test_scope_method_is_chat_send requires the literal 'chat.send' inside the handler, and repo_embeddings_tests runs actual vitest tests; a stub wouldn't pass."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "Tests cover requiredOperatorMethod presence, 'chat.send' value, pathname preservation, export, and repo-level lint/test/typecheck."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are grouped by section headers (Gate, Fail-to-pass, Pass-to-pass, Config-derived, Repo CI/CD) with clear docstrings."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task is a code change, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "Paths and identifiers match consistently between instruction, tests, and solution."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md names the exact function (handleOpenAiEmbeddingsHttpRequest), file (src/gateway/embeddings-http.ts), and the exact option key and value to add ('requiredOperatorMethod: \"chat.send\"'), removing all localization/reasoning."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "Code-only task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 7,
+  "fail_count": 2
+}

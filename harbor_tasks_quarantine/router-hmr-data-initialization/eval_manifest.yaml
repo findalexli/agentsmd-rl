@@ -1,0 +1,147 @@
+checks:
+- id: test_source_code_initializes_hot_data
+  type: fail_to_pass
+  origin: pr_diff
+  description: Source code must initialize import.meta.hot.data before storing to
+    it
+- id: test_source_has_correct_template_structure
+  type: fail_to_pass
+  origin: pr_diff
+  description: Template must have correct structure for HMR handling
+- id: test_hmr_test_file_exists
+  type: pass_to_pass
+  origin: static
+  description: HMR test file should exist
+- id: test_router_plugin_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: Router plugin package builds successfully
+- id: test_router_plugin_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Router plugin unit tests pass
+- id: test_router_plugin_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Router plugin ESLint checks pass
+- id: test_router_plugin_types
+  type: pass_to_pass
+  origin: repo_tests
+  description: Router plugin TypeScript type checking passes
+- id: test_router_plugin_build_validation
+  type: pass_to_pass
+  origin: repo_tests
+  description: Router plugin package build validation passes
+- id: test_add_hmr_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Add HMR specific unit tests pass
+- id: test_code_splitter_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Code splitter unit tests pass
+rubric:
+- rule: TanStack Router types are FULLY INFERRED. Never cast, never annotate inferred
+    values.
+  source:
+    path: packages/router-core/skills/router-core/SKILL.md
+    lines: 7-8
+  evidence: The fix `import.meta.hot.data ??= {}` is added as plain JavaScript within
+    the Babel template string, avoiding any TypeScript type casts (e.g., `as any`)
+    which aligns with the project's strict 'never cast' philosophy.
+  category: style
+  verification: llm_judge
+- rule: Preserve type-safe, defensive TypeScript behavior when updating internals.
+  source:
+    path: AGENTS.md
+    lines: 20-20
+  source_text: '- TypeScript strict mode with extensive type safety'
+  evidence: The diff adds `import.meta.hot.data ??= {}` before `import.meta.hot.data[%%hotDataKey%%]
+    = %%stableComponentIdent%%`, which defensively initializes optional HMR state
+    instead of assuming `data` already exists.
+  category: safety
+  verification: llm_judge
+- rule: Implement bundler/HMR transformation behavior inside the router plugin architecture.
+  source:
+    path: AGENTS.md
+    lines: 160-160
+  source_text: '- **Plugin Architecture**: Universal bundler plugins using unplugin'
+  evidence: The only changed file is `packages/router-plugin/src/core/code-splitter/plugins/react-stable-hmr-split-route-components.ts`,
+    and the added line is inside the plugin-generated `import.meta.hot` template.
+    The fix stays in the plugin layer rather than moving into unrelated runtime code.
+  category: architecture
+  verification: llm_judge
+distractors:
+- rule: TypeScript strict mode with extensive type safety
+  collision_type: architecture_boundary
+  why_distracting: The agent might attempt to add TypeScript type assertions or annotations
+    (e.g., `as any`) inside the Babel template string to satisfy strict mode. However,
+    this string generates runtime JavaScript, and adding TS syntax here could break
+    the Babel parser or the generated code.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 14-15
+- rule: 'Critical: Always run unit and type tests during development - do not proceed
+    if they fail'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might get distracted by unrelated failing tests in the
+    monorepo and attempt to fix them before proceeding, rather than focusing purely
+    on the specific bug in the router-plugin.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 42-43
+- rule: 'The ONE Required Type Annotation: Register... Without this, top-level exports
+    have no type safety.'
+  source:
+    path: packages/router-core/skills/router-core/type-safety/SKILL.md
+    lines: 13-25
+  collision_type: architecture_boundary
+  why_distracting: The agent might attempt to add TypeScript interface declarations
+    or module augmentations for `import.meta.hot.data` inside the Babel template string
+    to satisfy type safety rules. However, this is a template generating runtime JavaScript,
+    and adding TS declarations here would cause Babel parsing errors.
+  severity: high
+- rule: Use `getRouteApi('/path')` in code-split files, NOT `import { Route } from
+    './route'`.
+  source:
+    path: packages/router-core/skills/router-core/code-splitting/SKILL.md
+    lines: 8-9
+  collision_type: architecture_boundary
+  why_distracting: The file being edited is `react-stable-hmr-split-route-components.ts`,
+    which is part of the code-splitter plugin. The agent might mistakenly try to apply
+    user-land code-splitting rules (like using `getRouteApi`) to the compiler plugin's
+    source code or the generated template.
+  severity: medium
+- rule: Do not force this React-specific HMR fix into framework-agnostic shared code
+    just because the repo prefers separating core logic from framework bindings.
+  source:
+    path: AGENTS.md
+    lines: 21-21
+  source_text: '- Framework-agnostic core logic separated from React/Solid bindings'
+  collision_type: architecture_boundary
+  why_distracting: Because the target path includes `src/core`, an agent could over-apply
+    this rule and try to generalize the fix into shared compiler logic or other frameworks.
+    The gold diff correctly keeps the change scoped to a React-only split-route-components
+    plugin.
+  severity: medium
+- rule: Do not treat this as an application route-definition change under `src/routes/`.
+  source:
+    path: AGENTS.md
+    lines: 117-117
+  source_text: '- Use file-based routing in `src/routes/` directories'
+  collision_type: scope_ambiguity
+  why_distracting: The patch mentions route components and HMR for routes, so an agent
+    might mistakenly look for example app route files. The actual bug is in the internal
+    router plugin that generates HMR code, not in file-based route definitions.
+  severity: medium
+hierarchy_analysis: The configuration consists of a single, flat `AGENTS.md` file
+  containing generic monorepo boilerplate. There is no complex hierarchy or overriding
+  of rules.
+version: '2.0'
+source:
+  repo: TanStack/router
+  pr: 7074
+  base_commit: 30835cb8e935b740c92fa95909a073e644dde530
+  merge_commit: f8351a8d7aa9f5a341377f96966451892acb39f1

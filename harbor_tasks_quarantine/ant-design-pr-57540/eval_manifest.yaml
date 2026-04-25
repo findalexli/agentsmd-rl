@@ -1,0 +1,74 @@
+source:
+  repo: ant-design/ant-design
+  pr_number: 57540
+  pr_title: "fix: correct Cascader menu item ellipsis styles"
+  base_commit: 1ed0c62c7cbdd3ed02db8255d742c1b90dbb4299
+  merge_commit: ffe7ccf17f689af990c4757c8197c8727c8f4184
+
+checks:
+  # Fail-to-pass tests - these verify the bug fix
+  - id: test_textellipsis_in_content_not_item
+    type: fail_to_pass
+    origin: pr_fix
+    description: textEllipsis must be applied to &-content element, not &-item parent
+
+  - id: test_minwidth_zero_in_content
+    type: fail_to_pass
+    origin: pr_fix
+    description: "&-content must have minWidth: 0 to enable flex shrinking for ellipsis"
+
+  - id: test_maxwidth_on_item
+    type: fail_to_pass
+    origin: pr_fix
+    description: "&-item should have maxWidth constraint for proper menu layout"
+
+  # Pass-to-pass tests - these verify no regressions
+  - id: test_typescript_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: TypeScript file has valid syntax
+
+  - id: test_import_textellipsis_exists
+    type: pass_to_pass
+    origin: static
+    description: textEllipsis utility is imported from style utilities
+
+  - id: test_function_exports
+    type: pass_to_pass
+    origin: static
+    description: getColumnsStyle function is properly exported
+
+  - id: test_eslint_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: ESLint passes on the changed file
+
+  - id: test_cascader_style_index_imports_columns
+    type: pass_to_pass
+    origin: static
+    description: Cascader style index properly imports columns style
+
+  - id: test_build_cascader_component
+    type: pass_to_pass
+    origin: repo_tests
+    description: Cascader component can be built without TypeScript errors
+
+  - id: test_biome_lint_cascader
+    type: pass_to_pass
+    origin: repo_tests
+    description: Biome lint passes on Cascader component
+
+  - id: test_biome_format_columns_ts
+    type: pass_to_pass
+    origin: repo_tests
+    description: Biome format check passes on columns.ts
+
+  - id: test_eslint_cascader_style
+    type: pass_to_pass
+    origin: repo_tests
+    description: ESLint passes on Cascader style directory
+
+rubric:
+  - id: code_only_fix
+    rule: "This is a CSS-in-JS styling bugfix in columns.ts that does not require any documentation or config file changes - no CLAUDE.md, README, or other doc updates are needed for this type of fix"
+    weight: 1

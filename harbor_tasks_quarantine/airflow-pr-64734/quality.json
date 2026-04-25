@@ -1,0 +1,54 @@
+{
+  "model": "claude-opus-4-7",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "Instruction names all relevant files (values.yaml, values.schema.json, NOTES.txt), the schema properties (enabled, minReplicaCount, maxReplicaCount, metrics, behavior), and the deprecation strings (workers.hpa.enabled, workers.hpa.minReplicaCount, workers.hpa.maxReplicaCount, workers.celery.hpa.enabled)."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction describes the desired structure and properties without prescribing exact code changes or line edits."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check for presence of keys/properties/strings and behavioral helm rendering, which alternative correct implementations would satisfy."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "TestBackwardCompatibility runs `helm template` subprocess to verify rendering behavior, not just text matching."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "Tests require actual schema properties, values.yaml structure, and NOTES.txt content; a stub cannot satisfy them without implementing the config changes."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "Tests cover values.yaml section, schema properties, NOTES.txt deprecation strings, and backward compatibility as required by instruction."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are grouped into named classes (TestValuesYamlChanges, TestSchemaChanges, TestDeprecationWarnings, TestBackwardCompatibility) with docstrings."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "The expected schema keys (enabled, minReplicaCount, maxReplicaCount, metrics, behavior) are documented in instruction.md."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths and property names appear consistent between instruction and tests."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction identifies relevant files as investigation targets but does not point to specific lines; localization is part of the task scope."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "Not an agentmd-edits task; this is a code/config change task."
+    }
+  },
+  "tier_a_fails": [],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 10,
+  "fail_count": 0
+}

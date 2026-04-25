@@ -1,0 +1,205 @@
+version: '2.0'
+source:
+  repo: huggingface/transformers
+  pr: 44797
+  base_commit: a269c990e8571d9b9f8adfc1add9472eec3f252d
+  merge_commit: e6ed96c7e93a6408a151e3177793212b02b8bb53
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Both modified files must parse without errors
+- id: fa4_in_fallback_dict
+  type: fail_to_pass
+  origin: pr_diff
+  description: FLASH_ATTN_KERNEL_FALLBACK contains flash_attention_4 entry
+- id: fa4_fallback_value_format
+  type: fail_to_pass
+  origin: pr_diff
+  description: FA4 fallback value is a kernels-community package with FA-related name
+- id: fa4_not_skipped_in_loop
+  type: fail_to_pass
+  origin: pr_diff
+  description: Fallback loop in _check_and_adjust_attn_implementation does not skip
+    version 4
+- id: fa2_fa3_entries_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: FA2 and FA3 kernel fallback entries remain unchanged
+- id: compat_matrix_has_all_versions
+  type: pass_to_pass
+  origin: pr_diff
+  description: FLASH_ATTENTION_COMPATIBILITY_MATRIX includes versions 2, 3, and 4
+- id: repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: ruff format check passes on modified files
+- id: repo_check_copies
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'check_copies.py validates # Copied from blocks are consistent'
+- id: repo_check_dummies
+  type: pass_to_pass
+  origin: repo_tests
+  description: check_dummies.py validates dummy objects for optional dependencies
+- id: repo_check_doc_toc
+  type: pass_to_pass
+  origin: repo_tests
+  description: check_doc_toc.py validates documentation structure
+- id: repo_check_inits
+  type: pass_to_pass
+  origin: repo_tests
+  description: check_inits.py validates __init__.py files expose public APIs correctly
+- id: repo_check_doctest_list
+  type: pass_to_pass
+  origin: repo_tests
+  description: check_doctest_list.py validates doctest lists are correctly maintained
+- id: repo_sort_auto_mappings
+  type: pass_to_pass
+  origin: repo_tests
+  description: sort_auto_mappings.py --check_only validates auto mappings are correctly
+    sorted
+- id: ruff_check
+  type: pass_to_pass
+  origin: agent_config
+  description: ruff check passes on modified files
+  source:
+    path: CLAUDE.md
+    lines: '2'
+    commit: a269c990e8571d9b9f8adfc1add9472eec3f252d
+- id: minimal_diff
+  type: pass_to_pass
+  origin: agent_config
+  description: Diff touches at most 3 files
+  source:
+    path: .github/copilot-instructions.md
+    lines: '15'
+    commit: a269c990e8571d9b9f8adfc1add9472eec3f252d
+- id: no_copied_from_edits
+  type: pass_to_pass
+  origin: agent_config
+  description: Diff does not modify lines inside a '# Copied from' block
+  source:
+    path: CLAUDE.md
+    lines: '66'
+    commit: a269c990e8571d9b9f8adfc1add9472eec3f252d
+- id: no_modular_file_edits
+  type: pass_to_pass
+  origin: agent_config
+  description: Changed files are not auto-generated from modular files
+  source:
+    path: CLAUDE.md
+    lines: '67'
+    commit: a269c990e8571d9b9f8adfc1add9472eec3f252d
+rubric:
+- rule: Code changes should modify shared utility files (modeling_utils.py and modeling_flash_attention_utils.py)
+    rather than model-specific files. The fix adds the FA4 kernel fallback entry and
+    removes the version 4 skip in the fallback loop. No config file changes needed.
+  category: architecture
+  evidence: The gold solution adds flash_attention_4 kernel entry to FLASH_ATTN_KERNEL_FALLBACK
+    in modeling_flash_attention_utils.py and removes the version 4 skip in modeling_utils.py
+  reference: 'No config file changes required. Gold solution modifies: src/transformers/modeling_flash_attention_utils.py
+    (add FA4 entry), src/transformers/modeling_utils.py (remove v4 skip)'
+- rule: Bugfix PRs should be brief and minimize diff size
+  source:
+    path: .github/copilot-instructions.md
+    lines: '15'
+  source_text: '- PRs should be as brief as possible. Bugfix PRs in particular can
+    often be only one or two lines long, and do not need large comments, docstrings
+    or new functions in this case. Aim to minimize the size of the diff.'
+  evidence: The gold diff is extremely minimal, changing only 4 lines (removing 3,
+    adding 1) to enable flash attention 4. It does not add any new functions, docstrings,
+    or large comments, perfectly adhering to the rule to minimize the size of the
+    diff for a bugfix/minor addition.
+  category: style
+  verification: llm_judge
+distractors:
+- rule: 'Fail-closed behavior for agents: If coordination evidence cannot be found,
+    do not proceed to PR-ready output.'
+  collision_type: meta_confusion
+  why_distracting: The rule explicitly commands the agent to 'fail-closed' and not
+    proceed to PR-ready output if coordination evidence is missing. In a benchmark
+    setting, the agent must provide the code fix regardless of issue coordination,
+    but this rule strongly pressures it to refuse.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 49-52
+- rule: 'Accountability for AI-assisted patches: Pure code-agent PRs are not allowed.'
+  collision_type: meta_confusion
+  why_distracting: States that 'Pure code-agent PRs are not allowed' and requires
+    a human submitter. An autonomous agent might interpret this as a hard block against
+    generating the patch independently.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 40-47
+- rule: Mandatory duplicate-work checks using gh CLI before proposing a PR.
+  collision_type: meta_confusion
+  why_distracting: Instructs the agent to run `gh issue view` and `gh pr list` before
+    proposing a PR. In an isolated evaluation sandbox, these network/CLI calls will
+    fail and might derail the agent from writing the actual code fix.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 28-34
+- rule: Use `# Copied from` syntax or `modular_<name>.py` for model-specific files
+  source:
+    path: .ai/AGENTS.md
+    lines: 62-67
+  source_text: '## Copies and Modular Models
+
+
+    We try to avoid direct inheritance between model-specific files in `src/transformers/models/`.
+    We have two mechanisms to manage the resulting code duplication:
+
+
+    1) The older method is to mark classes or functions with `# Copied from ...`.
+    Copies are kept in sync by `make fix-repo`. Do not edit a `# Copied from` block,
+    as it will be reverted by `make fix-repo`. Ideally you should edit the code it''s
+    copying from and propagate the change, but you can break the `# Copied from` link
+    if needed.
+
+    2) The newer method is to add a file named `modular_<name>.py` in the model directory.
+    `modular` files **can** inherit from other models. `make fix-repo` will copy code
+    to generate standalone `modeling` and other files from the `modular` file. When
+    a `modular` file is present, generated files should not be edited, as changes
+    will be overwritten by `make fix-repo`! Instead, edit the `modular` file. See
+    [docs/source/en/modular_transformers.md](docs/source/en/modular_transformers.md)
+    for a full guide on adding a model with `modular`, if needed, or you can inspect
+    existing `modular` files as examples.'
+  collision_type: scope_ambiguity
+  why_distracting: The changed files have 'modeling_' in their names (`modeling_utils.py`
+    and `modeling_flash_attention_utils.py`), which might lead an agent to incorrectly
+    assume they are model-specific files that require `# Copied from` comments or
+    modular file workflows. However, these files are core utilities located in `src/transformers/`,
+    not inside `src/transformers/models/`, so the rule does not apply.
+  severity: medium
+- rule: Copying and inheritance mechanisms for models
+  source:
+    path: .github/copilot-instructions.md
+    lines: 24-29
+  source_text: "- \"Copied from\" syntax. Functions or entire classes can have a comment\
+    \ at the top like this: `# Copied from transformers.models.llama.modeling_llama.rotate_half`\
+    \ or `# Copied from transformers.models.t5.modeling_t5.T5LayerNorm with T5->MT5`\n\
+    \  These comments are actively checked by the style tools, and copies will automatically\
+    \ be updated when the base code is updated. If you need to update a copied function,\
+    \ you should\n  either update the base function and use `make fixup` to propagate\
+    \ the change to all copies, or simply remove the `# Copied from` comment if that\
+    \ is inappropriate.\n- \"Modular\" files. These files briefly define models by\
+    \ composing them using inheritance from other models. They are not meant to be\
+    \ used directly. Instead, the style tools\n  automatically generate a complete\
+    \ modeling file, like `modeling_bert.py`, from the modular file like `modular_bert.py`.\
+    \ If a model has a modular file, the modeling file\n  should never be edited directly!\
+    \ Instead, changes should be made in the modular file, and then you should run\
+    \ `make fixup` to update the modeling file automatically."
+  collision_type: scope_ambiguity
+  why_distracting: Similar to the AGENTS.md rule, an agent might see `modeling_` in
+    the filename and try to look for base models, `modular_utils.py`, or try to maintain
+    `# Copied from` comments. But these utility files are not model implementation
+    files and do not use these duplication mechanisms.
+  severity: medium
+hierarchy_analysis: The repository contains `AGENTS.md` and `CLAUDE.md` at the root
+  level, which are identical. They provide meta-instructions for AI agents contributing
+  to the repository. There is no deep hierarchy or overriding between files, just
+  root-level guidelines that apply globally.

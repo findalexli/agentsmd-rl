@@ -1,0 +1,58 @@
+{
+  "model": "claude-opus-4-7",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "instruction.md names the exact files (packages/react-router/src/router.ts, packages/solid-router/src/router.ts) and the exact string patterns tested ('(globalThis as any).createFileRoute', '(window as any).createFileRoute', the import statement)."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md lists the exact literal lines to remove: 'import { createFileRoute, createLazyFileRoute } from \\'./fileRoute\\'', '(globalThis as any).createFileRoute', '(window as any).createFileRoute' \u2014 essentially specifying the fix verbatim."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check for absence of polluting patterns and that Router/createFileRoute still work via proper imports; any correct fix removing the pollution would pass."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests include runtime Node subprocess executions importing built modules and checking typeof globalThis.createFileRoute, plus ESLint/build CI commands, not just text grep."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "Behavioral tests require actual removal of global assignment (runtime check) plus pass-to-pass tests require Router class and createFileRoute still be importable/functional, so a stub can't satisfy both."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "Instruction's stated requirements (no global pollution, Router still exported, createFileRoute importable from fileRoute module, builds pass) are all tested."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are organized into classes: TestGlobalPollutionRemoved, TestSourceCodeChanges, TestRouterFunctionality, TestRepoCICommands with descriptive docstrings."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "No structured data output; task is code modification."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, package names, and commands match those used in tests and Dockerfile."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md explicitly names the files to edit (packages/react-router/src/router.ts, packages/solid-router/src/router.ts) and the exact patterns/lines to remove, eliminating the localization portion of the task."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd/config task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 7,
+  "fail_count": 2
+}

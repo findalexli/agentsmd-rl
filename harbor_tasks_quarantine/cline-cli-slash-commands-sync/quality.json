@@ -1,0 +1,59 @@
+{
+  "model": "claude-opus-4-7",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert specific identifiers like 'getStandaloneSlashCommandName', 'getStandaloneSlashCommandToExecute', 'StandaloneSlashCommandExecutionInput', 'createCliOnlySlashCommands', 'handleCliOnlySlashCommand', 'SlashCommandInfo', 'fuzzyFilter' that are not named in instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction describes behaviors needed without prescribing exact code changes or line numbers."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert on gold-specific names like 'handleCliOnlySlashCommand' in ChatView and 'StandaloneSlashCommandExecutionInput' interface name, which a correct alternative fix might not use."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Most f2p tests are grep-based checks like 'assert \"createCliOnlySlashCommands\" in content' rather than importing/calling the functions to verify behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "Tests only check for substring presence (e.g., 'exactMatches' in content); an agent could add stub functions with matching names/keywords without implementing correct filtering behavior."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "Tests cover each numbered behavior listed in instruction.md at least via string checks."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests have descriptive names and docstrings grouped by behavior."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "No structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos observed in filenames or paths."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction names files to modify but doesn't leak specific buggy lines."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "Code task, not a config-edit task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 5,
+  "fail_count": 4
+}

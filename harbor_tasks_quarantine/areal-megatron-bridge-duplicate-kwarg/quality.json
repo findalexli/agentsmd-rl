@@ -1,0 +1,54 @@
+{
+  "model": "claude-opus-4-7",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "Instruction names the file (areal/engine/megatron_engine.py), the method (_build_hf_mcore_bridge), the bridge_cls value ('megatron-bridge'), and describes the pre-runtime Python error \u2014 all test assertions key off these."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction says there's a pre-runtime error but doesn't say it's a duplicate kwarg or name trust_remote_code; the agent must diagnose."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check generic properties (no duplicate kwargs, trust_remote_code appears exactly once, dtype present, megatron-bridge path retained), allowing multiple valid fixes."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests use py_compile, ast.parse/walk, ruff subprocess, and tomllib \u2014 executing code and parsing AST rather than naive substring checks."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub can't pass test_file_parses (base has SyntaxError) nor test_from_hf_pretrained_trust_remote_code (requires exactly one occurrence)."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "Instruction's expected behavior (megatron-bridge path initializes with path, trust_remote_code, dtype) is tested via AST checks on the from_hf_pretrained call."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are grouped with section comments (fail-to-pass, pass-to-pass, config-derived, repo CI) and descriptive names/docstrings."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task is a code bug fix with no structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "Paths, method names, and bridge_cls string 'megatron-bridge' are consistent across instruction, tests, and solution."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction points to the method/branch but doesn't state the specific line or that the issue is a duplicate kwarg."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "Code-only task; no config edits involved."
+    }
+  },
+  "tier_a_fails": [],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
+}

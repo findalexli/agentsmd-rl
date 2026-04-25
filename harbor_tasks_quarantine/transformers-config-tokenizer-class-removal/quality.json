@@ -1,0 +1,56 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "instruction.md names all affected files (configuration_utils.py, mt5/configuration_mt5.py, umt5/configuration_umt5.py, tests/utils/test_configuration_utils.py), the classes (PreTrainedConfig, MT5Config, UMT5Config), the attribute (tokenizer_class), the import (PreTrainedTokenizerBase), and the expected behaviors. The test for test_configuration_utils.py common kwargs is discoverable from the instruction mentioning 'test that tracks known common kwargs'. All key specifics in tests are discoverabl"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the problem (tokenizer_class attribute is a leftover, causes pollution, unnecessary import) and expected behavior, but does not specify exact line numbers to change or exact code to write. A developer must still reason about what to remove and how."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check behavioral properties (no tokenizer_class in to_dict(), no class-level attribute via AST, no import of PreTrainedTokenizerBase) rather than implementation-specific details. Any correct fix that removes the attribute and import would pass. The AST checks are flexible enough to handle different removal approaches."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests use a mix of approaches: importing and calling PreTrainedConfig().to_dict() (behavioral execution), AST parsing to check class structure (structural inspection), and subprocess calls to ruff. test_pretrained_config_no_tokenizer_class and test_config_roundtrip actually instantiate and call the code. Not purely text-matching."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests check that tokenizer_class is NOT in default config dicts, NOT declared as a class attribute in MT5Config/UMT5Config, and PreTrainedTokenizerBase is NOT imported. A stub or no-op would leave the original code intact, which would fail these tests. The tests require actual removal of code."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All four expected behaviors from instruction.md are tested: (1) no tokenizer_class in PreTrainedConfig (test_pretrained_config_no_tokenizer_class), (2) no tokenizer_class in MT5Config/UMT5Config (test_mt5_config_no_tokenizer_class, test_umt5_config_no_tokenizer_class), (3) no PreTrainedTokenizerBase import (test_no_tokenizer_base_in_config_module), (4) kwarg passthrough still works (test_tokenizer_class_kwarg_passthrough)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section headers (Gates, Fail-to-pass, Pass-to-pass, Config-derived, Repo CI), descriptive function names, and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or tests."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names all affected files, the exact attribute name (tokenizer_class), the exact import to remove (PreTrainedTokenizerBase), and even the hardcoded value ('T5Tokenizer') in MT5Config and UMT5Config. While the files are somewhat obvious from the domain, the instruction essentially provides a complete localization of every change needed, leaving minimal reasoning for the agent."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits task."
+    }
+  },
+  "tier_a_fails": [],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 8,
+  "fail_count": 1
+}

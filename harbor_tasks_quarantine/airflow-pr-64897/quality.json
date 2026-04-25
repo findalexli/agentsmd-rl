@@ -1,0 +1,54 @@
+{
+  "model": "claude-opus-4-7",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "instruction.md names the file path, the DagRunInfo class, the includes list mechanism, and the field names partition_key and partition_date with expected serialization behavior."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction describes what's broken and expected output but doesn't specify the exact code change; developer must reason about modifying the includes list."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests only check serialized output keys/values, not specific implementation; alternative correct fixes (e.g., overriding _fields, custom serialization) would also pass."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests execute the DagRunInfo class via subprocess and inspect the serialized dict output."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "Tests assert specific values like 'daily_partition' and ISO datetime strings that require actual serialization working correctly."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "Tests cover partition_key, partition_date, None cases, and various values as described in instruction."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are grouped under TestDagRunInfoSerialization class with descriptive names and docstrings."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "Instruction lists all expected fields in serialized output explicitly."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "Paths and names appear correct and consistent."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction names the file and class (appropriate domain localization) but does not name the exact line or show the fix."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config edit."
+    }
+  },
+  "tier_a_fails": [],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 10,
+  "fail_count": 0
+}

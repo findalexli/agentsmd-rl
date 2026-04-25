@@ -1,0 +1,153 @@
+checks:
+- id: test_padstring_syntax_valid
+  type: fail_to_pass
+  origin: pr_diff
+  description: C++ source compiles syntactically (clang -fsyntax-only)
+- id: test_string_argument_description
+  type: fail_to_pass
+  origin: pr_diff
+  description: '''string'' argument description is ''String or FixedString'' not ''Array'''
+- id: test_length_argument_description
+  type: fail_to_pass
+  origin: pr_diff
+  description: '''length'' argument description is ''UInt*'' not ''const UInt*'''
+- id: test_pad_string_argument_description
+  type: fail_to_pass
+  origin: pr_diff
+  description: '''pad_string'' argument description is ''String'' not ''Array'''
+- id: test_no_trailing_whitespace
+  type: pass_to_pass
+  origin: static
+  description: No trailing whitespace in modified files
+- id: test_file_not_empty_and_valid
+  type: pass_to_pass
+  origin: static
+  description: Modified C++ file is valid and non-empty
+- id: test_no_tabs_for_indentation
+  type: pass_to_pass
+  origin: static
+  description: Uses spaces for indentation, not tabs
+- id: test_include_directives_format
+  type: pass_to_pass
+  origin: static
+  description: Include directives follow project format conventions
+- id: test_validate_function_arguments_usage
+  type: pass_to_pass
+  origin: static
+  description: validateFunctionArguments API is used correctly
+- id: test_allman_brace_style
+  type: pass_to_pass
+  origin: agent_config
+  source:
+    path: .claude/CLAUDE.md
+  description: Code follows Allman brace style conventions
+- id: test_repo_codespell
+  type: pass_to_pass
+  origin: repo_tests
+  description: codespell finds no typos in padString.cpp
+- id: test_repo_git_status_clean
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git repository is in clean state
+- id: test_repo_padstring_sql_test_exists
+  type: pass_to_pass
+  origin: static
+  description: pad_string SQL test files exist and are valid
+- id: test_repo_leftpad_fixedstring_test_exists
+  type: pass_to_pass
+  origin: static
+  description: leftPad FixedString test exists
+- id: test_repo_clang_format_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: C++ file follows project clang-format style
+- id: test_repo_yamllint_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: YAML files pass yamllint validation
+- id: test_repo_file_in_git
+  type: pass_to_pass
+  origin: repo_tests
+  description: padString.cpp is tracked in git
+- id: test_repo_clang_format_style
+  type: pass_to_pass
+  origin: repo_tests
+  description: C++ file can be parsed by clang-format
+- id: test_repo_no_executable_bit
+  type: pass_to_pass
+  origin: repo_tests
+  description: Source file does not have executable bit set
+- id: test_repo_no_bom
+  type: pass_to_pass
+  origin: repo_tests
+  description: Source file has no UTF-8/UTF-16 byte order mark
+- id: test_repo_no_duplicate_includes
+  type: pass_to_pass
+  origin: static
+  description: Source file has no duplicate
+- id: test_repo_git_whitespace_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Git whitespace check passes
+rubric:
+- rule: Use accurate type descriptions in FunctionArgumentDescriptor. String arguments
+    should be described as 'String or FixedString' not 'Array', and length arguments
+    as 'UInt*' not 'const UInt*'.
+  source:
+    path: src/Functions/padString.cpp
+    lines: 167-173
+    commit: dea580e0abc03ab181a4d2bc2bc8a65e599216ae
+  reference: "FunctionArgumentDescriptors mandatory_args{\n    {\"string\", static_cast<FunctionArgumentDescriptor::TypeValidator>(&isStringOrFixedString),\
+    \ nullptr, \"String or FixedString\"},\n    {\"length\", static_cast<FunctionArgumentDescriptor::TypeValidator>(&isInteger),\
+    \ nullptr, \"UInt*\"},\n};\nFunctionArgumentDescriptors optional_args{\n    {\"\
+    pad_string\", static_cast<FunctionArgumentDescriptor::TypeValidator>(&isString),\
+    \ isColumnConst, \"String\"}\n};\n"
+distractors:
+- rule: 'When writing text such as documentation, comments, or commit messages, wrap
+    literal names from ClickHouse SQL language, classes and functions, or literal
+    excerpts from log messages inside inline code blocks, such as: `MergeTree`.'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might apply markdown backticks to the C++ string literals
+    (e.g., `"\`String\` or \`FixedString\`"`) because they are used in error messages
+    and contain ClickHouse SQL types, misinterpreting the scope of 'text such as documentation,
+    comments, or commit messages'.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 5-5
+- rule: Wrap literal names from ClickHouse SQL language in inline code blocks
+  source:
+    path: .claude/CLAUDE.md
+    lines: '5'
+  source_text: 'When writing text such as documentation, comments, or commit messages,
+    wrap literal names from ClickHouse SQL language, classes and functions, or literal
+    excerpts from log messages inside inline code blocks, such as: `MergeTree`.'
+  collision_type: scope_ambiguity
+  why_distracting: The PR modifies C++ string literals that represent ClickHouse SQL
+    types ('String', 'FixedString', 'Array'). An agent might mistakenly apply this
+    documentation formatting rule to the C++ strings and wrap them in markdown backticks
+    (e.g., '`String` or `FixedString`'), which would cause incorrect type names to
+    be displayed in application error messages.
+  severity: high
+- rule: Always use Allman-style braces when writing C++ code
+  source:
+    path: .claude/CLAUDE.md
+    lines: '145'
+  source_text: When writing C++ code, always use Allman-style braces (opening brace
+    on a new line). This is enforced by the style check in CI.
+  collision_type: scope_ambiguity
+  why_distracting: The PR modifies elements within a C++ uniform initialization block
+    `FunctionArgumentDescriptors mandatory_args{ ... };`. An agent might see this
+    rule and mistakenly try to reformat the `{` onto a new line. However, the rule
+    generally applies to control structures and function bodies, not necessarily uniform
+    initialization, and reformatting untouched lines falls outside the scope of the
+    fix.
+  severity: medium
+hierarchy_analysis: The single AGENTS.md file contains documentation and commit message
+  guidelines that do not apply to the C++ string literals being modified.
+version: '2.0'
+source:
+  repo: ClickHouse/ClickHouse
+  pr: 102106
+  base_commit: a77cd4c5a6ede8a2d5da637a75348a4cc055c007
+  merge_commit: dea580e0abc03ab181a4d2bc2bc8a65e599216ae

@@ -1,0 +1,28 @@
+name = "excalidraw-cache-collision-detection"
+difficulty = "medium"
+time_limit = 1200  # 20 minutes
+memory_limit = "4gb"
+tags = ["typescript", "performance", "caching", "collision-detection"]
+
+[description]
+brief = "Add caching to hitElementItself for better collision detection performance"
+detail = """
+This task involves implementing a caching mechanism in the collision detection system.
+The hitElementItself function is called frequently during mouse interactions, and
+repeated hit tests on the same point/element can be expensive.
+
+Your implementation should:
+1. Cache the result of hit tests based on point, element, and threshold
+2. Return cached results when the same point/element combination is tested again
+3. Invalidate cache when element version changes
+4. Use WeakRef to avoid memory leaks
+5. Handle threshold increases properly (cached result is still valid)
+6. Handle threshold decreases properly (must recompute)
+"""
+
+[environment]
+image = "task-env"
+workdir = "/workspace/excalidraw"
+
+[verifier]
+env = { GEMINI_API_KEY = "${GEMINI_API_KEY:-}", ANTHROPIC_API_KEY = "${ANTHROPIC_API_KEY:-}" }

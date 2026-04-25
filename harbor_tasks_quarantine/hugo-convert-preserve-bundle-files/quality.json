@@ -1,0 +1,58 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "test_copy_content_dirs_function_exists asserts specific implementation details: the function name 'copyContentDirsForOutput', the exact import '\"slices\"', the import '\"github.com/gohugoio/hugo/common/hugio\"', and the exact call 'c.copyContentDirsForOutput(pagesBackedByFile)'. None of these are mentioned or discoverable from instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "instruction.md describes the broken behavior (non-content bundle files not copied) and acceptance criteria but does not specify exact code changes, line numbers, or function names to implement."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_copy_content_dirs_function_exists asserts the exact function name 'copyContentDirsForOutput', the exact imports '\"slices\"' and '\"github.com/gohugoio/hugo/common/hugio\"', and the exact call string 'c.copyContentDirsForOutput(pagesBackedByFile)'. An alternative correct fix using different function names, different imports (e.g., 'sort' instead of 'slices', 'io' instead of 'hugio'), or different internal structure would fail this test."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "test_copy_content_dirs_function_exists is purely text-based: it reads convert.go and checks for string presence ('copyContentDirsForOutput', '\"slices\"', etc.) with no execution. While other tests do execute the binary, this test is purely textual assertion."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "test_bundle_files_preserved_during_convert builds hugo, runs 'hugo convert toJSON -o outputdir', and checks that bundle resource files exist with correct content. A stub or no-op implementation would not produce these files. test_convert_output_inside_content_tree similarly requires actual functionality."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All three acceptance criteria (bundle files preserved, edge case output inside content tree, code quality checks) are tested by the test suite."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive docstrings and comments indicating fail_to_pass vs pass_to_pass categories."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task does not produce structured data like JSON/CSV/API/DB schemas."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names in instruction.md or tests."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "instruction.md does not name specific files, lines, or function names. It describes the problem at the feature/behavior level ('hugo convert command') which is appropriate for the task domain."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 6,
+  "fail_count": 3
+}

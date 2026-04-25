@@ -1,0 +1,91 @@
+version: '2.0'
+source:
+  repo: THUDM/slime
+  pr: 1714
+  base_commit: e46e660059b5f2ae949ad812c7d49af823f415a3
+  merge_commit: 5fa6755dbc3d7f6593f66cea260de6b7bf387173
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified file must parse without errors
+- id: test_pre_commit_ruff
+  type: pass_to_pass
+  origin: pre_commit
+  description: Repo passes ruff linting on modified file (pre-commit hook)
+- id: test_repo_compileall
+  type: pass_to_pass
+  origin: repo_tests
+  description: All Python modules compile without syntax errors
+- id: test_pre_commit_black
+  type: pass_to_pass
+  origin: pre_commit
+  description: Modified file passes black format check (pre-commit hook)
+- id: test_pre_commit_isort
+  type: pass_to_pass
+  origin: pre_commit
+  description: Modified file passes isort import format check (pre-commit hook)
+- id: test_pre_commit_yaml
+  type: pass_to_pass
+  origin: pre_commit
+  description: All YAML files are valid (pre-commit hook)
+- id: test_repo_import_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified module imports without errors
+- id: init_client_trust_env_disabled
+  type: fail_to_pass
+  origin: pr_diff
+  description: init_http_client creates AsyncClient with trust_env=False across varied
+    configs
+- id: init_client_proxy_not_mounted
+  type: fail_to_pass
+  origin: pr_diff
+  description: With proxy env vars set, init_http_client must not mount proxy transports
+- id: ray_actor_trust_env_disabled
+  type: fail_to_pass
+  origin: pr_diff
+  description: _HttpPosterActor creates AsyncClient with trust_env=False
+- id: init_client_preserves_config
+  type: pass_to_pass
+  origin: static
+  description: init_http_client creates AsyncClient with connection limits and timeout
+rubric: []
+distractors:
+- rule: Avoid blocking network calls in reward functions
+  source:
+    path: .claude/skills/add-reward-function/SKILL.md
+    lines: '83'
+  source_text: '- Doing blocking network calls without async handling'
+  collision_type: scope_ambiguity
+  why_distracting: The agent modifying the HTTP client might see a rule about network
+    calls and attempt to apply reward-function-specific async patterns to the core
+    HTTP client, which already uses httpx.AsyncClient.
+  severity: low
+- rule: Add tests for new behavior and follow test naming patterns
+  source:
+    path: .claude/skills/add-tests-and-ci/SKILL.md
+    lines: 23-25
+  source_text: '- Follow existing naming: `tests/test_<feature>.py`
+
+    - Start from nearest existing test file for your model/path
+
+    - Keep test scope small and behavior-focused'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to create a new test file specifically
+    for the proxy bypass, which is unnecessary since existing tests already exercise
+    SGLang HTTP communication (and previously had to manually clear proxy env vars
+    to do so).
+  severity: medium
+- rule: Avoid blocking-heavy logic in high-frequency paths
+  source:
+    path: .claude/skills/add-rollout-function/SKILL.md
+    lines: '99'
+  source_text: '- Using blocking-heavy logic in high-frequency rollout paths without
+    batching/concurrency control'
+  collision_type: scope_ambiguity
+  why_distracting: The HTTP client is used in the rollout path, so an agent might
+    misinterpret this as an instruction to add batching or concurrency control to
+    the HTTP client itself, rather than the custom rollout functions the rule is intended
+    for.
+  severity: low

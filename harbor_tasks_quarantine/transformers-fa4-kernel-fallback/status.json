@@ -1,0 +1,120 @@
+{
+  "schema_version": 2,
+  "valid": true,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-16T07:49:03.529632",
+  "total_time": 716.41,
+  "sandbox_id": "i4a8ecl3peyc8g5gf7wus",
+  "backend": "anthropic",
+  "pipeline": "pipeline",
+  "start_at": "judge",
+  "nodes": {
+    "p2p_enrich": {
+      "status": "completed",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 271.82,
+      "notes": "CI commands verified in Docker: ruff format --check, ruff check, utils/check_copies.py, utils/check_dummies.py, utils/check_doc_toc.py, utils/check_inits.py. Already has 12 p2p tests (5 repo_tests + 4 pr_diff + 3 agent_config). No new tests needed."
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 197.87,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All 4 validation checks passed: Docker build succeeded, NOP test reward=0 (3 fail-to-pass tests correctly fail on base), Gold test reward=1 (15/15 tests pass after fix), Rubric judge=1.0 (>=0.8 threshold). The judge API error (HTTP 403) is due to Fireworks endpoint routing, not content issues.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 245.3
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 2.75,
+      "notes": "ICR=1.00"
+    },
+    "rubric_quality_loop": {
+      "status": "ok",
+      "model": "gemini-3.1-pro + kimi-k2.5",
+      "backend": "fireworks",
+      "time": 31.93,
+      "notes": "verdict=HIGH rounds=0",
+      "quality_verdict": "HIGH",
+      "loop_rounds": 0,
+      "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "claude-opus-4-6",
+      "backend": "anthropic",
+      "time": 0.75,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:2', 'A:[A] test_not_tautological @ tests/test_outputs.py:389: test `test_no_copied_from_edits` has 1 assert(s), all pass on a s', 'A:[A] test_not_tautological @ tests/test_outputs.py:415: test `test_no_modular_file_edits` has 1 assert(s), all pass on a ', 'lint_tier_b:3', 'B:[B] pinned_dependencies @ environment/Dockerfile:16: unpinned pip deps: \".[quality]\", 2>/dev/null', 'B:[B] pinned_dependencies @ environment/Dockerfile:18: unpinned pip deps: pyyaml, pytest, pytest-json-ctrf', 'B:[B] pinned_dependencies @ environment/Dockerfile:22: unpinned pip deps: ruff']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 19.81,
+      "tier_a_fails": [],
+      "tier_b_fails": [],
+      "pass_count": 9,
+      "fail_count": 0
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1584.71,
+      "at": "2026-04-12T04:31:55.023674"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1240.41,
+      "at": "2026-04-12T05:49:20.627873"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1799.66,
+      "at": "2026-04-15T06:24:16.427590"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "glm",
+      "time": 2482.27,
+      "at": "2026-04-15T14:06:38.733224"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "anthropic",
+      "time": 716.41,
+      "at": "2026-04-16T07:49:03.529632"
+    }
+  ]
+}

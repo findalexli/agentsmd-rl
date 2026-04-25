@@ -1,0 +1,54 @@
+{
+  "model": "claude-opus-4-7",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "Instruction mentions createTestAgentDB, AppenderV2, EnableSTStorage, record.SamplesV2, record.RefSample.ST, wlog.NewSegmentsReader, and specific ST values [1000..5000] and [1234..5234] used in tests."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction describes the bug (ST dropped, comes back as 0) but does not state the exact line or code change; agent must locate and add the ST field."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests only verify behavior (ST values round-trip through WAL) without asserting on specific variable names or line positions."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests write Go test files and execute `go test`, inspecting actual WAL decode behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "f2p tests require exact ST values [1000..5000] and [1234..5234] to be read back from WAL; a stub cannot satisfy this."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "Tests cover varying ST values, different label sets, and the listed upstream tests (TestCommit_AppendV2, TestRollbackAppendV2, etc.)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are individually named and commented with pass_to_pass/fail_to_pass labels."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "No structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "Paths and commands look correct (tsdb/agent, go test flags)."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction points at the tsdb/agent package and AppenderV2 flow, which is necessary domain context, not a specific line/file pointer."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "Code-only task."
+    }
+  },
+  "tier_a_fails": [],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
+}

@@ -1,0 +1,56 @@
+source:
+  repo: SeleniumHQ/selenium
+  pr_number: 17233
+  base_commit: 4bb23f484eec6f986b563fb3146cb64dcbcc0187
+  merge_commit: d4fb256426eed10e0b0e37c8d16a7b969d1e1848
+  title: "[build] Fix RBE tests"
+
+target_files:
+  - java/src/org/openqa/selenium/concurrent/Lazy.java
+
+checks:
+  - id: test_runtime_exception_not_wrapped
+    type: fail_to_pass
+    origin: pr_description
+    description: RuntimeException thrown by supplier should not be wrapped in InitializationException
+
+  - id: test_runtime_exception_various_types
+    type: fail_to_pass
+    origin: pr_description
+    description: Various RuntimeException subtypes (IllegalArgumentException, NullPointerException, etc.) should pass through unwrapped
+
+  - id: test_checked_exception_still_wrapped
+    type: pass_to_pass
+    origin: pr_description
+    description: Checked exceptions (like IOException) should still be wrapped in InitializationException
+
+  - id: test_lazy_normal_operation
+    type: pass_to_pass
+    origin: pr_description
+    description: Lazy class should work normally when supplier succeeds (value caching, getIfInitialized)
+
+  - id: test_lazy_source_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: The Lazy.java source file should compile without errors
+
+  - id: test_concurrent_package_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: All concurrent package Java files compile together without errors
+
+  - id: test_git_repo_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: Git repository is in a valid state after applying patch
+
+  - id: test_lazy_java_file_parseable
+    type: pass_to_pass
+    origin: static
+    description: Lazy.java is valid UTF-8 with proper Java structure
+
+rubric:
+  - id: minimal_code_change
+    rule: "This is a minimal code-only fix (2 lines added to handle RuntimeException). Per AGENTS.md 'prefer small, reversible diffs' convention, no config file (CLAUDE.md, AGENTS.md, README.md) changes are required or expected. The agent correctly made ONLY the necessary Java code change."
+    source:
+      path: AGENTS.md

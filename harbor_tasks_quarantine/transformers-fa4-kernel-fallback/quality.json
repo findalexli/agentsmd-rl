@@ -1,0 +1,54 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the relevant files (modeling_utils.py, modeling_flash_attention_utils.py), the key data structures (FLASH_ATTN_KERNEL_FALLBACK, FLASH_ATTENTION_COMPATIBILITY_MATRIX), the naming convention (kernels-community/ prefix with flash/attn-related names), and the versions (2, 3, 4). The tests check for 'flash_attention_4' in the fallback dict, the 'kernels-community/' prefix, and flash/attn-related naming \u2014 all discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes the bug (FA4 fallback not working) and the expected behavior (should fall back like FA2/FA3) but does not specify the exact code change needed (adding a dict entry and removing a skip condition). A developer must reason about what to change."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "The tests check that 'flash_attention_4' exists in the fallback dict, starts with 'kernels-community/', and contains a flash/attn-related token (flash, attn, or fa). This allows many valid package names like 'kernels-community/flash-attn4', 'kernels-community/flash-attention-4', 'kernels-community/fa4-impl', etc. The tests don't assert on exact line positions or specific internal helper functions."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests use subprocess to actually import the module (with mocked torch), execute it, and inspect runtime dictionary values via json.loads(). They also run ruff, check_copies.py, and check_dummies.py as subprocesses. This is behavioral verification, not just text matching."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests (test_fa4_in_fallback_dict, test_fa4_fallback_value_format, test_fa4_not_skipped_in_loop) check that the FLASH_ATTN_KERNEL_FALLBACK dict contains a 'flash_attention_4' key with a properly formatted value. The base commit lacks this entry and has an explicit skip for version 4, so a stub/no-op implementation would fail these tests."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires: (1) FA4 fallback entry in FLASH_ATTN_KERNEL_FALLBACK, (2) following the kernels-community/ naming convention, (3) not being skipped in the loop. All three are tested by the fail-to-pass tests. Preservation of FA2/FA3 entries is also tested."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass, Repo CI tests), descriptive function names, and detailed docstrings explaining what each test verifies and why."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves modifying Python source code dictionaries, not producing structured data output like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All filenames (modeling_flash_attention_utils.py, modeling_utils.py), variable names (FLASH_ATTN_KERNEL_FALLBACK, FLASH_ATTENTION_COMPATIBILITY_MATRIX), and paths are consistent and correct throughout the instruction and tests."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the two relevant files and data structures, which is appropriate given the task domain. It does not specify exact line numbers, the skip condition to remove, or the exact dict entry to add. The files mentioned are the natural locations for the described functionality."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task modifying Python source files, not a configuration edit task."
+    }
+  },
+  "tier_a_fails": [],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
+}

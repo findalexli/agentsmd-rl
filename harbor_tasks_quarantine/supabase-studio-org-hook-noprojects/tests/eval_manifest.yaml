@@ -1,0 +1,86 @@
+version: "2.0"
+
+source:
+  repo: "supabase/supabase"
+  pr: 44572
+  base_commit: "e7bec24021de77053a9b9b05c06ab17789f1269b"
+  merge_commit: "a020be54c0d18e06ea2f59398f2e6ac4e846867f"
+
+checks:
+  - id: typescript_valid
+    type: pass_to_pass
+    origin: static
+    description: "Modified TypeScript file must be structurally valid"
+
+  - id: uses_org_hook_not_props
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Component should use useSelectedOrganizationQuery hook instead of receiving org via props"
+
+  - id: component_has_no_params
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Component should take no parameters (uses hook instead of props)"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Component is not a stub - has the actual implementation logic"
+
+  - id: imports_correct
+    type: pass_to_pass
+    origin: static
+    description: "Component imports required dependencies correctly"
+
+  - id: test_repo_typescript_parse
+    type: pass_to_pass
+    origin: repo_tests
+    description: "TypeScript syntax check on the modified file passes"
+
+  - id: test_repo_billing_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's Billing component tests pass"
+
+  - id: test_repo_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's unit tests pass"
+
+  - id: test_repo_config_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's config tests pass"
+
+  - id: test_repo_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's linter passes"
+
+  - id: test_repo_prettier
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's code formatting passes for modified file"
+
+  - id: test_repo_component_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's component tests pass"
+
+  - id: test_repo_features_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's feature tests pass"
+
+  - id: test_repo_pages_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's pages tests pass"
+
+rubric:
+  # Rules for this specific refactor task (code change validation)
+  - rule: "Component should use the useSelectedOrganizationQuery hook instead of receiving organization via props"
+    reference: "import { useSelectedOrganizationQuery } from '@/hooks/misc/useSelectedOrganization'"
+
+  - rule: "Component should have no parameters (no props interface)"
+    reference: "export const NoProjectsOnPaidOrgInfo = () =>"

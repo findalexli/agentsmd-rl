@@ -1,0 +1,123 @@
+{
+  "schema_version": 2,
+  "valid": true,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-15T06:15:27.802256",
+  "total_time": 1021.6,
+  "sandbox_id": "iu9p6bp0i4pzny84n72p3",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "judge",
+  "nodes": {
+    "p2p_enrich": {
+      "status": "completed",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 124.51,
+      "notes": "Verified 4 repo CI/CD pass_to_pass gates in test_outputs.py:\n\n1. test_repo_ruff_check - Runs 'ruff check' on video_processing_utils.py\n2. test_repo_ruff_format - Runs 'ruff format --check' on video_processing_utils.py\n3. test_repo_modeling_structure - Runs 'python utils/check_modeling_structure.py'\n4. test_repo_inits - Runs 'python utils/check_inits.py'\n\nAll 4 repo_tests commands verified working in Docker:\n- ruff check/format: uses pyproject.toml config (line-length 119), passes on base commit\n- check_modeling_structure.py: validates modeling structure, passes on base commit\n- check_inits.py: validates __init__ structure, passes on base commit\n\nCI commands tested but not added (don't work in minimal env):\n- check_types.py: requires 'ty' type checker (not installed)\n- check_docstrings.py: fails due to import error (the bug we're fixing)\n- check_modular_conversion.py: requires libcst module\n- pytest tests: require torch/PIL/extras not in base image\n\nTotal pass_to_pass tests: 9 (4 repo_tests + 3 static + 2 pr_diff)"
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 199.36,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All 4 validation checks passed: Docker build, NOP test (reward=0), Gold test (reward=1), Rubric judge (1.0). Removed rubric rules checking agent doc modifications (irrelevant for code fix).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 115.04
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.15,
+      "notes": "ICR=1.00"
+    },
+    "rubric_quality_loop": {
+      "status": "ok",
+      "model": "gemini-3.1-pro + kimi-k2.5",
+      "backend": "fireworks",
+      "time": 24.7,
+      "notes": "verdict=LOW rounds=0",
+      "quality_verdict": "LOW",
+      "loop_rounds": 0,
+      "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "passed",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.42,
+      "notes": "flags=['lint_tier_b:2', 'B:[B] pinned_dependencies @ environment/Dockerfile:20: unpinned pip deps: \".[dev-sklearn]\", 2>/dev/null', 'B:[B] pinned_dependencies @ environment/Dockerfile:21: unpinned pip deps: numpy, huggingface_hub, tokenizers, safetensors']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 25.31,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 7,
+      "fail_count": 3
+    }
+  },
+  "history": [
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 1593.84,
+      "at": "2026-04-09T14:54:44.859717"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1339.79,
+      "at": "2026-04-10T15:31:31.078538"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1164.41,
+      "at": "2026-04-12T04:45:38.771493"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1037.23,
+      "at": "2026-04-12T06:07:18.343665"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 1021.6,
+      "at": "2026-04-15T06:15:27.802256"
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "model": "claude-opus-4-7",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "Instruction names both file paths, the function `requiresProjectAnnotations`, the 2-parameter signature, the `areProjectAnnotationRequired` variable, `setup-file-with-project-annotations`, and the 'return true' default behavior \u2014 all asserted by tests."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction describes what to remove (CSF4-related code/parameter) without showing the exact replacement lines or diff."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check absence of `isCSF4`, `const previewOrConfigFile`, `isCsfFactoryPreview(`, and presence of `areProjectAnnotationRequired` and `return true` \u2014 all behavioral constraints stated in the instruction, not gold-specific names."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests use TypeScript AST via Node subprocess to parse and inspect function declarations, parameters, and identifier usage \u2014 not just string matching."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "Each f2p test asserts a specific structural change (param count=2, zero isCSF4 references, no `const previewOrConfigFile`) that a stub cannot satisfy without performing the refactor."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "Tests cover parameter removal, CSF4 reference removal, preview injection removal, and preservation of project annotations conditional \u2014 matching all instruction requirements."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are grouped with section comments (Gates, Fail-to-pass, Pass-to-pass) and have descriptive names and docstrings."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task is a code refactor, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths and identifiers are consistent between instruction, tests, and solution."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction names the two files (which is the scope of the task) but does not give exact line numbers or the diff."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, no config edits involved."
+    }
+  },
+  "tier_a_fails": [],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
+}

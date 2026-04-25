@@ -1,0 +1,20 @@
+name = "lancedb-urllib-request-import"
+description = "Fix missing urllib.request import in url_retrieve function that causes AttributeError when downloading images from HTTP URLs"
+
+# Task metadata
+difficulty = "easy"
+tags = ["python", "import", "bugfix", "embeddings"]
+
+# Estimated time (in minutes) for an agent to complete this task
+time_estimate = 10
+
+# Files that should be examined/modified
+target_files = [
+    "python/python/lancedb/embeddings/utils.py"
+]
+
+# Distinctive line for idempotency check (a line from the patch)
+distinctive_line = "+import urllib.request"
+
+[verifier]
+env = { GEMINI_API_KEY = "${GEMINI_API_KEY:-}", ANTHROPIC_API_KEY = "${ANTHROPIC_API_KEY:-}" }

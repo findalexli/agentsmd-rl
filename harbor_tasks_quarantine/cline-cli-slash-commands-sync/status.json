@@ -1,0 +1,121 @@
+{
+  "schema_version": 2,
+  "valid": false,
+  "verdict": "fail",
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-22T07:56:34.040625",
+  "total_time": 199.96,
+  "sandbox_id": "ibl1y5dqt7dbcww7hu79j",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "fix_quality",
+  "error": "rate limited during fix_quality: {\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":180049,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 429 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"rate_limit_error\\\",\\\"message\\\":\\\"usage limit exceeded (2056)\\\"},\\\"request_id\\\":\\\"063814a0e2106ae78e229573d2a9231b\\\"}\",\"stop_reason\":\"stop_sequence\",\"session_id\":\"dc87edf8-67e0-4207-afe9-c26c35604dcb\",\"total_cost_usd\":0,\"usage\":{\"input_tokens\":0,\"cache_creation_input_tokens\":0,\"cache_read_inp",
+  "nodes": {
+    "scaffold": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 529.36,
+      "notes": ""
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 222.21,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All validation checks passed: Docker build succeeds, NOP test gives reward=0 (tests correctly fail on buggy base), Gold test gives reward=1 (all 14 tests pass on fixed code). Rubric rules are verified by the test functions themselves.",
+      "model": "opus",
+      "backend": "chutes",
+      "time": 1.67
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.4,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:195: test `test_cli_vitest_tests_pass` has 1 assert(s), all pass on a ', 'lint_tier_b:2', 'B:[B] pinned_dependencies @ environment/Dockerfile:11: unpinned pip deps: pytest', 'B:[B] no_network_during_tests @ tests/test.sh:43: network call at test time: `pip install`']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 12.66,
+      "tier_a_fails": [
+        "behavior_in_task_description",
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text",
+        "test_not_tautological"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 5,
+      "fail_count": 4
+    },
+    "tests_rewrite": {
+      "status": "error",
+      "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":500,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"There's an issue with the selected model (opus). It may not exist or you may not have access to it. Run --model to pick a different model.\",\"stop_reason\":\"stop_sequence\",\"session_id\":\"8",
+      "time": 1.69
+    },
+    "fix_quality": {
+      "status": "rate_limited",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 182.94,
+      "notes": ""
+    }
+  },
+  "history": [
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "minimax",
+      "time": 200.69,
+      "at": "2026-04-22T07:28:33.331235"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "minimax",
+      "time": 285.18,
+      "at": "2026-04-22T07:34:33.317607"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "minimax",
+      "time": 207.94,
+      "at": "2026-04-22T07:40:09.968119"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "minimax",
+      "time": 197.1,
+      "at": "2026-04-22T07:47:44.936573"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "minimax",
+      "time": 199.96,
+      "at": "2026-04-22T07:56:34.040625"
+    }
+  ]
+}

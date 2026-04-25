@@ -1,0 +1,166 @@
+version: '2.0'
+source:
+  repo: sgl-project/sglang
+  pr: 22150
+  base_commit: df9c831ab80c78495142b4dbcb1dfa537c9e1c73
+  merge_commit: 3a4f4cbc525b9106bb57a69b96420c545a90f7ae
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Test file must parse without errors
+- id: test_repo_python_syntax_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Python syntax check passes (py_compile)
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff linting passes (F401, F821)
+- id: test_repo_black_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's black formatting check passes
+- id: test_repo_codespell_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's codespell check passes
+- id: test_repo_isort_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's isort import sorting check passes
+- id: test_repo_toml_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TOML files are valid
+- id: test_repo_yaml_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's YAML files are valid
+- id: test_repo_precommit_ast_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Python AST check passes via pre-commit
+- id: test_repo_precommit_debug_statements
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo has no debug statements
+- id: test_repo_precommit_symlinks
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo has no broken symlinks
+- id: test_repo_precommit_trailing_whitespace
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo has no trailing whitespace
+- id: test_repo_precommit_end_of_file_fixer
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo has proper end-of-file newlines
+- id: test_repo_precommit_check_yaml
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's YAML files pass pre-commit check
+- id: test_repo_precommit_check_toml
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TOML files pass pre-commit check
+- id: test_repo_precommit_check_merge_conflict
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo has no merge conflict markers
+- id: transfer_engine_flag_hardcoded_false
+  type: fail_to_pass
+  origin: pr_diff
+  description: remote_instance_weight_loader_start_seed_via_transfer_engine must be
+    hardcoded to False, not conditional on backend
+- id: fixme_comment_added
+  type: fail_to_pass
+  origin: pr_diff
+  description: FIXME comment about random behavior must be added before random.choice
+    calls
+- id: no_conditional_transfer_engine_expression
+  type: fail_to_pass
+  origin: pr_diff
+  description: The conditional expression checking backend == 'transfer_engine' must
+    be removed from Engine init
+- id: file_structure_intact
+  type: pass_to_pass
+  origin: static
+  description: The test file should still have expected structure with key imports
+    and functions
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: The fix hardcodes False for the parameter and removes conditional logic
+rubric:
+- rule: Test-only code fixes require no agent configuration changes when the existing
+    conventions are followed
+  source:
+    path: .claude/skills/write-sglang-test/SKILL.md
+    commit: df9c831ab80c78495142b4dbcb1dfa537c9e1c73
+  reference: ''
+- id: test_repo_precommit_check_added_large_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo has no large files added
+- rule: No production code changes in test PRs
+  source:
+    path: .claude/skills/write-sglang-test/SKILL.md
+    lines: '177'
+  source_text: '**Quality bar** — test real logic (validation boundaries, state transitions,
+    error paths, branching, etc.). Skip tests that just verify Python itself works
+    (e.g., "does calling an abstract method raise `NotImplementedError`?", "does a
+    dataclass store the field I assigned?"). Consolidate repetitive patterns into
+    parameterized tests. No production code changes in test PRs.'
+  evidence: The gold diff correctly scopes its fixes entirely to the test file `test/registered/distributed/test_load_weights_from_remote_instance.py`,
+    disabling non-deterministic paths and addressing a test logic issue without touching
+    any production code in `python/sglang/`.
+  category: architecture
+  verification: llm_judge
+- rule: Consolidate repetitive patterns into parameterized tests
+  source:
+    path: .claude/skills/write-sglang-test/SKILL.md
+    lines: '177'
+  source_text: '**Quality bar** — test real logic (validation boundaries, state transitions,
+    error paths, branching, etc.). Skip tests that just verify Python itself works
+    (e.g., "does calling an abstract method raise `NotImplementedError`?", "does a
+    dataclass store the field I assigned?"). Consolidate repetitive patterns into
+    parameterized tests. No production code changes in test PRs.'
+  evidence: 'The developer explicitly adds the comment `# FIXME: refactor this test
+    to have less random behavior` immediately above the non-deterministic `random.choice(["Engine",
+    "Server"])` calls, acknowledging the rule and indicating intent to transition
+    to deterministic, parameterized tests.'
+  category: testing patterns
+  verification: llm_judge
+distractors:
+- rule: Prefer mock over real server
+  source:
+    path: .claude/skills/write-sglang-test/SKILL.md
+    lines: '16'
+  source_text: 5. **Prefer mock over real server** — when testing logic that doesn't
+    need a server / engine launch (middleware, request routing, config validation,
+    argument parsing), use `unittest.mock.patch` / `MagicMock` and place tests in
+    `test/registered/unit/`. Only launch a real server when the test genuinely needs
+    inference results or server lifecycle behavior.
+  collision_type: scope_ambiguity
+  why_distracting: An agent reviewing the test file might try to optimize it by removing
+    the real server engine launches (`sgl.Engine`, `popen_launch_server`) and replacing
+    them with mocks. However, this test specifically validates distributed multi-GPU
+    weight loading over network/NCCL backends, which inherently requires the actual
+    server and engine lifecycles to be verified correctly.
+  severity: high
+- rule: Do NOT add register_amd_ci unless testing AMD paths
+  source:
+    path: .claude/skills/write-sglang-test/SKILL.md
+    lines: '36'
+  source_text: '**Key principle for E2E tests**: Do NOT add `register_amd_ci` unless
+    the test specifically exercises AMD/ROCm code paths. Common E2E tests just need
+    any GPU to run — duplicating across backends wastes CI time with no extra coverage.'
+  collision_type: scope_ambiguity
+  why_distracting: An agent might see the `register_amd_ci` call at the top of the
+    file and delete it, assuming this is a 'Common E2E test' that only needs to run
+    on one backend to save CI time. But because distributed weight loading exercises
+    highly hardware-specific communication code paths (NCCL vs RCCL), the AMD registry
+    is crucial coverage here.
+  severity: high

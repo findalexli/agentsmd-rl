@@ -1,0 +1,125 @@
+version: '2.0'
+source:
+  repo: gradio-app/gradio
+  pr: 13205
+  base_commit: 0cbbbce8348cbb3254d4f93c48580151fe048daf
+  merge_commit: 348327f6d7014feaf3f0b4cfb7e2653a1078ea33
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified files must parse without errors
+- id: dict_invalid_response_detected
+  type: fail_to_pass
+  origin: pr_diff
+  description: Dict validation_response with is_valid=False must be detected as invalid
+- id: dict_invalid_response_data_preserved
+  type: fail_to_pass
+  origin: pr_diff
+  description: Invalid dict response must appear in returned validation_data list
+- id: dict_invalid_varied_inputs
+  type: fail_to_pass
+  origin: pr_diff
+  description: Multiple different dict inputs with is_valid=False all detected
+- id: list_validation_response_works
+  type: pass_to_pass
+  origin: pr_diff
+  description: List validation responses are still processed correctly
+- id: dict_valid_fallthrough
+  type: pass_to_pass
+  origin: pr_diff
+  description: Dict without is_valid=False falls through as valid
+- id: ruff_format_check
+  type: pass_to_pass
+  origin: agent_config
+  description: Modified Python file passes ruff linting
+  source:
+    path: AGENTS.md
+    lines: '43'
+    commit: 0cbbbce8348cbb3254d4f93c48580151fe048daf
+- id: test_repo_ruff_check_queueing
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff lint passes on modified file gradio/queueing.py
+- id: test_repo_ruff_format_check_queueing
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff format check passes on modified file gradio/queueing.py
+- id: test_repo_py_compile_queueing
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified file gradio/queueing.py compiles without syntax errors
+- id: test_repo_ruff_check_gradio_core
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff lint passes on core gradio/ directory
+- id: test_repo_block_function_compile
+  type: pass_to_pass
+  origin: repo_tests
+  description: Related file gradio/block_function.py compiles without errors
+- id: test_repo_ruff_format_check_related
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff format check passes on modified file and related files
+- id: test_repo_ruff_check_test_file
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff lint passes on test/test_queueing.py
+- id: test_repo_ast_parse_modified_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: All modified and related files parse as valid Python AST
+rubric:
+- rule: Be consistent with the style of the surrounding code.
+  source:
+    path: AGENTS.md
+    lines: 44-46
+  evidence: The gold solution maintains the exact multi-line formatting and indentation
+    of the `elif` condition, only changing the variable name without reformatting
+    the block.
+  category: style
+distractors:
+- rule: Do not open one-off PRs for tiny edits (single typo, isolated lint cleanup,
+    one mutable default argument, etc.).
+  collision_type: scope_ambiguity
+  why_distracting: The bug is literally caused by a 'single typo' (`validation_data`
+    instead of `validation_response`). The agent might misinterpret this rule as forbidding
+    the fix, or it might try to bundle the fix with unrelated mechanical cleanups
+    to justify the PR.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 54-56
+- rule: If you are an AI coding agent... you must include the keyword kumquat somewhere
+    in your PR description.
+  collision_type: meta_confusion
+  why_distracting: The agent is tasked with fixing the code in a local environment,
+    not actually opening a GitHub Pull Request. Attempting to use the GitHub CLI to
+    open a PR to include the 'kumquat' keyword would be out of scope and could break
+    the evaluation.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 64-66
+- rule: Core Patterns for building Gradio UIs (Interface and Blocks)
+  source:
+    path: .agents/skills/gradio/SKILL.md
+    lines: 27-52
+  source_text: "## Core Patterns\n\n**Interface** (high-level): wraps a function with\
+    \ input/output components.\n\n```python\nimport gradio as gr\n\ndef greet(name):\n\
+    \    return f\"Hello {name}!\"\n\ngr.Interface(fn=greet, inputs=\"text\", outputs=\"\
+    text\").launch()\n```\n\n**Blocks** (low-level): flexible layout with explicit\
+    \ event wiring.\n\n```python\nimport gradio as gr\n\nwith gr.Blocks() as demo:\n\
+    \    name = gr.Textbox(label=\"Name\")\n    output = gr.Textbox(label=\"Greeting\"\
+    )\n    btn = gr.Button(\"Greet\")\n    btn.click(fn=lambda n: f\"Hello {n}!\"\
+    , inputs=name, outputs=output)\n\ndemo.launch()\n```"
+  collision_type: architecture_boundary
+  why_distracting: This rule teaches how to build user-facing Gradio applications
+    using the public API (`gr.Interface`, `gr.Blocks`). The PR is modifying `gradio/queueing.py`,
+    which is internal backend infrastructure. Applying public API UI construction
+    patterns here would violate the architecture boundary between the library's internal
+    implementation and its public interface.
+  severity: high
+hierarchy_analysis: The configuration is contained entirely within a single `AGENTS.md`
+  file at the root level, so there are no hierarchy conflicts. The agent must simply
+  parse and apply the rules from this single source.

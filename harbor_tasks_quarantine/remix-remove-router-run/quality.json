@@ -1,0 +1,54 @@
+{
+  "model": "claude-opus-4-7",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "All asserted paths (router.ts, router.test.ts, README.md files, .changes/minor.router-run.md) and strings (router.run(), 'Running Code In Request Context') are referenced in instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction describes what to remove conceptually without giving exact line replacements."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check for absence of strings (run<result>, router.run(), createStorageKey) and compilation/tests passing \u2014 any correct removal satisfies them."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests run subprocess typecheck, lint, format, and node --test on multiple test files in addition to text checks."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "Tests require actual removal plus working compilation and tests; stubs wouldn't pass typecheck/test runs."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "Removal of method, tests, change file, README updates all tested."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are grouped with comment headers (fail_to_pass, pass_to_pass) and named descriptively."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task doesn't produce structured data."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "Paths and commands look correct."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "Files are listed but that's appropriate scope, no line-level hints."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "Not an agentmd-edits task."
+    }
+  },
+  "tier_a_fails": [],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
+}

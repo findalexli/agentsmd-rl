@@ -1,0 +1,125 @@
+source:
+  repo: ant-design/ant-design.git
+  pr: 0
+  base_commit: 5e6a263cfe58b7bbe428a80bf4fd0de0e359d6b7
+  merge_commit: 61877c831805779958bf78bc300d166f4340dee5
+checks:
+- id: typescript_compilation
+  description: TypeScript should compile without errors related to slider component
+  type: fail_to_pass
+  origin: pr_diff
+- id: no_as_any_cast
+  description: The 'as any' cast should be removed from onChangeComplete call
+  type: fail_to_pass
+  origin: pr_diff
+- id: no_ts_ignore
+  description: The @ts-ignore comment should be removed from before RcSlider component
+  type: fail_to_pass
+  origin: pr_diff
+- id: proper_restprops_typing
+  description: restProps should use proper Omit<SliderProps, 'onAfterChange' | 'onChange'>
+    type assertion
+  type: fail_to_pass
+  origin: pr_diff
+- id: component_functional
+  description: The Slider component should still function correctly after type changes
+  type: fail_to_pass
+  origin: pr_diff
+- id: repo_slider_unit_tests
+  description: The repository's existing unit tests for the slider component pass
+  type: pass_to_pass
+  origin: repo_tests
+- id: repo_eslint_slider
+  description: The repository's ESLint check on the slider component passes
+  type: pass_to_pass
+  origin: repo_tests
+- id: repo_biome_lint_slider
+  description: The repository's Biome lint check on the slider component passes
+  type: pass_to_pass
+  origin: repo_tests
+- id: repo_biome_check_slider
+  description: The repository's Biome check (format + lint) on the slider component
+    passes
+  type: pass_to_pass
+  origin: repo_tests
+- id: repo_tsc_slider
+  description: The repository's TypeScript compilation passes without slider-related
+    errors
+  type: pass_to_pass
+  origin: repo_tests
+- id: repo_node_tests
+  description: The repository's Node.js tests pass
+  type: pass_to_pass
+  origin: repo_tests
+- id: repo_slider_type_tests
+  description: The repository's slider TypeScript type tests pass
+  type: pass_to_pass
+  origin: repo_tests
+- id: repo_slider_semantic_tests
+  description: The repository's slider semantic tests pass
+  type: pass_to_pass
+  origin: repo_tests
+- id: repo_slider_a11y_tests
+  description: The repository's slider accessibility tests pass
+  type: pass_to_pass
+  origin: repo_tests
+- id: repo_slider_tooltip_tests
+  description: The repository's slider tooltip tests pass
+  type: pass_to_pass
+  origin: repo_tests
+rubric:
+- rule: Never use `any` type - define precise types instead. Use proper type assertions
+    that maintain type safety.
+  source:
+    path: .github/copilot-instructions.md
+    lines: 378-386
+    commit: 5e6a263cfe58b7bbe428a80bf4fd0de0e359d6b7
+- rule: Always use TypeScript with strict type checking. Prefer interfaces (not type
+    aliases) for object structures.
+  source:
+    path: .github/copilot-instructions.md
+    lines: 378-386
+    commit: 5e6a263cfe58b7bbe428a80bf4fd0de0e359d6b7
+- rule: Remove @ts-ignore comments when fixing type issues - use proper type assertions
+    instead of suppressing errors.
+  source:
+    path: .github/copilot-instructions.md
+    lines: '380'
+    commit: 5e6a263cfe58b7bbe428a80bf4fd0de0e359d6b7
+- rule: 使用 TypeScript 和 React 开发 (Develop using TypeScript and React)
+  source:
+    path: CLAUDE.md
+    lines: 7-8
+  evidence: 'The gold solution removes `@ts-ignore` and `as any`, replacing them with
+    proper TypeScript type assertions (`RcSliderProps[''onChangeComplete'']` and `Omit<SliderProps,
+    ''onAfterChange'' | ''onChange''>`), '
+  category: style
+distractors:
+- rule: 'Changelog 规范: 必须同时提供中英文两个版本 (Changelog rules: Must provide both Chinese and
+    English versions)'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to document this TypeScript fix in the changelog
+    files. However, fixing internal types is an internal refactoring imperceptible
+    to users ('用户无感知的改动'), so it should not be added to the changelog. Modifying
+    the changelog would be wasted effort and violate the instruction to only modify
+    the component file.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 125-129
+- rule: 'Demo 导入规范: 一律使用绝对路径导入，不使用相对路径导入 (Demo import rules: Always use absolute paths)'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might misapply the Demo import rules to the main component
+    file (`components/slider/index.tsx`) and attempt to rewrite its relative imports
+    to absolute imports, which is incorrect for component source code.
+  severity: low
+  source:
+    path: CLAUDE.md
+    lines: 28-33
+hierarchy_analysis: The configuration files `CLAUDE.md` and `AGENTS.md` are identical
+  and provide project-wide guidelines. The commands are heavily focused on PRs, changelogs,
+  demos, and tests, with minimal specific guidance for internal component implementation
+  other than using TypeScript. Agents must be careful to correctly scope the demo/test
+  import rules and changelog rules so they do not misapply them to internal component
+  refactoring.
+version: '2.0'

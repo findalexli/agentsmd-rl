@@ -1,0 +1,23 @@
+name = "selenium-bazel-closure-provider-migration"
+difficulty = "medium"
+tags = ["bazel", "starlark", "build-system", "api-migration"]
+
+time_estimate = "20m"
+
+description = """
+Migrate deprecated struct field access to modern Starlark provider API in Bazel build files.
+The javascript/private/header.bzl file uses deprecated Bazel 6.x style provider access that
+breaks in Bazel 7+. Replace getattr(d, 'closure_js_binary', None) with ClosureJsBinaryInfo in d
+and d.closure_js_binary.bin with d[ClosureJsBinaryInfo].bin.
+"""
+
+[environment]
+dockerfile = "Dockerfile"
+base_commit = "7beae82d3e1fbdcb30eb5165f8f4726a83c0fd26"
+merge_commit = "375a1fd34e90a884317fcac3522a4de7c08bff05"
+
+[solution]
+type = "patch"
+
+[verifier]
+env = { GEMINI_API_KEY = "${GEMINI_API_KEY:-}", ANTHROPIC_API_KEY = "${ANTHROPIC_API_KEY:-}" }

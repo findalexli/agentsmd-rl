@@ -1,0 +1,56 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the two affected files (modeling_nemotron_h.py and modular_nemotron_h.py), the classes (NemotronHPreTrainedModel, NemotronHForCausalLM), the attribute (_tied_weights_keys), the __init__ override issue, and the type annotation requirement for the config parameter. All test-asserted specifics (file paths, class names, attribute names, NemotronHConfig annotation) are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what is wrong (misplaced attribute, unnecessary __init__ override, missing type annotation) but does not specify exact line numbers or the precise code changes needed. A developer must still reason about what to change."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check structural properties via AST (no _tied_weights_keys on base class, presence on causal LM class, no del statement in modular __init__, NemotronHConfig annotation exists). Any correct fix that achieves these structural outcomes would pass. Tests don't assert on line positions, specific helper functions, or other implementation details."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests use AST parsing to inspect class structure (checking for assignments, function definitions, annotations), run ruff subprocess checks, and verify file lengths. They are not simple string-in-file checks but structural/behavioral verification."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests check that _tied_weights_keys is removed from NemotronHPreTrainedModel (it exists in the original code), that the modular __init__ override with del is removed, and that a NemotronHConfig type annotation is added. A stub or no-op would not pass these since the original code has the bugs present."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All three behaviors described in the instruction are tested: (1) _tied_weights_keys removal from base class (test_base_class_no_tied_weights_keys), (2) modular __init__ override removal (test_modular_causal_lm_no_init_override), (3) config type annotation (test_causal_lm_init_config_annotation)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section headers (Gates, Fail-to-pass, Pass-to-pass, Config-derived, Repo CI), descriptive function names, and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves code fixes, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in file paths, class names, attribute names, or commands across the instruction and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names the exact classes (NemotronHPreTrainedModel, NemotronHForCausalLM), the exact attribute (_tied_weights_keys), and that the modular __init__ override should be removed. It also specifies the exact files. While some localization is acceptable, stating 'The modular file should not need to override __init__ just to clean up a misplaced base class attribute' combined with the specific attribute name essentially gives away the exact fix. The instruction goes beyond des"
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
+    }
+  },
+  "tier_a_fails": [],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 8,
+  "fail_count": 1
+}

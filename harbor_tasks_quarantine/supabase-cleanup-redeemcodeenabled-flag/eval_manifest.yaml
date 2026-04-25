@@ -1,0 +1,59 @@
+version: "2.0"
+
+source:
+  repo: "supabase/supabase"
+  pr: 44563
+  base_commit: "421eaedd508d86c7502f954c0a4f619d4458e844"
+  merge_commit: "5ca6182d1ea2b940a6ad6024952720853b655226"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified files must parse without errors"
+
+  - id: feature_flag_removed_from_credit_code_redemption
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The useFlag('redeemCodeEnabled') hook and conditional rendering must be removed from CreditCodeRedemption.tsx"
+
+  - id: feature_flag_removed_from_redeem_page
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The useFlag('redeemCodeEnabled') hook and 'coming soon' message must be removed from redeem page"
+
+  - id: useflag_import_cleaned_up
+    type: fail_to_pass
+    origin: pr_diff
+    description: "The useFlag import should be cleaned up from files where it's no longer used"
+
+  - id: test_repo_typecheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Studio TypeScript typecheck passes"
+
+  - id: test_repo_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Studio ESLint passes"
+
+  - id: test_repo_lint_ratchet
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Studio lint ratchet passes (stricter ESLint rules)"
+
+  - id: test_repo_prettier_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Code formatting check passes"
+
+  - id: test_repo_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Studio unit tests (stable subset) pass"
+
+  - id: not_stub
+    type: pass_to_pass
+    origin: static
+    description: "Modified functions still have real logic, not just pass/return"
+

@@ -1,0 +1,57 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert specific details not mentioned in instruction.md: (1) test_godoclint_enabled_in_config checks for the exact linter name 'godoclint', but instruction.md only says 'Enable a godoc linter' without naming 'godoclint' specifically. (2) Tests check specific files local_unix.go and local_windows.go by name, and the exact string '// Package local provides the default implementation for volumes', but instruction.md never names these files or this exact string. (3) test_local_package_has_prop"
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "instruction.md describes the problem (duplicate package docs) and what to do (audit files, enable a linter) but does not specify exact lines to change, which files to edit, or exact content to add/remove."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_godoclint_enabled_in_config requires the exact linter name 'godoclint' in .golangci.yml. An agent might reasonably enable a different godoc-related linter (e.g., 'godot') based on instruction.md's vague 'godoc linter' phrasing and would fail. Also, test_golangci_config_valid asserts config['linters']['enable'] contains 'godoclint', which is very gold-specific."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "While some tests do text-based file inspection (checking for string presence/absence), there are also behavioral tests: test_go_code_compiles runs 'go build', test_go_vet runs 'go vet', test_go_fmt runs 'go fmt', test_local_unit_tests runs actual Go unit tests, and test_golangci_config_valid parses YAML and checks structure. Not every test is pure text matching."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests (test_godoclint_enabled_in_config, test_unix_file_no_package_doc, test_windows_file_no_package_doc) check for specific content changes that cannot be satisfied by stub/no-op implementations. The base commit has duplicate docs in those files and lacks godoclint in .golangci.yml, so actual edits are required."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "instruction.md requires: (1) duplicate docs removed - tested by test_unix_file_no_package_doc and test_windows_file_no_package_doc, (2) godoc linter enabled - tested by test_godoclint_enabled_in_config, (3) go build/vet/fmt pass - tested, (4) valid YAML - tested, (5) docs in exactly one file - tested by test_local_package_has_proper_doc."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named with descriptive function names and docstrings indicating fail-to-pass vs pass-to-pass classification (e.g., 'Fail-to-pass: godoclint linter must be enabled', 'Pass-to-pass: Go vet passes')."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves editing Go source files and a YAML config, not producing structured data output like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, commands, or variable names in instruction.md or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "instruction.md says to audit 'all Go source files in daemon/volume/local/' without naming specific files like local_unix.go or local_windows.go. It describes the problem generally without pointing to exact buggy lines."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "The gold config diff to .golangci.yml is localized: it adds one line ('godoclint') and makes a minor comment fix on an adjacent line. It doesn't contradict other files."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 2
+}

@@ -1,0 +1,54 @@
+{
+  "model": "claude-opus-4-7",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "All asserted paths (extensions.rs, experiments.rs, App.tsx, InterruptionHandler.tsx, useRecipeManager.ts, WaveformVisualizer.tsx), literal strings, and function name save_extensions_map are named in instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction describes what's wrong and expected behavior (warn level or higher, remove files/comments) without prescribing specific code edits."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check for removal of files/strings and presence of tracing::warn! with message content, which matches any reasonable fix; instruction allows 'warn! or higher' but test only accepts warn! \u2014 minor but acceptable since instruction explicitly mentions warn."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests run cargo check, clippy, fmt, and npx tsc as subprocesses in addition to text inspection for deletions."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub cannot satisfy file removals, missing console.logs, or warn! log upgrade; each f2p requires actual change."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "Each of the four cleanup categories in instruction has corresponding tests."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are grouped under Gates, Fail-to-pass, and Pass-to-pass comment sections with descriptive names."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "No structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "Paths and names appear consistent between instruction, tests, and solution."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction names files because localization is the task scope (cleanup of specific known files), not a bug-finding task."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "Not an agentmd-edits/config task."
+    }
+  },
+  "tier_a_fails": [],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
+}

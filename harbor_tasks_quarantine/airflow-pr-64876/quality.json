@@ -1,0 +1,54 @@
+{
+  "model": "claude-opus-4-7",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "Migration file path, the two UPDATE statements, disable_sqlite_fkeys context manager, and import statement are all named in instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction describes the root cause (PRAGMA ignored in active transaction) and requirements but does not state explicitly to move UPDATEs inside the context manager; agent must reason about that."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check that UPDATEs are inside the with-block via AST, which is the only correct fix given the requirements; alternative valid fixes would also need this structure."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests execute subprocess SQLite scripts simulating the actual PRAGMA/UPDATE behavior and use AST analysis rather than string matching."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "AST test asserts zero UPDATEs before the with-block and \u22652 inside; a stub cannot satisfy this without the actual code restructuring."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "Tests cover both behavioral SQLite PRAGMA semantics and structural placement of UPDATE statements, matching the instruction requirements."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Three clearly named test functions with docstrings explaining what each verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "No structured data output produced."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths and names are consistent and correct."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction names the migration file (the task scope) but does not point at exact line numbers or dictate the code rearrangement."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "Code-only task, not an agentmd-edits/config task."
+    }
+  },
+  "tier_a_fails": [],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
+}

@@ -1,0 +1,172 @@
+version: '2.0'
+source:
+  repo: PrimeIntellect-ai/prime-rl
+  pr: 2097
+  base_commit: b7afd84024531074830143d88bf0f60f506e1588
+  merge_commit: 27c35b1ce136c85c120b0486128316ae022b53a5
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: train.py must be valid Python
+- id: test_repo_python_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's train.py passes Python syntax check via py_compile
+- id: test_repo_imports_parse
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's train.py imports are syntactically valid (AST parse check)
+- id: test_repo_config_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's config files have valid TOML syntax
+- id: test_repo_ruff_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's train.py passes ruff linting
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's train.py is properly formatted
+- id: test_repo_toml_syntax_all
+  type: pass_to_pass
+  origin: repo_tests
+  description: All TOML files in repo have valid syntax
+- id: test_repo_example_configs_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: All example TOML configs have valid syntax
+- id: test_repo_ruff_check_all
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - ruff check on entire src/ passes
+- id: test_repo_ruff_format_all
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - ruff format check on entire src/ passes
+- id: test_repo_pyproject_toml_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - pyproject.toml has valid TOML syntax
+- id: test_repo_configs_dir_toml_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - all TOML files in configs/ have valid syntax
+- id: test_repo_entrypoint_sft_import
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo CI - SFT entrypoint module can be imported/parsed
+- id: model_assigned_before_hybrid_cp
+  type: fail_to_pass
+  origin: pr_diff
+  description: model must be assigned (via setup_model) before setup_hybrid_cp(model,
+    ...) is called
+- id: hybrid_cp_after_model_init
+  type: fail_to_pass
+  origin: pr_diff
+  description: setup_hybrid_cp() must be called after setup_model() in train()
+- id: setup_hybrid_cp_retained
+  type: pass_to_pass
+  origin: pr_diff
+  description: setup_hybrid_cp call must still exist (not deleted to avoid NameError)
+- id: substitute_ring_attn_present
+  type: pass_to_pass
+  origin: pr_diff
+  description: substitute_ring_attn must still be called
+- id: setup_model_present
+  type: pass_to_pass
+  origin: pr_diff
+  description: setup_model must still be called
+- id: train_not_stub
+  type: pass_to_pass
+  origin: static
+  description: train() must have >= 20 top-level statements
+- id: setup_ckpt_managers_retained
+  type: pass_to_pass
+  origin: pr_diff
+  description: setup_ckpt_managers must still be called
+- id: hybrid_cp_guarded_by_cp_enabled
+  type: pass_to_pass
+  origin: pr_diff
+  description: setup_hybrid_cp must be inside a cp_enabled conditional
+- id: no_try_except_around_hybrid_cp
+  type: pass_to_pass
+  origin: agent_config
+  description: setup_hybrid_cp must not be wrapped in try/except
+  source:
+    path: AGENTS.md
+    lines: '5'
+    commit: b7afd84024531074830143d88bf0f60f506e1588
+distractors:
+- rule: Write tests as plain functions with pytest fixtures.
+  collision_type: scope_ambiguity
+  why_distracting: The rule instructs the agent to write tests, which might lead the
+    agent to attempt writing a complex distributed test for context-parallel initialization,
+    expanding the scope unnecessarily for a simple function call reordering.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 44-45
+- rule: You are responsible for maintaining the skills folder. When a workflow fails
+    and you fix it... you must update the skills to make implicit knowledge explicit.
+  collision_type: scope_ambiguity
+  why_distracting: The rule states that when fixing a workflow, the agent must update
+    the skills folder to make implicit knowledge explicit. The agent might waste time
+    trying to document the CP initialization order in the skills files.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 39-42
+- rule: Any PR that modifies configuration structures or usage patterns must update
+    CHANGELOG.md.
+  source:
+    path: .cursor/BUGBOT.md
+    lines: 5-11
+  source_text: 'Any PR that modifies configuration structures or usage patterns must
+    update `CHANGELOG.md`. This includes changes to config fields (added, removed,
+    renamed, moved, or default value changes) in:
+
+
+    - `src/prime_rl/*/config.py`
+
+    - `src/prime_rl/rl.py`
+
+    - `src/prime_rl/utils/config.py`
+
+
+    If such changes are detected without a corresponding `CHANGELOG.md` update, request
+    that the author add an entry.'
+  collision_type: rule_conflict
+  why_distracting: The diff edits `src/prime_rl/trainer/sft/train.py`, which heavily
+    relies on `config`. An agent might mistakenly believe this constitutes a usage
+    pattern change requiring a CHANGELOG update, ignoring the specific file allowlist
+    constraint.
+  severity: medium
+hierarchy_analysis: The hierarchy is flat, with `CLAUDE.md` simply pointing to `AGENTS.md`.
+  The rules are generic repository guidelines rather than specific architectural constraints.
+rubric:
+- rule: Do not add unnecessary comments. Especially do not try to explain code change
+    that reflect your work process, do not refer to old code.
+  source:
+    path: AGENTS.md
+    lines: 5-6
+  evidence: The gold solution moves the `setup_hybrid_cp` call without adding any
+    comments explaining the bug fix or referring to the old code location.
+  category: documentation
+  verification: llm_judge
+- rule: Avoid try/except blocks unless it's really necessary.
+  source:
+    path: AGENTS.md
+    lines: '5'
+  source_text: '- Avoid try/except blocks unless it''s really necessary.  It''s fine
+    that a program fails if something goes wrong as this helps us to catch non-obvious
+    bugs and unforeseen side-effects earlier. You can add try catch on code that explicitly
+    aims to be fault tolerant like adding retry mechanisms or explicit and intentional
+    robustness. '
+  evidence: Instead of wrapping the premature `setup_hybrid_cp(model, ...)` call in
+    a try/except block to catch the resulting NameError/UnboundLocalError, the diff
+    addresses the root cause by logically reordering the initialization flow, allowing
+    any unhandled issues to fail loudly.
+  category: error_handling
+  verification: llm_judge

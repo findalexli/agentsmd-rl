@@ -1,0 +1,57 @@
+{
+  "model": "claude-opus-4-7",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "Instruction names the file path, function names (startEmbeddedDb, pg.initialise, pg.start, cleanStaleDatabases), and the PID_FILE constant that tests assert on."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction describes the symptom and hints at sequencing but doesn't explicitly state 'move PID write after initialise'; it says the try block 'must correctly sequence' these operations, leaving the actual fix to the agent."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert strict ordering `initPos < pidPos < startPos` via literal substring `PID_FILE` in the try block; an alternative valid fix that removes the pre-init PID write entirely without writing PID file in the try block, or uses a different constant reference, would fail."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Tests read the source via `fs.readFileSync`, regex-match the function and try block, and check `indexOf` positions of literal strings like 'await pg.initialise()' and 'PID_FILE'; the 'behavioral' simulation uses a mock and never executes the actual startEmbeddedDb function."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub/no-op wouldn't satisfy the ordering assertions since the test requires specific literal strings present in the correct order in the actual source file."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction's claimed bug (initialise failing due to pre-existing PID file) is verified by the ordering check and simulated mock."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests have descriptive names and docstrings explaining the fail-to-pass intent."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task is a code bug fix, not producing structured data."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "Paths and identifiers (startEmbeddedDb.ts, PID_FILE, pg.initialise) match across instruction, tests, and solution."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction names the file (which is necessary context) but doesn't point to a specific line or state the exact fix."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "Code-only task, not an agentmd/config edit."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 2
+}

@@ -1,0 +1,98 @@
+source_pr:
+  repo: OpenHands/OpenHands
+  number: 13589
+  title: "fix(frontend): guard against undefined matcher.hooks in hooks modal"
+  url: https://github.com/OpenHands/OpenHands/pull/13589
+  base_commit: 3cd85a07b78a2d9d2e28b2904e1b42096d47a802
+  merge_commit: f7b53283b5692e1ba1755bfba8a51f09c76f5ec7
+
+# Agent configs found in the repository at base commit
+agent_configs:
+  - path: AGENTS.md
+    type: root
+    applies_to: all
+  - path: .agents/skills/cross-repo-testing/SKILL.md
+    type: skill
+    applies_to: false  # Not relevant to this PR
+  - path: .agents/skills/upcoming-release/SKILL.md
+    type: skill
+    applies_to: false  # Not relevant to this PR
+  - path: .agents/skills/update-sdk/SKILL.md
+    type: skill
+    applies_to: false  # Not relevant to this PR
+
+checks:
+  # Pass-to-pass tests (repo health)
+  - id: test_vitest_base
+    type: pass_to_pass
+    origin: repo_tests
+    description: Frontend vitest test framework runs without crashing
+
+  - id: test_typecheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: Frontend TypeScript typecheck passes
+
+  - id: test_hooks_modal_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo hooks-modal unit tests pass
+
+  - id: test_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: Frontend linting passes
+
+  - id: test_translation_completeness
+    type: pass_to_pass
+    origin: repo_tests
+    description: Translation keys have complete language coverage
+
+  # Fail-to-pass tests (the bug)
+  - id: test_hook_event_item_undefined_hooks
+    type: fail_to_pass
+    origin: gold_patch
+    description: HookEventItem component handles undefined matcher.hooks without crashing
+    points: 2
+
+  - id: test_hook_matcher_content_undefined_hooks
+    type: fail_to_pass
+    origin: gold_patch
+    description: HookMatcherContent component handles undefined matcher.hooks without crashing
+    points: 2
+
+  # Structural verification (gold patch applied)
+  - id: test_nullish_coalescing_present
+    type: structural
+    origin: gold_patch
+    description: Gold patch adds nullish coalescing operator ?? [] to both components
+    points: 1
+
+  - id: test_type_definition_optional
+    type: structural
+    origin: gold_patch
+    description: HookMatcher type definition marks hooks as optional with ?
+    points: 1
+
+rubric:
+  # Structural rules specific to this bug fix (deterministic)
+  - id: nullish_coalescing_in_event_item
+    rule: hook-event-item.tsx uses nullish coalescing (matcher.hooks ?? []) to guard against undefined
+    source:
+      file: frontend/src/components/features/conversation-panel/hook-event-item.tsx
+      lines: "Fix changes matcher.hooks.length to (matcher.hooks ?? []).length"
+    weight: 1
+
+  - id: nullish_coalescing_in_matcher_content
+    rule: hook-matcher-content.tsx uses nullish coalescing (matcher.hooks ?? []) to guard against undefined
+    source:
+      file: frontend/src/components/features/conversation-panel/hook-matcher-content.tsx
+      lines: "Fix changes matcher.hooks.map to (matcher.hooks ?? []).map"
+    weight: 1
+
+  - id: optional_type_annotation
+    rule: HookMatcher type definition marks hooks as optional with ?
+    source:
+      file: frontend/src/api/conversation-service/v1-conversation-service.types.ts
+      lines: "Fix changes hooks: HookDefinition[] to hooks?: HookDefinition[]"
+    weight: 1

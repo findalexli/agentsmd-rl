@@ -1,0 +1,29 @@
+name = "appwrite-variable-id-optional"
+title = "Make variableId optional in createProjectVariable endpoint"
+description = """
+Fix a bug where creating a global project variable always fails with
+"Param 'variableId' is not optional" because the endpoint incorrectly requires
+variableId as a mandatory parameter. The Console UI does not send this parameter,
+so the request fails. Other similar endpoints (createVariable for Functions and
+Sites) generate the ID internally using ID::unique(). This fix makes variableId
+optional with a default of 'unique()'.
+"""
+
+[repository]
+owner = "appwrite"
+repo = "appwrite"
+base_commit = "20f80ac067e0042ea05ac9566f0a9ff1624bf3b2"
+merge_commit = "597b20a6cb2eb3cc93a5a25814f2ec39b35cd3cd"
+pr_number = 11795
+
+[task]
+difficulty = "easy"
+estimated_time = "5 min"
+tags = ["php", "api", "validation", "bugfix"]
+
+[timeouts]
+agent = 1800  # 30 minutes
+verifier = 120  # 2 minutes
+
+[verifier]
+env = { GEMINI_API_KEY = "${GEMINI_API_KEY:-}", ANTHROPIC_API_KEY = "${ANTHROPIC_API_KEY:-}" }

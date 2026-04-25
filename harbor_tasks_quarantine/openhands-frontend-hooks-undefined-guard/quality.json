@@ -1,0 +1,57 @@
+{
+  "model": "claude-opus-4-7",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "Tests assert specific file paths (hook-event-item.tsx, hook-matcher-content.tsx, v1-conversation-service.types.ts) and specific interface name HookMatcher with optional hooks field, none of which are named in instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction describes symptom (undefined hooks causing length crash) without stating the specific files or the exact ?? [] fix."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_hooks_type_optional requires the fix be in the HookMatcher interface with 'hooks?:' syntax specifically; an alternative valid fix (e.g., just guarding at call sites without changing type, or using a different type location) would fail this test."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests run vitest, tsc, lint, and translation checks via subprocess; behavioral tests exist alongside structural grep checks."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The f2p tests require actual guard patterns in specific files and the hooks-modal unit tests must pass \u2014 a stub wouldn't satisfy these."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "Tests cover typecheck, lint, modal tests, and the specific undefined-guard behavior requested."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests have descriptive names and docstrings labeling pass_to_pass vs fail_to_pass."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "No structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "Paths and commands look consistent."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction references 'hooks viewer modal' and 'conversation panel' generically without naming exact files or lines."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "Code-only task."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 2
+}

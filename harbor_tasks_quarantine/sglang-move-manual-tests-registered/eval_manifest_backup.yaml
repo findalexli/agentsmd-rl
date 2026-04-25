@@ -1,0 +1,46 @@
+version: "2.0"
+
+source:
+  repo: "sgl-project/sglang"
+  pr: 22298
+  base_commit: "4e4b4ac153e7e313bdf26e37f00188acd45c00e0"
+  merge_commit: "36f05810c9c7fc5fe63736439378aa6233856222"
+
+checks:
+  - id: syntax_check
+    type: pass_to_pass
+    origin: static
+    description: "Modified files must parse without errors"
+
+  - id: files_moved_to_manual
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Files were moved from test/registered/8-gpu-models/ to test/manual/"
+
+  - id: register_cuda_ci_removed_from_manual_files
+    type: fail_to_pass
+    origin: pr_diff
+    description: "register_cuda_ci() calls were removed from moved files"
+
+  - id: import_ci_register_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Import of ci_register was removed from moved files"
+
+  - id: files_removed_from_registered
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Files no longer exist in test/registered/8-gpu-models/"
+
+  - id: collect_tests_does_not_fail
+    type: pass_to_pass
+    origin: pr_diff
+    description: "collect_tests() does not raise ValueError for remaining registered files"
+
+  - id: remaining_registered_files_have_registration
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Remaining files in test/registered/8-gpu-models/ have proper CI registration"
+
+rubric:
+  []

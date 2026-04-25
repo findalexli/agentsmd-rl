@@ -1,0 +1,132 @@
+{
+  "schema_version": 2,
+  "valid": false,
+  "verdict": "fail",
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-22T07:43:19.089575",
+  "total_time": 15752.75,
+  "sandbox_id": "i7z9o1lxvesqdo9br6fxx",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "fix_quality",
+  "error": "rate limited during fix_quality: {\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":190045,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 429 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"rate_limit_error\\\",\\\"message\\\":\\\"usage limit exceeded (2056)\\\"},\\\"request_id\\\":\\\"06381185d14d2c333b2105b421b8aaf6\\\"}\",\"stop_reason\":\"stop_sequence\",\"session_id\":\"db5f77bb-bc44-46a3-88a5-b05de4b5d506\",\"total_cost_usd\":0,\"usage\":{\"input_tokens\":0,\"cache_creation_input_tokens\":0,\"cache_read_inp",
+  "nodes": {
+    "p2p_enrich": {
+      "status": "rate_limited",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 201.77,
+      "notes": ""
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 370.78,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "rubric_icr": 1.0,
+      "attempts": 1,
+      "notes": "All validations pass: Docker build succeeds, NOP test correctly fails (reward=0) - the fail-to-pass test catches the module-level import bug, Gold test passes (reward=1) - all 13 tests pass after applying the lazy import fix, Rubric judge returns ICR=1.0 when run with API keys.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 92.83
+    },
+    "rubric_judge": {
+      "status": "pass",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1.7,
+      "notes": "ICR=1.00"
+    },
+    "rubric_quality_loop": {
+      "status": "no_config_files",
+      "model": "gemini-3.1-pro + kimi-k2.5",
+      "backend": "fireworks",
+      "time": 0.17,
+      "notes": "verdict=DELETE rounds=0",
+      "quality_verdict": "DELETE",
+      "loop_rounds": 0,
+      "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.5,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:228: test `test_triton_import_still_toplevel` has 1 assert(s), all pas', 'lint_tier_b:2', 'B:[B] pinned_dependencies @ environment/Dockerfile:21: unpinned pip deps: numpy, 2>/dev/null', 'B:[B] no_network_during_tests @ tests/test.sh:44: network call at test time: `pip install`']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 26.29,
+      "tier_a_fails": [
+        "no_solution_leakage",
+        "anti_cheating_measures"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 7,
+      "fail_count": 3
+    },
+    "fix_quality": {
+      "status": "rate_limited",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 192.67,
+      "notes": ""
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold_reward": 1.0,
+      "backend": "fireworks",
+      "time": 2092.67,
+      "at": "2026-04-10T18:34:47.825283"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1761.67,
+      "at": "2026-04-12T02:45:00.992665"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1711.21,
+      "at": "2026-04-12T03:56:41.880012"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "glm",
+      "time": 2565.03,
+      "at": "2026-04-15T06:14:19.872735"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "minimax",
+      "time": 15752.75,
+      "at": "2026-04-22T07:43:19.089575"
+    }
+  ]
+}

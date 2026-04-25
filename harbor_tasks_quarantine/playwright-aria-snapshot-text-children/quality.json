@@ -1,0 +1,54 @@
+{
+  "model": "claude-opus-4-7",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "Instruction names the file path packages/injected/src/ariaSnapshot.ts, the function textContributesInfo, the longestCommonSubstring utility, and provides all test-case name/text pairs used in the tests."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction describes the broken behavior and expected input/output cases without stating the specific line to remove or the exact code change."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests only assert truthy/falsy returns of textContributesInfo for specific cases and check the function/LCS call exist; alternative correct implementations satisfying these cases would pass."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests extract and execute the textContributesInfo function via a Node.js subprocess harness and assert on return values."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "Stub returning True would fail exclusion tests (covered_hello, covered_foo, empty_text); stub returning False would fail inclusion tests\u2014requires real logic."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All inclusion and exclusion cases listed in instruction.md are covered by test_text_contributes_unique_short_text, test_text_contributes_partial_overlap, and test_preserved_exclusions."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are organized with section header comments (Gates, Fail-to-pass, Pass-to-pass, Repo CI/CD) and descriptive names."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task does not produce structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "Filenames, function names, and commands appear correct and consistent."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction points at the file and function responsible but does not reveal which specific lines to remove/change."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "Code-only task, no config edits."
+    }
+  },
+  "tier_a_fails": [],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
+}

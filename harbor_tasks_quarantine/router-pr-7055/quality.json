@@ -1,0 +1,59 @@
+{
+  "model": "claude-opus-4-7",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "Instruction names the file path, required exports, and event subscription strings that tests assert on."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "Instruction explicitly states 'The onRendered event handler should not contain any logic that clears the scroll restoration cache based on navigation direction' which directly describes the fix rather than just the bug."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_ignore_scroll_flag_handling asserts the literal token 'shouldClearCache' is absent \u2014 an alternative fix that renamed the variable but kept some conditional logic would fail, and conversely fixes not matching exact naming patterns are constrained."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests run subprocess builds, type checks, eslint, and unit tests (e.g., test_typescript_compiles, test_repo_unit_tests)."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "F2P tests require removal of specific buggy patterns that would not be absent in a stub; the patterns check actual file content changes."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "Tests cover the described removal of cache clearing and preservation of module structure/events."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests have descriptive names and docstrings explaining fail-to-pass vs pass-to-pass."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task is a code fix, no structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "Paths and commands look correct."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "Instruction specifies exact file 'packages/router-core/src/scroll-restoration.ts' and tells the agent exactly which handler ('onRendered') should not clear the cache, leaving no localization work."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "Code-only task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 3
+}

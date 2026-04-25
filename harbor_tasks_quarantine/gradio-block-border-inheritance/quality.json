@@ -1,0 +1,58 @@
+{
+  "model": "claude-opus-4-7",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "instruction.md names js/atoms/src/Block.svelte, .hide-container:not(.fullscreen), .block, --block-border-width, and template attributes class:hide-container, class:fullscreen, style:flex-grow, <slot, matching all test assertions."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "Instruction explicitly dictates the fix: 'must set its own border directly to zero, without using --block-border-width', 'must NOT set --block-border-width: 0', '.block must set border-width: var(--block-border-width)', and 'template must NOT apply border-width via inline style' \u2014 these are the exact diff lines."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check the structural properties (no inheritable var, direct border-width: 0, .block has border-width var, no inline style:border-width) which any correct fix per the spec would share."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "While CSS-text checks exist, repo_tests run pnpm format:check and pnpm test:run js/atoms/Block.test.ts which execute the unit test suite."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "f2p tests require both removing --block-border-width: 0, adding direct border-width: 0, and removing the inline style attribute \u2014 a stub cannot satisfy these."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All 7 verification points in instruction.md map to assertions in test_outputs.py."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are clearly grouped with comment headers '=== fail_to_pass ===', '=== pass_to_pass ===', '=== repo_tests ===' and named descriptively."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task is a CSS/Svelte fix, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "Paths js/atoms/src/Block.svelte and CSS class names are consistent across instruction, tests, and solution."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "Instruction names the exact file js/atoms/src/Block.svelte and dictates the precise CSS lines to add/remove (e.g., 'must NOT set --block-border-width: 0', '.block must set border-width: var(--block-border-width)'), eliminating localization."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "Code-only task, not an agentmd-edits config change."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 7,
+  "fail_count": 2
+}

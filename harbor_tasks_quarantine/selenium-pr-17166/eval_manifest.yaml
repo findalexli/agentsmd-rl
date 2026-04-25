@@ -1,0 +1,62 @@
+source:
+  repo: SeleniumHQ/selenium
+  pr_number: 17166
+  base_commit: c685486d68fb96745b47842972a5940d7e9acb14
+  merge_commit: 5b3c36cda86950b87f96039917822ff7301afd5f
+  title: "[java] Keys: enforce CharSequence contract in charAt()"
+
+checks:
+  - id: test_charat_invalid_index_throws_exception
+    type: fail_to_pass
+    origin: pr_tests
+    description: Keys.charAt(1) throws IndexOutOfBoundsException instead of returning 0
+
+  - id: test_charat_negative_index_throws_exception
+    type: fail_to_pass
+    origin: pr_tests
+    description: Keys.charAt(-1) throws IndexOutOfBoundsException for negative index
+
+  - id: test_charat_large_index_throws_exception
+    type: fail_to_pass
+    origin: pr_tests
+    description: Keys.charAt(100) throws IndexOutOfBoundsException for large index
+
+  - id: test_charat_zero_returns_keycode
+    type: pass_to_pass
+    origin: pr_tests
+    description: Keys.charAt(0) returns the correct key code
+
+  - id: test_multiple_keys_charat_zero
+    type: pass_to_pass
+    origin: pr_tests
+    description: Multiple Keys return correct charAt(0) values
+
+  - id: test_charsequence_contract_length
+    type: pass_to_pass
+    origin: pr_tests
+    description: All Keys have length() == 1
+
+  - id: test_keys_java_compiles
+    type: pass_to_pass
+    origin: static
+    description: Keys.java compiles successfully without syntax errors
+
+  - id: test_keys_enum_has_expected_values
+    type: pass_to_pass
+    origin: static
+    description: Keys enum contains expected key constants with correct codes
+
+  - id: test_keys_subsequence_valid
+    type: pass_to_pass
+    origin: static
+    description: Keys.subSequence(0,1) returns correct CharSequence
+
+rubric:
+  # Pure code fix task - these rules describe conventions, not files to edit
+  # The judge evaluates diff quality, not config file edits
+  - id: api_abi_compatibility
+    rule: Maintains API/ABI compatibility for valid usage (charAt(0) unchanged)
+    # The fix preserves charAt(0) behavior - only changes behavior for invalid indexes
+  - id: small_reversible_diffs
+    rule: Change is small and focused, not a repo-wide refactor
+    # The fix is a 4-line change to a single method

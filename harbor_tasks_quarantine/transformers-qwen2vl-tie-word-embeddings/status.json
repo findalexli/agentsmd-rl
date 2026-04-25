@@ -1,0 +1,97 @@
+{
+  "schema_version": 2,
+  "valid": true,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-16T09:28:50.047497",
+  "total_time": 40.11,
+  "sandbox_id": "itw5a7ijfnva6wvydsc7w",
+  "backend": "anthropic",
+  "pipeline": "pipeline",
+  "start_at": "judge",
+  "nodes": {
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 384.69,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "rubric_icr": 0.0,
+      "attempts": 1,
+      "notes": "All 4 checks passed: 1) Docker build successful, 2) NOP test reward=0 (correctly fails on buggy base), 3) Gold test reward=1 (18/18 tests pass), 4) Rubric judge returns 0.00 because the judge mechanism (extract_config_hunks) only evaluates config/documentation file changes, but this gold solution only modifies code files. Adjusted rubric rules to remove incorrect source references to CLAUDE.md/AGENTS.md which were not modified by the gold solution.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 268.11
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "claude-opus-4-7",
+      "backend": "anthropic",
+      "time": 0.8,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:2', 'A:[A] test_not_tautological @ tests/test_outputs.py:201: test `test_modernvbert_init_type_hint` has 4 assert(s), all pass ', 'A:[A] test_not_tautological @ tests/test_outputs.py:220: test `test_modular_init_type_hint` has 4 assert(s), all pass on a', 'lint_tier_b:2', 'B:[B] pinned_dependencies @ environment/Dockerfile:14: unpinned pip deps: ruff', 'B:[B] pinned_dependencies @ environment/Dockerfile:21: unpinned pip deps: \".[quality]\", 2>']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 12.97,
+      "tier_a_fails": [],
+      "tier_b_fails": [],
+      "pass_count": 9,
+      "fail_count": 0
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1237.32,
+      "at": "2026-04-12T06:02:30.574423"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "glm",
+      "time": 928.45,
+      "at": "2026-04-15T06:11:37.006674"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "oauth",
+      "time": 362.33,
+      "at": "2026-04-15T13:31:49.595027"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "glm",
+      "time": 5794.89,
+      "at": "2026-04-16T03:56:30.895465"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "anthropic",
+      "time": 40.11,
+      "at": "2026-04-16T09:28:50.047497"
+    }
+  ]
+}

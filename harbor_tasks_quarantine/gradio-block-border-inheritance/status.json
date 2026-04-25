@@ -1,0 +1,123 @@
+{
+  "schema_version": 2,
+  "valid": false,
+  "verdict": "fail",
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-22T07:36:27.114970",
+  "total_time": 31843.5,
+  "sandbox_id": "iy1rzqolbt5689744qjpx",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "fix_quality",
+  "error": "rate limited during fix_quality: {\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":188953,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 429 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"rate_limit_error\\\",\\\"message\\\":\\\"usage limit exceeded (2056)\\\"},\\\"request_id\\\":\\\"06380fe98de0a5568099ffc2456ab0ff\\\"}\",\"stop_reason\":\"stop_sequence\",\"session_id\":\"098beed4-afe9-4f45-b2fc-93753be5e316\",\"total_cost_usd\":0,\"usage\":{\"input_tokens\":0,\"cache_creation_input_tokens\":0,\"cache_read_inp",
+  "nodes": {
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 370.17,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 2,
+      "notes": "Fixed 2 fail_to_pass tests that were incorrectly passing on base commit: (1) test_hide_container_uses_direct_border_zero - made regex more specific, (2) test_child_block_retains_border - added check for inline style removal. All 3 fail_to_pass tests now correctly fail on base (reward=0) and pass on gold (reward=1).",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 322.79
+    },
+    "rubric_quality_loop": {
+      "status": "ok",
+      "model": "gemini-3.1-pro + kimi-k2.5",
+      "backend": "fireworks",
+      "time": 25.78,
+      "notes": "verdict=MEDIUM rounds=0",
+      "quality_verdict": "MEDIUM",
+      "loop_rounds": 0,
+      "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "passed",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.23,
+      "notes": "flags=['lint_tier_b:1', 'B:[B] no_network_during_tests @ tests/test.sh:44: network call at test time: `pip install`']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 14.32,
+      "tier_a_fails": [
+        "no_solution_leakage",
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 5,
+      "fail_count": 4
+    },
+    "tests_rewrite": {
+      "status": "error",
+      "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":109,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"Not logged in \u00b7 Please run /login\",\"stop_reason\":\"stop_sequence\",\"session_id\":\"258cd727-9dd7-45e3-ab1b-13404e0a2e7c\",\"total_cost_usd\":0,\"usage\":{\"input_tokens\":0,\"cache_creation_input_t",
+      "time": 1.35
+    },
+    "fix_quality": {
+      "status": "rate_limited",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 191.16,
+      "notes": ""
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "oauth",
+      "time": 372.35,
+      "at": "2026-04-15T12:51:13.920516"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "oauth",
+      "time": 728.03,
+      "at": "2026-04-15T18:52:43.039499"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 2861.9,
+      "at": "2026-04-15T23:16:54.199079"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 697.15,
+      "at": "2026-04-16T10:50:55.103637"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "minimax",
+      "time": 31843.5,
+      "at": "2026-04-22T07:36:27.114970"
+    }
+  ]
+}

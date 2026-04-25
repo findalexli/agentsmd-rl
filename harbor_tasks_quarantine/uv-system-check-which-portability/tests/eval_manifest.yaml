@@ -1,0 +1,95 @@
+version: '2.0'
+source:
+  repo: astral-sh/uv
+  pr: 18588
+  base_commit: cedae1aa42c0f1ff59b4e4f988659c52d467d585
+  merge_commit: cb093394b3adf152f6959d00251f8690ae5c9d4c
+checks:
+- id: syntax_valid
+  type: pass_to_pass
+  origin: static
+  description: Target script must be valid Python
+- id: no_platform_guard_on_path_check
+  type: fail_to_pass
+  origin: pr_diff
+  description: PATH verification must not be gated on os.name/'nt' comparison
+- id: uses_cross_platform_which
+  type: fail_to_pass
+  origin: pr_diff
+  description: Must call shutil.which() instead of subprocess which
+- id: path_check_raises_when_not_found
+  type: fail_to_pass
+  origin: pr_diff
+  description: shutil.which result must be checked and raise Exception if binary not
+    found
+- id: module_loads
+  type: pass_to_pass
+  origin: static
+  description: Module loads and install_package is callable
+- id: install_package_signature
+  type: pass_to_pass
+  origin: static
+  description: install_package has correct function signature (uv, package, version
+    parameters)
+- id: script_has_main_guard
+  type: pass_to_pass
+  origin: static
+  description: Script has if __name__ == '__main__' guard for testability
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: install_package has real implementation, not a stub
+- id: top_level_shutil_import
+  type: pass_to_pass
+  origin: agent_config
+  description: shutil imported at top level per CLAUDE.md style rule
+  source:
+    path: CLAUDE.md
+    lines: '16'
+    commit: cedae1aa42c0f1ff59b4e4f988659c52d467d585
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff linter passes on the modified file
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's ruff format check passes on the modified file
+- id: test_repo_pyflakes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's pyflakes linter passes on the modified file
+- id: test_repo_validate_pyproject
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's pyproject.toml passes validation
+rubric:
+- rule: AVOID shortening variable names, e.g., use `version` instead of `ver`, and
+    `requires_python` instead of `rp`
+  source:
+    path: CLAUDE.md
+    lines: 17-18
+    commit: cedae1aa42c0f1ff59b4e4f988659c52d467d585
+distractors:
+- rule: When making changes for Windows from Unix, use `cargo xwin clippy` to check
+    compilation
+  collision_type: scope_ambiguity
+  why_distracting: The PR makes changes to support Windows, but the file being edited
+    is a Python script. Running `cargo xwin clippy` is for Rust code and is irrelevant
+    here, potentially wasting time or causing confusion.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 4-4
+- rule: ALWAYS attempt to add a test case for changed behavior
+  collision_type: meta_confusion
+  why_distracting: The file being modified (`scripts/check_system_python.py`) is itself
+    a test/check script. Attempting to add a test case for a test script is unnecessary
+    and would lead to meta-level confusion.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 2-2
+hierarchy_analysis: The configuration is a flat, single-file `CLAUDE.md`. The rules
+  are predominantly Rust-specific, whereas the target file for this task is a Python
+  script, meaning most rules naturally do not apply.

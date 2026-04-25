@@ -1,0 +1,54 @@
+{
+  "model": "claude-opus-4-7",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "instruction.md names padString.cpp, the three arguments (string, length, pad_string), their validators (isStringOrFixedString, isInteger, isString), and describes expected description content."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what's wrong but doesn't give exact replacement strings like 'String or FixedString' or 'UInt*'."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests use semantic matching via description_matches_validator \u2014 e.g., isInteger accepts any description with 'int'/'uint'/'*', isStringOrFixedString accepts anything mentioning both terms, allowing multiple valid phrasings."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests execute subprocess (python3 script and optionally clang AST dump) to parse source and extract descriptors rather than simple text grep."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "Tests assert specific descriptor content matches validator semantics; a stub cannot satisfy them without the actual fix since descriptors must be present and semantically consistent."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "Tests cover all three arguments described in instruction.md (string, length, pad_string)."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are grouped under FAIL-TO-PASS section headers with docstrings explaining purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task is a code fix, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "Filenames and identifiers like padString.cpp, isStringOrFixedString, isInteger, isString are consistent between instruction, tests, and solution."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The file padString.cpp is named but localization is expected since the task is scoped to a single file fix; exact line/string replacement is not disclosed."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "Code-only task, not a config edit."
+    }
+  },
+  "tier_a_fails": [],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
+}

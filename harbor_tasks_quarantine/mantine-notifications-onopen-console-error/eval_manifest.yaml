@@ -1,0 +1,71 @@
+source:
+  pr: 8807
+  repo: mantinedev/mantine
+  base_commit: 5f19669395218658b58c53e228b239530ab09a50
+  merge_commit: efc2a3bf7d1854014d3ca5bd6c2d2fc5cac03bcc
+
+checks:
+  # Fail-to-pass tests (behavioral)
+  - id: test_react_warning_not_emitted_for_onopen
+    type: fail_to_pass
+    origin: behavioral
+    description: No React warning 'Unknown event handler property onOpen' is emitted when onOpen callback is used
+
+  - id: test_onopen_destructured_before_spread
+    type: fail_to_pass
+    origin: behavioral
+    description: onOpen is destructured from data before spreading notificationProps to prevent DOM forwarding
+
+  # Pass-to-pass tests (repo CI/CD)
+  - id: test_repo_notifications_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo notifications tests pass
+
+  - id: test_repo_typecheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: TypeScript type checking passes
+
+  - id: test_repo_oxlint
+    type: pass_to_pass
+    origin: repo_tests
+    description: oxlint checks pass on notifications package
+
+  - id: test_repo_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: Code formatting checks pass on notifications package
+
+  - id: test_repo_syncpack
+    type: pass_to_pass
+    origin: repo_tests
+    description: syncpack version consistency check passes
+
+  # Pass-to-pass tests (behavioral - preserve existing functionality)
+  - id: test_onopen_still_invoked_via_data_in_useeffect
+    type: pass_to_pass
+    origin: behavioral
+    description: onOpen is still invoked via data.onOpen() in useEffect (existing behavior)
+
+# Rubric items from agent config (CLAUDE.md)
+rubric:
+  - id: no_inline_comments
+    description: "No inline comments describing logic (per CLAUDE.md Code Style)"
+    source: "CLAUDE.md: Code Style - Comments Guidelines"
+
+  - id: commit_convention_area_prefix
+    description: "Commit messages should use [area] prefix format (e.g., [@mantine/notifications])"
+    source: "CLAUDE.md: Commit conventions"
+
+  - id: use_npx_jest_for_tests
+    description: "Run tests using npx jest with direct path, not npm test"
+    source: "CLAUDE.md: Finalizing Your Work && llms/testing.md"
+
+  - id: typecheck_before_finalize
+    description: "TypeScript type checking should pass before finalizing"
+    source: "CLAUDE.md: Finalizing Your Work - npm run typecheck"
+
+  - id: self_documenting_code
+    description: "Code should be self-documenting without explanatory comments"
+    source: "CLAUDE.md: Code Style - Comments Guidelines"

@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd /workspace/sglang
+
+# Idempotent: skip if already applied (check for lazy import pattern)
+grep -A2 'is_cutedsl' python/sglang/srt/layers/attention/linear/kda_backend.py | grep -q 'from sglang.srt.layers.attention.linear.kernels.kda_cutedsl' && exit 0
+
+git apply - <<'PATCH'
+diff --git a/python/sglang/srt/layers/attention/linear/kda_backend.py b/python/sglang/srt/layers/attention/linear/kda_backend.py
+index a5f9ba2ae157..fb27462b07ae 100644
+--- a/python/sglang/srt/layers/attention/linear/kda_backend.py
++++ b/python/sglang/srt/layers/attention/linear/kda_backend.py
+@@ -3,9 +3,6 @@
+ import torch
+
+ from sglang.srt.layers.attention.hybrid_linear_attn_backend import MambaAttnBackendBase
+-from sglang.srt.layers.attention.linear.kernels.kda_cutedsl import (
+-    CuteDSLKDAKernel,
+-)
+ from sglang.srt.layers.attention.linear.kernels.kda_triton import TritonKDAKernel
+ from sglang.srt.layers.attention.linear.utils import (
+     LinearAttnKernelBackend,
+@@ -50,6 +47,10 @@ def __init__(
+         elif decode_backend.is_cutedsl():
+             if not is_cuda():
+                 raise ValueError("KDA CuTe DSL backend requires CUDA")
++            from sglang.srt.layers.attention.linear.kernels.kda_cutedsl import (
++                CuteDSLKDAKernel,
++            )
++
+             self.decode_kernel = CuteDSLKDAKernel()
+         else:
+             raise ValueError(
+
+PATCH

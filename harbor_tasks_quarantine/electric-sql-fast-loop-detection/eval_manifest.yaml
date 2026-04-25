@@ -1,0 +1,123 @@
+# Eval manifest for electric-sql-fast-loop-detection
+
+source:
+  repo: electric-sql/electric
+  pr_number: 4028
+  base_commit: 4f55cef768a2933319c58c7e6275b7661030179c
+  merge_commit: 9335ae645357c8d0b2b3f281316f2b318648531e
+  title: "fix(elixir-client): Add fast-loop detection"
+
+description: |
+  The Elixir client lacked fast-loop detection present in the TypeScript client.
+  When a server or CDN bug causes repeated responses at the same offset without
+  progress, the client would hammer the server indefinitely. This fix ports the
+  TypeScript client's fast-loop detection: track non-live requests in a 500ms
+  sliding window, and if 5+ requests occur at the same offset, clear caches on
+  first detection, apply exponential backoff on subsequent detections, and raise
+  an error after 5 consecutive detections.
+
+files_changed:
+  - packages/elixir-client/lib/electric/client/shape_state.ex
+  - packages/elixir-client/lib/electric/client/stream.ex
+
+checks:
+  - id: test_fast_loop_check_exists
+    description: ShapeState has check_fast_loop/1 function
+    type: fail_to_pass
+    origin: agent_config
+    source: root/AGENTS.md
+    details: |
+      The ShapeState module must export a check_fast_loop/1 function that returns
+      {:ok, t()} | {:backoff, non_neg_integer(), t()} | {:error, String.t()}.
+      This is the core fast-loop detection function.
+
+  - id: test_fast_loop_constants
+    description: ShapeState has fast_loop detection constants
+    type: fail_to_pass
+    origin: agent_config
+    source: root/AGENTS.md
+    details: |
+      The module must define @fast_loop_window_ms, @fast_loop_threshold,
+      @fast_loop_max_count, @fast_loop_backoff_base_ms, and @fast_loop_backoff_max_ms
+      as per the TypeScript client implementation.
+
+  - id: test_fast_loop_struct_fields
+    description: ShapeState struct has recent_requests and fast_loop_consecutive_count fields
+    type: fail_to_pass
+    origin: agent_config
+    source: root/AGENTS.md
+    details: |
+      The struct must include recent_requests (list of timestamp, offset tuples)
+      and fast_loop_consecutive_count for tracking consecutive detections.
+
+  - id: test_clear_fast_loop_exists
+    description: ShapeState has clear_fast_loop/1 function
+    type: fail_to_pass
+    origin: agent_config
+    source: root/AGENTS.md
+    details: |
+      The clear_fast_loop/1 function resets tracking state when transitioning
+      to live mode (where rapid polling is expected).
+
+  - id: test_stream_calls_check_fast_loop
+    description: Stream module calls check_fast_loop in the fetch path
+    type: fail_to_pass
+    origin: agent_config
+    source: root/AGENTS.md
+    details: |
+      The Stream's fetch/1 function must invoke check_fast_loop to detect stuck
+      retry loops on non-live requests before proceeding with the fetch.
+
+  - id: test_stream_clears_fast_loop_on_live
+    description: Stream clears fast-loop tracking when transitioning to live mode
+    type: fail_to_pass
+    origin: agent_config
+    source: root/AGENTS.md
+    details: |
+      When the stream transitions to up-to-date in live mode, clear_fast_loop
+      must be called to prevent false positives during expected rapid polling.
+
+  - id: test_elixir_tests_pass
+    description: Elixir client test suite passes
+    type: pass_to_pass
+    origin: repo_tests
+    description_long: |
+      The mix test suite in packages/elixir-client must pass. This includes
+      all unit tests and integration tests for the client.
+
+  - id: test_elixir_format_check
+    description: Repo Elixir formatting passes
+    type: pass_to_pass
+    origin: repo_tests
+    description_long: |
+      mix format --check-formatted passes with no formatting issues.
+
+  - id: test_elixir_compile_warnings
+    description: Repo compiles without warnings
+    type: pass_to_pass
+    origin: repo_tests
+    description_long: |
+      mix compile --force --all-warnings --warnings-as-errors passes with no warnings.
+
+  - id: test_elixir_fetch_unit_tests
+    description: Fetch module unit tests pass
+    type: pass_to_pass
+    origin: repo_tests
+    description_long: |
+      Tests for request, response, message, and poll modules pass.
+
+  - id: test_elixir_util_tests
+    description: Util module tests pass
+    type: pass_to_pass
+    origin: repo_tests
+    description_long: |
+      Util module tests pass.
+
+  - id: test_elixir_mock_and_http_tests
+    description: Mock and HTTP fetch tests pass
+    type: pass_to_pass
+    origin: repo_tests
+    description_long: |
+      Mock and HTTP fetch tests pass.
+
+rubric: []

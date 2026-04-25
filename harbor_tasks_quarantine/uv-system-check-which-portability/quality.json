@@ -1,0 +1,56 @@
+{
+  "model": "claude-opus-4-7",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "instruction.md names the file scripts/check_system_python.py, the pylint PATH check, the os.name != 'nt' guard, and the which subprocess call \u2014 all specifics tested."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction says to use a 'cross-platform approach' and remove the guard, but doesn't name shutil.which or give exact replacement code."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_uses_cross_platform_which hard-requires shutil.which; an alternative correct fix using os.path or importlib.util.find_spec or distutils.spawn.find_executable would fail."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests parse AST and also load the module via importlib (test_module_loads), inspecting structure rather than mere string matching."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "f2p tests require presence of shutil.which call, absence of os.name guard with which, and a raise on None \u2014 a stub cannot satisfy all three."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "Both behaviors (remove platform guard, cross-platform check) are tested."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are organized with section comments (Gates, Fail-to-pass, Pass-to-pass) and descriptive names."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "No structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "Paths and names are consistent."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "File is named in 'Files to investigate' which is appropriate; no exact line or replacement code leaked."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "Code-only task."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 1
+}

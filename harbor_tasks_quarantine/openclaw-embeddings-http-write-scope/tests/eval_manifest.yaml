@@ -1,0 +1,141 @@
+version: '2.0'
+source:
+  repo: openclaw/openclaw
+  pr: 57721
+  base_commit: 85647949a484957ba6bac00e47653b0acd4a92d7
+  merge_commit: 3216df79238f614c42e40972ef81e875dd2364e2
+checks:
+- id: ts_file_parses
+  type: pass_to_pass
+  origin: static
+  description: embeddings-http.ts parses without fatal TypeScript errors
+- id: embeddings_handler_enforces_scope
+  type: fail_to_pass
+  origin: pr_diff
+  description: handleGatewayPostJsonEndpoint call includes requiredOperatorMethod
+    for scope enforcement
+- id: scope_method_is_chat_send
+  type: fail_to_pass
+  origin: pr_diff
+  description: requiredOperatorMethod value is 'chat.send' (canonical write-gated
+    method)
+- id: handler_is_exported
+  type: pass_to_pass
+  origin: pr_diff
+  description: handleOpenAiEmbeddingsHttpRequest remains an exported function
+- id: pathname_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: Helper call still registers pathname '/v1/embeddings'
+- id: handler_not_stub
+  type: pass_to_pass
+  origin: static
+  description: Handler retains substantial logic (>8 statements, await, return, multiple
+    calls)
+- id: no_ts_nocheck
+  type: pass_to_pass
+  origin: agent_config
+  description: No @ts-nocheck directive added
+  source:
+    path: CLAUDE.md
+    lines: '146'
+    commit: 85647949a484957ba6bac00e47653b0acd4a92d7
+- id: no_lint_suppressions
+  type: pass_to_pass
+  origin: agent_config
+  description: No inline lint suppression comments (@ts-ignore, @ts-expect-error,
+    eslint-disable)
+  source:
+    path: CLAUDE.md
+    lines: '146'
+    commit: 85647949a484957ba6bac00e47653b0acd4a92d7
+- id: no_new_explicit_any
+  type: pass_to_pass
+  origin: agent_config
+  description: No new explicit 'any' type annotations introduced
+  source:
+    path: CLAUDE.md
+    lines: '144'
+    commit: 85647949a484957ba6bac00e47653b0acd4a92d7
+- id: no_mixed_dynamic_static_imports
+  type: pass_to_pass
+  origin: agent_config
+  description: No dynamic import() used for modules already statically imported in
+    embeddings-http.ts
+  source:
+    path: CLAUDE.md
+    lines: '155'
+    commit: 85647949a484957ba6bac00e47653b0acd4a92d7
+- id: test_repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's lint check (oxlint) passes on the codebase
+- id: test_repo_embeddings_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's embeddings-http unit tests pass
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's TypeScript typecheck (tsgo --noEmit) passes on the codebase
+rubric:
+- rule: 'Code change follows existing conventions: brief comments for tricky logic
+    (none needed for simple property addition).'
+  source:
+    path: CLAUDE.md
+    lines: '163'
+    commit: 85647949a484957ba6bac00e47653b0acd4a92d7
+  reference: (gold solution made no CLAUDE.md changes - no tricky logic to document)
+- rule: Code change uses strict typing and avoids `any` annotations.
+  source:
+    path: CLAUDE.md
+    lines: '144'
+    commit: 85647949a484957ba6bac00e47653b0acd4a92d7
+  reference: (gold solution made no CLAUDE.md changes - code follows strict typing
+    convention)
+- rule: Code change uses American spelling and grammar.
+  source:
+    path: CLAUDE.md
+    lines: '167'
+    commit: 85647949a484957ba6bac00e47653b0acd4a92d7
+  reference: (gold solution made no CLAUDE.md changes - simple code addition follows
+    American conventions)
+- rule: 'Source code: `src/`'
+  source:
+    path: CLAUDE.md
+    lines: 8-8
+  evidence: The gold solution correctly applies the fix within the `src/` directory
+    (`src/gateway/embeddings-http.ts`), adhering to the project structure guidelines
+    for source code.
+  category: architecture
+- rule: 'Source code: src/'
+  source:
+    path: AGENTS.md
+    lines: 7-7
+  evidence: The gold solution modifies a file in the src/ directory (src/gateway/embeddings-http.ts),
+    adhering to the project structure guidelines.
+  category: architecture
+distractors:
+- rule: Do not edit files covered by security-focused CODEOWNERS rules unless a listed
+    owner explicitly asked for the change or is already reviewing it with you.
+  collision_type: scope_ambiguity
+  why_distracting: The agent might assume that `src/gateway/embeddings-http.ts` (which
+    handles authorization and scopes) is a security-focused file and refuse to edit
+    it without explicit owner permission, halting the task.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 6-6
+- rule: 'Tests: colocated *.test.ts.'
+  collision_type: rule_conflict
+  why_distracting: The prompt explicitly asks to update `src/gateway/embeddings-http.test.ts`,
+    and the config reinforces colocated tests. However, the gold solution completely
+    omits the test updates, so an agent following the prompt and config would generate
+    a diff that fails strict comparison against the incomplete gold solution.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 10-10
+hierarchy_analysis: The configuration consists of identical `AGENTS.md` and `CLAUDE.md`
+  files at the root level. There is no deep hierarchy, and the rules are generic repository
+  guidelines that do not conflict with each other.

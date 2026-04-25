@@ -1,0 +1,197 @@
+version: '2.0'
+source:
+  repo: oven-sh/bun
+  pr: 28504
+  base_commit: 6034bd82b1a0d9b3635560405354e931b7e0e192
+  merge_commit: 594f421fdc9a6aaf04b394e2775abc2f4baba05c
+checks:
+- id: test_no_bare_put_on_registration_targets
+  type: fail_to_pass
+  origin: pr_diff
+  description: Buggy .put() calls on expect_proto/constructor/static_proto are removed
+    or guarded
+- id: test_index_safe_property_setting
+  type: fail_to_pass
+  origin: pr_diff
+  description: Properties registered via a method that handles index keys (putMayBeIndex,
+    etc.)
+- id: test_all_three_targets_use_safe_setter
+  type: fail_to_pass
+  origin: pr_diff
+  description: All three registration targets are updated, not just one or two
+- id: test_extend_preserves_core_logic
+  type: pass_to_pass
+  origin: pr_diff
+  description: Extend function still iterates properties and creates wrapper functions
+- id: test_key_functions_preserved
+  type: pass_to_pass
+  origin: static
+  description: Core expect functions (applyCustomMatcher, extend, call, getNot) still
+    exist
+- id: test_not_stub
+  type: pass_to_pass
+  origin: static
+  description: expect.zig has substantial Zig content (not stubbed out)
+- id: test_no_inline_import_in_functions
+  type: pass_to_pass
+  origin: agent_config
+  description: No @import() inline inside the extend() function body (scoped to agent's
+    change)
+  source:
+    path: src/CLAUDE.md
+    lines: '11'
+    commit: 6034bd82b1a0d9b3635560405354e931b7e0e192
+- id: test_no_std_direct_usage
+  type: pass_to_pass
+  origin: agent_config
+  description: No std.fs/std.posix/std.os introduced in extend() — must use bun.*
+    equivalents
+  source:
+    path: src/CLAUDE.md
+    lines: '16'
+    commit: 6034bd82b1a0d9b3635560405354e931b7e0e192
+- id: test_no_wrong_allocator
+  type: pass_to_pass
+  origin: agent_config
+  description: New allocator usage should use bun.default_allocator, not std.heap
+  source:
+    path: src/CLAUDE.md
+    lines: '232'
+    commit: 6034bd82b1a0d9b3635560405354e931b7e0e192
+- id: test_no_catch_outofmemory_pattern
+  type: pass_to_pass
+  origin: agent_config
+  description: Must not use 'catch bun.outOfMemory()' — use bun.handleOom() instead
+  source:
+    path: src/CLAUDE.md
+    lines: '234'
+    commit: 6034bd82b1a0d9b3635560405354e931b7e0e192
+- id: test_repo_zig_formatting
+  type: pass_to_pass
+  origin: repo_tests
+  description: Zig code follows basic formatting rules (no tabs, no trailing whitespace)
+    via Python subprocess
+- id: test_repo_zig_ban_words_extend
+  type: pass_to_pass
+  origin: repo_tests
+  description: extend() function passes ban-words check (no std.debug.print, std.log,
+    allocator.ptr comparisons, catch bun.outOfMemory) via Python subprocess
+- id: test_repo_zig_ban_words_full
+  type: pass_to_pass
+  origin: repo_tests
+  description: expect.zig passes full ban-words test suite (zero-tolerance patterns)
+    via Python subprocess
+- id: test_repo_zig_syntax_basic
+  type: pass_to_pass
+  origin: repo_tests
+  description: Zig code has valid basic syntax (balanced braces/parens/brackets) via
+    Python subprocess
+- id: test_repo_expect_zig_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: expect.zig has required structure (Expect struct, applyCustomMatcher,
+    extend, call) via Python subprocess
+- id: test_repo_package_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: package.json is valid JSON with required CI scripts (lint, fmt, typecheck)
+    via Python subprocess
+- id: test_repo_cpp_basic_style
+  type: pass_to_pass
+  origin: repo_tests
+  description: C++ files follow basic style conventions (no trailing whitespace, no
+    tabs) via Python subprocess
+- id: test_repo_zig_syntax_treesitter
+  type: pass_to_pass
+  origin: repo_tests
+  description: Zig code has valid syntax according to tree-sitter parser (mirrors
+    zig build check CI step) via Python subprocess
+- id: test_repo_expect_extend_test_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: expect-extend.test.js has valid structure with required patterns (expect.extend,
+    _toBeDivisibleBy, tests) via Python subprocess
+- id: test_repo_expect_zig_putmaybeindex_ready
+  type: pass_to_pass
+  origin: repo_tests
+  description: expect.zig has all 3 targets (expect_proto, expect_constructor, expect_static_proto)
+    in extend() ready for putMayBeIndex fix via Python subprocess
+rubric:
+- rule: Use bun.JSError!JSValue return type for error handling
+  source:
+    path: .claude/skills/implementing-jsc-classes-zig/SKILL.md
+    lines: 87-89
+  source_text: '**Key patterns:**
+
+
+    - Use `bun.JSError!JSValue` return type for error handling'
+  evidence: The gold diff replaces `expect_proto.put` with `try expect_proto.putMayBeIndex(...)`,
+    properly utilizing Zig's `try` keyword to propagate the `bun.JSError` from `putMayBeIndex`
+    through the enclosing `extend` function, which correctly uses the `bun.JSError!JSValue`
+    return type.
+  category: error_handling
+  verification: llm_judge
+distractors:
+- rule: Always use `bun.*` APIs instead of `std.*`.
+  collision_type: architecture_boundary
+  why_distracting: The agent might try to convert the numeric index to a string using
+    `std.fmt` or `bun.strings` to bypass the `put` assertion, rather than using the
+    correct JSC method `putMayBeIndex`.
+  severity: medium
+  source:
+    path: src/AGENTS.md
+    lines: 18-32
+- rule: NEVER write tests that check for no "panic" or "uncaught exception" or similar
+    in the test output.
+  collision_type: rule_conflict
+  why_distracting: The bug explicitly mentions a crash/assertion failure. If the agent
+    decides to write a regression test, it might naturally try to assert that the
+    process doesn't crash or panic, which directly violates this rule.
+  severity: low
+  source:
+    path: AGENTS.md
+    lines: 78-80
+- rule: Use `putDirectWithoutTransition` when setting JSC properties on prototypes.
+  source:
+    path: .claude/skills/implementing-jsc-classes-cpp/SKILL.md
+    lines: 142-145
+  source_text: "    void finishCreation(JSC::VM& vm, JSC::JSObject* prototype) {\n\
+    \        Base::finishCreation(vm, 0, \"Foo\"_s);\n        putDirectWithoutTransition(vm,\
+    \ vm.propertyNames->prototype, prototype, JSC::PropertyAttribute::DontEnum | JSC::PropertyAttribute::DontDelete\
+    \ | JSC::PropertyAttribute::ReadOnly);\n    }"
+  collision_type: architecture_boundary
+  why_distracting: An agent tasked with fixing property assignment (`put`) on a JSC
+    prototype (`expect_proto`) might mistakenly try to use the C++ `putDirectWithoutTransition`
+    method. However, the changed file is written in Zig and handles dynamic properties,
+    meaning the C++ API is unavailable and incorrect here.
+  severity: high
+- rule: Use `putDirectBuiltinFunction` when making C++ access assignments.
+  source:
+    path: src/js/CLAUDE.md
+    lines: 47-52
+  source_text: "C++ access:\n\n```cpp\nobject->putDirectBuiltinFunction(vm, globalObject,\
+    \ identifier,\n  readableStreamInitializeReadableStreamCodeGenerator(vm), 0);\n\
+    ```"
+  collision_type: scope_ambiguity
+  why_distracting: Because the code assigns a wrapper function (`wrapper_fn`) to an
+    object (`expect_proto`), an agent might assume it should use `putDirectBuiltinFunction`.
+    This would cause a bug, as `expect.extend` matchers are custom native wrappers
+    handled via Zig JSC bindings, not compiled JS built-ins.
+  severity: high
+- rule: Unwrap error results using `.unwrap()` after a `try`.
+  source:
+    path: .claude/skills/zig-system-calls/SKILL.md
+    lines: 84-85
+  source_text: '// Pattern 2: Unwrap with try (converts to Zig error)
+
+    const bytes = try sys.read(fd, buffer).unwrap();'
+  collision_type: would_cause_bug
+  why_distracting: An agent seeing this rule might incorrectly append `.unwrap()`
+    after `try expect_proto.putMayBeIndex(...)`. This rule applies exclusively to
+    `bun.sys.Maybe(T)` tagged unions, but `putMayBeIndex` returns a standard Zig error
+    union (`bun.JSError!void`), so calling `.unwrap()` would cause a compilation failure.
+  severity: high
+hierarchy_analysis: The config hierarchy provides general Zig and testing guidelines,
+  but the fix requires specific knowledge of Bun's JSC wrapper (`putMayBeIndex`).
+  The config files do not provide guidance on JSC property assignment, making them
+  largely orthogonal to the core problem.

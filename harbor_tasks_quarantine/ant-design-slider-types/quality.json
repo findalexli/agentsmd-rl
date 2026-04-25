@@ -1,0 +1,54 @@
+{
+  "model": "claude-opus-4-7",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "instruction.md names the file components/slider/index.tsx, the onInternalChangeComplete function, the // @ts-ignore comment, as any pattern, and restProps spread \u2014 all assertions in tests map to these."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "instruction describes what's broken (ts-ignore, as any, restProps spread) without prescribing the exact replacement code."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests only check absence of @ts-ignore and as any, presence of restProps, and that tsc/lint/tests pass \u2014 multiple valid type-narrowing approaches would pass."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests run tsc, eslint, biome, and jest via subprocess to verify behavior beyond text grep."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub would fail tsc compilation and jest tests; removing restProps entirely would fail test_restprops_type_narrowing."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All required behaviors (no ts-ignore, no as any, tsc/lint/tests pass) are covered by tests."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are individually named with docstrings explaining origin and purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "No structured data output required."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "Paths and commands appear correct."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "File path is necessary context; instruction doesn't point at exact line numbers of the fix."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "Code-only task, not a config edit."
+    }
+  },
+  "tier_a_fails": [],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
+}

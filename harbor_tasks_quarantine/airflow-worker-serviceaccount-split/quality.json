@@ -1,0 +1,54 @@
+{
+  "model": "claude-opus-4-7",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "Instruction names all key files (values.yaml, values.schema.json, worker-kubernetes-serviceaccount.yaml, _helpers.yaml, pod-template-file.kubernetes-helm-yaml, NOTES.txt, 64730.significant.rst), fields (automountServiceAccountToken, create, name, annotations), and helper names (_serviceAccountNameGen, worker.kubernetes.serviceAccountName)."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction describes what to add/change but does not provide literal implementation code; agent must still write the helm template logic."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check rendered output contains names/annotations and schema fields exist - a functional implementation with any naming style would pass."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests run `helm template` subprocess and inspect rendered YAML output for ServiceAccount resources."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "Tests require actual helm render to produce ServiceAccount resource with custom names and annotations; a stub would fail."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "Tests cover celery SA, kubernetes SA, annotations, custom names, fallback/backward compat, pod template usage, schema, and values fields."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests have descriptive names, docstrings, and a '=== Fail-to-pass tests ===' section header comment."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "Schema structure is explicitly documented with field names and types in instruction.md."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths and helper names look consistent between instruction and tests."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction names files to modify but this is expected since the task is adding new Helm chart functionality, not bug localization."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a feature-add task for Helm chart templates, not an agentmd config edit."
+    }
+  },
+  "tier_a_fails": [],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 10,
+  "fail_count": 0
+}

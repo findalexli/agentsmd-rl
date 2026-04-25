@@ -1,0 +1,69 @@
+manifest_version: "1.0"
+
+task:
+  name: moby-remove-duplicate-godoc
+  source:
+    repo: moby/moby
+    pr_number: 52260
+    base_commit: e2171f609d8b134f799885480fdb362bdd7b7b12
+    merge_commit: 80ab088261feab27941129932af6c26e0eb3d183
+
+checks:
+  # Fail-to-pass tests
+  - id: test_godoclint_enabled_in_config
+    type: fail_to_pass
+    origin: gold_patch
+    description: godoclint linter must be enabled in .golangci.yml
+    points: 1
+
+  - id: test_unix_file_no_package_doc
+    type: fail_to_pass
+    origin: gold_patch
+    description: local_unix.go must not have duplicate package doc comment
+    points: 1
+
+  - id: test_windows_file_no_package_doc
+    type: fail_to_pass
+    origin: gold_patch
+    description: local_windows.go must not have duplicate package doc comment
+    points: 1
+
+  # Pass-to-pass tests
+  - id: test_local_package_has_proper_doc
+    type: pass_to_pass
+    origin: repo_tests
+    description: The local package should still have documentation in local.go
+    points: 1
+
+  - id: test_golangci_config_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: .golangci.yml must be valid YAML with proper structure
+    points: 1
+
+  - id: test_go_code_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: Modified Go code should compile successfully
+    points: 1
+
+  - id: test_go_vet
+    type: pass_to_pass
+    origin: repo_tests
+    description: Go vet passes on modified package
+    points: 1
+
+  - id: test_go_fmt
+    type: pass_to_pass
+    origin: repo_tests
+    description: Go fmt passes on modified package
+    points: 1
+
+  - id: test_local_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Unit tests for local volume package pass
+    points: 1
+
+# No agent config rubric items since the repo has no CLAUDE.md or similar files
+rubric: []

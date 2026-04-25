@@ -1,0 +1,54 @@
+{
+  "model": "claude-opus-4-7",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "instruction.md names Bun.$.braces, the file src/shell/braces.zig, the expected return [\"\"], and the parse/tokenize options which tests assert on."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction describes the bug (empty token list access, underflow in subtraction) but does not state the exact fix code."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check behavior (return values, no crash) not specific variable names or line positions."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests execute bun via subprocess and parse JSON output to verify behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "Tests assert concrete expansions like ['abd','acd'] for 'a{b,c}d' and [''] for empty, which a stub couldn't satisfy."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All three reproducer variants (plain, parse:true, tokenize:true) are tested, plus regression tests."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are grouped with section comments (Gates, Fail-to-pass, Pass-to-pass) and descriptive names."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "Instruction documents expected return [\"\"] for base call; parse:true schema (atoms) is referenced but tests only check 'atoms' key presence loosely."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos observed in paths or commands."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction names the file src/shell/braces.zig but localization within the file (parser/lexer functions) still requires investigation."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-fix task, not an agentmd-edits task."
+    }
+  },
+  "tier_a_fails": [],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 10,
+  "fail_count": 0
+}

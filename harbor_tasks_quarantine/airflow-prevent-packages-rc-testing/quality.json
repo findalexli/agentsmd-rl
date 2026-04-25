@@ -1,0 +1,54 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the target file (scripts/in_container/install_airflow_and_providers.py), the --exclude-newer option, --pre flag, ISO format timestamp, pre-release installation paths, and console print messages. The tests check these same things. The specific function names (_install_airflow_and_optionally_providers_together, _install_only_airflow_airflow_core_task_sdk_with_constraints) are internal to the target file and discoverable by reading it, which the agent is expected to do."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what needs to happen (add --exclude-newer with ISO timestamp, update console messages) but doesn't specify exact code changes like line numbers or exact replacement strings. The agent must read the file and figure out where and how to make the changes."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check behavioral properties: that --exclude-newer appears in captured commands with a valid ISO timestamp, that --pre is also present, and that neither appears for non-pre-release. Alternative implementations (e.g., using datetime.utcnow(), different variable names, different code structure) would all pass as long as they produce the correct command-line arguments."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests import the module, reload it, create InstallationSpec objects, mock run_command, call the actual functions (_install_airflow_and_optionally_providers_together, _install_only_airflow_airflow_core_task_sdk_with_constraints), and inspect the captured command lists. This is behavioral testing via execution, not text matching."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub/no-op implementation would not pass because: the original code only appends '--pre' without '--exclude-newer', so test_pre_release_adds_exclude_newer_to_first_function and test_pre_release_adds_exclude_newer_to_second_function would fail. The tests capture actual commands executed via mocked run_command and assert --exclude-newer is present with a valid timestamp."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires: (1) --exclude-newer with ISO timestamp for pre-release - tested by test_pre_release_adds_exclude_newer_to_first_function and _second_function; (2) all pre-release paths updated consistently - tested by having separate tests for both functions; (3) console messages updated - partially tested (test_exclude_newer_timestamp_is_recent checks dynamism); (4) --pre still present - tested by test_pre_release_includes_pre_flag; (5) non-pre-release unaffected - tested by test_non_"
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_pre_release_adds_exclude_newer_to_first_function, test_non_pre_release_does_not_add_exclude_newer, etc.), each has a docstring explaining what it verifies, and they cover distinct aspects of the fix."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task modifies a Python script's behavior, not structured data output like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, option names (--exclude-newer, --pre), function names, and other identifiers are all correctly spelled throughout the instruction and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the target file (appropriate since it's a single-file task) but doesn't specify line numbers or exact code to change. It describes the problem and desired behavior at a functional level."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task modifying a Python script, not a configuration edit task."
+    }
+  },
+  "tier_a_fails": [],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
+}

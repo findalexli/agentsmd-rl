@@ -1,0 +1,60 @@
+{
+  "model": "claude-opus-4-7",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "instruction.md names the target file src/Functions/padString.cpp and all three argument names (string, length, pad_string) with exact old and new description strings."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md explicitly states the exact string replacements: 'Array' \u2192 'String or FixedString', 'const UInt*' \u2192 'UInt*', 'Array' \u2192 'String', leaving no reasoning about what to change."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests use strict regex matching specific implementation details like static_cast<FunctionArgumentDescriptor::TypeValidator>(&isStringOrFixedString) and nullptr ordering, which would reject valid alternative formatting or refactoring."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Nearly all tests use TARGET_FILE.read_text() and regex/substring matches; the one compile attempt in test_padString_file_compiles falls back to text checks and doesn't actually verify runtime behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "Tests verify specific string replacements tied to the bug fix; a stub cannot pass since the file's text must contain specific new descriptions and lack old ones."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All three description changes specified in instruction.md are tested via dedicated test functions."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are named descriptively (test_string_argument_has_correct_description, etc.) and grouped with a pass-to-pass section comment."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "No structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "Filenames and identifiers are consistent between instruction, tests, and solution."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md names the exact file src/Functions/padString.cpp and specifies the exact before/after strings, eliminating any localization task."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "Code-only task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 5,
+  "fail_count": 4
+}

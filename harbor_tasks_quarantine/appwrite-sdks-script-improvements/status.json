@@ -1,0 +1,118 @@
+{
+  "schema_version": 2,
+  "valid": true,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-22T00:03:04.701317",
+  "total_time": 6793.96,
+  "sandbox_id": "iyp40a89pfpnwmt61qs9c",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "fix_quality",
+  "nodes": {
+    "scaffold": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 525.79,
+      "notes": ""
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 287.93,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 2,
+      "notes": "Fixed Dockerfile to properly install composer dev dependencies (pint, phpstan, phpunit) using --ignore-platform-reqs. All 14 tests pass. Docker build, NOP test (reward=0), and Gold test (reward=1) all succeed. Rubric judge is designed for agent evaluation mode, not gold validation - gold solution passes all project linting (pint PSR-12, phpstan).",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 448.38
+    },
+    "quality_gate": {
+      "status": "passed",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.22,
+      "notes": "flags=['lint_tier_b:2', 'B:[B] pinned_dependencies @ environment/Dockerfile:36: unpinned pip deps: pytest', 'B:[B] no_network_during_tests @ tests/test.sh:39: network call at test time: `pip install`']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 17.79,
+      "tier_a_fails": [
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 6,
+      "fail_count": 3
+    },
+    "tests_rewrite": {
+      "status": "error",
+      "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":629,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 400 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"invalid_request_error\\\",\\\"message\\\":\\\"\\\\\\\"thinking.type.enabled\\\\\\\" is not supported for this model. Use \\\\\\\"thinking.type.adapt",
+      "time": 1.88
+    },
+    "fix_quality": {
+      "status": "ok",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 1620.73,
+      "notes": ""
+    }
+  },
+  "history": [
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "minimax",
+      "time": 375.93,
+      "at": "2026-04-21T08:47:13.384763"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 3984.49,
+      "at": "2026-04-21T10:27:36.409855"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "chutes",
+      "time": 251.98,
+      "at": "2026-04-21T13:39:20.159629"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "minimax",
+      "time": 2184.03,
+      "at": "2026-04-21T14:43:26.295837"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 6793.96,
+      "at": "2026-04-22T00:03:04.701317"
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "model": "claude-opus-4-7",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "Instruction names both files (tests/library/browsercontext-fetch.spec.ts and tests/bidi/expectations/moz-firefox-nightly-library.txt) and the test title used in assertions."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction describes the problem (BiDi case not handled) without specifying the exact code change or variable names."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_bidi_cookie_rejection_condition requires the exact pattern '|| isBidi' OR-combined with chromium on a single line; an equivalent fix like a separate `if (isBidi && value==='None')` branch or reordering to `isBidi || browserName==='chromium'` would fail."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests also run npm build, eslint, tsc, generate_channels, etc. as subprocesses, beyond just text inspection."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "f2p tests require specific code additions (isBidi in signature, OR-combined condition, removal of expectation line) which a stub cannot satisfy."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "Both required behaviors (update test logic for BiDi, remove expectation entry) are tested."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are grouped with section comments (Gates, Fail-to-pass, Pass-to-pass) and descriptive names."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task is a code/test fix, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "Paths and commands appear correct."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction points to the right files but doesn't give the exact line fix; localization to 'around line 1155' is acceptable guidance."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "Not an agentmd-edits task."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 1
+}

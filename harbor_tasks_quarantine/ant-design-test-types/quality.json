@@ -1,0 +1,57 @@
+{
+  "model": "claude-opus-4-7",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "Instruction names all affected files (tests/setupAfterEnv.ts, tests/shared/focusTest.tsx, package.json), the required types (SnapshotTarget, FocusableRef with focus/blur returning void), the functions (formatHTML, getElement, cloneNodes), version pin @sinonjs/fake-timers 15.2.0, and config fields (pnpm.overrides, overrides, resolutions)."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction describes what needs to change at a conceptual level (define types, replace any, add null check) without giving exact code or line numbers."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert very specific implementation details: `querySelector<HTMLElement>` literal (test_get_element_returns_typed_element), `expect(element).not.toBeNull()` literal assertion, `as SnapshotTarget` occurring at least 2 times, and exact regex for `React.createRef<FocusableRef>()`. Valid alternative fixes (e.g., using a different null check, returning `HTMLElement | null`, or using `querySelector<HTMLInputElement>`) would fail."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Most f2p tests (test_snapshot_target_type_exists, test_format_html_uses_proper_types, test_print_uses_type_assertion, test_focusable_ref_type_exists, test_focus_test_ref_uses_proper_type, test_get_element_returns_typed_element, test_fire_event_calls_without_nonnull_assertion) use regex/substring checks on file contents. Only test_typescript_compiles and lint tests execute subprocesses."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "Tests check for concrete code patterns that require actually implementing the type changes; a stub can't pass without making the edits."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "Instruction items (SnapshotTarget, FocusableRef, typed refs, getElement return type, null check, lint, tsc, version pin) are mostly exercised by tests."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are individually named with docstrings describing fail-to-pass vs pass-to-pass intent."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task is code/type changes, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "Paths and identifiers in instruction match those in tests."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction identifies the files to edit (which is part of task scope), but doesn't point to exact buggy lines."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "Gold diff only adds pnpm.overrides/overrides/resolutions sections to package.json, a localized change."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 2
+}

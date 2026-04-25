@@ -1,0 +1,86 @@
+# Evaluation manifest for withastro/astro#16170
+
+pr_metadata:
+  owner: withastro
+  repo: astro
+  pr_number: 16170
+  title: "fix(vercel): edge middleware next() drops HTTP method and body"
+  base_commit: 6b6751d85a6dfaf751919675d61eea16da9a7a26
+  merge_commit: d0fe1ec216f8f322392e34ce40378d022e495cef
+  files_changed:
+    - packages/integrations/vercel/src/serverless/middleware.ts
+    - packages/integrations/vercel/test/edge-middleware.test.js
+    - .changeset/warm-tigers-knock.md
+
+target_file: packages/integrations/vercel/src/serverless/middleware.ts
+distinctive_line: "method: request.method,"
+
+checks:
+  - id: test_middleware_generates_method_forwarding
+    description: "The generated middleware template includes method: request.method in fetch options"
+    type: fail_to_pass
+    origin: pr_diff
+    test_class: test_outputs
+
+  - id: test_middleware_generates_body_forwarding
+    description: "The generated middleware template conditionally includes body: request.body"
+    type: fail_to_pass
+    origin: pr_diff
+    test_class: test_outputs
+
+  - id: test_middleware_generates_duplex_for_streaming
+    description: "The generated middleware template includes duplex: 'half' for streaming"
+    type: fail_to_pass
+    origin: pr_diff
+    test_class: test_outputs
+
+  - id: test_middleware_runs_without_error
+    description: "The middleware.ts file is syntactically valid TypeScript"
+    type: pass_to_pass
+    origin: static
+    test_class: test_outputs
+
+  - id: test_repo_biome_lint_middleware
+    description: "Repo biome linter passes on the edge middleware file"
+    type: pass_to_pass
+    origin: repo_tests
+    test_class: test_outputs
+
+  - id: test_repo_biome_lint_vercel_src
+    description: "Repo biome linter passes on the vercel integration source"
+    type: pass_to_pass
+    origin: repo_tests
+    test_class: test_outputs
+
+  - id: test_repo_eslint_middleware
+    description: "Repo eslint passes on the edge middleware file"
+    type: pass_to_pass
+    origin: repo_tests
+    test_class: test_outputs
+
+  - id: test_repo_biome_lint_edge_test
+    description: "Repo biome linter passes on the edge middleware test file"
+    type: pass_to_pass
+    origin: repo_tests
+    test_class: test_outputs
+
+  - id: test_repo_eslint_edge_test
+    description: "Repo eslint passes on the edge middleware test file"
+    type: pass_to_pass
+    origin: repo_tests
+    test_class: test_outputs
+
+rubric:
+  - rule: "Added lines follow existing code style and indentation patterns in the middleware file"
+    description: "The fetch call additions should use the same formatting as surrounding code"
+    source:
+      path: packages/integrations/vercel/src/serverless/middleware.ts
+    reference: "Added lines use same indentation (tabs) and style as surrounding fetch options"
+    weight: medium
+
+  - rule: "Changes are minimal and focused on the specific bug fix"
+    description: "Only the middleware.ts file should be modified with the fix"
+    source:
+      path: packages/integrations/vercel/src/serverless/middleware.ts
+    reference: "Only the fetch call options are modified to add method and body/duplex"
+    weight: medium

@@ -1,0 +1,56 @@
+{
+  "model": "claude-opus-4-7",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "Instruction describes the file (FakeProcessGroup), the operation (allgather), and expected behavior; tests extract from FakeProcessGroup.hpp which is implied by the task domain."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction describes the bug and expected behavior ('process each tensor appropriately', 'not fail') without specifying the exact fix."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_allgather_continue_present asserts 'tensor_1_copied=0' requiring the mismatched tensor be skipped entirely; a valid alternative fix like try/catch around copy_ or resizing the output tensor would fail this assertion (resize would copy, and the extraction logic skips the 'return' line but not try/catch blocks)."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests compile and execute C++ code extracted from the header and run it, verifying runtime behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "Tests require actual execution with observable copy behavior; a stub wouldn't satisfy tensor_0_copied=1 and tensor_1_copied=0."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "Tests cover the matching-size copy case and uneven-size skip case as described in instruction.md."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are grouped with section comments (Gates, Fail-to-pass, Pass-to-pass) and have descriptive names."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task is a code fix, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No visible typos in paths or commands."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction mentions FakeProcessGroup (the subject of the task) without pointing to exact file/line."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "Code-only task."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 1
+}

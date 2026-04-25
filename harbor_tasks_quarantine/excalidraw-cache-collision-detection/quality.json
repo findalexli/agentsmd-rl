@@ -1,0 +1,62 @@
+{
+  "model": "claude-opus-4-7",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "fail",
+      "reason": "instruction.md is empty/not provided, so the agent cannot know required variable names like 'cachedPoint', 'cachedElement', 'cachedThreshold', 'cachedHit', 'WeakRef', 'pointsEqual', or the file path packages/element/src/collision.ts that tests assert on."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "No instruction.md content is shown, so it cannot leak the solution; (though this is due to missing instruction entirely)."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "Tests assert exact literal strings like 'cachedThreshold <= threshold', 'new WeakRef(element)', 'cachedElement?.deref()', 'cachedHit = result', 'return cachedHit' \u2014 alternative valid caching implementations (e.g., using Map, different variable names, or different comparison order like 'threshold >= cachedThreshold') would fail."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "All custom tests (test_collision_cache_implements_caching, test_cache_reuses_result_for_increased_threshold, test_cache_invalidates_on_version_change, test_uses_weakref_for_element_cache, test_cache_stores_hit_result) use `open(...).read()` and `in content` substring checks; no test actually executes the caching behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "Since tests are pure string matching, a stub that simply writes the required literals as comments into collision.ts would pass all cache tests without implementing any real fix."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "instruction.md is missing so required behavior cannot be compared; tests check textual implementation rather than behavioral outcomes of caching."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are grouped with docstrings and a clear PASS-TO-PASS section separator comment block."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task modifies TypeScript source; no structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "Paths like packages/element/src/collision.ts and yarn commands appear consistent and correct."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md is not provided in the audit material, so it's impossible to verify it avoids hinting; assuming missing instruction is itself a defect."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code change task, not an agentmd config edit."
+    }
+  },
+  "tier_a_fails": [
+    "behavior_in_task_description",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 3,
+  "fail_count": 6
+}

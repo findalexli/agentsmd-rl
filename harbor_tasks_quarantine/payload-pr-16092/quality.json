@@ -1,0 +1,56 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "instruction.md names buildSearchParams from packages/sdk/src/utilities/buildSearchParams.ts, the trash parameter, and the expected behavior (trash=true, trash=false, absent). All test-specific details (function name, file path, parameter values) are discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what is broken (trash is silently dropped) and the expected behavior, but does not specify exact code changes, line numbers, or replacement code. A developer must still reason about how to add trash handling."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests only check that the output of buildSearchParams includes 'trash=true' or 'trash=false' strings and that TypeScript compiles. Any correct implementation that serializes the trash boolean into the query string would pass, regardless of implementation details."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests import and execute buildSearchParams via tsx subprocess calls, checking the actual return value of the function. They also run lint, unit tests, and type checking as behavioral checks."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub/default implementation of buildSearchParams would not include 'trash=true' in its output. The f2p tests (test_build_params_trash_true, test_build_params_trash_false, test_build_params_trash_with_other_args) require actual implementation of trash serialization logic."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All three behaviors specified in instruction.md are tested: trash=true produces 'trash=true', trash=false produces 'trash=false', and absent trash produces no trash parameter. Type checking also validates the OperationArgs type extension."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_build_params_trash_true, test_build_params_trash_false, etc.) with docstrings indicating fail-to-pass vs pass-to-pass classification."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task involves modifying a query string builder function, not producing structured data output like JSON/CSV/API/DB schemas."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md explicitly names the exact file (packages/sdk/src/utilities/buildSearchParams.ts) and describes precisely what to add ('serialize the trash boolean into the query string, analogous to how it already handles draft, depth, limit'). It also names the exact type (OperationArgs) to extend. This significantly reduces the localization challenge."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits/config task."
+    }
+  },
+  "tier_a_fails": [],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 8,
+  "fail_count": 1
+}

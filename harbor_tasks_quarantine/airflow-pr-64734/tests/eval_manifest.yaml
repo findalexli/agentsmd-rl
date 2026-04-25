@@ -1,0 +1,102 @@
+task:
+  name: airflow-helm-celery-hpa
+  title: "Add workers.celery.hpa configuration to Airflow Helm chart"
+  description: |
+    Introduce a new `workers.celery.hpa` configuration section in the Airflow Helm chart
+    and deprecate the existing `workers.hpa` section, since HPA settings only apply to
+    Celery workers.
+
+source:
+  repo: apache/airflow
+  pr_number: 64734
+  pr_url: https://github.com/apache/airflow/pull/64734
+  base_commit: 93552c2bcb5815fb5e131e13a56995a7b8e97695
+  merge_commit: c68d10270485b866a9528cb8e0bcbd1bf4a20e96
+
+checks:
+  - id: test_values_yaml_has_celery_hpa_section
+    type: fail_to_pass
+    origin: behavioral
+    description: values.yaml contains workers.celery.hpa configuration section
+
+  - id: test_values_yaml_has_celery_hpa_enabled_property
+    type: fail_to_pass
+    origin: behavioral
+    description: values.yaml has enabled property under workers.celery.hpa
+
+  - id: test_schema_has_celery_hpa_properties
+    type: fail_to_pass
+    origin: behavioral
+    description: values.schema.json defines workers.celery.hpa properties
+
+  - id: test_schema_celery_hpa_has_metrics_property
+    type: fail_to_pass
+    origin: behavioral
+    description: Schema defines workers.celery.hpa.metrics property
+
+  - id: test_schema_celery_hpa_has_behavior_property
+    type: fail_to_pass
+    origin: behavioral
+    description: Schema defines workers.celery.hpa.behavior property
+
+  - id: test_notes_have_deprecation_warnings_for_hpa_enabled
+    type: fail_to_pass
+    origin: behavioral
+    description: NOTES.txt contains deprecation warning for workers.hpa.enabled
+
+  - id: test_notes_have_deprecation_warnings_for_hpa_minreplica
+    type: fail_to_pass
+    origin: behavioral
+    description: NOTES.txt contains deprecation warning for workers.hpa.minReplicaCount
+
+  - id: test_notes_have_deprecation_warnings_for_hpa_maxreplica
+    type: fail_to_pass
+    origin: behavioral
+    description: NOTES.txt contains deprecation warning for workers.hpa.maxReplicaCount
+
+  - id: test_legacy_hpa_still_works
+    type: pass_to_pass
+    origin: behavioral
+    description: Legacy workers.hpa configuration still renders HPA (backward compatibility)
+
+  - id: test_celery_hpa_via_merge_works
+    type: pass_to_pass
+    origin: behavioral
+    description: workers.celery.hpa values are merged into workers.hpa via workersMergeValues
+
+  - id: test_helm_chart_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: Helm chart passes linting
+
+  - id: test_helm_template_default_values
+    type: pass_to_pass
+    origin: repo_tests
+    description: Chart renders with default values
+
+  - id: test_repo_hpa_disabled_by_default
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's HPA test verifies HPA is disabled by default
+
+  - id: test_repo_hpa_enabled_celery
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's HPA test for CeleryExecutor passes
+
+  - id: test_repo_chart_schema_validation
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's chart schema validation test passes
+
+  - id: test_repo_worker_kind
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's worker kind test (StatefulSet vs Deployment) passes
+
+rubric:
+  - id: no_documentation_changes_required
+    rule: |
+      This is a Helm chart configuration task. No changes to CLAUDE.md, AGENTS.md,
+      or other documentation files are required. The solution should modify chart
+      configuration files (values.yaml, values.schema.json, NOTES.txt) and tests.

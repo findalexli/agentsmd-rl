@@ -1,0 +1,59 @@
+{
+  "model": "claude-opus-4-7",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "instruction.md names the target file path and the template function buildStableSplitComponentStatements; the literal strings tested (`import.meta.hot.data ??= {}`, `import.meta.hot?.data?.[%%hotDataKey%%]`, `import.meta.hot.data[%%hotDataKey%%]`) are derivable from the described fix context."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md explicitly states the fix: requirement 3 says 'must handle the case where `import.meta.hot.data` is undefined before properties are written to it' and the problem description reveals the exact symptom pattern, making the `??= {}` fix near-trivial; however the test asserts the exact literal `import.meta.hot.data ??= {}` which is not explicitly dictated \u2014 still borderline acceptable. Primary concern: the instruction's requirement 3 basically describes the fix verbatim."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_source_code_initializes_hot_data asserts the exact string `import.meta.hot.data ??= {}`; valid alternatives like `if (!import.meta.hot.data) import.meta.hot.data = {}` or `import.meta.hot.data = import.meta.hot.data || {}` would fail despite being correct fixes."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests include subprocess executions of build, unit tests, lint, types, and build validation (test_router_plugin_build, test_router_plugin_unit_tests, etc.) beyond the textual assertions."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The F2P tests require the specific string to be present before the access pattern; a stub implementation wouldn't satisfy this without adding the initialization line."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "Tests cover the required behavior: initialization before access, build success, unit test pass, and existing test suite compatibility."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are individually named with clear docstrings marking F2P/P2P and describing what each verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task modifies TypeScript source code, not structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths and commands appear correct and consistent between instruction, tests, and solution."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md's 'File Under Test' section names the exact file `packages/router-plugin/src/core/code-splitter/plugins/react-stable-hmr-split-route-components.ts` and the specific function `buildStableSplitComponentStatements`, removing localization effort."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd/config-edits task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 3
+}

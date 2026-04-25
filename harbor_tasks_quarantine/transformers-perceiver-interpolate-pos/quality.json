@@ -1,0 +1,54 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the class (PerceiverTrainablePositionEncoding), the method (interpolate_pos_encoding), the file path, and the expected behavior (output first dimension equals height*width). The tests use exactly these names and check this behavior. The test for ruff, imports, and unit tests are pass-to-pass regression tests whose specifics (file path, class names) are all discoverable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes WHAT is broken (interpolation is a no-op, output shape matches source grid instead of target) but does not say HOW to fix it (e.g., it doesn't mention changing 'new_height, new_width' to 'height, width' on a specific line). A developer must still reason about the implementation."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "The f2p tests only check behavioral properties: output shape dimensions (result.shape[0] == height*width) and that output differs from input when target dims differ. They don't assert on specific variable names, line positions, or internal implementation details. Alternative fixes (e.g., rewriting the interpolation differently, using a different reshape strategy) would pass as long as they produce correct output shapes."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "The f2p tests import PerceiverTrainablePositionEncoding, instantiate it, call interpolate_pos_encoding, and check output tensor shapes. Pass-to-pass tests execute subprocess commands and import modules. Tests verify behavior through execution, not text matching."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub interpolate_pos_encoding returning None, empty tensor, or the original embeddings unchanged would fail: test_interpolate_to_target_dims checks shape[0]==64 (not 16), test_interpolate_values_change explicitly checks result.shape[0] != pos_emb.shape[0]. The buggy code returns 16 positions; only a real fix produces 64."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires that interpolate_pos_encoding produces output with first dimension == height*width (not original index_dims product). Tests check this for square (4\u21928), non-square, and multiple resolutions, fully covering the stated expected behavior."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass, Config-derived), descriptive function names (test_interpolate_to_target_dims, test_interpolate_multiple_resolutions), and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves fixing a bug in positional encoding interpolation; it does not produce structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, class names, method names, or variable names across instruction.md and test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction names the file and method (which is appropriate given the task domain), but doesn't mention the specific buggy line or the exact variable name change needed (new_height/new_width \u2192 height/width). The localization to the method level is reasonable."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits task involving config files."
+    }
+  },
+  "tier_a_fails": [],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
+}

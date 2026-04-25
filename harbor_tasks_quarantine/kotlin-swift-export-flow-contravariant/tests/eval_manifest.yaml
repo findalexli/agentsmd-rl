@@ -1,0 +1,76 @@
+source_pr:
+  owner: JetBrains
+  repo: kotlin
+  number: 5772
+  title: "[Swift Export] Support Flow in contravariant positions"
+  base_commit: 7730271d0f5754fdffedf0199ab34b405dc746b0
+  merge_commit: 276965ca2e5e21ebd4cad854570d29938929174f
+
+checks:
+  - id: test_flow_type_check_removed
+    type: fail_to_pass
+    origin: pr_diff
+    description: SirTypeProviderImpl no longer checks for COVARIANT position when handling Flow types
+
+  - id: test_companion_object_is_internal
+    type: fail_to_pass
+    origin: pr_diff
+    description: SirTypeProviderImpl companion object is internal (not private) to expose FLOW_CLASS_IDS
+
+  - id: test_visibility_checker_flow_support
+    type: fail_to_pass
+    origin: pr_diff
+    description: SirVisibilityCheckerImpl treats Flow types as supported in hasUnboundInputTypeParameters
+
+  - id: test_compilation_with_cross_file_reference
+    type: fail_to_pass
+    origin: pr_diff
+    description: Code compiles with cross-file reference from SirVisibilityCheckerImpl to SirTypeProviderImpl.FLOW_CLASS_IDS (uses subprocess.run)
+
+  - id: test_sir_type_provider_compiles
+    type: pass_to_pass
+    origin: static
+    description: SirTypeProviderImpl has valid Kotlin syntax and expected structure
+
+  - id: test_sir_visibility_checker_compiles
+    type: pass_to_pass
+    origin: static
+    description: SirVisibilityCheckerImpl has valid Kotlin syntax and expected structure
+
+  - id: test_repo_file_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: SirTypeProviderImpl has expected Kotlin file structure
+
+  - id: test_repo_sir_visibility_structure
+    type: pass_to_pass
+    origin: repo_tests
+    description: SirVisibilityCheckerImpl has expected Kotlin file structure
+
+  - id: test_cross_file_reference_valid
+    type: pass_to_pass
+    origin: pr_diff
+    description: Cross-file reference from SirVisibilityCheckerImpl to SirTypeProviderImpl.FLOW_CLASS_IDS is valid
+
+  - id: test_flow_types_defined
+    type: pass_to_pass
+    origin: static
+    description: FLOW_CLASS_IDS contains all expected Flow type definitions
+
+  - id: test_gradle_module_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: The sir-providers module compiles successfully with gradle (behavioral check)
+
+rubric:
+  - rule: "When intercepting Flow types in SirTypeProviderImpl, do not limit to COVARIANT positions"
+    source: "Fix requirement"
+    weight: 4
+
+  - rule: "Make companion object internal in SirTypeProviderImpl to allow access to FLOW_CLASS_IDS from other classes"
+    source: "Fix requirement"
+    weight: 2
+
+  - rule: "Add Flow class ID check in SirVisibilityCheckerImpl.hasUnboundInputTypeParameters to treat Flow as a supported type"
+    source: "Fix requirement"
+    weight: 4

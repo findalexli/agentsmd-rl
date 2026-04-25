@@ -1,0 +1,119 @@
+{
+  "schema_version": 2,
+  "valid": false,
+  "verdict": "fail",
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-22T01:41:55.533524",
+  "total_time": 12726.28,
+  "sandbox_id": "i4d0jrhxkm7lpdohviif1",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "fix_quality",
+  "error": "The sandbox was not found: This error is likely due to sandbox timeout. You can modify the sandbox timeout by passing 'timeout' when starting the sandbox or calling '.set_timeout' on the sandbox with the desired timeout.",
+  "nodes": {
+    "scaffold": {
+      "status": "ok",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 2037.88,
+      "notes": ""
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 1363.57,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "fail",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 2,
+      "notes": "Docker build, NOP test (reward=0), and Gold test (reward=1) all pass. Rubric judge returns 0.0 because it expects config file updates (AGENTS.md) but gold solution only modifies Rust source files. The rubric is fundamentally incompatible with this task type (Rust parser bug fix). Updated rubric to reference AGENTS.md with rules about testing (which biome AGENTS.md requires), but judge still fails because extract_config_hunks finds no config file changes. The gold solution HAS proper tests and comments in source files, but the judge cannot evaluate source code - only config file modifications.",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 2868.89
+    },
+    "quality_gate": {
+      "status": "passed",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.36,
+      "notes": "flags=['lint_tier_b:2', 'B:[B] pinned_dependencies @ environment/Dockerfile:25: unpinned pip deps: pytest', 'B:[B] no_network_during_tests @ tests/test.sh:37: network call at test time: `pip install`']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 13.47,
+      "tier_a_fails": [
+        "solution_uniqueness_guard",
+        "test_not_tautological"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 6,
+      "fail_count": 3
+    },
+    "tests_rewrite": {
+      "status": "error",
+      "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":1541,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 400 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"invalid_request_error\\\",\\\"message\\\":\\\"\\\\\\\"thinking.type.enabled\\\\\\\" is not supported for this model. Use \\\\\\\"thinking.type.adap",
+      "time": 3.37
+    },
+    "fix_quality": {
+      "status": "rate_limited",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 548.42,
+      "notes": ""
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1157.85,
+      "at": "2026-04-15T21:56:49.688457"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "anthropic",
+      "time": 44.7,
+      "at": "2026-04-16T10:03:17.272291"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 1156.06,
+      "at": "2026-04-21T13:54:24.048650"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "minimax",
+      "time": 7396.39,
+      "at": "2026-04-21T16:10:18.257930"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "minimax",
+      "time": 12726.28,
+      "at": "2026-04-22T01:41:55.533524"
+    }
+  ]
+}

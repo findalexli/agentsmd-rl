@@ -1,0 +1,145 @@
+version: '2.0'
+source:
+  repo: huggingface/transformers
+  pr: 45079
+  base_commit: 57e84139542c8c297873f35fcd25f66ffcf132ae
+  merge_commit: 4932e9721e230bea915341e7f04db32885b6c6af
+checks:
+- id: syntax_valid
+  type: pass_to_pass
+  origin: static
+  description: Modified modeling_utils.py must parse without syntax errors
+- id: import_transformers
+  type: pass_to_pass
+  origin: repo_tests
+  description: Transformers library can be imported without errors
+- id: test_repo_check_dummies
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo dummy objects check passes (CI check_dummies)
+- id: test_repo_check_inits
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo init files check passes (CI check_inits)
+- id: test_repo_check_deps_table
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo dependency table check passes (CI check_deps_table)
+- id: test_repo_check_pipeline_typing
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo pipeline typing check passes (CI check_pipeline_typing)
+- id: resize_embeddings_weights_preserved_after_post_init
+  type: fail_to_pass
+  origin: pr_diff
+  description: LM head weights are preserved through resize_token_embeddings() then
+    post_init()
+- id: resize_embeddings_expands_and_shrinks_correctly
+  type: fail_to_pass
+  origin: pr_diff
+  description: LM head weights preserved for both vocab expansion and shrinking
+- id: fix_is_not_stub
+  type: pass_to_pass
+  origin: static
+  description: The fix actually sets _is_hf_initialized, not a no-op
+- id: tied_embeddings_unaffected
+  type: pass_to_pass
+  origin: repo_tests
+  description: Models with tie_word_embeddings=True still work correctly
+- id: model_forward_pass_works
+  type: pass_to_pass
+  origin: repo_tests
+  description: Basic model inference still works after the fix
+- id: test_repo_check_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo public imports check passes (CI check_imports)
+- id: test_repo_check_config_docstrings
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo config docstrings check passes (CI check_config_docstrings)
+- id: test_repo_check_config_attributes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo config attributes check passes (CI check_config_attributes)
+- id: test_repo_check_modeling_structure
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo modeling file structure check passes (CI check_modeling_structure)
+- id: test_repo_check_import_complexity
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo import complexity check passes (CI check_import_complexity)
+- id: test_repo_check_doctest_list
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo doctest list check passes (CI check_doctest_list)
+- id: test_repo_check_auto_mappings
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo auto mappings check passes (CI check_auto_mappings)
+- id: test_repo_check_init_isort
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo init isort check passes (CI check_init_isort)
+- id: test_repo_check_add_dates
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo add dates check passes (CI check_add_dates)
+- id: test_repo_check_doc_toc
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo doc TOC check passes (CI check_doc_toc)
+rubric:
+- rule: PRs should be as brief as possible. Bugfix PRs in particular can often be
+    only one or two lines long, and do not need large comments, docstrings or new
+    functions in this case. Aim to minimize the size of the diff.
+  source:
+    path: .github/copilot-instructions.md
+    lines: '15'
+    commit: 57e84139542c8c297873f35fcd25f66ffcf132ae
+  reference: The gold solution adds a single line `new_lm_head._is_hf_initialized = True` to fix the bug,
+    demonstrating that bugfix PRs can be just one line long.
+- rule: Code style is enforced in the CI. You can install the style tools with `pip
+    install -e .[quality]`. You can then run `make fixup` to apply style and consistency
+    fixes to your code.
+  source:
+    path: .github/copilot-instructions.md
+    lines: '34'
+    commit: 57e84139542c8c297873f35fcd25f66ffcf132ae
+  reference: The gold solution follows the code style with clean, properly indented code that passes CI checks.
+- rule: Manage code duplication by editing shared utilities or the source code that
+    others copy from, rather than editing `# Copied from` blocks or using direct inheritance
+    in model-specific files.
+  source:
+    path: AGENTS.md
+    lines: 53-57
+  evidence: The patch modifies the shared `_get_resized_lm_head` function in `src/transformers/modeling_utils.py`
+    rather than attempting to edit model-specific files or `# Copied from` blocks.
+  category: architecture
+  reference: The gold solution edits the shared `_get_resized_lm_head` function in `src/transformers/modeling_utils.py`,
+    which is the correct approach for managing code duplication by editing the source that others copy from.
+distractors:
+- rule: If coordination evidence cannot be found, do not proceed to PR-ready output.
+  collision_type: meta_confusion
+  why_distracting: The task prompt does not provide issue coordination links or approval
+    evidence. An agent following this rule strictly would refuse to generate the patch
+    and instead output a request for clarification.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 48-51
+- rule: Do not open one-off PRs for tiny edits (single typo, isolated lint cleanup,
+    one mutable default argument, etc.).
+  collision_type: scope_ambiguity
+  why_distracting: The requested fix is a single-line addition (`new_lm_head._is_hf_initialized
+    = True`). An agent might misclassify this as a 'tiny edit' and refuse to output
+    the fix, failing to distinguish between trivial busywork and a critical bug fix.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 35-37
+hierarchy_analysis: The repository contains identical `AGENTS.md` and `CLAUDE.md`
+  files at the root level. These files contain strict meta-instructions governing
+  agent behavior, specifically designed to prevent uncoordinated or low-value AI-generated
+  PRs.

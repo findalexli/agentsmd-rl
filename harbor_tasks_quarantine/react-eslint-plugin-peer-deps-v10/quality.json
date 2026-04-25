@@ -1,0 +1,54 @@
+{
+  "model": "claude-opus-4-7",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "Instruction names the file packages/eslint-plugin-react-hooks/package.json and describes ESLint 10 peer dependency issue; tests check peerDependencies.eslint for ^10.0.0 which is the versioned behavior described."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction describes the bug (peer dep doesn't include v10) but doesn't state the exact string to add or edit."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests only require ^10.0.0 combined via || with existing versions preserved, allowing alternative valid range formulations."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests parse JSON, inspect structured fields, and execute subprocesses like eslint.js, jest, license and warnings scripts."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "f2p tests require ^10.0.0 to be present with || separator plus backward compat versions, which a stub cannot satisfy without the fix."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "Instruction's expected behavior (install cleanly with ESLint 10) is verified by peer dependency range tests."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests grouped with comment section headers (Gates, Fail-to-pass, Pass-to-pass, repo_tests) and descriptive names."
+    },
+    "structured_data_schema": {
+      "outcome": "pass",
+      "reason": "package.json schema (name, version, peerDependencies.eslint) is described implicitly via the file reference and is a standard npm schema."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in paths or commands."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction points to package.json which is the obvious file for peer dependency declarations, not a buggy line."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "Gold patch is a single-line edit to peerDependencies.eslint, localized and non-contradictory."
+    }
+  },
+  "tier_a_fails": [],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 11,
+  "fail_count": 0
+}

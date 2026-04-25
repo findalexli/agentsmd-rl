@@ -1,0 +1,120 @@
+{
+  "schema_version": 2,
+  "valid": false,
+  "verdict": "fail",
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-22T07:30:58.245461",
+  "total_time": 15012.04,
+  "sandbox_id": "iiwg75zk3edvg7vyrf3qi",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "fix_quality",
+  "error": "rate limited during fix_quality: {\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":187574,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 429 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"rate_limit_error\\\",\\\"message\\\":\\\"usage limit exceeded (2056)\\\"},\\\"request_id\\\":\\\"06380ea1fd74e188fe9ec43ce40cb7f2\\\"}\",\"stop_reason\":\"stop_sequence\",\"session_id\":\"8cbc328d-0eeb-40e8-a1bf-aa7abf8c1ba1\",\"total_cost_usd\":0,\"usage\":{\"input_tokens\":0,\"cache_creation_input_tokens\":0,\"cache_read_inp",
+  "nodes": {
+    "scaffold": {
+      "status": "ok",
+      "model": "claude-opus-4-5",
+      "backend": "anthropic",
+      "time": 340.07,
+      "notes": ""
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "claude-opus-4-5",
+      "backend": "anthropic",
+      "time": 201.95,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "claude-opus-4-5",
+      "backend": "anthropic",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "rubric_icr": 1.0,
+      "attempts": 1,
+      "notes": "All checks pass. Simplified rubric to single code-only rule since original rules were code conventions that couldn't be evaluated by config-file-edit judge.",
+      "model": "claude-opus-4-5",
+      "backend": "anthropic",
+      "time": 415.31
+    },
+    "quality_gate": {
+      "status": "passed",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.5,
+      "notes": "flags=['lint_tier_b:3', 'B:[B] pinned_dependencies @ environment/Dockerfile:16: unpinned pip deps: pytest', 'B:[B] no_network_during_tests @ tests/test.sh:4: network call at test time: `pip install`', 'B:[B] no_network_during_tests @ tests/test.sh:40: network call at test time: `pip install`']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 12.52,
+      "tier_a_fails": [
+        "no_solution_leakage",
+        "solution_uniqueness_guard"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 6,
+      "fail_count": 3
+    },
+    "tests_rewrite": {
+      "status": "error",
+      "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":500,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 400 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"invalid_request_error\\\",\\\"message\\\":\\\"\\\\\\\"thinking.type.enabled\\\\\\\" is not supported for this model. Use \\\\\\\"thinking.type.adapt",
+      "time": 1.73
+    },
+    "fix_quality": {
+      "status": "rate_limited",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 190.38,
+      "notes": ""
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 972.43,
+      "at": "2026-04-15T05:44:08.163950"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "oauth",
+      "time": 573.58,
+      "at": "2026-04-15T13:25:55.550096"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 3112.92,
+      "at": "2026-04-16T02:26:07.975029"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "anthropic",
+      "time": 70.22,
+      "at": "2026-04-16T10:28:43.839022"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "minimax",
+      "time": 15012.04,
+      "at": "2026-04-22T07:30:58.245461"
+    }
+  ]
+}

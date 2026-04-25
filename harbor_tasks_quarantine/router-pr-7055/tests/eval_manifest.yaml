@@ -1,0 +1,81 @@
+version: "1.0"
+
+source:
+  type: github_pr
+  owner: TanStack
+  repo: router
+  pr_number: 7055
+  base_commit: 5c5a4359e837b4f4aa424b047709008e40d69497
+  merge_commit: 42c3f3b3a3a478fd6d6894310ef94b2d23794b8e
+  title: "fix: scroll restoration upon browser forward navigation"
+
+checks:
+  - id: test_forward_navigation_does_not_clear_cache
+    type: fail_to_pass
+    origin: test_behavior
+    description: >
+      The scroll cache should not be cleared on forward navigation.
+      The buggy pattern checking toIndex > fromIndex and clearing cache should be removed.
+
+  - id: test_scroll_restoration_module_imports
+    type: pass_to_pass
+    origin: test_behavior
+    description: >
+      Verifies the scroll-restoration module exports are intact after the fix.
+
+  - id: test_scroll_restoration_preserves_cache_structure
+    type: pass_to_pass
+    origin: test_behavior
+    description: >
+      Cache initialization pattern should remain; only cache clearing is removed.
+
+  - id: test_typescript_compiles
+    type: pass_to_pass
+    origin: repo_tests
+    description: TypeScript compilation for router-core succeeds.
+
+  - id: test_router_core_types
+    type: pass_to_pass
+    origin: repo_tests
+    description: TypeScript type checking for router-core passes.
+
+  - id: test_no_syntax_errors_in_scroll_restoration
+    type: pass_to_pass
+    origin: repo_tests
+    description: The scroll-restoration.ts file has valid TypeScript syntax.
+
+  - id: test_scroll_restoration_event_handlers_exist
+    type: pass_to_pass
+    origin: test_behavior
+    description: Core scroll restoration event handlers (onBeforeLoad, onRendered, scroll, pagehide) exist.
+
+  - id: test_ignore_scroll_flag_handling
+    type: fail_to_pass
+    origin: test_behavior
+    description: >
+      The ignoreScroll flag timing should be correct after the fix, with no
+      shouldClearCache logic appearing before it.
+
+  - id: test_repo_eslint
+    type: pass_to_pass
+    origin: repo_tests
+    description: ESLint check for router-core passes.
+
+  - id: test_repo_build_check
+    type: pass_to_pass
+    origin: repo_tests
+    description: Package build check (publint/attw) for router-core passes.
+
+  - id: test_repo_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Router-core unit tests pass.
+
+rubric:
+  - id: rubric_no_config_edits_needed
+    rule: >
+      This is a pure TypeScript bug fix in scroll-restoration.ts that removes incorrect
+      cache-clearing logic. No documentation or config file changes are required because
+      the fix does not alter any public API, behavior contract, or usage patterns that
+      would need to be documented. The existing AGENTS.md and SKILL.md guidelines remain
+      valid. PASS if no config file edits were made, since none are needed.

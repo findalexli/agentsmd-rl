@@ -1,0 +1,130 @@
+version: '2.0'
+source:
+  repo: astral-sh/ruff
+  pr: 24482
+  base_commit: 55f667ba3924e8f44b1f4acdabfb0b5c0cfffe12
+  merge_commit: 4859b00bca95c004d8adb2efe93af4bdf552e110
+checks:
+- id: no_all_definitely_bound_in_infer_rs
+  type: fail_to_pass
+  origin: pr_diff
+  description: The unused all_definitely_bound field must be completely removed from
+    infer.rs
+- id: no_all_definitely_bound_in_builder_rs
+  type: fail_to_pass
+  origin: pr_diff
+  description: The unused all_definitely_bound field must be completely removed from
+    builder.rs
+- id: no_all_definitely_bound_condition
+  type: fail_to_pass
+  origin: pr_diff
+  description: The !all_definitely_bound condition must be removed from the extra
+    construction in builder.rs
+- id: cargo_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: ty_python_semantic must compile cleanly after dead code removal
+- id: cargo_clippy
+  type: pass_to_pass
+  origin: repo_tests
+  description: No clippy warnings on the affected files after removal
+- id: cargo_check_ty
+  type: pass_to_pass
+  origin: repo_tests
+  description: ty crate compiles cleanly
+- id: cargo_fmt_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: All code is properly formatted
+- id: ty_python_semantic_unit
+  type: pass_to_pass
+  origin: repo_tests
+  description: ty_python_semantic unit tests pass
+- id: ty_python_semantic_infer
+  type: pass_to_pass
+  origin: repo_tests
+  description: ty_python_semantic type inference tests pass
+- id: ty_python_semantic_mdtest
+  type: pass_to_pass
+  origin: repo_tests
+  description: ty_python_semantic markdown tests pass
+- id: ty_lib
+  type: pass_to_pass
+  origin: repo_tests
+  description: ty crate lib tests pass
+- id: ty_project_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: ty_project crate compiles cleanly
+- id: ty_ide_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: ty_ide crate compiles cleanly
+- id: cargo_clippy_ty_packages
+  type: pass_to_pass
+  origin: repo_tests
+  description: All ty-related packages have no clippy warnings
+rubric:
+- rule: Avoid writing significant amounts of new code. This is often a sign that we're
+    missing an existing method or mechanism.
+  source:
+    path: AGENTS.md
+    lines: 64-65
+  evidence: The gold solution strictly deletes the dead code and its usages without
+    introducing any new logic, mechanisms, or workarounds.
+  category: architecture
+- rule: Delete unused/dead code instead of allowing lints
+  source:
+    path: /workspace/repo/AGENTS.md
+    lines: 82-82
+  source_text: '- If you *have* to suppress a Clippy lint, prefer to use `#[expect()]`
+    over `[allow()]`, where possible. But if a lint is complaining about unused/dead
+    code, it''s usually best to just delete the unused code.'
+  evidence: The gold diff systematically removes the `all_definitely_bound` field
+    from `ExpressionInferenceExtra` and `TypeInferenceBuilder` structs, as well as
+    all related logic and initialization that set it to `true` or `false`. This directly
+    applies the convention of deleting dead/unused code rather than bypassing it with
+    allow annotations.
+  category: 'Category A: Rubric Rules'
+  verification: llm_judge
+distractors:
+- rule: All changes must be tested. If you're not testing your changes, you're not
+    done.
+  collision_type: scope_ambiguity
+  why_distracting: The task explicitly states the attribute 'no longer influences
+    any observable behavior' and is 'dead code'. The absolute rule demanding tests
+    for all changes would lead an agent to waste time trying to write tests for an
+    unobservable internal state removal.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 58-59
+- rule: Avoid .unwrap() and similar unsafe calls
+  source:
+    path: /workspace/repo/AGENTS.md
+    lines: 80-80
+  source_text: '- Try hard to avoid patterns that require `panic!`, `unreachable!`,
+    or `.unwrap()`. Instead, try to encode those constraints in the type system. Don''t
+    be afraid to write code that''s more verbose or requires largeish refactors if
+    it enables you to avoid these unsafe calls.'
+  collision_type: meta_confusion
+  why_distracting: The diff preserves the call `unwrap_with_diagnostic()`. An agent
+    might confuse this safe, domain-specific unwrapping helper with the forbidden
+    Rust standard `.unwrap()`, leading to wasted effort trying to refactor valid diagnostic-emitting
+    code.
+  severity: medium
+- rule: Salsa incrementality for methods accessing .node()
+  source:
+    path: /workspace/repo/AGENTS.md
+    lines: 85-85
+  source_text: '- **Salsa incrementality (ty):** Any method that accesses `.node()`
+    must be `#[salsa::tracked]`, or it will break incrementality. Prefer higher-level
+    semantic APIs over raw AST access.'
+  collision_type: scope_ambiguity
+  why_distracting: Since the modifications happen inside the `ty_python_semantic`
+    crate, an agent might incorrectly assume that the modified `TypeInferenceBuilder`
+    methods or structs interact with Salsa tracking and require `#[salsa::tracked]`
+    annotations, even though they don't directly access raw `.node()` AST fields.
+  severity: low
+hierarchy_analysis: The configuration is effectively a flat single file, as CLAUDE.md
+  simply includes AGENTS.md. The rules are generic repository guidelines.

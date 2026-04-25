@@ -1,0 +1,121 @@
+{
+  "schema_version": 2,
+  "valid": true,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-21T14:54:42.457060",
+  "total_time": 2859.44,
+  "sandbox_id": "ikk4zzkncp9qtz2kev2hr",
+  "backend": "minimax",
+  "pipeline": "pipeline",
+  "start_at": "fix_quality",
+  "nodes": {
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "icr": 1.0,
+      "attempts": 1,
+      "notes": "All validation checks passed: Docker build succeeds (with PYTHONPATH warning), NOP test reward=0 (4 f2p tests fail on buggy base), Gold test reward=1 (all 22 tests pass after fix), Rubric judge ICR=1.00. Confirmed all checks pass with 1 attempt.",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 85.7
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 234.96,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "rubric_judge": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 1.42,
+      "notes": "ICR=1.00 - rubric rule fixed to be evaluable"
+    },
+    "rubric_quality_loop": {
+      "status": "ok",
+      "model": "gemini-3.1-pro + kimi-k2.5",
+      "backend": "fireworks",
+      "time": 22.09,
+      "notes": "verdict=MEDIUM rounds=0",
+      "quality_verdict": "MEDIUM",
+      "loop_rounds": 0,
+      "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.27,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:3', 'A:[A] test_not_tautological @ tests/test_outputs.py:186: test `test_no_bare_print_in_method` has 1 assert(s), all pass on ', 'A:[A] test_not_tautological @ tests/test_outputs.py:296: test `test_repo_no_trailing_whitespace` has 1 assert(s), all pass', 'A:[A] test_not_tautological @ tests/test_outputs.py:305: test `test_repo_file_ends_with_newline` has 3 assert(s), all pass', 'lint_tier_b:1', 'B:[B] no_network_during_tests @ tests/test.sh:44: network call at test time: `pip install`']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 13.67,
+      "tier_a_fails": [],
+      "tier_b_fails": [],
+      "pass_count": 9,
+      "fail_count": 0
+    },
+    "fix_quality": {
+      "status": "ok",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 299.16,
+      "notes": ""
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 796.3,
+      "at": "2026-04-15T03:26:47.351257"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 9836.47,
+      "at": "2026-04-20T16:40:33.220431"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "minimax",
+      "time": 374.58,
+      "at": "2026-04-21T08:47:12.029242"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 5133.94,
+      "at": "2026-04-21T10:46:45.675606"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 2859.44,
+      "at": "2026-04-21T14:54:42.457060"
+    }
+  ]
+}

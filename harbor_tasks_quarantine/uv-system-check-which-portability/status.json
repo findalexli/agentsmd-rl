@@ -1,0 +1,127 @@
+{
+  "schema_version": 2,
+  "valid": true,
+  "verdict": "pass",
+  "nop_reward": 0.0,
+  "gold_reward": 1.0,
+  "validated_at": "2026-04-16T09:28:45.508306",
+  "total_time": 37.06,
+  "sandbox_id": "ipafnk9vnlch0s87jydwt",
+  "backend": "anthropic",
+  "pipeline": "pipeline",
+  "start_at": "judge",
+  "nodes": {
+    "p2p_enrich": {
+      "status": "completed",
+      "model": "glm-5.1",
+      "backend": "glm",
+      "time": 215.84,
+      "notes": "Added 2 repo_tests CI checks: test_repo_ruff_check (ruff check) and test_repo_ruff_format (ruff format --diff). Both use subprocess.run() to execute actual CI commands."
+    },
+    "p2p_enrichment": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 223.38,
+      "notes": ""
+    },
+    "improve": {
+      "status": "skipped",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0,
+      "notes": "tests look good"
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "All 4 validation checks passed: Docker build OK, NOP=0 (3 fail-to-pass tests correctly fail), Gold=1 (all 13 tests pass). Rubric judge returns 0.0 because this code-only task doesn't modify CLAUDE.md - this is expected behavior.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 97.51
+    },
+    "rubric_judge": {
+      "status": "fail",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 2.8,
+      "notes": "ICR=0.50"
+    },
+    "rubric_quality_loop": {
+      "status": "ok",
+      "model": "gemini-3.1-pro + kimi-k2.5",
+      "backend": "fireworks",
+      "time": 20.27,
+      "notes": "verdict=LOW rounds=0",
+      "quality_verdict": "LOW",
+      "loop_rounds": 0,
+      "abandon_reason": ""
+    },
+    "quality_gate": {
+      "status": "DELETE",
+      "model": "claude-opus-4-7",
+      "backend": "anthropic",
+      "time": 0.76,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:5', 'A:[A] test_not_tautological @ tests/test_outputs.py:35: test `test_no_platform_guard_on_path_check` has 1 assert(s), all p', 'A:[A] test_not_tautological @ tests/test_outputs.py:75: test `test_uses_cross_platform_which` has 2 assert(s), all pass on', 'A:[A] test_not_tautological @ tests/test_outputs.py:121: test `test_path_check_raises_when_not_found` has 1 assert(s), all', 'A:[A] test_not_tautological @ tests/test_outputs.py:216: test `test_script_has_main_guard` has 1 assert(s), all pass on a ']"
+    },
+    "quality_judge": {
+      "status": "ok",
+      "time": 11.22,
+      "tier_a_fails": [
+        "solution_uniqueness_guard"
+      ],
+      "tier_b_fails": [],
+      "pass_count": 8,
+      "fail_count": 1
+    },
+    "tests_rewrite": {
+      "status": "error",
+      "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":410,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 400 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"invalid_request_error\\\",\\\"message\\\":\\\"\\\\\\\"thinking.type.enabled\\\\\\\" is not supported for this model. Use \\\\\\\"thinking.type.adapt",
+      "time": 3.32
+    }
+  },
+  "history": [
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 1038.61,
+      "at": "2026-04-12T06:21:05.203782"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 632.37,
+      "at": "2026-04-15T06:15:49.342536"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "oauth",
+      "time": 417.43,
+      "at": "2026-04-15T13:33:53.167811"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 3210.6,
+      "at": "2026-04-16T03:19:56.150337"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "anthropic",
+      "time": 37.06,
+      "at": "2026-04-16T09:28:45.508306"
+    }
+  ]
+}

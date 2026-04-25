@@ -1,0 +1,25 @@
+[task]
+name = "shichaopei/airflow-external-link-security"
+description = "Fix external link security attributes in React UI component"
+difficulty = "easy"
+tags = ["react", "typescript", "security", "ui", "accessibility"]
+
+[task.source]
+type = "github_pr"
+owner = "apache"
+repo = "airflow"
+pr_number = 64772
+base_commit = "b2b3ce2607088ec5c11356ac5e271cb80fd8b6bb"
+merge_commit = "9e2bf8110b4d273ff93c9dccc9023188cdf51af0"
+
+[task.estimates]
+expected_time_minutes = 15
+max_time_minutes = 60
+
+[task.files]
+primary = [
+    "airflow-core/src/airflow/ui/src/pages/Connections/NothingFoundInfo.tsx"
+]
+
+[verifier]
+env = { GEMINI_API_KEY = "${GEMINI_API_KEY:-}", ANTHROPIC_API_KEY = "${ANTHROPIC_API_KEY:-}" }

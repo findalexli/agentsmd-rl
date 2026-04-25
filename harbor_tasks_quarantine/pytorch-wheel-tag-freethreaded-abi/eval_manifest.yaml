@@ -1,0 +1,186 @@
+version: '2.0'
+source:
+  repo: pytorch/pytorch
+  pr: 177993
+  base_commit: 8eaba043803b82549bf4fb42d5e03099be2eb1d9
+  merge_commit: 549e5c77bb09262be27b441ee27eeaebffcc7905
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Source file must parse without syntax errors
+- id: freethreaded_abi_subprocess
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Subprocess: MATRIX_PYTHON_VERSION=X.Yt triggers free-threaded ABI
+    detection'
+- id: freethreaded_abi_tag_accepted
+  type: fail_to_pass
+  origin: pr_diff
+  description: Free-threaded Python wheel with 't' ABI suffix must pass validation
+- id: freethreaded_abi_via_env_var
+  type: fail_to_pass
+  origin: pr_diff
+  description: Free-threaded detection via MATRIX_PYTHON_VERSION ending in 't'
+- id: freethreaded_abi_via_sysconfig
+  type: fail_to_pass
+  origin: pr_diff
+  description: Free-threaded detection via sysconfig Py_GIL_DISABLED flag
+- id: freethreaded_wrong_tag_rejected
+  type: fail_to_pass
+  origin: pr_diff
+  description: Wheel WITHOUT 't' suffix must fail under free-threaded Python
+- id: mac_minos_mode2_attempted
+  type: fail_to_pass
+  origin: pr_diff
+  description: check_mac_wheel_minos attempts Mode 2 when no wheel dir is set
+- id: dead_code_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: No unreachable 'continue' after 'raise' in tag validation loop
+- id: standard_wheel_validation
+  type: pass_to_pass
+  origin: pr_diff
+  description: Standard non-free-threaded wheels still validate correctly
+- id: extract_wheel_tags
+  type: pass_to_pass
+  origin: pr_diff
+  description: _extract_wheel_tags correctly parses multi-tag WHEEL metadata
+- id: core_functions_importable
+  type: pass_to_pass
+  origin: pr_diff
+  description: All core public functions exist and are callable
+- id: not_stub
+  type: pass_to_pass
+  origin: static
+  description: Core functions have real implementations, not stubs
+- id: repo_file_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: Source file compiles without errors via py_compile
+- id: repo_smoke_test_dir_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: All Python files in smoke_test directory compile
+- id: repo_imports_are_standard_lib
+  type: pass_to_pass
+  origin: repo_tests
+  description: Source file only uses standard library imports
+- id: repo_shell_scripts_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: Shell scripts in .ci/pytorch have valid syntax
+- id: repo_check_gomp_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: check_gomp.py compiles without errors
+- id: repo_check_gomp_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: check_gomp.py is importable
+- id: repo_check_wheel_tags_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: check_wheel_tags.py is importable
+- id: test_repo_smoke_test_py_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: smoke_test.py compiles without errors
+- id: test_repo_max_autotune_py_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: max_autotune.py compiles without errors
+- id: test_repo_common_sh_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: common.sh has valid shell syntax
+- id: test_repo_common_build_sh_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: common-build.sh has valid shell syntax
+- id: test_repo_binary_populate_env_sh_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: binary_populate_env.sh has valid shell syntax
+- id: test_repo_check_binary_symbols_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: check_binary_symbols.py compiles without errors
+- id: test_repo_check_binary_sh_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: check_binary.sh has valid shell syntax
+- id: test_repo_build_sh_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: build.sh has valid shell syntax
+- id: test_repo_run_tests_sh_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: run_tests.sh has valid shell syntax
+rubric:
+- rule: Minimize comments; be concise; code should be self-explanatory and self-documenting.
+  source:
+    path: CLAUDE.md
+    lines: 63-64
+  evidence: The gold solution adds a complex boolean condition to check for free-threaded
+    Python (checking MATRIX_PYTHON_VERSION, Py_GIL_DISABLED, and _is_gil_enabled)
+    but includes zero comments, relying entirely
+  category: documentation
+- rule: If uncertain, choose the simpler, more concise implementation.
+  source:
+    path: CLAUDE.md
+    lines: 84-85
+  evidence: The gold solution removes the unreachable `continue` statement immediately
+    following `raise RuntimeError(msg)` to simplify the code.
+  category: style
+distractors:
+- rule: Once the change is passing, find an appropriate test file to add the test
+    to and make sure to follow local conventions on the test file.
+  collision_type: scope_ambiguity
+  why_distracting: The bug is in a CI smoke test script (`.ci/pytorch/smoke_test/check_wheel_tags.py`).
+    There is no standard test suite for the CI scripts themselves. Attempting to add
+    a test for this script would lead the agent to create misplaced tests or fail
+    to find an appropriate test file.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 3-7
+- rule: All build (both codegen, C++ and python) is done via `pip install -e . -v
+    --no-build-isolation`.
+  collision_type: rule_conflict
+  why_distracting: The bug report explicitly requires the agent to 'Build a PyTorch
+    wheel'. If the agent tries to reproduce the issue by building a wheel, it might
+    strictly use the provided command (`pip install -e .`), which creates an editable
+    install rather than a `.whl` file, thus failing to reproduce the wheel tag validation
+    issue.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 11-14
+- rule: 'Use our test class and test runner: ... from torch.testing._internal.common_utils
+    import run_tests, TestCase'
+  collision_type: architecture_boundary
+  why_distracting: If the agent attempts to write a test for the wheel tag validation
+    logic, it might try to use the core PyTorch testing framework (`torch.testing._internal.common_utils`).
+    However, CI scripts are standalone and do not use the core PyTorch testing utilities.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 16-24
+- rule: Debug PyTorch 2 compiler stack failures including Dynamo graph breaks, Inductor
+    codegen errors...
+  source:
+    path: .claude/skills/pt2-bug-basher/SKILL.md
+    lines: 1-3
+  collision_type: scope_ambiguity
+  why_distracting: The issue mentions 'free-threaded Python builds' and 'wheel tag
+    validation', which might sound like a build/compiler issue, prompting the agent
+    to use this skill. However, it's a CI script bug.
+  severity: low
+hierarchy_analysis: The config hierarchy is flat (Level 0 `AGENTS.md` and `CLAUDE.md`).
+  The rules in these files are heavily biased towards core PyTorch development (C++
+  extensions, core Python APIs, standard test suite). The agent must recognize that
+  it is operating in a CI script (`.ci/pytorch/smoke_test/`) and selectively ignore
+  rules about testing frameworks, build commands, and test file placement, as they
+  do not apply to this architectural boundary.

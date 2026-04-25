@@ -1,0 +1,56 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "instruction.md names the file (slime/backends/sglang_utils/sglang_engine.py), the function (launch_server_process), and the attribute (encoder_only). The tests check behavior around these elements. The expected behavior (fallback to non-encoder-only path) is described. Test-specific details like the mock _path markers are implementation details of the test harness, not things the agent needs to discover from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "instruction.md describes what's broken (AttributeError when encoder_only is missing) and expected behavior (proceed with default path), but does not specify the exact fix (e.g., it doesn't say 'use hasattr' or 'use getattr with default'). A developer must reason about how to handle the missing attribute."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check behavioral outcomes: no crash when encoder_only is missing, correct import path selection (http vs encode) based on attribute presence/value. Alternative fixes like getattr(server_args, 'encoder_only', False), try/except, or hasattr() would all pass. Tests don't assert on specific line content, variable names, or implementation details."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests import and call launch_server_process(), check that it doesn't raise exceptions, and verify the correct function target is set via _TrackingProcess.last_target. They execute the code rather than just checking file contents."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "test_missing_attr_defaults_to_http checks that _TrackingProcess.last_target._path == 'http', and test_no_crash_missing_encoder_only verifies no AttributeError. A stub (pass/return None) would fail because no process target would be set, and the original buggy code would crash with AttributeError."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "instruction.md requires: no crash when encoder_only is absent, and proceeding with default non-encoder-only path. Tests cover both (test_no_crash_missing_encoder_only, test_missing_attr_defaults_to_http), plus regression tests for encoder_only=True and encoder_only=False."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass, repo_tests), descriptive function names, and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task involves fixing a Python function's attribute access, not producing structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos found in filenames, paths, function names, or variable names across instruction.md, tests, and solution files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "instruction.md explicitly names the exact function (launch_server_process()) and the exact file (slime/backends/sglang_utils/sglang_engine.py), and tells the agent that the issue is direct access to server_args.encoder_only. This significantly narrows the localization task \u2014 the agent essentially just needs to guard one attribute access."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not a config edit task."
+    }
+  },
+  "tier_a_fails": [],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 8,
+  "fail_count": 1
+}

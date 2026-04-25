@@ -1,0 +1,57 @@
+checks:
+  # Fail-to-pass tests - these verify the bug fix
+  - id: test_css_ellipsis_behavior
+    type: fail_to_pass
+    origin: pr_diff
+    description: CSS output contains textEllipsis properties and minWidth: 0 for proper ellipsis truncation
+
+  # Pass-to-pass tests - these verify no regressions
+  - id: test_typescript_syntax_valid
+    type: pass_to_pass
+    origin: repo_tests
+    description: TypeScript file has valid syntax
+
+  - id: test_columns_ts_imports_are_valid
+    type: pass_to_pass
+    origin: static
+    description: columns.ts can be bundled without import errors
+
+  - id: test_columns_ts_exports_callable
+    type: pass_to_pass
+    origin: static
+    description: columns.ts exports a callable function that returns valid CSS output
+
+  - id: test_eslint_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: ESLint passes on the changed file
+
+  - id: test_cascader_style_index_imports_columns
+    type: pass_to_pass
+    origin: static
+    description: Cascader style index properly imports columns style
+
+  - id: test_build_cascader_component
+    type: pass_to_pass
+    origin: repo_tests
+    description: Cascader component can be built without TypeScript errors
+
+  - id: test_biome_lint_cascader
+    type: pass_to_pass
+    origin: repo_tests
+    description: Biome lint passes on Cascader component
+
+  - id: test_biome_format_columns_ts
+    type: pass_to_pass
+    origin: repo_tests
+    description: Biome format check passes on columns.ts
+
+  - id: test_eslint_cascader_style
+    type: pass_to_pass
+    origin: repo_tests
+    description: ESLint passes on Cascader style directory
+
+rubric:
+  - id: code_only_fix
+    rule: "This is a CSS-in-JS styling bugfix in columns.ts that does not require any documentation or config file changes - no CLAUDE.md, README, or other doc updates are needed for this type of fix"
+    weight: 1

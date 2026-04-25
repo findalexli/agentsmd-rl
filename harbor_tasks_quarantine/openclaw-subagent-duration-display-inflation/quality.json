@@ -1,0 +1,56 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the affected files (src/shared/subagents-format.ts, src/agents/subagent-control.ts, src/auto-reply/reply/commands-subagents/shared.ts), the function formatDurationCompact, the canonical implementation path (src/infra/format-time/format-duration.ts), expected behaviors (formatDurationCompact(30_000) \u2192 '30s', formatDurationCompact(90_000) \u2192 '1m30s'), and the need for callers to handle undefined. All test specifics (file paths, function names, expected values, caller guarding "
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "The instruction describes what's broken (duplicate formatter, no seconds granularity, callers don't handle undefined) and points to the canonical implementation as existing, but doesn't say 'replace the function with a re-export' or specify exact code changes. A developer still must decide whether to re-export, rewrite, or delegate."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check behavioral outcomes (formatDurationCompact returns correct strings like '30s', '1m30s'), not implementation specifics. test_no_duplicate_implementation allows either a re-export (0 local function matches) or a thin wrapper (<=10 lines). test_callers_handle_undefined checks for ?? or || or formatDurationHuman, accommodating multiple approaches. Alternative fixes (rewriting the function in-place with seconds support, delegating to canonical, thin wrapper) would all pass."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "The core tests (test_seconds_precision, test_minute_second_precision, test_hour_format, test_edge_cases_no_crash) use a Node.js subprocess to actually evaluate the formatDurationCompact function with real inputs and check return values. While some tests (test_callers_handle_undefined, test_no_duplicate_implementation) do text inspection, the primary behavioral tests execute code."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub returning a default value would fail: test_seconds_precision asserts the result is not None and matches specific second patterns and is not '1m'; test_minute_second_precision requires patterns like '1m30s'; test_callers_handle_undefined requires specific code patterns in caller files that don't exist in the base commit. These cannot be satisfied without implementing the fix."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "All explicitly required behaviors from instruction.md are tested: second-level precision (30s), combined minute+second format (1m30s), callers handling undefined, and the duplicate implementation issue. The instruction's expected behaviors are fully covered."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (fail-to-pass, pass-to-pass, repo CI/CD), descriptive function names (test_seconds_precision, test_callers_handle_undefined), and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task involves fixing a duration formatting function, not producing structured data output like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "File paths, function names, and commands in instruction.md are all correct and consistent with the test files and solution."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names the exact buggy file (src/shared/subagents-format.ts), describes the exact bug mechanism ('divides by 60,000 and then rounding up with Math.max(1, ...)'), names the exact canonical replacement file (src/infra/format-time/format-duration.ts), and lists the exact caller files. This removes essentially all localization and diagnosis work from the task."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task, not an agentmd-edits task."
+    }
+  },
+  "tier_a_fails": [],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 8,
+  "fail_count": 1
+}

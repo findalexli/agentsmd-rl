@@ -1,0 +1,56 @@
+{
+  "model": "claude-opus-4-7",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "Instruction names both files to modify, the two required functions (check_fast_loop/1, clear_fast_loop/1), behavior requirements, and verification commands; test file path and 8-test count are mentioned."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction describes behavior requirements and interface signatures but does not provide exact implementation code or line-level changes."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_stream_calls_check_fast_loop asserts the literal string 'check_fast_loop(stream)' \u2014 a correct alternative that passes the state with a different variable name (e.g., check_fast_loop(state) or piping |> check_fast_loop()) would fail."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests execute mix test subprocesses including the shape_state_test.exs with 8 tests, plus format/compile checks, in addition to text asserts."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "test_elixir_tests_pass runs the 8 ShapeState tests which exercise actual detection logic; a stub would not satisfy them."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "Tests cover struct fields, both required functions, stream integration for both check and clear, and the 8-test requirement."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are individually named with docstrings describing what each verifies."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "No structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "Paths and function names are consistent between instruction and tests."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction names the module files to modify which is appropriate scope; no line numbers given."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "Code-only task."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 1
+}

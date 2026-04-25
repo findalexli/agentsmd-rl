@@ -1,0 +1,127 @@
+source_pr:
+  owner: TanStack
+  repo: router
+  number: 6892
+  merge_commit: 044fb24d265659d4b895f5b23a314e3a22c26564
+  base_commit: 870cf28066954b17e551c4e0f6627e382f0d6a57
+
+task:
+  name: "router-update-example-deps"
+  title: "Add script to auto-update example dependency versions"
+  description: |
+    Create a script that automatically updates example application dependencies
+    to match workspace package versions during the changeset version workflow.
+
+  difficulty: "easy"
+  estimated_time: "15-30 minutes"
+  tags: ["javascript", "automation", "monorepo", "dependencies"]
+
+repository:
+  type: "monorepo"
+  language: "typescript/javascript"
+  workspace_tool: "pnpm"
+
+files:
+  - path: "scripts/update-example-deps.mjs"
+    description: "New script that updates example dependencies from workspace packages"
+    created: true
+  - path: "package.json"
+    description: "Modified changeset:version script to call the new update script"
+    modified: true
+
+checks:
+  # Fail-to-pass tests (verify the fix works)
+  - id: "test_script_file_exists"
+    type: fail_to_pass
+    origin: implementation
+    description: "The update-example-deps.mjs script file exists"
+    points: 1
+
+  - id: "test_script_is_valid_javascript"
+    type: fail_to_pass
+    origin: implementation
+    description: "The script is syntactically valid JavaScript/Node.js"
+    points: 1
+
+  - id: "test_changeset_version_script_updated"
+    type: fail_to_pass
+    origin: implementation
+    description: "package.json changeset:version script calls update-example-deps.mjs"
+    points: 1
+
+  - id: "test_script_updates_example_dependencies"
+    type: fail_to_pass
+    origin: implementation
+    description: "Running the script updates workspace dependencies in examples"
+    points: 2
+
+  - id: "test_script_preserves_json_formatting"
+    type: fail_to_pass
+    origin: implementation
+    description: "The script preserves JSON formatting with 2-space indentation"
+    points: 1
+
+  - id: "test_script_excludes_node_modules"
+    type: fail_to_pass
+    origin: implementation
+    description: "The script excludes node_modules from glob search"
+    points: 1
+
+  # Pass-to-pass tests (verify existing functionality still works)
+  - id: "test_repo_package_json_valid"
+    type: pass_to_pass
+    origin: static
+    description: "The repo's package.json is valid JSON"
+    points: 0
+
+  - id: "test_repo_lint"
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo's linter passes on core package"
+    points: 0
+
+  - id: "test_repo_types"
+    type: pass_to_pass
+    origin: repo_tests
+    description: "TypeScript typecheck passes on core package"
+    points: 0
+
+  - id: "test_repo_unit_tests"
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Unit tests pass on core package"
+    points: 0
+
+  - id: "test_repo_build"
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Build succeeds on core package"
+    points: 0
+
+  - id: "test_repo_docs_links"
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Documentation links are valid"
+    points: 0
+
+  - id: "test_repo_format"
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Repo formatting follows prettier standards"
+    points: 0
+
+rubric:
+  - id: "script_uses_node_fs_glob"
+    rule: "The update-example-deps.mjs script uses fs and globSync from node:fs for file operations"
+    source: "Implementation pattern"
+    weight: 1
+
+  - id: "script_excludes_node_modules"
+    rule: "The script excludes node_modules from glob search using exclude option"
+    source: "Implementation requirement"
+    weight: 1
+
+  - id: "script_preserves_formatting"
+    rule: "The script preserves 2-space JSON indentation and trailing newline when writing package.json"
+    source: "Implementation requirement"
+    weight: 1

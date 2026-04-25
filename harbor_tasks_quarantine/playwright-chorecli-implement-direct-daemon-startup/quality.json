@@ -1,0 +1,60 @@
+{
+  "model": "claude-opus-4-7",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "instruction.md lists all file paths tested; tests check structural properties (existence, braces, DEPS.list sections) derivable from the instruction."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction describes the problem (unreliable polling, rename -b to -s) without specifying exact code changes."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_modified_files_deps_updated asserts daemon.ts must have DEPS entries, and test_mcp_deps_structure requires strict mode for cli.ts/program.ts/socketConnection.ts \u2014 these are gold-specific internal structural details an alternative correct fix might not produce identically."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Visible tests only read files and check existence/braces/markdown headings/DEPS.list structure; no subprocess execution or behavioral verification of daemon startup or -s flag."
+    },
+    "test_not_tautological": {
+      "outcome": "fail",
+      "reason": "All visible f2p tests (test_syntax_check, test_all_modified_files_exist, test_typescript_syntax_valid, test_documentation_files_valid, etc.) pass on the base commit without any fix \u2014 they only verify files exist with balanced braces and markdown headings."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "Instruction requires renaming -b to -s, stdout markers for daemon readiness, and improved browser error messages, but visible tests don't check for '-s' flag, stdout markers, or the specific error message content."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are grouped with section comments (Gates pass_to_pass) and have descriptive names and docstrings."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "No structured data output produced."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "Filenames and paths appear consistent and correct."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction names affected modules/files at a reasonable granularity without pointing to specific lines."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "Not an agentmd-edits task."
+    }
+  },
+  "tier_a_fails": [
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text",
+    "test_not_tautological"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests"
+  ],
+  "pass_count": 5,
+  "fail_count": 4
+}

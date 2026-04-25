@@ -1,0 +1,100 @@
+source_pr:
+  owner: langchain-ai
+  repo: langgraph
+  pr_number: 7367
+  title: "chore: update configurable metadata"
+  base_commit: c965a483e8b37f73bc7136801e2d8da199597285
+  merge_commit: a12e5580209748417117a3896002ffcd81774196
+
+checks:
+  - id: test_config_items_not_propagated_to_metadata
+    type: fail_to_pass
+    origin: behavioral
+    description: Config items should NOT be automatically added to metadata in ensure_config()
+
+  - id: test_config_items_still_in_configurable
+    type: fail_to_pass
+    origin: behavioral
+    description: Config items should remain in configurable dict, not propagated to metadata
+
+  - id: test_sensitive_keys_not_in_metadata
+    type: fail_to_pass
+    origin: behavioral
+    description: Sensitive config keys (containing key/token/secret/password/auth) should NOT appear in metadata
+
+  - id: test_varied_config_types
+    type: fail_to_pass
+    origin: behavioral
+    description: Test with varied config values to ensure robustness (multiple input variations)
+
+  - id: test_repo_test_suite
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo test suite test_configurable_metadata passes with the new expected behavior
+
+  # Pass-to-Pass tests from repo CI
+  - id: test_p2p_repo_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's unit tests for test_utils.py pass
+
+  - id: test_p2p_repo_config_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's config async tests pass
+
+  - id: test_p2p_repo_channel_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's channel tests pass
+
+  - id: test_p2p_repo_lint
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's ruff linter passes on langgraph package
+
+  - id: test_p2p_repo_typecheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's mypy typecheck on _config.py passes
+
+  - id: test_p2p_repo_format
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's ruff format check on _config.py passes
+
+  - id: test_p2p_configurable_metadata_test
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's specific test_configurable_metadata test passes on base commit
+
+rubric:
+  - rule: "Remove the code block that propagates config items to metadata"
+    weight: 0.25
+    origin: agent_config
+    source: "langgraph/_internal/_config.py"
+
+  - rule: "Remove the _exclude_as_metadata() helper function"
+    weight: 0.25
+    origin: agent_config
+    source: "langgraph/_internal/_config.py"
+
+  - rule: "Remove the _OMIT constant tuple"
+    weight: 0.10
+    origin: agent_config
+    source: "langgraph/_internal/_config.py"
+
+  - rule: "Remove unused Mapping import from collections.abc"
+    weight: 0.10
+    origin: agent_config
+    source: "langgraph/_internal/_config.py"
+
+  - rule: "Update test expectation from {includeme, andme, nooverride} to {nooverride}"
+    weight: 0.30
+    origin: agent_config
+    source: "tests/test_utils.py"
+
+metadata:
+  estimated_difficulty: "easy"
+  estimated_time: "15 min"
+  tags: ["python", "config", "metadata", "bugfix"]

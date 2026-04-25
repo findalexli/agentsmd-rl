@@ -1,0 +1,60 @@
+{
+  "model": "claude-opus-4-7",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "instruction.md names the test path test/regression/issue/25707.test.ts, required imports (bunExe, bunEnv, tempDir, harness), Bun.spawn usage, the error code ERR_UNKNOWN_BUILTIN_MODULE, and files to change."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "Issue 4 dictates the exact header separator string `| ------------------------------------------------------------ | ------------------------------------ |` and Issue 2 effectively tells the agent to copy line_text; these are near-verbatim fix instructions."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "fail",
+      "reason": "test_logger_ensures_line_text_safety asserts on the specific internal helper name 'addResolveErrorWithLevel' in the diff, and test_credentials_uses_bun_strings_api requires 'indexOfAny' specifically, excluding equivalent alternative implementations."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "All repo tests inspect file contents or git diff output (e.g., test_linker_defers_unknown_node_modules greps diff for '.dynamic'); none actually build/execute Bun to verify behavior, and the regression test file itself is only inspected textually, not run."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "Tests check multiple specific substrings and structural properties; a trivial stub cannot satisfy them without producing the required edits."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "Tests cover all four issues: linker diff, logger diff, credentials function, CLAUDE.md formatting, and regression test existence."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests have descriptive names and docstrings grouped by concern (regression test, linker, logger, credentials, CLAUDE.md)."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task does not produce structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "Paths and identifiers appear consistent between instruction and tests."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "Instruction explicitly names the linker deferral condition ('.require and .require_resolve'), the function addResolveError, the function containsNewlineOrCR, and the exact markdown table separator, leaving no localization work."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "pass",
+      "reason": "CLAUDE.md diff is localized to specific table rows and three section headers, not a full rewrite."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 4
+}

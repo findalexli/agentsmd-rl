@@ -1,0 +1,59 @@
+{
+  "model": "claude-opus-4-7",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "Instruction names the file path, the exact FIXME comment string, and the exact parameter name and value change."
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "Instruction provides the exact before/after code blocks and the exact FIXME comment string, leaving no reasoning about what to change."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check for the hardcoded False value and the exact FIXME comment, which are both explicitly mandated by the instruction."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "Tests use AST parsing and string inspection of the test file (get_test_file_content, ast.parse) rather than executing the fixed test; remaining tests are lint/format checks."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub wouldn't satisfy the AST checks requiring the hardcoded False value and the exact FIXME comment."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "Both required changes (hardcoded False and FIXME comment) are verified by the hidden tests."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are grouped with section comments (Gates, Pass-to-pass) and descriptive names."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "No structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "Paths and names appear consistent between instruction, tests, and solution."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "Instruction explicitly shows the exact before/after code snippets for the parameter change, which is essentially giving the fix rather than requiring localization."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code edit task, not an agentmd config task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "tests_verify_behavior_not_text"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 3
+}

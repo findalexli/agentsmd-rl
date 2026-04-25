@@ -1,0 +1,54 @@
+{
+  "model": "claude-opus-4-7",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "Instruction names the file path NothingFoundInfo.tsx and describes the target/rel attributes; tests check these same attributes."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction describes the problem (link security, new tab, HTML syntax) without stating target=\"_blank\" or rel=\"noopener noreferrer\" literally."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests accept rel tokens in either order and only require target=\"_blank\" plus noopener+noreferrer, allowing alternative correct fixes."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests execute pnpm lint, pnpm test, and prettier subprocesses in addition to static file checks."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "f2p tests require the specific attribute fixes which a stub cannot satisfy without actually editing the component."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "Both required behaviors (new-tab opening and security rel) are directly asserted."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are individually named with docstrings indicating fail_to_pass/pass_to_pass intent."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task modifies a UI component, no structured data output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "Paths and commands (pnpm run lint, NothingFoundInfo.tsx) are consistent and correct."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction points to the component file which is the logical scope; doesn't name exact line or attribute values."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "Code-only task, not a config edit."
+    }
+  },
+  "tier_a_fails": [],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
+}

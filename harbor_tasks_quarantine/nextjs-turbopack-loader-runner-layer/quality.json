@@ -1,0 +1,59 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the specific files (lib.rs, mod.rs via mention of config-based and import-assertion paths), function names (process_default_internal, node_evaluate_asset_context, WebpackLoaderItem, etc.), layer names ('webpack_loaders', 'turbopack_use_loaders', 'externals-tracing'), and the Layer::new(rcstr!(...)) syntax. The test for MOD_FILE (module_options/mod.rs) checks for 'webpack_loaders' there too, and the instruction mentions both code paths need the same name. The git SHA is impl"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states: 'The correct layer name that should be used in both places is \"webpack_loaders\". The buggy layer name that must be removed is \"turbopack_use_loaders\".' and 'Both code paths must use \"webpack_loaders\" as the layer name'. This directly tells the agent exactly what string to change and what to change it to, leaving no reasoning required."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "The fix is inherently unique: the only correct change is replacing 'turbopack_use_loaders' with 'webpack_loaders' in the Layer::new call within process_default_internal in lib.rs. The mod.rs file already has 'webpack_loaders'. There's essentially one correct fix, and the tests check for it appropriately."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The core fail-to-pass tests (test_layer_name_fixed, test_buggy_name_removed, test_cross_file_consistency, test_loader_pipeline_preserved, test_other_layers_untouched, test_layer_new_call_syntax) all exclusively use string/regex matching on file contents (e.g., 'assert \"webpack_loaders\" in matches', 'if \"turbopack_use_loaders\" in src'). No test compiles the Rust code, runs a subprocess that exercises the loader pipeline, or verifies any runtime behavior."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "The fail-to-pass tests like test_layer_name_fixed check that 'webpack_loaders' appears in Layer::new calls within process_default_internal, and test_buggy_name_removed checks 'turbopack_use_loaders' is absent. At the base commit, lib.rs contains 'turbopack_use_loaders', so these tests would fail without making the actual change. A stub/no-op would not pass."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "The instruction requires: both paths use 'webpack_loaders', 'turbopack_use_loaders' removed, 'externals-tracing' untouched, Layer::new(rcstr!(...)) syntax preserved, specific functions preserved. All of these are tested by the corresponding test functions."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-named (test_layer_name_fixed, test_buggy_name_removed, test_cross_file_consistency, etc.), grouped by purpose (fix verification, repo integrity pass-to-pass), and have docstrings/comments explaining their purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "This task involves editing Rust source code, not producing structured data like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "No typos detected in filenames, paths, function names, or string literals in the instruction or test files."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly names the exact buggy string ('turbopack_use_loaders'), the exact fix string ('webpack_loaders'), and even specifies it's in a Layer::new(rcstr!(...)) call within process_default_internal. This is extreme localization leakage \u2014 the agent doesn't need to diagnose anything."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task (editing Rust source), not a config/agentmd-edits task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage",
+    "tests_verify_behavior_not_text"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 3
+}

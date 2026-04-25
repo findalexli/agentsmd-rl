@@ -1,0 +1,42 @@
+name = "astro-vercel-edge-middleware-method-body"
+duration = "15m"
+difficulty = "medium"
+description = "Fix edge middleware next() dropping HTTP method and body in @astrojs/vercel"
+
+tags = ["vercel", "middleware", "edge", "serverless", "http-method", "body"]
+
+source_repo = "withastro/astro"
+source_pr = 16170
+base_commit = "6b6751d85a6dfaf751919675d61eea16da9a7a26"
+merge_commit = "d0fe1ec216f8f322392e34ce40378d022e495cef"
+
+target_file = "packages/integrations/vercel/src/serverless/middleware.ts"
+distinctive_line = "method: request.method,"
+patch_content = """
+diff --git a/packages/integrations/vercel/src/serverless/middleware.ts b/packages/integrations/vercel/src/serverless/middleware.ts
+index 2e63aa1..6f81f2a 100644
+--- a/packages/integrations/vercel/src/serverless/middleware.ts
++++ b/packages/integrations/vercel/src/serverless/middleware.ts
+@@ -127,12 +127,14 @@ export default async function middleware(request, context) {
+ 	const next = async () => {
+ 		const { vercel, ...locals } = ctx.locals;
+ 		const response = await fetch(new URL('/${NODE_PATH}', request.url), {
++			method: request.method,
+ 			headers: {
+ 				...Object.fromEntries(request.headers.entries()),
+ 				'${ASTRO_MIDDLEWARE_SECRET_HEADER}': '${middlewareSecret}',
+ 				'${ASTRO_PATH_HEADER}': request.url.replace(origin, ''),
+ 				'${ASTRO_LOCALS_HEADER}': trySerializeLocals(locals)
+-			}
++			},
++			...(request.body ? { body: request.body, duplex: 'half' } : {}),
+ 		});
+ 		return new Response(response.body, {
+ 			status: response.status,
+"""
+
+agent_config_file = "AGENTS.md"
+agent_config_commit = "6b6751d85a6dfaf751919675d61eea16da9a7a26"
+
+[verifier]
+env = { GEMINI_API_KEY = "${GEMINI_API_KEY:-}", ANTHROPIC_API_KEY = "${ANTHROPIC_API_KEY:-}" }

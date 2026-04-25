@@ -1,0 +1,67 @@
+task:
+  name: hugo-cascade-regular-page
+  source_pr:
+    owner: gohugoio
+    repo: hugo
+    number: 14628
+    title: "hugolib: Allow regular pages to cascade to self"
+    base_commit: 87f8de8c7ab10516614180080f97490645bbfdec
+    merge_commit: 9b5f1d491d2b7cde198dd2fd858de92e9e97700f
+
+checks:
+  # Fail-to-pass tests: These verify the bug is fixed
+  - id: test_cascade_frontmatter_on_regular_page
+    type: fail_to_pass
+    origin: task_specific
+    description: Regular pages with cascade frontmatter should not render when targeting matching environment
+
+  - id: test_cascade_to_self_multiple_environments
+    type: fail_to_pass
+    origin: task_specific
+    description: Cascade targeting works for regular pages across different environment values
+
+  - id: test_code_change_removes_isbranchnode_check
+    type: fail_to_pass
+    origin: agent_config
+    source: AGENTS.md:2-8
+    description: Code change removes the isBranchNode check, allowing cascade for regular pages
+
+  # Pass-to-pass tests: These verify repo integrity
+  - id: test_repo_go_test_hugolib
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repository's cascade tests pass
+
+  - id: test_repo_go_build
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repository builds successfully
+
+  - id: test_repo_gofmt
+    type: pass_to_pass
+    origin: repo_tests
+    description: Go code is properly formatted (gofmt)
+
+  - id: test_repo_go_vet
+    type: pass_to_pass
+    origin: repo_tests
+    description: Go code passes static analysis (go vet)
+
+  - id: test_repo_hugolib_unit_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: hugolib package unit tests pass
+
+  - id: test_repo_page_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: page package tests pass (relevant to cascade changes)
+
+  - id: test_repo_cascade_integration_tests
+    type: pass_to_pass
+    origin: repo_tests
+    description: Cascade integration tests pass
+
+rubric:
+  # No rubric rules applicable - the gold solution is a minimal one-line code fix
+  # without config/documentation changes. The judge evaluates config edits, not code.

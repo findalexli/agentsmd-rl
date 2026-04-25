@@ -1,0 +1,121 @@
+rubric:
+- rule: Follow the Action pattern for HTTP endpoints. Param definitions should use
+    ->param(name, default, validator, description, optional, injections) structure.
+  source:
+    path: AGENTS.md
+    lines: 79-96
+    commit: 20f80ac067e0042ea05ac9566f0a9ff1624bf3b2
+- rule: Optional parameters should have appropriate defaults. For ID fields that should
+    be auto-generated, use 'unique()' as the default value.
+  source:
+    path: AGENTS.md
+    lines: 93-96
+    commit: 20f80ac067e0042ea05ac9566f0a9ff1624bf3b2
+- rule: 'HTTP endpoint files must follow strict naming: only Create.php, Get.php,
+    Update.php, Delete.php, or XList.php allowed.'
+  source:
+    path: src/Appwrite/Platform/AGENTS.md
+    lines: 29-33
+    commit: 20f80ac067e0042ea05ac9566f0a9ff1624bf3b2
+- rule: Inside Http directories for services, file names can only be Get.php, Update.php,
+    Create.php, Delete.php or XList.php.
+  source:
+    path: src/Appwrite/Platform/AGENTS.md
+    lines: 30-34
+  evidence: The file being modified is `src/Appwrite/Platform/Modules/Project/Http/Project/Variables/Create.php`,
+    adhering to the strict naming convention that HTTP endpoint files must be named
+    `Create.php`, `Get
+  category: naming
+- rule: Action pattern (HTTP endpoints) uses a fluent interface in the constructor
+    to define HTTP method, path, description, and parameters.
+  source:
+    path: AGENTS.md
+    lines: 48-66
+  evidence: The gold solution modifies the `->param()` definition inside the `__construct()`
+    method of the `Create` action class, preserving the fluent builder pattern used
+    for defining endpoint parameters.
+  category: architecture
+- rule: HTTP endpoints use the Action pattern, defining parameters via `->param()`
+    in the `__construct()` method.
+  source:
+    path: AGENTS.md
+    lines: 58-75
+  evidence: The gold solution correctly targets the `->param('variableId', ...)` call
+    inside the `__construct()` method to change the parameter definition, adhering
+    to the Action pattern where endpoint parameters
+  category: architecture
+- rule: Action pattern (HTTP endpoints) defines how endpoints are structured with
+    `__construct` setting up params and `action` handling the logic.
+  source:
+    path: AGENTS.md
+    lines: 49-69
+  evidence: The gold solution modifies the `param` definition within the `__construct`
+    method, maintaining the fluent interface pattern and overall structure of the
+    Action class as defined in the config.
+  category: architecture
+- rule: Action pattern (HTTP endpoints) uses `__construct` to define parameters via
+    `->param(...)`.
+  source:
+    path: AGENTS.md
+    lines: 54-75
+  evidence: The gold solution modifies the `->param()` call inside the `__construct()`
+    method, preserving the fluent interface and Action pattern structure defined in
+    the documentation.
+  category: architecture
+- rule: Inside `Http` directories for services, file names for endpoint actions must
+    be restricted to `Get.php`, `Update.php`, `Create.php`, `Delete.php`, or `XList.php`.
+  source:
+    path: src/Appwrite/Platform/AGENTS.md
+    lines: 37-37
+  source_text: 3. Inside `Http` directories for services, file names can only be `Get.php`,
+    `Update.php`, `Create.php`, `Delete.php` or `XList.php`. We call it `XList`, because
+    `List` is a reserved keyword and PHP would not like that. Never use any other
+    words! Let's say you want a method to be `blockUser`, tempting to add `Users/Block.php`,
+    instead, think of the resource and property it affec
+  evidence: The modified file is named `Create.php` and is located within the `Http/Project/Variables/`
+    directory, adhering to the strict naming convention for HTTP endpoint actions.
+  category: naming
+  verification: llm_judge
+distractors:
+- rule: Action pattern example defines ID parameters with an empty string default
+    and no optional flag.
+  collision_type: would_cause_bug
+  why_distracting: The Action pattern example shows an ID parameter defined as `->param('teamId',
+    '', new CustomId(), 'Team ID.')` (which defaults to required with an empty string).
+    If the agent strictly copies this pattern for the ID parameter, it will fail to
+    make the parameter optional and default to `'unique()'`, leaving the bug unresolved.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 67-67
+hierarchy_analysis: The configuration hierarchy is moderate, with a root `AGENTS.md`
+  defining the Action pattern and a module-level `AGENTS.md` defining directory structures.
+  The agent must apply the general Action pattern from the root config while explicitly
+  deviating from the specific parameter configuration shown in its example.
+version: '2.0'
+source:
+  repo: appwrite/appwrite
+  pr: 11795
+  base_commit: 20f80ac067e0042ea05ac9566f0a9ff1624bf3b2
+  merge_commit: 597b20a6cb2eb3cc93a5a25814f2ec39b35cd3cd
+checks:
+- id: test_repo_composer_validate
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's composer.json is valid
+- id: test_repo_php_syntax_all
+  type: pass_to_pass
+  origin: repo_tests
+  description: All PHP files in modified module have valid syntax
+- id: test_repo_pint_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo passes PSR-12 lint checks using Laravel Pint
+- id: test_repo_phpstan_variables
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified file passes PHPStan level 3 static analysis
+- id: test_repo_unit_custom_id
+  type: pass_to_pass
+  origin: repo_tests
+  description: CustomId validator unit tests pass

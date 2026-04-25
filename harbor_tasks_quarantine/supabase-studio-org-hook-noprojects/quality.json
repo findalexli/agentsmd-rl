@@ -1,0 +1,59 @@
+{
+  "model": "claude-opus-4-6",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "The instruction names the file path (apps/studio/components/interfaces/Billing/NoProjectsOnPaidOrgInfo.tsx), the component name (NoProjectsOnPaidOrgInfo), the hook (useSelectedOrganizationQuery), the import path (@/hooks/misc/useSelectedOrganization), the props interface to remove (NoProjectsOnPaidOrgInfoProps), and the requirement for zero parameters. All specific identifiers checked by the tests (component name, hook name, parameter count, props interface removal) are discoverable from the ins"
+    },
+    "no_solution_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction explicitly states the fix: 'use the useSelectedOrganizationQuery hook (importable from @/hooks/misc/useSelectedOrganization) to obtain the organization data internally, rather than receiving it via props' and 'the component should take no parameters and have no props interface.' This tells the agent exactly what to change, including the specific hook name, import path, and the structural modification needed."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "The tests check behavioral properties: no org param, org obtained from a hook/function call in body, zero parameters, sufficient statements/JSX/hooks. They use AST analysis rather than exact text matching, so alternative implementations (e.g., different variable destructuring patterns, using a wrapper around the hook) would still pass as long as they meet the behavioral requirements."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "pass",
+      "reason": "Tests use TypeScript compiler API via Node.js subprocesses to parse and analyze the AST of the component file. They check structural properties (parameter count, hook calls, JSX presence, statement count) through actual code parsing rather than simple text matching."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "A stub implementation (e.g., empty function returning null) would fail test_not_stub (requires >=3 statements, JSX, hooks) and test_uses_org_hook_not_props (requires organization obtained from a call in the body). The f2p tests require meaningful structural changes that a trivial stub cannot satisfy."
+    },
+    "behavior_in_tests": {
+      "outcome": "fail",
+      "reason": "The instruction says 'The Admonition banner renders correctly when the organization is eligible, displaying the organization's plan.name and a Link to billing settings' and 'The NoProjectsOnPaidOrgInfoProps interface is removed.' The tests don't verify the interface removal (no test checks that the interface declaration is absent), and don't verify the Admonition actually renders with plan.name and Link content."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are well-organized with clear section comments (Gates, Fail-to-pass, Pass-to-pass), descriptive function names (test_typescript_valid, test_uses_org_hook_not_props, test_component_has_no_params, test_not_stub), and docstrings explaining each test's purpose."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "The task involves modifying a React component, not producing structured data output like JSON/CSV/API/DB."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "All file paths, component names, hook names, and import paths in the instruction match those referenced in the tests and solution."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "fail",
+      "reason": "The instruction names the exact file path (apps/studio/components/interfaces/Billing/NoProjectsOnPaidOrgInfo.tsx), the exact hook to use (useSelectedOrganizationQuery), its exact import path (@/hooks/misc/useSelectedOrganization), and the exact interface to remove (NoProjectsOnPaidOrgInfoProps). This goes beyond describing what's broken \u2014 it prescribes the exact fix location and mechanism."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code-only task modifying a single React component file, not a configuration editing task."
+    }
+  },
+  "tier_a_fails": [
+    "no_solution_leakage"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [
+    "behavior_in_tests",
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 3
+}
