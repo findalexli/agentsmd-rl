@@ -158,16 +158,36 @@ def install_cleanup_handlers(api_key: str | None = None) -> None:
 
 
 class StartAt(str, Enum):
-    """DAG entry point — which node a task starts at."""
+    """DAG entry point — which node a task starts at.
+
+    Supported (canonical):
+      ONESHOT_REPAIR — 2-node pipeline: qgate + fix_task_quality. Opus owns
+                       Docker validate + give-up internally. Default for
+                       repairing existing tasks. ~85-90% pass, ~$5/task.
+      SCAFFOLD       — initial PR → task generation. Still in use for new tasks.
+
+    Deprecated (kept for backward compat with in-flight runs; prefer
+    ONESHOT_REPAIR which folds these into one Opus call):
+      QGATE, RUBRIC, ENRICH    — sub-stages of the older multi-node DAG.
+      IMPROVE, FIX_QUALITY     — old test-improvement / quality-fix entry
+                                  points. The 4-Opus-call chain they trigger
+                                  (fix → validate_and_fix → quality_judge →
+                                  instruction_reconcile → tests_rewrite) is
+                                  redundant: validate_and_fix often overwrites
+                                  fix_task_quality's correct verdict. Use
+                                  ONESHOT_REPAIR instead.
+      VALIDATE, JUDGE          — retrofit-only entry points; bypassed by
+                                  ONESHOT_REPAIR.
+    """
     SCAFFOLD = "scaffold"
-    QGATE = "qgate"
-    RUBRIC = "rubric"
-    ENRICH = "enrich"
-    IMPROVE = "improve"
-    FIX_QUALITY = "fix_quality"  # combined improve + instruction reconcile
-    VALIDATE = "validate"
-    JUDGE = "judge"          # retrofit entry: skip validate, trust prior nop=0/gold=1
-    ONESHOT_REPAIR = "oneshot_repair"  # 2-node: qgate + fix_task_quality (Opus owns validate + give-up)
+    QGATE = "qgate"           # deprecated — runs as part of ONESHOT_REPAIR
+    RUBRIC = "rubric"         # deprecated
+    ENRICH = "enrich"         # deprecated
+    IMPROVE = "improve"       # deprecated
+    FIX_QUALITY = "fix_quality"  # deprecated — use ONESHOT_REPAIR
+    VALIDATE = "validate"     # deprecated
+    JUDGE = "judge"           # deprecated
+    ONESHOT_REPAIR = "oneshot_repair"  # canonical: qgate + fix_task_quality
 
     @classmethod
     def from_str(cls, s: str) -> "StartAt":

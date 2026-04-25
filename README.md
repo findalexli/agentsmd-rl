@@ -18,29 +18,68 @@ See [research/negative_rubrics_plan.md](research/negative_rubrics_plan.md) for t
 
 The benchmark has two complementary task classes, both mined from merged PRs in repos with agent instruction files:
 
-### Class A: Code Bug Fixes (`harbor_tasks/`, 1,136 tasks)
+### Class A: Code Bug Fixes (`harbor_tasks/`, 226 active tasks)
 
 Standard SWE-bench-style tasks. The PR fixed a bug; the agent must reproduce the fix. Evaluation is execution-based: fail-to-pass tests must fail on the base commit and pass after the fix, pass-to-pass tests must pass on both.
 
-All 1,136 tasks also have **rubric rules** (3.8/task avg) and **distractors** (2.6/task avg) extracted from the repo's agent config files. These enable 4-track evaluation: programmatic tests + LLM-judged convention compliance + distractor discrimination. 952 tasks have the standalone LLM judge deployed directly into `test.sh`, so `harbor run` produces all 4 tracks in a single command.
+Tasks have **rubric rules** and **distractors** extracted from the repo's agent config files, enabling 4-track evaluation: programmatic tests + LLM-judged convention compliance + distractor discrimination. The standalone LLM judge is deployed directly into `test.sh`, so `harbor run` produces all 4 tracks in a single command.
 
-### Class B: Code + Config Edits (`harbor_tasks_agentmd_edits/`, 6,167 tasks)
+### Class B: Code + Config Edits (`harbor_tasks_quarantine/_unfilled_agentmd_stubs/`, 4,862 candidate stubs)
 
-The PR changed both functional code AND agent instruction files (CLAUDE.md, AGENTS.md, SKILL.md, .cursorrules, etc.). These tasks test whether agents can navigate hierarchical config files — following relevant conventions, ignoring distracting ones, and updating config files correctly.
-
-63 tasks currently passing oracle validation. This class is under active development.
+The PR changed both functional code AND agent instruction files (CLAUDE.md, AGENTS.md, SKILL.md, .cursorrules, etc.) — OR the code diff is causally shaped by a rule in those files. These tasks test whether agents can navigate hierarchical config files — following relevant conventions, ignoring distracting ones, and updating config files correctly. Stubs await a Gemini causality judge + Opus scaffold pass before becoming runnable tasks.
 
 | | Class A (code-only) | Class B (code + config) |
 |---|---|---|
-| **Directory** | `harbor_tasks/` | `harbor_tasks_agentmd_edits/` |
-| **Count** | 1,136 tasks (1,131 passing, 99%) | 6,167 tasks (63 passing) |
+| **Directory** | `harbor_tasks/` | `harbor_tasks_quarantine/_unfilled_agentmd_stubs/` (pre-scaffold) |
+| **Count (current)** | 226 active (185 passing oracle) | 4,862 stub candidates under causality classification |
 | **PR changes** | Code only | Code + agent config files |
 | **Eval tracks** | All 4 tracks | All 4 tracks |
-| **Rubric rules** | 3,489 total (3.8/task avg) | Under development |
-| **Distractors** | 1,710 total (2.6/task avg) | Under development |
 | **What it measures** | Can the agent fix bugs AND follow the right conventions? | Can the agent fix bugs AND reason about which config rules apply AND update config files? |
 
 Both classes share identical file structure and are processed by the same pipeline.
+
+## How tasks are filtered
+
+We mine tasks from merged GitHub PRs. A PR becomes a useful benchmark task only when **the gold fix would have looked different if the repo's agent-instruction files (CLAUDE.md, AGENTS.md, SKILL.md, etc.) hadn't existed**. Otherwise passing or failing the test tells us nothing about whether the agent paid attention to those instructions. Each filter stage removes PRs that don't pass that bar.
+
+### The funnel (2026-04-25)
+
+| Stage | What it checks | Survivors |
+|---|---|---|
+| **0. Upstream** | Every merged PR on GitHub | (effectively unbounded) |
+| **1. Find repos with agent-instruction files** | Repo has at least one of: CLAUDE.md, AGENTS.md, SKILL.md anywhere, .cursor/rules, .github/copilot-instructions.md, .agents/skills/, .opencode/skills/, .codex/skills/, etc. | **107 repos** |
+| **2. Find merged bug-fix / feature PRs in those repos** | PR is non-trivial, merged, has resolvable base + merge SHA, touches code | **5,070 PRs** |
+| **3. Create one task placeholder per PR** | Empty task directory with template files, named `<repo>-<first-5-title-words>` | 6,086 placeholders (older scout passes left some duplicates) |
+| **4. Drop placeholders that don't match a known scout entry** | Stale slugs from older runs | −627 → 5,459 |
+| **5. Re-verify repo still has agent-instruction files at HEAD** | Some repos got renamed; broaden the file-name regex to catch newer IDE conventions | −598 → **4,862 candidate placeholders** |
+| **6. Per-PR causality check** (Gemini 3.1 Pro judge) | Does the PR either edit one of those agent-instruction files, OR is the code diff specifically following a rule from one? "Decorative" PRs (the fix is independent of the rules) get dropped. | **~6.4% of placeholders (≈310 PRs)** |
+
+### What the survivors become
+
+The PRs that pass stage 6 fall into two categories:
+
+- **Class A — PRs that edit an agent-instruction file** (≈80 PRs, ~1.6% of placeholders). The PR's diff includes changes to CLAUDE.md / AGENTS.md / SKILL.md / etc. Tests *"can the agent update agent instructions correctly?"*
+- **Class B — PRs whose code follows a specific rule** (≈230 PRs, ~4.8% of placeholders). The code diff doesn't touch markdown, but it specifically follows a rule from one (e.g., a commit message says "use 7-char git-dep commit hashes", and the diff does so). Tests *"can the agent reason about which conventions apply to this fix?"*
+- **Discarded — decorative** (≈93.7%). The fix is fully determined by the bug; the agent-instruction files are irrelevant. These could populate a generic code-only benchmark, but they don't test instruction-following.
+
+### Why each gate matters
+
+- Without **stages 1 and 5**, we end up with PRs from repos that have no agent-instruction files — there's literally nothing for the agent to follow or ignore.
+- Without **stage 6** (the causality judge), we'd keep ~94% of PRs where the markdown is decorative — and passing/failing those tells us nothing about whether the agent attended to instructions.
+
+The combination is what makes the Class A+B pool valuable for RL training: the gold fix is *causally* shaped by the agent-instruction surface, so a reward gap between agents that read vs. ignore the markdown is real signal, not noise.
+
+### Current pool snapshot
+
+| Bucket | Count | Status |
+|---|---|---|
+| Active Class A code-only tasks (`harbor_tasks/`) | 226 | 185 passing oracle, ready to use |
+| Class B candidate placeholders (`harbor_tasks_quarantine/_unfilled_agentmd_stubs/`) | 4,862 | causality classification in progress |
+| Discarded — repo has no agent-instruction files (`_stubs_no_tier1/`) | 598 | trash |
+| Discarded — placeholder slug doesn't match any scout entry (`_stubs_unmatched/`) | 627 | trash |
+| Other discarded (decorative / trivial / no-signal sweeps) | 899 | trash |
+
+Cost to materialize the projected ~310 Class A+B winners into runnable tasks: **≈$2,500** in Opus 4.6 (scaffolding) + Gemini (causality + audit) calls.
 
 ## Repository Structure
 
@@ -55,8 +94,8 @@ taskforge/                   # Task construction toolkit
   backends.py                   # Multi-backend LLM pool with rate limit handling
   gemini_rubric_constructor.py  # Structured output rubric generation + Kimi validation
   hierarchy_context.py          # Config hierarchy extractor (root → leaf AGENTS.md)
-harbor_tasks/                # Class A: code-only bug fixes (1,136 tasks)
-harbor_tasks_agentmd_edits/  # Class B: code + config file edits (6,167 tasks)
+harbor_tasks/                # Class A: code-only bug fixes (226 active)
+harbor_tasks_quarantine/     # Quarantined tasks + Class B candidate pool
 scripts/
   run_agent_eval.py             # Agent eval runner (Track 1+3+4, pluggable backend)
   fix_task_toml.py              # Batch fix task.toml formatting issues
@@ -260,7 +299,7 @@ This matches every major SWE benchmark (SWE-bench, Terminal Bench, SWE-smith, R2
 
 | Track | What | Method | Role | Coverage |
 |-------|------|--------|------|----------|
-| 1. Code correctness | Did the agent fix the bug? | `test.sh` → nop=0, gold=1 | **Reward signal** | 1,131/1,136 (99%) |
+| 1. Code correctness | Did the agent fix the bug? | `test.sh` → nop=0, gold=1 | **Reward signal** | All Class A tasks |
 | 2. Config edits | Did the agent update config files correctly? | Gold diff vs agent diff (Gemini semantic comparison) | Monitoring | Class B only |
 | 3. Positive rubric | Does the agent follow relevant conventions? | Gemini 3.1 Pro judges diff vs rubric rules | Monitoring | 914 tasks (3,489 rules) |
 | 4. Distractors | Does the agent IGNORE irrelevant conventions? | Gemini checks agent didn't apply collision rules | Monitoring | 646 tasks (1,710 rules) |
@@ -286,31 +325,36 @@ Following [OpenAI's critique of SWE-bench Verified](https://openai.com/index/why
 
 ## Task Construction Pipeline
 
-### E2B Agent-Chain Pipeline (primary)
+We run two simple pipelines, both inside an E2B Firecracker microVM with Docker access. **Each pipeline uses one `claude -p` agent call** — the agent does its own iteration internally (write code → run Docker → verify → adjust) instead of being orchestrated across multiple separate calls.
 
-Each task runs through 4 focused `claude -p` agents inside an E2B Firecracker microVM with Docker:
+### Pipeline 1: Repair (existing task → cleaned task)
+
+For tasks already in `harbor_tasks/` that have quality issues (broken oracle, weak tests, leaky instructions). Used to clean the active pool.
 
 ```
-[Scaffold] → [P2P Enrich] → [Improve Tests] → [Validate+Fix] → [Rubric Judge]
+[ Programmatic lint ] → [ One Opus call: fix tests + instruction + run Docker oracle + write verdict ]
 ```
 
-| Agent | What it does | Docker access? |
-|-------|-------------|----------------|
-| **P2P Enrich** | Discover repo CI/CD, add pass-to-pass tests | Yes (runs CI commands) |
-| **Improve Tests** | Upgrade grep-only tests to behavioral subprocess tests | No |
-| **Validate+Fix** | Docker build → NOP test (expect 0) → Gold test (expect 1) → fix issues | Yes (builds & runs containers) |
-| **Rubric Judge** | Check config edits against eval_manifest.yaml rubric rules | No (programmatic) |
-
-Inter-agent communication via `status.json` — each agent reads previous nodes' notes, writes its own findings with model/backend provenance.
+- Programmatic lint (no LLM, ~2s) flags issues like tautological tests, unpinned deps, `pip install` at test time. Output is fed to the Opus prompt as a "what's wrong" hint.
+- The Opus agent reads `quality.json`, edits `test_outputs.py` / `instruction.md` / `eval_manifest.yaml`, runs `nop=0/gold=1` Docker validation itself, and writes either `{"fixed": true, "nop_reward": 0, "gold_reward": 1}` or `{"abandoned": true, "reason": "..."}` to `reconcile_status.json`. We trust the agent's verdict and download.
+- Empirically: ~85–90% real pass rate, ≈$5 per task, 15–25 min wall.
 
 ```bash
-# Validate all unvalidated tasks (80 concurrent E2B sandboxes)
-set -a && source .env && set +a && export GH_TOKEN=$(gh auth token)
-.venv/bin/python scripts/validate_batch.py --concurrency 80
-
-# Only tasks from last 24 hours
-.venv/bin/python scripts/validate_batch.py --recent 24 --concurrency 80
+.venv/bin/python scripts/validate_batch.py \
+    --task-file queue.txt \
+    --start-at oneshot_repair \
+    --concurrency 10
 ```
+
+### Pipeline 2: Scaffold (new PR → new task)
+
+For PRs in the candidate placeholder pool that pass the causality judge. (Currently the same `claude -p` repair pattern; a dedicated `oneshot_scaffold` mode is planned that internalizes the lint rules + Docker oracle in a single agent call.)
+
+### Why one-call pipelines
+
+Earlier versions of this repo had a 4–6 node chain (scaffold → enrich → improve → validate → judge → reconcile → tests-rewrite). Each node spun a fresh sandbox session, each hit rate limits independently, and a redundant validate node frequently overwrote the agent's correct verdict. Collapsing to a single call makes the pipeline ~3–4× cheaper, ~5× more accurate, and easier to reason about.
+
+The legacy multi-node modes (`fix_quality`, `validate`, `judge`) still exist in `taskforge/e2b_worker.py` and are reachable via `--start-at <mode>`, but `oneshot_repair` is the supported default.
 
 ### Backend Pool
 
@@ -352,24 +396,15 @@ python -m taskforge.pipeline scaffold-from-prs --input scouted.jsonl --workers 8
 | **Hierarchical config context extraction** | **Nobody** | **Yes (novel)** |
 | **Self-contained LLM judge in test harness** | **Nobody** | **Yes (novel, Gemini structured output inside harbor)** |
 
-## Status
+## Status (2026-04-25)
 
-**7,303 tasks** across two classes:
-- 1,136 code-only (1,131 passing, 99%) — 952 with self-contained 4-track LLM judge
-- 6,167 code+config (63 passing, under development)
+After a strict markdown-causality cleanup pass, the active corpus is much tighter than the historical 7,303-task pool: tasks where the gold fix is decorative (markdown removal wouldn't have changed it) were quarantined.
 
-**Quality tiers (code-only, based on 20-rubric quality audit via Opus 4.7):**
-- **399 tier-A clean (RL-ready)** — all task-quality rubrics pass (no solution leakage, no tautological tests, behavioral tests, deterministic Dockerfiles)
-- 713 tier-A flagged — oracle works but known quality issues (leaky instructions, weak tests)
-- 19 failing oracle — build or test failures
+**Class A — code-only bug fixes (`harbor_tasks/`)**: 226 active, 185 passing the Docker oracle. Currently being repaired in batch via the simplified `oneshot_repair` pipeline (see [Task Construction Pipeline](#task-construction-pipeline)). Pass rate observed in flight: ~85–90% on tasks with prior quality flags.
 
-### RL-Ready Subset: 399 Tier-A Tasks
+**Class B — code + config edits (placeholders)**: 4,862 candidate PR placeholders awaiting causality classification. Per a Gemini 3.1 Pro audit on a 1,640-PR sample, ≈6.4% of placeholders pass the causality bar (PR edits an agent-instruction file directly, OR the code diff specifically follows a rule from one). Projected materializable Class B pool: **≈310 tasks** at ~$8 each via the same one-call pipeline.
 
-The RL-ready subset requires only task-quality gates (the 20-rubric registry in `taskforge/rubrics.py`): no solution leakage, behavioral tests, deterministic builds. Convention-following rubrics (Tracks 3/4) are logged as monitoring signals but are **not** a gate for RL readiness — see [Research Insights](#research-insights).
-
-**399 tasks across 80+ repos**, oracle-verified (nop=0, gold=1).
-
-**Top repos** (10 of 80+): gradio (21), transformers (20), opencode (18), AReaL (16), next.js (10), ruff (10), bun (9), uv (9), openclaw (8), playwright (8)
+**Quarantined**: 2,124 PRs across three discard buckets (no-instruction-files, slug-doesn't-match-scout, decorative). See [How tasks are filtered](#how-tasks-are-filtered).
 
 ### Monitoring: Convention-Following Rubrics (Tracks 3 & 4)
 
