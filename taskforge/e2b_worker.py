@@ -164,6 +164,7 @@ class StartAt(str, Enum):
     FIX_QUALITY = "fix_quality"  # combined improve + instruction reconcile
     VALIDATE = "validate"
     JUDGE = "judge"          # retrofit entry: skip validate, trust prior nop=0/gold=1
+    ONESHOT_REPAIR = "oneshot_repair"  # 2-node: qgate + fix_task_quality (Opus owns validate + give-up)
 
     @classmethod
     def from_str(cls, s: str) -> "StartAt":
@@ -2052,7 +2053,16 @@ async def run_task(
             # If start_at is FIX_QUALITY, skip the old improve node and use the
             # combined fix_task_quality agent instead (fixes tests + instruction
             # together, then validates). Skips to VALIDATE after.
-            if start_at == StartAt.FIX_QUALITY:
+            if start_at in (StartAt.FIX_QUALITY, StartAt.ONESHOT_REPAIR):
+                # Oneshot trusts whatever reconcile_status.json the agent writes.
+                # Delete any pre-existing copy uploaded with the task so a stale
+                # success verdict from a prior run can't be mistaken for a fresh one.
+                if start_at == StartAt.ONESHOT_REPAIR:
+                    await run_cmd(
+                        sandbox,
+                        "rm -f /workspace/task/reconcile_status.json",
+                    )
+
                 t0 = time.monotonic()
                 s, err = await node_fix_task_quality(sandbox)
                 elapsed = time.monotonic() - t0
@@ -2068,6 +2078,41 @@ async def run_task(
                         pool.report_429(backend)
                     result.error = f"rate limited during fix_quality: {err}"
                     raise _RateLimited(result.error)
+
+                # Oneshot mode: trust the agent's verdict from reconcile_status.json
+                # and skip the trailing validate/judge/reconcile/tests_rewrite chain.
+                if start_at == StartAt.ONESHOT_REPAIR:
+                    if s != "ok":
+                        result.error = f"oneshot agent {s}: {(err or '')[:200]}"
+                        result.valid = False
+                        logger.warning("[%s] oneshot: agent did not complete (status=%s)",
+                                       result.task_name, s)
+                    else:
+                        rs_data: dict = {}
+                        try:
+                            rs_raw = await sandbox.files.read(
+                                "/workspace/task/reconcile_status.json", format="text")
+                            rs_data = json.loads(rs_raw)
+                        except Exception as e:
+                            logger.warning("[%s] oneshot: reconcile_status read failed: %s",
+                                           result.task_name, str(e)[:80])
+
+                        if rs_data.get("abandoned"):
+                            result.error = f"oneshot abandoned: {rs_data.get('reason', '')[:200]}"
+                            result.valid = False
+                            logger.info("[%s] oneshot ABANDONED: %s",
+                                        result.task_name, rs_data.get("reason", "")[:120])
+                        elif rs_data.get("fixed"):
+                            result.nop_reward = float(rs_data.get("nop_reward", -1))
+                            result.gold_reward = float(rs_data.get("gold_reward", -1))
+                            result.valid = (result.nop_reward == 0.0 and result.gold_reward == 1.0)
+                            logger.info("[%s] oneshot FIXED: nop=%.1f gold=%.1f valid=%s",
+                                        result.task_name, result.nop_reward,
+                                        result.gold_reward, result.valid)
+                        else:
+                            result.error = "oneshot: agent wrote no verdict to reconcile_status.json"
+                            result.valid = False
+                            logger.warning("[%s] oneshot: no verdict produced", result.task_name)
 
             elif start_at.should_run(StartAt.IMPROVE):
                 needs_improve, reason = await node_check_test_quality(sandbox)
@@ -2139,7 +2184,7 @@ async def run_task(
                             result.task_name, result.nop_reward, result.gold_reward, result.valid)
 
             # ── Node 6a: Rubric Lint (agentmd only) ───────────────
-            if result.valid and agentmd:
+            if result.valid and agentmd and start_at != StartAt.ONESHOT_REPAIR:
                 injected, samples = await node_rubric_lint(sandbox)
                 if injected > 0:
                     await update_sandbox_status(sandbox, "rubric_lint", {
@@ -2154,7 +2199,7 @@ async def run_task(
             # Scores task against 10 llm_judge rubrics. Writes quality.json.
             # Runs for BOTH code-only and agentmd tasks.
             judge_summary: dict = {}
-            if result.valid:
+            if result.valid and start_at != StartAt.ONESHOT_REPAIR:
                 t0 = time.monotonic()
                 js, judge_summary = await node_quality_judge(sandbox)
                 elapsed = time.monotonic() - t0

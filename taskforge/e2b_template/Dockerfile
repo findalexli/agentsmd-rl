@@ -14,7 +14,7 @@ RUN curl -fsSL https://get.docker.com | sh
 # Node.js 22 + Claude Code CLI + Gemini CLI
 RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
     apt-get install -y nodejs && \
-    npm install -g @anthropic-ai/claude-code@latest @google/gemini-cli
+    npm install -g @anthropic-ai/claude-code@2.1.119 @google/gemini-cli
 
 # GitHub CLI (for scaffold PR fetching)
 RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | \
