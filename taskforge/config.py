@@ -29,7 +29,11 @@ AGENT_INSTRUCTION_PATTERNS: list[str] = [
     r"\.claude/agents/.*\.md$",        # custom subagent definitions
     # GitHub-hosted skills (e.g., dotnet/maui .github/skills/)
     r"\.github/skills/.*SKILL\.md$",
-    r"\.agents/skills/.*SKILL\.md$",   # alternative convention (ant-design, next.js)
+    r"\.agents/skills/.*SKILL\.md$",   # alternative convention (PostHog, vscode, openai-agents-js)
+    r"\.agent/skills/.*SKILL\.md$",    # singular variant (apache/beam)
+    r"\.opencode/skills/.*SKILL\.md$", # cloudflare/workerd convention
+    r"\.codex/skills/.*SKILL\.md$",    # dagger convention
+    r"\.github/prompts/.*\.prompt\.md$",  # vscode + next.js prompt-files convention
     # Cross-tool
     r"AGENTS\.md$",
     r"SKILL\.md$",
