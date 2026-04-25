@@ -188,8 +188,13 @@ async def run_batch_scaffold(
     pool: BackendPool | None,
     concurrency: int,
     agentmd: bool = False,
+    start_at: StartAt = StartAt.SCAFFOLD,
 ) -> list[WorkerResult]:
-    """Scaffold new tasks from PR refs via E2B pipeline."""
+    """Scaffold new tasks from PR refs via E2B pipeline.
+
+    `start_at` defaults to SCAFFOLD (legacy multi-node chain). Pass
+    StartAt.ONESHOT_SCAFFOLD for the canonical one-call mode.
+    """
     sandbox_sem = asyncio.Semaphore(concurrency)
     results: list[WorkerResult] = []
     results_lock = asyncio.Lock()
@@ -203,7 +208,7 @@ async def run_batch_scaffold(
             try:
                 r = await run_task(
                     "", task_dir, pool, sandbox_sem,
-                    start_at=StartAt.SCAFFOLD,
+                    start_at=start_at,
                     pr_ref=pr_ref,
                     agentmd=agentmd,
                 )
@@ -257,7 +262,7 @@ async def main():
     parser.add_argument("--agentmd", action="store_true",
                         help="Scaffold as agentmd_edits (code + config tasks)")
     parser.add_argument("--start-at", type=str, default=None,
-                        choices=["scaffold", "qgate", "rubric", "enrich", "improve", "fix_quality", "validate", "judge", "oneshot_repair"],
+                        choices=["scaffold", "qgate", "rubric", "enrich", "improve", "fix_quality", "validate", "judge", "oneshot_repair", "oneshot_scaffold"],
                         help="DAG entry point for existing tasks (default: validate)")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
@@ -345,7 +350,12 @@ async def main():
 
     wall_start = time.monotonic()
     if pr_items is not None:
-        results = await run_batch_scaffold(pr_items, pool, args.concurrency, agentmd=args.agentmd)
+        scaffold_start_at = (StartAt.from_str(args.start_at)
+                             if args.start_at else StartAt.SCAFFOLD)
+        results = await run_batch_scaffold(
+            pr_items, pool, args.concurrency,
+            agentmd=args.agentmd, start_at=scaffold_start_at,
+        )
     else:
         start_at = StartAt.from_str(args.start_at) if args.start_at else StartAt.VALIDATE
         results = await run_batch_mixed(items, pool, args.concurrency, start_at=start_at)

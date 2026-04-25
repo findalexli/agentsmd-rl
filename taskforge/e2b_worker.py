@@ -178,6 +178,15 @@ class StartAt(str, Enum):
                                   ONESHOT_REPAIR instead.
       VALIDATE, JUDGE          — retrofit-only entry points; bypassed by
                                   ONESHOT_REPAIR.
+
+    Canonical (one-call) modes:
+      ONESHOT_SCAFFOLD — for NEW tasks from a PR ref. Runs scaffold.md
+                          (which already does PR fetch → file generation →
+                          Docker NOP/GOLD validate → self-audit), then
+                          trusts the agent's scaffold_status.json verdict
+                          and skips trailing nodes.
+      ONESHOT_REPAIR   — for EXISTING tasks with quality flags. Same
+                          pattern with fix_task_quality.md.
     """
     SCAFFOLD = "scaffold"
     QGATE = "qgate"           # deprecated — runs as part of ONESHOT_REPAIR
@@ -188,6 +197,7 @@ class StartAt(str, Enum):
     VALIDATE = "validate"     # deprecated
     JUDGE = "judge"           # deprecated
     ONESHOT_REPAIR = "oneshot_repair"  # canonical: qgate + fix_task_quality
+    ONESHOT_SCAFFOLD = "oneshot_scaffold"  # canonical: one-call scaffold from PR
 
     @classmethod
     def from_str(cls, s: str) -> "StartAt":
@@ -317,7 +327,7 @@ async def ensure_template() -> str:
 
 async def create_worker_sandbox(
     backend_env: dict[str, str] | None = None,
-    timeout: int = 3600,
+    timeout: int = SANDBOX_TIMEOUT,
     max_ip_retries: int = 10,
 ) -> AsyncSandbox:
     """Create sandbox from harbor-worker template with env vars injected.
@@ -1909,7 +1919,14 @@ async def run_task(
                 }
 
             # ── Node 0: Scaffold (new PRs only) ───────────────────
-            if is_new and start_at == StartAt.SCAFFOLD:
+            if is_new and start_at in (StartAt.SCAFFOLD, StartAt.ONESHOT_SCAFFOLD):
+                # Oneshot: ensure no stale verdict from a prior attempt.
+                if start_at == StartAt.ONESHOT_SCAFFOLD:
+                    await run_cmd(
+                        sandbox,
+                        "rm -f /workspace/task/scaffold_status.json",
+                    )
+
                 t0 = time.monotonic()
                 s, name, err = await node_scaffold(sandbox, pr_ref, agentmd)
                 elapsed = time.monotonic() - t0
@@ -1935,6 +1952,36 @@ async def run_task(
                 dest = task_dir / name
                 await update_sandbox_status(sandbox, "scaffold", _stamp("scaffold", "ok", elapsed))
                 logger.info("[%s] scaffold ok → %s", pr_ref, name)
+
+                # Oneshot mode: trust scaffold.md's verdict (Docker NOP/GOLD
+                # already validated inside the agent call) and skip the
+                # trailing rubric/enrich/improve/validate/judge chain.
+                if start_at == StartAt.ONESHOT_SCAFFOLD:
+                    ss_data: dict = {}
+                    try:
+                        ss_raw = await sandbox.files.read(
+                            "/workspace/task/scaffold_status.json", format="text")
+                        ss_data = json.loads(ss_raw)
+                    except Exception as e:
+                        logger.warning("[%s] oneshot_scaffold: status read failed: %s",
+                                       result.task_name, str(e)[:80])
+
+                    if ss_data.get("abandoned"):
+                        result.error = f"oneshot_scaffold abandoned: {ss_data.get('reason','')[:200]}"
+                        result.valid = False
+                        logger.info("[%s] oneshot_scaffold ABANDONED: %s",
+                                    result.task_name, ss_data.get("reason","")[:120])
+                    elif ss_data.get("scaffolded"):
+                        result.nop_reward = float(ss_data.get("nop_reward", -1))
+                        result.gold_reward = float(ss_data.get("gold_reward", -1))
+                        result.valid = (result.nop_reward == 0.0 and result.gold_reward == 1.0)
+                        logger.info("[%s] oneshot_scaffold SCAFFOLDED: nop=%.1f gold=%.1f valid=%s",
+                                    result.task_name, result.nop_reward,
+                                    result.gold_reward, result.valid)
+                    else:
+                        result.error = "oneshot_scaffold: agent wrote no verdict to scaffold_status.json"
+                        result.valid = False
+                        logger.warning("[%s] oneshot_scaffold: no verdict produced", result.task_name)
 
                 # Dedup check: skip if task already exists on disk (unless --force)
                 if dest.exists() and not force:
@@ -2207,7 +2254,7 @@ async def run_task(
                             result.task_name, result.nop_reward, result.gold_reward, result.valid)
 
             # ── Node 6a: Rubric Lint (agentmd only) ───────────────
-            if result.valid and agentmd and start_at != StartAt.ONESHOT_REPAIR:
+            if result.valid and agentmd and start_at not in (StartAt.ONESHOT_REPAIR, StartAt.ONESHOT_SCAFFOLD):
                 injected, samples = await node_rubric_lint(sandbox)
                 if injected > 0:
                     await update_sandbox_status(sandbox, "rubric_lint", {
@@ -2222,7 +2269,7 @@ async def run_task(
             # Scores task against 10 llm_judge rubrics. Writes quality.json.
             # Runs for BOTH code-only and agentmd tasks.
             judge_summary: dict = {}
-            if result.valid and start_at != StartAt.ONESHOT_REPAIR:
+            if result.valid and start_at not in (StartAt.ONESHOT_REPAIR, StartAt.ONESHOT_SCAFFOLD):
                 t0 = time.monotonic()
                 js, judge_summary = await node_quality_judge(sandbox)
                 elapsed = time.monotonic() - t0

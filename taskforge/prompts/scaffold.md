@@ -348,3 +348,25 @@ Self-audit:
   Anti-patterns: none
   Manifest sync: yes
 ```
+
+### 8. Write final verdict
+
+After Docker validation passes AND the self-audit clears, write your verdict
+to `/workspace/task/scaffold_status.json`. The runtime trusts this file —
+without it, your work is discarded.
+
+On success:
+```json
+{"scaffolded": true, "nop_reward": 0, "gold_reward": 1}
+```
+
+If you tried hard but cannot make the oracle work (e.g., the PR's behavior
+genuinely can't be tested on CPU, or the base commit's build is broken in
+ways you can't fix without modifying upstream code), write:
+```json
+{"abandoned": true, "reason": "<one-sentence cause>"}
+```
+
+Do not invent success. Only write `"scaffolded": true` if you actually saw
+NOP=0 AND GOLD=1 from the Docker runs in step 6. Bogus verdicts pollute the
+benchmark and are worse than abandoning.
