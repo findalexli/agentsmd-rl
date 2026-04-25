@@ -108,11 +108,15 @@ def main() -> None:
             decision = "quarantine"
             reasons.append("decorative")
         else:
-            # Tier-A lint fails or quality fails go to fix queue
+            # Any non-trivial lint fail or quality fail → fix queue.
+            # Tier-A rubrics that demand semantic rewrites (skip mechanical
+            # tier-B like pinned_dependencies and no_network — those are
+            # auto-fixable with separate scripts).
             tier_a = {"oracle_no_external_fetch", "tests_have_subprocess",
                       "gold_diff_non_trivial", "test_not_tautological",
                       "tests_verify_behavior_not_text",
-                      "no_hidden_solution_artifacts"}
+                      "no_hidden_solution_artifacts",
+                      "reward_is_pure_pytest"}
             if any(r in tier_a for r in row["lint_fails"]) or row["quality_fails"]:
                 decision = "fix"
                 reasons.append("quality_or_lint_fail")
