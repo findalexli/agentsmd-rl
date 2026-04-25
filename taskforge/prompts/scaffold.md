@@ -351,6 +351,19 @@ Self-audit:
 
 ### 8. Write final verdict
 
+Before writing the verdict, do two final mechanical checks:
+
+1. **eval_manifest schema** must be **`version: "2.0"`** (string, with quotes)
+   at the top of the file. Run:
+   ```bash
+   grep -q '^version: "2.0"' /workspace/task/eval_manifest.yaml || \
+     sed -i '1i version: "2.0"\n' /workspace/task/eval_manifest.yaml
+   ```
+2. **No scratch files in tests/**. The only files allowed in
+   `/workspace/task/tests/` are `test.sh`, `test_outputs.py`,
+   `eval_manifest.yaml`, `standalone_judge.py`. Any debug `test_*.py` or
+   `*.txt` you wrote during exploration must be deleted.
+
 After Docker validation passes AND the self-audit clears, write your verdict
 to `/workspace/task/scaffold_status.json`. The runtime trusts this file —
 without it, your work is discarded.
