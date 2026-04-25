@@ -108,12 +108,18 @@ def find_unvalidated(recent_hours: int | None = None) -> list[tuple[str, Path]]:
 
 
 def make_pool_no_oauth() -> BackendPool | None:
-    """Create backend pool with only GLM + Fireworks (no OAuth)."""
+    """Create backend pool. Includes OAuth unless USE_OAUTH=0 is set in env.
+
+    Default for retrofit/fix_quality runs is to INCLUDE OAuth so we can fall
+    back from rate-limited cheap backends to the user's Claude Code Max
+    subscription.
+    """
     all_backends = backends_from_env()
-    filtered = [b for b in all_backends if b.name != "oauth"]
-    if not filtered:
+    if os.environ.get("USE_OAUTH", "1") == "0":
+        all_backends = [b for b in all_backends if b.name != "oauth"]
+    if not all_backends:
         return None
-    return BackendPool(filtered)
+    return BackendPool(all_backends)
 
 
 async def run_batch_mixed(
