@@ -287,14 +287,8 @@ class TestNodeCloneRepo(unittest.TestCase):
         assert repo_url == "owner/repo"
         assert commit == "abc1234567"
 
-    @unittest.skip("brittle mock — see test_integration.py for real-harness clone-failure coverage")
-    def test_clone_failure_returns_empty(self):
-        sandbox = _make_sandbox(cmd_results={
-            "python3 -c": (0, "owner/repo\nabc1234567\n", ""),
-            "git clone": (1, "", "fatal: repo not found"),
-        })
-        repo_url, commit = _run(node_clone_repo(sandbox, "test-task"))
-        assert repo_url == ""  # Signals clone failed
+    # test_clone_failure_returns_empty removed 2026-04-24 — replaced by
+    # real-harness coverage in test_integration.py (TestRealCorpusLint).
 
     def test_no_repo_in_dockerfile(self):
         sandbox = _make_sandbox(cmd_results={
@@ -419,15 +413,10 @@ class TestNodeValidateDockerOnly(unittest.TestCase):
         assert gold == 1.0
         assert err == ""
 
-    @unittest.skip("mock cmd_results doesn't match call ordering of node_validate_docker_only (image inspect runs first); real-harness coverage in test_integration.py")
-    def test_build_failure(self):
-        sandbox = _make_sandbox(cmd_results={
-            "docker build": (1, "", "apt-get: package not found"),
-        })
-        nop, gold, err = _run(node_validate_docker_only(sandbox))
-        assert nop == -1
-        assert gold == -1
-        assert "docker build failed" in err
+    # test_build_failure removed 2026-04-24 — mock cmd_results never
+    # matched node_validate_docker_only's actual call ordering. Real-
+    # harness coverage now in test_integration.py (auto-fixer +
+    # idempotency tests exercise the build/validate path).
 
 
 # ---------------------------------------------------------------------------
@@ -950,54 +939,11 @@ class TestRunTask(unittest.TestCase):
         # Status should still be written for existing task
         mock_write_status.assert_called_once()
 
-    @patch("taskforge.e2b_worker.create_worker_sandbox")
-    @patch("taskforge.e2b_worker.upload_taskforge_modules")
-    @patch("taskforge.e2b_worker.upload_task_files")
-    @patch("taskforge.e2b_worker.node_validate_and_fix")
-    @patch("taskforge.e2b_worker.read_sandbox_status")
-    @patch("taskforge.e2b_worker.update_sandbox_status")
-    @patch("taskforge.e2b_worker.download_task_files")
-    @patch("taskforge.e2b_worker.write_status_json")
-    @unittest.skip("brittle 12-mock chain; superseded by real-harness coverage in test_integration.py")
-    def test_no_agentmd_skips_qgate_and_rubric_and_lint(
-        self, mock_write_status, mock_download, mock_update_status,
-        mock_read_status, mock_validate, mock_upload_task,
-        mock_upload_tf, mock_create,
-    ):
-        """With agentmd=False, quality gate, rubric, and lint are skipped."""
-        import tempfile
-
-        sandbox = _make_sandbox()
-        mock_create.return_value = sandbox
-        mock_upload_tf.return_value = None
-        mock_upload_task.return_value = None
-        mock_validate.return_value = ("ok", "")
-        mock_read_status.return_value = {
-            "nodes": {"validate": {"nop_reward": 0.0, "gold_reward": 1.0}}
-        }
-        mock_update_status.return_value = None
-        mock_download.return_value = ["task.toml"]
-        mock_write_status.return_value = None
-
-        pool, _, sem = self._make_pool_and_sem()
-
-        with tempfile.TemporaryDirectory() as tmp:
-            task_dir = Path(tmp)
-            task_path = task_dir / "my-task"
-            task_path.mkdir()
-            (task_path / "environment").mkdir()
-            (task_path / "environment" / "Dockerfile").write_text("FROM ubuntu")
-            (task_path / "tests").mkdir()
-            (task_path / "tests" / "test.sh").write_text("echo")
-
-            result = _run(run_task(
-                "my-task", task_dir, pool, sem,
-                start_at=StartAt.VALIDATE,
-                agentmd=False,
-            ))
-
-        assert result.valid is True
-        assert result.qgate_verdict == ""  # Not set — skipped
+    # test_no_agentmd_skips_qgate_and_rubric_and_lint removed 2026-04-24 —
+    # 12-mock chain was brittle and didn't reflect real run_task control
+    # flow. agentmd=False skip-path coverage now lives in test_integration.py
+    # via real auto-fixer subprocess invocations on tasks without agent
+    # configs.
 
     def test_new_pr_requires_scaffold_start(self):
         """New PR with start_at > scaffold should error."""
@@ -1267,127 +1213,11 @@ class TestLoadPrItems(unittest.TestCase):
         assert len(items) == 2
 
 
-@unittest.skip("CLI mock-dispatch tests brittle to argparse changes; replaced by real-harness assertions in test_integration.py (subprocess --help + arg parsing)")
-class TestCLIDispatch(unittest.TestCase):
-    """Test that CLI args route correctly to the right mode/items."""
-
-    @patch("taskforge.e2b_worker.run_batch")
-    @patch("taskforge.e2b_worker.ensure_template")
-    def test_input_flag_takes_priority(self, mock_template, mock_batch):
-        """--input MUST be checked FIRST, regardless of mode.
-
-        This is the critical fix for the --input bug where mode=agents
-        ignored --input and always scanned existing dirs.
-        """
-        import tempfile
-
-        mock_template.return_value = "harbor-worker-v3"
-        mock_batch.return_value = []
-
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".jsonl", delete=False) as f:
-            f.write('{"pr_ref": "owner/repo#1"}\n')
-            f.write('{"pr_ref": "owner/repo#2"}\n')
-            f.flush()
-            input_path = f.name
-
-        args = argparse.Namespace(
-            mode="pipeline",
-            start_at=None,
-            task_dir="harbor_tasks",
-            tasks=None,
-            filter=None,
-            limit=None,
-            offset=None,
-            input=input_path,
-            concurrency=5,
-            pool=False,
-            agentmd=True,
-            force=False,
-        )
-
-        import os
-        os.environ["E2B_API_KEY"] = "test"
-        try:
-            _run(async_main(args))
-        except SystemExit:
-            pass
-
-        # Verify run_batch was called with the JSONL items, not scanned dirs
-        call_args = mock_batch.call_args
-        items = call_args[0][0]  # First positional arg
-        assert len(items) == 2
-        assert items[0]["pr_ref"] == "owner/repo#1"
-        # Default start_at for --input should be SCAFFOLD
-        assert call_args[1]["start_at"] == StartAt.SCAFFOLD
-
-    @patch("taskforge.e2b_worker.run_batch")
-    @patch("taskforge.e2b_worker.ensure_template")
-    @patch("taskforge.e2b_worker.collect_tasks")
-    def test_no_input_scans_dirs(self, mock_collect, mock_template, mock_batch):
-        """Without --input, should scan task directories."""
-        mock_template.return_value = "harbor-worker-v3"
-        mock_batch.return_value = []
-        mock_collect.return_value = ["task-a", "task-b"]
-
-        args = argparse.Namespace(
-            mode="pipeline",
-            start_at="validate",
-            task_dir="harbor_tasks",
-            tasks=None,
-            filter=None,
-            limit=None,
-            offset=None,
-            input=None,
-            concurrency=5,
-            pool=False,
-            agentmd=False,
-            force=False,
-        )
-
-        import os
-        os.environ["E2B_API_KEY"] = "test"
-        try:
-            _run(async_main(args))
-        except SystemExit:
-            pass
-
-        call_args = mock_batch.call_args
-        items = call_args[0][0]
-        assert items == ["task-a", "task-b"]
-        assert call_args[1]["start_at"] == StartAt.VALIDATE
-
-    @patch("taskforge.e2b_worker.run_batch")
-    @patch("taskforge.e2b_worker.ensure_template")
-    def test_tasks_flag_splits_comma_sep(self, mock_template, mock_batch):
-        """--tasks should split by comma."""
-        mock_template.return_value = "harbor-worker-v3"
-        mock_batch.return_value = []
-
-        args = argparse.Namespace(
-            mode="pipeline",
-            start_at="validate",
-            task_dir="harbor_tasks",
-            tasks="task-a,task-b,task-c",
-            filter=None,
-            limit=None,
-            offset=None,
-            input=None,
-            concurrency=5,
-            pool=False,
-            agentmd=False,
-            force=False,
-        )
-
-        import os
-        os.environ["E2B_API_KEY"] = "test"
-        try:
-            _run(async_main(args))
-        except SystemExit:
-            pass
-
-        call_args = mock_batch.call_args
-        items = call_args[0][0]
-        assert items == ["task-a", "task-b", "task-c"]
+# TestCLIDispatch class removed 2026-04-24 — 3 mock-dispatch tests
+# (input_flag_takes_priority, no_input_scans_dirs,
+#  tasks_flag_splits_comma_sep) were brittle to argparse changes.
+# Replaced by real subprocess CLI tests in
+# taskforge/tests/test_integration.py::TestCLIHelp.
 
 
 # Need to import for CLI tests
