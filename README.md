@@ -14,29 +14,29 @@ Grounded in: [NoisyBench](https://arxiv.org/abs/2601.07226) (80% drop from hard 
 
 See [research/negative_rubrics_plan.md](research/negative_rubrics_plan.md) for the full research plan.
 
-## Task Classes
+## Task taxonomy
 
-The benchmark has two complementary task classes, both mined from merged PRs in repos with agent instruction files:
+A merged PR is useful for the benchmark only when its gold fix is **causally shaped by the repo's agent-instruction files** (CLAUDE.md / AGENTS.md / SKILL.md / .cursor/rules / etc.). A Gemini 3.1 Pro judge sorts every candidate PR into three buckets:
 
-### Class A: Code Bug Fixes (`harbor_tasks/`, 226 active tasks)
+| Type | What the gold diff looks like | What it tests | Sample share | Projected pool |
+|---|---|---|---|---|
+| **A — edits agent-instructions** | Diff includes changes to CLAUDE.md / AGENTS.md / SKILL.md / etc. The markdown is *part of* the gold patch. | "Can the agent update agent-instruction files correctly?" | ~1.6% | **~80 PRs** |
+| **B — follows a rule (code-only)** | Diff is **code-only** — no markdown changes. But the code specifically applies a rule from the markdown (e.g. "use 7-char commit hashes for git deps", "CREATE INDEX CONCURRENTLY for existing tables", "no wildcard imports"). | "Can the agent reason about which conventions apply to this fix?" | ~4.8% | **~230 PRs** |
+| **C — decorative** *(discarded)* | Code-only fix determined purely by the bug (null check, type fix, edge case). Removing the markdown wouldn't change the fix. | nothing instruction-specific | ~93.7% | (excluded) |
 
-Standard SWE-bench-style tasks. The PR fixed a bug; the agent must reproduce the fix. Evaluation is execution-based: fail-to-pass tests must fail on the base commit and pass after the fix, pass-to-pass tests must pass on both.
+**Both A and B are kept** — they're complementary. **C is discarded.**
 
-Tasks have **rubric rules** and **distractors** extracted from the repo's agent config files, enabling 4-track evaluation: programmatic tests + LLM-judged convention compliance + distractor discrimination. The standalone LLM judge is deployed directly into `test.sh`, so `harbor run` produces all 4 tracks in a single command.
+Type B (~3× larger than A) is the more important bucket: **most agent-instruction-following happens without the agent ever editing the markdown** — it shows up in the choices the agent makes inside the code.
 
-### Class B: Code + Config Edits (`harbor_tasks_quarantine/_unfilled_agentmd_stubs/`, 4,862 candidate stubs)
+All tasks (A and B alike) get the same 4-track evaluation: programmatic fail-to-pass + pass-to-pass tests, plus a self-contained Gemini judge in `test.sh` that scores convention compliance (positive rubric) and distractor avoidance (negative rubric).
 
-The PR changed both functional code AND agent instruction files (CLAUDE.md, AGENTS.md, SKILL.md, .cursorrules, etc.) — OR the code diff is causally shaped by a rule in those files. These tasks test whether agents can navigate hierarchical config files — following relevant conventions, ignoring distracting ones, and updating config files correctly. Stubs await a Gemini causality judge + Opus scaffold pass before becoming runnable tasks.
+### Where tasks live on disk
 
-| | Class A (code-only) | Class B (code + config) |
+| | Active (scaffolded, runnable) | Candidate (placeholder, pre-scaffold) |
 |---|---|---|
-| **Directory** | `harbor_tasks/` | `harbor_tasks_quarantine/_unfilled_agentmd_stubs/` (pre-scaffold) |
-| **Count (current)** | 226 active (185 passing oracle) | 4,862 stub candidates under causality classification |
-| **PR changes** | Code only | Code + agent config files |
-| **Eval tracks** | All 4 tracks | All 4 tracks |
-| **What it measures** | Can the agent fix bugs AND follow the right conventions? | Can the agent fix bugs AND reason about which config rules apply AND update config files? |
-
-Both classes share identical file structure and are processed by the same pipeline.
+| Path | `harbor_tasks/` | `harbor_tasks_quarantine/candidates/` |
+| Count | 226 (185 passing oracle) | 4,862 |
+| Notes | Legacy mix; the in-flight causality judge is dropping any remaining C tasks. | Awaits Gemini causality classification + one-call Opus scaffold (~$8/task). |
 
 ## How tasks are filtered
 
@@ -54,32 +54,27 @@ We mine tasks from merged GitHub PRs. A PR becomes a useful benchmark task only 
 | **5. Re-verify repo still has agent-instruction files at HEAD** | Some repos got renamed; broaden the file-name regex to catch newer IDE conventions | −598 → **4,862 candidate placeholders** |
 | **6. Per-PR causality check** (Gemini 3.1 Pro judge) | Does the PR either edit one of those agent-instruction files, OR is the code diff specifically following a rule from one? "Decorative" PRs (the fix is independent of the rules) get dropped. | **~6.4% of placeholders (≈310 PRs)** |
 
-### What the survivors become
-
-The PRs that pass stage 6 fall into two categories:
-
-- **Class A — PRs that edit an agent-instruction file** (≈80 PRs, ~1.6% of placeholders). The PR's diff includes changes to CLAUDE.md / AGENTS.md / SKILL.md / etc. Tests *"can the agent update agent instructions correctly?"*
-- **Class B — PRs whose code follows a specific rule** (≈230 PRs, ~4.8% of placeholders). The code diff doesn't touch markdown, but it specifically follows a rule from one (e.g., a commit message says "use 7-char git-dep commit hashes", and the diff does so). Tests *"can the agent reason about which conventions apply to this fix?"*
-- **Discarded — decorative** (≈93.7%). The fix is fully determined by the bug; the agent-instruction files are irrelevant. These could populate a generic code-only benchmark, but they don't test instruction-following.
+PRs that pass stage 6 land as Type A or Type B (see [Task taxonomy](#task-taxonomy)). Decorative PRs (Type C) are dropped at this stage.
 
 ### Why each gate matters
 
 - Without **stages 1 and 5**, we end up with PRs from repos that have no agent-instruction files — there's literally nothing for the agent to follow or ignore.
 - Without **stage 6** (the causality judge), we'd keep ~94% of PRs where the markdown is decorative — and passing/failing those tells us nothing about whether the agent attended to instructions.
 
-The combination is what makes the Class A+B pool valuable for RL training: the gold fix is *causally* shaped by the agent-instruction surface, so a reward gap between agents that read vs. ignore the markdown is real signal, not noise.
+The combination is what makes the surviving A+B pool valuable for RL training: the gold fix is *causally* shaped by the agent-instruction surface, so a reward gap between agents that read vs. ignore the markdown is real signal, not noise.
 
-### Current pool snapshot
+### Discard buckets
 
-| Bucket | Count | Status |
+Numbers behind the funnel — what gets thrown away at each stage:
+
+| Reason discarded | Path | Count |
 |---|---|---|
-| Active Class A code-only tasks (`harbor_tasks/`) | 226 | 185 passing oracle, ready to use |
-| Class B candidate placeholders (`harbor_tasks_quarantine/_unfilled_agentmd_stubs/`) | 4,862 | causality classification in progress |
-| Discarded — repo has no agent-instruction files (`_stubs_no_tier1/`) | 598 | trash |
-| Discarded — placeholder slug doesn't match any scout entry (`_stubs_unmatched/`) | 627 | trash |
-| Other discarded (decorative / trivial / no-signal sweeps) | 899 | trash |
+| Placeholder slug doesn't match any scout entry | `harbor_tasks_quarantine/discarded_unmatched/` | 627 |
+| Repo has no agent-instruction files at HEAD | `harbor_tasks_quarantine/discarded_no_instructions/` | 598 |
+| Decorative / trivial / no-signal | `harbor_tasks_quarantine/discarded_decorative/` | 899 |
+| **Total trash** | | **2,124** |
 
-Cost to materialize the projected ~310 Class A+B winners into runnable tasks: **≈$2,500** in Opus 4.6 (scaffolding) + Gemini (causality + audit) calls.
+Cost to materialize the projected ~310 surviving (A+B) PRs into runnable tasks: **≈$2,500** in Opus 4.6 (scaffolding) + Gemini (causality + audit) calls.
 
 ## Repository Structure
 
