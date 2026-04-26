@@ -377,6 +377,8 @@ def collect_markdown_text(task_dir: Path) -> tuple[str, list[str]]:
         return "(no eval_manifest.yaml)", []
     try:
         manifest = yaml.safe_load(manifest_path.read_text(errors="ignore")) or {}
+        if not isinstance(manifest, dict):
+            manifest = {}
     except Exception:
         return "(unparseable eval_manifest.yaml)", []
 
@@ -453,6 +455,8 @@ def collect_checks(task_dir: Path) -> str:
         return "(none)"
     try:
         manifest = yaml.safe_load(manifest_path.read_text(errors="ignore")) or {}
+        if not isinstance(manifest, dict):
+            manifest = {}
     except Exception:
         return "(unparseable)"
     out = []
@@ -470,6 +474,8 @@ def collect_rubric(task_dir: Path) -> str:
         return "(none)"
     try:
         manifest = yaml.safe_load(manifest_path.read_text(errors="ignore")) or {}
+        if not isinstance(manifest, dict):
+            manifest = {}
     except Exception:
         return "(unparseable)"
     out = []
