@@ -47,62 +47,103 @@ from dotenv import load_dotenv
 load_dotenv()
 
 GEMINI_KEY = os.environ.get("GEMINI_API_KEY", "")
+# Gemini 3.1 Pro is the canonical judge for this benchmark — using 2.5 Flash
+# was a mistake on the original sweep (caused ~50% false-positive quarantine
+# rate observed in the 2026-04-25 audit).
 GEMINI_URL = ("https://generativelanguage.googleapis.com/v1beta/models/"
-              "gemini-2.5-flash:generateContent")
+              "gemini-3.1-pro-preview-customtools:generateContent")
 
 
 JUDGE_PROMPT = """\
-You judge whether a software-engineering task's gold solution is causally
-dependent on the REPO'S agent-instruction markdown files. These are markdown
-files committed in the repo BEFORE the task starts, e.g.:
+You judge whether a software-engineering task is suitable for an
+agent-instruction-following benchmark. There are THREE verdicts:
+
+1. **load_bearing** — The task IS a real markdown-causal task. The gold
+   solution either edits a repo markdown file directly OR follows a
+   specific rule from one (i.e., removing the markdown would change the
+   agent's solution). KEEP these.
+
+2. **decorative** — The repo has agent-instruction markdowns, but the
+   gold fix is determined by the bug itself, not by any rule. Removing
+   the markdown wouldn't change the fix. DISCARD.
+
+3. **unscaffoldable** — The PR cannot become a valid Linux-Docker
+   benchmark task regardless of markdown causality. Common reasons
+   (cited from observed Opus abandon patterns):
+   - Platform-specific runtime (Android emulator, iOS simulator, WinUI,
+     macOS-only frameworks like AppleArchive, Cocoa, Metal, DirectX)
+   - GPU/special hardware required (CUDA kernels, TPU, model weights)
+   - Needs cloud accounts / API keys / paid services / OAuth
+   - Massive cross-cutting refactor (>500 lines functional code or
+     >10 files architecturally invasive — too brittle for a clean test)
+   - No testable behavior (purely visual UI/CSS, audio, animation,
+     or PR is docs-only / CI-only with no executable code change)
+   - Reverted upstream / repo deleted / can't checkout base commit
+   DISCARD with the specific reason.
+
+REPO MARKDOWN FILES are committed in the repo BEFORE the task starts, e.g.:
 - `CLAUDE.md`, `AGENTS.md`, `CONVENTIONS.md` (any directory)
 - `.claude/rules/*.md`, `.claude/skills/*/SKILL.md`, `.claude/agents/*.md`
-- `.cursorrules`, `.cursor/rules/`
-- `.github/copilot-instructions.md`
+- `.agents/skills/*/SKILL.md`, `.opencode/skills/*/SKILL.md`,
+  `.codex/skills/*/SKILL.md`, `.github/skills/*/SKILL.md`
+- `.cursorrules`, `.cursor/rules/`, `.github/copilot-instructions.md`
 
 DO NOT count the task's own `instruction.md` as a markdown — that is the
 prompt given to the agent regardless. The question is about REPO files.
 
-The test:
-> Imagine we DELETED the listed REPO MARKDOWN FILES below before the agent
-> looked at the repo. Would the gold solution still be the SAME correct fix?
->   - If YES (gold doesn't depend on those files) → verdict "decorative"
->   - If NO (gold needs those files to choose this specific fix) → verdict
->     "load_bearing"
-
-LOAD_BEARING examples:
-- Gold patch updates AGENTS.md/CLAUDE.md to document a new feature/rule
-- Gold patch follows a naming/style/pattern rule that exists ONLY in repo's
-  CLAUDE.md (e.g., "use single-word variable names", "no wildcard imports")
+LOAD_BEARING evidence (any one suffices):
+- Gold patch directly edits one of the listed markdown files
+- Gold patch follows a SPECIFIC rule from a markdown (cite the rule
+  verbatim and the file:line)
 - Gold patch creates files at paths mandated by `.claude/rules/`
-- Without the markdown, an equally-correct alternative fix would be plausible
+- A corollary action mandated by markdown is in the diff (e.g.,
+  "bug fixes must include a test" → diff adds a test;
+  "add type guards when adding event types" → diff adds type guards;
+  "use top-level imports" → diff adds an import at module top)
+- The eval_manifest.yaml `rubric:` section cites a markdown rule WITH
+  source path and the diff visibly follows it
 
-DECORATIVE examples:
-- Gold patch fixes a bug whose correct fix is fully determined by code/tests
-- Repo markdowns contain only generic advice with no rule that constrains the gold
-- Gold patch never touches markdown AND no rule from markdown predicts the choice
+**The RUBRIC RULES section below is AUTHORITATIVE.** Each rubric rule
+was mined from a specific markdown file with line citations. If a
+rubric rule names a SPECIFIC rule (not generic "follow existing style"
+or "run linting") with a source citation, AND the gold patch follows
+that rule (e.g. rubric says "add type guards when adding event types"
+and the diff adds isFooEvent + isBarEvent type guards), the verdict
+MUST be "load_bearing". Do not be misled by the surrounding
+markdown content being mostly generic — focus on whether ANY of the
+rubric-cited rules predict a specific choice in the gold patch.
 
-Be strict: if you cannot point to a SPECIFIC sentence in a REPO MARKDOWN
-file (CLAUDE.md / AGENTS.md / .claude/* / etc., NOT instruction.md) that
-predicts a SPECIFIC choice in the gold patch, the verdict is "decorative".
+Be strict for "decorative" — if you cannot point to a SPECIFIC rubric
+rule (or a specific sentence in a REPO MARKDOWN file) that predicts a
+SPECIFIC choice in the gold patch, the verdict is "decorative". A
+rubric like "Follow existing code style" is too generic; one like
+"Add type guards when adding event types" is specific.
+
+Be aggressive for "unscaffoldable" only when evidence is concrete (file
+paths matching platform-specific dirs, framework imports, file count,
+line count). When in doubt between "decorative" and "unscaffoldable",
+prefer "decorative" — it's the milder discard.
+
+=== RUBRIC RULES (AUTHORITATIVE — mined from repo markdowns) ===
+{rubric}
+
+=== agent_config CHECKS (a check that already links to a markdown rule) ===
+{checks}
+
+=== GOLD SOLUTION (solve.sh — does this follow any rubric rule above?) ===
+{solve_sh}
 
 === TASK INSTRUCTION (the agent's prompt — DOES NOT count as a markdown) ===
 {instruction}
 
-=== GOLD SOLUTION (solve.sh) ===
-{solve_sh}
-
-=== REPO MARKDOWN FILES (the only files that count for this judgment) ===
+=== REPO MARKDOWN FILES (raw content; rubric above is the distillation) ===
 {markdowns}
 
-=== agent_config CHECKS (link from a check to a markdown rule) ===
-{checks}
-
-=== RUBRIC RULES (rules supposedly mined from repo markdowns) ===
-{rubric}
-
-Output JSON. Keep `reason` ≤ 25 words. Each `evidence` item must cite a
-specific repo markdown file (not instruction.md), ≤ 20 words.
+Output JSON. Keep `reason` ≤ 30 words. Each `evidence` item must cite a
+specific rubric rule or repo markdown file (not instruction.md), ≤ 20
+words. For unscaffoldable, the `reason` MUST name the abandon category
+(e.g., "platform-specific: macOS-only", "too-large: 600 lines / 12 files",
+"no testable behavior: pure CSS animation", etc.).
 """
 
 
@@ -469,7 +510,8 @@ def build_prompt(task_dir: Path) -> tuple[str, list[str]] | None:
 _RESPONSE_SCHEMA = {
     "type": "OBJECT",
     "properties": {
-        "verdict":    {"type": "STRING", "enum": ["load_bearing", "decorative"]},
+        "verdict":    {"type": "STRING",
+                       "enum": ["load_bearing", "decorative", "unscaffoldable"]},
         "reason":     {"type": "STRING"},
         "evidence":   {"type": "ARRAY", "items": {"type": "STRING"}},
         "confidence": {"type": "NUMBER"},
@@ -489,10 +531,14 @@ async def call_gemini(prompt: str, client: httpx.AsyncClient) -> dict | None:
                 "maxOutputTokens": 1024,
                 "responseMimeType": "application/json",
                 "responseSchema": _RESPONSE_SCHEMA,
-                "thinkingConfig": {"thinkingBudget": 0},
+                # Gemini 3.1 Pro requires thinking mode (no budget=0 allowed).
+                # 1024 is small but enough for a structured-output verdict;
+                # large thinking would just inflate cost without changing the
+                # answer for a 3-way classification task.
+                "thinkingConfig": {"thinkingBudget": 1024},
             },
         },
-        timeout=120,
+        timeout=180,
     )
     r.raise_for_status()
     data = r.json()
@@ -530,7 +576,7 @@ async def judge_task(name: str, prompt: str, used_paths: list[str],
                                "evidence": []}
         try:
             v = await call_gemini(prompt, client)
-            if v and v.get("verdict") in ("load_bearing", "decorative"):
+            if v and v.get("verdict") in ("load_bearing", "decorative", "unscaffoldable"):
                 out.update(v)
         except Exception as e:
             out["error"] = str(e)[:300]
@@ -610,7 +656,10 @@ def main() -> None:
     ap.add_argument("--corpus", type=Path, default=Path("harbor_tasks"))
     ap.add_argument("--tasks-file", type=Path,
                     help="File with one task name per line (default: all in corpus)")
-    ap.add_argument("--concurrency", type=int, default=8)
+    ap.add_argument("--concurrency", type=int, default=100,
+                    help="Async concurrency. Flex-tier Gemini handles 100+ "
+                         "in parallel without rate limits — latency hides "
+                         "the per-call cost.")
     ap.add_argument("--out", type=Path, default=Path("/tmp/markdown_causality.json"))
     args = ap.parse_args()
 
