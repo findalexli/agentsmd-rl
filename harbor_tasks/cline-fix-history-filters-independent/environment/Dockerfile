@@ -9,9 +9,11 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Clone repo at base commit
-RUN git clone --filter=blob:none https://github.com/cline/cline.git /workspace/cline && \
+RUN git init /workspace/cline && \
     cd /workspace/cline && \
-    git checkout 9fc9785aa2ab3985ae5030330566499d26fb6192 && \
+    git remote add origin https://github.com/cline/cline.git && \
+    git fetch --depth=1 origin 9fc9785aa2ab3985ae5030330566499d26fb6192 && \
+    git checkout FETCH_HEAD \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

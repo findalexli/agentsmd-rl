@@ -16,9 +16,11 @@ RUN pip3 install --break-system-packages pytest pytest-json-ctrf 2>/dev/null || 
 RUN npm install -g pnpm
 
 # Clone repo at base commit (blob-less clone for large monorepo)
-RUN git clone --filter=blob:none https://github.com/lobehub/lobe-chat.git /workspace/lobe-chat && \
+RUN git init /workspace/lobe-chat && \
     cd /workspace/lobe-chat && \
-    git checkout 17544558908a97902ef5bf1f564254288f0cf649 && \
+    git remote add origin https://github.com/lobehub/lobe-chat.git && \
+    git fetch --depth=1 origin 17544558908a97902ef5bf1f564254288f0cf649 && \
+    git checkout FETCH_HEAD \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

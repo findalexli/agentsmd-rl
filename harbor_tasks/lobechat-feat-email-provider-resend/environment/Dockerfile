@@ -12,9 +12,11 @@ RUN apt-get update && \
 RUN npm install -g pnpm
 
 # Clone repo at base commit
-RUN git clone --filter=blob:none https://github.com/lobehub/lobe-chat.git /workspace/lobe-chat && \
+RUN git init /workspace/lobe-chat && \
     cd /workspace/lobe-chat && \
-    git checkout 08572d060270afd65fcc5efdf7cde9e5fb0b0e04 && \
+    git remote add origin https://github.com/lobehub/lobe-chat.git && \
+    git fetch --depth=1 origin 08572d060270afd65fcc5efdf7cde9e5fb0b0e04 && \
+    git checkout FETCH_HEAD \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

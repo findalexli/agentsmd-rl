@@ -14,9 +14,11 @@ RUN pip3 install pytest --break-system-packages
 WORKDIR /workspace
 
 # Clone the repo at base commit (shallow clone for speed)
-RUN git clone --filter=blob:none --depth=100 https://github.com/SeleniumHQ/selenium.git && \
-    cd selenium && \
-    git checkout 5c2bf6b42fb66f895d936cf13a392385fb032689
+RUN git init /workspace/&& && \
+    cd /workspace/&& && \
+    git remote add origin https://github.com/SeleniumHQ/selenium.git && \
+    git fetch --depth=1 origin 5c2bf6b42fb66f895d936cf13a392385fb032689 && \
+    git checkout FETCH_HEAD
 
 # Verify the target file exists
 RUN ls -la /workspace/selenium/dotnet/src/webdriver/BiDi/Json/

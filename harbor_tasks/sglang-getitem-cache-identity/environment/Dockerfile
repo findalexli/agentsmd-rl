@@ -9,9 +9,11 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Clone sglang repo at base commit
-RUN git clone --filter=blob:none https://github.com/sgl-project/sglang.git /workspace/sglang && \
+RUN git init /workspace/sglang && \
     cd /workspace/sglang && \
-    git checkout ef2d4013d77cf1267e032d7a7a745dc3a6f74880 && \
+    git remote add origin https://github.com/sgl-project/sglang.git && \
+    git fetch --depth=1 origin ef2d4013d77cf1267e032d7a7a745dc3a6f74880 && \
+    git checkout FETCH_HEAD \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

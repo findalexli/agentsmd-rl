@@ -16,8 +16,10 @@ RUN mkdir -p /logs/verifier
 
 # Clone the repository at the base commit
 WORKDIR /workspace
-RUN git clone --filter=blob:none https://github.com/TanStack/router.git router && \
-    cd router && \
-    git checkout 13ef4c2e7c92e276185c112d486248b7447535de
+RUN git init /workspace/router && \
+    cd /workspace/router && \
+    git remote add origin https://github.com/TanStack/router.git && \
+    git fetch --depth=1 origin 13ef4c2e7c92e276185c112d486248b7447535de && \
+    git checkout FETCH_HEAD
 
 WORKDIR /workspace/router

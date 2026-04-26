@@ -10,10 +10,11 @@ RUN apt-get update && apt-get install -y \
 
 # Clone React repo at base commit (before the fix)
 WORKDIR /workspace
-RUN git clone --depth 1 https://github.com/facebook/react.git && \
-    cd react && \
+RUN git init /workspace/&& && \
+    cd /workspace/&& && \
+    git remote add origin https://github.com/facebook/react.git && \
     git fetch --depth=1 origin f944b4c5352be02623d2d7415c0806350f875114 && \
-    git checkout f944b4c5352be02623d2d7415c0806350f875114
+    git checkout FETCH_HEAD
 
 WORKDIR /workspace/react
 

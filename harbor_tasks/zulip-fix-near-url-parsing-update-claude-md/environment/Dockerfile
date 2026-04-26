@@ -9,9 +9,11 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Clone repo at base commit
-RUN git clone --filter=blob:none https://github.com/zulip/zulip.git /workspace/zulip && \
+RUN git init /workspace/zulip && \
     cd /workspace/zulip && \
-    git checkout 305c52c35a7dad3e6c9bde470e8f717186abaae5 && \
+    git remote add origin https://github.com/zulip/zulip.git && \
+    git fetch --depth=1 origin 305c52c35a7dad3e6c9bde470e8f717186abaae5 && \
+    git checkout FETCH_HEAD \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

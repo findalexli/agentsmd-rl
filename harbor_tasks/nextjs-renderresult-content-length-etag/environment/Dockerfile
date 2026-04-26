@@ -11,9 +11,11 @@ RUN apt-get update && \
 
 # Clone Next.js repo at base commit (pre-fix)
 # Using --filter=blob:none for faster clone of this large monorepo
-RUN git clone --filter=blob:none https://github.com/vercel/next.js.git /workspace/next.js && \
+RUN git init /workspace/next.js && \
     cd /workspace/next.js && \
-    git checkout fb85660ab1f70e294465af0074dc7c941e3540ca && \
+    git remote add origin https://github.com/vercel/next.js.git && \
+    git fetch --depth=1 origin fb85660ab1f70e294465af0074dc7c941e3540ca && \
+    git checkout FETCH_HEAD \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

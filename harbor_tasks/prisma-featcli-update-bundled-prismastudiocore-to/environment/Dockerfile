@@ -9,9 +9,11 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Clone repo at base commit (blob-filter for large monorepo)
-RUN git clone --filter=blob:none https://github.com/prisma/prisma.git /workspace/prisma && \
+RUN git init /workspace/prisma && \
     cd /workspace/prisma && \
-    git checkout 32fb24b53c2a46971f3093eee9934c18e0f47642 && \
+    git remote add origin https://github.com/prisma/prisma.git && \
+    git fetch --depth=1 origin 32fb24b53c2a46971f3093eee9934c18e0f47642 && \
+    git checkout FETCH_HEAD \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

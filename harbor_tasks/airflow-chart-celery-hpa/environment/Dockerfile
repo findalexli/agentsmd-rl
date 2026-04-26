@@ -14,9 +14,11 @@ RUN curl -fsSL https://get.helm.sh/helm-v3.14.0-linux-amd64.tar.gz | tar -xz -C 
 # Clone the Airflow repository at the base commit
 WORKDIR /workspace
 ARG BASE_COMMIT=fc861cbf12857fbfed34d6e934706639d9d761f1
-RUN git clone --filter=blob:none https://github.com/apache/airflow.git airflow && \
-    cd airflow && \
-    git checkout ${BASE_COMMIT}
+RUN git init /workspace/airflow && \
+    cd /workspace/airflow && \
+    git remote add origin https://github.com/apache/airflow.git && \
+    git fetch --depth=1 origin fc861cbf12857fbfed34d6e934706639d9d761f1 && \
+    git checkout FETCH_HEAD
 
 # Install test dependencies
 WORKDIR /workspace/airflow

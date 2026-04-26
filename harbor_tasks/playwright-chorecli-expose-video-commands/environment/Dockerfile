@@ -9,9 +9,11 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Clone repo at base commit (large monorepo — use --depth for speed)
-RUN git clone --filter=blob:none https://github.com/microsoft/playwright.git /workspace/playwright && \
+RUN git init /workspace/playwright && \
     cd /workspace/playwright && \
-    git checkout 8c99ff19b8e03ab21cec344d8b2f1d149d4040c7 && \
+    git remote add origin https://github.com/microsoft/playwright.git && \
+    git fetch --depth=1 origin 8c99ff19b8e03ab21cec344d8b2f1d149d4040c7 && \
+    git checkout FETCH_HEAD \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

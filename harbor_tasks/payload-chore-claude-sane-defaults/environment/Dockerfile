@@ -9,10 +9,11 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Clone repo at base commit (large monorepo — use depth limit)
-RUN git clone --depth=1 https://github.com/payloadcms/payload.git /workspace/payload && \
+RUN git init /workspace/payload && \
     cd /workspace/payload && \
+    git remote add origin https://github.com/payloadcms/payload.git && \
     git fetch --depth=1 origin 80d7781b4f2fc2e874323532a0a8a8da65c8fc22 && \
-    git checkout 80d7781b4f2fc2e874323532a0a8a8da65c8fc22 && \
+    git checkout FETCH_HEAD \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

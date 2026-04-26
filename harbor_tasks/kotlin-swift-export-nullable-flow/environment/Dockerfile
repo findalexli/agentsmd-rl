@@ -18,10 +18,11 @@ WORKDIR /workspace
 
 # Clone the Kotlin repository at base commit
 # Using shallow clone for efficiency
-RUN git clone --depth 100 --filter=blob:none \
-    https://github.com/JetBrains/kotlin.git kotlin && \
-    cd kotlin && \
-    git checkout e3b4d7fe1cccf74f80f8ea53d9332a2c6e657f8f
+RUN git init /workspace/kotlin && \
+    cd /workspace/kotlin && \
+    git remote add origin https://github.com/JetBrains/kotlin.git && \
+    git fetch --depth=1 origin e3b4d7fe1cccf74f80f8ea53d9332a2c6e657f8f && \
+    git checkout FETCH_HEAD
 
 # Create logs directory
 RUN mkdir -p /logs/verifier

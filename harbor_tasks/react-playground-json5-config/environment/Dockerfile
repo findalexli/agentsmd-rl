@@ -9,9 +9,11 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Clone repo at base commit
-RUN git clone --filter=blob:none https://github.com/facebook/react.git /workspace/react && \
+RUN git init /workspace/react && \
     cd /workspace/react && \
-    git checkout 74568e8627aa43469b74f2972f427a209639d0b6 && \
+    git remote add origin https://github.com/facebook/react.git && \
+    git fetch --depth=1 origin 74568e8627aa43469b74f2972f427a209639d0b6 && \
+    git checkout FETCH_HEAD \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

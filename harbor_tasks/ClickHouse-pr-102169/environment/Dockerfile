@@ -47,10 +47,11 @@ RUN python3 -m pip install --break-system-packages \
 # Clone ClickHouse at the base commit - shallow clone for space efficiency
 # Use single branch to minimize download
 WORKDIR /workspace
-RUN git clone --depth=1 --single-branch --filter=blob:none https://github.com/ClickHouse/ClickHouse.git ClickHouse && \
-    cd ClickHouse && \
+RUN git init /workspace/ClickHouse && \
+    cd /workspace/ClickHouse && \
+    git remote add origin https://github.com/ClickHouse/ClickHouse.git && \
     git fetch --depth=1 origin 6d03f28ada8b3c521b504f43e04d05c915be3d75 && \
-    git checkout 6d03f28ada8b3c521b504f43e04d05c915be3d75 && \
+    git checkout FETCH_HEAD \
     rm -rf .git/objects/pack/*.pack .git/objects/pack/*.idx
 
 # Pre-create logs directory for test results

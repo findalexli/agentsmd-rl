@@ -19,10 +19,11 @@ RUN pip install uv
 
 # Clone Airflow repo at base commit (shallow clone for speed)
 ARG BASE_COMMIT=8dc4305675a6817f55d5ebcc88367859da21beca
-RUN git clone --filter=blob:none https://github.com/apache/airflow.git /workspace/airflow \
-    && cd /workspace/airflow \
-    && git fetch --depth=1 origin ${BASE_COMMIT} \
-    && git checkout ${BASE_COMMIT}
+RUN git init /workspace/airflow && \
+    cd /workspace/airflow && \
+    git remote add origin https://github.com/apache/airflow.git && \
+    git fetch --depth=1 origin 8dc4305675a6817f55d5ebcc88367859da21beca && \
+    git checkout FETCH_HEAD
 
 WORKDIR /workspace/airflow
 

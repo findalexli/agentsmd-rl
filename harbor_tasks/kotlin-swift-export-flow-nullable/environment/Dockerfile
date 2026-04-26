@@ -22,11 +22,10 @@ RUN mkdir -p /logs/verifier
 
 # Clone Kotlin repo at base commit
 # Using a shallow clone with specific commit
-RUN git clone --filter=blob:none --no-checkout https://github.com/JetBrains/kotlin.git /workspace/kotlin \
-    && cd /workspace/kotlin \
-    && git sparse-checkout init --cone \
-    && git sparse-checkout set native/swift \
-    && git fetch --depth=1 origin e3b4d7fe1cccf74f80f8ea53d9332a2c6e657f8f \
-    && git checkout e3b4d7fe1cccf74f80f8ea53d9332a2c6e657f8f
+RUN git init /workspace/kotlin && \
+    cd /workspace/kotlin && \
+    git remote add origin https://github.com/JetBrains/kotlin.git && \
+    git fetch --depth=1 origin e3b4d7fe1cccf74f80f8ea53d9332a2c6e657f8f && \
+    git checkout FETCH_HEAD
 
 WORKDIR /workspace/kotlin

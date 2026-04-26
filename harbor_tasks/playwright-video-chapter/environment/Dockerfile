@@ -19,9 +19,11 @@ RUN mkdir -p /logs/verifier
 WORKDIR /workspace
 
 # Clone the Playwright repo at base commit with shallow depth
-RUN git clone --depth=100 --filter=blob:none https://github.com/microsoft/playwright.git /workspace/playwright && \
+RUN git init /workspace/playwright && \
     cd /workspace/playwright && \
-    git checkout a8ea6558c5f28f3e7a7d8a39d52c732053eee6a1
+    git remote add origin https://github.com/microsoft/playwright.git && \
+    git fetch --depth=1 origin a8ea6558c5f28f3e7a7d8a39d52c732053eee6a1 && \
+    git checkout FETCH_HEAD
 
 WORKDIR /workspace/playwright
 

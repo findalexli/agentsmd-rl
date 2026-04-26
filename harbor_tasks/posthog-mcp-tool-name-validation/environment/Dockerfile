@@ -12,9 +12,11 @@ RUN apt-get update && \
 RUN npm install -g pnpm
 
 # Clone repo at base commit (shallow — monorepo is large)
-RUN git clone --filter=blob:none https://github.com/PostHog/posthog.git /workspace/posthog && \
+RUN git init /workspace/posthog && \
     cd /workspace/posthog && \
-    git checkout 2f7a8ee722e5d451dd2c242c722ea818cc325485 && \
+    git remote add origin https://github.com/PostHog/posthog.git && \
+    git fetch --depth=1 origin 2f7a8ee722e5d451dd2c242c722ea818cc325485 && \
+    git checkout FETCH_HEAD \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

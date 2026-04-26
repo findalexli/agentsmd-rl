@@ -10,9 +10,11 @@ RUN apt-get update && \
 
 RUN pip install --no-cache-dir pytest pytest-json-ctrf
 
-RUN git clone --filter=blob:none https://github.com/BerriAI/litellm.git /workspace/litellm && \
+RUN git init /workspace/litellm && \
     cd /workspace/litellm && \
-    git checkout a38993b871a32090caea0941427a8bc5489a5c02 && \
+    git remote add origin https://github.com/BerriAI/litellm.git && \
+    git fetch --depth=1 origin a38993b871a32090caea0941427a8bc5489a5c02 && \
+    git checkout FETCH_HEAD \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

@@ -13,9 +13,11 @@ WORKDIR /workspace
 
 # Clone the Playwright repository at the base commit
 # Using depth=1 since we only need the specific commit
-RUN git clone --depth=100 --filter=blob:none https://github.com/microsoft/playwright.git /workspace/playwright && \
+RUN git init /workspace/playwright && \
     cd /workspace/playwright && \
-    git checkout 824f63da57edf990c6eeab6301d5f1b65dcb4ca8
+    git remote add origin https://github.com/microsoft/playwright.git && \
+    git fetch --depth=1 origin 824f63da57edf990c6eeab6301d5f1b65dcb4ca8 && \
+    git checkout FETCH_HEAD
 
 WORKDIR /workspace/playwright
 

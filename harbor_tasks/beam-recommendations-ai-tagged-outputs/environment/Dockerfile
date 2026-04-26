@@ -6,7 +6,11 @@ ENV LANG=C.UTF-8
 RUN apt-get update &&     apt-get install -y --no-install-recommends         git curl ca-certificates build-essential tmux &&     rm -rf /var/lib/apt/lists/*
 
 # Clone repo at base commit (large monorepo — use blob filter)
-RUN git clone --filter=blob:none https://github.com/apache/beam.git /workspace/beam &&     cd /workspace/beam &&     git checkout 8044fcb3e6e394db4be60a7883eb9572ebd41eac &&     git config user.email "agent@test" &&     git config user.name "Agent"
+RUN git init /workspace/beam && \
+    cd /workspace/beam && \
+    git remote add origin https://github.com/apache/beam.git && \
+    git fetch --depth=1 origin 8044fcb3e6e394db4be60a7883eb9572ebd41eac && \
+    git checkout FETCH_HEAD     git config user.email "agent@test" &&     git config user.name "Agent"
 
 WORKDIR /workspace/beam
 

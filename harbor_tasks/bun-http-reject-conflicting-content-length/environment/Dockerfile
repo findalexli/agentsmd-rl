@@ -13,9 +13,11 @@ RUN curl -fsSL https://bun.sh/install | bash
 ENV PATH="/root/.bun/bin:$PATH"
 
 # Clone repo at base commit
-RUN git clone --filter=blob:none https://github.com/oven-sh/bun.git /workspace/bun && \
+RUN git init /workspace/bun && \
     cd /workspace/bun && \
-    git checkout 5b3ca83b84f90ccc9c71005db0ab9bd87850bc70 && \
+    git remote add origin https://github.com/oven-sh/bun.git && \
+    git fetch --depth=1 origin 5b3ca83b84f90ccc9c71005db0ab9bd87850bc70 && \
+    git checkout FETCH_HEAD \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

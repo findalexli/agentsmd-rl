@@ -11,9 +11,11 @@ RUN apt-get update && apt-get install -y \
 
 # Clone the superset repository at base commit
 # Using --filter=blob:none for partial clone to save time/space
-RUN git clone --filter=blob:none https://github.com/apache/superset.git /workspace/superset && \
+RUN git init /workspace/superset && \
     cd /workspace/superset && \
-    git checkout fc8c06f7a3ba4c0a5feeafbb522b876b5f017d45
+    git remote add origin https://github.com/apache/superset.git && \
+    git fetch --depth=1 origin fc8c06f7a3ba4c0a5feeafbb522b876b5f017d45 && \
+    git checkout FETCH_HEAD
 
 # Install Python dependencies
 # We need to install the development dependencies to run tests

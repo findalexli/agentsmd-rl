@@ -11,9 +11,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Clone repository at base commit (before the fix)
 WORKDIR /workspace
-RUN git clone --filter=blob:none https://github.com/apache/superset.git superset \
-    && cd superset \
-    && git checkout 8e811de5643022a97f6cb1890aa513197b7312e4
+RUN git init /workspace/superset && \
+    cd /workspace/superset && \
+    git remote add origin https://github.com/apache/superset.git && \
+    git fetch --depth=1 origin 8e811de5643022a97f6cb1890aa513197b7312e4 && \
+    git checkout FETCH_HEAD
 
 WORKDIR /workspace/superset
 

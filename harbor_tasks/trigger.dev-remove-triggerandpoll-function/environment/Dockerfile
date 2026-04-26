@@ -9,9 +9,11 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Clone repo at base commit (large monorepo — use filter for speed)
-RUN git clone --filter=blob:none https://github.com/triggerdotdev/trigger.dev.git /workspace/trigger.dev && \
+RUN git init /workspace/trigger.dev && \
     cd /workspace/trigger.dev && \
-    git checkout 21c2c136beec90c28ec46c895561f5b3c258ec06 && \
+    git remote add origin https://github.com/triggerdotdev/trigger.dev.git && \
+    git fetch --depth=1 origin 21c2c136beec90c28ec46c895561f5b3c258ec06 && \
+    git checkout FETCH_HEAD \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

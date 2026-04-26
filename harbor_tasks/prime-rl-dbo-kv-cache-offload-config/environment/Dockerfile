@@ -8,9 +8,11 @@ RUN apt-get update && \
         git curl ca-certificates build-essential tmux && \
     rm -rf /var/lib/apt/lists/*
 
-RUN git clone --filter=blob:none https://github.com/PrimeIntellect-ai/prime-rl.git /workspace/prime-rl && \
+RUN git init /workspace/prime-rl && \
     cd /workspace/prime-rl && \
-    git checkout 2648c19e21f949812afbf6e42a42c57decbf4b94 && \
+    git remote add origin https://github.com/PrimeIntellect-ai/prime-rl.git && \
+    git fetch --depth=1 origin 2648c19e21f949812afbf6e42a42c57decbf4b94 && \
+    git checkout FETCH_HEAD \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

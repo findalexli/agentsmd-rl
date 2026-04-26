@@ -8,9 +8,11 @@ RUN apt-get update && \
         git curl ca-certificates build-essential tmux && \
     rm -rf /var/lib/apt/lists/*
 
-RUN git clone --filter=blob:none https://github.com/inclusionAI/AReaL.git /workspace/AReaL && \
+RUN git init /workspace/AReaL && \
     cd /workspace/AReaL && \
-    git checkout d64f8688833cd73648a1b06932f1fbec542694e3 && \
+    git remote add origin https://github.com/inclusionAI/AReaL.git && \
+    git fetch --depth=1 origin d64f8688833cd73648a1b06932f1fbec542694e3 && \
+    git checkout FETCH_HEAD \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

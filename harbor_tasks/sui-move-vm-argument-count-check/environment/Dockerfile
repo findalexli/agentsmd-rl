@@ -17,8 +17,11 @@ WORKDIR /workspace/sui
 
 # Clone the repo at base commit (shallow clone for faster download)
 # Using filter=blob:none for partial clone to save space
-RUN git clone --filter=blob:none https://github.com/MystenLabs/sui.git /workspace/sui && \
-    git checkout 44e12d2c78cf6724a80fc06828bfa89b98c8de8f
+RUN git init /workspace/sui && \
+    cd /workspace/sui && \
+    git remote add origin https://github.com/MystenLabs/sui.git && \
+    git fetch --depth=1 origin 44e12d2c78cf6724a80fc06828bfa89b98c8de8f && \
+    git checkout FETCH_HEAD
 
 # Install Python packages for test runner
 RUN pip3 install pytest --break-system-packages

@@ -26,9 +26,10 @@ RUN mkdir -p /workspace /logs/verifier
 # Clone ClickHouse repo at base commit
 WORKDIR /workspace
 ARG BASE_COMMIT=f4eb1501802bc9f274870d147ae82979956939e6
-RUN git clone --filter=blob:none https://github.com/ClickHouse/ClickHouse.git ClickHouse \
-    && cd ClickHouse \
-    && git fetch --depth=100 origin ${BASE_COMMIT} \
-    && git checkout ${BASE_COMMIT}
+RUN git init /workspace/ClickHouse && \
+    cd /workspace/ClickHouse && \
+    git remote add origin https://github.com/ClickHouse/ClickHouse.git && \
+    git fetch --depth=1 origin f4eb1501802bc9f274870d147ae82979956939e6 && \
+    git checkout FETCH_HEAD
 
 WORKDIR /workspace/ClickHouse

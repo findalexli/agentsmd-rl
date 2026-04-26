@@ -14,9 +14,11 @@ RUN pip3 install pytest --break-system-packages
 WORKDIR /workspace
 
 # Clone the repository at base commit (shallow clone for efficiency)
-RUN git clone --filter=blob:none https://github.com/TanStack/router.git router && \
-    cd router && \
-    git checkout ab46b5ec42296c60dc46d97481f038b8df68ed84
+RUN git init /workspace/router && \
+    cd /workspace/router && \
+    git remote add origin https://github.com/TanStack/router.git && \
+    git fetch --depth=1 origin ab46b5ec42296c60dc46d97481f038b8df68ed84 && \
+    git checkout FETCH_HEAD
 
 # Install pnpm globally (required by the repo)
 RUN npm install -g pnpm

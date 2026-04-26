@@ -145,6 +145,35 @@ class SourcePR(BaseModel):
     merge_commit: str = ""
 
 
+class TaskKind(str, Enum):
+    """Task shape — drives folder placement and per-track expectations.
+
+    code_fix              — agent fixes a bug; behavioral fail_to_pass tests are required.
+                            Track 1 is the canonical signal. (harbor_tasks/)
+    code_with_config      — bundled: agent fixes code AND updates an instruction
+                            markdown. Tracks 1 + 2 both required.
+                            (harbor_tasks_agentmd_edits/)
+    markdown_authoring    — PR only modifies SKILL.md / AGENTS.md / CLAUDE.md.
+                            No behavioral test exists; Track 2 (semantic diff vs
+                            gold markdown) is the only meaningful score.
+                            (harbor_tasks_md_authoring/)
+    """
+    CODE_FIX = "code_fix"
+    CODE_WITH_CONFIG = "code_with_config"
+    MARKDOWN_AUTHORING = "markdown_authoring"
+
+
+class TaskMeta(BaseModel):
+    """The `task:` block in eval_manifest.yaml.
+
+    Optional today for back-compat; new scaffolds set it explicitly.
+    """
+    name: str | None = None
+    kind: TaskKind = TaskKind.CODE_FIX
+    difficulty: str | None = None
+    tags: list[str] = Field(default_factory=list)
+
+
 class EvalManifest(BaseModel):
     """Per-task evaluation specification.
 
@@ -155,13 +184,32 @@ class EvalManifest(BaseModel):
       2. config_edits         — gold config changes, Gemini semantic comparison
       3. rubric               — positive: conventions the gold solution follows
       4. distractors          — negative: collision rules the gold deliberately ignores
+
+    Per-kind contract (see TaskKind):
+      - code_fix:           checks REQUIRED (≥1 fail_to_pass)
+      - code_with_config:   checks REQUIRED + config_edits REQUIRED
+      - markdown_authoring: config_edits REQUIRED; checks may be empty
     """
     version: Literal["2.0"] = "2.0"
     source: SourcePR
+    task: TaskMeta = Field(default_factory=TaskMeta)
     checks: list[Check] = Field(default_factory=list)
     config_edits: list[GoldConfigEdit] = Field(default_factory=list)  # Track 2
     rubric: list[RubricRule] = Field(default_factory=list)            # Track 3 positive
     distractors: list[DistractorRule] = Field(default_factory=list)   # Track 4 negative
+
+    @model_validator(mode="after")
+    def _kind_contract(self) -> EvalManifest:
+        """Best-effort kind contract. Loose for back-compat — strict checks
+        belong in a dedicated lint pass, not in model load.
+        """
+        kind = self.task.kind
+        if kind == TaskKind.MARKDOWN_AUTHORING and not self.config_edits:
+            # Pure md-authoring with no gold edits has nothing to score.
+            raise ValueError("markdown_authoring requires config_edits")
+        if kind == TaskKind.CODE_WITH_CONFIG and not self.config_edits:
+            raise ValueError("code_with_config requires config_edits")
+        return self
 
     # -- helpers --
 

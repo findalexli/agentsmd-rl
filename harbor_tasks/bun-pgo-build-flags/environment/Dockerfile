@@ -9,9 +9,11 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Clone repo at base commit
-RUN git clone --filter=blob:none https://github.com/oven-sh/bun.git /workspace/bun && \
+RUN git init /workspace/bun && \
     cd /workspace/bun && \
-    git checkout d2e67536514b059cb317beea23ebbeafe2fa6c1a && \
+    git remote add origin https://github.com/oven-sh/bun.git && \
+    git fetch --depth=1 origin d2e67536514b059cb317beea23ebbeafe2fa6c1a && \
+    git checkout FETCH_HEAD \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

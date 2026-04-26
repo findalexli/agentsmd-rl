@@ -9,10 +9,11 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Clone PostHog monorepo at base commit (shallow to save time)
-RUN git clone --filter=blob:none --depth=1 https://github.com/PostHog/posthog.git /workspace/posthog && \
+RUN git init /workspace/posthog && \
     cd /workspace/posthog && \
+    git remote add origin https://github.com/PostHog/posthog.git && \
     git fetch --depth=1 origin a65a8fd19c2bed0c06c111f1d65b0deb87f31313 && \
-    git checkout a65a8fd19c2bed0c06c111f1d65b0deb87f31313 && \
+    git checkout FETCH_HEAD \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

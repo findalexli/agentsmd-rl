@@ -11,9 +11,11 @@ RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
 WORKDIR /workspace
 
 # Clone the repository at base commit
-RUN git clone --filter=blob:none https://github.com/langchain-ai/langgraph.git langgraph && \
-    cd langgraph && \
-    git checkout b8540449b477aeff563e8867378c3888516763b4
+RUN git init /workspace/langgraph && \
+    cd /workspace/langgraph && \
+    git remote add origin https://github.com/langchain-ai/langgraph.git && \
+    git fetch --depth=1 origin b8540449b477aeff563e8867378c3888516763b4 && \
+    git checkout FETCH_HEAD
 
 # Install Python SDK dependencies
 WORKDIR /workspace/langgraph/libs/sdk-py

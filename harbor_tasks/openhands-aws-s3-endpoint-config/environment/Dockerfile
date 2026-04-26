@@ -8,9 +8,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Clone OpenHands repo at base commit (shallow clone for speed)
-RUN git clone --filter=blob:none --depth=100 https://github.com/All-Hands-AI/OpenHands.git openhands && \
-    cd openhands && \
-    git checkout c9b2ce2fb9c61313d80643a489f81728bb9f5b09
+RUN git init /workspace/openhands && \
+    cd /workspace/openhands && \
+    git remote add origin https://github.com/All-Hands-AI/OpenHands.git && \
+    git fetch --depth=1 origin c9b2ce2fb9c61313d80643a489f81728bb9f5b09 && \
+    git checkout FETCH_HEAD
 
 # Install minimal testing dependencies
 RUN pip install --no-cache-dir pytest

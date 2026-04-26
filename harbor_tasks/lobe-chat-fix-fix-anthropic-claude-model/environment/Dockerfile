@@ -9,9 +9,11 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Clone repo at base commit (parent of merge commit)
-RUN git clone --filter=blob:none https://github.com/lobehub/lobe-chat.git /workspace/lobe-chat && \
+RUN git init /workspace/lobe-chat && \
     cd /workspace/lobe-chat && \
-    git checkout 66fba601942579a3c37fe4f0abe92e20de8e1831 && \
+    git remote add origin https://github.com/lobehub/lobe-chat.git && \
+    git fetch --depth=1 origin 66fba601942579a3c37fe4f0abe92e20de8e1831 && \
+    git checkout FETCH_HEAD \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

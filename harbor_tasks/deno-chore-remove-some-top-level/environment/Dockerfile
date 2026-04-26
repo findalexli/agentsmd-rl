@@ -9,9 +9,11 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Clone repo at base commit
-RUN git clone --filter=blob:none https://github.com/denoland/deno.git /workspace/deno && \
+RUN git init /workspace/deno && \
     cd /workspace/deno && \
-    git checkout 0b38d25ba7c1893757e15fbb2a68537b0191321f && \
+    git remote add origin https://github.com/denoland/deno.git && \
+    git fetch --depth=1 origin 0b38d25ba7c1893757e15fbb2a68537b0191321f && \
+    git checkout FETCH_HEAD \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

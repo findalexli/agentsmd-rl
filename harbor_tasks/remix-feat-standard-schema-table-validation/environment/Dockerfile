@@ -12,9 +12,11 @@ RUN apt-get update && \
 RUN corepack enable
 
 # Clone repo at base commit
-RUN git clone --filter=blob:none --single-branch https://github.com/remix-run/remix.git /workspace/remix && \
+RUN git init /workspace/remix && \
     cd /workspace/remix && \
-    git checkout 89db125c56d3b0d637a283ac9122c6cb8f5542c3 && \
+    git remote add origin https://github.com/remix-run/remix.git && \
+    git fetch --depth=1 origin 89db125c56d3b0d637a283ac9122c6cb8f5542c3 && \
+    git checkout FETCH_HEAD \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

@@ -19,9 +19,11 @@ WORKDIR /workspace
 
 # Clone the router repository at base commit
 ARG BASE_COMMIT=0e0a2817c30011829a4fefbb7d3bdef1e710d3ef
-RUN git clone --filter=blob:none https://github.com/TanStack/router.git /workspace/router && \
+RUN git init /workspace/router && \
     cd /workspace/router && \
-    git checkout ${BASE_COMMIT}
+    git remote add origin https://github.com/TanStack/router.git && \
+    git fetch --depth=1 origin 0e0a2817c30011829a4fefbb7d3bdef1e710d3ef && \
+    git checkout FETCH_HEAD
 
 # Install dependencies and build packages
 WORKDIR /workspace/router

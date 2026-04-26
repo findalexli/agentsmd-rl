@@ -9,9 +9,11 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Clone repo at base commit
-RUN git clone --filter=blob:none https://github.com/PRQL/prql.git /workspace/prql && \
+RUN git init /workspace/prql && \
     cd /workspace/prql && \
-    git checkout 7b0d983ead8d91921252ad835a3c43b2288b7fe1 && \
+    git remote add origin https://github.com/PRQL/prql.git && \
+    git fetch --depth=1 origin 7b0d983ead8d91921252ad835a3c43b2288b7fe1 && \
+    git checkout FETCH_HEAD \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

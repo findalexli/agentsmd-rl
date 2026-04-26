@@ -15,9 +15,11 @@ WORKDIR /workspace
 
 # Clone the ant-design repository at base commit
 # Using filter=blob:none for faster clone
-RUN git clone --filter=blob:none https://github.com/ant-design/ant-design.git /workspace/ant-design \
-    && cd /workspace/ant-design \
-    && git checkout 501436e5f45e533679f797ee0ee58e2a391e566d
+RUN git init /workspace/ant-design && \
+    cd /workspace/ant-design && \
+    git remote add origin https://github.com/ant-design/ant-design.git && \
+    git fetch --depth=1 origin 501436e5f45e533679f797ee0ee58e2a391e566d && \
+    git checkout FETCH_HEAD
 
 # Install dependencies (needed for tests)
 WORKDIR /workspace/ant-design

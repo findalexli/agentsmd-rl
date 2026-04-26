@@ -10,9 +10,11 @@ RUN apt-get update && \
 
 RUN pip3 install pytest pytest-json-ctrf --break-system-packages
 
-RUN git clone --filter=blob:none https://github.com/Infisical/infisical.git /workspace/infisical && \
+RUN git init /workspace/infisical && \
     cd /workspace/infisical && \
-    git checkout e928398a0919194fc2efd855aaf6700424b507d9 && \
+    git remote add origin https://github.com/Infisical/infisical.git && \
+    git fetch --depth=1 origin e928398a0919194fc2efd855aaf6700424b507d9 && \
+    git checkout FETCH_HEAD \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

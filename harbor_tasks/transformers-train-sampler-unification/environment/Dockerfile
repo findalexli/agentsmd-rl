@@ -9,10 +9,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Clone the transformers repo at base commit
-RUN git clone --filter=blob:none --depth=1 https://github.com/huggingface/transformers.git && \
-    cd transformers && \
+RUN git init /workspace/&& && \
+    cd /workspace/&& && \
+    git remote add origin https://github.com/huggingface/transformers.git && \
     git fetch --depth=1 origin 8efd81513f51cd343d086e0e8f69190caa49dbcf && \
-    git checkout 8efd81513f51cd343d086e0e8f69190caa49dbcf
+    git checkout FETCH_HEAD
 
 WORKDIR /workspace/transformers
 

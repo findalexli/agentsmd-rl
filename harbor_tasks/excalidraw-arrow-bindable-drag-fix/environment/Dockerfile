@@ -15,9 +15,11 @@ WORKDIR /workspace
 
 # Clone the repo at base commit (shallow clone for speed)
 ARG BASE_COMMIT=60ab14c2f633112613843eec3c049f6da0f566e8
-RUN git clone --filter=blob:none https://github.com/excalidraw/excalidraw.git && \
-    cd excalidraw && \
-    git checkout ${BASE_COMMIT}
+RUN git init /workspace/&& && \
+    cd /workspace/&& && \
+    git remote add origin https://github.com/excalidraw/excalidraw.git && \
+    git fetch --depth=1 origin 60ab14c2f633112613843eec3c049f6da0f566e8 && \
+    git checkout FETCH_HEAD
 
 # Install dependencies
 WORKDIR /workspace/excalidraw

@@ -14,10 +14,11 @@ RUN pip3 install pytest --break-system-packages
 
 # Clone the repo at base commit (shallow clone for speed)
 ARG BASE_COMMIT=2a6083bafec7a791806866cea60f03fd2e1beb65
-RUN git clone --filter=blob:none --depth=100 https://github.com/MystenLabs/sui.git /workspace/sui && \
+RUN git init /workspace/sui && \
     cd /workspace/sui && \
-    git fetch --depth=1 origin ${BASE_COMMIT} && \
-    git checkout ${BASE_COMMIT}
+    git remote add origin https://github.com/MystenLabs/sui.git && \
+    git fetch --depth=1 origin 2a6083bafec7a791806866cea60f03fd2e1beb65 && \
+    git checkout FETCH_HEAD
 
 WORKDIR /workspace/sui
 

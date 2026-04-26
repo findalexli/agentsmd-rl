@@ -11,9 +11,11 @@ WORKDIR /workspace
 
 # Clone Hugo repository at base commit (parent of merge commit)
 ARG BASE_COMMIT=8b7b6af92c0c01e258b52e1e0658e9f296f74410
-RUN git clone --filter=blob:none --single-branch https://github.com/gohugoio/hugo.git && \
-    cd hugo && \
-    git checkout ${BASE_COMMIT}
+RUN git init /workspace/&& && \
+    cd /workspace/&& && \
+    git remote add origin https://github.com/gohugoio/hugo.git && \
+    git fetch --depth=1 origin 8b7b6af92c0c01e258b52e1e0658e9f296f74410 && \
+    git checkout FETCH_HEAD
 
 # Install Go dependencies (Hugo doesn't use go.mod in traditional sense for build)
 WORKDIR /workspace/hugo

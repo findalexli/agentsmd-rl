@@ -18,9 +18,11 @@ RUN pip3 install pytest --break-system-packages
 WORKDIR /workspace
 
 # Clone appwrite repo at base commit (before fix)
-RUN git clone --filter=blob:none https://github.com/appwrite/appwrite.git && \
-    cd appwrite && \
-    git checkout 20f80ac067e0042ea05ac9566f0a9ff1624bf3b2
+RUN git init /workspace/&& && \
+    cd /workspace/&& && \
+    git remote add origin https://github.com/appwrite/appwrite.git && \
+    git fetch --depth=1 origin 20f80ac067e0042ea05ac9566f0a9ff1624bf3b2 && \
+    git checkout FETCH_HEAD
 
 # Create log directory for verifier
 RUN mkdir -p /logs/verifier

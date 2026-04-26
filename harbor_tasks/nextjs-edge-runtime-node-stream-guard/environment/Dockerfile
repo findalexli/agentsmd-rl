@@ -9,9 +9,11 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Clone repo at base commit
-RUN git clone --filter=blob:none https://github.com/vercel/next.js.git /workspace/next.js && \
+RUN git init /workspace/next.js && \
     cd /workspace/next.js && \
-    git checkout 15d9b4d7f923e637d1661b109df639a918f59c8a && \
+    git remote add origin https://github.com/vercel/next.js.git && \
+    git fetch --depth=1 origin 15d9b4d7f923e637d1661b109df639a918f59c8a && \
+    git checkout FETCH_HEAD \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

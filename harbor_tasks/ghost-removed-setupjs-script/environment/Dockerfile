@@ -9,10 +9,11 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Ghost is huge — shallow clone only. We only need files, not build.
-RUN git clone --depth=1 https://github.com/TryGhost/Ghost.git /workspace/Ghost && \
+RUN git init /workspace/Ghost && \
     cd /workspace/Ghost && \
+    git remote add origin https://github.com/TryGhost/Ghost.git && \
     git fetch --depth=1 origin c1e86e6dd150e7ab1a226cfce8f73bc4ee441787 && \
-    git checkout c1e86e6dd150e7ab1a226cfce8f73bc4ee441787 && \
+    git checkout FETCH_HEAD \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

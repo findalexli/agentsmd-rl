@@ -17,9 +17,11 @@ RUN curl -fsSL https://ziglang.org/download/0.13.0/zig-linux-x86_64-0.13.0.tar.x
     ln -s /opt/zig-linux-x86_64-0.13.0/zig /usr/local/bin/zig
 
 # Clone repo at base commit
-RUN git clone --filter=blob:none https://github.com/oven-sh/bun.git /workspace/bun && \
+RUN git init /workspace/bun && \
     cd /workspace/bun && \
-    git checkout 686eda3cb4773bb1ffe77cbdef6d0507d8fc2314 && \
+    git remote add origin https://github.com/oven-sh/bun.git && \
+    git fetch --depth=1 origin 686eda3cb4773bb1ffe77cbdef6d0507d8fc2314 && \
+    git checkout FETCH_HEAD \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

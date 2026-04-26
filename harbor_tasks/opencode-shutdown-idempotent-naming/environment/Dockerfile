@@ -15,9 +15,11 @@ RUN curl -fsSL https://bun.sh/install | bash && \
 
 # Clone repo at base commit
 ARG BASE_COMMIT=2a0be8316be7ae6ec78f5d221851fc1cc0cdddb2
-RUN git clone --filter=blob:none https://github.com/anomalyco/opencode.git /workspace/opencode && \
+RUN git init /workspace/opencode && \
     cd /workspace/opencode && \
-    git checkout $BASE_COMMIT && \
+    git remote add origin https://github.com/anomalyco/opencode.git && \
+    git fetch --depth=1 origin 2a0be8316be7ae6ec78f5d221851fc1cc0cdddb2 && \
+    git checkout FETCH_HEAD \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

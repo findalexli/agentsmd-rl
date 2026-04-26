@@ -6,9 +6,11 @@ RUN apt-get update && apt-get install -y python3 python3-pip git && rm -rf /var/
 # Clone ant-design at base commit
 WORKDIR /workspace
 ARG BASE_COMMIT=b73b49c02f70e54ffc67c6e7ec895ec8d62378f3
-RUN git clone --filter=blob:none https://github.com/ant-design/ant-design.git ant-design && \
-    cd ant-design && \
-    git checkout ${BASE_COMMIT}
+RUN git init /workspace/ant-design && \
+    cd /workspace/ant-design && \
+    git remote add origin https://github.com/ant-design/ant-design.git && \
+    git fetch --depth=1 origin b73b49c02f70e54ffc67c6e7ec895ec8d62378f3 && \
+    git checkout FETCH_HEAD
 
 WORKDIR /workspace/ant-design
 

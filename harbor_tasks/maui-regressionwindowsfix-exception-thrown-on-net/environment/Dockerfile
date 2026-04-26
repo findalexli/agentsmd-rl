@@ -9,9 +9,11 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Clone repo at base commit
-RUN git clone --filter=blob:none https://github.com/dotnet/maui.git /workspace/maui && \
+RUN git init /workspace/maui && \
     cd /workspace/maui && \
-    git checkout 260770c977f376c9b0190c03ed1a41920725f079 && \
+    git remote add origin https://github.com/dotnet/maui.git && \
+    git fetch --depth=1 origin 260770c977f376c9b0190c03ed1a41920725f079 && \
+    git checkout FETCH_HEAD \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

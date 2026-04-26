@@ -9,9 +9,11 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Clone repo at base commit (before the PR changes)
-RUN git clone --filter=blob:none https://github.com/vercel/next.js.git /workspace/next.js && \
+RUN git init /workspace/next.js && \
     cd /workspace/next.js && \
-    git checkout c74cb2ae25bbe515c600b85f1e974f7eb26db576 && \
+    git remote add origin https://github.com/vercel/next.js.git && \
+    git fetch --depth=1 origin c74cb2ae25bbe515c600b85f1e974f7eb26db576 && \
+    git checkout FETCH_HEAD \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

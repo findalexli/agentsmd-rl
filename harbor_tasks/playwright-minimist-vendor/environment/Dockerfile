@@ -16,9 +16,11 @@ RUN mkdir -p /logs/verifier
 
 # Clone repo at base commit (before the minimist vendor PR)
 ARG BASE_COMMIT=4df350b1c81b61ea471ff12767efd8e05f773377
-RUN git clone --filter=blob:none https://github.com/microsoft/playwright.git repo && \
-    cd repo && \
-    git checkout ${BASE_COMMIT}
+RUN git init /workspace/repo && \
+    cd /workspace/repo && \
+    git remote add origin https://github.com/microsoft/playwright.git && \
+    git fetch --depth=1 origin 4df350b1c81b61ea471ff12767efd8e05f773377 && \
+    git checkout FETCH_HEAD
 
 WORKDIR /workspace/repo
 

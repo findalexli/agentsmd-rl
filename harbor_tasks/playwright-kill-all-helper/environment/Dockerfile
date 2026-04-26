@@ -11,9 +11,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /workspace
 
 # Clone playwright repo at base commit
-RUN git clone --filter=blob:none https://github.com/microsoft/playwright.git /workspace/playwright && \
+RUN git init /workspace/playwright && \
     cd /workspace/playwright && \
-    git checkout 8710e613f8297cebe33c4f6a745999ab4e4907aa
+    git remote add origin https://github.com/microsoft/playwright.git && \
+    git fetch --depth=1 origin 8710e613f8297cebe33c4f6a745999ab4e4907aa && \
+    git checkout FETCH_HEAD
 
 WORKDIR /workspace/playwright
 

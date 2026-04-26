@@ -17,10 +17,11 @@ WORKDIR /workspace
 
 # Clone ClickHouse repo at base commit (shallow clone for speed)
 ARG BASE_COMMIT=cf5fb461472203d56bb0c169a61d194dd97fc2f2
-RUN git clone --filter=blob:none --depth=100 https://github.com/ClickHouse/ClickHouse.git ClickHouse && \
-    cd ClickHouse && \
-    git fetch --depth=1 origin ${BASE_COMMIT} && \
-    git checkout ${BASE_COMMIT}
+RUN git init /workspace/ClickHouse && \
+    cd /workspace/ClickHouse && \
+    git remote add origin https://github.com/ClickHouse/ClickHouse.git && \
+    git fetch --depth=1 origin cf5fb461472203d56bb0c169a61d194dd97fc2f2 && \
+    git checkout FETCH_HEAD
 
 WORKDIR /workspace/ClickHouse
 

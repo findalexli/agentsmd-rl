@@ -11,9 +11,11 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Clone repo at base commit (use --depth=N for large monorepos)
-RUN git clone --filter=blob:none https://github.com/anthropics/claude-code.git /workspace/claude-code && \
+RUN git init /workspace/claude-code && \
     cd /workspace/claude-code && \
-    git checkout ae411f846195b38c8bec88914dd06132e00eadf8 && \
+    git remote add origin https://github.com/anthropics/claude-code.git && \
+    git fetch --depth=1 origin ae411f846195b38c8bec88914dd06132e00eadf8 && \
+    git checkout FETCH_HEAD \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

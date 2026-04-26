@@ -18,9 +18,11 @@ WORKDIR /workspace
 
 # Clone the sui repository at base commit
 # Using --filter=blob:none for faster clone while keeping history needed for checkout
-RUN git clone --filter=blob:none https://github.com/MystenLabs/sui.git /workspace/sui && \
+RUN git init /workspace/sui && \
     cd /workspace/sui && \
-    git checkout 383a983d2b14715a4299227920188aa62089a723
+    git remote add origin https://github.com/MystenLabs/sui.git && \
+    git fetch --depth=1 origin 383a983d2b14715a4299227920188aa62089a723 && \
+    git checkout FETCH_HEAD
 
 # Install Rust components needed for the move-analyzer
 RUN rustup component add rustfmt clippy

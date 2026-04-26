@@ -16,11 +16,11 @@ RUN curl -fsSL https://get.helm.sh/helm-v3.15.0-linux-amd64.tar.gz | tar -xz \
 
 # Clone the repository with sparse checkout for chart and helm-tests
 WORKDIR /workspace
-RUN git clone --filter=blob:none --no-checkout https://github.com/apache/airflow.git airflow \
-    && cd airflow \
-    && git sparse-checkout init --cone \
-    && git sparse-checkout set chart helm-tests dev/breeze/src/airflow_breeze/global_constants.py \
-    && git checkout 79af23f696fc5e6fe3170211cd691ac4141863f8
+RUN git init /workspace/airflow && \
+    cd /workspace/airflow && \
+    git remote add origin https://github.com/apache/airflow.git && \
+    git fetch --depth=1 origin 79af23f696fc5e6fe3170211cd691ac4141863f8 && \
+    git checkout FETCH_HEAD
 
 # Install Python dependencies needed for helm tests
 RUN pip install --no-cache-dir \

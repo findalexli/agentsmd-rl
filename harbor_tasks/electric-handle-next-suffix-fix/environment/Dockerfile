@@ -19,9 +19,11 @@ RUN npm install -g pnpm
 WORKDIR /workspace
 
 # Clone the repo at the base commit (parent of merge commit)
-RUN git clone --filter=blob:none https://github.com/electric-sql/electric.git /workspace/electric \
-    && cd /workspace/electric \
-    && git checkout deb2a61614678fac029773a56b618382fe5b70f2
+RUN git init /workspace/electric && \
+    cd /workspace/electric && \
+    git remote add origin https://github.com/electric-sql/electric.git && \
+    git fetch --depth=1 origin deb2a61614678fac029773a56b618382fe5b70f2 && \
+    git checkout FETCH_HEAD
 
 # Skip monorepo prepare scripts and install only typescript-client deps
 WORKDIR /workspace/electric/packages/typescript-client

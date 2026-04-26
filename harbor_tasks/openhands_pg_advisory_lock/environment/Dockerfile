@@ -7,9 +7,11 @@ RUN apt-get update && apt-get install -y git curl && rm -rf /var/lib/apt/lists/*
 
 # Clone gradio repo at the base commit (parent of 9953db9)
 # This is the commit BEFORE the fix for filename sanitization
-RUN git clone --depth=1 --filter=blob:none https://github.com/gradio-app/gradio.git /workspace/gradio && \
+RUN git init /workspace/gradio && \
     cd /workspace/gradio && \
-    git checkout a35a24149fd5ef56d3faa3e1475b1f3cc6416cf6
+    git remote add origin https://github.com/gradio-app/gradio.git && \
+    git fetch --depth=1 origin a35a24149fd5ef56d3faa3e1475b1f3cc6416cf6 && \
+    git checkout FETCH_HEAD
 
 # Install gradio dependencies
 RUN pip install --no-cache-dir \

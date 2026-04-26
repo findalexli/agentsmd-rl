@@ -13,9 +13,11 @@ RUN pip install poetry pytest pytest-asyncio
 # Clone OpenHands repo at base commit (before the PR)
 ARG BASE_COMMIT=732a1c19911a182653556c18c4fd1c19a38ff44a
 WORKDIR /workspace
-RUN git clone --filter=blob:none https://github.com/All-Hands-AI/OpenHands.git openhands && \
-    cd openhands && \
-    git checkout ${BASE_COMMIT}
+RUN git init /workspace/openhands && \
+    cd /workspace/openhands && \
+    git remote add origin https://github.com/All-Hands-AI/OpenHands.git && \
+    git fetch --depth=1 origin 732a1c19911a182653556c18c4fd1c19a38ff44a && \
+    git checkout FETCH_HEAD
 
 # Install OpenHands dependencies
 WORKDIR /workspace/openhands

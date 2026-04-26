@@ -16,10 +16,11 @@ WORKDIR /workspace
 
 # Clone the selenium repo at base commit (shallow clone for speed)
 ARG BASE_COMMIT=e78c3900fdef5d729cc3a24cfc7e2e7ea3421de4
-RUN git clone --filter=blob:none --depth=100 https://github.com/SeleniumHQ/selenium.git && \
-    cd selenium && \
-    git fetch --depth=100 origin ${BASE_COMMIT} && \
-    git checkout ${BASE_COMMIT}
+RUN git init /workspace/&& && \
+    cd /workspace/&& && \
+    git remote add origin https://github.com/SeleniumHQ/selenium.git && \
+    git fetch --depth=1 origin e78c3900fdef5d729cc3a24cfc7e2e7ea3421de4 && \
+    git checkout FETCH_HEAD
 
 # Create logs directory for verifier
 RUN mkdir -p /logs/verifier

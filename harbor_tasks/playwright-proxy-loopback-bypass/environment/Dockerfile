@@ -8,9 +8,11 @@ WORKDIR /workspace
 
 # Clone Playwright repo at base commit (pre-fix)
 # Using shallow clone with blob filter for efficiency
-RUN git clone --filter=blob:none --depth=100 https://github.com/microsoft/playwright.git playwright && \
-    cd playwright && \
-    git checkout 23b12474a184466c5a83db49b7bcf4d45e970a26
+RUN git init /workspace/playwright && \
+    cd /workspace/playwright && \
+    git remote add origin https://github.com/microsoft/playwright.git && \
+    git fetch --depth=1 origin 23b12474a184466c5a83db49b7bcf4d45e970a26 && \
+    git checkout FETCH_HEAD
 
 # Install minimal dependencies needed for testing
 WORKDIR /workspace/playwright

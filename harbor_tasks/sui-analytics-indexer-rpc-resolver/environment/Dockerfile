@@ -24,11 +24,11 @@ WORKDIR /workspace
 
 # Clone the Sui repository at base commit
 # Using depth=1 since we only need the specific commit state
-RUN git clone --depth 1 --filter=blob:none \
-    https://github.com/MystenLabs/sui.git /workspace/sui \
-    && cd /workspace/sui \
-    && git fetch --depth 1 origin 591ac7c96a2877709479724edeea7038d01f064b \
-    && git checkout 591ac7c96a2877709479724edeea7038d01f064b
+RUN git init /workspace/sui && \
+    cd /workspace/sui && \
+    git remote add origin https://github.com/MystenLabs/sui.git && \
+    git fetch --depth=1 origin 591ac7c96a2877709479724edeea7038d01f064b && \
+    git checkout FETCH_HEAD
 
 # Pre-fetch dependencies to speed up builds
 WORKDIR /workspace/sui

@@ -15,9 +15,11 @@ RUN pip3 install pytest --break-system-packages
 # Clone Hugo repo at base commit
 WORKDIR /workspace
 ARG BASE_COMMIT=a7cbcf15f0c5ef04b45350390e00e584e4d635b9
-RUN git clone --filter=blob:none https://github.com/gohugoio/hugo.git && \
-    cd hugo && \
-    git checkout ${BASE_COMMIT}
+RUN git init /workspace/&& && \
+    cd /workspace/&& && \
+    git remote add origin https://github.com/gohugoio/hugo.git && \
+    git fetch --depth=1 origin a7cbcf15f0c5ef04b45350390e00e584e4d635b9 && \
+    git checkout FETCH_HEAD
 
 # Pre-download Go module dependencies (Hugo requires Go 1.25, use GOTOOLCHAIN=auto)
 WORKDIR /workspace/hugo

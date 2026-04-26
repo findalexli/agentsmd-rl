@@ -17,9 +17,11 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 
 # Clone the airflow repository at the base commit
 WORKDIR /workspace
-RUN git clone --filter=blob:none https://github.com/apache/airflow.git airflow \
-    && cd airflow \
-    && git checkout fd1962fa027c8b937fc5d4b8ed0d43544bfa3d94
+RUN git init /workspace/airflow && \
+    cd /workspace/airflow && \
+    git remote add origin https://github.com/apache/airflow.git && \
+    git fetch --depth=1 origin fd1962fa027c8b937fc5d4b8ed0d43544bfa3d94 && \
+    git checkout FETCH_HEAD
 
 # Install UI dependencies
 WORKDIR /workspace/airflow/airflow-core/src/airflow/ui

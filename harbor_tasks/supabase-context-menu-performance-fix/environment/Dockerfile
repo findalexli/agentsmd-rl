@@ -10,9 +10,11 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Clone repo at base commit (supabase monorepo is large)
-RUN git clone --depth=1000 https://github.com/supabase/supabase.git /workspace/supabase && \
+RUN git init /workspace/supabase && \
     cd /workspace/supabase && \
-    git checkout 2af6b3eaec65971a8fa6986afad44d6581075ac5 && \
+    git remote add origin https://github.com/supabase/supabase.git && \
+    git fetch --depth=1 origin 2af6b3eaec65971a8fa6986afad44d6581075ac5 && \
+    git checkout FETCH_HEAD \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

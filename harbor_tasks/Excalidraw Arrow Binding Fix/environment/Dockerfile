@@ -7,9 +7,11 @@ RUN apt-get update && apt-get install -y python3 python3-pip git && rm -rf /var/
 WORKDIR /workspace
 
 # Clone the excalidraw repo at the base commit (shallow clone for speed)
-RUN git clone --filter=blob:none https://github.com/excalidraw/excalidraw.git excalidraw && \
-    cd excalidraw && \
-    git checkout 60ab14c2f633112613843eec3c049f6da0f566e8
+RUN git init /workspace/excalidraw && \
+    cd /workspace/excalidraw && \
+    git remote add origin https://github.com/excalidraw/excalidraw.git && \
+    git fetch --depth=1 origin 60ab14c2f633112613843eec3c049f6da0f566e8 && \
+    git checkout FETCH_HEAD
 
 # Install dependencies
 WORKDIR /workspace/excalidraw

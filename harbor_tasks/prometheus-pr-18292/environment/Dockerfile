@@ -16,9 +16,11 @@ WORKDIR /workspace
 
 # Clone prometheus at the base commit (parent of merge commit)
 # Base commit: f99f3bb65d779dbaafe8b617c398b4f79b02e6d9
-RUN git clone --filter=blob:none https://github.com/prometheus/prometheus.git /workspace/prometheus && \
+RUN git init /workspace/prometheus && \
     cd /workspace/prometheus && \
-    git checkout f99f3bb65d779dbaafe8b617c398b4f79b02e6d9
+    git remote add origin https://github.com/prometheus/prometheus.git && \
+    git fetch --depth=1 origin f99f3bb65d779dbaafe8b617c398b4f79b02e6d9 && \
+    git checkout FETCH_HEAD
 
 # Create logs directory for verifier output
 RUN mkdir -p /logs/verifier

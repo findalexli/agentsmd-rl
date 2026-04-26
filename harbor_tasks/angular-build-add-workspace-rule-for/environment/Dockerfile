@@ -9,9 +9,11 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Clone repo at base commit (large monorepo, use blob filter)
-RUN git clone --filter=blob:none https://github.com/angular/angular.git /workspace/angular && \
+RUN git init /workspace/angular && \
     cd /workspace/angular && \
-    git checkout d75046bc091699bbadcb5f2032be627e983ee6fa && \
+    git remote add origin https://github.com/angular/angular.git && \
+    git fetch --depth=1 origin d75046bc091699bbadcb5f2032be627e983ee6fa && \
+    git checkout FETCH_HEAD \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

@@ -6,9 +6,11 @@ RUN apt-get update && apt-get install -y \
 
 # Clone the airflow repo at base commit
 WORKDIR /workspace
-RUN git clone --filter=blob:none https://github.com/apache/airflow.git airflow && \
-    cd airflow && \
-    git checkout b5dae4e72df868004b53006bb995256ef88d9c0b
+RUN git init /workspace/airflow && \
+    cd /workspace/airflow && \
+    git remote add origin https://github.com/apache/airflow.git && \
+    git fetch --depth=1 origin b5dae4e72df868004b53006bb995256ef88d9c0b && \
+    git checkout FETCH_HEAD
 
 # Install the git provider dependencies
 WORKDIR /workspace/airflow/providers/git

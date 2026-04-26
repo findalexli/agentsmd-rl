@@ -10,10 +10,11 @@ WORKDIR /workspace
 
 # Clone selenium repo at base commit (shallow clone for speed)
 ARG BASE_COMMIT=39436b0c1eabbed5489148b98a36302d77feed9e
-RUN git clone --depth=100 --filter=blob:none https://github.com/SeleniumHQ/selenium.git selenium && \
-    cd selenium && \
-    git fetch --depth=100 origin ${BASE_COMMIT} && \
-    git checkout ${BASE_COMMIT}
+RUN git init /workspace/selenium && \
+    cd /workspace/selenium && \
+    git remote add origin https://github.com/SeleniumHQ/selenium.git && \
+    git fetch --depth=1 origin 39436b0c1eabbed5489148b98a36302d77feed9e && \
+    git checkout FETCH_HEAD
 
 # Install Python dependencies for testing
 RUN pip install --no-cache-dir pytest mypy

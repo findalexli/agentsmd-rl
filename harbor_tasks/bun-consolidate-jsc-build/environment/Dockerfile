@@ -21,9 +21,11 @@ WORKDIR /workspace/bun
 
 # Clone the Bun repo at the base commit (shallow clone for speed)
 ARG BASE_COMMIT=a14a89ca953910e89697895dfdfb4cdf4c90a151
-RUN git clone --filter=blob:none --depth=1 https://github.com/oven-sh/bun.git . && \
-    git fetch --depth=1 origin ${BASE_COMMIT} && \
-    git checkout ${BASE_COMMIT}
+RUN git init /workspace/. && \
+    cd /workspace/. && \
+    git remote add origin https://github.com/oven-sh/bun.git && \
+    git fetch --depth=1 origin a14a89ca953910e89697895dfdfb4cdf4c90a151 && \
+    git checkout FETCH_HEAD
 
 # Install minimal dependencies for validation
 RUN bun install --frozen-lockfile || npm install

@@ -10,9 +10,11 @@ RUN corepack enable && corepack prepare pnpm@10.28.1 --activate
 
 # Clone repo at base commit (parent of merge commit)
 WORKDIR /workspace
-RUN git clone --filter=blob:none https://github.com/civitai/civitai.git civitai && \
-    cd civitai && \
-    git checkout 47c3beedb50993e5f410e241e4940131bba9afb2
+RUN git init /workspace/civitai && \
+    cd /workspace/civitai && \
+    git remote add origin https://github.com/civitai/civitai.git && \
+    git fetch --depth=1 origin 47c3beedb50993e5f410e241e4940131bba9afb2 && \
+    git checkout FETCH_HEAD
 
 # Install dependencies for typecheck/lint CI commands
 WORKDIR /workspace/civitai

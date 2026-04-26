@@ -19,9 +19,11 @@ WORKDIR /workspace
 
 # Clone the repository at the base commit (before the fix)
 # Using filter=blob:none for faster clone
-RUN git clone --filter=blob:none https://github.com/TanStack/router.git /workspace/router && \
+RUN git init /workspace/router && \
     cd /workspace/router && \
-    git checkout 77ad7925d4a6ea88ecd523ca7445ca192ce7a91a
+    git remote add origin https://github.com/TanStack/router.git && \
+    git fetch --depth=1 origin 77ad7925d4a6ea88ecd523ca7445ca192ce7a91a && \
+    git checkout FETCH_HEAD
 
 # Install dependencies and build all packages in the monorepo first
 WORKDIR /workspace/router

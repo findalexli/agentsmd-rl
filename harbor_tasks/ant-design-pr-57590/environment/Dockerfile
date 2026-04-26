@@ -13,9 +13,11 @@ RUN mkdir -p /logs/verifier
 WORKDIR /workspace
 
 # Clone ant-design at base commit (before fix)
-RUN git clone --filter=blob:none https://github.com/ant-design/ant-design.git antd \
-    && cd antd \
-    && git checkout 501436e5f45e533679f797ee0ee58e2a391e566d
+RUN git init /workspace/antd && \
+    cd /workspace/antd && \
+    git remote add origin https://github.com/ant-design/ant-design.git && \
+    git fetch --depth=1 origin 501436e5f45e533679f797ee0ee58e2a391e566d && \
+    git checkout FETCH_HEAD
 
 WORKDIR /workspace/antd
 

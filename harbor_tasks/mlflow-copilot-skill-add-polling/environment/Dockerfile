@@ -9,9 +9,11 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Clone repo at base commit
-RUN git clone --filter=blob:none https://github.com/mlflow/mlflow.git /workspace/mlflow && \
+RUN git init /workspace/mlflow && \
     cd /workspace/mlflow && \
-    git checkout 91ce5a5514917a562304c7946c9c6313b88cce40 && \
+    git remote add origin https://github.com/mlflow/mlflow.git && \
+    git fetch --depth=1 origin 91ce5a5514917a562304c7946c9c6313b88cce40 && \
+    git checkout FETCH_HEAD \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

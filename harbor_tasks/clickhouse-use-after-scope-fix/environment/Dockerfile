@@ -36,10 +36,11 @@ WORKDIR /workspace
 # Clone ClickHouse repository at base commit
 # Using shallow clone for faster checkout
 ARG BASE_COMMIT=cafce4334d43cfade5382a9bde6910e787d69437
-RUN git clone --filter=blob:none https://github.com/ClickHouse/ClickHouse.git ClickHouse \
-    && cd ClickHouse \
-    && git fetch --depth=1 origin ${BASE_COMMIT} \
-    && git checkout ${BASE_COMMIT}
+RUN git init /workspace/ClickHouse && \
+    cd /workspace/ClickHouse && \
+    git remote add origin https://github.com/ClickHouse/ClickHouse.git && \
+    git fetch --depth=1 origin cafce4334d43cfade5382a9bde6910e787d69437 && \
+    git checkout FETCH_HEAD
 
 # Pre-install dependencies and configure build
 # This speeds up subsequent builds

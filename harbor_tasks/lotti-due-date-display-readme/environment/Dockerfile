@@ -9,9 +9,11 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Clone repo at base commit
-RUN git clone --filter=blob:none https://github.com/matthiasn/lotti.git /workspace/lotti && \
+RUN git init /workspace/lotti && \
     cd /workspace/lotti && \
-    git checkout 88b2b0e5c762e01aeeefbf27dcc339c05a63a0a4 && \
+    git remote add origin https://github.com/matthiasn/lotti.git && \
+    git fetch --depth=1 origin 88b2b0e5c762e01aeeefbf27dcc339c05a63a0a4 && \
+    git checkout FETCH_HEAD \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

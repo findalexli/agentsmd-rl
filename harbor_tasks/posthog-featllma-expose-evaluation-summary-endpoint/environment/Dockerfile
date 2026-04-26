@@ -9,9 +9,11 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # PostHog is a large monorepo — partial clone (blobs lazy-fetched on demand)
-RUN git clone --filter=blob:none https://github.com/PostHog/posthog.git /workspace/posthog && \
+RUN git init /workspace/posthog && \
     cd /workspace/posthog && \
-    git checkout c68338921ad4d5598a9830cca90c9e1f34c2dc8f && \
+    git remote add origin https://github.com/PostHog/posthog.git && \
+    git fetch --depth=1 origin c68338921ad4d5598a9830cca90c9e1f34c2dc8f && \
+    git checkout FETCH_HEAD \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

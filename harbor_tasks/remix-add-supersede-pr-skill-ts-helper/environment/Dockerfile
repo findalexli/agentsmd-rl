@@ -12,9 +12,11 @@ RUN apt-get update && \
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
 # Clone repo at base commit and install dependencies
-RUN git clone --filter=blob:none https://github.com/remix-run/remix.git /workspace/remix && \
+RUN git init /workspace/remix && \
     cd /workspace/remix && \
-    git checkout 64b3a160dc25bbb082b96673e12bb55935f3528d && \
+    git remote add origin https://github.com/remix-run/remix.git && \
+    git fetch --depth=1 origin 64b3a160dc25bbb082b96673e12bb55935f3528d && \
+    git checkout FETCH_HEAD \
     git config user.email "agent@test" && \
     git config user.name "Agent" && \
     pnpm install

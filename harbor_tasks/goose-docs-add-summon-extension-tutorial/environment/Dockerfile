@@ -9,9 +9,11 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Clone repo at base commit
-RUN git clone --filter=blob:none https://github.com/block/goose.git /workspace/goose && \
+RUN git init /workspace/goose && \
     cd /workspace/goose && \
-    git checkout e2d174ac1d4ed3304d9949f04572803467d343cb && \
+    git remote add origin https://github.com/block/goose.git && \
+    git fetch --depth=1 origin e2d174ac1d4ed3304d9949f04572803467d343cb && \
+    git checkout FETCH_HEAD \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

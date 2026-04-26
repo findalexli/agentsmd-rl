@@ -17,9 +17,11 @@ RUN curl -fsSL https://github.com/bazelbuild/bazelisk/releases/download/v1.25.0/
 
 # Clone Selenium repo at base commit
 WORKDIR /workspace
-RUN git clone --filter=blob:none https://github.com/SeleniumHQ/selenium.git selenium \
-    && cd selenium \
-    && git checkout 36fc8f9b7bdedeba3884fadc232aec76fcd044c1
+RUN git init /workspace/selenium && \
+    cd /workspace/selenium && \
+    git remote add origin https://github.com/SeleniumHQ/selenium.git && \
+    git fetch --depth=1 origin 36fc8f9b7bdedeba3884fadc232aec76fcd044c1 && \
+    git checkout FETCH_HEAD
 
 WORKDIR /workspace/selenium
 

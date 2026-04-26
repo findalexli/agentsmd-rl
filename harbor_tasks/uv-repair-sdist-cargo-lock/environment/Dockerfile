@@ -10,9 +10,11 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Clone repo at base commit (treeless clone — uv is large)
-RUN git clone --filter=blob:none https://github.com/astral-sh/uv.git /workspace/uv && \
+RUN git init /workspace/uv && \
     cd /workspace/uv && \
-    git checkout c5977cc4ae4cd1cf8b97c7193e927f7b2a9c4e87 && \
+    git remote add origin https://github.com/astral-sh/uv.git && \
+    git fetch --depth=1 origin c5977cc4ae4cd1cf8b97c7193e927f7b2a9c4e87 && \
+    git checkout FETCH_HEAD \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

@@ -14,9 +14,11 @@ RUN apt-get update && \
 RUN pip3 install pytest --break-system-packages
 
 # Clone repo at base commit (6a928b02f4de1efc633a8fae0331cd1fa821950e)
-RUN git clone --filter=blob:none https://github.com/microsoft/playwright.git /workspace/playwright && \
+RUN git init /workspace/playwright && \
     cd /workspace/playwright && \
-    git checkout 6a928b02f4de1efc633a8fae0331cd1fa821950e && \
+    git remote add origin https://github.com/microsoft/playwright.git && \
+    git fetch --depth=1 origin 6a928b02f4de1efc633a8fae0331cd1fa821950e && \
+    git checkout FETCH_HEAD \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

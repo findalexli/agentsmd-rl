@@ -9,11 +9,11 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Clone repo at base commit (sparse checkout — only fetch files needed for tests)
-RUN git clone --filter=blob:none --no-checkout https://github.com/cloudflare/workerd.git /workspace/workerd && \
+RUN git init /workspace/workerd && \
     cd /workspace/workerd && \
-    git sparse-checkout init --cone && \
-    git sparse-checkout set src/rust docs/reference && \
-    git checkout d7dc27c438f7ea1fd5eb28a0258d5dbae265a99d && \
+    git remote add origin https://github.com/cloudflare/workerd.git && \
+    git fetch --depth=1 origin d7dc27c438f7ea1fd5eb28a0258d5dbae265a99d && \
+    git checkout FETCH_HEAD \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

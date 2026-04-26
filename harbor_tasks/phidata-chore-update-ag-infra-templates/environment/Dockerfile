@@ -9,9 +9,11 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Clone repo at base commit
-RUN git clone --filter=blob:none https://github.com/phidatahq/phidata.git /workspace/phidata && \
+RUN git init /workspace/phidata && \
     cd /workspace/phidata && \
-    git checkout 156d4e43e6281d0ff65a2351379df732348ffadc && \
+    git remote add origin https://github.com/phidatahq/phidata.git && \
+    git fetch --depth=1 origin 156d4e43e6281d0ff65a2351379df732348ffadc && \
+    git checkout FETCH_HEAD \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

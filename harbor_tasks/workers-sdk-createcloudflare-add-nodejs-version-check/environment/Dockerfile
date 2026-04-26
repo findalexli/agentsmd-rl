@@ -9,9 +9,11 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Clone repo at base commit (sparse — monorepo is large)
-RUN git clone --filter=blob:none https://github.com/cloudflare/workers-sdk.git /workspace/workers-sdk && \
+RUN git init /workspace/workers-sdk && \
     cd /workspace/workers-sdk && \
-    git checkout 0de69890c8503bb67e391e7ad5578c7001b7798e && \
+    git remote add origin https://github.com/cloudflare/workers-sdk.git && \
+    git fetch --depth=1 origin 0de69890c8503bb67e391e7ad5578c7001b7798e && \
+    git checkout FETCH_HEAD \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

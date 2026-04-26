@@ -19,9 +19,11 @@ WORKDIR /workspace
 
 # Clone the sui repo at base commit (shallow clone for speed)
 ARG BASE_COMMIT=b62e4bf94eaaf96cb2d42b643ba92847bbf57be8
-RUN git clone --filter=blob:none https://github.com/MystenLabs/sui.git sui && \
-    cd sui && \
-    git checkout ${BASE_COMMIT}
+RUN git init /workspace/sui && \
+    cd /workspace/sui && \
+    git remote add origin https://github.com/MystenLabs/sui.git && \
+    git fetch --depth=1 origin b62e4bf94eaaf96cb2d42b643ba92847bbf57be8 && \
+    git checkout FETCH_HEAD
 
 # Create logs directory for verifier
 RUN mkdir -p /logs/verifier

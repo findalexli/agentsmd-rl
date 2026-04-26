@@ -6,7 +6,11 @@ ENV LANG=C.UTF-8
 RUN apt-get update &&     apt-get install -y --no-install-recommends         git curl ca-certificates build-essential python3 python3-pip tmux jq &&     rm -rf /var/lib/apt/lists/*
 
 # Clone repo at base commit (monorepo, use --filter=blob:none)
-RUN git clone --filter=blob:none https://github.com/vercel/next.js.git /workspace/next.js &&     cd /workspace/next.js &&     git checkout 46761a321042e8ac1863f4cfc8d73d527956e181 &&     git config user.email "agent@test" &&     git config user.name "Agent"
+RUN git init /workspace/next.js && \
+    cd /workspace/next.js && \
+    git remote add origin https://github.com/vercel/next.js.git && \
+    git fetch --depth=1 origin 46761a321042e8ac1863f4cfc8d73d527956e181 && \
+    git checkout FETCH_HEAD     git config user.email "agent@test" &&     git config user.name "Agent"
 
 WORKDIR /workspace/next.js
 

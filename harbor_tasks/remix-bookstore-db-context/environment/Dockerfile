@@ -10,9 +10,11 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Clone repo at base commit (large monorepo — use blob filter)
-RUN git clone --filter=blob:none https://github.com/remix-run/remix.git /workspace/remix && \
+RUN git init /workspace/remix && \
     cd /workspace/remix && \
-    git checkout b29fc874293468babb25b90e95edc208f1d652be && \
+    git remote add origin https://github.com/remix-run/remix.git && \
+    git fetch --depth=1 origin b29fc874293468babb25b90e95edc208f1d652be && \
+    git checkout FETCH_HEAD \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

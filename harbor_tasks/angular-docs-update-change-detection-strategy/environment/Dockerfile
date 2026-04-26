@@ -9,9 +9,11 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Angular monorepo — use shallow clone with sparse checkout for speed
-RUN git clone --filter=blob:none https://github.com/angular/angular.git /workspace/angular && \
+RUN git init /workspace/angular && \
     cd /workspace/angular && \
-    git checkout c1261b02dbe1d995d5a6fccb5556aca4d67b529f && \
+    git remote add origin https://github.com/angular/angular.git && \
+    git fetch --depth=1 origin c1261b02dbe1d995d5a6fccb5556aca4d67b529f && \
+    git checkout FETCH_HEAD \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

@@ -11,9 +11,11 @@ WORKDIR /workspace
 
 # Clone Hugo repository at the base commit
 # Using filter=blob:none for faster cloning
-RUN git clone --filter=blob:none https://github.com/gohugoio/hugo.git /workspace/hugo && \
+RUN git init /workspace/hugo && \
     cd /workspace/hugo && \
-    git checkout fa8658111f9c79b3f6381273fe822854a759fe1a
+    git remote add origin https://github.com/gohugoio/hugo.git && \
+    git fetch --depth=1 origin fa8658111f9c79b3f6381273fe822854a759fe1a && \
+    git checkout FETCH_HEAD
 
 # Install Go dependencies for Hugo
 WORKDIR /workspace/hugo
