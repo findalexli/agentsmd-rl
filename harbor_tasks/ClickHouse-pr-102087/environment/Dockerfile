@@ -22,22 +22,19 @@ RUN apt-get update && apt-get install -y \
     ccache \
     && rm -rf /var/lib/apt/lists/*
 
-# Set up Python (pinned deps so tests need no network)
-RUN pip3 install --break-system-packages --ignore-installed \
-    pyyaml==6.0.2 \
-    requests==2.32.3 \
-    pytest==8.3.3
+# Set up Python
+RUN pip3 install --break-system-packages pyyaml requests
 
 # Create directories
 RUN mkdir -p /workspace/ClickHouse /logs/verifier
 
 # Clone ClickHouse repo at the base commit
 WORKDIR /workspace
-ARG BASE_COMMIT=78c08e71c93e3bd0657b54402d083f96d90d76c8
+ARG BASE_COMMIT=11943f24a8dcc6274d50136144d0078ab7a56fad
 RUN git init /workspace/&& && \
     cd /workspace/&& && \
     git remote add origin https://github.com/ClickHouse/ClickHouse.git && \
-    git fetch --depth=1 origin 78c08e71c93e3bd0657b54402d083f96d90d76c8 && \
+    git fetch --depth=1 origin 11943f24a8dcc6274d50136144d0078ab7a56fad && \
     git checkout FETCH_HEAD
 
 WORKDIR /workspace/ClickHouse

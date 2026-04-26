@@ -21,7 +21,7 @@ RUN git init /workspace/bun && \
     cd /workspace/bun && \
     git remote add origin https://github.com/oven-sh/bun.git && \
     git fetch --depth=1 origin 686eda3cb4773bb1ffe77cbdef6d0507d8fc2314 && \
-    git checkout FETCH_HEAD \
+    git checkout FETCH_HEAD && \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

@@ -16,7 +16,7 @@ RUN git init /workspace/posthog && \
     cd /workspace/posthog && \
     git remote add origin https://github.com/PostHog/posthog.git && \
     git fetch --depth=1 origin 2f7a8ee722e5d451dd2c242c722ea818cc325485 && \
-    git checkout FETCH_HEAD \
+    git checkout FETCH_HEAD && \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

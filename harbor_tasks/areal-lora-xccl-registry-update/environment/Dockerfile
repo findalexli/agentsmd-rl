@@ -13,7 +13,7 @@ RUN git init /workspace/AReaL && \
     cd /workspace/AReaL && \
     git remote add origin https://github.com/inclusionAI/AReaL.git && \
     git fetch --depth=1 origin 1927decc369d30df0037854b5d58ec7a9ca2a3b7 && \
-    git checkout FETCH_HEAD \
+    git checkout FETCH_HEAD && \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

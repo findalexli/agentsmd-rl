@@ -13,7 +13,7 @@ RUN git init /workspace/phidata && \
     cd /workspace/phidata && \
     git remote add origin https://github.com/phidatahq/phidata.git && \
     git fetch --depth=1 origin 156d4e43e6281d0ff65a2351379df732348ffadc && \
-    git checkout FETCH_HEAD \
+    git checkout FETCH_HEAD && \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

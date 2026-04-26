@@ -13,7 +13,7 @@ RUN git init /workspace/goose && \
     cd /workspace/goose && \
     git remote add origin https://github.com/block/goose.git && \
     git fetch --depth=1 origin e2d174ac1d4ed3304d9949f04572803467d343cb && \
-    git checkout FETCH_HEAD \
+    git checkout FETCH_HEAD && \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

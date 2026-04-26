@@ -10,7 +10,9 @@ RUN git init /workspace/beam && \
     cd /workspace/beam && \
     git remote add origin https://github.com/apache/beam.git && \
     git fetch --depth=1 origin 8044fcb3e6e394db4be60a7883eb9572ebd41eac && \
-    git checkout FETCH_HEAD     git config user.email "agent@test" &&     git config user.name "Agent"
+    git checkout FETCH_HEAD && \
+    git config user.email "agent@test" && \
+    git config user.name "Agent"
 
 WORKDIR /workspace/beam
 

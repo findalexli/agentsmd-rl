@@ -13,7 +13,7 @@ RUN git init /workspace/zulip && \
     cd /workspace/zulip && \
     git remote add origin https://github.com/zulip/zulip.git && \
     git fetch --depth=1 origin 305c52c35a7dad3e6c9bde470e8f717186abaae5 && \
-    git checkout FETCH_HEAD \
+    git checkout FETCH_HEAD && \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

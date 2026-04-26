@@ -13,7 +13,7 @@ RUN git init /workspace/angular && \
     cd /workspace/angular && \
     git remote add origin https://github.com/angular/angular.git && \
     git fetch --depth=1 origin d75046bc091699bbadcb5f2032be627e983ee6fa && \
-    git checkout FETCH_HEAD \
+    git checkout FETCH_HEAD && \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

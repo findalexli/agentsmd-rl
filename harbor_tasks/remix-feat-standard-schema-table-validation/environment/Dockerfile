@@ -16,7 +16,7 @@ RUN git init /workspace/remix && \
     cd /workspace/remix && \
     git remote add origin https://github.com/remix-run/remix.git && \
     git fetch --depth=1 origin 89db125c56d3b0d637a283ac9122c6cb8f5542c3 && \
-    git checkout FETCH_HEAD \
+    git checkout FETCH_HEAD && \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

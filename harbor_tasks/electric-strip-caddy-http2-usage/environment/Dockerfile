@@ -13,7 +13,7 @@ RUN git init /workspace/electric && \
     cd /workspace/electric && \
     git remote add origin https://github.com/electric-sql/electric.git && \
     git fetch --depth=1 origin 551cb0265c7d4b53b8cba6d9fc8181997c463940 && \
-    git checkout FETCH_HEAD \
+    git checkout FETCH_HEAD && \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

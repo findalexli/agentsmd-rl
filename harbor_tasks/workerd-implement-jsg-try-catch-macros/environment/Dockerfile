@@ -13,7 +13,7 @@ RUN git init /workspace/workerd && \
     cd /workspace/workerd && \
     git remote add origin https://github.com/cloudflare/workerd.git && \
     git fetch --depth=1 origin bca5351754a7d3ee0568971d57435859bc3a71e6 && \
-    git checkout FETCH_HEAD \
+    git checkout FETCH_HEAD && \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

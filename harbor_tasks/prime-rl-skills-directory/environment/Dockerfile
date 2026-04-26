@@ -13,7 +13,7 @@ RUN git init /workspace/prime-rl && \
     cd /workspace/prime-rl && \
     git remote add origin https://github.com/PrimeIntellect-ai/prime-rl.git && \
     git fetch --depth=1 origin 31b48b8b10db390d835909a6fd976f29d9880c81 && \
-    git checkout FETCH_HEAD \
+    git checkout FETCH_HEAD && \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

@@ -13,7 +13,7 @@ RUN git init /workspace/lotti && \
     cd /workspace/lotti && \
     git remote add origin https://github.com/matthiasn/lotti.git && \
     git fetch --depth=1 origin 88b2b0e5c762e01aeeefbf27dcc339c05a63a0a4 && \
-    git checkout FETCH_HEAD \
+    git checkout FETCH_HEAD && \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

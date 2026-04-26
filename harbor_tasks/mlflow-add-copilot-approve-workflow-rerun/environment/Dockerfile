@@ -13,7 +13,7 @@ RUN git init /workspace/mlflow && \
     cd /workspace/mlflow && \
     git remote add origin https://github.com/mlflow/mlflow.git && \
     git fetch --depth=1 origin 39f35acce9e63788371bfaaa2c57cafef10a02ec && \
-    git checkout FETCH_HEAD \
+    git checkout FETCH_HEAD && \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

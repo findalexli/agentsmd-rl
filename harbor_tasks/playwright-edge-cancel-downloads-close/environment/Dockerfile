@@ -13,7 +13,7 @@ RUN git init /workspace/playwright && \
     cd /workspace/playwright && \
     git remote add origin https://github.com/microsoft/playwright.git && \
     git fetch --depth=1 origin 72310c757282e397fcd280e85602adcdf0d581ca && \
-    git checkout FETCH_HEAD \
+    git checkout FETCH_HEAD && \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

@@ -13,7 +13,7 @@ RUN git init /workspace/sglang && \
     cd /workspace/sglang && \
     git remote add origin https://github.com/sgl-project/sglang.git && \
     git fetch --depth=1 origin bb9e058f5b9d4754ac2965bb36864fee1cd978e8 && \
-    git checkout FETCH_HEAD \
+    git checkout FETCH_HEAD && \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

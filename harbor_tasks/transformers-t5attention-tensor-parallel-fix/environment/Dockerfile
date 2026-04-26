@@ -13,7 +13,7 @@ RUN git init /workspace/transformers && \
     cd /workspace/transformers && \
     git remote add origin https://github.com/huggingface/transformers.git && \
     git fetch --depth=1 origin 38593c2e83964079576eb646fe9b68cce16114dc && \
-    git checkout FETCH_HEAD \
+    git checkout FETCH_HEAD && \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

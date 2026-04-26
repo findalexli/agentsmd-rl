@@ -51,7 +51,7 @@ RUN git init /workspace/ClickHouse && \
     cd /workspace/ClickHouse && \
     git remote add origin https://github.com/ClickHouse/ClickHouse.git && \
     git fetch --depth=1 origin 6d03f28ada8b3c521b504f43e04d05c915be3d75 && \
-    git checkout FETCH_HEAD \
+    git checkout FETCH_HEAD && \
     rm -rf .git/objects/pack/*.pack .git/objects/pack/*.idx
 
 # Pre-create logs directory for test results

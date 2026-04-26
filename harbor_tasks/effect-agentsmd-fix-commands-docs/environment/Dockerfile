@@ -12,7 +12,7 @@ RUN git init /workspace/effect && \
     cd /workspace/effect && \
     git remote add origin https://github.com/effect-ts/effect.git && \
     git fetch --depth=1 origin 5487cfb65a69a308e7c0b29ae666c8a9ddcab159 && \
-    git checkout FETCH_HEAD \
+    git checkout FETCH_HEAD && \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

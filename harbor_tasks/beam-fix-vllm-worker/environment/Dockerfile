@@ -21,9 +21,5 @@ RUN git init /workspace/beam && \
 
 WORKDIR /workspace/beam
 
-# Linters/formatters used by test_outputs.py
-RUN pip install --no-cache-dir --break-system-packages \
-    flake8==7.1.1 \
-    pycodestyle==2.12.1 \
-    pylint==3.3.1 \
-    yapf==0.40.2
+# auto-installed (scaffold Change 2A retrofit 2026-04-24)
+RUN pip install --no-cache-dir --break-system-packages flake8 pycodestyle pylint 2>/dev/null || pip install --no-cache-dir flake8 pycodestyle pylint

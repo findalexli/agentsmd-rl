@@ -12,7 +12,7 @@ RUN git init /workspace/gradio && \
     cd /workspace/gradio && \
     git remote add origin https://github.com/gradio-app/gradio.git && \
     git fetch --depth=1 origin 0b943a4fd0d7701203f1b79b70b5afed19ee8413 && \
-    git checkout FETCH_HEAD \
+    git checkout FETCH_HEAD && \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

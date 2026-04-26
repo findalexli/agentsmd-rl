@@ -13,7 +13,7 @@ RUN git init /workspace/trigger.dev && \
     cd /workspace/trigger.dev && \
     git remote add origin https://github.com/triggerdotdev/trigger.dev.git && \
     git fetch --depth=1 origin 21c2c136beec90c28ec46c895561f5b3c258ec06 && \
-    git checkout FETCH_HEAD \
+    git checkout FETCH_HEAD && \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

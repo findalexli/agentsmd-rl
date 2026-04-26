@@ -13,7 +13,7 @@ RUN git init /workspace/react && \
     cd /workspace/react && \
     git remote add origin https://github.com/facebook/react.git && \
     git fetch --depth=1 origin 74568e8627aa43469b74f2972f427a209639d0b6 && \
-    git checkout FETCH_HEAD \
+    git checkout FETCH_HEAD && \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

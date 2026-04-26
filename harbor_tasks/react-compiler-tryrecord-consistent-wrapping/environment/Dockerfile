@@ -13,7 +13,7 @@ RUN git init /workspace/react && \
     cd /workspace/react && \
     git remote add origin https://github.com/facebook/react.git && \
     git fetch --depth=1 origin cebe42e24521ce02bf427fd482009d01e1466277 && \
-    git checkout FETCH_HEAD \
+    git checkout FETCH_HEAD && \
     rm -rf .git && \
     git init && \
     git add -A && \

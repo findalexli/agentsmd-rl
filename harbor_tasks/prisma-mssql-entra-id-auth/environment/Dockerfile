@@ -13,7 +13,7 @@ RUN git init /workspace/prisma && \
     cd /workspace/prisma && \
     git remote add origin https://github.com/prisma/prisma.git && \
     git fetch --depth=1 origin a60fe90928873bcec23b0fd07a002c164d7f4d27 && \
-    git checkout FETCH_HEAD \
+    git checkout FETCH_HEAD && \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

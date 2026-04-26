@@ -14,7 +14,7 @@ RUN git init /workspace/infisical && \
     cd /workspace/infisical && \
     git remote add origin https://github.com/Infisical/infisical.git && \
     git fetch --depth=1 origin e928398a0919194fc2efd855aaf6700424b507d9 && \
-    git checkout FETCH_HEAD \
+    git checkout FETCH_HEAD && \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

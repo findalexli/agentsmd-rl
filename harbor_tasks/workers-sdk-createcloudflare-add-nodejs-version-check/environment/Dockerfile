@@ -13,7 +13,7 @@ RUN git init /workspace/workers-sdk && \
     cd /workspace/workers-sdk && \
     git remote add origin https://github.com/cloudflare/workers-sdk.git && \
     git fetch --depth=1 origin 0de69890c8503bb67e391e7ad5578c7001b7798e && \
-    git checkout FETCH_HEAD \
+    git checkout FETCH_HEAD && \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

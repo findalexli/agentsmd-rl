@@ -13,7 +13,7 @@ RUN git init /workspace/prql && \
     cd /workspace/prql && \
     git remote add origin https://github.com/PRQL/prql.git && \
     git fetch --depth=1 origin 7b0d983ead8d91921252ad835a3c43b2288b7fe1 && \
-    git checkout FETCH_HEAD \
+    git checkout FETCH_HEAD && \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

@@ -23,10 +23,6 @@ RUN git init /workspace/excalidraw && \
 RUN cd /workspace/excalidraw && \
     npm install typescript --save-dev 2>/dev/null || true
 
-# Install test tooling so test.sh needs no network access
-RUN pip3 install pytest pyyaml --break-system-packages
-RUN npm install -g prettier
-
 # Create logs directory
 RUN mkdir -p /logs/verifier
 

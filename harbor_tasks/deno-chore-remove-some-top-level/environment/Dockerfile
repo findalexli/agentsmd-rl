@@ -13,7 +13,7 @@ RUN git init /workspace/deno && \
     cd /workspace/deno && \
     git remote add origin https://github.com/denoland/deno.git && \
     git fetch --depth=1 origin 0b38d25ba7c1893757e15fbb2a68537b0191321f && \
-    git checkout FETCH_HEAD \
+    git checkout FETCH_HEAD && \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

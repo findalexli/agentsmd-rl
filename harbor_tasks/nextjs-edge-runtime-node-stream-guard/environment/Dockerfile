@@ -13,7 +13,7 @@ RUN git init /workspace/next.js && \
     cd /workspace/next.js && \
     git remote add origin https://github.com/vercel/next.js.git && \
     git fetch --depth=1 origin 15d9b4d7f923e637d1661b109df639a918f59c8a && \
-    git checkout FETCH_HEAD \
+    git checkout FETCH_HEAD && \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

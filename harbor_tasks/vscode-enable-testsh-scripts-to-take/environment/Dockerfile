@@ -15,7 +15,7 @@ RUN git init /workspace/vscode && \
     cd /workspace/vscode && \
     git remote add origin https://github.com/microsoft/vscode.git && \
     git fetch --depth=1 origin 73b0fb29377f401a4e2b792b9065e77b9fa19e9e && \
-    git checkout FETCH_HEAD \
+    git checkout FETCH_HEAD && \
     rm -rf .git && \
     git init && \
     git add -A && \

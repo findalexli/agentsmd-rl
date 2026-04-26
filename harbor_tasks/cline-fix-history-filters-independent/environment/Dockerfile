@@ -13,7 +13,7 @@ RUN git init /workspace/cline && \
     cd /workspace/cline && \
     git remote add origin https://github.com/cline/cline.git && \
     git fetch --depth=1 origin 9fc9785aa2ab3985ae5030330566499d26fb6192 && \
-    git checkout FETCH_HEAD \
+    git checkout FETCH_HEAD && \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

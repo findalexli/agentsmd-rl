@@ -13,7 +13,7 @@ RUN git init /workspace/opencode && \
     cd /workspace/opencode && \
     git remote add origin https://github.com/anomalyco/opencode.git && \
     git fetch --depth=1 origin 1398674e531acc845e062b219f718cac1cd89a44 && \
-    git checkout FETCH_HEAD \
+    git checkout FETCH_HEAD && \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

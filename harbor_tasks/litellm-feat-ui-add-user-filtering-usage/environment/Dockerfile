@@ -14,7 +14,7 @@ RUN git init /workspace/litellm && \
     cd /workspace/litellm && \
     git remote add origin https://github.com/BerriAI/litellm.git && \
     git fetch --depth=1 origin a38993b871a32090caea0941427a8bc5489a5c02 && \
-    git checkout FETCH_HEAD \
+    git checkout FETCH_HEAD && \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

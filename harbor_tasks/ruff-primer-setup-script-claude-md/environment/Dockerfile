@@ -13,7 +13,7 @@ RUN git init /workspace/ruff && \
     cd /workspace/ruff && \
     git remote add origin https://github.com/astral-sh/ruff.git && \
     git fetch --depth=1 origin bbaa7698227fcf4f7ec001af6aa5110d405ee54f && \
-    git checkout FETCH_HEAD \
+    git checkout FETCH_HEAD && \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

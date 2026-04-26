@@ -13,7 +13,7 @@ RUN git init /workspace/claude-code && \
     cd /workspace/claude-code && \
     git remote add origin https://github.com/anthropics/claude-code.git && \
     git fetch --depth=1 origin 4dc23d0275ff615ba1dccbdd76ad2b12a3ede591 && \
-    git checkout FETCH_HEAD \
+    git checkout FETCH_HEAD && \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

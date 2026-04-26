@@ -13,7 +13,7 @@ RUN git init /workspace/maui && \
     cd /workspace/maui && \
     git remote add origin https://github.com/dotnet/maui.git && \
     git fetch --depth=1 origin 48dae02e3e04dce551396f747f234bf3e30801ec && \
-    git checkout FETCH_HEAD \
+    git checkout FETCH_HEAD && \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

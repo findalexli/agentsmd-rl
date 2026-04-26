@@ -42,23 +42,59 @@ from typing import Optional
 ROOT = Path(__file__).resolve().parents[1]
 TASKS_DIR = ROOT / "harbor_tasks"
 
-# Match the entire `RUN git clone ... && git checkout <sha>` block.
-# Captures: 1=repo URL (without .git), 2=target dir, 3=commit sha, 4=extras chain.
-#
-# BODY matches across line continuations (`\\\n`) and arbitrary intervening
-# commands like `cd <dir>`, non-greedily.
+# Match `RUN git clone ... git checkout <sha>` — extras after the sha are
+# captured separately by `extract_tail()` to avoid non-greedy BODY pitfalls.
 BODY = r"(?:[^\n]|\\\n)*?"
 CLONE_RE = re.compile(
     r"""RUN\s+git\s+clone\b""" + BODY + r"""
         https://github\.com/([\w.-]+/[\w.-]+?)\.git\s+(\S+)
         """ + BODY + r"""
         git\s+checkout\s+(\$\{?BASE_COMMIT\}?|[0-9a-f]{7,40})
-        ((?:\s*&&""" + BODY + r""")*)
     """,
     re.VERBOSE,
 )
 # Match an `ARG BASE_COMMIT=<sha>` line so we can resolve ${BASE_COMMIT} refs.
 ARG_RE = re.compile(r"ARG\s+BASE_COMMIT\s*=\s*([0-9a-f]{7,40})")
+
+
+def extract_tail(text: str, start_idx: int) -> tuple[str, int]:
+    """Starting at `start_idx` (just past `git checkout <sha>`), walk forward
+    through any `&& <command>` chain that is part of the same RUN block (i.e.,
+    the previous logical line ended with `\\`). Returns (tail_str, new_end_idx)
+    where new_end_idx is the index right after the last command in the chain.
+    """
+    i = start_idx
+    n = len(text)
+    end = i
+    while i < n:
+        # Skip any whitespace / line-continuation prefix
+        j = i
+        while j < n and text[j] in " \t":
+            j += 1
+        if j < n and text[j] == "\\" and j + 1 < n and text[j + 1] == "\n":
+            j += 2
+            while j < n and text[j] in " \t":
+                j += 1
+        # Now we should see `&&` for the chain to continue
+        if j + 1 < n and text[j] == "&" and text[j + 1] == "&":
+            j += 2
+            # Read the command — stop at end-of-line that isn't \-continued
+            while j < n:
+                if text[j] == "\n":
+                    # Inspect previous non-space char
+                    k = j - 1
+                    while k > start_idx and text[k] in " \t":
+                        k -= 1
+                    if k >= start_idx and text[k] == "\\":
+                        j += 1  # continuation, keep going
+                        continue
+                    break
+                j += 1
+            end = j
+            i = j
+        else:
+            break
+    return text[start_idx:end], end
 
 
 def find_block(text: str) -> Optional[re.Match]:
@@ -72,11 +108,14 @@ def build_shallow(repo: str, target: str, sha: str, extras: str) -> str:
     # Strip the trailing parts from `extras` that we already account for
     # (the cd and git checkout we re-emit fresh).
     extras_lines: list[str] = []
-    for chunk in re.split(r"\\?\s*\n?\s*&&\s*", extras):
-        chunk = chunk.strip().rstrip("\\").strip()
+    for chunk in re.split(r"\s*&&\s*", extras):
+        # Collapse any embedded line continuations (`\\\n` + indent) into
+        # a single space so the chunk is a clean one-liner.
+        chunk = re.sub(r"\\\s*\n\s*", " ", chunk).strip()
+        # Drop trailing line-continuation slashes
+        chunk = chunk.rstrip("\\").strip()
         if not chunk:
             continue
-        # Skip cd / checkout — we re-emit ours
         if chunk.startswith("cd "):
             continue
         if chunk.startswith("git checkout "):
@@ -98,17 +137,14 @@ def build_shallow(repo: str, target: str, sha: str, extras: str) -> str:
 def migrate_one(path: Path) -> tuple[bool, str, Optional[str]]:
     """Returns (changed, status_msg, new_text_or_None)."""
     text = path.read_text()
-    # Skip if already migrated. (Some shallow Dockerfiles use ARG BASE_COMMIT;
-    # we still want to migrate those if they use full clone, so the check
-    # specifically asks for `git init` + `git fetch --depth=1` co-occurring.)
     if "git init " in text and "git fetch --depth=1" in text and "git clone" not in text:
         return False, "already-shallow", None
     m = find_block(text)
     if not m:
         return False, "no-clone-block", None
-    repo, target, sha_token, extras = m.group(1), m.group(2), m.group(3), m.group(4) or ""
+    repo, target, sha_token = m.group(1), m.group(2), m.group(3)
+    extras, tail_end = extract_tail(text, m.end())
 
-    # Resolve $BASE_COMMIT or ${BASE_COMMIT} reference if present
     if sha_token.startswith("$"):
         arg_m = ARG_RE.search(text)
         if not arg_m:
@@ -118,7 +154,7 @@ def migrate_one(path: Path) -> tuple[bool, str, Optional[str]]:
         sha = sha_token
 
     new_block = build_shallow(repo, target, sha, extras)
-    new_text = text[: m.start()] + new_block + text[m.end():]
+    new_text = text[: m.start()] + new_block + text[tail_end:]
     return True, f"ok repo={repo} sha={sha[:8]} target={target}", new_text
 
 

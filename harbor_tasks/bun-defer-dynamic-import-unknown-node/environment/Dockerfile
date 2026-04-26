@@ -17,7 +17,7 @@ RUN git init /workspace/bun && \
     cd /workspace/bun && \
     git remote add origin https://github.com/oven-sh/bun.git && \
     git fetch --depth=1 origin 9a72bbfae2d086779739de54043a8e8bbd7ee9ed && \
-    git checkout FETCH_HEAD \
+    git checkout FETCH_HEAD && \
     git config core.sparseCheckout false
 
 # Create logs directory for test output

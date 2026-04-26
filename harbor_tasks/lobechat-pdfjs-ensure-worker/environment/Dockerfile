@@ -20,7 +20,7 @@ RUN git init /workspace/lobe-chat && \
     cd /workspace/lobe-chat && \
     git remote add origin https://github.com/lobehub/lobe-chat.git && \
     git fetch --depth=1 origin 17544558908a97902ef5bf1f564254288f0cf649 && \
-    git checkout FETCH_HEAD \
+    git checkout FETCH_HEAD && \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

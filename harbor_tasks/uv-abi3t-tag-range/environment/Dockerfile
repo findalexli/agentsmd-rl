@@ -13,7 +13,7 @@ RUN git init /workspace/uv && \
     cd /workspace/uv && \
     git remote add origin https://github.com/astral-sh/uv.git && \
     git fetch --depth=1 origin b7d5faf568b30c86daf7503f8518e11cbfeeaa81 && \
-    git checkout FETCH_HEAD \
+    git checkout FETCH_HEAD && \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 

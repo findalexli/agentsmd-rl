@@ -27,7 +27,7 @@ RUN git init /workspace/payload && \
     cd /workspace/payload && \
     git remote add origin https://github.com/payloadcms/payload.git && \
     git fetch --depth=1 origin a188556e99d94c96266671b2129e5c8cb05e46a5 && \
-    git checkout FETCH_HEAD \
+    git checkout FETCH_HEAD && \
     git config user.email "agent@test" && \
     git config user.name "Agent"
 
