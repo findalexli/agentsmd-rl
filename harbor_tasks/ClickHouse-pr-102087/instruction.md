@@ -2,39 +2,26 @@
 
 ## Problem
 
-The `leftPad` and `rightPad` string functions in ClickHouse have a heap-buffer-overflow vulnerability that can be detected by Address Sanitizer (ASan). The issue is in how padding characters are stored and copied in the `PaddingChars` class in `src/Functions/padString.cpp`.
-
-The padding logic uses `memcpySmallAllowReadWriteOverflow15` which requires 15 extra bytes of read padding beyond the buffer size. The current implementation uses a regular `String` class which doesn't provide this padding, leading to out-of-bounds reads when the pad string is shorter than 16 bytes and needs to be repeated.
+The `leftPad`, `rightPad`, `leftPadUTF8`, and `rightPadUTF8` string functions have a heap-buffer-overflow vulnerability that is detected by Address Sanitizer (ASan).
 
 ## Symptoms
 
-- ASan reports heap-buffer-overflow when running queries like:
+- ASan reports a heap-buffer-overflow when running queries such as:
   - `SELECT leftPad('x', 100, 'abc')`
   - `SELECT rightPad('x', 50, 'абвгдежзиклмнопрс')` (UTF8 variant)
-- The overflow happens in the `writeSlice` function called from `PaddingChars::appendTo`
+- The overflow is triggered inside the `writeSlice` function, which is called when appending padding characters to the result string.
+- The crash occurs because `writeSlice` internally uses `memcpySmallAllowReadWriteOverflow15`, which reads up to 15 bytes past the end of the source buffer. The internal buffer that stores the padding characters does not provide this extra read margin, causing out-of-bounds reads when the pad string is short (fewer than 16 bytes) and gets repeated.
 
-## What needs to be fixed
+## What needs to change
 
-The `padString.cpp` file needs to be modified to:
+The internal buffer holding the padding characters must be stored in a container that guarantees at least 15 bytes of read padding beyond its logical size. The current container type (`String`) does not provide this guarantee. ClickHouse's `PaddedPODArray` family of containers does provide this padding and is used elsewhere in the codebase for exactly this purpose.
 
-1. Store the pad string in a container that provides 15 bytes of read padding (`PaddedPODArray<UInt8>` instead of `String`)
-2. Update the constructor to initialize this container properly
-3. Move the empty pad string handling logic from a separate `init()` method to the main execution function
-4. Use `insertFromItself` instead of `operator+=` for duplicating the pad string content (since `PaddedPODArray` has different semantics)
-5. Use `validateFunctionArguments` helper for argument validation instead of manual checks
-
-## File to modify
-
-- `src/Functions/padString.cpp` - Contains the `PaddingChars` class and `FunctionPadString` class
-
-## References
-
-- Look at how other functions use `PaddedPODArray` for similar purposes
-- The `writeSlice` function and `memcpySmallAllowReadWriteOverflow15` are defined in the GatherUtils/Algorithms headers
-- Check how `validateFunctionArguments` is used in other functions for argument validation
+Additionally, review the surrounding code for related issues:
+- The logic that defaults an empty pad string to a single space character should be placed so it runs before the padding buffer is constructed, not inside the buffer's own initialization.
+- Consider whether the function's argument validation can be simplified using existing ClickHouse validation helpers.
 
 ## Notes
 
 - The fix should maintain the same behavior for all edge cases (empty strings, UTF8, etc.)
 - When writing C++ code, use Allman-style braces (opening brace on a new line)
-- The expected output for test queries is provided in the test files
+- The expected output for test queries is provided in the existing SQL test files under `tests/queries/0_stateless/`

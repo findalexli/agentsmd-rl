@@ -32,9 +32,7 @@ RUN pnpm install
 # Build all packages in the monorepo to ensure dependencies exist
 RUN pnpm run build:all 2>&1 || true
 
-# Copy test files from parent directory
+# Test files (test.sh, solve.sh) are mounted at runtime by Harbor, not at build time.
+# Removed the build-time chmod since the files don't exist in the build context.
 
-# Make scripts executable
-RUN chmod +x /workspace/task/test.sh /workspace/task/solve.sh
-
-WORKDIR /workspace/task
+WORKDIR /workspace/router

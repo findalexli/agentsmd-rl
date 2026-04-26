@@ -2,150 +2,156 @@
 """
 Tests for ClickHouse leftPad/rightPad heap-buffer-overflow fix.
 
-This tests:
-1. The code changes are present (PaddedPODArray usage, empty string handling moved)
-2. The C++ code compiles without errors
-3. Expected test files exist
+Verifies:
+1. The pad string buffer uses a container with read padding (not plain String)
+2. The reinterpret_cast workaround for String::data() is removed from appendTo
+3. Empty pad string fallback is placed before buffer construction
+4. The C++ code has valid syntax
 """
 
 import subprocess
-import sys
 import re
-import os
 
 REPO = "/workspace/ClickHouse"
 TARGET_FILE = f"{REPO}/src/Functions/padString.cpp"
 
-def test_padded_pod_array_usage():
-    """Verify PaddedPODArray is used instead of String for pad_string."""
+
+def _read_target():
     with open(TARGET_FILE, 'r') as f:
-        content = f.read()
-
-    # Check that PaddedPODArray is used for pad_string
-    assert 'PaddedPODArray<UInt8> pad_string' in content, \
-        "PaddedPODArray<UInt8> should be used for pad_string member"
-
-    # Check that String is no longer used for pad_string
-    # (The old code had: String pad_string; as a member)
-    lines = content.split('\n')
-    in_class_padding_chars = False
-    brace_depth = 0
-    found_old_pattern = False
-
-    for line in lines:
-        if 'class PaddingChars' in line:
-            in_class_padding_chars = True
-            brace_depth = 0
-
-        if in_class_padding_chars:
-            brace_depth += line.count('{') - line.count('}')
-
-            # Look for old pattern: String pad_string; (not inside a function)
-            if brace_depth > 0 and re.match(r'\s+String\s+pad_string\s*;', line):
-                found_old_pattern = True
-                break
-
-            if brace_depth == 0 and '}' in line and 'class' not in line:
-                in_class_padding_chars = False
-
-    assert not found_old_pattern, \
-        "Old 'String pad_string;' member should be replaced with PaddedPODArray"
+        return f.read()
 
 
-def test_empty_pad_string_handling_moved():
-    """Verify empty pad string handling is moved from init() to executeImpl."""
-    with open(TARGET_FILE, 'r') as f:
-        content = f.read()
-
-    # Check that empty string handling is now in executeImpl
-    # The fix moves: if (pad_string.empty()) pad_string = " ";
-    # from init() to after getting pad_string from column
-    assert "if (pad_string.empty())" in content, \
-        "Empty pad_string check should be in executeImpl"
-
-    # Verify it's in the executeImpl function context (after getting pad_string from column)
-    pattern = r'pad_string = column_pad_const->getValue<String>\(\);\s*\}\s*if \(pad_string\.empty\(\)\)'
-    assert re.search(pattern, content, re.DOTALL), \
-        "Empty pad_string check should come right after getting value from column"
-
-
-def test_init_method_removed():
-    """Verify the old init() method is removed from PaddingChars class."""
-    with open(TARGET_FILE, 'r') as f:
-        content = f.read()
-
-    # The old code had a private init() method
-    # After the fix, init() should not exist as a separate method
-    # Instead, the logic is in the constructor
-
-    # Check that init() method is not present
-    init_pattern = r'void\s+init\s*\(\s*\)'
-    assert not re.search(init_pattern, content), \
-        "Old init() method should be removed, logic moved to constructor"
+def _extract_class_body(content, class_name):
+    """Extract the body of a class from C++ source."""
+    idx = content.find(f'class {class_name}')
+    if idx == -1:
+        return ""
+    # Find the opening brace
+    brace_start = content.find('{', idx)
+    if brace_start == -1:
+        return ""
+    depth = 1
+    i = brace_start + 1
+    while i < len(content) and depth > 0:
+        if content[i] == '{':
+            depth += 1
+        elif content[i] == '}':
+            depth -= 1
+        i += 1
+    return content[idx:i]
 
 
-def test_memcpySmallAllowReadWriteOverflow15_comment():
-    """Verify comment explaining the padding requirement exists."""
-    with open(TARGET_FILE, 'r') as f:
-        content = f.read()
-
-    # Check for the explanatory comment
-    assert 'memcpySmallAllowReadWriteOverflow15' in content, \
-        "Comment should mention memcpySmallAllowReadWriteOverflow15 as the reason for padding"
-
-    assert '15 extra bytes of read padding' in content, \
-        "Comment should explain the 15-byte read padding requirement"
-
-
-def test_insertFromItself_used():
-    """Verify insertFromItself is used instead of operator+= for padding string."""
-    with open(TARGET_FILE, 'r') as f:
-        content = f.read()
-
-    # The old code used: pad_string += pad_string;
-    # The new code uses: pad_string.insertFromItself(pad_string.begin(), pad_string.end());
-    assert 'insertFromItself' in content, \
-        "insertFromItself should be used for duplicating pad_string content"
+def _extract_method_body(content, method_name):
+    """Extract the body of a method from C++ source, including its signature."""
+    pattern = rf'(?:void|size_t|ALWAYS_INLINE)\s+{method_name}\s*\('
+    match = re.search(pattern, content)
+    if not match:
+        return ""
+    start = match.start()
+    # Find the opening brace of the method
+    brace_start = content.find('{', start)
+    if brace_start == -1:
+        return ""
+    depth = 1
+    i = brace_start + 1
+    while i < len(content) and depth > 0:
+        if content[i] == '{':
+            depth += 1
+        elif content[i] == '}':
+            depth -= 1
+        i += 1
+    return content[start:i]
 
 
-def test_validateFunctionArguments_usage():
-    """Verify validateFunctionArguments is used for argument validation."""
-    with open(TARGET_FILE, 'r') as f:
-        content = f.read()
+# =============================================================================
+# Fail-to-pass tests
+# =============================================================================
 
-    # Check that validateFunctionArguments is used instead of manual validation
-    assert 'validateFunctionArguments' in content, \
-        "validateFunctionArguments should be used for argument validation"
+def test_pad_buffer_not_plain_string():
+    """The PaddingChars class must NOT use String for the pad data member.
 
-    # Check that FunctionArgumentDescriptors are used
-    assert 'FunctionArgumentDescriptors' in content, \
-        "FunctionArgumentDescriptors should be used for argument descriptors"
+    String does not provide the 15-byte read padding required by
+    memcpySmallAllowReadWriteOverflow15. Using it causes heap-buffer-overflow.
+    """
+    content = _read_target()
+    padding_class = _extract_class_body(content, 'PaddingChars')
+    assert padding_class, "PaddingChars class not found in source"
+
+    # Look for member declarations in the private section
+    # The old buggy code had: String pad_string;
+    # Any correct fix must NOT have a bare String member for the pad data
+    private_idx = padding_class.rfind('private:')
+    if private_idx != -1:
+        private_section = padding_class[private_idx:]
+    else:
+        private_section = padding_class
+
+    # Check there is no "String pad_string;" member declaration
+    assert not re.search(r'\bString\s+pad_string\s*;', private_section), \
+        "pad_string member must not be plain String (lacks read padding for memcpy)"
 
 
-def test_constructor_initialization_list():
-    """Verify proper constructor initialization list formatting."""
-    with open(TARGET_FILE, 'r') as f:
-        content = f.read()
+def test_pad_buffer_has_read_padding():
+    """The pad string buffer must use a container providing read padding.
 
-    # Check for the Allman-style brace formatting in the constructor
-    # The fix changes: : function_name(name_), is_right_pad(is_right_pad_), is_utf8(is_utf8_) {}
-    # To:
-    # : function_name(name_)
-    # , is_right_pad(is_right_pad_)
-    # , is_utf8(is_utf8_)
-    # {}
+    PaddedPODArray (or equivalent) provides the 15-byte read safety margin
+    required by memcpySmallAllowReadWriteOverflow15 used in writeSlice.
+    """
+    content = _read_target()
+    padding_class = _extract_class_body(content, 'PaddingChars')
+    assert padding_class, "PaddingChars class not found"
 
-    # Look for the pattern with each member on separate line
-    pattern = r': function_name\(name_\)\s*\n\s*, is_right_pad\(is_right_pad_\)\s*\n\s*, is_utf8\(is_utf8_\)\s*\n\s*\{\}'
-    assert re.search(pattern, content), \
-        "Constructor should use Allman-style formatting with each member on separate line"
+    # The buffer must use PaddedPODArray (the ClickHouse container with padding)
+    assert 'PaddedPODArray' in padding_class, \
+        "PaddingChars must use PaddedPODArray for the pad buffer (provides read padding)"
+
+
+def test_no_reinterpret_cast_in_append():
+    """appendTo must not use reinterpret_cast on pad_string.data().
+
+    The old code needed reinterpret_cast<const UInt8 *>(pad_string.data())
+    because String::data() returns char*. With a UInt8 container like
+    PaddedPODArray<UInt8>, data() already returns UInt8* and no cast is needed.
+    This verifies the buffer type change was applied to the write path.
+    """
+    content = _read_target()
+    append_body = _extract_method_body(content, 'appendTo')
+    assert append_body, "appendTo method not found"
+
+    assert 'reinterpret_cast' not in append_body, \
+        "appendTo should not need reinterpret_cast with a UInt8 container"
+
+
+def test_empty_pad_default_in_execute_path():
+    """Empty pad string fallback to space must be in the execute path.
+
+    The default of replacing an empty pad_string with " " must happen after
+    retrieving the pad string from the column argument and before constructing
+    PaddingChars. The old code had this inside PaddingChars::init(), but it
+    should be in the executeImpl flow so the fallback applies correctly when
+    the third argument is omitted.
+    """
+    content = _read_target()
+
+    # The PaddingChars class should NOT contain the empty-string fallback
+    padding_class = _extract_class_body(content, 'PaddingChars')
+    assert padding_class, "PaddingChars class not found"
+
+    # Check that the empty check is NOT inside PaddingChars
+    has_empty_check_in_class = bool(
+        re.search(r'pad_string\.empty\(\)', padding_class) and
+        re.search(r'pad_string\s*=\s*"\\? "', padding_class)
+    )
+    assert not has_empty_check_in_class, \
+        "Empty pad_string fallback should not be inside PaddingChars class"
+
+    # The fallback should be somewhere in the file (in executeImpl)
+    assert 'pad_string.empty()' in content, \
+        "Empty pad_string check must exist in the execute path"
 
 
 def test_cpp_syntax_valid():
-    """Verify the C++ code has valid syntax by running clang syntax check."""
-    # Try to compile just the file to check for syntax errors
-    # This is a lightweight check - we don't need to fully build ClickHouse
-
+    """The C++ code has valid syntax (verified via clang)."""
     result = subprocess.run(
         [
             'clang-18', '-fsyntax-only', '-std=c++23',
@@ -162,109 +168,22 @@ def test_cpp_syntax_valid():
         timeout=60,
         cwd=REPO
     )
-
-    # If this fails due to missing includes, that's ok - we're checking for obvious syntax errors
-    # Only fail if there are clear syntax errors in the file itself
+    # Only fail on syntax errors in our file, not missing dependency headers
     if result.returncode != 0:
-        # Check if the error is about the file content vs missing dependencies
         stderr = result.stderr
-        if 'error:' in stderr and 'padString.cpp' in stderr:
-            # Filter out errors that are not in our file
-            lines = stderr.split('\n')
-            our_errors = [l for l in lines if 'padString.cpp' in l and 'error:' in l]
-            if our_errors:
-                # Check if errors are about missing includes vs syntax
-                syntax_errors = [l for l in our_errors if not 'file not found' in l.lower()]
-                if syntax_errors:
-                    pytest.fail(f"Syntax errors found:\n{chr(10).join(syntax_errors)}")
-
-    # Test passes - either no errors or only missing include errors
-
-
-def test_new_headers_included():
-    """Verify new required headers are included."""
-    with open(TARGET_FILE, 'r') as f:
-        content = f.read()
-
-    # Check for new headers added in the fix
-    assert '#include <memory>' in content, \
-        "<memory> header should be included"
-
-    assert '#include <DataTypes/IDataType.h>' in content, \
-        "IDataType.h should be included for validateFunctionArguments"
-
-
-def test_error_codes_updated():
-    """Verify error codes are updated correctly."""
-    with open(TARGET_FILE, 'r') as f:
-        content = f.read()
-
-    # The fix removes ILLEGAL_TYPE_OF_ARGUMENT and NUMBER_OF_ARGUMENTS_DOESNT_MATCH
-    # from this file since validateFunctionArguments handles them
-
-    # Check they're removed from ErrorCodes namespace in this file
-    error_codes_section = re.search(
-        r'namespace ErrorCodes\s*\{([^}]+)\}',
-        content,
-        re.DOTALL
-    )
-
-    if error_codes_section:
-        section = error_codes_section.group(1)
-        # These should not be declared in this file anymore
-        assert 'ILLEGAL_TYPE_OF_ARGUMENT' not in section, \
-            "ILLEGAL_TYPE_OF_ARGUMENT should be removed from local ErrorCodes (handled by validateFunctionArguments)"
-        assert 'NUMBER_OF_ARGUMENTS_DOESNT_MATCH' not in section, \
-            "NUMBER_OF_ARGUMENTS_DOESNT_MATCH should be removed from local ErrorCodes (handled by validateFunctionArguments)"
-
-
-def test_chassert_for_column_check():
-    """Verify chassert is used for the column type check."""
-    with open(TARGET_FILE, 'r') as f:
-        content = f.read()
-
-    # The fix changes from throwing an exception to using chassert
-    # since validation is already done by validateFunctionArguments
-    assert 'chassert(column_pad_const)' in content, \
-        "chassert should be used for column_pad_const check after validation"
+        lines = stderr.split('\n')
+        our_errors = [l for l in lines if 'padString.cpp' in l and 'error:' in l]
+        syntax_errors = [l for l in our_errors if 'file not found' not in l.lower()]
+        if syntax_errors:
+            raise AssertionError(f"Syntax errors found:\n{chr(10).join(syntax_errors)}")
 
 
 # =============================================================================
-# Pass-to-pass tests - These verify the repo's CI checks pass on base commit
+# Pass-to-pass tests
 # =============================================================================
-
-def test_repo_style_cpp():
-    """Repo's C++ style check passes (pass_to_pass)."""
-    r = subprocess.run(
-        ["bash", f"{REPO}/ci/jobs/scripts/check_style/check_cpp.sh"],
-        capture_output=True,
-        text=True,
-        timeout=120,
-        cwd=REPO,
-    )
-    # The script exits 0 even if style issues found, but outputs style errors
-    # A real failure would be the script crashing (non-zero from bash error)
-    # We only fail if there's a bash error, not style issues in other files
-    assert r.returncode == 0, f"C++ style check script failed:\n{r.stderr[-500:]}"
-
-
-def test_repo_git_status():
-    """Repo's git status is clean (pass_to_pass)."""
-    r = subprocess.run(
-        ["git", "status", "--porcelain"],
-        capture_output=True,
-        text=True,
-        timeout=30,
-        cwd=REPO,
-    )
-    assert r.returncode == 0, f"Git status check failed:\n{r.stderr[-500:]}"
-    # Check that working tree is clean (no modified files)
-    # Empty output means clean working tree
-
 
 def test_repo_padstring_tests_exist():
     """Test files for padString functions exist and are valid (pass_to_pass)."""
-    # Verify the SQL test files exist and have content
     test_files = [
         f"{REPO}/tests/queries/0_stateless/01940_pad_string.sql",
         f"{REPO}/tests/queries/0_stateless/01940_pad_string.reference",

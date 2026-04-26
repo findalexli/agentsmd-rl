@@ -1,104 +1,39 @@
+version: "2.0"
+
 source_pr:
   owner: ClickHouse
   repo: ClickHouse
   number: 102087
   merge_commit: 76f219cd167ab3b9f50f93daf1c74d2f54345b2f
-  base_commit: 11943f24a8dcc6274d50136144d0078ab7a56fad
-
-target_file: src/Functions/padString.cpp
+  base_commit: 78c08e71c93e3bd0657b54402d083f96d90d76c8
 
 checks:
-  # Fail-to-pass tests - these verify the specific code changes
-  - id: test_padded_pod_array_usage
+  - id: test_pad_buffer_not_plain_string
     type: fail_to_pass
-    origin: code_structure
-    description: PaddedPODArray is used instead of String for pad_string member
-    source: "PR diff changes pad_string from String to PaddedPODArray<UInt8>"
+    origin: pr_diff
+    description: PaddingChars does not use plain String for pad data (lacks read padding)
 
-  - id: test_empty_pad_string_handling_moved
+  - id: test_pad_buffer_has_read_padding
     type: fail_to_pass
-    origin: code_structure
-    description: Empty pad string handling is moved from init() to executeImpl
-    source: "PR diff moves empty string check to executeImpl function"
+    origin: pr_diff
+    description: Pad string buffer uses PaddedPODArray providing 15-byte read margin
 
-  - id: test_init_method_removed
+  - id: test_no_reinterpret_cast_in_append
     type: fail_to_pass
-    origin: code_structure
-    description: Old init() method is removed from PaddingChars class
-    source: "PR diff removes init() method, logic moved to constructor"
+    origin: pr_diff
+    description: appendTo does not use reinterpret_cast (UInt8 container returns UInt8*)
 
-  - id: test_memcpySmallAllowReadWriteOverflow15_comment
+  - id: test_empty_pad_default_in_execute_path
     type: fail_to_pass
-    origin: code_structure
-    description: Comment explains the 15-byte read padding requirement
-    source: "PR diff adds comment explaining memcpySmallAllowReadWriteOverflow15 requirement"
-
-  - id: test_insertFromItself_used
-    type: fail_to_pass
-    origin: code_structure
-    description: insertFromItself is used instead of operator+= for padding
-    source: "PR diff uses insertFromItself for PaddedPODArray operations"
-
-  - id: test_validateFunctionArguments_usage
-    type: fail_to_pass
-    origin: code_structure
-    description: validateFunctionArguments is used for argument validation
-    source: "PR diff replaces manual validation with validateFunctionArguments helper"
-
-  - id: test_constructor_initialization_list
-    type: fail_to_pass
-    origin: agent_config
-    description: Constructor uses Allman-style brace formatting per CLAUDE.md
-    source: "CLAUDE.md: When writing C++ code, always use Allman-style braces (opening brace on a new line)"
+    origin: pr_diff
+    description: Empty pad string fallback is in executeImpl, not inside PaddingChars
 
   - id: test_cpp_syntax_valid
     type: fail_to_pass
-    origin: code_structure
-    description: C++ code has valid syntax
-    source: "Basic requirement - code must compile"
-
-  - id: test_new_headers_included
-    type: fail_to_pass
-    origin: code_structure
-    description: New required headers (<memory>, IDataType.h) are included
-    source: "PR diff adds necessary includes"
-
-  - id: test_error_codes_updated
-    type: fail_to_pass
-    origin: code_structure
-    description: Error codes are updated (removed ones handled by validateFunctionArguments)
-    source: "PR diff removes error codes now handled by validateFunctionArguments"
-
-  - id: test_chassert_for_column_check
-    type: fail_to_pass
-    origin: code_structure
-    description: chassert is used for column_pad_const check
-    source: "PR diff replaces exception with chassert after validation"
-
-  # Pass-to-pass tests - These verify repo CI checks pass on the base commit
-  - id: test_repo_style_cpp
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's C++ style check script runs without errors"
-    source: "ci/jobs/scripts/check_style/check_cpp.sh - validates C++ code style using grep patterns"
-
-  - id: test_repo_git_status
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo's git status check passes"
-    source: "git status --porcelain - validates repo is in clean state"
+    origin: pr_diff
+    description: C++ code has valid syntax (clang check)
 
   - id: test_repo_padstring_tests_exist
     type: pass_to_pass
     origin: repo_tests
-    description: "Test files for padString functions exist and are non-empty"
-    source: "test -s on SQL test files - validates test file existence and content"
-
-rubric:
-  - rule: Code includes proper fix for heap-buffer-overflow security issue
-    source: "The diff shows addition of PaddedPODArray and proper memory handling"
-    weight: high
-
-  - rule: Changes maintain existing code style and formatting conventions
-    source: "Code follows existing patterns in the repository"
-    weight: medium
+    description: SQL test files for padString functions exist and are non-empty

@@ -29,11 +29,14 @@ RUN pip3 install --break-system-packages pyyaml requests
 RUN mkdir -p /workspace/ClickHouse /logs/verifier
 
 # Clone ClickHouse repo at the base commit
+# NOTE: Original PR base 11943f24a8dcc6274d50136144d0078ab7a56fad was force-pushed/orphaned upstream.
+# Switched to task.toml base_commit 78c08e71c93e3bd0657b54402d083f96d90d76c8 which is still reachable.
 WORKDIR /workspace
-ARG BASE_COMMIT=11943f24a8dcc6274d50136144d0078ab7a56fad
-RUN git clone --filter=blob:none https://github.com/ClickHouse/ClickHouse.git && \
-    cd ClickHouse && \
-    git fetch --depth=50 origin && \
-    git checkout ${BASE_COMMIT}
+ARG BASE_COMMIT=78c08e71c93e3bd0657b54402d083f96d90d76c8
+RUN git init /workspace/ClickHouse && \
+    cd /workspace/ClickHouse && \
+    git remote add origin https://github.com/ClickHouse/ClickHouse.git && \
+    git fetch --depth=1 origin ${BASE_COMMIT} && \
+    git checkout FETCH_HEAD
 
 WORKDIR /workspace/ClickHouse
