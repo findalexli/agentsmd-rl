@@ -199,8 +199,15 @@ def scout_repo(
     target: int,
     existing: set[tuple[str, int]],
     caution: str | None = None,
+    cutoff_date: str | None = None,
 ) -> list[dict]:
-    """Scout a single repo for candidate code-only PRs."""
+    """Scout a single repo for candidate code-only PRs.
+
+    `cutoff_date` (ISO 8601) — drop PRs merged before this date. Lets us
+    use --months with the non-agentmd path so we can scout broadly
+    (catches both Class A PRs that touch agent-md AND Class B PRs that
+    only touch code; the causality judge filters A+B at the next stage).
+    """
     print(f"\n{'='*60}")
     print(f"  Scouting {repo} (target: {target})")
     if caution:
@@ -234,6 +241,12 @@ def scout_repo(
 
         if (repo, pr_num) in existing:
             skipped["existing"] += 1
+            continue
+
+        merged_at = pr.get("mergedAt", "")
+        if cutoff_date and merged_at and merged_at < cutoff_date:
+            skipped.setdefault("too_old", 0)
+            skipped["too_old"] += 1
             continue
 
         pr_labels = {la.get("name", "").lower() for la in pr.get("labels", [])}
@@ -828,9 +841,20 @@ def _cmd_scout(args: argparse.Namespace) -> None:
                 print(f"  {repo}: target {target}, existing {existing_count}")
             return
 
+        # Compute cutoff_date the same way as the agentmd branch so --months
+        # works in non-agentmd mode too. This catches both Class A (agent-md
+        # edits) and Class B (code-only follows-rule) PRs at scout time;
+        # the causality judge filters A+B at the next stage.
+        from datetime import datetime, timedelta, timezone
+        cutoff_iso: str | None = None
+        if args.months:
+            cutoff = datetime.now(timezone.utc) - timedelta(days=args.months * 30)
+            cutoff_iso = cutoff.strftime("%Y-%m-%dT%H:%M:%SZ")
+            print(f"Cutoff date: {cutoff_iso} ({args.months} months ago)")
+
         all_candidates = []
         for repo, target, caution in repos:
-            candidates = scout_repo(repo, target, existing, caution)
+            candidates = scout_repo(repo, target, existing, caution, cutoff_date=cutoff_iso)
             all_candidates.extend(candidates)
             time.sleep(1)
 
