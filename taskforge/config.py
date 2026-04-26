@@ -148,8 +148,18 @@ def extract_added_lines(hunk: str) -> str:
 # GitHub API helper
 # ---------------------------------------------------------------------------
 
-def gh_json(cmd: list[str], retries: int = 3, timeout: int = 120) -> list | dict:
-    """Run a gh command and parse JSON output, with retries for rate limits."""
+def gh_json(cmd: list[str], retries: int = 5, timeout: int = 120) -> list | dict:
+    """Run a gh command and parse JSON output, with retries for rate limits.
+
+    Retries up to `retries` times on:
+      - subprocess timeouts
+      - GH 5xx (502/503/504) — gateway errors
+      - GH rate-limit / abuse messages
+
+    Backoff: 5xx uses 10s × (attempt+1) capped at 60s. Rate-limit uses
+    30s × (attempt+1). Both cap retries at 5 by default (was 3 — too low
+    for sustained GraphQL 504 storms observed during deep-scout passes).
+    """
     for attempt in range(retries):
         try:
             result = subprocess.run(
@@ -157,7 +167,10 @@ def gh_json(cmd: list[str], retries: int = 3, timeout: int = 120) -> list | dict
                 capture_output=True, text=True, timeout=timeout,
             )
         except subprocess.TimeoutExpired:
-            print(f"  gh timeout (attempt {attempt + 1})", file=sys.stderr)
+            wait = min(10 * (attempt + 1), 60)
+            print(f"  gh timeout (attempt {attempt + 1}/{retries}), waiting {wait}s",
+                  file=sys.stderr)
+            time.sleep(wait)
             continue
 
         if result.returncode == 0:
@@ -171,9 +184,11 @@ def gh_json(cmd: list[str], retries: int = 3, timeout: int = 120) -> list | dict
             print(f"  Rate limited, waiting {wait}s...", file=sys.stderr)
             time.sleep(wait)
             continue
-        if "502" in result.stderr or "503" in result.stderr or "stream error" in stderr_lower:
-            wait = 5 * (attempt + 1)
-            print(f"  Server error, retrying in {wait}s... ({result.stderr[:100]})", file=sys.stderr)
+        if any(c in result.stderr for c in ("502", "503", "504")) or \
+           "stream error" in stderr_lower or "gateway" in stderr_lower:
+            wait = min(10 * (attempt + 1), 60)
+            print(f"  Server error (attempt {attempt + 1}/{retries}), retrying in {wait}s... "
+                  f"({result.stderr[:100]})", file=sys.stderr)
             time.sleep(wait)
             continue
         if result.stderr:

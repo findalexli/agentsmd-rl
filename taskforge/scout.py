@@ -216,12 +216,18 @@ def scout_repo(
 
     fetch_limit = target * 4
 
+    # NOTE: dropping `files` from --json drastically reduces GraphQL node-cost
+    # and avoids the gateway 504s that killed earlier deep-scout passes (the
+    # `files` field expands per-file into nested objects, blowing out the
+    # complexity score on big PRs). Scout-time docs-only/deps-only filtering
+    # is therefore softened — but the downstream causality judge already
+    # detects "no testable behavior" PRs, so we lose nothing.
     prs = gh_json([
         "pr", "list",
         "--repo", repo,
         "--state", "merged",
         "--limit", str(fetch_limit),
-        "--json", "number,title,files,changedFiles,additions,deletions,mergedAt,labels,mergeCommit",
+        "--json", "number,title,changedFiles,additions,deletions,mergedAt,labels,mergeCommit",
     ])
 
     if not prs:
