@@ -12,11 +12,9 @@ RUN pip install poetry==1.8.5
 
 # Clone the repository at base commit
 WORKDIR /workspace
-RUN git init /workspace/&& && \
-    cd /workspace/&& && \
-    git remote add origin https://github.com/OpenHands/OpenHands.git && \
-    git fetch --depth=1 origin dbd199e77cdf741f4b1707702255b0b42fc04ab5 && \
-    git checkout FETCH_HEAD
+RUN git clone --filter=blob:none https://github.com/OpenHands/OpenHands.git && \
+    cd OpenHands && \
+    git checkout dbd199e77cdf741f4b1707702255b0b42fc04ab5
 
 WORKDIR /workspace/OpenHands
 

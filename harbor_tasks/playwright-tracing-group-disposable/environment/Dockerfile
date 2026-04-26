@@ -18,11 +18,9 @@ RUN pip install pytest
 WORKDIR /workspace
 
 # Clone playwright repo at base commit
-RUN git init /workspace/&& && \
-    cd /workspace/&& && \
-    git remote add origin https://github.com/microsoft/playwright.git && \
-    git fetch --depth=1 origin 1ed53ac99ec225a5fc0aacb762a18e3195c61a6c && \
-    git checkout FETCH_HEAD
+RUN git clone --filter=blob:none https://github.com/microsoft/playwright.git && \
+    cd playwright && \
+    git checkout 1ed53ac99ec225a5fc0aacb762a18e3195c61a6c
 
 # Install dependencies (npm ci is faster and more reliable than npm install)
 RUN cd /workspace/playwright && npm ci

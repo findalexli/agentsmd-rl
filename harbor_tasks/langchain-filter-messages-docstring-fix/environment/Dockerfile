@@ -8,11 +8,9 @@ WORKDIR /workspace
 
 # Clone the langchain repo at base commit
 ARG BASE_COMMIT=e89afedfecad9b49bae977130f28995b064dd0a2
-RUN git init /workspace/&& && \
-    cd /workspace/&& && \
-    git remote add origin https://github.com/langchain-ai/langchain.git && \
-    git fetch --depth=1 origin e89afedfecad9b49bae977130f28995b064dd0a2 && \
-    git checkout FETCH_HEAD
+RUN git clone --filter=blob:none https://github.com/langchain-ai/langchain.git && \
+    cd langchain && \
+    git checkout ${BASE_COMMIT}
 
 # Install langchain-core dependencies
 WORKDIR /workspace/langchain/libs/core

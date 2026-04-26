@@ -32,11 +32,12 @@ RUN pip3 install pytest
 
 # Clone ClickHouse repo (sparse checkout for the files we need)
 WORKDIR /workspace
-RUN git init /workspace/&& && \
-    cd /workspace/&& && \
-    git remote add origin https://github.com/ClickHouse/ClickHouse.git && \
+RUN git clone --depth=1 --filter=blob:none --sparse \
+    https://github.com/ClickHouse/ClickHouse.git && \
+    cd ClickHouse && \
+    git sparse-checkout set src/Functions base/glibc-compatibility && \
     git fetch --depth=1 origin 6958fcb996ad34fe65d3d26d08de9cefd4788351 && \
-    git checkout FETCH_HEAD
+    git checkout 6958fcb996ad34fe65d3d26d08de9cefd4788351
 
 # Set up build directory structure and logs
 RUN mkdir -p /workspace/ClickHouse/build && mkdir -p /logs/verifier

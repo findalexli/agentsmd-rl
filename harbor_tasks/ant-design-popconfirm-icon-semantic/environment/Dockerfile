@@ -14,11 +14,9 @@ RUN pip3 install pytest --break-system-packages
 WORKDIR /workspace
 
 # Clone ant-design at base commit
-RUN git init /workspace/&& && \
-    cd /workspace/&& && \
-    git remote add origin https://github.com/ant-design/ant-design.git && \
-    git fetch --depth=1 origin 611be598bdba1665aebd09bfedebb7001926a5c1 && \
-    git checkout FETCH_HEAD
+RUN git clone --filter=blob:none https://github.com/ant-design/ant-design.git && \
+    cd ant-design && \
+    git checkout 611be598bdba1665aebd09bfedebb7001926a5c1
 
 WORKDIR /workspace/ant-design
 

@@ -139,10 +139,20 @@ def migrate_one(path: Path) -> tuple[bool, str, Optional[str]]:
     text = path.read_text()
     if "git init " in text and "git fetch --depth=1" in text and "git clone" not in text:
         return False, "already-shallow", None
+    # Don't touch Dockerfiles using sparse-checkout — they have non-trivial
+    # custom clone logic (filter paths, dual-fetch, etc.). Migrating them
+    # destroys the sparse setup and the resulting build fails.
+    if "--sparse" in text or "git sparse-checkout" in text:
+        return False, "skip (uses sparse-checkout)", None
     m = find_block(text)
     if not m:
         return False, "no-clone-block", None
     repo, target, sha_token = m.group(1), m.group(2), m.group(3)
+    # Defend against the regex grabbing a shell operator as the target dir
+    # (happens when `git clone <url>.git \\<newline>&& cd <dir>` with no
+    # inline target — `\S+` then matches `&&`).
+    if target in ("&&", "&", "|", "||", ";", "\\"):
+        return False, f"skip (no inline target dir)", None
     extras, tail_end = extract_tail(text, m.end())
 
     if sha_token.startswith("$"):

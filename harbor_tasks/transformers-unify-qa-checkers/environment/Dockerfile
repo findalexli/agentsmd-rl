@@ -12,11 +12,11 @@ RUN apt-get update && \
 
 # Clone transformers repo at base commit
 WORKDIR /workspace
-RUN git init /workspace/&& && \
-    cd /workspace/&& && \
-    git remote add origin https://github.com/huggingface/transformers.git && \
+RUN git clone --depth=1 --filter=blob:none \
+    https://github.com/huggingface/transformers.git && \
+    cd transformers && \
     git fetch --depth=1 origin 28af8184fb00a0e9bc778c3defdec39bbe7e8839 && \
-    git checkout FETCH_HEAD
+    git checkout 28af8184fb00a0e9bc778c3defdec39bbe7e8839
 
 WORKDIR /workspace/transformers
 
