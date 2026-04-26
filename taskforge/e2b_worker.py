@@ -1941,6 +1941,8 @@ async def run_task(
                     raise _RateLimited(result.error)
                 if s == "abandoned":
                     result.error = f"scaffold abandoned: {err}"
+                    logger.info("[%s] scaffold ABANDONED (%.0fs): %s",
+                                pr_ref, elapsed, err[:200])
                     await update_sandbox_status(sandbox, "scaffold", _stamp("scaffold", s, elapsed, err))
                     result.total_time = round(time.monotonic() - t_start, 2)
                     return result
@@ -1956,16 +1958,26 @@ async def run_task(
 
                 # Oneshot mode: trust scaffold.md's verdict (Docker NOP/GOLD
                 # already validated inside the agent call) and skip the
-                # trailing rubric/enrich/improve/validate/judge chain.
+                # trailing qgate/rubric/enrich/improve/validate/judge chain.
                 if start_at == StartAt.ONESHOT_SCAFFOLD:
                     ss_data: dict = {}
+                    # Primary: scaffold_status.json (Step 8 of scaffold.md)
                     try:
                         ss_raw = await sandbox.files.read(
                             "/workspace/task/scaffold_status.json", format="text")
                         ss_data = json.loads(ss_raw)
-                    except Exception as e:
-                        logger.warning("[%s] oneshot_scaffold: status read failed: %s",
-                                       result.task_name, str(e)[:80])
+                    except Exception:
+                        # Fallback: agent may have written {abandoned:true} to
+                        # status.json via Step 1b's abandon path before reaching
+                        # Step 8. Surface that reason rather than blank-failing.
+                        try:
+                            sj_raw = await sandbox.files.read(
+                                "/workspace/task/status.json", format="text")
+                            sj_data = json.loads(sj_raw)
+                            if sj_data.get("abandoned"):
+                                ss_data = sj_data
+                        except Exception:
+                            pass
 
                     if ss_data.get("abandoned"):
                         result.error = f"oneshot_scaffold abandoned: {ss_data.get('reason','')[:200]}"
@@ -1983,6 +1995,23 @@ async def run_task(
                         result.error = "oneshot_scaffold: agent wrote no verdict to scaffold_status.json"
                         result.valid = False
                         logger.warning("[%s] oneshot_scaffold: no verdict produced", result.task_name)
+
+                    # Trust the verdict — short-circuit past qgate and the rest
+                    # of the multi-node chain. Download outputs only if valid.
+                    result.total_time = round(time.monotonic() - t_start, 2)
+                    final_status = await read_sandbox_status(sandbox)
+                    result.nodes = final_status.get("nodes", {})
+                    if result.valid and dest:
+                        await download_task_files(sandbox, dest)
+                        write_status_json(dest, result, nodes=result.nodes)
+                        result.downloaded = True
+                        logger.info("[%s] PASS — downloaded to %s",
+                                    result.task_name, dest)
+                    elif dest and not is_new:
+                        write_status_json(dest, result, nodes=result.nodes)
+                    if pool and backend and "rate limited" not in (result.error or "").lower():
+                        pool.report_success(backend)
+                    return result
 
                 # Dedup check: skip if task already exists on disk (unless --force)
                 if dest.exists() and not force:
