@@ -748,18 +748,21 @@ def write_status_json(task_path: Path, result: WorkerResult, nodes: dict | None 
 async def node_scaffold(
     sandbox: AsyncSandbox,
     pr_ref: str,
-    agentmd: bool = False,
+    agentmd: bool = False,  # kept for callsite compat; only affects output dir
 ) -> tuple[str, str, str]:
     """Node 0: Scaffold a task from a PR reference.
 
-    Reads: scaffold prompt template from local disk
+    Always uses scaffold.md (the general prompt that handles both Class A
+    PRs that edit agent-instruction files AND Class B PRs whose code
+    follows a rule from one). The deprecated scaffold_agentmd.md prompt
+    abandoned every Class B PR via its strict "no config edit" criterion;
+    that footgun caused the 70% abandon rate observed on 2026-04-25.
+
+    Reads: scaffold.md from local disk
     Writes: /workspace/task/* (all task files) in the sandbox
     Returns: (status, task_name, error)
     """
-    if agentmd:
-        prompt_file = ROOT / "taskforge" / "prompts" / "scaffold_agentmd.md"
-    else:
-        prompt_file = ROOT / "taskforge" / "prompts" / "scaffold.md"
+    prompt_file = ROOT / "taskforge" / "prompts" / "scaffold.md"
     if not prompt_file.exists():
         prompt_file = ROOT / ".claude" / "commands" / "scaffold-task.md"
     prompt = prompt_file.read_text().replace("$ARGUMENTS", pr_ref)

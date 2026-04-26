@@ -262,7 +262,11 @@ async def main():
     parser.add_argument("--agentmd", action="store_true",
                         help="Scaffold as agentmd_edits (code + config tasks)")
     parser.add_argument("--start-at", type=str, default=None,
-                        choices=["scaffold", "qgate", "rubric", "enrich", "improve", "fix_quality", "validate", "judge", "oneshot_repair", "oneshot_scaffold"],
+                        choices=["oneshot_repair", "oneshot_scaffold",
+                                 # Deprecated multi-node entry points — kept callable for
+                                 # in-flight retrofit but oneshot_* are canonical:
+                                 "scaffold", "qgate", "rubric", "enrich", "improve",
+                                 "fix_quality", "validate", "judge"],
                         help="DAG entry point for existing tasks (default: validate)")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
