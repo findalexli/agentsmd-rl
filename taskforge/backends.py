@@ -551,15 +551,14 @@ def backends_from_env(env_file: Path | None = None) -> list[Backend]:
     # Tier 2: reliable but paid. Use as primary when Fireworks/GLM unavailable.
     # Set ANTHROPIC_ENABLED=1 to include in pool (off by default — prefer cheap Kimi)
     if _get("ANTHROPIC_API_KEY") and _enabled("ANTHROPIC_ENABLED"):
-        # Sandbox claude CLI is 2.1.97 — uses legacy "thinking.type.enabled" which
-        # the API rejects for opus-4-7. Pin to opus-4-6 until the harbor-worker
-        # template is rebuilt with a CLI version that emits "thinking.type.adaptive".
+        # As of harbor-worker-v4 the sandbox runs claude-code 2.1.119, which
+        # emits the new thinking.type.adaptive format Opus 4.7 requires.
         backends.append(Backend(
             name="anthropic",
             base_url="https://api.anthropic.com",
             api_key=_get("ANTHROPIC_API_KEY"),
             model_map={
-                "opus": "claude-opus-4-6",
+                "opus": "claude-opus-4-7",
                 "sonnet": "claude-sonnet-4-6",
                 "haiku": "claude-haiku-4-5",
             },
