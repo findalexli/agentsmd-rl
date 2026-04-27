@@ -97,19 +97,84 @@ The dominant filter is the **causality judge** (stage 4.3): without it, ≈94% o
 
 ## 5. Pipeline B — Markdown-authoring tasks
 
-A regex pre-filter routes only PRs whose every changed file is a tier-1 instruction file; those go through a two-stage Gemini quality gate around a deterministic scaffolder (no LLM in the scaffold step). All numbers below are for the **2026-04-27 batch** in isolation.
+Pipeline B targets the subset of PRs that *only* edit tier-1 instruction files. The transformation from such a PR to a runnable benchmark task is mechanical (extract the most distinctive added lines, assert their presence in the agent's output), so we replace the per-task Opus call of Pipeline A with a deterministic procedure flanked by two Gemini quality gates: one cheap title-level screen before scaffolding, and one full-context judge after. All numbers below are for the **2026-04-27 batch**.
 
-| Stage | Mechanism | Input | Drop | Output |
+The pipeline is five stages, summarized in Table 5.1 and detailed in §5.1–§5.5 below.
+
+**Table 5.1.** Pipeline B per-stage filter rates.
+
+| Stage | Filter | In | Drop | Out |
 |---|---|---|---|---|
-| 5.1 Tier-1 path regex | A PR survives iff every changed path matches the tier-1 regex; codebearing PRs are routed to a separate queue (retained for future Pipeline A processing — currently 34,358 rows total across all scouts to date) | 9,629 | 9,308 | **321** pure-tier-1 PRs (3.3%) |
-| 5.2 Pre-judge | Gemini 3.1 Pro Standard tier with input restricted to `{repo, title, file_paths}` (no PR body, no patch). Drops obvious slop only: bot-generated titles ("Automated AGENTS.md update for commit ABC"), test/CI scaffolding, version-bump titles, generic boilerplate. Conservative — defaults to KEEP. | 321 | 19 | **302** (94.1% pass) |
-| 5.3 Deterministic scaffold | Per surviving PR: shallow-clone the repo at the base SHA (`git fetch --depth=1`), generate a Dockerfile, write a `solve.sh` that applies the gold patch verbatim, generate `tests/test_outputs.py` with one assertion per *distinctive* added line (top-N longest `+` lines from the diff, ≥ 12 chars, non-trivial alphanumeric content). No LLM call. ≈99% scaffold success per attempt. | 302 | 88 idempotent dupes against the existing corpus | 214 newly-scaffolded tasks |
-| 5.4 Post-judge | Gemini 3.1 Pro Standard tier, full context: complete `instruction.md` + complete gold patch. Verdict in {HIGH, MEDIUM, LOW, DELETE} with structured fields for `load_bearing` (boolean), `research_relevant` (boolean), `slop_score` ∈ [0, 10], `evidence` (a quoted phrase from the diff). Run on the full 822-task corpus state at this point (608 pre-existing + 214 newly scaffolded). | 822 | 104 (LOW + DELETE) | HIGH=706, MEDIUM=12, LOW=2, DELETE=102 |
-| 5.5 Quarantine | Move LOW + DELETE to `harbor_tasks_md_authoring_quarantine_quality/` | 822 | 104 | **718 active** |
+| 5.1 Path regex | Tier-1-only (every changed path) | 9,629 | 9,308 | **321** |
+| 5.2 Pre-judge | Gemini, title-only | 321 | 19 | 302 |
+| 5.3 Scaffold | Deterministic transform | 302 | 88 (idempotent) | 214 newly created |
+| 5.4 Post-judge | Gemini, full gold-patch context | 822† | 104 | 718 |
+| 5.5 Quarantine | Move LOW + DELETE | — | 104 | **718 active** |
 
-**End-to-end yield (single batch)**: 214 new tasks scaffolded / 9,629 candidates ≈ 2.2%; counting all post-judge survivors (including the 504 pre-existing tasks the judge re-validated as HIGH/MEDIUM): 718 / 9,629 ≈ 7.5%.
+† Stage 5.4 runs on the full corpus state at judge time: 608 tasks pre-existing in `harbor_tasks_md_authoring/` from earlier scout passes, plus the 214 added in stage 5.3, for 822 tasks total. The judge does not skip pre-existing entries; it re-validates them.
 
-The dominant filter is the **path regex** (stage 5.1) at 96.7% drop. The two LLM judges combined contribute another ≈12.4% relative reduction, almost entirely from the **post-judge** — the pre-judge by construction sees no patch content and is limited to title-level signals.
+### 5.1 Path regex pre-filter
+
+A PR survives iff *every* path in its diff matches the tier-1 regex (defined in §1). PRs touching any non-tier-1 path — even a single test fixture or generated file — are routed instead to a side queue (`scaffold_queue_*_codebearing.jsonl`, 34,358 rows cumulative across all 2026-04 scouts) and held for future Pipeline A processing. The regex is the work-horse filter: it discards 9,308 of 9,629 candidates (96.7%) without a single API call.
+
+### 5.2 Pre-judge
+
+Gemini 3.1 Pro Standard tier, structured-output classifier with input restricted to `{repo, title, file_paths}` — no PR body, no diff. The prompt directs the model to return KEEP unless the title is unambiguously slop. Surface-level rejection patterns the prompt enumerates explicitly:
+
+- bot-generated titles (e.g. *"Automated AGENTS.md update for commit ABC"*),
+- test or CI scaffolding (*"test: broken merge-batch e2e PR"*, *"DO NOT MERGE"*),
+- pure metadata or version-bump titles (*"bump skill version to 1.0.1"*, *"add tags"*),
+- generic boilerplate (*"Add comprehensive guide for X"* with no specific feature).
+
+Conservative by design — the prompt instructs the model to default to KEEP when in doubt, deferring strict rejection to the post-judge (§5.4) which has the gold patch. Drops 19 of 321 (5.9%).
+
+### 5.3 Deterministic scaffold
+
+For each PR that passes pre-judge:
+
+1. Shallow-clone the repository at the base commit SHA (`git init && git fetch --depth=1 origin <SHA>`).
+2. Emit a `Dockerfile` based on the project's primary language detected from file paths (Python, Node, Rust, Go, generic).
+3. Emit `solution/solve.sh` that applies the PR's gold diff verbatim via `git apply <<'PATCH'`.
+4. Emit `tests/test_outputs.py` containing **N = 3** pytest assertions, one per distinctive added line. A line is *distinctive* if it is among the longest `+` lines in the diff after these filters: length ≥ 12 characters, contains non-trivial alphanumeric content, deduplicated against earlier picks. Each assertion checks `assert <line> in <target_file_text>`.
+5. Emit `eval_manifest.yaml` (schema v2.0) with `task.kind = markdown_authoring` and one entry per changed file in `config_edits`.
+
+The transform involves zero LLM calls. Per-attempt success rate is approximately 99%; the residual ~1% are edge cases (e.g. patches consisting entirely of removals, no `+` lines to extract). Of the 302 PRs entering this stage, 214 produce new task directories; the remaining 88 collide with task slugs already present in `harbor_tasks_md_authoring/` from earlier scout passes and are skipped under an idempotency check.
+
+### 5.4 Post-judge
+
+Gemini 3.1 Pro Standard tier, structured-output classifier with full context: the scaffolded task's `instruction.md` (PR description) and the complete gold patch as it appears in `eval_manifest.yaml`'s `config_edits[].gold_added`. The judge produces a structured `Verdict` object:
+
+```
+load_bearing       : bool       # would the gold patch change downstream agent behavior?
+research_relevant  : bool       # is the change in scope for the agent-md research schema?
+slop_score         : int 0..10  # 0 = concrete rule, 10 = AI/boilerplate
+evidence           : string     # one quoted phrase from the diff supporting the score
+verdict            : enum       # HIGH | MEDIUM | LOW | DELETE
+```
+
+The verdict is determined deterministically from the structured fields per the threshold table in §6. Stage 5.4 is run on the full corpus state at judge time (822 tasks: 608 pre-existing + 214 newly scaffolded), with caching (`md_quality.json` written per task) so re-runs skip already-judged tasks unless explicitly re-judged.
+
+Outcomes for the 822 tasks judged in this pass:
+
+| Verdict | Count | Share | Outcome |
+|---|---:|---:|---|
+| HIGH | 706 | 85.9% | Keep |
+| MEDIUM | 12 | 1.5% | Keep |
+| LOW | 2 | 0.2% | Quarantine |
+| DELETE | 102 | 12.4% | Quarantine |
+
+### 5.5 Quarantine
+
+LOW and DELETE verdicts are moved (preserving full task contents) to `harbor_tasks_md_authoring_quarantine_quality/`. The post-judge result remains attached as `md_quality.json` inside each quarantined task, providing an audit trail. **718 tasks remain active** in `harbor_tasks_md_authoring/` (706 HIGH + 12 MEDIUM).
+
+### 5.6 Yield analysis
+
+Two yield definitions matter:
+
+- **Per-batch new yield**: 214 newly scaffolded / 9,629 candidates ≈ **2.2%**. This is the relevant figure when forecasting future scout passes.
+- **Cumulative active yield**: 718 active tasks (after quarantine) / 9,629 candidates ≈ **7.5%**. This includes 504 pre-existing tasks the post-judge re-validated as HIGH or MEDIUM in this pass — they were scaffolded in earlier scouts but only became "active" after this run's judge confirmed their quality.
+
+The path regex (stage 5.1) is the dominant filter at 96.7% drop. Of the 321 PRs that survive it, the two LLM judges together remove a further 12.7% (19 + 88 idempotent skips at scaffold + ~30 fresh DELETEs from the 214 newly-scaffolded subset of stage 5.4). The pre-judge contributes a small absolute share because it has no patch content to reason over; the post-judge does the heavy lifting on quality.
 
 ---
 
