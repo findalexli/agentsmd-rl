@@ -199,6 +199,7 @@ class StartAt(str, Enum):
     JUDGE = "judge"           # deprecated
     ONESHOT_REPAIR = "oneshot_repair"  # canonical: qgate + fix_task_quality
     ONESHOT_SCAFFOLD = "oneshot_scaffold"  # canonical: one-call scaffold from PR
+    ONESHOT_REPAIR_MANIFEST = "oneshot_repair_manifest"  # canonical: rewrite eval_manifest.yaml only, preserve tests/Dockerfile/solve.sh
 
     @classmethod
     def from_str(cls, s: str) -> "StartAt":
@@ -845,6 +846,43 @@ async def node_scaffold(
     # Read task name from task.toml
     task_name = await _read_task_name(sandbox, pr_ref)
     return "ok", task_name, ""
+
+
+async def node_repair_manifest(sandbox: AsyncSandbox) -> tuple[str, str]:
+    """Repair eval_manifest.yaml in place. Tests/Dockerfile/solve.sh untouched.
+
+    Reads: taskforge/prompts/repair_manifest.md
+    Mutates: /workspace/task/eval_manifest.yaml (in sandbox)
+    Returns: (status, error)
+    """
+    prompt_file = ROOT / "taskforge" / "prompts" / "repair_manifest.md"
+    prompt = prompt_file.read_text()
+    await sandbox.files.write("/workspace/repair_prompt.md", prompt.encode())
+
+    code, stdout, stderr = await run_cmd(
+        sandbox,
+        "cat /workspace/repair_prompt.md | claude -p "
+        "--dangerously-skip-permissions --model opus "
+        "--output-format json",
+        user="worker",
+    )
+
+    if code != 0:
+        combined = stdout + stderr
+        if _is_rate_limit(combined):
+            return "rate_limited", combined[:500]
+        return "error", combined[:500]
+
+    # Check if agent abandoned
+    try:
+        raw = await sandbox.files.read("/workspace/task/scaffold_status.json", format="text")
+        ss = json.loads(raw)
+        if ss.get("abandoned"):
+            return "abandoned", ss.get("reason", "")[:300]
+    except Exception:
+        pass
+
+    return "ok", ""
 
 
 async def node_qgate(sandbox: AsyncSandbox, agentmd: bool = False) -> tuple[str, list[str]]:
@@ -2049,6 +2087,67 @@ async def run_task(
                     return result
                 await upload_task_files(sandbox, dest)
                 result.scaffold_status = "skipped"
+                result.task_name = task_ref
+
+                # ── Oneshot manifest repair: rewrite eval_manifest.yaml only ──
+                # Skips the rest of the pipeline (qgate/rubric/enrich/improve/validate).
+                # Uses the schema gate to verify the agent produced canonical output.
+                if start_at == StartAt.ONESHOT_REPAIR_MANIFEST:
+                    # Clear stale verdict
+                    await run_cmd(sandbox, "rm -f /workspace/task/scaffold_status.json")
+                    t0 = time.monotonic()
+                    s, err = await node_repair_manifest(sandbox)
+                    elapsed = time.monotonic() - t0
+                    result.scaffold_time = round(elapsed, 2)
+
+                    if s == "rate_limited":
+                        result.error = f"rate limited: {err}"
+                        if pool and backend:
+                            pool.report_429(backend)
+                        raise _RateLimited(result.error)
+                    if s == "abandoned":
+                        result.error = f"repair abandoned: {err}"
+                        result.valid = False
+                        logger.info("[%s] repair_manifest ABANDONED (%.0fs): %s",
+                                    task_ref, elapsed, err[:200])
+                        result.total_time = round(time.monotonic() - t_start, 2)
+                        return result
+                    if s != "ok":
+                        result.error = f"repair failed: {err}"
+                        result.total_time = round(time.monotonic() - t_start, 2)
+                        logger.info("[%s] repair_manifest FAILED (%.0fs): %s",
+                                    task_ref, elapsed, err[:200])
+                        return result
+
+                    # Schema gate: validate the new manifest
+                    try:
+                        manifest_raw = await sandbox.files.read(
+                            "/workspace/task/eval_manifest.yaml", format="text")
+                        import yaml as _yaml
+                        from taskforge.models import EvalManifest
+                        EvalManifest.model_validate(_yaml.safe_load(manifest_raw))
+                        result.valid = True
+                        logger.info("[%s] repair_manifest OK (%.0fs)", task_ref, elapsed)
+                    except Exception as schema_err:
+                        msg = str(schema_err)[:400]
+                        result.valid = False
+                        result.error = f"manifest schema invalid: {msg}"
+                        logger.warning("[%s] repair_manifest REJECTED (schema): %s",
+                                       task_ref, msg[:200])
+                        result.total_time = round(time.monotonic() - t_start, 2)
+                        return result
+
+                    # Download just the new manifest (not the whole task dir —
+                    # tests/Dockerfile/solve.sh weren't touched).
+                    new_manifest_text = manifest_raw
+                    (dest / "eval_manifest.yaml").write_text(new_manifest_text)
+                    result.downloaded = True
+                    result.total_time = round(time.monotonic() - t_start, 2)
+                    logger.info("[%s] repair_manifest PASS — manifest written to %s",
+                                task_ref, dest / "eval_manifest.yaml")
+                    if pool and backend:
+                        pool.report_success(backend)
+                    return result
 
                 # Pre-pull ghcr.io image if available (skips slow Docker build)
                 await prepull_task_image(sandbox, task_ref)
@@ -2776,8 +2875,11 @@ async def run_batch(
                             claim_dir=claim_dir,
                         )
                     else:
-                        # Existing task
-                        task_name = item if isinstance(item, str) else item.get("task", str(item))
+                        # Existing task — accept both `task` (legacy) and `task_ref` keys
+                        if isinstance(item, str):
+                            task_name = item
+                        else:
+                            task_name = item.get("task_ref") or item.get("task") or item.get("name") or str(item)
                         r = await run_task(
                             task_name, task_dir, pool, sandbox_sem,
                             start_at=start_at,
@@ -3046,7 +3148,7 @@ def main():
     parser.add_argument("--mode", choices=["pipeline", "docker-only"], required=True,
                         help="pipeline: unified DAG (LLM + Docker). docker-only: no LLM, just Docker oracle")
     parser.add_argument("--start-at", type=str, default=None,
-                        choices=["scaffold", "oneshot_scaffold", "qgate", "rubric", "enrich", "improve", "validate", "judge"],
+                        choices=["scaffold", "oneshot_scaffold", "oneshot_repair_manifest", "qgate", "rubric", "enrich", "improve", "validate", "judge"],
                         help="DAG entry point (default: scaffold for --input, validate for existing tasks)")
     parser.add_argument("--task-dir", default="harbor_tasks")
     parser.add_argument("--tasks", type=str, default=None, help="Comma-sep task names")
