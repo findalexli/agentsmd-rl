@@ -187,6 +187,37 @@ Filter contribution by stage:
 
 The pre-judge contributes a small absolute share because it has no patch content to reason over; the post-judge is the strict filter that ultimately determines what stays in the corpus.
 
+### 5.7 Why ≈30K PRs become ≈200 new tasks
+
+Three filters compose multiplicatively. Each removes a population we cannot validly include in this benchmark.
+
+```
+29,733  raw merged PRs from 1,037 agent-instruction-equipped repos
+   ↓  ×0.324   scout-time PR filters: changedFiles ∈ [1,8],
+              additions+deletions ∈ [5,500], skip {wontfix, dependencies,
+              automated-update}, recency cutoff
+ 9,629  candidates
+   ↓  ×0.033   tier-1-only path regex: every changed file must be an
+              agent-instruction file. The other 96.7% mix code with
+              markdown and are routed to the codebearing queue
+              (Pipeline A's input, not Pipeline B's).
+   321  pure-tier-1 PRs
+   ↓  ×0.941   pre-judge title screen: drops bot-PRs, dummy tests,
+              version-bump-only titles
+   302  scaffolder inputs
+   ↓  +88 idempotent skips (already in corpus from earlier scouts)
+   214  newly scaffolded tasks
+   ↓  ×~0.85   post-judge over the merged 822-task corpus drops 12.7%
+              as LOW/DELETE; the new-task share is bounded above by this
+   ≈180  net new HIGH/MEDIUM tasks added by this batch
+```
+
+Per-PR new-task yield ≈ 214 / 29,733 = **0.72%**. The two filters that dominate are mechanical (×0.324, scout-time hygiene) and structural (×0.033, tier-1-only paths).
+
+**Why so many PRs drop at the path regex.** Even in repositories built around `CLAUDE.md` / `AGENTS.md` / `SKILL.md`, the vast majority of merged PRs are ordinary code work — bug fixes, feature additions, refactors — that may incidentally touch a doc file but mostly modify source code. Only about 1 in 30 PRs we scouted are *purely* rule-file edits. Pipeline B's deterministic scaffolder (verbatim-grep test on extracted `+` lines) only works on this narrow population. PRs that mix code with markdown are not lost; they are routed to a side queue for Pipeline A.
+
+**Why the funnel is intentionally steep.** A benchmark that retained 30% of merged PRs would be silent on whether the agent attended to the rule files — exactly the failure mode the inclusion criterion (§1) is designed to prevent. The same logic applies to Pipeline A, where the *causality judge* (§4.3) drops 94% of admitted PRs as class C (decorative): the bug-fix is determined by the bug, not by any documented rule. Both pipelines pay the same kind of cost — high drop rate — for the same kind of property: every surviving task carries a clean instruction-following signal.
+
 ---
 
 ## 6. Quality gate criteria (markdown-authoring post-judge)
