@@ -2,6 +2,19 @@
 
 This document explains how we mine merged GitHub PRs and turn them into runnable benchmark tasks. The protocol produces two corpora — *code-fix tasks* and *markdown-authoring tasks* — both released as pre-built Docker images on `ghcr.io/findalexli/agentsmd-rl/<task>:latest`.
 
+## TL;DR — start to end
+
+- **Goal.** Build a benchmark that measures whether an AI coding agent reads and follows the *rule files* a repository maintains (`CLAUDE.md`, `AGENTS.md`, `SKILL.md`, `.cursor/rules/*`, …) when it modifies code.
+- **Find rule-equipped repos.** Run `gh search repos` over 13 agent-instruction-related topics (`claude-code`, `claude-skills`, `agent-skills`, `cursor-rules`, `awesome-claude-code`, …) and 3 path queries (`SKILL.md in:path`, `.claude/skills in:path`, `.cursor/rules in:path`). Keep ≥ 5-star repos and dedup against earlier passes. → **1,037 repos** for the latest markdown batch.
+- **Pull merged PRs from each repo.** `gh pr list --state merged --limit 200 --json …,files`. The `files` field gives us each PR's path list at scout time. Drop PRs that change > 8 files, add+remove > 500 lines or < 5, carry skip-labels, or merged before the recency cutoff. → **29,733 raw PRs → 9,629 candidates.**
+- **Two pipelines diverge.**
+   - **Pipeline A (code-fix)** keeps any PR from a rule-equipped repo (deduping against tasks we already built), then asks Gemini to classify each PR's gold fix as rule-shaped (A or B) vs. decorative (C) vs. unscaffoldable (D). ~94 % drop here. The survivors are built into runnable tasks by Claude Opus 4.7 inside an E2B sandbox, and validated via a Docker test (no fix → reward 0; gold → reward 1).
+   - **Pipeline B (markdown-authoring)** keeps only PRs whose every changed file is a rule file (~96.7 % drop, the dominant cut), runs a cheap title-only Gemini pre-judge to drop bot/dummy PRs, then builds tasks deterministically: shallow-clone the repo, copy the gold patch into a `solve.sh`, write a verbatim-grep test for the most distinctive added lines. A second Gemini judge with full gold-patch context then quarantines slop.
+- **Ship.** Every active task has a pre-built image on GHCR. Final corpus: **582 code-fix + 718 markdown-authoring = 1,300 tasks.**
+- **Yield is steep on purpose.** End-to-end ~0.7 %–2.8 % of fetched PRs survive to a runnable task. A benchmark retaining 30 % of merged PRs would be silent on instruction-following — exactly what the inclusion criterion exists to prevent.
+
+---
+
 **Corpus snapshot (2026-04-27).**
 
 | Corpus | Active | What "reward = 1" means | How each task is built | Quality check |
@@ -17,7 +30,7 @@ This document explains how we mine merged GitHub PRs and turn them into runnable
 A few terms recur. We define each one once here in plain English; the rest of the document uses them as shorthand.
 
 - **Rule file** *(sometimes labeled "tier-1 instruction file")*: a markdown file a repository maintains so AI coding agents can read it before changing code — `CLAUDE.md`, `AGENTS.md`, `SKILL.md`, `.cursor/rules/*`, and similar. The exact list is fixed in §3.
-- **Slug**: a short, URL-safe name we generate per PR (e.g. `prefect-update-agentsmd-files-for-2793f36`) and use as the on-disk task directory. "Skip on slug" means: don't process a PR if a task with the same slug already exists in the corpus.
+- **Task name**: a short, URL-safe identifier we derive per PR (e.g. `prefect-update-agentsmd-files-for-2793f36`) and use as the on-disk task directory. We use it to *deduplicate against existing tasks* — if a task with this name already exists in the corpus, the pipeline skips the PR.
 - **Build a task** *(sometimes labeled "scaffold")*: produce the four files Harbor needs to run the task — `environment/Dockerfile`, `solution/solve.sh` (applies the gold fix), `tests/test.sh` (returns 0 or 1), `eval_manifest.yaml` (declarative spec of what the agent should achieve). Pipeline A uses Opus to do this; Pipeline B uses a deterministic script.
 - **Rule-relevance check** *(sometimes labeled "causality judge")*: a Gemini call that decides whether the gold fix was *actually shaped by* the repo's rule files — vs. being a bug fix that just happens to live in a repo with rule files. This is the most important filter in either pipeline.
 
@@ -64,7 +77,7 @@ Every drop in the pipeline maps to one of five assumptions. Below: the assumptio
 |---|---|---|---|
 | **A1** | The repository contains rule files | Repository discovery: `gh search repos` over agent-instruction-related topics + path queries; require ≥ 5 stars | upstream of the funnel (governs which repos we even scout) |
 | **A2** | The PR is a clean, scaffoldable unit of work | Per-PR scout filters: 1–8 files changed, 5–500 total lines added+deleted, no `wontfix`/`dependencies`/`automated-update` labels, within recency window | 67.6 % (29,733 → 9,629) |
-| **A3** | The PR's diff content is in scope for the chosen pipeline | Pipeline A: only PRs from rule-equipped repos, with name-based dedup against the existing corpus. Pipeline B: every changed file must be a rule file | A: 41.5 % (slug-dedup + repo allowlist together); B: 96.7 % (path regex) |
+| **A3** | The PR's diff content is in scope for the chosen pipeline | Pipeline A: only PRs from rule-equipped repos, with name-based dedup against the existing corpus. Pipeline B: every changed file must be a rule file | A: 41.5 % (name-dedup + repo allowlist together); B: 96.7 % (path regex) |
 | **A4** | The gold fix is shaped by the rule files (the core assumption from §2) | Pipeline A: a Gemini rule-relevance check that classifies each PR as A / B / C / D / ERR. Pipeline B: a Gemini check on the title before building the task, then a stricter Gemini check on the gold patch after | A: 94.2 % drop at the rule-relevance check; B: 5.9 % at the title-level pre-check + 12.7 % at the post-check |
 | **A5** | The task is mechanically buildable into a runnable Docker test | Pipeline A: Opus builds the task in an E2B sandbox; the Docker test must pass. Pipeline B: deterministic script with idempotency check; manifests that fail YAML parsing are rejected by the post-judge | A: ≈ 25–30 % build-fail; B: ≈ 1 % build-fail |
 
@@ -79,8 +92,8 @@ A3 is the easiest assumption to misread as "redundant with A4." It is not. A3 an
 
 Without A3, each pipeline would still produce correct tasks for the small surviving subset, but it would do so wastefully or unsafely:
 
-**Pipeline A — without A3 (skip-on-slug + rule-equipped repo)**
-- *Skip-on-slug* exists because a single repo gets re-scouted across passes. Without it, we'd re-fetch, re-judge, and possibly re-build PRs we already have, paying Gemini and Opus costs for zero new tasks.
+**Pipeline A — without A3 (name-based dedup + rule-equipped repo)**
+- *Name-based dedup* exists because a single repo gets re-scouted across passes. Without it, we'd re-fetch, re-judge, and possibly re-build PRs we already have, paying Gemini and Opus costs for zero new tasks.
 - *Rule-equipped repo* exists because a PR from a repo with **no rule files** literally cannot satisfy A4 — there are no rules for the fix to be shaped by. The rule-relevance judge would dutifully label every such PR as class C and drop it. We avoid the LLM cost (≈ 1,500 PRs × $0.005 ≈ $7.50 per pass, plus latency) by filtering structurally first.
 
 **Pipeline B — without A3 (every-file-is-a-rule-file)**
@@ -133,7 +146,7 @@ Numbers below are for the 2026-04-26 scout pass. The cumulative `harbor_tasks/` 
 
 | Stage | Filter | Enforces | In | Drop | Out |
 |---|---|---|---:|---:|---:|
-| 7.1 Skip on slug | A PR is dropped if a task with its slug already lives in the corpus (avoids redoing work) | A3 | 19,417 | 4,868 | 14,549 |
+| 7.1 Skip-by-name | A PR is dropped if a task with its derived name already lives in the corpus (avoids redoing work) | A3 | 19,417 | 4,868 | 14,549 |
 | 7.2 Rule-equipped repo only | Drop PRs from repos with no rule file | A3 | 14,549 | 1,503 | 13,046 |
 | 7.3 Rule-relevance check | Gemini 3.1 Pro classifies each PR as A / B / C / D / ERR | A4 | 13,046 | 12,294 | 750 (A=204, B=546) |
 | 7.4 Build task + Docker test | Opus 4.7 inside an E2B sandbox: clone repo, apply gold, write the test, then Docker-test it (no fix → 0; gold → 1) | A5 | 750 | ≈ 25–30 % | ≈ 530–560 |
@@ -153,7 +166,7 @@ Pipeline B targets PRs that *only* edit rule files. The transformation from such
 |---|---|---|---:|---:|---:|
 | 8.1.1 Rule-file-only path regex | Every changed file in the PR must match the rule-file regex. PRs with any non-rule-file path go to a side queue (`*_codebearing.jsonl`, 34,358 cumulative rows across all 2026-04 scouts) for later Pipeline A processing — they are not lost, just deferred | A3 | 9,629 | 9,308 | **321** |
 | 8.1.2 Pre-judge (title-only) | Gemini 3.1 Pro Standard, given only `{repo, title, file_paths}` (no PR body, no patch). Drops bot-generated titles, dummy-test PRs, version-bump-only titles, generic boilerplate. Conservative — defaults to KEEP | A4 | 321 | 19 | 302 |
-| 8.1.3 Build task (deterministic) | Shallow-clone the repo at the base commit (`git fetch --depth=1 origin <SHA>`); generate `Dockerfile`, `solve.sh` (applies the gold patch verbatim), `tests/test_outputs.py` (3 pytest assertions, one per distinctive added line — longest `+` lines, ≥ 12 chars, alphanumeric, deduplicated), and `eval_manifest.yaml` v2.0. No LLM call | A5 | 302 | 88 (slug already in corpus) | **214 newly built** |
+| 8.1.3 Build task (deterministic) | Shallow-clone the repo at the base commit (`git fetch --depth=1 origin <SHA>`); generate `Dockerfile`, `solve.sh` (applies the gold patch verbatim), `tests/test_outputs.py` (3 pytest assertions, one per distinctive added line — longest `+` lines, ≥ 12 chars, alphanumeric, deduplicated), and `eval_manifest.yaml` v2.0. No LLM call | A5 | 302 | 88 (task name already in corpus) | **214 newly built** |
 
 ### 8.2 Corpus re-validation (independent count, 822 → 718)
 
@@ -190,7 +203,7 @@ Both pipelines end at similar yields (Pipeline A ≈ 2.8 %, Pipeline B ≈ 2.2 %
         ▼
    302  ▊                                                             1.02  candidates the build script will see
         │
-        │  build script: 88 idempotent slug-collisions
+        │  build script: 88 idempotent name-collisions
         │                (those PRs were already built in
         │                earlier scouts — skipped, not dropped)
         ▼
@@ -212,7 +225,7 @@ Both pipelines end at similar yields (Pipeline A ≈ 2.8 %, Pipeline B ≈ 2.2 %
                                                                               %  of raw
 19,417  ████████████████████████████████████████████████████████████████████  100.00  raw merged PRs from 107 repos
         │
-        │  A3 — skip on slug (already in baseline corpus)            ×0.749    drops 25.1 %
+        │  A3 — skip by task name (already in baseline corpus)       ×0.749    drops 25.1 %
         ▼
 14,549  ███████████████████████████████████████████████████          74.93   unique new PRs
         │
