@@ -1,8 +1,8 @@
 # agentsmd-rl
 
-See [README.md](README.md) for project overview, research question, and task list.
+See [README.md](README.md) for project overview and research question. The full data-construction protocol lives in [research/data_mining_pipeline.md](research/data_mining_pipeline.md) — that is the canonical methods doc.
 
-## Repository Structure
+## Repository structure
 
 ```
 claude-code-rl-w-tinker/    # RL training library (proxy + GRPO + Tinker API)
@@ -10,31 +10,45 @@ claude-code-rl-w-tinker/    # RL training library (proxy + GRPO + Tinker API)
   train.py                  #   Training loop: Harbor Trial → GRPO → Tinker forward_backward
   harbor_tokenization.py    #   Multi-turn chat tokenization for RL
   test_*.py                 #   Unit + e2e + logprob fidelity tests
-taskforge/                  # Task construction toolkit
+
+taskforge/                  # Task-construction toolkit
   models.py                 #   Pydantic: EvalManifest, Check, RubricRule, DistractorRule, SourceRef
   config.py                 #   Shared config patterns, is_config_file(), extract_config_hunks()
+  scout.py                  #   gh-based PR discovery + scout-time filters (shared by both pipelines)
+  e2b_worker.py             #   Pipeline A — Opus 4.7 in an E2B sandbox; --start-at oneshot_scaffold
+  pipeline.py               #   Parallel orchestrator wrapping the above
+  judge.py                  #   Track 3: rubric judge (Gemini)
+  distractor_judge.py       #   Track 4: distractor judge (inverted Gemini)
+  quality_judge.py          #   Pipeline A post-scaffold rubric audit
+  quality_gate.py           #   Reward-tampering / jailbreak detection in agent diffs
   gemini_rubric_constructor.py  # Gemini structured output rubric gen + Kimi validation loop
-  hierarchy_context.py      #   Config hierarchy extractor (root → leaf AGENTS.md)
-  pipeline.py               #   Parallel pipeline orchestrator (claude -p)
-  judge.py                  #   LLM judge for config edit rubric (Gemini structured output)
-  distractor_judge.py       #   Track 4 judge — agent passes when it does NOT apply distractor
-  rubric_validator.py       #   Precision/recall validator for rubric rules
-  e2b.py                    #   E2B sandbox validation
+  e2b.py                    #   E2B sandbox helpers
   templates/task_template/  #   Task template with placeholders (copied by /scaffold-task)
+  prompts/                  #   System prompts (scaffold.md, repair_manifest.md, …)
+
 scripts/
-  run_agent_eval.py         #   Agent eval runner (Track 1+3+4) — see "Running an Eval" below
-harbor_tasks/               # Benchmark tasks: code-only bug fixes (775)
-harbor_tasks_agentmd_edits/ # Benchmark tasks: code + config edits (232, 4-track eval)
+  scaffold_markdown_only.py #   Pipeline B — deterministic builder for pure-rule-file PRs (no LLM)
+  quality_judge.py          #   Two-stage Gemini judge: pre-scaffold + post-scaffold quality gate
+  run_agent_eval.py         #   Agent eval runner (Tracks 1, 3, 4) — see "Running an Eval" below
+  push_images.py            #   Build + push task images to ghcr.io/findalexli/agentsmd-rl/<task>
+
+harbor_tasks/               # Pipeline A output: code-fix tasks (~580 active)
+harbor_tasks_md_authoring/  # Pipeline B output: markdown-authoring tasks (~718 active)
+harbor_tasks_agentmd_edits/ # Track 2 corpus: code + config-edit tasks (~82, smaller / harder)
   <task>/
     instruction.md          #   Agent reads this (bug description, not the fix)
     task.toml               #   Metadata (difficulty, timeouts, resources)
     eval_manifest.yaml      #   Checks + rubric rules with source traceability
-    environment/Dockerfile  #   Clones repo at pre-fix commit
-    solution/solve.sh       #   Gold patch (idempotent)
+    environment/Dockerfile  #   Clones repo at base commit (`git fetch --depth=1`)
+    solution/solve.sh       #   Gold patch (idempotent — guarded by distinctive grep)
     tests/test.sh           #   Deterministic tests → /logs/verifier/reward.txt
-scripts/                    # Shell orchestrators for overnight batch pipelines
-research/                   # Research docs and analysis
+
+research/                   # Research docs (data_mining_pipeline.md is the canonical methods doc)
 ```
+
+Quarantined and gitignored locally:
+- `harbor_tasks_md_authoring_quarantine_quality/` — Pipeline B quality-gate rejects (kept on disk for audit, audit trail in `research/md_authoring_quality_judgments.json`)
+- `pipeline_logs/`, `jobs/`, `pipeline_claims*/` — local working state, never tracked
 
 ## Task Selection Criteria
 
@@ -52,12 +66,36 @@ And satisfy standard requirements:
 - CPU-testable (no GPU required for verification)
 - Fix is non-trivial but contained (1-5 files changed)
 
-## Adding a New Task
+## Adding new tasks
 
-1. `/scaffold-task owner/repo#PR_NUMBER` — create task from a PR (includes test audit + rubric extraction)
-2. `/validate-task <task-name>` — Docker oracle test (build, nop=0, gold=1)
+### Pipeline A — code-fix tasks (Opus + sandbox)
 
-For batch scaffolding: `python -m taskforge.e2b_worker --mode pipeline --start-at oneshot_scaffold --input <prs.jsonl> --pool` runs `taskforge/prompts/scaffold.md` inside an E2B sandbox per PR. After the agent self-validates Docker oracle, the pipeline now also runs `EvalManifest.model_validate(...)` as a schema gate — scaffolds whose `eval_manifest.yaml` doesn't match `taskforge/models.py` are rejected. (Historically ~38% of the corpus drifted because the prompt didn't echo the canonical schema; the prompt has since been patched to inline it. See `feedback_oneshot_schema_drift` memory.)
+For one-off authoring:
+1. `/scaffold-task owner/repo#PR_NUMBER` — fetch PR metadata, discover agent configs, generate every task file
+2. `/validate-task <task-name>` — Docker oracle (build, nop=0, gold=1)
+
+For batch:
+```
+python -m taskforge.e2b_worker --mode pipeline --start-at oneshot_scaffold \
+    --input <prs.jsonl> --pool
+```
+Runs `taskforge/prompts/scaffold.md` inside an E2B sandbox per PR. Post-Opus, the pipeline runs `EvalManifest.model_validate(...)` as a schema gate — scaffolds whose `eval_manifest.yaml` doesn't match `taskforge/models.py` are rejected.
+
+### Pipeline B — markdown-authoring tasks (deterministic, no LLM at scaffold time)
+
+For PRs whose every changed file is a rule file (`CLAUDE.md` / `AGENTS.md` / `SKILL.md` / `.cursor/rules/*`):
+```
+python scripts/scaffold_markdown_only.py \
+    --queue <prs.jsonl> --out-dir harbor_tasks_md_authoring \
+    --concurrency 16
+```
+Then run the two Gemini quality gates:
+```
+python scripts/quality_judge.py --mode markdown_authoring \
+    --task-dir harbor_tasks_md_authoring --quarantine
+```
+
+The full multi-stage funnel (discover → scout → filter → judge → build → ship) is documented in [research/data_mining_pipeline.md](research/data_mining_pipeline.md), including waterfall diagrams of where every PR drops out.
 
 ## Running an Eval (agent vs. tasks)
 
