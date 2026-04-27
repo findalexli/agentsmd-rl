@@ -1,0 +1,57 @@
+version: "2.0"
+
+task:
+  name: nanoclaw-fix-diagnostics-prompt-never-shown
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: qwibitai/nanoclaw
+  pr: 1372
+  base_commit: "e6df18ca8b2ff9059ce4571e44e57a8c93263994"
+  merge_commit: "2f1d7fe98b0bcab41cb9798fe1414e57aa6f312b"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/setup/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/setup/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/setup/diagnostics.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/update-nanoclaw/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/update-nanoclaw/diagnostics.md."
+
+config_edits:
+  - path: ".claude/skills/setup/SKILL.md"
+    tier: 1
+    gold_added: |-
+      ## 9. Diagnostics
+      Send diagnostics data by following `.claude/skills/setup/diagnostics.md`.
+    gold_removed: ""
+  - path: ".claude/skills/setup/diagnostics.md"
+    tier: 1
+    gold_added: |-
+      3. Remove the `## 9. Diagnostics` section from `.claude/skills/setup/SKILL.md` and the `## Diagnostics` section from `.claude/skills/update-nanoclaw/SKILL.md`
+    gold_removed: ""
+  - path: ".claude/skills/update-nanoclaw/SKILL.md"
+    tier: 1
+    gold_added: |-
+      Send diagnostics data by following `.claude/skills/update-nanoclaw/diagnostics.md`.
+    gold_removed: ""
+  - path: ".claude/skills/update-nanoclaw/diagnostics.md"
+    tier: 1
+    gold_added: |-
+      3. Remove the `## 9. Diagnostics` section from `.claude/skills/setup/SKILL.md` and the `## Diagnostics` section from `.claude/skills/update-nanoclaw/SKILL.md`
+    gold_removed: ""

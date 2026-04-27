@@ -1,0 +1,63 @@
+version: "2.0"
+
+task:
+  name: ai-setup-fixskills-correct-addingacommand-export-pattern
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: caliber-ai-org/ai-setup
+  pr: 179
+  base_commit: "6db87e6e48190a23f373ed710595781f5b0d1331"
+  merge_commit: "a734716c3727b809c0873e026e6ca403c091441d"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/skills/adding-a-command/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/skills/adding-a-command/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/skills/adding-a-command/SKILL.md."
+
+config_edits:
+  - path: ".cursor/skills/adding-a-command/SKILL.md"
+    tier: 1
+    gold_added: |-
+      - Command file MUST be in `src/commands/{commandName}.ts` and export a **named** async function: `export async function {commandName}Command(options?: OptionType)`. Never use default exports — `src/cli.ts` imports commands by name.
+      - Always use `tracked('{kebab-name}', {commandName}Command)` wrapper in `src/cli.ts` to enable telemetry tracking.
+         - Export named async function: `export async function {commandName}Command(options?: { optionName?: type }) { ... }`
+         - Return `void`; handle all output via `console.log` or chalk
+         - Define a TypeScript interface for options if the command takes any
+         - Import the command by name: `import { {commandName}Command } from './commands/{commandName}.js'`
+             .command('{kebab-name}')
+             .action(tracked('{kebab-name}', {commandName}Command))
+      3. **Handle errors consistently**: Wrap error-prone operations in try/catch:
+         - User error (bad input): `console.error(chalk.red('message')); throw new Error('__exit__');`
+         - System error: `throw new Error('Detailed error message');`
+         - Import command by name: `import { {commandName}Command } from '../{commandName}.js'`
+         - Test happy path and error paths
+         import chalk from 'chalk';
+         import { checkFilesExist } from '../lib/config.js';
+      
+         export async function verifyCommand(options?: { json?: boolean }) {
+           console.log(chalk.bold('Verify'));
+           console.log(`  Config files: ${exists ? chalk.green('found') : chalk.red('missing')}`);
+         }
+         import { verifyCommand } from './commands/verify.js';
+      3. Create `src/commands/__tests__/verify.test.ts` with happy-path test
+      4. Run `npm run build && npm run test`
+      **"SyntaxError: The requested module does not provide an export named '{commandName}Command'"**
+      - Use `export async function {commandName}Command(...)` — named export, not `export default`
+      - Import in `src/cli.ts` using named import: `import { {commandName}Command } from './commands/{commandName}.js'`
+      - `tracked()` is defined in `src/cli.ts` itself; it takes two args: `tracked('kebab-name', handlerFn)`
+      - Verify you're using it as `.action(tracked('{kebab-name}', {commandName}Command))`
+      **Command crashes when run but appears in --help**
+      - Verify import name matches function export in the command file
+      - Wrap handler with `tracked('command-name', handler)` and ensure the import is correct
+    gold_removed: ""

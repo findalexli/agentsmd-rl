@@ -1,0 +1,65 @@
+version: "2.0"
+
+task:
+  name: aionui-fixprautomation-symlink-nodemodules-in-worktree
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: iOfficeAI/AionUi
+  pr: 1977
+  base_commit: "0fbef7a85837afe6791e5986b9232164b1270491"
+  merge_commit: "81d9e35a43f974b18f29b5c56d06a2eaf4fba171"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/pr-automation/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/pr-automation/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/pr-fix/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/pr-fix/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/pr-review/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/pr-review/SKILL.md."
+
+config_edits:
+  - path: ".claude/skills/pr-automation/SKILL.md"
+    tier: 1
+    gold_added: |-
+      
+      # Symlink node_modules so tsc/lint can run in the worktree
+      ln -s "$REPO_ROOT/node_modules" "$WORKTREE_DIR/node_modules"
+      
+    gold_removed: ""
+  - path: ".claude/skills/pr-fix/SKILL.md"
+    tier: 1
+    gold_added: |-
+      After creating the worktree (all three paths), symlink `node_modules` so lint/tsc/test can run:
+      
+      ```bash
+      ln -s "$REPO_ROOT/node_modules" "$WORKTREE_DIR/node_modules"
+      ```
+      
+    gold_removed: ""
+  - path: ".claude/skills/pr-review/SKILL.md"
+    tier: 1
+    gold_added: |-
+      
+      # Symlink node_modules so lint/tsc/test can run in the worktree
+      ln -s "$REPO_ROOT/node_modules" "$WORKTREE_DIR/node_modules"
+    gold_removed: ""

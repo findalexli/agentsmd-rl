@@ -1,0 +1,45 @@
+version: "2.0"
+
+task:
+  name: cli-chore-use-labels
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: googleworkspace/cli
+  pr: 203
+  base_commit: "b38b760d79bb2a8c95c0c6726f0591e512b7d703"
+  merge_commit: "c532ea6ad8daeb3ac2ca6ee7bc214b47b5762815"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: "AGENTS.md"
+    tier: 1
+    gold_added: |-
+      ## PR Labels
+      
+      Use these labels to categorize pull requests and issues:
+      
+      - `area: discovery` — Discovery document fetching, caching, parsing
+      - `area: http` — Request execution, URL building, response handling
+      - `area: docs` — README, contributing guides, documentation
+      - `area: tui` — Setup wizard, picker, input fields
+      - `area: distribution` — Nix flake, cargo-dist, npm packaging, install methods
+      - `area: mcp` — Model Context Protocol server/tools
+      - `area: auth` — OAuth, credentials, multi-account, ADC
+      - `area: skills` — AI skill generation and management
+      
+    gold_removed: ""

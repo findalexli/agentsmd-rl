@@ -1,0 +1,30 @@
+version: "2.0"
+
+task:
+  name: plannotator-fixskill-trim-compound-skill-description
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: backnotprop/plannotator
+  pr: 430
+  base_commit: "4627f754262074990c951145730f232d45c2a403"
+  merge_commit: "9937bf8b86acef853cbe5553d4d1b9749800aa67"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in apps/skills/plannotator-compound/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in apps/skills/plannotator-compound/SKILL.md."
+
+config_edits:
+  - path: "apps/skills/plannotator-compound/SKILL.md"
+    tier: 1
+    gold_added: |-
+      disable-model-invocation: true
+        a polished HTML dashboard report.
+    gold_removed: ""

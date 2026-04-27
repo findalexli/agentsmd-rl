@@ -1,0 +1,128 @@
+version: "2.0"
+
+task:
+  name: compound-engineering-plugin-featcework-accept-bare-prompts-a
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: EveryInc/compound-engineering-plugin
+  pr: 423
+  base_commit: "88e7a5250fff7a274b595831fc91583d46bdc585"
+  merge_commit: "6dabae6683fb2c37dc47616f172835eacc105d11"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-work-beta/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-work-beta/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-work-beta/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-work/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-work/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-work/SKILL.md."
+
+config_edits:
+  - path: "plugins/compound-engineering/skills/ce-work-beta/SKILL.md"
+    tier: 1
+    gold_added: |-
+      description: "[BETA] Execute work with external delegate support. Same as ce:work but includes experimental Codex delegation mode for token-conserving code implementation."
+      argument-hint: "[plan file path or description of work to do]"
+      # Work Execution Command
+      Execute work efficiently while maintaining quality and finishing features.
+      This command takes a work document (plan, specification, or todo file) or a bare prompt describing the work, and executes it systematically. The focus is on **shipping complete features** by understanding requirements quickly, following existing patterns, and maintaining quality throughout.
+      ### Phase 0: Input Triage
+      
+      Determine how to proceed based on what was provided in `<input_document>`.
+      
+      **Plan document** (input is a file path to an existing plan, specification, or todo file) → skip to Phase 1.
+      
+      **Bare prompt** (input is a description of work, not a file path):
+      
+      1. **Scan the work area**
+      
+         - Identify files likely to change based on the prompt
+         - Find existing test files for those areas (search for test/spec files that import, reference, or share names with the implementation files)
+         - Note local patterns and conventions in the affected areas
+      
+      2. **Assess complexity and route**
+      
+         | Complexity | Signals | Action |
+         |-----------|---------|--------|
+         | **Trivial** | 1-2 files, no behavioral change (typo, config, rename) | Proceed to Phase 1 step 2 (environment setup), then implement directly — no task list, no execution loop. Apply Test Discovery if the change touches behavior-bearing code |
+         | **Small / Medium** | Clear scope, under ~10 files | Build a task list from discovery. Proceed to Phase 1 step 2 |
+         | **Large** | Cross-cutting, architectural decisions, 10+ files, touches auth/payments/migrations | Inform the user this would benefit from `/ce:brainstorm` or `/ce:plan` to surface edge cases and scope boundaries. Honor their choice. If proceeding, build a task list and continue to Phase 1 step 2 |
+      
+      ---
+      
+      1. **Read Plan and Clarify** _(skip if arriving from Phase 0 with a bare prompt)_
+      3. **Create Todo List** _(skip if Phase 0 already built one, or if Phase 0 routed as Trivial)_
+         | **Inline** | 1-2 small tasks, or tasks needing user interaction mid-flight. **Default for bare-prompt work** — bare prompts rarely produce enough structured context to justify subagent dispatch |
+         | **Serial subagents** | 3+ tasks with dependencies between them. Each subagent gets a fresh context window focused on one unit — prevents context degradation across many tasks. Requires plan-unit metadata (Goal, Files, Approach, Test scenarios) |
+         | **Parallel subagents** | 3+ tasks where some units have no shared dependencies and touch non-overlapping files. Dispatch independent units simultaneously, run dependent units after their prerequisites complete. Requires plan-unit metadata |
+           - Read any referenced files from the plan or discovered during Phase 0
+           - Find existing test files for implementation files being changed (Test Discovery — see below)
+           - Add, update, or remove tests to match implementation changes (see Test Discovery below)
+         **Test Discovery** — Before implementing changes to a file, find its existing test files (search for test/spec files that import, reference, or share naming patterns with the implementation file). When a plan specifies test scenarios or test files, start there, then check for additional test coverage the plan may not have enumerated. Changes to implementation files should be accompanied by corresponding test updates — new tests for new behavior, modified tests for changed behavior, removed or updated tests for deleted behavior.
+      
+         - Add new tests for new behavior, update tests for changed behavior, remove tests for deleted behavior
+    gold_removed: ""
+  - path: "plugins/compound-engineering/skills/ce-work/SKILL.md"
+    tier: 1
+    gold_added: |-
+      description: Execute work efficiently while maintaining quality and finishing features
+      argument-hint: "[plan file path or description of work to do]"
+      # Work Execution Command
+      Execute work efficiently while maintaining quality and finishing features.
+      This command takes a work document (plan, specification, or todo file) or a bare prompt describing the work, and executes it systematically. The focus is on **shipping complete features** by understanding requirements quickly, following existing patterns, and maintaining quality throughout.
+      ### Phase 0: Input Triage
+      
+      Determine how to proceed based on what was provided in `<input_document>`.
+      
+      **Plan document** (input is a file path to an existing plan, specification, or todo file) → skip to Phase 1.
+      
+      **Bare prompt** (input is a description of work, not a file path):
+      
+      1. **Scan the work area**
+      
+         - Identify files likely to change based on the prompt
+         - Find existing test files for those areas (search for test/spec files that import, reference, or share names with the implementation files)
+         - Note local patterns and conventions in the affected areas
+      
+      2. **Assess complexity and route**
+      
+         | Complexity | Signals | Action |
+         |-----------|---------|--------|
+         | **Trivial** | 1-2 files, no behavioral change (typo, config, rename) | Proceed to Phase 1 step 2 (environment setup), then implement directly — no task list, no execution loop. Apply Test Discovery if the change touches behavior-bearing code |
+         | **Small / Medium** | Clear scope, under ~10 files | Build a task list from discovery. Proceed to Phase 1 step 2 |
+         | **Large** | Cross-cutting, architectural decisions, 10+ files, touches auth/payments/migrations | Inform the user this would benefit from `/ce:brainstorm` or `/ce:plan` to surface edge cases and scope boundaries. Honor their choice. If proceeding, build a task list and continue to Phase 1 step 2 |
+      
+      ---
+      
+      1. **Read Plan and Clarify** _(skip if arriving from Phase 0 with a bare prompt)_
+      3. **Create Todo List** _(skip if Phase 0 already built one, or if Phase 0 routed as Trivial)_
+         | **Inline** | 1-2 small tasks, or tasks needing user interaction mid-flight. **Default for bare-prompt work** — bare prompts rarely produce enough structured context to justify subagent dispatch |
+         | **Serial subagents** | 3+ tasks with dependencies between them. Each subagent gets a fresh context window focused on one unit — prevents context degradation across many tasks. Requires plan-unit metadata (Goal, Files, Approach, Test scenarios) |
+         | **Parallel subagents** | 3+ tasks where some units have no shared dependencies and touch non-overlapping files. Dispatch independent units simultaneously, run dependent units after their prerequisites complete. Requires plan-unit metadata |
+           - Read any referenced files from the plan or discovered during Phase 0
+           - Find existing test files for implementation files being changed (Test Discovery — see below)
+           - Add, update, or remove tests to match implementation changes (see Test Discovery below)
+         **Test Discovery** — Before implementing changes to a file, find its existing test files (search for test/spec files that import, reference, or share naming patterns with the implementation file). When a plan specifies test scenarios or test files, start there, then check for additional test coverage the plan may not have enumerated. Changes to implementation files should be accompanied by corresponding test updates — new tests for new behavior, modified tests for changed behavior, removed or updated tests for deleted behavior.
+      
+         - Add new tests for new behavior, update tests for changed behavior, remove tests for deleted behavior
+    gold_removed: ""

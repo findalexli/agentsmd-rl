@@ -1,0 +1,61 @@
+version: "2.0"
+
+task:
+  name: compound-engineering-plugin-fixcecompound-explicit-mode-prom
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: EveryInc/compound-engineering-plugin
+  pr: 528
+  base_commit: "5fb6801567e1d5ea153e51c5b796f5a523ba2997"
+  merge_commit: "0ae91dcc298721e5b2c4ab6d1fc6f76a13b6f67c"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-compound/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-compound/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-compound/SKILL.md."
+
+config_edits:
+  - path: "plugins/compound-engineering/skills/ce-compound/SKILL.md"
+    tier: 1
+    gold_added: |-
+      Present the user with two options before proceeding, using the platform's blocking question tool (`AskUserQuestion` in Claude Code, `request_user_input` in Codex, `ask_user` in Gemini). If no question tool is available, present the options and wait for the user's reply.
+      ```
+      1. Full (recommended) — the complete compound workflow. Researches,
+         cross-references, and reviews your solution to produce documentation
+         that compounds your team's knowledge.
+      
+      2. Lightweight — same documentation, single pass. Faster and uses
+         fewer tokens, but won't detect duplicates or cross-reference
+         existing docs. Best for simple fixes or long sessions nearing
+         context limits.
+      ```
+      
+      Do NOT pre-select a mode. Do NOT skip this prompt. Wait for the user's choice before proceeding.
+      - If context is already tight or you are in lightweight mode, do not expand into a broad refresh automatically; instead recommend `ce:compound-refresh` as the next step with a scope hint
+         c. In full mode, explain to the user why this matters — agents working in this repo (including fresh sessions, other tools, or collaborators without the plugin) won't know to check `docs/solutions/` unless the instruction file surfaces it. Show the proposed change and where it would go, then use the platform's blocking question tool (`AskUserQuestion` in Claude Code, `request_user_input` in Codex, `ask_user` in Gemini) to get consent before making the edit. If no question tool is available, present the proposal and wait for the user's reply. In lightweight mode, output a one-liner note and move on
+      ### Lightweight Mode
+      **Single-pass alternative — same documentation, fewer tokens.**
+      This mode skips parallel subagents entirely. The orchestrator performs all work in a single pass, producing the same solution document without cross-referencing or duplicate detection.
+      **Lightweight output:**
+      ✓ Documentation complete (lightweight mode)
+      Note: This was created in lightweight mode. For richer documentation
+      In lightweight mode, the overlap check is skipped (no Related Docs Finder subagent). This means lightweight mode may create a doc that overlaps with an existing one. That is acceptable — `ce:compound-refresh` will catch it later. Only suggest `ce:compound-refresh` if there is an obvious narrow refresh target. Do not broaden into a large refresh sweep from a lightweight session.
+      Bug track:
+      Knowledge track:
+      - best-practices/
+      - workflow-issues/
+      - developer-experience/
+      - documentation-gaps/
+      
+    gold_removed: ""

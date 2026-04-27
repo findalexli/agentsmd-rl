@@ -1,0 +1,60 @@
+version: "2.0"
+
+task:
+  name: terraform-skill-docs-codify-llm-content-rules
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: antonbabenko/terraform-skill
+  pr: 19
+  base_commit: "fd3aab0efa67b84dd3798ad25510f480a0dcf3f9"
+  merge_commit: "319472c33477fc35f275d7ac53b885ed0591832e"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: "CLAUDE.md"
+    tier: 1
+    gold_added: |-
+      ### LLM Consumption Rules (enforce in every PR review)
+      
+      These rules tune content for the **primary reader: an LLM retrieving facts to answer a user query**, not a human reading the guide end-to-end. They are **mandatory** for every addition to `SKILL.md` and `references/*.md`. Reviewers must reject PRs that violate them.
+      
+      **1. Shape — decision table before playbook.** The LLM retrieval path is: classify intent → pick branch → execute. When a topic has multiple viable approaches, open the section with a decision table (`Goal | Use | Tradeoff`) before any phase steps or default procedure. Never bury branching in prose or push alternatives to the end.
+      
+      **2. Cut human scaffolding.** Before/after config diffs, "Why this matters" paragraphs, and pedagogical asides are human-only signal. If the phase steps already name the required action, a before/after diff is redundant and must be dropped. Teaching tone ≠ retrieval value.
+      
+      **3. Compress prose → ❌/✅ Rules.** Any sentence starting with "You should...", "Note that...", "Keep in mind...", "It's important to..." — rewrite as terse imperative ❌/✅ bullet. One fact per bullet. Direct verbs only: `Keep`, `Remove`, `Run`, `Confirm`, `Use`, `Avoid`, `Scope`.
+      
+      **4. Every artifact earns its tokens.** Every code block, table, and example must add a fact not present in the prose. If it only restates, cut it. No "for completeness" content.
+      
+      **5. Anchor stability.** SKILL.md routes to specific `#anchor` headings in reference files. Rewrites may restructure internal subsections, but must preserve the top-level `### Heading` that the SKILL.md diagnose table points to.
+      
+      **6. Retrieval-first ordering.** Within a section, order content by what the LLM needs first: (a) decision table, (b) default procedure, (c) alternatives, (d) rules/gotchas as ❌/✅. Rationale lives in ≤1 opening sentence, never a closing "Why this matters" block.
+      
+      **Token target per reference subsection:** under 400 tokens (~1,600 chars). If larger, split or compress — do not ship a 600-token walkthrough when 350 tokens carries the same decision value.
+      
+      **Pre-merge checklist for any content PR:**
+      
+      - [ ] Decision table precedes playbook (if multiple approaches exist)
+      - [ ] No before/after diff that merely restates the phase steps
+      - [ ] No paragraph starting with "Why this matters" / "Note" / "Keep in mind" — all converted to ❌/✅
+      - [ ] Every code block / table adds a fact not in surrounding prose
+      - [ ] Subsection under 400 tokens
+      - [ ] Anchors referenced from SKILL.md remain stable
+      - [ ] For substantive new sections, consult an external LLM expert (e.g. GPT via `mcp__codex__codex`) for format/compression review before merge
+      
+    gold_removed: ""

@@ -1,0 +1,64 @@
+version: "2.0"
+
+task:
+  name: antigravity-awesome-skills-featodooedi-implement-idempotency
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: sickn33/antigravity-awesome-skills
+  pr: 416
+  base_commit: "e874770c0d2a9e45f2d48b9becf84c0d2ddb492e"
+  merge_commit: "23121df6a2fe4488516c071ccf2ef49fe9036623"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/odoo-edi-connector/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/odoo-edi-connector/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/odoo-edi-connector/SKILL.md."
+
+config_edits:
+  - path: "skills/odoo-edi-connector/SKILL.md"
+    tier: 1
+    gold_added: |-
+      from datetime import datetime
+      import os
+      
+      odoo_url = os.getenv("ODOO_URL")
+      db = os.getenv("ODOO_DB")
+      pwd = os.getenv("ODOO_API_KEY") 
+      uid = int(os.getenv("ODOO_UID", "2"))
+                  # Extract header info (BEG segment)                     
+                  po_number = transaction['BEG'][3]    # Purchase Order Number                                                    
+                  po_date   = transaction['BEG'][5]    # Purchase Order Date 
+      
+                  # IDEMPOTENCY CHECK: Verify PO doesn't already exist in Odoo
+                  existing = models.execute_kw(db, uid, pwd, 'sale.order', 'search', [
+                      [['client_order_ref', '=', po_number]]
+                  ])
+                  if existing:
+                      print(f"Skipping: PO {po_number} already exists.")
+                      continue 
+      
+                              # Extract partner (N1 segment — Buyer)                  
+                  partner_name = transaction.get_segment('N1')[2] if transaction.get_segment('N1') else "Unknown"                                                                             
+                  
+                  # Find partner in Odoo                                  
+                  partner = models.execute_kw(db, uid, pwd, 'res.partner', 'search',                                                  
+                                      [[['name', 'ilike', partner_name]]])                
+                  
+                  if not partner:
+                      print(f"Error: Partner '{partner_name}' not found. Skipping transaction.")
+                      continue
+                      
+                  partner_id = partner[0]
+          today = datetime.now().strftime('%y%m%d')
+    gold_removed: ""

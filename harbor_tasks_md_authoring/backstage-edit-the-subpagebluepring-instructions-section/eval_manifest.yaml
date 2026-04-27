@@ -1,0 +1,63 @@
+version: "2.0"
+
+task:
+  name: backstage-edit-the-subpagebluepring-instructions-section
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: backstage/backstage
+  pr: 33723
+  base_commit: "7bc057e8b6bebf5ae764eacf43e41147113e9b53"
+  merge_commit: "d8976ea64839a3a544987087b087a75300de93ab"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in docs/.well-known/skills/plugin-full-frontend-system-migration/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in docs/.well-known/skills/plugin-full-frontend-system-migration/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in docs/.well-known/skills/plugin-full-frontend-system-migration/SKILL.md."
+
+config_edits:
+  - path: "docs/.well-known/skills/plugin-full-frontend-system-migration/SKILL.md"
+    tier: 1
+    gold_added: |-
+      Old frontend plugins often use React Router `<Route>` trees inside a router component to handle internal navigation. Before migrating, determine which routing pattern fits the plugin.
+      
+      ### Decide Which Routing Pattern to Use
+      
+      Not all internal routing maps to tabs. Read the plugin's existing router component and ask the user:
+      
+      > "Does your plugin use top-level tabs that users navigate between via a header (e.g. Overview / Settings)? Or does it use detail/drill-down routes (e.g. `/my-plugin/items/:id`)?"
+      
+      Use `SubPageBlueprint` when:
+      
+      - The sub-routes represent top-level tabs/sections of the plugin
+      - Users navigate between them via the header
+      
+      Keep internal routing within a `PageBlueprint` `loader` when:
+      
+      - Routes are detail/drill-down pages (e.g. `/my-plugin/items/:id`)
+      - The routing is deeply nested or dynamic
+      
+      **If the plugin uses drill-down routing only**, use a `PageBlueprint` with a `loader` that handles its own `<Routes>` and skip the rest of this step:
+      
+      ```tsx
+      export const myPage = PageBlueprint.make({
+        params: {
+          path: '/my-plugin',
+          routeRef: rootRouteRef,
+          loader: () => import('./components/Router').then(m => <m.MyPluginRouter />),
+        },
+      });
+      ```
+      
+      **If the plugin uses top-level tabs**, continue with the `SubPageBlueprint` migration below.
+    gold_removed: ""

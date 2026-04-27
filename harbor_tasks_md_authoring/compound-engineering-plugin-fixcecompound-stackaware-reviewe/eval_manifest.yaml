@@ -1,0 +1,53 @@
+version: "2.0"
+
+task:
+  name: compound-engineering-plugin-fixcecompound-stackaware-reviewe
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: EveryInc/compound-engineering-plugin
+  pr: 497
+  base_commit: "2c90aebe3b14af996859df7d0c3a45a8f060d9a9"
+  merge_commit: "1fc075d4cae199904464d43096d01111c365d02d"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-compound/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-compound/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-compound/SKILL.md."
+
+config_edits:
+  - path: "plugins/compound-engineering/skills/ce-compound/SKILL.md"
+    tier: 1
+    gold_added: |-
+      - **performance_issue** → `compound-engineering:review:performance-oracle`
+      - **security_issue** → `compound-engineering:review:security-sentinel`
+      - **database_issue** → `compound-engineering:review:data-integrity-guardian`
+      - Any code-heavy issue → always run `compound-engineering:review:code-simplicity-reviewer`, and additionally run the kieran reviewer that matches the repo's primary stack:
+        - Ruby/Rails → also run `compound-engineering:review:kieran-rails-reviewer`
+        - Python → also run `compound-engineering:review:kieran-python-reviewer`
+        - TypeScript/JavaScript → also run `compound-engineering:review:kieran-typescript-reviewer`
+        - Other stacks → no kieran reviewer needed
+        ✓ kieran-rails-reviewer: Code examples meet Rails conventions
+      - **compound-engineering:review:kieran-rails-reviewer**: Reviews code examples for Rails best practices
+      - **compound-engineering:review:kieran-python-reviewer**: Reviews code examples for Python best practices
+      - **compound-engineering:review:kieran-typescript-reviewer**: Reviews code examples for TypeScript best practices
+      - **compound-engineering:review:code-simplicity-reviewer**: Ensures solution code is minimal and clear
+      - **compound-engineering:review:pattern-recognition-specialist**: Identifies anti-patterns or repeating issues
+      - **compound-engineering:review:performance-oracle**: Analyzes performance_issue category solutions
+      - **compound-engineering:review:security-sentinel**: Reviews security_issue solutions for vulnerabilities
+      - **compound-engineering:review:data-integrity-guardian**: Reviews database_issue migrations and queries
+      
+      ### Enhancement & Research
+      - **compound-engineering:research:best-practices-researcher**: Enriches solution with industry best practices
+      - **compound-engineering:research:framework-docs-researcher**: Links to framework/library documentation references
+    gold_removed: ""

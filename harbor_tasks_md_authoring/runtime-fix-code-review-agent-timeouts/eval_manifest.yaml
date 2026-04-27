@@ -1,0 +1,38 @@
+version: "2.0"
+
+task:
+  name: runtime-fix-code-review-agent-timeouts
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: dotnet/runtime
+  pr: 126783
+  base_commit: "25f7804b9f26ef494a4ab0d9f56b9c0bee2ba5e2"
+  merge_commit: "634fa0df4c8b3db25e0a66e36a340be6ce9d2929"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/code-review/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/code-review/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/code-review/SKILL.md."
+
+config_edits:
+  - path: ".github/skills/code-review/SKILL.md"
+    tier: 1
+    gold_added: |-
+      1. Inspect the available model list and select models from 2-3 distinct model families, up to 3 sub-agent models total. If fewer than 2 eligible families are available, use what is available. **Model selection rules:**
+         - From each selected family, pick the model with the highest capability tier (prefer "premium" or "standard" over "fast/cheap").
+         - **Do not use `gpt-5.4`** — it has known reliability issues causing sub-agent timeouts in >90% of affected runs. For the OpenAI/GPT family, prefer `gpt-5.3-codex` if it is explicitly listed as available; otherwise, fall back to the highest-version non-blocked GPT model that satisfies the other rules here.
+         - If multiple standard-tier models exist in the same family (excluding blocked models above), pick the one with the highest version number. Prefer "-codex" variants over general-purpose for code review tasks.
+      4. Present a single unified review to the user, noting when an issue was flagged by multiple models. **After posting the review, immediately exit.** Do not wait for any remaining sub-agents. Do not attempt retries if the comment was posted successfully. The review is complete once the post operation succeeds or returns a comment URL.
+      
+    gold_removed: ""

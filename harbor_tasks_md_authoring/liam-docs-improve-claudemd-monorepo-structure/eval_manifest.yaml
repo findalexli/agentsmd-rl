@@ -1,0 +1,41 @@
+version: "2.0"
+
+task:
+  name: liam-docs-improve-claudemd-monorepo-structure
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: liam-hq/liam
+  pr: 3712
+  base_commit: "e39829b8904f5d39807394522e67bcd2e5419e0c"
+  merge_commit: "23dd6b60ae158a241bb2a5a21b95622bc10019f6"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: "CLAUDE.md"
+    tier: 1
+    gold_added: |-
+      #### Applications
+      
+      #### Public Packages
+      
+      #### Internal Packages
+      - **frontend/internal-packages/agent** - AI agent system using LangGraph (`@liam-hq/agent`)
+      - **frontend/internal-packages/db** - Database utilities (`@liam-hq/db`)
+      - **frontend/internal-packages/mcp-server** - MCP server implementation (`@liam-hq/mcp-server`)
+      
+    gold_removed: ""

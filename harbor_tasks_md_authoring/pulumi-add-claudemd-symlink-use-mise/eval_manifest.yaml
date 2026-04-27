@@ -1,0 +1,208 @@
+version: "2.0"
+
+task:
+  name: pulumi-add-claudemd-symlink-use-mise
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: pulumi/pulumi
+  pr: 22228
+  base_commit: "36f559063323329ce861741d56d99e3d4f680a6c"
+  merge_commit: "85e4608ff7dcbd4337c5c27d3a37e08e9f46cdc9"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in pkg/AGENTS.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in pkg/AGENTS.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in pkg/AGENTS.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in sdk/go/AGENTS.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in sdk/go/AGENTS.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in sdk/go/AGENTS.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in sdk/nodejs/AGENTS.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in sdk/nodejs/AGENTS.md."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in sdk/nodejs/AGENTS.md."
+  - id: signal_12
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in sdk/python/AGENTS.md."
+  - id: signal_13
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in sdk/python/AGENTS.md."
+  - id: signal_14
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in sdk/python/AGENTS.md."
+
+config_edits:
+  - path: "AGENTS.md"
+    tier: 1
+    gold_added: |-
+      
+      
+      ## Tool setup
+      
+      This repo uses [mise](https://mise.jdx.dev/) to manage tool versions (Go, Node, Python, protoc, etc.). See `.mise.toml` for the full list. If mise is installed and activated (via `mise activate` in your shell profile), tool versions are handled automatically and you can run `make` directly. Otherwise, **prefix all `make` commands with `mise exec --`** to ensure the correct tool versions are used:
+      
+      ```sh
+      mise exec -- make build
+      mise exec -- make lint
+      ```
+      
+      
+      - **Build CLI and SDKs:** `mise exec -- make build`
+      - **Build CLI with specific SDKs:** `SDKS="nodejs python" mise exec -- make build`
+      - **Build a single SDK:** `cd sdk/nodejs && mise exec -- make build` (or `sdk/python`, `sdk/go`, `sdk/pcl`)
+      - **Lint:** `mise exec -- make lint`
+      - **Lint fix:** `mise exec -- make lint_fix`
+      - **Format:** `mise exec -- make format`
+      - **Fast tests:** `mise exec -- make test_fast`
+      - **Full tests:** `mise exec -- make test_all`
+      - **Language conformance tests:** `./scripts/run-conformance.sh`
+      - **Tidy check:** `mise exec -- make tidy`
+      - **Tidy fix:** `mise exec -- make tidy_fix`
+      - **Proto generation:** `mise exec -- make build_proto`
+      - **Proto check:** `mise exec -- make check_proto`
+      - **Changelog entry:** `mise exec -- make changelog` (interactive)
+      - **Go workspace:** `mise exec -- make work`
+      
+      - Multiple Go modules (`pkg/go.mod`, `sdk/go.mod`, `tests/go.mod`, etc.). Changes to `go.mod` in one module may require updates in others. Run `mise exec -- make tidy` to verify.
+        - Use `mise exec -- make work` to create a `go.work` file for cross-module development.
+      - Proto-generated files must stay in sync with `proto/*.proto`. CI enforces via `mise exec -- make check_proto`.
+      - Changelog entries are required for most PRs. Run `mise exec -- make changelog` to create one.
+      - Integration tests need the CLI and SDKs built first. `bin/` must be on `PATH`.
+      
+      - Do not edit generated proto files by hand — edit `proto/*.proto` and run `mise exec -- make build_proto`.
+      - Do not edit other generated files by hand. Some tests use golden files updated with `PULUMI_ACCEPT=1`.
+      
+      - A change touches the public SDK surface (exported types/functions in `sdk/go/`, `sdk/nodejs/`, `sdk/python/`).
+      - A change touches the public CLI interface (`pkg/cmd/pulumi/`, built with `github.com/spf13/cobra`).
+      
+      - Any `.go` file → `mise exec -- make format && mise exec -- make lint && mise exec -- make test_fast`
+      - `proto/*.proto` → `mise exec -- make build_proto && mise exec -- make check_proto` and commit generated files
+      - `go.mod` or `go.sum` in any module → `mise exec -- make tidy`
+      - `pkg/codegen/schema/pulumi.json` → `mise exec -- make lint_pulumi_json`
+      
+      See subdirectory `AGENTS.md` files (`pkg/`, `sdk/nodejs/`, `sdk/python/`, `sdk/go/`) for package-specific instructions.
+    gold_removed: ""
+  - path: "CLAUDE.md"
+    tier: 1
+    gold_added: |-
+      AGENTS.md
+    gold_removed: ""
+  - path: "pkg/AGENTS.md"
+    tier: 1
+    gold_added: |-
+      # Core Engine (`pkg/`)
+      
+      ## Testing
+      
+      - **Unit tests:** `cd pkg && go test -count=1 -tags all ./...`
+      - **Codegen tests:** `cd pkg && go test -count=1 -tags all ./codegen/...`
+      - **Codegen for a specific language:** `cd pkg && go test -count=1 -tags all ./codegen/go/...`
+      - **Lifecycle tests:** `cd pkg && go test -count=1 -tags all ./engine/lifecycletest/...`
+      
+      ## If you change...
+      
+      - Anything in `pkg/codegen/` → run codegen tests: `cd pkg && go test -count=1 -tags all ./codegen/...`
+      - Anything in `pkg/backend/display/` → add a test using pre-constructed, JSON-serialized engine events (ref. `testProgressEvents`)
+      - Anything that adds or changes the engine, resource options, or the provider interface → add a test to `pkg/engine/lifecycletest/`
+    gold_removed: ""
+  - path: "sdk/go/AGENTS.md"
+    tier: 1
+    gold_added: |-
+      # Go SDK (`sdk/go/`)
+      
+      ## Commands
+      
+      All commands run from `sdk/go/`. Prefix with `mise exec --` if mise is not activated.
+      
+      - **Build:** `mise exec -- make build`
+      - **Lint:** `mise exec -- make lint`
+      - **Fast tests:** `mise exec -- make test_fast`
+      - **Full tests:** `mise exec -- make test_all`
+      
+      ## If you change...
+      
+      - Go files → `mise exec -- make lint && mise exec -- make test_fast`
+    gold_removed: ""
+  - path: "sdk/nodejs/AGENTS.md"
+    tier: 1
+    gold_added: |-
+      # Node.js SDK (`sdk/nodejs/`)
+      
+      ## Commands
+      
+      All commands run from `sdk/nodejs/`. Prefix with `mise exec --` if mise is not activated.
+      
+      - **Build:** `mise exec -- make build`
+      - **Install (required before integration tests):** `mise exec -- make install`
+      - **Lint:** `mise exec -- make lint`
+      - **Lint fix:** `mise exec -- make lint_fix`
+      - **Fast tests:** `mise exec -- make test_fast`
+      - **Full tests:** `mise exec -- make test_all`
+      
+      ## If you change...
+      
+      - TypeScript files → `mise exec -- make lint && mise exec -- make test_fast`
+      - You must run `mise exec -- make install` to make the SDK available via `yarn link` before running integration tests.
+    gold_removed: ""
+  - path: "sdk/python/AGENTS.md"
+    tier: 1
+    gold_added: |-
+      # Python SDK (`sdk/python/`)
+      
+      ## Commands
+      
+      All commands run from `sdk/python/`. Prefix with `mise exec --` if mise is not activated.
+      
+      - **Build:** `mise exec -- make build`
+      - **Lint:** `mise exec -- make lint`
+      - **Lint fix:** `mise exec -- make lint_fix`
+      - **Format:** `mise exec -- make format`
+      - **Fast tests:** `mise exec -- make test_fast`
+      - **Full tests:** `mise exec -- make test_all`
+      
+      ## If you change...
+      
+      - Python files → `mise exec -- make lint && mise exec -- make test_fast`
+    gold_removed: ""

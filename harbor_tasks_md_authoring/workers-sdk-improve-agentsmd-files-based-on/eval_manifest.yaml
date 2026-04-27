@@ -1,0 +1,84 @@
+version: "2.0"
+
+task:
+  name: workers-sdk-improve-agentsmd-files-based-on
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: cloudflare/workers-sdk
+  pr: 13408
+  base_commit: "5eff8c14f08696e5a832875a35e214969aa55b9b"
+  merge_commit: "2403ea61e153f184f1f8c4cd48aa1d44eb7112e7"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/miniflare/AGENTS.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/miniflare/AGENTS.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/miniflare/AGENTS.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/wrangler/AGENTS.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/wrangler/AGENTS.md."
+
+config_edits:
+  - path: "AGENTS.md"
+    tier: 1
+    gold_added: |-
+      - Prefer `function` declarations over `const` arrow function assignments for named/exported functions
+      - ESLint disable comments must use double-dash separator: `// eslint-disable-next-line rule-name -- reason here`
+      - Never modify generated files directly — modify the generator or config, then regenerate
+      - **`expect` must come from test context** — never `import { expect } from "vitest"`:
+        - Use destructured test context: `it("name", ({ expect }) => { ... })`
+        - For helper functions that need `expect`, pass it as a parameter with type `ExpectStatic`
+        - Always use `import type` for `ExpectStatic`: `import { beforeAll, type ExpectStatic, test } from "vitest"`
+        - When test context is unavailable (e.g. setup files), use `node:assert` instead
+        - E2E vitest configs do NOT set `globals: true` — this rule is critical there; forgetting `{ expect }` in the callback causes `ReferenceError` at runtime
+      - When changing user-facing strings or output messages, update corresponding test snapshots
+      - New test fixtures in `vitest-pool-workers-examples/` must include a `tsconfig.json`
+      - Test fixtures serve as user-facing recipes — use clean patterns, avoid type casting where possible
+      - Focus on user-facing impact; reference the public-facing package, not internal implementation packages
+      - **Trivial/obvious code comments** → don't add comments that restate what the code does; comments should explain "why", not "what"
+      - **Duplicating types/constants across packages** → export from the owning package and import where needed
+      
+      When making architectural changes to a package (renaming files, adding entry points, changing build output), update the relevant AGENTS.md to reflect the new structure.
+    gold_removed: ""
+  - path: "packages/miniflare/AGENTS.md"
+    tier: 1
+    gold_added: |-
+      ## Generated Files
+      
+      - `src/runtime/config/generated/workerd.ts` — generated Cap'n Proto types, do not edit directly
+      - `src/workers/local-explorer/openapi.local.json` — generated from `scripts/openapi-filter-config.ts`, modify the config not the output
+      
+    gold_removed: ""
+  - path: "packages/wrangler/AGENTS.md"
+    tier: 1
+    gold_added: |-
+      - Never import `expect` from vitest — use test context `({ expect }) => {}`
+        - When adding `expect` as a parameter to helper functions, check ALL call sites (e.g., across `deployments.test.ts`, `versions.test.ts`)
+    gold_removed: ""

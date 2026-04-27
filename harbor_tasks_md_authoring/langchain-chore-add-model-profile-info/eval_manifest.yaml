@@ -1,0 +1,94 @@
+version: "2.0"
+
+task:
+  name: langchain-chore-add-model-profile-info
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: langchain-ai/langchain
+  pr: 35336
+  base_commit: "4af87fd0255cc97b5dfbd5408e5a2df5d0174de5"
+  merge_commit: "135a208919d20049b4b5002ea5dfd71bea0baf8c"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: "AGENTS.md"
+    tier: 1
+    gold_added: |-
+      ## Model profiles
+      
+      Model profiles are generated using the `langchain-profiles` CLI in `libs/model-profiles`. The `--data-dir` must point to the directory containing `profile_augmentations.toml`, not the top-level package directory.
+      
+      ```bash
+      # Run from libs/model-profiles
+      cd libs/model-profiles
+      
+      # Refresh profiles for a partner in this repo
+      uv run langchain-profiles refresh --provider openai --data-dir ../partners/openai/langchain_openai/data
+      
+      # Refresh profiles for a partner in an external repo (requires echo y to confirm)
+      echo y | uv run langchain-profiles refresh --provider google --data-dir /path/to/langchain-google/libs/genai/langchain_google_genai/data
+      ```
+      
+      Example partners with profiles in this repo:
+      
+      - `libs/partners/openai/langchain_openai/data/` (provider: `openai`)
+      - `libs/partners/anthropic/langchain_anthropic/data/` (provider: `anthropic`)
+      - `libs/partners/perplexity/langchain_perplexity/data/` (provider: `perplexity`)
+      
+      The `echo y |` pipe is required when `--data-dir` is outside the `libs/model-profiles` working directory.
+      
+    gold_removed: ""
+  - path: "CLAUDE.md"
+    tier: 1
+    gold_added: |-
+      ## Model profiles
+      
+      Model profiles are generated using the `langchain-profiles` CLI in `libs/model-profiles`. The `--data-dir` must point to the directory containing `profile_augmentations.toml`, not the top-level package directory.
+      
+      ```bash
+      # Run from libs/model-profiles
+      cd libs/model-profiles
+      
+      # Refresh profiles for a partner in this repo
+      uv run langchain-profiles refresh --provider openai --data-dir ../partners/openai/langchain_openai/data
+      
+      # Refresh profiles for a partner in an external repo (requires echo y to confirm)
+      echo y | uv run langchain-profiles refresh --provider google --data-dir /path/to/langchain-google/libs/genai/langchain_google_genai/data
+      ```
+      
+      Example partners with profiles in this repo:
+      
+      - `libs/partners/openai/langchain_openai/data/` (provider: `openai`)
+      - `libs/partners/anthropic/langchain_anthropic/data/` (provider: `anthropic`)
+      - `libs/partners/perplexity/langchain_perplexity/data/` (provider: `perplexity`)
+      
+      The `echo y |` pipe is required when `--data-dir` is outside the `libs/model-profiles` working directory.
+      
+    gold_removed: ""

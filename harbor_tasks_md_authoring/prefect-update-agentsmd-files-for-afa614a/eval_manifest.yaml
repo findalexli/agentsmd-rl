@@ -1,0 +1,53 @@
+version: "2.0"
+
+task:
+  name: prefect-update-agentsmd-files-for-afa614a
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: prefecthq/prefect
+  pr: 21475
+  base_commit: "afa614af268961a660534d0ba0abd68ef4957658"
+  merge_commit: "46e52ecdccf965c39de3b300b376ed38425b5fc8"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in ui-v2/src/routes/AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in ui-v2/src/routes/AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in ui-v2/src/routes/AGENTS.md."
+
+config_edits:
+  - path: "ui-v2/src/routes/AGENTS.md"
+    tier: 1
+    gold_added: |-
+      ## Search Parameters
+      
+      Use `validateSearch` with `zodValidator` from `@tanstack/zod-adapter` to validate search params:
+      
+      ```ts
+      import { zodValidator } from "@tanstack/zod-adapter";
+      import { z } from "zod";
+      
+      const searchSchema = z.object({
+      	redirect: z.string().optional(),
+      });
+      
+      export const Route = createFileRoute("/path")({
+      	validateSearch: zodValidator(searchSchema),
+      	component: function RouteComponent() {
+      		const { redirect } = Route.useSearch();
+      		// ...
+      	},
+      });
+      ```
+      
+    gold_removed: ""

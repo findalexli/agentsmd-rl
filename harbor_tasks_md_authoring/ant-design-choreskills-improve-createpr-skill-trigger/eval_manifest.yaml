@@ -1,0 +1,38 @@
+version: "2.0"
+
+task:
+  name: ant-design-choreskills-improve-createpr-skill-trigger
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: ant-design/ant-design
+  pr: 57529
+  base_commit: "dce9f138cb06cc679f889f5d20c0a0c3e5a7d268"
+  merge_commit: "ca147c0ceb54f8f2249804b73d6266b130ce1acb"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/create-pr/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/create-pr/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/create-pr/SKILL.md."
+
+config_edits:
+  - path: ".agents/skills/create-pr/SKILL.md"
+    tier: 1
+    gold_added: |-
+      如果用户只输入很短的口语化指令，也应直接触发本 skill，不要因为信息太少而跳过。例如：
+      - 中文：`创建pr`、`创建 PR`、`开pr`、`开个pr`、`提pr`、`提个pr`、`帮我提个pr`、`发pr`、`写pr`、`准备pr`。
+      - 英文：`create pr`、`create a pr`、`open pr`、`open a pr`、`submit pr`、`send pr`、`draft pr`、`prepare pr`、`help me create a pr`、`open a pull request`。
+      
+      这类短句默认表示：先分析当前分支改动并整理待确认的 `base`、`title`、`body` 草稿，等用户确认后再真正创建 PR。
+      
+    gold_removed: ""

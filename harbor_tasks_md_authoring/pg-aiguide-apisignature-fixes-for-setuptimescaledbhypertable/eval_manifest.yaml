@@ -1,0 +1,72 @@
+version: "2.0"
+
+task:
+  name: pg-aiguide-apisignature-fixes-for-setuptimescaledbhypertable
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: timescale/pg-aiguide
+  pr: 69
+  base_commit: "cec1be3c4f149255dedcd1f35105dfebd31f740d"
+  merge_commit: "44f5a47d2a72fb4b0fdb47415da3ecb6091242d1"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/setup-timescaledb-hypertables/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/setup-timescaledb-hypertables/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/setup-timescaledb-hypertables/SKILL.md."
+
+config_edits:
+  - path: "skills/setup-timescaledb-hypertables/SKILL.md"
+    tier: 1
+    gold_added: |-
+      ## Step 2: Compression Policy (Optional)
+      
+      **IMPORTANT**: If you used `tsdb.enable_columnstore=true` in Step 1, starting with TimescaleDB version 2.23 a columnstore policy is **automatically created** with `after => INTERVAL '7 days'`. You only need to call `add_columnstore_policy()` if you want to customize the `after` interval to something other than 7 days.
+      -- In TimescaleDB 2.23 and later only needed if you want to override the default 7-day policy created by tsdb.enable_columnstore=true
+      -- Remove the existing auto-created policy first:
+      -- CALL remove_columnstore_policy('your_table_name');
+      -- Then add custom policy:
+      -- CALL add_columnstore_policy('your_table_name', after => INTERVAL '1 day');
+          start_offset => NULL,
+          start_offset => NULL,
+      --     start_offset => INTERVAL '7 days',    -- only refresh last 7 days (NULL = refresh all)
+          start_offset => NULL,    -- Use NULL to refresh all data, or set to retention period if enabled on raw data
+      -- Check compression settings
+      SELECT * FROM hypertable_compression_stats('your_table_name');
+      SELECT
+          chunk_name,
+          range_start,
+          range_end,
+          is_compressed
+      WHERE hypertable_name = 'your_table_name'
+      ORDER BY range_start DESC;
+      - `compress_chunk()` → `convert_to_columnstore()` (use with `CALL`, not `SELECT`)
+      - `decompress_chunk()` → `convert_to_rowstore()` (use with `CALL`, not `SELECT`)
+      **Compression Stats (use functions, not views):**
+      - Use function: `hypertable_compression_stats('table_name')`
+      - Use function: `chunk_compression_stats('_timescaledb_internal._hyper_X_Y_chunk')`
+      - Note: Views like `columnstore_settings` may not be available in all versions; use functions instead
+      **Manual Compression Example:**
+      ```sql
+      -- Compress a specific chunk
+      CALL convert_to_columnstore('_timescaledb_internal._hyper_7_1_chunk');
+      
+      -- Check compression statistics
+      SELECT
+          number_compressed_chunks,
+          pg_size_pretty(before_compression_total_bytes) as before_compression,
+          pg_size_pretty(after_compression_total_bytes) as after_compression,
+          ROUND(100.0 * (1 - after_compression_total_bytes::numeric / NULLIF(before_compression_total_bytes, 0)), 1) as compression_pct
+      FROM hypertable_compression_stats('your_table_name');
+      ```
+    gold_removed: ""

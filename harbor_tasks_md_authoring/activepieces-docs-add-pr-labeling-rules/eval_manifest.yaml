@@ -1,0 +1,40 @@
+version: "2.0"
+
+task:
+  name: activepieces-docs-add-pr-labeling-rules
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: activepieces/activepieces
+  pr: 12268
+  base_commit: "48f41a8b98139c0540dee68858d9f97e62c4edc1"
+  merge_commit: "2db6411a2f1e18aa6d26359228ab33c1977eeb24"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: "AGENTS.md"
+    tier: 1
+    gold_added: |-
+      ## Pull Requests
+      
+      - When creating a PR with `gh pr create`, always apply exactly one of these labels based on the nature of the change:
+        - **`feature`** — new functionality
+        - **`bug`** — bug fix
+        - **`skip-changelog`** — changes that should not appear in the changelog (docs, CI tweaks, internal refactors, etc.)
+      - If the PR includes any contributions to pieces (integrations under `packages/pieces`), also add the **`pieces`** label (in addition to the primary label above).
+      
+    gold_removed: ""

@@ -1,0 +1,39 @@
+version: "2.0"
+
+task:
+  name: agent-skills-docsfrontendui-prevent-page-scroll-in
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: addyosmani/agent-skills
+  pr: 79
+  base_commit: "7338cf0a5a9557275e3cd8dc520002e59215e0a7"
+  merge_commit: "9534f44c5448086fcc0046f9d83752c654c81930"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/frontend-ui-engineering/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/frontend-ui-engineering/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/frontend-ui-engineering/SKILL.md."
+
+config_edits:
+  - path: "skills/frontend-ui-engineering/SKILL.md"
+    tier: 1
+    gold_added: |-
+           onKeyDown={e => {
+             if (e.key === 'Enter') handleClick();
+             if (e.key === ' ') e.preventDefault();
+           }}
+           onKeyUp={e => {
+             if (e.key === ' ') handleClick();
+           }}>
+    gold_removed: ""

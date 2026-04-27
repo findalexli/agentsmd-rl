@@ -1,0 +1,44 @@
+version: "2.0"
+
+task:
+  name: nanoclaw-fix-explicit-read-tool-directive
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: qwibitai/nanoclaw
+  pr: 1443
+  base_commit: "df76dc6797807ee9702c56a30731086fca63dab6"
+  merge_commit: "8824a84afeff759e2ad91ea30ebbeaf16a880a4f"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/setup/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/setup/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/update-nanoclaw/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/update-nanoclaw/SKILL.md."
+
+config_edits:
+  - path: ".claude/skills/setup/SKILL.md"
+    tier: 1
+    gold_added: |-
+      1. Use the Read tool to read `.claude/skills/setup/diagnostics.md`.
+      2. Follow every step in that file before completing setup.
+    gold_removed: ""
+  - path: ".claude/skills/update-nanoclaw/SKILL.md"
+    tier: 1
+    gold_added: |-
+      1. Use the Read tool to read `.claude/skills/update-nanoclaw/diagnostics.md`.
+      2. Follow every step in that file before finishing.
+    gold_removed: ""

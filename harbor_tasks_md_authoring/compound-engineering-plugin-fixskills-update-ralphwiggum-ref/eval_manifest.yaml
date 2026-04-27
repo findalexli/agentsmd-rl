@@ -1,0 +1,39 @@
+version: "2.0"
+
+task:
+  name: compound-engineering-plugin-fixskills-update-ralphwiggum-ref
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: EveryInc/compound-engineering-plugin
+  pr: 324
+  base_commit: "f5bbb76b51a88bff660f64f933595509c0201f0c"
+  merge_commit: "ac756a267c5e3d5e4ceb2f99939dbb93491ac4d2"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/lfg/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/lfg/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/slfg/SKILL.md."
+
+config_edits:
+  - path: "plugins/compound-engineering/skills/lfg/SKILL.md"
+    tier: 1
+    gold_added: |-
+      1. **Optional:** If the `ralph-loop` skill is available, run `/ralph-loop:ralph-loop "finish all slash commands" --completion-promise "DONE"`. If not available or it fails, skip and continue to step 2 immediately.
+      Start with step 2 now (or step 1 if ralph-loop is available). Remember: plan FIRST, then work. Never skip the plan.
+    gold_removed: ""
+  - path: "plugins/compound-engineering/skills/slfg/SKILL.md"
+    tier: 1
+    gold_added: |-
+      1. **Optional:** If the `ralph-loop` skill is available, run `/ralph-loop:ralph-loop "finish all slash commands" --completion-promise "DONE"`. If not available or it fails, skip and continue to step 2 immediately.
+    gold_removed: ""

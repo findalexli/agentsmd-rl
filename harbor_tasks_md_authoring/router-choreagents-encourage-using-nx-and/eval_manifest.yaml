@@ -1,0 +1,58 @@
+version: "2.0"
+
+task:
+  name: router-choreagents-encourage-using-nx-and
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: TanStack/router
+  pr: 6671
+  base_commit: "027dc0581750bc7db48600f438240ccb8b2bb1e8"
+  merge_commit: "bab64df13be7bc06c578ad2108c639fcd68313cc"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: "AGENTS.md"
+    tier: 1
+    gold_added: |-
+      - Use `pnpm nx show projects` to list all available packages
+      - Target specific packages: `pnpm nx run @tanstack/react-router:test:unit`
+      - Target multiple packages: `pnpm nx run-many --target=test:eslint --projects=@tanstack/history,@tanstack/router-core`
+      - Run affected tests only: `pnpm nx affected --target=test:unit`
+      - Exclude patterns: `pnpm nx run-many --target=test:unit --exclude="examples/**,e2e/**"`
+      - **Granular unit testing through Nx (recommended):**
+        - Specific files: `pnpm nx run @tanstack/react-router:test:unit -- tests/link.test.tsx tests/Scripts.test.tsx`
+        - Test patterns: `pnpm nx run @tanstack/react-router:test:unit -- tests/ClientOnly.test.tsx -t "should render fallback"`
+        - Name patterns: `pnpm nx run @tanstack/react-router:test:unit -- -t "navigation"` (all tests with "navigation" in name)
+        - Exclude patterns: `pnpm nx run @tanstack/react-router:test:unit -- --exclude="**/*link*" tests/`
+        - List tests: `pnpm nx run @tanstack/react-router:test:unit -- list tests/link.test.tsx` (or `-- list` for all)
+      - **Testing strategy:** Package level (nx) → File-level args via nx → Test-level args (`-t`) via nx → Pattern-level args (`--exclude`) via nx
+      - **Agent execution guardrails (important):**
+        - Always prefer `pnpm nx ...` over `npx nx ...`.
+        - Prefer Nx targets over direct test runners so task dependencies (including required builds) remain in the graph.
+        - In sandbox, run Nx with `CI=1 NX_DAEMON=false pnpm nx run <project>:<target> --outputStyle=stream --skipRemoteCache`
+        - Run only one Nx command at a time.
+        - If an Nx command shows no output for ~20 seconds, stop, run `pnpm nx reset` once, and retry once.
+        - Do not loop retries indefinitely. If it still hangs or sandbox blocks graph/daemon behavior, request escalation immediately.
+        1. **Affected only:** `pnpm nx affected --target=test:unit` (compares to main branch)
+        2. **Specific packages:** `pnpm nx run @tanstack/react-router:test:unit`
+        3. **Specific files:** `pnpm nx run @tanstack/react-router:test:unit -- tests/link.test.tsx`
+        4. **Specific patterns:** `pnpm nx run @tanstack/react-router:test:unit -- tests/link.test.tsx -t "preloading"`
+        - Use `pnpm nx run @tanstack/react-router:test:unit -- list` to explore available tests before running
+        - Keep all test filtering arguments behind `pnpm nx run ... -- ...` for maximum precision while preserving task dependencies
+      - **Example workflow:** `pnpm nx run @tanstack/react-router:test:unit` → `pnpm nx run @tanstack/react-router:test:unit -- tests/link.test.tsx` → `pnpm nx run @tanstack/react-router:test:unit -- tests/link.test.tsx -t "preloading"`
+    gold_removed: ""

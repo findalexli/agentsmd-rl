@@ -1,0 +1,40 @@
+version: "2.0"
+
+task:
+  name: agents-fix-correct-pep-695-type
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: wshobson/agents
+  pr: 463
+  base_commit: "1ad2f007d5e9ec822a2d79e727ac1dcdf5f66f11"
+  merge_commit: "825fb4cf054a6fcc8eda80cc3b373f4657974624"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/python-development/skills/python-type-safety/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/python-development/skills/python-type-safety/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/python-development/skills/python-type-safety/SKILL.md."
+
+config_edits:
+  - path: "plugins/python-development/skills/python-type-safety/SKILL.md"
+    tier: 1
+    gold_added: |-
+      **Note:** The `type Alias = ...` statement syntax (PEP 695) was introduced in **Python 3.12**, not 3.10. For projects targeting earlier versions (including 3.10/3.11), use the `TypeAlias` annotation (PEP 613, available since Python 3.10).
+      # Python 3.12+ type statement (PEP 695)
+      # Python 3.12+ type statement with generics (PEP 695)
+      ```
+      ```python
+      # Python 3.10-3.11 style (needed for broader compatibility)
+      ```
+      ```python
+    gold_removed: ""

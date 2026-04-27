@@ -1,0 +1,36 @@
+version: "2.0"
+
+task:
+  name: prql-docs-clarify-cargo-test-command
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: PRQL/prql
+  pr: 5484
+  base_commit: "541974b371bac89e3c7e758106ecde97df307f4c"
+  merge_commit: "7fcf44783eddcf9328842691cf2a0a181e1e90dd"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: "CLAUDE.md"
+    tier: 1
+    gold_added: |-
+      # Unit tests filtered by test name
+      cargo insta test -p prqlc --lib -- resolver
+      # Integration tests filtered by test name
+      cargo insta test -p prqlc --test integration -- date
+    gold_removed: ""

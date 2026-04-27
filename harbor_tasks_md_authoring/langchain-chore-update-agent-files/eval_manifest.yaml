@@ -1,0 +1,108 @@
+version: "2.0"
+
+task:
+  name: langchain-chore-update-agent-files
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: langchain-ai/langchain
+  pr: 35346
+  base_commit: "e95e869d9e97243593672ea8c853d936e46be004"
+  merge_commit: "8aa7a3f07a9dbd446456ab0a533feb7b57fabd84"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: "AGENTS.md"
+    tier: 1
+    gold_added: |-
+      ## CI/CD infrastructure
+      
+      ### Release process
+      
+      Releases are triggered manually via `.github/workflows/_release.yml` with `working-directory` and `release-version` inputs.
+      
+      ### PR labeling and linting
+      
+      **Title linting** (`.github/workflows/pr_lint.yml`)
+      
+      **Auto-labeling:**
+      
+      - `.github/workflows/pr_labeler_file.yml`
+      - `.github/workflows/pr_labeler_title.yml`
+      - `.github/workflows/auto-label-by-package.yml`
+      - `.github/workflows/tag-external-contributions.yml`
+      
+      ### Adding a new partner to CI
+      
+      When adding a new partner package, update these files:
+      
+      - `.github/ISSUE_TEMPLATE/*.yml` – Add to package dropdown
+      - `.github/dependabot.yml` – Add dependency update entry
+      - `.github/pr-file-labeler.yml` – Add file-to-label mapping
+      - `.github/workflows/_release.yml` – Add API key secrets if needed
+      - `.github/workflows/auto-label-by-package.yml` – Add package label
+      - `.github/workflows/check_diffs.yml` – Add to change detection
+      - `.github/workflows/integration_tests.yml` – Add integration test config
+      - `.github/workflows/pr_lint.yml` – Add to allowed scopes
+      
+    gold_removed: ""
+  - path: "CLAUDE.md"
+    tier: 1
+    gold_added: |-
+      ## CI/CD infrastructure
+      
+      ### Release process
+      
+      Releases are triggered manually via `.github/workflows/_release.yml` with `working-directory` and `release-version` inputs.
+      
+      ### PR labeling and linting
+      
+      **Title linting** (`.github/workflows/pr_lint.yml`)
+      
+      **Auto-labeling:**
+      
+      - `.github/workflows/pr_labeler_file.yml`
+      - `.github/workflows/pr_labeler_title.yml`
+      - `.github/workflows/auto-label-by-package.yml`
+      - `.github/workflows/tag-external-contributions.yml`
+      
+      ### Adding a new partner to CI
+      
+      When adding a new partner package, update these files:
+      
+      - `.github/ISSUE_TEMPLATE/*.yml` – Add to package dropdown
+      - `.github/dependabot.yml` – Add dependency update entry
+      - `.github/pr-file-labeler.yml` – Add file-to-label mapping
+      - `.github/workflows/_release.yml` – Add API key secrets if needed
+      - `.github/workflows/auto-label-by-package.yml` – Add package label
+      - `.github/workflows/check_diffs.yml` – Add to change detection
+      - `.github/workflows/integration_tests.yml` – Add integration test config
+      - `.github/workflows/pr_lint.yml` – Add to allowed scopes
+      
+    gold_removed: ""

@@ -1,0 +1,72 @@
+version: "2.0"
+
+task:
+  name: claude-code-plugins-plus-skills-fixnavanpack-audit-repair-mi
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: jeremylongshore/claude-code-plugins-plus-skills
+  pr: 486
+  base_commit: "b7b9b4d6dff3a9503645f7b8673d52fef98db365"
+  merge_commit: "5e953c1ea37d5f8eefa7870e32652d7802c2a889"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/saas-packs/navan-pack/skills/navan-multi-env-setup/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/saas-packs/navan-pack/skills/navan-multi-env-setup/SKILL.md."
+
+config_edits:
+  - path: "plugins/saas-packs/navan-pack/skills/navan-debug-bundle/SKILL.md"
+    tier: 1
+    gold_added: |-
+      ## Overview
+      
+      ## Output
+    gold_removed: ""
+  - path: "plugins/saas-packs/navan-pack/skills/navan-incident-runbook/SKILL.md"
+    tier: 1
+    gold_added: |-
+      ## Overview
+      
+      ## Output
+    gold_removed: ""
+  - path: "plugins/saas-packs/navan-pack/skills/navan-migration-deep-dive/SKILL.md"
+    tier: 1
+    gold_added: |-
+      ## Overview
+      
+      ## Output
+    gold_removed: ""
+  - path: "plugins/saas-packs/navan-pack/skills/navan-multi-env-setup/SKILL.md"
+    tier: 1
+    gold_added: |-
+      | Missing env vars | N/A | Config loader throws on startup; check the correct `.env.<environment>` file exists |
+      | Wrong environment loaded | N/A | Verify NODE_ENV matches the intended `.env.<environment>` file |
+    gold_removed: ""
+  - path: "plugins/saas-packs/navan-pack/skills/navan-prod-checklist/SKILL.md"
+    tier: 1
+    gold_added: |-
+      ## Overview
+      
+      ## Output
+    gold_removed: ""
+  - path: "plugins/saas-packs/navan-pack/skills/navan-reference-architecture/SKILL.md"
+    tier: 1
+    gold_added: |-
+      ## Overview
+      
+      ## Output
+    gold_removed: ""
+  - path: "plugins/saas-packs/navan-pack/skills/navan-upgrade-migration/SKILL.md"
+    tier: 1
+    gold_added: |-
+      ## Overview
+      
+      ## Output
+    gold_removed: ""

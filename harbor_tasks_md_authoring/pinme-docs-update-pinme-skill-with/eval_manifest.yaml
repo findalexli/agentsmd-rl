@@ -1,0 +1,60 @@
+version: "2.0"
+
+task:
+  name: pinme-docs-update-pinme-skill-with
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: glitternetwork/pinme
+  pr: 25
+  base_commit: "4ab1fed5918ee751ca82948675f7438c4f7b7442"
+  merge_commit: "b42521bce94354ec99600222f5a51736b310ed4b"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/pinme/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/pinme/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/pinme/SKILL.md."
+
+config_edits:
+  - path: "skills/pinme/SKILL.md"
+    tier: 1
+    gold_added: |-
+      ## System Requirements
+      
+      - Node.js version 16.13.0 or higher required
+      
+      
+      # Configure authentication
+      pinme set-appkey
+      
+      # Display available domains
+      pinme my-domains
+      
+      # End session
+      pinme logout
+      
+      ## File Size Limits
+      
+      | Type | Limit |
+      |------|-------|
+      | Single file | 200MB maximum |
+      | Total directory | 1GB maximum |
+      
+      ## Fixed Domain Binding
+      
+      Format: `https://<name>.pinit.eth.limo`
+      
+      **Requirements:**
+      - Plus membership
+      - AppKey configuration (use `pinme set-appkey`)
+    gold_removed: ""

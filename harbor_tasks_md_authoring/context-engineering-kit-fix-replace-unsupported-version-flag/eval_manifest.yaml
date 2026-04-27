@@ -1,0 +1,26 @@
+version: "2.0"
+
+task:
+  name: context-engineering-kit-fix-replace-unsupported-version-flag
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: NeoLabHQ/context-engineering-kit
+  pr: 63
+  base_commit: "554814cfd47755379170dd8686d9391822e3ea83"
+  merge_commit: "20695fa8295a28066a6e8c974871cbf3e0699448"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/mcp/skills/setup-codemap-cli/SKILL.md."
+
+config_edits:
+  - path: "plugins/mcp/skills/setup-codemap-cli/SKILL.md"
+    tier: 1
+    gold_added: |-
+      Check whether codemap is installed by running `codemap -help`.
+      ```
+    gold_removed: ""

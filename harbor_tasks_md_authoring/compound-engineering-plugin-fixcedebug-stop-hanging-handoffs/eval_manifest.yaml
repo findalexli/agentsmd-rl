@@ -1,0 +1,53 @@
+version: "2.0"
+
+task:
+  name: compound-engineering-plugin-fixcedebug-stop-hanging-handoffs
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: EveryInc/compound-engineering-plugin
+  pr: 646
+  base_commit: "01d5e8fb7388aa8a144f82f2496933ed8728866c"
+  merge_commit: "86d9a2c55f49eb49dbbc3d918ce859dbe273d44e"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-debug/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-debug/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-debug/SKILL.md."
+
+config_edits:
+  - path: "plugins/compound-engineering/skills/ce-debug/SKILL.md"
+    tier: 1
+    gold_added: |-
+      | 4 | Handoff | Structured summary, then prompt the user for the next action |
+      - Other trackers (Linear URL/ID, Jira URL/key, any tracker URL): Attempt to fetch using available MCP tools or by fetching the URL content. If the fetch fails — auth, missing tool, non-public page — ask the user to paste the relevant issue content. Ensure the fetch includes the full comment thread, not just the opening description.
+      Read the full conversation — the original description AND every comment, with particular attention to the latest ones. Comments frequently contain updated reproduction steps, narrowed scope, prior failed attempts, additional stack traces, or a pivot to a different suspected root cause; treating the opening post as the whole picture often sends the investigation in the wrong direction. Extract reported symptoms, expected behavior, reproduction steps, and environment details from the combined thread. Then proceed to Phase 1.
+      Then offer next steps.
+      
+      Use the platform's blocking question tool (`AskUserQuestion` in Claude Code, `request_user_input` in Codex, `ask_user` in Gemini). In Claude Code, call `ToolSearch` with `select:AskUserQuestion` first if its schema isn't loaded — a pending schema load is not a reason to fall back. Fall back to numbered options in chat only when no blocking tool exists in the harness or the call errors (e.g., Codex edit modes). Never silently skip the question.
+      
+      Options to offer:
+      2. **Diagnosis only — I'll take it from here** — skip the fix, proceed to Phase 4's summary, and end the skill
+      If the user chose "Diagnosis only" at the end of Phase 2, skip this phase and go straight to Phase 4 for the summary — the skill's job was the diagnosis. If they chose "Rethink the design", control has transferred to `/ce-brainstorm` and this skill ends.
+      ### Phase 4: Handoff
+      **Structured summary** — always write this first:
+      **If Phase 3 was skipped** (user chose "Diagnosis only" in Phase 2), stop after the summary — the user already told you they were taking it from here. Do not prompt.
+      
+      **If Phase 3 ran**, immediately after the summary prompt the user for the next action via the platform's blocking question tool (`AskUserQuestion` in Claude Code, `request_user_input` in Codex, `ask_user` in Gemini). In Claude Code, call `ToolSearch` with `select:AskUserQuestion` first if its schema isn't loaded — a pending schema load is not a reason to fall back. Fall back to numbered options in chat only when no blocking tool exists in the harness or the call errors (e.g., Codex edit modes). Never end the phase without collecting a response — do not stop at "ready when you are" or any other passive phrasing that leaves the user hanging.
+      
+      Options (include only those that apply):
+      
+      1. **Commit the fix** — stage and commit the change (always applies here, since Phase 3 ran)
+      2. **Document as a learning** (`/ce-compound`) — capture the bug and fix as a reusable pattern
+      3. **Post findings to the issue** — reply on the tracker with confirmed root cause, verified reproduction, relevant code references, and suggested fix direction (include only when entry came from an issue tracker)
+    gold_removed: ""

@@ -1,0 +1,59 @@
+version: "2.0"
+
+task:
+  name: prefect-update-agentsmd-files-for-8fd8ff3
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: prefecthq/prefect
+  pr: 21505
+  base_commit: "8fd8ff326eade955d019864b52f548dc83ad780a"
+  merge_commit: "738c470fc107062f71e3396359c6d64094fd72c2"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/prefect/utilities/AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/prefect/utilities/AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/prefect/utilities/AGENTS.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/prefect/workers/AGENTS.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/prefect/workers/AGENTS.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/prefect/workers/AGENTS.md."
+
+config_edits:
+  - path: "src/prefect/utilities/AGENTS.md"
+    tier: 1
+    gold_added: |-
+      - `processutils.py` — Subprocess execution, output streaming, and command serialization helpers (`run_process`, `consume_process_output`, `stream_text`, `command_to_string`, `command_from_string`)
+      - **`command_to_string` always uses POSIX quoting (`shlex.join`), even on Windows.** This is intentional for platform-neutral storage — bundle commands are serialized by one platform and may be deserialized by another. `command_from_string` uses a dual-path approach: if the string was POSIX-serialized by Prefect (round-trips cleanly through `shlex.split`/`shlex.join`), it uses POSIX parsing; otherwise it falls back to native Windows command-line parsing (`CommandLineToArgvW`). Do not use `" ".join(command)` or `shlex.split(command)` directly when working with stored Prefect commands — use these helpers instead.
+      - **`get_sys_executable()` no longer quotes the Python path on Windows.** It previously returned `'"path/to/python"'` (with embedded quotes) on Windows; now it returns the raw path. Code relying on the old quoted form (e.g., joining into a shell string) will break — use `subprocess.list2cmdline` or `command_to_string` for shell-safe serialization instead.
+    gold_removed: ""
+  - path: "src/prefect/workers/AGENTS.md"
+    tier: 1
+    gold_added: |-
+      ## Bundle Launcher Override
+      
+      When a flow is decorated with an infrastructure decorator (`@docker`, `@ecs`, `@kubernetes`, etc.) and a `launcher` argument is supplied, `InfrastructureBoundFlow` stores a normalized `BundleLauncherOverride` on `flow.launcher`. `BaseWorker.submit()` extracts this via `getattr(flow, "launcher", None)` and calls `resolve_bundle_step_with_launcher(step, launcher, side)` before converting steps to commands.
+      
+      **Non-obvious:** the launcher replaces the `uv run ...` prefix entirely. With a launcher, the resulting command is `[*launcher, "-m", "<module>", "--key", "<path>"]` rather than `["uv", "run", "--with", "...", "--python", "X.Y", "-m", "<module>", "--key", "<path>"]`. Launchers and `requires` are mutually exclusive — `convert_step_to_command` raises `ValueError` if a step has both.
+      
+      Work-pool-level launchers are configured via `prefect work-pool storage configure s3|gcs|azure --launcher <executable>` and are stored in the step dict itself. Flow-level launchers (via the decorator) are resolved at submit time and win over the work-pool step configuration.
+      
+    gold_removed: ""

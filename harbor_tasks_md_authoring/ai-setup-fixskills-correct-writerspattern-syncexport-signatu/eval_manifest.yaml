@@ -1,0 +1,166 @@
+version: "2.0"
+
+task:
+  name: ai-setup-fixskills-correct-writerspattern-syncexport-signatu
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: caliber-ai-org/ai-setup
+  pr: 180
+  base_commit: "6db87e6e48190a23f373ed710595781f5b0d1331"
+  merge_commit: "1eec969e5dbd25c9846a23a1eab248c4046a662c"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/writers-pattern/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/writers-pattern/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/writers-pattern/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/skills/writers-pattern/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/skills/writers-pattern/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/skills/writers-pattern/SKILL.md."
+
+config_edits:
+  - path: ".agents/skills/writers-pattern/SKILL.md"
+    tier: 1
+    gold_added: |-
+      - Each writer MUST export a **named synchronous** function: `export function write{Platform}Config(config: {PlatformConfig}): string[]`
+      - Writer MUST return `string[]` of written file paths (NOT `Promise<string[]>`) — all file I/O uses synchronous `fs` APIs
+      - Writers are called from `writeSetup()` in `src/writers/index.ts`; they must be synchronous to compose correctly
+      - Writer files live in `src/writers/{platform}/index.ts` with a platform-specific config interface defined in the same file
+      - Never use default exports — `src/writers/index.ts` imports all writers by their named export
+         - Define a platform-specific config interface at the top of the file (see `src/writers/claude/index.ts` for shape)
+         - Export named synchronous function: `export function write{Platform}Config(config: {PlatformConfig}): string[]`
+         - Initialize `const written: string[] = []` to track all written paths
+         - Use synchronous `fs.writeFileSync` and `fs.mkdirSync` — no async/await
+         - Return the `written` array at the end
+         - For the main config file: use content-wrapping helpers from `src/writers/pre-commit-block.ts` (e.g., `appendPreCommitBlock`, `appendLearningsBlock`)
+         - For rules: create `<platform>/rules/` directory, write each rule, push paths to `written`
+         - For skills: create `<platform>/skills/<name>/` directory, write `SKILL.md` with YAML frontmatter, push paths to `written`
+         - For MCP servers: read existing JSON (if any), merge with spread operator, write back
+         - All writes use `fs.writeFileSync`; all directory creation uses `fs.mkdirSync(dir, { recursive: true })`
+         - Create `src/writers/__tests__/{platform}.test.ts` following the vitest pattern in `src/writers/__tests__/codex.test.ts`
+         - Mock `fs` module: `vi.mock('fs')`
+         - Test that main config file is written to correct path and returned in the array
+         - Test skill frontmatter format is correct
+         - Verify test runs: `npm test -- src/writers/__tests__/{platform}.test.ts`
+      5. **Register in src/writers/index.ts**
+         - Add import: `import { write{Platform}Config } from './{platform}/index.js'`
+         - Add platform to `AgentSetup.targetAgent` tuple
+         - Add `{platform}?: Parameters<typeof write{Platform}Config>[0]` to `AgentSetup`
+         - Add conditional write block in `writeSetup()` and `getFilesToWrite()`
+         - Run `npm run test` — all tests pass
+         - Run `npx tsc --noEmit` — no type errors
+      1. Create `src/writers/jetbrains/index.ts` with a `JetbrainsConfig` interface
+      2. Implement `export function writeJetbrainsConfig(config: JetbrainsConfig): string[]` — synchronous, uses `fs.writeFileSync`, returns `written` array
+      3. Create `src/writers/__tests__/jetbrains.test.ts` using `vi.mock('fs')` pattern from `codex.test.ts`
+      4. Add to `src/writers/index.ts`: import `{ writeJetbrainsConfig }`, add to `AgentSetup`, call in `writeSetup()`
+      5. Run `npm run build && npm run test` — all pass
+      **Result**: New writer available via `writeSetup()` orchestration; files are written synchronously and paths are returned.
+      - **"TypeError: write{Platform}Config is not a function"** — Verify the function is exported: `export function write{Platform}Config(...)`. Missing `export` is a common mistake.
+      - **"ENOENT: no such file or directory"** — Ensure `fs.mkdirSync(parentDir, { recursive: true })` is called BEFORE `fs.writeFileSync(filePath, ...)`. See `src/writers/claude/index.ts` for correct order.
+      - **"Skill file has no frontmatter"** — Frontmatter format must be `---\nname: ...\ndescription: ...\n---\n<content>` (no extra blank lines). Compare with `src/writers/claude/index.ts` lines 40–48.
+      - **"written array is empty but files were created"** — Every `fs.writeFileSync()` call must be followed by `written.push(filePath)`. Check every file operation.
+    gold_removed: ""
+  - path: ".cursor/skills/writers-pattern/SKILL.md"
+    tier: 1
+    gold_added: |-
+      - Writers MUST return `string[]` (array of file paths written) — **synchronously**, not `Promise<string[]>`
+      - Each writer lives in `src/writers/{platform}/index.ts` with a named export `write{Platform}Config(config: {PlatformConfig}): string[]`
+      - Writers are registered in `src/writers/index.ts` within the `writeSetup()` function (not a Map)
+      - All file I/O uses synchronous `fs` APIs (`fs.writeFileSync`, `fs.mkdirSync`)
+      - Test files go in `src/writers/__tests__/{platform}.test.ts` (not nested under the writer directory)
+      Create `src/writers/{platform}/` with `index.ts`.
+      └── index.ts
+      **Step 3: Implement write{Platform}Config() export**
+      Write the function matching the claude/cursor/codex pattern. Follow this template:
+      import fs from 'fs';
+      import path from 'path';
+      import { appendPreCommitBlock, appendLearningsBlock } from '../pre-commit-block.js';
+      
+      interface OpenaiGptConfig {
+        instructions: string;
+        rules?: Array<{ filename: string; content: string }>;
+        skills?: Array<{ name: string; description: string; content: string }>;
+      }
+      export function writeOpenaiGptConfig(config: OpenaiGptConfig): string[] {
+      
+        // 1. Write main config file
+        fs.writeFileSync('.openai/instructions.md', appendLearningsBlock(appendPreCommitBlock(config.instructions, 'openai-gpt')));
+        written.push('.openai/instructions.md');
+      
+        // 2. Write rules (if any)
+        if (config.rules?.length) {
+          const rulesDir = path.join('.openai', 'rules');
+          fs.mkdirSync(rulesDir, { recursive: true });
+          for (const rule of config.rules) {
+            const rulePath = path.join(rulesDir, rule.filename);
+            fs.writeFileSync(rulePath, rule.content);
+            written.push(rulePath);
+          }
+      
+      Verify: function is synchronous; every `fs.writeFileSync` is preceded by `fs.mkdirSync`; every written path is in the returned array.
+      **Step 4: Register in src/writers/index.ts**
+      import { writeOpenaiGptConfig } from './openai-gpt/index.js';
+      Add to `AgentSetup`:
+      - Add `'openai-gpt'` to the `targetAgent` tuple
+      - Add `'openaiGpt'?: Parameters<typeof writeOpenaiGptConfig>[0]`
+      Add to `writeSetup()` and `getFilesToWrite()`:
+      ```typescript
+      if (setup.targetAgent.includes('openai-gpt') && setup.openaiGpt) {
+        written.push(...writeOpenaiGptConfig(setup.openaiGpt));
+      }
+      ```
+      **Step 5: Write tests in src/writers/__tests__/{platform}.test.ts**
+      Follow the pattern from `src/writers/__tests__/codex.test.ts`:
+      import { describe, it, expect, vi, beforeEach } from 'vitest';
+      import fs from 'fs';
+      vi.mock('fs');
+      import { writeOpenaiGptConfig } from '../openai-gpt/index.js';
+      
+      describe('writeOpenaiGptConfig', () => {
+        beforeEach(() => { vi.clearAllMocks(); vi.mocked(fs.existsSync).mockReturnValue(false); });
+        it('writes instructions.md', () => {
+          const written = writeOpenaiGptConfig({ instructions: '# Config' });
+          expect(written).toContain('.openai/instructions.md');
+      npm test -- src/writers/__tests__/{platform}.test.ts
+      1. Create `src/writers/github-copilot/index.ts` with `GithubCopilotConfig` interface
+      2. Implement `export function writeGithubCopilotConfig(config: GithubCopilotConfig): string[]` — synchronous, writes `.github/copilot-instructions.md` and `.github/instructions/` files
+      3. Add to `src/writers/index.ts`: import `{ writeGithubCopilotConfig }`, add to `AgentSetup`, call in `writeSetup()`
+      4. Create `src/writers/__tests__/github-copilot.test.ts` with `vi.mock('fs')` tests
+      5. Verify `npm run build && npm test` passes
+      **Result:** New writer integrated; `writeSetup()` calls `writeGithubCopilotConfig()` when `'github-copilot'` is in `targetAgent`.
+      **"TypeError: write{Platform}Config is not a function"**
+      - Verify function is exported with `export function write{Platform}Config(...)` — no `default`, no `async`
+      - Check import in `src/writers/index.ts` uses `{ write{Platform}Config }` (named import, `.js` extension)
+      **"ENOENT: no such file or directory"**
+      - `fs.mkdirSync(parentDir, { recursive: true })` must be called BEFORE `fs.writeFileSync`
+      - See `src/writers/claude/index.ts` for the correct order
+      - Every `fs.writeFileSync()` call must be followed by `written.push(filePath)`
+      - Check every file operation in the writer for a missing push
+      
+      **"Tests fail with mock not working"**
+      - `vi.mock('fs')` must be at the top of the test file (before imports)
+      - Follow pattern from `src/writers/__tests__/codex.test.ts`
+      
+      **"Type error on AgentSetup"**
+      - Add platform to `targetAgent` tuple AND add the platform property to `AgentSetup` in `src/writers/index.ts`
+      - Both must be updated together — missing either causes a type error
+    gold_removed: ""

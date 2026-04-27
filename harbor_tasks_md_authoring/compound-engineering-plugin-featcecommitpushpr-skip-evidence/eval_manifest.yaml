@@ -1,0 +1,39 @@
+version: "2.0"
+
+task:
+  name: compound-engineering-plugin-featcecommitpushpr-skip-evidence
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: EveryInc/compound-engineering-plugin
+  pr: 663
+  base_commit: "351d12ec5b795bff4c5e633e9a64644f045340c6"
+  merge_commit: "75cf4d603da4d2449658ddfe97b374a1f9c67362"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-commit-push-pr/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-commit-push-pr/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-commit-push-pr/SKILL.md."
+
+config_edits:
+  - path: "plugins/compound-engineering/skills/ce-commit-push-pr/SKILL.md"
+    tier: 1
+    gold_added: |-
+      **Evidence decision (before delegation).** Before running the full decision, two short-circuits:
+      
+      1. **User explicitly asked for evidence.** If the user's invocation requested it ("ship with a demo", "include a screenshot"), proceed directly to capture. If capture turns out to be not possible (no runnable surface, missing credentials, docs-only diff) or clearly not useful, note that briefly and proceed without evidence — do not force capture for its own sake.
+      
+      2. **Agent judgment on authored changes.** If you authored the commits in this session and know the change is clearly non-observable (internal plumbing, backend refactor without user-facing effect, type-level changes, etc.), skip the prompt without asking. The categorical skip list below is not exhaustive — trust judgment about the change you just wrote.
+      
+      Otherwise, run the full decision: if the branch diff changes observable behavior (UI, CLI output, API behavior with runnable code, generated artifacts, workflow output) and evidence is not otherwise blocked (unavailable credentials, paid services, deploy-only infrastructure, hardware), ask: "This PR has observable behavior. Capture evidence for the PR description?"
+    gold_removed: ""

@@ -1,0 +1,41 @@
+version: "2.0"
+
+task:
+  name: cocoindex-docs-add-python-code-formatting
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: cocoindex-io/cocoindex
+  pr: 1855
+  base_commit: "52d83c8f94e5393dbf679da6a07edba59e909bcb"
+  merge_commit: "ae637fda25ebdb8ea2994a5cc79f4353e5bdc022"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: "CLAUDE.md"
+    tier: 1
+    gold_added: |-
+      ### Code Formatting and Linting
+      
+      ```bash
+      uv run ruff format .           # Format Python code
+      uv run ruff format --check .   # Check formatting without making changes (same as CI)
+      uv run ruff check .            # Lint Python code
+      ```
+      
+      | Python formatting | `uv run ruff format .` |
+    gold_removed: ""

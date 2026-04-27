@@ -1,0 +1,35 @@
+version: "2.0"
+
+task:
+  name: vitess-claudemd-required-code-is-formatted
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: vitessio/vitess
+  pr: 19417
+  base_commit: "7d6e2fc962a8ac3f5bebe057d2664392da45310f"
+  merge_commit: "74101e8a5f7c0e1b079ff5eb474b9123235d9944"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: "CLAUDE.md"
+    tier: 1
+    gold_added: |-
+      - Always sign git commits with the `git commit --signoff` flag
+          - [ ] Golang code passes the `gofumpt` formatter
+          - [ ] Golang code passes the `goimports -local "vitess.io/vitess" -w ...` formatter
+    gold_removed: ""

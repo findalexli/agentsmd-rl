@@ -1,0 +1,92 @@
+version: "2.0"
+
+task:
+  name: vitess-claudemd-add-missing-patterns-from
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: vitessio/vitess
+  pr: 19813
+  base_commit: "72756d809e1ed6f36c8dfc047a08dfcd356b26bf"
+  merge_commit: "ebc733cbc05eaae6aaed905ba56a0118f4cf903a"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: "CLAUDE.md"
+    tier: 1
+    gold_added: |-
+      To make sure tests are easy to read, we use `github.com/stretchr/testify/assert` and `github.com/stretchr/testify/require` for assertions:
+      - Use `require` (not `assert`) when the test cannot continue after a failure (e.g., `require.NoError` after setup that must succeed)
+      - Use `assert.Eventually` instead of manual `time.Sleep()` and timeouts
+      - Use `t.Context()` instead of `context.Background()` — it integrates with test cancellation
+      - Use `t.Cleanup()` for test teardown
+      - Use `assert.ErrorContains` / `require.ErrorContains` to check error messages
+      - Use the `_test.go` suffix for mocks and test helpers that are only used by the current package's tests; if helpers or mocks need to be imported by other packages' tests or fuzz harnesses, put them in a normal reusable package such as `testlib` or `testutil`
+      - CI timeouts must be generous (30s+) — GitHub Actions runners can be resource-starved with multi-second pauses; sub-second timeouts cause flakiness with no recourse but retry
+      7. **Never silently swallow errors** - When recovering from an error (e.g., restarting replication), always log the original error before the recovery attempt so operators can trace what happened
+      8. **Log with context** - Include workflow name, recovery type, tablet alias, and other identifiers in log messages — a keyspace/tablet can have many concurrent workflows
+      
+      ### Failure-Path Safety
+      Multi-step operations must not leave the system in a half-applied state:
+      - If step 2 of 3 succeeds but step 3 fails, ensure step 2 is rolled back or the cleanup path handles it
+      - Deferred cleanup must use bounded contexts — never `context.Background()` for operations that could hang indefinitely
+      - When holding a mutex, always bound the operation with a reasonable timeout
+      - Test failure paths, not just the happy path — a test that only proves "step X ran" without covering "what if step X+1 fails" is incomplete
+      ### 3. Conditions Must Be as Specific as the Intent
+      - Guard clauses should match *exactly* the intended case, not just currently-known cases
+      - A check like `len(tables) == 0` when you mean "is virtual dual" will silently fire for future zero-table cases
+      - A nil return from a helper (e.g., `operatorKeyspace()` returning nil for composite operators) should not be treated as "safe to skip" — handle it explicitly
+      - When catching MySQL error codes, match the specific codes that apply to your call site, not a broad class
+      
+      ### 4. Zero-Value / Default Behavior Safety
+      - New struct fields must not change behavior for existing callers who omit them
+      - Prefer negative-polarity booleans (`NoCrossKeyspaceJoins` not `AllowCrossKeyspaceJoins`) so the zero-value preserves existing behavior
+      - When a flag value of `0` or empty previously meant "disabled," don't change it to mean "unlimited" — preserve the existing semantic or make the change explicit
+      - Validate mutually exclusive flags in `PreRunE` and add unit tests for invalid combinations
+      
+      ### 5. Performance with Clarity
+      - Optimize hot paths, but keep code readable
+      - Preallocate slices and maps when the size is known: `make([]T, 0, len(source))`
+      - Avoid duplicate work — cache results of expensive calls like `reflect.Value.MapKeys()` instead of calling twice
+      ### 6. Fail Fast and Clearly
+      ### 7. Interfaces Define What You Need, Not What You Provide
+      ### 8. Go-Specific Best Practices
+      - **Use format verbs precisely** - Use `%s` for strings and `%d` for integers, not `%v` for everything
+      - **Structured logging** - New log messages should use structured logging with `slog`-style fields (e.g., `log.Warn("message", slog.Any("error", err))`) rather than printf-style logging with format strings
+      - **Reuse existing helpers** - Before writing new parsing/validation code, check for existing utilities (e.g., `sqlerror` package for MySQL error codes, `mysqlctl.ParseVersionString()`, `strings.Split()`, `topoproto.TabletAliasString()` for formatting tablet aliases)
+      - Field order in AST structs matters — generated walkers visit fields in declaration order, so reordering fields changes semantic-analysis walk order and can break scope setup
+      ### MySQL Flavor Isolation
+      - MySQL-version-specific behavior belongs in the corresponding flavor implementation (e.g., MariaDB handling in the MariaDB flavor file), not in generic code
+      - Be aware that MariaDB and older MySQL versions may not support all system variables (e.g., `super_read_only`) — other Vitess call sites already warn-and-continue for `ERUnknownSystemVariable`
+      
+      ### User-Visible Changes
+      - Any user-visible behavioral change — even a correctness fix — needs explicit callout in release/deployment notes
+      - Removing or renaming a public API function (e.g., in `sqlparser`) is a breaking change for downstream users — call it out explicitly or keep a thin compatibility wrapper
+      - Changelog summaries are for key changes all users should know about — internal implementation details don't belong there
+      - Keep PRs clean of unrelated diffs (e.g., stray `package-lock.json` changes, `go.sum` without `go mod tidy`)
+      
+      ## :mag: Debugging & Troubleshooting
+      // Use structured logging (slog-style) for new code
+      log.Info("Starting payment processing",
+          slog.String("user_id", userID),
+          slog.String("action", "process_payment"),
+          slog.Float64("amount", amount),
+      )
+              return vterrors.Errorf(vtrpcpb.Code_INVALID_ARGUMENT, "invalid amount: %f", amount)
+      
+          log.Info("Payment validation passed")
+    gold_removed: ""

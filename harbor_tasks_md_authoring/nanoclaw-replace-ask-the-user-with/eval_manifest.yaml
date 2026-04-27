@@ -1,0 +1,155 @@
+version: "2.0"
+
+task:
+  name: nanoclaw-replace-ask-the-user-with
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: qwibitai/nanoclaw
+  pr: 389
+  base_commit: "e59856fbece89e9638f8a66a0ff4231ac4677c0d"
+  merge_commit: "264f85556644ee8af298491f055208157e8f662f"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/add-discord/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/add-discord/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/add-discord/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/add-gmail/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/add-gmail/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/add-gmail/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/add-parallel/SKILL.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/add-parallel/SKILL.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/add-parallel/SKILL.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/add-telegram/SKILL.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/add-telegram/SKILL.md."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/add-telegram/SKILL.md."
+  - id: signal_12
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/add-voice-transcription/SKILL.md."
+  - id: signal_13
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/add-voice-transcription/SKILL.md."
+  - id: signal_14
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/add-voice-transcription/SKILL.md."
+  - id: signal_15
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/setup/SKILL.md."
+  - id: signal_16
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/setup/SKILL.md."
+  - id: signal_17
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/setup/SKILL.md."
+
+config_edits:
+  - path: ".claude/skills/add-discord/SKILL.md"
+    tier: 1
+    gold_added: |-
+      Use `AskUserQuestion` to collect configuration:
+      AskUserQuestion: Should Discord replace WhatsApp or run alongside it?
+      - **Replace WhatsApp** - Discord will be the only channel (sets DISCORD_ONLY=true)
+      - **Alongside** - Both Discord and WhatsApp channels active
+      
+      AskUserQuestion: Do you have a Discord bot token, or do you need to create one?
+      
+      If they have one, collect it now. If not, we'll create one in Phase 3.
+    gold_removed: ""
+  - path: ".claude/skills/add-gmail/SKILL.md"
+    tier: 1
+    gold_added: |-
+      Use `AskUserQuestion` to determine the configuration:
+      AskUserQuestion: How do you want to use Gmail with NanoClaw?
+      - **Tool Mode** - Agent can read/send emails when triggered from WhatsApp (simpler setup)
+      - **Channel Mode** - Emails can trigger the agent, schedule tasks, and receive email replies (requires polling)
+      Use `AskUserQuestion` to configure email triggering:
+      AskUserQuestion: How should the agent be triggered from email?
+      - **Specific Label** - Create a Gmail label (e.g., "NanoClaw"), emails with this label trigger the agent
+      - **Email Address Pattern** - Emails to a specific address pattern (e.g., andy+task@gmail.com) via plus-addressing
+      - **Subject Prefix** - Emails with a subject starting with a keyword (e.g., "[Andy]")
+      AskUserQuestion: How should email conversations be grouped?
+      - **Per Email Thread** - Each email thread gets its own conversation context
+      - **Per Sender** - All emails from the same sender share context
+      - **Single Context** - All emails share the main group context
+    gold_removed: ""
+  - path: ".claude/skills/add-parallel/SKILL.md"
+    tier: 1
+    gold_added: |-
+      Use `AskUserQuestion: Do you have a Parallel AI API key, or should I help you get one?`
+      Collect it now.
+      **Permission:** ALWAYS use `AskUserQuestion` before using this tool
+      AskUserQuestion: I can do deep research on [topic] using Parallel's Task API. This will take 2-5 minutes and provide comprehensive analysis with citations. Should I proceed?
+    gold_removed: ""
+  - path: ".claude/skills/add-telegram/SKILL.md"
+    tier: 1
+    gold_added: |-
+      Use `AskUserQuestion` to collect configuration:
+      AskUserQuestion: Should Telegram replace WhatsApp or run alongside it?
+      - **Replace WhatsApp** - Telegram will be the only channel (sets TELEGRAM_ONLY=true)
+      - **Alongside** - Both Telegram and WhatsApp channels active
+      
+      AskUserQuestion: Do you have a Telegram bot token, or do you need to create one?
+      
+      If they have one, collect it now. If not, we'll create one in Phase 3.
+      After completing the Telegram setup, use `AskUserQuestion`:
+      AskUserQuestion: Would you like to add Agent Swarm support? Without it, Agent Teams still work — they just operate behind the scenes. With Swarm support, each subagent appears as a different bot in the Telegram group so you can see who's saying what and have interactive team sessions.
+    gold_removed: ""
+  - path: ".claude/skills/add-voice-transcription/SKILL.md"
+    tier: 1
+    gold_added: |-
+      Use `AskUserQuestion` to collect information:
+      
+      AskUserQuestion: Do you have an OpenAI API key for Whisper transcription?
+      
+      If yes, collect it now. If no, direct them to create one at https://platform.openai.com/api-keys.
+    gold_removed: ""
+  - path: ".claude/skills/setup/SKILL.md"
+    tier: 1
+    gold_added: |-
+      - If NODE_OK=false → Node.js is missing or too old. Use `AskUserQuestion: Would you like me to install Node.js 22?` If confirmed:
+      - PLATFORM=macos + APPLE_CONTAINER=installed → Use `AskUserQuestion: Docker (default, cross-platform) or Apple Container (native macOS)?` If Apple Container, run `/convert-to-apple-container` now, then skip to 3c.
+      - DOCKER=not_found → Use `AskUserQuestion: Docker is required for running agents. Would you like me to install it?` If confirmed:
+    gold_removed: ""

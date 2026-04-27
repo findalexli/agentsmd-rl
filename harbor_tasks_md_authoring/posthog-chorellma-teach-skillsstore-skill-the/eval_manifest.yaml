@@ -1,0 +1,118 @@
+version: "2.0"
+
+task:
+  name: posthog-chorellma-teach-skillsstore-skill-the
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: PostHog/posthog
+  pr: 55897
+  base_commit: "1be6f59659a8f72ce2d2b823a7780ff2bc782847"
+  merge_commit: "6cff0b4e7f422742827bb64ac1304f8449f38b45"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in products/llm_analytics/skills/skills-store/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in products/llm_analytics/skills/skills-store/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in products/llm_analytics/skills/skills-store/SKILL.md."
+
+config_edits:
+  - path: "products/llm_analytics/skills/skills-store/SKILL.md"
+    tier: 1
+    gold_added: |-
+      | Tool                        | Purpose                                                    |
+      | --------------------------- | ---------------------------------------------------------- |
+      | `posthog:skill-list`        | List all available skills (Level 1 — names + descriptions) |
+      | `posthog:skill-get`         | Fetch a skill by name (Level 2 — body + file manifest)     |
+      | `posthog:skill-file-get`    | Fetch a single bundled file by path (Level 3 — on demand)  |
+      | `posthog:skill-create`      | Store a new skill (optionally with bundled files)          |
+      | `posthog:skill-update`      | Publish a new version (body, `edits`, or `file_edits`)     |
+      | `posthog:skill-file-create` | Add one bundled file to a skill (publishes a new version)  |
+      | `posthog:skill-file-delete` | Remove one bundled file from a skill                       |
+      | `posthog:skill-file-rename` | Rename one bundled file (move without rewriting content)   |
+      | `posthog:skill-duplicate`   | Duplicate an existing skill under a new name               |
+      Each write publishes a new immutable version. Always fetch first to get the current version, then update with `base_version` for concurrency checks:
+      Pick the most surgical primitive for what you're changing — the API offers several so you don't have to round-trip the whole skill to tweak one part. Anything you don't touch is carried forward from the current latest.
+      
+      ### Editing the body
+      
+      Full replacement (good for substantial rewrites):
+      Incremental find/replace (good for small tweaks — no round-tripping the whole body):
+      
+      ```json
+      posthog:skill-update
+      {
+        "skill_name": "make-fractals",
+        "edits": [
+          { "old": "Use Pillow for rendering.", "new": "Use Pillow ≥10.0 for rendering." }
+        ],
+        "base_version": 2
+      }
+      ```
+      
+      Each `edits[].old` must match exactly once. `body` and `edits` are mutually exclusive.
+      
+      ### Editing one bundled file
+      
+      Use `file_edits` to patch a single file without resending any other file:
+      
+      ```json
+      posthog:skill-update
+      {
+        "skill_name": "make-fractals",
+        "file_edits": [
+          {
+            "path": "scripts/mandelbrot.py",
+            "edits": [
+              { "old": "ITERATIONS = 100", "new": "ITERATIONS = 250" }
+            ]
+          }
+        ],
+        "base_version": 2
+      }
+      ```
+      
+      Non-targeted files carry forward unchanged. `file_edits` cannot add, remove, or rename files — use the per-file tools below for that.
+      
+      ### Adding, removing, or renaming a file
+      
+      Atomic per-file tools — each publishes a new version and returns the updated skill (read its `version` to chain further edits via `base_version`):
+      
+      ```json
+      posthog:skill-file-create
+      { "skill_name": "make-fractals", "path": "scripts/julia.py", "content": "...", "base_version": 2 }
+      ```
+      
+      ```json
+      posthog:skill-file-delete
+      { "skill_name": "make-fractals", "file_path": "scripts/old.py", "base_version": 3 }
+      ```
+      
+      ```json
+      posthog:skill-file-rename
+      { "skill_name": "make-fractals", "old_path": "scripts/julia.py", "new_path": "scripts/julia_set.py", "base_version": 4 }
+      ```
+      
+      ### Replacing the whole bundle (rare)
+      
+      Passing `files` to `skill-update` replaces ALL bundled files — anything not in the array is dropped. Only use this when you intentionally want to wipe and reseed the bundle. For everything else, prefer `file_edits` or the per-file CRUD tools above.
+      
+      allowed-tools: mcp__posthog__skill-list, mcp__posthog__skill-get, mcp__posthog__skill-create, mcp__posthog__skill-update, mcp__posthog__skill-file-get, mcp__posthog__skill-file-create, mcp__posthog__skill-file-delete, mcp__posthog__skill-file-rename, mcp__posthog__skill-duplicate
+      
+      ## Edit one part of an existing skill
+      
+      skill-get → note version → pick the smallest primitive:
+      
+      - body tweak: skill-update(skill_name="...", base_version=N, edits=[{old, new}])
+      - one bundled file: skill-update(skill_name="...", base_version=N, file_edits=[{path, edits:[{old, new}]}])
+      - add/remove/rename a file: skill-file-create / skill-file-delete / skill-file-rename
+    gold_removed: ""

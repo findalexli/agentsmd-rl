@@ -1,0 +1,100 @@
+version: "2.0"
+
+task:
+  name: compound-engineering-plugin-fixcework-codify-worktree-isolat
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: EveryInc/compound-engineering-plugin
+  pr: 698
+  base_commit: "7eea2d1cfe5c177e2d144b1e12f4957c75dac556"
+  merge_commit: "053c1db25511843b5967b3d04427b172ede98d25"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-work-beta/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-work-beta/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-work-beta/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-work/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-work/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-work/SKILL.md."
+
+config_edits:
+  - path: "plugins/compound-engineering/skills/ce-work-beta/SKILL.md"
+    tier: 1
+    gold_added: |-
+         3. **If overlap is found AND worktree isolation is unavailable**: downgrade to serial subagents. Log the reason (e.g., "Units 2 and 4 share `config/routes.rb` — using serial dispatch"). Serial subagents still provide context-window isolation without shared-directory write races.
+         4. **If overlap is found AND worktree isolation is available**: parallel dispatch is still safe — subagents work in isolation, and the overlap surfaces as a predictable merge conflict the orchestrator handles via the post-batch flow below. Log the predicted overlap so the post-batch flow knows which merges to expect conflicts on.
+         Even with no file overlap, parallel subagents sharing the orchestrator's working directory face git index contention (concurrent staging/committing corrupts the index) and test interference (concurrent test runs pick up each other's in-progress changes). Worktree isolation eliminates both; the shared-directory fallback constraints below mitigate them.
+      
+         **Subagent isolation** — give each parallel subagent its own working tree:
+         - **Claude Code (`Agent` tool):** pass `isolation: "worktree"` and `run_in_background: true`. The harness creates a per-subagent worktree under `.claude/worktrees/agent-<id>` on its own branch. Verify `.claude/worktrees/` is gitignored before relying on this.
+         - **Other platforms** without built-in worktree isolation (e.g., Codex `spawn_agent`, Pi `subagent`): subagents share the orchestrator's directory.
+         **Shared-directory fallback constraints** — apply only when worktree isolation is unavailable:
+         - These constraints prevent git index contention and test interference between concurrent subagents.
+         - With worktree isolation active, omit these constraints — subagents may stage, commit, and run their unit's tests within their own worktree branch.
+         **After all parallel subagents in a batch complete (worktree-isolated mode):**
+         1. Wait for every subagent in the current parallel batch to finish.
+         2. For each completed subagent, in dependency order: review the worktree's diff against the orchestrator's branch. If the subagent did not commit its own work, stage and commit it inside that worktree.
+         3. Merge each subagent's branch into the orchestrator's branch sequentially in dependency order. **If a merge conflict surfaces, abort the merge (`git merge --abort`) and re-dispatch the conflicting unit serially against the now-merged tree** — hand-resolving silently picks a side and discards one unit's intent. (Predicted overlap from the Parallel Safety Check surfaces here as a conflict, not as silent data loss in shared-directory mode.)
+         4. After each merge, run the relevant test suite. If tests fail, diagnose and fix before merging the next branch.
+         5. Update the task list (progress is carried by the merge commits).
+         6. After merging, remove each subagent's worktree and delete its branch. Use the absolute path and branch name returned in the subagent's result.
+            - Unlock the worktree first — the harness locks per-subagent worktrees: `git worktree unlock <absolute-path>`
+            - Remove the worktree: `git worktree remove <absolute-path>`
+            - Delete the branch: `git branch -d <branch-name>` (the branch outlives the worktree by default and accumulates as orphans if not cleaned up; `-d` lowercase refuses to delete unmerged branches, which is the safety we want — if it fails, investigate before forcing)
+         7. Dispatch the next batch of independent units, or the next dependent unit.
+      
+         **After all parallel subagents in a batch complete (shared-directory fallback):**
+         **Parallel subagent mode:** Commit ownership is split by isolation mode (see Phase 1 Step 4):
+         - **Worktree-isolated:** subagents may stage and commit inside their own worktree branch; the orchestrator merges those branches in dependency order after the batch.
+         - **Shared-directory fallback:** subagents do not commit; the orchestrator stages and commits each unit after the entire parallel batch completes.
+    gold_removed: ""
+  - path: "plugins/compound-engineering/skills/ce-work/SKILL.md"
+    tier: 1
+    gold_added: |-
+         3. **If overlap is found AND worktree isolation is unavailable**: downgrade to serial subagents. Log the reason (e.g., "Units 2 and 4 share `config/routes.rb` — using serial dispatch"). Serial subagents still provide context-window isolation without shared-directory write races.
+         4. **If overlap is found AND worktree isolation is available**: parallel dispatch is still safe — subagents work in isolation, and the overlap surfaces as a predictable merge conflict the orchestrator handles via the post-batch flow below. Log the predicted overlap so the post-batch flow knows which merges to expect conflicts on.
+         Even with no file overlap, parallel subagents sharing the orchestrator's working directory face git index contention (concurrent staging/committing corrupts the index) and test interference (concurrent test runs pick up each other's in-progress changes). Worktree isolation eliminates both; the shared-directory fallback constraints below mitigate them.
+      
+         **Subagent isolation** — give each parallel subagent its own working tree:
+         - **Claude Code (`Agent` tool):** pass `isolation: "worktree"` and `run_in_background: true`. The harness creates a per-subagent worktree under `.claude/worktrees/agent-<id>` on its own branch. Verify `.claude/worktrees/` is gitignored before relying on this.
+         - **Other platforms** without built-in worktree isolation (e.g., Codex `spawn_agent`, Pi `subagent`): subagents share the orchestrator's directory.
+         **Shared-directory fallback constraints** — apply only when worktree isolation is unavailable:
+         - These constraints prevent git index contention and test interference between concurrent subagents.
+         - With worktree isolation active, omit these constraints — subagents may stage, commit, and run their unit's tests within their own worktree branch.
+         **After all parallel subagents in a batch complete (worktree-isolated mode):**
+         1. Wait for every subagent in the current parallel batch to finish.
+         2. For each completed subagent, in dependency order: review the worktree's diff against the orchestrator's branch. If the subagent did not commit its own work, stage and commit it inside that worktree.
+         3. Merge each subagent's branch into the orchestrator's branch sequentially in dependency order. **If a merge conflict surfaces, abort the merge (`git merge --abort`) and re-dispatch the conflicting unit serially against the now-merged tree** — hand-resolving silently picks a side and discards one unit's intent. (Predicted overlap from the Parallel Safety Check surfaces here as a conflict, not as silent data loss in shared-directory mode.)
+         4. After each merge, run the relevant test suite. If tests fail, diagnose and fix before merging the next branch.
+         5. Update the task list (progress is carried by the merge commits).
+         6. After merging, remove each subagent's worktree and delete its branch. Use the absolute path and branch name returned in the subagent's result.
+            - Unlock the worktree first — the harness locks per-subagent worktrees: `git worktree unlock <absolute-path>`
+            - Remove the worktree: `git worktree remove <absolute-path>`
+            - Delete the branch: `git branch -d <branch-name>` (the branch outlives the worktree by default and accumulates as orphans if not cleaned up; `-d` lowercase refuses to delete unmerged branches, which is the safety we want — if it fails, investigate before forcing)
+         7. Dispatch the next batch of independent units, or the next dependent unit.
+      
+         **After all parallel subagents in a batch complete (shared-directory fallback):**
+         **Parallel subagent mode:** Commit ownership is split by isolation mode (see Phase 1 Step 4):
+         - **Worktree-isolated:** subagents may stage and commit inside their own worktree branch; the orchestrator merges those branches in dependency order after the batch.
+         - **Shared-directory fallback:** subagents do not commit; the orchestrator stages and commits each unit after the entire parallel batch completes.
+    gold_removed: ""

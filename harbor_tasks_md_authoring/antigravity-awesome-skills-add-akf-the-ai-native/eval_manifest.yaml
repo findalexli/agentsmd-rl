@@ -1,0 +1,97 @@
+version: "2.0"
+
+task:
+  name: antigravity-awesome-skills-add-akf-the-ai-native
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: sickn33/antigravity-awesome-skills
+  pr: 406
+  base_commit: "a632d0bd1fee35b047b6b58c0741560f089715b2"
+  merge_commit: "7751f14d53a29209376c01905b6b2d1d1ea00340"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/akf-trust-metadata/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/akf-trust-metadata/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/akf-trust-metadata/SKILL.md."
+
+config_edits:
+  - path: "skills/akf-trust-metadata/SKILL.md"
+    tier: 1
+    gold_added: |-
+      ---
+      name: akf-trust-metadata
+      description: "The AI native file format. EXIF for AI — stamps every file with trust scores, source provenance, and compliance metadata. Embeds into 20+ formats (DOCX, PDF, images, code). EU AI Act, SOX, HIPAA auditing."
+      risk: safe
+      source: community
+      date_added: "2026-03-27"
+      author: HMAKT99
+      tags:
+      - trust
+      - metadata
+      - provenance
+      - compliance
+      - file-format
+      - ai-native
+      ---
+      
+      # AKF — The AI Native File Format
+      
+      Every photo has EXIF. Every song has ID3. AKF is the native metadata format for AI-generated content.
+      
+      ## After creating or modifying files
+      
+      ```bash
+      akf stamp <file> --agent <agent-name> --evidence "<what you did>"
+      ```
+      
+      Evidence examples:
+      - "generated from user prompt"
+      - "refactored existing code"
+      - "tests pass"
+      - "docs reviewed"
+      
+      ## Before modifying existing files
+      
+      ```bash
+      akf read <file>          # Check existing trust metadata
+      akf inspect <file>       # See detailed trust scores
+      ```
+      
+      ## Compliance auditing
+      
+      ```bash
+      akf audit <file> --regulation eu_ai_act    # EU AI Act Article 50
+      akf audit <file> --regulation hipaa         # HIPAA
+      akf audit <file> --regulation sox           # SOX
+      akf audit <file> --regulation nist_ai       # NIST AI RMF
+      ```
+      
+      ## Classification
+      
+      - `--label confidential` for finance/secret/internal paths
+      - `--label public` for README, docs, examples
+      - Default: `internal`
+      
+      ## Install
+      
+      ```bash
+      pip install akf
+      ```
+      
+      ## Links
+      
+      - https://akf.dev
+      - https://github.com/HMAKT99/AKF
+      - npm: `npm install akf-format`
+    gold_removed: ""

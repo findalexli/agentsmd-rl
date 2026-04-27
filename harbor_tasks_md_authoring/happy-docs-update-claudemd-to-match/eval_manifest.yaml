@@ -1,0 +1,41 @@
+version: "2.0"
+
+task:
+  name: happy-docs-update-claudemd-to-match
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: slopus/happy
+  pr: 406
+  base_commit: "45a903837fbbb3811af6637f2b02a89ab31044cf"
+  merge_commit: "a99f5314e03ac0d454163e1ffb866eaeba44be44"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: "CLAUDE.md"
+    tier: 1
+    gold_added: |-
+      - `yarn test` - Run tests in watch mode (Vitest)
+      - **React Native** with **Expo** SDK 54
+      - **Expo Router v6** for file-based routing
+      - **libsodium** (via `@more-tech/react-native-libsodium`) for end-to-end encryption
+      - **LiveKit** for real-time voice communication
+      3. **Encryption**: End-to-end encryption using libsodium for all sensitive data
+      5. **Real-time Voice**: LiveKit integration for voice communication sessions
+      6. **Platform-Specific Code**: Separate implementations for web vs native when needed
+      3. **Add to ALL languages** - When adding new strings, you MUST add them to all language files in `sources/text/translations/` (currently: `en`, `ru`, `pl`, `es`, `ca`, `it`, `pt`, `ja`, `zh-Hans`)
+    gold_removed: ""

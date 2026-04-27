@@ -1,0 +1,99 @@
+version: "2.0"
+
+task:
+  name: buildwithclaude-improve-tubeify-skill-structure-eval
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: davepoon/buildwithclaude
+  pr: 104
+  base_commit: "7cc63f3632f01e21f414d2d26241e2965153259a"
+  merge_commit: "787af34266d14e75a98fcc36ae30efaea9e807d6"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/all-skills/skills/tubeify/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/all-skills/skills/tubeify/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/all-skills/skills/tubeify/SKILL.md."
+
+config_edits:
+  - path: "plugins/all-skills/skills/tubeify/SKILL.md"
+    tier: 1
+    gold_added: |-
+      description: >
+        Remove pauses, filler words (um, uh), and dead air from raw YouTube recordings
+        via the Tubeify API. Use when the user wants to edit a video, clean up audio,
+        trim silences, or polish a raw recording for YouTube.
+      Submit a raw recording URL to the Tubeify API and get back a polished, trimmed video with pauses, filler words, and dead air removed automatically.
+      ## Workflow
+      ### 1. Authenticate
+      ```bash
+      curl -c session.txt -X POST https://tubeify.xyz/index.php \
+        -d "wallet=<WALLET_ADDRESS>"
+      ```
+      
+      Response on success:
+      ```json
+      { "status": "ok", "session": "active" }
+      ```
+      If the response contains `"status": "error"`, check the wallet address and retry.
+      ### 2. Submit video for processing
+      ```bash
+      ```
+      
+      Parameters:
+      - `video_url` (required) — direct URL to the raw video file
+      - `remove_pauses` — remove silent gaps and dead air (default: `true`)
+      - `remove_fillers` — remove filler words like "um", "uh", "like" (default: `true`)
+      Response on success:
+      
+      ```json
+      { "status": "queued", "job_id": "abc123" }
+      ```
+      
+      ### 3. Poll for completion
+      
+      ```bash
+      Poll every 15 seconds. Terminal states:
+      
+      | `status`   | Meaning                        | Action                        |
+      |------------|--------------------------------|-------------------------------|
+      | `queued`   | Waiting in queue               | Keep polling                  |
+      | `processing` | Actively editing            | Keep polling                  |
+      | `complete` | Finished — download ready      | Read `download_url` from body |
+      | `failed`   | Processing error               | Check `error` field, retry    |
+      
+      Complete response example:
+      
+      ```json
+      { "status": "complete", "download_url": "https://tubeify.xyz/dl/abc123.mp4" }
+      ```
+      
+      Failed response example:
+      
+      ```json
+      { "status": "failed", "error": "Unsupported video format" }
+      ```
+      
+      ### 4. Download the result
+      
+      ```bash
+      curl -o edited_video.mp4 "<download_url>"
+      ```
+      
+      ## Environment
+      
+      | Variable | Description |
+      |----------|-------------|
+      | `TUBEIFY_WALLET` | Ethereum wallet address for authentication |
+      
+    gold_removed: ""

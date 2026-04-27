@@ -1,0 +1,71 @@
+version: "2.0"
+
+task:
+  name: cocoindex-chore-update-claudemd-for-recent
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: cocoindex-io/cocoindex
+  pr: 1584
+  base_commit: "d5f46d0067336b805aba82cad0805011def4c358"
+  merge_commit: "2341c3abee41ccce11e7b3aaf60156afb2b044d2"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: "CLAUDE.md"
+    tier: 1
+    gold_added: |-
+      │   │   │   ├── component_ctx.py # ComponentContext and component_subpath
+      **Processing Component** — The unit of execution that owns a set of target states. Created by `mount()` or `mount_run()` at a specific component path. When a component finishes, its target states sync atomically to external systems.
+      **Component Path** — Stable identifier for a processing component across runs. Created via `coco.component_subpath("process", filename)`. CocoIndex uses component paths to:
+      * Determine ownership of target states (if a path disappears, its target states are cleaned up)
+      **Context** — React-style provider mechanism for sharing resources. Define keys with `ContextKey[T]`, provide values in lifespan via `builder.provide()`, use in functions via `coco.use_context(key)`.
+      # Mounting processing components (subpath first, then function)
+      coco.mount(coco.component_subpath("name"), fn, *args, **kw)      # child runs independently
+      coco.mount_run(coco.component_subpath("name"), fn, *args, **kw)  # returns value, creates dependency
+      # Component subpath composition
+      subpath = coco.component_subpath("process", filename)  # multiple parts
+      subpath = coco.component_subpath("a") / "b" / "c"      # chaining with /
+      
+      # Using component_subpath as context manager (applies to all nested mount calls)
+      with coco.component_subpath("process"):
+          for f in files:
+              coco.mount(coco.component_subpath(str(f.relative_path)), process_file, f, target)
+      dir_target.declare_file(filename=name, content=data)
+      table_target.declare_row(row=MyRow(...))
+      
+      # Using context values
+      db = coco.use_context(PG_DB)  # retrieve value provided in lifespan
+      
+      # Explicit context management (for ThreadPoolExecutor)
+      ctx = coco.get_component_context()
+      with ctx.attach():
+          # coco APIs work correctly in this thread
+          coco.mount(...)
+      When a processing component finishes, CocoIndex compares its declared target states with those from the previous run at the same component path:
+      Changes are applied atomically per component. If a source item is deleted (path no longer mounted), all its target states are cleaned up automatically.
+      def process_file(file: FileLike, target: localfs.DirTarget) -> None:
+          target.declare_file(filename=outname, content=html)
+      def app_main(sourcedir: pathlib.Path, outdir: pathlib.Path) -> None:
+          target = coco.mount_run(
+              coco.component_subpath("setup"), localfs.declare_dir_target, outdir
+          ).result()
+          with coco.component_subpath("process"):
+              for f in files:
+                  coco.mount(coco.component_subpath(str(f.relative_path)), process_file, f, target)
+          app_main,
+    gold_removed: ""

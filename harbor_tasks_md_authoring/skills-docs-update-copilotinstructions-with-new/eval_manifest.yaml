@@ -1,0 +1,88 @@
+version: "2.0"
+
+task:
+  name: skills-docs-update-copilotinstructions-with-new
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: microsoft/skills
+  pr: 31
+  base_commit: "9d318c4315979d8009e72ef7427db60ae69de68d"
+  merge_commit: "a8494c50a2011d2eef8edea59c6cbde5c947fd3c"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: ".github/copilot-instructions.md"
+    tier: 1
+    gold_added: |-
+      AGENTS.md                # Agent configuration template
+      CATALOG.md               # Full skill catalog
+      
+      ├── skills/              # All 127 skills (flat structure with language suffixes)
+      │   └── */SKILL.md       # Each skill has YAML frontmatter + markdown body
+      ├── prompts/             # Reusable prompt templates
+      ├── agents/              # Agent persona definitions (backend, frontend, infrastructure, planner, presenter)
+      ├── scripts/             # Automation scripts (doc scraping)
+      ├── workflows/           # GitHub Actions (daily doc updates)
+      
+      output/                  # Generated llms.txt files (daily workflow)
+      ├── llms.txt             # Links + summaries
+      └── llms-full.txt        # Full content
+      
+      skills/                  # Symlinks for backward compatibility
+      ├── python/              # -> ../.github/skills/*-py
+      ├── dotnet/              # -> ../.github/skills/*-dotnet
+      ├── typescript/          # -> ../.github/skills/*-ts
+      └── java/                # -> ../.github/skills/*-java
+      
+      .vscode/
+      └── mcp.json             # MCP server configurations
+      ### Skill Naming Convention
+      
+      Skills use language suffixes for discoverability:
+      
+      | Language | Suffix | Examples |
+      |----------|--------|----------|
+      | **Core** | — | `mcp-builder`, `skill-creator`, `azd-deployment` |
+      | **Python** | `-py` | `inference-py`, `cosmos-db-py`, `foundry-sdk-py` |
+      | **.NET** | `-dotnet` | `inference-dotnet`, `cosmosdb-dotnet` |
+      | **TypeScript** | `-ts` | `inference-ts`, `agents-ts`, `nextgen-frontend-ts` |
+      | **Java** | `-java` | `inference-java`, `cosmos-java` |
+      
+      ### Featured Skills
+      | `azure-ai-search-py` | Search SDK patterns, vector/hybrid search, agentic retrieval |
+      | `azure-ai-agents-py` | Low-level agents SDK for CRUD, threads, streaming, tools |
+      | `azure-ai-voicelive-py` | Real-time voice AI with Azure AI Voice Live SDK |
+      | `foundry-sdk-py` | High-level Foundry project client, versioned agents, evals |
+      | `foundry-iq-py` | Agentic retrieval with knowledge bases |
+      | `nextgen-frontend-ts` | NextGen Design System UI patterns (Vite + React) |
+      | `agent-framework-py` | Agent Framework SDK for persistent Azure agents |
+      | `mcp-builder` | Building MCP servers (Python/Node/C#) |
+      | `cosmos-db-py` | Cosmos DB NoSQL with Python/FastAPI |
+      | `fastapi-router-py` | FastAPI routers with CRUD, auth, response models |
+      | `pydantic-models-py` | Pydantic v2 multi-model patterns |
+      | `zustand-store-ts` | Zustand stores with TypeScript and subscribeWithSelector |
+      | `react-flow-node-ts` | React Flow custom nodes with TypeScript |
+      | `github-issue-creator` | GitHub issue creation patterns |
+      
+      📖 **See [CATALOG.md](../CATALOG.md) for all 127 skills**
+         - Use language suffix: `-py`, `-dotnet`, `-ts`, `-java`
+         - Core/cross-language skills have no suffix
+         - Example: `cosmos-db-py`, `inference-dotnet`, `mcp-builder`
+         name: skill-name-py
+      5. Reference official docs via `microsoft-docs` MCP for current API patterns
+    gold_removed: ""

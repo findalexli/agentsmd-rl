@@ -1,0 +1,39 @@
+version: "2.0"
+
+task:
+  name: skills-add-proper-frontmatter-to-skillmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: anthropics/skills
+  pr: 897
+  base_commit: "ca1e7dc13c0ab5e2dfaa6de71991cd951b8f1cf2"
+  merge_commit: "12ab35c2eb5668c95810e6a6066f40f4218adc39"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/claude-api/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/claude-api/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/claude-api/SKILL.md."
+
+config_edits:
+  - path: "skills/claude-api/SKILL.md"
+    tier: 1
+    gold_added: |-
+      ---
+      name: claude-api
+      description: Build, debug, and optimize Claude API / Anthropic SDK apps. Apps built with this skill should include prompt caching. TRIGGER when: code imports anthropic/@anthropic-ai/sdk; user asks to use the Claude API, Anthropic SDKs, or Managed Agents (/v1/agents, /v1/sessions, /v1/environments). DO NOT TRIGGER when: code imports `openai`/other AI SDK, general programming, or ML/data-science tasks.
+      license: Complete terms in LICENSE.txt
+      ---
+      
+      
+    gold_removed: ""

@@ -1,0 +1,235 @@
+version: "2.0"
+
+task:
+  name: ouroboros-fixskills-load-deferred-mcp-tools
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Q00/ouroboros
+  pr: 127
+  base_commit: "1974de2f3f17040e7862121a528e8b134f75f20d"
+  merge_commit: "7dcfc9c897e23082d2a7dac720dabf9801305bc2"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/evaluate/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/evaluate/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/evaluate/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/evolve/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/evolve/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/evolve/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/interview/SKILL.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/interview/SKILL.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/interview/SKILL.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/run/SKILL.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/run/SKILL.md."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/run/SKILL.md."
+  - id: signal_12
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/seed/SKILL.md."
+  - id: signal_13
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/seed/SKILL.md."
+  - id: signal_14
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/seed/SKILL.md."
+  - id: signal_15
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/status/SKILL.md."
+  - id: signal_16
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/status/SKILL.md."
+  - id: signal_17
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/status/SKILL.md."
+  - id: signal_18
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/unstuck/SKILL.md."
+  - id: signal_19
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/unstuck/SKILL.md."
+  - id: signal_20
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/unstuck/SKILL.md."
+
+config_edits:
+  - path: "skills/evaluate/SKILL.md"
+    tier: 1
+    gold_added: |-
+      ### Load MCP Tools (Required first)
+      
+      The Ouroboros MCP tools are often registered as **deferred tools** that must be explicitly loaded before use. **You MUST perform this step before proceeding.**
+      
+      1. Use the `ToolSearch` tool to find and load the evaluate MCP tool:
+         ```
+         ToolSearch query: "+ouroboros evaluate"
+         ```
+      2. The tool will typically be named `mcp__plugin_ouroboros_ouroboros__ouroboros_evaluate` (with a plugin prefix). After ToolSearch returns, the tool becomes callable.
+      3. If ToolSearch finds the tool → proceed with the MCP-based evaluation below. If not → skip to **Fallback** section.
+      
+      **IMPORTANT**: Do NOT skip this step. Do NOT assume MCP tools are unavailable just because they don't appear in your immediate tool list. They are almost always available as deferred tools that need to be loaded first.
+      
+      ### Evaluation Steps
+      
+    gold_removed: ""
+  - path: "skills/evolve/SKILL.md"
+    tier: 1
+    gold_added: |-
+      ### Load MCP Tools (Required before Path A/B decision)
+      
+      The Ouroboros MCP tools are often registered as **deferred tools** that must be explicitly loaded before use. **You MUST perform this step before deciding between Path A and Path B.**
+      
+      1. Use the `ToolSearch` tool to find and load the evolve MCP tools:
+         ```
+         ToolSearch query: "+ouroboros evolve"
+         ```
+      2. The tools will typically be named with prefix `mcp__plugin_ouroboros_ouroboros__` (e.g., `ouroboros_evolve_step`, `ouroboros_interview`, `ouroboros_generate_seed`). After ToolSearch returns, the tools become callable.
+      3. If ToolSearch finds the tools → proceed to **Path A**. If not → proceed to **Path B**.
+      
+      **IMPORTANT**: Do NOT skip this step. Do NOT assume MCP tools are unavailable just because they don't appear in your immediate tool list. They are almost always available as deferred tools that need to be loaded first.
+      
+      ### Path A: MCP Available (loaded via ToolSearch above)
+    gold_removed: ""
+  - path: "skills/interview/SKILL.md"
+    tier: 1
+    gold_added: |-
+      ### Step 0.5: Load MCP Tools (Required before Path A/B decision)
+      
+      The Ouroboros MCP tools are often registered as **deferred tools** that must be explicitly loaded before use. **You MUST perform this step before deciding between Path A and Path B.**
+      
+      1. Use the `ToolSearch` tool to find and load the interview MCP tool:
+         ```
+         ToolSearch query: "+ouroboros interview"
+         ```
+         This searches for tools with "ouroboros" in the name related to "interview".
+      
+      2. The tool will typically be named `mcp__plugin_ouroboros_ouroboros__ouroboros_interview` (with a plugin prefix). After ToolSearch returns, the tool becomes callable.
+      
+      3. If ToolSearch finds the tool → proceed to **Path A**.
+         If ToolSearch returns no matching tools → proceed to **Path B**.
+      
+      **IMPORTANT**: Do NOT skip this step. Do NOT assume MCP tools are unavailable just because they don't appear in your immediate tool list. They are almost always available as deferred tools that need to be loaded first.
+      
+      If the `ouroboros_interview` MCP tool is available (loaded via ToolSearch above), use it for persistent, structured interviews:
+    gold_removed: ""
+  - path: "skills/run/SKILL.md"
+    tier: 1
+    gold_added: |-
+      ### Load MCP Tools (Required first)
+      
+      The Ouroboros MCP tools are often registered as **deferred tools** that must be explicitly loaded before use. **You MUST perform this step before proceeding.**
+      
+      1. Use the `ToolSearch` tool to find and load the execution MCP tools:
+         ```
+         ToolSearch query: "+ouroboros execute"
+         ```
+      2. The tools will typically be named with prefix `mcp__plugin_ouroboros_ouroboros__` (e.g., `ouroboros_execute_seed`, `ouroboros_session_status`). After ToolSearch returns, the tools become callable.
+      3. If ToolSearch finds the tools → proceed with the steps below. If not → skip to **Fallback** section.
+      
+      **IMPORTANT**: Do NOT skip this step. Do NOT assume MCP tools are unavailable just because they don't appear in your immediate tool list. They are almost always available as deferred tools that need to be loaded first.
+      
+      ### Execution Steps
+      
+    gold_removed: ""
+  - path: "skills/seed/SKILL.md"
+    tier: 1
+    gold_added: |-
+      When the user invokes this skill:
+      
+      ### Load MCP Tools (Required before Path A/B decision)
+      
+      The Ouroboros MCP tools are often registered as **deferred tools** that must be explicitly loaded before use. **You MUST perform this step before deciding between Path A and Path B.**
+      
+      1. Use the `ToolSearch` tool to find and load the seed generation MCP tool:
+         ```
+         ToolSearch query: "+ouroboros seed"
+         ```
+      2. The tool will typically be named `mcp__plugin_ouroboros_ouroboros__ouroboros_generate_seed` (with a plugin prefix). After ToolSearch returns, the tool becomes callable.
+      3. If ToolSearch finds the tool → proceed to **Path A**. If not → proceed to **Path B**.
+      
+      **IMPORTANT**: Do NOT skip this step. Do NOT assume MCP tools are unavailable just because they don't appear in your immediate tool list. They are almost always available as deferred tools that need to be loaded first.
+      If the `ouroboros_generate_seed` MCP tool is available (loaded via ToolSearch above):
+    gold_removed: ""
+  - path: "skills/status/SKILL.md"
+    tier: 1
+    gold_added: |-
+      ### Load MCP Tools (Required first)
+      
+      The Ouroboros MCP tools are often registered as **deferred tools** that must be explicitly loaded before use. **You MUST perform this step before proceeding.**
+      
+      1. Use the `ToolSearch` tool to find and load the status MCP tools:
+         ```
+         ToolSearch query: "+ouroboros session status"
+         ```
+      2. The tools will typically be named with prefix `mcp__plugin_ouroboros_ouroboros__` (e.g., `ouroboros_session_status`, `ouroboros_measure_drift`). After ToolSearch returns, the tools become callable.
+      3. If ToolSearch finds the tools → proceed with the steps below. If not → skip to **Fallback** section.
+      
+      **IMPORTANT**: Do NOT skip this step. Do NOT assume MCP tools are unavailable just because they don't appear in your immediate tool list. They are almost always available as deferred tools that need to be loaded first.
+      
+      ### Status Steps
+      
+    gold_removed: ""
+  - path: "skills/unstuck/SKILL.md"
+    tier: 1
+    gold_added: |-
+      ### Load MCP Tools (Required first)
+      
+      The Ouroboros MCP tools are often registered as **deferred tools** that must be explicitly loaded before use. **You MUST perform this step before proceeding.**
+      
+      1. Use the `ToolSearch` tool to find and load the lateral thinking MCP tool:
+         ```
+         ToolSearch query: "+ouroboros lateral"
+         ```
+      2. The tool will typically be named `mcp__plugin_ouroboros_ouroboros__ouroboros_lateral_think` (with a plugin prefix). After ToolSearch returns, the tool becomes callable.
+      3. If ToolSearch finds the tool → use MCP mode below. If not → skip to **Fallback** section.
+      
+      **IMPORTANT**: Do NOT skip this step. Do NOT assume MCP tools are unavailable just because they don't appear in your immediate tool list. They are almost always available as deferred tools that need to be loaded first.
+      
+      ### Unstuck Steps
+      
+    gold_removed: ""

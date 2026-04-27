@@ -1,0 +1,41 @@
+version: "2.0"
+
+task:
+  name: ui-ux-pro-max-skill-docs-add-git-workflow-rules
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: nextlevelbuilder/ui-ux-pro-max-skill
+  pr: 9
+  base_commit: "2e7acbf50f8ea257e1d4e0629baf87bf5e6c71b3"
+  merge_commit: "765b0bb936cbd709305d741b6ddb97dcee58e596"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: "CLAUDE.md"
+    tier: 1
+    gold_added: |-
+      
+      ## Git Workflow
+      
+      Never push directly to `main`. Always:
+      
+      1. Create a new branch: `git checkout -b feat/... ` or `fix/...`
+      2. Commit changes
+      3. Push branch: `git push -u origin <branch>`
+      4. Create PR: `gh pr create`
+    gold_removed: ""

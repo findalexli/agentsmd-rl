@@ -1,0 +1,73 @@
+version: "2.0"
+
+task:
+  name: lemonade-update-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: lemonade-sdk/lemonade
+  pr: 1436
+  base_commit: "082b15bbbab2bfdaa28efca6b75d164844038ab2"
+  merge_commit: "c760384177359c70b96813228fa28d85d15004db"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: "AGENTS.md"
+    tier: 1
+    gold_added: |-
+      CMakeLists.txt is at the repository root. Build uses CMake presets — run the setup script first, then build with `--preset`.
+      
+      # 1. Setup (configures build directory and installs deps)
+      ./setup.sh          # Linux / macOS
+      ./setup.ps1         # Windows (PowerShell)
+      
+      # 2. Build C++ server
+      cmake --build --preset default          # Linux / macOS (Ninja)
+      cmake --build --preset windows          # Windows (Visual Studio 2022)
+      cmake --build --preset vs18             # Windows (Visual Studio 2026)
+      # 3. Electron app (optional, requires Node.js 20+)
+      cmake --build --preset default --target electron-app    # Linux / macOS
+      cmake --build --preset windows --target electron-app    # Windows (VS 2022)
+      cmake --build --preset vs18 --target electron-app       # Windows (VS 2026)
+      # 4. Web app (auto-built on non-Windows; manual on Windows)
+      cmake --build --preset default --target web-app         # Linux / macOS
+      cmake --build --preset windows --target web-app         # Windows
+      # 5. Windows MSI installer (WiX 5.0+ required)
+      cmake --build --preset windows --target wix_installer_minimal  # server + web-app
+      cmake --build --preset windows --target wix_installer_full     # server + electron + web-app
+      # 6. macOS signed installer
+      cmake --build --preset default --target package-macos
+      # 7. Linux .deb / .rpm
+      cd build && cpack            # .deb
+      cd build && cpack -G RPM     # .rpm
+      # 8. Linux AppImage
+      cmake --build --preset default --target appimage
+      CMake presets: `default` (Ninja, Release), `windows` (VS 2022), `vs18` (VS 2026), `debug` (Ninja, Debug).
+      Integration tests in Python against a live server. Tests auto-discover the server binary from the build directory; use `--server-binary` to override.
+      # CLI tests (no inference backend needed)
+      python test/server_cli.py
+      
+      # Endpoint tests (no inference backend needed)
+      
+      # LLM tests (specify wrapped server and backend)
+      python test/server_llm.py --wrapped-server llamacpp --backend vulkan
+      
+      # Audio transcription tests
+      
+      # Image generation tests (slow)
+      python test/server_sd.py
+    gold_removed: ""

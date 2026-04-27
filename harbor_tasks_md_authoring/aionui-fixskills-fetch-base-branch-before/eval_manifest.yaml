@@ -1,0 +1,55 @@
+version: "2.0"
+
+task:
+  name: aionui-fixskills-fetch-base-branch-before
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: iOfficeAI/AionUi
+  pr: 2097
+  base_commit: "06c80b8b464b2c805cd8f7c78e260c0a2f84b28c"
+  merge_commit: "08afcf89513c4f8d99c1ce9383be5bfca8cec909"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/pr-automation/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/pr-automation/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/pr-automation/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/pr-review/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/pr-review/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/pr-review/SKILL.md."
+
+config_edits:
+  - path: ".claude/skills/pr-automation/SKILL.md"
+    tier: 1
+    gold_added: |-
+      git fetch origin "$BASE_REF"
+      # Create worktree on the PR's head branch; fetch base branch for accurate rebase
+      git fetch origin <base_branch>
+      git fetch origin "$BASE_REF"
+    gold_removed: ""
+  - path: ".claude/skills/pr-review/SKILL.md"
+    tier: 1
+    gold_added: |-
+      # Fetch PR head AND base branch so the three-dot diff is accurate
+      BASE_REF=$(gh pr view ${PR_NUMBER} --json baseRefName --jq '.baseRefName')
+      git fetch origin "$BASE_REF"
+    gold_removed: ""

@@ -1,0 +1,60 @@
+version: "2.0"
+
+task:
+  name: ant-design-docs-add-twophase-interaction-workflow
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: ant-design/ant-design
+  pr: 57236
+  base_commit: "28e95c97dbf2434b899dc511133666bd491d7161"
+  merge_commit: "36e83c90e43aebeac85fc373e25fb58238653f5a"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/issue-reply/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/issue-reply/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/issue-reply/SKILL.md."
+
+config_edits:
+  - path: ".claude/skills/issue-reply/SKILL.md"
+    tier: 1
+    gold_added: |-
+      ## 交互流程
+      
+      当用户要求处理 issues 时，采用「先草拟、后确认」的两阶段流程：
+      
+      ### 第一阶段：总览 + 草拟方案
+      
+      1. 使用 `gh issue list` 拉取指定范围的 open issues
+      2. 对每个 issue 获取详情（body、comments、labels）
+      3. 对每个 issue 给出处理方案，包括：
+         - 分类（Bug / Feature Request / 使用问题）
+         - 当前状态（无人回复 / 维护者已回复 / 等待用户反馈 等）
+         - 处理建议（需要回复 / 可以关闭 / 无需操作 / 等待中）
+         - 如果需要回复：草拟回复内容（含语言判断、正文、代码示例）
+         - 标签操作（添加/移除哪些标签）
+         - 是否关闭 issue
+      4. 将所有方案一次性呈现给用户，**不要直接操作**
+      
+      ### 第二阶段：讨论和确认
+      
+      1. 用户可以对任意 issue 的方案提出修改意见
+      2. 根据反馈调整方案，直到用户满意
+      3. 用户确认后执行操作（评论、加标签、关闭等）
+      4. 如果用户说「就这样」或类似确认，直接执行
+      
+      **关键原则：先草拟完整方案，等用户讨论确认后再执行。不要未经确认就回复或关闭 issue。**
+      
+      ---
+      
+    gold_removed: ""

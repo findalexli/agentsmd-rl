@@ -1,0 +1,39 @@
+version: "2.0"
+
+task:
+  name: n8n-docs-add-migration-timestamp-guidance
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: n8n-io/n8n
+  pr: 28444
+  base_commit: "e8360a497d5650f3acf046c88385ae0ce96ad6f5"
+  merge_commit: "69a62e0906d5c063ad070695f664c78cf0cc9ffc"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/@n8n/db/AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/@n8n/db/AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/@n8n/db/AGENTS.md."
+
+config_edits:
+  - path: "packages/@n8n/db/AGENTS.md"
+    tier: 1
+    gold_added: |-
+      ## Creating Migrations
+      
+      Migration files are named `{TIMESTAMP}-{DescriptiveName}.ts`. The timestamp
+      must be the **exact** Unix millisecond timestamp at the time of creation — do
+      not round or fabricate a value. Use `Date.now()` in a Node REPL or
+      `date +%s%3N` in a shell (GNU `date`) to generate it.
+      
+    gold_removed: ""

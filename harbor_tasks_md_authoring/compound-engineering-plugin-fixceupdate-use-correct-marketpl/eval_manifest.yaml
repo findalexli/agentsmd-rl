@@ -1,0 +1,35 @@
+version: "2.0"
+
+task:
+  name: compound-engineering-plugin-fixceupdate-use-correct-marketpl
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: EveryInc/compound-engineering-plugin
+  pr: 566
+  base_commit: "8ec6d339fee38cf4306e6586f726486cbae713b0"
+  merge_commit: "d8305dd159ebe9d89df9c4af5a7d0fb2b128801b"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-update/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-update/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-update/SKILL.md."
+
+config_edits:
+  - path: "plugins/compound-engineering/skills/ce-update/SKILL.md"
+    tier: 1
+    gold_added: |-
+      !`gh release list --repo EveryInc/compound-engineering-plugin --limit 30 --json tagName --jq '[.[] | select(.tagName | startswith("compound-engineering-v"))][0].tagName | sub("compound-engineering-v";"")' 2>/dev/null || echo '__CE_UPDATE_VERSION_FAILED__'`
+      !`ls "${CLAUDE_PLUGIN_ROOT}/cache/compound-engineering-plugin/compound-engineering/" 2>/dev/null || echo '__CE_UPDATE_CACHE_FAILED__'`
+      rm -rf "<plugin-root-path>/cache/compound-engineering-plugin/compound-engineering"
+    gold_removed: ""

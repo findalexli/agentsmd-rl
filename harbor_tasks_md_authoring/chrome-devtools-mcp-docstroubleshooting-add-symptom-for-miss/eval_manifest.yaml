@@ -1,0 +1,38 @@
+version: "2.0"
+
+task:
+  name: chrome-devtools-mcp-docstroubleshooting-add-symptom-for-miss
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: ChromeDevTools/chrome-devtools-mcp
+  pr: 1148
+  base_commit: "5dc00b3005bc945a9140195d0321bce2ed98de90"
+  merge_commit: "57e7d51e8ca1e2ee325a9e7a9c64c033acbe6d6a"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/troubleshooting/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/troubleshooting/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/troubleshooting/SKILL.md."
+
+config_edits:
+  - path: "skills/troubleshooting/SKILL.md"
+    tier: 1
+    gold_added: |-
+      #### Symptom: Missing Tools / Only 9 tools available
+      
+      If the server starts successfully but only a limited subset of tools (like `list_pages`, `get_console_message`, `lighthouse_audit`, `take_memory_snapshot`) are available, this is likely because the MCP client is enforcing a **read-only mode**.
+      
+      All tools in `chrome-devtools-mcp` are annotated with `readOnlyHint: true` (for safe, non-modifying tools) or `readOnlyHint: false` (for tools that modify browser state, like `emulate`, `click`, `navigate_page`). To access the full suite of tools, the user must disable read-only mode in their MCP client (e.g., by exiting "Plan Mode" in Gemini CLI or adjusting their client's tool safety settings).
+      
+    gold_removed: ""

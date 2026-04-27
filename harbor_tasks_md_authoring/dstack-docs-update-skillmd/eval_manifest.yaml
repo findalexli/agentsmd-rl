@@ -1,0 +1,45 @@
+version: "2.0"
+
+task:
+  name: dstack-docs-update-skillmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: dstackai/dstack
+  pr: 3547
+  base_commit: "409da83c1f583497725e88468254f6d86f3d2071"
+  merge_commit: "685e0cd87ed25fccbb26c13564d7815c34e1a92f"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/dstack/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/dstack/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/dstack/SKILL.md."
+
+config_edits:
+  - path: "skills/dstack/SKILL.md"
+    tier: 1
+    gold_added: |-
+        dstack apply --help <configuration type>    # Flags for apply per configuration type (dev-environment, task, service, fleet, etc)
+      ### List offers
+      Offers represent available instance configurations available for provisioning across backends. `dstack offer` lists offers regardless of configured fleets.
+      ```bash
+      
+      # JSON output (for troubleshooting/scripting)
+      dstack offer --json
+      **Max offers:** By default, `dstack offer` returns first N offers (output also includes the total number). Use `--max-offers N` to increase the limit.
+      **Grouping:** Prefer `--group-by gpu` (other supported values: `gpu,backend`, `gpu,backend,region`) for aggregated output across all offers, not `--max-offers`.
+         dstack fleet get my-fleet --json
+         dstack run get my-run --json
+         dstack ps -n 10 --json
+         dstack offer --json
+    gold_removed: ""

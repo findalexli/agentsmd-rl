@@ -1,0 +1,41 @@
+version: "2.0"
+
+task:
+  name: agent-reach-docs-skillmd-metadata
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Panniantong/Agent-Reach
+  pr: 143
+  base_commit: "70a0bb8af8bbc336c750254a1c5faeb87e082777"
+  merge_commit: "ce9b365491763e3ee4440414d0078da0bb1da7f2"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in agent_reach/skill/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in agent_reach/skill/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in agent_reach/skill/SKILL.md."
+
+config_edits:
+  - path: "agent_reach/skill/SKILL.md"
+    tier: 1
+    gold_added: |-
+        Give your AI agent eyes to see the entire internet. 7500+ GitHub stars.
+        Search and read 14 platforms: Twitter/X, Reddit, YouTube, GitHub, Bilibili,
+        XiaoHongShu (小红书), Douyin (抖音), Weibo (微博), WeChat Articles (微信公众号),
+        LinkedIn, Instagram, RSS, Exa web search, and any web page.
+        One command install, zero config for 8 channels, agent-reach doctor for diagnostics.
+        "微信文章", "公众号", "LinkedIn", "GitHub issue", "RSS", "微博",
+      metadata:
+        openclaw:
+          homepage: https://github.com/Panniantong/Agent-Reach
+    gold_removed: ""

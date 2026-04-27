@@ -1,0 +1,30 @@
+version: "2.0"
+
+task:
+  name: rtk-fix-remove-personal-preferences-from
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: rtk-ai/rtk
+  pr: 242
+  base_commit: "ab5dbb1a34f2c6f766c008c1d6e087239f98ac64"
+  merge_commit: "3a8044ef6991b2208d904b7401975fcfcb165cdb"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: "CLAUDE.md"
+    tier: 1
+    gold_added: |-
+      pwd  # Verify you're in the rtk project root
+      **Never assume** which project to work in. Always verify before file operations.
+    gold_removed: ""

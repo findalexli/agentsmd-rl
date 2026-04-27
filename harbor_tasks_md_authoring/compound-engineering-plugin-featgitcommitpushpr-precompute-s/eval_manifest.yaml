@@ -1,0 +1,68 @@
+version: "2.0"
+
+task:
+  name: compound-engineering-plugin-featgitcommitpushpr-precompute-s
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: EveryInc/compound-engineering-plugin
+  pr: 464
+  base_commit: "2619ad9f58e6c45968ec10d7f8aa7849fe43eb25"
+  merge_commit: "6ca7aef7f33ebdf29f579cb4342c209d2bd40aad"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-work-beta/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-work/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/git-commit-push-pr/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/git-commit-push-pr/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/git-commit-push-pr/SKILL.md."
+
+config_edits:
+  - path: "plugins/compound-engineering/skills/ce-work-beta/SKILL.md"
+    tier: 1
+    gold_added: |-
+      - [ ] PR description includes Compound Engineered badge with accurate model and harness
+    gold_removed: ""
+  - path: "plugins/compound-engineering/skills/ce-work/SKILL.md"
+    tier: 1
+    gold_added: |-
+      - [ ] PR description includes Compound Engineered badge with accurate model and harness
+    gold_removed: ""
+  - path: "plugins/compound-engineering/skills/git-commit-push-pr/SKILL.md"
+    tier: 1
+    gold_added: |-
+      **Plugin version (pre-resolved):** !`jq -r .version "${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json"`
+      
+      If the line above resolved to a semantic version (e.g., `2.42.0`), use it as `[VERSION]` in the versioned badge below. Otherwise (empty, a literal command string, or an error), use the versionless badge. Do not attempt to resolve the version at runtime.
+      
+      **Versioned badge** (when version resolved above):
+      
+      **Versionless badge** (when version is not available):
+      
+      ```markdown
+      ---
+      
+      [![Compound Engineering](https://img.shields.io/badge/Compound_Engineering-6366f1)](https://github.com/EveryInc/compound-engineering-plugin)
+      🤖 Generated with [MODEL] ([CONTEXT] context, [THINKING]) via [HARNESS](HARNESS_URL)
+      ```
+      
+      [BADGE LINE FROM BADGE SECTION ABOVE]
+      Use the versioned or versionless badge line resolved in the Compound Engineering badge section above.
+      
+    gold_removed: ""

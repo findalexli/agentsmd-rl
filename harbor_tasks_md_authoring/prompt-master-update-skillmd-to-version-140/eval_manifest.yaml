@@ -1,0 +1,53 @@
+version: "2.0"
+
+task:
+  name: prompt-master-update-skillmd-to-version-140
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: nidhinjs/prompt-master
+  pr: 2
+  base_commit: "a49c039da712e49cebb65c60b7d168a10e252c90"
+  merge_commit: "d557e37e7e5768022aac5386a236689466f0161f"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+
+config_edits:
+  - path: "SKILL.md"
+    tier: 1
+    gold_added: |-
+      Version: 1.4.0
+      Description: Generates surgical, credit-efficient prompts for any AI tool or IDE. ALWAYS invoke this skill when the user wants to write, build, fix, improve, rewrite, edit, adapt, or decompose a prompt for ANY AI tool including Claude, ChatGPT, Gemini, Cursor, Claude Code, GitHub Copilot, Windsurf, Bolt, v0, Midjourney, DALL-E, Stable Diffusion, ComfyUI, or any other AI-powered tool. Trigger on phrases like "help me write a prompt", "make a prompt for", "fix this prompt", "improve this prompt", "rewrite this for", "turn this into a prompt", "I want to build X in Claude Code", "write me a Midjourney prompt", "adapt this prompt", "break this prompt down", or any request where the user is trying to communicate an idea to an AI system more effectively. Do NOT trigger on general questions about prompting theory like "what is a prompt" or "how do prompts work". This skill eliminates wasted tokens, prevents scope creep, retains full context from the conversation, and asks clarifying questions before generating when the intent is ambiguous.
+      **Reasoning LLM** (Claude, GPT-4o, Gemini,)
+      **Image AI — Generation** (Midjourney, DALL-E 3, Stable Diffusion)
+      First detect: is this a generation task (creating from scratch) or an editing task (modifying an existing image)?
+      - Generation: subject + style + mood + lighting + composition + negative prompts
+      **Image AI — Reference Editing** (when user has an existing image to modify)
+      Detect this when: user mentions "change", "edit", "modify", "adjust" anything in an existing image, or uploads a reference image.
+      Always instruct the user to attach the reference image to the tool first. Then build the prompt around the delta only — what changes, what stays the same.
+      Read references/templates.md Template J for the full reference editing template.
+      
+      **ComfyUI**
+      Node-based workflow, not a single prompt box. Ask which checkpoint model is loaded (SD 1.5, SDXL, Flux) before writing — prompt syntax changes per model.
+      Always output two separate blocks: Positive Prompt and Negative Prompt. Never merge them.
+      Read references/templates.md Template K for the full ComfyUI template.
+      
+      **Prompt Decompiler Mode**
+      Detect this when: user pastes an existing prompt and wants to break it down, adapt it for a different tool, simplify it, or split it into a chain.
+      This is a distinct task from building from scratch. Do not treat it as a fix request.
+      Read references/templates.md Template L for the full Prompt Decompiler template.
+      
+    gold_removed: ""

@@ -1,0 +1,52 @@
+version: "2.0"
+
+task:
+  name: swc-chore-sync-claudemd-from-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: swc-project/swc
+  pr: 11345
+  base_commit: "468d20cf811794e2e905617b4426e8d593cbca59"
+  merge_commit: "6e87c3b002252a54c2c10e99b3e160febb36b73f"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: "CLAUDE.md"
+    tier: 1
+    gold_added: |-
+      # AI Agent Rules
+      
+      When working in a specific directory, apply the rules from that directory and all parent directories up to the root.
+      
+      ## While working on `.`
+      
+      *Source: `AGENTS.md`*
+      
+      
+      
+      ---
+      
+      ## While working on `crates/swc_ecma_minifier`
+      
+      *Source: `crates/swc_ecma_minifier/AGENTS.md`*
+      
+      1. You can run execution tests by doing `./scripts/exec.sh` to see if your changes are working.
+      2. If an execution test fails, you are wrong.
+      3. Always run execution tests after making changes.
+      4. You can run fixture tests by doing `./scripts/test.sh`, and you can do `UPDATE=1 ./scripts/test.sh` to update fixtures.
+    gold_removed: ""

@@ -1,0 +1,40 @@
+version: "2.0"
+
+task:
+  name: hive-docs-clarify-test-generation-responsibility
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: aden-hive/hive
+  pr: 3901
+  base_commit: "2a98d3a489b15d2fd4acb37456379a8053319941"
+  merge_commit: "bc2a42aed2d24f9ae87ac1e7e233dd84de0d9220"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/hive/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/hive/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/hive/SKILL.md."
+
+config_edits:
+  - path: ".claude/skills/hive/SKILL.md"
+    tier: 1
+    gold_added: |-
+      ### What This Phase Does
+      
+      Guides the creation and execution of a comprehensive test suite:
+      - Constraint tests
+      - Success criteria tests
+      - Edge case tests
+      - Integration tests
+      2. **Generate tests** - The calling agent writes pytest files in `exports/agent_name/tests/` using hive-test guidelines and templates
+    gold_removed: ""

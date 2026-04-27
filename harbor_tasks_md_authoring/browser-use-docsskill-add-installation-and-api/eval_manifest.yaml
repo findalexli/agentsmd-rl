@@ -1,0 +1,66 @@
+version: "2.0"
+
+task:
+  name: browser-use-docsskill-add-installation-and-api
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: browser-use/browser-use
+  pr: 3962
+  base_commit: "5882675788972894be68baa53c8a1d80e9815c3e"
+  merge_commit: "f798633548f2da90019aaf0516672272039a8921"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/browser-use/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/browser-use/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/browser-use/SKILL.md."
+
+config_edits:
+  - path: "skills/browser-use/SKILL.md"
+    tier: 1
+    gold_added: |-
+      ## Installation
+      
+      ```bash
+      # Run without installing (recommended for one-off use)
+      uvx browser-use[cli] open https://example.com
+      
+      # Or install permanently
+      uv pip install browser-use[cli]
+      
+      # Install browser dependencies (Chromium)
+      browser-use install
+      ```
+      
+      ### Setup
+      ```bash
+      browser-use install                       # Install Chromium and system dependencies
+      ```
+      
+      ## API Key Configuration
+      
+      Some features (`run`, `extract`, `--browser remote`) require an API key. The CLI checks these locations in order:
+      
+      1. `--api-key` command line flag
+      2. `BROWSER_USE_API_KEY` environment variable
+      3. `~/.config/browser-use/config.json` file
+      
+      To configure permanently:
+      ```bash
+      mkdir -p ~/.config/browser-use
+      echo '{"api_key": "your-key-here"}' > ~/.config/browser-use/config.json
+      ```
+      
+      7. **CLI aliases**: `bu`, `browser`, and `browseruse` all work identically to `browser-use`
+      browser-use install                   # Install/reinstall Chromium
+    gold_removed: ""

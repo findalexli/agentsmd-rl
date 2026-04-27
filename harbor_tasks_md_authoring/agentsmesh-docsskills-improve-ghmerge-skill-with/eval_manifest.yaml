@@ -1,0 +1,138 @@
+version: "2.0"
+
+task:
+  name: agentsmesh-docsskills-improve-ghmerge-skill-with
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: AgentsMesh/AgentsMesh
+  pr: 91
+  base_commit: "892889c87a275bb0defe0ef9f9e40d46355b0cc9"
+  merge_commit: "f03939455562e718e646d880aeb34a8bc227df94"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/gh-merge/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/gh-merge/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/gh-merge/SKILL.md."
+
+config_edits:
+  - path: ".claude/skills/gh-merge/SKILL.md"
+    tier: 1
+    gold_added: |-
+      gh auth status
+      - 当前分支不能是目标分支
+      - `gh` CLI 已认证
+      - **识别 GitHub remote 名称**：检查 `git remote -v` 输出，找到指向 `github.com` 的 remote（可能是 `origin`、`github` 或其他名称），后续所有 git push/fetch 命令都使用该 remote 名称
+      git add <files>
+      git push -u <github-remote> <current-branch>
+      **注意：**
+      - 优先 `git add <具体文件>` 而非 `git add .`，避免意外提交敏感文件
+      - push 时使用步骤 1 识别的 GitHub remote 名称
+      
+      ### 3. Rebase 到最新目标分支
+      合并前先 rebase，减少冲突风险：
+      git fetch <github-remote> main
+      
+      # 如有未提交的更改，先 stash
+      git stash  # 仅在有 unstaged changes 时执行
+      
+      git rebase <github-remote>/main
+      
+      # rebase 完成后恢复 stash
+      git stash pop  # 仅在之前执行了 stash 时
+      # rebase 改变了历史，需要 force push
+      git push --force-with-lease <github-remote> <current-branch>
+      ```
+      
+      **如果 rebase 有冲突：**
+      1. 解决冲突文件
+      2. `git add <resolved-files>`
+      3. `git rebase --continue`
+      4. 重复直到 rebase 完成
+      5. `git push --force-with-lease`
+      
+      ### 4. 创建 Pull Request
+      
+      ```bash
+      记录返回的 PR 编号（如 `#42`）。
+      ### 5. 等待并监控 CI Checks（关键步骤）
+      **⚠️ 绝对不能跳过此步骤。必须确认 CI 全部通过后才能合并。**
+      # 等待 CI 触发（GitHub Actions 有 10-30 秒延迟）
+      sleep 30
+      
+      # 等待所有 checks 完成
+      gh pr checks <pr-number> --watch --interval 15 --fail-fast
+      ```
+      **处理 `no checks reported` 的情况：**
+      如果 `gh pr checks` 返回 `no checks reported`，这表示 CI 尚未触发，**绝不能**认为"没有 CI"而直接合并。必须重试：
+      
+      ```bash
+      # 等待更长时间后重试（最多重试 3 次，每次间隔 30 秒）
+      sleep 30
+      如果重试 3 次（共等待约 2 分钟）后仍然 `no checks reported`，则明确告知用户"CI 未触发"，**询问用户是否确认合并**，不得自行决定。
+      
+      ### 6. 处理 CI 失败
+      # 1. 查看失败的 job 日志
+      # 2. 修复代码
+      # 3. 提交修复并推送
+      git add <files>
+      git push <github-remote> <current-branch>
+      # 4. 重新等待 CI
+      sleep 30
+      ### 7. 合并 PR
+      **前置条件（全部满足才能执行合并）：**
+      1. `gh pr checks` 至少报告了 1 个 check
+      2. 所有 checks 状态为 `pass`
+      3. 没有未解决的冲突
+      **合并策略：**
+      - `--squash`：压缩为单个 commit（推荐，保持历史整洁）
+      - `--merge`：保留完整 commit 历史
+      - `--rebase`：线性历史，无 merge commit
+      **处理 worktree 环境下的报错：**
+      在 git worktree 中执行 `gh pr merge --delete-branch` 时，可能报错：
+      ```
+      failed to run git: fatal: 'main' is already used by worktree at '...'
+      ```
+      这是因为 worktree 无法切换到 main 分支来删除本地分支。**这个报错不影响远程合并**，PR 已经成功合并。用 `gh pr view` 确认：
+      gh pr view <pr-number> --json state,mergedAt
+      # 确认 state 为 "MERGED"
+      ### 8. 清理
+      # 在 worktree 中无需手动切换分支和清理
+      # worktree 会在退出时提示清理
+      # 非 worktree 环境：
+      git branch -d <branch-name>
+      - 分支: feature/xxx → main
+      - CI Checks: 全部通过 (N/N)
+      - PR: https://github.com/org/repo/pull/42
+      ### PR 有合并冲突
+      git fetch <github-remote> main
+      git stash  # 如有 unstaged changes
+      git rebase <github-remote>/main
+      # 解决冲突...
+      git add <resolved-files>
+      git stash pop  # 如之前 stash 了
+      git push --force-with-lease <github-remote> <current-branch>
+      ### CI 需要 re-run
+      gh run rerun <run-id> --failed
+      sleep 30
+      gh pr checks <pr-number> --watch --interval 15 --fail-fast
+      ### Review 未通过
+      gh pr view <pr-number> --comments
+      # 修复后推送
+      git add <files> && git commit -m "fix: address review feedback" && git push
+      - **CI 通过是合并的硬性前提**，绝不能在 CI 未完成或未触发时合并
+      - 识别正确的 GitHub remote 名称（不一定是 `origin`）
+      - 使用 `--force-with-lease`（而非 `--force`）推送 rebase 后的代码
+      - worktree 环境中 `gh pr merge` 的本地分支删除报错可以忽略，远程合并不受影响
+      - 提交前确保代码已通过本地测试
+    gold_removed: ""

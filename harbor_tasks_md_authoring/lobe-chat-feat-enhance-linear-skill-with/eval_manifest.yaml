@@ -1,0 +1,37 @@
+version: "2.0"
+
+task:
+  name: lobe-chat-feat-enhance-linear-skill-with
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: lobehub/lobe-chat
+  pr: 13629
+  base_commit: "8b3c871d08983a809b5470d08e679fe2207a5a05"
+  merge_commit: "3bb09e0ef9d94559b1f42ecf4261cd977e20c5c4"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/linear/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/linear/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/linear/SKILL.md."
+
+config_edits:
+  - path: ".agents/skills/linear/SKILL.md"
+    tier: 1
+    gold_added: |-
+      2. **Read images**: If the issue description contains images, MUST use `mcp__linear-server__extract_images` to read image content for full context
+      3. **Check for sub-issues**: Use `mcp__linear-server__list_issues` with `parentId` filter
+      4. **Mark as In Progress**: When starting to plan or implement an issue, immediately update status to **"In Progress"** via `mcp__linear-server__update_issue`
+      5. **Update issue status** when completing: `mcp__linear-server__update_issue`
+      6. **Add completion comment** (REQUIRED): `mcp__linear-server__create_comment`
+    gold_removed: ""

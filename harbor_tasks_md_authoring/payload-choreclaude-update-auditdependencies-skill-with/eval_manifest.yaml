@@ -1,0 +1,96 @@
+version: "2.0"
+
+task:
+  name: payload-choreclaude-update-auditdependencies-skill-with
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: payloadcms/payload
+  pr: 16106
+  base_commit: "0f79eedb6eb598bc22397e9b4b16f81d33c34d7b"
+  merge_commit: "974870a7991d2f65b14f4d0e7aebfc792d3cf5c7"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/audit-dependencies/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/audit-dependencies/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/audit-dependencies/SKILL.md."
+
+config_edits:
+  - path: ".claude/skills/audit-dependencies/SKILL.md"
+    tier: 1
+    gold_added: |-
+      argument-hint: 'critical|high|moderate|low'
+      Fix dependency vulnerabilities reported by `.github/workflows/audit-dependencies.sh`. Prefer fixes in this order: direct dependency bump > lockfile update > pnpm override. Every override requires justification for why simpler approaches aren't feasible.
+          "Is version pinned or ranged?" [shape=diamond];
+          "Lockfile update" [shape=box];
+          "Present plan to user" [shape=box];
+          "Can bump direct dep?" -> "Is version pinned or ranged?" [label="no"];
+          "Breaking changes acceptable?" -> "Is version pinned or ranged?" [label="no"];
+          "Is version pinned or ranged?" -> "Lockfile update" [label="ranged - fix is in range"];
+          "Is version pinned or ranged?" -> "Apply pnpm override" [label="pinned - explain why"];
+          "Lockfile update" -> "More packages?";
+          "More packages?" -> "Present plan to user" [label="no"];
+          "Present plan to user" -> "Install and verify";
+      #### Check if a lockfile update is sufficient
+      
+      Before reaching for an override, check whether the parent's version specifier is **pinned** (exact version like `3.10.3`) or **ranged** (like `^2.3.1`, `~4.0.3`):
+      
+      ```bash
+      pnpm view <parent> dependencies.<vulnerable-pkg>
+      ```
+      
+      If the range already includes the fixed version, a lockfile update is all that's needed:
+      
+      ```bash
+      pnpm update <vulnerable-pkg> --recursive
+      ```
+      
+      No `package.json` changes required — the lockfile was just stale.
+      
+      Add a pnpm override in root `package.json` only when:
+      - The parent pins an exact version that doesn't satisfy the fix
+      Override format: `"<parent>><vulnerable-pkg>": "^<fixed-version>"`
+      
+      **Override syntax rules:**
+      
+      - Use `^` ranges, not `>=`. `>=` can cross major versions and cause unexpected resolutions (e.g., `"picomatch": ">=2.3.2"` can resolve to 4.x).
+      - pnpm only supports single-level parent scoping: `"parent>pkg"` works, `"grandparent>parent>pkg"` does not.
+      - pnpm does not support version selectors in override keys: `"pkg@^2"` does not work.
+      - If the same vulnerable package appears through many transitive paths, a global override may be needed. Be careful that it doesn't affect unrelated consumers on a different major version — use parent-scoped overrides when the package spans multiple major versions across the tree.
+      - pnpm only honors `overrides` in the root workspace `package.json`. Overrides in workspace packages are ignored.
+      ### 3. Present Plan to User
+      
+      Before applying fixes, present a summary table to the user showing each vulnerability, the proposed fix strategy (direct bump / lockfile update / override), and justification. Get confirmation before proceeding.
+      
+      ### 4. Apply Fixes
+      - Run `pnpm update <pkg> --recursive` for lockfile-only fixes
+      ### 5. Install and Verify
+      ### 6. Build and Verify
+      ### 7. Look Up CVEs
+      ### 8. Commit and Create PR
+        - [Why this approach: direct bump because X / lockfile update because Y / override because Z]
+      | Mistake                                           | Fix                                                                                                                                                         |
+      | ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+      | Jumping straight to overrides                     | Check: can you bump the parent? If not, does the semver range already allow the fix (lockfile update)? Only then override.                                  |
+      | Using `>=` in override ranges                     | Use `^` to stay within the same major version. `>=2.3.2` can resolve to 4.x.                                                                                |
+      | Not checking pinned vs ranged                     | `pnpm view <parent> dependencies.<pkg>` — if ranged and the fix is in range, just `pnpm update`.                                                            |
+      | Nested override scoping (`a>b>c`)                 | pnpm only supports single-level: `"parent>pkg"`. For deeper chains, override the direct parent or use a global override.                                    |
+      | Version selectors in override keys (`pkg@^2`)     | Not supported by pnpm. Use parent-scoped or global overrides instead.                                                                                       |
+      | Global override affecting multiple major versions | `"picomatch": ">=4.0.4"` forces all picomatch to 4.x, breaking consumers that need 2.x. Scope overrides to the parent when a package spans multiple majors. |
+      | Not checking all workspace packages               | Same dep may appear in multiple `package.json` files (e.g., `changelogen` in both `tools/releaser` and `tools/scripts`)                                     |
+      | Overriding with a nonexistent version             | Verify the target version exists with `pnpm view` before installing                                                                                         |
+      | Not falling back to `--ignore-scripts`            | Pre-existing native build failures block `pnpm install`; use `--ignore-scripts` to get lockfile updated                                                     |
+      | Missing code changes for breaking bumps           | If a bump changes API defaults, update the calling code                                                                                                     |
+      | Forgetting advisory links in PR                   | Always look up and include GHSA links for each vulnerability                                                                                                |
+      | Applying fixes without user confirmation          | Present the full plan (strategy per vuln + justification) and get confirmation before making changes                                                        |
+    gold_removed: ""

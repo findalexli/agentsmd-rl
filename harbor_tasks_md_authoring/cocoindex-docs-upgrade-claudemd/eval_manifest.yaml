@@ -1,0 +1,102 @@
+version: "2.0"
+
+task:
+  name: cocoindex-docs-upgrade-claudemd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: cocoindex-io/cocoindex
+  pr: 1576
+  base_commit: "09ebf5729eb7cfc4e254707989db8f3234ef5bfc"
+  merge_commit: "188f0ba235fb53615936649e0c13d4df9a61eeba"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: "CLAUDE.md"
+    tier: 1
+    gold_added: |-
+      uv run mypy              # Type check Python code
+      | Python code only | `uv run mypy && uv run pytest python/` |
+      │   └── extra_text/             # Text processing utilities (splitter, language detection)
+      │   ├── cocoindex/              # Python package
+      │   │   ├── __init__.py         # Package entry point
+      │   │   ├── cli.py              # CLI commands
+      │   │   ├── asyncio.py          # Async App and APIs (import cocoindex.asyncio as coco_aio)
+      │   │   ├── _internal/          # Internal implementation for the core engine
+      │   │   │   ├── api.py          # Shared API definitions
+      │   │   │   ├── api_sync.py     # Sync APIs: App, mount, mount_run
+      │   │   │   ├── api_async.py    # Async APIs: App, mount, mount_run
+      │   │   │   ├── app.py          # App base implementation
+      │   │   │   ├── context_keys.py # ContextKey and ContextProvider
+      │   │   │   ├── environment.py  # Environment and lifespan handling
+      │   │   │   ├── function.py     # @coco.function decorator implementation
+      │   │   │   ├── scope.py        # Scope implementation
+      │   │   │   └── target_state.py # Target state implementation
+      │   │   ├── connectors/         # External system connectors (localfs, postgres, qdrant, lancedb, google_drive)
+      │   │   ├── connectorkits/      # Connector building utilities
+      │   │   ├── resources/          # Abstractions: file.py (FileLike), chunk.py (Chunk), schema.py
+      │   │   └── extras/             # Utilities: text.py (RecursiveSplitter), sentence_transformers.py
+      │   └── tests/                  # Python tests
+      ### Mental model: declarative data pipelines
+      CocoIndex uses a **declarative** programming model — you specify *what* your output should look like (target states), not *how* to incrementally update it. The engine handles change detection and applies minimal updates automatically.
+      Think of it like:
+      * **React**: declare UI as function of state → React re-renders what changed
+      * **Spreadsheets**: declare formulas → cells recompute when inputs change
+      * **CocoIndex**: declare target states as function of source → engine syncs what changed
+      ### Core concepts
+      
+      **App** — The top-level runnable unit. Bundles a main function with its arguments. When you call `app.update()`, the main function runs as the root processing component.
+      
+      **Processing Component** — The unit of execution that owns a set of target states. Created by `mount()` or `mount_run()` at a specific scope. When a component finishes, its target states sync atomically to external systems.
+      
+      **Scope** — Stable identifier for a processing component across runs (like a path in a tree: `scope / "process" / filename`). CocoIndex uses scopes to:
+      
+      * Match components to their previous runs for change detection
+      * Determine ownership of target states (if a scope disappears, its target states are cleaned up)
+      
+      **Target State** — What you want to exist in an external system (a file, a database row, a table). You *declare* target states; CocoIndex keeps them in sync — creating, updating, or removing as needed.
+      
+      **Target** — The API object used to declare target states (e.g., `DirTarget`, `TableTarget`). Targets can be nested: a container target state (directory/table) provides a Target for declaring child target states (files/rows).
+      
+      **Function** — A Python function decorated with `@coco.function`. Use `memo=True` to enable memoization (skip execution when inputs and code are unchanged).
+      
+      **Context** — React-style provider mechanism for sharing resources. Define keys with `ContextKey[T]`, provide values in lifespan via `builder.provide()`, use in functions via `scope.use()`.
+      
+      ### Key APIs
+      # Mounting processing components
+      coco.mount(fn, scope, *args, **kw)      # child runs independently, no data dependency
+      coco.mount_run(fn, scope, *args, **kw)  # returns value, creates data dependency
+      # Scope composition (stable identifiers)
+      file_scope  = scope / "process" / filename
+      
+      # Declaring target states (typically via Target methods)
+      dir_target.declare_file(scope, filename=name, content=data)
+      table_target.declare_row(scope, row=MyRow(...))
+      **Mount handles:**
+      * `mount()` → `ProcessingUnitMountHandle`: call `wait_until_ready()` to block until target states are synced
+      * `mount_run()` → `ProcessingUnitMountRunHandle[T]`: call `result()` to get return value (implicitly waits)
+      ### How syncing works
+      When a processing component finishes, CocoIndex compares its declared target states with those from the previous run at the same scope:
+      
+      * New target states → create (insert row, create file)
+      * Changed target states → update
+      * Missing target states → delete
+      
+      Changes are applied atomically per component. If a source item is deleted (scope no longer mounted), all its target states are cleaned up automatically.
+      @coco.function(memo=True)
+          target = coco.mount_run(localfs.declare_dir_target, scope / "setup", outdir).result()
+    gold_removed: ""

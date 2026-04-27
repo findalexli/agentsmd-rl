@@ -1,0 +1,46 @@
+version: "2.0"
+
+task:
+  name: payload-chore-add-react-component-file
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: payloadcms/payload
+  pr: 16125
+  base_commit: "a6735f3f89c6ed41f92e79c6e94f129e10fff29e"
+  merge_commit: "9284441b210eae54759d51f8562883ff6c4aef35"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: "CLAUDE.md"
+    tier: 1
+    gold_added: |-
+      ### React Component File Structure
+      
+      Each React component should have its own named folder:
+      
+      ```
+      ComponentName/
+      ├── index.tsx       # Component implementation
+      └── index.scss      # Styles (if applicable)
+      ```
+      
+      - **Do:** Create a folder per component with `index.tsx` and `index.scss`
+      - **Don't:** Place multiple `ComponentName.tsx` files in a single folder with one shared `.scss` file
+      - Re-export from barrel files (`index.ts`) when grouping related components in a parent directory
+      
+    gold_removed: ""

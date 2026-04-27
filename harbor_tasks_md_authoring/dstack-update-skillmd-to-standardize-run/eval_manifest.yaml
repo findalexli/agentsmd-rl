@@ -1,0 +1,44 @@
+version: "2.0"
+
+task:
+  name: dstack-update-skillmd-to-standardize-run
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: dstackai/dstack
+  pr: 3555
+  base_commit: "8ff914b1ce32411c5522113b0e45918fac9b2fba"
+  merge_commit: "cfea44e0f4fbcf37bdb3ec5cd15c79789bf87b9d"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/dstack/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/dstack/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/dstack/SKILL.md."
+
+config_edits:
+  - path: "skills/dstack/SKILL.md"
+    tier: 1
+    gold_added: |-
+      Note: `dstack attach` writes SSH alias info under `~/.dstack/ssh/config` (and may update `~/.ssh/config`) to enable `ssh <run name>`, IDE connections, port forwarding, and real-time logs (`dstack attach --logs`). If the sandbox cannot write there, the alias will not be created.
+      
+      **Permissions guardrail:** If `dstack attach` fails due to sandbox permissions, request permission escalation to run it outside the sandbox. If escalation isn’t approved or attach still fails, ask the user to run `dstack attach` locally and share the IDE link/SSH alias output.
+      nohup dstack attach <run name> --logs > /tmp/<run name>.attach.log 2>&1 & echo $! > /tmp/<run name>.attach.pid
+      tail -n 50 /tmp/<run name>.attach.log
+      tail -f /tmp/<run name>.attach.log
+      kill "$(cat /tmp/<run name>.attach.pid)"
+      pkill -f "dstack attach <run name>"
+      **"Connect to" or "open" a dev environment:** If a dev environment is already running, use `dstack attach <run name> --logs` (agent runs it in the background by default) to surface the IDE URL (`cursor://`, `vscode://`, etc.) and SSH alias. If sandboxed attach fails, request escalation or ask the user to run attach locally and share the link.
+      **Port forwarding:** When you specify `ports`, `dstack apply` forwards them to `localhost` while attached. Use `dstack attach <run name>` to reconnect and restore port forwarding. The run name becomes an SSH alias (e.g., `ssh <run name>`) for direct access.
+      - Without gateway: `<dstack server URL>/proxy/services/f/<run name>/`
+      - OpenAI-compatible models: Use `service.url` from `dstack run get <run name> --json` and append `/v1` as the base URL; do **not** use deprecated `service.model.base_url` for requests.
+    gold_removed: ""

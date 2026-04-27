@@ -1,0 +1,41 @@
+version: "2.0"
+
+task:
+  name: agent-reach-fix-shorten-skillmd-description-to
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Panniantong/Agent-Reach
+  pr: 166
+  base_commit: "6c5346cfa45513f02d89cec85320711fb4390ff7"
+  merge_commit: "1442852471f2da4a795a1ef0972a8bd77b1bee2a"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in agent_reach/skill/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in agent_reach/skill/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in agent_reach/skill/SKILL.md."
+
+config_edits:
+  - path: "agent_reach/skill/SKILL.md"
+    tier: 1
+    gold_added: |-
+        Give your AI agent eyes to see the entire internet.
+        XiaoHongShu, Douyin, Weibo, WeChat Articles, Xiaoyuzhou Podcast, LinkedIn,
+        Instagram, V2EX, RSS, Exa web search, and any web page.
+        Zero config for 8 channels. Use when user asks to search, read, or interact
+        on any supported platform, shares a URL, or asks to search the web.
+        Triggers: "搜推特", "搜小红书", "看视频", "搜一下", "上网搜", "帮我查",
+        "search twitter", "youtube transcript", "search reddit", "read this link",
+        "B站", "bilibili", "抖音视频", "微信文章", "公众号", "微博", "V2EX",
+        "小宇宙", "播客", "podcast", "web search", "research", "帮我安装".
+    gold_removed: ""

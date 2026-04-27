@@ -1,0 +1,40 @@
+version: "2.0"
+
+task:
+  name: mlflow-document-uv-run-frozen-flag
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: mlflow/mlflow
+  pr: 22505
+  base_commit: "bcac793de0c657fac9e9a992e44b695d162f00ad"
+  merge_commit: "8cb94fb1d46c8093f8ddf5eb5a14821f5818df9d"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: "CLAUDE.md"
+    tier: 1
+    gold_added: |-
+      ### Offline / No-Network Usage
+      
+      If PyPI is unreachable, add `--frozen` to `uv run` commands that should use the existing `uv.lock` as-is without modifying the environment. This works when the required dependencies are already installed or available in the local cache:
+      
+      ```bash
+      uv run --frozen pytest tests/
+      ```
+      
+    gold_removed: ""

@@ -1,0 +1,37 @@
+version: "2.0"
+
+task:
+  name: compound-engineering-plugin-featceproof-broaden-triggers-and
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: EveryInc/compound-engineering-plugin
+  pr: 618
+  base_commit: "153bea8669d63848f57942e842cd58ed664e7435"
+  merge_commit: "e0f2a4f9d748124fecb41114856690f88f8fc2e9"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-proof/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-proof/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-proof/SKILL.md."
+
+config_edits:
+  - path: "plugins/compound-engineering/skills/ce-proof/SKILL.md"
+    tier: 1
+    gold_added: |-
+      description: Create, share, view, comment on, edit, and run human-in-the-loop review loops over markdown documents via Proof — the collaborative markdown editor and renderer at proofeditor.ai (also called "Proof editor"). Use this skill whenever the user wants to view or render a local markdown file in Proof for easier reading, share a markdown file to Proof to get a shareable URL, iterate on a Proof doc collaboratively, comment on or suggest edits in a Proof doc, HITL a spec/plan/draft for human review, sync a Proof doc back to local, or when given a proofeditor.ai URL. Common phrasings include "view this in proof", "render this markdown in proof", "open this md file in proof", "share it to proof", "share to proof editor", "iterate with proof", "HITL this doc". Upstream handoffs from ce-brainstorm / ce-ideate / ce-plan for human review also belong here. Match these intents even when the user doesn't name Proof, as long as they clearly want a rendered/shared markdown surface. Do NOT trigger on "proof" meaning evidence, a mathematical/logical proof, burden of proof, proof-of-concept, or a bare "proofread this" request where the model is expected to review text inline.
+      Human-in-the-loop iteration over an existing local markdown file: upload to Proof, let the user annotate in Proof's web UI, ingest feedback as in-thread replies and tracked edits, and sync the final doc back to disk. Two entry points, identical mechanics — load `references/hitl-review.md` for the full loop spec (invocation contract, mark classification, idempotent ingest passes, exception-based terminal reporting, end-sync atomic write) in either case:
+      
+      - **Direct user request** — a bare user phrase naming a local markdown file and asking to iterate collaboratively via Proof: "share this to proof so we can iterate", "iterate with proof on this doc", "HITL this file with me", "let's get feedback on this in proof", "open this in proof editor so I can review". The file is whichever markdown the user just created, edited, or referenced; if ambiguous, ask which file. This is a first-class entry point — do not require an upstream caller.
+      - **Upstream skill handoff** — `ce-brainstorm`, `ce-ideate`, or `ce-plan` finishes a draft and hands it off for human review before the next phase, passing the file path and title explicitly.
+    gold_removed: ""

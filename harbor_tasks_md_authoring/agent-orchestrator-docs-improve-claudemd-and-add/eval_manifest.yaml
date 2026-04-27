@@ -1,0 +1,111 @@
+version: "2.0"
+
+task:
+  name: agent-orchestrator-docs-improve-claudemd-and-add
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: ComposioHQ/agent-orchestrator
+  pr: 36
+  base_commit: "8e5b23e6a064a9f08e41dd980c7183af001365d8"
+  merge_commit: "baaabe537a10245c91e0e7da9ccb2a2332ea576d"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: "CLAUDE.md"
+    tier: 1
+    gold_added: |-
+      ## What This Is
+      Open-source system for orchestrating parallel AI coding agents. Agent-agnostic (Claude Code, Codex, Aider), runtime-agnostic (tmux, docker, k8s), tracker-agnostic (GitHub, Linear, Jira). Manages session lifecycle, tracks PR/CI/review state, auto-handles routine issues (CI failures, review comments), pushes notifications to humans only when needed.
+      **Core principle: Push, not pull.** Spawn agents, walk away, get notified when your judgment is needed.
+      TypeScript (ESM), Node 20+, pnpm workspaces. Next.js 15 (App Router) + Tailwind. Commander.js CLI. YAML + Zod config. Server-Sent Events for real-time. Flat metadata files + JSONL event log. ESLint + Prettier. vitest.
+      | Slot      | Interface   | Default Plugin |
+      | --------- | ----------- | -------------- |
+      | Runtime   | `Runtime`   | tmux           |
+      | Agent     | `Agent`     | claude-code    |
+      | Workspace | `Workspace` | worktree       |
+      | Tracker   | `Tracker`   | github         |
+      | SCM       | `SCM`       | github         |
+      | Notifier  | `Notifier`  | desktop        |
+      | Terminal  | `Terminal`  | iterm2         |
+      | Lifecycle | (core)      | —              |
+      **All interfaces defined in `packages/core/src/types.ts` — read this file first.**
+          runtime-{tmux,process}/
+          agent-{claude-code,codex,aider,opencode}/
+          workspace-{worktree,clone}/
+          tracker-{github,linear}/
+          scm-github/
+          notifier-{desktop,slack,composio,webhook}/
+          terminal-{iterm2,web}/
+      ## Key Files (Read These First)
+      1. `packages/core/src/types.ts` — all interfaces (Runtime, Agent, Workspace, Tracker, SCM, Notifier, Terminal)
+      2. `agent-orchestrator.yaml.example` — config format
+      3. Plugin examples:
+         - `packages/plugins/runtime-tmux/src/index.ts` — Runtime implementation
+         - `packages/plugins/agent-claude-code/src/index.ts` — Agent implementation
+      4. This file (CLAUDE.md) — code conventions
+      ## TypeScript Conventions (MUST follow)
+      - **ESM modules** — `"type": "module"` in all packages
+      - **`.js` extensions in imports** — `import { foo } from "./bar.js"` (required for ESM)
+      - **`node:` prefix for builtins** — `import { readFileSync } from "node:fs"`
+      - **Strict mode** — `"strict": true` in tsconfig
+      - **`type` imports** — `import type { Foo }` for type-only (enforced by ESLint)
+      - **No `any`** — use `unknown` + type guards (ESLint error)
+      - **No unsafe casts** — `as unknown as T` bypasses type safety, validate instead
+      - **Prefer `const`** — `let` only when reassignment needed, never `var`
+      - **Semicolons, double quotes, 2-space indent** — enforced by Prettier
+      ## Plugin Pattern (MUST follow)
+      
+      Every plugin exports a `PluginModule` with inline `satisfies` for compile-time type checking:
+      export const manifest = {
+      export function create(): Runtime {
+          async create(config) { /* ... */ },
+          async destroy(handle) { /* ... */ },
+      **Do NOT** use `const plugin = { ... }; export default plugin;` — always inline `satisfies`.
+      ## Shell Command Execution (MUST follow — security critical)
+      - **Always use `execFile`** (or `spawn`) — NEVER `exec` (shell injection risk)
+      - **Never interpolate user input** — pass as array args, not string template
+      - **Do NOT use `JSON.stringify` for shell escaping** — not a shell escaping function
+      ## Error Handling
+      - Plugins throw if they can't do their job
+      - Core services catch and handle plugin errors
+      - **Always wrap `JSON.parse`** in try/catch (corrupted metadata should not crash)
+      - **Guard external data** — validate types from API/CLI/file inputs
+      ## Naming
+      - Constants: `UPPER_SNAKE_CASE` (only true constants: env vars, regex patterns)
+      - Test files: `*.test.ts` (co-located or in `__tests__/`)
+      ## Commands
+      pnpm install           # install deps
+      pnpm typecheck         # typecheck
+      pnpm test              # run tests
+      # Before committing
+      - Missing `.js` extension in local imports — runtime error with ESM
+      - Using bare `"fs"` instead of `"node:fs"` — inconsistent
+      
+      ## Config
+      
+      Config loaded from `agent-orchestrator.yaml` (see `agent-orchestrator.yaml.example`). Paths support `~` expansion. Validated with Zod at load time. Per-project overrides for plugins and reactions.
+      
+      ## Design Decisions
+      
+      1. **Stateless orchestrator** — no database, flat metadata files + event log
+      2. **Plugins implement interfaces** — pure implementation of interface from `types.ts`
+      3. **Push notifications** — Notifier is primary human interface, not dashboard
+      4. **Two-tier event handling** — auto-handle routine issues, notify human when judgment needed
+      5. **Backwards-compatible metadata** — flat key=value files
+      6. **Security first** — `execFile` not `exec`, validate all external input
+    gold_removed: ""

@@ -1,0 +1,65 @@
+version: "2.0"
+
+task:
+  name: ghost-added-i18n-guidance-to-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: TryGhost/Ghost
+  pr: 27177
+  base_commit: "17492ed6ebc56781ed154528c2778ab570703a79"
+  merge_commit: "04df2dd8ec4b3bd2957e0170cfd0d68e56c00ce9"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: "AGENTS.md"
+    tier: 1
+    gold_added: |-
+      - Context descriptions: `ghost/i18n/locales/context.json` — every key must have a non-empty description
+      
+      **Translation Workflow:**
+      ```bash
+      yarn workspace @tryghost/i18n translate   # Extract keys from source, update all locale files + context.json
+      yarn workspace @tryghost/i18n lint:translations  # Validate interpolation variables across locales
+      ```
+      
+      `yarn translate` is run as part of `yarn workspace @tryghost/i18n test`. In CI, it fails if translation keys or `context.json` are out of date (`failOnUpdate: process.env.CI`). Always run `yarn translate` after adding or changing `t()` calls.
+      
+      **Rules for Translation Keys:**
+      1. **Never split sentences across multiple `t()` calls.** Translators cannot reorder words across separate keys. Instead, use `@doist/react-interpolate` to embed React elements (links, bold, etc.) within a single translatable string.
+      2. **Always provide context descriptions.** When adding a new key, add a description in `context.json` explaining where the string appears and what it does. CI will reject empty descriptions.
+      3. **Use interpolation for dynamic values.** Ghost uses `{variable}` syntax: `t('Welcome back, {name}!', {name: firstname})`
+      4. **Use `<tag>` syntax for inline elements.** Combined with `@doist/react-interpolate`: `t('Click <a>here</a> to retry')` with `mapping={{ a: <a href="..." /> }}`
+      
+      **Correct pattern (using Interpolate):**
+      ```jsx
+      import Interpolate from '@doist/react-interpolate';
+      
+      <Interpolate
+          mapping={{ a: <a href={link} /> }}
+          string={t('Could not sign in. <a>Click here to retry</a>')}
+      />
+      ```
+      
+      **Incorrect pattern (split sentences):**
+      ```jsx
+      // BAD: translators cannot reorder "Click here to retry" relative to the first sentence
+      {t('Could not sign in.')} <a href={link}>{t('Click here to retry')}</a>
+      ```
+      
+      See `apps/portal/src/components/pages/email-receiving-faq.js` for a canonical example of correct `Interpolate` usage.
+    gold_removed: ""

@@ -1,0 +1,37 @@
+version: "2.0"
+
+task:
+  name: e2b-add-claudemd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: e2b-dev/E2B
+  pr: 1137
+  base_commit: "59057f5a984840e20329ee485ed4acfec66db36b"
+  merge_commit: "f7fef4df77f7ecaab3a3f103f32e3553e2d380aa"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: "CLAUDE.md"
+    tier: 1
+    gold_added: |-
+      Use pnpm for node and poetry for python to install and update dependencies.
+      Run `pnpm run format`, `pnpm run lint` and `pnpm run typecheck` before commiting changes.
+      To re-generate the API client run `make codegen` in the repository root.
+      Run tests on affected codepaths using `pnpm run test`.
+      Default credentials are stored in .env.local in the repository root or inside ~/.e2b/config.json.
+    gold_removed: ""

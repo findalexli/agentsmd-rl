@@ -1,0 +1,201 @@
+version: "2.0"
+
+task:
+  name: antigravity-awesome-skills-docswordpressseoskill-update-skil
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: sickn33/antigravity-awesome-skills
+  pr: 553
+  base_commit: "f061fc5566e817a4b329317211787f704b0ef8b4"
+  merge_commit: "b2153bd23fe06fe604159e040d556480797b31f7"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/social-post-writer-seo/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/social-post-writer-seo/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/social-post-writer-seo/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/wordpress-centric-high-seo-optimized-blogwriting-skill/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/wordpress-centric-high-seo-optimized-blogwriting-skill/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/wordpress-centric-high-seo-optimized-blogwriting-skill/SKILL.md."
+
+config_edits:
+  - path: "skills/social-post-writer-seo/SKILL.md"
+    tier: 1
+    gold_added: |-
+      source_type: self
+      tags: [social-media, marketing, content-writing, seo, growth]
+      tools: [claude, cursor, gemini]
+      version: 1.0.1
+      ## Overview
+      This skill is designed to help users create high-quality, engaging, and platform-optimized social media content. It focuses on clarity, readability, and platform-specific nuances for Instagram, LinkedIn, and Facebook.
+      
+      ## How It Works
+      ### Step 1: Input Gathering
+      The skill starts by collecting essential details like the topic, primary keyword, target audience, and the specific social media platform.
+      
+      ### Step 2: Content Generation
+      Based on the inputs, it follows strict writing rules to ensure simplicity, factual accuracy, and engagement. It structures the post with a hook, context, value, and a call to action.
+      
+      ### Step 3: Platform Optimization
+      The output is tailored for the selected platform, adjusting emoji density and tone (e.g., more professional for LinkedIn, more visual/casual for Instagram).
+      
+      ## Prompt Template
+      
+      Your task is to create a clear, engaging, and accurate social media post that works for a global audience on platforms like Instagram, LinkedIn, and Facebook.
+      Meet SolMug, a solar powered coffee mug concept for busy commutes.
+      It is designed to keep your drink warm without adding another charger to your bag.
+      A small change for your morning routine, with sustainability in mind.
+      ## Best Practices
+      - ✅ Always include a "Hook" in the first line to capture attention.
+      - ✅ Use line breaks frequently to make the post scannable on mobile.
+      - ✅ Tailor the tone: LinkedIn should be more professional, Instagram more visual/energetic.
+      - ❌ Avoid using more than 10 hashtags; it can look like spam.
+      - ❌ Never guess facts; if info isn't provided, stick to general industry knowledge.
+      
+      ## Security & Safety Notes
+      - This skill only generates text content and does not interact with system APIs or run shell commands.
+      - Ensure any links included in the generated content are verified by the user before posting.
+      
+      ## Common Pitfalls
+      - **Problem:** Post feels too "salesy".
+        **Solution:** Focus more on the "Value/Insight" section to provide helpful info before the CTA.
+      - **Problem:** Low engagement on LinkedIn.
+        **Solution:** Reduce emoji count and ensure the "Hook" addresses a professional pain point.
+      
+      ## Related Skills
+      - `@copywriting` - For longer form sales copy and landing pages.
+      - `@seo-content` - For blog-style SEO content optimization.
+      - `@ad-creative` - Specifically for paid social media advertisements.
+    gold_removed: ""
+  - path: "skills/wordpress-centric-high-seo-optimized-blogwriting-skill/SKILL.md"
+    tier: 1
+    gold_added: |-
+      description: "Create long-form, high-quality, SEO-optimized blog posts ready for WordPress with truth boxes and FAQ schema."
+      risk: safe
+      source: self
+      source_type: self
+      date_added: "2026-04-12"
+      author: Whoisabhishekadhikari
+      tools: [claude, cursor, gemini]
+      version: 1.0.3
+      # WordPress Centric High SEO Optimized Blog Writing Skill
+      
+      ## Overview
+      
+      This skill is designed for Senior Content Strategists and Expert Copywriters to create high-quality, long-form blog posts that are ready for direct publication in WordPress. It emphasizes professional structure, factual accuracy (Truth Boxes), and comprehensive SEO optimization (Yoast elements and Schema markup).
+      
+      ## When to Use This Skill
+      
+      - Use when you need to write a professional blog post or article.
+      - Use when creating SEO-optimized content for a WordPress site.
+      - Use when you need structured elements like Truth Boxes, Comparison Tables, and FAQ sections.
+      - Use when the user requires Yoast SEO metadata and JSON-LD schema.
+      
+      ## How It Works
+      
+      ### Step 1: Gather Inputs
+      The skill requires a Title, Primary Keyword, Intent, and Niche/Industry. It also prompts for Yoast SEO preference and image count if not provided.
+      
+      ### Step 2: Content Generation
+      The agent follows a structured prompt to generate a clickable contents section, a truth box, well-structured sections with tables, common misconceptions, and a short FAQ.
+      
+      ### Step 3: SEO & Schema (Optional)
+      If requested, the agent provides Yoast SEO metadata (Social titles, meta descriptions) and JSON-LD Schema (BlogPosting, FAQPage).
+      
+      ## Prompt Template
+      USER PREFERENCES (ASK IF MISSING)
+      Yoast SEO: {Are Yoast SEO elements like meta descriptions and focus keyphrases needed?}
+      Image Count: {How many images should be included in the SEO plan?}
+      
+      
+      Introduction
+      
+      Include {User Requested Count} images
+      The final output must be generated in this order:
+      1. The full blog post (from Main Title to Conclusion)
+      2. SEO Section (if requested)
+      3. Schema Markup (if requested)
+      
+      The content must be:
+      SEO SECTION (YOAST)
+      *Only provide this section if the user requested Yoast SEO elements.*
+      
+      Provide the following:
+      
+      Focus Keyphrase
+      SEO Title
+      Slug
+      Meta Description
+      Social Title
+      Social Description
+      
+      If the user provided or approved reliable market sources, include this line with the actual month and year:
+      Data accurate as of [Month Year] based on cited market research.
+      
+      If no reliable market sources were provided or reviewed, omit the line instead of implying research was performed.
+      
+      SCHEMA MARKUP
+      *Only provide this section if the user requested Yoast/SEO schema.*
+      
+      Add clean JSON-LD for:
+      
+      BlogPosting
+      FAQPage
+      
+      Use placeholder URLs if needed
+      
+      ## Examples
+      
+      ### Example 1: Informational Blog Post
+      **User:** Write a blog post about "Sustainable Gardening for Beginners".
+      **Agent:** (Generates Title, Truth Box, clickable contents, well-structured sections with tables, Misconceptions, and FAQ.)
+      
+      ## Best Practices
+      
+      - ✅ Use short, punchy sentences.
+      - ✅ Ensure tables are clean and use `|` markdown syntax.
+      - ✅ Maintain the Truth Box at the very beginning of the post for high engagement.
+      - ❌ Avoid using numbered headings; stick to standard markdown `#`, `##`, `###`.
+      - ❌ Do not use hyphen bullets in the contents section.
+      
+      
+      - This skill does not replace environment-specific validation, testing, or expert review.
+      - Stop and ask for clarification if required inputs, permissions, or safety boundaries are missing.
+      
+      ## Security & Safety Notes
+      
+      - This skill focuses on content generation and does not involve shell commands or direct system mutation.
+      - Ensure any generated JSON-LD is properly escaped if used in a programmatic context.
+      
+      ## Common Pitfalls
+      
+      - **Problem:** Missing Primary Keyword in Alt Text.
+        **Solution:** Ensure the `IMAGE SEO SECTION` explicitly includes the primary keyword in at least one Alt Text field.
+      - **Problem:** AI-sounding or repetitive tone.
+        **Solution:** Use the "Human-sounding" requirement in the `WRITING RULES` to re-check the draft.
+      
+      ## Related Skills
+      
+      - `@seo-plan` - Use for high-level SEO strategy before writing.
+      - `@seo-content` - For broader SEO content optimization across different platforms.
+      - `@copywriting` - General professional writing and marketing copy.
+    gold_removed: ""

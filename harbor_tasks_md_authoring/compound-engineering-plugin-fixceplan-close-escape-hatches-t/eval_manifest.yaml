@@ -1,0 +1,49 @@
+version: "2.0"
+
+task:
+  name: compound-engineering-plugin-fixceplan-close-escape-hatches-t
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: EveryInc/compound-engineering-plugin
+  pr: 554
+  base_commit: "e45c435b996f7c0bf5ae0e23c0ab95b3fbd9204c"
+  merge_commit: "e4d5f241bd3945784905a32d7fb7ef9305c621e8"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-plan/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-plan/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-plan/SKILL.md."
+
+config_edits:
+  - path: "plugins/compound-engineering/skills/ce-plan/SKILL.md"
+    tier: 1
+    gold_added: |-
+      description: "Create structured plans for any multi-step task -- software features, research workflows, events, study plans, or any goal that benefits from structured breakdown. Also deepen existing plans with interactive review of sub-agent findings. Use for plan creation when the user says 'plan this', 'create a plan', 'write a tech plan', 'plan the implementation', 'how should we build', 'what's the approach for', 'break this down', 'plan a trip', 'create a study plan', or when a brainstorm/requirements document is ready for planning. Use for plan deepening when the user says 'deepen the plan', 'deepen my plan', 'deepening pass', or uses 'deepen' in reference to a plan."
+      `ce:brainstorm` defines **WHAT** to build. `ce:plan` defines **HOW** to build it. `ce:work` executes the plan. A prior brainstorm is useful context but never required — `ce:plan` works from any input: a requirements doc, a bug report, a feature idea, or a rough description.
+      
+      **When directly invoked, always plan.** Never classify a direct invocation as "not a planning task" and abandon the workflow. If the input is unclear, ask clarifying questions or use the planning bootstrap (Phase 0.4) to establish enough context — but always stay in the planning workflow.
+      **If the feature description above is empty, ask the user:** "What would you like to plan? Describe the task, goal, or project you have in mind." Then wait for their response before continuing.
+      If the input is present but unclear or underspecified, do not abandon — ask one or two clarifying questions, or proceed to Phase 0.4's planning bootstrap to establish enough context. The goal is always to help the user plan, never to exit the workflow.
+      For everything else (quick questions, error messages, factual lookups) **only when auto-selected**, respond directly without any planning workflow. When directly invoked by the user, treat the input as a planning request — ask clarifying questions if needed, but do not exit the workflow.
+      #### 0.4 Planning Bootstrap (No Requirements Doc or Unclear Input)
+      If no relevant requirements document exists, or the input needs more structure:
+      - Assess whether the request is already clear enough for direct technical planning — if so, continue to Phase 0.5
+      - If the ambiguity is mainly product framing, user behavior, or scope definition, recommend `ce:brainstorm` as a suggestion — but always offer to continue planning here as well
+      - If the user wants to continue here (or was already explicit about wanting a plan), run the planning bootstrap below
+      If the bootstrap reveals that a different workflow would serve the user better:
+      
+      - **Symptom without a root cause** (user describes broken behavior but hasn't identified why) — announce that investigation is needed before planning and load the `ce:debug` skill. A plan requires a known problem to solve; debugging identifies what that problem is. Announce the routing clearly: "This needs investigation before planning — switching to ce:debug to find the root cause."
+      - **Clear task ready to execute** (known root cause, obvious fix, no architectural decisions) — suggest `ce:work` as a faster alternative alongside continuing with planning. The user decides.
+      
+    gold_removed: ""

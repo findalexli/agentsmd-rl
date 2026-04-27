@@ -1,0 +1,86 @@
+version: "2.0"
+
+task:
+  name: compound-engineering-plugin-featplugin-add-execution-posture
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: EveryInc/compound-engineering-plugin
+  pr: 309
+  base_commit: "74b286f9bf98d06c6bbd34641d23c2dbd33da7c2"
+  merge_commit: "748f72a57f713893af03a4d8ed69c2311f492dbd"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-plan-beta/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-plan-beta/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-plan-beta/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-work/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-work/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-work/SKILL.md."
+
+config_edits:
+  - path: "plugins/compound-engineering/skills/ce-plan-beta/SKILL.md"
+    tier: 1
+    gold_added: |-
+      7. **Carry execution posture lightly when it matters** - If the request, origin document, or repo context clearly implies test-first, characterization-first, or another non-default execution posture, reflect that in the plan as a lightweight signal. Do not turn the plan into step-by-step execution choreography.
+      #### 1.1b Detect Execution Posture Signals
+      
+      Decide whether the plan should carry a lightweight execution posture signal.
+      
+      Look for signals such as:
+      - The user explicitly asks for TDD, test-first, or characterization-first work
+      - The origin document calls for test-first implementation or exploratory hardening of legacy code
+      - Local research shows the target area is legacy, weakly tested, or historically fragile, suggesting characterization coverage before changing behavior
+      
+      When the signal is clear, carry it forward silently in the relevant implementation units.
+      
+      Ask the user only if the posture would materially change sequencing or risk and cannot be responsibly inferred.
+      
+      - **Execution note** - optional, only when the unit benefits from a non-default execution posture such as test-first or characterization-first work
+      Use `Execution note` sparingly. Good uses include:
+      - `Execution note: Start with a failing integration test for the request/response contract.`
+      - `Execution note: Add characterization coverage before modifying this legacy parser.`
+      - `Execution note: Implement new domain behavior test-first.`
+      
+      Do not expand units into literal `RED/GREEN/REFACTOR` substeps.
+      
+      **Execution note:** [Optional test-first, characterization-first, or other execution posture signal]
+      
+      - Do not expand implementation units into micro-step `RED/GREEN/REFACTOR` instructions
+      - If test-first or characterization-first posture was explicit or strongly implied, the relevant units carry it forward with a lightweight `Execution note`
+    gold_removed: ""
+  - path: "plugins/compound-engineering/skills/ce-work/SKILL.md"
+    tier: 1
+    gold_added: |-
+         - Check for `Execution note` on each implementation unit — these carry the plan's execution posture signal for that unit (for example, test-first or characterization-first). Note them when creating tasks.
+         - If the user explicitly asks for TDD, test-first, or characterization-first execution in this session, honor that request even if the plan has no `Execution note`
+         - Carry each unit's `Execution note` into the task when present
+         - The specific unit's Goal, Files, Approach, Execution note, Patterns, Test scenarios, and Verification
+         When a unit carries an `Execution note`, honor it. For test-first units, write the failing test before implementation for that unit. For characterization-first units, capture existing behavior before changing it. For units without an `Execution note`, proceed pragmatically.
+      
+         Guardrails for execution posture:
+         - Do not write the test and implementation in the same step when working test-first
+         - Do not skip verifying that a new test fails before implementing the fix or feature
+         - Do not over-implement beyond the current behavior slice when working test-first
+         - Skip test-first discipline for trivial renames, pure configuration, and pure styling work
+      
+    gold_removed: ""

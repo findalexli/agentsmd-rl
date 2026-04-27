@@ -1,0 +1,40 @@
+version: "2.0"
+
+task:
+  name: pinme-add-router-mode-check-section
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: glitternetwork/pinme
+  pr: 34
+  base_commit: "1341aad131faad04e30a7468ead3ca0dce291000"
+  merge_commit: "8c3e56e70def0952da8c43e2745089fd059fcd9d"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/pinme/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/pinme/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/pinme/SKILL.md."
+
+config_edits:
+  - path: ".claude/skills/pinme/SKILL.md"
+    tier: 1
+    gold_added: |-
+      Use PinMe CLI to upload files and get a preview URL.
+      ## Router Mode Check
+      
+      Before building a frontend project for IPFS deployment, ensure it uses **hash mode** routing (e.g., `/#/about`). History mode (e.g., `/about`) will cause **404 errors** on sub-routes when deployed to IPFS, because there is no server to handle fallback routing.
+      
+      - **React**: Use `HashRouter` instead of `BrowserRouter`
+      - **Vue**: Use `createWebHashHistory()` instead of `createWebHistory()`
+      
+    gold_removed: ""

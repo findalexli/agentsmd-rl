@@ -1,0 +1,223 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd /workspace/nanoclaw
+
+# Idempotency guard
+if grep -qF "description: Show what this NanoClaw instance can do \u2014 installed skills, availab" "container/skills/capabilities/SKILL.md" && grep -qF "description: Quick read-only health check \u2014 session context, workspace mounts, t" "container/skills/status/SKILL.md"; then
+  echo "Gold patch already applied."
+  exit 0
+fi
+
+git apply --whitespace=nowarn <<'PATCH'
+diff --git a/container/skills/capabilities/SKILL.md b/container/skills/capabilities/SKILL.md
+@@ -0,0 +1,100 @@
++---
++name: capabilities
++description: Show what this NanoClaw instance can do — installed skills, available tools, and system info. Read-only. Use when the user asks what the bot can do, what's installed, or runs /capabilities.
++---
++
++# /capabilities — System Capabilities Report
++
++Generate a structured read-only report of what this NanoClaw instance can do.
++
++**Main-channel check:** Only the main channel has `/workspace/project` mounted. Run:
++
++```bash
++test -d /workspace/project && echo "MAIN" || echo "NOT_MAIN"
++```
++
++If `NOT_MAIN`, respond with:
++> This command is available in your main chat only. Send `/capabilities` there to see what I can do.
++
++Then stop — do not generate the report.
++
++## How to gather the information
++
++Run these commands and compile the results into the report format below.
++
++### 1. Installed skills
++
++List skill directories available to you:
++
++```bash
++ls -1 /home/node/.claude/skills/ 2>/dev/null || echo "No skills found"
++```
++
++Each directory is an installed skill. The directory name is the skill name (e.g., `agent-browser` → `/agent-browser`).
++
++### 2. Available tools
++
++Read the allowed tools from your SDK configuration. You always have access to:
++- **Core:** Bash, Read, Write, Edit, Glob, Grep
++- **Web:** WebSearch, WebFetch
++- **Orchestration:** Task, TaskOutput, TaskStop, TeamCreate, TeamDelete, SendMessage
++- **Other:** TodoWrite, ToolSearch, Skill, NotebookEdit
++- **MCP:** mcp__nanoclaw__* (messaging, tasks, group management)
++
++### 3. MCP server tools
++
++The NanoClaw MCP server exposes these tools (via `mcp__nanoclaw__*` prefix):
++- `send_message` — send a message to the user/group
++- `schedule_task` — schedule a recurring or one-time task
++- `list_tasks` — list scheduled tasks
++- `pause_task` — pause a scheduled task
++- `resume_task` — resume a paused task
++- `cancel_task` — cancel and delete a task
++- `update_task` — update an existing task
++- `register_group` — register a new chat/group (main only)
++
++### 4. Container skills (Bash tools)
++
++Check for executable tools in the container:
++
++```bash
++which agent-browser 2>/dev/null && echo "agent-browser: available" || echo "agent-browser: not found"
++```
++
++### 5. Group info
++
++```bash
++ls /workspace/group/CLAUDE.md 2>/dev/null && echo "Group memory: yes" || echo "Group memory: no"
++ls /workspace/extra/ 2>/dev/null && echo "Extra mounts: $(ls /workspace/extra/ 2>/dev/null | wc -l | tr -d ' ')" || echo "Extra mounts: none"
++```
++
++## Report format
++
++Present the report as a clean, readable message. Example:
++
++```
++📋 *NanoClaw Capabilities*
++
++*Installed Skills:*
++• /agent-browser — Browse the web, fill forms, extract data
++• /capabilities — This report
++(list all found skills)
++
++*Tools:*
++• Core: Bash, Read, Write, Edit, Glob, Grep
++• Web: WebSearch, WebFetch
++• Orchestration: Task, TeamCreate, SendMessage
++• MCP: send_message, schedule_task, list_tasks, pause/resume/cancel/update_task, register_group
++
++*Container Tools:*
++• agent-browser: ✓
++
++*System:*
++• Group memory: yes/no
++• Extra mounts: N directories
++• Main channel: yes
++```
++
++Adapt the output based on what you actually find — don't list things that aren't installed.
++
++**See also:** `/status` for a quick health check of session, workspace, and tasks.
+diff --git a/container/skills/status/SKILL.md b/container/skills/status/SKILL.md
+@@ -0,0 +1,104 @@
++---
++name: status
++description: Quick read-only health check — session context, workspace mounts, tool availability, and task snapshot. Use when the user asks for system status or runs /status.
++---
++
++# /status — System Status Check
++
++Generate a quick read-only status report of the current agent environment.
++
++**Main-channel check:** Only the main channel has `/workspace/project` mounted. Run:
++
++```bash
++test -d /workspace/project && echo "MAIN" || echo "NOT_MAIN"
++```
++
++If `NOT_MAIN`, respond with:
++> This command is available in your main chat only. Send `/status` there to check system status.
++
++Then stop — do not generate the report.
++
++## How to gather the information
++
++Run the checks below and compile results into the report format.
++
++### 1. Session context
++
++```bash
++echo "Timestamp: $(date)"
++echo "Working dir: $(pwd)"
++echo "Channel: main"
++```
++
++### 2. Workspace and mount visibility
++
++```bash
++echo "=== Workspace ==="
++ls /workspace/ 2>/dev/null
++echo "=== Group folder ==="
++ls /workspace/group/ 2>/dev/null | head -20
++echo "=== Extra mounts ==="
++ls /workspace/extra/ 2>/dev/null || echo "none"
++echo "=== IPC ==="
++ls /workspace/ipc/ 2>/dev/null
++```
++
++### 3. Tool availability
++
++Confirm which tool families are available to you:
++
++- **Core:** Bash, Read, Write, Edit, Glob, Grep
++- **Web:** WebSearch, WebFetch
++- **Orchestration:** Task, TaskOutput, TaskStop, TeamCreate, TeamDelete, SendMessage
++- **MCP:** mcp__nanoclaw__* (send_message, schedule_task, list_tasks, pause_task, resume_task, cancel_task, update_task, register_group)
++
++### 4. Container utilities
++
++```bash
++which agent-browser 2>/dev/null && echo "agent-browser: available" || echo "agent-browser: not installed"
++node --version 2>/dev/null
++claude --version 2>/dev/null
++```
++
++### 5. Task snapshot
++
++Use the MCP tool to list tasks:
++
++```
++Call mcp__nanoclaw__list_tasks to get scheduled tasks.
++```
++
++If no tasks exist, report "No scheduled tasks."
++
++## Report format
++
++Present as a clean, readable message:
++
++```
++🔍 *NanoClaw Status*
++
++*Session:*
++• Channel: main
++• Time: 2026-03-14 09:30 UTC
++• Working dir: /workspace/group
++
++*Workspace:*
++• Group folder: ✓ (N files)
++• Extra mounts: none / N directories
++• IPC: ✓ (messages, tasks, input)
++
++*Tools:*
++• Core: ✓  Web: ✓  Orchestration: ✓  MCP: ✓
++
++*Container:*
++• agent-browser: ✓ / not installed
++• Node: vXX.X.X
++• Claude Code: vX.X.X
++
++*Scheduled Tasks:*
++• N active tasks / No scheduled tasks
++```
++
++Adapt based on what you actually find. Keep it concise — this is a quick health check, not a deep diagnostic.
++
++**See also:** `/capabilities` for a full list of installed skills and tools.
+PATCH
+
+echo "Gold patch applied."

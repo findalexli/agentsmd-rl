@@ -1,0 +1,51 @@
+version: "2.0"
+
+task:
+  name: superpowers-fix-use-git-checkignore-for
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: obra/superpowers
+  pr: 160
+  base_commit: "5faddc4087553bdc3c7ee98a83300e844295207e"
+  merge_commit: "c037dcbf4ba74a3e7a63f7f2910baf1f13513d05"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/using-git-worktrees/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/using-git-worktrees/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/using-git-worktrees/SKILL.md."
+
+config_edits:
+  - path: "skills/using-git-worktrees/SKILL.md"
+    tier: 1
+    gold_added: |-
+      **MUST verify directory is ignored before creating worktree:**
+      # Check if directory is ignored (respects local, global, and system gitignore)
+      git check-ignore -q .worktrees 2>/dev/null || git check-ignore -q worktrees 2>/dev/null
+      **If NOT ignored:**
+      | `.worktrees/` exists | Use it (verify ignored) |
+      | `worktrees/` exists | Use it (verify ignored) |
+      | Directory not ignored | Add to .gitignore + commit |
+      ### Skipping ignore verification
+      
+      - **Fix:** Always use `git check-ignore` before creating project-local worktree
+      
+      ### Assuming directory location
+      ### Proceeding with failing tests
+      
+      ### Hardcoding setup commands
+      
+      [Verify ignored - git check-ignore confirms .worktrees/ is ignored]
+      - Create worktree without verifying it's ignored (project-local)
+      - Verify directory is ignored for project-local
+    gold_removed: ""

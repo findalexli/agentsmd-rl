@@ -1,0 +1,39 @@
+version: "2.0"
+
+task:
+  name: compound-engineering-plugin-fixgitcommitpushpr-simplify-pr-p
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: EveryInc/compound-engineering-plugin
+  pr: 513
+  base_commit: "3fa0c815b286c9e11b28dc04c803529e73b79c1b"
+  merge_commit: "f6544eba0e6851b8772bb9920583ffda5c80cccc"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/git-commit-push-pr/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/git-commit-push-pr/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/git-commit-push-pr/SKILL.md."
+
+config_edits:
+  - path: "plugins/compound-engineering/skills/git-commit-push-pr/SKILL.md"
+    tier: 1
+    gold_added: |-
+      !`git rev-parse --abbrev-ref origin/HEAD 2>/dev/null || echo 'DEFAULT_BRANCH_UNRESOLVED'`
+      !`gh pr view --json url,title,state 2>/dev/null || echo 'NO_OPEN_PR'`
+      printf '=== STATUS ===\n'; git status; printf '\n=== DIFF ===\n'; git diff HEAD; printf '\n=== BRANCH ===\n'; git branch --show-current; printf '\n=== LOG ===\n'; git log --oneline -10; printf '\n=== DEFAULT_BRANCH ===\n'; git rev-parse --abbrev-ref origin/HEAD 2>/dev/null || echo 'DEFAULT_BRANCH_UNRESOLVED'; printf '\n=== PR_CHECK ===\n'; gh pr view --json url,title,state 2>/dev/null || echo 'NO_OPEN_PR'
+      If the existing PR check returned JSON with `state: OPEN`, an open PR exists — proceed to DU-3. Otherwise (`NO_OPEN_PR` or a non-OPEN state), report no open PR and stop.
+      The remote default branch value returns something like `origin/main`. Strip the `origin/` prefix to get the branch name. If it returned `DEFAULT_BRANCH_UNRESOLVED` or a bare `HEAD`, try:
+      If the existing PR check returned JSON with `state: OPEN`, note the URL — continue to Step 4 and Step 5, then skip to Step 7 (existing PR flow). Otherwise (`NO_OPEN_PR` or a non-OPEN state), continue to Step 4 through Step 8.
+      2. **Remote default branch from context above:** If the remote default branch resolved (not `DEFAULT_BRANCH_UNRESOLVED`), strip the `origin/` prefix and use that. Use `origin` as the base remote.
+    gold_removed: ""

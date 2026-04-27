@@ -1,0 +1,42 @@
+version: "2.0"
+
+task:
+  name: ui-ux-pro-max-skill-fix-fix-codex-scripts-path
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: nextlevelbuilder/ui-ux-pro-max-skill
+  pr: 80
+  base_commit: "5bf9df8d5223c5da3bcdf180115bc36e2a691959"
+  merge_commit: "ae8c5642481e6517b4c94a5254ec5de1ee4bcfe4"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .codex/skills/ui-ux-pro-max/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .codex/skills/ui-ux-pro-max/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .codex/skills/ui-ux-pro-max/SKILL.md."
+
+config_edits:
+  - path: ".codex/skills/ui-ux-pro-max/SKILL.md"
+    tier: 1
+    gold_added: |-
+      python3 .codex/skills/ui-ux-pro-max/scripts/search.py "<keyword>" --domain <domain> [-n <max_results>]
+      python3 .codex/skills/ui-ux-pro-max/scripts/search.py "<keyword>" --stack html-tailwind
+      python3 .codex/skills/ui-ux-pro-max/scripts/search.py "beauty spa wellness service" --domain product
+      python3 .codex/skills/ui-ux-pro-max/scripts/search.py "elegant minimal soft" --domain style
+      python3 .codex/skills/ui-ux-pro-max/scripts/search.py "elegant luxury" --domain typography
+      python3 .codex/skills/ui-ux-pro-max/scripts/search.py "beauty spa wellness" --domain color
+      python3 .codex/skills/ui-ux-pro-max/scripts/search.py "hero-centric social-proof" --domain landing
+      python3 .codex/skills/ui-ux-pro-max/scripts/search.py "animation" --domain ux
+      python3 .codex/skills/ui-ux-pro-max/scripts/search.py "accessibility" --domain ux
+      python3 .codex/skills/ui-ux-pro-max/scripts/search.py "layout responsive" --stack html-tailwind
+    gold_removed: ""

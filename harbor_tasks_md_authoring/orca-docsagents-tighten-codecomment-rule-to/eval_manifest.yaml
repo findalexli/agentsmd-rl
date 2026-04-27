@@ -1,0 +1,37 @@
+version: "2.0"
+
+task:
+  name: orca-docsagents-tighten-codecomment-rule-to
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: stablyai/orca
+  pr: 883
+  base_commit: "3bbe9ed712bb4c583936f54ab9e0e8b864166312"
+  merge_commit: "8ea1f2ee338e3fb2737b9e812d0e8077bbcaf710"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: "AGENTS.md"
+    tier: 1
+    gold_added: |-
+      ## Code Comments: Document the "Why", Briefly
+      When writing or modifying code driven by a design doc or non-obvious constraint, add a comment explaining **why** the code behaves the way it does.
+      
+      Keep comments short — one or two lines. Capture only the non-obvious reason (safety constraint, compatibility shim, design-doc rule). Don't restate what the code does, narrate the mechanism, cite design-doc sections verbatim, or explain adjacent API choices unless they're the point.
+      Be mindful of the user's `gh` CLI API rate limit — batch requests where possible and avoid unnecessary calls. All code, commands, and scripts must be compatible with macOS, Linux, and Windows.
+    gold_removed: ""

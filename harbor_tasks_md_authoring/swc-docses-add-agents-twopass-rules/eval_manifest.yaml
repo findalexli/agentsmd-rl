@@ -1,0 +1,64 @@
+version: "2.0"
+
+task:
+  name: swc-docses-add-agents-twopass-rules
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: swc-project/swc
+  pr: 11634
+  base_commit: "ff3adef43b0b49a611f1f1704400ca20ec1111f3"
+  merge_commit: "12af4a1fcffff0bcefaa5ca766914d1aae2c7847"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in crates/swc_es_minifier/AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in crates/swc_es_minifier/AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in crates/swc_es_minifier/AGENTS.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in crates/swc_es_transforms/AGENTS.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in crates/swc_es_transforms/AGENTS.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in crates/swc_es_transforms/AGENTS.md."
+
+config_edits:
+  - path: "crates/swc_es_minifier/AGENTS.md"
+    tier: 1
+    gold_added: |-
+      ### Instructions
+      
+      - This crate must operate in exactly two passes.
+      - Pass 1 is the analysis pass. It must collect data only and must not transform the AST.
+      - Pass 2 is the transform pass. It must apply transformations using data from pass 1.
+      - Do not add a third pass, and do not merge analysis and transformation into a single pass.
+      - Never add dependencies on any `swc_ecma_*` crate.
+      
+    gold_removed: ""
+  - path: "crates/swc_es_transforms/AGENTS.md"
+    tier: 1
+    gold_added: |-
+      ### Instructions
+      
+      - This crate must operate in exactly two passes.
+      - Pass 1 is the analysis pass. It must collect data only and must not transform the AST.
+      - Pass 2 is the transform pass. It must apply transformations using data from pass 1.
+      - Do not add a third pass, and do not merge analysis and transformation into a single pass.
+      - Never add dependencies on any `swc_ecma_*` crate.
+      
+    gold_removed: ""

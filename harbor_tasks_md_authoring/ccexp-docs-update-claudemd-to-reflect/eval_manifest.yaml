@@ -1,0 +1,225 @@
+version: "2.0"
+
+task:
+  name: ccexp-docs-update-claudemd-to-reflect
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: nyatinte/ccexp
+  pr: 33
+  base_commit: "e9f341696fbe1af724579c1c91a0d00de1f0f018"
+  merge_commit: "6ccfdbff45e913574ebf26a3779471472ab7321b"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: "CLAUDE.md"
+    tier: 1
+    gold_added: |-
+      **ccexp** (short for claude-code-explorer) - React Ink-based CLI tool for exploring and managing Claude Code settings and slash commands. The tool provides an interactive terminal UI for file navigation, content preview, and file management operations. The package was renamed from `claude-code-explorer` to `ccexp` for brevity and easier command-line usage.
+      # Release Management
+      bun run release               # Interactive version bumping with bumpp
+      bun run prepack              # Pre-publish build and package.json cleanup
+      
+      │   │   ├── FileGroup.tsx     # File grouping by type
+      │   │   ├── MenuActions/      # File action menu module
+      │   │   │   ├── index.tsx     # Main menu component
+      │   │   │   ├── Footer.tsx    # Menu footer controls
+      │   │   │   ├── Header.tsx    # Menu header
+      │   │   │   ├── MenuItem.tsx  # Individual menu item
+      │   │   │   ├── MenuList.tsx  # Menu item container
+      │   │   │   ├── StatusMessage.tsx # Action feedback
+      │   │   │   ├── types.ts      # Menu types
+      │   │   │   └── hooks/
+      │   │   │       └── useMenu.ts    # Menu state management
+      │   │   ├── MarkdownPreview.tsx # Markdown renderer
+      │   │   └── *.test.tsx        # Preview tests
+      │   ├── ErrorBoundary.tsx     # Error handling component
+      │   ├── ErrorBoundary.test.tsx # Boundary tests
+      │   ├── LoadingScreen.tsx     # Loading UI component
+      │   └── LoadingScreen.test.tsx # Loading tests
+      │   ├── useFileNavigation.test.tsx # Hook tests
+      ├── base-file-scanner.ts    # Abstract scanner base class
+      ├── default-scanner.ts      # Default file scanner implementation
+      ├── scan-exclusions.ts # File/directory exclusion patterns
+      ├── test-setup.ts      # Global test setup
+      ├── test-utils.ts      # Common test utilities
+      ├── test-fixture-helpers.ts # fs-fixture utilities
+      ├── test-keyboard-helpers.ts # Keyboard interaction testing
+      ├── test-interaction-helpers.ts # UI interaction testing
+      ├── test-navigation.ts # Navigation test helpers
+      ├── boundary.test.tsx  # Error boundary integration tests
+      ├── e2e.test.tsx       # End-to-end tests
+      ├── vitest.d.ts        # Vitest type definitions
+      ├── styles/
+      │   └── theme.ts       # UI color theme constants
+      2. **Simplified Type System**: Clean types with runtime validation where needed
+         // Simple type alias approach
+         export type ClaudeFilePath = string;
+         // Runtime validation helper
+           if (path.length === 0) {
+             throw new Error('Path must not be empty');
+           }
+           return path;
+      6. **Scanner Hierarchy**: Modular scanner architecture with base class
+      
+         ```typescript
+         // Base scanner provides common functionality
+         export abstract class BaseFileScanner<T> {
+           protected abstract readonly maxFileSize: number;
+           protected abstract readonly fileType: string;
+           
+           async processFile(filePath: string): Promise<T | null> {
+             // Common file processing logic
+           }
+           
+           protected abstract parseContent(
+             filePath: string,
+             content: string,
+             stats: Stats,
+           ): Promise<T | null>;
+         }
+         
+         // Specialized scanners extend base
+         class ClaudeMdScanner extends BaseFileScanner<ClaudeFileInfo> {
+           protected readonly maxFileSize = FILE_SIZE_LIMITS.MAX_CLAUDE_MD_SIZE;
+           protected readonly fileType = 'Claude.md';
+         }
+         ```
+      
+      - **Scanners**: Multiple specialized scanners → discover files
+        - `base-file-scanner.ts` → Abstract base class for all scanners
+        - `claude-md-scanner.ts` → CLAUDE.md file discovery
+        - `slash-command-scanner.ts` → Slash command discovery
+        - `default-scanner.ts` → Combined scanner for all file types
+        - `fast-scanner.ts` → High-performance directory traversal
+      - **Exclusions**: `scan-exclusions.ts` → Configurable file/directory filtering
+      ### Testing Philosophy & Strategy
+      
+      #### Core Testing Principles
+      #### Efficient Test Architecture with fs-fixture
+      
+      The project employs a sophisticated testing strategy using `fs-fixture` for creating isolated file system environments:
+      
+      ```typescript
+      // Example from test-fixture-helpers.ts
+      export async function withTempFixture<T>(
+        fileTree: FileTree,
+        callback: (fixture: FsFixture) => Promise<T>,
+      ): Promise<T> {
+        await using fixture = await createFixture(fileTree);
+        return callback(fixture);
+      }
+      
+      // Usage example
+      await withTempFixture(
+        { 'test.md': '# Test content' },
+        async (fixture) => {
+          const content = await fixture.readFile('test.md', 'utf-8');
+          // Test logic here
+        }
+      );
+      ```
+      
+      #### Scanner Testing Strategy
+      
+      File scanners are tested using fs-fixture to create isolated file environments:
+      
+      ```typescript
+      // Example from claude-md-scanner.ts tests
+      await using fixture = await createClaudeProjectFixture({
+        projectName: 'test-scan',
+        includeLocal: true,
+        includeCommands: true,
+      });
+      
+      const result = await scanClaudeFiles({
+        path: fixture.getPath('test-scan'),
+        recursive: false,
+      });
+      
+      // The scanner internally uses a singleton pattern
+      const scanner = new ClaudeMdScanner();
+      const fileInfo = await scanner.processFile(filePath);
+      ```
+      
+      #### Test Helper Architecture
+      
+      - **test-fixture-helpers.ts**: Factory functions for creating test file structures
+      - **test-keyboard-helpers.ts**: Keyboard event simulation for React Ink components
+      - **test-interaction-helpers.ts**: UI interaction testing utilities
+      - **test-navigation.ts**: Navigation flow testing helpers
+      - **test-utils.ts**: Common testing utilities and assertions
+      
+      #### Testing Configuration
+      
+      **vitest.config.ts**:
+      ```typescript
+      export default defineConfig({
+        test: {
+          includeSource: ['src/**/*.{js,ts,tsx}'],
+          exclude: ['node_modules'],
+          globals: true,
+          environment: 'node',
+          setupFiles: ['./src/test-setup.ts'],
+        },
+        esbuild: {
+          jsx: 'automatic',
+        },
+      });
+      ```
+      
+      This configuration enables:
+      - InSource testing pattern
+      - Global test functions without imports
+      - Proper React JSX transformation
+      - Consistent test environment setup
+      
+      - **File grouping**: Organized display by file type with collapsible groups
+        - CLAUDE.md files (Project configurations)
+        - CLAUDE.local.md files (Local overrides)
+        - Global CLAUDE.md (User-wide settings)
+        - Slash commands (Custom command definitions)
+        - Groups can be collapsed/expanded with arrow keys
+      ## Git Hooks
+      
+      The project uses Lefthook for pre-commit hooks:
+      
+      ```bash
+      # Automatically runs on git commit:
+      bun run ci  # Full quality pipeline
+      ```
+      
+      This ensures all code meets quality standards before committing.
+      
+      
+      ## CI/CD Pipeline
+      
+      The project uses GitHub Actions for continuous integration:
+      
+      ### CI Workflow (`.github/workflows/ci.yml`)
+      
+      Runs on every push and pull request with the following jobs:
+      
+      1. **Build** - Verifies the project builds correctly
+      2. **Lint & Format** - Ensures code style compliance with Biome
+      3. **TypeScript Check** - Validates type safety
+      4. **Knip** - Checks for unused dependencies
+      5. **Tests** - Runs all unit and integration tests
+      6. **Preview Package** - Publishes preview packages for PRs via `pkg-pr-new`
+      
+      All jobs run in parallel for efficiency, with PR preview packages only published after all checks pass.
+    gold_removed: ""

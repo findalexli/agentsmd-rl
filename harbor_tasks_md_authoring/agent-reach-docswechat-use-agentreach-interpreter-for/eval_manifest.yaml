@@ -1,0 +1,39 @@
+version: "2.0"
+
+task:
+  name: agent-reach-docswechat-use-agentreach-interpreter-for
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Panniantong/Agent-Reach
+  pr: 188
+  base_commit: "c1af1cad14706624b5f4b2937fafff1379f5c355"
+  merge_commit: "e6406500f30612e8bb4f074ac5a1d8bd79dde5d5"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in agent_reach/skill/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in agent_reach/skill/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in agent_reach/skill/SKILL.md."
+
+config_edits:
+  - path: "agent_reach/skill/SKILL.md"
+    tier: 1
+    gold_added: |-
+      ```bash
+      # miku_ai is installed inside the agent-reach Python environment.
+      # Use the same interpreter that runs agent-reach (handles pipx / venv installs):
+      AGENT_REACH_PYTHON=$(python3 -c "import agent_reach, sys; print(sys.executable)" 2>/dev/null || echo python3)
+      $AGENT_REACH_PYTHON -c "
+          for a in await get_wexin_article(\'query\', 5):
+              print(f\'{a[\"title\"]} | {a[\"url\"]}\')
+    gold_removed: ""

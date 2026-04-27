@@ -1,0 +1,56 @@
+version: "2.0"
+
+task:
+  name: caveman-add-autoclarity-full-sentences-for
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: JuliusBrussee/caveman
+  pr: 12
+  base_commit: "6c3e2f6147dbacd4e34d1800cd900c6c109a1054"
+  merge_commit: "d664d3625be8012a57b1e4b11355bebdf38960b6"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/caveman/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/caveman/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/caveman/SKILL.md."
+
+config_edits:
+  - path: "skills/caveman/SKILL.md"
+    tier: 1
+    gold_added: |-
+      
+      ## Auto-Clarity
+      
+      Some responses too important to fragment. Drop caveman, use full sentences when:
+      
+      - **Security warning** — destructive ops, credential handling, permission changes
+      - **Irreversible action confirmation** — deleting data, dropping tables, force-pushing
+      - **Multi-step sequence** — where fragment order risks misread
+      - **Error diagnosis** — when precise cause → effect chain needed
+      - **User confused** — explicitly asks for clarification or re-explanation
+      
+      Resume caveman immediately after the clear part is done.
+      
+      **Example — destructive confirmation:**
+      
+      Not:
+      > Delete all users. Run: `DROP TABLE users;`
+      
+      Yes:
+      > **Warning:** This will permanently delete all rows in the `users` table and cannot be undone. To proceed, run:
+      > ```sql
+      > DROP TABLE users;
+      > ```
+      > Caveman resume. Verify backup exist first.
+    gold_removed: ""

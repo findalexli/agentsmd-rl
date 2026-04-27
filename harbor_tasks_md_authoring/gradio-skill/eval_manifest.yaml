@@ -1,0 +1,45 @@
+version: "2.0"
+
+task:
+  name: gradio-skill
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: gradio-app/gradio
+  pr: 13230
+  base_commit: "45c4ecd25fc83c7ee0210d216df1bc4bd509e622"
+  merge_commit: "b07bc5f2eddeb068e466d1794c3327deca6f8ef2"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/frontend-unit-testing/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/frontend-unit-testing/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/frontend-unit-testing/SKILL.md."
+
+config_edits:
+  - path: ".agents/skills/frontend-unit-testing/SKILL.md"
+    tier: 1
+    gold_added: |-
+      expect(queryByRole("button")).not.toBeInTheDocument();
+      expect(queryByLabelText("Upload file")).not.toBeInTheDocument();
+      expect(queryByRole("button")).not.toBeInTheDocument();  // not in DOM
+      expect(getByRole("button")).toBeInTheDocument();        // in DOM
+      - **Don't use `toBeTruthy()` or `toBeFalsy()`.** These are too vague and hide intent. Use the most specific matcher for the value being checked:
+        - Element in DOM → `toBeInTheDocument()` / `.not.toBeInTheDocument()`
+        - Element visible → `toBeVisible()` / `.not.toBeVisible()`
+        - Element has value → `toHaveValue("x")`
+        - Element checked → `toBeChecked()`
+        - Element disabled → `toBeDisabled()` / `toBeEnabled()`
+        - Boolean variable → `toBe(true)` / `toBe(false)`
+        - Array non-empty → `toHaveLength(n)` or `expect(arr.length).toBeGreaterThan(0)`
+        - Non-DOM null/undefined → `toBeNull()` / `toBeDefined()` / `toBeUndefined()`
+    gold_removed: ""

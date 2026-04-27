@@ -1,0 +1,75 @@
+version: "2.0"
+
+task:
+  name: auto-claude-code-research-in-sleep-featrebuttal-generate-rev
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: wanshuiyin/Auto-claude-code-research-in-sleep
+  pr: 144
+  base_commit: "3db8a24949a79b1cb78c7f32b8a42f9cab71d481"
+  merge_commit: "de19075d02eedd031444b43d0a54ddd413dd9426"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/rebuttal/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/rebuttal/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/rebuttal/SKILL.md."
+
+config_edits:
+  - path: "skills/rebuttal/SKILL.md"
+    tier: 1
+    gold_added: |-
+      Also generate `rebuttal/REVISION_PLAN.md` — the **overall revision checklist**.
+      
+      This document is the single source of truth for every paper revision promised (explicitly or implicitly) in the rebuttal draft. It exists so the author can track follow-through after the rebuttal is submitted, and so the commitment gate in Phase 5 has a concrete artifact to validate against.
+      
+      Structure:
+      
+      1. **Header**
+         - Paper title, venue, character limit, rebuttal round
+         - Links back to `ISSUE_BOARD.md`, `STRATEGY_PLAN.md`, `REBUTTAL_DRAFT_v1.md`
+      
+      2. **Overall checklist** — a single flat GitHub-style checklist covering **every** revision item, so the author can tick items off as they land in the camera-ready / revised PDF:
+      
+         ```markdown
+         ## Overall Checklist
+      
+         - [ ] (R1-C2) Add assumption hierarchy table to Section 3.1 — commitment: `approved_for_rebuttal` — owner: author — status: pending
+         - [ ] (R2-C1) Clarify novelty delta vs. Smith'24 in Section 2 related work — commitment: `already_done` — status: verify wording
+         - [ ] (R3-C4) Add runtime breakdown figure to Appendix B — commitment: `future_work_only` — status: deferred, note in camera-ready
+         - ...
+         ```
+      
+         Checklist items must be **atomic** (one paper edit per line) and each must reference its `issue_id` so it maps back to `ISSUE_BOARD.md`.
+      
+      3. **Grouped view** — the same items regrouped by (a) paper section/location and (b) severity, so the author can plan the revision pass efficiently.
+      
+      4. **Commitment summary** — counts of `already_done` / `approved_for_rebuttal` / `future_work_only`, plus any `needs_user_input` items that are blocking.
+      
+      5. **Out-of-scope log** — reviewer concerns that will **not** trigger a paper revision (e.g. `deferred_intentionally`, `narrow_concession` with no edit), with a one-line reason each. This keeps the checklist honest: nothing silently disappears.
+      
+      Rules for `REVISION_PLAN.md`:
+      - Every checklist item must map to at least one `issue_id` from `ISSUE_BOARD.md`.
+      - Every promise in `REBUTTAL_DRAFT_v1.md` that implies a paper edit must appear as a checklist item — if it is not in the plan, it is a commitment-gate violation.
+      - Never add items that are not backed by the draft or by user-confirmed evidence.
+      - On rerun / follow-up rounds, update checkbox state in place rather than regenerating from scratch.
+      
+      3. **Commitment** — promises are approved AND every paper-edit promise in the draft appears as a checklist item in `REVISION_PLAN.md` (and vice versa — no orphan items in the plan)
+      4. Refresh `rebuttal/REVISION_PLAN.md` so the overall checklist matches the final draft (add items, mark `already_done` as checked, carry forward any `pending` items)
+      5. Present to user:
+         - `REVISION_PLAN.md` checklist — counts of pending / approved / deferred
+      4. Update `rebuttal/REVISION_PLAN.md` in place — add any new checklist items introduced by the follow-up, tick off items the author has already completed, and keep existing items' status current
+      5. Re-run safety lints
+      6. Use Codex MCP reply for continuity if useful
+      7. Rules: escalate technically not rhetorically; concede if reviewer is correct; stop arguing if reviewer is immovable and no new evidence exists
+    gold_removed: ""

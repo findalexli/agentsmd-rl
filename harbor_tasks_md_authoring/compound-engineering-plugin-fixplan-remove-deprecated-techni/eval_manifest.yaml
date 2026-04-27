@@ -1,0 +1,58 @@
+version: "2.0"
+
+task:
+  name: compound-engineering-plugin-fixplan-remove-deprecated-techni
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: EveryInc/compound-engineering-plugin
+  pr: 258
+  base_commit: "1e829ba4fe88c3d82c5b77020485790fba060c32"
+  merge_commit: "a8f49093de29ae00179e8a26d20cbbe8f3856957"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-plan/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-plan/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-plan/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/deepen-plan/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/deepen-plan/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/deepen-plan/SKILL.md."
+
+config_edits:
+  - path: "plugins/compound-engineering/skills/ce-plan/SKILL.md"
+    tier: 1
+    gold_added: |-
+      3. **Review and refine** - Improve the document through structured self-review
+      4. **Share to Proof** - Upload to Proof for collaborative review and sharing
+      5. **Start `/ce:work`** - Begin implementing this plan locally
+      6. **Start `/ce:work` on remote** - Begin implementing in Claude Code on the web (use `&` to run in background)
+      7. **Create Issue** - Create issue in project tracker (GitHub/Linear)
+      Loop back to options after Simplify or Other changes until user selects `/ce:work` or another action.
+         - Ask if they want to proceed to `/ce:work`
+    gold_removed: ""
+  - path: "plugins/compound-engineering/skills/deepen-plan/SKILL.md"
+    tier: 1
+    gold_added: |-
+      2. **Start `/ce:work`** - Begin implementing this enhanced plan
+      3. **Deepen further** - Run another round of research on specific sections
+      4. **Revert** - Restore original plan (if backup exists)
+    gold_removed: ""

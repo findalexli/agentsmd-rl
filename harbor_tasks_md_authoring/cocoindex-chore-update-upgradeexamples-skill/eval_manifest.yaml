@@ -1,0 +1,40 @@
+version: "2.0"
+
+task:
+  name: cocoindex-chore-update-upgradeexamples-skill
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: cocoindex-io/cocoindex
+  pr: 1734
+  base_commit: "ed78ebb1e0194b526cf4089b6ed39256bd63b16c"
+  merge_commit: "0eaa5c9f47e9395406950c44128043845808720c"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/upgrade-examples/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/upgrade-examples/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/upgrade-examples/SKILL.md."
+
+config_edits:
+  - path: ".claude/skills/upgrade-examples/SKILL.md"
+    tier: 1
+    gold_added: |-
+      6. Switch back to the previous branch and delete the local branch:
+      
+      ```bash
+      git checkout v1
+      git branch -d ex-dep-VERSION
+      ```
+      
+      7. Report the number of files updated and provide the PR link from the `gh pr create` output to the user.
+    gold_removed: ""

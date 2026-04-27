@@ -1,0 +1,58 @@
+version: "2.0"
+
+task:
+  name: chrome-devtools-mcp-docs-adapt-a11y-skill-to
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: ChromeDevTools/chrome-devtools-mcp
+  pr: 1054
+  base_commit: "13a18e2380f401ee37a20c08cc55b2df0cf6992d"
+  merge_commit: "21634e660c346e469ae62116b1824538f51567dd"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/a11y-debugging/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/a11y-debugging/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/a11y-debugging/SKILL.md."
+
+config_edits:
+  - path: "skills/a11y-debugging/SKILL.md"
+    tier: 1
+    gold_added: |-
+      ### 1. Automated Audit (Lighthouse)
+      Start by running a Lighthouse accessibility audit to get a comprehensive baseline. This tool provides a high-level score and lists specific failing elements with remediation advice.
+      
+      1.  Run the audit:
+          - Set `mode` to `"navigation"` to refresh the page and capture load issues.
+          - Set `outputDirPath` (e.g., `/tmp/lh-report`) to save the full JSON report.
+      2.  **Analyze the Summary**:
+          - Check `scores` (0-1 scale). A score < 1 indicates violations.
+          - Review `audits.failed` count.
+      3.  **Review the Report (CRITICAL)**:
+          - **Parsing**: Do not read the entire file line-by-line. Use a CLI tool like `jq` or a Node.js one-liner to filter for failures:
+            ```bash
+            # Extract failing audits with their details
+            node -e "const r=require('./report.json'); Object.values(r.audits).filter(a=>a.score!==null && a.score<1).forEach(a=>console.log(JSON.stringify({id:a.id, title:a.title, items:a.details?.items})))"
+            ```
+          - This efficiently extracts the `selector` and `snippet` of failing elements without loading the full report into context.
+      
+      ### 2. Browser Issues & Audits
+      
+      Chrome automatically checks for common accessibility problems. Use `list_console_messages` to check for these native audits:
+      ### 3. Semantics & Structure
+      ### 4. Labels, Forms & Text Alternatives
+      ### 5. Focus & Keyboard Navigation
+      ### 6. Tap Targets and Visuals
+      ### 7. Color Contrast
+      ### 8. Global Page Checks
+    gold_removed: ""

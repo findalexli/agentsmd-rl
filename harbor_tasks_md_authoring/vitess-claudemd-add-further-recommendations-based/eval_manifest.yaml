@@ -1,0 +1,76 @@
+version: "2.0"
+
+task:
+  name: vitess-claudemd-add-further-recommendations-based
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: vitessio/vitess
+  pr: 19671
+  base_commit: "6fc1442de8374f65df290ac6ccf989b7bf9b1bc9"
+  merge_commit: "bc4843e90273cc388965270ecca58095bdf24a5f"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: "CLAUDE.md"
+    tier: 1
+    gold_added: |-
+      To make sure tests are easy to read, we use `github.com/stretchr/testify/assert` and `github.com/stretchr/testify/require` for assertions. Use `assert.Eventually` instead of manual `time.Sleep()` and timeouts. Use `t.Cleanup()` for test cleanup and `t.Context()` for the test's parent context.
+      // YES - Clear error context with vterrors
+              return nil, vterrors.Errorf(vtrpcpb.Code_FAILED_PRECONDITION, "user ID cannot be empty")
+      
+              return nil, vterrors.Wrapf(err, "failed to get user %s", id)
+      
+      1. **Use `vterrors`** - Prefer `vterrors` over `fmt.Errorf` or `errors` package, with an appropriate `vtrpcpb.Code` (e.g., `vtrpcpb.Code_FAILED_PRECONDITION` for unexpected input values, `vtrpcpb.Code_INTERNAL` for internal operation failures)
+      2. **Wrap errors with context** - Use `vterrors.Wrapf(err, "context")`
+      3. **Validate early** - Check inputs before doing work
+      4. **Fail fast** - Don't continue with invalid state
+      5. **Log appropriately** - Errors at boundaries, debug info internally
+      6. **Return structured errors** - Use error types for different handling
+      - **No naked returns in non-trivial functions** - For functions with named return values, avoid bare `return` and explicitly return all result values (very small helpers are the only exception). This does not prohibit plain `return` in `func f() { ... }` when used for early-exit/guard clauses.
+      - **Reduce nesting** - Prefer early returns and guard clauses over deeply nested `if` conditions
+      - **Copyright header** - New Go files must include the project copyright header with the current year
+      - **Always run `gofumpt -w`** on changed Go files before committing - this is mandatory
+      - **Always run `goimports -local "vitess.io/vitess" -w`** on changed Go files before committing
+      
+      ## :building_construction: Vitess-Specific Conventions
+      
+      ### Generated Code
+      - **Never** directly edit files with a `Code generated ... DO NOT EDIT` header - these are generated and will be overwritten
+      - Run `make codegen` to regenerate after modifying source definitions
+      
+      #### Protobufs
+      - **Never** directly edit files under `go/vt/proto/` - they are generated from `proto/*.proto` protobuf definitions
+      - After modifying `proto/*.proto` files, run `make proto` to regenerate
+      - Avoid storing timestamps or time durations as integers; use `vttime.Time` for timestamps and `vttime.Duration` (or `google.protobuf.Duration`, as appropriate) for durations instead
+      - Avoid storing tablet aliases as a string: use `topodata.TabletAlias`
+      
+      #### SQL Parser
+      - **Never** directly edit these generated files in `go/vt/sqlparser/`: `sql.go`, `ast_clone.go`, `ast_copy_on_rewrite.go`, `ast_equals.go`, `ast_format_fast.go`, `ast_path.go`, `ast_rewrite.go`, `ast_visit.go`, `cached_size.go`
+      - After modifying source files (e.g., `sql.y`, AST definitions), run `make codegen` to regenerate
+      
+      ### Command-Line Flags
+      - New flags must **not** use underscores (use hyphens instead)
+      - When flags are added or modified, update the corresponding `go/flags/endtoend/` files - column/whitespace alignment matters
+      
+      ### TabletAlias Formatting
+      - Format `*topodatapb.TabletAlias` using `topoproto.TabletAliasString(alias)` in logs and error messages so that tablet aliases are human-readable
+      
+      ### EmergencyReparentShard (ERS)
+      - ERS must prioritize **certainty** that we picked the most-advanced candidate
+      - Changes should prioritize reducing points of failure - avoid new RPCs or work that may delay or make ERS more brittle
+    gold_removed: ""

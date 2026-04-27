@@ -1,0 +1,90 @@
+version: "2.0"
+
+task:
+  name: godogen-add-task-resumption-and-status
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: htdt/godogen
+  pr: 6
+  base_commit: "82dd234b1003b02c890be30139329a95132b1b1b"
+  merge_commit: "7e5523a7e83a920db4d1adce5a44279fd7201b6d"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/agents/game-decomposer.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/agents/game-decomposer.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/agents/game-decomposer.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/agents/gamedev.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/agents/gamedev.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/agents/gamedev.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/agents/godot-task.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/agents/godot-task.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/agents/godot-task.md."
+
+config_edits:
+  - path: ".claude/agents/game-decomposer.md"
+    tier: 1
+    gold_added: |-
+        - {High-level, testable behavior — what the player should experience}
+        - {High-level, testable behavior — what the player should experience}
+      - **Requirements** — high-level behaviors the task must achieve. Focus on *what* the player experiences, not *how* to implement it. The task executor is a strong LLM — it doesn't need pixel-exact dimensions or implementation recipes. Specify concrete values only when they matter for game feel (e.g., "car should feel heavy, not twitchy") or correctness (e.g., "arena is 50m wide to fit 4 players").
+      ### Merge Tasks Are Rarely Needed
+      Each task builds directly into the shared project — features are integrated by default. Only add a merge task when integration is genuinely non-trivial (e.g., two large independent systems with complex runtime interactions). If the "merge" is just loading scenes together or connecting signals, put that in the later task's requirements instead.
+      2. **No unnecessary merge tasks** — most simple games need zero
+      - Detailed technical specs — the task executor is a strong LLM, it makes good implementation decisions on its own. Focus on *what* each task should achieve, not *how*.
+    gold_removed: ""
+  - path: ".claude/agents/gamedev.md"
+    tier: 1
+    gold_added: |-
+          |
+          +- Check if build/PLAN.md exists (resume check)
+          |   +- If yes: read PLAN.md, STRUCTURE.md, MEMORY.md → skip to task execution
+          |   +- If no: continue with fresh pipeline below
+          |   +- Update PLAN.md: mark task status → in_progress
+          |   +- Update PLAN.md: mark task status → done / done (partial) / skipped
+      ## PLAN.md Task Status
+      
+      Keep a `**Status:**` field on each task in PLAN.md: `pending` | `in_progress` | `done` | `done (partial)` | `skipped`. Update it immediately when state changes — before launching the sub-agent and after reading its result. This is what enables resumption.
+      
+      ## Resuming an Interrupted Pipeline
+      
+      At the start of every run, check if `build/PLAN.md` exists. If so, read it along with STRUCTURE.md and MEMORY.md, then resume from the first non-`done` task. Treat `in_progress` as needing a retry.
+      
+      **PLAN.md** — decomposer agent is the primary author. You own the `**Status:**` fields. Between decomposer runs, you may also tweak tasks when discoveries change future work (adjust approach, mark tasks skipped, add tasks).
+    gold_removed: ""
+  - path: ".claude/agents/godot-task.md"
+    tier: 1
+    gold_added: |-
+      9. **Verify visually** — read captured PNGs and check two things:
+         - **Task goal:** does the screenshot match the **Verify** description?
+         - **Visual quality & logic:** look for obvious bugs — geometry clipping through other geometry, objects floating in mid-air when they shouldn't be, wrong assets used (e.g., dog image where cat is expected), text overflow, UI elements overlapping or cut off at screen edges. Don't add decorations or polish beyond the task scope, but do fix clear correctness issues.
+         If either check fails, identify the issue, fix scene/script/test, and repeat from step 3.
+    gold_removed: ""

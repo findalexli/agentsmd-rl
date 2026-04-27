@@ -1,0 +1,201 @@
+version: "2.0"
+
+task:
+  name: ai-setup-fixskills-correct-scoringchecks-function-signature
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: caliber-ai-org/ai-setup
+  pr: 181
+  base_commit: "6db87e6e48190a23f373ed710595781f5b0d1331"
+  merge_commit: "203da129c6bb7697cb53cf61c3170860a4485c85"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/scoring-checks/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/scoring-checks/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/scoring-checks/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/skills/scoring-checks/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/skills/scoring-checks/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/skills/scoring-checks/SKILL.md."
+
+config_edits:
+  - path: ".agents/skills/scoring-checks/SKILL.md"
+    tier: 1
+    gold_added: |-
+      1. **Check must return `Check[]`** — Never return a single check or a Promise. Return an empty array `[]` only if there are genuinely zero checks; always push at least one check object.
+      2. **Use constants from `src/scoring/constants.ts`** — All `maxPoints` and `earnedPoints` values must reference `POINTS_*` constants; never hardcode numbers.
+      3. **Deterministic only** — No LLM calls, no network. Scoring checks use `fs`, `path`, and `execSync` for git commands only.
+      4. **File structure**: Add checks to existing category files in `src/scoring/checks/`. Export a **named function** with signature `check{Category}(dir: string): Check[]`.
+      5. **Integration point**: Spread the result into `allChecks` in `computeLocalScore()` inside `src/scoring/index.ts`.
+      1. **Choose or create a check file** in `src/scoring/checks/` matching the category (`existence.ts`, `quality.ts`, `grounding.ts`, `accuracy.ts`, `freshness.ts`, `bonus.ts`, `sources.ts`).
+         - Import `type { Check }` from `../index.js`.
+         - Add a new `export function check{Category}(dir: string): Check[]` function (or add to the existing one).
+      2. **Inspect the filesystem** using the `dir` parameter.
+         - Use `fs.existsSync(join(dir, 'path'))`, `fs.readFileSync(join(dir, 'file'), 'utf-8')`, etc.
+         - For git-based checks: `execSync('git log ...', { cwd: dir })`.
+         - No external APIs, no LLM calls.
+         - `id`: Unique kebab-case string (e.g., `'claude_md_exists'`, `'skills_count'`).
+         - `name`: Human-readable display name.
+         - `category`: One of `'existence' | 'quality' | 'grounding' | 'accuracy' | 'freshness' | 'bonus'`.
+         - `maxPoints` / `earnedPoints`: Must reference `POINTS_*` constants.
+         - `passed`: `earnedPoints >= Math.ceil(maxPoints * 0.6)` (or custom logic).
+         - `detail`: Human-friendly message explaining the result.
+         - Optional: `suggestion` (if not passed) and `fix` object with `action`, `data`, `instruction`.
+         - Add new constants to `src/scoring/constants.ts` if needed.
+         - Example: `export const POINTS_YOUR_CHECK = 4;` then use `maxPoints: POINTS_YOUR_CHECK`.
+      5. **Register in src/scoring/index.ts**.
+         - The existing category functions (`checkExistence`, `checkQuality`, etc.) are already called in `computeLocalScore()`.
+         - If adding a new function: import it and spread into `allChecks`.
+         - Verify tests pass: `npm test -- src/scoring/__tests__/`.
+      6. **Write a test** in `src/scoring/checks/__tests__/{category}.test.ts`.
+         - Use `mkdtempSync` to create a temp directory; write files to simulate conditions.
+         - Test both passing and failing cases.
+         - Verify: `npx vitest run src/scoring/checks/__tests__/{category}.test.ts`.
+      1. In `src/scoring/checks/existence.ts`, add to the `checkExistence(dir: string): Check[]` function:
+      import type { Check } from '../index.js';
+      import { POINTS_CLAUDE_MD_EXISTS } from '../constants.js';
+      import { existsSync, readFileSync } from 'fs';
+      import { join } from 'path';
+      
+      export function checkExistence(dir: string): Check[] {
+        const checks: Check[] = [];
+        const claudeMdPath = join(dir, 'CLAUDE.md');
+        const exists = existsSync(claudeMdPath);
+        const nonEmpty = exists && readFileSync(claudeMdPath, 'utf-8').trim().length > 0;
+        const earned = nonEmpty ? POINTS_CLAUDE_MD_EXISTS : 0;
+        checks.push({
+          id: 'claude_md_exists',
+          category: 'existence',
+          maxPoints: POINTS_CLAUDE_MD_EXISTS,
+          earnedPoints: earned,
+          passed: earned > 0,
+          detail: exists ? (nonEmpty ? 'CLAUDE.md present and non-empty' : 'CLAUDE.md is empty') : 'CLAUDE.md missing',
+        });
+        return checks;
+      2. Add to `src/scoring/constants.ts`: `export const POINTS_CLAUDE_MD_EXISTS = 10;`
+      3. `checkExistence` is already called in `computeLocalScore()` in `src/scoring/index.ts` — no changes needed there.
+      4. Test with `npm test -- src/scoring/`.
+      **Result**: Check appears in score output under the existence category.
+      - Verify the check ID is not in a `*_ONLY_CHECKS` set that excludes your target agent.
+      - Verify the function is called (or its result is spread) in `computeLocalScore()` in `src/scoring/index.ts`.
+      **"Points are hardcoded but should use constants"**
+      - Replace all literal numbers like `earnedPoints: 5` with `earnedPoints: POINTS_YOUR_CHECK`.
+      - Constants are in `src/scoring/constants.ts` — add new ones if needed.
+      **"Platform-specific check appears for wrong agent"**
+      - Add check ID to the appropriate `*_ONLY_CHECKS` set in `src/scoring/constants.ts`.
+      - Verify `filterChecksForTarget()` in `src/scoring/index.ts` handles your platform set.
+      **"Test fails with file not found"**
+      - Use `mkdtempSync` to create a real temp directory; write files with `writeFileSync`.
+      - Always clean up in a `finally` block: `rmSync(dir, { recursive: true })`.
+    gold_removed: ""
+  - path: ".cursor/skills/scoring-checks/SKILL.md"
+    tier: 1
+    gold_added: |-
+      - **All checks must be deterministic**: No randomness, no external APIs. Same filesystem state → same result.
+      - **Return type is always `Check[]`**: Each check has `id`, `name`, `category`, `maxPoints`, `earnedPoints`, `passed`, `detail`.
+      - **Function signature**: `export function check{Category}(dir: string): Check[]` — takes a directory path, not a fingerprint or config object.
+      - **Only import from `src/scoring/constants.ts`** for `POINTS_*` values. Never hardcode numbers.
+      - **Check logic is synchronous**. No async/await. Use `fs`, `path`, and `execSync` for git commands.
+      ### Step 1: Add check to the appropriate category file
+      Choose the right file in `src/scoring/checks/` based on category (`existence.ts`, `quality.ts`, `grounding.ts`, `accuracy.ts`, `freshness.ts`, `bonus.ts`, `sources.ts`). Add your logic to that file's exported function.
+      import type { Check } from '../index.js';
+      import { POINTS_YOUR_CHECK, YOUR_THRESHOLD_ARRAY } from '../constants.js';
+      import { existsSync, readFileSync } from 'fs';
+      import { join } from 'path';
+      
+      export function checkYourCategory(dir: string): Check[] {
+        const checks: Check[] = [];
+      
+        // Inspect the filesystem using `dir`
+        const metric = /* e.g., count files, parse content */;
+        const threshold = YOUR_THRESHOLD_ARRAY.find(t => metric >= t.minValue);
+        const earned = threshold?.points ?? 0;
+      
+        checks.push({
+          id: 'your_unique_check_id',
+          name: 'Human-readable check name',
+          category: 'quality', // matches the category file
+          maxPoints: POINTS_YOUR_CHECK,
+          earnedPoints: earned,
+          passed: earned >= Math.ceil(POINTS_YOUR_CHECK * 0.6),
+          detail: `${earned}/${POINTS_YOUR_CHECK} points — ${metric} items found`,
+          suggestion: earned >= POINTS_YOUR_CHECK ? undefined : 'Action to improve',
+        });
+      
+        return checks;
+      Verify the function signature is `check{Category}(dir: string): Check[]` — NOT `(fingerprint, config)` or `(ctx: ScoringContext)`.
+      ### Step 2: Add point constants in `src/scoring/constants.ts`
+      export const POINTS_YOUR_CHECK = 4; // fits within category budget
+      Check the `CATEGORY_MAX` object to ensure your check fits within its category's point budget.
+      ### Step 3: Register new function in `src/scoring/index.ts` (if adding a new function)
+      If you created a new function (rather than adding to an existing one):
+      import { checkYourCategory } from './checks/your-file.js';
+      // In computeLocalScore():
+      const allChecks: Check[] = [
+        ...checkExistence(dir),
+        ...checkQuality(dir),
+        ...checkYourCategory(dir), // ← ADD IN ORDER
+        ...checkFreshness(dir),
+        ...checkBonus(dir),
+      ];
+      ### Step 4: Handle platform-specific filtering (if applicable)
+      If the check only applies to certain platforms, add its ID to a `*_ONLY_CHECKS` set in `src/scoring/constants.ts`.
+      ### Step 5: Write a test
+      import { mkdtempSync, writeFileSync, rmSync } from 'fs';
+      import { join } from 'path';
+      import { checkYourCategory } from '../your-file.js';
+      
+      it('awards full points when condition passes', () => {
+        const dir = mkdtempSync('test-scoring-');
+        try {
+          writeFileSync(join(dir, 'SOME_FILE.md'), 'content');
+          const checks = checkYourCategory(dir);
+          const check = checks.find(c => c.id === 'your_unique_check_id');
+          expect(check?.passed).toBe(true);
+          expect(check?.earnedPoints).toBe(POINTS_YOUR_CHECK);
+        } finally {
+          rmSync(dir, { recursive: true });
+        }
+      Verify: `npm run test -- src/scoring/checks/__tests__/{category}.test.ts`.
+      1. In `src/scoring/checks/existence.ts`, add to the `checkExistence(dir: string): Check[]` function:
+         - `const exists = existsSync(join(dir, 'CLAUDE.md'));`
+         - Push a check with `id: 'claude_md_exists'`, `maxPoints: POINTS_CLAUDE_MD_EXISTS`, `earnedPoints: exists ? POINTS_CLAUDE_MD_EXISTS : 0`.
+      2. Add `export const POINTS_CLAUDE_MD_EXISTS = 10;` to `src/scoring/constants.ts`.
+      3. `checkExistence` is already called in `computeLocalScore()` — no `src/scoring/index.ts` changes needed.
+      4. Test: create temp dir with/without `CLAUDE.md`, call `checkExistence(dir)`, verify `passed` and `earnedPoints`.
+      **Result**: Check appears in score output under the existence category.
+      ## Common Issues
+      **"My check doesn't appear in the score report"**
+      - Verify the check ID is not in a `*_ONLY_CHECKS` set that excludes your target agent.
+      - Verify the category function is called and its result is spread into `allChecks` in `computeLocalScore()`.
+      - Run `npm run build && npm test` to catch import errors.
+      **"Points are hardcoded"**
+      - Replace literal numbers with `POINTS_*` constants from `src/scoring/constants.ts`.
+      - Add a new constant if one doesn't exist for your check.
+      **"Type error: Property X does not exist on Check"**
+      - The `Check` interface in `src/scoring/index.ts` requires: `id`, `name`, `category`, `maxPoints`, `earnedPoints`, `passed`, `detail`.
+      - Optional fields: `suggestion`, `fix` (object with `action`, `data`, `instruction`).
+      - Do NOT use `score`, `weight`, `reasons` — those are from a different shape.
+      **"Test fails — can't create real files"**
+      - Use `mkdtempSync` to create a temp dir; write files with `writeFileSync`; clean up with `rmSync(dir, { recursive: true })` in a `finally` block.
+      - See `src/scoring/checks/__tests__/` for existing patterns.
+    gold_removed: ""

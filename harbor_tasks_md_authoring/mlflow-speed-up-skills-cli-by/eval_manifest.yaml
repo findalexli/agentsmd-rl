@@ -1,0 +1,104 @@
+version: "2.0"
+
+task:
+  name: mlflow-speed-up-skills-cli-by
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: mlflow/mlflow
+  pr: 22893
+  base_commit: "aad3f0ce173042a2c56c2ea5184d9902ef05acb1"
+  merge_commit: "d072ed421bf1cbef6130ca0132abddd63338255e"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/README.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/README.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/add-review-comment/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/analyze-ci/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/analyze-ci/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/analyze-ci/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/fetch-diff/SKILL.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/fetch-diff/SKILL.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/fetch-diff/SKILL.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/fetch-unresolved-comments/SKILL.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/fetch-unresolved-comments/SKILL.md."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/fetch-unresolved-comments/SKILL.md."
+
+config_edits:
+  - path: ".claude/skills/README.md"
+    tier: 1
+    gold_added: |-
+      uv run --package skills skills <command> [args]
+      Run `uv run --package skills skills --help` to see available commands.
+    gold_removed: ""
+  - path: ".claude/skills/add-review-comment/SKILL.md"
+    tier: 1
+    gold_added: |-
+        - Bash(uv run --package skills skills fetch-diff:*)
+    gold_removed: ""
+  - path: ".claude/skills/analyze-ci/SKILL.md"
+    tier: 1
+    gold_added: |-
+        - Bash(uv run --package skills skills analyze-ci:*)
+      uv run --package skills skills analyze-ci '<pr_url>'
+      uv run --package skills skills analyze-ci '<run_url>'
+      uv run --package skills skills analyze-ci '<job_url>' ['<job_url>' ...]
+      uv run --package skills skills analyze-ci '<pr_url>' --debug
+      uv run --package skills skills analyze-ci 'https://github.com/mlflow/mlflow/pull/19601'
+      uv run --package skills skills analyze-ci 'https://github.com/mlflow/mlflow/actions/runs/22626454465'
+      uv run --package skills skills analyze-ci 'https://github.com/mlflow/mlflow/actions/runs/12345/job/67890'
+    gold_removed: ""
+  - path: ".claude/skills/fetch-diff/SKILL.md"
+    tier: 1
+    gold_added: |-
+        - Bash(uv run --package skills skills fetch-diff:*)
+      uv run --package skills skills fetch-diff <pr_url> [--files <pattern> ...]
+      uv run --package skills skills fetch-diff https://github.com/mlflow/mlflow/pull/123
+      uv run --package skills skills fetch-diff https://github.com/mlflow/mlflow/pull/123 --files '*.py'
+      uv run --package skills skills fetch-diff https://github.com/mlflow/mlflow/pull/123 --files 'mlflow/server/js/*'
+      uv run --package skills skills fetch-diff https://github.com/mlflow/mlflow/pull/123 --files '*.py' '*.ts'
+    gold_removed: ""
+  - path: ".claude/skills/fetch-unresolved-comments/SKILL.md"
+    tier: 1
+    gold_added: |-
+        - Bash(uv run --package skills skills fetch-unresolved-comments:*)
+         uv run --package skills skills fetch-unresolved-comments <pr_url>
+         uv run --package skills skills fetch-unresolved-comments https://github.com/mlflow/mlflow/pull/18327
+    gold_removed: ""

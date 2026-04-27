@@ -1,0 +1,57 @@
+version: "2.0"
+
+task:
+  name: compound-engineering-plugin-fixcedebug-default-to-commitandp
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: EveryInc/compound-engineering-plugin
+  pr: 693
+  base_commit: "f30404e57bcbf7866c1a9524f4392f7dff8f3a0b"
+  merge_commit: "e21156eeb7e1502a37bf7d4a30fdc6a3287eed7a"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-debug/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-debug/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-debug/SKILL.md."
+
+config_edits:
+  - path: "plugins/compound-engineering/skills/ce-debug/SKILL.md"
+    tier: 1
+    gold_added: |-
+      Analyze how this was introduced and what allowed it to survive. Note any systemic gap or repeated pattern found — it informs Phase 4's decision on whether to offer learning capture.
+      **If Phase 3 ran**, the next move depends on whether the skill created the branch in Phase 3.
+      #### Skill-owned branch (created in Phase 3): default to commit-and-PR without prompting
+      1. **Check for contextual overrides first.** Look at the user's original prompt, loaded memories, and the user/repo `AGENTS.md` or `CLAUDE.md` for preferences that conflict with auto commit-and-PR — for example, "always review before pushing", "open PRs as drafts", or "don't open PRs from skills". A signal must be an explicit instruction or a clearly applicable rule, not a vague tonal cue. If any apply, honor them — switch to the pre-existing-branch menu below, or skip the PR step entirely, whichever matches the user's stated preference.
+      2. **Briefly preview what will happen** — what will be committed, on what branch, and that a PR will be opened — then proceed without waiting for confirmation. The preview exists so the user can interrupt; it is not a blocking question. Format and length are your call; keep it scannable.
+      3. **Run `/ce-commit-push-pr`.** When the entry came from an issue tracker, include the appropriate auto-close syntax for that tracker in the location it requires — most trackers parse PR descriptions (e.g., `Fixes #N` for GitHub, `Closes ABC-123` for Linear), but some only parse commit messages (e.g., Jira Smart Commits) — so the diagnosis and fix flow back to the issue and it closes on merge. Surface the resulting PR URL.
+      #### Pre-existing branch (skill did not create it): ask the user
+      
+      Use the platform's blocking question tool (`AskUserQuestion` in Claude Code, `request_user_input` in Codex, `ask_user` in Gemini, `ask_user` in Pi (requires the `pi-ask-user` extension)). In Claude Code, call `ToolSearch` with `select:AskUserQuestion` first if its schema isn't loaded — a pending schema load is not a reason to fall back. Fall back to numbered options in chat only when no blocking tool exists in the harness or the call errors. Never end the phase without collecting a response.
+      
+      Options:
+      
+      1. **Commit and open a PR (`/ce-commit-push-pr`)** — default for most cases
+      2. **Commit the fix (`/ce-commit`)** — local commit only
+      3. **Stop here** — user takes it from there
+      
+      #### After a PR is open (either path): consider offering learning capture
+      
+      Most bugs are localized mechanical fixes (typo, missed null check, missing import) where the only "lesson" is the bug itself. Compounding those clutters `docs/solutions/` without adding value. Decide which path applies:
+      
+      - **Skip silently** when the fix is mechanical and there's no generalizable insight. Default to this when in doubt.
+      - **Offer neutrally** when the lesson can be stated in one sentence — e.g., "X.foo() returns T | undefined when Y, not just T", or "the diagnostic path was non-obvious and worth recording." If you cannot articulate the lesson, skip rather than offer.
+      - **Lean into the offer** when the pattern appears in 3+ locations OR the root cause reveals a wrong assumption about a shared dependency, framework, or convention that other code is likely to repeat.
+      
+      When offering, use the blocking question tool described above. If the user accepts, run `/ce-compound`, then commit the resulting learning doc to the same branch and push so the open PR picks up the new commit.
+    gold_removed: ""

@@ -1,0 +1,155 @@
+version: "2.0"
+
+task:
+  name: compound-engineering-plugin-featgitcommitpushpr-preresolve-c
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: EveryInc/compound-engineering-plugin
+  pr: 488
+  base_commit: "afdd9d44651f834b1eed0b20e401ffbef5c8cd41"
+  merge_commit: "bbd4f6de56963fc3cdb3131773d7e29d523ce549"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/git-commit-push-pr/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/git-commit-push-pr/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/git-commit-push-pr/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/git-commit/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/git-commit/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/git-commit/SKILL.md."
+
+config_edits:
+  - path: "plugins/compound-engineering/skills/git-commit-push-pr/SKILL.md"
+    tier: 1
+    gold_added: |-
+      ## Context
+      **If you are not Claude Code**, skip to the "Context fallback" section below and run the command there to gather context.
+      **If you are Claude Code**, the six labeled sections below (Git status, Working tree diff, Current branch, Recent commits, Remote default branch, Existing PR check) contain pre-populated data. Use them directly throughout this skill -- do not re-run these commands.
+      **Git status:**
+      !`git status`
+      **Working tree diff:**
+      !`git diff HEAD`
+      **Current branch:**
+      !`git branch --show-current`
+      **Recent commits:**
+      !`git log --oneline -10`
+      
+      **Remote default branch:**
+      !`git rev-parse --abbrev-ref origin/HEAD 2>/dev/null || echo '__DEFAULT_BRANCH_UNRESOLVED__'`
+      **Existing PR check:**
+      !`PR_OUT=$(gh pr view --json url,title,state 2>&1); PR_EXIT=$?; printf '%s\n__GH_PR_VIEW_EXIT__=%s\n' "$PR_OUT" "$PR_EXIT"`
+      ### Context fallback
+      
+      **If you are Claude Code, skip this section — the data above is already available.**
+      
+      Run this single command to gather all context:
+      printf '=== STATUS ===\n'; git status; printf '\n=== DIFF ===\n'; git diff HEAD; printf '\n=== BRANCH ===\n'; git branch --show-current; printf '\n=== LOG ===\n'; git log --oneline -10; printf '\n=== DEFAULT_BRANCH ===\n'; git rev-parse --abbrev-ref origin/HEAD 2>/dev/null || echo '__DEFAULT_BRANCH_UNRESOLVED__'; printf '\n=== PR_CHECK ===\n'; PR_OUT=$(gh pr view --json url,title,state 2>&1); PR_EXIT=$?; printf '%s\n__GH_PR_VIEW_EXIT__=%s\n' "$PR_OUT" "$PR_EXIT"
+      Interpret the PR check result using the Reusable PR probe rules above.
+      
+      ---
+      
+      ## Description Update workflow
+      
+      ### DU-1: Confirm intent
+      
+      Ask the user to confirm: "Update the PR description for this branch?" Use the platform's blocking question tool (`AskUserQuestion` in Claude Code, `request_user_input` in Codex, `ask_user` in Gemini). If no question tool is available, present the question and wait for the user's reply.
+      
+      If the user declines, stop.
+      
+      ### DU-2: Find the PR
+      
+      Use the current branch and existing PR check from the context above. If the current branch is empty (detached HEAD), report that there is no branch to update and stop.
+      
+      Interpret the PR check result using the Reusable PR probe rules above:
+      Use the context above (git status, working tree diff, current branch, recent commits, remote default branch, and existing PR check). All data needed for this step and Step 3 is already available -- do not re-run those commands.
+      The remote default branch value returns something like `origin/main`. Strip the `origin/` prefix to get the branch name. If it returned `__DEFAULT_BRANCH_UNRESOLVED__` or a bare `HEAD`, try:
+      If the current branch from the context above is empty, the repository is in detached HEAD state. Explain that a branch is required before committing and pushing. Ask whether to create a feature branch now. Use the platform's blocking question tool (`AskUserQuestion` in Claude Code, `request_user_input` in Codex, `ask_user` in Gemini). If no question tool is available, present the options and wait for the user's reply.
+      If the git status from the context above shows a clean working tree (no staged, modified, or untracked files), check whether there are unpushed commits or a missing PR before stopping. The current branch and existing PR check are already available from the context above. Additionally:
+      1. Run `git rev-parse --abbrev-ref --symbolic-full-name @{u}` to check whether an upstream is configured.
+      2. If the command succeeds, run `git log <upstream>..HEAD --oneline` using the upstream name from the previous command.
+      Use the current branch and existing PR check from the context above. If the current branch is empty, report that the workflow is in detached HEAD state and stop.
+      Interpret the PR check result using the Reusable PR probe rules:
+      1. If the current branch from the context above is `main`, `master`, or the resolved default branch from Step 1, create a descriptive feature branch first with `git checkout -b <branch-name>`. Derive the branch name from the change content.
+      3. For each commit group, stage and commit in a single call. Avoid `git add -A` or `git add .` to prevent accidentally including sensitive files. Follow the conventions from Step 2. Use a heredoc for the message:
+         ```bash
+         git add file1 file2 file3 && git commit -m "$(cat <<'EOF'
+         commit message here
+         EOF
+         )"
+         ```
+      2. **Remote default branch from context above:** If the remote default branch resolved (not `__DEFAULT_BRANCH_UNRESOLVED__`), strip the `origin/` prefix and use that. Use `origin` as the base remote.
+      Once the base branch and remote are known, gather the full scope in as few calls as possible.
+      First, verify the remote-tracking ref exists and fetch if needed:
+      
+      ```bash
+      git rev-parse --verify <base-remote>/<base-branch> 2>/dev/null || git fetch --no-tags <base-remote> <base-branch>
+      ```
+      
+      Then gather the merge base, commit list, and full diff in a single call:
+      
+      ```bash
+      MERGE_BASE=$(git merge-base <base-remote>/<base-branch> HEAD) && echo "MERGE_BASE=$MERGE_BASE" && echo '=== COMMITS ===' && git log --oneline $MERGE_BASE..HEAD && echo '=== DIFF ===' && git diff $MERGE_BASE...HEAD
+      ```
+    gold_removed: ""
+  - path: "plugins/compound-engineering/skills/git-commit/SKILL.md"
+    tier: 1
+    gold_added: |-
+      ## Context
+      **If you are not Claude Code**, skip to the "Context fallback" section below and run the command there to gather context.
+      
+      **If you are Claude Code**, the five labeled sections below (Git status, Working tree diff, Current branch, Recent commits, Remote default branch) contain pre-populated data. Use them directly throughout this skill -- do not re-run these commands.
+      
+      **Git status:**
+      !`git status`
+      
+      **Working tree diff:**
+      !`git diff HEAD`
+      
+      **Current branch:**
+      !`git branch --show-current`
+      
+      **Recent commits:**
+      !`git log --oneline -10`
+      
+      **Remote default branch:**
+      !`git rev-parse --abbrev-ref origin/HEAD 2>/dev/null || echo '__DEFAULT_BRANCH_UNRESOLVED__'`
+      
+      ### Context fallback
+      **If you are Claude Code, skip this section — the data above is already available.**
+      
+      Run this single command to gather all context:
+      printf '=== STATUS ===\n'; git status; printf '\n=== DIFF ===\n'; git diff HEAD; printf '\n=== BRANCH ===\n'; git branch --show-current; printf '\n=== LOG ===\n'; git log --oneline -10; printf '\n=== DEFAULT_BRANCH ===\n'; git rev-parse --abbrev-ref origin/HEAD 2>/dev/null || echo '__DEFAULT_BRANCH_UNRESOLVED__'
+      ---
+      
+      ## Workflow
+      
+      ### Step 1: Gather context
+      
+      Use the context above (git status, working tree diff, current branch, recent commits, remote default branch). All data needed for this step is already available -- do not re-run those commands.
+      
+      The remote default branch value returns something like `origin/main`. Strip the `origin/` prefix to get the branch name. If it returned `__DEFAULT_BRANCH_UNRESOLVED__` or a bare `HEAD`, try:
+      If the git status from the context above shows a clean working tree (no staged, modified, or untracked files), report that there is nothing to commit and stop.
+      If the current branch from the context above is empty, the repository is in detached HEAD state. Explain that a branch is required before committing if the user wants this work attached to a branch. Ask whether to create a feature branch now. Use the platform's blocking question tool (`AskUserQuestion` in Claude Code, `request_user_input` in Codex, `ask_user` in Gemini). If no question tool is available, present the options and wait for the user's reply before proceeding.
+      If the current branch from the context above is `main`, `master`, or the resolved default branch from Step 1, warn the user and ask whether to continue committing here or create a feature branch first. Use the platform's blocking question tool (`AskUserQuestion` in Claude Code, `request_user_input` in Codex, `ask_user` in Gemini). If no question tool is available, present the options and wait for the user's reply before proceeding. If the user chooses to create a branch, derive the name from the change content, create it with `git checkout -b <branch-name>`, then continue.
+      For each commit group, stage and commit in a single call. Prefer staging specific files by name over `git add -A` or `git add .` to avoid accidentally including sensitive files (.env, credentials) or unrelated changes. Use a heredoc to preserve formatting:
+      git add file1 file2 file3 && git commit -m "$(cat <<'EOF'
+    gold_removed: ""

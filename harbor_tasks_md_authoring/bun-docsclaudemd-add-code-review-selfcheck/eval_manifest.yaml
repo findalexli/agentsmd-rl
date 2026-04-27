@@ -1,0 +1,38 @@
+version: "2.0"
+
+task:
+  name: bun-docsclaudemd-add-code-review-selfcheck
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: oven-sh/bun
+  pr: 29063
+  base_commit: "490e23731c85a36b433165f3ff7a0202619e53b1"
+  merge_commit: "94d125390358db9315422430061090a0270772d1"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: "CLAUDE.md"
+    tier: 1
+    gold_added: |-
+      ## Code Review Self-Check
+      
+      - Before writing code that makes a non-obvious choice, pre-emptively ask "why this and not the alternative?" If you can't answer, research until you can — don't write first and justify later.
+      - Don't take a bug report's suggested fix at face value; verify it's the right layer.
+      - If neighboring code does something differently than you're about to, find out _why_ before deviating — its choices are often load-bearing, not stylistic.
+      
+    gold_removed: ""

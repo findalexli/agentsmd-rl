@@ -1,0 +1,56 @@
+version: "2.0"
+
+task:
+  name: remix-tighten-makepr-skill-workflow
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: remix-run/remix
+  pr: 11167
+  base_commit: "65e400d904db10f3d7ea9eac66b0affa1adfd1df"
+  merge_commit: "ea7b2af25aaa687b9ecdd7607f30cd2f5c40da92"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/make-pr/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/make-pr/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/make-pr/SKILL.md."
+
+config_edits:
+  - path: ".agents/skills/make-pr/SKILL.md"
+    tier: 1
+    gold_added: |-
+      Optimize for the shortest path to a credible PR, not the fullest possible context-gathering pass.
+      1. Check the fast-path blockers first.
+      
+      - Check `git status --short --branch` and `git branch --show-current` before doing deeper prep.
+      - If the repo is in a detached HEAD or worktree state and the user wants a PR opened, create a branch early.
+      
+      1. Gather only the context needed to write the PR.
+      - Prefer `git diff --stat` plus the relevant diff over broad repo archaeology when the change is small.
+      - If the user supplies a report, issue, or related PR, treat that as the primary context source.
+      
+      1. Get the branch into a PR-ready state quickly.
+      
+      - If changes are still uncommitted and the user wants a PR, branch first, then commit.
+      - Prefer a single clean commit unless the user asks for a different history shape.
+      
+      1. Check whether this PR also needs a change file.
+      
+      - Do not assume every PR needs one.
+      - Before opening the PR, decide whether the change is user-facing enough to require release notes in `packages/*/.changes`.
+      - If a change file is needed or likely needed, use the `make-change-file` skill instead of re-deriving that workflow here.
+      - After the intro, include clear bullets describing:
+      - If `gh pr create` fails, leave the branch pushed when possible and give the user a ready-to-open compare URL plus the prepared title/body details.
+      
+      ````
+    gold_removed: ""

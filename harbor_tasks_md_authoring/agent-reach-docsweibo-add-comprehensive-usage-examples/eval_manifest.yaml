@@ -1,0 +1,68 @@
+version: "2.0"
+
+task:
+  name: agent-reach-docsweibo-add-comprehensive-usage-examples
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Panniantong/Agent-Reach
+  pr: 195
+  base_commit: "90bb4e0266b81c2665c2c440f55412c75a2d2fad"
+  merge_commit: "afc8d0e3ee7561a999f96cf35395fe2836b50285"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in agent_reach/skill/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in agent_reach/skill/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in agent_reach/skill/SKILL.md."
+
+config_edits:
+  - path: "agent_reach/skill/SKILL.md"
+    tier: 1
+    gold_added: |-
+      ## 微博 / Weibo (mcporter)
+      
+      ```bash
+      # 热搜榜
+      mcporter call 'weibo.get_trendings(limit: 20)'
+      
+      # 搜索用户
+      mcporter call 'weibo.search_users(keyword: "雷军", limit: 10)'
+      
+      # 获取用户资料
+      mcporter call 'weibo.get_profile(uid: "1195230310")'
+      
+      # 获取用户微博动态
+      mcporter call 'weibo.get_feeds(uid: "1195230310", limit: 20)'
+      
+      # 获取用户热门微博
+      mcporter call 'weibo.get_hot_feeds(uid: "1195230310", limit: 10)'
+      
+      # 搜索微博内容
+      mcporter call 'weibo.search_content(keyword: "人工智能", limit: 20)'
+      
+      # 搜索话题
+      mcporter call 'weibo.search_topics(keyword: "AI", limit: 10)'
+      
+      # 获取微博评论
+      mcporter call 'weibo.get_comments(mid: "5099916367123456", limit: 50)'
+      
+      # 获取粉丝列表
+      mcporter call 'weibo.get_fans(uid: "1195230310", limit: 20)'
+      
+      # 获取关注列表
+      mcporter call 'weibo.get_followers(uid: "1195230310", limit: 20)'
+      ```
+      
+      > Zero config. No login needed. Uses mobile API with auto visitor cookies.
+      
+    gold_removed: ""

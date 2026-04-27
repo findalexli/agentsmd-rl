@@ -1,0 +1,50 @@
+version: "2.0"
+
+task:
+  name: compound-engineering-plugin-fixceplan-route-confidencegate-p
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: EveryInc/compound-engineering-plugin
+  pr: 462
+  base_commit: "2619ad9f58e6c45968ec10d7f8aa7849fe43eb25"
+  merge_commit: "1962f546b5e5288c7ce5d8658f942faf71651c81"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/AGENTS.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-plan/SKILL.md."
+
+config_edits:
+  - path: "plugins/compound-engineering/AGENTS.md"
+    tier: 1
+    gold_added: |-
+      ## Debugging Plugin Bugs
+      
+      Developers of this plugin also use it via their marketplace install (`~/.claude/plugins/`). When a developer reports a bug they experienced while using a skill or agent, the installed version may be older than the repo. Glob for the component name under `~/.claude/plugins/` and diff the installed content against the repo version.
+      
+      - **Repo already has the fix**: The developer's install is stale. Tell them to reinstall the plugin or use `--plugin-dir` to load skills from the repo checkout. No code change needed.
+      - **Both versions have the bug**: Proceed with the fix normally.
+      
+      Important: Just because the developer's installed plugin may be out of date, it's possible both old and current repo versions have the bug. The proper fix is to still fix the repo version.
+      
+    gold_removed: ""
+  - path: "plugins/compound-engineering/skills/ce-plan/SKILL.md"
+    tier: 1
+    gold_added: |-
+      If the plan already appears sufficiently grounded and the thin-grounding override does not apply, report "Confidence check passed — no sections need strengthening" and skip to Phase 5.3.8 (Document Review). Document-review always runs regardless of whether deepening was needed — the two tools catch different classes of issues.
+    gold_removed: ""

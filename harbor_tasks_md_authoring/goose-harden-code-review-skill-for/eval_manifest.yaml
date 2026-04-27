@@ -1,0 +1,57 @@
+version: "2.0"
+
+task:
+  name: goose-harden-code-review-skill-for
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: block/goose
+  pr: 8740
+  base_commit: "38941b1d26ac5c2fd27892669c62fbe190cbe5ec"
+  merge_commit: "15cfd127ca657de7f24fb128cf137cb724523554"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/code-review/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/code-review/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/code-review/SKILL.md."
+
+config_edits:
+  - path: ".agents/skills/code-review/SKILL.md"
+    tier: 1
+    gold_added: |-
+      ### Async State, Defaults & Persistence
+      - **Async Source of Truth**: During async provider/model/session mutations, does UI/session/localStorage state update only after the backend accepts the change? If the UI updates optimistically, is there an explicit rollback path?
+      - **UI/Backend Drift**: Could the UI show provider/model/project/persona X while the backend is still on Y after a failed mutation, delayed prepare, or pending-to-real session handoff?
+      - **Requested vs Fallback Authority**: Do explicit user or caller selections stay authoritative over sticky defaults, saved preferences, aliases, or fallback resolution?
+      - **Dependent State Invalidation**: When a parent selection changes (provider/project/persona/workspace/etc.), are dependent values like `modelId`, `modelName`, defaults, or cached labels cleared or recomputed so stale state does not linger?
+      - **Persisted Preference Validation**: Are stored selections validated against current inventory/capabilities before reuse, and do stale values fail soft instead of breaking creation flows?
+      - **Compatibility of Fallbacks**: Are default or sticky selections guaranteed to remain compatible with the active concrete provider/backend, instead of leaking across providers?
+      - **Best-Effort Lookups**: Do inventory/config/default-resolution lookups degrade gracefully on transient failure, or can they incorrectly block a primary flow that should still work with a safe fallback?
+      - **Draft/Home/Handoff Paths**: If the product has draft, Home, pending, or pre-created sessions, did you review those handoff paths separately from the already-active session path?
+      
+      Before reading any code, run the project's CI gate to establish a baseline. Use **check-only** commands so the baseline never mutates the working tree — otherwise auto-formatters can introduce unstaged diffs and you'll end up reviewing formatter output instead of the author's actual changes.
+      
+      Avoid `just check-everything` as the baseline in this repo: that recipe runs `cargo fmt --all` in write mode and will modify the working tree. Run the non-mutating equivalents instead:
+      cargo fmt --all -- --check
+      cargo clippy --all-targets -- -D warnings
+      (cd ui/desktop && pnpm run lint:check)
+      ./scripts/check-openapi-schema.sh
+      If the project has a stronger pre-push or CI gate than this helper set, run that fuller gate when the review is meant to be PR-ready, but only after confirming it is also non-mutating (or run it from a clean stash). In this repo, targeted tests for the changed area plus the pre-push checks are often the practical follow-up.
+      3. For stateful UI or async flow changes, trace the full path end to end: user selection -> local/session state update -> persistence -> backend prepare/set/update call -> failure/rollback path
+      4. Note the file path and line numbers from the diff output for each issue found
+      Before presenting findings to the user, silently review the issue list three times:
+      3. **Pass 3**: For async state/default-resolution issues, ask — can the UI, persisted state, and backend ever disagree after a failure, fallback, or session handoff?
+      After these passes, tag each surviving issue as one of:
+      Only present issues that survived these passes.
+      Your code is ready to commit and push. Lefthook and CI will run the repo's configured gates when you push.
+    gold_removed: ""

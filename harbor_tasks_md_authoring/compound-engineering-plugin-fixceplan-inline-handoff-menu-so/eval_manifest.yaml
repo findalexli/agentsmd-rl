@@ -1,0 +1,51 @@
+version: "2.0"
+
+task:
+  name: compound-engineering-plugin-fixceplan-inline-handoff-menu-so
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: EveryInc/compound-engineering-plugin
+  pr: 615
+  base_commit: "d8436b9a3c5b5370e51ec168a251ccb45f0d826e"
+  merge_commit: "9497a00d90bdedf6d1741aa4cf1287fb139ed990"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-plan/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-plan/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-plan/SKILL.md."
+
+config_edits:
+  - path: "plugins/compound-engineering/skills/ce-plan/SKILL.md"
+    tier: 1
+    gold_added: |-
+      **NEVER CODE during this skill.** Research, decide, and write the plan — do not start implementation.
+      
+      If the plan already appears sufficiently grounded and the thin-grounding override does not apply, report "Confidence check passed — no sections need strengthening", then **load `references/plan-handoff.md` now and execute 5.3.8 → 5.3.9 → 5.4 in sequence**. Document review is mandatory — do not skip it because the confidence check passed. The two tools catch different classes of issues.
+      **Load `references/plan-handoff.md` now.** It contains the full instructions for 5.3.8 (document review), 5.3.9 (final checks and cleanup), and 5.4 (post-generation handoff, including the Proof HITL flow, post-HITL re-review, and Issue Creation branching). Document review is mandatory — do not skip it even if the confidence check already ran.
+      
+      After document review and final checks, present this menu using the platform's blocking question tool (`AskUserQuestion` in Claude Code, `request_user_input` in Codex, `ask_user` in Gemini). If no question tool is available, present the numbered options in chat and wait for the user's reply before proceeding.
+      
+      **Question:** "Plan ready at `docs/plans/YYYY-MM-DD-NNN-<type>-<name>-plan.md`. What would you like to do next?"
+      
+      **Options:**
+      1. **Start `/ce-work`** (recommended) - Begin implementing this plan in the current session
+      2. **Create Issue** - Create a tracked issue from this plan in your configured issue tracker (GitHub or Linear)
+      3. **Open in Proof (web app) — review and comment to iterate with the agent** - Open the doc in Every's Proof editor, iterate with the agent via comments, or copy a link to share with others
+      4. **Done for now** - Pause; the plan file is saved and can be resumed later
+      
+      Routing each selection, contextual surfacing of residual document-review findings, and the post-HITL resync logic all live in `references/plan-handoff.md` — follow it for every branch.
+      
+      **Completion check:** This skill is not complete until the post-generation menu above has been presented and the user has selected an action. If you have written the plan file and have not yet presented the menu, you are not done — go to the load instruction above and continue.
+      **Pipeline mode exception:** In LFG, SLFG, or any `disable-model-invocation` context, skip the interactive menu and return control to the caller after the plan file is written, confidence check has run, and `ce-doc-review` has run in headless mode (per `references/plan-handoff.md`).
+    gold_removed: ""

@@ -1,0 +1,267 @@
+version: "2.0"
+
+task:
+  name: pinme-docs-optimize-skill-documentation
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: glitternetwork/pinme
+  pr: 41
+  base_commit: "aa0bac7077edfb8a85745f8e16a93cbad3feed5a"
+  merge_commit: "256eed3587653bcd499f09b1d6d9733bfcac9c51"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/pinme-api/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/pinme-api/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/pinme-api/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/pinme/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/pinme/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/pinme/SKILL.md."
+
+config_edits:
+  - path: "skills/pinme-api/SKILL.md"
+    tier: 1
+    gold_added: |-
+      description: Use this skill when a PinMe project (Worker TypeScript) needs to integrate email sending (send_email) or LLM API calls (chat/completions). Guides AI to generate correct Worker TS code.
+      # PinMe Worker API Integration
+      Guides how to call PinMe platform's email sending and LLM APIs in a PinMe Worker (TypeScript).
+      ## Environment Variables
+      The following environment variables are automatically injected when the Worker is created — no manual configuration needed:
+        API_KEY: string;      // Project API Key — used for send_email and chat/completions authentication
+        BASE_URL?: string;    // Optional override for PinMe API base URL, defaults to https://pinme.dev
+      > `API_KEY` is the sole credential for the Worker to call PinMe platform APIs. When `BASE_URL` is not set, it defaults to `https://pinme.dev`.
+      ## API 1: Send Email
+      **Endpoint:** `POST {BASE_URL}/api/v4/send_email`
+      **Authentication:** `X-API-Key` header (using `env.API_KEY`)
+      **Sender:** Automatically set to `{project_name}@pinme.dev`
+      ### Request Format
+      | Field | Type | Required | Description |
+      |-------|------|----------|-------------|
+      | `to` | string | Yes | Recipient email address |
+      | `subject` | string | Yes | Email subject |
+      | `html` | string | Yes | HTML body |
+      ### Response Format
+      **Success (200):**
+      **Errors:**
+      | HTTP Status | Meaning | data.error Example |
+      |-------------|---------|-------------------|
+      | 401 | API Key missing or invalid | `"X-API-Key header is required"` / `"Invalid API key"` |
+      | 400 | Parameter validation failed | `"Invalid email address"` / `"Subject is required"` |
+      | 500 | Email service error | `"Failed to send email"` |
+      ### Worker Example Code
+      // Usage in routes
+      ## API 2: LLM Chat Completions
+      **Endpoint:** `POST {BASE_URL}/api/v1/chat/completions?project_name={project_name}`
+      **Authentication:** `X-API-Key` header (using `env.API_KEY`)
+      **Request Body:** OpenAI-compatible format, passed through to LLM service as-is
+      **Streaming:** Supports SSE (`stream: true`)
+      ### Request Format
+      > `project_name` is parsed from the Worker's subdomain — see example below. For available models, refer to [PinMe LLM Supported Models](https://openrouter.ai/models) (OpenAI-compatible format).
+      ### Response Format
+      **Non-streaming Success (200):**
+      **Streaming Success (200):** SSE format
+      **Errors:**
+      | HTTP Status | Meaning | data.error Example |
+      |-------------|---------|-------------------|
+      | 401 | API Key missing or invalid | `"X-API-Key header is required"` / `"Invalid API key or project name"` |
+      | 400 | project_name missing or LLM not configured | `"project_name is required"` / `"LLM service not configured for this project"` |
+      | 413 | Request body exceeds 1MB | `"Request body too large (max 1MB)"` |
+      | 502 | LLM service unavailable | `"LLM service unavailable"` |
+      ### Worker Example Code — Non-streaming
+      // Get project_name: parsed from the Worker's subdomain
+      // Usage in routes
+      ### Worker Example Code — Streaming (SSE Passthrough)
+        // Ensure stream=true in the request
+        // Pass through SSE stream directly
+      ### Frontend SSE Stream Consumer Example
+          buffer = lines.pop()!; // Keep incomplete line
+      ## Error Handling Patterns
+      PinMe platform API unified response format:
+        code: number;   // 200=success, other=failure
+        data?: T;       // Business data on success, may contain { error: string } on failure
+      ### Recommended Unified Error Handler
+      ### Usage Examples
+      // Send email
+      // Call LLM (non-streaming)
+    gold_removed: ""
+  - path: "skills/pinme/SKILL.md"
+    tier: 1
+    gold_added: |-
+      description: Use this skill when the user mentions "pinme", or needs to upload files, store to IPFS, create/publish/deploy websites or full-stack services (including frontend pages, backend APIs, database storage, email sending, etc.), or any feature requiring backend database/server support.
+      Zero-config deployment tool: upload static files to IPFS, or create and deploy full-stack web projects (React+Vite + Cloudflare Worker + D1 database). Workers also support sending emails via the PinMe platform API.
+      ## When to Use
+          "User Request" [shape=doublecircle];
+          "Needs backend API or database?" [shape=diamond];
+          "Upload Files (Path 1)" [shape=box];
+          "Full-Stack Project (Path 2)" [shape=box];
+      
+          "User Request" -> "Needs backend API or database?";
+          "Needs backend API or database?" -> "Upload Files (Path 1)" [label="No"];
+          "Needs backend API or database?" -> "Full-Stack Project (Path 2)" [label="Yes"];
+      ## Path 1: Upload Files / Static Sites
+      > No login required.
+          "Install/update pinme to latest" [shape=box];
+          "Determine build artifacts" [shape=box];
+          "Return preview URL" [shape=doublecircle];
+          "Install/update pinme to latest" -> "Determine build artifacts";
+          "Determine build artifacts" -> "pinme upload <path>";
+          "pinme upload <path>" -> "Return preview URL";
+      **1. Check installation and update to latest:**
+      LOCAL=$(pinme --version 2>/dev/null || echo "0.0.0")
+      LATEST=$(npm view pinme version)
+      [ "$LOCAL" != "$LATEST" ] && npm install -g pinme@latest || echo "pinme is up to date ($LOCAL)"
+      **2. Determine upload target** (priority order):
+      3. `out/` — Next.js static export
+      4. `public/` — Plain static files
+      **3. Upload:**
+      pinme upload ./dist --domain my-site  # Optional: bind subdomain (VIP required)
+      **4. Return** the preview URL (`https://pinme.eth.limo/#/preview/*`) to the user. Note: return the **full URL** including all hash characters — do not truncate.
+      ### Common Examples
+      pinme upload ./document.pdf          # Single file
+      pinme upload ./my-folder             # Folder
+      pinme upload dist                    # Vite/Vue build artifacts
+      pinme upload build                   # CRA build artifacts
+      pinme upload out                     # Next.js static export
+      pinme upload ./dist --domain my-site # Bind PinMe subdomain (VIP required)
+      pinme import ./my-archive.car        # Import CAR file
+      ### Do NOT Upload
+      - `node_modules/`, `.env`, `.git/`, `src/`
+      - Only upload build artifacts, never upload source code
+      ## Path 2: Full-Stack Project
+      > Login required. Uses React+Vite frontend + Cloudflare Worker backend + D1 SQLite database.
+          "Install/update pinme to latest" [shape=box];
+          "Modify template code" [shape=box];
+          "Return preview URL" [shape=doublecircle];
+          "Install/update pinme to latest" -> "pinme login";
+          "pinme create <name>" -> "Modify template code";
+          "Modify template code" -> "pinme save";
+          "pinme save" -> "Return preview URL";
+      ### Architecture
+      | Layer | Tech Stack | Deploy Target |
+      |-------|-----------|---------------|
+      | Frontend | React + Vite (`frontend/`) | IPFS |
+      | Backend | Cloudflare Worker (`backend/src/worker.ts`) | `{name}.pinme.pro` |
+      | Database | D1 SQLite (`db/*.sql`) | Cloudflare D1 |
+      ### Core Commands
+      pinme login                  # Login (only needed once)
+      pinme create <dirName>       # Clone template and create project (auto-fills API URL)
+      pinme save                   # First deploy / full update (frontend + backend + database, single command)
+      pinme update-worker          # Update backend only (when only backend/src/worker.ts was modified)
+      pinme update-web             # Update frontend only (when only frontend/src/ was modified)
+      pinme update-db              # Run SQL migrations only (when only db/ was modified)
+      > `pinme save` deploys frontend + backend + database all at once. Only use `pinme update-*` when you're certain only one part was modified.
+      ### Project Structure
+      ├── pinme.toml              # Root config (auto-generated, do not modify)
+      ├── package.json            # Monorepo root (workspaces: frontend + backend)
+      │   ├── wrangler.toml       # Worker config (auto-generated, do not modify)
+      │       └── worker.ts       # Backend entry — JSON API only
+      │   └── 001_init.sql        # SQL table definitions
+      │   ├── vite.config.ts      # Dev proxy: /api → localhost:8787
+      │   ├── .env                # Auto-generated: VITE_WORKER_URL (do not modify)
+      ### First Deployment
+      LOCAL=$(pinme --version 2>/dev/null || echo "0.0.0")
+      LATEST=$(npm view pinme version)
+      [ "$LOCAL" != "$LATEST" ] && npm install -g pinme@latest
+      `pinme create` generates a working Hello World template (includes frontend page + backend API routes + database schema). **Modify the template** to match the user's business logic — do not write from scratch:
+      - Modify `backend/src/worker.ts` — replace API routes
+      - Modify `frontend/src/pages/` — replace page components
+      - Modify `db/001_init.sql` — replace table definitions
+      # Single command deploys frontend + backend + database
+      # Outputs preview URL: https://pinme.eth.limo/#/preview/{CID}
+      **Return** the preview URL to the user. Note: return the **full URL** including all hash characters — do not truncate.
+      The backend Worker is deployed at `https://{name}.pinme.pro`. Frontend API requests are automatically configured to point to that address — no manual setup needed.
+      ### Subsequent Updates
+      | Changes | Command | Notes |
+      |---------|---------|-------|
+      | Backend only (`backend/src/worker.ts`) | `pinme update-worker` | Faster |
+      | Frontend only (`frontend/src/`) | `pinme update-web` | Generates new CID |
+      | Database only (`db/`) | `pinme update-db` | Runs new migrations |
+      | Multiple changes or uncertain | `pinme save` | Safe full deployment |
+      > Each frontend deployment generates a new CID and preview URL. Old URLs remain accessible.
+      ## Worker Code Patterns (backend/src/worker.ts)
+      The Worker backend only serves JSON APIs. **No npm packages allowed** (no hono, express, etc.). Write routes manually:
+        DB: D1Database;           // When using database
+        API_KEY?: string;         // When using email sending
+        JWT_SECRET: string;       // When using JWT auth
+        ADMIN_PASSWORD: string;   // When using password auth
+      ### Worker Restrictions
+      | Prohibited | Alternative |
+      |-----------|-------------|
+      | `import from 'hono'` or any npm package | Manual routing (`if pathname === '/api/...'`) |
+      | `import fs from 'fs'` / Node.js built-in modules | Web APIs: `crypto`, `fetch`, `URL`, etc. |
+      | `require()` syntax | ESM `import` only |
+      | Worker returning HTML | JSON API only |
+      | Storing passwords in plaintext | Hash with SHA-256 before storing |
+      | SQL string concatenation | Use `.bind()` parameterized queries |
+      ### Email API Reference (for Worker Backend)
+      When the backend needs email sending capability, use the PinMe platform API (`https://pinme.dev/api/v4/send_email`).
+      **1. Configure API_KEY**
+      Add to the `Env` interface:
+        API_KEY?: string;  // Required for email sending
+      **2. Email Handler Code**
+      ## Frontend API Utility (frontend/src/utils/api.ts)
+      // Development: Vite proxies /api → localhost:8787
+      // Production: VITE_WORKER_URL is auto-injected by pinme create
+      ## D1 Database Operations
+      // Query multiple rows
+      // Query single row (returns null if not found)
+      // Insert and return new row
+      // Update
+      // Delete (check if affected)
+      ### SQL Migration Files
+      **Format:** `db/NNN_description.sql` (e.g. `001_init.sql`). Executed in filename order.
+      **SQLite Type Constraints:**
+      | Do Not Use | Alternative |
+      |-----------|-------------|
+      | `BOOLEAN` | `INTEGER` (0 = false, 1 = true) |
+      | `DATETIME` / `TIMESTAMP` | `TEXT`, store ISO 8601 (default: `datetime('now')`) |
+      | `JSON` type | `TEXT`, use `JSON.stringify()` / `JSON.parse()` |
+      ## Capability Limits
+      | Limitation | Alternative |
+      |-----------|-------------|
+      | File storage (image uploads) | Store external image URLs, or `pinme upload` then store IPFS link |
+      | WebSocket | Polling API (fetch every 5 seconds) |
+      | Multiple Workers | Merge into a single Worker with route prefixes |
+      | Multiple databases | Merge into one D1 |
+      ## Important Notes
+      - `pinme.toml`, `backend/wrangler.toml`, `frontend/.env` are auto-generated — do not modify
+      - Frontend API URL is obtained via `VITE_WORKER_URL` env var — do not hardcode
+      - Passwords, tokens, and API keys must be stored in secrets, never in config files
+      ## Common Errors
+      | Error | Solution |
+      |-------|----------|
+      | `No such file or directory` | Verify the path exists |
+      | `Permission denied` | Check file/folder permissions |
+      | Upload failed | Check network connection, retry |
+      | Not logged in error | Run `pinme login` first |
+      ## Other Commands
+      pinme list / pinme ls -l 5     # View upload history
+      pinme list -c                  # Clear upload history
+      pinme rm <hash>                # Delete uploaded content
+      pinme bind <path> --domain <domain>  # Bind domain (VIP + AppKey required)
+      pinme export <CID>             # Export as CAR file
+      pinme set-appkey               # Set/view AppKey
+      pinme my-domains               # List bound domains
+      pinme delete <project>          # Delete project (Worker + domain + D1)
+      pinme logout                   # Log out
+      ```
+    gold_removed: ""

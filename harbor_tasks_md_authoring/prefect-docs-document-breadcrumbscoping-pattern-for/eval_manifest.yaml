@@ -1,0 +1,44 @@
+version: "2.0"
+
+task:
+  name: prefect-docs-document-breadcrumbscoping-pattern-for
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: prefecthq/prefect
+  pr: 21694
+  base_commit: "59c0f682ea6a595d53e1871487baab205e521252"
+  merge_commit: "793a4dad50c40bd2cc3e4c67ab0c89b17e8bf4fc"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in ui-v2/e2e/AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in ui-v2/e2e/AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in ui-v2/e2e/AGENTS.md."
+
+config_edits:
+  - path: "ui-v2/e2e/AGENTS.md"
+    tier: 1
+    gold_added: |-
+      **Strict mode on detail pages**: When asserting the name of a resource on its detail page (e.g., a task run or flow run), the name can appear in multiple places — the breadcrumb, the page heading, and as log entry metadata once logs finish loading. Scope the assertion to the specific landmark:
+      
+      ```typescript
+      // ✅ Good - scoped to breadcrumb; avoids matching log metadata that loads later
+      await expect(
+        page.getByLabel("breadcrumb").getByText(taskRunName, { exact: true }),
+      ).toBeVisible({ timeout: 10000 });
+      
+      // ❌ Bad - strict mode violation once logs load and the name appears a second time
+      await expect(page.getByText(taskRunName)).toBeVisible();
+      ```
+      
+    gold_removed: ""

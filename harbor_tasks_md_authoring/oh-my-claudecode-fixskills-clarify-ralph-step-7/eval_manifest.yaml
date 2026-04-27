@@ -1,0 +1,38 @@
+version: "2.0"
+
+task:
+  name: oh-my-claudecode-fixskills-clarify-ralph-step-7
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Yeachan-Heo/oh-my-claudecode
+  pr: 2245
+  base_commit: "581ad602d64b3aa98729876a6f05d51937d0fede"
+  merge_commit: "ed310388e8c8a621be127293b0288fb7af39dc46"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/ralph/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/ralph/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/ralph/SKILL.md."
+
+config_edits:
+  - path: "skills/ralph/SKILL.md"
+    tier: 1
+    gold_added: |-
+         - **On APPROVAL: immediately proceed to Step 7.5 in the same turn. Do NOT pause to report the verdict to the user — reporting happens only at Step 8 (`/oh-my-claudecode:cancel`) or on rejection (Step 9). Treating an approved verdict as a reporting checkpoint is a polite-stop anti-pattern.**
+      7.5 **Mandatory Deslop Pass** (runs unconditionally after Step 7 approval, unless `{{PROMPT}}` contains `--no-deslop`):
+         - **Invoke the `ai-slop-cleaner` skill via the Skill tool: `Skill("ai-slop-cleaner")`.** Run in standard mode (not `--review`) on the files changed during the current Ralph session only.
+         - **ai-slop-cleaner is a SKILL, not an agent.** Do NOT call it via `Task(subagent_type="oh-my-claudecode:ai-slop-cleaner")` — that subagent type does not exist and the call will fail with "Agent type not found". If you see that error, retry with the Skill tool — do NOT substitute a similarly-named agent like `code-simplifier` as a "closest match".
+      - **Skill vs agent invocation**: `ai-slop-cleaner` is a skill, invoke via `Skill("ai-slop-cleaner")`. `architect`, `critic`, `executor` etc. are agents, invoke via `Task(subagent_type="oh-my-claudecode:<name>")`. If you ever get "Agent type ... not found" for an `oh-my-claudecode:<name>` identifier, the item is a skill — retry with the Skill tool. Do NOT substitute a similarly-named agent as a "closest match".
+      - **Do NOT stop after Step 7 approval.** The boulder continues through 7 → 7.5 → 7.6 → 8 in the same turn as a single chain. Step 7 is a checkpoint inside the loop, not a reporting moment. Treating an architect/critic APPROVED verdict as "time to summarise and wait for user acknowledgment" is a polite-stop anti-pattern — the only reporting moments in Ralph are Step 8 (successful cancel) or Step 9 (rejection).
+    gold_removed: ""

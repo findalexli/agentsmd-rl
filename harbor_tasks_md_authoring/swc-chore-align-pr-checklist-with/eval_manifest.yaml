@@ -1,0 +1,78 @@
+version: "2.0"
+
+task:
+  name: swc-chore-align-pr-checklist-with
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: swc-project/swc
+  pr: 11560
+  base_commit: "431c5764b84d43fad0e30d25dcc0a8e049e8beae"
+  merge_commit: "e34ac335eb8f008f64a23bb879065a847a977f6c"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: "AGENTS.md"
+    tier: 1
+    gold_added: |-
+      ## PR / CI rule
+      
+      -   Before opening or updating a PR, always run this baseline locally.
+          -   `cargo fmt --all`
+          -   `cargo clippy --all --all-targets -- -D warnings`
+      -   For each touched Rust crate, run crate-level verification locally.
+          -   `cargo test -p <crate>`
+      -   If wasm binding packages are touched, run:
+          -   `(cd bindings/binding_core_wasm && ./scripts/test.sh)`
+          -   `(cd bindings/binding_minifier_wasm && ./scripts/test.sh)`
+          -   `(cd bindings/binding_typescript_wasm && ./scripts/test.sh)`
+          -   `(cd bindings/binding_es_ast_viewer && ./scripts/test.sh)`
+      -   If node bindings or integration paths are touched, run:
+          -   `(cd packages/core && yarn build:dev && yarn test)`
+      
+    gold_removed: ""
+  - path: "CLAUDE.md"
+    tier: 1
+    gold_added: |-
+      ## PR / CI rule
+      
+      -   Before opening or updating a PR, always run this baseline locally.
+          -   `cargo fmt --all`
+          -   `cargo clippy --all --all-targets -- -D warnings`
+      -   For each touched Rust crate, run crate-level verification locally.
+          -   `cargo test -p <crate>`
+      -   If wasm binding packages are touched, run:
+          -   `(cd bindings/binding_core_wasm && ./scripts/test.sh)`
+          -   `(cd bindings/binding_minifier_wasm && ./scripts/test.sh)`
+          -   `(cd bindings/binding_typescript_wasm && ./scripts/test.sh)`
+          -   `(cd bindings/binding_es_ast_viewer && ./scripts/test.sh)`
+      -   If node bindings or integration paths are touched, run:
+          -   `(cd packages/core && yarn build:dev && yarn test)`
+      
+    gold_removed: ""

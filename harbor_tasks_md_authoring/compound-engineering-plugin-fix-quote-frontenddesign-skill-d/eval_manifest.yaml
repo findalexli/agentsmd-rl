@@ -1,0 +1,25 @@
+version: "2.0"
+
+task:
+  name: compound-engineering-plugin-fix-quote-frontenddesign-skill-d
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: EveryInc/compound-engineering-plugin
+  pr: 353
+  base_commit: "4aa50e1bada07e90f36282accb3cd81134e706cd"
+  merge_commit: "86342db36c0d09b65afe11241e095dda2ad2cdb0"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/frontend-design/SKILL.md."
+
+config_edits:
+  - path: "plugins/compound-engineering/skills/frontend-design/SKILL.md"
+    tier: 1
+    gold_added: |-
+      description: 'Build web interfaces with genuine design quality, not AI slop. Use for any frontend work - landing pages, web apps, dashboards, admin panels, components, interactive experiences. Activates for both greenfield builds and modifications to existing applications. Detects existing design systems and respects them. Covers composition, typography, color, motion, and copy. Verifies results via screenshots before declaring done.'
+    gold_removed: ""

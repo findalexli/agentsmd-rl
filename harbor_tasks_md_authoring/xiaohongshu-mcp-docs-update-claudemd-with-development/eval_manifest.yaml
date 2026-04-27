@@ -1,0 +1,36 @@
+version: "2.0"
+
+task:
+  name: xiaohongshu-mcp-docs-update-claudemd-with-development
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: xpzouying/xiaohongshu-mcp
+  pr: 46
+  base_commit: "cc14518d032f0f41bf9f789952fc5d5ec2a32fc1"
+  merge_commit: "8fdb461f8f0089b8caa7438799f2c39d814d9335"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: "CLAUDE.md"
+    tier: 1
+    gold_added: |-
+      - 测试过程中产生的脚本和build中间文件,如果没有必要,则删除.
+      - 所有的feature变更,都需要使用分支进行开发.
+      - 在我未同意之前, 你不能推送到远程.
+      - 我需要: 1.本地 review; 2.远程 PR review.
+    gold_removed: ""

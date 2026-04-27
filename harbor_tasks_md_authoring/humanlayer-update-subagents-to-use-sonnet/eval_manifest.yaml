@@ -1,0 +1,70 @@
+version: "2.0"
+
+task:
+  name: humanlayer-update-subagents-to-use-sonnet
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: humanlayer/humanlayer
+  pr: 695
+  base_commit: "3d0ed95d939857af0f7ac8cceddee57ee5dd211e"
+  merge_commit: "4edc168a18a9823a6556c1603648a194b6e22a8b"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/agents/codebase-analyzer.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/agents/codebase-locator.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/agents/codebase-pattern-finder.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/agents/thoughts-analyzer.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/agents/thoughts-locator.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/agents/web-search-researcher.md."
+
+config_edits:
+  - path: ".claude/agents/codebase-analyzer.md"
+    tier: 1
+    gold_added: |-
+      model: sonnet
+    gold_removed: ""
+  - path: ".claude/agents/codebase-locator.md"
+    tier: 1
+    gold_added: |-
+      model: sonnet
+    gold_removed: ""
+  - path: ".claude/agents/codebase-pattern-finder.md"
+    tier: 1
+    gold_added: |-
+      model: sonnet
+    gold_removed: ""
+  - path: ".claude/agents/thoughts-analyzer.md"
+    tier: 1
+    gold_added: |-
+      model: sonnet
+    gold_removed: ""
+  - path: ".claude/agents/thoughts-locator.md"
+    tier: 1
+    gold_added: |-
+      model: sonnet
+    gold_removed: ""
+  - path: ".claude/agents/web-search-researcher.md"
+    tier: 1
+    gold_added: |-
+      model: sonnet
+    gold_removed: ""

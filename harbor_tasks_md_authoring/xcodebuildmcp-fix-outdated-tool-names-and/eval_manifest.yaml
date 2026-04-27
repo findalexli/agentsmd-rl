@@ -1,0 +1,54 @@
+version: "2.0"
+
+task:
+  name: xcodebuildmcp-fix-outdated-tool-names-and
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: getsentry/XcodeBuildMCP
+  pr: 217
+  base_commit: "c14c159cd9ab1882fa90bb5c9e73f711fd98ec37"
+  merge_commit: "c74ad3d112e26446267ee47e57751c9f34ccf157"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/xcodebuildmcp-cli/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/xcodebuildmcp-cli/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/xcodebuildmcp-cli/SKILL.md."
+
+config_edits:
+  - path: "skills/xcodebuildmcp-cli/SKILL.md"
+    tier: 1
+    gold_added: |-
+      xcodebuildmcp simulator discover-projects --workspace-root .
+      xcodebuildmcp simulator list
+      xcodebuildmcp simulator build-and-run --scheme MyApp --project-path ./MyApp.xcodeproj --simulator-name "iPhone 17 Pro"
+      xcodebuildmcp simulator build --scheme MyApp --project-path ./MyApp.xcodeproj --simulator-name "iPhone 17 Pro"
+      When you need to run tests, you can do so with the `test` tool.
+      xcodebuildmcp simulator test --scheme MyAppTests --project-path ./MyApp.xcodeproj --simulator-name "iPhone 17 Pro"
+      xcodebuildmcp device list
+      xcodebuildmcp device build --scheme MyApp --project-path ./MyApp.xcodeproj
+      xcodebuildmcp device get-app-path --scheme MyApp --project-path ./MyApp.xcodeproj
+      xcodebuildmcp device install --device-id DEVICE_UDID --app-path /path/to/MyApp.app
+      xcodebuildmcp device launch --device-id DEVICE_UDID --bundle-id io.sentry.MyApp
+      xcodebuildmcp logging start-simulator-log-capture --simulator-id SIMULATOR_UDID --bundle-id io.sentry.MyApp
+      xcodebuildmcp logging stop-simulator-log-capture --log-session-id LOG_SESSION_ID
+      xcodebuildmcp simulator launch-app --bundle-id io.sentry.MyApp --simulator-id SIMULATOR_UDID
+      xcodebuildmcp debugging attach --bundle-id io.sentry.MyApp --simulator-id SIMULATOR_UDID
+      xcodebuildmcp macos build --scheme MyMacApp --project-path ./MyMacApp.xcodeproj
+      xcodebuildmcp macos build-and-run --scheme MyMacApp --project-path ./MyMacApp.xcodeproj
+      xcodebuildmcp swift-package list
+      xcodebuildmcp project-discovery discover-projects --workspace-root .
+      xcodebuildmcp project-scaffolding scaffold-ios --project-name MyApp --output-path ./Projects
+      xcodebuildmcp project-scaffolding scaffold-macos --project-name MyMacApp --output-path ./Projects
+      ```
+    gold_removed: ""

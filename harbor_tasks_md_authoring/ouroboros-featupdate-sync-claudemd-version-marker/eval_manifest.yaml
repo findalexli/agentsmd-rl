@@ -1,0 +1,51 @@
+version: "2.0"
+
+task:
+  name: ouroboros-featupdate-sync-claudemd-version-marker
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Q00/ouroboros
+  pr: 139
+  base_commit: "4164f266b186872ad755ba2b2b70fabb37a90dab"
+  merge_commit: "0c1efd1045a868ee7c180058f7471f60d694af75"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/update/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/update/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/update/SKILL.md."
+
+config_edits:
+  - path: "skills/update/SKILL.md"
+    tier: 1
+    gold_added: |-
+         c. **Verify and update CLAUDE.md version marker**:
+         NEW_VERSION=$(python3 -c "import ouroboros; print(ouroboros.__version__)" 2>/dev/null)
+         echo "Installed: v$NEW_VERSION"
+      
+         if [ -n "$NEW_VERSION" ] && grep -q "ooo:VERSION" CLAUDE.md 2>/dev/null; then
+           OLD_VERSION=$(grep "ooo:VERSION" CLAUDE.md | sed 's/.*ooo:VERSION:\(.*\) -->/\1/' | tr -d ' ')
+           if [ "$OLD_VERSION" != "$NEW_VERSION" ]; then
+             sed -i.bak "s/<!-- ooo:VERSION:.*-->/<!-- ooo:VERSION:$NEW_VERSION -->/" CLAUDE.md && rm -f CLAUDE.md.bak
+             echo "CLAUDE.md version marker updated: v$OLD_VERSION → v$NEW_VERSION"
+           else
+             echo "CLAUDE.md version marker already up to date (v$NEW_VERSION)"
+           fi
+         fi
+         > **Note**: This only updates the version marker. If the block content itself
+         > changed between versions, the user should run `ooo setup` to regenerate it.
+      
+         If CLAUDE.md block content changed, regenerate it:
+           ooo setup
+      
+    gold_removed: ""

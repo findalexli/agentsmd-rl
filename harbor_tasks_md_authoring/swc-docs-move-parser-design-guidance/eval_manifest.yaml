@@ -1,0 +1,39 @@
+version: "2.0"
+
+task:
+  name: swc-docs-move-parser-design-guidance
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: swc-project/swc
+  pr: 11600
+  base_commit: "c7bfebec4fb691e6e49f3c3b7b257be178e7f238"
+  merge_commit: "e6e91a3d525774fb3453ebda64793d3d253771b5"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in crates/swc_es_parser/AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in crates/swc_es_parser/AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in crates/swc_es_parser/AGENTS.md."
+
+config_edits:
+  - path: "crates/swc_es_parser/AGENTS.md"
+    tier: 1
+    gold_added: |-
+      # swc_es_parser Parity Design
+      - The parser keeps allocating directly into `swc_es_ast` without intermediate trees.
+      - A parity fixture mode can classify known shared fixtures as expected success or expected failure.
+      ## Fixture Parity Contract
+      - `swc_es_parser/tests/parity_suite.rs` reuses the `swc_ecma_parser/tests` fixture corpus.
+      - The suite enforces pass/fail parity only (not diagnostic-text parity).
+      - The suite mirrors `swc_ecma_parser` fixture skip rules for `typescript/tsc` and `test262` pass ignores.
+    gold_removed: ""

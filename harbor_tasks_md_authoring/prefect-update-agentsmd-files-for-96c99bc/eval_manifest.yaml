@@ -1,0 +1,41 @@
+version: "2.0"
+
+task:
+  name: prefect-update-agentsmd-files-for-96c99bc
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: prefecthq/prefect
+  pr: 21442
+  base_commit: "96c99bc94c19052f3a429e6328c0207176e22a11"
+  merge_commit: "66ce5720c1e86a4f8a833f10edbd1e1f8b6c67ce"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in tests/AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in tests/AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in tests/AGENTS.md."
+
+config_edits:
+  - path: "tests/AGENTS.md"
+    tier: 1
+    gold_added: |-
+      Use `retry_asserts` from `prefect._internal.testing` to handle timing-sensitive assertions. Two patterns:
+      
+      - **Retrying assertions for async event propagation** (most common): wrap the assertion inside `with attempt:` so it retries until the event arrives.
+        ```python
+        async for attempt in retry_asserts(max_attempts=5, delay=0.5):
+            with attempt:
+                callback.assert_called_once_with(flow_run_id)
+        ```
+      - **Retrying HTTP requests** (`hosted_api_client` tests): SQLite "database is locked" 503 errors can occur due to concurrent access. Retry the HTTP request inside the loop; keep the result assertions *outside* so a wrong result is never masked.
+    gold_removed: ""

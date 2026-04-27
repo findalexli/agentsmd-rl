@@ -1,0 +1,39 @@
+version: "2.0"
+
+task:
+  name: sanity-docsagents-add-guidance-for-running
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: sanity-io/sanity
+  pr: 12332
+  base_commit: "896b9cf49e9baa02c961db64814c91e76374d7f4"
+  merge_commit: "45d322149f7b00a661fcd08ec41e3cbc0b6b9120"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: "AGENTS.md"
+    tier: 1
+    gold_added: |-
+      # Run a single test file (IMPORTANT: use vitest directly with --project to avoid running all tests)
+      pnpm vitest run --project=sanity packages/sanity/src/core/hooks/useClient.test.ts
+      
+      # Run a single test file with verbose output
+      pnpm vitest run --project=sanity --reporter=verbose packages/sanity/src/core/hooks/useClient.test.ts
+      **Important:** Do NOT use `pnpm test -- path/to/file.test.ts` for running a single file — it runs all tests across all projects. Use `pnpm vitest run --project=<project> <path>` instead.
+      
+    gold_removed: ""

@@ -1,0 +1,51 @@
+version: "2.0"
+
+task:
+  name: context-mode-add-windows-notes-for-script
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: mksglu/context-mode
+  pr: 192
+  base_commit: "45a8ffcb1f81159c6c6b61c594507504ac0b2333"
+  merge_commit: "3df75cea67cf627fc7f81acbd973810a316d8964"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in configs/codex/AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in configs/codex/AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in configs/codex/AGENTS.md."
+
+config_edits:
+  - path: "configs/codex/AGENTS.md"
+    tier: 1
+    gold_added: |-
+      
+      ## Windows notes
+       
+      **PowerShell cmdlets in shell scripts** — The sandbox executes scripts via bash. PowerShell
+      cmdlets (`Format-List`, `Format-Table`, `Get-Culture`, etc.) do not exist in bash and will fail
+      with `command not found`. Wrap them with `pwsh -NoProfile -Command "..."` instead.
+       
+      **Relative paths** — The sandbox CWD is a temp directory, not your project root. Always convert
+      any user-supplied path to an absolute path before passing it to `rg`, `grep`, or `find`.
+      Ask the user to confirm the absolute path if it is not already known.
+       
+      **Windows drive letter paths** — The sandbox runs Git Bash / MSYS2, not WSL. Drive letters must
+      use the MSYS2 convention, NOT the WSL convention:
+      `X:\path` → `/x/path` (lowercase letter, no `/mnt/` prefix).
+      Never emit `/mnt/<letter>/` prefixes regardless of which drive the project is on.
+       
+      **Always quote paths** — If a path contains spaces, bash splits it into separate arguments.
+      Always wrap every path in double quotes: `rg "symbol" "$REPO_ROOT/some dir/Source"`.
+      This applies to all tools: `rg`, `grep`, `find`, `ls`, etc.
+    gold_removed: ""

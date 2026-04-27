@@ -1,0 +1,45 @@
+version: "2.0"
+
+task:
+  name: agent-reach-docs-fix-xiaohongshu-api-in
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Panniantong/Agent-Reach
+  pr: 65
+  base_commit: "1a61a2cc81f0166621156bdbda96cb9cca6c56ee"
+  merge_commit: "7434c3cb9faa4266b869117b15cca4d0f147b91d"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in agent_reach/skill/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in agent_reach/skill/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in agent_reach/skill/SKILL.md."
+
+config_edits:
+  - path: "agent_reach/skill/SKILL.md"
+    tier: 1
+    gold_added: |-
+      > ⚠️ 需要登录。使用 Cookie-Editor 导入 cookies 或扫码登录。
+      
+      # 搜索笔记
+      # 获取笔记详情（含评论）
+      # 获取全部评论
+      mcporter call 'xiaohongshu.get_feed_detail(feed_id: "xxx", xsec_token: "yyy", load_all_comments: true)'
+      
+      # 发布图文笔记
+      mcporter call 'xiaohongshu.publish_content(title: "标题", content: "正文", images: ["/path/to/img.jpg"], tags: ["美食"])'
+      # 发布视频笔记
+      mcporter call 'xiaohongshu.publish_with_video(title: "标题", content: "正文", video: "/path/to/video.mp4", tags: ["vlog"])'
+      其他功能（点赞、收藏、评论、用户主页等）：`npx mcporter list xiaohongshu`
+      
+    gold_removed: ""

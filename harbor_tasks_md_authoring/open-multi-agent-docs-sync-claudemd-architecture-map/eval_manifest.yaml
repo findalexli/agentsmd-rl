@@ -1,0 +1,58 @@
+version: "2.0"
+
+task:
+  name: open-multi-agent-docs-sync-claudemd-architecture-map
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: JackChen-me/open-multi-agent
+  pr: 171
+  base_commit: "ff987cfc37a77769cca15ca5ef773a9bc7d02e2f"
+  merge_commit: "ebce1d1d434e34c94bd96fa10f0f52c8c2d91074"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: "CLAUDE.md"
+    tier: 1
+    gold_added: |-
+      npm run test:coverage  # Vitest with v8 coverage
+      npm run test:e2e       # E2E suite (requires RUN_E2E=1, real API keys)
+      Tests live in `tests/` (vitest); E2E suite under `tests/e2e/`. Examples in `examples/` are standalone scripts requiring API keys (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, etc.) and are organized by intent: `basics/`, `cookbook/`, `patterns/`, `providers/`, `integrations/`, `production/`, with shared `fixtures/`. CLI usage and JSON schemas: `docs/cli.md`.
+      ES module TypeScript framework for multi-agent orchestration. Three runtime dependencies: `@anthropic-ai/sdk`, `openai`, `zod`. Optional peer deps `@google/genai` (Gemini) and `@modelcontextprotocol/sdk` (MCP) are loaded lazily so users only install what they use; the three-dependency promise covers `dependencies` only.
+      | Agent | `agent/agent.ts`, `agent/runner.ts`, `agent/pool.ts`, `agent/structured-output.ts`, `agent/loop-detector.ts` | Agent lifecycle (idle→running→completed/error), conversation loop, concurrency pool with Semaphore, structured output validation, sliding-window loop detection |
+      | Tool | `tool/framework.ts`, `tool/executor.ts`, `tool/mcp.ts`, `tool/text-tool-extractor.ts`, `tool/built-in/` | `defineTool()` with Zod schemas, ToolRegistry, parallel batch execution with concurrency semaphore, MCP integration, fallback text-format tool-call extraction for local models |
+      | LLM | `llm/adapter.ts` + per-provider files (`anthropic`, `openai`, `azure-openai`, `gemini`, `grok`, `deepseek`, `minimax`, `qiniu`, `copilot`) + `openai-common.ts` | `LLMAdapter` interface (`chat` + `stream`); async `createAdapter()` factory imports the chosen adapter lazily so unused SDKs aren't loaded; `baseURL` parameter targets OpenAI-compatible servers (Ollama, vLLM, LM Studio) |
+      | Dashboard | `dashboard/render-team-run-dashboard.ts`, `dashboard/layout-tasks.ts` | Pure HTML renderer for the post-run team task DAG (no I/O) |
+      | CLI | `cli/oma.ts` | Shell/CI entry; built to `dist/cli/oma.js` and exposed as the `oma` npm bin |
+      | Utils | `utils/semaphore.ts`, `utils/tokens.ts`, `utils/keywords.ts`, `utils/trace.ts` | Concurrency primitive, token accounting, keyword helpers, trace plumbing |
+      | Errors | `errors.ts` | Shared error types |
+      | Exports | `index.ts` (root, `'open-multi-agent'`), `mcp.ts` (subpath, `'open-multi-agent/mcp'`) | Public API surface; MCP integration is a separate entry point so non-MCP users don't pay the import cost |
+      `bash`, `file_read`, `file_write`, `file_edit`, `grep`, `glob` — registered via `registerBuiltInTools(registry)`. `grep` and `glob` share a recursive directory walker in `tool/built-in/fs-walk.ts` (with a `SKIP_DIRS` set for `.git`, `node_modules`, `dist`, etc.) so their filtering rules stay consistent. `delegate_to_agent` is opt-in (`registerBuiltInTools(registry, { includeDelegateTool: true })`) and only wired up inside pool workers by `runTeam`/`runTasks` — see "Agent Delegation" below.
+      
+      ### Local Model Support
+      
+      `tool/text-tool-extractor.ts` is a safety-net fallback for OpenAI-compatible local servers (Ollama thinking-model bug, vLLM, LM Studio) that emit tool calls as plain text instead of native `tool_calls` blocks. It recognises raw JSON, markdown-fenced JSON, Hermes-style `<tool_call>` tags, and JSON leaked inside unclosed `<think>` tags. Native `tool_calls` from the server always win; this only runs when none are present.
+      
+      ### MCP Integration
+      
+      `connectMCPTools()` (in `tool/mcp.ts`) bridges Model Context Protocol servers into the `ToolRegistry`. Imported lazily and exposed via the dedicated `open-multi-agent/mcp` package subpath (`src/mcp.ts`) so users who don't need MCP don't load `@modelcontextprotocol/sdk`.
+      
+      ### Loop Detection
+      
+      Optional `LoopDetectionConfig` on the agent runner triggers `agent/loop-detector.ts`, a sliding-window detector that hashes tool-call signatures (with sorted JSON keys) and text outputs to catch agents stuck repeating the same actions across turns.
+      Implement `LLMAdapter` interface with `chat(messages, options)` and `stream(messages, options)`, add the provider name to the `SupportedProvider` union, then register a new `case` in the `createAdapter()` factory in `src/llm/adapter.ts`. Use a dynamic `await import('./your-provider.js')` so the SDK only loads when that provider is requested. OpenAI-compatible providers should accept the `baseURL` parameter and reuse helpers from `openai-common.ts`.
+    gold_removed: ""

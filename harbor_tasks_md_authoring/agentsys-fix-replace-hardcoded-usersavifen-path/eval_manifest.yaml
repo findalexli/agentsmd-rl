@@ -1,0 +1,124 @@
+version: "2.0"
+
+task:
+  name: agentsys-fix-replace-hardcoded-usersavifen-path
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: agent-sh/agentsys
+  pr: 333
+  base_commit: "16c5c8b9c525b25a78ffe40f9b4353407983d644"
+  merge_commit: "d9e145d612d16ec8827af89bdfac6d7f30de5f8f"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .kiro/skills/web-auth/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .kiro/skills/web-auth/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .kiro/skills/web-auth/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .kiro/skills/web-browse/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .kiro/skills/web-browse/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .kiro/skills/web-browse/SKILL.md."
+
+config_edits:
+  - path: ".kiro/skills/web-auth/SKILL.md"
+    tier: 1
+    gold_added: |-
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js session auth myapp --url "https://myapp.com/login?redirect=/dashboard"
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js session auth myapp --url https://myapp.com/login?redirect=/dashboard
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js session start <session-name>
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js session auth <session-name> --provider <provider>
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js session auth <session-name> --provider my-corp --providers-file ./custom-providers.json
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js session auth <session-name> --url <login-url> [--success-url <url>] [--success-selector <selector>] [--timeout <seconds>]
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js session verify <session-name> --url <protected-page-url>
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js session verify <session-name> --provider <provider>
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js session start twitter
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js session auth twitter --provider twitter
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run twitter goto "https://x.com/home"
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run twitter snapshot
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js session start github
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js session auth github --provider github
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js session start myapp
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js session auth myapp --url "https://myapp.com/login" --success-url "https://myapp.com/dashboard"
+    gold_removed: ""
+  - path: ".kiro/skills/web-browse/SKILL.md"
+    tier: 1
+    gold_added: |-
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run <session-name> <action> [args] [options]
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run <session> goto "https://example.com/search?q=test&page=2"
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run <session> goto https://example.com/search?q=test&page=2
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run <session> goto <url> [--no-auth-wall-detect] [--no-content-block-detect] [--no-auto-recover] [--ensure-auth] [--wait-loaded]
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run <session> snapshot
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run <session> click <selector> [--wait-stable] [--timeout <ms>]
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run <session> click-wait <selector> [--timeout <ms>]
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run <session> type <selector> <text>
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run <session> read <selector>
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run <session> fill <selector> <value>
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run <session> wait <selector> [--timeout <ms>]
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run <session> evaluate <js-code>
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run <session> screenshot [--path <file>]
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run <session> network [--filter <pattern>]
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run <session> checkpoint [--timeout <seconds>]
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run <session> select-option <trigger-selector> <option-text> [--exact]
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run <session> tab-switch <tab-name> [--wait-for <selector>]
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run <session> modal-dismiss [--accept] [--selector <selector>]
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run <session> form-fill --fields '{"Email": "user@example.com", "Name": "Jane"}' [--submit] [--submit-text <text>]
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run <session> search-select <input-selector> <query> --pick <text>
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run <session> date-pick <input-selector> --date <YYYY-MM-DD>
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run <session> file-upload <selector> <file-path> [--wait-for <selector>]
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run <session> hover-reveal <trigger-selector> --click <target-selector>
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run <session> scroll-to <selector> [--container <selector>]
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run <session> wait-toast [--timeout <ms>] [--dismiss]
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run <session> iframe-action <iframe-selector> <action> [args]
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run <session> login --user <username> --pass <password> [--success-selector <selector>]
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run <session> next-page
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run <session> paginate --selector <css-selector> [--max-pages N] [--max-items N]
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run <session> extract --selector <css-selector> [--fields f1,f2,...] [--max-items N] [--max-field-length N]
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run <session> extract --auto [--max-items N] [--max-field-length N]
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run mysession extract --selector ".post-card" --fields "title,url,author,date"
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run mysession extract --auto --max-items 20
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run mysession extract --selector ".product-item" --fields "title,url,image,text"
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run <session> snapshot --snapshot-depth 2
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run <session> goto <url> --snapshot-depth 3
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run <session> snapshot --snapshot-selector "css=nav"
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run <session> click "#btn" --snapshot-selector "#main"
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run <session> goto <url> --snapshot-full
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run <session> snapshot --snapshot-full
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run <session> click "#submit" --no-snapshot
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run <session> fill "#email" user@test.com --no-snapshot
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run <session> snapshot --snapshot-max-lines 50
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run <session> goto <url> --snapshot-max-lines 100
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run <session> snapshot --snapshot-compact
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run <session> goto <url> --snapshot-compact
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run <session> snapshot --snapshot-collapse
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run <session> goto <url> --snapshot-collapse
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run <session> snapshot --snapshot-text-only
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run <session> goto <url> --snapshot-text-only --snapshot-max-lines 50
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run <session> checkpoint
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run <session> snapshot
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run mysession click "role=button[name='Sign In']"
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run session goto "https://example.com"
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run session snapshot
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run session click "role=link[name='Login']"
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run session fill "#email" user@example.com
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run session fill "#password" secretpass
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run session click "role=button[name='Submit']"
+      node ~/.agentsys/plugins/web-ctl/scripts/web-ctl.js run session snapshot
+    gold_removed: ""

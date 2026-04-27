@@ -1,0 +1,38 @@
+version: "2.0"
+
+task:
+  name: remix-update-jsdoc-guidelines-and-eslint
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: remix-run/remix
+  pr: 11153
+  base_commit: "98b3bfb30cd97795cba036d7d5c058f42b73d77d"
+  merge_commit: "d2cff3d4322325a1625b9967c333ab558421db1d"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/write-api-docs/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/write-api-docs/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/write-api-docs/SKILL.md."
+
+config_edits:
+  - path: "skills/write-api-docs/SKILL.md"
+    tier: 1
+    gold_added: |-
+      - Specify `@param` default values in parenthesis at the end of the comment, do not use `@default` tags
+      - Include an `@example` code block when it helps to show a use-case or pattern. Skip `@example` for simple getters, trivial constructors, or APIs whose usage is self-evident.
+      - Use `{@link API}` to link to related Remix APIs when it adds value. Don't link every related API — use discretion to avoid noise.
+      - Use backticks for all other unlinked code references — identifiers, HTTP methods, special values.
+       * Creates an {@link AuthProvider} for direct credentials-based authentication.
+      The relevant rules live in [`eslint.config.js`](../../eslint.config.js).
+    gold_removed: ""

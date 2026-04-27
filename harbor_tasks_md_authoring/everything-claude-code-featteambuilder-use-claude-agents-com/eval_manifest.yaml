@@ -1,0 +1,45 @@
+version: "2.0"
+
+task:
+  name: everything-claude-code-featteambuilder-use-claude-agents-com
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: affaan-m/everything-claude-code
+  pr: 1021
+  base_commit: "a4d4b1d756f08f9127de3dc4b6b1a557c3449517"
+  merge_commit: "fade657338b8d53a2154aac500af118032d914f1"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/team-builder/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/team-builder/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/team-builder/SKILL.md."
+
+config_edits:
+  - path: "skills/team-builder/SKILL.md"
+    tier: 1
+    gold_added: |-
+      Agents are discovered via two methods, merged and deduplicated by agent name:
+      1. **`claude agents` command** (primary) — run `claude agents` to get all agents known to the CLI, including user agents, plugin agents (e.g. `everything-claude-code:architect`), and built-in agents. This automatically covers ECC marketplace installs without any path configuration.
+      2. **File glob** (fallback, for reading agent content) — agent markdown files are read from:
+         - `./agents/**/*.md` + `./agents/*.md` — project-local agents
+         - `~/.claude/agents/**/*.md` + `~/.claude/agents/*.md` — global user agents
+      Earlier sources take precedence when names collide: user agents > plugin agents > built-in agents. A custom path can be used instead if the user specifies one.
+      Run `claude agents` to get the full agent list. Parse each line:
+      - **Plugin agents** are prefixed with `plugin-name:` (e.g., `everything-claude-code:security-reviewer`). Use the part after `:` as the agent name and the plugin name as the domain.
+      - **User agents** have no prefix. Read the corresponding markdown file from `~/.claude/agents/` or `./agents/` to extract the name and description.
+      - **Built-in agents** (e.g., `Explore`, `Plan`) are skipped unless the user explicitly asks to include them.
+      
+      For user agents loaded from markdown files:
+      If no agents are found after running `claude agents` and probing file locations, inform the user: "No agents found. Run `claude agents` to verify your setup." Then stop.
+    gold_removed: ""

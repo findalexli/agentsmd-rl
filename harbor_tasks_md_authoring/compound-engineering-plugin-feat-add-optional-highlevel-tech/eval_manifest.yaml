@@ -1,0 +1,118 @@
+version: "2.0"
+
+task:
+  name: compound-engineering-plugin-feat-add-optional-highlevel-tech
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: EveryInc/compound-engineering-plugin
+  pr: 322
+  base_commit: "0407c135e6c7d805c8224675f3316f2a162aa6da"
+  merge_commit: "3ba4935926b05586da488119f215057164d97489"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-plan-beta/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-plan-beta/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-plan-beta/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/deepen-plan-beta/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/deepen-plan-beta/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/deepen-plan-beta/SKILL.md."
+
+config_edits:
+  - path: "plugins/compound-engineering/skills/ce-plan-beta/SKILL.md"
+    tier: 1
+    gold_added: |-
+      2. **Decisions, not code** - Capture approach, boundaries, files, dependencies, risks, and test scenarios. Do not pre-write implementation code or shell command choreography. Pseudo-code sketches or DSL grammars that communicate high-level technical design are welcome when they help a reviewer validate direction — but they must be explicitly framed as directional guidance, not implementation specification.
+      #### 3.4 High-Level Technical Design (Optional)
+      
+      Before detailing implementation units, decide whether an overview would help a reviewer validate the intended approach. This section communicates the *shape* of the solution — how pieces fit together — without dictating implementation.
+      
+      **When to include it:**
+      
+      | Work involves... | Best overview form |
+      |---|---|
+      | DSL or API surface design | Pseudo-code grammar or contract sketch |
+      | Multi-component integration | Mermaid sequence or component diagram |
+      | Data pipeline or transformation | Data flow sketch |
+      | State-heavy lifecycle | State diagram |
+      | Complex branching logic | Flowchart |
+      | Single-component with non-obvious shape | Pseudo-code sketch |
+      
+      **When to skip it:**
+      - Well-patterned work where prose and file paths tell the whole story
+      - Straightforward CRUD or convention-following changes
+      - Lightweight plans where the approach is obvious
+      
+      Choose the medium that fits the work. Do not default to pseudo-code when a diagram communicates better, and vice versa.
+      
+      Frame every sketch with: *"This illustrates the intended approach and is directional guidance for review, not implementation specification. The implementing agent should treat it as context, not code to reproduce."*
+      
+      Keep sketches concise — enough to validate direction, not enough to copy-paste into production.
+      
+      #### 3.5 Define Each Implementation Unit
+      - **Technical design** - optional pseudo-code or diagram when the unit's approach is non-obvious and prose alone would leave it ambiguous. Frame explicitly as directional guidance, not implementation specification
+      #### 3.6 Keep Planning-Time and Implementation-Time Unknowns Separate
+      - Use the full core template, omitting optional sections (including High-Level Technical Design) that add no value for this particular work
+      - Use the full core template plus optional analysis sections where warranted
+      <!-- Optional: Include this section only when the work involves DSL design, multi-component
+           integration, complex data flow, state-heavy lifecycle, or other cases where prose alone
+           would leave the approach shape ambiguous. Omit it entirely for well-patterned or
+           straightforward work. -->
+      ## High-Level Technical Design
+      
+      > *This illustrates the intended approach and is directional guidance for review, not implementation specification. The implementing agent should treat it as context, not code to reproduce.*
+      
+      [Pseudo-code grammar, mermaid diagram, data flow sketch, or state diagram — choose the medium that best communicates the solution shape for this work.]
+      
+      **Technical design:** *(optional -- pseudo-code or diagram when the unit's approach is non-obvious. Directional guidance, not implementation specification.)*
+      
+      - Do not include implementation code — no imports, exact method signatures, or framework-specific syntax
+      - Pseudo-code sketches and DSL grammars are allowed in the High-Level Technical Design section and per-unit technical design fields when they communicate design direction. Frame them explicitly as directional guidance, not implementation specification
+      - Mermaid diagrams are encouraged when they clarify relationships or flows that prose alone would make hard to follow — ERDs for data model changes, sequence diagrams for multi-service interactions, state diagrams for lifecycle transitions, flowcharts for complex branching logic
+      - If a High-Level Technical Design section is included, it uses the right medium for the work, carries the non-prescriptive framing, and does not contain implementation code (no imports, exact signatures, or framework-specific syntax)
+      - Per-unit technical design fields, if present, are concise and directional rather than copy-paste-ready
+    gold_removed: ""
+  - path: "plugins/compound-engineering/skills/deepen-plan-beta/SKILL.md"
+    tier: 1
+    gold_added: |-
+      - `High-Level Technical Design` (optional overview — pseudo-code, DSL grammar, mermaid diagram, or data flow)
+      - `Implementation Units` (may include per-unit `Technical design` subsections)
+      **High-Level Technical Design (when present)**
+      - The sketch uses the wrong medium for the work (e.g., pseudo-code where a sequence diagram would communicate better)
+      - The sketch contains implementation code (imports, exact signatures, framework-specific syntax) rather than pseudo-code
+      - The non-prescriptive framing is missing or weak
+      - The sketch does not connect to the key technical decisions or implementation units
+      
+      **High-Level Technical Design (when absent)** *(Standard or Deep plans only)*
+      - The work involves DSL design, API surface design, multi-component integration, complex data flow, or state-heavy lifecycle
+      - Key technical decisions would be easier to validate with a visual or pseudo-code representation
+      - The approach section of implementation units is thin and a higher-level technical design would provide context
+      
+      **High-Level Technical Design**
+      - `compound-engineering:review:architecture-strategist` for validating that the technical design accurately represents the intended approach and identifying gaps
+      - `compound-engineering:research:repo-research-analyst` for grounding the technical design in existing repo patterns and conventions
+      - Add `compound-engineering:research:best-practices-researcher` when the technical design involves a DSL, API surface, or pattern that benefits from external validation
+      
+      - Strengthen, replace, or add a High-Level Technical Design section when the work warrants it and the current representation is weak, uses the wrong medium, or is absent where it would help. Preserve the non-prescriptive framing
+      - Strengthen or add per-unit technical design fields where the unit's approach is non-obvious and the current approach notes are thin
+      - Add implementation code — no imports, exact method signatures, or framework-specific syntax. Pseudo-code sketches and DSL grammars are allowed in both the top-level High-Level Technical Design section and per-unit technical design fields
+    gold_removed: ""

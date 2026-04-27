@@ -1,0 +1,36 @@
+version: "2.0"
+
+task:
+  name: compound-engineering-plugin-fixonboarding-resolve-section-co
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: EveryInc/compound-engineering-plugin
+  pr: 421
+  base_commit: "4b9232b93f878c344a7f8451275be08ce7ed3508"
+  merge_commit: "d2436e7c933129784c67799a5b9555bccce2e46d"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/onboarding/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/onboarding/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/onboarding/SKILL.md."
+
+config_edits:
+  - path: "plugins/compound-engineering/skills/onboarding/SKILL.md"
+    tier: 1
+    gold_added: |-
+      3. **Six sections, each earning its place** -- Every section answers a question a new contributor will ask in their first hour. No speculative sections. Section 2 may be skipped for pure infrastructure with no consuming audience, producing five sections.
+      Only read files whose content is needed to write the six sections with concrete, specific detail. The inventory already provides structure, languages, frameworks, scripts, and entry point paths -- don't re-read files just to confirm what the inventory already says. Different repos need different amounts of reading; a small CLI tool might need 4 files, a complex monorepo might need 20. Let the sections drive what you read, not an arbitrary count.
+      Synthesize the inventory data and key file contents into the sections defined below. Write the file to the repo root.
+      - Use markdown headers (`##`) for each section
+    gold_removed: ""

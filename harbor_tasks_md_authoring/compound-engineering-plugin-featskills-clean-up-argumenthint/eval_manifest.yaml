@@ -1,0 +1,71 @@
+version: "2.0"
+
+task:
+  name: compound-engineering-plugin-featskills-clean-up-argumenthint
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: EveryInc/compound-engineering-plugin
+  pr: 436
+  base_commit: "03f5aa65b098e2ab8e25670594e0f554ea3cafbe"
+  merge_commit: "d2b24e07f6f2fde11cac65258cb1e76927238b5d"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-ideate/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-plan/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-review/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-work-beta/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-work/SKILL.md."
+
+config_edits:
+  - path: "plugins/compound-engineering/skills/ce-compound-refresh/SKILL.md"
+    tier: 1
+    gold_added: |-
+      
+    gold_removed: ""
+  - path: "plugins/compound-engineering/skills/ce-compound/SKILL.md"
+    tier: 1
+    gold_added: |-
+      
+    gold_removed: ""
+  - path: "plugins/compound-engineering/skills/ce-ideate/SKILL.md"
+    tier: 1
+    gold_added: |-
+      argument-hint: "[feature, focus area, or constraint]"
+    gold_removed: ""
+  - path: "plugins/compound-engineering/skills/ce-plan/SKILL.md"
+    tier: 1
+    gold_added: |-
+      argument-hint: "[optional: feature description, requirements doc path, or improvement idea]"
+    gold_removed: ""
+  - path: "plugins/compound-engineering/skills/ce-review/SKILL.md"
+    tier: 1
+    gold_added: |-
+      argument-hint: "[blank to review current branch, or provide PR link]"
+    gold_removed: ""
+  - path: "plugins/compound-engineering/skills/ce-work-beta/SKILL.md"
+    tier: 1
+    gold_added: |-
+      argument-hint: "[Plan doc path or description of work. Blank to auto use latest plan doc]"
+    gold_removed: ""
+  - path: "plugins/compound-engineering/skills/ce-work/SKILL.md"
+    tier: 1
+    gold_added: |-
+      argument-hint: "[Plan doc path or description of work. Blank to auto use latest plan doc]"
+    gold_removed: ""

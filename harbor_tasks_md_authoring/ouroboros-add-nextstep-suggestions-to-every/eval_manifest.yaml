@@ -1,0 +1,178 @@
+version: "2.0"
+
+task:
+  name: ouroboros-add-nextstep-suggestions-to-every
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Q00/ouroboros
+  pr: 68
+  base_commit: "7b5923ad6dbee5b70a390a4f0752c3e1b90c1d84"
+  merge_commit: "2c2ba795ccb69325368c966e480cad76933a8116"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/evaluate/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/evaluate/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/evaluate/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/evolve/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/evolve/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/evolve/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/interview/SKILL.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/interview/SKILL.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/interview/SKILL.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/ralph/SKILL.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/ralph/SKILL.md."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/ralph/SKILL.md."
+  - id: signal_12
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/run/SKILL.md."
+  - id: signal_13
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/run/SKILL.md."
+  - id: signal_14
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/run/SKILL.md."
+  - id: signal_15
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/seed/SKILL.md."
+  - id: signal_16
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/seed/SKILL.md."
+  - id: signal_17
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/status/SKILL.md."
+  - id: signal_18
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/status/SKILL.md."
+  - id: signal_19
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/status/SKILL.md."
+  - id: signal_20
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/unstuck/SKILL.md."
+  - id: signal_21
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/unstuck/SKILL.md."
+
+config_edits:
+  - path: "skills/evaluate/SKILL.md"
+    tier: 1
+    gold_added: |-
+         - Always end with a 📍 suggestion based on the outcome:
+           - **APPROVED**: `📍 Done! Your implementation passes all checks. Optional: ooo evolve to iteratively refine`
+           - **REJECTED at Stage 1** (mechanical): `📍 Next: Fix the build/test failures above, then ooo evaluate — or ooo ralph for automated fix loop`
+           - **REJECTED at Stage 2** (semantic): `📍 Next: ooo run to re-execute with fixes — or ooo evolve for iterative refinement`
+           - **REJECTED at Stage 3** (consensus): `📍 Next: ooo interview to re-examine requirements — or ooo unstuck to challenge assumptions`
+      
+      📍 Done! Your implementation passes all checks. Optional: `ooo evolve` to iteratively refine
+    gold_removed: ""
+  - path: "skills/evolve/SKILL.md"
+    tier: 1
+    gold_added: |-
+      8. When the loop terminates, display a result summary with next step:
+         - `converged`: `📍 Next: Ontology converged! Run ooo evaluate for formal verification`
+         - `stagnated`: `📍 Next: ooo unstuck to break through, then ooo evolve --status <lineage_id> to resume`
+         - `exhausted`: `📍 Next: ooo evaluate to check best result — or ooo unstuck to try a new approach`
+         - `failed`: `📍 Next: Check the error above. ooo status to inspect session, or ooo unstuck if blocked`
+    gold_removed: ""
+  - path: "skills/interview/SKILL.md"
+    tier: 1
+    gold_added: |-
+      5. After completion, suggest the next step in `📍 Next:` format:
+         `📍 Next: ooo seed to crystallize these requirements into a specification`
+      7. After completion, suggest the next step in `📍 Next:` format:
+         `📍 Next: ooo seed to crystallize these requirements into a specification`
+      📍 Next: `ooo seed` to crystallize these requirements into a specification
+      
+    gold_removed: ""
+  - path: "skills/ralph/SKILL.md"
+    tier: 1
+    gold_added: |-
+      4. **On termination**, display a 📍 next-step:
+         - **Success** (QA passed): `📍 Next: ooo evaluate for formal 3-stage verification`
+         - **Max iterations reached**: `📍 Next: ooo interview to re-examine the problem — or ooo unstuck to try a different approach`
+      
+      5. **Report progress** each iteration:
+      6. **Handle interruption**:
+      
+      📍 Next: `ooo evaluate` for formal 3-stage verification
+    gold_removed: ""
+  - path: "skills/run/SKILL.md"
+    tier: 1
+    gold_added: |-
+         Present QA verdict with next step:
+         - **PASS**: `📍 Next: ooo evaluate <session_id> for formal 3-stage verification`
+         - **REVISE**: Show differences/suggestions, then `📍 Next: Fix the issues above, then ooo run to retry — or ooo unstuck if blocked`
+         - **FAIL/ESCALATE**: `📍 Next: Review failures above, then ooo run to retry — or ooo unstuck if blocked`
+        📍 Next: `ooo evaluate sess-abc-123` for formal 3-stage verification
+    gold_removed: ""
+  - path: "skills/seed/SKILL.md"
+    tier: 1
+    gold_added: |-
+      Your seed has been crystallized!
+      📍 Next: `ooo run` to execute this seed (requires `ooo setup` first)
+    gold_removed: ""
+  - path: "skills/status/SKILL.md"
+    tier: 1
+    gold_added: |-
+         - End with a `📍` next-step based on context:
+           - No drift measured: `📍 Session active — say "am I drifting?" to measure drift, or continue with ooo run`
+           - Drift ≤ 0.3: `📍 On track — continue with ooo run or ooo evaluate when ready`
+           - Drift > 0.3: `📍 Warning: significant drift detected. Consider ooo interview to re-clarify, or ooo evolve to course-correct`
+      
+      📍 On track — continue with `ooo run` or `ooo evaluate` when ready
+    gold_removed: ""
+  - path: "skills/unstuck/SKILL.md"
+    tier: 1
+    gold_added: |-
+         - Suggest concrete next steps with a `📍 Next:` action routing back to the workflow
+      
+      📍 Next: Try the approach above, then `ooo run` to execute — or `ooo interview` to re-examine the problem
+    gold_removed: ""

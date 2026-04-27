@@ -1,0 +1,71 @@
+version: "2.0"
+
+task:
+  name: anthropic-cybersecurity-skills-add-nist-csf-20-categories
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: mukul975/Anthropic-Cybersecurity-Skills
+  pr: 12
+  base_commit: "72a2cd6b7a8cc6dbe147249393359448e76c390c"
+  merge_commit: "d885a68e7ffa1002c7f79d456d8ff7467a39bb63"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/implementing-gdpr-data-protection-controls/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/implementing-iso-27001-information-security-management/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/implementing-pci-dss-compliance-controls/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/performing-nist-csf-maturity-assessment/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/performing-nist-csf-maturity-assessment/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/performing-nist-csf-maturity-assessment/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/performing-soc2-type2-audit-preparation/SKILL.md."
+
+config_edits:
+  - path: "skills/implementing-gdpr-data-protection-controls/SKILL.md"
+    tier: 1
+    gold_added: |-
+      nist_csf: [GV.OC, GV.PO, GV.RR, ID.AM, PR.AA, PR.DS, RS.CO, RS.MA]
+    gold_removed: ""
+  - path: "skills/implementing-iso-27001-information-security-management/SKILL.md"
+    tier: 1
+    gold_added: |-
+      nist_csf: [GV.OC, GV.RM, GV.RR, GV.PO, GV.OV, ID.RA, PR.AA, PR.DS]
+    gold_removed: ""
+  - path: "skills/implementing-pci-dss-compliance-controls/SKILL.md"
+    tier: 1
+    gold_added: |-
+      nist_csf: [GV.PO, ID.RA, PR.AA, PR.DS, PR.PS, DE.CM, DE.AE]
+    gold_removed: ""
+  - path: "skills/performing-nist-csf-maturity-assessment/SKILL.md"
+    tier: 1
+    gold_added: |-
+      nist_csf: [GV.OC, GV.RM, GV.RR, GV.PO, GV.OV, GV.SC, ID.AM, ID.RA, ID.IM, PR.AA, PR.AT, PR.DS, PR.PS, PR.IR, DE.CM, DE.AE, RS.MA, RS.CO, RS.AN, RS.MI, RC.RP, RC.CO]
+      | **Identify** | ID | 3 | Determine current cybersecurity risk to the organization |
+      | **Recover** | RC | 2 | Restore capabilities impaired by cybersecurity incidents |
+    gold_removed: ""
+  - path: "skills/performing-soc2-type2-audit-preparation/SKILL.md"
+    tier: 1
+    gold_added: |-
+      nist_csf: [GV.OC, GV.RM, GV.RR, GV.PO, GV.OV, ID.RA, PR.AA, PR.DS, DE.CM, DE.AE, RS.MA]
+    gold_removed: ""

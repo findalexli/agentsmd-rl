@@ -1,0 +1,73 @@
+version: "2.0"
+
+task:
+  name: selenium-py-add-in-rules-to
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: SeleniumHQ/selenium
+  pr: 17102
+  base_commit: "d4b49f5a60c8f5704b2ddd525395a6f1e13f73b3"
+  merge_commit: "ab138ab0728231ab12c1a39bdaf5349d212c2bc4"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in py/AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in py/AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in py/AGENTS.md."
+
+config_edits:
+  - path: "py/AGENTS.md"
+    tier: 1
+    gold_added: |-
+      
+      
+      
+      Run tests via `bazel test //py/...`. See `/AGENTS.md` for toolchain details.
+      
+      ## Testing
+      
+      Run tests via `bazel test //py:test-{browser}` or `bazel test //py:test-{browser}-bidi`, where `{browser}` is the target browser (e.g., `chrome`, `firefox`, `edge`). See `/AGENTS.md` for toolchain details.
+      
+      
+      
+      Use union notation (`|`) instead of `Optional`:
+      
+      ```python
+      # Preferred
+      def method(param: str | None) -> int | None:
+          pass
+      
+      # Avoid
+      from typing import Optional
+      def method(param: Optional[str]) -> Optional[int]:
+          pass
+      ```
+      
+      ### Python version
+      
+      Code must work with Python 3.10 or later. Use modern syntax features available in 3.10+.
+      
+      See the **Type hints** section for guidance on preferred type annotation syntax (including unions).
+      
+      For testing: use `bazel test //py/...` which employs a hermetic Python 3.10+ toolchain (see `/AGENTS.md`).
+      
+      For ad-hoc scripts, check your Python version locally before running:
+      
+      ```bash
+      python --version
+      # Ensure you have 3.10+; on macOS/Linux use python3.10+ or on Windows py -3.10
+      ```
+      
+      
+      
+    gold_removed: ""

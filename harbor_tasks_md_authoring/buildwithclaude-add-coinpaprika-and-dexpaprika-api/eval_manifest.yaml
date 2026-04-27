@@ -1,0 +1,158 @@
+version: "2.0"
+
+task:
+  name: buildwithclaude-add-coinpaprika-and-dexpaprika-api
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: davepoon/buildwithclaude
+  pr: 103
+  base_commit: "7cc63f3632f01e21f414d2d26241e2965153259a"
+  merge_commit: "c2e60982b883858a3b716969da2dd7a95116513e"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/all-skills/skills/coinpaprika-api/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/all-skills/skills/coinpaprika-api/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/all-skills/skills/coinpaprika-api/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/all-skills/skills/dexpaprika-api/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/all-skills/skills/dexpaprika-api/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/all-skills/skills/dexpaprika-api/SKILL.md."
+
+config_edits:
+  - path: "plugins/all-skills/skills/coinpaprika-api/SKILL.md"
+    tier: 1
+    gold_added: |-
+      ---
+      name: coinpaprika-api
+      description: "Access cryptocurrency market data from CoinPaprika: prices, tickers, OHLCV, exchanges, contract lookups for 12,000+ coins and 350+ exchanges. Free tier, no API key needed. Install MCP: add https://mcp.coinpaprika.com/sse as SSE server, or install plugin: /plugin marketplace add coinpaprika/claude-marketplace"
+      ---
+      
+      # CoinPaprika API
+      
+      Access cryptocurrency market data for 12,000+ coins and 350+ exchanges via the CoinPaprika MCP server.
+      
+      ## Setup
+      
+      Add the MCP server to your Claude Code config:
+      
+      ```json
+      {
+        "mcpServers": {
+          "coinpaprika": {
+            "url": "https://mcp.coinpaprika.com/sse"
+          }
+        }
+      }
+      ```
+      
+      Or install the full plugin (includes agent + skill):
+      ```
+      /plugin marketplace add coinpaprika/claude-marketplace
+      /plugin install coinpaprika@coinpaprika-plugins
+      ```
+      
+      ## Available MCP Tools (29)
+      
+      - `getGlobal` — Total market cap, BTC dominance, 24h volume
+      - `getTickers` / `getTickersById` — Price, market cap, volume for coins
+      - `getTickersHistoricalById` — Historical price ticks
+      - `getCoins` / `getCoinById` — Coin details, descriptions, links, teams
+      - `getCoinEvents` / `getCoinExchanges` / `getCoinMarkets` — Events, exchange listings, trading pairs
+      - `getCoinOHLCVHistorical` / `getCoinOHLCVLatest` / `getCoinOHLCVToday` — Candlestick data
+      - `getExchanges` / `getExchangeByID` / `getExchangeMarkets` — Exchange data
+      - `getPlatforms` / `getContracts` / `getTickerByContract` / `getHistoricalTickerByContract` — Contract lookups
+      - `search` / `resolveId` — Find coins, exchanges, people, tags
+      - `priceConverter` — Convert between currencies
+      - `getTags` / `getTagById` / `getPeopleById` — Categories and team info
+      - `keyInfo` / `getMappings` / `getChangelogIDs` / `status` — Account and metadata
+      
+      ## Coin ID Format
+      
+      Pattern: `{symbol}-{name}` lowercase. Examples: `btc-bitcoin`, `eth-ethereum`, `sol-solana`.
+      
+      Use `search` or `resolveId` if unsure of the correct ID.
+      
+      ## Rate Limits
+      
+      - Free tier: 20,000 calls/month, no API key needed
+      - Pro tier: higher limits via api-pro.coinpaprika.com
+      - Docs: https://docs.coinpaprika.com
+    gold_removed: ""
+  - path: "plugins/all-skills/skills/dexpaprika-api/SKILL.md"
+    tier: 1
+    gold_added: |-
+      ---
+      name: dexpaprika-api
+      description: "Access DeFi data from DexPaprika: token prices, liquidity pools, OHLCV, transactions across 34+ blockchains and 30M+ pools. Free, no API key needed. Install MCP: add https://mcp.dexpaprika.com/sse as SSE server, or install plugin: /plugin marketplace add coinpaprika/claude-marketplace"
+      ---
+      
+      # DexPaprika API
+      
+      Access DeFi data across 34+ blockchains, 30M+ liquidity pools, and 28M+ tokens via the DexPaprika MCP server.
+      
+      ## Setup
+      
+      Add the MCP server to your Claude Code config:
+      
+      ```json
+      {
+        "mcpServers": {
+          "dexpaprika": {
+            "url": "https://mcp.dexpaprika.com/sse"
+          }
+        }
+      }
+      ```
+      
+      Or install the full plugin (includes agent + 4 skills):
+      ```
+      /plugin marketplace add coinpaprika/claude-marketplace
+      /plugin install dexpaprika@coinpaprika-plugins
+      ```
+      
+      ## Available MCP Tools (14)
+      
+      - `getCapabilities` — Server capabilities, workflow examples, network synonyms
+      - `getNetworks` — List 34+ supported blockchains
+      - `getStats` — Platform-wide statistics
+      - `getNetworkDexes` — DEXes on a network
+      - `getNetworkPools` — Top pools (sortable by volume, price, txns)
+      - `getNetworkPoolsFilter` — Filter pools by volume, txns, creation date
+      - `getDexPools` — Pools for a specific DEX
+      - `getPoolDetails` — Pool details (tokens, volume, liquidity)
+      - `getPoolOHLCV` — Historical price candles (1m to 24h intervals)
+      - `getPoolTransactions` — Recent swaps and trades
+      - `getTokenDetails` — Token price, liquidity, metrics
+      - `getTokenPools` — All pools containing a token
+      - `getTokenMultiPrices` — Batch prices for up to 10 tokens
+      - `search` — Search tokens, pools, DEXes across all networks
+      
+      ## Common Network IDs
+      
+      `ethereum`, `solana`, `bsc`, `polygon`, `arbitrum`, `base`, `avalanche`, `optimism`, `sui`, `ton`, `tron`
+      
+      ## Rate Limits
+      
+      - Free: 10,000 requests/day, no API key needed
+      - Docs: https://docs.dexpaprika.com
+      - Streaming: https://streaming.dexpaprika.com (real-time SSE, ~1s updates)
+    gold_removed: ""

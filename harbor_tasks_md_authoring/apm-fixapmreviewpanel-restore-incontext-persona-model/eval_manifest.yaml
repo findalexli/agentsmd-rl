@@ -1,0 +1,172 @@
+version: "2.0"
+
+task:
+  name: apm-fixapmreviewpanel-restore-incontext-persona-model
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: microsoft/apm
+  pr: 908
+  base_commit: "81a584588e54ae1a9a18da10ab6f0822a19bef04"
+  merge_commit: "ea6558e1a736a5f904b6fa476ae12db8be64ddc7"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .apm/skills/apm-review-panel/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .apm/skills/apm-review-panel/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .apm/skills/apm-review-panel/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/apm-review-panel/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/apm-review-panel/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/apm-review-panel/SKILL.md."
+
+config_edits:
+  - path: ".apm/skills/apm-review-panel/SKILL.md"
+    tier: 1
+    gold_added: |-
+      The panel is fixed at **5 mandatory specialist lenses + 1 conditional
+      auth lens + 1 arbiter lens = up to 7 persona sections in one verdict
+      comment**. You play each lens in turn from inside a single agent loop
+      (progressive-disclosure skill model -- no sub-agent dispatch). Routing
+      chooses *which* lenses execute; it never changes which headings appear
+      in the final verdict.
+      1. **Fast-path file trigger.** Activate the Auth Expert lens
+         immediately when the PR changes any of:
+         before activating the lens:
+      - **YES** -> take the Auth Expert lens (per the Persona pass
+        procedure) and capture its findings.
+        citing the touched files>` in working notes; do not take the lens.
+      - This skill orchestrates a panel **in your own context** -- you are
+        the only agent. You load each persona's `.agent.md` reference file
+        on demand (progressive disclosure), assume that persona's lens to
+        produce its findings, then move to the next persona. Do NOT spawn
+        sub-agents (no `task` tool dispatch) -- the panel is a sequence of
+        reasoning passes inside one agent loop, not a multi-agent fan-out.
+      - Persona detail lives in the linked `.agent.md` files. Read each
+        one when you switch to that persona; do not pre-load all of them.
+      steps in order, in a single agent loop. Do not skip ahead and do not
+      emit any output before the final step.
+         activation decision (and proceed to step 3) or an `Auth Expert
+         inactive reason: <one sentence>` in working notes.
+      3. For each mandatory persona (plus `auth-expert` if activated),
+         follow the **Persona pass procedure** below, one persona at a
+         time. Do not try to play multiple personas in a single pass.
+         - Findings exist in working notes for the 5 mandatory specialists
+           (Python Architect, CLI Logging Expert, DevX UX Expert, Supply
+           Chain Security Expert, OSS Growth Hacker).
+           reason` exists (neither = incomplete; both = inconsistent
+           routing).
+         - The Python Architect notes contain the OO / class mermaid
+         - No persona section is missing or empty.
+         If any check fails, redo that persona's pass and repeat the gate.
+         Do not proceed to step 5 until the gate passes.
+      5. Take the **APM CEO** lens (load
+         `../../agents/apm-ceo.agent.md`) and arbitrate over the collected
+         findings -- still in your own context. CEO arbitration may run
+         `safe-outputs.add-comment` channel. Never call the GitHub API
+         directly. This is the ONLY output emission for the entire panel
+         run -- no per-persona comments, no progress comments.
+      
+      ### Persona pass procedure
+      
+      For each persona, run this exact procedure in your own context:
+      
+      1. Open the persona's `.agent.md` file (linked in the roster) and
+         read its scope, lens, anti-patterns, and required return shape.
+      2. From that persona's lens, review the PR title/body/diff against
+         the scope declared in the file.
+      3. Write the findings to working notes under
+         `<persona-name>: <findings>` (or, for an inactive Auth Expert,
+         `Auth Expert inactive reason: <one sentence>`).
+      4. Drop the persona lens before moving on. Do not emit any comment
+         from inside a persona pass; persona findings stay in working
+         notes until step 7 synthesizes them.
+      - **No multi-persona-in-one-pass.** Each persona has its own
+        `.agent.md` for a reason -- read it when you take that lens, write
+        the findings, then drop the lens before moving on. Trying to be all
+        personas in one reasoning pass is the most common cause of dropped
+        findings and mixed voices.
+    gold_removed: ""
+  - path: ".github/skills/apm-review-panel/SKILL.md"
+    tier: 1
+    gold_added: |-
+      The panel is fixed at **5 mandatory specialist lenses + 1 conditional
+      auth lens + 1 arbiter lens = up to 7 persona sections in one verdict
+      comment**. You play each lens in turn from inside a single agent loop
+      (progressive-disclosure skill model -- no sub-agent dispatch). Routing
+      chooses *which* lenses execute; it never changes which headings appear
+      in the final verdict.
+      1. **Fast-path file trigger.** Activate the Auth Expert lens
+         immediately when the PR changes any of:
+         before activating the lens:
+      - **YES** -> take the Auth Expert lens (per the Persona pass
+        procedure) and capture its findings.
+        citing the touched files>` in working notes; do not take the lens.
+      - This skill orchestrates a panel **in your own context** -- you are
+        the only agent. You load each persona's `.agent.md` reference file
+        on demand (progressive disclosure), assume that persona's lens to
+        produce its findings, then move to the next persona. Do NOT spawn
+        sub-agents (no `task` tool dispatch) -- the panel is a sequence of
+        reasoning passes inside one agent loop, not a multi-agent fan-out.
+      - Persona detail lives in the linked `.agent.md` files. Read each
+        one when you switch to that persona; do not pre-load all of them.
+      steps in order, in a single agent loop. Do not skip ahead and do not
+      emit any output before the final step.
+         activation decision (and proceed to step 3) or an `Auth Expert
+         inactive reason: <one sentence>` in working notes.
+      3. For each mandatory persona (plus `auth-expert` if activated),
+         follow the **Persona pass procedure** below, one persona at a
+         time. Do not try to play multiple personas in a single pass.
+         - Findings exist in working notes for the 5 mandatory specialists
+           (Python Architect, CLI Logging Expert, DevX UX Expert, Supply
+           Chain Security Expert, OSS Growth Hacker).
+           reason` exists (neither = incomplete; both = inconsistent
+           routing).
+         - The Python Architect notes contain the OO / class mermaid
+         - No persona section is missing or empty.
+         If any check fails, redo that persona's pass and repeat the gate.
+         Do not proceed to step 5 until the gate passes.
+      5. Take the **APM CEO** lens (load
+         `../../agents/apm-ceo.agent.md`) and arbitrate over the collected
+         findings -- still in your own context. CEO arbitration may run
+         `safe-outputs.add-comment` channel. Never call the GitHub API
+         directly. This is the ONLY output emission for the entire panel
+         run -- no per-persona comments, no progress comments.
+      
+      ### Persona pass procedure
+      
+      For each persona, run this exact procedure in your own context:
+      
+      1. Open the persona's `.agent.md` file (linked in the roster) and
+         read its scope, lens, anti-patterns, and required return shape.
+      2. From that persona's lens, review the PR title/body/diff against
+         the scope declared in the file.
+      3. Write the findings to working notes under
+         `<persona-name>: <findings>` (or, for an inactive Auth Expert,
+         `Auth Expert inactive reason: <one sentence>`).
+      4. Drop the persona lens before moving on. Do not emit any comment
+         from inside a persona pass; persona findings stay in working
+         notes until step 7 synthesizes them.
+      - **No multi-persona-in-one-pass.** Each persona has its own
+        `.agent.md` for a reason -- read it when you take that lens, write
+        the findings, then drop the lens before moving on. Trying to be all
+        personas in one reasoning pass is the most common cause of dropped
+        findings and mixed voices.
+    gold_removed: ""

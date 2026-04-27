@@ -1,0 +1,37 @@
+version: "2.0"
+
+task:
+  name: prefect-document-uv-run-project-for
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: prefecthq/prefect
+  pr: 21625
+  base_commit: "6f89b6d66878624ed5e572f85370cb518b630208"
+  merge_commit: "489391882a9a316b8071eba2149a9ba96bd9c6a8"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: "AGENTS.md"
+    tier: 1
+    gold_added: |-
+      uv run -s my_script.py                             # Run a script with an editable prefect install
+      uv run --extra aws repros/1234.py                  # Run repro needing an integration extra
+      uv run --project ./src/integrations/<name> <cmd>   # Run against a local integration from repo root
+      prefect server start                               # Start local server
+      prefect config view                                # Inspect current configuration
+    gold_removed: ""

@@ -1,0 +1,101 @@
+version: "2.0"
+
+task:
+  name: gemini-voyager-docs-update-claudemd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Nagi-ovo/gemini-voyager
+  pr: 66
+  base_commit: "89a59ebf98c3260ec7a28ee52b4da9a92e3423b2"
+  merge_commit: "2dc1a59f26f2f2b8993f6369cb4669abad4d0935"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: "CLAUDE.md"
+    tier: 1
+    gold_added: |-
+      > **Last Updated**: 2025-11-18
+      > **Version**: 0.9.5
+      - **UI Customization**: Adjustable chat width, sidebar width, dark mode, multi-language support (EN/ZH)
+      - **Auto-Backup**: Automatic timestamped backups with File System Access API or JSZip fallback
+      │   │   │   ├── sidebarWidth/     # Sidebar width adjuster
+      │   │   ├── formulaCopy/          # Formula copy logic
+      │   │   └── backup/               # Auto-backup with File System API
+      | `src/features/backup/` | Auto-backup with File System API/JSZip fallback | Changing backup strategy, adding backup targets |
+      - `geminiSidebarWidth` - Sidebar width setting
+      **Note**: Some features use storage keys not in the central `StorageKeys` object:
+      - Prompt Manager: `gvPromptItems`, `gvPromptPanelLocked`
+      - Backup Service: `gvBackupConfig` (defined in `src/features/backup/types/backup.ts`)
+      ### Working with Backup Service
+      
+      The backup service (`src/features/backup/`) provides automatic timestamped backups with File System Access API:
+      
+      **Key Features**:
+      - Automatic backups at configurable intervals
+      - Manual backup triggering
+      - Backs up prompts and folder data
+      - JSZip fallback for browsers without File System Access API support
+      
+      **Example Usage**:
+      ```typescript
+      import { BackupService, backupService } from '@/features/backup/services/BackupService';
+      
+      // Request directory access
+      const dirHandle = await BackupService.requestDirectoryAccess();
+      if (!dirHandle) {
+        console.log('User cancelled directory selection');
+        return;
+      }
+      
+      // Create backup
+      const config = {
+        enabled: true,
+        intervalHours: 24,
+        includePrompts: true,
+        includeFolders: true,
+      };
+      
+      const result = await backupService.createBackup(dirHandle, config);
+      if (result.success) {
+        console.log(`Backup created: ${result.data.promptCount} prompts, ${result.data.folderCount} folders`);
+      }
+      ```
+      
+      **Backup Structure**:
+      - Each backup creates a timestamped folder: `backup-YYYYMMDD-HHMMSS/`
+      - Contains: `prompts.json`, `folders.json`, `metadata.json`
+      
+      | `src/features/backup/services/BackupService.ts` | Auto-backup with File System API | `backupService`, `createBackup()` |
+      | `src/features/backup/services/PromptImportExportService.ts` | Prompt backup/restore | Export/import prompt library |
+      ### v0.9.5 (Latest)
+      - Added configurable sidebar width setting
+      - Fixed abnormal line spacing of dialog items within folder
+      - Fixed 10px right padding overlap issue between chat scroll and timeline
+      
+      ### v0.9.4
+      - Added jszip fallback for browsers like Safari and Firefox that don't support File System Access API
+      - Improved backup compatibility across browsers
+      
+      ### v0.9.3
+      - Added automatic backup with timestamp feature
+      - Fixed hide archived setting not applying to conversations after page refresh
+      - Fixed folder records being cleared unexpectedly
+      
+      ### v0.9.2
+      **Last Updated**: 2025-11-18
+    gold_removed: ""

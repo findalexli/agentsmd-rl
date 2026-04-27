@@ -1,0 +1,37 @@
+version: "2.0"
+
+task:
+  name: claude-code-sub-agents-update-claudemd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: lst97/claude-code-sub-agents
+  pr: 2
+  base_commit: "45ce711551357cf5cad16b23db76a14e70d11d41"
+  merge_commit: "8657ef50ee28a1fcc97d985eaec69be2e521505c"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: "CLAUDE.md"
+    tier: 1
+    gold_added: |-
+          B --> C{Is the request trivial?};
+          C -- YES --> E[Answer directly];
+          C -- NO --> D[**Invoke agent_organizer**];
+          G -- YES --> H[Handle directly without sub-agents]
+          E -- YES ---> F[Use subset of previous team<br/>Max 3 agents]
+    gold_removed: ""

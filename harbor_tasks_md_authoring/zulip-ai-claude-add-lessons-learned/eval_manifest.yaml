@@ -1,0 +1,63 @@
+version: "2.0"
+
+task:
+  name: zulip-ai-claude-add-lessons-learned
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: zulip/zulip
+  pr: 38631
+  base_commit: "b244dcd163a51bf7f2496d98d318ed172f882cf0"
+  merge_commit: "30d6953a9f139640a0f321075e9b1c98941bdb68"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/CLAUDE.md."
+
+config_edits:
+  - path: ".claude/CLAUDE.md"
+    tier: 1
+    gold_added: |-
+      - Use `em` units instead of `px` for computed CSS values that need to
+        scale with font size. Pixel approximations break at different zoom
+        levels and font-size settings.
+      - Leave commits that break if a later commit in the PR is dropped.
+        When a commit is flagged as potentially droppable, verify all
+        earlier commits work correctly without it.
+      ### Puppeteer Visual Tests: Verifying Alignment
+      
+      When using Puppeteer to verify visual alignment, do not rely on
+      eyeballing screenshots — especially small full-page ones. Instead:
+      
+      - Use `page.evaluate()` with `getBoundingClientRect()` to measure
+        actual pixel positions of the elements you need aligned, and print
+        them to the console. Compare the numbers.
+      - Always take **both** a full-page screenshot and a zoomed clip of
+        the area of interest.
+      - For zoomed clips, calculate the clip region from non-fixed elements;
+        fixed/sticky elements may report bounding-box positions that don't
+        match their visual location on the page.
+      - Be aware that CSS nesting can scope styles to a specific parent
+        (e.g., `.parent .my-class`) — reusing the same class name in a
+        different context may not pick up the expected styles.
+      
+      - Don't access DOM APIs (`document.documentElement.style`, `$()`
+        selectors for specific elements) without guarding for node test
+        environments, where the DOM is mocked minimally. Check that the
+        element exists before using it.
+      - Don't make design or UX decisions silently. When a technical
+        constraint forces a tradeoff, present the constraint and options
+        to the user rather than picking one. Never remove features, hide
+        UI elements, or change interaction patterns without asking.
+    gold_removed: ""

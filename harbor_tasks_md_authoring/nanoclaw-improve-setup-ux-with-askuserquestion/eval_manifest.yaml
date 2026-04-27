@@ -1,0 +1,76 @@
+version: "2.0"
+
+task:
+  name: nanoclaw-improve-setup-ux-with-askuserquestion
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: qwibitai/nanoclaw
+  pr: 60
+  base_commit: "80e68dc00d4f85609dba83636868dc4a0e0e9db6"
+  merge_commit: "1a32bff6ecb98e87a7bd0e3fbdbef75a508f721a"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/setup/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/setup/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/setup/SKILL.md."
+
+config_edits:
+  - path: ".claude/skills/setup/SKILL.md"
+    tier: 1
+    gold_added: |-
+      **UX Note:** When asking the user questions, prefer using the `AskUserQuestion` tool instead of just outputting text. This integrates with Claude's built-in question/answer system for a better experience.
+      
+      ## 7. Understand the Security Model
+      
+      Before registering your main channel, you need to understand an important security concept.
+      
+      **Use the AskUserQuestion tool** to present this:
+      
+      > **Important: Your "main" channel is your admin control portal.**
+      >
+      > The main channel has elevated privileges:
+      > - Can see messages from ALL other registered groups
+      > - Can manage and delete tasks across all groups
+      > - Can write to global memory that all groups can read
+      > - Has read-write access to the entire NanoClaw project
+      >
+      > **Recommendation:** Use your personal "Message Yourself" chat or a solo WhatsApp group as your main channel. This ensures only you have admin control.
+      >
+      > **Question:** Which setup will you use for your main channel?
+      >
+      > Options:
+      > 1. Personal chat (Message Yourself) - Recommended
+      > 2. Solo WhatsApp group (just me)
+      > 3. Group with other people (I understand the security implications)
+      
+      If they choose option 3, ask a follow-up:
+      
+      > You've chosen a group with other people. This means everyone in that group will have admin privileges over NanoClaw.
+      >
+      > Are you sure you want to proceed? The other members will be able to:
+      > - Read messages from your other registered chats
+      > - Schedule and manage tasks
+      > - Access any directories you've mounted
+      >
+      > Options:
+      > 1. Yes, I understand and want to proceed
+      > 2. No, let me use a personal chat or solo group instead
+      
+      ## 8. Register Main Channel
+      ## 9. Configure External Directory Access (Mount Allowlist)
+      ### 9a. Collect Directory Paths
+      ### 9b. Configure Non-Main Group Access
+      ### 9c. Create the Allowlist
+      ## 10. Configure launchd Service
+    gold_removed: ""

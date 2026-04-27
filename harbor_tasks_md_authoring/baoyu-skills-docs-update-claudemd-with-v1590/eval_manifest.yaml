@@ -1,0 +1,123 @@
+version: "2.0"
+
+task:
+  name: baoyu-skills-docs-update-claudemd-with-v1590
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: JimLiu/baoyu-skills
+  pr: 77
+  base_commit: "661c74cce441d6d81393b3bd06a2fca336806279"
+  merge_commit: "e1a1fe23cb2213fa2eb1d8adab7dd0db2891e9a9"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: "CLAUDE.md"
+    tier: 1
+    gold_added: |-
+      Claude Code marketplace plugin providing AI-powered content generation skills. Current version: **1.59.0**. Skills use official AI APIs (OpenAI, Google, DashScope, Replicate) or the reverse-engineered Gemini Web API for text/image generation, and Chrome CDP for browser automation.
+      Skills are organized into three plugin categories in `.claude-plugin/marketplace.json`:
+      │   ├── baoyu-post-to-wechat/      # WeChat Official Account posting
+      │   ├── baoyu-post-to-weibo/       # Weibo posting (text, images, videos, articles)
+      │   └── baoyu-infographic/         # Professional infographics (21 layouts × 20 styles)
+      │   ├── baoyu-danger-gemini-web/   # Gemini Web API wrapper (text + image gen)
+      │   └── baoyu-image-gen/           # Official API image gen (OpenAI, Google, DashScope, Replicate)
+          ├── baoyu-compress-image/       # Image compression (WebP/PNG via sips/cwebp/Sharp)
+          ├── baoyu-url-to-markdown/      # Fetch any URL → markdown via Chrome CDP
+          ├── baoyu-format-markdown/      # Format/beautify plain text or markdown files
+          ├── baoyu-markdown-to-html/     # Markdown → styled HTML (WeChat-compatible themes)
+          └── baoyu-translate/            # Multi-mode translation (quick/normal/refined)
+      Top-level `scripts/` directory contains repository maintenance utilities:
+      - `scripts/sync-clawhub.sh` - Publish skills to ClawHub/OpenClaw registry
+      - `scripts/sync-md-to-wechat.sh` - Sync markdown content to WeChat
+      
+      - `SKILL.md` - YAML front matter (name, description, version, openclaw metadata) + documentation
+      - `scripts/` - TypeScript implementations (optional, pure-prompt skills omit this)
+      - `references/` - Extended reference files linked from SKILL.md (optional)
+      - `prompts/` - AI prompt templates (optional, used by some content skills)
+      - **Chrome**: Required for `baoyu-danger-gemini-web` auth, `baoyu-post-to-x`, `baoyu-post-to-wechat`, `baoyu-post-to-weibo`, and `baoyu-url-to-markdown`
+      - **Image generation APIs**: `baoyu-image-gen` requires at least one API key (OpenAI, Google, DashScope, or Replicate)
+      `baoyu-image-gen` uses official API keys configured in EXTEND.md (loaded at Step 0 before generation).
+      
+      The file contains:
+      - `name`: Plugin name (`baoyu-skills`)
+      - `owner`: Author info
+      - `metadata.version`: Semver version (currently `1.59.0`)
+      - `plugins[]`: Array of plugin categories, each with `name`, `description`, `source`, `strict`, and `skills[]` paths
+      
+      ## ClawHub / OpenClaw Publishing
+      
+      Skills include `metadata.openclaw` in their YAML front matter for registry compatibility:
+      
+      ```yaml
+      metadata:
+        openclaw:
+          homepage: https://github.com/JimLiu/baoyu-skills#<skill-name>
+          requires:          # optional — only for skills with scripts
+            anyBins:
+              - bun
+              - npx
+      ```
+      
+      To publish/sync skills to ClawHub registry:
+      ```bash
+      bash scripts/sync-clawhub.sh           # sync all skills
+      bash scripts/sync-clawhub.sh <skill>   # sync one skill
+      ```
+      
+      Requires `clawhub` CLI or `npx` (auto-downloads via npx if not installed).
+      
+      ### SKILL.md Frontmatter Template
+      
+      ```yaml
+      ---
+      name: baoyu-<name>
+      description: <Third-person description. What it does + when to use it.>
+      version: <semver matching marketplace.json>
+      metadata:
+        openclaw:
+          homepage: https://github.com/JimLiu/baoyu-skills#baoyu-<name>
+          requires:          # include only if skill has scripts
+            anyBins:
+              - bun
+              - npx
+      ---
+      ```
+      
+      1. Create `skills/baoyu-<name>/SKILL.md` with YAML front matter (see template above)
+         - Always include `metadata.openclaw.homepage`
+         - Include `metadata.openclaw.requires.anyBins` only when the skill has executable scripts
+      2. Add TypeScript in `skills/baoyu-<name>/scripts/` (if applicable)
+      5. **Add Script Directory section** to SKILL.md (see template below) if skill has scripts
+      6. **Add openclaw metadata** to SKILL.md frontmatter (required for ClawHub registry)
+      | Generates visual content (images, slides, comics, infographics) | `content-skills` |
+      | Publishes to platforms (X, WeChat, Weibo, etc.) | `content-skills` |
+      | Provides AI generation backend (official API or reverse-engineered) | `ai-generation-skills` |
+      | Converts or processes content (URL→md, md→html, format) | `utility-skills` |
+      | Translates documents | `utility-skills` |
+      1. Determine this SKILL.md file's directory path as `{baseDir}`
+      2. Script path = `{baseDir}/scripts/<script-name>.ts`
+      4. Replace all `{baseDir}` and `${BUN_X}` in this document with actual values
+      When referencing scripts in workflow sections, use `${BUN_X} {baseDir}/scripts/<name>.ts` so agents can resolve the correct runtime and path.
+      
+      > **Note**: The path variable was renamed from `SKILL_DIR` / `${SKILL_DIR}` to `baseDir` / `{baseDir}` (no `${}` wrapper) in v1.57.0. All existing SKILL.md files use `{baseDir}`.
+      1. Check available image generation skills (`baoyu-image-gen` default, or `baoyu-danger-gemini-web`)
+      2. Generate images sequentially by default (one at a time)
+         - Use batch parallel mode only when user already has multiple prompts or explicitly wants parallel throughput
+      **Batch Parallel Generation** (`baoyu-image-gen` only): supports concurrent workers with per-provider throttling. Configure via `batch.max_workers` and `batch.provider_limits` in EXTEND.md. Default: sequential.
+      
+    gold_removed: ""

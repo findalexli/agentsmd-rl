@@ -1,0 +1,35 @@
+version: "2.0"
+
+task:
+  name: compound-engineering-plugin-fixcreateagentskills-remove-lite
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: EveryInc/compound-engineering-plugin
+  pr: 252
+  base_commit: "42cc74c7c7bbba96dd373f0fdcd0ad1b7e36b78b"
+  merge_commit: "c8261b63d9798c09fc3f7e70ed9396d4cf81cd18"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/create-agent-skills/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/create-agent-skills/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/create-agent-skills/SKILL.md."
+
+config_edits:
+  - path: "plugins/compound-engineering/skills/create-agent-skills/SKILL.md"
+    tier: 1
+    gold_added: |-
+      Skills support dynamic context injection: prefix a backtick-wrapped shell command with an exclamation mark, and the preprocessor executes it at load time, replacing the directive with stdout. Write an exclamation mark immediately before the opening backtick of the command you want executed (for example, to inject the current git branch, write the exclamation mark followed by `git branch --show-current` wrapped in backticks).
+      **Important:** The preprocessor scans the entire SKILL.md as plain text — it does not parse markdown. Directives inside fenced code blocks or inline code spans are still executed. If a skill documents this syntax with literal examples, the preprocessor will attempt to run them, causing load failures. To safely document this feature, describe it in prose (as done here) or place examples in a reference file, which is loaded on-demand by Claude and not preprocessed.
+      For a concrete example of dynamic context injection in a skill, see [official-spec.md](references/official-spec.md) § "Dynamic Context Injection".
+    gold_removed: ""

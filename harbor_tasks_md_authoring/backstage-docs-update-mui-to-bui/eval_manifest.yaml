@@ -1,0 +1,123 @@
+version: "2.0"
+
+task:
+  name: backstage-docs-update-mui-to-bui
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: backstage/backstage
+  pr: 33548
+  base_commit: "e7e2fb2a5a841e04b65ee7a9f1c4bdca9e24fbe7"
+  merge_commit: "9e80eff573fde353af759cae1f9a7958abadb8b5"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in docs/.well-known/skills/mui-to-bui-migration/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in docs/.well-known/skills/mui-to-bui-migration/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in docs/.well-known/skills/mui-to-bui-migration/SKILL.md."
+
+config_edits:
+  - path: "docs/.well-known/skills/mui-to-bui-migration/SKILL.md"
+    tier: 1
+    gold_added: |-
+      - `Flex` - Flex layout component
+      - `FullPage` - Full-page layout wrapper
+      - `Accordion` - Collapsible content panels (`Accordion`, `AccordionTrigger`, `AccordionPanel`, `AccordionGroup`)
+      - `Alert` - Alert/notification banners (`status`, `title`, `description`)
+      - `Button` - Action buttons (`variant="primary"`, `variant="secondary"`, `variant="tertiary"`, `isDisabled`, `destructive`, `loading`)
+      - `FieldLabel` - Form field label with description and secondary label
+      - `Header` - Page headers with breadcrumbs and tabs
+      - `List` - List component (`List`, `ListRow`)
+      - `Menu` - Dropdown menus (`MenuTrigger`, `Menu`, `MenuItem`, `MenuSection`, `MenuSeparator`, `SubmenuTrigger`)
+      - `PluginHeader` - Plugin-level header with icon, title, tabs, and actions
+      - `RadioGroup` - Radio button groups (`RadioGroup`, `Radio`)
+      - `SearchAutocomplete` - Search input with autocomplete popover (`SearchAutocomplete`, `SearchAutocompleteItem`)
+      - `Select` - Dropdown select (single and multiple selection modes)
+      - `Table` - Data tables (with `useTable` hook for data management)
+      - `TablePagination` - Standalone pagination component
+      - `Text` - Typography component (`variant`, `color`, `weight`, `truncate`)
+      - `Tooltip` - Tooltip overlays (`TooltipTrigger`, `Tooltip` — both from `@backstage/ui`)
+      - `useTable` - Table data management hook (supports `complete`, `offset`, and `cursor` pagination modes)
+          background-color: var(--bui-bg-neutral-1);
+      import { Tooltip, TooltipTrigger, Text } from '@backstage/ui';
+        <Text>Hover me</Text>
+        <Tooltip>Tooltip content</Tooltip>
+      </TooltipTrigger>;
+      ### 12. List to BUI List
+      import { List, ListItem, ListItemIcon, ListItemText } from '@material-ui/core';
+            <SomeIcon />
+          </ListItemIcon>
+          <ListItemText primary="Title" secondary="Description" />
+      </List>;
+      **After (BUI List):**
+      import { List, ListRow } from '@backstage/ui';
+      import { RiSomeIcon } from '@remixicon/react';
+      <List>
+        <ListRow icon={<RiSomeIcon size={20} />} description="Description">
+          Title
+        </ListRow>
+      </List>;
+      Note: `ListRow` supports `icon`, `description`, `menuItems`, and `customActions` props.
+      
+      ### 14. Alert Pattern
+      
+      **Before (MUI Alert):**
+      
+      ```typescript
+      import { Alert, AlertTitle } from '@material-ui/lab';
+      
+      <Alert severity="error">
+        <AlertTitle>Error</AlertTitle>
+        Something went wrong.
+      </Alert>;
+      ```
+      
+      **After (BUI Alert):**
+      
+      ```typescript
+      import { Alert } from '@backstage/ui';
+      
+      <Alert
+        status="danger"
+        icon
+        title="Error"
+        description="Something went wrong."
+      />;
+      ```
+      
+      Status mapping: `severity="error"` → `status="danger"`, `severity="warning"` → `status="warning"`,
+      `severity="info"` → `status="info"`, `severity="success"` → `status="success"`.
+      
+      Set `icon` to `true` for automatic status icons, or pass a custom `ReactElement`.
+      Use `loading` for a loading spinner, and `customActions` for action buttons.
+      
+      ### 15. Icons: MUI Icons to Remix Icons
+      | `background.paper`   | `var(--bui-bg-neutral-1)`                  |
+      | `background.default` | `var(--bui-bg-app)`                        |
+      | `action.hover`       | `var(--bui-bg-neutral-1-hover)`            |
+      | `divider`            | `var(--bui-border-1)`                      |
+      | Link color           | `var(--bui-fg-info)`     |
+      3. [ ] Add CSS import to root file
+      4. [ ] Remove `@material-ui/core` imports (except components with no BUI equivalent)
+      5. [ ] Remove `@material-ui/icons` imports
+      6. [ ] Remove `@material-ui/lab` imports (Alert, Pagination now in BUI)
+      14. [ ] Replace MUI `Tooltip` with BUI `TooltipTrigger` pattern (both from `@backstage/ui`)
+      19. [ ] Replace MUI `Alert` with BUI `Alert`
+      20. [ ] Replace MUI `List` with BUI `List` and `ListRow`
+      21. [ ] Update `Button` props (`disabled` → `isDisabled`, `variant="contained"` → `variant="primary"`)
+      22. [ ] Update `TextField` props (`required` → `isRequired`, `onChange` signature)
+      23. [ ] Replace MUI icons with Remix icons
+      24. [ ] Run `yarn tsc` to check for type errors
+      25. [ ] Run `yarn build` to verify build
+      26. [ ] Run `yarn lint` to check for missing dependencies
+      27. [ ] Test component rendering and functionality
+    gold_removed: ""

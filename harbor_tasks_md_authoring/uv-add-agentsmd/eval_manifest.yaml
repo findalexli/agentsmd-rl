@@ -1,0 +1,56 @@
+version: "2.0"
+
+task:
+  name: uv-add-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: astral-sh/uv
+  pr: 18902
+  base_commit: "bca76afb9c459dc27287ee98e90ed833fb3a9f95"
+  merge_commit: "27dc5627d001b6c2c5794971cc245260de8326a6"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: "AGENTS.md"
+    tier: 1
+    gold_added: |-
+      - Read CONTRIBUTING.md for guidelines on how to run tools
+      - ALWAYS attempt to add a test case for changed behavior
+      - PREFER integration tests, e.g., at `it/...` over unit tests
+      - When making changes for Windows from Unix, use `cargo xwin clippy` to check compilation
+      - NEVER perform builds with the release profile, unless asked or reproducing performance issues
+      - PREFER running specific tests over running the entire test suite
+      - AVOID using `panic!`, `unreachable!`, `.unwrap()`, unsafe code, and clippy rule ignores
+      - PREFER patterns like `if let` to handle fallibility
+      - ALWAYS write `SAFETY` comments following our usual style when writing `unsafe` code
+      - PREFER `#[expect()]` over `[allow()]` if clippy must be disabled
+      - PREFER let chains (`if let` combined with `&&`) over nested `if let` statements
+      - NEVER update all dependencies in the lockfile and ALWAYS use `cargo update --precise` to make
+        lockfile changes
+      - NEVER assume clippy warnings are pre-existing, it is very rare that `main` has warnings
+      - ALWAYS read and copy the style of similar tests when adding new cases
+      - PREFER top-level imports over local imports or fully qualified names
+      - AVOID shortening variable names, e.g., use `version` instead of `ver`, and `requires_python`
+        instead of `rp`
+      - PREFER [`TypeName`] references when writing Rust doc comments
+    gold_removed: ""
+  - path: "CLAUDE.md"
+    tier: 1
+    gold_added: |-
+      @AGENTS.md
+    gold_removed: ""

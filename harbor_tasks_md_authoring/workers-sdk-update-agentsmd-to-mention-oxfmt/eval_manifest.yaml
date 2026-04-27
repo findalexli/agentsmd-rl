@@ -1,0 +1,40 @@
+version: "2.0"
+
+task:
+  name: workers-sdk-update-agentsmd-to-mention-oxfmt
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: cloudflare/workers-sdk
+  pr: 13053
+  base_commit: "bc24ec81b9ed341dd165b7690f8602f6d738de0c"
+  merge_commit: "5ededb5d52f4362ce8f72d442ba825d48dcabbf8"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: "AGENTS.md"
+    tier: 1
+    gold_added: |-
+      - Format with oxfmt - run `pnpm prettify` in the workspace root before committing
+      **Formatting (oxfmt):**
+      - `sortPackageJson` option sorts package.json keys
+    gold_removed: ""
+  - path: "packages/create-cloudflare/AGENTS.md"
+    tier: 1
+    gold_added: |-
+      
+    gold_removed: ""

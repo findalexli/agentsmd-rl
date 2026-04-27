@@ -1,0 +1,43 @@
+version: "2.0"
+
+task:
+  name: mlflow-gate-pr-autoapproval-on-author
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: mlflow/mlflow
+  pr: 22765
+  base_commit: "076c047dcc0fa2d687edd8df0c59c1cb830a6e27"
+  merge_commit: "eb9c0916b153846e6422d4bbff4f20dad8a8750e"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/pr-review/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/pr-review/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/pr-review/SKILL.md."
+
+config_edits:
+  - path: ".claude/skills/pr-review/SKILL.md"
+    tier: 1
+    gold_added: |-
+      Approve the PR when there are no issues or only minor issues, but **only if the PR author has the `admin` or `maintain` role**.
+      
+      First, check the PR author's role:
+      author=$(gh api repos/<owner>/<repo>/pulls/<PR_NUMBER> --jq '.user.login')
+      gh api repos/<owner>/<repo>/collaborators/"$author"/permission --jq '.role_name'
+      
+      - If the role is `admin` or `maintain` -> approve the PR:
+        ```bash
+        gh pr review <PR_NUMBER> --repo <owner/repo> --approve
+        ```
+      - Otherwise (including API errors, e.g., 404 for non-collaborators) -> do NOT approve. Do not mention the reason for not approving in the review.
+    gold_removed: ""

@@ -1,0 +1,37 @@
+version: "2.0"
+
+task:
+  name: pareto-mac-update-claude-instructions
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: ParetoSecurity/pareto-mac
+  pr: 197
+  base_commit: "1c1fba2191a39a9637d76f48f1c5c5f29d68027b"
+  merge_commit: "0803e9863389e2b16e62f9acf3acbe0217f54e2e"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: "CLAUDE.md"
+    tier: 1
+    gold_added: |-
+      - `update` - Force update check (not available in SetApp build)
+      - `debug` - Output detailed check status (supports `?check=<checkname>` parameter)
+      - `showPrefs` - Show preferences window
+      - `showBeta` - Enable beta channel
+      - `enrollTeam` - Enroll device to team (not available in SetApp build)
+    gold_removed: ""

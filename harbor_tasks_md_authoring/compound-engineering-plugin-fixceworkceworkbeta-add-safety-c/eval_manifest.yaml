@@ -1,0 +1,106 @@
+version: "2.0"
+
+task:
+  name: compound-engineering-plugin-fixceworkceworkbeta-add-safety-c
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: EveryInc/compound-engineering-plugin
+  pr: 557
+  base_commit: "e4d5f241bd3945784905a32d7fb7ef9305c621e8"
+  merge_commit: "5cae4d1dab212d7e438f0b081986e987c860d4d5"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-work-beta/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-work-beta/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-work-beta/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-work/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-work/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-work/SKILL.md."
+
+config_edits:
+  - path: "plugins/compound-engineering/skills/ce-work-beta/SKILL.md"
+    tier: 1
+    gold_added: |-
+         | **Parallel subagents** | 3+ tasks that pass the Parallel Safety Check (below). Dispatch independent units simultaneously, run dependent units after their prerequisites complete. Requires plan-unit metadata |
+      
+         **Parallel Safety Check** — required before choosing parallel dispatch:
+      
+         1. Build a file-to-unit mapping from every candidate unit's `Files:` section (Create, Modify, and Test paths)
+         2. Check for intersection — any file path appearing in 2+ units means overlap
+         3. If any overlap is found, downgrade to serial subagents. Log the reason (e.g., "Units 2 and 4 share `config/routes.rb` — using serial dispatch"). Serial subagents still provide context-window isolation without shared-directory risks
+      
+         Even with no file overlap, parallel subagents sharing a working directory face git index contention (concurrent staging/committing corrupts the index) and test interference (concurrent test runs pick up each other's in-progress changes). The parallel subagent constraints below mitigate these.
+         **Parallel subagent constraints** — when dispatching units in parallel (not serial or inline):
+         - Instruct each subagent: "Do not stage files (`git add`), create commits, or run the project test suite. The orchestrator handles testing, staging, and committing after all parallel units complete."
+         - These constraints prevent git index contention and test interference between concurrent subagents
+      
+         **After each subagent completes (serial mode):**
+         1. Review the subagent's diff — verify changes match the unit's scope and `Files:` list
+         2. Run the relevant test suite to confirm the tree is healthy
+         3. If tests fail, diagnose and fix before proceeding — do not dispatch dependent units on a broken tree
+         4. Update the plan checkboxes and task list
+         5. Dispatch the next unit
+      
+         **After all parallel subagents in a batch complete:**
+         1. Wait for every subagent in the current parallel batch to finish before acting on any of their results
+         2. Cross-check for discovered file collisions: compare the actual files modified by all subagents in the batch (not just their declared `Files:` lists). Subagents may create or modify files not anticipated during planning — this is expected, since plans describe *what* not *how*. A collision only matters when 2+ subagents in the same batch modified the same file. In a shared working directory, only the last writer's version survives — the other unit's changes to that file are lost. If a collision is detected: commit all non-colliding files from all units first, then re-run the affected units serially for the shared file so each builds on the other's committed work
+         3. For each completed unit, in dependency order: review the diff, run the relevant test suite, stage only that unit's files, and commit with a conventional message derived from the unit's Goal
+         4. If tests fail after committing a unit's changes, diagnose and fix before committing the next unit
+         5. Update the plan checkboxes and task list
+         6. Dispatch the next batch of independent units, or the next dependent unit
+         **Parallel subagent mode:** When units run as parallel subagents, the subagents do not commit — the orchestrator handles staging and committing after the entire parallel batch completes (see Parallel subagent constraints in Phase 1 Step 4). The commit guidance in this section applies to inline and serial execution, and to the orchestrator's commit decisions after parallel batch completion.
+      
+    gold_removed: ""
+  - path: "plugins/compound-engineering/skills/ce-work/SKILL.md"
+    tier: 1
+    gold_added: |-
+         | **Parallel subagents** | 3+ tasks that pass the Parallel Safety Check (below). Dispatch independent units simultaneously, run dependent units after their prerequisites complete. Requires plan-unit metadata |
+      
+         **Parallel Safety Check** — required before choosing parallel dispatch:
+      
+         1. Build a file-to-unit mapping from every candidate unit's `Files:` section (Create, Modify, and Test paths)
+         2. Check for intersection — any file path appearing in 2+ units means overlap
+         3. If any overlap is found, downgrade to serial subagents. Log the reason (e.g., "Units 2 and 4 share `config/routes.rb` — using serial dispatch"). Serial subagents still provide context-window isolation without shared-directory risks
+      
+         Even with no file overlap, parallel subagents sharing a working directory face git index contention (concurrent staging/committing corrupts the index) and test interference (concurrent test runs pick up each other's in-progress changes). The parallel subagent constraints below mitigate these.
+         **Parallel subagent constraints** — when dispatching units in parallel (not serial or inline):
+         - Instruct each subagent: "Do not stage files (`git add`), create commits, or run the project test suite. The orchestrator handles testing, staging, and committing after all parallel units complete."
+         - These constraints prevent git index contention and test interference between concurrent subagents
+      
+         **After each subagent completes (serial mode):**
+         1. Review the subagent's diff — verify changes match the unit's scope and `Files:` list
+         2. Run the relevant test suite to confirm the tree is healthy
+         3. If tests fail, diagnose and fix before proceeding — do not dispatch dependent units on a broken tree
+         4. Update the plan checkboxes and task list
+         5. Dispatch the next unit
+      
+         **After all parallel subagents in a batch complete:**
+         1. Wait for every subagent in the current parallel batch to finish before acting on any of their results
+         2. Cross-check for discovered file collisions: compare the actual files modified by all subagents in the batch (not just their declared `Files:` lists). Subagents may create or modify files not anticipated during planning — this is expected, since plans describe *what* not *how*. A collision only matters when 2+ subagents in the same batch modified the same file. In a shared working directory, only the last writer's version survives — the other unit's changes to that file are lost. If a collision is detected: commit all non-colliding files from all units first, then re-run the affected units serially for the shared file so each builds on the other's committed work
+         3. For each completed unit, in dependency order: review the diff, run the relevant test suite, stage only that unit's files, and commit with a conventional message derived from the unit's Goal
+         4. If tests fail after committing a unit's changes, diagnose and fix before committing the next unit
+         5. Update the plan checkboxes and task list
+         6. Dispatch the next batch of independent units, or the next dependent unit
+         **Parallel subagent mode:** When units run as parallel subagents, the subagents do not commit — the orchestrator handles staging and committing after the entire parallel batch completes (see Parallel subagent constraints in Phase 1 Step 4). The commit guidance in this section applies to inline and serial execution, and to the orchestrator's commit decisions after parallel batch completion.
+      
+    gold_removed: ""

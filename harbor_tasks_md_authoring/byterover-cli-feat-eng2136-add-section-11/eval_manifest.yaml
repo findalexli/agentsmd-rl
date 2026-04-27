@@ -1,0 +1,111 @@
+version: "2.0"
+
+task:
+  name: byterover-cli-feat-eng2136-add-section-11
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: campfirein/byterover-cli
+  pr: 445
+  base_commit: "1977914503102506b1544a06fc0635f09523c95c"
+  merge_commit: "4859ef3ba3dc08ed00f4af0fb3dbfd373e29c38b"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/server/templates/skill/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/server/templates/skill/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/server/templates/skill/SKILL.md."
+
+config_edits:
+  - path: "src/server/templates/skill/SKILL.md"
+    tier: 1
+    gold_added: |-
+      ### 11. Query and Curate History
+      **Overview:** Inspect past query and curate operations. Use `brv query-log view` to review query history, `brv curate view` to review curate history, and `brv query-log summary` to see aggregated recall metrics. Supports filtering by time, status, tier, and detailed per-operation output.
+      
+      **Use this skill when:**
+      - You want to review what was queried or curated previously
+      - You need to inspect a specific operation by logId
+      - You want to filter history by time window or completion status
+      - You want to collect data for analysis or debugging
+      - You want to know what knowledge was added, updated, or deleted over time
+      - You want aggregated metrics on query recall, cache hit rate, or knowledge gaps
+      
+      **Do NOT use this skill when:**
+      - You want to run a new query — use `brv query` instead
+      - You want to curate new knowledge — use `brv curate` instead
+      
+      **View curate history:** to check past curations
+      - Show recent entries (last 10)
+      ```bash
+      brv curate view
+      ```
+      - Full detail for a specific entry: all files and operations performed (logId is printed by `brv curate` on completion, e.g. `cur-1739700001000`)
+      ```bash
+      brv curate view cur-1739700001000
+      ```
+      - List entries with file operations visible (no logId needed)
+      ```bash
+      brv curate view --detail
+      ```
+      - Filter by time and status
+      ```bash
+      brv curate view --since 1h --status completed --limit 1000
+      ```
+      - For all filter options
+      ```bash
+      brv curate view --help
+      ```
+      
+      **View query history:** to check past queries
+      - Show recent entries (last 10)
+      ```bash
+      brv query-log view
+      ```
+      - Full detail for a specific entry: matched docs and search metadata (logId is printed by `brv query` on completion, e.g. `qry-1739700001000`)
+      ```bash
+      brv query-log view qry-1739700001000
+      ```
+      - List entries with matched docs visible (no logId needed)
+      ```bash
+      brv query-log view --detail
+      ```
+      - Filter by time, status, or resolution tier (0=exact cache, 1=fuzzy cache, 2=direct search, 3=optimized LLM, 4=full agentic)
+      ```bash
+      brv query-log view --since 1h --status completed --limit 1000
+      brv query-log view --tier 0 --tier 1
+      ```
+      - For all filter options
+      ```bash
+      brv query-log view --help
+      ```
+      
+      **View query recall metrics:** to see aggregated stats across recent queries
+      - Summary for the last 24 hours (default)
+      ```bash
+      brv query-log summary
+      ```
+      - Summary for a specific time window
+      ```bash
+      brv query-log summary --last 7d
+      brv query-log summary --since 2026-04-01 --before 2026-04-03
+      ```
+      - Narrative format (human-readable prose report)
+      ```bash
+      brv query-log summary --format narrative
+      ```
+      - For all options
+      ```bash
+      brv query-log summary --help
+      ```
+      
+    gold_removed: ""

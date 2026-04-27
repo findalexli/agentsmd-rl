@@ -1,0 +1,119 @@
+version: "2.0"
+
+task:
+  name: compound-engineering-plugin-featonboarding-add-consumer-pers
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: EveryInc/compound-engineering-plugin
+  pr: 413
+  base_commit: "90684c4e8272b41c098ef2452c40d86d460ea578"
+  merge_commit: "31326a54584a12c473944fa488bea26410fd6fce"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/onboarding/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/onboarding/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/onboarding/SKILL.md."
+
+config_edits:
+  - path: "plugins/compound-engineering/skills/onboarding/SKILL.md"
+    tier: 1
+    gold_added: |-
+      3. **Six sections, each earning its place** -- Every section answers a question a new contributor will ask in their first hour. No speculative sections.
+      Synthesize the inventory data and key file contents into a document with exactly six sections. Write the file to the repo root.
+      #### Section 2: How It's Used
+      
+      Answer: What does it look like to be on the consuming side of this project?
+      
+      Before a contributor can reason about architecture, they need to understand what the project *does* from the outside. This section bridges "what is this" (Section 1) and "how is it built" (Section 3). The audience for this section -- like the rest of the document -- is a new developer on the team. The goal is to show them what the product looks like from the consumer's perspective so the architecture and code flows in later sections make intuitive sense.
+      
+      Title this section in the output based on who consumes the project:
+      
+      - **End-user product** (web app, mobile app, consumer tool) -- Title: **"User Experience"**. Describe what the user sees and the primary workflows (e.g., "sign up, create a project, invite collaborators, see real-time updates"). Draw from routes, entry points, and README.
+      - **Developer tool** (SDK, library, dev CLI, framework) -- Title: **"Developer Experience"**. Describe how a developer consumes the tool: installation, a minimal usage example showing the primary API surface, and the 2-3 most common commands or patterns. This is distinct from Section 6 (Developer Guide), which covers contributing to *this codebase* -- this section covers *using* what the codebase produces.
+      - **Both** (platform with a consumer-facing product AND a developer API/SDK) -- Title: **"User and Developer Experience"**. Cover both perspectives, starting with the end-user experience and then the developer-facing surface.
+      
+      Keep to 1-3 paragraphs or a short flow per audience. If comprehensive user or developer docs exist, link to them and summarize the key workflows in a sentence each. Do not duplicate existing documentation.
+      
+      Skip this section only for codebases with no consuming audience (pure infrastructure, internal deployment tooling with no direct interaction).
+      
+      ---
+      
+      #### Section 3: How Is It Organized?
+      **System architecture** -- There are two kinds of diagrams that help a new contributor, and the system's complexity determines whether to use one or both:
+      
+      1. **Architecture diagram** -- Components, how they connect, and what protocols or transports they use. A developer looks at this to understand where code lives and how pieces talk to each other. Label edges with interaction types (HTTP, WebSocket, bridge, queue, etc.). Start with user-facing surfaces at the top, internal plumbing in the middle, and data stores and external services at the bottom.
+      
+      2. **User interaction flow** -- The logical journey a user takes through the product. Not about infrastructure, but about what happens from the user's perspective -- the sequence of actions and what the system does in response.
+      
+      **When to use one vs. both:**
+      - For straightforward systems (single web app, CLI tool, simple API), the architecture diagram already tells the user's story -- one diagram is enough. The request path through the components *is* the user flow.
+      - For multi-surface products (native app + web + API, or systems with multiple distinct user types), include both. The architecture diagram shows the developer how the pieces are wired; the user interaction flow shows the logical product experience across those pieces. These are different lenses on the same system.
+      
+      Use vertical stacking to keep diagrams under 80 columns.
+      Architecture diagram example:
+             User / Browser
+                  |
+                  |  HTTP / WebSocket
+                  v
+      +------------------+    bridge    +------------------+
+      | Browser Client   |<----------->| Native macOS App |
+      | (Vite bundle)    |             | (Swift/WKWebView)|
+      +--------+---------+             +--------+---------+
+               |                                |
+               |  WebSocket                     |  bridge
+               v                               v
+      +------------------------------------------+
+      |            Express Server                |
+      |  routes -> services -> models            |
+      +--------------------+---------------------+
+                           |
+                           |  SQL / Yjs sync
+                           v
+                    +--------------+
+                    | SQLite + Yjs |
+                    +--------------+
+      ```
+      
+      User interaction flow example (same system, different lens):
+      
+      ```
+      User opens app
+        |
+        v
+      Writes/edits document
+        (Milkdown editor)
+        |
+        v
+      Changes sync in real-time
+        (Yjs CRDT)
+        |                \
+        v                 v
+      Document persists   Other connected
+        to SQLite         clients see edits
+        |
+        v
+      User shares doc
+        -> generates link
+        |
+        v
+      Recipient opens
+        in browser client
+      Skip both for simple projects (single-purpose libraries, CLI tools) where the directory tree already tells the whole story.
+      #### Section 4: Key Concepts and Abstractions
+      #### Section 5: Primary Flows
+      #### Section 6: Developer Guide
+      Cover these areas:
+      - [ ] "How It's Used" section present with title adapted to audience (User Experience / Developer Experience / both), skipped only for pure infrastructure with no consuming audience
+      - [ ] Architecture diagram has labeled edges (protocols/transports) and includes a user interaction flow diagram when the system has multiple surfaces or user types
+    gold_removed: ""

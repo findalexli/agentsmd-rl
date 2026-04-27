@@ -1,0 +1,30 @@
+version: "2.0"
+
+task:
+  name: ant-design-docs-add-guidance-for-issues
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: ant-design/ant-design
+  pr: 57121
+  base_commit: "42b5401fd940c387e28b2dc35495acb3be3fcb77"
+  merge_commit: "add7dcd15c3770f78d9e704a20cef99541132f13"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/issue-reply/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/issue-reply/SKILL.md."
+
+config_edits:
+  - path: ".claude/skills/issue-reply/SKILL.md"
+    tier: 1
+    gold_added: |-
+      - PR 已合并但新版本未发布 → 告知用户等待新版本发布
+      **关闭时保持礼貌，简要说明关闭原因即可。**
+    gold_removed: ""

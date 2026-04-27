@@ -1,0 +1,98 @@
+version: "2.0"
+
+task:
+  name: nanoclaw-docsaddopencode-pin-sdkcli-to-1417
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: qwibitai/nanoclaw
+  pr: 1864
+  base_commit: "97d9cf1a638bc4929dde4b83c20d6c9179e7b1f1"
+  merge_commit: "8d8126a3d7f057c9606662623f9c0667a2fed1ba"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/add-opencode/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/add-opencode/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/add-opencode/SKILL.md."
+
+config_edits:
+  - path: ".claude/skills/add-opencode/SKILL.md"
+    tier: 1
+    gold_added: |-
+      Pinned. Bump deliberately, not with `bun update`. Use `1.4.17` — must match the `opencode-ai` CLI version pinned in step 5. The 1.14.x SDK has a completely different API and is **incompatible** with the current provider code.
+      cd container/agent-runner && bun add @opencode-ai/sdk@1.4.17 && cd -
+      ARG OPENCODE_VERSION=1.4.17
+      > **Do not use `latest`** — the CLI and SDK must be the same version. `latest` silently upgrades the CLI to 1.14.x which has a breaking session API change (UUID session IDs → `ses_` prefix) incompatible with SDK 1.4.x.
+      
+      > **Build cache gotcha:** The container buildkit caches COPY steps aggressively. If provider files were already present in the build context before, the new files may not be picked up. If you see "Unknown provider: opencode" after the build, prune the builder and rebuild:
+      > ```bash
+      > docker builder prune -f && ./container/build.sh
+      > ```
+      
+      ### 7. Propagate to existing per-group overlays
+      
+      Each agent group has a live source overlay at `data/v2-sessions/<group-id>/agent-runner-src/providers/` that **overrides the image at runtime**. This overlay is created when the group is first wired and never auto-updated by image rebuilds. Any group that already existed before this skill ran needs the new files copied in manually.
+      
+      ```bash
+      for overlay in data/v2-sessions/*/agent-runner-src/providers/; do
+        [ -d "$overlay" ] || continue
+        cp container/agent-runner/src/providers/opencode.ts "$overlay"
+        cp container/agent-runner/src/providers/mcp-to-opencode.ts "$overlay"
+        cp container/agent-runner/src/providers/index.ts "$overlay"
+        echo "Updated: $overlay"
+      done
+      ```
+      
+      - `OPENCODE_PROVIDER` — OpenCode provider id, e.g. `openrouter`, `anthropic`, `deepseek`.
+      - `OPENCODE_MODEL` — full model id in `provider/model` form, e.g. `deepseek/deepseek-chat`.
+      - `OPENCODE_SMALL_MODEL` — optional second model for lighter tasks; defaults to `OPENCODE_MODEL` if unset.
+      - `ANTHROPIC_BASE_URL` — **required for non-`anthropic` providers.** The opencode container provider passes this as the `baseURL` for the upstream provider config so requests route through OneCLI's credential proxy or directly to the provider's API. Set it to the provider's API base URL (e.g. `https://api.deepseek.com/v1`, `https://openrouter.ai/api/v1`).
+      
+      Credentials: register provider API keys in OneCLI with the matching `--host-pattern` (e.g. `api.deepseek.com`, `openrouter.ai`). OneCLI injects them via `HTTPS_PROXY` in the container — the key never lives in `.env` or the container environment.
+      After adding a secret, **grant the agent access** — agents in `selective` mode only receive secrets they've been explicitly assigned:
+      
+      ```bash
+      # Find the agent id and secret id, then:
+      onecli agents set-secrets --id <agent-id> --secret-ids <existing-ids>,<new-secret-id>
+      ```
+      
+      Always include existing secret IDs in the list — `set-secrets` replaces, not appends.
+      
+      #### Example: DeepSeek
+      
+      ```env
+      OPENCODE_PROVIDER=deepseek
+      OPENCODE_MODEL=deepseek/deepseek-chat
+      OPENCODE_SMALL_MODEL=deepseek/deepseek-chat
+      ANTHROPIC_BASE_URL=https://api.deepseek.com/v1
+      ```
+      
+      Register the key:
+      ```bash
+      onecli secrets create --name "DeepSeek" --type generic \
+        --value YOUR_KEY --host-pattern "api.deepseek.com" \
+        --header-name "Authorization" --value-format "Bearer {value}"
+      ```
+      ANTHROPIC_BASE_URL=https://openrouter.ai/api/v1
+      ```
+      
+      Register the key:
+      ```bash
+      onecli secrets create --name "OpenRouter" --type generic \
+        --value YOUR_KEY --host-pattern "openrouter.ai" \
+        --header-name "Authorization" --value-format "Bearer {value}"
+      #### Example: Anthropic (no ANTHROPIC_BASE_URL needed)
+      When `OPENCODE_PROVIDER` is `anthropic`, OpenCode uses normal Anthropic env inside the container — the proxy + placeholder key pattern is unchanged and `ANTHROPIC_BASE_URL` is not required.
+      OPENCODE_SMALL_MODEL=anthropic/claude-haiku-4-5-20251001
+      - Session continuation uses UUID format (SDK 1.4.x / CLI 1.4.x). Stale sessions are cleared by `isSessionInvalid` on OpenCode-specific error patterns. If you see UUID-related errors after an accidental CLI upgrade, clear `session_state` in `outbound.db` and wipe the `opencode-xdg` directory under the session folder.
+    gold_removed: ""

@@ -1,0 +1,141 @@
+version: "2.0"
+
+task:
+  name: agents-recommend-modern-stripe-best-practices
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: wshobson/agents
+  pr: 435
+  base_commit: "5d65aa10638bcc1b390738e11f9bff213f61955a"
+  merge_commit: "1874219995a3e9be113492925a9b57613683f36c"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/payment-processing/skills/stripe-integration/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/payment-processing/skills/stripe-integration/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/payment-processing/skills/stripe-integration/SKILL.md."
+
+config_edits:
+  - path: "plugins/payment-processing/skills/stripe-integration/SKILL.md"
+    tier: 1
+    gold_added: |-
+      **Checkout Sessions**
+      - Recommended for most integrations
+      - Supports all UI paths:
+        - Stripe-hosted checkout page
+        - Embedded checkout form
+        - Custom UI with Elements (Payment Element, Express Checkout Element) using `ui_mode='custom'`
+      - Provides built-in checkout capabilities (line items, discounts, tax, shipping, address collection, saved payment methods, and checkout lifecycle events)
+      - Lower integration and maintenance burden than Payment Intents
+      **Payment Intents (Bespoke control)**
+      - You calculate the final amount with taxes, discounts, subscriptions, and currency conversion yourself.
+      - More complex implementation and long-term maintenance burden
+          cancel_url='https://yourdomain.com/cancel'
+                              'name': 'Blue T-shirt',
+      ### Pattern 2: Elements with Checkout Sessions
+      
+      ```python
+      def create_checkout_session_for_elements(amount, currency='usd'):
+          """Create a checkout session configured for Payment Element."""
+          session = stripe.checkout.Session.create(
+              mode='payment',
+              ui_mode='custom',
+              line_items=[{
+                  'price_data': {
+                      'currency': currency,
+                      'product_data': {'name': 'Blue T-shirt'},
+                      'unit_amount': amount,
+                  },
+                  'quantity': 1,
+              }],
+              return_url='https://yourdomain.com/complete?session_id={CHECKOUT_SESSION_ID}'
+          )
+          return session.client_secret  # Send to frontend
+      ```
+      
+      ```javascript
+      const stripe = Stripe("pk_test_...");
+      const appearance = { theme: "stripe" };
+      
+      const checkout = stripe.initCheckout({
+        clientSecret,
+        elementsOptions: { appearance },
+      });
+      const loadActionsResult = await checkout.loadActions();
+      
+      if (loadActionsResult.type === "success") {
+        const { actions } = loadActionsResult;
+        const session = actions.getSession();
+      
+        const button = document.getElementById("pay-button");
+        const checkoutContainer = document.getElementById("checkout-container");
+        const emailInput = document.getElementById("email");
+        const emailErrors = document.getElementById("email-errors");
+        const errors = document.getElementById("confirm-errors");
+      
+        // Display a formatted string representing the total amount
+        checkoutContainer.append(`Total: ${session.total.total.amount}`);
+      
+        // Mount Payment Element
+        const paymentElement = checkout.createPaymentElement();
+        paymentElement.mount("#payment-element");
+      
+        // Store email for submission
+        emailInput.addEventListener("blur", () => {
+          actions.updateEmail(emailInput.value).then((result) => {
+            if (result.error) emailErrors.textContent = result.error.message;
+          });
+        });
+      
+        // Handle form submission
+        button.addEventListener("click", () => {
+          actions.confirm().then((result) => {
+            if (result.type === "error") errors.textContent = result.error.message;
+          });
+        });
+      }
+      ```
+      
+      ### Pattern 3: Elements with Payment Intents
+      
+      Pattern 2 (Elements with Checkout Sessions) is Stripe's recommended approach, but you can also use Payment Intents as an alternative.
+          """Create a payment intent for bespoke checkout UI with Payment Element."""
+      ```
+      ```javascript
+      // Mount Payment Element and confirm via Payment Intents
+      const stripe = Stripe("pk_test_...");
+      const appearance = { theme: "stripe" };
+      const elements = stripe.elements({ appearance, clientSecret });
+      
+      const paymentElement = elements.create("payment");
+      paymentElement.mount("#payment-element");
+      
+      document.getElementById("pay-button").addEventListener("click", async () => {
+        const { error } = await stripe.confirmPayment({
+          elements,
+          confirmParams: {
+            return_url: "https://yourdomain.com/complete",
+          },
+        });
+      
+        if (error) {
+          document.getElementById("errors").textContent = error.message;
+        }
+      });
+      ### Pattern 4: Subscription Creation
+      ### Pattern 5: Customer Portal
+              automatic_payment_methods={
+                  'enabled': True
+              },
+              customer=customer.id
+    gold_removed: ""

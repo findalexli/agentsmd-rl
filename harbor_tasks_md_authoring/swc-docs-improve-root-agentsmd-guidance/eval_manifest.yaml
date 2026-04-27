@@ -1,0 +1,51 @@
+version: "2.0"
+
+task:
+  name: swc-docs-improve-root-agentsmd-guidance
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: swc-project/swc
+  pr: 11626
+  base_commit: "fdcd184a2ad3295015faf51fde62dbe4b700515e"
+  merge_commit: "1cdfec9f298d0979f40d2be5a227ea4dc973138b"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: "AGENTS.md"
+    tier: 1
+    gold_added: |-
+      -   Prefer enum (or dedicated type) based modeling over raw string literals whenever possible.
+      ## Debugging and logging
+      
+      -   Do not guess behavior. Verify assumptions by reading source, fixtures, and tests.
+      -   Debug with logs when behavior is unclear.
+      -   Write sufficient logs for debugging and operational troubleshooting.
+      -   Prefer structured logging in Rust (`tracing`) over ad-hoc plain text logs when feasible.
+      
+      ## Shell safety
+      
+      -   For shell commands or scripts, prefer `$(...)` over legacy backticks for command substitution.
+      -   Quote and escape all dynamic shell values strictly.
+      
+      ## Git workflow
+      
+      -   Run `git commit` only after `git add`.
+      -   Once changes are staged, commit without unnecessary delay so staged history is preserved.
+      -   After addressing pull request review comments and pushing updates, resolve the corresponding review threads.
+      
+    gold_removed: ""

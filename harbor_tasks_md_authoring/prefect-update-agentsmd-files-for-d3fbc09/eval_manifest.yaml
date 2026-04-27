@@ -1,0 +1,38 @@
+version: "2.0"
+
+task:
+  name: prefect-update-agentsmd-files-for-d3fbc09
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: prefecthq/prefect
+  pr: 21452
+  base_commit: "d3fbc098129a1cf3a101da7b3af79ba1536b7b40"
+  merge_commit: "d63229cbca052e7644c5c17b8739cf7f1dcf099b"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in ui-v2/e2e/AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in ui-v2/e2e/AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in ui-v2/e2e/AGENTS.md."
+
+config_edits:
+  - path: "ui-v2/e2e/AGENTS.md"
+    tier: 1
+    gold_added: |-
+      **Strict mode and confirmation dialogs**: When a confirmation dialog contains the item name (e.g., "Are you sure you want to delete `<name>`?"), asserting `getByText(name)` is gone will fail in strict mode because the name matches both the table row and the dialog description simultaneously. Always wait for the dialog to close before asserting the item's absence, and scope the final assertion to the list/table to avoid matching unrelated page elements (e.g., breadcrumbs, headers):
+      // ✅ Good - wait for dialog to close, then scope assertion to the table
+      const deleteDialog = page.getByRole("alertdialog");
+      await deleteDialog.getByRole("button", { name: "Delete" }).click();
+      await expect(deleteDialog).not.toBeVisible();
+      await expect(page.getByRole("table").getByText(itemName)).not.toBeVisible();
+    gold_removed: ""

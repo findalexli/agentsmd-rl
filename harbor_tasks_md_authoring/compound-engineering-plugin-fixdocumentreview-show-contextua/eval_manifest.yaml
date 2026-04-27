@@ -1,0 +1,38 @@
+version: "2.0"
+
+task:
+  name: compound-engineering-plugin-fixdocumentreview-show-contextua
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: EveryInc/compound-engineering-plugin
+  pr: 459
+  base_commit: "847ce3f156a5cdf75667d9802e95d68e6b3c53a4"
+  merge_commit: "2b7283da7b48dc073670c5f4d116e58255f0ffcb"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/document-review/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/document-review/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/document-review/SKILL.md."
+
+config_edits:
+  - path: "plugins/compound-engineering/skills/document-review/SKILL.md"
+    tier: 1
+    gold_added: |-
+      
+      Offer these two options. Use the document type from Phase 1 to set the "Review complete" description:
+      1. **Refine again** -- Address the findings above, then re-review
+      2. **Review complete** -- description based on document type:
+         - requirements document: "Create technical plan with ce:plan"
+         - plan document: "Implement with ce:work"
+    gold_removed: ""

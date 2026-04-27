@@ -1,0 +1,88 @@
+version: "2.0"
+
+task:
+  name: skills-fix-and-improve-aflpp-skill
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: trailofbits/skills
+  pr: 15
+  base_commit: "fd46c1caa71937b57f29a8060b626f4a06e5e61b"
+  merge_commit: "da18f0efc85955d471edfe5270cc645c6485c945"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/testing-handbook-skills/skills/aflpp/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/testing-handbook-skills/skills/aflpp/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/testing-handbook-skills/skills/aflpp/SKILL.md."
+
+config_edits:
+  - path: "plugins/testing-handbook-skills/skills/aflpp/SKILL.md"
+    tier: 1
+    gold_added: |-
+      ./afl++ docker afl-clang-fast++ -DNO_MAIN=1 -O2 -fsanitize=fuzzer harness.cc main.cc -o fuzz
+      mkdir seeds && echo "aaaa" > seeds/minimal_seed
+      | Docker (from Docker Hub) | Specific AFL++ version, Apple Silicon support | As of 4.35c: Clang 19 & GCC 11 |
+      Prior to installing afl++, check the clang version dependency of the packge with `apt-cache show afl++`, and install the matching `lld` version (e.g., `lld-17`).
+      
+      
+      apt install afl++ lld-17
+      Refer to the [Dockerfile](https://github.com/AFLplusplus/AFLplusplus/blob/stable/Dockerfile) for Ubuntu version requirements and dependencies. Set `LLVM_CONFIG` to specify Clang version (e.g., `llvm-config-18`).
+      ./afl++ <host/docker> afl-clang-fast++ -DNO_MAIN=1 -O2 -fsanitize=fuzzer harness.cc main.cc -o fuzz
+      ./afl++ <host/docker> afl-g++-fast -DNO_MAIN=1 -O2 -fsanitize=fuzzer harness.cc main.cc -o fuzz
+      ./afl++ <host/docker> AFL_USE_ASAN=1 afl-clang-fast++ -DNO_MAIN=1 -O2 -fsanitize=fuzzer harness.cc main.cc -o fuzz
+      Note that `-g` is not necessary, it is added by default by the AFL++ compilers.
+      
+      | `-DNO_MAIN=1` | Skip main function when using libFuzzer harness |
+      | `-fsanitize=fuzzer` | Enable libFuzzer compatibility mode and adds the fuzzer runtime when linking executable |
+      | `-fsanitize=fuzzer-no-link` | Instrument without linking fuzzer runtime (for static libraries and object files) |
+      echo "aaaa" > seeds/minimal_seed
+      ./afl++ <host/docker> AFL_FAST_CAL=1 afl-fuzz -i seeds -o out -- ./fuzz
+      | `-t 1000` | Timeout in milliseconds for each test case (default: 1000ms) |
+      ## CMPLOG
+      
+      CMPLOG/RedQueen is the best path constraint solving mechanism available in any fuzzer.
+      To enable it, the fuzz target needs to be instrumented for it.
+      Before building the fuzzing target set the environment variable:
+      
+      ```bash
+      ./afl++ <host/docker> AFL_LLVM_CMPLOG=1 make
+      ```
+      
+      No special action is needed for compiling and linking the harness.
+      
+      To run a fuzzer instance with a CMPLOG instrumented fuzzing target, add `-c0` to the command like arguments:
+      
+      ```bash
+      ./afl++ <host/docker> afl-fuzz -c0 -S cmplog -i seeds -o state -- ./fuzz 1>secondary02.log 2>secondary02.error &
+      ```
+      
+      ./afl++ <host/docker> AFL_USE_ASAN=1 afl-clang-fast++ -DNO_MAIN=1 -O2 -fsanitize=fuzzer harness.cc main.cc -o fuzz
+      ./afl++ <host/docker> AFL_USE_UBSAN=1 afl-clang-fast++ -DNO_MAIN=1 -O2 -fsanitize=fuzzer,undefined harness.cc main.cc -o fuzz
+      | Use LLVMFuzzerTestOneInput harnesses where possible | If a fuzzing campaign has at least 85% stability then this is the most efficient fuzzing style. If not then try standard input or file input fuzzing |
+      ./afl++ <host/docker> afl-clang-fast++ -O2 main_stdin.c -o fuzz_stdin
+      ./afl++ <host/docker> afl-clang-fast++ -O2 main_file.c -o fuzz_file
+      ./afl++ <host/docker> afl-clang-fast++ -O2 main_arg.c -o fuzz_arg
+      ./configure --enable-shared=no
+      export AFL_LLVM_CMPLOG=1
+      export AFL_USE_ASAN=1
+      make
+      export AFL_USE_ASAN=1
+      $CXX -fsanitize=fuzzer libpng_read_fuzzer.cc .libs/libpng16.a -lz -o fuzz
+      ./afl++ <host/docker> afl-fuzz -i seeds -o out -- ./fuzz
+      target_compile_options(fuzz PRIVATE -O2 -fsanitize=fuzzer-no-link)
+      | Low exec/sec (<1k) | Not using persistent mode | Create a LLVMFuzzerTestOneInput style harness |
+      | Low stability (<85%) | Non-deterministic code | Fuzz a program via stdin or file inputs, or create such a harness |
+      | GCC plugin error | GCC version mismatch | Ensure system GCC matches AFL++ build and install gcc-$GCC_VERSION-plugin-dev |
+      **[Fuzzing in Depth](https://aflplus.plus/docs/fuzzing_in_depth.md)**
+      **[AFL++: Combining Incremental Steps of Fuzzing Research](https://www.usenix.org/system/files/woot20-paper-fioraldi.pdf)**
+    gold_removed: ""

@@ -1,0 +1,42 @@
+version: "2.0"
+
+task:
+  name: compound-engineering-plugin-fixgitcommitpushpr-remove-harnes
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: EveryInc/compound-engineering-plugin
+  pr: 539
+  base_commit: "2c05c43dc8b66ae37501e42a9747c07d82002185"
+  merge_commit: "044a035e77298c4b8d2152ac2cba36fc00f5b99a"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/git-commit-push-pr/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/git-commit-push-pr/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/git-commit-push-pr/SKILL.md."
+
+config_edits:
+  - path: "plugins/compound-engineering/skills/git-commit-push-pr/SKILL.md"
+    tier: 1
+    gold_added: |-
+      ![HARNESS](https://img.shields.io/badge/MODEL_SLUG-COLOR?logo=LOGO&logoColor=white)
+      Fill in at PR creation time using the harness lookup (for logo and color) and model slug below.
+      | Harness | `LOGO` | `COLOR` |
+      |---------|--------|---------|
+      | Claude Code | `claude` | `D97757` |
+      | Codex | (omit logo param) | `000000` |
+      | Gemini CLI | `googlegemini` | `4285F4` |
+      - `Gemini_3.1_Pro`
+      - `Gemini_3_Flash`
+      ![Claude Code](https://img.shields.io/badge/Opus_4.6_(1M,_Extended_Thinking)-D97757?logo=claude&logoColor=white)
+    gold_removed: ""

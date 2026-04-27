@@ -1,0 +1,45 @@
+version: "2.0"
+
+task:
+  name: prefect-update-agentsmd-files-for-af75419
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: prefecthq/prefect
+  pr: 21451
+  base_commit: "af754191fe29d26fb8492fa4739608d465fe0996"
+  merge_commit: "1722bfc16bb098cd167b2257ab21f17ca3cac5b4"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in ui-v2/e2e/AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in ui-v2/e2e/AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in ui-v2/e2e/AGENTS.md."
+
+config_edits:
+  - path: "ui-v2/e2e/AGENTS.md"
+    tier: 1
+    gold_added: |-
+      **Strict mode and confirmation dialogs**: When a confirmation dialog contains the item name (e.g., "Are you sure you want to delete `<name>`?"), asserting `getByText(name)` is gone will fail in strict mode because the name matches both the table row and the dialog description simultaneously. Always wait for the dialog to close before asserting the item's absence:
+      
+      ```typescript
+      // ✅ Good - wait for dialog to close first
+      await page.getByRole("button", { name: "Delete" }).click();
+      await expect(page.getByRole("alertdialog")).not.toBeVisible();
+      await expect(page.getByText(itemName)).not.toBeVisible();
+      
+      // ❌ Bad - strict mode violation if dialog still visible
+      await page.getByRole("button", { name: "Delete" }).click();
+      await expect(page.getByText(itemName)).not.toBeVisible();
+      ```
+      
+    gold_removed: ""

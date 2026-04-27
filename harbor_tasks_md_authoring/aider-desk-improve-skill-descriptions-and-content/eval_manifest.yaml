@@ -1,0 +1,147 @@
+version: "2.0"
+
+task:
+  name: aider-desk-improve-skill-descriptions-and-content
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: hotovo/aider-desk
+  pr: 682
+  base_commit: "7043fc9ac723542e3bfce50450ede630740b8ac1"
+  merge_commit: "9c34f256e21b7fee59382c5f9dd2ba7bd0e38aff"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .aider-desk/skills/agent-creator/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .aider-desk/skills/agent-creator/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .aider-desk/skills/agent-creator/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .aider-desk/skills/skill-creator/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .aider-desk/skills/skill-creator/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .aider-desk/skills/skill-creator/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .aider-desk/skills/theme-factory/SKILL.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .aider-desk/skills/writing-tests/SKILL.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .aider-desk/skills/writing-tests/SKILL.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .aider-desk/skills/writing-tests/SKILL.md."
+
+config_edits:
+  - path: ".aider-desk/skills/agent-creator/SKILL.md"
+    tier: 1
+    gold_added: |-
+      description: Create and configure AiderDesk agent profiles by defining tool groups, approval rules, subagent settings, and provider/model selection. Use when setting up a new agent, creating a profile, or configuring agent tools and permissions.
+      Read all reference files before proposing a profile to ensure accuracy.
+      ## Q&A Process
+      On user confirmation, generate the profile. Verify structure against `references/profile-examples.md` before creating files.
+      Only include tools that exist in `references/tool-approval-guide.md`.
+      **Every agent is a subagent (enabled: true)**. See `references/subagent-guide.md` for detailed guidance.
+      ## Minimal config.json Structure
+      
+      ```json
+      {
+        "name": "my-agent",
+        "provider": "anthropic",
+        "model": "claude-sonnet-4-5-20250929",
+        "maxIterations": 250,
+        "toolGroups": ["power", "todo"],
+        "toolApprovals": {
+          "power---bash": "ask",
+          "power---read": "always"
+        },
+        "subagent": {
+          "enabled": true,
+          "contextMemory": "off"
+        }
+      }
+    gold_removed: ""
+  - path: ".aider-desk/skills/skill-creator/SKILL.md"
+    tier: 1
+    gold_added: |-
+      description: Create AiderDesk Agent Skills by writing SKILL.md files, defining frontmatter metadata, structuring references, and organizing skill directories. Use when building a new skill, creating a SKILL.md, planning skill architecture, or writing skill content.
+      ## Quick Workflow
+      
+      1. Create skill directory: `.aider-desk/skills/my-skill/`
+      2. Write `SKILL.md` with YAML frontmatter (`name`, `description`) and body instructions
+      3. Add detailed docs to `references/` as needed
+      4. Verify: mention a trigger keyword — skill should appear in active skills sidebar
+      
+      **If skill doesn't load**: check YAML syntax is valid, `name` is lowercase-hyphenated, and `description` contains the trigger terms users would say
+      
+      ### SKILL.md Example
+      
+      ```yaml
+      ---
+      name: deploy-helper
+      description: Deploy AiderDesk builds to staging and production environments. Use when deploying, releasing, or publishing builds.
+      ---
+      ```
+      
+      ```markdown
+      # Deploy Helper
+      
+      Build and deploy AiderDesk to target environments.
+      
+      ## Steps
+      
+      1. Run `npm run build` to generate production artifacts
+      2. Verify build output exists in `dist/`
+      3. Deploy to staging: `./scripts/deploy.sh staging`
+      4. Verify deployment: check health endpoint returns 200
+      
+      ## Troubleshooting
+      
+      - Build fails: check `tsconfig.json` paths and run `npm run typecheck`
+      
+      ## References
+      
+      - [environments.md](references/environments.md) - Environment configs
+      ```
+      
+    gold_removed: ""
+  - path: ".aider-desk/skills/theme-factory/SKILL.md"
+    tier: 1
+    gold_added: |-
+      description: Create new AiderDesk UI themes by defining SCSS color variables, registering theme types, and adding i18n display names. Use when adding a theme, creating a color scheme, customizing appearance, or implementing dark mode and light mode variants.
+    gold_removed: ""
+  - path: ".aider-desk/skills/writing-tests/SKILL.md"
+    tier: 1
+    gold_added: |-
+      name: writing-tests
+      description: Write unit tests, component tests, and integration tests for AiderDesk using Vitest and React Testing Library. Use when creating new tests, adding test coverage, configuring mocks, setting up test files, or debugging failing tests.
+      ## Debugging Failing Tests
+      
+      1. Read the error output and identify the failing assertion
+      2. Check mock setup — verify `vi.mock()` paths and return values match expectations
+      3. For component tests, inspect rendered output with `screen.debug()`
+      4. Run a single test in isolation: `npm run test:node -- --no-color -t "test name"`
+      5. Verify coverage: `npm run test:coverage` to confirm new code is tested
+      
+    gold_removed: ""

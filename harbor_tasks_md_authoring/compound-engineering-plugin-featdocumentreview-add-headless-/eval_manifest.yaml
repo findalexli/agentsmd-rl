@@ -1,0 +1,99 @@
+version: "2.0"
+
+task:
+  name: compound-engineering-plugin-featdocumentreview-add-headless-
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: EveryInc/compound-engineering-plugin
+  pr: 425
+  base_commit: "88e7a5250fff7a274b595831fc91583d46bdc585"
+  merge_commit: "4e4a6563b4aa7375e9d1c54bd73442f3b675f100"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/document-review/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/document-review/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/document-review/SKILL.md."
+
+config_edits:
+  - path: "plugins/compound-engineering/skills/document-review/SKILL.md"
+    tier: 1
+    gold_added: |-
+      argument-hint: "[path/to/document.md]"
+      ## Phase 0: Detect Mode
+      
+      Check the skill arguments for `mode:headless`. Arguments may contain a document path, `mode:headless`, or both. Tokens starting with `mode:` are flags, not file paths -- strip them from the arguments and use the remaining token (if any) as the document path for Phase 1.
+      
+      If `mode:headless` is present, set **headless mode** for the rest of the workflow.
+      
+      **Headless mode** changes the interaction model, not the classification boundaries. Document-review still applies the same judgment about what is deterministic vs. what needs verification. The only difference is how non-auto findings are delivered:
+      - `auto` fixes are applied silently (same as interactive)
+      - `batch_confirm` and `present` findings are returned as structured text for the caller to handle -- no AskUserQuestion prompts, no interactive approval
+      - Phase 5 returns immediately with "Review complete" (no refine/complete question)
+      
+      The caller receives findings with their original classifications intact and decides what to do with each tier.
+      
+      Callers invoke headless mode by including `mode:headless` in the skill arguments, e.g.:
+      ```
+      Skill("compound-engineering:document-review", "docs/plans/my-plan.md mode:headless")
+      ```
+      
+      If `mode:headless` is not present, the skill runs in its default interactive mode with no behavior change.
+      
+      **If no document is specified (interactive mode):** Ask which document to review, or find the most recent in `docs/brainstorms/` or `docs/plans/` using a file-search/glob tool (e.g., Glob in Claude Code).
+      
+      **If no document is specified (headless mode):** Output "Review failed: headless mode requires a document path. Re-invoke with: Skill(\"compound-engineering:document-review\", \"<path> mode:headless\")" without dispatching agents.
+      **Headless mode:** Do not prompt. Include `batch_confirm` findings in the structured text output alongside `present` findings, clearly marked with their classification so the caller can distinguish them. The caller decides whether to apply them.
+      
+      **Interactive mode:**
+      
+      **Headless mode:** Do not use interactive question tools. Output all non-auto findings as a structured text summary the caller can parse and act on:
+      
+      ```
+      Document review complete (headless mode).
+      
+      Applied N auto-fixes.
+      
+      Batch-confirm findings (clear fix, wording needs verification):
+      
+      [P1][batch_confirm] Section: <section> — <title> (<reviewer>, confidence <N>)
+        Why: <why_it_matters>
+        Suggested fix: <suggested_fix>
+      
+      Present findings (requires judgment):
+      
+      [P0][present] Section: <section> — <title> (<reviewer>, confidence <N>)
+        Why: <why_it_matters>
+        Suggested fix: <suggested_fix or "none">
+      
+      [P1][present] Section: <section> — <title> (<reviewer>, confidence <N>)
+        Why: <why_it_matters>
+        Suggested fix: <suggested_fix or "none">
+      
+      Residual concerns:
+      - <concern> (<source>)
+      
+      Deferred questions:
+      - <question> (<source>)
+      ```
+      
+      Omit any section with zero items. Then proceed directly to Phase 5 (which returns immediately in headless mode).
+      
+      **Interactive mode:**
+      
+      **Headless mode:** Return "Review complete" immediately. Do not ask questions. The caller receives the text summary from Phase 4 and handles any remaining findings.
+      
+      **Interactive mode:**
+      
+      - Do not modify caller skills (ce-brainstorm, ce-plan, or external plugin skills that invoke document-review)
+    gold_removed: ""

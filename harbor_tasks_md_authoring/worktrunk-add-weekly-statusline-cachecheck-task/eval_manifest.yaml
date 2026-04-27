@@ -1,0 +1,66 @@
+version: "2.0"
+
+task:
+  name: worktrunk-add-weekly-statusline-cachecheck-task
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: max-sixty/worktrunk
+  pr: 2211
+  base_commit: "b320a3d8fecd9dc3af238d2333ce4583ddf43125"
+  merge_commit: "a14fdb45d99dd14429d2cf9dfa00c34f604d1812"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/running-tend/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/running-tend/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/running-tend/SKILL.md."
+
+config_edits:
+  - path: ".claude/skills/running-tend/SKILL.md"
+    tier: 1
+    gold_added: |-
+      ## Weekly Maintenance: Statusline Cache-Check
+      
+      Detect new in-process cache-miss duplicates introduced by recent changes by
+      running `wt-perf cache-check` against a real `wt list statusline --claude-code`
+      trace. The render runs on every Claude Code prompt redraw, so duplicate git
+      subprocesses there compound into measurable fseventsd / IPC load.
+      
+      ```bash
+      # Run from any worktree of this repo
+      cat > /tmp/statusline-input.json <<'EOF'
+      {"hook_event_name":"Status","workspace":{"current_dir":"REPLACE_WITH_CWD"},
+       "model":{"display_name":"Opus"},"context_window":{"used_percentage":42.0}}
+      EOF
+      sed -i '' "s|REPLACE_WITH_CWD|$PWD|" /tmp/statusline-input.json
+      
+      RUST_LOG=debug cargo run --release -- list statusline --claude-code \
+        < /tmp/statusline-input.json 2>&1 \
+        | grep wt-trace \
+        | cargo run -p wt-perf -- cache-check
+      ```
+      
+      The report flags commands invoked more than once with the same context.
+      Triage each duplicate:
+      
+      - **Legitimate** (different cwd, different ref form that can't be normalized,
+        intentional double-call across phases) — note in the response and move on.
+      - **Cache miss** (same logical operation should hit cache but doesn't) —
+        open an issue or fix it. Past examples: `merge_base("main", "<sha>")` vs
+        `merge_base("main", "branch")` keying separately;
+        `worktree_at(cwd)` vs `worktree_at(porcelain_path)` not canonicalizing.
+      
+      Baseline as of 2026-04-13: 29 git subprocesses per render on a clean tree
+      (see PR #2209). A jump above ~32 on a clean tree warrants investigation.
+      
+    gold_removed: ""

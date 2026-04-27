@@ -1,0 +1,219 @@
+version: "2.0"
+
+task:
+  name: antigravity-awesome-skills-update-skillmd-to-final-version
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: sickn33/antigravity-awesome-skills
+  pr: 305
+  base_commit: "d50150fb4e6eb5c98ac05c9cc0dc75b75b363970"
+  merge_commit: "1a5c4059bde610252d1973c4f97002f1368bb6b9"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/analyze-project/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/analyze-project/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/analyze-project/SKILL.md."
+
+config_edits:
+  - path: "skills/analyze-project/SKILL.md"
+    tier: 1
+    gold_added: |-
+      Analyze AI-assisted coding sessions in `~/.gemini/antigravity/brain/` and produce a report that explains not just **what happened**, but **why it happened**, **who/what caused it**, and **what should change next time**.
+      ## Goal
+      2. Whether the main cause was:
+         - user/spec
+         - agent
+         - repo/codebase
+         - validation/testing
+      3. Whether the opening prompt was sufficient
+      4. Which files/subsystems repeatedly correlate with struggle
+      5. What changes would most improve future sessions
+      ## Global Rules
+      - Treat `.resolved.N` counts as **iteration signals**, not proof of failure
+      - Separate **human-added scope**, **necessary discovered scope**, and **agent-introduced scope**
+      - Every diagnosis must include **evidence** and **confidence**
+      - Confidence levels:
+        - **High** = direct artifact/timestamp evidence
+        - **Medium** = multiple supporting signals
+      - Evidence precedence:
+        - artifact contents > timestamps > metadata summaries > inference
+      - If evidence is weak, say so
+      
+      ---
+      
+      ## Step 0.5: Session Intent Classification
+      
+      Classify the primary session intent from objective + artifacts:
+      
+      - `DELIVERY`
+      - `DEBUGGING`
+      - `REFACTOR`
+      - `RESEARCH`
+      - `EXPLORATION`
+      - `AUDIT_ANALYSIS`
+      
+      Record:
+      - `session_intent`
+      - `session_intent_confidence`
+      
+      Use intent to contextualize severity and rework shape.
+      Do not judge exploratory or research sessions by the same standards as narrow delivery sessions.
+      ## Step 1: Discover Conversations
+      1. Read available conversation summaries from system context
+      2. List conversation folders in the user’s Antigravity `brain/` directory
+      3. Build a conversation index with:
+      4. If the user supplied a keyword/path, filter to matching conversations; otherwise analyze all
+      Output: indexed list of conversations to analyze.
+      ## Step 2: Extract Session Evidence
+      For each conversation, read if present:
+      ### Core artifacts
+      ### Metadata
+      ### Version snapshots
+      ### Additional signals
+      - file/folder/subsystem names mentioned in plans/walkthroughs
+      - validation/testing language
+      - explicit acceptance criteria, constraints, non-goals, and file targets
+      Record per conversation:
+      #### Lifecycle
+      - `is_abandoned_candidate` = task exists but no walkthrough
+      #### Revision / change volume
+      #### Content / quality
+      ## Step 3: Prompt Sufficiency
+      Score the opening request on a 0–2 scale for:
+      - **Clarity**
+      - **Boundedness**
+      - **Testability**
+      - **Architectural specificity**
+      - **Constraint awareness**
+      - **Dependency awareness**
+      Then note which missing prompt ingredients likely contributed to later friction.
+      Do not punish short prompts by default; a narrow, obvious task can still have high sufficiency.
+      Classify scope change into:
+      - **Human-added scope** — new asks beyond the original task
+      - **Necessary discovered scope** — work required to complete the original task correctly
+      - **Agent-introduced scope** — likely unnecessary work introduced by the agent
+      Record:
+      - evidence
+      Keep one short example in mind for calibration:
+      - Human-added: “also refactor nearby code while you’re here”
+      - Necessary discovered: hidden dependency must be fixed for original task to work
+      - Agent-introduced: extra cleanup or redesign not requested and not required
+      ---
+      ## Step 5: Rework Shape
+      Classify each session into one primary pattern:
+      - **Clean execution**
+      - **Early replan then stable finish**
+      - **Progressive scope expansion**
+      - **Reopen/reclose churn**
+      - **Late-stage verification churn**
+      - **Abandoned mid-flight**
+      - **Exploratory / research session**
+      - evidence
+      ### Primary root cause
+      One of:
+      ### Secondary root cause
+      Optional if materially relevant
+      ### Root-cause guidance
+      - **SPEC_AMBIGUITY**: opening ask lacked boundaries, targets, criteria, or constraints
+      - **HUMAN_SCOPE_CHANGE**: scope expanded because the user broadened the task
+      - **REPO_FRAGILITY**: hidden coupling, brittle files, unclear architecture, or environment issues forced extra work
+      - **AGENT_ARCHITECTURAL_ERROR**: wrong files, wrong assumptions, wrong approach, hallucinated structure
+      - **VERIFICATION_CHURN**: implementation mostly worked, but testing/validation caused loops
+      - **LEGITIMATE_TASK_COMPLEXITY**: revisions were expected for the difficulty and not clearly avoidable
+      Every root-cause assignment must include:
+      - evidence
+      - why stronger alternative causes were rejected
+      - confidence
+      
+      ---
+      ## Step 6.5: Session Severity Scoring (0–100)
+      Assign each session a severity score to prioritize attention.
+      Components (sum, clamp 0–100):
+      - **Completion failure**: 0–25 (`abandoned = 25`)
+      - **Replanning intensity**: 0–15
+      - **Scope instability**: 0–15
+      - **Rework shape severity**: 0–15
+      - **Prompt sufficiency deficit**: 0–10 (`low = 10`)
+      - **Root cause impact**: 0–10 (`REPO_FRAGILITY` / `AGENT_ARCHITECTURAL_ERROR` highest)
+      - **Hotspot recurrence**: 0–10
+      Bands:
+      - **0–19 Low**
+      - **20–39 Moderate**
+      - **40–59 Significant**
+      - **60–79 High**
+      - **80–100 Critical**
+      Record:
+      - `session_severity_score`
+      - `severity_band`
+      - `severity_drivers` = top 2–4 contributors
+      - `severity_confidence`
+      Use severity as a prioritization signal, not a verdict. Always explain the drivers.
+      Contextualize severity using session intent so research/exploration sessions are not over-penalized.
+      Across all conversations, cluster repeated struggle by file, folder, or subsystem.
+      - average severity
+      Goal: identify whether friction is mostly prompt-driven, agent-driven, or concentrated in specific repo areas.
+      ## Step 8: Comparative Cohorts
+      Compare:
+      Do not just restate averages; extract cautious evidence-backed patterns.
+      Examples of strong findings:
+      - replans cluster around weak file targeting rather than weak acceptance criteria
+      - scope growth often begins after initial success, suggesting post-success human expansion
+      - auth-related struggle is driven more by repo fragility than agent hallucination
+      
+      Create `session_analysis_report.md` with this structure:
+      **Generated**: [timestamp]  
+      **Conversations Analyzed**: [N]  
+      | Avg Session Severity | X | 🟢/🟡/🔴 |
+      | High-Severity Sessions | X / N | 🟢/🟡/🔴 |
+      Thresholds:
+      - First-shot: 🟢 >70 / 🟡 40–70 / 🔴 <40
+      - Scope growth: 🟢 <15 / 🟡 15–40 / 🔴 >40
+      - Replan rate: 🟢 <20 / 🟡 20–50 / 🔴 >50
+      Avg severity guidance:
+      - 🟢 <25
+      - 🟡 25–50
+      - 🔴 >50
+      
+      Note: avg severity is an aggregate health signal, not the same as per-session severity bands.
+      
+      Then add a short narrative summary of what is going well, what is breaking down, and whether the main issue is prompt quality, repo fragility, workflow discipline, or validation churn.
+      Summarize the main failure patterns across sessions.
+      Show the files/folders/subsystems most associated with replanning, abandonment, verification churn, and high severity.
+      List the cleanest sessions and extract what made them work.
+      List 3–7 evidence-backed findings with confidence.
+      ## Severity Triage
+      List the highest-severity sessions and say whether the best intervention is:
+      - prompt improvement
+      - scope discipline
+      - targeted skill/workflow
+      - repo refactor / architecture cleanup
+      - validation/test harness improvement
+      For each recommendation, use:
+      | # | Title | Intent | Duration | Scope Δ | Plan Revs | Task Revs | Root Cause | Rework Shape | Severity | Complete? |
+      |:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+      ## Step 11: Optional Post-Analysis Improvements
+      If appropriate, also:
+      - update any local project-health or memory artifact (if present) with recurring failure modes and fragile subsystems
+      - generate `prompt_improvement_tips.md` from high-sufficiency / first-shot-success sessions
+      - suggest missing skills or workflows when the same subsystem or task sequence repeatedly causes struggle
+      Only recommend workflows/skills when the pattern appears repeatedly.
+      1. metrics summary
+      2. root-cause diagnosis
+      3. prompt-sufficiency assessment
+      4. subsystem/friction map
+      5. severity triage and prioritization
+      6. evidence-backed recommendations
+      7. non-obvious findings
+      Prefer explicit uncertainty over fake precision.
+    gold_removed: ""

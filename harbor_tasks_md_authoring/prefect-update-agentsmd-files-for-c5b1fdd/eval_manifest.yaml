@@ -1,0 +1,54 @@
+version: "2.0"
+
+task:
+  name: prefect-update-agentsmd-files-for-c5b1fdd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: prefecthq/prefect
+  pr: 21594
+  base_commit: "c5b1fdd0d5780d94094c129ec15bba3dff1aa153"
+  merge_commit: "6d74e9ca0370fc65e36b58c27a718cc32d117a54"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in ui-v2/e2e/AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in ui-v2/e2e/AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in ui-v2/e2e/AGENTS.md."
+
+config_edits:
+  - path: "ui-v2/e2e/AGENTS.md"
+    tier: 1
+    gold_added: |-
+      **Avoid count comparisons across time snapshots:**
+      
+      Comparing a count captured before an action to a count captured after the action is flaky in parallel CI: other shards continuously emit background events (work-pool polls, heartbeats, etc.), so the "after" count can exceed the "before" count even when the action (e.g., a filter) is working correctly. Assert content directly instead — verify that each displayed item matches the expected criteria:
+      
+      ```typescript
+      // ❌ Bad - flaky: background events can push the post-action count above the pre-action count
+      const unfilteredCount = await page.locator("ol.list-none li").count();
+      await applyFilter("prefect.flow-run.*");
+      const filteredCount = await page.locator("ol.list-none li").count();
+      expect(filteredCount).toBeLessThanOrEqual(unfilteredCount);
+      
+      // ✅ Good - assert content rather than count
+      const prefix = "prefect.flow-run"; // strip trailing ".*" from the filter label
+      await applyFilter("prefect.flow-run.*");
+      const items = page.locator("ol.list-none li");
+      await expect(items.first()).toBeVisible();
+      const allText = await items.allTextContents();
+      for (const text of allText) {
+        expect(text).toContain(prefix);
+      }
+      ```
+      
+    gold_removed: ""

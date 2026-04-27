@@ -1,0 +1,43 @@
+version: "2.0"
+
+task:
+  name: workerd-refine-the-opencode-v8-update
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: cloudflare/workerd
+  pr: 6184
+  base_commit: "4d7ea265b2be86996b622d9f472b501fcc2e25c0"
+  merge_commit: "4b1e8cceb408f5cce5f75c694a3bd391d51c54cf"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .opencode/skills/update-v8/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .opencode/skills/update-v8/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .opencode/skills/update-v8/SKILL.md."
+
+config_edits:
+  - path: ".opencode/skills/update-v8/SKILL.md"
+    tier: 1
+    gold_added: |-
+      **Always** communicate and confirm with the developer at each step.
+      **Never** take irreversible actions (like dropping patches or updating hashes) without explicit confirmation.
+      
+      **Always** confirm with the human before replacing patches. If any patches were dropped or added,
+      the human needs to review the changes.
+      
+      Prompt the user to commit the changes and push for review.
+      
+      **Never** push the branch for review without a human review of the patch changes.
+      
+      You **May** prepare the draft PR text for the user. The PR should include:
+    gold_removed: ""

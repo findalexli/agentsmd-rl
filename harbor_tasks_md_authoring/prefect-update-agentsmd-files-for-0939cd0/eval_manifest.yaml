@@ -1,0 +1,68 @@
+version: "2.0"
+
+task:
+  name: prefect-update-agentsmd-files-for-0939cd0
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: prefecthq/prefect
+  pr: 21467
+  base_commit: "0939cd056bdd7f91f0d7ebbde26372ee0b37569e"
+  merge_commit: "da77b73ba52cd84594ba69e75dcd4dc8266a4739"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in ui-v2/AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in ui-v2/src/auth/AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in ui-v2/src/auth/AGENTS.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in ui-v2/src/auth/AGENTS.md."
+
+config_edits:
+  - path: "ui-v2/AGENTS.md"
+    tier: 1
+    gold_added: |-
+      │   ├── auth/          # Authentication state, AuthProvider, useAuth hook
+    gold_removed: ""
+  - path: "ui-v2/src/auth/AGENTS.md"
+    tier: 1
+    gold_added: |-
+      # Auth
+      
+      Manages authentication state for the Prefect UI, including detecting whether auth is required, validating stored credentials, and exposing login/logout actions.
+      
+      ## Purpose & Scope
+      
+      Provides the `AuthProvider` component and `useAuth` hook that gate access to the UI when the server requires authentication. Handles credential storage, validation, and session invalidation.
+      
+      Does NOT implement the login form UI — that lives in `src/routes/`. Does NOT make authenticated API requests — it only validates credentials via `/admin/version`.
+      
+      ## Entry Points & Contracts
+      
+      - **`AuthProvider`** — wrap the app root to enable auth. Reads `/ui-settings` on mount to determine if auth is required.
+      - **`useAuth()`** — throws if called outside `AuthProvider`. Use for components that are always rendered inside the provider.
+      - **`useAuthSafe()`** — returns `null` if called outside `AuthProvider`. Use in components that may render outside the provider (e.g., tests, Storybook).
+      
+      ## Key Behaviors
+      
+      - Auth is required when `settings.auth` is any truthy value (not only `"BASIC"`). This means custom auth modes also trigger the auth gate.
+      - Credentials are stored as a base64-encoded password in `localStorage` under the key `"prefect-password"`.
+      - On init, stored credentials are validated against `/admin/version` with a `Basic` auth header. Invalid credentials are cleared immediately.
+      - Session invalidation is event-driven: API middleware dispatches a `"auth:unauthorized"` window event, which `AuthProvider` listens for to reset `isAuthenticated` to `false` without a page reload.
+      
+      ## Anti-Patterns
+      
+      - Do not check `settings.auth === "BASIC"` to detect auth requirements — any truthy `auth` value means auth is required.
+      - Do not call `useAuth()` in components that might render in Storybook or tests outside a provider — use `useAuthSafe()` instead.
+    gold_removed: ""

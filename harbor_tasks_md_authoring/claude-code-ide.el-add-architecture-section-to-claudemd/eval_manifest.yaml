@@ -1,0 +1,50 @@
+version: "2.0"
+
+task:
+  name: claude-code-ide.el-add-architecture-section-to-claudemd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: manzaltu/claude-code-ide.el
+  pr: 39
+  base_commit: "6b1d1c31ea552876cbfbede74d83878f151312c4"
+  merge_commit: "1c602cbf7a0112d2a46df9168d12b381c8b7da52"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: "CLAUDE.md"
+    tier: 1
+    gold_added: |-
+      ## Architecture and File Structure
+      
+      This package integrates Claude Code CLI with Emacs via WebSocket and the Model Context Protocol (MCP).
+      
+      **Core Files:**
+      - `claude-code-ide.el` - Main entry: user commands, session management, terminal buffers
+      - `claude-code-ide-mcp.el` - WebSocket server, JSON-RPC handling, session state
+      - `claude-code-ide-mcp-handlers.el` - MCP tool implementations (file ops, ediff, diagnostics)
+      
+      **Support Files:**
+      - `claude-code-ide-mcp-server.el` - HTTP-based MCP tools server framework
+      - `claude-code-ide-mcp-http-server.el` - HTTP transport implementation
+      - `claude-code-ide-emacs-tools.el` - Emacs tools: xref, project info, imenu
+      - `claude-code-ide-diagnostics.el` - Flycheck integration
+      - `claude-code-ide-transient.el` - Transient menu interface
+      - `claude-code-ide-debug.el` - Debug logging utilities
+      - `claude-code-ide-tests.el` - ERT test suite with mocks
+      
+    gold_removed: ""

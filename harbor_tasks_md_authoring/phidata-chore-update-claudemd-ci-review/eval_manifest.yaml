@@ -1,0 +1,39 @@
+version: "2.0"
+
+task:
+  name: phidata-chore-update-claudemd-ci-review
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: phidatahq/phidata
+  pr: 6569
+  base_commit: "2bb00e5b73c2d0a088b559544ca8ba825590cbfe"
+  merge_commit: "8ec7285ea6838de3a1a681b232a9d75d6a804b59"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: "CLAUDE.md"
+    tier: 1
+    gold_added: |-
+      Every non-draft PR automatically receives a review from Opus using both `code-review` and `pr-review-toolkit` official plugins (10 specialized agents total). No manual trigger needed — the review posts as a sticky comment on the PR.
+      When running in GitHub Actions (CI), always end your response with a plain-text summary of findings. Never let the final action be a tool call. If there are no issues, say "No high-confidence findings."
+      Agno-specific checks to always verify:
+      - Both sync and async variants exist for all new public methods
+      - No agent creation inside loops (agents should be reused)
+      - CLAUDE.md coding patterns are followed
+      - No f-strings for print lines where there are no variables
+    gold_removed: ""

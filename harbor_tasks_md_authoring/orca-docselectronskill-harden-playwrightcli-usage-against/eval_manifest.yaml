@@ -1,0 +1,91 @@
+version: "2.0"
+
+task:
+  name: orca-docselectronskill-harden-playwrightcli-usage-against
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: stablyai/orca
+  pr: 996
+  base_commit: "dc86afb6bb9d1bf901a3cad962e82645c0155554"
+  merge_commit: "3b8b3a8bb85896a8ff99c09cc987449e478c0455"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/electron/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/electron/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/electron/SKILL.md."
+
+config_edits:
+  - path: ".agents/skills/electron/SKILL.md"
+    tier: 1
+    gold_added: |-
+      command playwright-cli attach --cdp="http://localhost:9222"
+      command playwright-cli snapshot
+      command playwright-cli click e5
+      command playwright-cli screenshot
+      ```
+      
+      ## Always prefix with `command`
+      
+      Use `command playwright-cli …` to bypass shell aliases (e.g. `alias playwright-cli='playwright-cli --persistent'`) that leak flags into subcommands. Behaves identically when no alias is set. All examples below use this form.
+      
+      ## Pick a free CDP port
+      
+      Port 9333 is a convention, not a guarantee — another worktree may hold it, and electron-vite will start without a debugger, letting you silently attach to the old app.
+      
+      ```bash
+      for p in 9333 9334 9335 9336 9337 9338 9339 9340; do
+        if ! lsof -i :$p >/dev/null 2>&1; then PORT=$p; break; fi
+      done
+      # After attach, verify you hit the right worktree:
+      command playwright-cli eval "window.__store.getState().worktreesByRepo"
+      # Launch with remote debugging (PORT picked above)
+      node config/scripts/run-electron-vite-dev.mjs --remote-debugging-port=$PORT 2>&1 &
+      # Wait for "DevTools listening on ws://..." in output, then attach
+      command playwright-cli attach --cdp="http://localhost:$PORT"
+      - electron-vite also supports `REMOTE_DEBUGGING_PORT` env var: `REMOTE_DEBUGGING_PORT=$PORT pnpm run dev`
+      command playwright-cli eval "(() => { const s = window.__store?.getState(); return JSON.stringify({ activeWorktreeId: s.activeWorktreeId, activeTabId: s.activeTabId, activeFileId: s.activeFileId, activeTabType: s.activeTabType }); })()"
+      command playwright-cli eval "(() => { const s = window.__store?.getState(); const wtId = s.activeWorktreeId; s.openFile({ worktreeId: wtId, filePath: '/path/to/file', relativePath: 'file.ts', mode: 'edit', language: 'typescript' }); return 'done'; })()"
+      command playwright-cli eval "(() => { window.__store.getState().closeFile('/path/to/file'); return 'closed'; })()"
+      command playwright-cli attach --cdp="http://localhost:9222"
+      command playwright-cli attach --cdp="http://localhost:9222"
+      command playwright-cli -s=slack attach --cdp="http://localhost:9222"
+      command playwright-cli -s=vscode attach --cdp="http://localhost:9223"
+      command playwright-cli tab-list
+      command playwright-cli tab-select 2
+      command playwright-cli attach --cdp="http://localhost:9222"
+      command playwright-cli snapshot
+      command playwright-cli click e10   # Navigate to a section
+      command playwright-cli snapshot    # Re-snapshot after navigation
+      command playwright-cli attach --cdp="http://localhost:9222"
+      command playwright-cli screenshot
+      command playwright-cli screenshot e5  # Screenshot a specific element
+      command playwright-cli screenshot --filename=app-state.png
+      command playwright-cli attach --cdp="http://localhost:9222"
+      command playwright-cli snapshot
+      command playwright-cli eval "document.title"
+      command playwright-cli eval "el => el.textContent" e5
+      command playwright-cli attach --cdp="http://localhost:9222"
+      command playwright-cli snapshot
+      command playwright-cli fill e3 "search query"
+      command playwright-cli press Enter
+      command playwright-cli snapshot
+      command playwright-cli -s=slack attach --cdp="http://localhost:9222"
+      command playwright-cli -s=vscode attach --cdp="http://localhost:9223"
+      command playwright-cli -s=slack snapshot
+      command playwright-cli -s=vscode snapshot
+      command playwright-cli run-code "async page => {
+      command playwright-cli close
+      command playwright-cli -s=slack close
+      command playwright-cli close-all
+    gold_removed: ""

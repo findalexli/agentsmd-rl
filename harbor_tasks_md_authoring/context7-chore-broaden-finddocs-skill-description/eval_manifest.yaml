@@ -1,0 +1,52 @@
+version: "2.0"
+
+task:
+  name: context7-chore-broaden-finddocs-skill-description
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: upstash/context7
+  pr: 2224
+  base_commit: "099715b6574672700d760d8f6e6f7a119e104554"
+  merge_commit: "d806b9fb5df8fd79aad0fc6d7cae0bcb1e02c537"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/find-docs/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/find-docs/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/find-docs/SKILL.md."
+
+config_edits:
+  - path: "skills/find-docs/SKILL.md"
+    tier: 1
+    gold_added: |-
+      description: >-
+        Retrieves authoritative, up-to-date technical documentation, API references,
+        configuration details, and code examples for any developer technology.
+      
+        Use this skill whenever answering technical questions or writing code that
+        interacts with external technologies. This includes libraries, frameworks,
+        programming languages, SDKs, APIs, CLI tools, cloud services, infrastructure
+        tools, and developer platforms.
+      
+        Common scenarios:
+        - looking up API endpoints, classes, functions, or method parameters
+        - checking configuration options or CLI commands
+        - answering "how do I" technical questions
+        - generating code that uses a specific library or service
+        - debugging issues related to frameworks, SDKs, or APIs
+        - retrieving setup instructions, examples, or migration guides
+        - verifying version-specific behavior or breaking changes
+      
+        Prefer this skill whenever documentation accuracy matters or when model
+        knowledge may be outdated.
+    gold_removed: ""

@@ -1,0 +1,53 @@
+version: "2.0"
+
+task:
+  name: chrome-devtools-mcp-refactor-simplify-javascript-code-exampl
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: ChromeDevTools/chrome-devtools-mcp
+  pr: 1009
+  base_commit: "33446d457e4386fadcfe4ddf6c7a43b2e9098c9a"
+  merge_commit: "5cedcaad2c8a5e488064e21fb56cbd8643345440"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/a11y-debugging/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/a11y-debugging/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/a11y-debugging/SKILL.md."
+
+config_edits:
+  - path: "skills/a11y-debugging/SKILL.md"
+    tier: 1
+    gold_added: |-
+      **Reading web.dev documentation**: If you need to research specific accessibility guidelines (like `https://web.dev/articles/accessible-tap-targets`), you can append `.md.txt` to the URL (e.g., `https://web.dev/articles/accessible-tap-targets.md.txt`) to fetch the clean, raw markdown version. This is much easier to read!
+          ```js
+          () =>
+            Array.from(document.querySelectorAll('input, select, textarea'))
+                return !hasId && !hasAria && !i.closest('label');
+      ```js
+      _Pass the element's `uid` from the snapshot as an argument to `evaluate_script`._
+      ```js
+      ```js
+      () => ({
+        lang:
+          document.documentElement.lang ||
+          'MISSING - Screen readers need this for pronunciation',
+        title: document.title || 'MISSING - Required for context',
+        viewport:
+          document.querySelector('meta[name="viewport"]')?.content ||
+          'MISSING - Check for user-scalable=no (bad practice)',
+        reducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches
+          ? 'Enabled'
+          : 'Disabled',
+      });
+    gold_removed: ""

@@ -1,0 +1,56 @@
+version: "2.0"
+
+task:
+  name: antigravity-awesome-skills-test-broken-mergebatch-e2e-pr
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: sickn33/antigravity-awesome-skills
+  pr: 453
+  base_commit: "07294762be883cc96572a97379e23ba6dc6769f7"
+  merge_commit: "59b70e23dd50ab4717fbc2b32ac0897fa8d3b703"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/merge-batch-e2e-test/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/merge-batch-e2e-test/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/merge-batch-e2e-test/SKILL.md."
+
+config_edits:
+  - path: "skills/merge-batch-e2e-test/SKILL.md"
+    tier: 1
+    gold_added: |-
+      ---
+      name: merge-batch-e2e-test
+      description: "Synthetic skill used to exercise the maintainer merge workflow end-to-end."
+      risk: safe
+      source: community
+      source_repo: Dimillian/Skills
+      source_type: community
+      date_added: "2026-04-05"
+      ---
+      
+      # Merge Batch E2E Test
+      
+      ## Overview
+      
+      This temporary skill exists only to test the maintainer merge workflow against a deliberately broken pull request.
+      
+      ## When to Use
+      
+      - Use when you need an intentionally broken skill PR to verify maintainer merge automation.
+      
+      ## Instructions
+      
+      1. Confirm the maintainer workflow detects broken metadata and CI failures.
+      2. Repair the skill and let the PR proceed to merge.
+    gold_removed: ""

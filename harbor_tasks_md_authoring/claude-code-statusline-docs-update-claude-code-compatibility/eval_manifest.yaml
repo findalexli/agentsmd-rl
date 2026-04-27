@@ -1,0 +1,36 @@
+version: "2.0"
+
+task:
+  name: claude-code-statusline-docs-update-claude-code-compatibility
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: rz1989s/claude-code-statusline
+  pr: 232
+  base_commit: "ccbeb347de79a1e72b2ad2944913fad61cbfc63f"
+  merge_commit: "5008681baf5045a3c1f45625e12d432a3dd2eba4"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: "CLAUDE.md"
+    tier: 1
+    gold_added: |-
+      **Current**: v2.17.0 | **Claude Code**: v2.1.6–v2.1.19 ✓ | **Branch**: dev → nightly → main
+      **Architecture**: Single Config.toml (227 settings), modular cache (8 sub-modules), 91.5% code reduction
+      **Features**: 7-line statusline, native context % (v2.1.6+), prayer times, cost tracking, MCP, GPS location
+      **Platforms**: macOS, Ubuntu, Arch, Fedora, Alpine Linux
+    gold_removed: ""

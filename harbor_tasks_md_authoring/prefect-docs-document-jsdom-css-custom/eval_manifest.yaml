@@ -1,0 +1,39 @@
+version: "2.0"
+
+task:
+  name: prefect-docs-document-jsdom-css-custom
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: prefecthq/prefect
+  pr: 21605
+  base_commit: "9f9bed74e6b830e8e2ca56b7154191a88f39fc8e"
+  merge_commit: "6dd5af5d803f477bf75b0bd9b65b7623d7e0847e"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in ui-v2/src/components/AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in ui-v2/src/components/AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in ui-v2/src/components/AGENTS.md."
+
+config_edits:
+  - path: "ui-v2/src/components/AGENTS.md"
+    tier: 1
+    gold_added: |-
+      - **CSS custom properties**: JSDOM does not load external stylesheets, so `getComputedStyle` returns `""` for CSS custom properties (e.g., Tailwind breakpoint tokens like `--breakpoint-lg`). Mock them by spying on `CSSStyleDeclaration.prototype.getPropertyValue`:
+        ```ts
+        vi.spyOn(CSSStyleDeclaration.prototype, "getPropertyValue")
+          .mockImplementation((name) => name === "--breakpoint-lg" ? "64rem" : "");
+        ```
+        Always call `vi.restoreAllMocks()` in `afterEach` to clean up.
+      - **`matchMedia` mocking**: JSDOM does not implement `window.matchMedia`. Stub it via `Object.defineProperty(window, "matchMedia", ...)` and restore the original in `afterEach`.
+    gold_removed: ""

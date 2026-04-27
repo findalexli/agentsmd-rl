@@ -1,0 +1,149 @@
+version: "2.0"
+
+task:
+  name: nanoclaw-docs-update-skills-to-use
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: qwibitai/nanoclaw
+  pr: 325
+  base_commit: "a7faac664af02ac1716379b0a4714096991b9aeb"
+  merge_commit: "6b9b3a12c9f96cf85c89b943ea399947ad79e9db"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/add-discord/modify/src/index.ts.intent.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/add-parallel/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/add-parallel/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/add-telegram/modify/src/index.ts.intent.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/add-voice-transcription/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/add-voice-transcription/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/add-voice-transcription/SKILL.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/debug/SKILL.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/debug/SKILL.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/debug/SKILL.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/setup/SKILL.md."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/setup/SKILL.md."
+  - id: signal_12
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/setup/SKILL.md."
+  - id: signal_13
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/x-integration/SKILL.md."
+  - id: signal_14
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/x-integration/SKILL.md."
+  - id: signal_15
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/x-integration/SKILL.md."
+
+config_edits:
+  - path: ".claude/skills/add-discord/modify/src/index.ts.intent.md"
+    tier: 1
+    gold_added: |-
+      - Container runtime check is unchanged (ensureContainerSystemRunning)
+    gold_removed: ""
+  - path: ".claude/skills/add-parallel/SKILL.md"
+    tier: 1
+    gold_added: |-
+      3. Docker installed and running
+      echo '{}' | docker run -i --entrypoint /bin/echo nanoclaw-agent:latest "Container OK"
+    gold_removed: ""
+  - path: ".claude/skills/add-telegram/modify/src/index.ts.intent.md"
+    tier: 1
+    gold_added: |-
+      - Container runtime check is unchanged (ensureContainerSystemRunning)
+    gold_removed: ""
+  - path: ".claude/skills/add-voice-transcription/SKILL.md"
+    tier: 1
+    gold_added: |-
+      ### Step 6: Build and Restart
+      Verify it started:
+      ### Step 7: Test Voice Transcription
+    gold_removed: ""
+  - path: ".claude/skills/debug/SKILL.md"
+    tier: 1
+    gold_added: |-
+      echo '{}' | docker run -i \
+        -v $(pwd)/data/env:/workspace/env-dir:ro \
+      - Docker supports both `-v` and `--mount` syntax
+      - Use `:ro` suffix for readonly mounts:
+        # Readonly
+        -v /path:/container/path:ro
+        # Read-write
+      docker run --rm --entrypoint /bin/bash nanoclaw-agent:latest -c 'ls -la /workspace/'
+      docker run --rm --entrypoint /bin/bash nanoclaw-agent:latest -c '
+      docker run --rm --entrypoint /bin/bash \
+        docker run -i \
+        -v $(pwd)/data/env:/workspace/env-dir:ro \
+      docker run --rm --entrypoint /bin/bash \
+        -v $(pwd)/data/env:/workspace/env-dir:ro \
+      docker run --rm -it --entrypoint /bin/bash nanoclaw-agent:latest
+      docker builder prune -af
+      docker images
+      docker run --rm --entrypoint /bin/bash nanoclaw-agent:latest -c '
+      docker info &>/dev/null && echo "OK" || echo "NOT RUNNING - start Docker Desktop (macOS) or sudo systemctl start docker (Linux)"
+      echo '{}' | docker run -i --entrypoint /bin/echo nanoclaw-agent:latest "OK" 2>/dev/null || echo "MISSING - run ./container/build.sh"
+    gold_removed: ""
+  - path: ".claude/skills/setup/SKILL.md"
+    tier: 1
+    gold_added: |-
+      Check the preflight results for `APPLE_CONTAINER` and `DOCKER`.
+      **If APPLE_CONTAINER=installed** (macOS only): Ask the user which runtime they'd like to use — Docker (default, cross-platform) or Apple Container (native macOS). If they choose Apple Container, run `/convert-to-apple-container` now before continuing, then skip to 3b.
+      **If APPLE_CONTAINER=not_found**: Use Docker (the default). Proceed to install/start Docker below.
+      ### 3a-docker. Install Docker
+      - DOCKER=running → continue to 3b
+      - DOCKER=installed_not_running → start Docker: `open -a Docker` (macOS) or `sudo systemctl start docker` (Linux). Wait 15s, re-check with `docker info`. If still not running, tell the user Docker is starting up and poll a few more times.
+      - DOCKER=not_found → **ask the user for confirmation before installing.** Tell them Docker is required for running agents and ask if they'd like you to install it. If confirmed:
+        - macOS: install via `brew install --cask docker`, then `open -a Docker` and wait for it to start. If brew not available, direct to Docker Desktop download at https://docker.com/products/docker-desktop
+        - Linux: install with `curl -fsSL https://get.docker.com | sh && sudo usermod -aG docker $USER`. Note: user may need to log out/in for group membership.
+      ### 3b. Build and test
+      - If it's a cache issue (stale layers): run `docker builder prune -f`, then retry.
+    gold_removed: ""
+  - path: ".claude/skills/x-integration/SKILL.md"
+    tier: 1
+    gold_added: |-
+      docker build -t "${IMAGE_NAME}:${TAG}" .
+      docker build -t "${IMAGE_NAME}:${TAG}" -f container/Dockerfile .
+      docker run nanoclaw-agent ls -la /app/src/skills/
+    gold_removed: ""

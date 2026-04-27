@@ -1,0 +1,25 @@
+version: "2.0"
+
+task:
+  name: skills-remaining-fixes-from-vanhauserthc
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: trailofbits/skills
+  pr: 75
+  base_commit: "1d843475e7285da696b41e04477d0f8e6ad49020"
+  merge_commit: "78bcf4c08691ae251c08da4709dbc80b4b7ac87e"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/testing-handbook-skills/skills/aflpp/SKILL.md."
+
+config_edits:
+  - path: "plugins/testing-handbook-skills/skills/aflpp/SKILL.md"
+    tier: 1
+    gold_added: |-
+      **[Fuzzing in Depth](https://raw.githubusercontent.com/AFLplusplus/AFLplusplus/refs/heads/stable/docs/fuzzing_in_depth.md)**
+    gold_removed: ""

@@ -1,0 +1,37 @@
+version: "2.0"
+
+task:
+  name: browser-use-docs-fix-default-action-count
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: browser-use/browser-use
+  pr: 3741
+  base_commit: "6811d70c52c4188f2dd6005e31957cb8cd6b1cfb"
+  merge_commit: "b9a37d7ad6d02db89708cd935f6e71177265394d"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: "AGENTS.md"
+    tier: 1
+    gold_added: |-
+      * `max_actions_per_step` (default: `3`): Maximum actions per step, e.g. for form filling the agent can output 3 fields at once. We execute the actions until the page changes.
+      history.screenshot_paths()        # List of screenshot paths
+      history.screenshot_paths()        # List of screenshot paths
+      > Tips and tricks
+      We're excited to have you join our community of contributors.
+    gold_removed: ""

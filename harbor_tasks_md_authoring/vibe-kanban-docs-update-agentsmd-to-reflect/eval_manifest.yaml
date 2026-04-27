@@ -1,0 +1,49 @@
+version: "2.0"
+
+task:
+  name: vibe-kanban-docs-update-agentsmd-to-reflect
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: BloopAI/vibe-kanban
+  pr: 2768
+  base_commit: "f5b07f9f4d56d52e3edce264a88c6b2c3a75fbe4"
+  merge_commit: "c18c1e52e029fe9640e6c8401dfe9d5a421b7674"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: "AGENTS.md"
+    tier: 1
+    gold_added: |-
+      - `crates/`: Rust workspace crates — `server` (API + bins), `db` (SQLx models/migrations), `executors`, `services`, `utils`, `git` (Git operations), `api-types` (shared API types for local + remote), `review` (PR review tool), `deployment`, `local-deployment`, `remote`.
+      - `shared/`: Generated TypeScript types (`shared/types.ts`, `shared/remote-types.ts`) and agent tool schemas (`shared/schemas/`). Do not edit generated files directly.
+      - [`docs/AGENTS.md`](docs/AGENTS.md) — Mintlify documentation writing guidelines and component reference.
+      - [`frontend/AGENTS.md`](frontend/AGENTS.md) — Frontend design system styling guidelines.
+      For remote/cloud types, regenerate using `pnpm run remote:generate-types`
+      Do not manually edit shared/remote-types.ts, instead edit crates/remote/src/bin/remote-generate-types.rs (see crates/remote/AGENTS.md for details).
+      
+      - Format code: `pnpm run format` (runs `cargo fmt` + frontend Prettier)
+      - Lint: `pnpm run lint` (runs frontend ESLint + `cargo clippy`)
+      
+      ## Before Completing a Task
+      - Run `pnpm run format` to format all Rust and frontend code.
+    gold_removed: ""
+  - path: "frontend/AGENTS.md"
+    tier: 1
+    gold_added: |-
+      
+    gold_removed: ""

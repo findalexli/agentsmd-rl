@@ -1,0 +1,38 @@
+version: "2.0"
+
+task:
+  name: next.js-add-internal-header-security-guideline
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: vercel/next.js
+  pr: 92128
+  base_commit: "d6ff2197d91fe6716c48ea80aecaaa89f396edaa"
+  merge_commit: "8b5dfa66d4229c211628d0f7ea3efe87d9259f85"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: "AGENTS.md"
+    tier: 1
+    gold_added: |-
+      
+      ### Server Security: Internal Header Filtering
+      
+      Next.js strips internal headers from incoming requests via `filterInternalHeaders()` in `packages/next/src/server/lib/server-ipc/utils.ts`. This runs at the entry point in `packages/next/src/server/lib/router-server.ts` before any server code executes. Only headers listed in the `INTERNAL_HEADERS` array are stripped.
+      
+      **When reviewing PRs: if new code reads a request header that is not a standard HTTP header (like `content-type`, `accept`, `user-agent`, `host`, `authorization`, `cookie`, etc.), flag it for security review.** The header may be forgeable by an external attacker if it is not in the `INTERNAL_HEADERS` filter list in `packages/next/src/server/lib/server-ipc/utils.ts`.
+    gold_removed: ""

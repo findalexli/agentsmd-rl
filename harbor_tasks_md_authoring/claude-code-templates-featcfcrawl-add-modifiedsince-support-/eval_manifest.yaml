@@ -1,0 +1,64 @@
+version: "2.0"
+
+task:
+  name: claude-code-templates-featcfcrawl-add-modifiedsince-support-
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: davila7/claude-code-templates
+  pr: 410
+  base_commit: "014933fb6fe10cbaf81d3c732e82005bbf741fe0"
+  merge_commit: "f9d20280b0959b2b25fe279b36f26d4c4f65c4ee"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in cli-tool/components/skills/utilities/cf-crawl/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in cli-tool/components/skills/utilities/cf-crawl/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in cli-tool/components/skills/utilities/cf-crawl/SKILL.md."
+
+config_edits:
+  - path: "cli-tool/components/skills/utilities/cf-crawl/SKILL.md"
+    tier: 1
+    gold_added: |-
+      For incremental crawls, add the `modifiedSince` parameter (Unix timestamp in seconds):
+      
+      ```bash
+      curl -s -X POST "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/browser-rendering/crawl" \
+        -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+        -H "Content-Type: application/json" \
+        -d '{
+          "url": "<TARGET_URL>",
+          "limit": <NUMBER_OF_PAGES>,
+          "formats": ["markdown"],
+          "modifiedSince": <UNIX_TIMESTAMP>
+        }'
+      ```
+      
+      When `--since` is provided, convert to Unix timestamp: `date -d "2026-03-10" +%s` (Linux) or `date -j -f "%Y-%m-%d" "2026-03-10" +%s` (macOS).
+      
+      When using `modifiedSince`, check for skipped pages to see what was unchanged:
+      
+      ```bash
+      # See which pages were skipped (not modified since the given timestamp)
+      curl -s -X GET "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/browser-rendering/crawl/<JOB_ID>?status=skipped&limit=50" \
+        -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}"
+      ```
+      
+      | `modifiedSince` | number | - | Unix timestamp; only crawl pages modified after this time |
+      ### Incremental crawl (diff detection)
+      ```
+      /cf-crawl https://docs.example.com --limit 50 --since 2026-03-10
+      ```
+      Only crawls pages modified since the given date. Skipped pages appear with `status=skipped` in results. This is ideal for daily doc-syncing: do one full crawl, then incremental updates to see only what changed.
+      
+      - `--since DATE`: only crawl pages modified since DATE (ISO date like `2026-03-10` or Unix timestamp). Converts to Unix timestamp for the `modifiedSince` API parameter
+    gold_removed: ""

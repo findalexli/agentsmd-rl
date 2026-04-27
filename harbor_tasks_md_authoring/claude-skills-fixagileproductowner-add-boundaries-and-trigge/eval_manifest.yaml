@@ -1,0 +1,45 @@
+version: "2.0"
+
+task:
+  name: claude-skills-fixagileproductowner-add-boundaries-and-trigge
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: alirezarezvani/claude-skills
+  pr: 521
+  base_commit: "29b4b141d0f3f51fcdd9f4e1b9f1d75f2dfbb9ec"
+  merge_commit: "13d2801f70db85b4b8bbb0a0a5e418d528eb3745"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in product-team/agile-product-owner/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in product-team/agile-product-owner/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in product-team/agile-product-owner/SKILL.md."
+
+config_edits:
+  - path: "product-team/agile-product-owner/SKILL.md"
+    tier: 1
+    gold_added: |-
+      not_for: Kanban-only workflows, waterfall project planning, general task management, non-Scrum agile frameworks (SAFe, LeSS) without adaptation
+        - backlog grooming
+        - sprint retrospective
+        - definition of done
+      - [What Makes This Skill Different](#what-makes-this-skill-different)
+      ## What Makes This Skill Different
+      
+      - **Capacity math that aligns with reality:** sprint capacity is based on velocity × availability factor, not hope.
+      - **Acceptance criteria scaled by story size:** minimum AC counts map to story points to avoid under-spec'ing large items.
+      - **Weighted prioritization that stays consistent:** value 40%, impact 30%, risk 15%, effort 15% keeps tradeoffs explicit.
+      - **Systematic epic splitting techniques:** five concrete split patterns prevent oversized stories.
+      - **INVEST validation baked into workflows:** every story includes a validation step, not just guidance.
+      
+    gold_removed: ""

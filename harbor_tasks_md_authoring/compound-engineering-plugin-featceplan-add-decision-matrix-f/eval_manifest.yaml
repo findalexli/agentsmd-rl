@@ -1,0 +1,40 @@
+version: "2.0"
+
+task:
+  name: compound-engineering-plugin-featceplan-add-decision-matrix-f
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: EveryInc/compound-engineering-plugin
+  pr: 417
+  base_commit: "d44729603da0c73d4959c372fac0198125a39c60"
+  merge_commit: "ccb371e0b7917420f5ca2c58433f5fc057211f04"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-plan/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-plan/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-plan/SKILL.md."
+
+config_edits:
+  - path: "plugins/compound-engineering/skills/ce-plan/SKILL.md"
+    tier: 1
+    gold_added: |-
+      | Mode/flag combinations or multi-input behavior | Decision matrix (inputs -> outcomes) |
+      - **Unchanged invariants:** [Existing APIs, interfaces, or behaviors that this plan explicitly does not change — and how the new work relates to them. Include when the change touches shared surfaces and reviewers need blast-radius assurance]
+      | Risk | Mitigation |
+      |------|------------|
+      | [Meaningful risk] | [How it is addressed or accepted] |
+      | Risk | Likelihood | Impact | Mitigation |
+      |------|-----------|--------|------------|
+      | [Risk] | [Low/Med/High] | [Low/Med/High] | [How addressed] |
+    gold_removed: ""

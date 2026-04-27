@@ -1,0 +1,60 @@
+version: "2.0"
+
+task:
+  name: biome-choreskills-common-mistakes-in-lint
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: biomejs/biome
+  pr: 9972
+  base_commit: "3f898108a2702851a0260b039d985277eb7e052f"
+  merge_commit: "7a360ddd0e8fc243fcfacf4823fb4a148d39053a"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/biome-developer/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/biome-developer/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/biome-developer/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/lint-rule-development/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/lint-rule-development/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/lint-rule-development/SKILL.md."
+
+config_edits:
+  - path: ".claude/skills/biome-developer/SKILL.md"
+    tier: 1
+    gold_added: |-
+      ## Common Mistakes to Avoid
+      
+      - Calling `format!()` (allocates a string) when formatting strings in a `markup!` block. `markup!` supports interpolation, E.g. `markup! { "Hello, "{name}"!" }`.
+      - Calling `.to_string()` or `.to_string_trimmed()` (allocates a string) on a `SyntaxToken` or `SyntaxNode`. It's highly unlikely that you actually need to call these methods on a syntax node. As for syntax tokens, you can easily borrow a `&str` from the token's text without allocating a new string, using `token.text()`.
+      
+    gold_removed: ""
+  - path: ".claude/skills/lint-rule-development/SKILL.md"
+    tier: 1
+    gold_added: |-
+      ## Common Mistakes to Avoid
+      
+      Generally, mistakes revolve around allocating unnecessary data during rule execution, which can lead to performance issues. Common examples include:
+      
+      - Placing `String` or `Box<str>` in a Rule's `State` type. It's a strong indicator that you are allocating a string unnecessarily. If the string comes from a CST token, this usually can be avoided by using `TokenText` instead.
+      - Building strings or other data structures only used in the code action in `run()` instead of `action()`. `run()` should only decide whether to emit a diagnostic; `action()` should build the fix. This matters for performance because building the action can be expensive, and we should avoid doing it when no diagnostic is emitted.
+      
+    gold_removed: ""

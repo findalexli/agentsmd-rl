@@ -1,0 +1,55 @@
+version: "2.0"
+
+task:
+  name: claude-skills-improve-seniorfullstack-skill-description-and
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: alirezarezvani/claude-skills
+  pr: 216
+  base_commit: "0bea02d2b6ab9647300dc10d71e4336ddd61c68c"
+  merge_commit: "672cf8876cc4236a7aacfdba6cce3daa8abcf135"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in engineering-team/senior-fullstack/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in engineering-team/senior-fullstack/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in engineering-team/senior-fullstack/SKILL.md."
+
+config_edits:
+  - path: "engineering-team/senior-fullstack/SKILL.md"
+    tier: 1
+    gold_added: |-
+      description: >
+        Generates fullstack project boilerplate for Next.js, FastAPI, MERN, and Django
+        stacks, runs static code quality analysis with security and complexity scoring,
+        and guides stack selection decisions. Use when the user asks to "scaffold a
+        project", "create a new app", "set up a starter template", "analyze code
+        quality", "audit my codebase", "what stack should I use", or mentions
+        fullstack boilerplate, project setup, code review, or tech stack comparison.
+      1. Choose appropriate stack based on requirements (see Stack Decision Matrix)
+      3. Verify scaffold: confirm `package.json` (or `requirements.txt`) exists
+      4. Run initial quality check — address any P0 issues before proceeding
+      5. Set up development environment
+      # 2. Verify scaffold succeeded
+      ls my-saas-app/package.json
+      
+      # 3. Navigate and install
+      # 4. Configure environment
+      # 5. Run quality check
+      # 6. Start development
+      2. Review security findings — fix all P0 (critical) issues immediately
+      3. Re-run analyzer to confirm P0 issues are resolved
+      4. Create tickets for P1/P2 issues
+      # 3. After fixing P0 issues, re-run to verify
+      python scripts/code_quality_analyzer.py /path/to/project --verbose
+    gold_removed: ""

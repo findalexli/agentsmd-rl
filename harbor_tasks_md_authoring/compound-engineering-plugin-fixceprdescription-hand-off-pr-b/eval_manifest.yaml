@@ -1,0 +1,104 @@
+version: "2.0"
+
+task:
+  name: compound-engineering-plugin-fixceprdescription-hand-off-pr-b
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: EveryInc/compound-engineering-plugin
+  pr: 581
+  base_commit: "1995e3d7907864130e5c1ce9cda2e531d81659cf"
+  merge_commit: "c89f18a1151aa289bcc293dc26ff49a011782c7b"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/AGENTS.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-pr-description/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-pr-description/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-pr-description/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/git-commit-push-pr/SKILL.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/git-commit-push-pr/SKILL.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/git-commit-push-pr/SKILL.md."
+
+config_edits:
+  - path: "plugins/compound-engineering/AGENTS.md"
+    tier: 1
+    gold_added: |-
+      ### Rationale Discipline
+      
+      Every line in `SKILL.md` loads on every invocation. Include rationale only when it changes what the agent does at runtime — if behavior wouldn't differ without the sentence, cut it.
+      
+      Keep rationale at the highest-level location that covers it; restate behavioral directives at the point they take effect. A 500-line skill shouldn't hinge on the agent remembering line 9 by line 400. Portability notes, defenses against mistakes the agent wasn't going to make, and meta-commentary about this repo's authoring rules belong in commit messages or `docs/solutions/`, not in the skill body.
+      
+      - [ ] When shell is the only option (e.g., `ast-grep`, `bundle show`, git commands), instruct one simple command at a time — no action chaining (`cmd1 && cmd2`, `cmd1 ; cmd2`) and no error suppression (`2>/dev/null`, `|| true`). Two narrow exceptions: boolean conditions within if/while guards (`[ -n "$X" ] || [ -n "$Y" ]`) are fine — that is normal conditional logic, not action chaining. **Value-producing preparatory commands** (`VAR=$(cmd1) && cmd2 "$VAR"`) are also fine when `cmd2` strictly consumes `cmd1`'s output and splitting would require manually threading the value through model context across bash calls (e.g., `BODY_FILE=$(mktemp -u) && cat > "$BODY_FILE" <<EOF ... EOF`). Simple pipes (e.g., `| jq .field`) and output redirection (e.g., `> file`) are acceptable when they don't obscure failures
+    gold_removed: ""
+  - path: "plugins/compound-engineering/skills/ce-pr-description/SKILL.md"
+    tier: 1
+    gold_added: |-
+      description: "Write or regenerate a value-first pull-request description (title + body) for the current branch's commits or for a specified PR. Use when the user says 'write a PR description', 'refresh the PR description', 'regenerate the PR body', 'rewrite this PR', 'freshen the PR', 'update the PR description', 'draft a PR body for this diff', 'describe this PR properly', 'generate the PR title', or pastes a GitHub PR URL / #NN / number. Also used internally by git-commit-push-pr (single-PR flow) and ce-pr-stack (per-layer stack descriptions) so all callers share one writing voice. Input is a natural-language prompt. A PR reference (a full GitHub PR URL, `pr:561`, `#561`, or a bare number alone) picks a specific PR; anything else is treated as optional steering for the default 'describe my current branch' mode. Returns structured {title, body_file} (body written to an OS temp file) for the caller to apply via gh pr edit or gh pr create — this skill never edits the PR itself and never prompts for confirmation."
+      Generate a conventional-commit-style title and a value-first body describing a pull request's work. Returns structured `{title, body_file}` for the caller to apply — this skill never invokes `gh pr edit` or `gh pr create`, and never prompts for interactive confirmation.
+      - **`body_file`** -- absolute path to an OS temp file (created via `mktemp`) containing the body markdown that follows the writing principles below. Do not emit the body inline in the return.
+      The caller decides whether to apply via `gh pr edit`, `gh pr create`, or discard, reading the body from `body_file` (e.g., `--body "$(cat "$BODY_FILE")"`). This skill does NOT call those commands itself. No cleanup is required — `mktemp` files live in OS temp storage, which the OS reaps on its own schedule.
+      If the returned `state` is not `OPEN`, report `"PR <number> is <state> (not open); cannot regenerate description"` and exit gracefully without output. Callers expecting `{title, body_file}` must handle this empty case.
+      ## Step 9: Return `{title, body_file}`
+      Write the composed body to an OS temp file, then return the title and the file path. Do not call `gh pr edit`, `gh pr create`, or any other mutating command. Do not ask the user to confirm — the caller owns apply.
+      ```bash
+      BODY_FILE=$(mktemp "${TMPDIR:-/tmp}/ce-pr-body.XXXXXX") && cat > "$BODY_FILE" <<'__CE_PR_BODY_END__' && echo "$BODY_FILE"
+      <the composed body markdown goes here, verbatim>
+      __CE_PR_BODY_END__
+      ```
+      
+      The quoted sentinel `'__CE_PR_BODY_END__'` keeps `$VAR`, backticks, `${...}`, and any literal `EOF` inside the body from being expanded or clashing with the terminator. Keep `echo "$BODY_FILE"` chained with `&&` so a failed `mktemp` or write never yields a success exit status with a path to a missing file.
+      
+      Format the return as a clearly labeled block the caller can extract cleanly:
+      === BODY_FILE ===
+      <absolute path to the mktemp body file>
+      Do not emit the body markdown in the return block — the caller reads it from `BODY_FILE`.
+      
+      If Step 1 exited gracefully (closed/merged PR, invalid range, empty commit list), do not create a body file — just return the reason string.
+    gold_removed: ""
+  - path: "plugins/compound-engineering/skills/git-commit-push-pr/SKILL.md"
+    tier: 1
+    gold_added: |-
+      **Generate the updated title and body** — load the `ce-pr-description` skill with the PR URL from DU-2 (e.g., `https://github.com/owner/repo/pull/123`). The URL preserves repo/PR identity even when invoked from a worktree or subdirectory where the current repo is ambiguous. If the user provided a focus (e.g., "include the benchmarking results"), append it as free-text steering after the URL. The skill returns a `{title, body_file}` block (body in an OS temp file) without applying or prompting.
+      If `ce-pr-description` returns a "not open" or other graceful-exit message instead of a `{title, body_file}` pair, report that message and stop.
+      **Compare and confirm** — briefly explain what the new description covers differently from the old one. This helps the user decide whether to apply; the description itself does not narrate these differences. Summarize from the body already in context (from the bash call that wrote `body_file`); do not `cat` the temp file, which would re-emit the body.
+      If confirmed, apply with the returned title and body file:
+      gh pr edit --title "<returned title>" --body "$(cat "<returned body_file>")"
+      If the PR check returned `state: OPEN`, note the URL -- this is the existing-PR flow. Continue to Step 4 and 5 (commit any pending work and push), then go to Step 7 to ask whether to rewrite the description. Only run Step 6 (which generates a new description via `ce-pr-description`) if the user confirms the rewrite; Step 7's existing-PR sub-path consumes the `{title, body_file}` that Step 6 produces. Otherwise (no open PR), continue through Steps 6, 7, and 8 in order.
+      `ce-pr-description` returns a `{title, body_file}` block (body in an OS temp file). It applies the value-first writing principles, commit classification, sizing, narrative framing, writing voice, visual communication, numbering rules, and the Compound Engineering badge footer internally. Use the returned values verbatim in Step 7; do not layer manual edits onto them unless a focused adjustment is required (e.g., splicing an evidence block captured in this step that was not passed as steering text — in that case, edit the body file directly before applying).
+      If `ce-pr-description` returns a graceful-exit message instead of `{title, body_file}` (e.g., closed PR, no commits to describe, base ref unresolved), report the message and stop — do not create or edit the PR.
+      Using the `{title, body_file}` returned by `ce-pr-description`:
+      gh pr create --title "<returned title>" --body "$(cat "<returned body_file>")"
+      - If **yes**, run Step 6 now to generate `{title, body_file}` via `ce-pr-description` (passing the existing PR URL as `pr:`), then apply the returned title and body file:
+        gh pr edit --title "<returned title>" --body "$(cat "<returned body_file>")"
+    gold_removed: ""

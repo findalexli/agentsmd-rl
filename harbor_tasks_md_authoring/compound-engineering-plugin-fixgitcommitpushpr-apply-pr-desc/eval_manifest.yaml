@@ -1,0 +1,49 @@
+version: "2.0"
+
+task:
+  name: compound-engineering-plugin-fixgitcommitpushpr-apply-pr-desc
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: EveryInc/compound-engineering-plugin
+  pr: 594
+  base_commit: "cc78551e7cac788d5e43efc835c040f696e5b936"
+  merge_commit: "1afd63cc764173368a30cbd92af704f5b7602e6d"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/git-commit-push-pr/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/git-commit-push-pr/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/git-commit-push-pr/SKILL.md."
+
+config_edits:
+  - path: "plugins/compound-engineering/skills/git-commit-push-pr/SKILL.md"
+    tier: 1
+    gold_added: |-
+      **If confirmed, perform these two actions in order.** They are separate steps with a hand-off boundary between them — do not stop after action 1.
+      1. `ce-pr-description` has already returned its `=== TITLE ===` / `=== BODY_FILE ===` block and stopped; it does not apply on its own.
+      2. Apply the returned title and body file yourself. This is this skill's responsibility, not the delegated skill's. Substitute `<TITLE>` and `<BODY_FILE>` verbatim from the return block; if `<TITLE>` contains `"`, `` ` ``, `$`, or `\`, escape them or switch to single quotes:
+      
+         ```bash
+         gh pr edit --title "<TITLE>" --body "$(cat "<BODY_FILE>")"
+         ```
+      Using the `=== TITLE ===` / `=== BODY_FILE ===` block returned by `ce-pr-description`, substitute `<TITLE>` and `<BODY_FILE>` verbatim. If `<TITLE>` contains `"`, `` ` ``, `$`, or `\`, escape them or switch to single quotes:
+      gh pr create --title "<TITLE>" --body "$(cat "<BODY_FILE>")"
+      - If **no** -- skip Step 6 entirely and finish. Do not run delegation or evidence capture when the user declined the rewrite.
+      - If **yes**, perform these two actions in order. They are separate steps with a hand-off boundary between them -- do not stop after action 1.
+        1. Run Step 6 to generate via `ce-pr-description` (passing the existing PR URL as `pr:`). `ce-pr-description` explicitly does not apply on its own; it returns its `=== TITLE ===` / `=== BODY_FILE ===` block and stops.
+        2. Apply the returned title and body file yourself. This is this skill's responsibility, not the delegated skill's. Substitute `<TITLE>` and `<BODY_FILE>` verbatim from the return block; if `<TITLE>` contains `"`, `` ` ``, `$`, or `\`, escape them or switch to single quotes:
+           ```bash
+           gh pr edit --title "<TITLE>" --body "$(cat "<BODY_FILE>")"
+           ```
+        Then report the PR URL (Step 8).
+    gold_removed: ""

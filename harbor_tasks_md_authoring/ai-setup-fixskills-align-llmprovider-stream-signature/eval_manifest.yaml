@@ -1,0 +1,89 @@
+version: "2.0"
+
+task:
+  name: ai-setup-fixskills-align-llmprovider-stream-signature
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: caliber-ai-org/ai-setup
+  pr: 178
+  base_commit: "6db87e6e48190a23f373ed710595781f5b0d1331"
+  merge_commit: "9a46fd43952233236425e5e8b38b896675706549"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/llm-provider/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/llm-provider/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/llm-provider/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/skills/llm-provider/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/skills/llm-provider/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .cursor/skills/llm-provider/SKILL.md."
+
+config_edits:
+  - path: ".agents/skills/llm-provider/SKILL.md"
+    tier: 1
+    gold_added: |-
+      - **Interface contract**: Provider MUST implement `LLMProvider` from `src/llm/types.ts` — both `call(options: LLMCallOptions): Promise<string>` and `stream(options: LLMStreamOptions, callbacks: LLMStreamCallbacks): Promise<void>` are required
+        async call(options: LLMCallOptions): Promise<string> {
+      
+        async stream(options: LLMStreamOptions, callbacks: LLMStreamCallbacks): Promise<void> {
+          // Streaming call — invoke callbacks.onText() for each chunk
+          // Call callbacks.onEnd() when complete, callbacks.onError() on error
+      - `call(options: LLMCallOptions)` returns `Promise<string>`; `stream(options: LLMStreamOptions, callbacks: LLMStreamCallbacks)` returns `Promise<void>`
+      **"Stream callbacks never fire; onEnd not called"**
+      - Verify `stream()` calls `callbacks.onText()` for each chunk and `callbacks.onEnd()` when done
+      - Ensure the async iterator is fully consumed before `callbacks.onEnd()` is called
+      - Compare streaming pattern to `anthropic.ts` as reference
+    gold_removed: ""
+  - path: ".cursor/skills/llm-provider/SKILL.md"
+    tier: 1
+    gold_added: |-
+      - **All providers must implement `LLMProvider` interface** from `src/llm/types.ts`: `call(options: LLMCallOptions): Promise<string>` and `stream(options: LLMStreamOptions, callbacks: LLMStreamCallbacks): Promise<void>`
+      - **Streaming via callbacks**: `stream()` invokes `callbacks.onText(text)` for each chunk, `callbacks.onEnd(meta?)` when complete, and `callbacks.onError(error)` on failure — it does NOT return an async generator or iterable.
+      - **Error handling**: Catch all errors and either call `callbacks.onError()` (in `stream()`) or throw (in `call()`). Preserve error messages unchanged.
+      - **Model validation**: Respect `options.model || this.defaultModel` pattern — never hardcode model names.
+         - Import `{ LLMProvider, LLMCallOptions, LLMStreamOptions, LLMStreamCallbacks, LLMConfig }` from `src/llm/types.ts`
+         - Constructor takes `config: LLMConfig`; store `this.defaultModel = config.model`
+         - Initialize SDK client from `config.apiKey` in constructor — never lazy-initialize on first call
+         - Verify API key exists in constructor, throw `new Error('API key required')` if missing
+         - Signature: `async call(options: LLMCallOptions): Promise<string>`
+         - Make HTTP request to provider API using `options.system`, `options.prompt`, `options.model || this.defaultModel`, `options.maxTokens`
+         - On error, throw with error message unchanged (retry logic in `src/llm/index.ts` handles transient errors)
+         - Signature: `async stream(options: LLMStreamOptions, callbacks: LLMStreamCallbacks): Promise<void>`
+         - Use provider's streaming endpoint; iterate chunks
+         - For each text chunk: call `callbacks.onText(chunkText)`
+         - After iteration completes: call `callbacks.onEnd({ stopReason, usage })` (usage is optional)
+         - On error: call `callbacks.onError(error instanceof Error ? error : new Error(String(error)))`
+         - Test by verifying `callbacks.onEnd` is called and `callbacks.onText` fires for each chunk
+         - Add provider to `ProviderType` union in `src/llm/types.ts`
+         - Add `LLMConfig` fields if needed (beyond `apiKey`, `model`, `baseUrl`)
+         - In `resolveFromEnv()`: add env var detection block before `return null`
+         - In `readConfigFile()` validation: add your provider slug to the includes list
+         - Verify: `npx tsc --noEmit` shows no ProviderType errors
+         - Import provider class at top of file
+         - Add `case 'your-provider': return new YourProviderProvider(config);` in `createProvider()` switch
+      - **"Unknown provider: your-provider"**: Verify `ProviderType` union updated AND `createProvider()` switch case added in `src/llm/index.ts`. Both must be updated together.
+      - **"Stream callbacks never fire; onEnd not called"**: `stream()` must be `async` (not a generator). Ensure `callbacks.onEnd()` is called after the loop completes, not inside it.
+      - **"API key required"**: Verify env var name in `resolveFromEnv()` matches the variable the user sets. Test: `YOUR_API_KEY=test npm run test -- src/llm/__tests__/index.test.ts`.
+      - **"Stream stops early"**: Check provider's response format (JSON lines, SSE, etc.). Log raw chunks: `console.error('Raw chunk:', chunk)` to debug parsing.
+      - **Type errors on LLMStreamCallbacks**: Verify import is `from './types.js'` (with `.js` extension for ESM).
+      - **Tests fail with "fetch is not defined"**: Add global fetch mock or use `node-fetch` in `src/test/setup.ts`.
+    gold_removed: ""

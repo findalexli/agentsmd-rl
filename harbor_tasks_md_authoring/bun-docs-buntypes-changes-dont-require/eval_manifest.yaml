@@ -1,0 +1,42 @@
+version: "2.0"
+
+task:
+  name: bun-docs-buntypes-changes-dont-require
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: oven-sh/bun
+  pr: 29098
+  base_commit: "68e80dbdb13f3c9bc02716f14065aceb1f989c8a"
+  merge_commit: "a1d1af936338ea785e47d3322f708ab7acc6e30e"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: "CLAUDE.md"
+    tier: 1
+    gold_added: |-
+      ### Changes that don't require a build
+      
+      Edits to **TypeScript type declarations** (`packages/bun-types/**/*.d.ts`) do not touch any compiled code, so `bun bd` is unnecessary. The types test just packs the `.d.ts` files and runs `tsc` against fixtures — it never executes your build. Run it directly with the system Bun:
+      
+      ```sh
+      bun test test/integration/bun-types/bun-types.test.ts
+      ```
+      
+      This is an explicit exception to the "never use `bun test` directly" rule. There are no native changes for a debug build to pick up, so don't wait on one.
+      
+    gold_removed: ""

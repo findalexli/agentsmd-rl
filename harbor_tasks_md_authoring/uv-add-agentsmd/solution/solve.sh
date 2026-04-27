@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd /workspace/uv
+
+# Idempotency guard
+if grep -qF "- NEVER perform builds with the release profile, unless asked or reproducing per" "AGENTS.md" && grep -qF "CLAUDE.md" "CLAUDE.md"; then
+  echo "Gold patch already applied."
+  exit 0
+fi
+
+git apply --whitespace=nowarn <<'PATCH'
+diff --git a/AGENTS.md b/AGENTS.md
+@@ -0,0 +1,19 @@
++- Read CONTRIBUTING.md for guidelines on how to run tools
++- ALWAYS attempt to add a test case for changed behavior
++- PREFER integration tests, e.g., at `it/...` over unit tests
++- When making changes for Windows from Unix, use `cargo xwin clippy` to check compilation
++- NEVER perform builds with the release profile, unless asked or reproducing performance issues
++- PREFER running specific tests over running the entire test suite
++- AVOID using `panic!`, `unreachable!`, `.unwrap()`, unsafe code, and clippy rule ignores
++- PREFER patterns like `if let` to handle fallibility
++- ALWAYS write `SAFETY` comments following our usual style when writing `unsafe` code
++- PREFER `#[expect()]` over `[allow()]` if clippy must be disabled
++- PREFER let chains (`if let` combined with `&&`) over nested `if let` statements
++- NEVER update all dependencies in the lockfile and ALWAYS use `cargo update --precise` to make
++  lockfile changes
++- NEVER assume clippy warnings are pre-existing, it is very rare that `main` has warnings
++- ALWAYS read and copy the style of similar tests when adding new cases
++- PREFER top-level imports over local imports or fully qualified names
++- AVOID shortening variable names, e.g., use `version` instead of `ver`, and `requires_python`
++  instead of `rp`
++- PREFER [`TypeName`] references when writing Rust doc comments
+diff --git a/CLAUDE.md b/CLAUDE.md
+@@ -1,19 +1 @@
+-- Read CONTRIBUTING.md for guidelines on how to run tools
+-- ALWAYS attempt to add a test case for changed behavior
+-- PREFER integration tests, e.g., at `it/...` over unit tests
+-- When making changes for Windows from Unix, use `cargo xwin clippy` to check compilation
+-- NEVER perform builds with the release profile, unless asked or reproducing performance issues
+-- PREFER running specific tests over running the entire test suite
+-- AVOID using `panic!`, `unreachable!`, `.unwrap()`, unsafe code, and clippy rule ignores
+-- PREFER patterns like `if let` to handle fallibility
+-- ALWAYS write `SAFETY` comments following our usual style when writing `unsafe` code
+-- PREFER `#[expect()]` over `[allow()]` if clippy must be disabled
+-- PREFER let chains (`if let` combined with `&&`) over nested `if let` statements
+-- NEVER update all dependencies in the lockfile and ALWAYS use `cargo update --precise` to make
+-  lockfile changes
+-- NEVER assume clippy warnings are pre-existing, it is very rare that `main` has warnings
+-- ALWAYS read and copy the style of similar tests when adding new cases
+-- PREFER top-level imports over local imports or fully qualified names
+-- AVOID shortening variable names, e.g., use `version` instead of `ver`, and `requires_python`
+-  instead of `rp`
+-- PREFER [`TypeName`] references when writing Rust doc comments
++@AGENTS.md
+PATCH
+
+echo "Gold patch applied."

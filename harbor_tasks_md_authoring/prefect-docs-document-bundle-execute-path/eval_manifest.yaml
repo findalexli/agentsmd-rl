@@ -1,0 +1,37 @@
+version: "2.0"
+
+task:
+  name: prefect-docs-document-bundle-execute-path
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: prefecthq/prefect
+  pr: 21647
+  base_commit: "5524827f6f3802a0bf067a71562b43f378fb8deb"
+  merge_commit: "8b1eae4d8feacb7b4a7bcf5de97c3bee7cf944c6"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/prefect/runner/AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/prefect/runner/AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/prefect/runner/AGENTS.md."
+
+config_edits:
+  - path: "src/prefect/runner/AGENTS.md"
+    tier: 1
+    gold_added: |-
+      **Two callers set `propose_submitting=False`** via `FlowRunExecutorContext.create_executor(propose_submitting=False)` — both have already advanced the flow run past the Pending state, so proposing Submitting again would be wrong:
+      - `prefect flow-run execute` CLI path (invoked by a worker)
+      - `execute_bundle()` in `prefect._experimental.bundles.execute` (invoked by bundle dispatch)
+      
+      The cancelling precheck (step 1a) still runs unconditionally even when `propose_submitting=False`.
+    gold_removed: ""

@@ -1,0 +1,84 @@
+version: "2.0"
+
+task:
+  name: compound-engineering-plugin-feat-specific-modelharnessversio
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: EveryInc/compound-engineering-plugin
+  pr: 283
+  base_commit: "30c06e512271693fce9d2a3b40fb818593b8ee05"
+  merge_commit: "fdbd584bac40ca373275b1b339ab81db65ac0958"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-work/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-work/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-work/SKILL.md."
+
+config_edits:
+  - path: "CLAUDE.md"
+    tier: 1
+    gold_added: |-
+      Include the attribution footer (fill in your actual values):
+      🤖 Generated with [MODEL] via [HARNESS](HARNESS_URL) + Compound Engineering v[VERSION]
+      Co-Authored-By: [MODEL] ([CONTEXT] context, [THINKING]) <noreply@anthropic.com>
+      **Fill in at commit/PR time:**
+      
+      | Placeholder | Value | Example |
+      |-------------|-------|---------|
+      | Placeholder | Value | Example |
+      |-------------|-------|---------|
+      | `[MODEL]` | Model name | Claude Opus 4.6, GPT-5.4 |
+      | `[CONTEXT]` | Context window (if known) | 200K, 1M |
+      | `[THINKING]` | Thinking level (if known) | extended thinking |
+      | `[HARNESS]` | Tool running you | Claude Code, Codex, Gemini CLI |
+      | `[HARNESS_URL]` | Link to that tool | `https://claude.com/claude-code` |
+      | `[VERSION]` | `plugin.json` → `version` | 2.40.0 |
+      
+    gold_removed: ""
+  - path: "plugins/compound-engineering/skills/ce-work/SKILL.md"
+    tier: 1
+    gold_added: |-
+         🤖 Generated with [MODEL] via [HARNESS](HARNESS_URL) + Compound Engineering v[VERSION]
+         Co-Authored-By: [MODEL] ([CONTEXT] context, [THINKING]) <noreply@anthropic.com>
+         **Fill in at commit/PR time:**
+      
+         | Placeholder | Value | Example |
+         |-------------|-------|---------|
+         | Placeholder | Value | Example |
+         |-------------|-------|---------|
+         | `[MODEL]` | Model name | Claude Opus 4.6, GPT-5.4 |
+         | `[CONTEXT]` | Context window (if known) | 200K, 1M |
+         | `[THINKING]` | Thinking level (if known) | extended thinking |
+         | `[HARNESS]` | Tool running you | Claude Code, Codex, Gemini CLI |
+         | `[HARNESS_URL]` | Link to that tool | `https://claude.com/claude-code` |
+         | `[VERSION]` | `plugin.json` → `version` | 2.40.0 |
+      
+         Subagents creating commits/PRs are equally responsible for accurate attribution.
+      
+         [![Compound Engineering v[VERSION]](https://img.shields.io/badge/Compound_Engineering-v[VERSION]-6366f1)](https://github.com/EveryInc/compound-engineering-plugin)
+         🤖 Generated with [MODEL] ([CONTEXT] context, [THINKING]) via [HARNESS](HARNESS_URL)
+      - [ ] PR description includes Compound Engineered badge with accurate model, harness, and version
+    gold_removed: ""

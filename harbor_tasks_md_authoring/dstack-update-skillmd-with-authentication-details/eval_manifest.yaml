@@ -1,0 +1,41 @@
+version: "2.0"
+
+task:
+  name: dstack-update-skillmd-with-authentication-details
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: dstackai/dstack
+  pr: 3554
+  base_commit: "fa001e580eb72d8e342f8683a1a730953fa7e425"
+  merge_commit: "8ff914b1ce32411c5522113b0e45918fac9b2fba"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/dstack/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/dstack/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/dstack/SKILL.md."
+
+config_edits:
+  - path: "skills/dstack/SKILL.md"
+    tier: 1
+    gold_added: |-
+      - Authentication: Unless `auth` is `false`, include `Authorization: Bearer <DSTACK_TOKEN>` on all service requests.
+      - OpenAI-compatible models: Use `service.url` from `dstack run get <run-name> --json` and append `/v1` as the base URL; do **not** use deprecated `service.model.base_url` for requests.
+      - Example (with gateway):
+        ```bash
+        curl -sS -X POST "https://<run name>.<gateway domain>/v1/chat/completions" \
+          -H "Authorization: Bearer <dstack token>" \
+          -H "Content-Type: application/json" \
+          -d '{"model":"<model name>","messages":[{"role":"user","content":"Hello"}],"max_tokens":64}'
+      spot_policy: auto # other values: spot, on-demand
+    gold_removed: ""

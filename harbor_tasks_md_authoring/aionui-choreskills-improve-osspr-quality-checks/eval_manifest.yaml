@@ -1,0 +1,41 @@
+version: "2.0"
+
+task:
+  name: aionui-choreskills-improve-osspr-quality-checks
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: iOfficeAI/AionUi
+  pr: 2185
+  base_commit: "3ca5bcf558f541c02c49dd4f88c4ab6a25423b77"
+  merge_commit: "fc2116252ad46a1e0e29b273e552570d96db42e0"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/oss-pr/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/oss-pr/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/oss-pr/SKILL.md."
+
+config_edits:
+  - path: ".claude/skills/oss-pr/SKILL.md"
+    tier: 1
+    gold_added: |-
+      | Command             | Scope                     | Skip when                   |
+      | ------------------- | ------------------------- | --------------------------- |
+      | `bun run format`    | `.ts/.tsx/.css/.json/.md` | **Never** — always run      |
+      | `bun run lint`      | `.ts/.tsx` only           | No `.ts/.tsx` files changed |
+      | `bunx tsc --noEmit` | `.ts/.tsx` only           | No `.ts/.tsx` files changed |
+      
+      Run in this order: `format` → `lint` → `tsc`.
+      - **format** → Auto-fixes silently (must run even for non-code files like `.md`).
+      1. bun run format (ALWAYS) && bun run lint && bunx tsc --noEmit (skip lint/tsc if no .ts/.tsx)
+    gold_removed: ""

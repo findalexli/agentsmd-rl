@@ -1,0 +1,39 @@
+version: "2.0"
+
+task:
+  name: compound-engineering-plugin-fixresolveprfeedback-add-actiona
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: EveryInc/compound-engineering-plugin
+  pr: 461
+  base_commit: "5ac8a2c2c8c258458307e476d6693cc387deb27e"
+  merge_commit: "2619ad9f58e6c45968ec10d7f8aa7849fe43eb25"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/resolve-pr-feedback/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/resolve-pr-feedback/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/resolve-pr-feedback/SKILL.md."
+
+config_edits:
+  - path: "plugins/compound-engineering/skills/resolve-pr-feedback/SKILL.md"
+    tier: 1
+    gold_added: |-
+      **PR comments and review bodies**: These have no resolve mechanism, so they reappear on every run. Apply two filters in order:
+      1. **Actionability**: Skip items that contain no actionable feedback or questions to answer. Examples: review wrapper text ("Here are some automated review suggestions..."), approvals ("this looks great!"), status badges ("Validated"), CI summaries with no follow-up asks. If there's nothing to fix, answer, or decide, it's not actionable -- drop it from the count entirely.
+      2. **Already replied**: For actionable items, check the PR conversation for an existing reply that quotes and addresses the feedback. If a reply already exists, skip. If not, it's new.
+      
+      The distinction is about content, not who posted what. A deferral from a teammate, a previous skill run, or a manual reply all count. Similarly, actionability is about content -- bot feedback that requests a specific code change is actionable; a bot's boilerplate header wrapping those requests is not.
+      | **Volume** | 3+ new items from triage |
+      If the gate does not fire, proceed to step 4. The common case (1-2 unrelated comments) skips this step entirely with zero overhead.
+    gold_removed: ""

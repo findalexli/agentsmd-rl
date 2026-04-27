@@ -1,0 +1,62 @@
+version: "2.0"
+
+task:
+  name: compound-engineering-plugin-featceplan-add-output-structure-
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: EveryInc/compound-engineering-plugin
+  pr: 542
+  base_commit: "bb59547a2efdd4e7213c149f51abd9c9a17016dd"
+  merge_commit: "f3cc7545e5eca0c3774b2803fa5515ff98a8fc1e"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-plan/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-plan/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-plan/SKILL.md."
+
+config_edits:
+  - path: "plugins/compound-engineering/skills/ce-plan/SKILL.md"
+    tier: 1
+    gold_added: |-
+      #### 3.4b Output Structure (Optional)
+      
+      For greenfield plans that create a new directory structure (new plugin, service, package, or module), include an `## Output Structure` section with a file tree showing the expected layout. This gives reviewers the overall shape before diving into per-unit details.
+      
+      **When to include it:**
+      - The plan creates 3+ new files in a new directory hierarchy
+      - The directory layout itself is a meaningful design decision
+      
+      **When to skip it:**
+      - The plan only modifies existing files
+      - The plan creates 1-2 files in an existing directory — the per-unit file lists are sufficient
+      
+      The tree is a scope declaration showing the expected output shape. It is not a constraint — the implementer may adjust the structure if implementation reveals a better layout. The per-unit `**Files:**` sections remain authoritative for what each unit creates or modifies.
+      
+      <!-- Optional: When some items are planned work that will happen in a separate PR, issue,
+           or repo, use this sub-heading to distinguish them from true non-goals. -->
+      ### Deferred to Separate Tasks
+      
+      - [Work that will be done separately]: [Where or when -- e.g., "separate PR in repo-x", "future iteration"]
+      
+      <!-- Optional: Include when the plan creates a new directory structure (greenfield plugin,
+           new service, new package). Shows the expected output shape at a glance. Omit for plans
+           that only modify existing files. This is a scope declaration, not a constraint --
+           the implementer may adjust the structure if implementation reveals a better layout. -->
+      ## Output Structure
+      
+          [directory tree showing new directories and files]
+      
+      - If the plan creates a new directory structure, would an Output Structure tree help reviewers see the overall shape?
+      - If Scope Boundaries lists items that are planned work for a separate PR or task, are they under `### Deferred to Separate Tasks` rather than mixed with true non-goals?
+    gold_removed: ""

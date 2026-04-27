@@ -1,0 +1,36 @@
+version: "2.0"
+
+task:
+  name: godogen-remove-export-recommendations-from-godottask
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: htdt/godogen
+  pr: 1
+  base_commit: "64473f9ecc9bc3598bf448ff6bbc26bd19dfface"
+  merge_commit: "fff5060d66878a94240e99b5693d0f24e102aba8"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/godot-task/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/godot-task/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/godot-task/SKILL.md."
+
+config_edits:
+  - path: ".claude/skills/godot-task/SKILL.md"
+    tier: 1
+    gold_added: |-
+      **Script section ordering:** signals → @onready vars → private state → lifecycle methods → public methods → private methods → signal handlers
+      var speed: float = 200.0
+      var jump_velocity: float = -400.0
+      var move_force: float = 10.0
+    gold_removed: ""

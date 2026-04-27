@@ -1,0 +1,44 @@
+version: "2.0"
+
+task:
+  name: maui-add-correct-ci-pipeline-names
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: dotnet/maui
+  pr: 34255
+  base_commit: "eba391e47657c89b9c5e81131183baed07fdccd0"
+  merge_commit: "d404e27bafae3c55a3706af7c86b2dae0a2458f7"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/copilot-instructions.md."
+
+config_edits:
+  - path: ".github/copilot-instructions.md"
+    tier: 1
+    gold_added: |-
+      ### CI Pipelines (Azure DevOps)
+      
+      When referencing or triggering CI pipelines, use these current pipeline names:
+      
+      | Pipeline | Name | Purpose |
+      |----------|------|---------|
+      | Overall CI | `maui-pr` | Full PR validation build |
+      | Device Tests | `maui-pr-devicetests` | Helix-based device tests |
+      | UI Tests | `maui-pr-uitests` | Appium-based UI tests |
+      
+      **⚠️ Old pipeline names** (e.g., `MAUI-UITests-public`, `MAUI-public`) are **outdated** and should NOT be used. Always use the names above.
+      
+    gold_removed: ""

@@ -1,0 +1,83 @@
+version: "2.0"
+
+task:
+  name: cc-wf-studio-chore-update-claudemd-guidelines-and
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: breaking-brake/cc-wf-studio
+  pr: 562
+  base_commit: "852407480044960f4c95743e05d646c5487fe6a7"
+  merge_commit: "38ea91501bf4b45f72a5ea880b52477e514e11b2"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: "CLAUDE.md"
+    tier: 1
+    gold_added: |-
+      ## Planning Guidelines
+      
+      ### Gather Context from github-knowledge MCP (Required for Plan Mode)
+      
+      **When entering Plan Mode to design or plan implementation, always gather related knowledge from the github-knowledge MCP first.**
+      
+      #### Steps
+      1. Use `search_decisions` to find past technical decisions by relevant modules, tags, or keywords
+      2. Use `search_domain_knowledge` to find related business rules, domain terms, and constraints
+      3. Use `get_decision_detail` as needed for full context on specific decisions
+      4. Use `get_module_history` as needed to understand how a module has evolved
+      
+      #### Purpose
+      - Maintain consistency with past technical decisions
+      - Avoid re-proposing previously rejected alternatives
+      - Incorporate domain knowledge (business rules, constraints) into design
+      - Align implementation with established architectural patterns
+      
+      ## AI Editing Features
+      
+      ### MCP Server-based AI Editing (Active)
+      - The built-in MCP server (`cc-workflow-ai-editor` skill) is the primary interface for external AI agents to create and edit workflows.
+      - All new AI editing development should go through the MCP server approach.
+      
+      ```mermaid
+      sequenceDiagram
+          actor User
+          participant VSCode as CC Workflow Studio
+          participant MCP as MCP Server
+          participant Agent as AI Agent
+      
+          User->>VSCode: Click agent button
+          VSCode->>MCP: Auto start server
+          VSCode->>Agent: Launch with editing skill
+      
+          loop AI edits workflow
+              Agent->>MCP: get_workflow
+              MCP-->>Agent: workflow JSON
+              Agent->>MCP: apply_workflow
+              MCP->>VSCode: Update canvas
+          end
+      ```
+      
+      ### Chat UI-based AI Editing (Discontinued)
+      - The chat UI-based AI editing features (Refinement Chat Panel, AI Workflow Generation Dialog) are **no longer under active development**.
+      - Existing functionality will be maintained but no new features or enhancements will be added.
+      - Affected features:
+        - `001-ai-workflow-generation`: AI Workflow Generation via AiGenerationDialog
+        - `001-ai-workflow-refinement`: AI Workflow Refinement via RefinementChatPanel
+        - `001-ai-skill-generation`: AI Skill Node Generation via AiGenerationDialog
+      
+    gold_removed: ""
