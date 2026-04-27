@@ -30,51 +30,64 @@ Type B (~3× larger than A) is the more important bucket: **most agent-instructi
 
 All tasks (A and B alike) get the same 4-track evaluation: programmatic fail-to-pass + pass-to-pass tests, plus a self-contained Gemini judge in `test.sh` that scores convention compliance (positive rubric) and distractor avoidance (negative rubric).
 
-### Where tasks live on disk
+### Where tasks live on disk (snapshot 2026-04-27)
 
-| | Active (scaffolded, runnable) | Candidate (placeholder, pre-scaffold) |
-|---|---|---|
-| Path | `harbor_tasks/` | `harbor_tasks_quarantine/candidates/` |
-| Count | 226 (185 passing oracle) | 4,862 |
-| Notes | Legacy mix; the in-flight causality judge is dropping any remaining C tasks. | Awaits Gemini causality classification + one-call Opus scaffold (~$8/task). |
+| Folder | Active | Quarantined | Notes |
+|---|---|---|---|
+| `harbor_tasks/` | 585 (Type A+B, code-fix) | — | Opus 4.7 scaffolded, 92% Docker-oracle pass, 89% rubric pass |
+| `harbor_tasks_md_authoring/` | **718** (706 HIGH + 12 MEDIUM) | 170 (DELETE/LOW + 2 secret-pattern) | Deterministic scaffold + Gemini quality gate (v2 pipeline). All 718 have GHCR images. |
+| `harbor_tasks_agentmd_edits/` | 81 (code + config edits, Track 2) | — | Smaller, harder corpus |
+
+The two flagship corpora — `harbor_tasks/` (code) and `harbor_tasks_md_authoring/` (markdown-authoring) — together hold **1,303 active tasks**, all with pre-built Docker images on GHCR.
 
 ## How tasks are filtered
 
-We mine tasks from merged GitHub PRs. A PR becomes a useful benchmark task only when **the gold fix would have looked different if the repo's agent-instruction files (CLAUDE.md, AGENTS.md, SKILL.md, etc.) hadn't existed**. Otherwise passing or failing the test tells us nothing about whether the agent paid attention to those instructions. Each filter stage removes PRs that don't pass that bar.
+We mine tasks from merged GitHub PRs. A PR becomes a useful benchmark task only when **the gold fix would have looked different if the repo's agent-instruction files (CLAUDE.md, AGENTS.md, SKILL.md, etc.) hadn't existed**. Otherwise passing or failing the test tells us nothing about whether the agent paid attention to those instructions.
 
-### The funnel (2026-04-25)
+We run two parallel pipelines today, depending on whether the PR touches code or only markdown:
+
+- **`harbor_tasks/`** — code-fix benchmarks. The PR's diff reveals a concrete bug fix; the agent must recreate it. Scaffolded with Claude Opus 4.7 in an E2B sandbox so it can read the repo, choose the right files, and produce a behavioral test (`taskforge.e2b_worker --start-at oneshot_scaffold`).
+- **`harbor_tasks_md_authoring/`** — markdown-authoring benchmarks. Every changed file is a tier-1 instruction file (CLAUDE.md, AGENTS.md, SKILL.md, `.cursor/rules`, etc.). Scaffolded *deterministically* with no LLM (`scripts/scaffold_markdown_only.py`) — extract distinctive `+` lines from the diff, grep for them in the agent's output. Cheap and fast — orders of magnitude lower cost than the code path.
+
+### Markdown-authoring funnel (v2 pipeline, 2026-04-27)
 
 | Stage | What it checks | Survivors |
 |---|---|---|
-| **0. Upstream** | Every merged PR on GitHub | (effectively unbounded) |
-| **1. Find repos with agent-instruction files** | Repo has at least one of: CLAUDE.md, AGENTS.md, SKILL.md anywhere, .cursor/rules, .github/copilot-instructions.md, .agents/skills/, .opencode/skills/, .codex/skills/, etc. | **107 repos** |
-| **2. Find merged bug-fix / feature PRs in those repos** | PR is non-trivial, merged, has resolvable base + merge SHA, touches code | **5,070 PRs** |
-| **3. Create one task placeholder per PR** | Empty task directory with template files, named `<repo>-<first-5-title-words>` | 6,086 placeholders (older scout passes left some duplicates) |
-| **4. Drop placeholders that don't match a known scout entry** | Stale slugs from older runs | −627 → 5,459 |
-| **5. Re-verify repo still has agent-instruction files at HEAD** | Some repos got renamed; broaden the file-name regex to catch newer IDE conventions | −598 → **4,862 candidate placeholders** |
-| **6. Per-PR causality check** (Gemini 3.1 Pro judge) | Does the PR either edit one of those agent-instruction files, OR is the code diff specifically following a rule from one? "Decorative" PRs (the fix is independent of the rules) get dropped. | **~6.4% of placeholders (≈310 PRs)** |
+| **1. Discover skill-rich repos** | `gh search repos` across topics: `claude-code`, `claude-skills`, `agent-skills`, `agents-md`, `cursor-rules`, `awesome-claude-*`, `.claude/skills in:path`, etc. | **1,042 unique repos** (after dedup vs. prior scouts) |
+| **2. Per-repo PR listing** | `gh pr list --json files` (limit ≤ 200 to avoid GraphQL 504s); skip stale PRs (>24 months), too-large diffs (>500 lines), too-many-files (>8) | **9,629 candidate PRs** |
+| **3. TIER1_RE pre-filter** (regex, free) | Drop PRs touching any non-tier-1 file. Pure code-bearing PRs go to a separate codebearing queue (~31K reserved for the Opus pipeline when budget returns) | **321 pure-tier-1-md PRs** (3.3% of candidates) |
+| **4. Pre-judge** (Gemini 3.1 Pro, Standard) | By **title + repo + file_paths only** (no body, no patch). Drop obvious slop: auto-bot titles ("Automated AGENTS.md update for commit X"), dummy-test PRs, pure version bumps, generic boilerplate | **−19** → **302 KEEP** (94% pass) |
+| **5. Deterministic scaffold** | No LLM. Shallow-clone repo at base SHA, apply gold patch, generate test that greps for the longest distinctive `+` lines. ~99% scaffold success | **214 newly-scaffolded tasks** (the rest were idempotent matches against prior scout output) |
+| **6. Post-judge** (Gemini 3.1 Pro, Standard) | Full context: instruction.md + gold patch. Verdict in `HIGH` / `MEDIUM` / `LOW` / `DELETE`. Auto-quarantine `LOW + DELETE` to `harbor_tasks_md_authoring_quarantine_quality/` | **HIGH=706 (86%)** + MEDIUM=12 + LOW=2 + DELETE=102 (incl. broken-yaml + bot-PRs) |
+| **7. Final corpus** | Active tasks committed + Docker images pushed to `ghcr.io/findalexli/agentsmd-rl/<task>:latest` | **718 tasks** (706 HIGH + 12 MEDIUM) |
 
-PRs that pass stage 6 land as Type A or Type B (see [Task taxonomy](#task-taxonomy)). Decorative PRs (Type C) are dropped at this stage.
+End-to-end yield: **0.7% of starting candidates** survive to a HIGH-quality scaffold-and-judge-passing task. Cost per task: **$0** (no LLM at scaffold time, ~$0.005 per Gemini judge call).
+
+### Two-pipeline split — why
+
+Markdown-only PRs don't need an agent to write Python; they need text. Running Opus on them was ~$2-5 per attempt for a deterministic transform. The v2 pipeline does the same job at zero LLM cost, then spends ~$0.01/task on a Gemini quality gate. We scale 100× cheaper while keeping a strict filter (Gemini drops ~14% as slop).
 
 ### Why each gate matters
 
-- Without **stages 1 and 5**, we end up with PRs from repos that have no agent-instruction files — there's literally nothing for the agent to follow or ignore.
-- Without **stage 6** (the causality judge), we'd keep ~94% of PRs where the markdown is decorative — and passing/failing those tells us nothing about whether the agent attended to instructions.
+- **Stage 1** discovery: without it, we'd burn quota on repos with no instruction files — no signal possible.
+- **Stage 3** TIER1_RE pre-filter: 97% of PRs touch at least one non-instruction file → handled by the code-fix pipeline (`harbor_tasks/`), not this one.
+- **Stage 4** pre-judge catches obvious throwaways (PrefectHQ's auto-AGENTS.md update bot, "test: broken merge-batch e2e PR", etc.) before scaffold burns cycles.
+- **Stage 6** post-judge applies the strictest filter with full context: gold patch + PR description visible. Catches subtle slop (generic AI prose, self-referential meta-skills, broken-yaml manifests) that pre-judge can't see.
 
-The combination is what makes the surviving A+B pool valuable for RL training: the gold fix is *causally* shaped by the agent-instruction surface, so a reward gap between agents that read vs. ignore the markdown is real signal, not noise.
+### What gets discarded (markdown_authoring v2, 2026-04-27)
 
-### Discard buckets
+Of the 822 tasks scaffolded across all v2 passes:
 
-Numbers behind the funnel — what gets thrown away at each stage:
+| Verdict | Count | % | Why dropped |
+|---|---|---|---|
+| **HIGH** | 706 | 85.9% | KEEP — concrete behavioral rule, specific commands/paths, low slop |
+| **MEDIUM** | 12 | 1.5% | KEEP — plausible but generic-leaning |
+| LOW | 2 | 0.2% | Marginal value, decorative |
+| DELETE | 102 | 12.4% | Bot-generated PRs, generic skill slop, broken-yaml manifests, dummy-test PRs |
 
-| Reason discarded | Path | Count |
-|---|---|---|
-| Placeholder slug doesn't match any scout entry | `harbor_tasks_quarantine/discarded_unmatched/` | 627 |
-| Repo has no agent-instruction files at HEAD | `harbor_tasks_quarantine/discarded_no_instructions/` | 598 |
-| Decorative / trivial / no-signal | `harbor_tasks_quarantine/discarded_decorative/` | 899 |
-| **Total trash** | | **2,124** |
+### Code-fix funnel (legacy, 2026-04-26)
 
-Cost to materialize the projected ~310 surviving (A+B) PRs into runnable tasks: **≈$2,500** in Opus 4.6 (scaffolding) + Gemini (causality + audit) calls.
+The original code-fix pipeline used Claude Opus + a 5-way causality judge (A/B/C/D/ERR). Today's snapshot of `harbor_tasks/`: **585 active tasks**, 92% Docker oracle pass, 89% rubric pass rate. See [research/scouting_report_2026_04_26.md](research/scouting_report_2026_04_26.md) for details.
 
 ## Repository Structure
 
@@ -165,6 +178,13 @@ harbor run -p harbor_tasks/<task> -a claude-code -m claude-opus-4-6 -y
 ```
 
 Images are built via GitHub Actions (`gh workflow run push-images.yml`) — no local Docker builds needed. Each image is tagged with both a Dockerfile content hash (for cache-busting) and `:latest`. Harbor falls back to building from `environment/Dockerfile` if no pre-built image is configured.
+
+Both task corpora are kept on GHCR:
+- `harbor_tasks/` — code-fix tasks
+- `harbor_tasks_md_authoring/` — markdown-authoring tasks (all 718 active tasks have images as of 2026-04-27)
+- `harbor_tasks_agentmd_edits/` — code + config edit tasks (Track 2)
+
+All Dockerfiles use shallow clone (`git fetch --depth=1 origin <SHA>`) for fast builds and small images.
 
 | Registry | Why |
 |----------|-----|
@@ -332,7 +352,7 @@ For tasks already in `harbor_tasks/` that have quality issues (broken oracle, we
 
 - Programmatic lint (no LLM, ~2s) flags issues like tautological tests, unpinned deps, `pip install` at test time. Output is fed to the Opus prompt as a "what's wrong" hint.
 - The Opus agent reads `quality.json`, edits `test_outputs.py` / `instruction.md` / `eval_manifest.yaml`, runs `nop=0/gold=1` Docker validation itself, and writes either `{"fixed": true, "nop_reward": 0, "gold_reward": 1}` or `{"abandoned": true, "reason": "..."}` to `reconcile_status.json`. We trust the agent's verdict and download.
-- Empirically: ~85–90% real pass rate, ≈$5 per task, 15–25 min wall.
+- Empirically: ~85–90% real pass rate, 15–25 min wall per task.
 
 ```bash
 .venv/bin/python scripts/validate_batch.py \
@@ -391,15 +411,22 @@ python -m taskforge.pipeline scaffold-from-prs --input scouted.jsonl --workers 8
 | **Hierarchical config context extraction** | **Nobody** | **Yes (novel)** |
 | **Self-contained LLM judge in test harness** | **Nobody** | **Yes (novel, Gemini structured output inside harbor)** |
 
-## Status (2026-04-25)
+## Status (2026-04-26)
 
-After a strict markdown-causality cleanup pass, the active corpus is much tighter than the historical 7,303-task pool: tasks where the gold fix is decorative (markdown removal wouldn't have changed it) were quarantined.
+**Active scaffolded tasks (`harbor_tasks/`):** 442 total / **399 tier-A** quality-audited. 91 of these were freshly scaffolded overnight via the `oneshot_scaffold` pipeline (45% pass rate from a 204-PR queue). Tier-A images now being built and pushed to ghcr.io via the `push-images.yml` workflow.
 
-**Class A — code-only bug fixes (`harbor_tasks/`)**: 226 active, 185 passing the Docker oracle. Currently being repaired in batch via the simplified `oneshot_repair` pipeline (see [Task Construction Pipeline](#task-construction-pipeline)). Pass rate observed in flight: ~85–90% on tasks with prior quality flags.
+**Candidate PR pool ready for scaffolding:** **977 PRs** classified as A (direct tier-1 edit) or B (code follows a rule). Composed of:
+- 204 baseline (Class B / 4,809-stub audit, mostly mature)
+- 750 from today's deep scout (107 repos, 19,417 fetched → 13,046 judged → A=204, B=546)
+- 23 from prior recovery batches (ERR retries + C-unfetchable retries)
 
-**Class B — code + config edits (placeholders)**: 4,862 candidate PR placeholders awaiting causality classification. Per a Gemini 3.1 Pro audit on a 1,640-PR sample, ≈6.4% of placeholders pass the causality bar (PR edits an agent-instruction file directly, OR the code diff specifically follows a rule from one). Projected materializable Class B pool: **≈310 tasks** at ~$8 each via the same one-call pipeline.
+**In flight:**
+- Scout against 40 newly-discovered repos (n8n, anthropics/skills, openai/codex, gemini-cli, etc.) — projected to add 100-300 more candidate PRs once Flex-judged.
+- Dockerfile shallow-clone migration: 198 of the 442 tasks updated to `git fetch --depth=1` (saves ~17× on initial fetch). Image rebuild in progress on GHCR.
 
-**Quarantined**: 2,124 PRs across three discard buckets (no-instruction-files, slug-doesn't-match-scout, decorative). See [How tasks are filtered](#how-tasks-are-filtered).
+**Switched all classifier work from Gemini batch → Flex tier (sync, 9 req/s sustained).** A 9,171-prompt batch that ran 3+ hours stalled out; re-submitted on Flex finished in 17 min.
+
+See [research/scouting_report_2026_04_26.md](research/scouting_report_2026_04_26.md) for the full breakdown — yields per repo, classifier comparison, batch-vs-Flex experiment, etc.
 
 ### Monitoring: Convention-Following Rubrics (Tracks 3 & 4)
 
