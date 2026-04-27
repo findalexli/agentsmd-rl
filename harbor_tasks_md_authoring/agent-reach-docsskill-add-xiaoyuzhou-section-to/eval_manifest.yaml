@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: agent-reach-docsskill-add-xiaoyuzhou-section-to
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Panniantong/Agent-Reach
+  pr: 158
+  base_commit: "59b594eccce8b7599c24a16b930d052074892b0e"
+  merge_commit: "383004e06a1bc292e385746f42c75d07cd7dc375"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in agent_reach/skill/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in agent_reach/skill/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in agent_reach/skill/SKILL.md."
+
+config_edits:
+  - path: agent_reach/skill/SKILL.md
+    tier: 1
+    gold_added: "  Search and read 16 platforms: Twitter/X, Reddit, YouTube, GitHub, Bilibili,\n  Xiaoyuzhou Podcast (小宇宙播客), LinkedIn, Instagram, V2EX, RSS, Exa web search, and any web page.\n  \"小宇宙\", \"xiaoyuzhou\", \"播客\", \"podcast\", \"转录\", \"transcribe\",\n## 小宇宙播客 / Xiaoyuzhou Podcast (groq-whisper + ffmpeg)\n\n```bash\n# 转录单集播客（输出文本到 /tmp/）\n~/.agent-reach/tools/xiaoyuzhou/transcribe.sh \"https://www.xiaoyuzhoufm.com/episode/EPISODE_ID\"\n```\n\n> 需要 ffmpeg + Groq API Key（免费）。  \n> 配置 Key：`agent-reach configure groq-key YOUR_KEY`  \n> 首次运行需安装工具：`agent-reach install --env=auto`  \n> 运行 `agent-reach doctor` 检查状态。  \n> 输出 Markdown 文件默认保存到 `/tmp/`。\n\n"
+    gold_removed: ''

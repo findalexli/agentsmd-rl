@@ -1,0 +1,122 @@
+version: "2.0"
+
+task:
+  name: skills-fix-prevent-batchasking-and-fix
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: heygen-com/skills
+  pr: 51
+  base_commit: "e8a3df3f0eb2e982a26720a208d1334aedd6e72a"
+  merge_commit: "e5e5db358ada7429d1f1f2a51a232e4cfc5c763e"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in heygen-avatar/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in heygen-avatar/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in heygen-avatar/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in heygen-video/SKILL.md."
+
+config_edits:
+  - path: SKILL.md
+    tier: 1
+    gold_added: '5. **Don''t batch-ask across skills.** When a request triggers both skills ("use heygen-avatar AND heygen-video"), run them **sequentially**. Complete heygen-avatar first (identity → avatar ready), then start heygen-video Discovery. Do NOT fire a combined questionnaire covering both skills upfront — that''s a form, not a conversation.
+
+      6. **Read workspace files before asking.** `SOUL.md`, `IDENTITY.md`, and `AVATAR-<NAME>.md` at the workspace root contain identity and existing avatar state. Check them first. Only ask the user for what''s genuinely missing.'
+    gold_removed: ''
+  - path: heygen-avatar/SKILL.md
+    tier: 1
+    gold_added: '## Start Here (Critical)
+
+
+      **Do NOT batch-ask questions.** Do not fire "give me a photo, voice preference, duration, target platform, tone, key message" all at once. Walk phases in order. Each phase asks at most one or two things at a time.
+
+
+      **When creating for the agent itself** ("create your avatar", "bring yourself to life"), do NOT ask the user for a photo or appearance details first. Read `SOUL.md` and `IDENTITY.md` from the workspace root. The agent''s identity lives there. Only ask the user for traits that are genuinely missing from those files.
+
+
+      **Photo is a nudge, not a gate.** Prompt-based avatars work. Offer photo as an optional upgrade for face consistency across videos, not as a required input.
+
+
+      **DO NOT batch-ask questions upfront.** Walk phases in order. Each phase asks at most one thing at a time, and only if needed.
+
+
+      Determine the target identity from the request. Do NOT ask the user "whose avatar?" if it''s clear from phrasing:
+
+
+      1. **Agent** — "create your avatar", "bring yourself to life", "design an avatar for you" → this is for the agent (Adam, Eve, Claude, etc.). Read `IDENTITY.md` for name.
+
+      2. **User** — "create my avatar", "make me an avatar", "I want my face in a video" → for the user. Ask for their name if not obvious.
+
+      3. **Named character** — "create an avatar called Cleo", "design a character named X" → use the given name.
+
+      Then check `AVATAR-<NAME>.md` at the workspace root:
+
+      - **AVATAR file exists + HeyGen section filled in** → "You already have an avatar set up. Want to add a new look, update it, or start fresh?" Wait for answer.
+
+      - **AVATAR file exists but HeyGen section empty** → skip to Phase 2.
+
+      - **No AVATAR file** → proceed to Phase 1.
+
+      ### Phase 1 — Identity Extraction
+
+      **Order matters. Files first, questions second.**
+
+      **For the agent** (Phase 0 target = agent):
+
+      1. Read `SOUL.md`, `IDENTITY.md`, and any existing `AVATAR-<NAME>.md` from the workspace root.
+
+      2. If SOUL.md or IDENTITY.md is found → extract appearance and voice traits silently. Do NOT ask the user "describe your appearance" — the agent IS the subject, and its identity lives in those files. **If the files describe only personality / values with no physical description, do NOT hallucinate traits.** Ask the user conversationally for the missing appearance traits only.
+
+      3. If neither file is found (e.g., Claude Code environment with no workspace identity) → ask the user to describe the agent''s appearance and voice conversationally.
+
+      **For users/named characters** (Phase 0 target = user or named):
+
+      - Conversational onboarding. Ask naturally about appearance (age, hair, general vibe) and voice (calm/energetic, accent). Not as a form — one or two questions at a time. Communicate in `user_language`.
+
+      Write `AVATAR-<NAME>.md` with the Appearance and Voice sections filled in. Leave the HeyGen section empty until Phase 2 succeeds.
+
+      Then proceed to Phase 2 via the Reference Photo Nudge.
+
+      ### Reference Photo Nudge (Phase 2 entry)
+
+      Ask if they have a reference photo. A photo produces better face consistency across videos, but prompt-based avatars work well when no photo is available. **This is a nudge, not a gate — offer to skip.**
+
+      Check first:
+
+      - **For agents:** look at the AVATAR file''s Appearance → Reference field, or IDENTITY.md for a photo path. If found, skip asking and use it.
+
+      - **For users:** ask. Keep it one sentence: "Got a headshot? It gives better face consistency, but I can also generate from your description — just say ''skip.''"
+
+      Branch:
+
+      - **Photo provided** → upload via MCP `upload_asset` or `heygen asset create --file <path>`, then Type B (photo) creation in Phase 2.
+
+      - **Skip** → Type A (prompt) creation in Phase 2.'
+    gold_removed: ''
+  - path: heygen-video/SKILL.md
+    tier: 1
+    gold_added: '**DO NOT batch-ask all of these at once.** Ask one or two items at a time. Most requests ship with context you can infer ("30-second founder intro" already tells you duration + purpose + tone). Only ask what''s genuinely missing. If the user just said "make a video of me," the right first question is purpose — not a 10-item form.
+
+      '
+    gold_removed: ''

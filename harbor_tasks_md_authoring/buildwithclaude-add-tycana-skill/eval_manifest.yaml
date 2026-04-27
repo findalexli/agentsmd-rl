@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: buildwithclaude-add-tycana-skill
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: davepoon/buildwithclaude
+  pr: 77
+  base_commit: "5a6ad5ba6e66e1309af03d02aff3f2f1c9a682d4"
+  merge_commit: "85717c43d7f474b9d2a4e1361a13b7cf1d2fa09a"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/all-skills/skills/tycana/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/all-skills/skills/tycana/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/all-skills/skills/tycana/SKILL.md."
+
+config_edits:
+  - path: plugins/all-skills/skills/tycana/SKILL.md
+    tier: 1
+    gold_added: "---\nname: tycana\ndescription: Persistent task management and productivity intelligence via MCP. Captures tasks from conversation, plans your day, tracks patterns, and gives personalized recommendations that improve over time.\nrequires:\n  mcp: [tycana]\ncategory: project-management\n---\n\n# Tycana Productivity\n\nTycana gives Claude persistent memory about your work across conversations. Connect once via MCP, and every session includes your tasks, projects, deadlines, blockers, and computed intelligence from your patterns.\n\n**Homepage**: [tycana.com](https://www.tycana.com)\n**Getting started**: [tycana.com/getting-started](https://www.tycana.com/getting-started/)\n\n## Prerequisites\n\n- Tycana MCP server connected at `https://app.tycana.com/mcp` (OAuth 2.1)\n- Or install the Tycana Claude plugin: `/plugin install tycana`\n\n## Available Tools\n\n| Tool | Purpose |\n|------|---------|\n| `capture` | Create tasks from conversation context |\n| `complete` | Mark items done with outcome and notes |\n| `plan_day` | Generate prioritized daily plan |\n| `what_next` | Energy-aware next action recommendation |\n| `review` | Progress summary with pattern analysis |\n| `get_context` | Load current work context |\n| `search` | Find items by keyword or filter |\n| `list_items` | List items with status/project filters |\n| `get_item` | Get full detail on a specific item |\n| `update_item` | Modify item properties |\n| `relate_items` | Create blocking/dependency relationships |\n| `remember` | Store personal preferences and constraints |\n| `cleanup_project` | Archive completed items in a project |\n| `delete_item` | Remove an item |\n\n## Example Prompts\n\n```\n\"Plan my day\"\n\"Remind me to update the deployment docs before Friday\"\n\"What should I work on next? I have about an hour and low energy\"\n\"How's the infrastructure project going?\"\n\"Review my week\"\n\"Brain dump — I've got a bunch of things rattling around\"\n```\n\n## Key Features\n\n- **Capture from conversation** — mention something you need to do and it's captured with effort, energy, and project inferred from context\n- **Computed intelligence** — velocity tracking, slip detection, effort calibration that improves over time\n- **Energy-aware recommendations** — factors in your current energy level for task suggestions\n- **Project graph** — items connect via blocking chains and dependencies, not flat lists"
+    gold_removed: ''

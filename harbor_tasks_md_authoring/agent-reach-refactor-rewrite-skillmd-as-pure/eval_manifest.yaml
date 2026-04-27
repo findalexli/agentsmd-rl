@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: agent-reach-refactor-rewrite-skillmd-as-pure
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Panniantong/Agent-Reach
+  pr: 78
+  base_commit: "105b477a31139e6ffba64709e5522cad56adcc12"
+  merge_commit: "94b428b0b9ccb4b907a8e54ee36b2054f8747d9e"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in agent_reach/skill/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in agent_reach/skill/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in agent_reach/skill/SKILL.md."
+
+config_edits:
+  - path: agent_reach/skill/SKILL.md
+    tier: 1
+    gold_added: "  Use the internet: search, read, and interact with 13+ platforms including\n  Twitter/X, Reddit, YouTube, GitHub, Bilibili, XiaoHongShu (小红书), Douyin (抖音),\n  WeChat Articles (微信公众号), LinkedIn, Boss直聘, RSS, Exa web search, and any web page.\n  Use when: (1) user asks to search or read any of these platforms,\n  (2) user shares a URL from any supported platform,\n  (3) user asks to search the web, find information online, or research a topic,\n  (4) user asks to post, comment, or interact on supported platforms.\n  Triggers: \"搜推特\", \"搜小红书\", \"看视频\", \"搜一下\", \"上网搜\", \"帮我查\", \"全网搜索\",\n  \"search twitter\", \"read tweet\", \"youtube transcript\", \"search reddit\",\n  \"read this link\", \"看这个链接\", \"B站\", \"bilibili\", \"抖音视频\",\n  \"微信文章\", \"公众号\", \"LinkedIn\", \"GitHub issue\", \"RSS\",\n  \"search online\", \"web search\", \"find information\", \"research\".\n# Agent Reach — Usage Guide\nUpstream tools for 13+ platforms. Call them directly.\nRun `agent-reach doctor` to check which channels are available.\n## ⚠️ Workspace Rules\n**Never create files in the agent workspace.** Use `/tmp/` for temporary output and `~/.agent-reach/` for persistent data.\n## Web — Any URL\ncurl -s \"https://r.jina.ai/URL\"\n## Web Search (Exa)\nmcporter call 'exa.web_search_exa(query: \"query\", numResults: 5)'\nmcporter call 'exa.get_code_context_exa(query: \"code question\", tokensNum: 3000)'\n## Twitter/X (xreach)\nxreach search \"query\" -n 10 --json          # search\nxreach tweet URL_OR_ID --json                # read tweet (supports /status/ and /article/ URLs)\nxreach tweets @username -n 20 --json         # user timeline\nxreach thread URL_OR_ID --json               # full thread\n## YouTube (yt-dlp)\nyt-dlp --dump-json \"URL\"                     # video metadata\n                                             # download subtitles, then read the .vtt file\nyt-dlp --dump-json \"ytsearch5:query\"         # search\n## Bilibili (yt-dlp)\n> Server IPs may get 412. Use `--cookies-from-browser chrome` or configure proxy.\n## Reddit\n```bash\ncurl -s \"https://www.reddit.com/r/SUBREDDIT/hot.json?limit=10\" -H \"User-Agent: agent-reach/1.0\"\ncurl -s \"https://www.reddit.com/search.json?q=QUERY&limit=10\" -H \"User-Agent: agent-reach/1.0\"\n> Server IPs may get 403. Search via Exa instead, or configure proxy.\n## GitHub (gh CLI)\n```bash\ngh search repos \"query\" --sort stars --limit 10\ngh repo view owner/repo\ngh search code \"query\" --language python\ngh issue list -R owner/repo --state open\ngh issue view 123 -R owner/repo\n```\n\n## 小红书 / XiaoHongShu (mcporter)\nmcporter call 'xiaohongshu.publish_content(title: \"标题\", content: \"正文\", images: [\"/path/img.jpg\"], tags: [\"tag\"])'\n> Requires login. Use Cookie-Editor to import cookies.\n## 抖音 / Douyin (mcporter)\n> No login needed.\n## 微信公众号 / WeChat Articles\n**Search** (miku_ai):\n```python\npython3 -c \"\nimport asyncio\nfrom miku_ai import get_wexin_article\nasync def s():\n    for a in await get_wexin_article('query', 5):\n        print(f'{a[\\\"title\\\"]} | {a[\\\"url\\\"]}')\nasyncio.run(s())\n\"\n**Read** (Camoufox — bypasses WeChat anti-bot):\ncd ~/.agent-reach/tools/wechat-article-for-ai && python3 main.py \"https://mp.weixin.qq.com/s/ARTICLE_ID\"\n> WeChat articles cannot be read with Jina Reader or curl. Must use Camoufox.\n## LinkedIn (mcporter)\n## Boss直聘 (mcporter)\nmcporter call 'bosszhipin.search_jobs_tool(keyword: \"Python\", city: \"北京\")'\n## RSS\nfor e in feedparser.parse('FEED_URL').entries[:5]:\n- **Channel not working?** Run `agent-reach doctor` — shows status and fix instructions.\n- **Twitter fetch failed?** Ensure `undici` is installed: `npm install -g undici`. Configure proxy: `agent-reach configure proxy URL`.\n- **Need to configure a channel?** Run `agent-reach doctor`, follow its instructions, or tell user to run the install guide."
+    gold_removed: ''

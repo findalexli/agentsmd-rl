@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: buildwithclaude-add-skyvern-browser-automation-skill
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: davepoon/buildwithclaude
+  pr: 129
+  base_commit: "8f2b986e624145cbe6f879be3ce142b8a417a456"
+  merge_commit: "cd94cadbc17a40a37e622e83e16b3f7c3c0ebcbb"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/all-skills/skills/skyvern/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/all-skills/skills/skyvern/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/all-skills/skills/skyvern/SKILL.md."
+
+config_edits:
+  - path: plugins/all-skills/skills/skyvern/SKILL.md
+    tier: 1
+    gold_added: "---\nname: skyvern\ndescription: \"AI-powered browser automation — navigate sites, fill forms, extract structured data, log in with stored credentials, and build reusable multi-step workflows using natural language. Install: pip install skyvern && skyvern setup\"\n---\n\n# Skyvern Browser Automation\n\nControl a real browser with natural language. Skyvern uses Vision LLMs and computer vision instead of brittle XPath/DOM selectors, so automations survive UI changes.\n\n## Setup\n\n**Cloud (recommended):**\n\n```bash\npip install skyvern\nskyvern setup  # interactive client selection\n```\n\nOr add the MCP server directly to your Claude Code config:\n\n```json\n{\n  \"mcpServers\": {\n    \"skyvern\": {\n      \"type\": \"streamable-http\",\n      \"url\": \"https://api.skyvern.com/mcp/\",\n      \"headers\": {\n        \"x-api-key\": \"YOUR_SKYVERN_API_KEY\"\n      }\n    }\n  }\n}\n```\n\nGet your API key at [app.skyvern.com](https://app.skyvern.com).\n\n## Key Features\n\n- **Natural language actions** — click, type, scroll, hover, drag-and-drop via plain English\n- **Structured extraction** — extract data with JSON schema validation and screenshot reasoning\n- **Secure login** — credential vault with 2FA/TOTP support (QR, email, SMS)\n- **Reusable workflows** — 23 block types, parameterized runs, cached scripts (10-100x faster on repeat)\n- **75+ MCP tools** — session management, multi-tab, iframes, network inspection, HAR recording\n- **Works with** — Claude Desktop, Claude Code, Cursor, Windsurf, Codex\n\n## Usage\n\n```\n\"Navigate to example.com and extract all product prices\"\n\"Log into my account and download the latest invoice\"\n\"Fill out the shipping form and click Submit\"\n\"Take a screenshot of the current page\"\n\"Build a workflow that runs this every Monday\"\n```\n\n## Links\n\n- **Homepage**: https://www.skyvern.com\n- **Docs**: https://www.skyvern.com/docs/integrations/mcp\n- **GitHub**: https://github.com/Skyvern-AI/skyvern\n- **Discord**: https://discord.gg/fG2XXEuQX3\n- **License**: AGPL v3.0"
+    gold_removed: ''

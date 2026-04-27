@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: skills-feat-route-video-generation-through
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: heygen-com/skills
+  pr: 67
+  base_commit: "df9458cc3543eb0fbda4b32822886eaba6234380"
+  merge_commit: "a2526d0c5bdb91860882e0cbdadb326edfb41145"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+
+config_edits:
+  - path: SKILL.md
+    tier: 1
+    gold_added: "1. **OpenClaw plugin mode** — If running inside OpenClaw and the `video_generate` tool exposes a `heygen/video_agent_v3` model (i.e. the user has [`@heygen/openclaw-plugin-heygen`](https://github.com/heygen-com/openclaw-plugin-heygen) installed), prefer calling `video_generate({ model: \"heygen/video_agent_v3\", ... })` directly for video generation. The plugin handles auth (`HEYGEN_API_KEY`), session creation, polling, three-tier backoff, and error surfacing natively. Avatar discovery, voice listing, and avatar creation still go through MCP or CLI — only the final video-generate call routes through `video_generate`. Frame Check still runs before submission.\n2. **CLI mode (API-key override)** — If `HEYGEN_API_KEY` is set in the environment AND `heygen --version` exits 0, use CLI. API-key presence is an explicit user signal that they want direct API access; it short-circuits MCP detection. No question asked.\n3. **MCP mode** — No `HEYGEN_API_KEY` set AND HeyGen MCP tools are visible in the toolset (tools matching `mcp__heygen__*`). OAuth auth, uses existing plan credits.\n4. **CLI mode (fallback)** — MCP tools NOT available AND `heygen --version` exits 0. Auth via `heygen auth login` (persists to `~/.heygen/credentials`).\n5. **Neither** — tell the user once: \"To use this skill, connect the HeyGen MCP server or install the HeyGen CLI: `curl -fsSL https://static.heygen.ai/cli/install.sh | bash` then `heygen auth login`.\"\n- **Never call `curl api.heygen.com/...`** — every mode routes through its own surface.\n- **OpenClaw plugin mode: only use `video_generate` for the generate step.** Never run `heygen ...` CLI for the generate call when the plugin is available. Avatar/voice discovery still uses MCP or CLI.\n- **Never cross over.** Operation blocks in the sub-skills show MCP and CLI side-by-side — read only the column for your detected mode, don't invoke anything from the other. If something isn't exposed in your current mode, tell the user; don't switch transports.\n\n### OpenClaw plugin-mode generate call\n\n```ts\nawait video_generate({\n  model: \"heygen/video_agent_v3\",\n  prompt: scriptWithFrameCheckNotes,\n  aspectRatio: \"16:9\", // or \"9:16\"\n  providerOptions: {\n    avatar_id,\n    voice_id,\n    style_id,        // optional\n    callback_url,    // optional async webhook\n    callback_id,     // optional correlation id\n  },\n});\n```\n\nPlugin install (one-time, by the user): `openclaw plugins install clawhub:@heygen/openclaw-plugin-heygen`. Plugin docs: <https://github.com/heygen-com/openclaw-plugin-heygen>."
+    gold_removed: ''

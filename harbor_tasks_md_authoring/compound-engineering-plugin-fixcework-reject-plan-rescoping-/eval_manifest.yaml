@@ -1,0 +1,44 @@
+version: "2.0"
+
+task:
+  name: compound-engineering-plugin-fixcework-reject-plan-rescoping-
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: EveryInc/compound-engineering-plugin
+  pr: 600
+  base_commit: "5c0ec9137a7350534e32db91e8bad66f02693716"
+  merge_commit: "b575e49c291371b178775a2bd50dbb1cc16210f5"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-work-beta/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-work-beta/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-work/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-work/SKILL.md."
+
+config_edits:
+  - path: plugins/compound-engineering/skills/ce-work-beta/SKILL.md
+    tier: 1
+    gold_added: '   - If clarifying questions were needed above, get user approval on the resolved answers. If no clarifications were needed, proceed without a separate approval step — plan scope is the plan''s authority, not something to renegotiate
+
+      - **Re-scoping the plan into human-time phases** - The plan''s Implementation Units define the scope of execution. Do not estimate human-hours per unit, propose multi-day breakdowns, or ask the user to pick a subset of units for "this session". Agents execute at agent speed, and context-window pressure is addressed by subagent dispatch (Phase 1 Step 4), not by phased sessions. If a plan-file input is genuinely too large for a single execution, say so plainly and suggest the user return to `/ce-plan` to reduce scope — don''t invent session phases as a workaround. For bare-prompt input, Phase 0''s Large routing already handles oversized work'
+    gold_removed: ''
+  - path: plugins/compound-engineering/skills/ce-work/SKILL.md
+    tier: 1
+    gold_added: '   - If clarifying questions were needed above, get user approval on the resolved answers. If no clarifications were needed, proceed without a separate approval step — plan scope is the plan''s authority, not something to renegotiate
+
+      - **Re-scoping the plan into human-time phases** - The plan''s Implementation Units define the scope of execution. Do not estimate human-hours per unit, propose multi-day breakdowns, or ask the user to pick a subset of units for "this session". Agents execute at agent speed, and context-window pressure is addressed by subagent dispatch (Phase 1 Step 4), not by phased sessions. If a plan-file input is genuinely too large for a single execution, say so plainly and suggest the user return to `/ce-plan` to reduce scope — don''t invent session phases as a workaround. For bare-prompt input, Phase 0''s Large routing already handles oversized work'
+    gold_removed: ''

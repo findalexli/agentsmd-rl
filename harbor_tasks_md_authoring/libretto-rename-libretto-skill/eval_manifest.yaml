@@ -1,0 +1,56 @@
+version: "2.0"
+
+task:
+  name: libretto-rename-libretto-skill
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: saffron-health/libretto
+  pr: 41
+  base_commit: "f7db31d95c6924f0961822401f01f188839d71af"
+  merge_commit: "dcc16fe47ea8a946041d68364681f649f35c1933"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/libretto/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/push/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/push/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/push/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/libretto/skill/SKILL.md."
+
+config_edits:
+  - path: .agents/skills/libretto/SKILL.md
+    tier: 1
+    gold_added: 'name: libretto'
+    gold_removed: ''
+  - path: .agents/skills/push/SKILL.md
+    tier: 1
+    gold_added: '1. Watch PR checks with `gh pr checks --watch`.
+
+      2. If GitHub returns `no checks reported`, treat it as possible propagation delay. Wait 15 seconds and retry `gh pr checks --watch`. Repeat up to 8 times (about 2 minutes total) before concluding there are no checks configured.
+
+      3. Once checks appear, wait for all required checks to complete.
+
+      4. If any test or type-check command fails, inspect logs immediately, fix the issue, commit, push, and repeat this CI loop until checks pass.
+
+      5. If checks are blocked on AI review bots, wait for bot completion and read all bot reviews before reporting completion.'
+    gold_removed: ''
+  - path: packages/libretto/skill/SKILL.md
+    tier: 1
+    gold_added: 'name: libretto'
+    gold_removed: ''

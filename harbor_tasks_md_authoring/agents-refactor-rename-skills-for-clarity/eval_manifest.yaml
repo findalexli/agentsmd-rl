@@ -1,0 +1,68 @@
+version: "2.0"
+
+task:
+  name: agents-refactor-rename-skills-for-clarity
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: astronomer/agents
+  pr: 14
+  base_commit: "2cdeed4a0ee26bbee4baf7051caee757af2a69e9"
+  merge_commit: "0cb15c7ace2a7524bbd55fc9bb330f88f03fda4f"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in shared-skills/check-freshness/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in shared-skills/debug-dag/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in shared-skills/discover-data/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in shared-skills/downstream-lineage/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in shared-skills/profile-table/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in shared-skills/upstream-lineage/SKILL.md."
+
+config_edits:
+  - path: shared-skills/airflow-2-to-3-migration/SKILL.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: shared-skills/check-freshness/SKILL.md
+    tier: 1
+    gold_added: 'name: check-freshness'
+    gold_removed: ''
+  - path: shared-skills/debug-dag/SKILL.md
+    tier: 1
+    gold_added: 'name: debug-dag'
+    gold_removed: ''
+  - path: shared-skills/discover-data/SKILL.md
+    tier: 1
+    gold_added: 'name: discover-data'
+    gold_removed: ''
+  - path: shared-skills/downstream-lineage/SKILL.md
+    tier: 1
+    gold_added: 'name: downstream-lineage'
+    gold_removed: ''
+  - path: shared-skills/profile-table/SKILL.md
+    tier: 1
+    gold_added: 'name: profile-table'
+    gold_removed: ''
+  - path: shared-skills/upstream-lineage/SKILL.md
+    tier: 1
+    gold_added: 'name: upstream-lineage'
+    gold_removed: ''

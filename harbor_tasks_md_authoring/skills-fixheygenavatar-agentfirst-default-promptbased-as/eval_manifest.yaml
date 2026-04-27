@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: skills-fixheygenavatar-agentfirst-default-promptbased-as
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: heygen-com/skills
+  pr: 55
+  base_commit: "ff7b6a32ffbd533b56f0aa8c040f78eef09500fd"
+  merge_commit: "57c319b656ffa8b88ea7ce6f85d49be30e27e927"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in heygen-avatar/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in heygen-avatar/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in heygen-avatar/SKILL.md."
+
+config_edits:
+  - path: heygen-avatar/SKILL.md
+    tier: 1
+    gold_added: "  Create a persistent HeyGen avatar — a reusable face + voice identity for the agent,\n  the user, or any named character — powered by HeyGen Avatar V technology.\n  Prompt-based creation by default (description → HeyGen builds it); photo upload is\n  optional for real-person digital twins.\n  Use when: (1) giving the agent a face + voice so it can present videos\n  (\"bring yourself to life\", \"create your avatar\", \"give yourself an avatar\",\n  \"design a presenter\", \"set up an avatar\", \"let's make an avatar\"),\n  (2) the user wants to appear in videos as themselves (\"create my avatar\",\n  \"I want my face in a video\", \"digital twin of me\", \"build me an avatar\"),\n  (3) building a named character presenter (\"create an avatar called Cleo\",\n  \"design a character named X\"), (4) establishing HeyGen identity before making videos —\n  the correct FIRST step when no avatar exists yet.\n  request (\"create an avatar AND make a video\", \"set up identity THEN create a video\",\nargument-hint: \"[name_or_description]\"\n**Default target = the agent.** The primary use of this skill is giving the agent a face + voice so it can present videos. Route to \"user\" only on explicit \"my avatar\" / \"me\" / \"my photo\" language. When in doubt, make the agent's avatar.\n**Do NOT batch-ask questions.** No \"give me a photo, voice preference, duration, target platform, tone, key message\" all at once. Walk phases in order. Each phase asks at most one or two things at a time.\n**For agent avatars: read SOUL.md and IDENTITY.md first, then go straight to prompt-based creation.** Do NOT ask the user for a photo or appearance details first. The agent's identity lives in those workspace files. Only ask the user for traits that are genuinely missing.\n\n**Prompt-based is the default creation path.** Photo is opt-in, only relevant when the user explicitly wants a real-person digital twin of themselves. Agents and named characters almost always use prompt-based creation.\nSee the Start Here block above for the default-to-agent rule. Only route to \"user\" or \"named character\" when the phrasing is unambiguous.\n\nRouting signals (in priority order):\n\n1. **User** (explicit only) — \"create **my** avatar\", \"make **me** an avatar\", \"I want my face in a video\", \"a digital twin of **me**\", \"based on **my** photo\". Requires a possessive pronoun referring to the user OR explicit mention of their photo. Ask for their name if not obvious.\n2. **Named character** (explicit only) — \"create an avatar called Cleo\", \"design a character named X\", \"build a presenter named Y\" → use the given name.\n3. **Agent** (default) — everything else: \"create your avatar\", \"bring yourself to life\", \"set up an avatar\", \"let's make an avatar\", \"create an avatar\", \"design a presenter\", \"I want you to appear in videos\", or any ambiguous phrasing. Read `IDENTITY.md` for name.\n**When unsure, default to agent.** Do NOT ask the user for their name, appearance, or voice on an ambiguous request — that's the wrong first move. If after reading IDENTITY.md + SOUL.md the intent still feels ambiguous, ask one short clarifying question to disambiguate (phrase it naturally — something like \"quick check: this avatar is for you, or for me?\").\n**Order matters. Files first, questions second. Prompt-based creation is the default path — photo is an opt-in upgrade.**\n2. If SOUL.md or IDENTITY.md is found → extract appearance and voice traits silently. Do NOT ask the user \"describe your appearance\" — the agent IS the subject, and its identity lives in those files. **If the files describe only personality / values with no physical description, do NOT hallucinate traits.** Ask the user conversationally for the missing appearance traits only (one or two at a time).\n4. Proceed directly to **Type A (prompt) creation** in Phase 2 by default. Do NOT ask for a photo unless the user volunteers one or explicitly asks for photo realism — agents almost always use prompt-based creation.\n- Conversational onboarding. Ask naturally about appearance and voice — one or two questions at a time, not a form. Communicate in `user_language`.\n- **User path only:** after the onboarding Q&A, run the Reference Photo Nudge below.\n- **Named character path:** skip the nudge, go straight to Type A (prompt) creation.\n### Reference Photo Nudge (user path only)\nOnly run this step when Phase 0 target = **user** (real-person digital twin) OR when the user explicitly asks for photo realism.\n- Check AVATAR file's Appearance → Reference field first. If a photo is already on file, skip asking and use it.\n- Otherwise, ask one sentence: *\"Got a headshot? It gives better face consistency for videos of you. I can also generate from your description — just say 'skip.'\"*\nFor agents and named characters, skip this entire step — go straight to Type A (prompt) creation.\n"
+    gold_removed: ''

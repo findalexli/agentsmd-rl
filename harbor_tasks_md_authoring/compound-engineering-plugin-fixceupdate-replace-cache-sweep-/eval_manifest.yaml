@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: compound-engineering-plugin-fixceupdate-replace-cache-sweep-
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: EveryInc/compound-engineering-plugin
+  pr: 656
+  base_commit: "7e83755acbb48a62accd3566def8c4adc7de451a"
+  merge_commit: "b9ae6b758d0d538648cc4dbb09dfb0fa8c0858fb"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-update/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-update/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/compound-engineering/skills/ce-update/SKILL.md."
+
+config_edits:
+  - path: plugins/compound-engineering/skills/ce-update/SKILL.md
+    tier: 1
+    gold_added: "  Check if the compound-engineering plugin is up to date and recommend the\n  update command if not. Use when the user says \"update compound engineering\",\n  \"check compound engineering version\", \"ce update\", \"is compound engineering\n  up to date\", \"update ce plugin\", or reports issues that might stem from a\n  stale compound-engineering plugin version. This skill only works in Claude\n  Code — it relies on the plugin harness cache layout.\n# Check Plugin Version\nVerify the installed compound-engineering plugin version matches the latest\nrelease, and recommend the update command if it doesn't. Claude Code only.\nOnly the **Skill directory** determines whether this session is Claude Code —\nif empty or unresolved, the skill requires Claude Code. The other sections may\n`${CLAUDE_SKILL_DIR}` is a Claude Code-documented substitution that resolves\nat skill-load time. For a marketplace-cached install it looks like\n`~/.claude/plugins/cache/<marketplace>/compound-engineering/<version>/skills/ce-update`,\nso the currently-loaded version is the basename two `dirname` levels up.\n**Skill directory:**\n!`echo \"${CLAUDE_SKILL_DIR}\"`\n**Currently loaded version:**\n!`case \"${CLAUDE_SKILL_DIR}\" in */plugins/cache/*/compound-engineering/*/skills/ce-update) basename \"$(dirname \"$(dirname \"${CLAUDE_SKILL_DIR}\")\")\" ;; *) echo '__CE_UPDATE_NOT_MARKETPLACE__' ;; esac`\n**Marketplace name:**\n!`case \"${CLAUDE_SKILL_DIR}\" in */plugins/cache/*/compound-engineering/*/skills/ce-update) basename \"$(dirname \"$(dirname \"$(dirname \"$(dirname \"${CLAUDE_SKILL_DIR}\")\")\")\")\" ;; *) echo '__CE_UPDATE_NOT_MARKETPLACE__' ;; esac`\nIf **Skill directory** is empty or unresolved: tell the user this skill\nrequires Claude Code and stop. No further action.\n### 2. Handle failure cases\nIf **Latest released version** contains `__CE_UPDATE_VERSION_FAILED__`: tell\nthe user the latest release could not be fetched (gh may be unavailable or\nrate-limited) and stop.\nIf **Currently loaded version** contains `__CE_UPDATE_NOT_MARKETPLACE__`: this\nsession loaded the skill from outside the standard marketplace cache (typical\nwhen using `claude --plugin-dir` for local development, or for a non-standard\ninstall). Tell the user (substituting the actual path):\n> \"Skill is loaded from `{skill-directory}` — not the standard marketplace\n> cache at `~/.claude/plugins/cache/`. This is normal when using\n> `claude --plugin-dir` for local development. No action for this session.\n> Your marketplace install (if any) is unaffected — run `/ce-update` in a\n> regular Claude Code session (no `--plugin-dir`) to check that cache.\"\nThen stop.\n### 3. Compare versions\n**Up to date** — `{currently loaded} == {latest}`:\n> \"compound-engineering **v{version}** is installed and up to date.\"\n\n**Out of date** — `{currently loaded} != {latest}`:\n\n> \"compound-engineering is on **v{currently loaded}** but **v{latest}** is available.\n>\n> Update with:\n> ```\n> claude plugin update compound-engineering@{marketplace-name}\n> ```\n> Then restart Claude Code to apply.\"\n\nThe `claude plugin update` command ships with Claude Code itself and updates\ninstalled plugins to their latest version; it replaces earlier manual cache\nsweep / marketplace-refresh workarounds. The marketplace name is derived from\nthe skill path rather than hardcoded because this plugin is distributed under\nmultiple marketplace names (for example, `compound-engineering-plugin` for\npublic installs per the README, or other names for internal/team marketplaces)."
+    gold_removed: ''

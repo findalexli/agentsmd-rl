@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: marketingskills-feat-add-growth-experimentation-program
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: coreyhaines31/marketingskills
+  pr: 211
+  base_commit: "7c8c087486c29290b982820d719e1c4a556c0053"
+  merge_commit: "2fe1310881ca3f2ab00798cdff21c646537e65b3"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/ab-test-setup/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/ab-test-setup/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/ab-test-setup/SKILL.md."
+
+config_edits:
+  - path: skills/ab-test-setup/SKILL.md
+    tier: 1
+    gold_added: "description: When the user wants to plan, design, or implement an A/B test or experiment, or build a growth experimentation program. Also use when the user mentions \"A/B test,\" \"split test,\" \"experiment,\" \"test this change,\" \"variant copy,\" \"multivariate test,\" \"hypothesis,\" \"should I test this,\" \"which version is better,\" \"test two versions,\" \"statistical significance,\" \"how long should I run this test,\" \"growth experiments,\" \"experiment velocity,\" \"experiment backlog,\" \"ICE score,\" \"experimentation program,\" or \"experiment playbook.\" Use this whenever someone is comparing two approaches and wants to measure which performs better, or when they want to build a systematic experimentation practice. For tracking implementation, see analytics-tracking. For page-level conversion optimization, see page-cro.\n  version: 1.2.0\n## Growth Experimentation Program\n\nIndividual tests are valuable. A continuous experimentation program is a compounding asset. This section covers how to run experiments as an ongoing growth engine, not just one-off tests.\n\n### The Experiment Loop\n\n```\n1. Generate hypotheses (from data, research, competitors, customer feedback)\n2. Prioritize with ICE scoring\n3. Design and run the test\n4. Analyze results with statistical rigor\n5. Promote winners to a playbook\n6. Generate new hypotheses from learnings\n→ Repeat\n```\n\n### Hypothesis Generation\n\nFeed your experiment backlog from multiple sources:\n\n| Source | What to Look For |\n|--------|-----------------|\n| Analytics | Drop-off points, low-converting pages, underperforming segments |\n| Customer research | Pain points, confusion, unmet expectations |\n| Competitor analysis | Features, messaging, or UX patterns they use that you don't |\n| Support tickets | Recurring questions or complaints about conversion flows |\n| Heatmaps/recordings | Where users hesitate, rage-click, or abandon |\n| Past experiments | \"Significant loser\" tests often reveal new angles to try |\n\n### ICE Prioritization\n\nScore each hypothesis 1-10 on three dimensions:\n\n| Dimension | Question |\n|-----------|----------|\n| **Impact** | If this works, how much will it move the primary metric? |\n| **Confidence** | How sure are we this will work? (Based on data, not gut.) |\n| **Ease** | How fast and cheap can we ship and measure this? |\n\n**ICE Score** = (Impact + Confidence + Ease) / 3\n\nRun highest-scoring experiments first. Re-score monthly as context changes.\n\n### Experiment Velocity\n\nTrack your experimentation rate as a leading indicator of growth:\n\n| Metric | Target |\n|--------|--------|\n| Experiments launched per month | 4-8 for most teams |\n| Win rate | 20-30% is common for mature programs (sustained higher rates may indicate conservative hypotheses) |\n| Average test duration | 2-4 weeks |\n| Backlog depth | 20+ hypotheses queued |\n| Cumulative lift | Compound gains from all winners |\n\n### The Experiment Playbook\n\nWhen a test wins, don't just implement it — document the pattern:\n\n```\n## [Experiment Name]\n**Date**: [date]\n**Hypothesis**: [the hypothesis]\n**Sample size**: [n per variant]\n**Result**: [winner/loser/inconclusive] — [primary metric] changed by [X%] (95% CI: [range], p=[value])\n**Guardrails**: [any guardrail metrics and their outcomes]\n**Segment deltas**: [notable differences by device, segment, or cohort]\n**Why it worked/failed**: [analysis]\n**Pattern**: [the reusable insight — e.g., \"social proof near pricing CTAs increases plan selection\"]\n**Apply to**: [other pages/flows where this pattern might work]\n**Status**: [implemented / parked / needs follow-up test]\n```\n\nOver time, your playbook becomes a library of proven growth patterns specific to your product and audience.\n\n### Experiment Cadence\n\n**Weekly (30 min)**: Review running experiments for technical issues and guardrail metrics. Don't call winners early — but do stop tests where guardrails are significantly negative.\n\n**Bi-weekly**: Conclude completed experiments. Analyze results, update playbook, launch next experiment from backlog.\n\n**Monthly (1 hour)**: Review experiment velocity, win rate, cumulative lift. Replenish hypothesis backlog. Re-prioritize with ICE.\n\n**Quarterly**: Audit the playbook. Which patterns have been applied broadly? Which winning patterns haven't been scaled yet? What areas of the funnel are under-tested?\n\n---\n"
+    gold_removed: ''

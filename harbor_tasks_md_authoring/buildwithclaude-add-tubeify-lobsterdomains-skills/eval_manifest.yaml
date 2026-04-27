@@ -1,0 +1,48 @@
+version: "2.0"
+
+task:
+  name: buildwithclaude-add-tubeify-lobsterdomains-skills
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: davepoon/buildwithclaude
+  pr: 86
+  base_commit: "65297c37e4aeca43b76fbe451dfad3599b2a48c9"
+  merge_commit: "4846390cbf1c560f1dc45f1a71cdf45175874142"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/all-skills/skills/lobsterdomains/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/all-skills/skills/lobsterdomains/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/all-skills/skills/lobsterdomains/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/all-skills/skills/tubeify/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/all-skills/skills/tubeify/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/all-skills/skills/tubeify/SKILL.md."
+
+config_edits:
+  - path: plugins/all-skills/skills/lobsterdomains/SKILL.md
+    tier: 1
+    gold_added: "---\nname: lobsterdomains\ncategory: web\ndescription: Register ICANN domains with crypto payments (USDC/USDT/ETH/BTC) via API — built for AI agents\n---\n\n# LobsterDomains\n\nRegister .com, .xyz, .org and 1000+ ICANN domains with cryptocurrency payments via a simple REST API. Built for AI agents to acquire domains fully autonomously.\n\n## When to Use This Skill\n\n- User wants to check if a domain name is available\n- User wants to register a domain programmatically without browser interaction\n- User wants to pay for domain registration with crypto (USDC/USDT/ETH/BTC)\n\n## What This Skill Does\n\n1. Checks domain availability and live pricing\n2. Accepts on-chain payment (USDC/USDT on Ethereum, Arbitrum, Base, or Optimism)\n3. Registers the domain and returns DNS management credentials\n\n## Usage\n\n```bash\n# Check availability\ncurl \"https://lobsterdomains.xyz/api/v1/domains/check?domain=example.com\" \\\n  -H \"Authorization: Bearer $LOBSTERDOMAINS_API_KEY\"\n\n# Register after payment\ncurl -X POST https://lobsterdomains.xyz/api/v1/domains/register \\\n  -H \"Authorization: Bearer $LOBSTERDOMAINS_API_KEY\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"domain\":\"example.com\",\"tx_hash\":\"0x...\",\"contact\":{\"name\":\"...\",\"email\":\"...\"}}'\n```\n\n## Setup\n\nGenerate an API key at https://lobsterdomains.xyz/api-keys (requires Ethereum wallet auth).\n\n## Links\n\n- Website: https://lobsterdomains.xyz\n- ClawHub: https://clawhub.ai/esokullu/lobsterdomains\n- Full docs: https://lobsterdomains.xyz/skills.md"
+    gold_removed: ''
+  - path: plugins/all-skills/skills/tubeify/SKILL.md
+    tier: 1
+    gold_added: "---\nname: tubeify\ncategory: media\ndescription: AI video editor for YouTube — removes pauses, filler words, and dead air from raw recordings via API\n---\n\n# Tubeify\n\nAI-powered video editing for YouTube creators. Submit a raw recording URL, get back a polished, trimmed video automatically — no manual editing required.\n\n## When to Use This Skill\n\n- User wants to remove dead air or pauses from a video recording\n- User wants to clean up filler words (um, uh, etc.) from a video\n- User wants to automate post-recording video editing for YouTube\n\n## What This Skill Does\n\n1. Authenticates to Tubeify with a wallet address\n2. Submits the raw video URL with processing options\n3. Polls for completion and returns a download link\n\n## Usage\n\n```bash\n# Authenticate\ncurl -c session.txt -X POST https://tubeify.xyz/index.php \\\n  -d \"wallet=<YOUR_WALLET>\"\n\n# Submit video\ncurl -b session.txt -X POST https://tubeify.xyz/process.php \\\n  -d \"video_url=<URL>\" \\\n  -d \"remove_pauses=true\" \\\n  -d \"remove_fillers=true\"\n\n# Check status\ncurl -b session.txt https://tubeify.xyz/status.php\n```\n\n## Links\n\n- Website: https://tubeify.xyz\n- ClawHub: https://clawhub.ai/esokullu/tubeify\n- Full docs: https://tubeify.xyz/skills.md"
+    gold_removed: ''

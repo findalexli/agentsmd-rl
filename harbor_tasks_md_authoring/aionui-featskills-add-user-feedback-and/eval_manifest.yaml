@@ -1,0 +1,110 @@
+version: "2.0"
+
+task:
+  name: aionui-featskills-add-user-feedback-and
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: iOfficeAI/AionUi
+  pr: 2491
+  base_commit: "e0e31eefb4816ef5bff4aef89396292480a821d5"
+  merge_commit: "47e4a78d4932834253a37f2564011db8f27f07f5"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/fix-sentry/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/fix-sentry/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/fix-sentry/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/fix-sentry/references/report-template.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/fix-sentry/references/report-template.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/fix-sentry/references/report-template.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/fix-sentry/references/triage-rules.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/fix-sentry/references/triage-rules.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/fix-sentry/references/triage-rules.md."
+
+config_edits:
+  - path: .claude/skills/fix-sentry/SKILL.md
+    tier: 1
+    gold_added: "  fix code, create GitHub issues, and submit PRs. Supports user feedback issues (event.type\n  \"default\") with attachment analysis (logs, screenshots) when include_feedback=true.\n- Event type (`event.type` — `error`, `default`, etc.)\n#### Step 1.5b: Attachment Analysis\n\nFor issues where `event.type` is `default` (user feedback) **or** stack traces are absent,\ncheck for attachments that may contain diagnostic information.\n\n**When to run:** After Step 1.5, for any issue group that meets either condition:\n\n- `event.type` is `default` (user feedback / bug report)\n- No usable stack trace was extracted in Step 1.5\n\n**Prerequisite:** Only runs when `include_feedback=true` is set for `event.type: default` issues.\nIssues without stack traces are always eligible regardless of this flag.\n\n**Procedure:**\n\n1. **Get events for the issue** (if not already fetched):\n\n   ```\n   mcp__sentry__list_issue_events(\n     issueUrl=\"<sentry-url>\",\n     limit=3\n   )\n   ```\n\n2. **List attachments** for each event:\n\n   ```\n   mcp__sentry__get_event_attachment(\n     projectSlug=\"<project>\",\n     eventId=\"<eventId>\"\n   )\n   ```\n\n3. **Download and analyze attachments by type:**\n\n   | Attachment type | Name / MIME pattern             | Analysis method                                                           |\n   | --------------- | ------------------------------- | ------------------------------------------------------------------------- |\n   | Logs            | `logs.gz`, `*.log`, `*.txt`     | Download → decompress → search for error patterns, stack traces, warnings |\n   | Screenshots     | `*.png`, `*.jpg`, `screenshot*` | Download → use vision to identify UI state, error dialogs, frozen screens |\n   | Config / state  | `*.json`, `*.xml`               | Download → check for misconfigurations                                    |\n\n   ```\n   mcp__sentry__get_event_attachment(\n     projectSlug=\"<project>\",\n     eventId=\"<eventId>\",\n     attachmentId=\"<attachmentId>\"\n   )\n   ```\n\n4. **Extract diagnostic signals from logs:**\n   - Error / Warning lines (`error`, `warn`, `fatal`, `crash`, `EPIPE`, etc.)\n   - Stack traces embedded in log output\n   - Performance indicators (memory usage, CPU spikes, event loop delays)\n   - Repeated failure patterns around the reported issue time\n\n5. **Extract signals from screenshots:**\n   - Visible error messages or dialogs\n   - UI freeze indicators (loading spinners stuck, unresponsive elements)\n   - Memory / resource warnings visible in UI\n\n6. **Combine user description + attachment signals** to form a diagnosis hypothesis.\n   Pass the combined evidence to Step 1.6 for triage classification.\n\n**Rate-limit note:** Same as Step 1.5 — call attachment APIs sequentially, never in parallel.\n\n**Quick reference — seven categories:**\n| Category          | Action                                                             |\n| ----------------- | ------------------------------------------------------------------ |\n| **Direct fix**    | Stack trace → our code → fix                                       |\n| **Defensive fix** | No trace, but pattern matches our code → fix with guards           |\n| **Feedback fix**  | User feedback + attachment analysis → identifiable code path → fix |\n| **Pending merge** | Open PR exists → skip or improve                                   |\n| **Already fixed** | Merged PR / resolved → skip                                        |\n| **System-level**  | EPIPE, ENOSPC, EIO, uv, Chromium → skip                            |\n| **Unfixable**     | No trace, no matching code, no diagnostic attachments → skip       |\n| Classification    | TTL      | Reason                                                |\n| ----------------- | -------- | ----------------------------------------------------- |\n| system_level      | 7 days   | These never change (EPIPE, ENOSPC, EIO, uv, etc.)     |\n| already_fixed     | 48 hours | Re-check in case of regression                        |\n| feedback_no_clue  | 48 hours | User feedback with no diagnostic clues in attachments |\n| unfixable         | 24 hours | Might become fixable with new code changes            |\n| fix_pending_merge | 12 hours | PR might get merged, issue might resolve              |\n| Parameter        | Default  | Description                                                        |\n| ---------------- | -------- | ------------------------------------------------------------------ |\n| threshold        | 100      | Minimum occurrence count (batch mode only)                         |\n| project          | electron | Sentry project slug                                                |\n| sort             | freq     | Sort order for issues                                              |\n| limit            | 0        | Max issues to fix per invocation (0 = unlimited, >0 = daemon mode) |\n| include_feedback | false    | Include `event.type: default` (user feedback) issues               |\n- Include user feedback: `/fix-sentry include_feedback=true`"
+    gold_removed: ''
+  - path: .claude/skills/fix-sentry/references/report-template.md
+    tier: 1
+    gold_added: "Will fix — feedback (N groups):\n  1. [ELECTRON-FF] User feedback description (N events)\n     → Attachment: logs.gz — stack trace found pointing to src/renderer/hooks/useChat.ts\n     → Feedback fix: add timeout guard for stalled stream response\n\nFixed — From Feedback (F groups):\n  1. [ELECTRON-FF] User-reported UI freeze during stream response\n     PR: <pr-url>\n     Issue: #<number>\n     Diagnosis: logs.gz contained repeated ETIMEDOUT in useChat hook\n     Verification: PASS — unit tests pass\n\nTotal: N fixed (PR created), F from feedback, P pending review, M already fixed, K skipped"
+    gold_removed: ''
+  - path: .claude/skills/fix-sentry/references/triage-rules.md
+    tier: 1
+    gold_added: '## Step C2: Feedback fix — User-reported issue with diagnostic attachments
+
+
+      Issues with `event.type: "default"` are user-submitted feedback, not automatic crash reports.
+
+      These have no stack trace but may include attachments (logs, screenshots) with diagnostic clues.
+
+
+      **Prerequisite:** Step 1.5b (Attachment Analysis) must have run first.
+
+
+      | Scenario                                                             | Result                                |
+
+      | -------------------------------------------------------------------- | ------------------------------------- |
+
+      | Log attachment contains stack trace pointing to our code             | Promote to Direct fix (Step B)        |
+
+      | Log attachment shows resource exhaustion (OOM, CPU 100%) in our code | Defensive fix                         |
+
+      | Log attachment shows repeated errors matching our code paths         | Defensive fix                         |
+
+      | Screenshot shows frozen UI with identifiable component               | Defensive fix                         |
+
+      | User description + logs suggest a specific code path                 | Defensive fix                         |
+
+      | Logs show only system / third-party issues                           | Skip (system-level)                   |
+
+      | No attachments, no matching code path from description               | Skip (unfixable — needs human triage) |
+
+
+      | Category          | Criteria                                                     | Action                        |
+
+      | ----------------- | ------------------------------------------------------------ | ----------------------------- |
+
+      | **Direct fix**    | Stack trace → our code, clear cause                          | Fix with targeted code change |
+
+      | **Defensive fix** | No stack trace, but error path matches our code              | Fix with defensive guards     |
+
+      | **Feedback fix**  | User feedback + attachment analysis → identifiable code path | Fix based on diagnostic clues |
+
+      | **Pending merge** | Existing OPEN PR addresses the root cause                    | Skip or improve existing PR   |
+
+      | **Already fixed** | Merged PR / resolved in Sentry                               | Skip                          |
+
+      | **System-level**  | EPIPE, ENOSPC, EIO, uv, Chromium internal                    | Skip                          |
+
+      | **Unfixable**     | No stack trace, no matching code path, no attachments        | Skip                          |'
+    gold_removed: ''

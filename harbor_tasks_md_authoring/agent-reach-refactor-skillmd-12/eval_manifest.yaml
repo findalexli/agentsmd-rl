@@ -1,0 +1,40 @@
+version: "2.0"
+
+task:
+  name: agent-reach-refactor-skillmd-12
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Panniantong/Agent-Reach
+  pr: 8
+  base_commit: "2f674f1e45b266ad281ae9f8f2c059a13182b2c7"
+  merge_commit: "291d073223cadd00bc0497e837fa4e9cbd333a7a"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in agent_reach/skill/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in agent_reach/skill/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in agent_reach/skill/SKILL.md."
+
+config_edits:
+  - path: agent-reach/SKILL.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: agent_reach/integrations/skill/SKILL.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: agent_reach/skill/SKILL.md
+    tier: 1
+    gold_added: "  Twitter/X, Reddit, YouTube, GitHub, Bilibili, XiaoHongShu, Instagram, LinkedIn,\n  Boss直聘, RSS, and any web page — all from a single CLI.\n  Use when: (1) reading content from URLs (tweets, Reddit posts, articles, videos),\n  (2) searching across platforms (web, Twitter, Reddit, GitHub, YouTube, Bilibili,\n  XiaoHongShu, Instagram, LinkedIn, Boss直聘),\n  (3) user asks to configure/enable a platform channel,\n  (4) checking channel health or updating Agent Reach.\n  \"搜索\", \"读取\", \"查一下\", \"看看这个链接\",\n  \"帮我配\", \"帮我添加\", \"帮我安装\".\nRead and search the internet across 12+ platforms via unified CLI.\n`install` auto-detects your environment and installs core dependencies (Node.js, mcporter, bird CLI, gh CLI, instaloader). Read the output and run `agent-reach doctor` to see what's active.\nHandles: tweets, Reddit posts, articles, YouTube/Bilibili (transcripts), GitHub repos, Instagram posts, LinkedIn profiles, Boss直聘 jobs, XiaoHongShu notes, RSS feeds, and any web page.\nagent-reach search-instagram \"query\"   # Instagram\nagent-reach search-linkedin \"query\"    # LinkedIn\nagent-reach search-bosszhipin \"query\"  # Boss直聘\nagent-reach configure instagram-cookies \"sessionid=xxx; csrftoken=yyy; ...\"\nagent-reach configure --from-browser chrome    # auto-extract cookies from local browser\n## Configuring a channel (\"帮我配 XXX\")\n\nAll channels follow the same flow. When a user asks to configure/enable any channel:\n\n1. Run `agent-reach doctor`\n2. Find the channel in the output — it shows the current status (✅/⚠️/⬜) and **what to do next**\n3. Execute whatever you can automatically (install packages, start services, register MCP)\n4. For steps that require human action (scan QR code, paste cookies, login), tell the user exactly what to do\n5. After the user completes their part, run `agent-reach doctor` again to verify\n\n**Do NOT memorize per-channel steps.** Always rely on `doctor` output — it stays up-to-date even when backends change.\n\n### Common human actions\nThese are things only the user can do. When `doctor` indicates one is needed, explain it clearly:\n- **Paste cookies:** User installs [Cookie-Editor](https://chromewebstore.google.com/detail/cookie-editor/hlkenndednhfkekhgcdicdfddnkalmdm) Chrome extension → goes to the website → exports Header String → sends it to you → you run `agent-reach configure <platform>-cookies \"...\"`\n- **Scan QR code:** User opens the URL shown in `doctor` output on their phone/browser and scans with the platform's app\n- **Browser login:** Some MCP services need a one-time browser login; on servers without a display, user may need VNC\n- **Proxy:** Reddit/Bilibili/XiaoHongShu block server IPs — suggest a residential proxy (~$1/month) if on a server\n- If a channel is ⬜ but the user hasn't asked for it, don't push — let them opt in\n- LinkedIn and Boss直聘 have Jina Reader fallback even without full setup"
+    gold_removed: ''

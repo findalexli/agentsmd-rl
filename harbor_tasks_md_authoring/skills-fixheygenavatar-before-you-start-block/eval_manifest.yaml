@@ -1,0 +1,50 @@
+version: "2.0"
+
+task:
+  name: skills-fixheygenavatar-before-you-start-block
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: heygen-com/skills
+  pr: 56
+  base_commit: "57c319b656ffa8b88ea7ce6f85d49be30e27e927"
+  merge_commit: "0c1e9d38b96247fbd124966f85760e3b652ec18e"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in heygen-avatar/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in heygen-avatar/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in heygen-avatar/SKILL.md."
+
+config_edits:
+  - path: heygen-avatar/SKILL.md
+    tier: 1
+    gold_added: '## Before You Start (environment detection)
+
+      - **Found** → OpenClaw environment. Skip this entire section and go straight to Phase 0. Workspace-native identity (SOUL.md, IDENTITY.md) will drive agent onboarding.
+
+      - **Not found** → Claude Code environment, no workspace identity files. Still go to Phase 0 next — do NOT skip ahead to listing user avatars or asking the user for a photo.
+
+      **⚠️ Do NOT fetch HeyGen avatars yet.** That''s a Phase 0 sub-step (only after target detection). Fetching before Phase 0 causes the agent to frame the conversation around "your existing avatars" when the default should be creating one for the agent itself.
+
+      **Optional existing-avatar check** (only useful on the user path when the user might already have avatars in their HeyGen account). If Phase 0 target = **user** AND no `AVATAR-<USER>.md` exists, list their HeyGen avatars first:
+
+
+      **MCP:** `list_avatar_groups(ownership=private)`
+
+      **CLI:** `heygen avatar list --ownership private`
+
+
+      If the list is non-empty, present the options and ask which to use or whether to create new. If empty, proceed to Phase 1. Skip this check entirely for agent and named-character targets — those live in AVATAR-*.md, not the HeyGen catalog.
+
+      '
+    gold_removed: ''

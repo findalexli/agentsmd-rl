@@ -1,0 +1,80 @@
+version: "2.0"
+
+task:
+  name: skills-fix-silent-mode-detection-no
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: heygen-com/skills
+  pr: 54
+  base_commit: "d2ff2c6312e78315b4d920eb0ba6f900601ddfbd"
+  merge_commit: "ff7b6a32ffbd533b56f0aa8c040f78eef09500fd"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in heygen-avatar/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in heygen-avatar/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in heygen-avatar/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in heygen-video/SKILL.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in heygen-video/SKILL.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in heygen-video/SKILL.md."
+
+config_edits:
+  - path: SKILL.md
+    tier: 1
+    gold_added: 'Two modes, in order of preference. **Mode selection is silent — detect once at the start of the session, pick a mode, and move on.** Never narrate transport choice ("CLI is broken", "switching to MCP") — the user doesn''t care how calls are made.
+
+      **CLI fallback:** If MCP tools are not available AND the `heygen` binary runs cleanly (`heygen --version` exits 0), use it. Auth: set `HEYGEN_API_KEY` in the env OR run `heygen auth login` (persists to `~/.heygen/credentials`). If the CLI binary is missing, errors on `--version`, or auth is not set, silently skip it — do not retry MCP.
+
+
+      **Neither available:** Only if both MCP and a working CLI are missing, tell the user once — concisely — how to connect: "To use this skill, connect the HeyGen MCP server or install the HeyGen CLI: `curl -fsSL https://static.heygen.ai/cli/install.sh | bash` then `heygen auth login`."'
+    gold_removed: ''
+  - path: heygen-avatar/SKILL.md
+    tier: 1
+    gold_added: '**Mode selection is silent.** Detect once at the start of the session, pick a mode, move on. Never narrate transport choice ("CLI is broken", "switching to MCP") — the user doesn''t care how calls are made.
+
+
+      **CLI fallback:** If MCP tools are not available AND the `heygen` binary runs cleanly (`heygen --version` exits 0), use it. Auth: `HEYGEN_API_KEY` env OR `heygen auth login` (persists to `~/.heygen/credentials`). If the CLI is missing, errors on `--version`, or auth is not set, silently skip it — do not retry MCP.
+
+
+      **Neither available:** Only if MCP is unavailable AND the CLI doesn''t work, tell the user once: "To use this skill, connect the HeyGen MCP server or install the HeyGen CLI: `curl -fsSL https://static.heygen.ai/cli/install.sh | bash` then `heygen auth login`."'
+    gold_removed: ''
+  - path: heygen-video/SKILL.md
+    tier: 1
+    gold_added: 'Two modes, in order of preference. **Mode selection is silent.** Detect once at the start of the session, pick a mode, move on. Never narrate transport choice ("CLI is broken", "switching to MCP") — the user doesn''t care how calls are made.
+
+      **CLI fallback:** If MCP tools are not available AND the `heygen` binary runs cleanly (`heygen --version` exits 0), use it. Auth: `HEYGEN_API_KEY` env OR `heygen auth login` (persists to `~/.heygen/credentials`). If the CLI is missing, errors on `--version`, or auth is not set, silently skip it — do not retry MCP.
+
+
+      **Neither available:** Only if MCP is unavailable AND the CLI doesn''t work, tell the user once: "To use this skill, connect the HeyGen MCP server or install the HeyGen CLI: `curl -fsSL https://static.heygen.ai/cli/install.sh | bash` then `heygen auth login`."'
+    gold_removed: ''

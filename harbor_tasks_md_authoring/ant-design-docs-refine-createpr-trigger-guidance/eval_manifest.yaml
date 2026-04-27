@@ -1,0 +1,52 @@
+version: "2.0"
+
+task:
+  name: ant-design-docs-refine-createpr-trigger-guidance
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: ant-design/ant-design
+  pr: 57559
+  base_commit: "a539397a6d6d3322bf39d96fc424a5ddd4e59d0c"
+  merge_commit: "0a0bc50f57f95c326ab180c721c66357105496ec"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/create-pr/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/create-pr/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/create-pr/SKILL.md."
+
+config_edits:
+  - path: .agents/skills/create-pr/SKILL.md
+    tier: 1
+    gold_added: 'description: Create pull requests for ant-design using the repository''s official PR templates. Use this skill when the user asks to create/open a PR, draft PR title/body, summarize branch changes for a PR, or otherwise prepare PR content. Judge by intent rather than fixed phrases; short colloquial requests still count if they are about creating a PR rather than discussing PR concepts.
+
+      ## 基本规则
+
+      ### 一、按意图触发，不按短语触发
+
+      只要能判断用户是在请求创建 PR，或为创建 PR 做准备，就应使用本 skill。
+
+      不要把触发限制成固定说法。即使用户表达很短、很口语，或要求不完整，只要不是在单纯讨论 PR 概念，也应进入本 skill 的工作流。
+
+      ### 二、必须以仓库模板为准
+
+      ### 三、模板语言由用户习惯决定，但标题固定英文
+
+      ### 四、先分析分支，再写 PR
+
+      ### 五、先给草稿，后创建 PR
+
+      ### 六、标题和正文要分工明确
+
+      ### 七、信息不足时不要硬写'
+    gold_removed: ''

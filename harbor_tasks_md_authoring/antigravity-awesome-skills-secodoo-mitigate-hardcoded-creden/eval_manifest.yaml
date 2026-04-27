@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: antigravity-awesome-skills-secodoo-mitigate-hardcoded-creden
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: sickn33/antigravity-awesome-skills
+  pr: 413
+  base_commit: "fa237d97aec62e564a3b50fa9f4d81dbfefc75c3"
+  merge_commit: "9ea0c1306ea460b9497a359bb0539afc5e663a23"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/odoo-woocommerce-bridge/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/odoo-woocommerce-bridge/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/odoo-woocommerce-bridge/SKILL.md."
+
+config_edits:
+  - path: skills/odoo-woocommerce-bridge/SKILL.md
+    tier: 1
+    gold_added: "import os\n    url=os.getenv(\"WC_URL\", \"https://mystore.com\"),\n    consumer_key=os.getenv(\"WC_KEY\"),\n    consumer_secret=os.getenv(\"WC_SECRET\"),\nodoo_url = os.getenv(\"ODOO_URL\", \"https://myodoo.example.com\")\ndb = os.getenv(\"ODOO_DB\", \"my_db\")\nuid = int(os.getenv(\"ODOO_UID\", \"2\"))\npwd = os.getenv(\"ODOO_PASSWORD\")\n"
+    gold_removed: ''

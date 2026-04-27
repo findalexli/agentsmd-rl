@@ -1,0 +1,126 @@
+version: "2.0"
+
+task:
+  name: antigravity-awesome-skills-highlight-durable-execution-in-re
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: sickn33/antigravity-awesome-skills
+  pr: 184
+  base_commit: "984bbe32b0117c710c028fed7ccd31c731793c36"
+  merge_commit: "baab789d11ded530d0f040ba341dc9c837e3ad86"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/ai-agents-architect/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/ai-agents-architect/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/architecture-patterns/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/architecture-patterns/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/architecture-patterns/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/event-sourcing-architect/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/event-sourcing-architect/SKILL.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/event-sourcing-architect/SKILL.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/saga-orchestration/SKILL.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/saga-orchestration/SKILL.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/saga-orchestration/SKILL.md."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/workflow-automation/SKILL.md."
+  - id: signal_12
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/workflow-automation/SKILL.md."
+  - id: signal_13
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/workflow-automation/SKILL.md."
+
+config_edits:
+  - path: skills/ai-agents-architect/SKILL.md
+    tier: 1
+    gold_added: '| Agent workflows lost on crash or restart | high | Use durable execution (e.g. DBOS) to persist workflow state: |
+
+      Works well with: `rag-engineer`, `prompt-engineer`, `backend`, `mcp-builder`, `dbos-python`'
+    gold_removed: ''
+  - path: skills/architecture-patterns/SKILL.md
+    tier: 1
+    gold_added: '5. For workflows that must survive failures (payments, order fulfillment, multi-step processes), use durable execution at the infrastructure layer — frameworks like DBOS persist workflow state, providing crash recovery without adding architectural complexity.
+
+      ## Related Skills
+
+
+      Works well with: `event-sourcing-architect`, `saga-orchestration`, `workflow-automation`, `dbos-*`
+
+      '
+    gold_removed: ''
+  - path: skills/event-sourcing-architect/SKILL.md
+    tier: 1
+    gold_added: '- Use durable execution for process managers and sagas — frameworks like DBOS persist workflow state automatically, making cross-aggregate orchestration resilient to crashes
+
+
+      ## Related Skills
+
+
+      Works well with: `saga-orchestration`, `architecture-patterns`, `dbos-*`'
+    gold_removed: ''
+  - path: skills/saga-orchestration/SKILL.md
+    tier: 1
+    gold_added: '## Durable Execution Alternative
+
+
+      The templates above build saga infrastructure from scratch — saga stores, event publishers, compensation tracking. **Durable execution frameworks** (like DBOS) eliminate much of this boilerplate: the workflow runtime automatically persists state to a database, retries failed steps, and resumes from the last checkpoint after crashes. Instead of building a `SagaOrchestrator` base class, you write a workflow function with steps — the framework handles persistence, crash recovery, and exactly-once execution semantics. Consider durable execution when you want saga-like reliability without managing the coordination infrastructure yourself.
+
+
+      ## Related Skills
+
+
+      Works well with: `event-sourcing-architect`, `workflow-automation`, `dbos-*`
+
+      '
+    gold_removed: ''
+  - path: skills/workflow-automation/SKILL.md
+    tier: 1
+    gold_added: 'Inngest balances developer experience with reliability. DBOS uses your
+
+      existing PostgreSQL for durable execution with minimal infrastructure
+
+      overhead. There''s no "best" - only "best for your situation."
+
+      You push for durable execution
+
+      Works well with: `multi-agent-orchestration`, `agent-tool-builder`, `backend`, `devops`, `dbos-*`'
+    gold_removed: ''

@@ -1,189 +1,73 @@
 # Data Construction Methods
 
-This document explains how we mine merged GitHub PRs and turn them into runnable benchmark tasks. The protocol produces two corpora — *code-fix tasks* and *markdown-authoring tasks* — both released as pre-built Docker images on `ghcr.io/findalexli/agentsmd-rl/<task>:latest`.
+How we mine merged GitHub PRs and turn them into runnable benchmark tasks. Two corpora — *code-fix* and *markdown-authoring* — both released as Docker images on `ghcr.io/findalexli/agentsmd-rl/<task>:latest`.
 
-## TL;DR — start to end
+**Snapshot 2026-04-27.**
 
-- **Goal.** Build a benchmark that measures whether an AI coding agent reads and follows the *rule files* a repository maintains (`CLAUDE.md`, `AGENTS.md`, `SKILL.md`, `.cursor/rules/*`, …) when it modifies code.
-- **Find rule-equipped repos.** Run `gh search repos` over 13 agent-instruction-related topics (`claude-code`, `claude-skills`, `agent-skills`, `cursor-rules`, `awesome-claude-code`, …) and 3 path queries (`SKILL.md in:path`, `.claude/skills in:path`, `.cursor/rules in:path`). Keep ≥ 5-star repos and dedup against earlier passes. → **1,037 repos** for the latest markdown batch.
-- **Pull merged PRs from each repo.** `gh pr list --state merged --limit 200 --json …,files`. The `files` field gives us each PR's path list at scout time. Drop PRs that change > 8 files, add+remove > 500 lines or < 5, carry skip-labels, or merged before the recency cutoff. → **29,733 raw PRs → 9,629 candidates.**
-- **Two pipelines diverge.**
-   - **Pipeline A (code-fix)** keeps any PR from a rule-equipped repo (deduping against tasks we already built), then asks Gemini to classify each PR's gold fix as rule-shaped (A or B) vs. decorative (C) vs. unscaffoldable (D). ~94 % drop here. The survivors are built into runnable tasks by Claude Opus 4.7 inside an E2B sandbox, and validated via a Docker test (no fix → reward 0; gold → reward 1).
-   - **Pipeline B (markdown-authoring)** keeps only PRs whose every changed file is a rule file (~96.7 % drop, the dominant cut), runs a cheap title-only Gemini pre-judge to drop bot/dummy PRs, then builds tasks deterministically: shallow-clone the repo, copy the gold patch into a `solve.sh`, write a verbatim-grep test for the most distinctive added lines. A second Gemini judge with full gold-patch context then quarantines slop.
-- **Ship.** Every active task has a pre-built image on GHCR. Final corpus: **582 code-fix + 718 markdown-authoring = 1,300 tasks.**
-- **Yield is steep on purpose.** End-to-end ~0.7 %–2.8 % of fetched PRs survive to a runnable task. A benchmark retaining 30 % of merged PRs would be silent on instruction-following — exactly what the inclusion criterion exists to prevent.
-
----
-
-**Corpus snapshot (2026-04-27).**
-
-| Corpus | Active | What "reward = 1" means | How each task is built | Quality check |
+| Corpus | Active | What "reward = 1" means | How tasks are built | Quality check |
 |---|---:|---|---|---|
-| `harbor_tasks/` | 582 | The agent reproduces the gold code fix | Claude Opus 4.7 reads the repo and writes the task, in an isolated sandbox | Docker test (build → fail without fix → pass with fix) + LLM rubric audit |
-| `harbor_tasks_md_authoring/` | 718 | The agent's output contains the distinctive lines added by the gold patch | A short script copies the patch into a verbatim grep test — no LLM | Two-stage Gemini 3.1 Pro judge |
+| `harbor_tasks/` | 582 | Agent reproduces the gold code fix | Claude Opus 4.7 in an isolated sandbox | Docker test (no fix → 0; gold → 1) + LLM rubric audit |
+| `harbor_tasks_md_authoring/` | 718 | Agent's output contains the distinctive lines added by the gold patch | Deterministic script — no LLM | Two-stage Gemini 3.1 Pro judge |
 | **Total** | **1,300** | | | |
 
----
+## TL;DR
 
-## How to read this document
+- **What we test**: whether an AI agent reads and follows a repo's *rule files* (`CLAUDE.md`, `AGENTS.md`, `SKILL.md`, `.cursor/rules/*`) when modifying code.
+- **Core assumption** *(§3)*: a PR is useful only when its gold fix is *shaped by* the rule files — i.e. the diff would look materially different if those files had been absent.
+- **Where the volume goes**: 29,733 raw PRs → 9,629 candidates → 321 rule-file-only → 302 pre-judge → 214 newly built → ≈180 net new active tasks. **0.72 % per-PR yield, by design.**
+- **Two pipelines split on what the diff modifies**. Pipeline A (Opus + sandbox) handles code; Pipeline B (deterministic verbatim-grep) handles rule-file-only PRs. Both end at ≈2 % yield, just via different filters.
 
-A few terms recur. We define each one once here in plain English; the rest of the document uses them as shorthand.
+## Glossary
 
-- **Rule file** *(sometimes labeled "tier-1 instruction file")*: a markdown file a repository maintains so AI coding agents can read it before changing code — `CLAUDE.md`, `AGENTS.md`, `SKILL.md`, `.cursor/rules/*`, and similar. The exact list is fixed in §3.
-- **Task name**: a short, URL-safe identifier we derive per PR (e.g. `prefect-update-agentsmd-files-for-2793f36`) and use as the on-disk task directory. We use it to *deduplicate against existing tasks* — if a task with this name already exists in the corpus, the pipeline skips the PR.
-- **Build a task** *(sometimes labeled "scaffold")*: produce the four files Harbor needs to run the task — `environment/Dockerfile`, `solution/solve.sh` (applies the gold fix), `tests/test.sh` (returns 0 or 1), `eval_manifest.yaml` (declarative spec of what the agent should achieve). Pipeline A uses Opus to do this; Pipeline B uses a deterministic script.
-- **Rule-relevance check** *(sometimes labeled "causality judge")*: a Gemini call that decides whether the gold fix was *actually shaped by* the repo's rule files — vs. being a bug fix that just happens to live in a repo with rule files. This is the most important filter in either pipeline.
+- **Rule file**: a markdown file a repo maintains for AI coding agents — `CLAUDE.md`, `AGENTS.md`, `SKILL.md`, `.cursor/rules/*`, `.claude/{rules,skills,agents}/*.md`, `.github/copilot-instructions.md`, plus a few similar paths. Closed set, fixed by one regex.
+- **Task name**: a short URL-safe slug (`prefect-update-agentsmd-files-for-2793f36`) used as the on-disk task directory. Pipelines skip a PR if a task with the same name already exists.
+- **Build a task**: emit `environment/Dockerfile`, `solution/solve.sh`, `tests/test.sh`, `eval_manifest.yaml`. Pipeline A delegates this to Opus; Pipeline B uses a deterministic script.
+- **Rule-relevance check**: a Gemini call deciding whether the gold fix was *actually shaped by* the rule files (vs. a bug fix that just happens to live alongside them). The single most important filter.
 
-Where we use a technical label as a filter name (e.g. "tier-1 path regex"), we keep it consistent across §4-§9 so the funnel diagrams in §9 line up with the assumptions in §4.
+## 1. Inclusion criterion
 
----
+A merged PR enters the benchmark only when its gold diff is *shaped by* the rule files. PRs are sorted into four classes; we keep A and B, drop C and D.
 
-## 1. What this benchmark tests
-
-Whether an AI coding agent reads and follows the rule files a repository maintains, when modifying code or writing new rules.
-
-The hard part is constructing tasks where the *correct* answer is genuinely shaped by what the rule files say. A task whose gold solution would be identical even if the rule files vanished is useless: an agent that ignores the rules can still pass it. Every benchmark task we keep must carry a clean signal that *something in the rule files mattered to the fix*.
-
-## 2. Core assumption
-
-> **A merged PR is a useful benchmark task only when its gold diff is shaped by the rule files — i.e., the diff would look materially different if the rule files had been absent.**
-
-Every filter in the pipeline exists to enforce this one assumption. PRs that fail it produce tasks where reward is uninformative about instruction-following.
-
-## 3. Definitions
-
-**Rule file.** A file matching the regex below. We treat this as a closed set; any new agent-instruction format must be added to the regex by hand before the pipeline recognizes it.
-
-> `CLAUDE.md`, `CLAUDE.local.md`, `AGENTS.md`, `CONVENTIONS.md`, `SKILL.md`, `.cursorrules`, `.windsurfrules`, `.clinerules`, `.continuerules`, `*.mdc`, `.claude/{rules,skills,agents}/*.md`, `.cursor/rules/*`, `.github/copilot-instructions.md`, `.github/skills/*/SKILL.md`, `.github/prompts/*.prompt.md`, `.{agents,opencode,codex}/skills/*/SKILL.md`.
-
-A repository is **rule-equipped** if it contains at least one rule file.
-
-**PR class.** Every PR we judge for rule-relevance falls into one of four classes:
-
-| Class | The gold diff... | Outcome |
+| Class | Gold diff content | Outcome |
 |---|---|---|
-| **A** | edits a rule file | Keep — markdown-authoring task |
-| **B** | is code-only, but the code change encodes a specific rule from a rule file | Keep — code-fix task |
-| **C** | is determined entirely by the bug, independent of any rule | Drop — decorative |
-| **D** | cannot be turned into a Linux Docker benchmark (platform-specific runtime, GPU, multi-thousand-line refactor, no testable behavior) | Drop — unscaffoldable |
+| **A** | Edits a rule file | Keep — markdown-authoring task |
+| **B** | Code-only, encodes a rule documented in a rule file | Keep — code-fix task |
+| C | Determined entirely by the bug, independent of rules | Drop — decorative |
+| D | Unscaffoldable on Linux/Docker (platform-specific, GPU, > 500-line refactor) | Drop |
 
-**Docker test.** An automated check on a freshly-built task image. It asserts (a) running with the *base* commit (no fix applied) gives reward = 0, and (b) running after the *gold patch* gives reward = 1. Tasks that fail either assertion are quarantined.
+## 2. Assumptions and the filters that enforce them
 
-## 4. The five assumptions and the filters that enforce each
+Every drop in either pipeline maps to one of five assumptions.
 
-Every drop in the pipeline maps to one of five assumptions. Below: the assumption in plain English, the filter that enforces it, and the empirical drop rate observed on the 2026-04-27 batch.
-
-| # | Assumption | Filter | Drop rate (this batch) |
+| # | Assumption | Filter | Drop rate |
 |---|---|---|---|
-| **A1** | The repository contains rule files | Repository discovery: `gh search repos` over agent-instruction-related topics + path queries; require ≥ 5 stars | upstream of the funnel (governs which repos we even scout) |
-| **A2** | The PR is a clean, scaffoldable unit of work | Per-PR scout filters: 1–8 files changed, 5–500 total lines added+deleted, no `wontfix`/`dependencies`/`automated-update` labels, within recency window | 67.6 % (29,733 → 9,629) |
-| **A3** | The PR's diff content is in scope for the chosen pipeline | Pipeline A: only PRs from rule-equipped repos, with name-based dedup against the existing corpus. Pipeline B: every changed file must be a rule file | A: 41.5 % (name-dedup + repo allowlist together); B: 96.7 % (path regex) |
-| **A4** | The gold fix is shaped by the rule files (the core assumption from §2) | Pipeline A: a Gemini rule-relevance check that classifies each PR as A / B / C / D / ERR. Pipeline B: a Gemini check on the title before building the task, then a stricter Gemini check on the gold patch after | A: 94.2 % drop at the rule-relevance check; B: 5.9 % at the title-level pre-check + 12.7 % at the post-check |
-| **A5** | The task is mechanically buildable into a runnable Docker test | Pipeline A: Opus builds the task in an E2B sandbox; the Docker test must pass. Pipeline B: deterministic script with idempotency check; manifests that fail YAML parsing are rejected by the post-judge | A: ≈ 25–30 % build-fail; B: ≈ 1 % build-fail |
+| **A1** | Repository contains rule files | Discovery: `gh search repos` over agent-instruction topics + path queries; ≥ 5 stars | upstream of funnel |
+| **A2** | PR is a clean, scaffoldable unit | 1–8 files changed, 5–500 line diff, no skip-labels, recency cutoff | 67.6 % (29,733 → 9,629) |
+| **A3** | PR's diff content is in scope for the chosen pipeline | A: rule-equipped repo + name-dedup. B: every changed file is a rule file | A: 41.5 %, B: 96.7 % |
+| **A4** | Gold fix is shaped by the rule files (the core assumption) | A: Gemini rule-relevance judge → A/B/C/D. B: Gemini title pre-judge + full-patch post-judge | A: 94.2 %, B: 5.9 % + 12.7 % |
+| **A5** | Task is mechanically buildable | A: Opus build + Docker test. B: deterministic script + post-judge YAML check | A: ≈ 25-30 %, B: ≈ 1 % |
 
-The pipelines split on **A3**. Pipeline A admits any code-bearing PR from a rule-equipped repo and then leans on the rule-relevance check (A4) to decide what's worth building. Pipeline B starts strict on A3 — every file must be a rule file — so the LLM judges in A4 are smaller and cheaper. PRs that A3 drops in Pipeline B are not lost; they are routed to a side queue (`*_codebearing.jsonl`, 34,358 cumulative rows) for later processing through Pipeline A.
+**A3 vs A4** are easy to confuse. A3 is *operational* — "is this PR even the kind of input each pipeline can produce a task from?" A4 is *the research property* — "did the rule files actually matter to the fix?" A3 fails open (cheap to drop, plenty of candidates); A4 fails closed (examine carefully). Putting A3 first means the LLM only sees PRs it has a chance of judging usefully.
 
-### Why A3 specifically — the *scope* filter
-
-A3 is the easiest assumption to misread as "redundant with A4." It is not. A3 and A4 do different jobs:
-
-- **A4 (rule-relevance) decides whether the PR's gold fix was *shaped by* the rule files.** It enforces the core assumption from §2. It is expensive — an LLM call per PR.
-- **A3 (in-scope) decides whether the PR is the kind of thing this pipeline can produce a valid task for at all.** It enforces no research property; it enforces *operational feasibility*. It is cheap — pure regex / set membership, no LLM.
-
-Without A3, each pipeline would still produce correct tasks for the small surviving subset, but it would do so wastefully or unsafely:
-
-**Pipeline A — without A3 (name-based dedup + rule-equipped repo)**
-- *Name-based dedup* exists because a single repo gets re-scouted across passes. Without it, we'd re-fetch, re-judge, and possibly re-build PRs we already have, paying Gemini and Opus costs for zero new tasks.
-- *Rule-equipped repo* exists because a PR from a repo with **no rule files** literally cannot satisfy A4 — there are no rules for the fix to be shaped by. The rule-relevance judge would dutifully label every such PR as class C and drop it. We avoid the LLM cost (≈ 1,500 PRs × $0.005 ≈ $7.50 per pass, plus latency) by filtering structurally first.
-
-**Pipeline B — without A3 (every-file-is-a-rule-file)**
-- The build script extracts distinctive `+` lines from the gold patch and writes a test that greps for them in a *single, named* rule file. This only works when every changed file is a rule file we can grep. A mixed PR (some code, some markdown) would either: (a) generate a test that asserts on lines that don't exist in the file we're checking, producing a broken task, or (b) require the script to know how to scaffold code changes — which is exactly why we have Pipeline A.
-- A3 here is not a quality filter. It is a *type* filter: "Pipeline B's transform is undefined for this input shape." The 96.7 % of PRs A3 drops aren't slop; they're routed to Pipeline A's side queue and processed there.
-
-**A3 fails open, A4 fails closed.** A3 says: "if I can't tell whether this is in scope, drop it — it's cheap to drop and there are 30K candidates." A4 says: "if I can't tell whether the rules mattered, *examine it carefully*." Putting A3 before A4 means the LLM only sees PRs it has a chance of judging usefully.
-
-## 5. The two pipelines at a glance
+## 3. The two pipelines
 
 | | Pipeline A — code-fix | Pipeline B — markdown-authoring |
 |---|---|---|
-| What's in the gold diff | Code (optionally with rule-file edits) | Rule files only |
-| Pre-classifier filter (A3) | Rule-equipped *repo* + name-based dedup | Every changed file is a rule file |
-| Classifier (A4) | Gemini rule-relevance: A/B/C/D/ERR | Gemini structured judge: HIGH/MEDIUM/LOW/DELETE — twice (title-only, then full patch) |
-| Task build (A5) | Opus 4.7 in an E2B sandbox | Deterministic script: shallow-clone, copy the gold patch into a grep-based test |
+| Diff content | Code (with optional rule-file edits) | Rule files only |
+| A3 filter | Rule-equipped repo + name-dedup | Path regex (every file is a rule file) |
+| A4 classifier | Gemini rule-relevance: A/B/C/D | Gemini structured `Verdict { load_bearing, research_relevant, slop_score, verdict }` — twice (title-only, then full patch) |
+| A5 build | Opus 4.7 in an E2B sandbox | Deterministic: shallow-clone + apply gold + grep for distinctive `+` lines |
 | Validation | Docker test | Built into the verbatim-grep test |
-| Latest scout window | 12 months | 24 months |
-| Latest scout repos | 147 | 1,037 |
-| Cumulative active tasks | 582 | 718 |
+| Latest scout | 2026-04-26, 12-month window, 147 repos | 2026-04-27, 24-month window, 1,037 repos |
+| Cumulative active | **582** | **718** |
 
-## 6. Discovery and scout (shared by both pipelines)
+Pipeline B is for PRs whose transformation into a task is mechanical (extract distinctive added lines, grep for them in the agent's output). Routing such PRs through Pipeline A's Opus + sandbox produced lower-quality tasks because Opus occasionally invented additional files or paraphrased the diff, breaking the verbatim grep. The trade-off: Pipeline B's test is verbatim, so a competent agent that paraphrases the gold answer fails. The post-judge rejects PRs where this asymmetry is severe.
 
-**Discovery — finding rule-equipped repos.** We search GitHub for repositories that maintain rule files. Concretely: `gh search repos` over thirteen agent-instruction-related topics and three repository-path queries.
+## 4. The funnel
 
-> Topics: `claude-code`, `claude-skills`, `claude-agents`, `agent-skills`, `agents-md`, `claude-md`, `cursor-rules`, `awesome-skills`, `awesome-claude-code`, `claude-plugins`, `claude-code-skill`, `agent-instructions`, `llm-rules`.
-> Paths: `SKILL.md in:path`, `.claude/skills in:path`, `.cursor/rules in:path`.
+Both pipelines lose ~99 % of their input to enforce the inclusion criterion. They differ in *where* the dominant cut lands. Bar widths below are proportional to share-of-raw.
 
-For each query we sort by stars, take the top 200–300 results, keep only repositories with at least 5 stars (excludes empty/abandoned projects), and deduplicate against repos we scouted earlier.
-
-**Scout — fetching merged PRs.** For each retained repository we ask GitHub for up to 200 recent merged PRs in JSON form, including the *file paths* each PR changed:
-
-```
-gh pr list --state merged --limit 200 \
-   --json number,title,changedFiles,additions,deletions,mergedAt,labels,mergeCommit,files
-```
-
-(Above 200, GitHub's GraphQL endpoint returns 504 on large repositories.) Including `files` at scout time gives us each PR's path list and avoids ≈ 50× of follow-up REST `/files` calls in Pipeline B's downstream filtering.
-
-The **per-PR scout filters** apply assumption A2: skip PRs that change > 8 files, add+remove > 500 lines or < 5, carry one of the skip-labels (`wontfix`, `dependencies`, `automated-update`, `no-changelog`), or merged before the recency cutoff. There is one exemption: a PR that changes only docs is normally dropped at this stage, but if every changed file is a rule file we keep it (these are the inputs Pipeline B will eventually scaffold).
-
-| Pipeline | Repos scouted | Raw merged PRs fetched | After A2 filters |
-|---|---:|---:|---:|
-| A — Code-fix (2026-04-26 pass) | 107 | 19,417 | 14,549 |
-| B — Markdown-authoring (2026-04-27 batch) | 1,037 | 29,733 | 9,629 |
-
-## 7. Pipeline A — Code-fix tasks
-
-Numbers below are for the 2026-04-26 scout pass. The cumulative `harbor_tasks/` corpus is the result of multiple such passes accumulated over weeks.
-
-| Stage | Filter | Enforces | In | Drop | Out |
-|---|---|---|---:|---:|---:|
-| 7.1 Skip-by-name | A PR is dropped if a task with its derived name already lives in the corpus (avoids redoing work) | A3 | 19,417 | 4,868 | 14,549 |
-| 7.2 Rule-equipped repo only | Drop PRs from repos with no rule file | A3 | 14,549 | 1,503 | 13,046 |
-| 7.3 Rule-relevance check | Gemini 3.1 Pro classifies each PR as A / B / C / D / ERR | A4 | 13,046 | 12,294 | 750 (A=204, B=546) |
-| 7.4 Build task + Docker test | Opus 4.7 inside an E2B sandbox: clone repo, apply gold, write the test, then Docker-test it (no fix → 0; gold → 1) | A5 | 750 | ≈ 25–30 % | ≈ 530–560 |
-| 7.5 Quality audit | LLM rubric audit; tier-A/B failures are quarantined | A5 | ≈ 540 | small | merged into corpus |
-
-**Cumulative**: 582 active tasks in `harbor_tasks/`, 92.8 % Docker-test pass rate (540 pass / 41 fail / 1 missing). End-to-end yield this pass: ≈ 540 / 19,417 ≈ **2.8 %**.
-
-The dominant cut is **7.3, the rule-relevance check.** Without it, ≈ 94 % of admitted PRs are class C — fixes that have nothing to do with the rule files. A benchmark built from those would be silent on instruction-following, exactly the failure mode §2 forbids.
-
-## 8. Pipeline B — Markdown-authoring tasks
-
-Pipeline B targets PRs that *only* edit rule files. The transformation from such a PR to a runnable benchmark task is mechanical: extract the most distinctive added lines from the gold patch, then write a test that asserts those lines appear in the agent's output. We replace Pipeline A's per-task Opus call with a deterministic script, and add two Gemini quality gates around it — a cheap title-level check before the script runs, and a stricter full-context check after.
-
-### 8.1 New-candidate pipeline (chains 9,629 → 214)
-
-| Stage | Filter | Enforces | In | Drop | Out |
-|---|---|---|---:|---:|---:|
-| 8.1.1 Rule-file-only path regex | Every changed file in the PR must match the rule-file regex. PRs with any non-rule-file path go to a side queue (`*_codebearing.jsonl`, 34,358 cumulative rows across all 2026-04 scouts) for later Pipeline A processing — they are not lost, just deferred | A3 | 9,629 | 9,308 | **321** |
-| 8.1.2 Pre-judge (title-only) | Gemini 3.1 Pro Standard, given only `{repo, title, file_paths}` (no PR body, no patch). Drops bot-generated titles, dummy-test PRs, version-bump-only titles, generic boilerplate. Conservative — defaults to KEEP | A4 | 321 | 19 | 302 |
-| 8.1.3 Build task (deterministic) | Shallow-clone the repo at the base commit (`git fetch --depth=1 origin <SHA>`); generate `Dockerfile`, `solve.sh` (applies the gold patch verbatim), `tests/test_outputs.py` (3 pytest assertions, one per distinctive added line — longest `+` lines, ≥ 12 chars, alphanumeric, deduplicated), and `eval_manifest.yaml` v2.0. No LLM call | A5 | 302 | 88 (task name already in corpus) | **214 newly built** |
-
-### 8.2 Corpus re-validation (independent count, 822 → 718)
-
-After §8.1 we have 214 new tasks plus 608 tasks already in `harbor_tasks_md_authoring/` from earlier scouts — 822 in total. The post-judge re-validates *all 822*, not just the new ones, so it can clean up legacy tasks at the same time.
-
-| Stage | Filter | Enforces | In | Drop | Out |
-|---|---|---|---:|---:|---:|
-| 8.2.1 Post-judge (full context) | Gemini 3.1 Pro Standard, given `instruction.md` + the complete gold patch. Returns a structured `Verdict { load_bearing, research_relevant, slop_score, evidence, verdict ∈ {HIGH, MEDIUM, LOW, DELETE} }`. Verdict thresholds in §10 | A4 | 822 | 104 | 706 HIGH + 12 MEDIUM |
-| 8.2.2 Quarantine | Move LOW + DELETE to `harbor_tasks_md_authoring_quarantine_quality/`. Each quarantined task keeps its `md_quality.json` as an audit trail | — | 104 | — | **718 active** |
-
-Cumulative active yield: 718 / 9,629 ≈ **7.5 %**. Per-batch new-task yield: 214 / 9,629 ≈ **2.2 %**.
-
-## 9. The funnel — where every PR goes
-
-Both pipelines end at similar yields (Pipeline A ≈ 2.8 %, Pipeline B ≈ 2.2 % per pass). What differs is *where* the volume is lost. The waterfalls below show each pipeline's per-stage drop. **Bar widths are proportional to share-of-raw**; the dominant drop in each pipeline is tagged.
-
-### 9.1 Pipeline B — Markdown-authoring (2026-04-27 batch)
+### 4.1 Pipeline B — Markdown-authoring (2026-04-27 batch)
 
 ```
                                                                               %  of raw
@@ -194,38 +78,33 @@ Both pipelines end at similar yields (Pipeline A ≈ 2.8 %, Pipeline B ≈ 2.2 %
  9,629  ██████████████████████                                       32.39  candidates
         │
         │  A3 — rule-file-only path regex                            ×0.033    drops 96.7 %  ◄── DOMINANT CUT
-        │      (the other 96.7 % mix code with markdown and route
-        │       to Pipeline A's side queue, not lost)
+        │      96.7 % mix code with markdown — routed to Pipeline A
         ▼
    321  ▊                                                             1.08  rule-file-only PRs
         │
-        │  A4 — pre-judge title screen (Gemini, no patch context)    ×0.941    drops  5.9 %
+        │  A4 — pre-judge title screen (Gemini, no patch)            ×0.941    drops  5.9 %
         ▼
-   302  ▊                                                             1.02  candidates the build script will see
+   302  ▊                                                             1.02  scaffolder inputs
         │
-        │  build script: 88 idempotent name-collisions
-        │                (those PRs were already built in
-        │                earlier scouts — skipped, not dropped)
+        │  build script — 88 idempotent name-collisions
+        │                  (already built in earlier scouts; skipped, not dropped)
         ▼
-   214  ▌                                                             0.72  newly-built task directories
+   214  ▌                                                             0.72  newly-built tasks
         │
-        │  A4 — post-judge on the merged 822-task corpus             ×~0.85    drops 12.7 %
-        │       (Gemini sees the complete gold patch).
-        │       The new-task share of these drops is unattributed
-        │       — see Limitations (§14).
+        │  A4 — post-judge on merged 822-task corpus (Gemini, full patch)  ×~0.85   drops 12.7 %
         ▼
-   ≈180  ▌                                                            ≈0.6   net new HIGH/MEDIUM tasks added by this batch
+   ≈180  ▌                                                            ≈0.6   net new HIGH/MEDIUM tasks added
 ```
 
-**Per-PR new-task yield: 0.72 %.** The dominant cut is **A3** (the rule-file-only regex): 96.7 % of candidates touch at least one non-rule-file path. This is structural — Pipeline B's deterministic script only works on patches that are 100 % rule files. Anything mixed routes to Pipeline A.
+Per-PR new-task yield: **0.72 %**. Dominant cut: A3 — 96.7 % of candidates touch at least one non-rule-file path. Pipeline B's deterministic script is undefined on mixed code+markdown patches; those route to Pipeline A.
 
-### 9.2 Pipeline A — Code-fix (2026-04-26 scout pass)
+### 4.2 Pipeline A — Code-fix (2026-04-26 scout pass)
 
 ```
                                                                               %  of raw
 19,417  ████████████████████████████████████████████████████████████████████  100.00  raw merged PRs from 107 repos
         │
-        │  A3 — skip by task name (already in baseline corpus)       ×0.749    drops 25.1 %
+        │  A3 — name-dedup against baseline                          ×0.749    drops 25.1 %
         ▼
 14,549  ███████████████████████████████████████████████████          74.93   unique new PRs
         │
@@ -233,80 +112,66 @@ Both pipelines end at similar yields (Pipeline A ≈ 2.8 %, Pipeline B ≈ 2.2 %
         ▼
 13,046  ██████████████████████████████████████████████               67.19   PRs into the judge
         │
-        │  A4 — rule-relevance check (Gemini, A/B/C/D/ERR)           ×0.058    drops 94.2 %  ◄── DOMINANT CUT
-        │      C = decorative (10,398, 79.7 %): bug fix unrelated
-        │             to any documented rule
-        │      D = unscaffoldable (1,896, 14.5 %): platform-specific,
-        │             GPU-bound, > 500-line refactor, no testable
-        │             behavior
+        │  A4 — rule-relevance judge (Gemini, A/B/C/D/ERR)           ×0.058    drops 94.2 %  ◄── DOMINANT CUT
+        │      C = decorative (10,398, 79.7 %)
+        │      D = unscaffoldable (1,896, 14.5 %)
         ▼
    750  ██▊                                                            3.86  A + B wins (A=204, B=546)
         │
-        │  A5 — Opus 4.7 builds the task + Docker test                ×~0.72    drops ~28 %
-        │       (build → no fix → 0; gold → 1).
-        │       Failed builds are quarantined.
+        │  A5 — Opus 4.7 build + Docker test                         ×~0.72    drops ~28 %
         ▼
-  ≈540  ██                                                             ≈2.8   valid built tasks
+  ≈540  ██                                                             ≈2.8  valid built tasks
 ```
 
-**Per-PR yield: 2.8 % per pass.** The dominant cut is **A4** (the rule-relevance check): 94 % of admitted PRs are class C — bug fixes that any agent could write without ever opening a rule file.
+Per-PR yield: **2.8 % per pass.** Dominant cut: A4 — 94 % of admitted PRs are class C, bug fixes any agent could write without ever opening a rule file.
 
-### 9.3 Same shape, different orderings
+### 4.3 Same shape, different orderings
 
-Both pipelines lose ≈ 99 % of their raw input to enforce one principle: *every surviving task's gold fix must be shaped by the rule files.* They differ only in *where* in the funnel they push the work onto the LLM:
+Pipeline A enforces A4 with an LLM call on every candidate (~13 K Gemini calls). Pipeline B uses the path regex as a free proxy and only LLM-judges the 321 path-survivors. Both end with ≈2-3 % per-pass yield because both enforce the same core assumption — just at different stages.
 
-| | Pipeline A | Pipeline B |
+## 5. Pipeline B post-judge thresholds
+
+The post-judge prompt asks Gemini for four structured fields, then computes a verdict deterministically.
+
+| Field | Range | Meaning |
 |---|---|---|
-| How A4 (rule-relevance) is enforced | Gemini call on every candidate PR's metadata + diff | Path regex first (free; pure-rule-file PRs are tautologically "shaped by" the rules), then Gemini on the gold patch |
-| Where the dominant cut lands | Stage 7.3, ≈ 94 % drop | Stage 8.1.1, ≈ 97 % drop |
-| Cost shape | Pays a Gemini call on every candidate (≈ 13 K) | Pays a Gemini call only on the path-regex survivors (≈ 320) |
+| `load_bearing` | bool | Would an agent reading vs. ignoring this gold patch produce different downstream behavior? |
+| `research_relevant` | bool | Does the change carry a behavioral assertion an agent could either follow or violate? |
+| `slop_score` | 0…10 | 0 = concrete commands / paths / version pins; 10 = AI-generated boilerplate / auto-bot / generic prose |
+| `verdict` | enum | Computed from the above |
 
-A benchmark retaining 30 % of merged PRs would be silent on instruction-following — exactly the failure mode the inclusion criterion (§2) exists to prevent. The narrow yield is the price of having every surviving task carry a clean signal.
+Verdict mapping:
+- **HIGH** iff `slop_score ≤ 3` and both flags true,
+- **MEDIUM** iff `4 ≤ slop_score ≤ 6` and both flags true,
+- **LOW** iff `7 ≤ slop_score ≤ 8`,
+- **DELETE** iff `slop_score ≥ 9` or either flag false.
 
-## 10. Quality gate criteria (Pipeline B post-judge thresholds)
+The judge is instructed to default to reject when in doubt. A false positive (slop in corpus) silently weakens the benchmark; a false negative (real task quarantined) loses one task out of hundreds.
 
-The post-judge prompt asks Gemini for four structured fields, then computes the verdict deterministically from them.
+## 6. Failure modes observed (2026-04-27 batch)
 
-- **`load_bearing`** ∈ {true, false}: would an agent *reading* this gold patch produce different downstream behavior than an agent that *ignored* it? Falsified by generic prose, self-referential meta-content, pure formatting changes, lockfile-style updates, frontmatter-only PRs.
-- **`research_relevant`** ∈ {true, false}: does this PR fit our benchmark's schema? Falsified when the file is technically a rule file but the change carries no behavioral assertion an agent could either follow or violate.
-- **`slop_score`** ∈ [0, 10]: 0 = concrete commands / file paths / version pins / anti-pattern rules. 10 = AI-generated boilerplate / auto-bot output / generic prose any LLM could produce without context.
-- **`verdict`**:
-  - HIGH iff `slop_score ≤ 3` and both flags are true,
-  - MEDIUM iff `4 ≤ slop_score ≤ 6` and both flags are true,
-  - LOW iff `7 ≤ slop_score ≤ 8`,
-  - DELETE iff `slop_score ≥ 9` or either flag is false.
+Of 104 LOW + DELETE verdicts, attribution by inferred origin:
 
-The judge is instructed to default to reject when in doubt. The asymmetry: a false positive (slop task in the corpus) silently weakens the benchmark; a false negative (a real task moved to quarantine) just costs us one task out of hundreds.
+| Pattern | Count | Why post-judge catches it |
+|---|---:|---|
+| Auto-bot PRs (PrefectHQ commit-watcher emits "Update AGENTS.md for commit X" after each push) | 26 | "Automated AGENTS.md update" detected in PR body |
+| Broken-yaml manifests (a since-fixed scaffolder bug emitted mixed-indent YAML when gold patches contained outdented lines) | 33 | `yaml.safe_load` fails |
+| Generic AI-authored skills / boilerplate ("This skill helps with X" with no concrete commands) | ≈ 30-50 | High slop_score, low load_bearing |
+| Self-referential meta-content ("Add a skill for managing skills") | 3 | Fails research_relevant |
 
-## 11. Why two pipelines
+## 7. Reproducibility
 
-Markdown-only PRs do not need an agent to design a test, choose files, or run Docker. The transformation from PR-diff to task is mechanical (extract distinctive lines, grep for them in the agent's output). When we previously routed these through Pipeline A's Opus + sandbox flow, the LLM occasionally invented additional files or paraphrased the diff, breaking the verbatim grep and producing flaky tasks. Pipeline B's deterministic script produces tighter behavioral tests at much lower marginal effort per task. The trade-off is one strict asymmetry — the test is verbatim, so a competent agent that paraphrases the gold answer fails. The post-judge rejects PRs where this asymmetry is severe.
+Per-row decision logs are checked in:
 
-For Pipeline A the same logic does not apply. Deciding which test to write, where to write it, and how to phrase the instruction so the agent's path to a fix is non-trivial all require a model strong enough to read the repository structure. We retain Opus there.
+- `scouted_scaleup_v2_prejudged.decisions.csv`, `scouted_round2_v2_prejudged.decisions.csv` — pre-judge decisions for every PR considered.
+- `research/md_authoring_quality_judgments.json` — full post-judge structured output for every scaffolded task.
 
-## 12. Failure modes observed in production
+Gemini calls use temperature 0.1, structured output (`responseMimeType: application/json` + `responseSchema`), thinking budget 256 tokens. Discovery queries listed verbatim in `taskforge/scout.py`.
 
-Identified during the 2026-04-27 batch. Each is documented for reproducibility and to clarify why the post-judge is necessary even with the upstream filters.
+## 8. Limitations
 
-- **Auto-bot PRs** — *26 of 104 LOW + DELETE, by repository origin.* One repository (PrefectHQ) runs an automated commit-watcher that opens "Update AGENTS.md for commit X" PRs after each push to main. These pass the rule-file regex but contain no human-curated content. The pre-judge catches title-level cases; the post-judge catches the rest by detecting "Automated AGENTS.md update" in the PR body.
-- **Broken-yaml manifests** — *33 of 104.* A bug in the build script, identified and fixed mid-run, emitted `eval_manifest.yaml` files with mixed-indent YAML block scalars when the gold patch contained outdented lines. The judge correctly rejected these via `yaml.safe_load` failure.
-- **Generic AI-authored skills and boilerplate** — *residual ≈ 30–50.* PRs adding net-new SKILL.md files whose bodies are generic prose ("This skill helps with X") with no concrete commands, file paths, or anti-patterns. The task prompt offers nothing the agent could not invent independently, so the verbatim-grep test is unreliable.
-- **Self-referential meta-content** — *3 of 104.* "Add a skill for managing skills" — passes the regex, fails rule-relevance.
-
-## 13. Reproducibility
-
-Per-row decision logs are checked into the repository for the 2026-04-27 batch:
-
-- `scouted_scaleup_v2_prejudged.decisions.csv`, `scouted_round2_v2_prejudged.decisions.csv` — pre-judge decisions for every PR considered, with verdict and ≤ 12-word reason.
-- `pipeline_logs/scaffold_v4_2026_04_26/md_quality_v2_combined.json` — post-judge structured output for every task (`load_bearing`, `research_relevant`, `slop_score`, `evidence`, `verdict`).
-
-All Gemini calls use temperature 0.1, structured output via `responseMimeType: "application/json"` + `responseSchema`, and a thinking budget of 256 tokens. Discovery queries are listed verbatim in §6.
-
-## 14. Limitations
-
-- **Verbatim-grep tests** in Pipeline B reward agents that produce exactly the gold prose. A competent agent that produces semantically equivalent but textually different content fails. Mitigated by the post-judge, not eliminated.
-- **Single-classifier post-judge** in Pipeline B. We do not currently run a second-classifier cross-check, in contrast to Pipeline A which historically used a Kimi → Gemini → Kimi cross-validation loop.
-- **Recency window asymmetry**. Pipeline A uses 12 months, Pipeline B uses 24. Yield-rate comparisons across the two pipelines are not strictly apples-to-apples.
-- **Fallback path during Gemini Flex outages**. The Flex tier returned 503 UNAVAILABLE for sustained periods on 2026-04-27; the pipeline's auto-fallback to Standard tier restored throughput.
-- **The rule-file definition is closed**. Any new agent-instruction file format must be added to the regex by hand before the pipeline recognizes it.
-- **No batch-provenance tracking** in the post-judge. We cannot directly attribute the 104 LOW + DELETE verdicts in the 2026-04-27 batch to the 214 newly-built tasks vs. the 608 pre-existing ones; the §12 attribution is by inferred origin (e.g., PrefectHQ-bot PRs were built in earlier passes).
+- **Verbatim-grep tests** in Pipeline B reward agents that produce exactly the gold prose. Semantically equivalent but textually different output fails. Mitigated by the post-judge, not eliminated.
+- **Single-classifier post-judge** in Pipeline B (no second-classifier cross-check, unlike Pipeline A's historical Kimi → Gemini → Kimi loop).
+- **Recency-window asymmetry**: Pipeline A's latest pass uses 12 months, Pipeline B's uses 24 — yield-rate comparisons are not strictly apples-to-apples.
+- **Closed rule-file definition**: any new agent-instruction format must be added to the regex by hand.
+- **No batch-provenance tracking** in the post-judge — we cannot directly attribute the 104 LOW + DELETE verdicts in the 2026-04-27 batch to new vs. pre-existing tasks; §6 is by inferred origin.

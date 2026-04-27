@@ -1,0 +1,64 @@
+version: "2.0"
+
+task:
+  name: skills-fix-address-clawhub-security-scanner
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: heygen-com/skills
+  pr: 40
+  base_commit: "69927ac13f0c8645b7770c4ead9ed229c10f5738"
+  merge_commit: "920a17dd4d3d4d4227e59c639dcef1263441c430"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in heygen-video/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in heygen-video/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in heygen-video/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in platforms/nanoclaw/heygen/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in platforms/nanoclaw/heygen/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in platforms/nanoclaw/heygen/SKILL.md."
+
+config_edits:
+  - path: heygen-video/SKILL.md
+    tier: 1
+    gold_added: 'No auto-run steps. Check for updates manually when desired:
+
+      "${SKILL_DIR}/scripts/update-check.sh"
+
+      This script is opt-in only. Do not execute it automatically on skill invocation.
+
+      **API Key Resolution:** Check `$HEYGEN_API_KEY` env var first. If not set, read it safely:
+
+      ```bash
+
+      export HEYGEN_API_KEY=$(grep -m1 ''^HEYGEN_API_KEY='' ~/.heygen/config 2>/dev/null | cut -d= -f2-)
+
+      ```
+
+      Do not `source` the config file. If still unset, tell the user to run `./setup` or `export HEYGEN_API_KEY=<key>`.
+
+      > **`auto_proceed: true` is intentional.** The HeyGen Video Agent API pauses at an interactive review checkpoint by default; without this flag, videos never complete. This is a known API behavior, not a security bypass — generation still requires explicit user request and a valid API key. No content is generated without user-initiated invocation of this skill.'
+    gold_removed: ''
+  - path: platforms/nanoclaw/heygen/SKILL.md
+    tier: 1
+    gold_added: "curl -s -X GET \"https://api.heygen.com/v3/avatars\" \\\n  -H \"X-Api-Key: $HEYGEN_API_KEY\" | jq '.data.avatar_list[:5] | .[] | {avatar_id: .avatar_group_id, avatar_name}'\ncurl -s -X GET \"https://api.heygen.com/v3/voices\" \\"
+    gold_removed: ''

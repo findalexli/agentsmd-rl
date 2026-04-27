@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: skills-add-prompt-to-evaluate-skills
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: dotnet/skills
+  pr: 371
+  base_commit: "93ccead1e789917c5438562fd314a102d06da3b1"
+  merge_commit: "45c66f87d41c48ae5dbf33e5500743ae89cb7801"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/prompts/evaluate-skill-descriptions.prompt.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/prompts/evaluate-skill-descriptions.prompt.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/prompts/evaluate-skill-descriptions.prompt.md."
+
+config_edits:
+  - path: .github/prompts/evaluate-skill-descriptions.prompt.md
+    tier: 1
+    gold_added: "---\nmode: ask\ndescription: Evaluate skill description quality in frontmatter across all plugins and rate them 1-5.\n---\n\n# Evaluate Skill Description Quality\n\nThis repo contains several skills for helping AI coding agents like GitHub Copilot and Claude Code with .NET-related coding tasks. Evaluate how good the description is in the YAML front matter for each skill under `plugins/**/skills/*/SKILL.md` and rate them on a scale of 1–5 where 5 is the best.\n\n## What the Description Is For\n\nThe `description` field in each skill's frontmatter is the **only** information a coding agent sees (alongside the skill name) when deciding whether to load the skill. Agents use progressive loading — they read the full skill content only after they decide the skill is relevant. A poor description means a great skill never gets used.\n\nA good description answers four questions:\n\n1. **What it does** — the concrete outcome or capability\n2. **When to use it** — trigger phrases, scenarios, or user intents that should activate the skill\n3. **When NOT to use it** — clear boundaries, non-goals, or nearby-but-wrong intents where the skill should be skipped\n4. **Key capabilities** — enough specifics to differentiate it from other skills\n\n## Rating Scale\n\n| Rating | Meaning |\n|--------|---------|\n| **5** | Excellent — clearly states what, when to use, when NOT to use, and key capabilities; includes concrete trigger phrases, user-intent signals, and clear non-goals/boundaries |\n| **4** | Good — covers what and when to use and mentions some boundaries or non-goals, but could be more specific on triggers, edge cases, or capabilities |\n| **3** | Adequate — describes the skill but is missing clear when-to-use or when-NOT-to-use guidance, lacks strong trigger phrases, or is too generic to reliably match user intent |\n| **2** | Weak — vague or overly technical; an agent would struggle to know when to activate it or might over-trigger because boundaries and non-goals are unclear |\n| **1** | Poor — missing, trivially short, or provides almost no actionable information |\n\n## Examples of Good Descriptions (and Why)\n\n```yaml\n# Good — specific, actionable, with clear boundaries\ndescription: Analyzes Figma design files and generates developer handoff\n  documentation. Use when user uploads .fig files, asks for \"design specs\",\n  \"component documentation\", or \"design-to-code handoff\". Avoid when user is\n  asking about general UX research, copywriting, or non-Figma assets.\n\n# Good — includes trigger phrases and non-goals\ndescription: Manages Linear project workflows including sprint planning, task\n  creation, and status tracking. Use when user mentions \"sprint\", \"Linear\n  tasks\", \"project planning\", or asks to \"create tickets\". Avoid when the\n  user is managing GitHub issues or other ticketing tools instead of Linear.\n\n# Good — clear value proposition and scope limits\ndescription: End-to-end customer onboarding workflow for PayFlow. Handles\n  account creation, payment setup, and subscription management. Use when user\n  says \"onboard new customer\", \"set up subscription\", or \"create PayFlow\n  account\". Avoid when working with other payment providers or generic CRM\n  onboarding flows unrelated to PayFlow.\n```\n\n## Examples of Bad Descriptions (and Why)\n\n```yaml\n# Too vague — no actionable detail\ndescription: Helps with projects.\n\n# Missing triggers — no user-intent signals\ndescription: Creates sophisticated multi-page documentation systems.\n\n# Too technical, no user triggers\ndescription: Implements the Project entity model with hierarchical\n  relationships.\n```\n\n## Instructions\n\n1. Read each `SKILL.md` file under `plugins/**/skills/*/SKILL.md`.\n2. Extract the `description` from the YAML frontmatter.\n3. Rate each description 1–5 using the scale above.\n4. For each skill, provide:\n   - **Skill name** and plugin\n   - **Current description** (quote it)\n   - **Rating** (1–5)\n   - **Explanation** — why you gave that rating, what is good, and what is missing\n5. At the end, provide a summary table sorted by rating (lowest first) so the worst descriptions are easy to find and prioritize for improvement."
+    gold_removed: ''
