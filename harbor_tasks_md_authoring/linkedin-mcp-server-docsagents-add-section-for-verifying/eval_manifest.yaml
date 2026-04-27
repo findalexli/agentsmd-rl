@@ -1,0 +1,57 @@
+version: "2.0"
+
+task:
+  name: linkedin-mcp-server-docsagents-add-section-for-verifying
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: stickerdaniel/linkedin-mcp-server
+  pr: 202
+  base_commit: "b2bc7e01c3697c1626df92145bbffe38b30a5b8d"
+  merge_commit: "9321884b43ce431232ebb41b65a36dcf6c2fc19f"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: "AGENTS.md"
+    tier: 1
+    gold_added: |-
+      ## Verifying Bug Reports
+      
+      Always verify scraping bugs end-to-end against live LinkedIn, not just code analysis. Assume a valid login profile already exists at `~/.linkedin-mcp/profile/`. Start the server with HTTP transport in one terminal (this process is long-running and will block the shell), then in a second terminal call the tool via curl:
+      
+      ```bash
+      # Start server
+      uv run -m linkedin_mcp_server --transport streamable-http --log-level DEBUG
+      
+      # Initialize MCP session (grab Mcp-Session-Id from response headers)
+      curl -s -D /tmp/mcp-headers -X POST http://127.0.0.1:8000/mcp \
+        -H "Content-Type: application/json" \
+        -H "Accept: application/json, text/event-stream" \
+        -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"test","version":"1.0"}}}'
+      
+      # Extract the session ID from saved headers
+      SESSION_ID=$(grep -i 'Mcp-Session-Id' /tmp/mcp-headers | awk '{print $2}' | tr -d '\r')
+      
+      # Call a tool (use Mcp-Session-Id from previous response)
+      curl -s -X POST http://127.0.0.1:8000/mcp \
+        -H "Content-Type: application/json" \
+        -H "Accept: application/json, text/event-stream" \
+        -H "Mcp-Session-Id: $SESSION_ID" \
+        -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"get_person_profile","arguments":{"linkedin_username":"williamhgates","sections":"posts"}}}'
+      ```
+      
+    gold_removed: ""

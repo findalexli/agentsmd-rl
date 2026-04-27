@@ -1,0 +1,156 @@
+version: "2.0"
+
+task:
+  name: awesome-copilot-fix-outdated-copilot-skill-references
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: github/awesome-copilot
+  pr: 918
+  base_commit: "7172ebfb8b12e74f7dc3be1b7ac69de74b5aaa16"
+  merge_commit: "b91369d1b5d76a83f63f394ec43c1530d93d99f4"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/github-copilot-starter/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/github-copilot-starter/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/github-copilot-starter/SKILL.md."
+
+config_edits:
+  - path: "skills/github-copilot-starter/SKILL.md"
+    tier: 1
+    gold_added: |-
+      4. **Development Style**: (strict standards, flexible, specific patterns)
+      5. **GitHub Actions / Coding Agent**: Does the project use GitHub Actions? (yes/no — determines whether to generate `copilot-setup-steps.yml`)
+      Main repository instructions that apply to all Copilot interactions. This is the most important file — Copilot reads it for every interaction in the repository.
+      
+      Use this structure:
+      ```md
+      # {Project Name} — Copilot Instructions
+      
+      ## Project Overview
+      Brief description of what this project does and its primary purpose.
+      
+      ## Tech Stack
+      List the primary language, frameworks, and key dependencies.
+      
+      ## Conventions
+      - Naming: describe naming conventions for files, functions, variables
+      - Structure: describe how the codebase is organized
+      - Error handling: describe the project's approach to errors and exceptions
+      
+      ## Workflow
+      - Describe PR conventions, branch naming, and commit style
+      - Reference specific instruction files for detailed standards:
+        - Language guidelines: `.github/instructions/{language}.instructions.md`
+        - Testing: `.github/instructions/testing.instructions.md`
+        - Security: `.github/instructions/security.instructions.md`
+        - Documentation: `.github/instructions/documentation.instructions.md`
+        - Performance: `.github/instructions/performance.instructions.md`
+        - Code review: `.github/instructions/code-review.instructions.md`
+      ```
+      - `{primaryLanguage}.instructions.md` - Language-specific guidelines
+      ### 3. `.github/skills/` Directory
+      Create reusable skills as self-contained folders:
+      - `setup-component/SKILL.md` - Component/module creation
+      - `write-tests/SKILL.md` - Test generation
+      - `code-review/SKILL.md` - Code review assistance
+      - `refactor-code/SKILL.md` - Code refactoring
+      - `generate-docs/SKILL.md` - Documentation generation
+      - `debug-issue/SKILL.md` - Debugging assistance
+      Always create these 4 agents:
+      - `software-engineer.agent.md`
+      - `architect.agent.md`
+      - `reviewer.agent.md`
+      - `debugger.agent.md`
+      
+      For each, fetch the most specific match from awesome-copilot agents. If none exists, use the generic template.
+      **Agent Attribution**: When using content from awesome-copilot agents, add attribution comments:
+      ### 5. `.github/workflows/` Directory (only if user uses GitHub Actions)
+      Skip this section entirely if the user answered "no" to GitHub Actions.
+      
+      - Job name MUST be `copilot-setup-steps`
+      1. **Fetch specific instruction from awesome-copilot docs**: https://github.com/github/awesome-copilot/blob/main/docs/README.instructions.md
+      2. **Fetch specific agents from awesome-copilot docs**: https://github.com/github/awesome-copilot/blob/main/docs/README.agents.md
+      3. **Fetch specific skills from awesome-copilot docs**: https://github.com/github/awesome-copilot/blob/main/docs/README.skills.md
+      4. **Check for existing patterns** that match the technology stack
+      ```md
+      ```md
+      ```md
+      3. **Look for general matches** (e.g., frontend agents, testing skills, review workflows)
+      4. **Check the docs and relevant directories directly** for related files
+      5. **Prefer repo-native examples** over inventing new formats
+      - **Agents**: https://github.com/github/awesome-copilot/tree/main/agents
+      - **Skills**: https://github.com/github/awesome-copilot/tree/main/skills
+      **Awesome-Copilot Areas to Check:**
+      - **C# .NET Development**: Testing, documentation, and best practices
+      │   ├── skills/
+      │   │   ├── setup-component/
+      │   │   │   └── SKILL.md
+      │   │   ├── write-tests/
+      │   │   │   └── SKILL.md
+      │   │   ├── code-review/
+      │   │   │   └── SKILL.md
+      │   │   ├── refactor-code/
+      │   │   │   └── SKILL.md
+      │   │   ├── generate-docs/
+      │   │   │   └── SKILL.md
+      │   │   └── debug-issue/
+      │   │       └── SKILL.md
+      │   │   ├── software-engineer.agent.md
+      │   └── workflows/                        # only if GitHub Actions is used
+      Use this structure for all files:
+      ```md
+      applyTo: "**/*.{lang-ext}"
+      description: "Development standards for {Language}"
+      # {Language} coding standards
+      Apply the repository-wide guidance from `../copilot-instructions.md` to all code.
+      ## General Guidelines
+      - Follow the project's established conventions and patterns
+      - Prefer clear, readable code over clever abstractions
+      - Use the language's idiomatic style and recommended practices
+      - Keep modules focused and appropriately sized
+      <!-- Adapt the sections below to match the project's specific technology choices and preferences -->
+      **Skills (SKILL.md):**
+      ```md
+      name: {skill-name}
+      description: {Brief description of what this skill does}
+      # {Skill Name}
+      {One sentence describing what this skill does. Always follow the repository's established patterns.}
+      Ask for {required inputs} if not provided.
+      
+      ## Requirements
+      - Use the existing design system and repository conventions
+      - Follow the project's established patterns and style
+      - Adapt to the specific technology choices of this stack
+      - Reuse existing validation and documentation patterns
+      **Agents (.agent.md):**
+      ```md
+      1. **Gather project information** - Ask the user for technology stack, project type, and development style if not provided
+      2. **Research awesome-copilot patterns**:
+         - Use the fetch tool to explore awesome-copilot directories
+         - Check instructions: https://github.com/github/awesome-copilot/tree/main/instructions
+         - Check agents: https://github.com/github/awesome-copilot/tree/main/agents (especially for matching expert agents)
+         - Check skills: https://github.com/github/awesome-copilot/tree/main/skills
+         - Document all sources for attribution comments
+      3. **Create the directory structure**
+      4. **Generate main copilot-instructions.md** with project-wide standards
+      5. **Create language-specific instruction files** using awesome-copilot references with attribution
+      6. **Generate reusable skills** tailored to project needs
+      7. **Set up specialized agents**, fetching from awesome-copilot where applicable (especially for expert engineer agents matching the tech stack)
+      8. **Create the GitHub Actions workflow for Coding Agent** (`copilot-setup-steps.yml`) — skip if user does not use GitHub Actions
+      9. **Validate** all files follow proper formatting and include necessary frontmatter
+      2. **Usage examples** - How to use each skill and agent
+      - [ ] All authored Copilot markdown files have proper YAML frontmatter where required
+      - [ ] Skills and agents include relevant descriptions; include MCP/tool-related metadata only when the target Copilot environment actually supports or requires it
+      ## Workflow Template Structure (only if GitHub Actions is used)
+    gold_removed: ""

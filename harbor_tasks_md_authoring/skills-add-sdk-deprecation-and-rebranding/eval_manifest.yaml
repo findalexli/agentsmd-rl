@@ -1,0 +1,86 @@
+version: "2.0"
+
+task:
+  name: skills-add-sdk-deprecation-and-rebranding
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: microsoft/skills
+  pr: 272
+  base_commit: "e1f9cce11758d305e6c77683fe34ccc394586291"
+  merge_commit: "626ae2d8dc445b13583b3497590ae48b7e55cfac"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/skill-creator/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/skill-creator/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/skill-creator/SKILL.md."
+
+config_edits:
+  - path: ".github/skills/skill-creator/SKILL.md"
+    tier: 1
+    gold_added: |-
+      ### Handling Deprecated or Rebranded SDKs
+      
+      When an Azure SDK has been deprecated or rebranded, update skills to guide users toward the current package while maintaining backward compatibility:
+      
+      **1. Add a migration notice at the top of the skill:**
+      
+      ```markdown
+      > **⚠️ MIGRATION NOTICE**: The [Old Service Name] has been rebranded to **[New Service Name]**. While the package `old-package-name` remains available for compatibility, **new projects should use `new-package-name`** which provides the latest features and updates.
+      >
+      > **For new projects**: Use the `new-package-name` package instead.
+      >
+      > **This skill remains valid** for existing projects using `old-package-name`, but be aware you're using the legacy package name. The API patterns shown here are compatible with both packages.
+      ```
+      
+      **2. Show both installation options:**
+      
+      ```markdown
+      ## Installation
+      
+      ### Legacy Package (Old Name)
+      
+      \`\`\`xml
+      <dependency>
+          <groupId>com.azure</groupId>
+          <artifactId>azure-old-package</artifactId>
+          <version>4.2.0</version>
+      </dependency>
+      \`\`\`
+      
+      ### Recommended Package (New Name)
+      
+      **For new projects, use the rebranded package:**
+      
+      \`\`\`xml
+      <dependency>
+          <groupId>com.azure</groupId>
+          <artifactId>azure-new-package</artifactId>
+          <version>1.0.0</version>
+      </dependency>
+      \`\`\`
+      
+      > **Note**: The API patterns in this skill apply to both packages. Replace package names and imports as needed when using `azure-new-package`.
+      ```
+      
+      **3. When to create a new skill vs. update existing:**
+      
+      - **Update existing skill** if the API is largely compatible (same or similar class/method names)
+      - **Create new skill + migration guide** if the API changed significantly (use `references/migration.md`)
+      - **Always cross-reference** between old and new skills
+      
+      **Examples:**
+      - `azure-ai-formrecognizer-java` → `azure-ai-documentintelligence` (rebranded service)
+      - `azure-communication-callingserver-java` → `azure-communication-callautomation` (deprecated, with migration guide)
+      
+    gold_removed: ""
