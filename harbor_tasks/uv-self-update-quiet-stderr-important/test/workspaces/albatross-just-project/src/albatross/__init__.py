@@ -1,2 +1,0 @@
-def fly():
-    pass
