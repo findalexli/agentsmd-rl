@@ -39,7 +39,7 @@ All tasks get the same 4-track evaluation: programmatic fail-to-pass + pass-to-p
 | `harbor_tasks_md_authoring/` | **718** (706 HIGH + 12 MEDIUM) | 170 (DELETE/LOW + 2 secret-pattern) | Deterministic scaffold + Gemini quality gate (v2 pipeline). All 718 have GHCR images. |
 | `harbor_tasks_agentmd_edits/` | 81 (code + config edits, Track 2) | — | Smaller, harder corpus |
 
-The two flagship corpora — `harbor_tasks/` (code) and `harbor_tasks_md_authoring/` (markdown-authoring) — together hold **1,303 active tasks**, all with pre-built Docker images on GHCR.
+The two flagship corpora — `harbor_tasks/` (code) and `harbor_tasks_md_authoring/` (markdown-authoring) — together hold **1,300 active tasks**, all with pre-built Docker images on GHCR.
 
 ## How tasks are filtered
 

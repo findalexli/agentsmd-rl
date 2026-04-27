@@ -9,7 +9,7 @@ This document specifies how we mine merged GitHub PRs and convert them into runn
 | `harbor_tasks/` | 582 | Code change that depends on a documented rule | Claude Opus 4.7 in an isolated sandbox | Docker oracle (build, run, expect reward 0/1) + LLM rubric judge |
 | `harbor_tasks_md_authoring/` | 718 (706 HIGH + 12 MEDIUM) | Edits to agent-instruction files only | Deterministic transform — no LLM | Two-stage Gemini 3.1 Pro judge |
 
-Both corpora ship as images on `ghcr.io/findalexli/agentsmd-rl/<task>:latest`. Combined: **1,303 active tasks**.
+Both corpora ship as images on `ghcr.io/findalexli/agentsmd-rl/<task>:latest`. Combined: **1,300 active tasks**.
 
 ---
 
@@ -174,12 +174,18 @@ LOW and DELETE verdicts are moved (preserving full task contents) to `harbor_tas
 
 ### 5.6 Yield analysis
 
-Two yield definitions matter:
+Two yield definitions matter — they answer different questions and should not be conflated.
 
-- **Per-batch new yield**: 214 newly scaffolded / 9,629 candidates ≈ **2.2%**. This is the relevant figure when forecasting future scout passes.
-- **Cumulative active yield**: 718 active tasks (after quarantine) / 9,629 candidates ≈ **7.5%**. This includes 504 pre-existing tasks the post-judge re-validated as HIGH or MEDIUM in this pass — they were scaffolded in earlier scouts but only became "active" after this run's judge confirmed their quality.
+- **Per-batch new yield**: 214 newly scaffolded / 9,629 candidates ≈ **2.2%**. This is the relevant figure when forecasting how many tasks a future scout pass over a similar candidate distribution will add. It does *not* account for fresh tasks that may later be quarantined by the post-judge.
+- **Cumulative active yield over the batch's candidate population**: 718 active tasks / 9,629 candidates ≈ **7.5%**. This counts all tasks currently active in `harbor_tasks_md_authoring/` against the 2026-04-27 batch's candidates. Most of the 718 were scaffolded in earlier scout passes; this batch's contribution is the 214 newly scaffolded minus whatever subset of them ended up LOW/DELETE in §5.4 (the exact split is not tracked directly; see below).
 
-The path regex (stage 5.1) is the dominant filter at 96.7% drop. Of the 321 PRs that survive it, the two LLM judges together remove a further 12.7% (19 + 88 idempotent skips at scaffold + ~30 fresh DELETEs from the 214 newly-scaffolded subset of stage 5.4). The pre-judge contributes a small absolute share because it has no patch content to reason over; the post-judge does the heavy lifting on quality.
+Filter contribution by stage:
+
+- The path regex (§5.1) is dominant at 96.7% drop on the candidate pool (9,629 → 321).
+- The pre-judge (§5.2) drops 19 of 321 (5.9%) using only title-level signal.
+- The post-judge (§5.4) drops 104 of 822 (12.7%) on the *merged corpus*, using the full gold patch. Most of the 104 LOW + DELETE verdicts are concentrated in patterns that originate predominantly in earlier scaffold runs — auto-bot PRs from a single repository (≈26) and broken-yaml manifests from a since-fixed scaffolder bug (33) — rather than in the 214 newly scaffolded by this batch.
+
+The pre-judge contributes a small absolute share because it has no patch content to reason over; the post-judge is the strict filter that ultimately determines what stays in the corpus.
 
 ---
 
@@ -212,10 +218,10 @@ For Pipeline A the same logic does not apply: deciding which test to write, wher
 
 Identified during the 2026-04-27 batch. Each is documented for reproducibility and to clarify why the post-judge is necessary:
 
-- **Auto-bot PRs** (≈26 of 102 DELETEs): one repository (PrefectHQ) runs an automated commit-watcher that opens "Update AGENTS.md for commit X" PRs after each push to main. These pass the tier-1 path regex but contain no human-curated content. Pre-judge catches title-level cases; post-judge catches the rest by detecting "Automated AGENTS.md update" in the PR body.
-- **Generic AI-authored skills** (≈30 of 102 DELETEs): PRs adding net-new SKILL.md files where the body is generic prose ("This skill helps with X") with no concrete commands, file paths, or anti-patterns. Often impossible to scaffold meaningfully because the task prompt has nothing the agent could not invent independently.
-- **Broken-yaml manifests** (31 of 102 DELETEs): a scaffolder bug, identified and fixed mid-run, emitted `eval_manifest.yaml` files with mixed-indent YAML block scalars when the gold patch contained outdented lines. The judge correctly rejected these on `yaml.safe_load` failure.
-- **Self-referential meta-content** (small count): "Add a skill for managing skills" — passes the regex, fails causality.
+- **Auto-bot PRs** (26 of 104 LOW + DELETEs, by repository origin): one repository (PrefectHQ) runs an automated commit-watcher that opens "Update AGENTS.md for commit X" PRs after each push to main. These pass the tier-1 path regex but contain no human-curated content. Pre-judge catches title-level cases; post-judge catches the rest by detecting "Automated AGENTS.md update" in the PR body.
+- **Broken-yaml manifests** (33 of 104): a scaffolder bug, identified and fixed mid-run, emitted `eval_manifest.yaml` files with mixed-indent YAML block scalars when the gold patch contained outdented lines. The judge correctly rejected these via `yaml.safe_load` failure.
+- **Generic AI-authored skills** and **boilerplate**: a residual set (≈30-50, exact count requires keyword-tag review) of PRs that add net-new SKILL.md files whose bodies are generic prose ("This skill helps with X") with no concrete commands, file paths, or anti-patterns. The task prompt offers nothing the agent could not invent independently, so the verbatim-grep test is unreliable.
+- **Self-referential meta-content** (3 of 104): "Add a skill for managing skills" — passes the regex, fails causality.
 
 ---
 
