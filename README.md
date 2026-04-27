@@ -35,7 +35,7 @@ All tasks get the same 4-track evaluation: programmatic fail-to-pass + pass-to-p
 
 | Folder | Active | Quarantined | Notes |
 |---|---|---|---|
-| `harbor_tasks/` | 585 (Type A+B, code-fix) | — | Opus 4.7 scaffolded, 92% Docker-oracle pass, 89% rubric pass |
+| `harbor_tasks/` | 582 (Type A+B, code-fix) | — | Opus 4.7 scaffolded, 92.8% Docker-oracle pass (540 / 582), 89% rubric pass |
 | `harbor_tasks_md_authoring/` | **718** (706 HIGH + 12 MEDIUM) | 170 (DELETE/LOW + 2 secret-pattern) | Deterministic scaffold + Gemini quality gate (v2 pipeline). All 718 have GHCR images. |
 | `harbor_tasks_agentmd_edits/` | 81 (code + config edits, Track 2) | — | Smaller, harder corpus |
 
@@ -52,14 +52,14 @@ Both pipelines start with the same discovery + scout machinery (GitHub topic sea
 
 | | Pipeline A (code-fix) | Pipeline B (markdown-authoring) |
 |---|---|---|
-| Latest scout | 2026-04-26 (147 repos, 12-month window) | 2026-04-27 (1,042 repos, 24-month window) |
-| Raw merged PRs fetched | 19,417 | ≈67,400 |
+| Latest scout | 2026-04-26 (147 repos, 12-month window) | 2026-04-27 (1,037 repos, 24-month window) |
+| Raw merged PRs fetched | 19,417 | 29,733 |
 | After scout-time filters | 14,549 unique | 9,629 candidates |
 | Pre-classifier filter | Tier-1 *repo* allowlist | Tier-1 *path* regex (every changed file must match) |
 | Classifier | Gemini per-PR causality judge → A / B / C / D / ERR | Two-stage Gemini judge: pre-judge by title, post-judge by full gold patch |
 | Survivors after classifier | A=204 + B=546 = 750 (5.7%) | 302 KEEP / 19 DROP from the 321 that passed the regex |
 | Scaffold | Opus 4.7 + Docker oracle (≈25-30% scaffold-fail) | Deterministic, ≈99% success |
-| Cumulative active corpus | **585** (92.5% Docker oracle pass) | **718** (706 HIGH + 12 MEDIUM after post-judge) |
+| Cumulative active corpus | **582** (92.8% Docker oracle pass) | **718** (706 HIGH + 12 MEDIUM after post-judge) |
 
 **End-to-end yield**: ≈3% for Pipeline A, ≈7.5% for Pipeline B. Pipeline B is higher because the path-regex pre-filter starts from a much narrower distribution — anything reaching the LLM judges is already pure-tier-1.
 

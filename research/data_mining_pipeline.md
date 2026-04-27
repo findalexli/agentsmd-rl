@@ -6,7 +6,7 @@ This document specifies how we mine merged GitHub PRs and convert them into runn
 
 | Corpus | Active tasks | Diff content tested | Scaffold method | Quality gate |
 |---|---|---|---|---|
-| `harbor_tasks/` | 585 | Code change that depends on a documented rule | Claude Opus 4.7 in an isolated sandbox | Docker oracle (build, run, expect reward 0/1) + LLM rubric judge |
+| `harbor_tasks/` | 582 | Code change that depends on a documented rule | Claude Opus 4.7 in an isolated sandbox | Docker oracle (build, run, expect reward 0/1) + LLM rubric judge |
 | `harbor_tasks_md_authoring/` | 718 (706 HIGH + 12 MEDIUM) | Edits to agent-instruction files only | Deterministic transform — no LLM | Two-stage Gemini 3.1 Pro judge |
 
 Both corpora ship as images on `ghcr.io/findalexli/agentsmd-rl/<task>:latest`. Combined: **1,303 active tasks**.
@@ -48,7 +48,7 @@ We retain repositories with **≥ 5 stars** (excludes empty/abandoned projects) 
 | Pipeline run | Recency window | Unique repos retained |
 |---|---|---|
 | Code-fix corpus, latest scout pass (2026-04-26) | 12 months | 147 |
-| Markdown-authoring corpus, batch 2026-04-27 | 24 months | 1,042 |
+| Markdown-authoring corpus, batch 2026-04-27 | 24 months | 1,037 |
 
 The markdown run uses a longer window and a broader topic set because per-repo yield of *pure*-tier-1-path PRs is roughly half that of any-causality PRs (≈3% vs ≈6%); we compensate with breadth.
 
@@ -69,7 +69,7 @@ Per-PR scout-time exclusions:
 | Pipeline | Repos scouted | Raw merged PRs fetched | Candidates after scout filters |
 |---|---|---|---|
 | Code-fix (2026-04-26 pass) | 107 | 19,417 | 14,549 |
-| Markdown-authoring (2026-04-27 batch) | 1,042 | ≈67,400 | 9,629 |
+| Markdown-authoring (2026-04-27 batch) | 1,037 | 29,733 | 9,629 |
 
 The 14,549 → 13,046 transition in the code pipeline is a slug-deduplication against the cumulative baseline corpus (existing `(repo, pr)` pairs are skipped).
 
@@ -87,7 +87,7 @@ Each surviving PR receives a Gemini 3.1 Pro causality classification, then (for 
 | 4.4 Opus scaffold + Docker oracle | One-shot Claude Opus 4.7 call inside an E2B sandbox: clone repo, apply gold patch, generate `instruction.md` / `solve.sh` / `tests/test.sh` / `eval_manifest.yaml`, validate via Docker oracle | 750 | ≈25-30% scaffold-fail | ≈530-560 valid |
 | 4.5 Quality gate | LLM rubric audit (post-scaffold); tier-A/B failures moved to quarantine | ≈540 | small | merged into the cumulative corpus |
 
-**Cumulative corpus**: 585 active tasks in `harbor_tasks/` (as of 2026-04-27), 92.5% Docker-oracle pass rate (541 pass / 41 fail / 3 missing oracle status).
+**Cumulative corpus**: 582 active tasks in `harbor_tasks/` (as of 2026-04-27), 92.8% Docker-oracle pass rate (540 pass / 41 fail / 1 missing oracle status).
 
 **End-to-end yield (single pass)**: ≈540 / 19,417 ≈ 2.8%.
 
@@ -101,17 +101,22 @@ Pipeline B targets the subset of PRs that *only* edit tier-1 instruction files. 
 
 The pipeline is five stages, summarized in Table 5.1 and detailed in §5.1–§5.5 below.
 
-**Table 5.1.** Pipeline B per-stage filter rates.
+**Table 5.1.** Pipeline B funnel. Stages 5.1–5.3 chain cleanly on the new candidate pool. Stage 5.4 is a *re-validation pass* over the full corpus state at the time of judging, which includes both the 214 new tasks just scaffolded and 608 pre-existing tasks from earlier scouts; we keep its accounting separate so the per-stage math stays transparent.
+
+*New-candidate pipeline (chains 9,629 → 214):*
 
 | Stage | Filter | In | Drop | Out |
 |---|---|---|---|---|
 | 5.1 Path regex | Tier-1-only (every changed path) | 9,629 | 9,308 | **321** |
 | 5.2 Pre-judge | Gemini, title-only | 321 | 19 | 302 |
-| 5.3 Scaffold | Deterministic transform | 302 | 88 (idempotent) | 214 newly created |
-| 5.4 Post-judge | Gemini, full gold-patch context | 822† | 104 | 718 |
-| 5.5 Quarantine | Move LOW + DELETE | — | 104 | **718 active** |
+| 5.3 Scaffold | Deterministic transform | 302 | 88 (slug-collisions with existing corpus) | **214 newly scaffolded** |
 
-† Stage 5.4 runs on the full corpus state at judge time: 608 tasks pre-existing in `harbor_tasks_md_authoring/` from earlier scout passes, plus the 214 added in stage 5.3, for 822 tasks total. The judge does not skip pre-existing entries; it re-validates them.
+*Corpus re-validation (independent count, 822 → 718):*
+
+| Stage | Filter | In | Drop | Out |
+|---|---|---|---|---|
+| 5.4 Post-judge | Gemini, full gold-patch context | **822** = 608 pre-existing + 214 new from §5.3 | 104 (LOW + DELETE) | 718 (706 HIGH + 12 MEDIUM) |
+| 5.5 Quarantine | Move LOW + DELETE to `harbor_tasks_md_authoring_quarantine_quality/` | 104 | — | **718 active in corpus** |
 
 ### 5.1 Path regex pre-filter
 
@@ -218,7 +223,7 @@ Identified during the 2026-04-27 batch. Each is documented for reproducibility a
 
 | Pipeline | Source PRs | Final corpus | Per-PR yield |
 |---|---|---|---|
-| A — Code-fix (single 2026-04-26 pass) | 19,417 | ≈540 (this pass; cumulative `harbor_tasks/` is 585) | ≈2.8% |
+| A — Code-fix (single 2026-04-26 pass) | 19,417 | ≈540 (this pass; cumulative `harbor_tasks/` is 582) | ≈2.8% |
 | B — Markdown-authoring (single 2026-04-27 batch) | 9,629 | 214 new (cumulative `harbor_tasks_md_authoring/` is 718) | ≈2.2% (new) / 7.5% (with re-validated pre-existing) |
 
 Pipeline B's path-regex pre-filter extracts a much narrower starting population, so its absolute count of new tasks is lower per pass; the pre-filter does most of the selection work before any LLM is invoked.
