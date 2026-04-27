@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: claude-skills-add-reasoningsemiformally-skill
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: oaustegard/claude-skills
+  pr: 522
+  base_commit: "fe5b2fe2e9f036d665f2c3ac1c821184b3cb32d6"
+  merge_commit: "2e1787738e4a61020c66ef50debf93832e733630"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in reasoning-semiformally/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in reasoning-semiformally/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in reasoning-semiformally/SKILL.md."
+
+config_edits:
+  - path: reasoning-semiformally/SKILL.md
+    tier: 1
+    gold_added: "---\nname: reasoning-semiformally\ndescription: Apply semi-formal certificate reasoning to code analysis — patch verification, fault localization, patch equivalence. Use when reviewing patches, hunting bugs across scopes, comparing fixes, or when code reasoning requires tracing execution across files/modules. Triggers on code review, bug localization, patch comparison, name shadowing, scope analysis, regression checking.\n---\n\n# Semi-Formal Code Reasoning\n\nStructured certificate templates that force mandatory checkpoints before conclusions. Based on Ugare & Chandra (2026), validated in our replication experiments.\n\n## Core Principle\n\nThese templates are **cognitive forcing functions**. They change what the model thinks about before concluding — not its reasoning ability. Standard chain-of-thought lets pattern-matching to plausible answers. Structured templates insert mandatory scope checks, execution traces, and sufficiency verifications.\n\n**Value scales with reasoning distance.** Locally-obvious bugs show no improvement. Cross-scope, cross-file, and architectural bugs show dramatic gains (+11pp fault localization in our experiments).\n\n## When to Apply\n\nApply semi-formal reasoning when:\n- Tracing execution across module boundaries or class hierarchies\n- Name shadowing or scope ambiguity is possible\n- A fix might introduce regressions in untouched code paths\n- Comparing two patches for behavioral equivalence\n- Bug symptoms are distant from root cause (cross-file, cross-scope)\n\nSkip when:\n- Bug is locally obvious (typo, off-by-one in same function)\n- Change is trivial (docs, formatting, version bumps)\n- No execution paths cross scope boundaries\n\n## Templates\n\nThree templates for different tasks. Each follows the certificate pattern: premises → mandatory traces → formal conclusion.\n\n### Patch Verification\n\nFor reviewing diffs. Forces function resolution, execution tracing, regression checking.\n\n**Automated path:** `from muninn_utils.verify_patch import verify_patch` — wraps this template in a sub-agent call with outcome tracking. Use for PR workflows.\n\n**Direct application:** When reasoning about a patch inline (no sub-agent), follow this structure:\n\n```\nPREMISES:\nP1: The patch modifies [what files/functions]\nP2: The intended fix is [what it should do]\nP3: Must not break [existing behavior]\n\nFUNCTION RESOLUTION:\nFor each function call in the patch — trace which definition is actually invoked.\nCheck imports, module scope, class scope, builtins. Flag any name shadowing.\n\nEXECUTION TRACE:\nBefore: [input] → [buggy behavior]\nAfter:  [input] → [expected behavior]\n\nREGRESSION CHECK:\nFor each touched code path: [preserved / broken] because [evidence]\n\nEDGE CASES:\n[Any unhandled scenarios]\n\nVERDICT: [CORRECT | LIKELY_CORRECT | CONCERNS | BUGGY]\nCONFIDENCE: [high | medium | low]\nSUMMARY: [one sentence]\n```\n\nThe critical checkpoint: **FUNCTION RESOLUTION**. \"Which function is actually being called?\" catches name shadowing and import errors that narrative reasoning misses.\n\n### Fault Localization\n\nFor finding which line(s) cause a bug. Forces divergence analysis and sufficiency verification.\n\n```\nPREMISES:\nP1: The symptom is [what happens]\nP2: The expected behavior is [what should happen]\n\nCODE PATH TRACE:\nFor each relevant line:\n  LINE [N]: [what it does] → [result for buggy input]\n\nDIVERGENCE ANALYSIS:\nFor each candidate buggy line:\n  CLAIM D[N]: At line [N], [code] produces [behavior]\n              which contradicts P2 because [reason]\n  VERIFICATION: Would fixing ONLY this line fix the symptom? [yes/no + why]\n\nBUGGY LINES: [number(s)] — [reason]\n```\n\nThe critical checkpoint: **\"Would fixing ONLY this line fix the symptom?\"** Forces sufficiency verification — prevents identifying a line that contributes to the bug but isn't the root cause.\n\n### Patch Equivalence\n\nFor determining if two patches produce identical test outcomes. Forces per-test execution tracing for both patches.\n\n```\nDEFINITIONS:\nD1: Two patches are EQUIVALENT MODULO TESTS iff the test suite produces\n    identical pass/fail outcomes for both patches.\n\nPREMISES:\nP1: Patch 1 modifies [file(s)] by [change]\nP2: Patch 2 modifies [file(s)] by [change]\nP3: The tests check [behavior]\n\nFUNCTION RESOLUTION:\nFor EACH function call in each patch:\n- Trace Python name resolution (local → enclosing → module → builtins)\n- Check for module-level definitions that might shadow builtins\n\nANALYSIS OF TEST BEHAVIOR:\nFor each test:\n  Claim 1: With Patch 1, test will [PASS/FAIL] because [execution trace]\n  Claim 2: With Patch 2, test will [PASS/FAIL] because [execution trace]\n  Comparison: [SAME / DIFFERENT]\n\nCOUNTEREXAMPLE (if different):\n  Test [name] → different outcomes because [trace]\n\nANSWER: [YES equivalent | NO not equivalent]\n```\n\n## Composing Templates\n\nFor complex tasks, compose templates sequentially:\n1. **Fault localization** to find the bug\n2. **Patch verification** to validate a proposed fix\n3. **Patch equivalence** to compare alternative fixes\n\nEach template output feeds the next as premises.\n\n## Provenance\n\n- Paper: Ugare & Chandra, \"Agentic Code Reasoning with Semi-Formal Certificates\" (arXiv:2603.01896, March 2026)\n- Replication: Validated on Django name-shadowing (0%→100% fault localization) and 3 real bugs from private repos (+11pp aggregate)\n- Blog: austegard.com/blog/replicating-agentic-code-reasoning/"
+    gold_removed: ''

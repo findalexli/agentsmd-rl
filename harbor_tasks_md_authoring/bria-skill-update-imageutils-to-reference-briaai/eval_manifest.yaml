@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: bria-skill-update-imageutils-to-reference-briaai
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Bria-AI/bria-skill
+  pr: 24
+  base_commit: "56e4d1b18134026cd807ea4461523e011bd118eb"
+  merge_commit: "69a4a19067e08f1a3aaea43805f7ab3082135ba7"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/image-utils/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/image-utils/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/image-utils/SKILL.md."
+
+config_edits:
+  - path: skills/image-utils/SKILL.md
+    tier: 1
+    gold_added: "## Integration with Bria AI\nUse alongside the **[bria-ai skill](https://clawhub.ai/galbria/bria-ai)** to post-process AI-generated images. Generate or edit images with Bria's API, then use image-utils for resizing, cropping, watermarking, and web optimization.\nimport requests\n# Generate with Bria AI (see bria-ai skill for full API reference)\nresponse = requests.post(\n    \"https://engine.prod.bria-api.com/v2/image/generate\",\n    headers={\"api_token\": BRIA_API_KEY, \"Content-Type\": \"application/json\"},\n    json={\"prompt\": \"product photo of headphones\", \"aspect_ratio\": \"1:1\", \"sync\": True}\n)\nimage_url = response.json()[\"result\"][\"image_url\"]"
+    gold_removed: ''

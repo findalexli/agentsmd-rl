@@ -1,0 +1,57 @@
+version: "2.0"
+
+task:
+  name: marketingskills-seoaudit-add-warning-about-webfetch
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: coreyhaines31/marketingskills
+  pr: 53
+  base_commit: "a04cb61a577a20d9ab0f3da2a2d99c17a0476ded"
+  merge_commit: "a71f31c51ea34c17e976748a11e4754515c0a5cf"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/seo-audit/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/seo-audit/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/seo-audit/SKILL.md."
+
+config_edits:
+  - path: skills/seo-audit/SKILL.md
+    tier: 1
+    gold_added: '### ⚠️ Important: Schema Markup Detection Limitation
+
+
+      **`web_fetch` and `curl` cannot reliably detect structured data / schema markup.**
+
+
+      Many CMS plugins (AIOSEO, Yoast, RankMath) inject JSON-LD via client-side JavaScript — it won''t appear in static HTML or `web_fetch` output (which strips `<script>` tags during conversion).
+
+
+      **To accurately check for schema markup, use one of these methods:**
+
+      1. **Browser tool** — render the page and run: `document.querySelectorAll(''script[type="application/ld+json"]'')`
+
+      2. **Google Rich Results Test** — https://search.google.com/test/rich-results
+
+      3. **Screaming Frog export** — if the client provides one, use it (SF renders JavaScript)
+
+
+      **Never report "no schema found" based solely on `web_fetch` or `curl`.** This has led to false audit findings in production.
+
+
+      - Rich Results Test (**use this for schema validation — it renders JavaScript**)
+
+      > **Note on schema detection:** `web_fetch` strips `<script>` tags (including JSON-LD) and cannot detect JS-injected schema. Always use the browser tool, Rich Results Test, or Screaming Frog for schema checks. See the warning at the top of the Audit Framework section.
+
+      '
+    gold_removed: ''

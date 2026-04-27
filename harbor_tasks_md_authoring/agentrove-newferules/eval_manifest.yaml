@@ -1,0 +1,41 @@
+version: "2.0"
+
+task:
+  name: agentrove-newferules
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Mng-dev-ai/agentrove
+  pr: 480
+  base_commit: "52949e55a478793671da195d26cd0ef14403c4fe"
+  merge_commit: "c3109e618a18d9f71a11b1b243cc5e73b657a815"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '- Do not use semantic colors (`error-*`, `warning-*`, `success-*`) for interactive button backgrounds — use monochrome surface tokens; semantic colors are for status badges and text indicators only
+
+      - Every `dark:text-*` / `dark:bg-*` class must have a corresponding light-mode class — never rely on browser defaults or inherited color for one mode while explicitly setting the other
+
+      - Do not use custom shadow tokens (`shadow-soft`, `shadow-harsh`, etc.) — use only the defined hierarchy: `shadow-sm`, `shadow-medium`, `shadow-strong`
+
+      ### Layout
+
+
+      - Do not use absolute positioning for layout of sibling elements within a container — use flexbox (`flex`, `justify-between`, `gap-*`); reserve `absolute` for overlays, tooltips, dropdowns, and decorative elements only'
+    gold_removed: ''

@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: robotics-agent-skills-feat-use-c-lambdas-instead
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: arpitg1304/robotics-agent-skills
+  pr: 1
+  base_commit: "4a594d2380d81522cf285602b7357a80c63d78d9"
+  merge_commit: "8b3dfcb03d58520f244924139727a15085bea3e8"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/ros2/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/ros2/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/ros2/SKILL.md."
+
+config_edits:
+  - path: skills/ros2/SKILL.md
+    tier: 1
+    gold_added: "#include <vision_msgs/msg/detection2_d.hpp>\n        det_pub_ = this->create_publisher<vision_msgs::msg::Detection2D>(\"detections\", reliable_qos);\n            \"camera/image_raw\", sensor_qos, [this](const std::shared_ptr<const sensor_msgs::msg::Image>& msg){\n                this->image_callback(msg);\n            });\n            [this](){ this->timer_callback(); });\n    void image_callback(const std::shared_ptr<const sensor_msgs::msg::Image>& msg) {\n    rclcpp::Publisher<vision_msgs::msg::Detection2D>::SharedPtr det_pub_;\n            [this](sensor_msgs::msg::Image::UniquePtr msg) {\n                this->callback(std::move(msg));\n            },\n    void callback(sensor_msgs::msg::Image::UniquePtr msg) {\n        // UniquePtr = zero-copy when:\n        //   - publisher also uses UniquePtr\n        //   - both subscriber and publisher use intra-process\n        //   - this is the only subscriber"
+    gold_removed: ''

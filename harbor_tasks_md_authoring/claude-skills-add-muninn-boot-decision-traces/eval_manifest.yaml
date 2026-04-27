@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: claude-skills-add-muninn-boot-decision-traces
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: oaustegard/claude-skills
+  pr: 294
+  base_commit: "8441c100bd88cbb9df2aa841d1fcccadebf3910e"
+  merge_commit: "91b60801d66281da33b3338434e045fc022a1219"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: "## Muninn Boot\n\nThis repository is developed by two wings of the same raven. Claude Code implements; Claude.ai (Muninn) plans, tests, and operates the memory system. Both share a persistent memory store — boot it to maintain continuity.\n\nUnless the message contains \"skip boot\", execute at session start:\n\n```bash\npython3 << 'EOF'\nimport sys\nsys.path.insert(0, '/home/user/claude-skills/remembering')\nfrom scripts import boot\nprint(boot())\nEOF\n```\n\nCredentials auto-detect from environment or well-known paths (`/mnt/project/turso.env`, `/mnt/project/muninn.env`, `~/.muninn/.env`). If boot fails on missing credentials, note it and continue — not all sessions require memory access.\n\n### Decision Traces\n\nAfter completing meaningful work (implementation, bugfix, architecture decision), store a memory. This is how the other wing learns what happened.\n\n```python\nremember(\n    \"Closed #NNN: [what was learned]. Key decision: [rationale]. \"\n    \"Constraint: [if any]. Future note: [what next session needs to know].\",\n    \"decision\",\n    tags=[\"issue-NNN\", \"relevant-tags\"],\n    priority=1  # 1=significant, 0=routine\n)\n```\n\nGood traces lead with *why*, not *what* — the diff shows what. Include constraints discovered, alternatives rejected, and gotchas for future sessions.\n\n\n# After Muninn boot, remembering functions are available:\nfrom remembering.scripts import remember, journal\n# After boot, remembering functions are available:\nfrom remembering.scripts import recall, handoff_pending\n- These utilities import from the `scripts` package (e.g., `from remembering.scripts import _exec, reprioritize`), with the skill directory on `sys.path`"
+    gold_removed: ''

@@ -1,0 +1,40 @@
+version: "2.0"
+
+task:
+  name: agentrove-docs-expand-claudemd-with-crosscontext
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Mng-dev-ai/agentrove
+  pr: 553
+  base_commit: "081a49cf24f746c52a67ab0a9ca4e9d30fc8ff63"
+  merge_commit: "627cf708ba6d5bdc04f2f72c3f745a84905eb780"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '- Route cross-context event handlers (SSE, WebSocket, pub/sub, stream callbacks) by the event''s own identifiers (`envelope.chatId`), not hook-scoped ones — the latter silently misdirects off-screen updates
+
+      - When a terminal/completion handler needs metadata about the completed entity, capture it at session/handle creation — don''t resolve from the currently-viewed entity at completion time; off-screen completions land when the user has navigated elsewhere
+
+      - For off-screen entities that need fresh state on next mount, patch the cache optimistically during the stream/mutation (`queryClient.setQueryData`) — `invalidateQueries` alone isn''t enough since `useQuery` serves cached data on mount during the background refetch
+
+      - Terminal-kind gating (cancelled vs complete) applies only to UI-side concerns (notifications, toasts). Cache invalidations for server-side state mutated during the turn must run regardless — cancelled runs still leave real side effects
+
+      - When state is keyed by an input so render derives a `pending` flag as `stored.input !== currentInput`, the effect must update state for every input value — bailing on falsy inputs (`if (!x) return`) leaves `stored.input` stale and the pending flag locked on forever'
+    gold_removed: ''

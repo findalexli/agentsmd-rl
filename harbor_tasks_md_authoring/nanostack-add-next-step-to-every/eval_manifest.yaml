@@ -1,0 +1,170 @@
+version: "2.0"
+
+task:
+  name: nanostack-add-next-step-to-every
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: garagon/nanostack
+  pr: 13
+  base_commit: "5e1ad4046bb403a6fe022ec2b286ec739834320f"
+  merge_commit: "aa5d4a62dab8c0496b22682929f12e450452b512"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plan/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plan/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plan/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in qa/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in qa/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in qa/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in review/SKILL.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in review/SKILL.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in review/SKILL.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in security/SKILL.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in security/SKILL.md."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in security/SKILL.md."
+  - id: signal_12
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in think/SKILL.md."
+  - id: signal_13
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in think/SKILL.md."
+  - id: signal_14
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in think/SKILL.md."
+
+config_edits:
+  - path: plan/SKILL.md
+    tier: 1
+    gold_added: '## Next Step
+
+
+      After the user approves the plan and you finish building, tell the user:
+
+
+      > Build complete. Next steps in the sprint:
+
+      > - `/review` to run a two-pass code review with scope drift detection
+
+      > - `/security` to audit for vulnerabilities
+
+      > - `/qa` to test that everything works
+
+      >
+
+      > These three can run in any order. After all pass, `/ship` to create the PR.
+
+
+      Do NOT run `/review`, `/qa`, or `/security` automatically. Wait for the user to invoke each one.
+
+      '
+    gold_removed: ''
+  - path: qa/SKILL.md
+    tier: 1
+    gold_added: '## Next Step
+
+
+      After QA is complete and the artifact is saved, tell the user what''s next:
+
+
+      > QA complete. Remaining steps:
+
+      > - `/review` to run code review (if not done yet)
+
+      > - `/security` to audit for vulnerabilities (if not done yet)
+
+      > - `/ship` to create the PR (after review, security and qa pass)
+
+      '
+    gold_removed: ''
+  - path: review/SKILL.md
+    tier: 1
+    gold_added: '## Next Step
+
+
+      After the review is complete and the artifact is saved, tell the user what''s next in the sprint:
+
+
+      > Review complete. Remaining steps:
+
+      > - `/security` to audit for vulnerabilities (if not done yet)
+
+      > - `/qa` to test that everything works (if not done yet)
+
+      > - `/ship` to create the PR (after review, security and qa pass)
+
+      '
+    gold_removed: ''
+  - path: security/SKILL.md
+    tier: 1
+    gold_added: '## Next Step
+
+
+      After the security audit is complete and the artifact is saved, tell the user what''s next:
+
+
+      > Security audit complete. Remaining steps:
+
+      > - `/review` to run code review (if not done yet)
+
+      > - `/qa` to test that everything works (if not done yet)
+
+      > - `/ship` to create the PR (after review, security and qa pass)
+
+      '
+    gold_removed: ''
+  - path: think/SKILL.md
+    tier: 1
+    gold_added: '## Next Step
+
+
+      After the Think Summary and artifact are saved, tell the user:
+
+
+      > Ready for `/nano-plan`. Say `/nano-plan` to create the implementation plan, or adjust the brief first.
+
+
+      Do NOT proceed to planning automatically. Wait for the user to invoke `/nano-plan`.
+
+      '
+    gold_removed: ''

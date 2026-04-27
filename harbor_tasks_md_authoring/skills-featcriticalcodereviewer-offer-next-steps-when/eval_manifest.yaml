@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: skills-featcriticalcodereviewer-offer-next-steps-when
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: posit-dev/skills
+  pr: 17
+  base_commit: "8f5a7b6ae5328116c400ebbc7f16846269b43e14"
+  merge_commit: "24434a31417b51ea44cac35ddba78723800be0be"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in posit-dev/critical-code-reviewer/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in posit-dev/critical-code-reviewer/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in posit-dev/critical-code-reviewer/SKILL.md."
+
+config_edits:
+  - path: posit-dev/critical-code-reviewer/SKILL.md
+    tier: 1
+    gold_added: "## Next Steps\n\nAt the end of the review, suggest next steps that the user can take:\n\n1. Discuss and address review questions\n   - If the user chooses this option, use the AskUserQuestion tool to systematically talk through each of the issues identified in your review.\n   - Ask questions in groups by related severity or topic\n   - Offer resolution options and clearly mark your recommended choice\n\n2. Add your feedback to a pull request\n   - Offer this next step when the review is attached to a pull request\n   - Submit your review verbatim as a PR comment with attribution at the top: \"Review feedback assisted by the [critical-code-reviewer skill](https://github.com/posit-dev/skills/blob/main/posit-dev/critical-code-reviewer/SKILL.md).\"\n\nYou can offer additional next step options based on the context of your conversation.\n\nNOTE: If you are operating as a subagent or as an agent for another coding assistant, e.g. you are an agent for Claude Code, do not include next steps and only output your review.\n\n\n## Next Steps\n[Numbered options for proceeding, e.g., discuss issues, add to PR]"
+    gold_removed: ''

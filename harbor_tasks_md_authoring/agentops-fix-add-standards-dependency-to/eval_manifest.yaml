@@ -1,0 +1,80 @@
+version: "2.0"
+
+task:
+  name: agentops-fix-add-standards-dependency-to
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: boshu2/agentops
+  pr: 12
+  base_commit: "49a0d1ca8ecfbed5c397e4fe11192403574d498d"
+  merge_commit: "455cc23139c393777f1df06ed09bce93a518be41"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/core-kit/skills/crank/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/core-kit/skills/crank/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/core-kit/skills/crank/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/general-kit/skills/vibe/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/general-kit/skills/vibe/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/general-kit/skills/vibe/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/vibe-kit/skills/vibe/SKILL.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/vibe-kit/skills/vibe/SKILL.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/vibe-kit/skills/vibe/SKILL.md."
+
+config_edits:
+  - path: plugins/core-kit/skills/crank/SKILL.md
+    tier: 1
+    gold_added: "---\n\n## Context Inference\n\nWhen `/crank` is invoked without an epic-id, check the preceding conversation for context:\n\n### Priority Order\n\n1. **Explicit epic-id** - If user provides an epic ID, use it\n2. **Recently discussed epic** - If an epic was mentioned in conversation, use it\n3. **Hooked work** - Check `gt hook` for assigned epic\n4. **In-progress epic** - Check `bd list --type=epic --status=in_progress`\n5. **Ask user** - If no context found, ask which epic to crank\n\n### Detection Logic\n\n```markdown\n## On Invocation Without Epic ID\n\n1. Scan conversation for epic references:\n   - Look for issue IDs with epic type (e.g., \"ap-68ohb\")\n   - Check for \"epic\", \"parent issue\" mentions\n   - Extract from recent bd commands in conversation\n\n2. Check Gas Town hook:\n   ```bash\n   gt hook  # Returns hooked work including parent epic\n   ```\n\n3. Check beads state:\n   ```bash\n   bd list --type=epic --status=in_progress | head -1\n   ```\n\n4. If nothing found, ask:\n   \"Which epic should I crank? Run `bd list --type=epic` to see available epics.\"\n```\n\n### Example\n\n```\nUser: let's work on ap-68ohb - it has 27 children to implement\nUser: [does some planning work]\nUser: /crank\n\n→ Crank infers epic from conversation: ap-68ohb\n→ Starts autonomous execution without requiring re-specification\n```\n\n---\n"
+    gold_removed: ''
+  - path: plugins/general-kit/skills/validation-chain/SKILL.md
+    tier: 1
+    gold_added: '  - standards'
+    gold_removed: ''
+  - path: plugins/general-kit/skills/vibe-docs/SKILL.md
+    tier: 1
+    gold_added: "skills:\n  - standards"
+    gold_removed: ''
+  - path: plugins/general-kit/skills/vibe/SKILL.md
+    tier: 1
+    gold_added: "  - standards\n## Context Inference\n\nWhen `/vibe` is invoked without a target, check the preceding conversation for context:\n\n### Priority Order\n\n1. **Explicit target** - If user provides a path/target, use it\n2. **Recent code changes in conversation** - If code was just written or edited, validate those files\n3. **Staged git changes** - If `git diff --cached` shows staged files, validate those\n4. **Unstaged changes** - If `git diff` shows modified files, validate those\n5. **Default to `recent`** - Fall back to recent git changes\n\n### Detection Logic\n\n```markdown\n## On Invocation Without Target\n\n1. Check if files were edited in this conversation:\n   - Look for recent Edit/Write tool calls\n   - Extract file paths from tool results\n   - If found: validate those specific files\n\n2. Check git state:\n   ```bash\n   git diff --cached --name-only  # Staged changes\n   git diff --name-only           # Unstaged changes\n   ```\n\n3. If nothing found, use `recent` (HEAD~1..HEAD)\n```\n\n### Example\n\n```\nUser: [writes some code to services/auth/handler.py]\nUser: /vibe\n\n→ Vibe infers target from conversation: services/auth/handler.py\n→ Validates that specific file instead of requiring explicit path\n```\n\n---\n"
+    gold_removed: ''
+  - path: plugins/vibe-kit/skills/validation-chain/SKILL.md
+    tier: 1
+    gold_added: '  - standards'
+    gold_removed: ''
+  - path: plugins/vibe-kit/skills/vibe-docs/SKILL.md
+    tier: 1
+    gold_added: "skills:\n  - standards"
+    gold_removed: ''
+  - path: plugins/vibe-kit/skills/vibe/SKILL.md
+    tier: 1
+    gold_added: "  - standards\n## Context Inference\n\nWhen `/vibe` is invoked without a target, check the preceding conversation for context:\n\n### Priority Order\n\n1. **Explicit target** - If user provides a path/target, use it\n2. **Recent code changes in conversation** - If code was just written or edited, validate those files\n3. **Staged git changes** - If `git diff --cached` shows staged files, validate those\n4. **Unstaged changes** - If `git diff` shows modified files, validate those\n5. **Default to `recent`** - Fall back to recent git changes\n\n### Detection Logic\n\n```markdown\n## On Invocation Without Target\n\n1. Check if files were edited in this conversation:\n   - Look for recent Edit/Write tool calls\n   - Extract file paths from tool results\n   - If found: validate those specific files\n\n2. Check git state:\n   ```bash\n   git diff --cached --name-only  # Staged changes\n   git diff --name-only           # Unstaged changes\n   ```\n\n3. If nothing found, use `recent` (HEAD~1..HEAD)\n```\n\n### Example\n\n```\nUser: [writes some code to services/auth/handler.py]\nUser: /vibe\n\n→ Vibe infers target from conversation: services/auth/handler.py\n→ Validates that specific file instead of requiring explicit path\n```\n\n---\n"
+    gold_removed: ''

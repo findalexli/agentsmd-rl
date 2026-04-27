@@ -1,0 +1,58 @@
+version: "2.0"
+
+task:
+  name: claude-skills-reasoningsemiformally-add-modeltier-guidance-f
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: oaustegard/claude-skills
+  pr: 523
+  base_commit: "8b1220a999b064872cc578d5e24c8b991ce3f074"
+  merge_commit: "5ee41f671d7f02232d3232835f075e1234ff92fd"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in reasoning-semiformally/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in reasoning-semiformally/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in reasoning-semiformally/SKILL.md."
+
+config_edits:
+  - path: reasoning-semiformally/SKILL.md
+    tier: 1
+    gold_added: '## Model-Tier Considerations
+
+
+      Template value is model-capability-dependent, not just reasoning-distance-dependent.
+
+
+      **Smaller models (Haiku-class):** Templates provide the most value. On CVE-2026-29000 (383-line JWT auth bypass), Haiku went from 80% → 100% fault localization with the template (+20pp). The template forces execution tracing that the model wouldn''t do unprompted.
+
+
+      **Larger models (Sonnet-class):** Templates can add overhead on bugs the model already handles. Same CVE, Sonnet scored 100% standard but 80% with the template (-20pp). The structured format consumed tokens that the model would have used for reasoning.
+
+
+      **Cost optimization:** Haiku + semi-formal ≈ Sonnet standard, at ~1/10th the cost. When using sub-agents for verification (e.g., verify_patch), consider Haiku + template instead of Sonnet + standard prompting.
+
+
+      **Decision framework:**
+
+      - Bug seems hard (cross-scope, cross-file, architectural) + using a smaller model → apply template
+
+      - Bug seems hard + using a frontier model → apply template (net positive expected)
+
+      - Bug seems tractable + using a frontier model → skip template (overhead may hurt)
+
+      - Cost-sensitive workflow → use smaller model + template
+
+
+      - CVE validation: CVE-2026-29000 (pac4j-jwt, CVSS 10.0, 383 lines). Haiku: +20pp with template. Sonnet: -20pp (template overhead). Finding: value is model-tier-dependent.'
+    gold_removed: ''

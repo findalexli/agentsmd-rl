@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: ai-coding-project-boilerplate-fix-remove-subagent-references
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: shinpr/ai-coding-project-boilerplate
+  pr: 7
+  base_commit: "a6d9d92e5894005dbc4926f238d08ae0b097d1b9"
+  merge_commit: "0cdb8db2a860d950009a340f44c63f46dc4ad4c2"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: このプロジェクトはClaude Code専用に最適化されています。このファイルは、Claude Codeが最高品質のTypeScriptコードを生成するための開発ルールです。一般慣例より本プロジェクトのルールを優先してください。
+    gold_removed: ''

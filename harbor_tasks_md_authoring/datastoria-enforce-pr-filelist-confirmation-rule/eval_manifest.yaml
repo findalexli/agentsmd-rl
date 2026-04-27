@@ -1,0 +1,42 @@
+version: "2.0"
+
+task:
+  name: datastoria-enforce-pr-filelist-confirmation-rule
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: FrankChen021/datastoria
+  pr: 101
+  base_commit: "e1de08aa94eb0f612387622c849c76e53de5f849"
+  merge_commit: "23bb53b89f355d13c48f12e26756eee8f045368f"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '- Before listing changed files, run `git fetch origin master`.
+
+      - PR creation is blocked until the agent shows `Changed files vs origin/master` for each branch.
+
+      - The agent must receive explicit user approval after showing those file lists before running any `gh pr create` command.
+
+      - Before pushing a branch, run `git fetch origin master`.
+
+      - Push is blocked until the agent shows `Changed files vs origin/master` for each branch being pushed.
+
+      - The agent must receive explicit user approval after showing those file lists before running any `git push` command.'
+    gold_removed: ''

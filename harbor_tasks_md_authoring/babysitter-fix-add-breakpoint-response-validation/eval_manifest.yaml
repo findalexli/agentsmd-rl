@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: babysitter-fix-add-breakpoint-response-validation
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: a5c-ai/babysitter
+  pr: 20
+  base_commit: "7a7be2750f33c2dd75f673cf16787ee6b15f9185"
+  merge_commit: "336c9a9860478b17da1c7d0c291f851ae2ab4fad"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/babysitter/skills/babysit/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/babysitter/skills/babysit/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/babysitter/skills/babysit/SKILL.md."
+
+config_edits:
+  - path: plugins/babysitter/skills/babysit/SKILL.md
+    tier: 1
+    gold_added: "If running in interactive mode, use AskUserQuestion tool to ask the user the breakpoint question.\r\n**CRITICAL: Response validation rules:**\r\n- The AskUserQuestion MUST include explicit \"Approve\" and \"Reject\" (or similar) options so the user's intent is unambiguous.\r\n- If AskUserQuestion returns empty, no selection, or the user dismisses it without choosing an option: treat as **NOT approved**. Re-ask the question or keep the breakpoint in a pending/waiting state. Do NOT proceed.\r\n- NEVER fabricate, synthesize, or infer approval text. Only pass through the user's actual selected response verbatim.\r\n- NEVER assume approval from ambiguous, empty, or missing responses. When in doubt, the answer is \"not approved\".\r\n\r\nAfter receiving an explicit approval or rejection from the user, post the result of the breakpoint to the run by calling `task:post`.\r\nCRITICAL RULE: in interactive mode, NEVER auto-approve breakpoints. If AskUserQuestion returns empty, no selection, or is dismissed, treat it as NOT approved and re-ask. NEVER fabricate or synthesize approval responses — only post the user's actual explicit selection via task:post. An empty response is NOT approval.\r\n\r"
+    gold_removed: ''

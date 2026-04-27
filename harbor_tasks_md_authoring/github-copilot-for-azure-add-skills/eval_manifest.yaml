@@ -1,0 +1,48 @@
+version: "2.0"
+
+task:
+  name: github-copilot-for-azure-add-skills
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: microsoft/GitHub-Copilot-for-Azure
+  pr: 1910
+  base_commit: "9040e3db4ba673a25f8fcf00b3fbd2fbaf2796f6"
+  merge_commit: "addf100d6cb250d37e22a303cd1d7a45f93112a4"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/investigate-integration-test/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/investigate-integration-test/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/investigate-integration-test/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/submit-skill-fix-pr/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/submit-skill-fix-pr/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/submit-skill-fix-pr/SKILL.md."
+
+config_edits:
+  - path: .github/skills/investigate-integration-test/SKILL.md
+    tier: 1
+    gold_added: "---\nname: investigate-integration-test\ndescription: \"Investigate a failing integration test from a GitHub issue. Downloads logs/artifacts, analyzes the failure, examines relevant skills, and suggests fixes. TRIGGERS: investigate integration test, debug integration test, failing integration test, test failure investigation, diagnose test failure, analyze test issue\"\nlicense: MIT\nmetadata:\n  author: Microsoft\n  version: \"1.0.0\"\n---\n\n# Integration Test Investigation\n\nInvestigates a failing integration test given a GitHub issue in `microsoft/GitHub-Copilot-for-Azure`.\n\n## When to Use This Skill\n\n- A GitHub issue links to a failing integration test run\n- You need to diagnose why an integration test is failing\n- You want to understand a test failure before implementing a fix\n\n## Steps\n\n1. Read the GitHub issue.\n2. Download the test logs and artifacts from the linked run.\n3. Look through the logs/artifacts and analyze the test with the prompt specified in the issue to diagnose the failure.\n4. Examine the relevant skills under `plugin/skills` for context.\n5. Offer a suggested fix for each identified problem. Do not implement any fixes without the user's approval."
+    gold_removed: ''
+  - path: .github/skills/submit-skill-fix-pr/SKILL.md
+    tier: 1
+    gold_added: "---\nname: submit-skill-fix-pr\ndescription: \"Submit a pull request with skill fixes. Validates skill structure, bumps versions, and creates a PR with a proper description. TRIGGERS: submit skill fix, create fix PR, skill fix pull request, submit PR, push skill fix\"\nlicense: MIT\nmetadata:\n  author: Microsoft\n  version: \"1.0.0\"\n---\n\n# Submit Skill Fix PR\n\nCreates a pull request after committing skill fixes in `microsoft/GitHub-Copilot-for-Azure`.\n\n## When to Use This Skill\n\n- You have committed skill fixes and need to submit a PR\n- You need to validate skill structure before pushing\n- You want to create a properly formatted fix PR\n\n## Steps\n\n1. Install NPM dependencies in the `scripts` directory, if necessary.\n2. From the `scripts` directory run `npm run frontmatter` and `npm run references` to validate the skill structure. Fix and commit any problems.\n3. Ensure that skill version has been bumped for any updated SKILL.md.\n4. Push the branch to origin and create a PR into upstream. The PR description should include:\n   1. A brief description of the problem(s).\n   2. A brief description of the fix(es) and how they address the problems.\n   3. A \"Fixes #<issue_number>\" note. Ask the user if you don't know the issue number."
+    gold_removed: ''

@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: dash_skills-tweaks-to-darttestfundamentals
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: kevmoo/dash_skills
+  pr: 15
+  base_commit: "907a8ffa90cb449dce2c7d97120b12d261354d54"
+  merge_commit: "c9e1b6194a41f77c2124f41b9849f06d7dbb5ff5"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agent/skills/dart-test-fundamentals/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agent/skills/dart-test-fundamentals/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agent/skills/dart-test-fundamentals/SKILL.md."
+
+config_edits:
+  - path: .agent/skills/dart-test-fundamentals/SKILL.md
+    tier: 1
+    gold_added: "- Structuring test suites with `group`.\n    - **NOTE**: DO NOT remove groups when doing a cleanup on existing code you\n      didn't create unless explicitly asked to. This can cause a LOT of churn\n      in the DIFF that most engineers won't want!\n- **Naming Tests** `test('test name here',`:\n  - Avoid redundant \"test\" prefixes. Use `group` instead.\n### 3. Cleaning Up Resources\n\n- To clean up resources created WITHIN the `test` body, consider using\n  `addTearDown` instead of a `try-finally` block.\n\n**Avoid:**\n```dart\ntest('can create and delete a file', () {\n  final file = File('temp.txt');\n  try {\n    file.writeAsStringSync('hello');\n    expect(file.readAsStringSync(), 'hello');\n  } finally {\n    if (file.existsSync()) file.deleteSync();\n  }\n});\n```\n\n**Prefer:**\n```dart\ntest('can create and delete a file', () {\n  final file = File('temp.txt');\n  // Register teardown immediately after resource creation intent\n  addTearDown(() {\n    if (file.existsSync()) file.deleteSync();\n  });\n\n  file.writeAsStringSync('hello');\n  expect(file.readAsStringSync(), 'hello');\n});\n```\n\n### 4. Configuration (`dart_test.yaml`)\n### 5. File Naming"
+    gold_removed: ''

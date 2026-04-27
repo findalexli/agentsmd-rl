@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: claude-skills-feat-k-as-imagetype-parameter
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: oaustegard/claude-skills
+  pr: 469
+  base_commit: "d4c2420d7983a30c49578b623565366dd37e7fa2"
+  merge_commit: "0e9929df9b3cb38aa6ef4fe29bd1c699cc585065"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in image-to-svg/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in image-to-svg/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in image-to-svg/SKILL.md."
+
+config_edits:
+  - path: image-to-svg/SKILL.md
+    tier: 1
+    gold_added: "version: 1.3.0\n\n**Before running quantization, choose K based on the image:**\n\n| Image type | K | Rationale |\n|-----------|---|-----------|\n| Photo — portrait, landscape, still life | 56–64 | Smooth tonal gradation matters. Faces need many skin tone steps. |\n| Painting — Renaissance, Impressionist, watercolor | 48–64 | Sfumato, blending, atmospheric perspective all need tonal range. |\n| Illustration — comics, editorial, digital art | 36–48 | Moderate palette, some gradation in shading. |\n| Graphic art — logos, icons, Kandinsky, flat design | 24–32 | Flat fills ARE the correct representation. More K adds noise. |\n| Pixel art, posterized, limited palette | 8–16 | Match the source palette. |\n\nWhen uncertain, **look at the image** and ask: \"Does this have smooth gradients or hard edges?\" Gradients → higher K. Hard edges → lower K. Default to 48 if unsure.\n# K chosen by image type — see table above\ncriteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 0.2)\n_, labels, centers = cv2.kmeans(pixels, K, None, criteria, 5, cv2.KMEANS_PP_CENTERS)\n# Apply centers to full-res image (batched to avoid memory issues at high K)\nbatch_size = 50000\nfull_labels = np.empty(len(full_px), dtype=np.int32)\nfor i in range(0, len(full_px), batch_size):\n    chunk = full_px[i:i+batch_size]\n    dists = np.linalg.norm(chunk[:, None, :] - centers[None, :, :].astype(np.float32), axis=2)\n    full_labels[i:i+batch_size] = np.argmin(dists, axis=1)\n\n**Tradeoffs**: K=64 on the Mona Lisa produces ~2300 shapes (~1.2MB SVG) vs K=32's ~1000 shapes (~550KB). Processing time roughly doubles. The quality gain in tonal gradation is substantial for photos and paintings but wasted on graphic art.\n\nThe standard K-means + contour pipeline creates \"woodcut\" artifacts: thin dark shapes at color boundaries where gradient transitions get quantized into separate dark clusters. Three mechanisms prevent this.\n\nFirst, build a dark territory mask — the union of all dark cluster pixels. This prevents non-dark dilation from encroaching on legitimate dark features (hair, dark clothing):\n\ndark_territory = np.zeros((h_orig, w_orig), dtype=np.uint8)\nfor cid, cnt in sorted_clusters:\n    if cid in bg_clusters:\n        continue\n    c = centers[cid]\n    lum = 0.299*c[0] + 0.587*c[1] + 0.114*c[2]\n    if lum < DARK_LUM_THRESHOLD:\n        dark_territory[label_img == cid] = 255\n```\n\nThen extract contours per cluster:\n \n```python\n    # FIX 1: Dilate non-dark regions to fill boundary gaps, but respect dark territory\n    # Without the territory mask, background colors eat into hair/dark edges\n        dilated = cv2.dilate(mask, k_dilate, iterations=1)\n        growth = dilated & ~mask                    # new pixels from dilation\n        growth_into_dark = growth & dark_territory  # growth that would invade dark areas\n        mask = dilated & ~growth_into_dark           # keep growth only into non-dark gaps\n            \n            # FIX 3: Isolation filter — small dark shapes surrounded by non-dark\n            # regions are artifacts, not features. Real dark features (eyes, hair)\n            # have dark neighbors.\n            if area < 500:\n                border = cv2.dilate(contour_mask, np.ones((11,11), np.uint8), 1) & ~contour_mask\n                border_dark = cv2.bitwise_and(dark_territory, border)\n                if border_dark.sum() / max(border.sum(), 1) < 0.3:\n                    continue  # Skip: isolated dark fragment\n**Why this works**: Four mechanisms cooperate:\n1. **Dilation** fills dark boundary gaps between non-dark regions (the main woodcut fix)\n2. **Dark territory mask** prevents dilation from eating into real dark features like hair and clothing, which would create artificially sharp cutout edges\n3. **Dark shape gating** filters the remaining thin dark artifacts that aren't covered by dilation\n4. **Isolation filter** removes small dark shapes (<500px) that are surrounded by non-dark territory (dark_ratio < 0.3). At higher K, more boundary artifacts appear as isolated dark fragments in light regions\n\n- K=32: ~500-1000 paths, 400-600KB SVG\n- K=48–64: ~1500-2500 paths, 800KB-1.2MB SVG (recommended for photos/paintings)"
+    gold_removed: ''

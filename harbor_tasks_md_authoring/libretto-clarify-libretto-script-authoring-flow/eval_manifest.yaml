@@ -1,0 +1,154 @@
+version: "2.0"
+
+task:
+  name: libretto-clarify-libretto-script-authoring-flow
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: saffron-health/libretto
+  pr: 105
+  base_commit: "20f606611a11cbadf385a4634d1ac973fd9fbc0e"
+  merge_commit: "1d1676c9dbbb98a712d9092720de26fc4cb53439"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/libretto/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/libretto/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/libretto/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/libretto/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/libretto/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/libretto/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/libretto/SKILL.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/libretto/SKILL.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/libretto/SKILL.md."
+
+config_edits:
+  - path: .agents/skills/libretto/SKILL.md
+    tier: 1
+    gold_added: 'description: "Browser automation CLI for building, maintaining, and running browser automation workflows by inspecting live pages and prototyping interactions."
+
+      Libretto is a CLI for building and maintaining browser automation scripts.
+
+      Use `npx libretto` to build or debug automations by inspecting live browser state, executing Playwright code, and running existing workflows.
+
+      - Prefer Libretto when you need to build, maintain, or debug a browser automation script against the live site.
+
+      - Treat Libretto as a script-authoring workflow: choose or create a workflow file, inspect the page, try focused actions, then update code outside the CLI and verify it with `run`.
+
+      - If the user asks for a new automation or scrape and no workflow file exists yet, create one in the workspace instead of stopping at interactive exploration.
+
+      - For a new automation, make the workflow file a required deliverable before you finish the task, even if you inspect the site first.
+
+      - If the user does not provide a workflow path, choose a reasonable filename in the current workspace and create it yourself.
+
+      - When the task is to build or change an automation, create or update the workflow file and use Libretto commands to gather the information needed for that code change.
+
+      - For a new automation, you may use `open`, `snapshot`, or `exec` first to learn the page, but do not finish or reply as if the task is complete until the workflow file exists.
+
+      - Treat scrape and integration requests as requests for reusable automation code by default, not as requests to manually collect the final data in the live session.
+
+      - Use `open` at the start of script authoring when you need live page state to decide how the workflow should work.
+
+      - Use `exec` to validate selectors, inspect data, or prototype a step before you encode it in the workflow file.
+
+      - Use `snapshot` to understand the current page before editing the workflow when the structure or next step is unclear.
+
+      - Use `run` to verify a workflow file after creating it or editing it.
+
+      Assistant: I''ll inspect the real site first if needed, but before I finish I''ll create `./target-workflow.mjs` so the task produces reusable automation code.'
+    gold_removed: ''
+  - path: .claude/skills/libretto/SKILL.md
+    tier: 1
+    gold_added: 'description: "Browser automation CLI for building, maintaining, and running browser automation workflows by inspecting live pages and prototyping interactions."
+
+      Libretto is a CLI for building and maintaining browser automation scripts.
+
+      Use `npx libretto` to build or debug automations by inspecting live browser state, executing Playwright code, and running existing workflows.
+
+      - Prefer Libretto when you need to build, maintain, or debug a browser automation script against the live site.
+
+      - Treat Libretto as a script-authoring workflow: choose or create a workflow file, inspect the page, try focused actions, then update code outside the CLI and verify it with `run`.
+
+      - If the user asks for a new automation or scrape and no workflow file exists yet, create one in the workspace instead of stopping at interactive exploration.
+
+      - For a new automation, make the workflow file a required deliverable before you finish the task, even if you inspect the site first.
+
+      - If the user does not provide a workflow path, choose a reasonable filename in the current workspace and create it yourself.
+
+      - When the task is to build or change an automation, create or update the workflow file and use Libretto commands to gather the information needed for that code change.
+
+      - For a new automation, you may use `open`, `snapshot`, or `exec` first to learn the page, but do not finish or reply as if the task is complete until the workflow file exists.
+
+      - Treat scrape and integration requests as requests for reusable automation code by default, not as requests to manually collect the final data in the live session.
+
+      - Use `open` at the start of script authoring when you need live page state to decide how the workflow should work.
+
+      - Use `exec` to validate selectors, inspect data, or prototype a step before you encode it in the workflow file.
+
+      - Use `snapshot` to understand the current page before editing the workflow when the structure or next step is unclear.
+
+      - Use `run` to verify a workflow file after creating it or editing it.
+
+      Assistant: I''ll inspect the real site first if needed, but before I finish I''ll create `./target-workflow.mjs` so the task produces reusable automation code.'
+    gold_removed: ''
+  - path: skills/libretto/SKILL.md
+    tier: 1
+    gold_added: 'description: "Browser automation CLI for building, maintaining, and running browser automation workflows by inspecting live pages and prototyping interactions."
+
+      Libretto is a CLI for building and maintaining browser automation scripts.
+
+      Use `npx libretto` to build or debug automations by inspecting live browser state, executing Playwright code, and running existing workflows.
+
+      - Prefer Libretto when you need to build, maintain, or debug a browser automation script against the live site.
+
+      - Treat Libretto as a script-authoring workflow: choose or create a workflow file, inspect the page, try focused actions, then update code outside the CLI and verify it with `run`.
+
+      - If the user asks for a new automation or scrape and no workflow file exists yet, create one in the workspace instead of stopping at interactive exploration.
+
+      - For a new automation, make the workflow file a required deliverable before you finish the task, even if you inspect the site first.
+
+      - If the user does not provide a workflow path, choose a reasonable filename in the current workspace and create it yourself.
+
+      - When the task is to build or change an automation, create or update the workflow file and use Libretto commands to gather the information needed for that code change.
+
+      - For a new automation, you may use `open`, `snapshot`, or `exec` first to learn the page, but do not finish or reply as if the task is complete until the workflow file exists.
+
+      - Treat scrape and integration requests as requests for reusable automation code by default, not as requests to manually collect the final data in the live session.
+
+      - Use `open` at the start of script authoring when you need live page state to decide how the workflow should work.
+
+      - Use `exec` to validate selectors, inspect data, or prototype a step before you encode it in the workflow file.
+
+      - Use `snapshot` to understand the current page before editing the workflow when the structure or next step is unclear.
+
+      - Use `run` to verify a workflow file after creating it or editing it.
+
+      Assistant: I''ll inspect the real site first if needed, but before I finish I''ll create `./target-workflow.mjs` so the task produces reusable automation code.'
+    gold_removed: ''

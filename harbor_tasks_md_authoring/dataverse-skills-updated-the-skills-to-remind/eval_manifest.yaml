@@ -1,0 +1,70 @@
+version: "2.0"
+
+task:
+  name: dataverse-skills-updated-the-skills-to-remind
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: microsoft/Dataverse-skills
+  pr: 16
+  base_commit: "984d1b1cb498d45817c8bbe2da5a3405a7f08761"
+  merge_commit: "1256c1ff8da73792912d0c74c591369e79170a58"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/plugins/dataverse/skills/init/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/plugins/dataverse/skills/init/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/plugins/dataverse/skills/init/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/plugins/dataverse/skills/mcp-configure/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/plugins/dataverse/skills/mcp-configure/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/plugins/dataverse/skills/mcp-configure/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/plugins/dataverse/skills/overview/SKILL.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/plugins/dataverse/skills/setup/SKILL.md."
+
+config_edits:
+  - path: .github/plugins/dataverse/skills/init/SKILL.md
+    tier: 1
+    gold_added: 'Do not skip MCP configuration (step 8 in Scenario A, step 11 in Scenario B) unless an MCP server is already configured (`.mcp.json` exists with a Dataverse server entry, or `claude mcp list` shows one).
+
+      > Remember to **use `claude --continue` to resume the session** without losing context.
+
+      If MCP is needed and not yet configured, use the `dataverse-mcp-configure` skill.
+
+      > Remember to **use `claude --continue` to resume the session** without losing context.'
+    gold_removed: ''
+  - path: .github/plugins/dataverse/skills/mcp-configure/SKILL.md
+    tier: 1
+    gold_added: "If at any point during the MCP configuration process you discover that the user has not initialized the Dataverse workspace yet, do that first using the `dataverse-init` skill (do this by default when the user does not express a preference and just wants the MCP configured), which will set up the necessary environment variables. If they refuse, remind them to do that later when then attempt any operations that require PAC CLI, Python SDK or OData Web API instead of MCP.\r\nIf the file or the variable doesn't exist, the user has not initialized the Dataverse workspace yet. Do that first using the `dataverse-init` skill (do this by default when the user does not express a preference and just wants the MCP configured), which will set up the necessary environment variables. If the user refuses, remind them to do that later when they attempt any operations that require PAC CLI, Python SDK or OData Web API instead of MCP, and proceed to auto-discover the environment URL.\r\nRun {CLAUDE_COMMAND} to install the Dataverse MCP server, then tell the user:\r\n> Remember to **use `claude --continue` to resume the session** without losing context.\r\nPause and give the user a chance to restart the session to enable it before proceeding. Do not perform any subsequent or parallel operations until the user responds.\r\n  - After running the command, they must restart Claude Code for the changes to take effect (remind them: \"Remember to **use `claude --continue` to resume the session** without losing context\")\r\n  - To validate authentication independently, run:\r\n    ```\r\n    npx -y @microsoft/dataverse@latest mcp \"{USER_URL}\" --validate\r\n    ```\r\n    This checks credentials and prints error details if issues are found.\r"
+    gold_removed: ''
+  - path: .github/plugins/dataverse/skills/overview/SKILL.md
+    tier: 1
+    gold_added: '4. After MCP is configured, **stop here** — the session must be restarted for MCP tools to appear (if running in Claude Code, remind them to resume the session correctly: "Remember to **use `claude --continue` to resume the session** without losing context"). Do not fall back to the SDK or proceed with other tools. Wait for the user to restart and come back.'
+    gold_removed: ''
+  - path: .github/plugins/dataverse/skills/setup/SKILL.md
+    tier: 1
+    gold_added: 'After any `winget` install, the new tool may not be in PATH until the shell is restarted. If a tool is not found immediately after install, ask the user to close and reopen the terminal (if running in Claude Code, remind them to resume the session correctly: "Remember to **use `claude --continue` to resume the session** without losing context"), then proceed.'
+    gold_removed: ''

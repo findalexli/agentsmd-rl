@@ -1,0 +1,142 @@
+version: "2.0"
+
+task:
+  name: libretto-docs-improve-libretto-skill-debugging
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: saffron-health/libretto
+  pr: 129
+  base_commit: "89ec7cfe79423eeedf73d91290d5d328cfee59e9"
+  merge_commit: "e585195922b0580d537686e17519fb258edf3af4"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/libretto/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/libretto/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/libretto/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/libretto/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/libretto/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/libretto/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/libretto/SKILL.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/libretto/SKILL.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/libretto/SKILL.md."
+
+config_edits:
+  - path: .agents/skills/libretto/SKILL.md
+    tier: 1
+    gold_added: '## Session Storage
+
+
+      - Session state is stored in `.libretto/sessions/<session>/state.json`.
+
+      - CLI logs are stored in `.libretto/sessions/<session>/logs.jsonl`.
+
+
+      - Available globals: `page`, `context`, `browser`, `state`, `networkLog(opts?)`, `actionLog(opts?)`, `fetch`, `Buffer`.
+
+      npx libretto exec "await page.locator(''button:has-text(\"Continue\")'').click()"
+
+      - Use `--clear` to reset the network log before reproducing an issue.
+
+      npx libretto network --session debug-example --clear
+
+      - Use `--clear` to reset the action log before reproducing an issue.
+
+      npx libretto actions --session debug-example --clear
+
+      - By default in headed mode, a ghost cursor and element highlights are shown. Use `--no-visualize` to disable.
+
+      - Workflows pause by calling `await pause("session-name")` in the workflow file. Import `pause` from `"libretto"`.
+
+      - `pause(session)` is a no-op when `NODE_ENV === "production"`.
+
+      - Use `resume` when a workflow hit a `pause()` call.'
+    gold_removed: ''
+  - path: .claude/skills/libretto/SKILL.md
+    tier: 1
+    gold_added: '## Session Storage
+
+
+      - Session state is stored in `.libretto/sessions/<session>/state.json`.
+
+      - CLI logs are stored in `.libretto/sessions/<session>/logs.jsonl`.
+
+
+      - Available globals: `page`, `context`, `browser`, `state`, `networkLog(opts?)`, `actionLog(opts?)`, `fetch`, `Buffer`.
+
+      npx libretto exec "await page.locator(''button:has-text(\"Continue\")'').click()"
+
+      - Use `--clear` to reset the network log before reproducing an issue.
+
+      npx libretto network --session debug-example --clear
+
+      - Use `--clear` to reset the action log before reproducing an issue.
+
+      npx libretto actions --session debug-example --clear
+
+      - By default in headed mode, a ghost cursor and element highlights are shown. Use `--no-visualize` to disable.
+
+      - Workflows pause by calling `await pause("session-name")` in the workflow file. Import `pause` from `"libretto"`.
+
+      - `pause(session)` is a no-op when `NODE_ENV === "production"`.
+
+      - Use `resume` when a workflow hit a `pause()` call.'
+    gold_removed: ''
+  - path: skills/libretto/SKILL.md
+    tier: 1
+    gold_added: '## Session Storage
+
+
+      - Session state is stored in `.libretto/sessions/<session>/state.json`.
+
+      - CLI logs are stored in `.libretto/sessions/<session>/logs.jsonl`.
+
+
+      - Available globals: `page`, `context`, `browser`, `state`, `networkLog(opts?)`, `actionLog(opts?)`, `fetch`, `Buffer`.
+
+      npx libretto exec "await page.locator(''button:has-text(\"Continue\")'').click()"
+
+      - Use `--clear` to reset the network log before reproducing an issue.
+
+      npx libretto network --session debug-example --clear
+
+      - Use `--clear` to reset the action log before reproducing an issue.
+
+      npx libretto actions --session debug-example --clear
+
+      - By default in headed mode, a ghost cursor and element highlights are shown. Use `--no-visualize` to disable.
+
+      - Workflows pause by calling `await pause("session-name")` in the workflow file. Import `pause` from `"libretto"`.
+
+      - `pause(session)` is a no-op when `NODE_ENV === "production"`.
+
+      - Use `resume` when a workflow hit a `pause()` call.'
+    gold_removed: ''

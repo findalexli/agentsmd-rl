@@ -1,0 +1,48 @@
+version: "2.0"
+
+task:
+  name: modularity-unlock-modeldriven-question-discovery-in
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: vladikk/modularity
+  pr: 2
+  base_commit: "6ea38170657baa4ef6db9187ecf68a636438a3fe"
+  merge_commit: "c6f205e6d442d2724a007d607c552acabf948bc6"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/high-level-design/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/high-level-design/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/high-level-design/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/review/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/review/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/review/SKILL.md."
+
+config_edits:
+  - path: skills/high-level-design/SKILL.md
+    tier: 1
+    gold_added: "2. **Discover what's missing for coupling-aware design.** Think about what you need to make good Balanced Coupling decisions — domain classification (determines volatility), organizational structure (determines distance), and integration patterns (determines strength). Identify gaps in the requirements, especially:\n   - Business areas where core vs supporting vs generic classification is ambiguous — propose your interpretation and ask the user to confirm or correct\n   - Organizational constraints that affect module boundaries (team ownership, deployment units, shared infrastructure)\n   - Strategic direction that affects where volatility will be highest and where to invest design effort\n   - Integration requirements where the appropriate coupling strength is unclear\n\n   Ask the user about each gap individually using `AskUserQuestion`. Skip what's clear from the requirements. Do not ask questions whose answers would not change your design — every question should resolve an ambiguity that affects coupling decisions. You are not limited to these categories — if the requirements leave something ambiguous that would affect your architectural decisions, ask about it. Ground questions in specific requirements you read.\n"
+    gold_removed: ''
+  - path: skills/review/SKILL.md
+    tier: 1
+    gold_added: "1. Use `AskUserQuestion` to ask which parts of the codebase to analyze. Header: \"Scope\". Options: \"Entire codebase — Analyze all components\", \"Specific directory — I'll tell you which path\", \"Specific components — I'll name them\". If the user picks a specific scope, follow up to collect details.\n2. **Read before asking.** Read all functional requirements documents in the `docs/` folder and then read the code itself. Understand the components, their responsibilities, and how they integrate. Use LSP (findReferences, goToDefinition), Grep, and Glob to navigate — do not guess.\n3. **Surface your understanding.** Before asking domain questions, present a brief synthesis of what you learned from the code and requirements:\n   - Components you found and their responsibilities\n   - Integration patterns you observed (shared types, API calls, database access, event flows)\n   - Your best guess at domain classification (core / supporting / generic) with reasoning and confidence level — low confidence areas are the strongest candidates for follow-up questions\n   - Assumptions you're making about team structure, deployment topology, or design intent\n   Use `AskUserQuestion` to validate. Header: \"Summary\". Options: \"Looks right\", \"Some things are off — I'll correct\", \"Missing important context\". If the user corrects or adds context, incorporate it before proceeding.\n\n4. **Discover what you still need.** You know the Balanced Coupling model. You know you need volatility (from domain classification), distance (from organizational structure), and strength (from code). Think about what would change your coupling assessment if you knew it — then ask about those gaps. One question at a time via `AskUserQuestion`. Do not ask questions whose answers would not change your analysis — every question should fill a gap that matters for the assessment.\n\n   Common information gaps to consider (skip any you can already answer from code, requirements, or the user's corrections above):\n   - **Domain classification gaps** — areas where you can't tell if something is core (competitive advantage, high volatility) vs supporting vs generic. Propose your best guess and ask the user to confirm or correct.\n   - **Organizational context** — team ownership boundaries, deployment topology, shared infrastructure. These affect effective distance beyond what code structure shows.\n   - **Known pain points** — areas where changes are unexpectedly expensive, where deployments break things, or where the design feels wrong. These focus the analysis where it matters most.\n   - **Strategic direction** — upcoming migrations, business shifts, or planned changes that affect which areas are volatile.\n   - **Surprising patterns** — things you found in the code that could be intentional design choices or accidental complexity. Ask before assuming.\n\n   You are not limited to these categories. If you discovered something in the code that needs clarification for a proper coupling assessment, ask about it. Ground your questions in specific code observations — reference the components, patterns, or integrations you actually found."
+    gold_removed: ''

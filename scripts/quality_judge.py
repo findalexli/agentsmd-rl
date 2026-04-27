@@ -1,14 +1,36 @@
 #!/usr/bin/env python3
-"""Quality judge for agentmd-edit tasks.
+"""Quality judge for agentmd-edit tasks AND markdown_authoring tasks.
 
 Two-phase filter:
   Phase 1 (programmatic): flag obvious issues — Tier 2 only, no rubric, trivial
   Phase 2 (Gemini): read instruction.md + solve.sh summary for borderline tasks
 
+Modes:
+  --mode agentmd_edits      (default) Original schema for harbor_tasks_agentmd_edits/
+  --mode markdown_authoring Markdown-authoring task quality (load-bearing vs slop)
+
+Pre-judge mode:
+  --scout-jsonl <in> --filtered-output <out>
+  Judges scout rows by title + file_paths + repo only (no body / no patch).
+  Catches obvious slop (auto-bot titles, dummy test PRs) before scaffolder
+  wastes work on them. Lighter signal than the full markdown_authoring judge,
+  so we keep the post-scaffold judge as a final gate.
+
 Usage:
     source .env && export GEMINI_API_KEY
+    # Original agentmd-edits
     .venv/bin/python scripts/quality_judge.py --output /tmp/quality_results.json
-    .venv/bin/python scripts/quality_judge.py --delete  # actually delete LOW/DELETE tasks
+    # Markdown authoring corpus
+    .venv/bin/python scripts/quality_judge.py \\
+        --mode markdown_authoring \\
+        --task-dir harbor_tasks_md_authoring \\
+        --quarantine
+    # Pre-judge: filter scout JSONL before scaffolder runs
+    .venv/bin/python scripts/quality_judge.py \\
+        --mode markdown_authoring \\
+        --scout-jsonl /home/alex/agentsmd-rl/scouted_X.jsonl \\
+        --filtered-output /tmp/filtered_X.jsonl \\
+        --concurrency 32
 """
 
 import argparse
@@ -23,9 +45,109 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import yaml
 from taskforge.gemini_rubric_constructor import call_gemini
 
-TASK_DIR = Path("harbor_tasks_agentmd_edits")
+# TASK_DIR is now a CLI arg; keep this as the legacy default.
+DEFAULT_TASK_DIR = Path("harbor_tasks_agentmd_edits")
 
 # Gemini structured output schema for quality classification
+# Markdown_authoring quality schema — load-bearing vs slop, for the
+# pure-tier-1-md corpus produced by scripts/scaffold_markdown_only.py.
+MD_AUTHORING_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "load_bearing": {
+            "type": "boolean",
+            "description": "Does the markdown change actually alter agent behavior in a verifiable way?",
+        },
+        "research_relevant": {
+            "type": "boolean",
+            "description": "Does this fit the agent-md research schema (tier-1 file with measurable behavioral signal)?",
+        },
+        "slop_score": {
+            "type": "integer",
+            "description": "0=high quality, 10=pure AI slop / boilerplate / generic prose / auto-bot.",
+        },
+        "primary_issue": {
+            "type": "string",
+            "description": "If verdict=LOW or DELETE, dominant reason in <= 10 words. Empty otherwise.",
+        },
+        "evidence": {
+            "type": "string",
+            "description": "One short sentence quoting or citing the most decisive signal from the diff.",
+        },
+        "verdict": {
+            "type": "string",
+            "enum": ["HIGH", "MEDIUM", "LOW", "DELETE"],
+        },
+    },
+    "required": ["load_bearing", "research_relevant", "slop_score",
+                 "evidence", "verdict"],
+    "propertyOrdering": ["load_bearing", "research_relevant", "slop_score",
+                         "primary_issue", "evidence", "verdict"],
+}
+
+
+def _md_authoring_prompt(task_dir: Path) -> str:
+    """Build the prompt for a markdown_authoring task."""
+    instruction = ""
+    instr_path = task_dir / "instruction.md"
+    if instr_path.exists():
+        instruction = instr_path.read_text(errors="replace")[:6000]
+
+    manifest_path = task_dir / "eval_manifest.yaml"
+    try:
+        m = yaml.safe_load(manifest_path.read_text()) or {}
+    except yaml.YAMLError:
+        return f"BROKEN_MANIFEST in {task_dir.name}"
+    src = m.get("source", {})
+    repo = src.get("repo", "?")
+    pr = src.get("pr", "?")
+    config_edits = m.get("config_edits", []) or []
+    file_paths = "\n".join(f"- {ce.get('path','?')}" for ce in config_edits)
+    gold_added = "\n\n---\n\n".join(
+        (ce.get("gold_added") or "")[:6000] for ce in config_edits
+    )[:18000]
+
+    return f"""You are a strict reviewer auditing an SWE-benchmark corpus called `agentsmd-rl`. The benchmark tests whether AI coding agents follow project-specific rule files (CLAUDE.md, AGENTS.md, SKILL.md, .cursorrules) during coding tasks.
+
+Below is a single candidate **markdown_authoring** task. Decide whether it should stay in the corpus or be rejected as **AI slop / decorative / non-load-bearing**.
+
+## Task source
+Repo: {repo}
+PR: #{pr}
+Files changed (all are tier-1 agent-instruction files):
+{file_paths}
+
+## PR description (this becomes the agent's instruction.md)
+```
+{instruction}
+```
+
+## Gold patch — the markdown content the PR added
+```
+{gold_added}
+```
+
+## What "load-bearing" means here
+A change is **load-bearing** when it would cause an agent to behave differently downstream — e.g. specific commands, anti-patterns, file paths, version pins, conventions that contradict defaults, cross-references that route the agent to actual code, behavioral rules a competent agent could violate.
+
+A change is **NOT load-bearing** if it is:
+- Generic AI-generated boilerplate that any LLM could output ("This skill helps with X", "comprehensive guide", "best practices for Y") with no specifics
+- Auto-generated by a bot (e.g., "Automated AGENTS.md update for commit ABC", "Generated by Claude Code") with no human-curated content
+- Pure typo / formatting / linting fixes
+- Self-referential meta-content ("This is a skill for managing skills") with no concrete behavior change
+- Lockfile-style updates that happen to touch a markdown file
+- Net-new skill files where the body is generic prose with no specific commands, file paths, or anti-patterns
+
+## Verdicts
+- HIGH: clear specific behavioral rule, concrete commands/paths, low slop (slop_score <= 3)
+- MEDIUM: plausible but generic-leaning, mid slop (slop_score 4-6)
+- LOW: decorative/boilerplate, marginal value (slop_score 7-8)
+- DELETE: pure slop or auto-bot output (slop_score >= 9, OR load_bearing=false AND research_relevant=false)
+
+Be strict. When in doubt, downgrade.
+"""
+
+
 QUALITY_SCHEMA = {
     "type": "object",
     "properties": {
@@ -56,18 +178,42 @@ QUALITY_SCHEMA = {
 }
 
 
-def phase1_programmatic(task_dir: Path) -> dict:
-    """Fast programmatic checks. Returns flags and auto-verdict if obvious."""
+def phase1_programmatic(task_dir: Path, mode: str = "agentmd_edits") -> dict:
+    """Fast programmatic checks. Returns flags and auto-verdict if obvious.
+
+    For markdown_authoring mode, the bar is different: any tier-1 config_edit
+    counts as a real signal; rubric/distractor absence isn't a defect.
+    """
     manifest_path = task_dir / "eval_manifest.yaml"
     if not manifest_path.exists():
         return {"verdict": "DELETE", "reason": "no_manifest"}
 
-    m = yaml.safe_load(manifest_path.read_text()) or {}
+    try:
+        m = yaml.safe_load(manifest_path.read_text()) or {}
+    except yaml.YAMLError as e:
+        # Scaffolder mis-escaped backticks/etc. → bad manifest.
+        return {"verdict": "DELETE", "reason": f"yaml_parse_error: {str(e)[:80]}"}
     config_edits = m.get("config_edits", [])
     rubric = m.get("rubric", [])
     distractors = m.get("distractors", [])
     checks = m.get("checks", [])
     f2p = sum(1 for c in checks if c.get("type") == "fail_to_pass")
+
+    # Markdown-authoring mode: simpler programmatic gate
+    if mode == "markdown_authoring":
+        flags = []
+        if not config_edits:
+            return {"verdict": "DELETE", "reason": "no_config_edits", "flags": flags}
+        # Auto-DELETE for known auto-bot patterns (PrefectHQ etc.)
+        instr = task_dir / "instruction.md"
+        if instr.exists():
+            txt = instr.read_text(errors="replace")[:2000].lower()
+            if ("automated agents.md update" in txt or
+                "this pr was generated by claude code" in txt):
+                return {"verdict": "DELETE", "reason": "auto_bot_pr",
+                        "flags": ["auto_bot"]}
+        return {"verdict": None, "flags": flags,
+                "config_edit_count": len(config_edits), "f2p": f2p}
 
     tiers = [ce.get("tier", 2) for ce in config_edits]
     has_tier1 = 1 in tiers
@@ -99,7 +245,34 @@ def phase1_programmatic(task_dir: Path) -> dict:
     }
 
 
-def phase2_gemini(task_dir: Path, gemini_key: str) -> dict:
+def phase2_gemini(task_dir: Path, gemini_key: str,
+                  mode: str = "agentmd_edits",
+                  service_tier: str | None = None) -> dict:
+    """Gemini reads task content and classifies quality.
+
+    `mode` selects prompt + schema. `service_tier="flex"` for 50% Standard cost.
+    """
+    if mode == "markdown_authoring":
+        prompt = _md_authoring_prompt(task_dir)
+        schema = MD_AUTHORING_SCHEMA
+        sys_inst = ("You are an SWE-benchmark quality auditor. Be brutally "
+                    "honest. Reject AI slop, auto-bot output, and decorative "
+                    "edits. Reward concrete behavioral rules an agent could "
+                    "violate.")
+        result = call_gemini(
+            prompt, gemini_key,
+            schema=schema, system_instruction=sys_inst,
+            temperature=0.1, service_tier=service_tier,
+        )
+        if "error" in result:
+            return {"verdict": "ERROR", "error": result.get("error", "")}
+        return result
+
+    return _phase2_agentmd_edits(task_dir, gemini_key, service_tier)
+
+
+def _phase2_agentmd_edits(task_dir: Path, gemini_key: str,
+                          service_tier: str | None = None) -> dict:
     """Gemini reads instruction + solve.sh summary and classifies quality."""
     instruction = ""
     instr_path = task_dir / "instruction.md"
@@ -180,6 +353,7 @@ Think carefully: does the rubric test something NON-TRIVIAL? Is the config edit 
         schema=QUALITY_SCHEMA,
         system_instruction="You are a benchmark quality auditor. Be brutally honest. A task where the rubric is trivially connected to the config edit (add line → rubric checks line was added) is LOW. A README edit documenting a major architectural change IS valuable. Focus on whether the agent must REASON about competing instructions.",
         temperature=0.1,
+        service_tier=service_tier,
     )
 
     if "error" in result:
@@ -188,69 +362,316 @@ Think carefully: does the rubric test something NON-TRIVIAL? Is the config edit 
     return result
 
 
-def run_audit(gemini_key: str, limit: int = 0) -> list[dict]:
-    """Run full audit on all agentmd tasks."""
+def run_audit(task_dir: Path, gemini_key: str, mode: str = "agentmd_edits",
+              limit: int = 0, service_tier: str | None = None,
+              concurrency: int = 1) -> list[dict]:
+    """Run full audit. Concurrency>1 uses asyncio + ThreadPool for parallel
+    Gemini calls (call_gemini is sync urllib, so we offload to threads)."""
+    paths = [p for p in sorted(task_dir.iterdir()) if p.is_dir()]
+    if limit:
+        paths = paths[:limit]
+
+    if concurrency <= 1:
+        return _run_audit_sequential(paths, gemini_key, mode, service_tier)
+    return _run_audit_concurrent(paths, gemini_key, mode, service_tier,
+                                 concurrency)
+
+
+def _run_audit_sequential(paths, gemini_key, mode, service_tier):
     results = []
+    for task_path in paths:
+        results.append(_audit_one(task_path, gemini_key, mode, service_tier))
+        time.sleep(0.3)
+    return results
 
-    for task_path in sorted(TASK_DIR.iterdir()):
-        if not task_path.is_dir():
-            continue
 
-        # Phase 1
-        p1 = phase1_programmatic(task_path)
+def _run_audit_concurrent(paths, gemini_key, mode, service_tier, concurrency):
+    import asyncio
+    import concurrent.futures
+    started = time.monotonic()
+    counts = {"HIGH": 0, "MEDIUM": 0, "LOW": 0, "DELETE": 0,
+              "ERROR": 0, "UNKNOWN": 0}
+    results: list = []
 
-        if p1["verdict"] == "DELETE":
-            results.append({
-                "task": task_path.name,
-                "phase": "p1",
-                "verdict": "DELETE",
-                "reason": p1.get("reason", ""),
-                "flags": p1.get("flags", []),
-            })
-            continue
+    def progress():
+        if len(results) % 25 == 0 and len(results):
+            r = len(results) / max(1, time.monotonic() - started)
+            print(f"  [{len(results)}/{len(paths)}] {r:.2f}/s  "
+                  f"H={counts['HIGH']} M={counts['MEDIUM']} "
+                  f"L={counts['LOW']} D={counts['DELETE']} "
+                  f"ERR={counts['ERROR']}", flush=True)
 
-        # Phase 2: Gemini for all remaining
-        if not gemini_key:
-            results.append({
-                "task": task_path.name,
-                "phase": "p1_only",
-                "verdict": "UNKNOWN",
-                "flags": p1.get("flags", []),
-                **{k: v for k, v in p1.items() if k not in ("verdict", "flags")},
-            })
-            continue
+    async def main():
+        loop = asyncio.get_running_loop()
+        sem = asyncio.Semaphore(concurrency)
+        with concurrent.futures.ThreadPoolExecutor(max_workers=concurrency) as pool:
+            async def one(p):
+                async with sem:
+                    r = await loop.run_in_executor(
+                        pool, _audit_one, p, gemini_key, mode, service_tier)
+                    results.append(r)
+                    v = r.get("verdict", "ERROR")
+                    counts[v] = counts.get(v, 0) + 1
+                    progress()
+                    return r
+            await asyncio.gather(*(one(p) for p in paths))
+    asyncio.run(main())
+    return results
 
-        p2 = phase2_gemini(task_path, gemini_key)
-        results.append({
-            "task": task_path.name,
-            "phase": "p2",
+
+def _audit_one(task_path: Path, gemini_key: str, mode: str,
+               service_tier: str | None) -> dict:
+    p1 = phase1_programmatic(task_path, mode)
+    if p1["verdict"] == "DELETE":
+        return {"task": task_path.name, "phase": "p1", "verdict": "DELETE",
+                "reason": p1.get("reason", ""), "flags": p1.get("flags", [])}
+    if not gemini_key:
+        return {"task": task_path.name, "phase": "p1_only",
+                "verdict": "UNKNOWN", "flags": p1.get("flags", []),
+                **{k: v for k, v in p1.items() if k not in ("verdict", "flags")}}
+    p2 = phase2_gemini(task_path, gemini_key, mode, service_tier)
+    out_path = task_path / "md_quality.json"
+    try:
+        out_path.write_text(json.dumps(p2, indent=2))
+    except Exception:
+        pass
+    if mode == "markdown_authoring":
+        return {"task": task_path.name, "phase": "p2",
+                "verdict": p2.get("verdict", "ERROR"),
+                "load_bearing": p2.get("load_bearing"),
+                "research_relevant": p2.get("research_relevant"),
+                "slop_score": p2.get("slop_score"),
+                "primary_issue": p2.get("primary_issue", ""),
+                "evidence": p2.get("evidence", ""),
+                "p1_flags": p1.get("flags", [])}
+    return {"task": task_path.name, "phase": "p2",
             "verdict": p2.get("verdict", "ERROR"),
             "config_navigation": p2.get("config_navigation", ""),
             "config_edit_organic": p2.get("config_edit_organic", False),
             "task_type": p2.get("task_type", ""),
             "reasoning": p2.get("reasoning", ""),
-            "p1_flags": p1.get("flags", []),
-            "has_tier1": p1.get("has_tier1", False),
-            "rubric_count": p1.get("rubric_count", 0),
-            "distractor_count": p1.get("distractor_count", 0),
-            "f2p": p1.get("f2p", 0),
-        })
+            "p1_flags": p1.get("flags", [])}
 
-        time.sleep(0.5)  # rate limit
 
-        if limit and len(results) >= limit:
-            break
+# ---------------------------------------------------------------------------
+# Pre-judge — title-only / file_paths-only screening on scout output
+# ---------------------------------------------------------------------------
 
-    return results
+PREJUDGE_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "verdict": {
+            "type": "string",
+            "enum": ["KEEP", "DROP"],
+        },
+        "reason": {
+            "type": "string",
+            "description": "<= 12 words explaining the decision.",
+        },
+    },
+    "required": ["verdict", "reason"],
+    "propertyOrdering": ["verdict", "reason"],
+}
+
+
+def _prejudge_prompt(repo: str, pr: int, title: str, file_paths: list) -> str:
+    paths_str = "\n".join(f"  - {p}" for p in file_paths)
+    return f"""You are a fast pre-screen for an SWE-benchmark corpus called `agentsmd-rl`. The benchmark studies whether AI coding agents follow project-specific rule files (CLAUDE.md / AGENTS.md / SKILL.md / .cursor/rules).
+
+Decision: KEEP or DROP this PR before we waste effort scaffolding it. You have only title + file paths + repo (no body, no patch). Default to KEEP unless the title is OBVIOUSLY slop. The post-scaffold judge will see the gold patch and apply stricter checks; pre-judge is just to skip the most obvious throwaways.
+
+This PR's changed files are ALL tier-1 agent-instruction files (already filtered). Your job: is the TITLE itself a strong signal of slop?
+
+DROP signals:
+- Auto-bot titles: "Automated AGENTS.md update for commit XYZ", "Generated by Claude Code", "Auto-generated by ..."
+- Dummy / test / CI scaffolding: "test: broken merge-batch e2e PR", "DO NOT MERGE", "[draft] testing"
+- Pure version-bump / metadata-only: "bump skill version to 1.0.1", "add tags", "fix typo"
+- Generic boilerplate that any LLM could produce: "Add comprehensive guide for X" with no specific feature
+
+Otherwise KEEP.
+
+## PR
+Repo: {repo}
+PR: #{pr}
+Title: {title}
+Files changed:
+{paths_str}
+
+Output JSON only.
+"""
+
+
+def _prejudge_one(row: dict, gemini_key: str, service_tier: str) -> dict:
+    repo = row.get("repo", "")
+    pr = row.get("pr_number") or row.get("pr") or 0
+    title = row.get("title", "")
+    file_paths = row.get("file_paths", []) or []
+    if not file_paths:
+        return {"verdict": "KEEP", "reason": "no_file_paths_skip_check"}
+    prompt = _prejudge_prompt(repo, pr, title, file_paths)
+    # gemini-3.1-pro-preview-customtools requires thinking (budget=0 returns
+    # 400 INVALID_ARGUMENT). Use a small budget — enough to reason briefly
+    # without burning maxOutputTokens before JSON is emitted.
+    res = call_gemini(prompt, gemini_key,
+                      schema=PREJUDGE_SCHEMA, temperature=0.1,
+                      max_tokens=2048, service_tier=service_tier,
+                      thinking_budget=256)
+    if "error" in res:
+        return {"verdict": "KEEP", "reason": f"judge_error:{res.get('error','')[:30]}"}
+    return res
+
+
+def run_prejudge(scout_jsonl: Path, filtered_output: Path,
+                 gemini_key: str, service_tier: str | None,
+                 concurrency: int = 32) -> dict:
+    """Pre-judge scout JSONL by title + file_paths + repo. Writes filtered
+    JSONL with only KEEP rows. Returns counts dict.
+
+    First does a free regex pre-filter against TIER1_RE (only pure-tier-1-md
+    PRs are candidates for markdown_authoring scaffolding). Codebearing PRs
+    drop straight to a separate output without a Gemini call. The Gemini
+    judge then only weighs in on the small pure-md subset.
+    """
+    import asyncio
+    import concurrent.futures
+    import re as _re
+
+    # Match scaffolder's TIER1_RE (scripts/scaffold_markdown_only.py:45)
+    TIER1 = _re.compile(
+        r"(?:^|/)(CLAUDE\.md|CLAUDE\.local\.md|AGENTS\.md|CONVENTIONS\.md|SKILL\.md|"
+        r"\.cursorrules|\.windsurfrules|\.clinerules|\.continuerules)$|"
+        r"^\.claude/(rules|skills|agents)/.+\.md$|"
+        r"^\.cursor/rules/.+|"
+        r"^\.github/(copilot-instructions\.md|skills/.+SKILL\.md|prompts/.+\.prompt\.md)$|"
+        r"^\.agents?/skills/.+SKILL\.md$|"
+        r"^\.opencode/skills/.+SKILL\.md$|"
+        r"^\.codex/skills/.+SKILL\.md$|"
+        r"\.mdc$",
+        _re.IGNORECASE,
+    )
+
+    rows: list[dict] = []
+    codebearing: list[dict] = []
+    with open(scout_jsonl) as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                d = json.loads(line)
+            except Exception:
+                continue
+            fp = d.get("file_paths", []) or []
+            # Pre-filter: only pure-tier1-md PRs go to Gemini.
+            if fp and all(TIER1.search(p) for p in fp):
+                rows.append(d)
+            else:
+                codebearing.append(d)
+    print(f"Scout total: {len(rows)+len(codebearing)}", flush=True)
+    print(f"  pure-tier-1-md (Gemini-judged): {len(rows)}", flush=True)
+    print(f"  codebearing (regex-filtered, no Gemini): {len(codebearing)}", flush=True)
+
+    counts = {"KEEP": 0, "DROP": 0, "ERROR": 0}
+    decisions: list[dict] = []
+    started = time.monotonic()
+
+    def progress():
+        if len(decisions) % 100 == 0 and len(decisions):
+            r = len(decisions) / max(1, time.monotonic() - started)
+            print(f"  [{len(decisions)}/{len(rows)}] {r:.1f}/s  "
+                  f"K={counts['KEEP']} D={counts['DROP']} E={counts['ERROR']}",
+                  flush=True)
+
+    async def main_async():
+        loop = asyncio.get_running_loop()
+        sem = asyncio.Semaphore(concurrency)
+        with concurrent.futures.ThreadPoolExecutor(max_workers=concurrency) as pool:
+            async def one(row):
+                async with sem:
+                    res = await loop.run_in_executor(
+                        pool, _prejudge_one, row, gemini_key, service_tier)
+                    decisions.append({**row, "_prejudge": res})
+                    v = res.get("verdict", "ERROR")
+                    counts[v] = counts.get(v, 0) + 1
+                    progress()
+            await asyncio.gather(*(one(r) for r in rows))
+
+    asyncio.run(main_async())
+
+    kept = [d for d in decisions if d["_prejudge"]["verdict"] == "KEEP"]
+    # Strip _prejudge from output rows so they're a clean scout-format JSONL
+    with open(filtered_output, "w") as f:
+        for d in kept:
+            out = {k: v for k, v in d.items() if k != "_prejudge"}
+            f.write(json.dumps(out) + "\n")
+    print(f"\n=== Pre-judge done ===")
+    print(f"  KEEP:  {counts['KEEP']}")
+    print(f"  DROP:  {counts['DROP']}")
+    print(f"  ERROR: {counts['ERROR']}")
+    print(f"Wrote {len(kept)} kept rows → {filtered_output}")
+    # Also write a CSV of decisions for audit
+    csv_path = filtered_output.with_suffix(".decisions.csv")
+    with open(csv_path, "w") as f:
+        f.write("repo,pr,title,verdict,reason\n")
+        for d in decisions:
+            r = d["_prejudge"]
+            t = (d.get("title", "") or "").replace('"', "'")[:120]
+            f.write(f'"{d.get("repo","")}",{d.get("pr_number") or d.get("pr","")},"{t}",{r.get("verdict","")},"{(r.get("reason","") or "").replace(chr(34), chr(39))[:200]}"\n')
+    print(f"Wrote audit CSV → {csv_path}")
+    return counts
 
 
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument("--mode",
+                        choices=["agentmd_edits", "markdown_authoring"],
+                        default="agentmd_edits")
+    parser.add_argument("--task-dir", type=Path,
+                        help="Override task directory (default: harbor_tasks_agentmd_edits or harbor_tasks_md_authoring per --mode)")
     parser.add_argument("--output", default="/tmp/quality_results.json")
     parser.add_argument("--limit", type=int, default=0)
-    parser.add_argument("--delete", action="store_true", help="Actually delete LOW/DELETE tasks")
-    parser.add_argument("--move-tier2", action="store_true", help="Move Tier 2 only tasks to harbor_tasks")
+    parser.add_argument("--concurrency", type=int, default=8,
+                        help="Concurrent Gemini calls (default 8)")
+    parser.add_argument("--service-tier", default="flex",
+                        choices=["flex", "standard"],
+                        help="Gemini service tier (default flex = 50%% off)")
+    parser.add_argument("--delete", action="store_true",
+                        help="(agentmd_edits) actually delete LOW/DELETE tasks")
+    parser.add_argument("--quarantine", action="store_true",
+                        help="(markdown_authoring) move LOW/DELETE to <task-dir>_quarantine_quality/")
+    parser.add_argument("--move-tier2", action="store_true",
+                        help="Move Tier 2 only tasks to harbor_tasks")
+    # Pre-judge mode
+    parser.add_argument("--scout-jsonl", type=Path,
+                        help="Pre-judge mode: filter a scout JSONL by title+files (no scaffold)")
+    parser.add_argument("--filtered-output", type=Path,
+                        help="Pre-judge mode: where to write the kept-rows JSONL")
     args = parser.parse_args()
+
+    # Pre-judge branch — short-circuits before the task-dir logic
+    if args.scout_jsonl:
+        if not args.filtered_output:
+            sys.exit("--scout-jsonl requires --filtered-output")
+        gemini_key = os.environ.get("GEMINI_API_KEY", "")
+        if not gemini_key:
+            env_file = Path(".env")
+            if env_file.exists():
+                for line in env_file.read_text().splitlines():
+                    if line.startswith("GEMINI_API_KEY="):
+                        gemini_key = line.split("=", 1)[1].strip().strip('"')
+        if not gemini_key:
+            sys.exit("GEMINI_API_KEY required for pre-judge mode")
+        service_tier = "flex" if args.service_tier == "flex" else None
+        run_prejudge(args.scout_jsonl, args.filtered_output,
+                     gemini_key, service_tier, args.concurrency)
+        return
+
+    # Default task-dir per mode
+    task_dir = args.task_dir
+    if task_dir is None:
+        task_dir = (Path("harbor_tasks_md_authoring")
+                    if args.mode == "markdown_authoring"
+                    else DEFAULT_TASK_DIR)
 
     gemini_key = os.environ.get("GEMINI_API_KEY", "")
     if not gemini_key:
@@ -260,11 +681,19 @@ def main():
                 if line.startswith("GEMINI_API_KEY="):
                     gemini_key = line.split("=", 1)[1].strip().strip('"')
 
-    print(f"Gemini key: {gemini_key[:8]}...{gemini_key[-4:]}" if gemini_key else "No Gemini key")
+    if gemini_key:
+        print(f"Gemini key: {gemini_key[:8]}...{gemini_key[-4:]}")
+    else:
+        print("No Gemini key — phase1 only")
 
-    results = run_audit(gemini_key, args.limit)
+    service_tier = "flex" if args.service_tier == "flex" else None
+    print(f"Mode: {args.mode}  Task dir: {task_dir}  Tier: {args.service_tier}  "
+          f"Concurrency: {args.concurrency}")
 
-    # Summary
+    results = run_audit(task_dir, gemini_key, args.mode, args.limit,
+                        service_tier=service_tier,
+                        concurrency=args.concurrency)
+
     from collections import Counter
     verdicts = Counter(r["verdict"] for r in results)
     print(f"\n{'='*60}")
@@ -273,7 +702,6 @@ def main():
         print(f"  {v:8s}: {count}")
     print(f"{'='*60}")
 
-    # Save
     Path(args.output).write_text(json.dumps(results, indent=2))
     print(f"Details saved to {args.output}")
 
@@ -282,12 +710,25 @@ def main():
         deleted = 0
         for r in results:
             if r["verdict"] in ("DELETE", "LOW"):
-                task_path = TASK_DIR / r["task"]
-                if task_path.exists():
-                    shutil.rmtree(task_path)
+                p = task_dir / r["task"]
+                if p.exists():
+                    shutil.rmtree(p)
                     deleted += 1
-                    print(f"  DELETED: {r['task']}")
         print(f"\nDeleted {deleted} tasks")
+
+    if args.quarantine:
+        import shutil
+        qdir = task_dir.with_name(task_dir.name + "_quarantine_quality")
+        qdir.mkdir(exist_ok=True)
+        moved = 0
+        for r in results:
+            if r["verdict"] in ("DELETE", "LOW"):
+                src = task_dir / r["task"]
+                dst = qdir / r["task"]
+                if src.exists() and not dst.exists():
+                    shutil.move(str(src), str(dst))
+                    moved += 1
+        print(f"\nQuarantined {moved} → {qdir.name}/")
 
 
 if __name__ == "__main__":

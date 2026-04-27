@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: ru-text-add-root-skillmd-for-directory
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: talkstream/ru-text
+  pr: 6
+  base_commit: "515b914af857af08025f80d68f20231a07609544"
+  merge_commit: "7932d7c3a6adf4035e565202bf8e22212da7d253"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+
+config_edits:
+  - path: SKILL.md
+    tier: 1
+    gold_added: "---\nname: ru-text\ndescription: >\n  Use when writing, editing, or reviewing Russian-language text, or when user\n  mentions ru-text. Covers typography, info-style, editorial, UX writing, business\n  correspondence. Auto-activates on Russian text output.\n---\n\n# ru-text — Russian Text Quality\n\nIndependent Russian text quality reference by Arseniy Kamyshev.\nWith gratitude to the authors whose work shaped modern Russian text standards.\nCredits and recommended reading: [sources.md](skills/ru-text/references/sources.md)\n\n**Style priority**: if the user explicitly requests a specific style (casual, academic, SEO, literary, etc.), their prompt overrides these default rules where they conflict. These rules are defaults, not mandates.\n\n## Always-On: Typography\n\nApply these rules to ALL Russian text output without exception.\n\n| Rule | Wrong | Correct |\n|---|---|---|\n| Primary quotes: guillemets | \"текст\" | «текст» |\n| Nested quotes: lapki | «\"вложенные\"» | «„вложенные\"» |\n| Em dash with spaces | слово - слово | слово — слово |\n| En dash for ranges, no spaces | 10-15 дней | 10–15 дней |\n| NBSP after single-letter prepositions | в начале (breakable) | в\\u00A0начале |\n| Ellipsis: single character | ... | … |\n| Digit groups with thin spaces | 1000000 | 1 000 000 |\n| Decimal comma (not dot) | 3.14 | 3,14 |\n| Ordinal with hyphen | 1ый, 2ой | 1-й, 2-й |\n| Numero sign | No. 5, #5 | № 5 |\n| Abbreviations with NBSP | т.д., т.е. | т. д., т. е. |\n| Ruble symbol after number | 1500 руб | 1 500 ₽ |\n\nFull typography reference: [typography.md](skills/ru-text/references/typography.md)\n\n`/ru-text:ru-score` — text quality score (0–10, 5 dimensions).\n\n## Top Stop-Words (remove or replace)\n\n| Stop-word | Replace with |\n|---|---|\n| является | — (dash) or restructure |\n| осуществлять | делать, проводить |\n| в настоящее время | сейчас |\n| данный | этот |\n| определённый | (name the specific thing) |\n| произвести оплату | оплатить |\n| высококачественный | (name the specific quality) |\n| был осуществлён | (active voice + actor) |\n| на сегодняшний день | сегодня |\n| в целях | чтобы |\n\nFull stop-word catalog (97 entries): [info-style.md](skills/ru-text/references/info-style.md)\n\n## When to Load Reference Files\n\n| Task | Load |\n|---|---|\n| Writing/editing articles, blog posts, SEO, content | [info-style.md](skills/ru-text/references/info-style.md) |\n| Interface text, buttons, errors, hints, microcopy | [ux-writing.md](skills/ru-text/references/ux-writing.md) |\n| Emails, messenger, business correspondence | [business-writing.md](skills/ru-text/references/business-writing.md) |\n| Punctuation review, comma placement | [editorial-punctuation.md](skills/ru-text/references/editorial-punctuation.md) |\n| Grammar, capitalization, agreement, pleonasms | [editorial-grammar.md](skills/ru-text/references/editorial-grammar.md) |\n| Finding and fixing text problems, diagnostics | [anti-patterns.md](skills/ru-text/references/anti-patterns.md) |\n| Text scoring, quality assessment | [scoring.md](skills/ru-text/references/scoring.md) |\n| Credits, source attribution | [sources.md](skills/ru-text/references/sources.md) |\n| Experience-based rules (dash overuse, etc.) | [addenda.md](skills/ru-text/references/addenda.md) |\n\n## Quality Checklist\n\nBefore delivering Russian text:\n\n### Typography (mandatory)\n- [ ] Quotes: «» primary, „\" nested\n- [ ] Dashes: — in text, – in ranges, - only in compounds; max 1–2 per paragraph\n- [ ] NBSP after в, к, с, о, у, и, а\n- [ ] Ellipsis: … (single char)\n- [ ] Abbreviations: т. д., т. п. (with NBSP)\n- [ ] No double spaces, no space before punctuation\n\n### Writing quality (when creating/editing)\n- [ ] No filler words (является, осуществляет, данный)\n- [ ] Specific claims backed by facts or numbers\n- [ ] Active voice preferred\n- [ ] One idea per paragraph\n- [ ] Reader benefit clear in every section\n\n### Editorial (when proofreading)\n- [ ] No tautology or pleonasm\n- [ ] Lists grammatically homogeneous\n- [ ] Capitalization follows Russian norms (no Title Case)\n- [ ] Comma traps checked (однако, наконец, значит)"
+    gold_removed: ''

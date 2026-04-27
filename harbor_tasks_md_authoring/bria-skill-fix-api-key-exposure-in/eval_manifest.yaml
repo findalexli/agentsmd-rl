@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: bria-skill-fix-api-key-exposure-in
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Bria-AI/bria-skill
+  pr: 26
+  base_commit: "1d1e8c339f925511d3afbf7dca5263287676e81b"
+  merge_commit: "21e470a3968efd718079299409c78be57a241859"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/bria-ai/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/bria-ai/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/bria-ai/SKILL.md."
+
+config_edits:
+  - path: skills/bria-ai/SKILL.md
+    tier: 1
+    gold_added: "### Step 1: Check if the key exists (without printing the key)\nif [ -z \"$BRIA_API_KEY\" ]; then\n  echo \"BRIA_API_KEY is not set\"\nelse\n  echo \"BRIA_API_KEY is set\"\nfi"
+    gold_removed: ''

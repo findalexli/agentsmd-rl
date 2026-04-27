@@ -1,0 +1,42 @@
+version: "2.0"
+
+task:
+  name: narrator-ai-cli-skill-featskill-add-file-transfer-command
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: NarratorAI-Studio/narrator-ai-cli-skill
+  pr: 4
+  base_commit: "bc324dd0f22bad4dd79618057755d92e43824d8b"
+  merge_commit: "331d65ec32b484ea8fb61a6668680ac381b6b8d3"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+
+config_edits:
+  - path: SKILL.md
+    tier: 1
+    gold_added: 'description: "CLI client for Narrator AI video narration API. Create AI-narrated videos: popular-learning, generate-writing, clip-data, video-composing, magic-video. Supports Hot Drama / Original Mix / New Drama modes. 93 pre-built movies, 146 BGM tracks, 63 dubbing voices, 90+ narration templates. Supports uploading local files or transferring from HTTP/Baidu/PikPak links. Use when user needs to create AI narration videos, manage narration tasks, browse dubbing/BGM/material resources, or automate video production via narrator-ai-cli."
+
+      narrator-ai-cli file transfer --link "<url>" --json          # transfer by HTTP/Baidu/PikPak link
+
+      narrator-ai-cli file info <file_id> --json
+
+      narrator-ai-cli file download <file_id> --json
+
+      narrator-ai-cli file storage --json
+
+      narrator-ai-cli file delete <file_id> --json'
+    gold_removed: ''

@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: awesome-cursorrules-add-temporal-python-sdk-cursorrules
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: PatrickJS/awesome-cursorrules
+  pr: 23
+  base_commit: "d6e98f2fe37c702621a6cd62cb28596c87429a95"
+  merge_commit: "ac6e5e16f0465b37e9980de09627fc106df2d8b7"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in temporal-python-cursorrules/.cursorrules."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in temporal-python-cursorrules/.cursorrules."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in temporal-python-cursorrules/.cursorrules."
+
+config_edits:
+  - path: temporal-python-cursorrules/.cursorrules
+    tier: 1
+    gold_added: "### **Temporal Python SDK `.cursorrules`**\n```markdown\n# Temporal Python SDK - .cursorrules\n\n## Role and Expertise\nYou are an expert Python developer with extensive experience in Temporal.io for workflow orchestration. Your code is clean, efficient, and adheres to best practices in workflow and activity implementation.\n\n## Coding Standards\n\n### General Principles\n- Write concise, readable Python code.\n- Follow PEP 8 and PEP 257 for style and documentation.\n- Use Python type hints in all functions and methods.\n- Document all workflows and activities using descriptive docstrings.\n\n### Temporal.io Best Practices\n- Use `@workflow.defn` and `@activity.defn` decorators on all workflows and activities.\n- Name workflows with a `_workflow` suffix (e.g., `process_order_workflow`).\n- Name activities with an `_activity` suffix (e.g., `send_email_activity`).\n\n### Naming Conventions\n- **Variables and Functions**: snake_case\n- **Classes**: PascalCase\n- **Files**: snake_case\n- **Workflows and Activities**:\n  - Workflows: snake_case ending with `_workflow`.\n  - Activities: snake_case ending with `_activity`.\n\n### Error Handling\n- Always wrap activities with proper try-except blocks.\n- Log errors with context using Python's `logging` module.\n- Use Temporal's built-in error handling for retries and timeouts.\n\n## Project Structure\nOrganize the project with clear separation of concerns:\n- **workflows/**: Define all Temporal workflows here.\n- **activities/**: Implement all activity definitions.\n- **tests/**: Place unit tests and integration tests in this directory.\n- **utils/**: Include reusable utilities and helpers.\n\n## Dependencies\n- Ensure `temporalio` is listed in dependencies.\n- Avoid usage of `celery` or any conflicting task queue systems.\n\n## Documentation Standards\n- Use Python docstrings for all workflows and activities:\n  ```python\n  @workflow.defn\n  class ProcessOrderWorkflow:\n      \"\"\"Workflow for processing an order.\"\"\"\n  ```\n\n## Testing Standards\n- Write tests for all workflows and activities using `pytest`.\n- Mock Temporal APIs where needed for isolated testing.\n- Maintain at least 80% code coverage.\n\n## CI/CD Integration\n- Use GitHub Actions to automate testing and deployment.\n- Include the following checks:\n  - Linting with `flake8`.\n  - Type checking with `mypy`.\n  - Unit testing with `pytest`.\n\n## Code Examples\n\n### Workflow Example\n```python\nfrom temporalio import workflow\n\n@workflow.defn\nclass ProcessOrderWorkflow:\n    \"\"\"Workflow to process customer orders.\"\"\"\n\n    @workflow.run\n    async def run(self, order_id: str):\n        await workflow.execute_activity(\n            \"send_email_activity\", order_id, start_to_close_timeout=timedelta(seconds=30)\n        )\n```\n\n### Activity Example\n```python\nfrom temporalio import activity\n\n@activity.defn\nasync def send_email_activity(order_id: str):\n    \"\"\"Send a confirmation email for an order.\"\"\"\n    try:\n        # Simulate sending email\n        pass\n    except Exception as e:\n        activity.logger.error(f\"Failed to send email for order {order_id}: {str(e)}\")\n        raise\n```"
+    gold_removed: ''

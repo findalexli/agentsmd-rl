@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: claude-skills-exploringcodebases-v220-step0-setup-ref
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: oaustegard/claude-skills
+  pr: 561
+  base_commit: "13d9738c455f77151a55414ec9dfb17bbbdad2b3"
+  merge_commit: "92a487de1d8fd3fdc231630e4a10627bea26b527"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in exploring-codebases/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in exploring-codebases/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in exploring-codebases/SKILL.md."
+
+config_edits:
+  - path: exploring-codebases/SKILL.md
+    tier: 1
+    gold_added: "  version: 2.2.0\nExploratory code analysis for unfamiliar repositories. Orchestrates\ntree-sitting (structural) and featuring (semantic) over a local copy.\n## Workflow\n\nFive numbered steps, in order. Do not skip step 0.\n### 0. Setup (once per session)\nexport PYTHON=/home/claude/.venv/bin/python\nexport TREESIT=/mnt/skills/user/tree-sitting/scripts/treesit.py\nexport GATHER=/mnt/skills/user/featuring/scripts/gather.py\nIf step 2's `--stats` later reports `Scanned 0 files ... Errors: 1`, the\nlanguage pack isn't loaded — come back here and install. Treesit fails\nsilently on missing deps; it does not raise a useful error.\nOWNER=...\nREPO=...\nREF=main                    # branch name, tag, or SHA. For a PR: pull/N/head\ncurl -sL -H \"Authorization: Bearer $GH_TOKEN\" \\\n  \"https://api.github.com/repos/$OWNER/$REPO/tarball/$REF\" -o /tmp/$REPO.tar.gz\nls /tmp/$REPO | head        # sanity check — did extraction land?\nOne HTTP call gets the whole repo. Do NOT curl README, cat files, or\nfetch via `contents/PATH` first — they're in the tarball. The\nAuthorization header is only needed for private repos; public repos\nwork without it.\n**Ref selection matters.** If exploring a feature branch, PR, or tag,\nset `REF` accordingly. The default `main` will silently give you stale\ncode if the question is about an unmerged branch.\n### 2. Structural scan\n```\nRead the output. It gives file counts, symbol counts, languages, and\nper-directory symbol density. This IS the orienting artifact — treat it\nas the product of this step, not warm-up.\n\n**Drill only if you have a specific question.** For pure \"what is this\nrepo\" exploration, skip drilling and go to step 3 — featuring surfaces\nthe interesting paths for you. Drill when a user asked about a specific\nsubsystem, or when step 3's output raises a question that needs source.\n\nWhen you do drill, BATCH queries in one call — each extra query adds\n~0ms, separate invocations re-scan from scratch:\n\n```bash\n### 3. Feature synthesis\n$PYTHON $GATHER /tmp/$REPO \\\nOutput includes a \"Candidate areas for sub-files (by symbol density)\"\nlist near the top — that's your drill-target picker, ranked.\n\nSynthesize 2+3: capabilities, feature groups, architecture, entry\npoints, anomalies. Produce `_FEATURES.md` when warranted. This is the\nLLM step; everything before was mechanical.\nfor yet. Searching is the **convergent** skill — you know what you want.\n- **Large repos (>100 files)**: use `--skip tests,vendored,docs,...` in\n  step 2 to focus the scan.\n- **Monorepos**: treat each package/service as a separate exploration.\n- **Drill heuristics** (if step 2 drilling is warranted): directories\n  with high symbol-to-file ratio (dense logic), entry-point names\n  (`main`, `cli`, `app`, `server`, `routes`), files with many imports\n  (integration points)."
+    gold_removed: ''

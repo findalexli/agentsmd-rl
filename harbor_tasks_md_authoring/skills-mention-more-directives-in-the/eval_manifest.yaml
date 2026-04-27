@@ -1,0 +1,119 @@
+version: "2.0"
+
+task:
+  name: skills-mention-more-directives-in-the
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: dotnet/skills
+  pr: 307
+  base_commit: "4a4306f5638db875f821d6c2e4d280e7224d359d"
+  merge_commit: "873c2e43817a511534e949269e28d6f68f756019"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/dotnet/skills/csharp-scripts/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/dotnet/skills/csharp-scripts/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/dotnet/skills/csharp-scripts/SKILL.md."
+
+config_edits:
+  - path: plugins/dotnet/skills/csharp-scripts/SKILL.md
+    tier: 1
+    gold_added: 'description: Run single-file C# programs as scripts (file-based apps) for quick experimentation, prototyping, and concept testing. Use when the user wants to write and execute a small C# program without creating a full project.
+
+      - Place `using` directives at the top of the file (after the `#!` line and any `#:` directives if present)
+
+      ### Step 4: Add directives (if needed)
+
+      Place directives at the top of the file (immediately after an optional shebang line), before any `using` directives or other C# code. All directives start with `#:`.
+
+
+      #### `#:package` — NuGet package references
+
+
+      Always specify a version:
+
+      #### `#:property` — MSBuild properties
+
+
+      Set any MSBuild property inline. Syntax: `#:property PropertyName=Value`
+
+
+      ```csharp
+
+      #:property AllowUnsafeBlocks=true
+
+      #:property PublishAot=false
+
+      #:property NoWarn=CS0162
+
+      ```
+
+
+      MSBuild expressions and property functions are supported:
+
+
+      ```csharp
+
+      #:property LogLevel=$([MSBuild]::ValueOrDefault(''$(LOG_LEVEL)'', ''Information''))
+
+      ```
+
+
+      Common properties:
+
+
+      | Property | Purpose |
+
+      |----------|---------|
+
+      | `AllowUnsafeBlocks=true` | Enable `unsafe` code |
+
+      | `PublishAot=false` | Disable native AOT (enabled by default) |
+
+      | `NoWarn=CS0162;CS0219` | Suppress specific warnings |
+
+      | `LangVersion=preview` | Enable preview language features |
+
+      | `InvariantGlobalization=false` | Enable culture-specific globalization |
+
+
+      #### `#:project` — Project references
+
+
+      Reference another project by relative path:
+
+
+      ```csharp
+
+      #:project ../MyLibrary/MyLibrary.csproj
+
+      ```
+
+
+      #### `#:sdk` — SDK selection
+
+
+      Override the default SDK (`Microsoft.NET.Sdk`):
+
+
+      ```csharp
+
+      #:sdk Microsoft.NET.Sdk.Web
+
+      ```
+
+
+      | `#:property` with wrong syntax | Use `PropertyName=Value` with no spaces around `=` and no quotes: `#:property AllowUnsafeBlocks=true` |
+
+      | Directives placed after C# code | All `#:` directives must appear immediately after an optional shebang line (if present) and before any `using` directives or other C# statements |'
+    gold_removed: ''

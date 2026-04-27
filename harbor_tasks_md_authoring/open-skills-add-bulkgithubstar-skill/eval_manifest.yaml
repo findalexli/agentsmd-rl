@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: open-skills-add-bulkgithubstar-skill
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: besoeasy/open-skills
+  pr: 7
+  base_commit: "b55a40c2b934fa6e157e3e99e5c63b9a76fa977b"
+  merge_commit: "0d1093f5b53d9ae24879c89163d4b2859c54c6ab"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/bulk-github-star/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/bulk-github-star/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/bulk-github-star/SKILL.md."
+
+config_edits:
+  - path: skills/bulk-github-star/SKILL.md
+    tier: 1
+    gold_added: "---\nname: bulk-github-star\ndescription: \"Star all repositories from a GitHub user automatically. Use when: (1) Supporting open source creators, (2) Bulk discovery of useful projects, or (3) Automating GitHub engagement.\"\n---\n\n# Bulk GitHub Repository Starring\n\nAutomate starring all public repositories from any GitHub user with a single command.\n\n## When to use\n\n- User asks to star all repos from a specific GitHub user\n- Bulk appreciation for open source contributors\n- Discovering and saving all projects from a creator\n- Automation workflows for GitHub engagement\n\n## Required tools / APIs\n\n- GitHub CLI (`gh`) with authentication\n- No external API keys required (uses GitHub CLI token)\n\nInstall GitHub CLI:\n\n```bash\n# Ubuntu/Debian\nsudo apt-get install -y gh\n\n# macOS\nbrew install gh\n\n# Alpine (Docker)\napk add github-cli\n\n# Login required\ngh auth login\n```\n\n## Skills\n\n### star_all_user_repos\n\nStar all public repositories from a GitHub user.\n\n```bash\n# Star all repos from a user\nUSER=\"besoeasy\"\nrepos=$(gh repo list $USER --limit 100 | grep \"^$USER/\" | cut -f1)\n\nfor repo in $repos; do\n  echo \"Starring: $repo\"\n  gh api -X PUT /user/starred/$repo\ndone\n\necho \"Starred $(echo \"$repos\" | wc -l) repositories\"\n```\n\n**Node.js:**\n\n```javascript\nasync function starAllUserRepos(username) {\n  const { execSync } = require('child_process');\n  \n  // Get all repos for user\n  const output = execSync(`gh repo list ${username} --limit 100 --json nameWithOwner`, { encoding: 'utf8' });\n  const repos = JSON.parse(output);\n  \n  let starred = 0;\n  for (const repo of repos) {\n    const [owner, name] = repo.nameWithOwner.split('/');\n    try {\n      execSync(`gh api -X PUT /user/starred/${owner}/${name}`, { stdio: 'inherit' });\n      console.log(`✓ Starred: ${repo.nameWithOwner}`);\n      starred++;\n    } catch (err) {\n      console.error(`✗ Failed to star ${repo.nameWithOwner}:`, err.message);\n    }\n  }\n  \n  console.log(`\\nCompleted: ${starred}/${repos.length} repositories starred`);\n  return starred;\n}\n\n// Usage\n// starAllUserRepos('besoeasy');\n```\n\n### star_with_filter\n\nStar repos matching specific criteria (e.g., stars threshold, topic).\n\n```bash\n# Star only repos with >100 stars\nUSER=\"besoeasy\"\nMIN_STARS=100\n\ngh repo list $USER --limit 100 --json nameWithOwner,stargazerCount | \\\njq -r \".[] | select(.stargazerCount >= $MIN_STARS) | .nameWithOwner\" | \\\nwhile read repo; do\n  echo \"Starring: $repo ($(gh api /repos/$repo | jq -r '.stargazers_count') stars)\"\n  gh api -X PUT /user/starred/$repo\ndone\n```\n\n## Rate limits / Best practices\n\n- GitHub API: 5000 requests/hour for authenticated users\n- Add delays between requests: `sleep 0.5` to avoid rate limits\n- Respect GitHub ToS - don't use for spam or manipulation\n- Consider starring selectively rather than bulk for better curation\n\n## Agent prompt\n\n```text\nYou can bulk star GitHub repositories. When a user asks to star all repos from a GitHub user:\n\n1. Verify GitHub CLI is authenticated: gh auth status\n2. Get the list: gh repo list <username> --limit 100\n3. Star each using: gh api -X PUT /user/starred/<owner>/<repo>\n4. Report count of starred repositories\n\nAlways confirm the exact username before executing.\nNever star private repos (not accessible via public API anyway).\n```\n\n## Troubleshooting\n\n**Error: \"gh: command not found\"**\n- Install GitHub CLI first using package manager\n\n**Error: \"not logged in\"**\n- Run `gh auth login` and follow browser authentication\n\n**Error: \"API rate limit exceeded\"**\n- Wait 1 hour for rate limit reset\n- Use `sleep 1` between requests to slow down\n\n**Error: \"Not Found\"**\n- Verify the username is correct\n- Check if user exists: `gh user view <username>`\n\n## See also\n\n- [random-contributor](../random-contributor/SKILL.md) — find contributors to appreciate\n- [file-tracker](../file-tracker/SKILL.md) — track file changes in starred repos"
+    gold_removed: ''

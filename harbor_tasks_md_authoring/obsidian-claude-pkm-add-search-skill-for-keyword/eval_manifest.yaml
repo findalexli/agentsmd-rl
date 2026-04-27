@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: obsidian-claude-pkm-add-search-skill-for-keyword
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: ballred/obsidian-claude-pkm
+  pr: 8
+  base_commit: "9b3356301ea067118098146c0a15d36c4530cab6"
+  merge_commit: "3e868eb7e91b4f61099a58303aa99d7db21be450"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in vault-template/.claude/skills/search/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in vault-template/.claude/skills/search/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in vault-template/.claude/skills/search/SKILL.md."
+
+config_edits:
+  - path: vault-template/.claude/skills/search/SKILL.md
+    tier: 1
+    gold_added: "---\nname: search\ndescription: Search vault content by keyword using Grep. Zero dependencies — works in any vault without indexes or plugins. Groups results by directory for easy scanning.\nallowed-tools: Grep, Glob, Read\nuser-invocable: true\n---\n\n# Search Skill\n\nFast keyword search across all vault markdown files using the Grep tool. No indexes, no plugins, no setup — just structured search with directory grouping.\n\n## Usage\n\n```\n/search <term>\n```\n\nExamples:\n- `/search project planning`\n- `/search weekly review`\n- `/search TODO`\n\n## How to Execute\n\nWhen the user invokes `/search <term>`:\n\n### Step 1: Search for the term\n\nUse the **Grep** tool to search all `.md` files for the term:\n\n```\nGrep:\n  pattern: <search term>\n  glob: \"*.md\"\n  output_mode: content\n  -n: true\n  -C: 1\n```\n\nExclude hidden directories (`.claude/`, `.obsidian/`) and templates:\n\n```\nGrep:\n  pattern: <search term>\n  glob: \"*.md\"\n  path: .\n  output_mode: content\n  -n: true\n  -C: 1\n```\n\nFilter out results from `.claude/`, `.obsidian/`, and `Templates/` directories.\n\n### Step 2: Group results by directory\n\nOrganise matches into sections by their parent directory:\n\n- **Daily Notes/** — journal entries\n- **Goals/** — goal and vision documents\n- **Projects/** — project notes\n- **Archives/** — archived content\n- **Inbox/** — unprocessed items\n- **(root)** — top-level notes\n\n### Step 3: Present results\n\nFormat output as:\n\n```markdown\n## Search: \"<term>\"\n\n### Daily Notes/\n- **2024-01-15.md** (line 23): ...matching context...\n- **2024-01-14.md** (line 8): ...matching context...\n\n### Projects/\n- **Project Alpha.md** (line 45): ...matching context...\n\n### Goals/\n- **2024 Goals.md** (line 12): ...matching context...\n\n**Found X matches across Y files**\n```\n\n### Step 4: Suggest related content\n\nAfter showing results, check if any matched files contain `[[wiki-links]]` to other notes. If so, briefly mention:\n\n```\n\U0001F4A1 Related notes mentioned in results: [[Note A]], [[Note B]]\n```\n\n## No Results\n\nIf no matches are found:\n1. Suggest alternative search terms (synonyms, related words)\n2. Offer to search with case-insensitive matching if the original search was case-sensitive\n3. Suggest checking `Archives/` if not already included\n\n## Tips\n\n- Search is case-sensitive by default. Add `-i: true` to the Grep call for case-insensitive search\n- Use regex patterns for advanced searches: `task.*complete`, `#tag-name`\n- Combine with `/daily` to quickly find when something was mentioned"
+    gold_removed: ''

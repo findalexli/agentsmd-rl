@@ -1,0 +1,46 @@
+version: "2.0"
+
+task:
+  name: github-copilot-for-azure-strengthen-planfirst-enforcement-in
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: microsoft/GitHub-Copilot-for-Azure
+  pr: 1760
+  base_commit: "d5b015814cfb9b1c1c5296e7418a85824f2e1b87"
+  merge_commit: "0cbab9d7f0ba444a163fb298aefc30e54feb0557"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugin/skills/azure-prepare/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugin/skills/azure-prepare/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugin/skills/azure-prepare/SKILL.md."
+
+config_edits:
+  - path: plugin/skills/azure-prepare/SKILL.md
+    tier: 1
+    gold_added: '  version: "1.1.11"
+
+      1. **Plan first — MANDATORY** — You MUST physically write an initial `.azure/deployment-plan.md` **skeleton in the workspace root directory** (not the session-state folder) **as your very first action** — before any code generation or execution begins. Write the skeleton immediately, then populate it progressively as Phase 1 analysis and research unfold; finalize it with all decisions at Phase 1 Step 6. This file must exist on disk throughout. azure-validate and azure-deploy depend on it and will fail without it. Do not skip or defer this step.
+
+      > 2. **CREATE SKELETON** - Write an initial `.azure/deployment-plan.md` skeleton to disk **immediately** (before any code generation or execution begins), then populate it progressively as Phase 1 steps 1-5 reveal details; finalize it at Step 6
+
+      > 3. **CONFIRM** — Present the completed plan to the user and get approval
+
+      > ⚠️ **CRITICAL: `.azure/deployment-plan.md` must be WRITTEN TO DISK inside the workspace root** (e.g., `/tmp/my-project/.azure/deployment-plan.md`), not in the session-state folder. Use a file-write tool to create this file. This is the deployment plan artifact read by azure-validate and azure-deploy. **You MUST create this file — do not proceed without it.**
+
+      >
+
+      > ⛔ **Critical:** Skipping the plan file creation will cause azure-validate and azure-deploy to fail. This requirement has no exceptions.
+
+      | 6 | **Finalize Plan (MANDATORY)** - Use a file-write tool to finalize `.azure/deployment-plan.md` with all decisions from steps 1-5. Update the skeleton written at the start of Phase 1 with the complete content. The file must be fully populated before you present the plan to the user. | [plan-template.md](references/plan-template.md) |'
+    gold_removed: ''

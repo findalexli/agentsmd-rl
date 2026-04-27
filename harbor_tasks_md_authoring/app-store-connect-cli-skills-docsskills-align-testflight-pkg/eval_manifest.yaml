@@ -1,0 +1,64 @@
+version: "2.0"
+
+task:
+  name: app-store-connect-cli-skills-docsskills-align-testflight-pkg
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: rorkai/app-store-connect-cli-skills
+  pr: 10
+  base_commit: "aad228645ebebf65b4f6f3ad893ee0c195e5154b"
+  merge_commit: "ebc4f167ec0482cc827f9bf26dc3481a8c674fcb"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/asc-release-flow/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/asc-release-flow/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/asc-release-flow/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/asc-testflight-orchestration/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/asc-testflight-orchestration/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/asc-testflight-orchestration/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/asc-xcode-build/SKILL.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/asc-xcode-build/SKILL.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/asc-xcode-build/SKILL.md."
+
+config_edits:
+  - path: skills/asc-release-flow/SKILL.md
+    tier: 1
+    gold_added: "Upload the exported `.pkg` using `asc`:\nasc builds upload \\\n  --app <APP_ID> \\\n  --pkg <PATH_TO_PKG> \\\n  --version <VERSION> \\\n  --build-number <BUILD_NUMBER> \\\n  --wait\nNotes:\n- `--pkg` automatically sets platform to `MAC_OS`.\n- `asc publish appstore` currently supports `--ipa` workflows; for macOS `.pkg`, use `asc builds upload --pkg` + attach/submit steps below.\n"
+    gold_removed: ''
+  - path: skills/asc-testflight-orchestration/SKILL.md
+    tier: 1
+    gold_added: "  - `asc testflight beta-groups list --app \"APP_ID\" --paginate`\n  - `asc testflight beta-groups create --app \"APP_ID\" --name \"Beta Testers\"`\n  - `asc testflight beta-testers list --app \"APP_ID\" --paginate`\n  - `asc testflight beta-testers add --app \"APP_ID\" --email \"tester@example.com\" --group \"Beta Testers\"`\n  - `asc testflight beta-testers invite --app \"APP_ID\" --email \"tester@example.com\"`"
+    gold_removed: ''
+  - path: skills/asc-xcode-build/SKILL.md
+    tier: 1
+    gold_added: "### 3. Upload PKG with asc\nmacOS apps export as `.pkg` files. Upload with `asc`:\nasc builds upload \\\n  --app \"APP_ID\" \\\n  --pkg \"/tmp/YourMacAppExport/YourApp.pkg\" \\\n  --version \"1.0.0\" \\\n  --build-number \"123\"\nNotes:\n- `--pkg` automatically sets platform to `MAC_OS`.\n- For `.pkg` uploads, `--version` and `--build-number` are required (they are not auto-extracted like IPA uploads).\n- Add `--wait` if you want to wait for build processing to complete."
+    gold_removed: ''

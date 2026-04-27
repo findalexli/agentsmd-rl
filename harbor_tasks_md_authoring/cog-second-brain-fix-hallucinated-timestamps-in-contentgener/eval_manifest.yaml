@@ -1,0 +1,119 @@
+version: "2.0"
+
+task:
+  name: cog-second-brain-fix-hallucinated-timestamps-in-contentgener
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: huytieu/COG-second-brain
+  pr: 6
+  base_commit: "20578724a4e43c6c8384cc812da7a49bfac2350e"
+  merge_commit: "cc39233adf505320be847e617c423eb3fcbff6bc"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/braindump/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/braindump/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/braindump/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/daily-brief/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/daily-brief/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/daily-brief/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/knowledge-consolidation/SKILL.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/knowledge-consolidation/SKILL.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/knowledge-consolidation/SKILL.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/weekly-checkin/SKILL.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/weekly-checkin/SKILL.md."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/weekly-checkin/SKILL.md."
+
+config_edits:
+  - path: .claude/skills/braindump/SKILL.md
+    tier: 1
+    gold_added: '**Get current timestamp (REQUIRED before generating any files):**
+
+
+      1. Run `date ''+%Y-%m-%d %H:%M''` using Bash to get the actual current date and time
+
+      2. Store this value and use it for ALL timestamp fields (`created:` frontmatter AND filename `HHMM` component)
+
+      3. NEVER guess or fabricate the time — always use the value returned by the `date` command
+
+      '
+    gold_removed: ''
+  - path: .claude/skills/daily-brief/SKILL.md
+    tier: 1
+    gold_added: '**Get current timestamp (REQUIRED before generating any files):**
+
+
+      1. Run `date ''+%Y-%m-%d %H:%M''` using Bash to get the actual current date and time
+
+      2. Store this value and use it for the `created:` frontmatter field
+
+      3. NEVER guess or fabricate the time — always use the value returned by the `date` command
+
+      '
+    gold_removed: ''
+  - path: .claude/skills/knowledge-consolidation/SKILL.md
+    tier: 1
+    gold_added: '## Pre-Flight Check
+
+
+      **Get current timestamp (REQUIRED before generating any files):**
+
+
+      1. Run `date ''+%Y-%m-%d %H:%M''` using Bash to get the actual current date and time
+
+      2. Store this value and use it for the `created:` frontmatter field
+
+      3. NEVER guess or fabricate the time — always use the value returned by the `date` command
+
+      '
+    gold_removed: ''
+  - path: .claude/skills/weekly-checkin/SKILL.md
+    tier: 1
+    gold_added: '**Get current timestamp (REQUIRED before generating any files):**
+
+
+      1. Run `date ''+%Y-%m-%d %H:%M''` using Bash to get the actual current date and time
+
+      2. Store this value and use it for the `created:` frontmatter field
+
+      3. NEVER guess or fabricate the time — always use the value returned by the `date` command
+
+      '
+    gold_removed: ''

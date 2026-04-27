@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: obsidian-skills-docsobsidianbases-add-duration-type-document
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: kepano/obsidian-skills
+  pr: 35
+  base_commit: "4540df83fc68a68bef27e83ae79bc4f1b4d2ea7c"
+  merge_commit: "34c2cda8b29eaeec6793e342b8b56e96ac29f15c"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/obsidian-bases/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/obsidian-bases/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/obsidian-bases/SKILL.md."
+
+config_edits:
+  - path: skills/obsidian-bases/SKILL.md
+    tier: 1
+    gold_added: "\n\n\n\n  # Calculate days since created (use .days for Duration)\n  days_old: '(now() - file.ctime).days'\n\n  # Calculate days until due date\n  days_until_due: 'if(due_date, (date(due_date) - today()).days, \"\")'\n### Duration Type\n\nWhen subtracting two dates, the result is a **Duration** type (not a number). Duration has its own properties and methods.\n\n**Duration Fields:**\n| Field | Type | Description |\n|-------|------|-------------|\n| `duration.days` | Number | Total days in duration |\n| `duration.hours` | Number | Total hours in duration |\n| `duration.minutes` | Number | Total minutes in duration |\n| `duration.seconds` | Number | Total seconds in duration |\n| `duration.milliseconds` | Number | Total milliseconds in duration |\n\n**IMPORTANT:** Duration does NOT support `.round()`, `.floor()`, `.ceil()` directly. You must access a numeric field first (like `.days`), then apply number functions.\n\n```yaml\n# CORRECT: Calculate days between dates\n\"(date(due_date) - today()).days\"                    # Returns number of days\n\"(now() - file.ctime).days\"                          # Days since created\n\n# CORRECT: Round the numeric result if needed\n\"(date(due_date) - today()).days.round(0)\"           # Rounded days\n\"(now() - file.ctime).hours.round(0)\"                # Rounded hours\n\n# WRONG - will cause error:\n# \"((date(due) - today()) / 86400000).round(0)\"      # Duration doesn't support division then round\n```\n\n# Duration units: y/year/years, M/month/months, d/day/days,\n# Subtract dates returns Duration type\n\"now() - file.ctime\"                    # Returns Duration\n\"(now() - file.ctime).days\"             # Get days as number\n\"(now() - file.ctime).hours\"            # Get hours as number\n  days_until_due: 'if(due, (date(due) - today()).days, \"\")'\n"
+    gold_removed: ''

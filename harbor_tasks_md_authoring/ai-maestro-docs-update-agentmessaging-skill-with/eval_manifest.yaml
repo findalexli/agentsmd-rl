@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: ai-maestro-docs-update-agentmessaging-skill-with
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: 23blocks-OS/ai-maestro
+  pr: 71
+  base_commit: "4a1d17a5b5c946565e2cebb49950efd4e505171c"
+  merge_commit: "7a77c8e66473fc852885442aa00fdb919e93b9a0"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/agent-messaging/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/agent-messaging/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/agent-messaging/SKILL.md."
+
+config_edits:
+  - path: skills/agent-messaging/SKILL.md
+    tier: 1
+    gold_added: "- `to_agent[@host]` (required) - Target agent (host is optional thanks to smart lookup):\n  - `backend-api` - Script automatically searches ALL hosts to find this agent\n  - `api-form` - Fuzzy matching: finds `api-forms` even with typos/partial names\n  - `backend-api@mac-mini` - Explicitly specify host (skips search, faster)\n\n**Smart Lookup (v0.17.32+):**\nWhen no `@host` is specified, the script automatically:\n1. Searches ALL enabled hosts for the agent\n2. If found on exactly 1 host → sends automatically\n3. If found on multiple hosts → asks which one you meant\n4. If not found → tries fuzzy/partial matching\n\n**Fuzzy Matching (v0.17.33+):**\nIf exact name not found, searches for partial matches:\n- `api-form` → finds `api-forms` (typo tolerance)\n- `forms` → finds `23blocks-api-forms` (partial name)\n- Single fuzzy match: shows `\U0001F50D Found partial match: ...` then sends\n- Multiple fuzzy matches: shows options for clarification\n# Simple request - smart lookup finds agent automatically\n# Works with partial names - fuzzy matching finds the right agent\nsend-aimaestro-message.sh api-form \"Customer data sync\" \"Please sync customer records\"\n# Output: \U0001F50D Found partial match: api-forms@hostname\n# ✅ Message sent\n\n# Explicit host (faster - skips search)\n# Urgent notification\n**With explicit host (`agent@host`):**\n1. Parse destination and look up host URL from `~/.aimaestro/hosts.json`\n2. Query that specific host's API to resolve agent\n3. Send message to that host's `/api/messages` endpoint\n\n**Without host (smart lookup):**\n1. Search ALL enabled hosts for the agent (exact match first)\n2. If not found exactly, try fuzzy/partial matching on all hosts\n3. Single match → auto-select that host and send\n4. Multiple matches → prompt for clarification\n5. No matches → show helpful error with available hosts\n- The script automatically searches all hosts and tries fuzzy matching\n- If still not found, the error shows available hosts - check those for valid agent names\n- Use `list-agents.sh` to see all agents on local host\n- Use `list-agents.sh <host-id>` to see agents on a specific remote host\n- Try partial names - fuzzy matching handles typos and abbreviations"
+    gold_removed: ''

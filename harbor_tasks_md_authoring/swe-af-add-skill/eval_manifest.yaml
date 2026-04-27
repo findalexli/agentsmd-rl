@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: swe-af-add-skill
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Agent-Field/SWE-AF
+  pr: 9
+  base_commit: "9c3443db27666a99ad6d212b6d9e62a08f364f5c"
+  merge_commit: "f63b9e744ad922c0a914201020a0e9df9d4264fb"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in docs/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in docs/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in docs/SKILL.md."
+
+config_edits:
+  - path: docs/SKILL.md
+    tier: 1
+    gold_added: "---\nname: swe-af\ndescription: Autonomous engineering team runtime — one API call spins up coordinated AI agents to scope, build, and ship software.\nlicense: MIT\ncompatibility: opencode\n---\n\n# SWE-AF Usage Guide\n\n> Autonomous engineering team runtime — one API call spins up coordinated AI agents to scope, build, and ship software.\n\n## What It Does\n\nSWE-AF creates a coordinated team of AI agents (planning, coding, review, QA, merge, verification) that execute in parallel based on DAG dependencies. Issues with no dependencies run simultaneously; dependent issues run sequentially.\n\n## Installation\n\n```bash\npython3.12 -m venv .venv\nsource .venv/bin/activate\npip install -e \".[dev]\"\n```\n\n## Running\n\n**Terminal 1 — Control Plane:**\n```bash\naf                  # starts AgentField on port 8080\n```\n\n**Terminal 2 — Register Node:**\n```bash\npython -m swe_af    # registers the swe-planner node\n```\n\n## Triggering a Build\n\n**With local repo:**\n```bash\ncurl -X POST http://localhost:8080/api/v1/execute/async/swe-planner.build \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"input\": {\n      \"goal\": \"Add JWT auth to all API endpoints\",\n      \"repo_path\": \"/path/to/your/repo\",\n      \"config\": {\n        \"runtime\": \"open_code\",\n        \"models\": {\n          \"default\": \"zai-coding-plan/glm-5\"\n        }\n      }\n    }\n  }'\n```\n\n**With GitHub repo (clones + creates draft PR):**\n```bash\ncurl -X POST http://localhost:8080/api/v1/execute/async/swe-planner.build \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"input\": {\n      \"goal\": \"Add comprehensive test coverage\",\n      \"repo_url\": \"https://github.com/user/my-project\",\n      \"config\": {\n        \"runtime\": \"open_code\",\n        \"models\": {\n          \"default\": \"zai-coding-plan/glm-5\"\n        }\n      }\n    }\n  }'\n```\n\n## Configuration\n\n| Key | Values | Description |\n|-----|--------|-------------|\n| `runtime` | `\"claude_code\"`, `\"open_code\"` | AI backend to use |\n| `models.default` | model ID string | Default model for all agents |\n| `models.coder` | model ID string | Override for coder role |\n| `models.qa` | model ID string | Override for QA role |\n| `repo_path` | local path | Local workspace (new or existing) |\n| `repo_url` | GitHub URL | Clone + draft PR workflow |\n\n### Role-Specific Model Overrides\n\n```json\n{\n  \"config\": {\n    \"runtime\": \"open_code\",\n    \"models\": {\n      \"default\": \"zai-coding-plan/glm-5\",\n      \"coder\": \"zai-coding-plan/glm-5\",\n      \"qa\": \"zai-coding-plan/glm-5\",\n      \"verifier\": \"zai-coding-plan/glm-5\"\n    }\n  }\n}\n```\n\nAvailable roles: `pm`, `architect`, `tech_lead`, `sprint_planner`, `coder`, `qa`, `code_reviewer`, `qa_synthesizer`, `replan`, `retry_advisor`, `issue_writer`, `issue_advisor`, `verifier`, `git`, `merger`, `integration_tester`\n\n## Requirements for open_code Runtime\n\n1. `opencode` CLI installed and in PATH\n2. Model provider credentials configured in OpenCode (e.g., `OPENAI_API_KEY` for z.ai)\n3. Model ID format matches what OpenCode expects\n\n## Monitoring\n\n```bash\n# Check build status\ncurl http://localhost:8080/api/v1/executions/<execution_id>\n```\n\nArtifacts are saved to:\n```\n.artifacts/\n├── plan/           # PRD, architecture, issue specs\n├── execution/      # checkpoints, per-issue logs\n└── verification/   # acceptance criteria results\n```\n\n## What Happens in a Build\n\n1. **Planning** — PM → Architect → Tech Lead → Sprint Planner (generates issue DAG)\n2. **Issue Writing** — All issues written in parallel\n3. **Execution** — Issues run level-by-level (parallel within levels)\n   - Each issue: Coder → QA + Reviewer (parallel) → Synthesizer\n   - Failures trigger advisor (retry/split/accept with debt/escalate)\n4. **Merge** — Branches merged to integration branch\n5. **Integration Test** — Full suite on merged code\n6. **Verification** — Acceptance criteria checked against PRD\n\n## Key Endpoints\n\n```bash\nPOST /api/v1/execute/async/swe-planner.build     # Full build\nPOST /api/v1/execute/async/swe-planner.plan      # Plan only\nPOST /api/v1/execute/async/swe-planner.execute   # Execute existing plan\nPOST /api/v1/execute/async/swe-planner.resume_build  # Resume after crash\n```"
+    gold_removed: ''

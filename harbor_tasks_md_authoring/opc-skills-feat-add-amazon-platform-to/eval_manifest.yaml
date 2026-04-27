@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: opc-skills-feat-add-amazon-platform-to
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: ReScienceLab/opc-skills
+  pr: 77
+  base_commit: "593b2c5500b3c1324f34aca69ae202b7d5f0a804"
+  merge_commit: "01a0cbe066c214d8aa1e4c5f02aeb458c977e55a"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/requesthunt/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/requesthunt/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/requesthunt/SKILL.md."
+
+config_edits:
+  - path: skills/requesthunt/SKILL.md
+    tier: 1
+    gold_added: "description: Generate user demand research reports from real user feedback. Scrape and analyze feature requests, complaints, and questions from Reddit, X, GitHub, YouTube, LinkedIn, and Amazon. Use when user wants to do demand research, find feature requests, analyze user demand, or run RequestHunt queries.\nGenerate user demand research reports by collecting and analyzing real user feedback from Reddit, X (Twitter), GitHub, YouTube, LinkedIn, and Amazon.\n| **Amazon** | Consumer products, electronics, home goods | Product review complaints and feature wishes | High for physical products |\n| **Automotive / Hardware** | YouTube | Amazon, Reddit | Video review comments + Amazon product reviews are richest sources |\n| **Gaming / Entertainment** | YouTube | Amazon, Reddit | Game streams, product reviews, and community feedback |\n| **Travel / Transportation** | YouTube | Amazon, LinkedIn | Travel vlogs + Amazon gear reviews + business travel needs |\n| **Food / Dining** | YouTube | Amazon, Reddit | Recipe/delivery app reviews + Amazon kitchen product feedback |\n| **Real Estate / Home** | Amazon | YouTube, Reddit | Amazon dominates for home improvement and smart home products |\n| **Education / Learning** | YouTube | Amazon | Tutorial video comments + Amazon course/book reviews |\n| **Health / Medical** | LinkedIn | Amazon, X | Professional healthcare + Amazon health product reviews |\n| **Consumer Electronics** | Amazon | YouTube, Reddit | Amazon product reviews are the primary signal source |\n- **Consumer / hardware / lifestyle** → Amazon + YouTube first, Reddit second\n- **Physical products / electronics** → Amazon first, YouTube second\n# Consumer products — Amazon-first strategy\nrequesthunt scrape start \"wireless earbuds\" --platforms amazon,youtube,reddit --depth 2\n\nrequesthunt scrape start \"AI coding assistants\" --platforms reddit,x,github,youtube,linkedin,amazon --depth 2\n- Data Sources: Reddit (N), X (N), GitHub (N), YouTube (N), LinkedIn (N), Amazon (N)\n| Insight | Reddit | YouTube | LinkedIn | X | GitHub | Amazon |\n|---------|--------|---------|----------|---|--------|--------|\n| Volume | ... | ... | ... | ... | ... | ... |\n| Signal type | Technical | UX/Feature | Strategic | Sentiment | Bug/FR | Product |\nrequesthunt scrape start \"ai-assistant\" --platforms reddit,x,github,youtube,linkedin,amazon --depth 2\n  - Scrape: depth x number of platforms credits (Amazon capped at depth 5)"
+    gold_removed: ''

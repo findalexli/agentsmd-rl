@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: developer-kit-fixdeveloperkittools-removed-store-credentials
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: giuseppe-trisciuoglio/developer-kit
+  pr: 165
+  base_commit: "4b100337c3d7579b1d1fd952acdf61130ccf4b2e"
+  merge_commit: "d3202384de955894c0105b540cf2250df82a602c"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/developer-kit-tools/skills/sonarqube-mcp/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/developer-kit-tools/skills/sonarqube-mcp/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/developer-kit-tools/skills/sonarqube-mcp/SKILL.md."
+
+config_edits:
+  - path: plugins/developer-kit-tools/skills/sonarqube-mcp/SKILL.md
+    tier: 1
+    gold_added: "## Prerequisites and Setup\n**SonarQube Server (remote or local):**\nexport SONARQUBE_URL=\"https://sonarqube.mycompany.com\"  # or http://host.docker.internal:9000 for local Docker\n# SONARQUBE_URL is not needed for SonarCloud\n## Quick Start\n\n1. Set your SonarQube/SonarCloud credentials:\n   ```bash\n   # SonarQube Server\n   export SONARQUBE_TOKEN=\"squ_your_token\"\n   export SONARQUBE_URL=\"https://sonarqube.mycompany.com\"\n\n   # SonarCloud\n   export SONARQUBE_TOKEN=\"squ_your_token\"\n   export SONARQUBE_ORG=\"your-org-key\"\n   ```\n\n2. Verify MCP tool availability:\n   - Tool names follow the pattern: `mcp__sonarqube-mcp__<tool-name>`\n3. If the MCP server fails to start, check:\n   - Docker is running\n   - Environment variables are set\n   - Reference: [mcp/sonarqube on Docker Hub](https://hub.docker.com/r/mcp/sonarqube)\n1. **Environment Setup** — Set credentials once per session; the MCP server automatically picks them up\n2. **Always check quality gate before merge** — Run `get_project_quality_gate_status` as part of any PR review workflow\n3. **Shift left on security issues** — Use `analyze_code_snippet` during development, not only in CI\n4. **Prioritize by severity** — Address BLOCKER and HIGH issues first; document decisions for MEDIUM and LOW\n5. **Use `show_rule` for unfamiliar keys** — Never dismiss a rule without understanding its intent\n6. **Paginate large result sets** — Use `p` and `ps` parameters; handle multi-page responses for complete coverage\n7. **Never change issue status autonomously** — Always present issues to the user and get explicit confirmation before calling `change_sonar_issue_status`\n8. **Provide language hints** — Specify `language` in `analyze_code_snippet` for more accurate analysis"
+    gold_removed: ''

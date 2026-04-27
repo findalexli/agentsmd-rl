@@ -1,0 +1,80 @@
+version: "2.0"
+
+task:
+  name: cloudbase-mcp-docsskills-enforce-mcp-as-prerequisite
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: TencentCloudBase/CloudBase-MCP
+  pr: 404
+  base_commit: "cae3057e2efc90b64735bd7363e0aed0102a399f"
+  merge_commit: "e67c7ea1734a319dd255208583d4c8769ae84423"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in config/source/guideline/cloudbase/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in config/source/guideline/cloudbase/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in config/source/guideline/cloudbase/SKILL.md."
+
+config_edits:
+  - path: config/source/guideline/cloudbase/SKILL.md
+    tier: 1
+    gold_added: '## ⚠️ Prerequisite: MCP Must Be Configured
+
+      **CloudBase MCP (Model Context Protocol) is REQUIRED before using any CloudBase capabilities.** Without MCP, you cannot manage environments, deploy functions, operate databases, or perform any CloudBase management tasks.
+
+      ### Approach A: IDE Native MCP
+
+      If CloudBase MCP tools are already available in your IDE context (discoverable via `ToolSearch`), you can use them directly. Check by searching for `cloudbase` in your tool list — if tools like `manageFunctions`, `envQuery` appear, MCP is ready.
+
+
+      If not available, configure via your IDE''s MCP settings:
+
+      **Config file locations:**
+
+      ### Approach B: mcporter CLI
+
+      When your IDE does not support native MCP, use **mcporter** as the CLI to configure and call CloudBase MCP tools.
+
+      **Step 1 — Check**: `npx mcporter list | grep cloudbase`
+
+      **Step 2 — Configure** (if not found): create `config/mcporter.json` in the project root. If it already contains other MCP servers, keep them and only add the `cloudbase` entry:
+
+      **Step 3 — Verify**: `npx mcporter describe cloudbase`
+
+
+      ### Important Rules
+
+
+      - **When managing or deploying CloudBase, you MUST use MCP and MUST understand tool details first.** Before calling any CloudBase tool, run `npx mcporter describe cloudbase --all-parameters` (or `ToolSearch` in IDE) to inspect available tools and their parameters.
+
+      - You **do not need to hard-code Secret ID / Secret Key / Env ID** in the config. CloudBase MCP supports device-code based login via the `auth` tool, so credentials can be obtained interactively instead of being stored in config.
+
+
+      ### Quick Start (mcporter CLI)
+
+      - Check auth & env status:
+
+      - Start device-flow login (future-friendly device-code login; no keys in config):
+
+      - Bind environment after login (envId from CloudBase console):
+
+      ## Pricing & Free Trial
+
+
+      Each CloudBase account can create 1 free environment (3,000 resource points/month). For plans, quotas, and overage details, see [CloudBase Pricing](https://cloud.tencent.com/document/product/876/75213).
+
+
+      ---
+
+      '
+    gold_removed: ''

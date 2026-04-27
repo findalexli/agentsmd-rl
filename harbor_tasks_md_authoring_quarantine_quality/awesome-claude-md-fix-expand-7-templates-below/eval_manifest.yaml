@@ -1,0 +1,240 @@
+version: "2.0"
+
+task:
+  name: awesome-claude-md-fix-expand-7-templates-below
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: sx4im/awesome-claude-md
+  pr: 4
+  base_commit: "f8c5b5d1c111b480a11c24191cd716ee8f355ed3"
+  merge_commit: "aca7bf326847dd61650af48eac3819ccb0177682"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in templates/conventional-changelog/CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in templates/conventional-changelog/CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in templates/conventional-changelog/CLAUDE.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in templates/knip/CLAUDE.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in templates/knip/CLAUDE.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in templates/knip/CLAUDE.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in templates/lint-staged/CLAUDE.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in templates/lint-staged/CLAUDE.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in templates/lint-staged/CLAUDE.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in templates/oklch-colors/CLAUDE.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in templates/oklch-colors/CLAUDE.md."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in templates/oklch-colors/CLAUDE.md."
+  - id: signal_12
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in templates/renovate/CLAUDE.md."
+  - id: signal_13
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in templates/renovate/CLAUDE.md."
+  - id: signal_14
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in templates/renovate/CLAUDE.md."
+  - id: signal_15
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in templates/simple-git-hooks/CLAUDE.md."
+  - id: signal_16
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in templates/simple-git-hooks/CLAUDE.md."
+  - id: signal_17
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in templates/simple-git-hooks/CLAUDE.md."
+  - id: signal_18
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in templates/verdaccio/CLAUDE.md."
+  - id: signal_19
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in templates/verdaccio/CLAUDE.md."
+  - id: signal_20
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in templates/verdaccio/CLAUDE.md."
+
+config_edits:
+  - path: templates/conventional-changelog/CLAUDE.md
+    tier: 1
+    gold_added: '## File Naming
+
+
+      - Config: `conventional-changelog.config.js` or `.changelogrc` at project root
+
+      - Output: `CHANGELOG.md` in project root, committed to version control
+
+
+      - Test changelog generates with correct sections for features, fixes, and breaking changes.
+
+      - Test links to commits and issues resolve correctly.
+
+      - Test with different presets (angular, atom, ember, eslint).
+
+      - Test `releaseCount: 0` regenerates the full changelog from all commits.
+
+      - Test custom `writerOpts` templates render expected output.'
+    gold_removed: ''
+  - path: templates/knip/CLAUDE.md
+    tier: 1
+    gold_added: '## File Naming
+
+
+      - Config: `knip.config.ts`, `knip.json`, or `knip.config.js` at project root
+
+      - Workspace configs: one `knip.config.ts` per workspace root in monorepos
+
+
+      - Test with known unused code to verify detection accuracy.
+
+      - Test `--fix` removes correct code without breaking imports.
+
+      - Test CI pipeline fails when unused exports are introduced.
+
+      - Test monorepo workspace cross-references resolve correctly.
+
+      - Test dynamic imports are handled or explicitly ignored.'
+    gold_removed: ''
+  - path: templates/lint-staged/CLAUDE.md
+    tier: 1
+    gold_added: '## File Naming
+
+
+      - Config: `.lintstagedrc.js`, `lint-staged.config.js`, or `lint-staged` field in `package.json`
+
+      - Hooks: `.husky/pre-commit` contains `npx lint-staged`
+
+
+      - Test with a staged file that has a lint error and verify commit is blocked.
+
+      - Test auto-fix applies correctly and stages the fixed file.
+
+      - Test commit is blocked when unfixable errors exist in staged files.
+
+      - Test with multiple staged files across different glob patterns.
+
+      - Test that unstaged files are not modified by lint-staged commands.'
+    gold_removed: ''
+  - path: templates/oklch-colors/CLAUDE.md
+    tier: 1
+    gold_added: '## File Naming
+
+
+      - Theme files: `theme.css` or `tokens.css` for OKLCH color definitions
+
+      - Fallbacks: `fallback.css` for browsers without OKLCH support
+
+
+      - Test OKLCH colors render correctly in browsers supporting the `oklch()` function.
+
+      - Test gradients appear smooth compared to equivalent HSL gradients.
+
+      - Test fallback colors display correctly in older browsers.
+
+      - Test wide-gamut colors on HDR displays.
+
+      - Test `color-mix()` produces expected intermediate values.'
+    gold_removed: ''
+  - path: templates/renovate/CLAUDE.md
+    tier: 1
+    gold_added: '## File Naming
+
+
+      - Config: `renovate.json`, `.github/renovate.json`, or `renovate.json5` at project root
+
+      - Presets: shared configs via `extends` from npm packages or GitHub repos
+
+
+      - Test that PRs pass CI before auto-merge triggers.
+
+      - Test grouped updates bundle related packages into a single PR.
+
+      - Test scheduling respects configured time windows and timezone.
+
+      - Test private package updates resolve through configured registries.
+
+      - Test major version updates are never auto-merged without review.'
+    gold_removed: ''
+  - path: templates/simple-git-hooks/CLAUDE.md
+    tier: 1
+    gold_added: '## File Naming
+
+
+      - Config: `simple-git-hooks` field in `package.json` — no separate config file needed
+
+      - Hooks: installed to `.git/hooks/` directory automatically on `postinstall`
+
+
+      - Test hooks run on the appropriate git actions (commit, push, merge).
+
+      - Test that failing commands block the git operation with a non-zero exit code.
+
+      - Test hooks reinstall correctly after `rm -rf .git/hooks` and `npx simple-git-hooks`.
+
+      - Test with multiple hooks configured (pre-commit and commit-msg simultaneously).
+
+      - Test that `git commit --no-verify` bypasses hooks when needed.'
+    gold_removed: ''
+  - path: templates/verdaccio/CLAUDE.md
+    tier: 1
+    gold_added: '## File Naming
+
+
+      - Config: `config.yaml` at Verdaccio root — YAML format required
+
+      - Storage: `storage/` directory for cached and published packages
+
+
+      - Test publishing and installing private scoped packages end-to-end.
+
+      - Test authentication with htpasswd and configured auth plugins.
+
+      - Test uplink fallback when the upstream npmjs registry is unreachable.
+
+      - Test access control rules restrict unauthorized publishing.
+
+      - Test `max_body_size` rejects packages exceeding the configured limit.'
+    gold_removed: ''

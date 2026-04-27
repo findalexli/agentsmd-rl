@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: open-skills-add-randomcontributor-skill
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: besoeasy/open-skills
+  pr: 5
+  base_commit: "d77ce15f63ccf9becf6b1ac16affd33629c0aee5"
+  merge_commit: "e66d83104bfd3ba465d5c5eb07a7e30732dd2416"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/random-contributor/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/random-contributor/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/random-contributor/SKILL.md."
+
+config_edits:
+  - path: skills/random-contributor/SKILL.md
+    tier: 1
+    gold_added: "---\nname: random-contributor\ndescription: Pick a random contributor from a GitHub repository using the GitHub API or repository pages (no auth required for public repos).\n---\n\n# Random Contributor Skill\n\nPurpose\n- Select a uniformly random contributor from a public GitHub repository. Useful for sampling, shoutouts, delegation, or fair assignment among contributors.\n\nWhat it does\n- Uses GitHub REST API (public endpoints) to list contributors for a repo (handles pagination).\n- Falls back to scraping the repository's contributors page if API rate limits or CORS prevent API use.\n- Returns contributor info: login, name (if available), avatar URL, profile URL, contributions count.\n\nWhen to use\n- Pick a random maintainer or contributor for tasks like \"who should review\" or \"who to credit\".\n- Should be used only on public repositories.\n\nPrerequisites\n- `curl` and `jq` for Bash examples, or Node.js 18+ for JS examples.\n- Optional GitHub token (GH_TOKEN) increases rate limits; skill works without it for small repos.\n\nExamples\n--------\n\nBash (uses GitHub API; paginates with per_page=100):\n\n```bash\nREPO_OWNER=besoeasy\nREPO_NAME=open-skills\n\n# Fetch contributor list (public API). Uses optional GH_TOKEN env for higher rate limit.\nAUTH_HEADER=\"\"\nif [ -n \"${GH_TOKEN:-}\" ]; then\n  AUTH_HEADER=\"-H \\\"Authorization: token ${GH_TOKEN}\\\"\"\nfi\n\n# Get contributors (first page); for large repos you'd page. Here we do simple pagination loop.\ncontributors=()\npage=1\nwhile true; do\n  out=$(eval \"curl -fsS ${AUTH_HEADER} \\\"https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contributors?per_page=100&page=${page}\\\"\")\n  count=$(echo \"$out\" | jq 'length')\n  if [ \"$count\" -eq 0 ]; then break; fi\n  logins=$(echo \"$out\" | jq -r '.[].login')\n  while read -r l; do contributors+=(\"$l\"); done <<< \"$logins\"\n  if [ \"$count\" -lt 100 ]; then break; fi\n  page=$((page+1))\ndone\n\n# Pick random\nidx=$((RANDOM % ${#contributors[@]}))\nselected=${contributors[$idx]}\necho \"$selected\"\n```\n\nNode.js (recommended: uses native fetch and handles pagination):\n\n```javascript\nasync function getRandomContributor(owner, repo, token) {\n  const headers = {};\n  if (token) headers['Authorization'] = `token ${token}`;\n\n  let page = 1;\n  const per = 100;\n  const all = [];\n\n  while (true) {\n    const url = `https://api.github.com/repos/${owner}/${repo}/contributors?per_page=${per}&page=${page}`;\n    const res = await fetch(url, { headers });\n    if (!res.ok) break;\n    const data = await res.json();\n    if (!Array.isArray(data) || data.length === 0) break;\n    all.push(...data);\n    if (data.length < per) break;\n    page++;\n  }\n\n  if (!all.length) return null;\n  const pick = all[Math.floor(Math.random() * all.length)];\n  return {\n    login: pick.login,\n    avatar: pick.avatar_url,\n    profile: pick.html_url,\n    contributions: pick.contributions\n  };\n}\n\n// Usage:\n// getRandomContributor('besoeasy','open-skills', process.env.GH_TOKEN).then(console.log)\n```\n\nAgent prompt\n------------\n\n\"Find a random contributor for {owner}/{repo}. Use the GitHub API; if API rate limits block you, fall back to scraping the contributors page. Return JSON: {login, name?, avatar, profile, contributions}.\"\n\nNotes & Caveats\n- For very large repos (>1000 contributors) consider streaming or reservoir sampling instead of fetching all contributors at once.\n- Respect GitHub API rate limits; provide an option to use GH_TOKEN to increase limits.\n- Public repos only; do not attempt to access private repos without appropriate credentials.\n\nSee also\n- skills/check-crypto-address-balance (example of API usage patterns)\n"
+    gold_removed: ''

@@ -1,0 +1,48 @@
+version: "2.0"
+
+task:
+  name: agents-feat-add-astro-cli-local
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: astronomer/agents
+  pr: 18
+  base_commit: "598be80e31224d778ae21f4c3e7f4195eac23c8c"
+  merge_commit: "f3453055dd15b49a7833f045a2df9eec623271bb"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in shared-skills/astro-local-env/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in shared-skills/astro-local-env/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in shared-skills/astro-local-env/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in shared-skills/astro-project-setup/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in shared-skills/astro-project-setup/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in shared-skills/astro-project-setup/SKILL.md."
+
+config_edits:
+  - path: shared-skills/astro-local-env/SKILL.md
+    tier: 1
+    gold_added: "---\nname: astro-local-env\ndescription: Manage local Airflow environment with Astro CLI. Use when the user wants to start, stop, or restart Airflow, view logs, troubleshoot containers, or fix environment issues. For project setup, see astro-project-setup.\n---\n\n# Astro Local Environment\n\nThis skill helps you manage your local Airflow environment using the Astro CLI.\n\n> **To set up a new project**, see the **astro-project-setup** skill.\n> **When Airflow is running**, use MCP tools from **dag-authoring** and **dag-testing** skills.\n\n---\n\n## Start / Stop / Restart\n\n```bash\n# Start local Airflow (webserver at http://localhost:8080)\nastro dev start\n\n# Stop containers (preserves data)\nastro dev stop\n\n# Kill and remove volumes (clean slate)\nastro dev kill\n\n# Restart all containers\nastro dev restart\n\n# Restart specific component\nastro dev restart --scheduler\nastro dev restart --webserver\n```\n\n**Default credentials:** admin / admin\n\n**Restart after modifying:** `requirements.txt`, `packages.txt`, `Dockerfile`\n\n---\n\n## Check Status\n\n```bash\nastro dev ps\n```\n\n---\n\n## View Logs\n\n```bash\n# All logs\nastro dev logs\n\n# Specific component\nastro dev logs --scheduler\nastro dev logs --webserver\n\n# Follow in real-time\nastro dev logs -f\n```\n\n---\n\n## Access Container Shell\n\n```bash\n# Bash into scheduler container\nastro dev bash\n\n# Run Airflow CLI commands\nastro dev run airflow info\nastro dev run airflow dags list\n```\n\n---\n\n## Troubleshooting\n\n| Issue | Solution |\n|-------|----------|\n| Port 8080 in use | Stop other containers or edit `.astro/config.yaml` |\n| Container won't start | `astro dev kill` then `astro dev start` |\n| Package install failed | Check `requirements.txt` syntax |\n| DAG not appearing | Run `astro dev parse` to check for import errors |\n| Out of disk space | `docker system prune` |\n\n### Reset Environment\n\nWhen things are broken:\n\n```bash\nastro dev kill\nastro dev start\n```\n\n---\n\n## Upgrade Airflow\n\n### Test compatibility first\n\n```bash\nastro dev upgrade-test\n```\n\n### Change version\n\n1. Edit `Dockerfile`:\n   ```dockerfile\n   FROM quay.io/astronomer/astro-runtime:13.0.0\n   ```\n\n2. Restart:\n   ```bash\n   astro dev kill && astro dev start\n   ```\n\n---\n\n## Related Skills\n\n- **astro-project-setup**: Initialize projects and configure dependencies\n- **dag-authoring**: Write DAGs (uses MCP tools, requires running Airflow)\n- **dag-testing**: Test DAGs (uses MCP tools, requires running Airflow)"
+    gold_removed: ''
+  - path: shared-skills/astro-project-setup/SKILL.md
+    tier: 1
+    gold_added: "---\nname: astro-project-setup\ndescription: Initialize and configure Astro/Airflow projects. Use when the user wants to create a new project, set up dependencies, configure connections/variables, or understand project structure. For running the local environment, see astro-local-env.\n---\n\n# Astro Project Setup\n\nThis skill helps you initialize and configure Airflow projects using the Astro CLI.\n\n> **To run the local environment**, see the **astro-local-env** skill.\n> **To write DAGs**, see the **dag-authoring** skill.\n\n---\n\n## Initialize a New Project\n\n```bash\nastro dev init\n```\n\nCreates this structure:\n```\nproject/\n├── dags/                # DAG files\n├── include/             # SQL, configs, supporting files\n├── plugins/             # Custom Airflow plugins\n├── tests/               # Unit tests\n├── Dockerfile           # Image customization\n├── packages.txt         # OS-level packages\n├── requirements.txt     # Python packages\n└── airflow_settings.yaml # Connections, variables, pools\n```\n\n---\n\n## Adding Dependencies\n\n### Python Packages (requirements.txt)\n\n```\napache-airflow-providers-snowflake==5.3.0\npandas==2.1.0\nrequests>=2.28.0\n```\n\n### OS Packages (packages.txt)\n\n```\ngcc\nlibpq-dev\n```\n\n### Custom Dockerfile\n\nFor complex setups (private PyPI, custom scripts):\n\n```dockerfile\nFROM quay.io/astronomer/astro-runtime:12.4.0\n\nRUN pip install --extra-index-url https://pypi.example.com/simple my-package\n```\n\n**After modifying dependencies:** Run `astro dev restart`\n\n---\n\n## Configuring Connections & Variables\n\n### airflow_settings.yaml\n\nLoaded automatically on environment start:\n\n```yaml\nairflow:\n  connections:\n    - conn_id: my_postgres\n      conn_type: postgres\n      host: host.docker.internal\n      port: 5432\n      login: user\n      password: pass\n      schema: mydb\n\n  variables:\n    - variable_name: env\n      variable_value: dev\n\n  pools:\n    - pool_name: limited_pool\n      pool_slot: 5\n```\n\n### Export/Import\n\n```bash\n# Export from running environment\nastro dev object export --connections --file connections.yaml\n\n# Import to environment\nastro dev object import --connections --file connections.yaml\n```\n\n---\n\n## Validate Before Running\n\nParse DAGs to catch errors without starting the full environment:\n\n```bash\nastro dev parse\n```\n\n---\n\n## Related Skills\n\n- **astro-local-env**: Start, stop, and troubleshoot the local environment\n- **dag-authoring**: Write and validate DAGs (uses MCP tools)\n- **dag-testing**: Test DAGs (uses MCP tools)"
+    gold_removed: ''

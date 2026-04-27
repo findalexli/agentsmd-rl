@@ -1,0 +1,89 @@
+version: "2.0"
+
+task:
+  name: agent-rules-skill-fix-add-exact-name-matching
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: netresearch/agent-rules-skill
+  pr: 5
+  base_commit: "1ef979b6e6469837e0296740258f986bc54a06fe"
+  merge_commit: "9837db2e39e33cc51af5632841d0031572bbc477"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/agents/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/agents/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/agents/SKILL.md."
+
+config_edits:
+  - path: skills/agents/SKILL.md
+    tier: 1
+    gold_added: '| Commands | `grep` Makefile targets **AND run them** |
+
+      | **File names** | **EXACT match required** (not just existence) |
+
+      | **Numeric values** | PHPStan level, coverage %, etc. from actual configs |
+
+
+      ### Critical: Exact Name Matching
+
+
+      File names in AGENTS.md must match actual filenames **exactly**:
+
+
+      | Documented | Actual | Status |
+
+      |------------|--------|--------|
+
+      | `CowriterAjaxController.php` | `AjaxController.php` | **WRONG** - name mismatch |
+
+      | `AjaxController.php` | `AjaxController.php` | Correct |
+
+
+      **Real-world example from t3x-cowriter review:**
+
+      - AGENTS.md documented `Controller/CowriterAjaxController.php`
+
+      - Actual file was `Controller/AjaxController.php`
+
+      - This mismatch confused agents trying to find the file
+
+
+      ### Critical: Command Verification
+
+
+      Commands documented in AGENTS.md must actually work when run:
+
+
+      ```bash
+
+      # BAD: Document without testing
+
+      make test-mutation  # May not exist!
+
+
+      # GOOD: Verify before documenting
+
+      make -n test-mutation 2>/dev/null && echo "EXISTS" || echo "MISSING"
+
+      ```
+
+
+      **Real-world example from t3x-cowriter review:**
+
+      - AGENTS.md documented `make test-mutation` and `make phpstan`
+
+      - Neither target existed (actual was `make typecheck`)
+
+      - Agents failed when trying to run documented commands'
+    gold_removed: ''

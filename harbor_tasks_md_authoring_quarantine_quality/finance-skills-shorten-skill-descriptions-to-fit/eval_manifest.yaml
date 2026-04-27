@@ -1,0 +1,48 @@
+version: "2.0"
+
+task:
+  name: finance-skills-shorten-skill-descriptions-to-fit
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: himself65/finance-skills
+  pr: 24
+  base_commit: "98fe823e39a10f30126732255984e593ed30d17e"
+  merge_commit: "6d327ac80d2a4ceea5b797c82e672e91a49b5cc5"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/funda-data/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/funda-data/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/funda-data/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/stock-correlation/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/stock-correlation/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/stock-correlation/SKILL.md."
+
+config_edits:
+  - path: skills/funda-data/SKILL.md
+    tier: 1
+    gold_added: "  Fetch financial data from the Funda AI API (https://api.funda.ai).\n  Covers quotes, historical prices, financials, SEC filings, earnings transcripts,\n  analyst estimates, options flow/greeks/GEX, supply chain graph, social sentiment,\n  prediction markets, congressional trades, economic indicators, ESG, and news.\n  Triggers: stock quotes, fundamentals, balance sheet, income statement, cash flow,\n  analyst targets, DCF, options chain/flow/unusual activity, GEX, IV rank, max pain,\n  earnings/dividend/IPO calendar, SEC filings (10-K/10-Q/8-K), transcripts,\n  supply chain (suppliers/customers/competitors), congressional trading,\n  insider trades, institutional holdings (13F), Reddit/Twitter sentiment,\n  Polymarket, treasury rates, GDP, CPI, FRED data, ESG scores,\n  commodity/forex/crypto prices, stock screener, sector performance,\n  ETF holdings, news, COT reports. Also triggers for \"funda\" or \"funda.ai\".\n  If only a ticker is provided and Funda API can answer, use this skill."
+    gold_removed: ''
+  - path: skills/stock-correlation/SKILL.md
+    tier: 1
+    gold_added: "  Use when the user asks about correlated stocks, related companies, sector peers,\n  trading pairs, or how two or more stocks move together.\n  Triggers: \"what correlates with NVDA\", \"find stocks related to AMD\",\n  \"stocks that move together\", \"beta to\", \"relative performance\",\n  \"supply chain partners\", \"correlation matrix\", \"co-movement\",\n  \"related tickers\", \"sympathy plays\", \"semiconductor peers\",\n  \"hedging pair\", \"realized correlation\", \"rolling correlation\",\n  or any request about stocks that move in tandem or inversely.\n  Also triggers for well-known pairs like AMD/NVDA, GOOGL/AVGO, LITE/COHR.\n  If only one ticker is provided, infer the user wants correlated peers."
+    gold_removed: ''

@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: ai-dev-kit-add-dashboard-catalog-and-schema
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: databricks-solutions/ai-dev-kit
+  pr: 40
+  base_commit: "05e2bd4cca7c90ca7e7a94e342525fe8f8a7ee98"
+  merge_commit: "c2f628b2fd229c736a2813f245015ea399463d19"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in databricks-skills/asset-bundles/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in databricks-skills/asset-bundles/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in databricks-skills/asset-bundles/SKILL.md."
+
+config_edits:
+  - path: databricks-skills/asset-bundles/SKILL.md
+    tier: 1
+    gold_added: "**Support for dataset_catalog and dataset_schema parameters added in Databricks CLI 0.281.0  (January 2026)**\n\n      dataset_catalog: ${var.catalog} # Default catalog used by all datasets in the dashboard if not otherwise specified in the query\n      dataset_schema: ${var.schema} # Default schema used by all datasets in the dashboard if not otherwise specified in the query\n| **Hardcoded catalog in dashboard** | Use dataset_catalog parameter (CLI v0.281.0+), create environment-specific files, or parameterize JSON |"
+    gold_removed: ''

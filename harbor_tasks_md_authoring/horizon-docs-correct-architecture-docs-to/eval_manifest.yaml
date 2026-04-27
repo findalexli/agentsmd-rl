@@ -1,0 +1,50 @@
+version: "2.0"
+
+task:
+  name: horizon-docs-correct-architecture-docs-to
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: peters/horizon
+  pr: 24
+  base_commit: "26b89cdee4c97011ee8c8d5bb5c1d94443ad380c"
+  merge_commit: "234e5d0f2ca81c16cf08b4fd834c38338079e322"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '**Stack:** Rust (edition 2024) · eframe/egui (wgpu backend) · alacritty_terminal (VT parsing, PTY, event loop)
+
+      - `terminal.rs` — alacritty_terminal wrapper (VT parsing, PTY spawn, event loop, resize)
+
+      - **Per-panel event loop thread:** alacritty_terminal `EventLoop` reads PTY output, parses VT sequences, and sends events via `mpsc::channel`
+
+      - **Input:** main thread writes to PTY via `EventLoopSender`
+
+      Shell → PTY slave → PTY master → [alacritty EventLoop thread] → Term (VT parse) → channel → main thread → egui
+
+      Keyboard → main thread → EventLoopSender → PTY master → PTY slave → Shell
+
+      1. `Board::create_panel()` opens a PTY via `alacritty_terminal::tty`, spawns `$SHELL`
+
+      2. alacritty `EventLoop` thread continuously reads PTY output and updates the `Term` grid
+
+      3. Each frame: drain event channel → render from `Term` state → egui
+
+      4. On resize: recalculate rows/cols → resize `Term` + PTY'
+    gold_removed: ''

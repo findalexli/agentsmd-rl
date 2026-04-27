@@ -1,0 +1,30 @@
+version: "2.0"
+
+task:
+  name: agents-fix-airflowadapter-skill-frontmatter
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: astronomer/agents
+  pr: 147
+  base_commit: "86ba502e69e2e094e088d73d9cb0da84abf9be77"
+  merge_commit: "07a9a17520adc9c0b4a75b9c4e54ef6b081359a6"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in astro-airflow-mcp/.claude/skills/airflow-adapter/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in astro-airflow-mcp/.claude/skills/airflow-adapter/SKILL.md."
+
+config_edits:
+  - path: astro-airflow-mcp/.claude/skills/airflow-adapter/SKILL.md
+    tier: 1
+    gold_added: 'name: airflow-adapter
+
+      description: Airflow adapter pattern for v2/v3 API compatibility. Use when working with adapters, version detection, or adding new API methods that need to work across Airflow 2.x and 3.x.'
+    gold_removed: ''

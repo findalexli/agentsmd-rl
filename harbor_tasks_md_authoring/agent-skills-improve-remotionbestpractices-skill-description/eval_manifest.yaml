@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: agent-skills-improve-remotionbestpractices-skill-description
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: jdrhyne/agent-skills
+  pr: 8
+  base_commit: "0676c56a8ab10074ada5e175a55764d657671df5"
+  merge_commit: "d60569194334f4c823a488acf44ec94cedc53338"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/remotion/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/remotion/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/remotion/SKILL.md."
+
+config_edits:
+  - path: skills/remotion/SKILL.md
+    tier: 1
+    gold_added: "description: >\n  Guides implementation of Remotion video compositions, animations, transitions,\n  audio/video embedding, captions, and rendering in React. Covers frame-based timing\n  with interpolate() and useCurrentFrame(), media trimming and looping, scene sequencing,\n  3D content, chart animations, text effects, and Tailwind integration.\n  Use when the user mentions Remotion, programmatic video, React video, video composition,\n  video rendering, frame animation, MP4 export, or works with .remotion files.\nUse this skill when working with Remotion code — creating compositions, animating scenes,\nembedding audio/video, adding captions, configuring rendering, or troubleshooting\nframe-based timing issues.\n\n## Quick start\n\nA minimal Remotion composition:\n\n```tsx\nimport { useCurrentFrame, useVideoConfig, interpolate, Composition } from \"remotion\";\n\nconst MyVideo: React.FC = () => {\n  const frame = useCurrentFrame();\n  const { fps } = useVideoConfig();\n  const opacity = interpolate(frame, [0, fps], [0, 1], { extrapolateRight: \"clamp\" });\n  return <div style={{ opacity }}>Hello Remotion</div>;\n};\n\nexport const RemotionRoot: React.FC = () => (\n  <Composition id=\"MyVideo\" component={MyVideo} width={1920} height={1080} fps={30} durationInFrames={90} />\n);\n```\n\n**Critical rules**: Always use `useCurrentFrame()` for animations. Never use CSS transitions or Tailwind animation classes — they will not render."
+    gold_removed: ''

@@ -1,0 +1,64 @@
+version: "2.0"
+
+task:
+  name: claude-code-marketing-skills-featuresolo-tier-launch
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: cognyai/claude-code-marketing-skills
+  pr: 1
+  base_commit: "f8fbb6e08eb1f5166bfb935d1bd7f5db41890946"
+  merge_commit: "01f2101d8dee8194ddf3e9fcdac5f33489aa51df"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/cogny/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/cogny/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/cogny/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/linkedin-ads-audit/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/linkedin-ads-audit/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/linkedin-ads-audit/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/seo-audit/SKILL.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/seo-audit/SKILL.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/seo-audit/SKILL.md."
+
+config_edits:
+  - path: skills/cogny/SKILL.md
+    tier: 1
+    gold_added: "  # Built-in Cogny tools (task queue, heartbeat, findings)\n  - mcp__cogny__update_finding\n  - mcp__cogny__delete_finding\n  - mcp__cogny__delete_findings\n  # Context tree (organizational knowledge)\n  - mcp__cogny__browse_context_tree\n  - mcp__cogny__read_context_node\n  - mcp__cogny__search_context\n  - mcp__cogny__write_context_node\n  - mcp__cogny__archive_context_node\n  - mcp__cogny__get_context_tree_overview\n  # Platform tools — Search Console + LinkedIn Ads (launch MCPs)\n  - mcp__cogny__linkedin_ads__*\n  # Platform tools — Google Ads + Meta Ads (coming soon)\n  - mcp__cogny__google_ads__*\n  - mcp__cogny__meta_ads__*\n## Finding Management\n\nFindings are your primary output — they track actionable opportunities in the dashboard.\n\n### Creating findings\n\n### Compacting findings\n\nThe workspace has a limit of 100 findings. When approaching the limit:\n\n1. Use `list_findings` with `status: [\"done\", \"dismissed\"]` to find resolved items\n2. Use `delete_findings` to bulk-remove old resolved findings\n3. Use `update_finding` to merge duplicate findings into one (update the body to combine details, then delete the duplicates)\n\n### Recording to context tree\n\nWhen you discover important, reusable insights about the business (not one-off findings), save them to the context tree:\n\n- `write_context_node` with path like `insights/seo/top-keywords` or `insights/linkedin/audience-profile`\n- This persists knowledge across sessions and helps future analyses\n- The context tree has a limit of 50 nodes — use `archive_context_node` to clean up stale entries"
+    gold_removed: ''
+  - path: skills/linkedin-ads-audit/SKILL.md
+    tier: 1
+    gold_added: "---\nname: linkedin-ads-audit\ndescription: Full LinkedIn Ads account audit — campaign structure, targeting, creative performance, spend efficiency\nversion: \"1.0.0\"\nauthor: Cogny AI\nplatforms: [linkedin-ads]\nuser-invocable: true\nargument-hint: \"\"\nallowed-tools:\n  - mcp__cogny__linkedin_ads__*\n  - mcp__cogny__create_finding\n  - mcp__cogny__list_findings\n  - mcp__cogny__update_finding\n  - WebFetch\n  - Bash\n  - Read\n  - Write\n---\n\n# LinkedIn Ads Audit\n\nPerform a comprehensive LinkedIn Ads account audit using live data from the connected LinkedIn Ads MCP.\n\n## Usage\n\n`/linkedin-ads-audit` — audit the connected LinkedIn Ads account\n\n## Benchmarks\n\nUse these LinkedIn Ads benchmarks for scoring:\n\n| Metric | Poor | Average | Good |\n|--------|------|---------|------|\n| CTR | <0.3% | 0.4-0.6% | >0.8% |\n| CPC | >$10 | $5-8 | <$4 |\n| CPM | >$40 | $25-35 | <$20 |\n| Conversion Rate | <1% | 2-4% | >5% |\n| Engagement Rate | <0.3% | 0.5-1% | >1.5% |\n\n## Steps\n\n### 1. List accessible ad accounts\n\nQuery available ad accounts. If multiple exist, note which is active.\n\n### 2. Campaign overview\n\nGet all campaigns (active + recently paused). For each:\n- Status, objective, budget type (daily/lifetime)\n- Date range and total spend\n- Key metrics: impressions, clicks, CTR, CPC, conversions\n\nFlag:\n- Campaigns spending >30% of budget with CTR below 0.3%\n- Paused campaigns that were performing well (CTR >0.6%)\n- Campaigns running >90 days without optimization\n\n### 3. Spend efficiency analysis\n\nAcross all active campaigns:\n- Total monthly spend vs results\n- CPC trend (last 30 vs previous 30 days)\n- Cost per conversion by campaign\n- Budget utilization (actual spend vs allocated)\n\nFlag:\n- Campaigns with CPC >$10 (above LinkedIn average)\n- Budget underspend (<70% utilization) or overspend\n- Rising CPC trends (>20% increase MoM)\n\n### 4. Targeting review\n\nFor each active campaign, analyze:\n- Audience size (too narrow <10K or too broad >1M)\n- Job title/function targeting specificity\n- Industry and company size filters\n- Geographic targeting\n- Audience expansion settings\n\nFlag:\n- Overlapping audiences between campaigns\n- Overly broad targeting (no job title/function filters)\n- Missing exclusions (existing customers, competitors)\n\n### 5. Creative performance\n\nAnalyze ad creatives across campaigns:\n- Format breakdown (single image, carousel, video, text)\n- Per-creative CTR and engagement rate\n- Ad copy length and CTA effectiveness\n- Creative age (days since launch)\n\nFlag:\n- Creatives running >60 days (fatigue risk)\n- Single-format campaigns (no A/B testing)\n- Low-performing creatives (CTR <0.2%) still active\n- Missing formats (no video if budget >$5K/mo)\n\n### 6. Conversion tracking\n\nCheck:\n- Insight Tag installation status\n- Conversion event definitions\n- Attribution window settings\n- Lead gen form completion rates (if using lead gen)\n\nFlag:\n- Missing or misconfigured conversion tracking\n- Low form completion rates (<10%)\n- No offline conversion import\n\n### 7. Budget pacing\n\nFor each campaign:\n- Daily/monthly spend rate vs target\n- Projected end-of-month spend\n- Day-of-week performance patterns\n\nFlag:\n- Campaigns pacing >20% over or under budget\n- Weekend spend on B2B campaigns (usually wasteful)\n\n### 8. Report findings\n\nPresent as a scored audit:\n\n```\nLinkedIn Ads Audit\nScore: X/100\n\nCampaign Structure: X/20\n- [PASS/FAIL] Campaign organization\n- [PASS/FAIL] Objective alignment\n- [PASS/FAIL] Budget allocation\n\nTargeting: X/20\n- [PASS/FAIL] Audience specificity\n- [PASS/FAIL] Audience overlap\n- [PASS/FAIL] Exclusions\n\nCreative: X/20\n- [PASS/FAIL] Format diversity\n- [PASS/FAIL] Creative freshness\n- [PASS/FAIL] A/B testing\n\nPerformance: X/20\n- [PASS/FAIL] CPC vs benchmark\n- [PASS/FAIL] CTR vs benchmark\n- [PASS/FAIL] Conversion rate\n\nTracking & Budget: X/20\n- [PASS/FAIL] Conversion tracking\n- [PASS/FAIL] Budget pacing\n- [PASS/FAIL] Attribution setup\n\nTop 3 Actions:\n1. [Highest impact fix]\n2. [Second highest]\n3. [Third highest]\n```\n\n### 9. Record findings\n\nFor EVERY actionable issue found, call `mcp__cogny__create_finding`:\n\n```json\n{\n  \"title\": \"High CPC on 'Decision Makers' campaign ($12.40 vs $5-8 benchmark)\",\n  \"body\": \"Campaign targeting C-suite titles with single image ads. CPC is 55% above LinkedIn average. Recommend: 1) Test carousel format 2) Narrow to VP+ titles only 3) Add company size >500 filter\",\n  \"action_type\": \"campaign_optimization\",\n  \"expected_outcome\": \"Reduce CPC to <$8 within 2 weeks\",\n  \"estimated_impact_usd\": 800,\n  \"priority\": \"high\"\n}\n```\n\nAction types for LinkedIn Ads:\n- `campaign_optimization` — budget, bidding, pacing changes\n- `targeting_refinement` — audience, exclusion, geo changes\n- `creative_refresh` — new ads, format tests, copy updates\n- `conversion_tracking` — pixel, events, attribution fixes\n- `audience_management` — overlap, expansion, exclusion updates"
+    gold_removed: ''
+  - path: skills/seo-audit/SKILL.md
+    tier: 1
+    gold_added: "## Recording Findings\n\nIf the Cogny MCP is connected (`mcp__cogny__create_finding` available), record each actionable finding:\n\n```json\n{\n  \"title\": \"Missing meta descriptions on 12 pages\",\n  \"body\": \"Pages /pricing, /features, /blog/... lack meta descriptions. Average CTR for pages without descriptions is 30% lower.\",\n  \"action_type\": \"seo_optimization\",\n  \"expected_outcome\": \"Improve CTR by 15-30% on affected pages\",\n  \"priority\": \"high\"\n}\n```\n\n## Deeper Analysis\nWant live Search Console data (actual queries, rankings, click-through rates, indexing status)?\nConnect Search Console via Cogny ($9/mo): https://cogny.com/pricing"
+    gold_removed: ''

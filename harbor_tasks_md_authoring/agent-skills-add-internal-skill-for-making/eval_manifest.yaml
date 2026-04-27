@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: agent-skills-add-internal-skill-for-making
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: fluxcd/agent-skills
+  pr: 6
+  base_commit: "6d7128c5425f66e12856b0047407db8ebfcc9c42"
+  merge_commit: "482ac44b10c8806bd6d9d5a682d0f7300f2fa9ad"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in internal/skills/flux-controller-patch-releases/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in internal/skills/flux-controller-patch-releases/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in internal/skills/flux-controller-patch-releases/SKILL.md."
+
+config_edits:
+  - path: internal/skills/flux-controller-patch-releases/SKILL.md
+    tier: 1
+    gold_added: "---\nname: flux-controller-patch-releases\ndescription: >\n  Run the upstream Flux controller patch release procedure for helm-controller,\n  image-automation-controller, image-reflector-controller, kustomize-controller,\n  notification-controller, source-controller, and source-watcher. Use when\n  preparing a new controller patch release from a release series branch,\n  drafting changelog entries, tagging releases, and opening the follow-up\n  changelog PRs back to main.\n---\n\n# Flux Controller Patch Releases\n\nUse this skill for upstream Flux controller patch releases only. Do not use it\nfor `flux2`, `pkg`, or other non-controller repos.\n\nSupported controllers:\n- `helm-controller`\n- `image-automation-controller`\n- `image-reflector-controller`\n- `kustomize-controller`\n- `notification-controller`\n- `source-controller`\n- `source-watcher`\n\n## Preconditions\n\n- Read the upstream procedure at `website/content/en/flux/releases/procedure.md`,\n  section `Controllers: patch releases`.\n- Treat `git` and `gh` commands as confirmation points if the user wants that.\n- Use `date` to get the release date for changelog entries.\n- Fetch before reasoning about release branches or merged PRs. Do not trust stale\n  local `origin/*` refs.\n\n## Release Flow\n\nFor each controller:\n\n1. Refresh local state.\n   - `git fetch --all --tags --prune`\n   - `git switch release/vX.Y.x`\n   - `git pull origin release/vX.Y.x`\n\n2. Create the release preparation branch exactly from the release series branch.\n   - `git switch -c release-vX.Y.Z release/vX.Y.x`\n\n3. Draft the new `CHANGELOG.md` entry.\n   - Use the existing changelog structure in that repo.\n   - Use the current date from `date`.\n   - Build the entry from the commits merged into the release series branch since\n     the previous tag.\n   - Prefer PR titles over commit subjects for bullets.\n   - Check the PRs that introduced the changes; do not infer titles from local\n     commit messages.\n   - In the intro paragraph, summarize the concrete bug fixes shipped in the\n     patch release.\n\n4. Commit the changelog entry.\n   - `git add CHANGELOG.md`\n   - `git commit -s -m \"Add changelog entry for vX.Y.Z\"`\n\n5. Apply the release version bump exactly as documented.\n   - Update the controller self-API version in the root `go.mod`.\n   - Update `config/manager/kustomization.yaml` `newTag` to `vX.Y.Z`.\n   - Commit with:\n     - `git add go.mod config/manager/kustomization.yaml`\n     - `git commit -s -m \"Release vX.Y.Z\"`\n\n6. Push the release preparation branch.\n   - `git push origin release-vX.Y.Z`\n\n7. Open and merge the release PR into the release series branch.\n   - Base: `release/vX.Y.x`\n   - Head: `release-vX.Y.Z`\n\n8. Refresh the release series branch after merge.\n   - `git switch release/vX.Y.x`\n   - `git pull origin release/vX.Y.x`\n\n9. Create signed tags from the updated release series branch.\n   - `git tag -s -m \"api/vX.Y.Z\" api/vX.Y.Z`\n   - `git push origin api/vX.Y.Z`\n   - `git tag -s -m \"vX.Y.Z\" vX.Y.Z`\n   - `git push origin vX.Y.Z`\n\n10. Confirm the non-`api/` tag triggered the release workflow.\n\n11. Cherry-pick only the changelog commit back to `main`.\n   - `git switch main`\n   - `git pull origin main`\n   - `git switch -c pick-changelog-vX.Y.Z main`\n   - `git cherry-pick -x <Add changelog entry commit>`\n   - `git push origin pick-changelog-vX.Y.Z`\n   - Open PR from `pick-changelog-vX.Y.Z` to `main`\n\n## How To Build The Changelog Entry\n\nFor a patch release, gather:\n- the latest release tag on the release line\n- the merged commits on `origin/release/vX.Y.x` since that tag\n- the PRs corresponding to those merges\n\nWrite the new section at the top of `CHANGELOG.md`:\n- `## X.Y.Z`\n- `**Release date:** YYYY-MM-DD`\n- short intro paragraph describing the actual bug fixes in user-facing language\n- `Fixes:` when there are bug-fix items\n- `Improvements:` for dependency updates, docs, feature gates, or cleanup\n\nRules:\n- Use PR titles, not raw commit messages\n- Group multiple dependency bump PRs naturally when the repo history already does that\n- Verify the title against GitHub when the local merge commit is vague\n\n## Critical Checks\n\n- Always fetch before comparing `tag..origin/release/...`.\n- Always pull the release series branch before creating `release-vX.Y.Z`.\n- Always pull the release series branch again after merging the release PR and\n  before tagging.\n- Always inspect the actual root `go.mod`; do not assume the self-API path form.\n  `source-watcher` uses `github.com/fluxcd/source-watcher/api/v2`, so it still\n  needs the same self-API release bump pattern.\n- Do not silently special-case a controller. If the documented step seems not to\n  apply, inspect the file and confirm before proceeding.\n- Tag from the release series branch merge commit, not from the release prep branch.\n- Cherry-pick only the changelog commit back to `main`, not the release version bump.\n\n## Useful Local Queries\n\n- Release branches:\n  - `git branch -r --list 'origin/release/v*.x' | sort -V`\n- Latest tags:\n  - `git tag -l 'v*' | sort -V | tail`\n- Commits since previous release on the release branch:\n  - `git log --oneline <prev-tag>..origin/release/vX.Y.x`\n- PR metadata for changelog bullets:\n  - `gh pr view <number> -R fluxcd/<repo> --json number,title,url,baseRefName`"
+    gold_removed: ''

@@ -1,0 +1,45 @@
+version: "2.0"
+
+task:
+  name: loop-update-agentsmd-with-test-command
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: axeldelafosse/loop
+  pr: 27
+  base_commit: "6cf705a2d2619fde08b9bf9002966a9c6645e137"
+  merge_commit: "bc231576b8200e0a60380ceee2273dcd45ca24f5"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '- Run tests: `bun test`
+
+      # Repo Workflows
+
+
+      - Plain-text prompts auto-create `PLAN.md` first, then optionally run `--review-plan`; if you are changing planning behavior, keep that flow aligned.
+
+      - Running `loop` with no args opens the live panel for active sessions; keep panel-only changes separate from task-running changes when possible.
+
+      - `--tmux` and `--worktree` are first-class execution modes; preserve them when changing CLI parsing or startup flow.
+
+      - `loop update` / `loop upgrade` are supported manual update commands for installed binaries; source runs should continue to rely on `git pull`.
+
+      '
+    gold_removed: ''

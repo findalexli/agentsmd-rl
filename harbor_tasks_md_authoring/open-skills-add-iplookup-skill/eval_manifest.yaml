@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: open-skills-add-iplookup-skill
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: besoeasy/open-skills
+  pr: 9
+  base_commit: "40635dbb2214a3ddf8752f9176660b5b17f8c856"
+  merge_commit: "7371f7b3d43acbdf58fbbb2b1624986b34822079"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/ip-lookup/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/ip-lookup/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/ip-lookup/SKILL.md."
+
+config_edits:
+  - path: skills/ip-lookup/SKILL.md
+    tier: 1
+    gold_added: "---\nname: ip-lookup\ndescription: Check an IP address across multiple public geolocation and reputation sources and return a best-matched location summary.\n---\n\n# IP Lookup Skill\n\nPurpose\n- Query multiple public IP information providers and aggregate results to produce a concise, best-match location and metadata summary for an IP address.\n\nWhat it does\n- Queries at least four public sources (e.g. ipinfo.io, ip-api.com, ipstack, geoip-db, db-ip, ipgeolocation.io) or their free endpoints.\n- Normalises returned data (country, region, city, lat/lon, org/ASN) and computes a simple match score.\n- Returns a compact summary with the best-matched source and a short table of the other sources.\n\nNotes\n- Public APIs may have rate limits or require API keys for high volume; the skill falls back to free endpoints when possible.\n- Geolocation is approximate; ISP/gateway locations may differ from end-user locations.\n\nBash example (uses curl + jq):\n\n```bash\n# Basic usage: IP passed as first arg\nIP=${1:-8.8.8.8}\n\n# Query 4 sources\nA=$(curl -s \"https://ipinfo.io/${IP}/json\")\nB=$(curl -s \"http://ip-api.com/json/${IP}?fields=status,country,regionName,city,lat,lon,org,query\")\nC=$(curl -s \"https://geolocation-db.com/json/${IP}&position=true\")\nD=$(curl -s \"https://api.db-ip.com/v2/free/${IP}\" )\n\n# Output best-match heuristics should be implemented in script\necho \"One-line summary:\"\njq -n '{ip:env.IP,sourceA:A,sourceB:B,sourceC:C,sourceD:D}' --argjson A \"$A\" --argjson B \"$B\" --argjson C \"$C\" --argjson D \"$D\"\n```\n\nNode.js example (recommended):\n\n```javascript\n// ip_lookup.js\nasync function fetchJson(url, timeout = 8000){\n  const controller = new AbortController();\n  const id = setTimeout(()=>controller.abort(), timeout);\n  try { const res = await fetch(url, {signal: controller.signal}); clearTimeout(id); if(!res.ok) throw new Error(res.statusText); return await res.json(); } catch(e){ clearTimeout(id); throw e; }\n}\n\nasync function ipLookup(ip){\n  const sources = {\n    ipinfo: `https://ipinfo.io/${ip}/json`,\n    ipapi: `http://ip-api.com/json/${ip}?fields=status,country,regionName,city,lat,lon,org,query`,\n    geodb: `https://geolocation-db.com/json/${ip}&position=true`,\n    dbip: `https://api.db-ip.com/v2/free/${ip}`\n  };\n\n  const results = {};\n  for(const [k,u] of Object.entries(sources)){\n    try{ results[k] = await fetchJson(u); } catch(e){ results[k] = {error: e.message}; }\n  }\n\n  // Normalise and pick best match (simple majority on country+city)\n  const votes = {};\n  for(const r of Object.values(results)){\n    if(!r || r.error) continue;\n    const country = r.country || r.country_name || r.countryCode || null;\n    const city = r.city || r.city_name || null;\n    const key = `${country||'?'}/${city||'?'}`;\n    votes[key] = (votes[key]||0)+1;\n  }\n  const best = Object.entries(votes).sort((a,b)=>b[1]-a[1])[0];\n  return {best: best?best[0]:null,score: best?best[1]:0,results};\n}\n\n// Usage: node ip_lookup.js 8.8.8.8\n```\n\nAgent prompt\n------------\n\n\"Use the ip-lookup skill to query at least four public IP information providers for {ip}. Return a short JSON summary: best_match (country/city), score, and per-source details (country, region, city, lat, lon, org). Respect rate limits and fall back to alternate endpoints on errors.\"\n\n\"When creating a new skill, follow SKILL_TEMPLATE.md format and include Node.js and Bash examples.\" "
+    gold_removed: ''

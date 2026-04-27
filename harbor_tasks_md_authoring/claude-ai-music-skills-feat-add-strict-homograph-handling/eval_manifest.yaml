@@ -1,0 +1,112 @@
+version: "2.0"
+
+task:
+  name: claude-ai-music-skills-feat-add-strict-homograph-handling
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: bitwize-music-studio/claude-ai-music-skills
+  pr: 14
+  base_commit: "476e8e8cba172d0c61a4099efbcee69d722dfc1b"
+  merge_commit: "90f130820d82a86f2a0b55a5d05442451fd55ed2"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/lyric-writer/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/lyric-writer/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/lyric-writer/SKILL.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '**Homograph handling — hard rule**: Suno CANNOT infer pronunciation from context. "Context is clear" is NEVER an acceptable resolution. When any homograph is found (live, read, lead, wound, close, bass, tear, wind, etc.):
+
+      1. **ASK** the user which pronunciation is intended — do NOT assume or guess
+
+      2. **Fix** with phonetic spelling in Suno lyrics only (streaming lyrics keep standard spelling)
+
+      3. **Document** in track pronunciation table
+
+
+      See `/skills/lyric-writer/SKILL.md` for full homograph table and process.
+
+      '
+    gold_removed: ''
+  - path: skills/lyric-writer/SKILL.md
+    tier: 1
+    gold_added: '### Homograph Handling (Suno Pronunciation)
+
+
+      Suno CANNOT infer pronunciation from context. **"Context is clear" is NEVER an acceptable resolution for a homograph.**
+
+
+      **Process:**
+
+      1. **Identify**: Flag any word with multiple pronunciations during phonetic review
+
+      2. **ASK**: Ask the user which pronunciation is intended — do NOT assume
+
+      3. **Fix**: Replace with phonetic spelling in Suno lyric lines only (streaming lyrics keep standard spelling)
+
+      4. **Document**: Add to track pronunciation table with reason
+
+
+      **Common homographs — ALWAYS ask, NEVER guess:**
+
+
+      | Word | Pronunciation A | Phonetic | Pronunciation B | Phonetic |
+
+      |------|----------------|----------|-----------------|----------|
+
+      | live | real-time/broadcast | lyve | reside/exist | live |
+
+      | read | present tense | reed | past tense | red |
+
+      | lead | to guide | leed | metal | led |
+
+      | wound | injury | woond | past of wind | wownd |
+
+      | close | to shut | kloze | nearby | klohs |
+
+      | bass | low sound | bayss | the fish | bas |
+
+      | tear | from crying | teer | to rip | tare |
+
+      | wind | air movement | wihnd | to turn | wynd |
+
+
+      **Rules:**
+
+      - NEVER mark a homograph as "context clear" in the phonetic checklist
+
+      - ALWAYS ask the user when a homograph is encountered — do not guess
+
+      - Only apply phonetic spelling to Suno lyrics — streaming/distributor lyrics use standard English
+
+      - When in doubt, it''s a homograph. Ask.
+
+      - Full homograph reference: `/reference/suno/pronunciation-guide.md`
+
+      '
+    gold_removed: ''

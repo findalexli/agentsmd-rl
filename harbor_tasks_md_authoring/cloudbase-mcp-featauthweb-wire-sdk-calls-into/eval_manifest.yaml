@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: cloudbase-mcp-featauthweb-wire-sdk-calls-into
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: TencentCloudBase/CloudBase-MCP
+  pr: 412
+  base_commit: "6110b5a307c320918f1cddfe64825887d040ee0e"
+  merge_commit: "414ac1b92ce0791bf9ede280127abb44d8370cd6"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in config/source/skills/auth-web/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in config/source/skills/auth-web/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in config/source/skills/auth-web/SKILL.md."
+
+config_edits:
+  - path: config/source/skills/auth-web/SKILL.md
+    tier: 1
+    gold_added: "- Creating a detached helper file with `auth.signUp` / `verifyOtp` but never wiring it into the existing form handlers, so the actual button clicks still do nothing.\nWhen the project already has `handleSendCode` / `handleRegister` or similar UI handlers, wire the SDK calls there directly instead of leaving them commented out in `App.tsx`.\n\n```tsx\nconst handleSendCode = async () => {\n  const { data, error } = await auth.signUp({\n    email,\n    name: username || email.split('@')[0],\n  })\n  if (error) throw error\n  setSignUpData(data)\n}\n\nconst handleRegister = async () => {\n  if (!signUpData?.verifyOtp) throw new Error('Please send the code first')\n  const { error } = await signUpData.verifyOtp({\n    email,\n    token: code,\n    type: 'signup',\n  })\n  if (error) throw error\n}\n```\n"
+    gold_removed: ''

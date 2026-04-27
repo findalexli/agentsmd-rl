@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: skill-codex-add-critical-evaluation-guidelines-for
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: skills-directory/skill-codex
+  pr: 5
+  base_commit: "edb9305235ee58eed75caf6e22dbedad08a121bf"
+  merge_commit: "02ec193873d650ddd7bccf914dee4b641073f444"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+
+config_edits:
+  - path: SKILL.md
+    tier: 1
+    gold_added: "## Critical Evaluation of Codex Output\n\nCodex is powered by OpenAI models with their own knowledge cutoffs and limitations. Treat Codex as a **colleague, not an authority**.\n\n### Guidelines\n- **Trust your own knowledge** when confident. If Codex claims something you know is incorrect (e.g., \"Claude Opus 4.5 doesn't exist\"), push back directly.\n- **Research disagreements** using WebSearch or documentation before accepting Codex's claims. Share findings with Codex via resume if needed.\n- **Remember knowledge cutoffs** - Codex may not know about recent releases, APIs, or changes that occurred after its training data.\n- **Don't defer blindly** - Codex can be wrong. Evaluate its suggestions critically, especially regarding:\n  - Model names and capabilities\n  - Recent library versions or API changes\n  - Best practices that may have evolved\n\n### When Codex is Wrong\n1. State your disagreement clearly to the user\n2. Provide evidence (your own knowledge, web search, docs)\n3. Optionally resume the Codex session to discuss the disagreement. **Identify yourself as Claude** so Codex knows it's a peer AI discussion:\n   ```bash\n   echo \"This is Claude (Opus 4.5) following up. I disagree with [X] because [evidence]. What's your take on this?\" | codex exec --skip-git-repo-check resume --last 2>/dev/null\n   ```\n4. Frame disagreements as discussions, not corrections - either AI could be wrong\n5. Let the user decide how to proceed if there's genuine ambiguity\n"
+    gold_removed: ''

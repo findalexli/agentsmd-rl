@@ -1,0 +1,59 @@
+version: "2.0"
+
+task:
+  name: openclaw-codex-app-server-plugin-add-project-manager-skill
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: pwrdrvr/openclaw-codex-app-server
+  pr: 23
+  base_commit: "4589fc8502176ffdc7679274dbfed0b9b894dc8e"
+  merge_commit: "ea1c417f37633191ecff2785489eb9f433fca291"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/project-manager/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/project-manager/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/project-manager/SKILL.md."
+
+config_edits:
+  - path: .agents/skills/project-manager/SKILL.md
+    tier: 1
+    gold_added: '- Canonical repo: `pwrdrvr/openclaw-codex-app-server`
+
+      - For issues, set `Status`, `Priority`, `Size`, and `Workflow`.
+
+      - For PRs, usually set `Status` and `Workflow`; `Priority` and `Size` are issue-planning fields unless there is a specific reason to set them on the PR item.
+
+      - Treat the tracker as derived state, not a hand-edited source of truth.
+
+      - Regenerate it with `pnpm project:sync` after issue/project changes.
+
+      gh repo view --json nameWithOwner,url
+
+      gh project view 7 --owner pwrdrvr --format json
+
+      ## Gotchas
+
+
+      - Verify the repo slug before issue commands. The canonical repo is `pwrdrvr/openclaw-codex-app-server`; older shorthand like `pwrdrvr/openclaw-app-server` is wrong and will make `gh issue ...` fail.
+
+      - `gh project item-edit` needs opaque ids for the project, item, field, and single-select option. Always discover them with `gh project view ...` and `gh project field-list ...` instead of assuming cached ids still match.
+
+      - GitHub Projects custom views are not well-supported by `gh` or GraphQL mutations. Reading views works, but creating/editing/copying views is still better done in the web UI or browser automation. `gh project copy` does not carry over custom views.
+
+      - `.local/work-items.yaml` is currently issue-only. Add PRs to project `7`, but do not expect `pnpm project:sync` to mirror PR items into the local tracker.
+
+      - `.local/issue-drafts/<nn>-<slug>.md` filenames are local scratch ids, not GitHub issue numbers. Keep them stable enough to reuse, but do not try to force them to match the eventual GitHub issue number.
+
+      '
+    gold_removed: ''

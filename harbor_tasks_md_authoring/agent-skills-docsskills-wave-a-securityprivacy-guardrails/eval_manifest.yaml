@@ -1,0 +1,88 @@
+version: "2.0"
+
+task:
+  name: agent-skills-docsskills-wave-a-securityprivacy-guardrails
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: jdrhyne/agent-skills
+  pr: 16
+  base_commit: "32d41327ee81310ebb01d4063d8c23eaa35df286"
+  merge_commit: "e62920ba8e21832f59d6753408fa6ee4421d0e8d"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in prompts/munger-observer/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in prompts/munger-observer/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in prompts/munger-observer/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/context-recovery/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/context-recovery/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/context-recovery/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/google-ads/SKILL.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/google-ads/SKILL.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/google-ads/SKILL.md."
+
+config_edits:
+  - path: prompts/munger-observer/SKILL.md
+    tier: 1
+    gold_added: '
+
+      ## Privacy Addendum
+
+
+      - Analyze only the minimum required memory/session span for the requested review.
+
+      - Exclude credentials, financial account numbers, health data, and private identifiers from outputs.
+
+      - Do not copy or forward personal excerpts outside the current workspace/session without explicit user instruction.
+
+      '
+    gold_removed: ''
+  - path: skills/context-recovery/SKILL.md
+    tier: 1
+    gold_added: "\n## Privacy Guardrails (Required)\n\n- Default to minimum retrieval scope:\n  - last 24h or last 50 messages (whichever is smaller), unless user asks for more.\n- In DMs/private channels, require explicit user confirmation before broad history scans.\n- Do not persist recovered summaries to memory files without explicit approval.\n- Never include secrets/tokens in recovered summaries; replace with `[REDACTED]`.\n"
+    gold_removed: ''
+  - path: skills/google-ads/SKILL.md
+    tier: 1
+    gold_added: '
+
+      ## Security & Change-Control Addendum
+
+
+      - Default mode is read-only audit/reporting.
+
+      - Any mutating action (pause/enable/edit bids/budgets) requires explicit confirmation listing impacted entities first.
+
+      - Browser mode must be user-attended for account-affecting actions.
+
+      - Protect `~/.google-ads.yaml` permissions and never echo tokens/secrets in terminal output.
+
+      '
+    gold_removed: ''

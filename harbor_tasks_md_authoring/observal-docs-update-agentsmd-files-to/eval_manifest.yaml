@@ -1,0 +1,270 @@
+version: "2.0"
+
+task:
+  name: observal-docs-update-agentsmd-files-to
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: BlazeUp-AI/Observal
+  pr: 505
+  base_commit: "d521f43a0b8724b41182fcdc8e9a770365730208"
+  merge_commit: "1180ed0e97b3d678161ed74504057f901d67fc7b"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in ee/AGENTS.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in ee/AGENTS.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in ee/AGENTS.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in web/AGENTS.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in web/AGENTS.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in web/AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: 'The platform generates portable agent configs for 8 IDEs: Claude Code, Cursor, Gemini CLI, Kiro, VS Code, Codex CLI, GitHub Copilot, and OpenCode. The agent builder (`services/agent_builder.py`) and agent resolver (`services/agent_resolver.py`) compose and validate component bundles into IDE-specific output formats.
+
+
+      The web frontend is a Next.js 16 / React 19 app in `web/`. It uses four route groups: `(auth)` for login, `(registry)` for the public-facing agent browser, component library, and agent builder, `(admin)` for the admin dashboard, eval, review, alerts, user management, and settings, and `(user)` for user-scoped trace views. The frontend has a custom OKLCH design system with 5 themes (light, dark, midnight, forest, sunset), three typefaces (Archivo for display, Albert Sans for body, JetBrains Mono for code), and a 4pt spacing scale. It uses shadcn/ui components, Recharts for charts, TanStack Query for data fetching, and TanStack Table for sortable/filterable tables. Shared API response types live in `web/src/lib/types.ts`. The GraphQL API at `/api/v1/graphql` is the read layer for telemetry data; REST endpoints serve everything else.
+
+      ├── uninstall                # tear down Docker stack, remove repo and config
+
+      │   ├── canaries, canary-add, canary-reports, canary-delete
+
+      ├── migrate                  # ClickHouse telemetry migration tools
+
+      # Docker stack (11 services: init, api, db, clickhouse, redis, worker, web, lb, otel-collector, prometheus, grafana)
+
+      # Tests (1429 tests across 52 files, run from observal-server/)
+
+      - `api/routes/bulk.py` : Bulk agent creation from scan results
+
+      - `api/routes/jwks.py` : JWKS discovery endpoint for JWT public key distribution
+
+      - `api/routes/otlp.py` : OTLP HTTP receiver; accepts standard `/v1/traces`, `/v1/logs`, `/v1/metrics` and converts to ClickHouse format
+
+      - `api/routes/otel_dashboard.py` : OpenTelemetry-native dashboard queries
+
+      - `api/routes/component_source.py` : Component source CRUD and sync endpoints for git mirror origins
+
+      - `api/routes/config.py` : Server endpoint discovery and public config (eliminates hardcoded URLs)
+
+      - `alert_history.py` : AlertHistory (fired alert records with resolved timestamps)
+
+      - `component_bundle.py` : ComponentBundle, bundled component snapshots for portable sharing
+
+      - `password_reset_token.py` : PasswordResetToken, time-limited reset tokens
+
+      - `sanitization.py` : Sanitization rules for telemetry data scrubbing
+
+      - `scoring.py` : Scoring models for eval dimension weights and composite grades
+
+      - `agent_builder.py` : Composes resolved components into portable agent manifests for 8 IDEs
+
+      - `agent_resolver.py` : Looks up and validates all components for an agent; produces ResolvedAgent
+
+      - `hook_materializer.py` : Materializes hook definitions into runnable IDE configs
+
+      - `codex_config_generator.py` : Generates Codex CLI-specific agent and MCP configs
+
+      - `alert_evaluator.py` : Periodic metric threshold checks against ClickHouse; fires webhooks on breach
+
+      - `cache.py` : Caching layer for frequently accessed registry data
+
+      - `crypto.py` : Cryptographic utilities (payload encryption, key derivation)
+
+      - `demo_accounts.py` : Demo/seed account provisioning
+
+      - `download_tracker.py` : Tracks agent and component download metrics
+
+      - `events.py` : Internal event bus for cross-service coordination
+
+      - `git_mirror_service.py` : Git mirroring for component source synchronization
+
+      - `ide_feature_inference.py` : Detects IDE capabilities from config files for smart config generation
+
+      - `jwt_service.py` : JWT signing and verification for token-based auth
+
+      - `registry_telemetry.py` : Telemetry collection for registry operations (installs, searches, etc.)
+
+      - `secrets_redactor.py` : Redacts secrets from telemetry spans before storage
+
+      - `security_events.py` : Security event logging and audit trail
+
+      - `versioning.py` : Component versioning and compatibility checks
+
+      - `webhook_delivery.py` : Webhook HTTP delivery with retry logic and SSRF protection
+
+      - `webhook_signer.py` : HMAC signing for outbound webhook payloads
+
+      - `cmd_scan.py` : `observal scan`: auto-detect IDE configs (Claude Code, Cursor, Kiro, VS Code, Gemini CLI, Codex CLI), bulk-register MCPs, wrap with observal-shim; `--dry-run`, `--ide`, `--yes` flags. Auto-detects home dirs when project dir empty.
+
+      - `cmd_doctor.py` : `doctor_app`: diagnose IDE settings for Observal compatibility; checks Observal config, server connectivity, IDE configs (Claude Code, Kiro, Cursor, Gemini CLI, Codex CLI, Copilot, OpenCode), env vars, Docker availability, entry points; `--ide` to target specific IDE, `--fix` to show suggested fixes
+
+      - `cmd_migrate.py` : `migrate_app`: ClickHouse telemetry migration tools for PostgreSQL shallow-copy migrations
+
+      - `cmd_uninstall.py` : `observal uninstall`: tear down Docker stack, remove repo and config files
+
+      - `docker-compose.yml` : 11 services: init (migrations), api (8000), db (PostgreSQL 16), clickhouse (8123), redis (6379), worker (arq), web (3000), lb (nginx reverse proxy), otel-collector (4317/4318), prometheus (9090), grafana (3001)
+
+      - 1429 tests across 52 files; all mock external services (no Docker needed to run)
+
+      - `test_agent_config_generator.py` : Agent config generation for all IDEs
+
+      - `test_agent_name_lookup.py` : Agent name resolution
+
+      - `test_agent_review.py` : Agent review workflow
+
+      - `test_alert_evaluator.py` : Alert threshold evaluation and webhook firing
+
+      - `test_audit_logging.py` : Audit log creation and queries
+
+      - `test_auth_redis_down.py` : Auth resilience when Redis is unavailable
+
+      - `test_bulk.py` : Bulk agent creation
+
+      - `test_bundles.py` : Component bundle packaging
+
+      - `test_clickhouse_resource_tuning.py` : ClickHouse resource configuration
+
+      - `test_clickhouse_retention.py` : ClickHouse data retention policies
+
+      - `test_cli_errors.py` : CLI error handling and messages
+
+      - `test_config_generator_utils.py` : Config generation utilities
+
+      - `test_constants_sync.py` : Constant synchronization between frontend and backend
+
+      - `test_demo_accounts.py` : Demo account provisioning
+
+      - `test_deployment_guards.py` : Deployment safety checks
+
+      - `test_docker_detection.py` : Docker availability detection
+
+      - `test_draft_workflow.py` : Draft submission workflow
+
+      - `test_endpoint_discovery.py` : Server endpoint discovery
+
+      - `test_enterprise.py` : Enterprise feature gates
+
+      - `test_env_detection_and_config.py` : Environment detection
+
+      - `test_events.py` : Internal event bus
+
+      - `test_field_validation.py` : Input field validation
+
+      - `test_health.py` : Health endpoint behavior
+
+      - `test_ide_config_e2e.py` : End-to-end IDE config generation
+
+      - `test_migrate.py` : Migration tooling
+
+      - `test_migrate_telemetry.py` : Telemetry migration
+
+      - `test_payload_crypto.py` : Payload encryption
+
+      - `test_resilience.py` : Service resilience under failure
+
+      - `test_review_queue.py` : Review queue operations
+
+      - `test_sanitize.py` : Telemetry sanitization
+
+      - `test_scan_kiro_home.py` : Kiro home directory scanning
+
+      - `test_secrets_redactor.py` : Secret redaction in telemetry
+
+      - `test_settings_reconciler.py` : Settings reconciliation
+
+      - `test_skill_config_generator.py` : Skill config generation
+
+      - `test_uninstall.py` : Uninstall command
+
+      - `test_uninstall_windows.py` : Windows uninstall paths
+
+      - `test_versioning.py` : Component versioning
+
+      - `test_webhook_delivery.py` : Webhook delivery and retry
+
+      - `test_webhook_signer_properties.py` : Webhook signer property tests
+
+      - `test_webhook_signer.py` : Webhook HMAC signing
+
+      Four route groups organize the UI by access level:
+
+      - `review/page.tsx` : Admin review queue with detail sheet
+
+      - `errors/page.tsx` : Error log viewer
+
+
+      **`(user)/`** - User-scoped views (requires auth)
+
+      - `traces/page.tsx` : User trace list with filtering
+
+      - `traces/[id]/page.tsx` : Trace detail with resizable span tree + JSON viewer
+
+      - `src/hooks/use-role-guard.ts` : Generic role check hook
+
+      - `src/hooks/use-deployment-config.ts` : Deployment config fetcher (endpoint discovery)
+
+      - `src/components/layouts/role-guard.tsx` : Generic role guard wrapper
+
+      - `src/components/nav/github-star-banner.tsx` : GitHub star call-to-action banner
+
+      - `src/components/builder/` : Agent builder components (preview panel, sortable component list, validation panel)
+
+      - `src/components/registry/` : Agent card, component card, pull command with IDE selector, install dialog, metrics panel, feedback list, status badge, submit component dialog, registry detail, registry table
+
+      - `src/components/review/` : Review detail sheet, validation badges
+
+      - The `observal scan` command reads existing IDE config files, bulk-registers found MCP servers via `POST /api/v1/scan`, and rewrites configs to wrap commands with `observal-shim`. It creates timestamped backups before modifying any file. HTTP-transport MCPs are registered but not shimmed (they would need `observal-proxy`). Supports Claude Code, Cursor, Kiro, VS Code, Gemini CLI, and Codex CLI. Auto-detects home dirs when project dir is empty.
+
+      - Auth is API key based. Keys are SHA-256 hashed before storage. The `X-API-Key` header is checked on every authenticated request via `get_current_user` dependency. User onboarding uses self-registration (`observal auth register`) or SSO. Fresh servers auto-bootstrap an admin account on first `observal auth login` (zero prompts, localhost-only). The `/health` endpoint returns `initialized: bool` so the CLI knows whether to bootstrap or prompt for credentials. All auth endpoints are rate-limited via slowapi (backed by Redis). OAuth uses a one-time auth code exchange pattern: the callback stores credentials in Redis with a 30s TTL and redirects with an opaque code instead of the raw API key. JWT signing and verification available via `jwt_service.py` with JWKS endpoint for public key distribution.
+
+      - The CLI uses nested Typer subgroups: `auth`, `registry` (mcp/skill/hook/prompt/sandbox), `agent`, `ops` (telemetry), `admin` (review/eval), `self`, `config`, `doctor`, `migrate`. Root-level convenience commands: `pull`, `scan`, `uninstall`, `use`, `profile`.
+
+      - The web frontend proxies all API calls through Next.js rewrites (`/api/v1/*` -> backend). The backend URL is configured via `NEXT_PUBLIC_API_URL` env var (defaults to `http://localhost:8000`). Auth state (API key, user role) is stored in localStorage. Role-based access is enforced client-side via AuthGuard, AdminGuard, and RoleGuard components, not Next.js middleware.
+
+      - Alert rules support metric threshold monitoring with webhook delivery. The `alert_evaluator.py` service runs periodic checks against ClickHouse metrics and fires webhooks (with HMAC signing via `webhook_signer.py` and delivery retries via `webhook_delivery.py`) when thresholds are breached. SSRF protection prevents webhooks to private IP ranges.
+
+      - Telemetry data is scrubbed by `secrets_redactor.py` before ClickHouse storage. Security events are logged via `security_events.py` for audit trails.
+
+      - Server endpoint discovery (`api/routes/config.py`) eliminates hardcoded URLs — clients derive endpoints from server config at runtime.'
+    gold_removed: ''
+  - path: ee/AGENTS.md
+    tier: 1
+    gold_added: "# Enterprise Edition\n\nSource-available enterprise features for Observal. Loaded only when `DEPLOYMENT_MODE=enterprise`.\n\n**License:** Separate enterprise license (`ee/LICENSE`). Commercial license required for production. Community contributions NOT accepted into this directory.\n\n**Critical constraint:** Core must NEVER import from `ee/`. Dependency is strictly one-way: `ee/` imports core, never the reverse. The open-source edition must be fully functional without `ee/`.\n\n## How it loads\n\n`observal-server/main.py` calls `register_enterprise(app, settings)` from `ee/__init__.py` which:\n\n1. Validates enterprise config via `config_validator.py`\n2. Mounts EE routes (`/api/v1/sso/saml/*`, `/api/v1/scim/*`, `/api/v1/admin/audit-log*`)\n3. Adds `EnterpriseGuardMiddleware` (returns 503 on EE routes if config is invalid)\n4. Registers audit event bus handlers on `services.events.bus`\n5. Stores config issues in `app.state.enterprise_issues`\n\n## Config validation\n\nFive settings checked on startup. If any fail, issues are stored and the guard middleware blocks EE routes with 503.\n\n| Setting | Requirement |\n|---------|------------|\n| `SECRET_KEY` | Not the default `\"change-me-to-a-random-string\"` |\n| `OAUTH_CLIENT_ID` | Must be set |\n| `OAUTH_CLIENT_SECRET` | Must be set |\n| `OAUTH_SERVER_METADATA_URL` | Must be set (OIDC discovery) |\n| `FRONTEND_URL` | Not localhost or empty |\n\n## Features\n\n### Audit logging (implemented)\n\nListens to 8 event types on the core event bus (`services/events.py`):\n- `UserCreated`, `UserDeleted`\n- `LoginSuccess`, `LoginFailure`\n- `RoleChanged`, `SettingsChanged`\n- `AlertRuleChanged`, `AgentLifecycleEvent`\n\nEach event → row in ClickHouse `audit_log` table with actor info, resource details, HTTP metadata, and freeform detail JSON.\n\n**API endpoints (admin-only):**\n- `GET /api/v1/admin/audit-log` — query with filters (actor, action, resource_type, date range), paginated\n- `GET /api/v1/admin/audit-log/export` — CSV download (max 10k rows)\n\n### SAML 2.0 SSO (stub — returns 501)\n\n- `POST /api/v1/sso/saml/login` — initiate SAML login\n- `POST /api/v1/sso/saml/acs` — Assertion Consumer Service callback\n- `GET /api/v1/sso/saml/metadata` — SP metadata\n\n### SCIM 2.0 provisioning (stub — returns 501)\n\n- `GET /api/v1/scim/Users` — list users\n- `POST /api/v1/scim/Users` — create user\n- `GET /api/v1/scim/Users/{user_id}` — get user\n- `PUT /api/v1/scim/Users/{user_id}` — update user\n- `DELETE /api/v1/scim/Users/{user_id}` — delete user\n\n### Plugin registry (placeholder)\n\n`ee/plugins/__init__.py` — future home for Grafana, Prometheus, Datadog, and SIEM integrations.\n\n## Directory layout\n\n```\nee/\n├── __init__.py                         # register_enterprise() entrypoint\n├── LICENSE                             # Enterprise license\n├── AGENTS.md                           # This file\n├── README.md                           # Public-facing description\n├── docs/\n│   └── cli.md                          # EE configuration reference\n├── observal_server/\n│   ├── middleware/\n│   │   └── enterprise_guard.py         # 503 guard for misconfigured EE routes\n│   ├── routes/\n│   │   ├── __init__.py                 # mount_ee_routes() — mounts all EE routers\n│   │   ├── audit.py                    # Audit log query + CSV export\n│   │   ├── scim.py                     # SCIM 2.0 stubs\n│   │   └── sso_saml.py                # SAML 2.0 stubs\n│   └── services/\n│       ├── audit.py                    # Event bus handlers → ClickHouse audit_log writes\n│       └── config_validator.py         # Startup config validation\n└── plugins/\n    └── __init__.py                     # Future integrations placeholder\n```"
+    gold_removed: ''
+  - path: web/AGENTS.md
+    tier: 1
+    gold_added: "# Web Frontend\nNext.js 16 / React 19 / TypeScript 6 / Tailwind CSS 4 / Playwright 1.59\n\n## Stack\n\n- **Framework:** Next.js 16 with `output: \"standalone\"` for Docker\n- **UI:** shadcn/ui (`src/components/ui/`), Recharts 3 for charts, TanStack Query for data fetching, TanStack Table for sortable/filterable tables\n- **Design system:** OKLCH color space with 5 themes (light, dark, midnight, forest, sunset). Typography: Archivo (display), Albert Sans (body), JetBrains Mono (code). 4pt spacing scale. Defined in `globals.css`.\n- **API proxy:** Next.js rewrites (`/api/v1/*` → backend). Backend URL via `NEXT_PUBLIC_API_URL` (defaults `http://localhost:8000`).\n- **Auth:** API key + user role in localStorage. Client-side guards (AuthGuard, AdminGuard, RoleGuard), not middleware.\n- **GraphQL:** `/api/v1/graphql` is the read layer for telemetry. REST for everything else. WebSocket subscriptions via `src/lib/graphql-ws.ts`.\n\n## Route groups\n\n```\nsrc/app/\n├── (auth)/login/               # Login + first-run admin init\n├── (registry)/                 # Public agent browser (requires auth)\n│   ├── page.tsx                #   Registry home (search, trending, top rated)\n│   ├── agents/page.tsx         #   Agent list with search + filters\n│   ├── agents/[id]/page.tsx    #   Agent detail with pull command box\n│   ├── agents/builder/page.tsx #   Agent builder (two-column, component selector, YAML preview)\n│   ├── agents/leaderboard/     #   Agent leaderboard\n│   ├── components/page.tsx     #   Tabbed component browser (MCPs, skills, hooks, prompts, sandboxes)\n│   └── components/[id]/page.tsx#   Component detail\n├── (admin)/                    # Admin dashboard (requires admin role)\n│   ├── dashboard/page.tsx      #   Overview stats, recent agents, latest traces\n│   ├── review/page.tsx         #   Review queue with detail sheet\n│   ├── users/page.tsx          #   User management\n│   ├── settings/page.tsx       #   Enterprise settings\n│   ├── eval/page.tsx           #   Eval overview with agent scores\n│   ├── eval/[agentId]/page.tsx #   Eval detail (aggregate chart, dimension radar, penalty accordion)\n│   └── errors/page.tsx         #   Error log viewer\n└── (user)/                     # User-scoped views (requires auth)\n    ├── traces/page.tsx         #   User trace list with filtering\n    └── traces/[id]/page.tsx    #   Trace detail (resizable span tree + JSON viewer)\n```\n\n## Component directories\n\n```\nsrc/components/\n├── builder/       # Agent builder (preview panel, sortable component list, validation panel)\n├── dashboard/     # Stat cards, trend charts, bar lists, heatmap, time range select\n├── layouts/       # AuthGuard, AdminGuard, RoleGuard, DashboardShell, PageHeader\n├── nav/           # RegistrySidebar, CommandMenu (Cmd+K), NavUser, GitHubStarBanner\n├── registry/      # AgentCard, ComponentCard, PullCommand, InstallDialog, StatusBadge, SubmitComponentDialog, RegistryTable, RegistryDetail, ReviewForm\n├── review/        # ReviewDetailSheet, ValidationBadges\n├── shared/        # SkeletonLayouts, ErrorState, EmptyState\n├── traces/        # TraceList, TraceDetail, SpanTree\n└── ui/            # shadcn/ui primitives (27 components)\n```\n\n## Key files\n\n- `src/lib/api.ts` : Typed fetch wrapper; all REST + GraphQL calls; auth via localStorage\n- `src/lib/types.ts` : Shared TypeScript interfaces for all API responses\n- `src/lib/graphql-ws.ts` : GraphQL WebSocket subscription client\n- `src/lib/ide-features.ts` : IDE feature detection utilities\n- `src/lib/query-client.ts` : TanStack Query client configuration\n- `src/lib/utils.ts` : Shared utility functions\n- `src/lib/export.ts` : Data export utilities\n- `src/hooks/use-api.ts` : TanStack Query hooks for every endpoint (queries + mutations)\n- `src/hooks/use-auth.ts` : Auth guard hook (checks API key exists)\n- `src/hooks/use-admin-guard.ts` : Admin role check hook\n- `src/hooks/use-role-guard.ts` : Generic role check hook\n- `src/hooks/use-deployment-config.ts` : Deployment config fetcher (endpoint discovery)\n- `src/hooks/use-mobile.ts` : Mobile viewport detection\n- `next.config.ts` : API rewrites, standalone output\n- `playwright.config.ts` : E2E test config (Chromium, port 3000)\n\n## Commands\n\n```bash\npnpm dev          # dev server on :3000\npnpm build        # production build\npnpm lint         # ESLint\npnpm test:e2e     # Playwright e2e tests (requires running API + Docker stack)\n```\n\n## Conventions\n\n- No Tailwind config file — Tailwind CSS 4 uses `globals.css` for all design tokens\n- Theme switching via `src/components/ui/theme-switcher.tsx`\n- All API response types are centralized in `src/lib/types.ts` — don't define inline types for API data\n- Use TanStack Query hooks from `src/hooks/use-api.ts` for data fetching — don't call `fetch` directly in components\n- Semantic color tokens: background, foreground, card, border, primary, secondary, accent, destructive, success, warning, info"
+    gold_removed: ''

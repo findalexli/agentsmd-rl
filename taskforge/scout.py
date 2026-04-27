@@ -216,18 +216,18 @@ def scout_repo(
 
     fetch_limit = target * 4
 
-    # NOTE: dropping `files` from --json drastically reduces GraphQL node-cost
-    # and avoids the gateway 504s that killed earlier deep-scout passes (the
-    # `files` field expands per-file into nested objects, blowing out the
-    # complexity score on big PRs). Scout-time docs-only/deps-only filtering
-    # is therefore softened — but the downstream causality judge already
-    # detects "no testable behavior" PRs, so we lose nothing.
+    # Including `files` in the GraphQL query: works fine at limit <= 200,
+    # blows up complexity at limit=800 on huge repos. We cap fetch_limit
+    # below 200 by using target<=200 per repo. The downstream markdown
+    # scaffolder uses these paths to skip its per-PR REST `/files` call —
+    # 50× fewer GH REST calls, ~3× total throughput.
+    fetch_limit = min(fetch_limit, 200)
     prs = gh_json([
         "pr", "list",
         "--repo", repo,
         "--state", "merged",
         "--limit", str(fetch_limit),
-        "--json", "number,title,changedFiles,additions,deletions,mergedAt,labels,mergeCommit",
+        "--json", "number,title,changedFiles,additions,deletions,mergedAt,labels,mergeCommit,files",
     ])
 
     if not prs:
@@ -282,7 +282,25 @@ def scout_repo(
             code_files = [f for f in file_paths if not any(
                 f.endswith(ext) for ext in (".md", ".rst", ".txt", ".toml", ".cfg", ".ini", ".yml", ".yaml", ".json")
             ) and not f.startswith(("docs/", "doc/", ".github/"))]
-            if not code_files:
+            # Exempt pure-tier-1-instruction-file PRs from the docs_only drop —
+            # those are the markdown_authoring scaffolder's whole input.
+            # Tier-1 paths: CLAUDE.md / AGENTS.md / SKILL.md / .cursor/rules etc.
+            # Match the scaffolder's TIER1_RE (scripts/scaffold_markdown_only.py:45).
+            import re as _re
+            _TIER1 = _re.compile(
+                r"(?:^|/)(CLAUDE\.md|CLAUDE\.local\.md|AGENTS\.md|CONVENTIONS\.md|SKILL\.md|"
+                r"\.cursorrules|\.windsurfrules|\.clinerules|\.continuerules)$|"
+                r"^\.claude/(rules|skills|agents)/.+\.md$|"
+                r"^\.cursor/rules/.+|"
+                r"^\.github/(copilot-instructions\.md|skills/.+SKILL\.md|prompts/.+\.prompt\.md)$|"
+                r"^\.agents?/skills/.+SKILL\.md$|"
+                r"^\.opencode/skills/.+SKILL\.md$|"
+                r"^\.codex/skills/.+SKILL\.md$|"
+                r"\.mdc$",
+                _re.IGNORECASE,
+            )
+            is_pure_tier1 = bool(file_paths) and all(_TIER1.search(p) for p in file_paths)
+            if not code_files and not is_pure_tier1:
                 skipped["docs_only"] += 1
                 continue
             if all(any(p in f for p in ("lock", "requirements", "package.json", "Cargo.toml", "pyproject.toml"))
@@ -303,7 +321,11 @@ def scout_repo(
             "deletions": deletions,
             "merged_at": pr.get("mergedAt", ""),
             "merge_sha": merge_sha,
-            "file_paths": file_paths[:10],
+            # Capture full file path list (not capped) so the downstream
+            # markdown scaffolder can run TIER1_RE filter without a per-PR
+            # REST `/files` call. ~50× fewer GH REST calls in the scaffold
+            # phase, ~3× faster end-to-end.
+            "file_paths": file_paths,
         })
 
         if len(candidates) >= target:

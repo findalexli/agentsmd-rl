@@ -1,0 +1,95 @@
+version: "2.0"
+
+task:
+  name: observal-docs-document-enterprise-frontend-architecture
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: BlazeUp-AI/Observal
+  pr: 507
+  base_commit: "a36b69e6294865a5bd5d0ff7b5e650552ca49641"
+  merge_commit: "dfcb61b82e2ede455b6cf2e5f72d25e1b49df474"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in ee/AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in ee/AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in ee/AGENTS.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in web/AGENTS.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in web/AGENTS.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in web/AGENTS.md."
+
+config_edits:
+  - path: ee/AGENTS.md
+    tier: 1
+    gold_added: '## Frontend architecture
+
+
+      There is NO separate `web/ee/` directory. Enterprise frontend code lives in `web/src/` alongside core code, gated by `useDeploymentConfig()`.
+
+
+      This follows the industry-standard pattern (Langfuse, PostHog, Infisical, Lago all do this). The `ee/` boundary is for backend licensing — the frontend is AGPL and gates features server-side, not by directory.
+
+
+      **How enterprise features are gated in the frontend:**
+
+      - `useDeploymentConfig()` hook returns `{ deploymentMode, ssoEnabled, samlEnabled }`
+
+      - Pages check `deploymentMode === "enterprise"` and show upgrade prompts if not
+
+      - SSO button in login page: conditional on `ssoEnabled`
+
+      - Enterprise settings section: conditional on `deploymentMode`
+
+      - API filters results server-side — frontend reads what it''s given
+
+
+      **Enterprise-only admin pages** (audit log viewer, diagnostics, SCIM config) should be regular pages in `web/src/app/(admin)/` that check deployment mode and show an upgrade prompt when not enterprise. Do NOT create a `web/ee/` directory.
+
+
+      **Future resource-based access control** will follow PostHog''s annotation pattern: include `user_access_level` on every API response object. The API filters results by team membership; the frontend reads the annotation. No CASL or client-side policy engine needed initially.
+
+      '
+    gold_removed: ''
+  - path: web/AGENTS.md
+    tier: 1
+    gold_added: '## Enterprise feature gating
+
+
+      There is NO `web/ee/` directory. Enterprise frontend code lives here in `web/src/`, gated server-side via `useDeploymentConfig()`. This follows the Langfuse/PostHog/Infisical pattern — the `ee/` boundary is backend-only.
+
+
+      **Current enterprise conditionals:**
+
+      - `src/app/(auth)/login/page.tsx` — SSO button shown when `ssoEnabled`
+
+      - `src/app/(admin)/settings/page.tsx` — enterprise settings section shown when `deploymentMode === "enterprise"`
+
+      - `src/hooks/use-deployment-config.ts` — fetches `{ deploymentMode, ssoEnabled, samlEnabled }` from `/api/v1/config/public`
+
+
+      **Pattern for new enterprise pages:** Add regular pages in `src/app/(admin)/` that check deployment mode and show an upgrade prompt when not enterprise. Don''t duplicate pages or create separate directories.
+
+
+      **Future resource-based access control:** API will include `user_access_level` on response objects (PostHog annotation pattern). Frontend reads the annotation — no client-side policy engine needed.
+
+      '
+    gold_removed: ''

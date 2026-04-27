@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: claude-skills-fix-boundaryaware-contour-extraction-to
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: oaustegard/claude-skills
+  pr: 467
+  base_commit: "494a39b0306fde904ebd8ff3b668f3baad9294d2"
+  merge_commit: "ac36c4903f8319f8e683638bac9021ab840923d7"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in image-to-svg/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in image-to-svg/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in image-to-svg/SKILL.md."
+
+config_edits:
+  - path: image-to-svg/SKILL.md
+    tier: 1
+    gold_added: "version: 1.1.0\nSource Image → Preprocessing → Color Quantization → Edge Map → Contour Extraction → SVG Assembly\n\n## Step 3b: Structural Edge Map\n\nUse the seeing-images skill to create a reference edge map. This distinguishes real structural boundaries from gradient-transition artifacts during contour extraction.\n\n```python\nimport sys\nsys.path.insert(0, '/mnt/skills/user/seeing-images/scripts')\nfrom see import edges\n\nedge_path = edges(source_path, threshold=50)\nedge_img = cv2.imread(edge_path, cv2.IMREAD_GRAYSCALE)\nedge_img = cv2.resize(edge_img, (w_orig, h_orig))\n```\n## Step 4: Contour Extraction (Boundary-Aware)\n\nThe standard K-means + contour pipeline creates \"woodcut\" artifacts: thin dark shapes at color boundaries where gradient transitions get quantized into separate dark clusters. Two mechanisms prevent this.\n\nFor each non-background color cluster:\nDARK_LUM_THRESHOLD = 55  # Luminance below this = \"dark cluster\"\nk_morph = np.ones((3,3), np.uint8)\nk_dilate = np.ones((3,3), np.uint8)  # MUST be 3x3. 5x5 causes blotchy artifacts.\n\n    c = centers[cid]\n    lum = 0.299*c[0] + 0.587*c[1] + 0.114*c[2]\n    is_dark = lum < DARK_LUM_THRESHOLD\n    \n    # FIX 1: Dilate non-dark regions to fill boundary gaps\n    # Lighter regions grow ~1.5px, covering the dark artifact zones\n    if not is_dark:\n        mask = cv2.dilate(mask, k_dilate, iterations=1)\n    \n    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, k_morph, iterations=2)\n    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, k_morph, iterations=1)\n        peri = cv2.arcLength(contour, True)\n        compactness = (4 * 3.14159 * area / (peri * peri)) if peri > 0 else 1\n        \n        # FIX 2: Gate dark shapes — keep real features, skip boundary artifacts\n        if is_dark:\n            contour_mask = np.zeros((h_orig, w_orig), dtype=np.uint8)\n            cv2.drawContours(contour_mask, [contour], -1, 255, -1)\n            edge_overlap = cv2.bitwise_and(edge_img, contour_mask)\n            edge_density = edge_overlap.sum() / max(contour_mask.sum(), 1)\n            \n            # Keep if: compact (real dark area), edge-aligned, or large\n            if not (compactness > 0.15 or edge_density > 0.3\n                    or area > (h_orig * w_orig * 0.01)):\n                continue  # Skip: thin dark boundary artifact\n        \n        eps = 0.002 * peri\n\n**Why this works**: Boundary artifacts are thin (low compactness) AND don't correspond to real structural edges. Real dark features (eyes, hair, outlines in graphic art) have compact shapes or align with Sobel-detected edges.\n\n**Tuning**:\n- `DARK_LUM_THRESHOLD`: 55 works broadly; lower for dark images, higher for bright\n- Dilation kernel: 3×3 is the sweet spot. **Do NOT use 5×5** — causes blotchy artifacts in hair/foliage.\n- `compactness > 0.15`: Keeps circles/squares, filters ribbons\n- `edge_density > 0.3`: Keeps shapes aligned with real structural edges\n\n8. **Don't use a dilation kernel larger than 3×3.** 5×5 was tested and causes blotchy artifacts in fine-detail areas like hair and foliage.\n\n**Cross-skill dependency**: [seeing-images](/mnt/skills/user/seeing-images/SKILL.md) — the `edges()` function is used in Step 3b for structural edge detection."
+    gold_removed: ''

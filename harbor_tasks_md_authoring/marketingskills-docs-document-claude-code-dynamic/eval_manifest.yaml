@@ -1,0 +1,84 @@
+version: "2.0"
+
+task:
+  name: marketingskills-docs-document-claude-code-dynamic
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: coreyhaines31/marketingskills
+  pr: 189
+  base_commit: "b0fbcabc5f0c4ad0f84e50226cb65a42c6ff8793"
+  merge_commit: "9610095bb750cf1ecde9c22e3b3b912ef0bb876b"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '
+
+      ## Claude Code-Specific Enhancements
+
+
+      These patterns are **Claude Code only** and must not be added to `SKILL.md` files directly, as skills are designed to be cross-agent compatible (Codex, Cursor, Windsurf, etc.). Apply them locally in your own project''s `.claude/skills/` overrides instead.
+
+
+      ### Dynamic content injection with `!`command``
+
+
+      Claude Code supports embedding shell commands in SKILL.md using `` !`command` `` syntax. When the skill is invoked, Claude Code runs the command and injects the output inline — the model sees the result, not the instruction.
+
+
+      **Most useful application: auto-inject the product marketing context file**
+
+
+      Instead of every skill telling the agent "go check if `.agents/product-marketing-context.md` exists and read it," you can inject it automatically:
+
+
+      ```markdown
+
+      Product context: !`cat .agents/product-marketing-context.md 2>/dev/null || echo "No product context file found — ask the user about their product before proceeding."`
+
+      ```
+
+
+      Place this at the top of a skill''s body (after frontmatter) to make context available immediately without any file-reading step.
+
+
+      **Other useful injections:**
+
+
+      ```markdown
+
+      # Inject today''s date for recency-sensitive skills
+
+      Today''s date: !`date +%Y-%m-%d`
+
+
+      # Inject current git branch (useful for workflow skills)
+
+      Current branch: !`git branch --show-current 2>/dev/null`
+
+
+      # Inject recent commits for context
+
+      Recent commits: !`git log --oneline -5 2>/dev/null`
+
+      ```
+
+
+      **Why this is Claude Code-only**: Other agents that load skills will see the literal `` !`command` `` string rather than executing it, which would appear as garbled instructions. Keep cross-agent skill files free of this syntax.'
+    gold_removed: ''

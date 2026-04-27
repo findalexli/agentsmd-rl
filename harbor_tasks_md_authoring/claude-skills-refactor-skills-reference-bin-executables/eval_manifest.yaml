@@ -1,0 +1,116 @@
+version: "2.0"
+
+task:
+  name: claude-skills-refactor-skills-reference-bin-executables
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: jezweb/claude-skills
+  pr: 73
+  base_commit: "7ba8be14099f4e842ffa4816add565b65ba23109"
+  merge_commit: "bae7c5f7ae61cd3acce6c9819c406768d7cc35b3"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/design-assets/skills/image-processing/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/design-assets/skills/image-processing/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/design-assets/skills/image-processing/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/frontend/skills/product-showcase/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/frontend/skills/product-showcase/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/frontend/skills/product-showcase/SKILL.md."
+
+config_edits:
+  - path: plugins/design-assets/skills/image-processing/SKILL.md
+    tier: 1
+    gold_added: 'Use `img-process` (shipped in `bin/`) for common operations. For complex or custom workflows, generate a Pillow script adapted to the user''s environment.
+
+
+      ## Quick Reference — img-process CLI
+
+
+      ```bash
+
+      img-process resize hero.png --width 1920
+
+      img-process convert logo.png --format webp
+
+      img-process trim logo-raw.jpg -o logo-clean.png --padding 10
+
+      img-process thumbnail photo.jpg --size 200
+
+      img-process optimise hero.jpg --quality 85 --max-width 1920
+
+      img-process og-card -o og.png --title "My App" --subtitle "Built for speed"
+
+      img-process batch ./images --action convert --format webp -o ./optimised
+
+      ```
+
+
+      **Use `img-process` when**: the operation is standard (resize, convert, trim, thumbnail, optimise, OG card, batch). This is faster and avoids generating a script each time.
+
+
+      **Generate a custom script when**: the operation needs logic `img-process` doesn''t cover (compositing multiple images, watermarks, complex text layouts, conditional processing).
+
+      Pillow is required for both `img-process` and custom scripts:
+
+      ```bash
+
+      img-process trim logo-raw.jpg -o logo-trimmed.png --padding 10
+
+      img-process thumbnail logo-trimmed.png --size 512 -o favicon-512.png
+
+      ```
+
+      ```bash
+
+      img-process optimise hero.jpg --max-width 1920 --quality 85
+
+      # Outputs hero.webp — resized and compressed
+
+      ```
+
+      ```bash
+
+      img-process batch ./raw-images --action convert --format webp --quality 85 -o ./optimised
+
+      img-process batch ./photos --action resize --width 800 -o ./thumbnails
+
+      ```
+
+      ### Pipeline with Gemini Image Gen
+
+      ```bash
+
+      # After generating with Gemini (raw PNG output):
+
+      img-process optimise generated-image.png --max-width 1920 --quality 85
+
+      # Or batch process all generated images:
+
+      img-process batch ./generated --action optimise -o ./production
+
+      ```'
+    gold_removed: ''
+  - path: plugins/frontend/skills/product-showcase/SKILL.md
+    tier: 1
+    gold_added: "### 2. Capture Screenshots\nUse `capture-screenshots` (shipped in `bin/`) to capture the app. This is faster and more consistent than generating Playwright scripts each time.\n#### Quick capture (all key pages at once):\n```bash\ncapture-screenshots http://localhost:5173 \\\n  --pages /,/dashboard,/contacts,/settings \\\n  --output showcase/screenshots \\\n  --prefix screen \\\n  --mobile --dark\n```\n\nThis produces desktop (1280x720), mobile (375px), and dark mode variants for each page in one run.\n\n#### For authenticated apps:\n```bash\ncapture-screenshots https://app.example.com \\\n  --pages /,/dashboard,/settings \\\n  --auth user:password \\\n  --output showcase/screenshots \\\n  --mobile --dark\n```\n\n#### What to capture:\n**a. First Impression** — the main page/dashboard becomes the hero image. Note the immediate value proposition.\n**b. Features** — each major section. Use `--pages` with all nav paths. Capture 6-10 key screens that tell the product story.\n**c. \"How It Works\" flow** — the main workflow in sequence. Run `capture-screenshots` multiple times with `--prefix workflow-step` as you navigate through the flow steps.\n**d. Detail shots** — zoom into specific UI elements. Use `--full-page` for scrollable content.\n\n**e. Both modes** — `--dark` flag captures light and dark variants automatically. Use the best-looking mode for the hero.\n\n#### Post-capture optimisation:\n```bash\nimg-process batch showcase/screenshots --action optimise --max-width 1920 -o showcase/screenshots-opt\n```\n**Generating the GIF** — capture sequential screenshots then combine:\n```bash\n# Capture each step with a sequential prefix\ncapture-screenshots http://localhost:5173/clients \\\n  --prefix workflow-01 --output .jez/screenshots\n# ... navigate to next state ...\ncapture-screenshots http://localhost:5173/clients/new \\\n  --prefix workflow-02 --output .jez/screenshots\n\n# Combine frames into GIF (Python one-liner using Pillow)\npython3 -c \"\nfrom PIL import Image; import glob\nframes = [Image.open(f) for f in sorted(glob.glob('.jez/screenshots/workflow-*.png'))]\n    save_all=True, append_images=frames[1:], duration=500, loop=0)\n\""
+    gold_removed: ''

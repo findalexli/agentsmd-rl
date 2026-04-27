@@ -1,0 +1,61 @@
+version: "2.0"
+
+task:
+  name: claude-ai-music-skills-feat-noinventedcontractions-rule-for-
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: bitwize-music-studio/claude-ai-music-skills
+  pr: 18
+  base_commit: "a5bcacbea7f67460d9967c2571ff036b368aa3fd"
+  merge_commit: "f88d343c95a0ec1700e981249f9e0281fe6b589b"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/lyric-writer/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/lyric-writer/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/lyric-writer/SKILL.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '   - No invented contractions (signal''d, TV''d — spell out instead)'
+    gold_removed: ''
+  - path: skills/lyric-writer/SKILL.md
+    tier: 1
+    gold_added: '3. **Pronunciation check**: Proper nouns, homographs, acronyms, tech terms, invented contractions (no noun''d/brand''d)
+
+      - [ ] Invented contractions (signal''d, TV''d — Suno only handles standard pronoun/auxiliary contractions)
+
+      ### No Invented Contractions (Suno)
+
+
+      Suno only recognizes standard English contractions. Never use made-up contractions by appending ''d, ''ll, etc. to nouns, brand names, or non-standard words.
+
+
+      **Standard (OK for Suno):** they''d, he''d, you''d, she''d, we''d, I''d, wouldn''t, couldn''t, shouldn''t
+
+
+      **Invented (will break Suno):** signal''d, TV''d, network''d, podcast''d, channel''d
+
+
+      **Fix:** Spell it out — "signal would" not "signal''d", "TV could" not "TV''d"
+
+
+      **Rule:** If the base word isn''t a pronoun or standard auxiliary verb, don''t contract it. Suno will mispronounce or skip invented contractions.
+
+      '
+    gold_removed: ''

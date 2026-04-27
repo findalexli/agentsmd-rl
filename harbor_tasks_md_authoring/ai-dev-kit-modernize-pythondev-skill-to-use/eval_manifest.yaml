@@ -1,0 +1,119 @@
+version: "2.0"
+
+task:
+  name: ai-dev-kit-modernize-pythondev-skill-to-use
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: databricks-solutions/ai-dev-kit
+  pr: 134
+  base_commit: "0607c8b23aceebe5c362b1f5a7394046dd27b510"
+  merge_commit: "cf8d6ea50df4ead89d7764a8e3ae48888c3384ac"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/python-dev/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/python-dev/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/python-dev/SKILL.md."
+
+config_edits:
+  - path: .claude/skills/python-dev/SKILL.md
+    tier: 1
+    gold_added: '- **Use uv exclusively**: All packaging, environment, and script execution via [uv](https://github.com/astral-sh/uv)
+
+      - **No pip/venv/conda**: Do not use `pip`, `python3 -m venv`, or `conda` — `uv` handles all of this
+
+      - **pyproject.toml is the source of truth**: Define all dependencies in `pyproject.toml` (not `requirements.txt`)
+
+      # Install dependencies from pyproject.toml
+
+      uv sync
+
+
+      # Install with optional dev dependencies
+
+      uv sync --extra dev
+
+
+      # Run a script (no activation needed)
+
+      uv run python script.py
+
+
+      # Run pytest
+
+      uv run pytest
+
+
+      # Add a new dependency
+
+      uv add requests
+
+
+      # Remove a dependency
+
+      uv remove requests
+
+      ```
+
+
+      ### Running Python Code
+
+      - Use `uv run` to execute scripts — no manual venv activation needed
+
+      - Use `uv run <tool>` for dev tools (pytest, ruff, etc.)
+
+      - Dependencies are defined in `pyproject.toml` (not requirements.txt)
+
+
+      ### Linting & Formatting (Ruff)
+
+      - **Ruff**: Use Ruff for linting AND formatting (replaces flake8, black, isort)
+
+
+      ```bash
+
+      # Lint code
+
+      uv run ruff check .
+
+
+      # Lint and auto-fix
+
+      uv run ruff check --fix .
+
+
+      # Format code
+
+      uv run ruff format .
+
+
+      # Check formatting without changes
+
+      uv run ruff format --check .
+
+      ```
+
+
+      ### Type Checking (Pyright)
+
+
+      ```bash
+
+      # Check types
+
+      uv run pyright
+
+      Note: Use `pyright` for type checking — do not use `mypy`.
+
+      6. **Environment**: Use `uv` exclusively for dependencies and execution, Ruff for linting/formatting, Pyright for type checking'
+    gold_removed: ''

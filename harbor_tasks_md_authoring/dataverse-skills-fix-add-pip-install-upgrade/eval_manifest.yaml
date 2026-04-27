@@ -1,0 +1,68 @@
+version: "2.0"
+
+task:
+  name: dataverse-skills-fix-add-pip-install-upgrade
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: microsoft/Dataverse-skills
+  pr: 18
+  base_commit: "3c36b8d5ef41410b000872c697d9bb5138115e50"
+  merge_commit: "dd48ab88d47aac18f3e037847b809c0d3790bf0d"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/plugins/dataverse/skills/init/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/plugins/dataverse/skills/init/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/plugins/dataverse/skills/init/SKILL.md."
+
+config_edits:
+  - path: .github/plugins/dataverse/skills/init/SKILL.md
+    tier: 1
+    gold_added: 'Do not skip MCP configuration (step 9 in Scenario A, step 12 in Scenario B) unless an MCP server is already configured (`.mcp.json` exists with a Dataverse server entry, or `claude mcp list` shows one).
+
+      ### 7. Install / upgrade Python dependencies
+
+
+      ```
+
+      pip install --upgrade azure-identity requests PowerPlatform-Dataverse-Client
+
+      ```
+
+
+      ### 8. Verify the connection
+
+      ### 9. Configure MCP server (if not already configured)
+
+      ### 6. Install / upgrade Python dependencies
+
+
+      ```
+
+      pip install --upgrade azure-identity requests PowerPlatform-Dataverse-Client
+
+      ```
+
+
+      ### 7. Verify the environment connection
+
+      ### 8. Create the solution and metadata in the environment
+
+      ### 9. Pull the environment state to the repo
+
+      ### 10. Load demo data (optional)
+
+      ### 11. Commit
+
+      ### 12. Configure MCP server (if not already configured)'
+    gold_removed: ''

@@ -516,27 +516,42 @@ def scaffold_one(pr_record: dict, files: list[dict], pr_data: dict,
             idx += 1
     checks_yaml = "\n".join(checks_yaml_lines) or "  []"
 
-    config_edits_yaml_lines = []
-    for ce in config_edits:
-        # Use YAML block literals for multi-line content
-        added_indented = "\n".join(f"      {ln}" for ln in ce["gold_added"].split("\n"))
-        config_edits_yaml_lines.append(
-            f"  - path: {yaml_quote(ce['path'])}\n"
-            f"    tier: 1\n"
-            f"    gold_added: |-\n{added_indented}\n"
-            f"    gold_removed: \"\""
-        )
-    config_edits_yaml = "\n".join(config_edits_yaml_lines)
-
-    (task_dir / "eval_manifest.yaml").write_text(
-        EVAL_MANIFEST_TPL.format(
-            task_name=task_name,
-            repo=repo, pr=pr,
-            base_commit=base_commit, merge_commit=merge_commit,
-            checks_yaml=checks_yaml,
-            config_edits_yaml=config_edits_yaml,
-        )
+    # Use yaml.safe_dump for config_edits — hand-rolled block scalars broke
+    # on PRs whose patch lines had inconsistent leading whitespace (the YAML
+    # parser auto-detects indent from the first content line, and later
+    # lines with smaller indent silently broke out of the scalar, leaving
+    # markdown content interpreted as YAML keys).
+    import yaml as _yaml
+    ce_struct = [
+        {"path": ce["path"], "tier": 1,
+         "gold_added": ce["gold_added"], "gold_removed": ""}
+        for ce in config_edits
+    ]
+    # default_style="|" forces literal block scalars (with auto-quoting
+    # fallback for short lines). default_flow_style=False = block style.
+    # allow_unicode=True keeps CJK characters readable.
+    config_edits_yaml = _yaml.safe_dump(
+        ce_struct, default_flow_style=False, allow_unicode=True,
+        sort_keys=False, width=10000,
     )
+    # Indent the dumped YAML to fit under `config_edits:` (2 spaces).
+    config_edits_yaml = "\n".join(
+        ("  " + ln) if ln else ln for ln in config_edits_yaml.split("\n")
+    )
+
+    rendered = EVAL_MANIFEST_TPL.format(
+        task_name=task_name, repo=repo, pr=pr,
+        base_commit=base_commit, merge_commit=merge_commit,
+        checks_yaml=checks_yaml,
+        config_edits_yaml=config_edits_yaml.rstrip(),
+    )
+    # Validate parseability before writing — better to fail loudly than to
+    # produce a manifest the judge will choke on.
+    try:
+        _yaml.safe_load(rendered)
+    except _yaml.YAMLError:
+        return None  # signal scaffold failure; caller logs it
+    (task_dir / "eval_manifest.yaml").write_text(rendered)
 
     # task.toml
     (task_dir / "task.toml").write_text(
@@ -564,15 +579,33 @@ def scaffold_one(pr_record: dict, files: list[dict], pr_data: dict,
 
 
 async def process_one(client, sem, pr_record, out_dir, codebearing_path):
+    """Process one queue row.
+
+    If scout already provided `file_paths`, do the TIER1_RE filter LOCALLY
+    and skip the per-PR REST `/files` call for codebearing PRs (~98% of
+    candidates). Only the ~2% pure-md PRs need the REST call to fetch
+    patch content for solve.sh + signal-line generation.
+    """
     async with sem:
         repo = pr_record["repo"]
         pr = pr_record["pr"]
         try:
+            # Fast-path: scout provided file_paths → filter without REST
+            scout_paths = pr_record.get("file_paths")
+            if scout_paths is not None:
+                if not scout_paths or not all(
+                        TIER1_RE.search(p) for p in scout_paths):
+                    with open(codebearing_path, "a") as f:
+                        f.write(json.dumps(pr_record) + "\n")
+                    return ("codebearing", repo, pr,
+                            f"{len(scout_paths)} files, prefiltered")
+
+            # Either scout didn't pre-provide paths, or all paths matched.
+            # Fetch full patch via REST.
             files = await fetch_files(client, repo, pr)
             if files is None:
                 return ("err", repo, pr, "files fetch failed")
             if not is_pure_markdown(files):
-                # Code-bearing — write to codebearing queue
                 with open(codebearing_path, "a") as f:
                     f.write(json.dumps(pr_record) + "\n")
                 return ("codebearing", repo, pr, f"{len(files)} files, mixed")

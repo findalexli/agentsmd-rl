@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: agents-fix-cosmosdbtcoreskillmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: astronomer/agents
+  pr: 122
+  base_commit: "bc25485283568dfc1b22372c27065b276e862085"
+  merge_commit: "1c8bb8f2346fa8adcba75ebc5cb7959f0d3f3295"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/cosmos-dbt-core/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/cosmos-dbt-core/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/cosmos-dbt-core/SKILL.md."
+
+config_edits:
+  - path: skills/cosmos-dbt-core/SKILL.md
+    tier: 1
+    gold_added: "> **Before starting**, confirm: (1) dbt engine = Core (not Fusion → use **cosmos-dbt-fusion**), (2) warehouse type, (3) Airflow version, (4) execution environment (Airflow env / venv / container), (5) DbtDag vs DbtTaskGroup vs individual operators, (6) manifest availability.\n## 1. Configure Project (ProjectConfig)\n\n| Approach | When to use | Required param |\n|----------|-------------|----------------|\n| Project path | Files available locally | `dbt_project_path` |\n| Manifest only | `dbt_manifest` load | `manifest_path` + `project_name` |\n\n```python\nfrom cosmos import ProjectConfig\n\n_project_config = ProjectConfig(\n    dbt_project_path=\"/path/to/dbt/project\",\n    # manifest_path=\"/path/to/manifest.json\",  # for dbt_manifest load mode\n    # project_name=\"my_project\",  # if using manifest_path without dbt_project_path\n    # install_dbt_deps=False,  # if deps precomputed in CI\n)\n```\n\n## 2. Choose Parsing Strategy (RenderConfig)\n| `dbt_ls` | Complex selectors; need dbt-native selection | dbt installed OR `dbt_executable_path` | Can also be used with containerized execution |\n| `automatic` (default) | Simple setups; let Cosmos pick | (none) | Falls back: manifest → dbt_ls → custom |\n> **CRITICAL**: Containerized execution (`DOCKER`/`KUBERNETES`/etc.)\n## 3. Choose Execution Mode (ExecutionConfig)\n| `WATCHER` | Fastest; single `dbt build` visibility | Fastest | dbt adapter in env OR `dbt_executable_path` or dbt Fusion |\n| `WATCHER_KUBERNETES` | Fastest isolated method; single `dbt build` visibility | Fast | dbt installed in container |\n| `LOCAL` + `DBT_RUNNER` | dbt + adapter in the same Python installation as Airflow | Fast | dbt 1.5+ in `requirements.txt` |\n| `LOCAL` + `SUBPROCESS` | dbt + adapter available in the Airflow deployment, in an isolated Python installation | Medium | `dbt_executable_path` |\n| `AIRFLOW_ASYNC` | BigQuery + long-running transforms | Fast | Airflow ≥2.8; provider deps |\n| `KUBERNETES` | Isolation between Airflow and dbt | Medium | Airflow ≥2.8; provider deps |\n| Other containerized approaches | Support Airflow and dbt isolation | Medium | container config |\n    execution_mode=ExecutionMode.WATCHER,  # or LOCAL, VIRTUALENV, AIRFLOW_ASYNC, KUBERNETES, etc.\n## 4. Configure Warehouse Connection (ProfileConfig)\n| `AFTER_EACH` (default) | Tests run immediately after each model (default) |\n### Option C: Use Cosmos operators directly\n\n```python\nimport os\nfrom datetime import datetime\nfrom pathlib import Path\nfrom typing import Any\n\nfrom airflow import DAG\n\ntry:\n    from airflow.providers.standard.operators.python import PythonOperator\nexcept ImportError:\n    from airflow.operators.python import PythonOperator\n\nfrom cosmos import DbtCloneLocalOperator, DbtRunLocalOperator, DbtSeedLocalOperator, ProfileConfig\nfrom cosmos.io import upload_to_aws_s3\n\nDEFAULT_DBT_ROOT_PATH = Path(__file__).parent / \"dbt\"\nDBT_ROOT_PATH = Path(os.getenv(\"DBT_ROOT_PATH\", DEFAULT_DBT_ROOT_PATH))\nDBT_PROJ_DIR = DBT_ROOT_PATH / \"jaffle_shop\"\nDBT_PROFILE_PATH = DBT_PROJ_DIR / \"profiles.yml\"\nDBT_ARTIFACT = DBT_PROJ_DIR / \"target\"\n\nprofile_config = ProfileConfig(\n    profile_name=\"default\",\n    target_name=\"dev\",\n    profiles_yml_filepath=DBT_PROFILE_PATH,\n)\n\n\ndef check_s3_file(bucket_name: str, file_key: str, aws_conn_id: str = \"aws_default\", **context: Any) -> bool:\n    \"\"\"Check if a file exists in the given S3 bucket.\"\"\"\n    from airflow.providers.amazon.aws.hooks.s3 import S3Hook\n\n    s3_key = f\"{context['dag'].dag_id}/{context['run_id']}/seed/0/{file_key}\"\n    print(f\"Checking if file {s3_key} exists in S3 bucket...\")\n    hook = S3Hook(aws_conn_id=aws_conn_id)\n    return hook.check_for_key(key=s3_key, bucket_name=bucket_name)\n\n\nwith DAG(\"example_operators\", start_date=datetime(2024, 1, 1), catchup=False) as dag:\n    seed_operator = DbtSeedLocalOperator(\n        profile_config=profile_config,\n        project_dir=DBT_PROJ_DIR,\n        task_id=\"seed\",\n        dbt_cmd_flags=[\"--select\", \"raw_customers\"],\n        install_deps=True,\n        append_env=True,\n    )\n\n    check_file_uploaded_task = PythonOperator(\n        task_id=\"check_file_uploaded_task\",\n        python_callable=check_s3_file,\n        op_kwargs={\n            \"aws_conn_id\": \"aws_s3_conn\",\n            \"bucket_name\": \"cosmos-artifacts-upload\",\n            \"file_key\": \"target/run_results.json\",\n        },\n    )\n\n    run_operator = DbtRunLocalOperator(\n        profile_config=profile_config,\n        project_dir=DBT_PROJ_DIR,\n        task_id=\"run\",\n        dbt_cmd_flags=[\"--models\", \"stg_customers\"],\n        install_deps=True,\n        append_env=True,\n    )\n\n    clone_operator = DbtCloneLocalOperator(\n        profile_config=profile_config,\n        project_dir=DBT_PROJ_DIR,\n        task_id=\"clone\",\n        dbt_cmd_flags=[\"--models\", \"stg_customers\", \"--state\", DBT_ARTIFACT],\n        install_deps=True,\n        append_env=True,\n    )\n\n    seed_operator >> run_operator >> clone_operator\n    seed_operator >> check_file_uploaded_task\n```\n\n- [ ] Execution mode matches constraints (AIRFLOW_ASYNC → BigQuery only)\n- [ ] Load mode matches execution (complex selectors → dbt_ls)"
+    gold_removed: ''

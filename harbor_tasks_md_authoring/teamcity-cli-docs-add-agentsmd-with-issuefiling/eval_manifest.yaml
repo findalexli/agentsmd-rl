@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: teamcity-cli-docs-add-agentsmd-with-issuefiling
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: JetBrains/teamcity-cli
+  pr: 235
+  base_commit: "06c7a6d4c6ab7b402e4b9f290fc8bc1d8eecf8fa"
+  merge_commit: "d601013be3b3afd9ef0b7171c2d5140ff01db136"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# Agent Instructions\n\n## Filing Issues\n\n- **Always check `.github/ISSUE_TEMPLATE/` before creating an issue.** This repo has\n  `blank_issues_enabled: false` — every issue must use a template. Match the template\n  to the issue type (bug, feature, eval task).\n- **Follow the template structure exactly.** Fill in each section as defined in the YAML\n  fields. Do not add extra sections, root-cause analysis, or fix suggestions unless the\n  template asks for them.\n- **Verify labels exist before using them.** Templates declare labels (e.g. `eval`) that\n  may not yet exist in the repo. Run `gh label list` first; create missing labels only\n  if the template requires them.\n\n## Eval Issues (`eval_task.yml`)\n\nEval issues document real agent failures to turn into automated benchmarks. Keep them\nfocused on observable behavior:\n\n- **Prompt**: what the agent was asked to do\n- **What the agent did**: paste the actual commands and reasoning — no interpretation\n- **Correct behavior**: numbered list of concrete steps / assertions\n- **Failure type checkboxes**: select from the predefined list only"
+    gold_removed: ''

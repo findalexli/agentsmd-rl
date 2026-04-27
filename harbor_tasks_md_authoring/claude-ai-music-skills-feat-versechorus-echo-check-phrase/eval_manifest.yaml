@@ -1,0 +1,80 @@
+version: "2.0"
+
+task:
+  name: claude-ai-music-skills-feat-versechorus-echo-check-phrase
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: bitwize-music-studio/claude-ai-music-skills
+  pr: 19
+  base_commit: "05f6802f63452a09689baaa2e1c2f4265ddfd412"
+  merge_commit: "e91ecf9e7310d7ec96171e68ecb75234171e7c9c"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/lyric-writer/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/lyric-writer/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/lyric-writer/SKILL.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '11. **Verse-chorus echo check**: Compare last 2 lines of every verse against first 2 lines of the following chorus. Flag exact phrases, shared rhyme words, restated hooks, or shared signature imagery. Check ALL verse-to-chorus and bridge-to-chorus transitions. The chorus is the payoff — the verse should set it up, not pre-deliver it.'
+    gold_removed: ''
+  - path: skills/lyric-writer/SKILL.md
+    tier: 1
+    gold_added: '11. **Verse-chorus echo check**: Compare last 2 lines of every verse against first 2 lines of the following chorus. Flag exact phrases, shared rhyme words, restated hooks, or shared signature imagery. Check ALL verse-to-chorus and bridge-to-chorus transitions.
+
+      ### No Verse-Chorus Echo (Phrase Deduplication)
+
+      A verse must never repeat a key phrase, image, or rhyme word that appears in the chorus it leads into. The chorus is the hook — if the verse already said it, the chorus loses its impact.
+
+      **What to check** — before finalizing any track, compare:
+
+      1. The last 2 lines of every verse/section that precedes a chorus
+
+      2. The first 2 lines of the chorus
+
+
+      Flag any of these overlaps:
+
+      - **Exact phrase**: Same words appear in both (e.g., "digital heart" / "digital heart")
+
+      - **Same rhyme word**: Verse ends on "start," chorus opens on "start"
+
+      - **Restated hook**: Verse paraphrases the chorus hook in different words
+
+      - **Shared imagery**: Verse uses the chorus''s signature image (e.g., both say "warehouse")
+
+      - Last line of verse contains ANY phrase from the chorus first line
+
+      - A signature chorus word (the hook word) appears anywhere in the preceding verse
+
+      - The verse "gives away" the chorus before it hits
+
+
+      **Fix:**
+
+      1. Rewrite the verse line to use DIFFERENT imagery that SETS UP the chorus
+
+      2. The verse should create tension or expectation — the chorus resolves it
+
+      3. Complementary, not redundant: verse says "spark," chorus says "start"
+
+      **Scope:** This applies to EVERY verse-to-chorus transition in the track, not just the first one. Check all of them. Also check bridge-to-chorus transitions.
+
+      - [ ] Verse-chorus echo (verse repeats chorus phrase, rhyme word, hook, or signature imagery)'
+    gold_removed: ''

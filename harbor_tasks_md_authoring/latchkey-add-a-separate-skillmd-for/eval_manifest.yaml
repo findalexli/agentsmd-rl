@@ -1,0 +1,36 @@
+version: "2.0"
+
+task:
+  name: latchkey-add-a-separate-skillmd-for
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: imbue-ai/latchkey
+  pr: 39
+  base_commit: "6915b654e8e9890fe4a2c40c9a7602501afe87d2"
+  merge_commit: "fc864662e286ecf5809e6afc9306d898aa95e6fd"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in integrations/openclaw/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in integrations/openclaw/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in integrations/openclaw/SKILL.md."
+
+config_edits:
+  - path: integrations/SKILL.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: integrations/openclaw/SKILL.md
+    tier: 1
+    gold_added: "---\nname: latchkey\ndescription: Interact with arbitrary third-party or self-hosted services (AWS, Slack, Google Drive, Dropbox, GitHub, GitLab, Linear, Coolify...) using their HTTP APIs.\ncompatibility: Requires node.js, curl and latchkey (npm install -g latchkey).\nmetadata: {\"openclaw\":{\"emoji\":\"\U0001F511\",\"requires\":{\"bins\":[\"latchkey\"]},\"install\":[{\"id\":\"node\",\"kind\":\"node\",\"package\":\"latchkey\",\"bins\":[\"latchkey\"],\"label\":\"Install Latchkey (npm)\"}]}}\n---\n\n# Latchkey\n\n## Instructions\n\nLatchkey is a CLI tool that automatically injects credentials into curl commands. Credentials (mostly API tokens) need to be manually managed by the user.\n\nUse this skill when the user asks you to work with services that have HTTP APIs, like AWS, Coolify, GitLab, Google Drive, Discord or others.\n\nUsage:\n\n1. **Use `latchkey curl`** instead of regular `curl` for supported services.\n2. **Pass through all regular curl arguments** - latchkey is a transparent wrapper.\n3. **Check for `latchkey services list`** to get a list of supported services. Use `--viable` to only show the currently configured ones.\n4. **Use `latchkey services info <service_name>`** to get information about a specific service (auth options, credentials status, API docs links, special requirements, etc.).\n5. **If necessary, ask the user to configure credentials first.** Tell the user to run `latchkey auth set` on the machine where latchkey is installed (using the setCredentialsExample from the `services info` command).\n6. **Look for the newest documentation of the desired public API online.**\n7. **Do not initiate a new login if the credentials status is `valid` or `unknown`** - the user might just not have the necessary permissions for the action you're trying to do.\n\n\n## Examples\n\n### Make an authenticated curl request\n```bash\nlatchkey curl [curl arguments]\n```\n\n### Creating a Slack channel\n```bash\nlatchkey curl -X POST 'https://slack.com/api/conversations.create' \\\n  -H 'Content-Type: application/json' \\\n  -d '{\"name\":\"my-channel\"}'\n```\n\n(Notice that `-H 'Authorization: Bearer` is not present in the invocation.)\n\n### Getting Discord user info\n```bash\nlatchkey curl 'https://discord.com/api/v10/users/@me'\n```\n\n### Detect expired credentials\n```bash\nlatchkey services info discord  # Check the \"credentialStatus\" field - shows \"invalid\"\n```\n\n### List usable services\n\n```bash\nlatchkey services list --viable\n```\n\nLists services that have stored credentials.\n\n### Get service-specific info\n```bash\nlatchkey services info slack\n```\n\nReturns auth options, credentials status, and developer notes\nabout the service.\n\n\n## Storing credentials\n\nIt is the user's responsibility to supply credentials. The user would typically do something like this:\n\n```bash\nlatchkey auth set my-gitlab-instance -H \"PRIVATE-TOKEN: <token>\"\n```\n\nWhen credentials cannot be expressed as static curl arguments, the user would use the `set-nocurl` subcommand. For example:\n\n```bash\nlatchkey auth set-nocurl aws <access-key-id> <secret-access-key>\n```\n\nIf a service doesn't appear with the `--viable` flag, it may\nstill be supported; the user just hasn't provided the\ncredentials yet. `latchkey service info <service_name>` can be\nused to see how to provide credentials for a specific service.\n\n\n## Notes\n\n- All curl arguments are passed through unchanged\n- Return code, stdout and stderr are passed back from curl\n- Credentials are always stored encrypted and are never transmitted anywhere beyond the endpoints specified by the actual curl calls.\n\n## Currently supported services\n\nLatchkey currently offers varying levels of support for the\nfollowing services: AWS, Calendly, Coolify, Discord, Dropbox, Figma, GitHub, GitLab,\nGmail, Google Analytics, Google Calendar, Google Docs, Google Drive, Google Sheets,\nLinear, Mailchimp, Notion, Sentry, Slack, Stripe, Telegram, Umami, Yelp, Zoom, and more.\n\n### User-registered services\n\nNote for humans: users can also add limited support for new services\nat runtime using the `latchkey services register` command."
+    gold_removed: ''

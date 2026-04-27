@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: skills-docsrepo-add-claudemd-development-guidance
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: posit-dev/skills
+  pr: 31
+  base_commit: "1dd96f9117e37a83e8a4c4207b0a72ea292b8335"
+  merge_commit: "9f8615e4c89df9f87427ae726f332fca5660cb4c"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: "# CLAUDE.md\n\nThis file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.\n\n## What This Repository Is\n\nA collection of Claude Skills published by Posit PBC. Skills are structured markdown files that teach Claude specialized workflows (e.g., Shiny app development, R package testing, GitHub PR workflows). There is no application code to build, compile, or deploy — the primary artifacts are Markdown files consumed directly by Claude's skill system.\n\n## Utility Script\n\nThe only runnable utility is `count-skill-tokens.py`, which reports line and token counts for a skill:\n\n```bash\n# Requires uv\n./count-skill-tokens.py shiny/shiny-bslib\n# or\nuv run count-skill-tokens.py r-lib/cli\n```\n\nWarns when `SKILL.md` exceeds **5,000 tokens / 500 lines**, or when the skill `description` frontmatter exceeds **100 tokens**.\n\n## Directory Structure\n\n```\n<category>/\n  README.md                   # Category-level notes (optional per skill)\n  <skill-name>/\n    SKILL.md                  # Required: skill definition with YAML frontmatter\n    references/               # Optional: supplementary docs loaded on demand\n      *.md\n    scripts/                  # Optional: R or shell helpers\n    templates/                # Optional: document templates\n```\n\nDo **not** create a `README.md` inside individual skill directories — documentation about a skill's design goes in the category README.\n\n## SKILL.md Format\n\nEvery skill requires YAML frontmatter at minimum:\n\n```yaml\n---\nname: your-skill-name        # kebab-case, matches directory name\ndescription: >               # Claude reads this to decide when to activate the skill\n  Clear description of what this skill does and when to trigger it.\n  Keep under 100 tokens.\n---\n```\n\nThe body is instructions written **for Claude**, not end users — imperative, step-by-step, covering edge cases.\n\n## Registering a New Skill\n\nAfter creating the skill directory, add it to the appropriate plugin in `.claude-plugin/marketplace.json`:\n\n```json\n{\n  \"name\": \"open-source\",\n  \"skills\": [\n    \"./open-source/release-post\",\n    \"./open-source/your-new-skill\"   ← add here\n  ]\n}\n```\n\nIf a skill spans multiple categories (like `brand-yml` for both Shiny and Quarto), add its path to multiple plugin `skills` arrays. The `source` field is always `\"./\"` (repo root).\n\n## Skill Categories\n\n| Category | Purpose |\n|----------|---------|\n| `posit-dev/` | General developer skills (code review, architecture docs) |\n| `github/` | PR creation and review thread workflows |\n| `open-source/` | R/Python package release and changelog workflows |\n| `r-lib/` | R package development with the r-lib ecosystem |\n| `shiny/` | Shiny app development |\n| `quarto/` | Quarto document authoring |\n| `brand-yml/` | Shared skill registered under both `shiny` and `quarto` plugins |\n\n## Key Conventions\n\n- **Progressive disclosure**: Put specialized or large reference content in `references/*.md` and instruct Claude to read those files only when needed. This keeps the main `SKILL.md` within token limits.\n- **R scripts**: Use a shebang (`#!/usr/bin/env Rscript`), include inline usage docs, check for required packages at startup, and exit non-zero on error.\n- **Testing**: Install locally via `cp -r <category>/<skill> ~/.config/claude-code/skills/` and verify Claude activates the skill in Claude Code."
+    gold_removed: ''

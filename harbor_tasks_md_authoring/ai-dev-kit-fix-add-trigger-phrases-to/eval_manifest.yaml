@@ -1,0 +1,56 @@
+version: "2.0"
+
+task:
+  name: ai-dev-kit-fix-add-trigger-phrases-to
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: databricks-solutions/ai-dev-kit
+  pr: 317
+  base_commit: "75abeed99b401189c53e9463737bc7cc0946e8da"
+  merge_commit: "d203d15a3805c2d2c273f4856d709e267483e8af"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in databricks-skills/databricks-config/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in databricks-skills/databricks-docs/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in databricks-skills/databricks-lakebase-autoscale/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in databricks-skills/databricks-lakebase-provisioned/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in databricks-skills/databricks-spark-structured-streaming/SKILL.md."
+
+config_edits:
+  - path: databricks-skills/databricks-config/SKILL.md
+    tier: 1
+    gold_added: 'description: "Manage Databricks workspace connections: check current workspace, switch profiles, list available workspaces, or authenticate to a new workspace. Use when the user mentions \"switch workspace\", \"which workspace\", \"current profile\", \"databrickscfg\", \"connect to workspace\", or \"databricks auth\"."'
+    gold_removed: ''
+  - path: databricks-skills/databricks-docs/SKILL.md
+    tier: 1
+    gold_added: 'description: "Databricks documentation reference via llms.txt index. Use when other skills do not cover a topic, looking up unfamiliar Databricks features, or needing authoritative docs on APIs, configurations, or platform capabilities."'
+    gold_removed: ''
+  - path: databricks-skills/databricks-lakebase-autoscale/SKILL.md
+    tier: 1
+    gold_added: 'description: "Patterns and best practices for Lakebase Autoscaling (next-gen managed PostgreSQL). Use when creating or managing Lakebase Autoscaling projects, configuring autoscaling compute or scale-to-zero, working with database branching for dev/test workflows, implementing reverse ETL via synced tables, or connecting applications to Lakebase with OAuth credentials."'
+    gold_removed: ''
+  - path: databricks-skills/databricks-lakebase-provisioned/SKILL.md
+    tier: 1
+    gold_added: 'description: "Patterns and best practices for Lakebase Provisioned (Databricks managed PostgreSQL) for OLTP workloads. Use when creating Lakebase instances, connecting applications or Databricks Apps to PostgreSQL, implementing reverse ETL via synced tables, storing agent or chat memory, or configuring OAuth authentication for Lakebase."'
+    gold_removed: ''
+  - path: databricks-skills/databricks-spark-structured-streaming/SKILL.md
+    tier: 1
+    gold_added: 'description: "Comprehensive guide to Spark Structured Streaming for production workloads. Use when building streaming pipelines, working with Kafka ingestion, implementing Real-Time Mode (RTM), configuring triggers (processingTime, availableNow), handling stateful operations with watermarks, optimizing checkpoints, performing stream-stream or stream-static joins, writing to multiple sinks, or tuning streaming cost and performance."'
+    gold_removed: ''

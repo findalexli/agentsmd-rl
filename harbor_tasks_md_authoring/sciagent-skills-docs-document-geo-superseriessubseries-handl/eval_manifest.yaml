@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: sciagent-skills-docs-document-geo-superseriessubseries-handl
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: jaechang-hits/SciAgent-Skills
+  pr: 14
+  base_commit: "566e770ffd43d1ef44d29e99e7b257646b939e80"
+  merge_commit: "2ba45a2d6704fc296b3abeb80d37adc9217693c7"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/genomics-bioinformatics/geo-database/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/genomics-bioinformatics/geo-database/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/genomics-bioinformatics/geo-database/SKILL.md."
+
+config_edits:
+  - path: skills/genomics-bioinformatics/geo-database/SKILL.md
+    tier: 1
+    gold_added: "### SuperSeries and SubSeries\n\nMulti-assay or multi-batch submissions (e.g., RNA-seq + ATAC-seq) are organized as a **SuperSeries** GSE that references one or more **SubSeries** GSEs. Each SubSeries holds its own samples, platform, and matrix; the SuperSeries itself has no samples of its own. Both are tagged in `gse.metadata`:\n\n- SuperSeries: `gse.metadata[\"relation\"]` contains entries like `\"SuperSeries of: GSExxxx\"`\n- SubSeries: `gse.metadata[\"relation\"]` contains `\"SubSeries of: GSEyyyy\"`\n\nAlways resolve SubSeries before pulling an expression matrix — downloading the SuperSeries alone yields metadata but no data.\n\n```python\nimport GEOparse\n\ngse = GEOparse.get_GEO(\"GSE47966\", destdir=\"./geo_data/\", silent=True)  # a SuperSeries\nrelations = gse.metadata.get(\"relation\", [])\nsubseries = [r.split(\": \")[1] for r in relations if r.startswith(\"SuperSeries of\")]\nprint(f\"SubSeries to download: {subseries}\")\n\nfor acc in subseries:\n    sub = GEOparse.get_GEO(acc, destdir=\"./geo_data/\", silent=True)\n    print(f\"  {acc}: {len(sub.gsms)} samples, platforms={list(sub.gpls.keys())}\")\n```\n\n6. **Always resolve SubSeries before analysis**: After loading any GSE, inspect `gse.metadata.get(\"relation\", [])` for `\"SuperSeries of: ...\"` entries. If present, iterate every referenced SubSeries accession and download each one — the SuperSeries record itself carries no samples or expression matrices. Skipping this step silently drops the actual data.\n\n| GSE has no samples / empty `gse.gsms` | Accession is a SuperSeries | Parse `gse.metadata[\"relation\"]` for `SuperSeries of:` entries and download each SubSeries |"
+    gold_removed: ''

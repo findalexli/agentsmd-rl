@@ -1,0 +1,65 @@
+version: "2.0"
+
+task:
+  name: libretto-docs-enforce-cireview-gating-in
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: saffron-health/libretto
+  pr: 36
+  base_commit: "c04e573272d2b4a69ec83ff14c8f95dbb40c4cfb"
+  merge_commit: "8333f439e9aad0a1ab06cbf38887cdbe4bfcb138"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/push/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/push/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/push/SKILL.md."
+
+config_edits:
+  - path: .agents/skills/push/SKILL.md
+    tier: 1
+    gold_added: '3. Continue with the commit and PR workflow below
+
+      ## Commit and PR workflow
+
+      ## CI and review gating
+
+
+      Do not report completion to the user until all required GitHub PR checks pass.
+
+
+      After every push:
+
+
+      1. Watch the PR checks with `gh pr checks --watch`.
+
+      2. Wait for all required checks to complete.
+
+      3. If any test or type-check command fails, inspect logs immediately, fix the issue, commit, push, and repeat this CI loop until checks pass.
+
+      4. If checks are blocked on AI review bots, wait for bot completion and read all bot reviews before reporting completion.
+
+
+      AI review bot handling:
+
+
+      1. Read every new AI review comment on the PR, including multiple reviews from multiple bots.
+
+      2. Analyze each concern and classify it as valid, partially valid, or not valid.
+
+      3. For valid or partially valid concerns, apply fixes, commit, push, and restart the CI loop.
+
+      4. For concerns that are not valid, explain why with concrete technical reasoning when you report status to the user.
+
+      '
+    gold_removed: ''

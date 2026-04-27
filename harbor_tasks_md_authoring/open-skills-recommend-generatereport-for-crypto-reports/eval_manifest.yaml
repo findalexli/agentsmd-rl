@@ -1,0 +1,56 @@
+version: "2.0"
+
+task:
+  name: open-skills-recommend-generatereport-for-crypto-reports
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: besoeasy/open-skills
+  pr: 4
+  base_commit: "8273610bb7740b7906d72625624099d5562ee964"
+  merge_commit: "2a503220f7ff22096e15d028d95f4857e2d0dca4"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/city-distance/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/city-distance/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/city-distance/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/get-crypto-price/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/get-crypto-price/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/get-crypto-price/SKILL.md."
+
+config_edits:
+  - path: skills/city-distance/SKILL.md
+    tier: 1
+    gold_added: "---\nname: city-distance\ndescription: Calculate line-of-sight and road distances between two cities using free OpenStreetMap services.\n---\n\n- examples: EXAMPLES.md with worked examples (Paris–Berlin, Paris–Dubai)\n\nWhen to use:\n- Quickly get straight-line and driving distances between two cities without paying for an API.\n- Generate a rough list of settlements along a driving route for planning or visualization.\n\nPrerequisites:\n- Node.js 18+ for the Node.js examples (native fetch available)\n- curl and jq for Bash examples\n\nAgent prompt:\n> Calculate both the straight-line (Haversine) distance and the driving distance between {cityA} and {cityB} using free OpenStreetMap services. Return distances in km and optionally list major towns along the driving route.\n\nExamples\n--------\n\nBash (uses OSM routing, jq):\n\n```bash\nset -euo pipefail\nCITY_A_LAT=48.8566\nCITY_A_LON=2.3522\nCITY_B_LAT=52.52\nCITY_B_LON=13.4050\nURL=\"https://routing.openstreetmap.de/routed-car/route/v1/driving/${CITY_A_LON},${CITY_A_LAT};${CITY_B_LON},${CITY_B_LAT}?overview=false\"\n\ncurl -fsS --max-time 10 \"$URL\" | jq -r '.routes[0].distance / 1000'\n```\n\nNode.js (uses native fetch, AbortController, error handling):\n\n```javascript\n// city_distance_calculator.js\nasync function fetchJson(url, timeoutMs = 10000) {\n  const controller = new AbortController();\n  const id = setTimeout(() => controller.abort(), timeoutMs);\n  try {\n    const res = await fetch(url, { signal: controller.signal });\n    clearTimeout(id);\n    if (!res.ok) throw new Error(`HTTP ${res.status}`);\n    return await res.json();\n  } catch (err) {\n    clearTimeout(id);\n    throw err;\n  }\n}\n\nfunction haversine(lat1, lon1, lat2, lon2) {\n  const R = 6371e3;\n  const toRad = d => (d * Math.PI) / 180;\n  const φ1 = toRad(lat1), φ2 = toRad(lat2);\n  const Δφ = toRad(lat2 - lat1), Δλ = toRad(lon2 - lon1);\n  const a = Math.sin(Δφ/2)**2 + Math.cos(φ1)*Math.cos(φ2)*Math.sin(Δλ/2)**2;\n  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));\n  return (R * c) / 1000;\n}\n\n(async () => {\n  const paris = { lat: 48.8566, lon: 2.3522 };\n  const berlin = { lat: 52.52, lon: 13.4050 };\n  console.log('Line-of-sight (km):', haversine(paris.lat, paris.lon, berlin.lat, berlin.lon).toFixed(2));\n\n  const url = `https://routing.openstreetmap.de/routed-car/route/v1/driving/${paris.lon},${paris.lat};${berlin.lon},${berlin.lat}?overview=false`;\n  const data = await fetchJson(url, 15000);\n  console.log('Driving distance (km):', (data.routes[0].distance / 1000).toFixed(2));\n})();\n```\nSee also:\n- SKILL_TEMPLATE.md\n"
+    gold_removed: ''
+  - path: skills/get-crypto-price/SKILL.md
+    tier: 1
+    gold_added: '
+
+
+      Agent note: When producing human-friendly reports, agents should use the `skills/generate-report` skill to produce formatted outputs (markdown or PDF). See `skills/generate-report/SKILL.md` for examples and templates.
+
+
+      Example agent prompt:
+
+      > Use the generate-report skill to create a short Bitcoin price report (current price, 24h change, 7d change) in markdown and PDF. Include source URLs.'
+    gold_removed: ''

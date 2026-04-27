@@ -1,0 +1,198 @@
+version: "2.0"
+
+task:
+  name: agents-use-af-cli-in-skills
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: astronomer/agents
+  pr: 108
+  base_commit: "d8ff2c0e882cae291fdfb31963e524f5a04d1f0b"
+  merge_commit: "5ee86b5d7467adddc0063e8e64256b6265ce8dbf"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/airflow/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/airflow/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/airflow/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/authoring-dags/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/authoring-dags/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/authoring-dags/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/checking-freshness/SKILL.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/checking-freshness/SKILL.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/checking-freshness/SKILL.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/debugging-dags/SKILL.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/debugging-dags/SKILL.md."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/debugging-dags/SKILL.md."
+  - id: signal_12
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/testing-dags/SKILL.md."
+  - id: signal_13
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/testing-dags/SKILL.md."
+  - id: signal_14
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/tracing-downstream-lineage/SKILL.md."
+  - id: signal_15
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/tracing-downstream-lineage/SKILL.md."
+  - id: signal_16
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/tracing-downstream-lineage/SKILL.md."
+  - id: signal_17
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/tracing-upstream-lineage/SKILL.md."
+  - id: signal_18
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/tracing-upstream-lineage/SKILL.md."
+  - id: signal_19
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/tracing-upstream-lineage/SKILL.md."
+
+config_edits:
+  - path: skills/airflow/SKILL.md
+    tier: 1
+    gold_added: '- "Create a new DAG" / "Write a pipeline" -> use the **authoring-dags** skill
+
+      - "Test this DAG and fix if it fails" -> use the **testing-dags** skill
+
+      - "Full root cause analysis" / "Diagnose and fix" -> use the **debugging-dags** skill
+
+
+      ### Data Operations
+
+      - "Is the data fresh?" / "When was this table last updated?" -> use the **checking-freshness** skill
+
+      - "Where does this data come from?" -> use the **tracing-upstream-lineage** skill
+
+      - "What depends on this table?" / "What breaks if I change this?" -> use the **tracing-downstream-lineage** skill
+
+      | Skill | Use when... |
+
+      |-------|-------------|
+
+      | **authoring-dags** | Creating or editing DAG files with best practices |
+
+      | **testing-dags** | Iterative test -> debug -> fix -> retest cycles |
+
+      | **debugging-dags** | Deep root cause analysis and failure diagnosis |
+
+      | **checking-freshness** | Checking if data is up to date or stale |
+
+      | **tracing-upstream-lineage** | Finding where data comes from |
+
+      | **tracing-downstream-lineage** | Impact analysis -- what breaks if something changes |
+
+      | **migrating-airflow-2-to-3** | Upgrading DAGs from Airflow 2.x to 3.x |
+
+      | **managing-astro-local-env** | Starting, stopping, or troubleshooting local Airflow |
+
+      | **setting-up-astro-project** | Initializing a new Astro/Airflow project |'
+    gold_removed: ''
+  - path: skills/authoring-dags/SKILL.md
+    tier: 1
+    gold_added: "This skill guides you through creating and validating Airflow DAGs using best practices and `af` CLI commands.\n> **For testing and debugging DAGs**, see the **testing-dags** skill which covers the full test -> debug -> fix -> retest workflow.\n## Running the CLI\nRun all `af` commands using uvx (no installation required):\n```bash\nuvx --from astro-airflow-mcp af <command>\n```\nThroughout this document, `af` is shorthand for `uvx --from astro-airflow-mcp af`.\n\n---\n+-----------------------------------------+\n| 1. DISCOVER                             |\n|    Understand codebase & environment    |\n+-----------------------------------------+\n                 |\n+-----------------------------------------+\n| 2. PLAN                                 |\n|    Propose structure, get approval      |\n+-----------------------------------------+\n                 |\n+-----------------------------------------+\n| 3. IMPLEMENT                            |\n|    Write DAG following patterns         |\n+-----------------------------------------+\n                 |\n+-----------------------------------------+\n| 4. VALIDATE                             |\n|    Check import errors, warnings        |\n+-----------------------------------------+\n                 |\n+-----------------------------------------+\n| 5. TEST (with user consent)             |\n|    Trigger, monitor, check logs         |\n+-----------------------------------------+\n                 |\n+-----------------------------------------+\n| 6. ITERATE                              |\n|    Fix issues, re-validate              |\n+-----------------------------------------+\nUse `af` CLI commands to understand what's available:\n| Command | Purpose |\n|---------|---------|\n| `af config connections` | What external systems are configured |\n| `af config variables` | What configuration values exist |\n| `af config providers` | What operator packages are installed |\n| `af config version` | Version constraints and features |\n| `af dags list` | Existing DAGs and naming conventions |\n| `af config pools` | Resource pools for concurrency |\n- \"Is there a Snowflake connection?\" -> `af config connections`\n- \"What Airflow version?\" -> `af config version`\n- \"Are S3 operators available?\" -> `af config providers`\n**Use `af` CLI as a feedback loop to validate your DAG.**\nAfter saving, check for parse errors (Airflow will have already parsed the file):\n```bash\naf dags errors\n```\n- If your file appears -> **fix and retry**\n- If no errors -> **continue**\n```bash\naf dags get <dag_id>\n```\n```bash\naf dags warnings\n```\n```bash\naf dags explore <dag_id>\n```\n> See the **testing-dags** skill for comprehensive testing guidance.\n1. **Get user consent** -- Always ask before triggering\n2. **Trigger and wait** -- `af runs trigger-wait <dag_id> --timeout 300`\n3. **Analyze results** -- Check success/failure status\n4. **Debug if needed** -- `af runs diagnose <dag_id> <run_id>` and `af tasks logs <dag_id> <run_id> <task_id>`\n```bash\naf runs trigger-wait <dag_id> --timeout 300\nFor the full test -> debug -> fix -> retest loop, see **testing-dags**.\n2. Check for import errors: `af dags errors`\n3. Re-validate (Phase 4)\n## CLI Quick Reference\n| Phase | Command | Purpose |\n|-------|---------|---------|\n| Discover | `af config connections` | Available connections |\n| Discover | `af config variables` | Configuration values |\n| Discover | `af config providers` | Installed operators |\n| Discover | `af config version` | Version info |\n| Validate | `af dags errors` | Parse errors (check first!) |\n| Validate | `af dags get <dag_id>` | Verify DAG config |\n| Validate | `af dags warnings` | Configuration warnings |\n| Validate | `af dags explore <dag_id>` | Full DAG inspection |\n> **Testing commands** -- See the **testing-dags** skill for `af runs trigger-wait`, `af runs diagnose`, `af tasks logs`, etc.\n- **testing-dags**: For testing DAGs, debugging failures, and the test -> fix -> retest loop"
+    gold_removed: ''
+  - path: skills/checking-freshness/SKILL.md
+    tier: 1
+    gold_added: "1. **Find the DAG**: Which DAG populates this table? Use `af dags list` and look for matching names.\n   - Is the DAG paused? Use `af dags get <dag_id>`\n   - Did the last run fail? Use `af dags stats`"
+    gold_removed: ''
+  - path: skills/debugging-dags/SKILL.md
+    tier: 1
+    gold_added: '## Running the CLI
+
+
+      Run all `af` commands using uvx (no installation required):
+
+
+      ```bash
+
+      uvx --from astro-airflow-mcp af <command>
+
+      ```
+
+
+      Throughout this document, `af` is shorthand for `uvx --from astro-airflow-mcp af`.
+
+
+      ---
+
+
+      - Run `af runs diagnose <dag_id> <dag_run_id>` (if run_id is provided)
+
+      - If no run_id specified, run `af dags stats` to find recent failures
+
+      - Run `af health` to find recent failures across all DAGs
+
+      - Check for import errors with `af dags errors`
+
+      1. **Get task logs** using `af tasks logs <dag_id> <dag_run_id> <task_id>`
+
+      Use `af runs get <dag_id> <dag_run_id>` to compare the failed run against recent successful runs.
+
+      - To clear and rerun failed tasks: `af tasks clear <dag_id> <run_id> <task_ids> -D`'
+    gold_removed: ''
+  - path: skills/testing-dags/SKILL.md
+    tier: 1
+    gold_added: 'uvx --from astro-airflow-mcp af <command>
+
+      Throughout this document, `af` is shorthand for `uvx --from astro-airflow-mcp af`.'
+    gold_removed: ''
+  - path: skills/tracing-downstream-lineage/SKILL.md
+    tier: 1
+    gold_added: "   - Use `af dags list` to get all DAGs\n   - Use `af dags source <dag_id>` to search for table references\n1. **Check what the DAG produces**: Use `af dags source <dag_id>` to find output tables"
+    gold_removed: ''
+  - path: skills/tracing-upstream-lineage/SKILL.md
+    tier: 1
+    gold_added: '1. **Search DAGs by name**: Use `af dags list` and look for DAG names matching the table name
+
+      2. **Explore DAG source code**: Use `af dags source <dag_id>` to read the DAG definition
+
+      3. **Check DAG tasks**: Use `af tasks list <dag_id>` to see what operations the DAG performs
+
+      - **DAGs**: Check recent run status with `af dags stats`'
+    gold_removed: ''

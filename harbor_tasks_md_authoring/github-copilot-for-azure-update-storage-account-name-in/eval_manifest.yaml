@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: github-copilot-for-azure-update-storage-account-name-in
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: microsoft/GitHub-Copilot-for-Azure
+  pr: 1863
+  base_commit: "9470ca612677b575b422b0d4676d8f2268a83287"
+  merge_commit: "14f90e966caae4c626ee90cfdd538992a63ab5bc"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/analyze-skill-issues/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/analyze-skill-issues/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/skills/analyze-skill-issues/SKILL.md."
+
+config_edits:
+  - path: .github/skills/analyze-skill-issues/SKILL.md
+    tier: 1
+    gold_added: "  version: \"1.0.1\"\nQueries the `strdashboarddevveobvk` Azure Storage account that stores all integration test results and retrieves error details for a given skill.\n| Storage account | `strdashboarddevveobvk` |\nMCP tools are used exclusively for **blob discovery** — finding which blob paths exist. All calls require `account: \"strdashboarddevveobvk\"` and `container: \"integration-reports\"`. Use `az storage blob download` (see Phase 2) to read blob content.\n   mcp_azure_mcp_storage_blob_get({ account: \"strdashboarddevveobvk\", container: \"integration-reports\" })\naz storage blob download --account-name strdashboarddevveobvk --container-name integration-reports `\n| Blob list is empty | Container access issue or wrong account | Confirm `account: \"strdashboarddevveobvk\"` and that the user has Azure CLI credentials |"
+    gold_removed: ''

@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: goose-skills-removed-things-which-were-causing
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: gooseworks-ai/goose-skills
+  pr: 25
+  base_commit: "d652848ff3b389ee534e4c9420f6cc06fce9a695"
+  merge_commit: "338a01ebda726bbfc7a52458bfc4dedd56cb60a2"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/capabilities/create-dashboard/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/capabilities/create-dashboard/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/capabilities/create-dashboard/SKILL.md."
+
+config_edits:
+  - path: skills/capabilities/create-dashboard/SKILL.md
+    tier: 1
+    gold_added: "You are helping the user build a custom dashboard from the Gooseworks dashboard template.\nThe app must run on port `3847` from a single Express process that serves both API routes\nand the built React UI so it appears in the Gooseworks App tab.\n## Non-negotiable constraints\n1. Always use the template workflow (React + Vite + Tailwind + Express). Do not rebuild this in another framework.\n2. Use sandbox-agnostic paths via `$HOME` and `$HOME/workspace` only.\n3. Keep the active project in `$HOME/dashboard` (outside the workspace mount).\n4. Mirror only source files to `$HOME/workspace/dashboard-src` for persistence.\n5. Never place dependencies, build output, or VCS metadata in the mirror.\n6. Use one runtime port (`3847`) and one server process. No separate frontend dev server.\n## State handling\nBefore editing, inspect:\n- whether `$HOME/dashboard` exists\n- whether `$HOME/workspace/dashboard-src` exists\n- whether dependencies are already installed in `$HOME/dashboard`\nThen follow this decision flow:\n- Dashboard exists with dependencies: move to customization.\n- Dashboard missing but mirror exists: restore from mirror into `$HOME/dashboard`, install deps, build, start server, verify health.\n- Both missing: initialize from the official Gooseworks dashboard template, install deps, then continue.\n- Dashboard exists without dependencies: install deps, then continue.\nIf template initialization fails because the template source is unavailable, tell the user to retry once it is available. Do not hand-roll a replacement template.\n## Discovery and planning\nBefore coding:\n1. Clarify what the user wants to visualize if unclear.\n2. Inspect database schema with `query_database`:\n   - list tables\n   - inspect columns for relevant tables\n3. If the request is vague, confirm a one-sentence implementation plan.\n## Implementation guidance\nTemplate structure to use:\n- `server.js` for API routes and static serving.\n- `src/App.tsx` for route registration.\n- `src/components/Layout.tsx` for sidebar navigation entries.\n- `src/pages/*` for page implementations.\n- `src/lib/api.ts` (`runQuery`) for data access from pages.\nFor each new page:\n1. Create a page component in `src/pages`.\n2. Pull data using `runQuery` or a dedicated read-only API route when SQL becomes complex.\n3. Add route wiring in `src/App.tsx`.\n4. Add navigation in `src/components/Layout.tsx`.\nKeep all dashboard endpoints read-only.\n## Visual style rules\n- Use the stone palette only (for example: `text-stone-*`, `border-stone-*`, `bg-stone-*`).\n- Prefer compact typography (`text-xs` or `text-sm`) with `font-normal`.\n- Keep borders minimal and avoid heavy shadows.\n- For Recharts lines/grids, stay within the stone color family.\n## Build, run, and verify\nAfter changes:\n1. Run a production build.\n2. Restart the existing dashboard server process cleanly.\n3. Start the server that serves both API and UI on `3847`.\n4. Verify health via `/api/health`.\nInterpret health:\n- `ok=true` and `db=true`: dashboard is live.\n- `db=false`: inform the user that agent DB credentials/config are missing and stop further DB-dependent work.\n## Persistence to workspace mirror\nAfter each successful change:\n1. Ensure mirror destination is `$HOME/workspace/dashboard-src`.\n2. Sync source files from `$HOME/dashboard` into the mirror.\n3. Exclude dependency/build/VCS folders and files (for example dependency directory, build directory, and `.git`).\n4. Verify mirror size stays small (roughly under 1 MB; if it grows very large, clean leaked heavy folders and sync again).\nThe mirror should include source and config files needed to recreate the project quickly after restart.\n## Completion message\nEnd with a direct status message that the dashboard is live in the App tab and ready for further edits.\n## Iteration loop\nFor every follow-up tweak:\n1. Edit relevant files in `$HOME/dashboard`.\n2. Rebuild and restart the single server on `3847`.\n3. Re-sync source-only files to `$HOME/workspace/dashboard-src`.\n4. Tell the user the update is done and that the App tab will refresh."
+    gold_removed: ''

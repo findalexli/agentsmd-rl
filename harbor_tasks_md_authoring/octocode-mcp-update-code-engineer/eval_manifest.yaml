@@ -1,0 +1,393 @@
+version: "2.0"
+
+task:
+  name: octocode-mcp-update-code-engineer
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: bgauryy/octocode-mcp
+  pr: 384
+  base_commit: "2709273d2c0fd0e0830acc28f012169acd372438"
+  merge_commit: "839b963e0c19741630c656e9a6dd1261b27385d3"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/octocode-engineer/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/octocode-engineer/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/octocode-engineer/SKILL.md."
+
+config_edits:
+  - path: skills/octocode-engineer/SKILL.md
+    tier: 1
+    gold_added: 'description: "Flexible system-engineering skill for technical code understanding, project/feature deep dives, bug investigation, quality and architecture analysis, and safe delivery from research and RFC/planning through implementation and verification."
+
+      Use this skill as the main engineering organizer when you need to understand a system deeply, make safe decisions, and execute with architecture awareness.
+
+      Motivation: high-quality architectural investigation improves delivery velocity, project resilience, and long-term maintainability.
+
+
+      Suggested operating flow (adapt as needed):
+
+      2. Use LSP to resolve semantics and blast radius.
+
+      3. Use scanner output for architecture, critical paths, and risk concentration.
+
+      4. Use AST to prove structural claims that matter.
+
+      5. Summarize the system, flows, features, and constraints.
+
+      6. Decide whether to ask, plan, explain, or edit.
+
+      - map real behavior and ownership, not just file-level code snippets
+
+      - trace call flow, blast radius, and critical paths before changes
+
+      - validate contracts/protocols across APIs, events, storage, and shared DTOs
+
+      - detect code and architecture smells with structural proof
+
+      - assess modularity/layering, coupling, duplication, and change risk
+
+      - check efficiency, build/config, reliability, observability, rollout safety, and data correctness
+
+      - validate docs/RFC/design claims against real implementation behavior
+
+      - guide safe implementation and verification with clear evidence and confidence
+
+      - understand a technical codebase, project area, or feature end-to-end
+
+      - do a deep dive into behavior, flow, ownership, or architecture
+
+      - shape architecture decisions before implementation and prepare a strong RFC (https://skills.sh/bgauryy/octocode-mcp/octocode-rfc-generator)
+
+      - research implementation options and produce planning artifacts or design notes
+
+      - validate docs, planning docs, and RFCs against real implementation behavior
+
+      - check docs before planning and re-check docs after implementation
+
+      - prepare for planning by understanding the real system first
+
+      - verify implementation quality and risk after changes land
+
+      2. Prove behavior and blast radius before proposing changes.
+
+      3. Prefer local Octocode discovery, then LSP/scanner, then AST proof.
+
+      4. Validate important claims with at least 2 evidence sources.
+
+      5. Prefer clean modular boundary/contract fixes over local patches.
+
+      6. Use explicit confidence (`confirmed`, `likely`, `uncertain`) for conclusions.
+
+      7. Treat prompt steps as practical checkpoints, not optional suggestions.
+
+      8. Ask the user only at real decision checkpoints.
+
+      Single-file reading is often misleading. Root causes usually live in boundaries, flow ownership, contracts, architecture pressure, or rollout/runtime assumptions.
+
+
+      Use this skill to produce architecture-safe outcomes, not just passing patches:
+
+      - verify real ownership, dependencies, and call flow
+
+      - verify contracts/protocols, build/runtime assumptions, and migrations
+
+      - verify quality dimensions (efficiency, reliability, observability, data correctness)
+
+      - verify docs/RFC/design claims against implementation
+
+      | Critical path | Which execution paths dominate risk, latency, and business impact? | `lspCallHierarchy`, scanner flow output, targeted code read |
+
+      | Contracts & protocols | Are type contracts, API/event schemas, and protocol rules explicit and stable? | `lspGotoDefinition`, `lspFindReferences`, schema/code read, tests |
+
+      | Layering & modularity | Are dependency directions, boundaries, and module responsibilities clean? | scanner graph/architecture output, LSP references, AST checks |
+
+      | Reliability & resilience | Will this hold under failures, retries, partial outages, and retries of retries? | call flow + error handling read + tests + scanner risk signals |
+
+      | Observability & operability | Can operators detect, explain, and recover from failures quickly? | logs/metrics/traces checks, runbook/docs checks, boundary instrumentation read |
+
+      | Rollout & migration safety | Can this ship safely without breaking old producers/consumers? | migration docs, versioned contracts, compatibility checks, feature-flag/release-path review |
+
+      | Data correctness | Are invariants and consistency rules preserved across writes and side effects? | schema + storage logic + transaction/idempotency read + contract tests |
+
+      | code smell review | long methods, primitive obsession, shotgun surgery, feature envy, deep nesting, boolean flag clusters |
+
+      | architecture smell review | god module, cycle-prone broker, unstable abstraction, boundary leakage, sink module, layering drift |
+
+      | type/protocol review | API/event versioning, backward compatibility, serialization safety, optional/null semantics, schema drift |
+
+      | modularity/layer review | dependency direction, boundary ownership, cohesion vs coupling, module replaceability, cross-layer imports |
+
+      | reliability/resilience review | retry policy, timeout handling, failure isolation, idempotency, fallback behavior |
+
+      | observability/operability review | logging quality, metric/tracing coverage, diagnosability, alert/runbook readiness |
+
+      | rollout/migration review | feature flags, backwards compatibility windows, rollback path, migration sequencing |
+
+      | data correctness review | invariants, transaction boundaries, consistency model assumptions, duplicate-write safety |
+
+      Use task tracking whenever the work spans research -> planning -> implementation -> verification -> docs/RFC sync.
+
+
+      ### 7. Prompt execution contract
+
+
+      Treat the skill prompt as operational policy, not advice.
+
+
+      Use this minimum execution contract:
+
+      - restate the concrete goal and constraints in one short line before doing deep work
+
+      - declare the next tool step and why it is the cheapest proof step
+
+      - separate facts from inference in every checkpoint
+
+      - carry forward concrete identifiers from tools (`lineHint`, paths, symbols, artifact names)
+
+      - run explicit verification after edits; do not assume success from static reading
+
+      - if a gate cannot be satisfied (missing tests, missing schema, missing ownership), report it as a blocker, not a silent skip
+
+
+      Prompt reliability checks:
+
+      - avoid vague status updates; every update should include what was checked and what remains
+
+      - avoid broad claims like "looks fine" without at least one concrete evidence source
+
+      - avoid switching from investigation to edits without a short system/flow summary
+
+      - if 2 refinement attempts fail, stop and ask the user for a decision
+
+
+      Keep this flexible:
+
+      - skip irrelevant checks when they clearly do not apply
+
+      - go deeper only where risk or uncertainty is meaningful
+
+      - choose the lightest evidence path that can prove the conclusion
+
+
+      ### 8. Token-efficient execution mode
+
+
+      Default to evidence-rich but compact execution.
+
+
+      Token efficiency rules:
+
+      - use one investigation thread at a time unless independent questions can be batched
+
+      - avoid restating the same evidence in multiple sections; reference the prior checkpoint instead
+
+      - prefer short, structured status updates over long narrative blocks
+
+      - cap optional examples unless they materially change the decision
+
+      - stop research when confidence is sufficient for safe action (`confirmed` or clearly bounded `likely`)
+
+      - when uncertainty remains, ask one precise checkpoint question instead of writing long speculation
+
+
+      Output compression rules:
+
+      - summarize findings as: issue -> evidence -> impact -> action
+
+      - keep confidence markers terse (`confirmed` / `likely` / `uncertain`)
+
+      - report only residual risks that affect implementation, rollout, or contracts
+
+      - avoid duplicating tool command details unless reproducibility is needed
+
+
+      ### 9. Script usage policy (cost-aware)
+
+
+      Use scripts as proof tools, not as default heavy steps.
+
+
+      - prefer local/LSP narrowing before broad scanner runs
+
+      - run `scripts/run.js` broad scans for architecture/risk questions, not for single-symbol trivia
+
+      - use scoped scan options when possible before full-repo scans
+
+      - use `scripts/ast/tree-search.js` for fast triage, then `scripts/ast/search.js` only for authoritative confirmation
+
+      - avoid repeating the same scan when the artifact already answers the current question
+
+      - if scan output is stale relative to current edits, re-run only the minimal necessary scope
+
+
+      For non-trivial tasks, this order is recommended (not mandatory):
+
+      5. Identify critical paths and failure paths (latency/business-risk/error fanout).
+
+      6. Validate and check structural claims with AST tools.
+
+      7. Check architecture, layering/modularity, contracts/protocols, reliability/observability/rollout/data correctness, build/configuration, docs, and flow risk with the scanner and relevant project files.
+
+      8. Read the actual code with context.
+
+      9. If the task touches design docs or RFCs, validate them against current flows, contracts, and boundaries.
+
+      10. Summarize the current system, flows, feature surface, and critical paths before deciding on action.
+
+      11. Pause and ask the user if a real decision checkpoint appears.
+
+      12. Decide whether to explain, plan, or edit.
+
+      `clarify -> track -> layout -> symbols -> structure -> architecture/build/docs -> code -> docs/RFC reality check -> summarize -> checkpoint -> action`
+
+      Use these flows as templates, not rigid scripts.
+
+
+      ### For design and RFC validation
+
+
+      1. Identify the claims made by the design doc or RFC (scope, boundaries, contracts, rollout, invariants).
+
+      2. Map each claim to real code ownership (modules, entry points, storage, events, APIs).
+
+      3. Verify runtime flow alignment using LSP call flow + scanner flow/graph outputs.
+
+      4. Verify contract alignment (types/schemas/protocol versions/nullability/error semantics).
+
+      5. Verify architecture alignment (layer boundaries, dependency direction, shared module pressure).
+
+      6. Mark each claim as `confirmed`, `likely`, or `uncertain` with evidence.
+
+      7. Report mismatches clearly: missing implementation, divergence, undocumented behavior, risky assumptions.
+
+      8. Propose minimal doc/RFC corrections or implementation follow-ups to restore alignment.
+
+
+      ### For implementation duty cycle
+
+
+      1. Before coding: state root cause, blast radius, and target contract/boundary.
+
+      2. During coding: keep changes in the smallest responsible layer; avoid cross-layer leakage.
+
+      3. During coding: run narrow checks per batch (tests/types/lint or focused scanner slice).
+
+      4. After coding: run full relevant verification and re-check affected critical paths.
+
+      5. After coding: re-open docs/RFC sections touched by the change and sync them with reality.
+
+      6. Close with residual risk, follow-ups, and confidence level.
+
+
+      ## Quick Tool Routing
+
+
+      Use this compact routing table first; use detailed playbooks in [Tool workflows](./references/tool-workflows.md).
+
+
+      | Question | Route |
+
+      |----------|-------|
+
+      | symbol/ownership | `localSearchCode` -> LSP (`gotoDefinition` / `findReferences`) |
+
+      | callers/callees/critical path | `localSearchCode` -> `lspCallHierarchy` -> targeted read |
+
+      | architecture risk/hotspots | `scripts/run.js` (scoped first, broad when needed) |
+
+      | structural smells/claims | `scripts/ast/tree-search.js` -> `scripts/ast/search.js` |
+
+      | RFC/design/docs alignment | claim-by-claim mapping -> flow/contract/architecture validation |
+
+      - identify entry paths, error paths, and critical business/runtime paths
+
+      - inspect tests and scanner signals for hotspot/cycle/shared-boundary risk
+
+      - check contracts/protocols (types, schemas, compatibility, nullability, serialization)
+
+      - check reliability/observability/rollout assumptions (retries, telemetry, migration, rollback)
+
+      - check build/config assumptions that affect runtime behavior
+
+      - check whether critical behavior, constraints, and migration notes are documented
+
+      - if a design doc or RFC exists, map its claims to concrete code ownership before editing
+
+      - check for unnecessary complexity and nearby code/architecture smells, not only the target line
+
+      - maintain clear contracts/protocol compatibility unless an explicit migration is in scope
+
+      - preserve or improve reliability behavior under failure, retries, and partial success
+
+      - reduce redundancy and avoid layering new logic on rigid code when simplification is possible
+
+      - avoid introducing new smells (deep nesting, flag-parameter branching, over-centralized modules)
+
+      - keep CSS clean/scoped when frontend styling is touched
+
+      - update or flag docs when behavior, contracts, setup, migration, or architecture understanding changed
+
+      - if design/RFC assumptions were invalid, record the exact mismatch and corrective update
+
+      - run CSS checks when styles changed; run `knip` when refactors may leave dead artifacts
+
+      - verify build/config still match runtime/module expectations
+
+      - re-check changed symbols with LSP after renames/moves
+
+      - re-check critical paths for regressions in behavior, cost, and failure handling
+
+      - verify changed type/protocol contracts with consumers and boundary tests
+
+      - verify reliability/observability/rollout assumptions still hold after the change
+
+      - re-validate relevant design/RFC claims against final implementation behavior
+
+      Core guardrails:
+
+      - Do not present raw detector output as unquestioned fact.
+
+      - Do not guess `lineHint`; obtain it from `localSearchCode`.
+
+      - Do not use `lspCallHierarchy` on non-function symbols.
+
+      - Do not judge shared modules from one file read alone.
+
+      - Do not claim design/RFC compliance without claim-by-claim evidence.
+
+      - Do not ignore build/config evidence when runtime behavior may depend on it.
+
+      - Avoid quick patches when the real issue is contracts, boundaries, duplication, or architecture.
+
+      - Check blast radius before changing shared symbols.
+
+      - Re-sync docs/RFCs when implementation changes architecture, contracts, rollout assumptions, or constraints.
+
+      - Ask the user when a real ambiguity or decision checkpoint blocks safe progress.
+
+      - Is reliability acceptable under failure and retry conditions?
+
+      - Is observability sufficient to debug and operate this path?
+
+      - Is rollout/migration safety clear and reversible?
+
+      ## Companion Skill
+
+
+      Use this with the RFC skill when architecture options, trade-offs, or migration strategy need a formal proposal before coding:
+
+      - [octocode-rfc-generator](https://skills.sh/bgauryy/octocode-mcp/octocode-rfc-generator) — generate a smart RFC from validated system evidence.
+
+      '
+    gold_removed: ''

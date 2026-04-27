@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: claude-code-design-skills-add-component-description-validati
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: scoobynko/claude-code-design-skills
+  pr: 5
+  base_commit: "ded22e44a7ae74253e91cdb075706687a0a88ecc"
+  merge_commit: "5792382bb8f586882639b43a35fc583dfb421e41"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in figma-to-code/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in figma-to-code/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in figma-to-code/SKILL.md."
+
+config_edits:
+  - path: figma-to-code/SKILL.md
+    tier: 1
+    gold_added: "- Component description (usage guidelines)\n**Component Description Usage:**\n- If component has a `description` field, treat it as **authoritative usage guidelines**\n- Use the description to understand:\n  - Intended use cases and context\n  - Prop combinations and variants\n  - When to use vs. when not to use\n  - Any constraints or requirements\n- **If implementing usage that conflicts with description guidelines:**\n  1. Display warning to user: \"⚠️ Warning: Implementation may conflict with component guidelines: [specific conflict]\"\n  2. Explain the conflict clearly\n  3. Proceed with implementation as requested\n  4. Document the deviation in code comments\n\n- [ ] Checked component description for usage guidelines\n- [ ] Warned user if implementation conflicts with guidelines"
+    gold_removed: ''

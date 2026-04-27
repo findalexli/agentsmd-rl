@@ -1,0 +1,64 @@
+version: "2.0"
+
+task:
+  name: open-agreements-streamline-phase-4-save-confirmation
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: open-agreements/open-agreements
+  pr: 66
+  base_commit: "e09efd30276a52051128256cff6c74f556a06c65"
+  merge_commit: "56ab4916bf3c29599645d5033b2fd71c05f4abbb"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/delaware-franchise-tax/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/delaware-franchise-tax/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/delaware-franchise-tax/SKILL.md."
+
+config_edits:
+  - path: skills/delaware-franchise-tax/SKILL.md
+    tier: 1
+    gold_added: '## Phase 4: Save Receipt and Remind
+
+
+      ### Save the confirmation PDF
+
+
+      The downloaded confirmation PDF **is** the filing record — no need to create a separate one.
+
+
+      The portal downloads the receipt as `Ecorp_Confirmation_<ServiceRequestNumber>.pdf` to the default Downloads folder. Move it to a durable location:
+
+      - `~/Documents/Tax/Delaware/<EntityName>/` on local disk
+
+      - A "Tax" or "Corporate Records" folder in cloud storage if available
+
+      - Keep the original filename — it contains the Service Request Number for future reference
+
+
+      ```bash
+
+      # Example
+
+      mkdir -p ~/Documents/Tax/Delaware/My-Corp-Name
+
+      mv ~/Downloads/Ecorp_Confirmation_*.pdf ~/Documents/Tax/Delaware/My-Corp-Name/
+
+      ```
+
+
+      Ask the user where they keep tax records and move the file there.
+
+
+      ### Set a reminder'
+    gold_removed: ''

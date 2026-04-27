@@ -1,0 +1,239 @@
+version: "2.0"
+
+task:
+  name: nanostack-add-context-checkpoints-iteration-prompt
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: garagon/nanostack
+  pr: 64
+  base_commit: "0051bb6b2c7c8b43161d2d2421aece5a3ebc5d23"
+  merge_commit: "9cf96d680c7488352599dab2bb7727fec790889c"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in compound/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in compound/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plan/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plan/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plan/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in qa/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in qa/SKILL.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in qa/SKILL.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in review/SKILL.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in review/SKILL.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in review/SKILL.md."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in security/SKILL.md."
+  - id: signal_12
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in security/SKILL.md."
+  - id: signal_13
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in security/SKILL.md."
+  - id: signal_14
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in ship/SKILL.md."
+  - id: signal_15
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in ship/SKILL.md."
+  - id: signal_16
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in ship/SKILL.md."
+  - id: signal_17
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in think/SKILL.md."
+  - id: signal_18
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in think/SKILL.md."
+
+config_edits:
+  - path: compound/SKILL.md
+    tier: 1
+    gold_added: 'bin/save-artifact.sh compound ''<json with phase, summary including solutions_created, solutions_updated, total_solutions, context_checkpoint including summary, key_files, decisions_made, open_questions>''
+
+      The `context_checkpoint` is mandatory. Summarize how many solutions were created/updated and their types.
+
+      '
+    gold_removed: ''
+  - path: plan/SKILL.md
+    tier: 1
+    gold_added: 'bin/save-artifact.sh plan ''<json with phase, summary including planned_files array, context_checkpoint including summary, key_files, decisions_made, open_questions>''
+
+      The `context_checkpoint` is mandatory. Summarize the plan scope, list planned files, and document key decisions (e.g., "small scope, 2 files" or "chose X over Y because Z").
+
+
+      After build completes, run `/review`, `/security` and `/qa` **in parallel** using three Agent tool calls in a single message. These three phases are all read-only (they analyze code but don''t modify it) and have no dependencies on each other.
+
+
+      ```
+
+      Launch 3 agents in parallel (single message, 3 Agent tool calls):
+
+
+      Agent 1: "Run /review on this project. Save the artifact when done. Return the summary."
+
+      Agent 2: "Run /security on this project. Save the artifact when done. Return the summary."
+
+      Agent 3: "Run /qa on this project. Save the artifact when done. Return the summary."
+
+      ```
+
+
+      Show status as results come back:
+
+      > Autopilot: running /review, /security and /qa in parallel...
+
+      > Autopilot: review complete (X findings, 0 blocking).
+
+      > Autopilot: security grade A (0 critical, 0 high).
+
+      > Autopilot: qa passed (X tests, 0 failed).
+
+
+      After all three complete, check results:
+
+      - If any has **blocking issues**, **critical vulnerabilities**, or **test failures**: stop and ask the user
+
+      - If all three pass: proceed to `/ship`
+
+      If parallel execution is not available (single-threaded agent, no Agent tool), fall back to running them sequentially: `/review` → `/security` → `/qa`.'
+    gold_removed: ''
+  - path: qa/SKILL.md
+    tier: 1
+    gold_added: 'bin/save-artifact.sh qa ''<json with phase, mode, summary including wtf_likelihood, findings, context_checkpoint including summary, key_files, decisions_made, open_questions>''
+
+      The `context_checkpoint` is mandatory. Summarize tests passed/failed, bugs found/fixed, and WTF likelihood.
+
+
+      **If AUTOPILOT is active and running as a parallel sub-agent:** Save the artifact and return your summary to the parent agent. Do not proceed to the next skill — the parent orchestrates the sequence.
+
+
+      **If AUTOPILOT is active and running sequentially (no parallel):** Proceed to `/ship`. Show: `Autopilot: qa passed (X tests, 0 failed). Running /ship...`
+
+      **If AUTOPILOT is active but tests fail:** Return the failures. The parent agent (or sequential flow) will stop and ask the user.'
+    gold_removed: ''
+  - path: review/SKILL.md
+    tier: 1
+    gold_added: 'bin/save-artifact.sh review ''<json with phase, mode, summary, scope_drift, findings, conflicts, context_checkpoint including summary, key_files, decisions_made, open_questions>''
+
+      The `context_checkpoint` is mandatory. Summarize findings count and severity, scope drift status, and any auto-fixes applied.
+
+
+      **If AUTOPILOT is active and running as a parallel sub-agent:** Save the artifact and return your summary to the parent agent. Do not proceed to the next skill — the parent orchestrates the sequence.
+
+
+      **If AUTOPILOT is active and running sequentially (no parallel):** Proceed to the next pending skill (`/security` or `/qa`). Show: `Autopilot: review complete (X findings, 0 blocking). Running /security...`
+
+      **If AUTOPILOT is active but blocking issues found:** Return the blocking issues. The parent agent (or sequential flow) will stop and ask the user.'
+    gold_removed: ''
+  - path: security/SKILL.md
+    tier: 1
+    gold_added: 'bin/save-artifact.sh security ''<json with phase, mode, summary, findings, conflicts, context_checkpoint including summary, key_files, decisions_made, open_questions>''
+
+      The `context_checkpoint` is mandatory. Summarize the security grade, finding counts by severity, and any critical decisions.
+
+
+      **If AUTOPILOT is active and running as a parallel sub-agent:** Save the artifact and return your summary to the parent agent. Do not proceed to the next skill — the parent orchestrates the sequence.
+
+
+      **If AUTOPILOT is active and running sequentially (no parallel):** Proceed to next pending skill (`/qa` or `/ship`). Show: `Autopilot: security grade X (0 critical, 0 high). Running /qa...`
+
+      **If AUTOPILOT is active but critical or high findings found:** Return the findings. The parent agent (or sequential flow) will stop and ask the user.'
+    gold_removed: ''
+  - path: ship/SKILL.md
+    tier: 1
+    gold_added: 'bin/save-artifact.sh ship ''<json with phase, summary including pr_number, pr_url, title, status, ci_passed, context_checkpoint including summary, key_files, decisions_made, open_questions>''
+
+      The `context_checkpoint` is mandatory. Summarize what was shipped, PR number, and CI status.
+
+
+      ### Show the result
+
+
+      After shipping, if the project produces a viewable output (HTML file, web app, CLI tool), tell the user how to see it:
+
+
+      - HTML files: "Open `index.html` in your browser to see the result"
+
+      - Web apps: "Run `npm start` and open http://localhost:3000"
+
+      - CLI tools: "Run `node bin/cli.js --help` to try it"
+
+
+      Never auto-open URLs or execute `open` commands. Show the path or command and let the user decide.
+
+
+      After shipping, close with two things: what was built and what could come next.
+
+
+      **1. What was built.** Summarize what the user now has in plain language. Not phase names or artifact counts. What does the thing DO, where is it, and how to use it.
+
+
+      **2. What could come next.** Suggest 2-3 concrete extensions based on what was built. These should be things the user can say right now to start a new sprint. Frame them as natural next steps, not feature requests.
+
+
+      Example:
+
+      > Sprint complete. You have a world clock widget showing Buenos Aires, New York and Tokyo with live updates. Open `index.html` in your browser to see it.
+
+      > Ideas for the next sprint:
+
+      > - "Add a city picker so I can swap timezones"
+
+      > - "Show the date and day of the week under each clock"
+
+      > - "Add a dark/light mode toggle"
+
+      > Just describe what you want and run `/think` to start a new sprint. Run `/compound` to save what you learned from this one.'
+    gold_removed: ''
+  - path: think/SKILL.md
+    tier: 1
+    gold_added: 'bin/save-artifact.sh think ''<json with phase, summary including value_proposition, scope_mode, target_user, narrowest_wedge, key_risk, premise_validated, context_checkpoint including summary, key_files, decisions_made, open_questions>''
+
+      The `context_checkpoint` is mandatory. It captures the essence of this phase so downstream phases can restore context without replaying the full conversation. Write a 1-2 sentence summary, list key files, and document decisions made.
+
+      '
+    gold_removed: ''

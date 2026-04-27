@@ -1,0 +1,54 @@
+version: "2.0"
+
+task:
+  name: skills-remove-curl-from-allowed-tools
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: apollographql/skills
+  pr: 38
+  base_commit: "991960f03e545351ead7aff31b4c48f059a2f1b1"
+  merge_commit: "164b6890b450cc6ac19ba160eeb5fb6b00766a3e"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/apollo-connectors/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/apollo-mcp-server/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/rover/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/skill-creator/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/skill-creator/SKILL.md."
+
+config_edits:
+  - path: skills/apollo-connectors/SKILL.md
+    tier: 1
+    gold_added: 'allowed-tools: Bash(rover:*) Read Write Edit Glob Grep'
+    gold_removed: ''
+  - path: skills/apollo-mcp-server/SKILL.md
+    tier: 1
+    gold_added: 'allowed-tools: Bash(rover:*) Bash(npx:*) Read Write Edit Glob Grep'
+    gold_removed: ''
+  - path: skills/rover/SKILL.md
+    tier: 1
+    gold_added: 'allowed-tools: Bash(rover:*) Bash(npm:*) Bash(npx:*) Read Write Edit Glob Grep'
+    gold_removed: ''
+  - path: skills/skill-creator/SKILL.md
+    tier: 1
+    gold_added: '| `allowed-tools` | No | Space-delimited list of pre-approved tools. Do not include `Bash(curl:*)`. |
+
+      - NEVER include `Bash(curl:*)` in `allowed-tools` as it grants unrestricted network access and enables `curl | sh` remote code execution patterns'
+    gold_removed: ''

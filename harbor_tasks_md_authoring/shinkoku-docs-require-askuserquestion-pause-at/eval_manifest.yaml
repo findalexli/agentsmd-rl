@@ -1,0 +1,51 @@
+version: "2.0"
+
+task:
+  name: shinkoku-docs-require-askuserquestion-pause-at
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: kazukinagata/shinkoku
+  pr: 5
+  base_commit: "4acdbcd4ca5f15a6e152990469e0e27189d76f03"
+  merge_commit: "e54ce269ebd5a1b7334c36e0091786ed0570fae9"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/e-tax/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/e-tax/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/e-tax/SKILL.md."
+
+config_edits:
+  - path: skills/e-tax/SKILL.md
+    tier: 1
+    gold_added: '**★ ユーザー操作待ち — ブラウザ操作を一時停止**
+
+
+      この画面ではエージェントがブラウザを操作してはならない。
+
+      **AskUserQuestion ツールで一時停止**し、ユーザーが認証完了を報告するまで**絶対に次のステップに進まない**こと。
+
+
+      AskUserQuestion で以下を表示する:
+
+
+      認証が完了したら「認証完了」を選択してください。
+
+      - 選択肢: 「認証完了」 / 「QRコードが表示されない」
+
+      - 「QRコードが表示されない」が選ばれた場合は下記の ⚠️ Playwright CLI 使用時の注意 を参照して対処する
+
+      - **ユーザーが「認証完了」を選択するまで、一切のブラウザ操作・画面遷移を行わない**
+
+      '
+    gold_removed: ''

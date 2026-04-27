@@ -1,0 +1,59 @@
+version: "2.0"
+
+task:
+  name: nanostack-fix-bin-paths-to-absolute
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: garagon/nanostack
+  pr: 63
+  base_commit: "477145ed1d5b03e1a0317fc1d5499d10327efbbf"
+  merge_commit: "0051bb6b2c7c8b43161d2d2421aece5a3ebc5d23"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+
+config_edits:
+  - path: SKILL.md
+    tier: 1
+    gold_added: '## Script Resolution
+
+
+      All skills reference scripts as `bin/save-artifact.sh`, `bin/find-artifact.sh`, etc. These paths are **relative to the nanostack skill root**, not to the user''s project directory.
+
+
+      Before running any `bin/` script, resolve the nanostack root:
+
+
+      ```bash
+
+      # Find nanostack installation directory
+
+      NANOSTACK_ROOT="$(dirname "$(readlink -f "$(which claude 2>/dev/null)" 2>/dev/null)")/../../skills/nanostack" 2>/dev/null
+
+      [ ! -d "$NANOSTACK_ROOT" ] && NANOSTACK_ROOT="$HOME/.claude/skills/nanostack"
+
+      [ ! -d "$NANOSTACK_ROOT" ] && NANOSTACK_ROOT="$(find "$HOME/.claude" -name "nanostack" -type d -path "*/skills/*" 2>/dev/null | head -1)"
+
+      ```
+
+
+      Then prefix all script calls: `"$NANOSTACK_ROOT/bin/save-artifact.sh"` instead of `bin/save-artifact.sh`.
+
+
+      If the nanostack root cannot be found, skip the script call and proceed with the skill. Never fail a skill because a helper script is missing.
+
+      '
+    gold_removed: ''

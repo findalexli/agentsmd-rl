@@ -1,0 +1,40 @@
+version: "2.0"
+
+task:
+  name: agent-kanban-docs-update-agentkanban-skill-for
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: saltbo/agent-kanban
+  pr: 60
+  base_commit: "9d928951c067c5795c324a9ef7f42bca7baa320a"
+  merge_commit: "a8847824578fb989bd3d60ccc3156e157fffbe2a"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/agent-kanban/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/agent-kanban/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/agent-kanban/SKILL.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '- Repo management: `ak create repo` registers repo at tenant level. `ak get repo` lists registered repos.'
+    gold_removed: ''
+  - path: skills/agent-kanban/SKILL.md
+    tier: 1
+    gold_added: "2. **Log** progress as you work → `ak create note --task <id> \"doing X...\"`\n## Commands\n\n### Task Lifecycle\n| `ak task claim <id>` | Claim your assigned task (in_progress) |\n| `ak task review <id> --pr-url <url>` | Submit task for review with PR link |\n| `ak task cancel <id>` | Cancel a task |\n| `ak task reject <id> --reason \"...\"` | Reject task from review back to in_progress |\n\n### Resource CRUD (kubectl-style)\n\n| Command | Description |\n|---------|-------------|\n| `ak get task [id]` | View task details, or list tasks with filters |\n| `ak get task --board <id> --status <s>` | List tasks filtered by board, status, label, repo |\n| `ak get note --task <id>` | View progress logs for a task |\n| `ak create note --task <id> \"message\"` | Add a progress log entry |\n| `ak create task --board <id> --title \"...\"` | Create a new task |\n| `ak get agent` | List agents |\n| `ak get agent --format json` | List agents as JSON |\n| `ak get board` | List boards |\n| `ak get repo` | List repositories |\n| `ak create repo --name \"...\" --url \"...\"` | Register a repository |\n\n### Create Task Options\n\n```\nak create task --board <id> --title \"Title\" \\\n  --description \"Details\" \\\n  --repo <repo-id> \\\n  --priority medium \\\n  --labels \"bug,frontend\" \\\n  --assign-to <agent-id> \\\n  --parent <task-id> \\\n  --depends-on \"id1,id2\"\n```\n- **Never call `task complete`** — only humans complete tasks.\n- Always create a PR and submit via `task review --pr-url` when your work produces code changes.\n- Log progress frequently — humans monitor the board."
+    gold_removed: ''

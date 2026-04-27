@@ -1,0 +1,66 @@
+version: "2.0"
+
+task:
+  name: cloudbase-mcp-docsagents-add-attribution-evaluation-guardrai
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: TencentCloudBase/CloudBase-MCP
+  pr: 547
+  base_commit: "87e7fc2600675aa754d2611953904b5328971f4a"
+  merge_commit: "48434357058e34521828f5b45579a18c581397be"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in mcp/AGENTS.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in mcp/AGENTS.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in mcp/AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "<attribution_evaluation_guardrails>\n当任务来源于 failing eval、attribution issue、grader、benchmark、trace、result artifact 或其他评测证据时，必须额外遵守以下规则：\n1. 评测证据只用于定位问题，不等于产品公开契约；先判断是否存在真实用户可见的产品缺陷，再决定是否修改产品代码。\n2. 不要为了通过评测而新增 benchmark-only / grader-only 的兼容分支、提示词、注释、文案或行为。\n3. 不要新增同一语义字段的多套命名变体（例如大小写/下划线别名）来“兼容评测”，除非该别名已经是文档化的公开契约。\n4. 不要在代码、注释、文档、提交说明或 PR 描述中泄漏内部评测文件名或上下文路径（例如 `run-result.json`、`run-trace.json`、`evaluation-trace.json`、`.codebuddy/attribution-context`）；如必须提及，统一改写为“internal evaluation evidence”。\n5. 如果证据更像 grader / task contract 问题、仓库路由错误、或外部系统限制，而不是当前仓库里的真实产品缺陷，应停止产品表面改动，并在总结里明确说明原因与后续建议。\n6. 提交前必须自查 staged diff：确认没有评测专用措辞、没有内部 artifact 泄漏、没有为同一字段临时补多个别名。\n</attribution_evaluation_guardrails>\n\n提交代码注意 commit 采用 conventional-changelog 风格，在 `feat(xxx):` 后面加一个 emoji，提交信息使用英文描述。\n默认只推送 GitHub 远端，不要执行 `cnb` 推送，也不要使用 `--force`：\n- `git push github HEAD`\n提交 PR 之后不要立刻结束，先等待几分钟，观察 review 评论和 CI 结果；如果有可执行的失败项或反馈，继续在同一分支修复并更新 PR。\n1. 提交代码注意 commit 采用 conventional-changelog 风格，在 `feat(xxx):` 后面加一个 emoji，提交信息使用英文描述。\n2. 提交代码不要直接推到 `main`，使用 feature 分支，并且默认只推送 GitHub 远端，不要执行 `cnb` 推送，也不要使用 `--force`：\n   - `git push github HEAD`\n3. 然后自动创建 PR。\n4. 创建 PR 后先等待几分钟，再检查 review 评论和 CI；如果有可执行的问题，继续在同一分支修复并更新 PR。"
+    gold_removed: ''
+  - path: mcp/AGENTS.md
+    tier: 1
+    gold_added: '### Attribution and evaluation guardrails
+
+
+      When a task is triggered by failing evaluations, attribution issues, grader output, benchmark evidence, traces, or result artifacts, treat that evidence as diagnosis input rather than a public product contract.
+
+
+      - Only change product behavior when you can explain a real user-visible defect in this repository.
+
+      - Do not add benchmark-only or grader-only branches, wording, prompts, comments, or shims just to satisfy evaluation output.
+
+      - Do not add multiple naming variants for the same semantic field unless the alias is already part of a documented public contract.
+
+      - Do not leak internal evaluation filenames or context paths in code, comments, docs, commit messages, or PR bodies, including `run-result.json`, `run-trace.json`, `evaluation-trace.json`, and `.codebuddy/attribution-context`; rewrite them as “internal evaluation evidence” when needed.
+
+      - If the evidence points to a grader mismatch, task-contract mismatch, wrong-repo routing, or external limitation rather than a real product defect here, stop product-surface edits and explain that in the summary.
+
+      - Before commit, review the staged diff specifically for evaluator-only wording, internal artifact leakage, and temporary alias-field additions.
+
+      '
+    gold_removed: ''

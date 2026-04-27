@@ -1,0 +1,54 @@
+version: "2.0"
+
+task:
+  name: skills-ensure-createskill-mentions-codeowners
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: dotnet/skills
+  pr: 478
+  base_commit: "7747fcb427d0fdf66b2ee8fe0d4db07369b7a00f"
+  merge_commit: "db83be92f787f0dcd6729829fbfae73d36d124aa"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/create-skill/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/create-skill/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/create-skill/SKILL.md."
+
+config_edits:
+  - path: .agents/skills/create-skill/SKILL.md
+    tier: 1
+    gold_added: '### Step 6: Update CODEOWNERS
+
+
+      Add entries in `.github/CODEOWNERS` for the new skill and its test directory:
+
+
+      ```
+
+      /plugins/<plugin>/skills/<skill-name>/  @owner-team
+
+      /tests/<plugin>/<skill-name>/           @owner-team
+
+      ```
+
+
+      Match the owner pattern used by sibling skills in the same plugin.
+
+
+      ### Step 7: Validate the skill
+
+      - [ ] `.github/CODEOWNERS` has entries for the new skill and its test directory
+
+      | Missing CODEOWNERS entry | Add entries for both `/plugins/<plugin>/skills/<skill-name>/` and `/tests/<plugin>/<skill-name>/` matching sibling skills'' owner pattern |'
+    gold_removed: ''

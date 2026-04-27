@@ -1,0 +1,159 @@
+version: "2.0"
+
+task:
+  name: nanostack-wire-crossskill-artifact-reading-for
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: garagon/nanostack
+  pr: 24
+  base_commit: "b0ebda3840be06113e98ef5f44a919e8e8db0140"
+  merge_commit: "d7dd6a55886fb5c5dd2a515d0e3d0ca371010045"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plan/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plan/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plan/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in qa/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in qa/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in qa/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in review/SKILL.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in review/SKILL.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in review/SKILL.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in security/SKILL.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in security/SKILL.md."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in security/SKILL.md."
+  - id: signal_12
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in ship/SKILL.md."
+  - id: signal_13
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in ship/SKILL.md."
+  - id: signal_14
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in ship/SKILL.md."
+
+config_edits:
+  - path: plan/SKILL.md
+    tier: 1
+    gold_added: "- **Read the /think artifact** if one exists for this project:\n  ```bash\n  bin/find-artifact.sh think 2\n  ```\n  If found, extract and use:\n  - `key_risk` → add to your Risks section. This was already validated by /think.\n  - `narrowest_wedge` → this is the scope constraint. Don't plan beyond it.\n  - `out_of_scope` items from /think → pre-populate your Out of Scope section.\n  - `scope_mode` → if /think said \"reduce,\" plan the smallest version. If \"expand,\" plan bigger.\n  - `premise_validated` → if false, flag it. Don't plan for an unvalidated premise.\n"
+    gold_removed: ''
+  - path: qa/SKILL.md
+    tier: 1
+    gold_added: '**Read the plan artifact first:**
+
+
+      ```bash
+
+      bin/find-artifact.sh plan 2
+
+      ```
+
+
+      If the plan specifies product standards (shadcn/ui, Tailwind, dark mode, specific component library), use those as your checklist. Don''t guess what the UI should look like. The plan defines the spec. If the plan said "shadcn/ui + Tailwind" and the output uses raw CSS, that''s a finding.
+
+      '
+    gold_removed: ''
+  - path: review/SKILL.md
+    tier: 1
+    gold_added: '## Step 0: Read Plan Context
+
+
+      Find the plan artifact and extract context for the review:
+
+
+      ```bash
+
+      bin/find-artifact.sh plan 2
+
+      ```
+
+
+      If found, read these fields:
+
+      - **`planned_files[]`** → used by scope drift check (below)
+
+      - **`risks[]`** → create a risk checklist. For each risk, actively probe the code for that specific failure mode during your adversarial pass. These risks were identified during planning and should be verified.
+
+      - **`out_of_scope[]`** → verify none of these were implemented. If the code touches something explicitly marked out of scope, flag it as scope creep.
+
+
+      ## Step 0.5: Scope Drift Check'
+    gold_removed: ''
+  - path: security/SKILL.md
+    tier: 1
+    gold_added: '**Read the plan artifact** if one exists:
+
+
+      ```bash
+
+      bin/find-artifact.sh plan 2
+
+      ```
+
+
+      If found:
+
+      - **`planned_files[]`** → focus your audit on these files and their dependencies. Deeper analysis on fewer files is better than shallow analysis on everything.
+
+      - **`risks[]`** → treat each planned risk as a security hypothesis to verify. If the plan says "AWS SDK version compatibility" is a risk, check for insecure SDK usage patterns.
+
+
+      Then read project config: `bin/init-config.sh`. Use `detected` to scope which checks to run (skip Python checks in a Go project). Use `preferences.conflict_precedence` for cross-skill conflicts.'
+    gold_removed: ''
+  - path: ship/SKILL.md
+    tier: 1
+    gold_added: '**Verify review findings were resolved:**
+
+
+      ```bash
+
+      bin/find-artifact.sh review 2
+
+      ```
+
+
+      If a review artifact exists, check that all **blocking** findings have been addressed. For each blocking finding, verify the code at the reported file and line no longer has the issue. If a blocking finding is still present, do NOT proceed. Flag it.
+
+      '
+    gold_removed: ''

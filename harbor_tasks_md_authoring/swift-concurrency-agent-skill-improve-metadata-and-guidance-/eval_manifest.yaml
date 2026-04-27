@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: swift-concurrency-agent-skill-improve-metadata-and-guidance-
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: AvdLee/Swift-Concurrency-Agent-Skill
+  pr: 13
+  base_commit: "4bb3d96102a053a235cc0f58078a7a25152529d2"
+  merge_commit: "12a924399d6a481d18d063a2d8baa177f95e769a"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in swift-concurrency/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in swift-concurrency/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in swift-concurrency/SKILL.md."
+
+config_edits:
+  - path: swift-concurrency/SKILL.md
+    tier: 1
+    gold_added: "7. Course references are for deeper learning only. Use them sparingly and only when they clearly help answer the developer's question.\n\n## Recommended Tools for Analysis\n\nWhen analyzing Swift projects for concurrency issues:\n\n1. **Project Settings Discovery**\n   - Use `Read` on `Package.swift` for SwiftPM settings (tools version, strict concurrency flags, upcoming features)\n   - Use `Grep` for `SWIFT_STRICT_CONCURRENCY` or `SWIFT_DEFAULT_ACTOR_ISOLATION` in `.pbxproj` files\n   - Use `Grep` for `SWIFT_UPCOMING_FEATURE_` to find enabled upcoming features\n\n"
+    gold_removed: ''

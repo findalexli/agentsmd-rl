@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: rdc-cli-docsskill-add-remote-split-android
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: BANANASJIM/rdc-cli
+  pr: 213
+  base_commit: "dd4a6523cb0510ba829574bc89a5c7ef67bd3e78"
+  merge_commit: "25166ba26ed26178e8463c12526243d5c1a01c21"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/rdc/_skills/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/rdc/_skills/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in src/rdc/_skills/SKILL.md."
+
+config_edits:
+  - path: src/rdc/_skills/SKILL.md
+    tier: 1
+    gold_added: "1. **Open** a capture:\n   - Local: `rdc open path/to/capture.rdc`\n   - Remote replay (Proxy): `rdc open capture.rdc --proxy host:port`\n   - Split thin-client: `rdc open --connect host:port --token TOKEN`\n   - Android device: `rdc open capture.rdc --android [--serial SERIAL]`\n## Remote Capture Workflow\n\nrdc-cli wraps `renderdoccmd remoteserver` to support PC-to-PC remote captures.\n\n- `rdc serve [--port PORT] [--allow-ips CIDR] [--no-exec] [--daemon]` — launch remoteserver on the target machine\n- `rdc remote connect <host:port>` — save remote connection state\n- `rdc remote list` — enumerate capturable apps on the remote\n- `rdc remote capture <app> -o frame.rdc [--args ...] [--frame N] [--keep-remote]` — inject, capture, and transfer back. `--keep-remote` skips the transfer and prints the remote path; replay it with `rdc open <path> --proxy host:port`. (The CLI's own `next:` hint currently still references the deprecated `--remote` alias for `--proxy`.)\n- `rdc open frame.rdc --proxy host:port` — remote-backed replay (daemon local, GPU remote)\n\n`remote_state.py` persists the last connected host so subsequent `rdc remote list` can omit `--url`.\n\n## Split Mode (thin client)\n\nSplit mode decouples CLI and daemon — run the daemon where the GPU is and connect from a machine that doesn't need the renderdoc module. Useful when the analyst's laptop is macOS/Windows and the GPU is on a Linux server.\n\n- Server side: `rdc open capture.rdc --listen [ADDR[:PORT]]`\n  - Prints these four labeled lines to stdout (among other status output): `host: ADDR`, `port: PORT`, `token: TOKEN`, `connect with: rdc open --connect ADDR:PORT --token TOKEN`\n- Client side: `rdc open --connect HOST:PORT --token TOKEN`\n\nSSH tunnel tip (use the port from `--listen`, or `rdc serve`'s default `39920`): `ssh -L 39920:localhost:39920 user@server`, then connect to `localhost:39920`.\n\nEvery normal command (`rdc draws`, `rdc rt`, ...) works transparently in Split mode. Binary exports use `file_read` RPC with raw binary frames — no base64 overhead.\n\n## Android Workflow\n\n- Prerequisite: the RenderDoc APK must already be installed on the host via `rdc setup-renderdoc --android` (upstream) or `--android --arm` (ARM PS fork for Mali). `rdc android setup` does not push the APK itself.\n- `rdc android setup [--serial SERIAL]` — starts remoteserver on the device via RenderDoc's Device Protocol API (`StartRemoteServer`), sets adb forward, saves remote state.\n- `rdc android capture <activity> [--serial SERIAL] [--timeout N] [--port PORT] [-o out.rdc]` — GPU debug layers based capture (works around EMUI/Mali injection limitations).\n- `rdc android stop [--serial SERIAL]` — stops the remoteserver and cleans state.\n- For remote replay: `rdc open frame.rdc --android [--serial SERIAL]` — this is the only form that rewrites the saved `adb://SERIAL` to the forwarded `localhost:PORT`. Passing `--proxy adb://SERIAL` directly bypasses the rewrite and is known to crash the daemon (see `session.py:_resolve_android_url`).\n\nHardware matrix: Adreno is the happy path; Mali may need the ARM Performance Studio fork (see `rdc setup-renderdoc --android --arm`).\n\n## Troubleshooting\n\nAlways run `rdc doctor` first. It reports status for renderdoc module, renderdoccmd, adb, Android APK, and platform-specific toolchains. Only the missing-renderdoc-module case emits a dedicated build-hint block; other checks surface inline hints in the detail column, so read each failing line rather than relying on a uniform next-step list.\n\nCommon failure categories (conceptual, not literal error strings — map from the text the tool actually emits):\n\n- **network / connect failed** — remote host unreachable, firewall, wrong port. Verify `rdc serve` is running on the target.\n- **version mismatch** — host and target RenderDoc versions differ. Re-run `rdc setup-renderdoc` or `rdc setup-renderdoc --android` to align.\n- **inject failed / ident=0** — injection blocked (Android EMUI, macOS SIP, Windows privilege). Run `rdc doctor` and check the platform-specific detail.\n- **OpenCapture unsupported** — local GPU can't replay the capture's API surface; switch to `--proxy` or `--android` remote replay.\n- **not loaded / no session** — forgot `rdc open`; use `rdc status` to inspect.\n\nFor long operations (large capture transfers, remote replay init), the CLI has limited progress feedback — this is a known UX gap, not a hang. Wait up to the `--timeout` value before concluding failure.\n"
+    gold_removed: ''

@@ -1,0 +1,48 @@
+version: "2.0"
+
+task:
+  name: memsearch-expand-memoryrecall-skill-description-for
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: zilliztech/memsearch
+  pr: 353
+  base_commit: "b38c894d679e65ffb131205b71ea1b453a1b2269"
+  merge_commit: "6de05ece2a2e33b1c05e0481d070695ab93b42b0"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/claude-code/skills/memory-recall/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/codex/skills/memory-recall/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/openclaw/skills/memory-recall/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/opencode/skills/memory-recall/SKILL.md."
+
+config_edits:
+  - path: plugins/claude-code/skills/memory-recall/SKILL.md
+    tier: 1
+    gold_added: 'description: "Search and recall relevant memories from past sessions via memsearch. Use when the user''s question could benefit from historical context, past decisions, debugging notes, previous conversations, or project knowledge -- especially questions like ''what did I decide about X'', ''why did we do Y'', or ''have I seen this before''. Also use when you see `[memsearch] Memory available` hints injected via SessionStart or UserPromptSubmit. Typical flow: search for 3-5 chunks, expand the most relevant, optionally deep-drill into original transcripts via the anchor format. Skip when the question is purely about current code state (use Read/Grep), ephemeral (today''s task only), or the user has explicitly asked to ignore memory."'
+    gold_removed: ''
+  - path: plugins/codex/skills/memory-recall/SKILL.md
+    tier: 1
+    gold_added: 'description: "Search and recall relevant memories from past sessions via memsearch. Use when the user''s question could benefit from historical context, past decisions, debugging notes, previous conversations, or project knowledge -- especially questions like ''what did I decide about X'', ''why did we do Y'', or ''have I seen this before''. Also use when you see `[memsearch] Memory available` hints injected via SessionStart or UserPromptSubmit. Typical flow: search for 3-5 chunks, expand the most relevant, optionally deep-drill into original transcripts via the anchor format. Skip when the question is purely about current code state (use Read/Grep), ephemeral (today''s task only), or the user has explicitly asked to ignore memory."'
+    gold_removed: ''
+  - path: plugins/openclaw/skills/memory-recall/SKILL.md
+    tier: 1
+    gold_added: 'description: "Search and recall relevant memories from past sessions via memsearch. Use when the user''s question could benefit from historical context, past decisions, debugging notes, previous conversations, or project knowledge -- especially questions like ''what did I decide about X'', ''why did we do Y'', or ''have I seen this before''. Also use when you see `[memsearch] Memory available` hints injected via SessionStart or UserPromptSubmit. Typical flow: search for 3-5 chunks, expand the most relevant, optionally deep-drill into original transcripts via the anchor format. Skip when the question is purely about current code state (use Read/Grep), ephemeral (today''s task only), or the user has explicitly asked to ignore memory."'
+    gold_removed: ''
+  - path: plugins/opencode/skills/memory-recall/SKILL.md
+    tier: 1
+    gold_added: 'description: "Search and recall relevant memories from past sessions via memsearch. Use when the user''s question could benefit from historical context, past decisions, debugging notes, previous conversations, or project knowledge -- especially questions like ''what did I decide about X'', ''why did we do Y'', or ''have I seen this before''. Also use when you see `[memsearch] Memory available` hints injected via SessionStart or UserPromptSubmit. Typical flow: search for 3-5 chunks, expand the most relevant, optionally deep-drill into original transcripts via the anchor format. Skip when the question is purely about current code state (use Read/Grep), ephemeral (today''s task only), or the user has explicitly asked to ignore memory."'
+    gold_removed: ''

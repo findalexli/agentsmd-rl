@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: libretto-add-fixmergeconflicts-skill
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: saffron-health/libretto
+  pr: 39
+  base_commit: "1720b42e9f30a72b034a94b0d43df4825b117ed4"
+  merge_commit: "22506a565bfca7515a6c4cdbe1d502a9abd6ea48"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/fix-merge-conflicts/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/fix-merge-conflicts/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/fix-merge-conflicts/SKILL.md."
+
+config_edits:
+  - path: .agents/skills/fix-merge-conflicts/SKILL.md
+    tier: 1
+    gold_added: "---\nname: fix-merge-conflicts\ndescription: Resolve Git merge, rebase, or cherry-pick conflicts by preserving intent from both sides. Use when unmerged paths or conflict markers are present, especially when you must inspect the PR title and description tied to conflicting commits before choosing a resolution.\n---\n\nResolve conflicts by intent, not by line order.\n\n## Workflow\n\n1. Identify conflicted files and candidate commits.\n2. Map each conflicting commit to its PR.\n3. Read PR title and description to extract intent.\n4. Detect intent divergence and request user intervention.\n5. Resolve conflicts to preserve both intents when compatible.\n6. Validate behavior with targeted checks.\n7. Summarize decisions and any tradeoffs.\n\n## 1) Identify Conflict Scope\n\nRun:\n\n```bash\ngit status --porcelain\ngit diff --name-only --diff-filter=U\ngit log --left-right --merge --oneline\n```\n\nUse `git log --left-right --merge` as the starting set of commits that influenced the conflicted hunks.\n\n## 2) Map Commits to PRs\n\nPrefer GitHub metadata when available.\n\n1. Parse owner/repo from `origin`.\n2. For each conflicting commit SHA, query associated PRs.\n\n```bash\ngh api graphql \\\n  -f query='query($owner:String!,$repo:String!,$sha:GitObjectID!){repository(owner:$owner,name:$repo){object(oid:$sha){... on Commit{associatedPullRequests(first:5){nodes{number title body url mergedAt baseRefName headRefName}}}}}}' \\\n  -F owner=OWNER -F repo=REPO -F sha=COMMIT_SHA\n```\n\nIf no associated PR is found, fall back to `git show --stat COMMIT_SHA` and commit message context.\n\n## 3) Extract Intent\n\nFor each relevant PR, capture:\n\n- Goal stated in title\n- Constraints, caveats, or behavioral expectations from description\n- Any explicitly non-goals\n\nWrite a short intent summary per side before editing code.\n\n## 4) Divergence Checkpoint (User Intervention Required)\n\nBefore finalizing any hunk where intents conflict, notify the user and ask for direction.\n\nTreat these as divergence signals:\n\n- Both sides change the same behavior with incompatible outcomes\n- One side explicitly rejects behavior the other side introduces\n- Either PR description states a constraint that the other side would violate\n\nWhen divergence is detected:\n\n1. Pause editing for that hunk.\n2. Provide a short comparison of intent A vs intent B.\n3. Ask one explicit resolution question.\n4. Wait for user response before applying the final hunk resolution.\n\nQuestion format:\n\n```text\nIntent divergence detected in <file>:<hunk>.\nOption A (PR #X): <one-line intent>\nOption B (PR #Y): <one-line intent>\nWhich intent should be primary for this hunk?\n```\n\nIf the user chooses one side, preserve that side and salvage any non-conflicting behavior from the other side.\nIf the user requests a hybrid, restate the hybrid rule before applying edits.\n\n## 5) Resolve by Preserving Intent\n\nFor each conflict hunk:\n\n1. Explain what each side is trying to preserve.\n2. Keep both behaviors if they are compatible.\n3. If incompatible, keep repository invariants and adapt the losing side's goal into a safe equivalent.\n4. Never silently drop behavior that was explicitly called out in a PR description.\n\nAvoid resolving by \"take ours/theirs\" unless the PR intent proves one side is obsolete.\n\n## 6) Validate\n\nRun focused checks that cover touched behavior. In this repository, prefer:\n\n```bash\npnpm --filter libretto-cli type-check\npnpm --filter libretto-cli test -- <relevant-test-file>\n```\n\nRun broader checks when conflict scope is wide.\n\n## 7) Report\n\nProvide a concise summary:\n\n- Files resolved\n- PR intents preserved\n- Any intentional compromise and why\n- Follow-up risk or test gap, if any\n\nIf intent is ambiguous after reading PR metadata, ask one specific question before finalizing."
+    gold_removed: ''

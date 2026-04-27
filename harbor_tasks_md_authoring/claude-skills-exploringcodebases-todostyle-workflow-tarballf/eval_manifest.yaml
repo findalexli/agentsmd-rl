@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: claude-skills-exploringcodebases-todostyle-workflow-tarballf
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: oaustegard/claude-skills
+  pr: 560
+  base_commit: "00dfbf3362f8ba4e8b3459a71cc56ac29c66e760"
+  merge_commit: "17a93e3b45afadcca9468a75c8d64eeb401506e4"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in exploring-codebases/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in exploring-codebases/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in exploring-codebases/SKILL.md."
+
+config_edits:
+  - path: exploring-codebases/SKILL.md
+    tier: 1
+    gold_added: "  version: 2.1.0\nfeaturing (semantic) over a local copy of the repo.\nFour steps, in order. Do not skip step 1.\n### 1. Get the repo (tarball, not per-file)\nOWNER=... REPO=... REF=main\ncurl -sL \"https://api.github.com/repos/$OWNER/$REPO/tarball/$REF\" -o /tmp/$REPO.tar.gz\nmkdir -p /tmp/$REPO && tar -xzf /tmp/$REPO.tar.gz -C /tmp/$REPO --strip-components=1\nOne HTTP call gets the whole repo. Do NOT curl the README, cat individual\nfiles, or fetch via `contents/PATH` before this — they're all in the tarball.\nEvery pre-tarball `curl`/`cat` on a file that's already in the repo is\nwasted tool budget.\nFor private repos, add `-H \"Authorization: Bearer $GH_TOKEN\"`.\n### 2. Tree-sitting (structural inventory)\nTREESIT=/mnt/skills/user/tree-sitting/scripts/treesit.py\nPYTHON=/home/claude/.venv/bin/python\n# Structural overview — files, symbol counts, languages at depth=1\n$PYTHON $TREESIT /tmp/$REPO --stats\n# Drill into interesting paths. BATCH queries in one call — each extra\n# query adds ~0ms on top of the scan cost. Separate invocations re-scan.\n$PYTHON $TREESIT /tmp/$REPO --path=SUBDIR --detail=full \\\n  'find:*Handler*:function' 'source:main' 'refs:Config'\n### 3. Featuring (feature synthesis)\n$PYTHON /mnt/skills/user/featuring/scripts/gather.py /tmp/$REPO \\\n### 4. Reason about the combined output\nSynthesize steps 2+3 into understanding — identify capabilities, group symbols\ninto features, write user-facing descriptions. Produce `_FEATURES.md` when\nwarranted. This is the LLM step; everything before was mechanical.\n## Notes\n- **Scale**: For large repos (>100 files), use `--skip tests,vendored,docs,...`\n  in step 2 to focus the initial scan. Expand scope as needed.\n- **Monorepos**: Treat each package/service as a separate exploration.\n  Generate per-subsystem `_FEATURES.md` files linked from a root index.\n- **Drill heuristics** (for step 2): directories with high symbol count vs\n  file count (dense logic), entry-point patterns (`main`, `cli`, `app`,\n  `server`, `routes`), files with many imports (integration points)."
+    gold_removed: ''

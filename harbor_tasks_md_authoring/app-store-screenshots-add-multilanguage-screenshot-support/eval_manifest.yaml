@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: app-store-screenshots-add-multilanguage-screenshot-support
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: ParthJadhav/app-store-screenshots
+  pr: 6
+  base_commit: "cb7bfefdbffe11a86ceab58ec565e938097ce6b2"
+  merge_commit: "2f401899cbf2942c56bac8e1ce656e8f8b0911bf"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/app-store-screenshots/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/app-store-screenshots/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/app-store-screenshots/SKILL.md."
+
+config_edits:
+  - path: skills/app-store-screenshots/SKILL.md
+    tier: 1
+    gold_added: "10. **Localized screenshots** — \"Do you want screenshots in multiple languages? This helps your listing rank in regional App Stores even if your app is English-only. If yes: which languages? (e.g. en, de, es, pt, ja)\"\n11. **Additional instructions** — \"Any specific requirements, constraints, or preferences?\"\n**Multi-language:** nest screenshots under a locale folder per language. The generator switches the `base` path; all slide image srcs stay identical.\n\n```\n└── screenshots/\n    ├── en/\n    │   ├── home.png\n    │   ├── feature-1.png\n    │   └── ...\n    ├── de/\n    │   └── ...\n    └── {locale}/\n```\n\n### Multi-language: Locale Tabs\n\nAdd a `LOCALES` array and locale tabs to the toolbar. Every slide src uses `base` — no hardcoded paths:\n\n```tsx\nconst LOCALES = [\"en\", \"de\", \"es\"] as const; // use whatever langs were defined\ntype Locale = typeof LOCALES[number];\n\n// In ScreenshotsPage:\nconst [locale, setLocale] = useState<Locale>(\"en\");\nconst base = `/screenshots/${locale}`;\n\n// Toolbar tabs:\n{LOCALES.map(l => (\n  <button key={l} onClick={() => setLocale(l)}\n    style={{ fontWeight: locale === l ? 700 : 400 }}>\n    {l.toUpperCase()}\n  </button>\n))}\n\n// In every slide — unchanged between single and multi-language:\n<Phone src={`${base}/home.png`} alt=\"Home\" />\n```\n"
+    gold_removed: ''

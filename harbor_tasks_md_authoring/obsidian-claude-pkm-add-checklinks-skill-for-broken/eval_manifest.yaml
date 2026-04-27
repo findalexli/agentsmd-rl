@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: obsidian-claude-pkm-add-checklinks-skill-for-broken
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: ballred/obsidian-claude-pkm
+  pr: 10
+  base_commit: "9b3356301ea067118098146c0a15d36c4530cab6"
+  merge_commit: "31217feacbec5d10506ab0ced3dadd31c5da8710"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in vault-template/.claude/skills/check-links/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in vault-template/.claude/skills/check-links/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in vault-template/.claude/skills/check-links/SKILL.md."
+
+config_edits:
+  - path: vault-template/.claude/skills/check-links/SKILL.md
+    tier: 1
+    gold_added: "---\nname: check-links\ndescription: Find broken wiki-links in the vault. Read-only analysis — scans for [[links]] and verifies target files exist. No writes, no dependencies.\nallowed-tools: Grep, Glob, Read\nuser-invocable: true\n---\n\n# Check Links Skill\n\nFinds broken `[[wiki-links]]` across your vault by extracting link targets and verifying that each target file exists. Read-only — never modifies files.\n\n## Usage\n\n```\n/check-links\n```\n\nOr ask:\n- \"Check for broken links in my vault\"\n- \"Find dead wiki-links\"\n- \"Are there any broken links?\"\n\n## How to Execute\n\n### Step 1: Extract all wiki-links\n\nUse **Grep** to find all `[[...]]` patterns in markdown files:\n\n```\nGrep:\n  pattern: \"\\\\[\\\\[([^\\\\]|]+)\"\n  glob: \"*.md\"\n  output_mode: content\n  -n: true\n```\n\nThis captures the link target (before any `|` alias). Exclude `.claude/` and `.obsidian/` directories from results.\n\n### Step 2: Build unique target list\n\nFrom the grep results, extract the unique link targets. For each match like `[[My Note]]` or `[[My Note|display text]]`, the target is `My Note`.\n\nStrip:\n- Heading anchors: `[[Note#heading]]` → target is `Note`\n- Block references: `[[Note^block-id]]` → target is `Note`\n- Aliases: `[[Note|alias]]` → target is `Note`\n\n### Step 3: Verify each target exists\n\nFor each unique target, use **Glob** to check if a matching file exists:\n\n```\nGlob:\n  pattern: \"**/<target>.md\"\n```\n\nA link is **broken** if no file matches. A link is **valid** if at least one file matches.\n\n### Step 4: Report results\n\nGroup broken links by source file:\n\n```markdown\n## Broken Links Report\n\n### Daily Notes/2024-01-15.md\n- [[Projet Alpha]] — no matching file found\n- [[Old Goal]] — no matching file found\n\n### Projects/Project Beta.md\n- [[Meeting Notes Jan]] — no matching file found\n\n---\n\n**Summary:** 3 broken links across 2 files (out of 45 total links checked)\n```\n\n### Step 5: Suggest fixes\n\nFor each broken link, try to find a close match:\n\n1. Use **Glob** with a partial pattern: `**/*<partial-target>*.md`\n2. If a similar filename exists, suggest it:\n   ```\n   - [[Projet Alpha]] — Did you mean [[Project Alpha]]?\n   ```\n3. If no close match, just report \"no matching file found\"\n\n## Edge Cases\n\n- **Embedded images** (`![[image.png]]`) — skip these, they reference attachments\n- **External links** (`[text](https://...)`) — skip these, they are not wiki-links\n- **Template placeholders** (`[[{{date}}]]`) — skip anything with `{{` in the target\n- **Empty links** (`[[]]`) — report as malformed, not broken\n\n## No Broken Links\n\nIf all links are valid:\n\n```\n✅ All wiki-links verified — no broken links found across X files (Y links checked)\n```\n\n## Tips\n\n- Run `/check-links` periodically to catch link rot\n- After renaming files, run this to find links that need updating\n- Combine with `/search` to find notes that reference deleted content"
+    gold_removed: ''

@@ -1,0 +1,50 @@
+version: "2.0"
+
+task:
+  name: octocode-mcp-revise-labeling-rules-and-update
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: bgauryy/octocode-mcp
+  pr: 386
+  base_commit: "839b963e0c19741630c656e9a6dd1261b27385d3"
+  merge_commit: "6895ad02caf62d2282cda691706e9ca306262c5a"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/octocode-pull-request-reviewer/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/octocode-pull-request-reviewer/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/octocode-pull-request-reviewer/SKILL.md."
+
+config_edits:
+  - path: skills/octocode-pull-request-reviewer/SKILL.md
+    tier: 1
+    gold_added: '### Finding Numbering (applies to ALL output)
+
+      - **FORBIDDEN:** Using `#1`, `#2`, `#N` or any `#<number>` prefix to label findings or reference them in text. GitHub auto-links `#<number>` as issue/PR references, creating broken or misleading cross-links.
+
+      - Use plain numbering (`1.`, `2.`), lettered labels (`A`, `B`), or descriptive IDs (e.g., `[SEC-1]`, `[BUG-1]`) instead.
+
+
+      - **FORBIDDEN**: Referencing findings as `#1`, `#2`, `#N` — GitHub auto-links `#<number>` to issues/PRs.
+
+
+      ### Finding Labels
+
+      - **FORBIDDEN:** Using `#1`, `#2`, or any `#<number>` notation to label or reference findings anywhere in the output. GitHub auto-links `#N` to issues and pull requests, creating broken or misleading cross-links in PR comments.
+
+      - Use plain numbering (`1.`, `2.`), lettered labels (`A`, `B`), or descriptive category IDs (e.g., `[SEC-1]`, `[BUG-1]`, `[ARCH-1]`) instead.
+
+      - This applies to headings, inline references, summary lists, and any other mention of finding identifiers.
+
+      - [ ] No `#<number>` notation used in any finding label or reference'
+    gold_removed: ''

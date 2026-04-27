@@ -1,0 +1,68 @@
+version: "2.0"
+
+task:
+  name: nanostack-autopilot-remove-all-pause-points
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: garagon/nanostack
+  pr: 81
+  base_commit: "d246602e073727394a9a2565ac68f47d56ccb2d3"
+  merge_commit: "8254ac2246fe1d94e1462bba179caa30f874a620"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plan/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plan/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plan/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in ship/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in ship/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in ship/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in think/SKILL.md."
+
+config_edits:
+  - path: plan/SKILL.md
+    tier: 1
+    gold_added: '**If AUTOPILOT is active:** Present the plan briefly and proceed immediately. Do not wait for approval. The user chose autopilot because they trust the process.
+
+      **Otherwise:** Present the plan to the user. Wait for explicit approval before executing. If the user modifies the plan, update it before proceeding.
+
+
+      After the plan is approved (or auto-approved in autopilot), do these two steps in order:'
+    gold_removed: ''
+  - path: ship/SKILL.md
+    tier: 1
+    gold_added: '**Step 2: How to see the result.**
+
+      **If AUTOPILOT is active:** Skip this question. Go directly to Next Step (compound + sprint summary). The user will decide how to run it after the sprint closes.
+
+
+      **Otherwise**, ask:'
+    gold_removed: ''
+  - path: think/SKILL.md
+    tier: 1
+    gold_added: '**If AUTOPILOT is active:** Do NOT ask clarifying questions. Work with the information provided. Default to Builder mode. If the description is clear enough to plan, skip the diagnostic questions and go straight to Phase 5 (scope recommendation) with a brief that covers value prop, scope, wedge and risk. The user chose autopilot because they want speed, not a conversation.
+
+      '
+    gold_removed: ''

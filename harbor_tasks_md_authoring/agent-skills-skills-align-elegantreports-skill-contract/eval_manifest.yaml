@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: agent-skills-skills-align-elegantreports-skill-contract
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: jdrhyne/agent-skills
+  pr: 18
+  base_commit: "2d7a3c9e2657399c9f60ecddb9c188730284cb7b"
+  merge_commit: "6768672b15fc81bcee933e311c14ee04b4a97ecd"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/elegant-reports/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/elegant-reports/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/elegant-reports/SKILL.md."
+
+config_edits:
+  - path: skills/elegant-reports/SKILL.md
+    tier: 1
+    gold_added: "metadata: {\"clawdbot\":{\"requires\":{\"bins\":[\"node\",\"npm\"]}}}\npermissions:\n  - exec: \"Runs the local Node generator to list templates, render preview HTML, and create PDF outputs when the user asks.\"\n  - file_read: \"Reads bundled templates, themes, examples, and design references inside the skill directory plus user-approved input markdown files.\"\n  - file_write: \"Writes generated HTML/PDF outputs and user-requested template or theme files inside approved working directories.\"\n  - network: \"Calls Nutrient DWS and any hosted font assets used by the bundled templates when the user requests report generation.\"\nGenerate minimalist PDF reports inspired by Scandinavian editorial design.\n## When to Use\nUse this skill when the user wants:\n- polished executive briefings or board-style reports\n- presentation-like PDFs generated from markdown\n- a clean Nordic visual language instead of default developer styling\n- a reusable report template system that can be extended carefully\n## Quick Start\nInstall the pinned dependencies from `package-lock.json`, then run:\n```bash\ncd /path/to/elegant-reports\nnode ./generate.js --list\nnode ./generate.js examples/sample-executive.md output.pdf --template executive --theme light\nFor HTML debugging, add `--output-html` so the generator saves the rendered HTML alongside the PDF.\n\n## Available Templates\n| Template | Use Case |\n|----------|----------|\n| `executive` | polished briefings and compact executive summaries |\n| `report` | denser narrative reports and analysis writeups |\n| `presentation` | bold slide-like outputs with one idea per page |\n| `report-demo` | legacy report variant for comparison/testing |\n| `presentation-demo` | legacy presentation variant for comparison/testing |\nEach template supports `light` and `dark` themes where available.\nAdd YAML frontmatter to control the rendered output:\n## Workflow\n1. Pick the closest existing template instead of starting from scratch.\n2. Write or refine the source markdown.\n3. Generate a PDF.\n4. If layout tuning is needed, inspect the emitted HTML with `--output-html` and adjust the corresponding template/theme pair.\n5. Re-run until the design is clean and the PDF is stable.\n## Extending the Skill\nWhen authoring a new visual variant:\n- start from the nearest bundled template and theme\n- keep token names and spacing scales consistent with the existing system\n- make one visual change at a time and regenerate after each step\n- prefer additive variants over rewriting the whole design language\n- keep legacy/demo templates available until the replacement is verified\nThe bundled Nordic design research note is the canonical reference for the visual system. Read it only when you need deeper design rationale.\n## Safety Boundaries\n- Do not send sensitive source documents to third-party services unless the user explicitly requested PDF generation through Nutrient DWS and accepts that network boundary.\n- Do not browse arbitrary local files. Limit reads to the skill bundle and user-approved input/output paths.\n- Do not overwrite or delete files outside the user-approved working directory.\n- Do not install extra packages, change dependency versions, or add new external services unless the user explicitly asks for that setup work.\n- Do not claim a report was generated successfully unless the output artifact exists and the generator completed without error.\n- Do not fetch external design inspiration or web references unless the user explicitly wants fresh visual research.\n- pinned npm dependencies from `package-lock.json`\n- `NUTRIENT_DWS_API_KEY` environment variable for PDF generation\n## File Map\n- main generator CLI and module entrypoint\n- bundled HTML templates\n- bundled visual themes\n- sample markdown input\n- optional deeper design rationale bundled with the skill\n## Validation\n\nBefore calling the skill done:\n- run `node ./generate.js --list`\n- run `npm test`\n- verify the expected PDF or HTML artifact exists in the requested output path"
+    gold_removed: ''

@@ -1,0 +1,101 @@
+version: "2.0"
+
+task:
+  name: cog-second-brain-add-scout-skill-for-urltool
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: huytieu/COG-second-brain
+  pr: 14
+  base_commit: "39ccbee54404fd1276f7309fb23d0c9ef4edc912"
+  merge_commit: "167db61f6de4fa292f0ce2e7399c2618625f34a6"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/scout/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/scout/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/scout/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: .claude/skills/scout/SKILL.md
+    tier: 1
+    gold_added: "---\nname: scout\ndescription: Evaluate URLs and tools — check vault coverage, assess relevance, recommend save or skip\nroles: [all]\nintegrations: [web-fetch, web-search]\n---\n\n# COG Scout Skill\n\n## Purpose\nLightweight URL/tool triage that sits between \"ignore\" and `/url-dump`. Evaluates whether a URL or tool is worth saving or skipping — checking existing vault coverage, assessing relevance to the user's profile and interests, and recommending a clear next action.\n\n## When to Invoke\n- User wants to evaluate a URL or tool before committing to a full save\n- User says \"scout this\", \"evaluate this\", \"should I save this?\", \"is this relevant?\"\n- User shares one or more URLs and wants a quick relevance assessment\n- User mentions a tool/service name and wants to know if it's worth investigating\n\n## Agent Mode Awareness\n\n**Check `agent_mode` in `00-inbox/MY-PROFILE.md` frontmatter:**\n- If `agent_mode: team` — delegate vault scanning and web fetching to parallel sub-agents (one for vault search, one for content fetch/analysis). Combine results for recommendation.\n- If `agent_mode: solo` (default) — handle all scanning and analysis directly in the conversation. No delegation.\n\n## Pre-Flight Check\n\n**Before executing, check for user profile:**\n\n1. Look for `00-inbox/MY-PROFILE.md` and `00-inbox/MY-INTERESTS.md` in the vault\n2. If NOT found:\n   ```\n   Welcome to COG! Scout works best with a profile for relevance matching.\n\n   Would you like to run /onboarding first, or should I evaluate with general criteria?\n   ```\n3. If found:\n   - Read `MY-PROFILE.md` for active projects and role\n   - Read `MY-INTERESTS.md` for topic areas\n   - Read `00-inbox/MY-INTEGRATIONS.md` for active integrations (check if `web-fetch` and `web-search` are available)\n\n## Boundary with `/url-dump`\n\n**Scout evaluates** (\"should I save this?\"). **URL-dump saves** (\"save this now\").\n\n- Scout checks existing coverage, assesses relevance, and recommends an action\n- If the recommendation is **Save**, scout hands off to `/url-dump` with pre-filled category\n- Users who already know they want to save should use `/url-dump` directly\n\n## Process Flow\n\n### 1. Accept Input\n\nAccept one or more of:\n- **URL(s):** Direct links to evaluate\n- **Tool/service name(s):** Will search for the tool first\n- **Mixed:** Combination of URLs and names\n\n**Prompt (if no input provided):**\n```\nWhat URL(s) or tool(s) would you like me to evaluate?\n(You can paste URLs, tool names, or a mix)\n```\n\n**Batch mode:** Multiple URLs/names in one invocation are processed together with a summary table at the end.\n\n### 2. Vault Coverage Check\n\nFor each URL or tool name, search the **entire vault** for existing coverage.\n\n**Search strategy:**\n- Extract domain from URL (e.g., `github.com/owner/repo` → search for repo name)\n- Search for tool/service name across the whole vault (grep for domain, repo name, tool name)\n- Match against URL strings in frontmatter (`url:` fields) and inline links\n\n**If found:**\n```\n\U0001F50D Existing coverage found for [name]:\n- [file path] — saved [date], category: [category]\n- [file path] — mentioned in [context]\n\nWant me to check if an update is needed, or skip this one?\n```\n\n### 3. Content Fetch & Analysis\n\n**If URL provided and web-fetch is active:**\n- Fetch the URL content using WebFetch\n- Extract: title, description, content type, author, date\n\n**If tool name provided (no URL):**\n- Use WebSearch to find the tool's primary page\n- Fetch and analyze the top result\n\n**Content type detection:**\n- **Tool/Service:** Software, SaaS, API, library, framework\n- **Article/Blog:** Long-form content, tutorial, opinion piece\n- **Repository:** GitHub/GitLab repo (extract stars, last commit, language)\n- **Research:** Paper, study, academic content\n- **News:** Industry news, announcement\n- **Reference:** Documentation, spec, standard\n\n### 4. Relevance Assessment\n\nScore relevance against user context:\n\n**Profile Match (from MY-PROFILE.md):**\n- Does it relate to an active project? Which one?\n- Does it align with the user's role?\n- Does it fit the user's tech stack?\n\n**Interest Match (from MY-INTERESTS.md):**\n- Does it match any declared interest topics?\n- How directly relevant is it?\n\n**Quality Signals:**\n- For repos: stars, recent activity, maintainer health\n- For tools: pricing model, maturity, adoption\n- For articles: author credibility, publication quality, recency\n- For all: uniqueness vs. what's already in the vault\n\n### 5. Recommendation\n\nBased on analysis, recommend one of two actions:\n\n#### **Save** — Worth adding to the knowledge base\n```\n✅ SAVE — [Title/Name]\nCategory: [suggested category for url-dump]\nRelevance: [High/Medium] — [why it matters]\nProjects: [affected project(s) if any]\n\nShall I hand off to /url-dump to save it?\n```\n\n#### **Skip** — Not relevant or not worth the time\n```\n⏭️ SKIP — [Title/Name]\nReason: [clear explanation — wrong stack, low quality, already covered, irrelevant to interests]\n```\n\n### 6. Batch Summary (for multiple items)\n\nWhen processing multiple URLs/tools, end with a summary table:\n\n```markdown\n## Scout Summary\n\n| # | Item | Verdict | Reason |\n|---|------|---------|--------|\n| 1 | [Name 1] | ✅ Save | [brief reason] |\n| 2 | [Name 2] | ⏭️ Skip | [brief reason] |\n\n**Actions:**\n- [X] items ready to save via /url-dump\n```\n\n### 7. Execute Follow-up Actions\n\nBased on user confirmation:\n- **Save items:** Hand off to `/url-dump` with pre-filled category suggestion\n- **Skip items:** No action needed\n\n## Fallback Behavior\n\n| Scenario | Behavior |\n|----------|----------|\n| web-fetch unavailable | Evaluate based on URL structure, domain reputation, and vault search only. Note that content wasn't fetched. |\n| web-search unavailable | For tool-name inputs (no URL), ask the user for a direct URL instead. For URL inputs, proceed normally — web-search is not needed. |\n| No user profile | Evaluate with general quality/relevance criteria, skip personalized relevance scoring |\n| URL is paywalled | Note limitation, evaluate based on available preview and metadata |\n| Tool not found via search | Ask user for more context or a direct URL |\n\n## Uncertainty Handling\n\n- **High confidence:** Clear relevance match or clear irrelevance — give direct recommendation\n- **Medium confidence:** Partial match — present pros/cons, let user decide\n- **Low confidence:** Can't determine relevance — explain what's unclear, ask user for context\n\n## Integration with Other Skills\n\n### Downstream\n- **Save** → hands off to `/url-dump` with pre-filled category\n\n### Upstream\n- `/daily-brief` may surface new tools/services → user can run `/scout` to evaluate\n- `/auto-research` may discover tools during research → scout can triage them\n\n## Success Metrics\n- Quick triage (< 1 minute for single URL in solo mode)\n- Clear, actionable recommendations\n- Accurate vault coverage detection (no duplicate saves)\n- Relevance scoring matches user expectations\n- Smooth handoff to `/url-dump` when saving\n\n## Philosophy\n\nScout embodies COG's \"evaluate before you accumulate\" principle:\n- Not everything deserves a bookmark — be selective\n- Existing coverage should be surfaced before creating duplicates\n- Binary save/skip keeps decisions fast and avoids half-measures\n- Clear recommendations reduce decision fatigue"
+    gold_removed: ''
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '### /scout
+
+
+      **Description:** Evaluate URLs and tools — check vault coverage, assess relevance, recommend save or skip.
+
+
+      **Triggers:**
+
+      - `/scout`
+
+      - "scout this"
+
+      - "evaluate this"
+
+      - "should I save this?"
+
+      - "is this relevant?"
+
+
+      **Purpose:** Lightweight triage that sits between "ignore" and `/url-dump`. Checks existing vault coverage, assesses relevance to your profile and interests, and recommends save or skip.
+
+
+      **What it does:**
+
+      1. Accepts URL(s) or tool name(s)
+
+      2. Searches the entire vault for existing coverage (duplicates, mentions)
+
+      3. If new — fetches content, detects type (tool, article, repo, research, news, reference)
+
+      4. Assesses relevance against your profile (projects, role, tech stack) and interests
+
+      5. Recommends **Save** (hands off to `/url-dump` with pre-filled category) or **Skip** (explains why)
+
+      6. Supports batch mode (multiple URLs in one invocation)
+
+
+      **Boundary with `/url-dump`:** Scout evaluates ("should I save this?"). URL-dump saves ("save this now"). If you already know you want to save, use `/url-dump` directly.
+
+
+      ---
+
+
+      6. **Evaluate a tool?** Use `/scout` to check relevance before saving
+
+      7. **Build knowledge?** Run `/knowledge-consolidation` periodically
+
+      8. **Create user stories?** Use `/create-user-story` with a problem/solution
+
+      9. **Draft a PRD?** Use `/generate-prd` with your problem context
+
+      10. **Release notes?** Use `/generate-release-notes` with a version
+
+      11. **Strategic research?** Use `/auto-research` with your question'
+    gold_removed: ''

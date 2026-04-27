@@ -1,0 +1,83 @@
+version: "2.0"
+
+task:
+  name: mc-agent-toolkit-featautomatedtriage-add-interactive-triage-
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: monte-carlo-data/mc-agent-toolkit
+  pr: 54
+  base_commit: "11b047bdf959097933f7753b75ded6554a8ac30d"
+  merge_commit: "48f1322d9d2eba0f5c28321dc4f345802708fa48"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/automated-triage/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/automated-triage/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/automated-triage/SKILL.md."
+
+config_edits:
+  - path: skills/automated-triage/SKILL.md
+    tier: 1
+    gold_added: 'description: Triage Monte Carlo alerts interactively or build an automated workflow. Fetch, score, and troubleshoot alerts using MCP tools now, or design a reusable workflow that runs on a schedule.
+
+      version: 1.1.0
+
+      - Wants to triage or investigate recent Monte Carlo alerts (interactively or automated)
+
+      ### Step 2: Determine intent
+
+
+      Ask:
+
+
+      > "Are you looking to **triage some alerts right now** (I''ll investigate them with you using the triage tools), or **set up / refine an automated triage workflow** (I''ll help you design a process that can run on a schedule)?"
+
+
+      If the user''s request already makes the intent clear — e.g. "triage my freshness alerts from today" vs. "help me build a triage workflow" — skip the question and proceed directly.
+
+
+      ---
+
+
+      #### Branch A: Interactive triage
+
+
+      The user wants to look at specific alerts now. Use the triage tools directly to investigate and report findings. Do not frame this as workflow-building.
+
+
+      1. Clarify scope if needed — which alert types, time window, or specific tables? If the user already specified (e.g. "recent freshness alerts"), proceed without asking.
+
+      2. Fetch alerts with `get_alerts`, run `alert_assessment` in parallel on all of them, and report the results clearly.
+
+      3. For any alert where both confidence and impact are MEDIUM or higher, offer to run `run_troubleshooting_agent` for a deeper root cause analysis. Wait for confirmation before running it.
+
+      4. Summarise findings. Do not prompt to save a workflow file or set up automation unless the user brings it up.
+
+
+      **Write tools in interactive triage:** After findings are clear, proactively offer relevant actions — updating status, declaring a severity, assigning an owner, or posting a comment. Ask before executing.
+
+
+      ---
+
+
+      #### Branch B: Automated workflow
+
+
+      The user wants to build, test, or refine a triage workflow that can run on a schedule.
+
+      ### Step 3: Run the workflow (Branch B only)
+
+      **Action guard — workflow mode:** Never call write tools (`update_alert`, `set_alert_owner`, `create_or_update_alert_comment`) while building or testing a workflow, regardless of what the workflow document says. Only describe what would be done. This guard exists to prevent accidental writes on real alerts during development; lift it only when the user explicitly switches to action mode for a production run.
+
+      '
+    gold_removed: ''

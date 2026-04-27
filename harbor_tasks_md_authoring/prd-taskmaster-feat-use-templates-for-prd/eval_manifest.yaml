@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: prd-taskmaster-feat-use-templates-for-prd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: anombyte93/prd-taskmaster
+  pr: 2
+  base_commit: "f2437f01e7663d19343489e1d30fc3e895ee713a"
+  merge_commit: "b19598bc6f0220b668e4be8cf06102b2c2898a3e"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+
+config_edits:
+  - path: SKILL.md
+    tier: 1
+    gold_added: "## Workflow Overview (13 Steps)\n6. **Generate PRD** - Load template and fill with discovery answers\n10.5. **Generate CLAUDE.md** - TDD workflow guide from template\n**IMPORTANT**: Use the PRD template from `templates/` directory as the base structure.\n\n**Template Selection:**\n```\n1. Read PRD template based on project complexity:\n   - Complex/Standard projects: Use Read tool to load templates/taskmaster-prd-comprehensive.md\n   - Simple features: Use Read tool to load templates/taskmaster-prd-minimal.md\n\n2. Template provides:\n   - Complete section structure with placeholders\n   - Examples for each section\n   - Taskmaster-specific hints and formatting\n```\n\n**Generation Process:**\n```\n1. Load template:\n   - Use Read tool: templates/taskmaster-prd-comprehensive.md (default)\n   - Or: templates/taskmaster-prd-minimal.md (if user requested minimal)\n\n2. Fill template with user's answers from Step 4:\n   - Replace [placeholders] with actual content\n   - Expand examples with project-specific details\n   - Add technical depth based on discovery answers\n\n3. Write completed PRD:\n   - Output to: .taskmaster/docs/prd.md\n   - Preserve template structure and formatting\n```\n\n**Template contains 12 sections:**\n1. Executive Summary\n2. Problem Statement\n3. Goals & Success Metrics\n4. User Stories\n5. Functional Requirements\n6. Non-Functional Requirements\n7. Technical Considerations\n8. Implementation Roadmap\n9. Out of Scope\n10. Open Questions & Risks\n11. Validation Checkpoints\n12. Appendix: Task Breakdown Hints\n\n**Output:**\n```\n✅ PRD Generated from template\n   Template: taskmaster-prd-comprehensive.md\n   Output: .taskmaster/docs/prd.md\n   Sections: 12 (all populated)\n```\n### Step 10.5: Generate CLAUDE.md (TDD Workflow Guide)\n\n**IMPORTANT**: Generate a TDD workflow guide for the project using the template, but only if one doesn't already exist.\n\n**Pre-Check (REQUIRED):**\n```\n1. Check if CLAUDE.md already exists:\n   - Use Glob tool: ./CLAUDE.md\n   - If EXISTS → Skip generation, show message:\n     \"ℹ️ CLAUDE.md already exists. Skipping generation to preserve your configuration.\"\n   - If NOT EXISTS → Proceed with generation\n\n2. Check if codex.md already exists (for later):\n   - Use Glob tool: ./codex.md\n   - Store result for Step 4 below\n```\n\n**Template Loading (only if CLAUDE.md doesn't exist):**\n```\n1. Read the CLAUDE.md template:\n   - Use Read tool: templates/CLAUDE.md.template\n\n2. Template contains:\n   - TDD workflow instructions (RED → GREEN → REFACTOR)\n   - Taskmaster integration commands\n   - Agent usage guidelines\n   - Validation & quality gates\n   - Project-specific placeholders\n```\n\n**Placeholder Replacement:**\n```\nReplace these placeholders with project-specific values from Step 4 discovery:\n\n{{PROJECT_NAME}}        → User's project/feature name\n{{TECH_STACK}}          → Tech stack from discovery (e.g., \"React, Node.js, PostgreSQL\")\n{{ARCHITECTURE_OVERVIEW}} → Brief architecture description\n{{KEY_DEPENDENCIES}}    → Main dependencies identified\n{{TESTING_FRAMEWORK}}   → Testing framework (e.g., \"Jest\", \"Vitest\", \"pytest\")\n{{DEV_ENVIRONMENT}}     → Development environment setup\n{{TEST_COMMAND}}        → Test command (e.g., \"npm test\", \"pytest\")\n```\n\n**Generation Process:**\n```\n1. Pre-check: Skip if CLAUDE.md exists (see Pre-Check above)\n\n2. Load template:\n   - Use Read tool: templates/CLAUDE.md.template\n\n3. Fill placeholders with discovery answers:\n   - If value unknown, use sensible default or \"[To be configured]\"\n\n4. Write to project root:\n   - Output to: ./CLAUDE.md (project root)\n\n5. Ask about Codex (only if codex.md doesn't exist):\n   - Use AskUserQuestion: \"Are you using Codex in addition to Claude Code?\"\n   - If yes AND codex.md doesn't exist: Also write to ./codex.md (identical content)\n   - If codex.md exists: Skip, show \"ℹ️ codex.md already exists.\"\n```\n\n**Output:**\n```\n[If CLAUDE.md doesn't exist]\n✅ CLAUDE.md Generated\n   Template: templates/CLAUDE.md.template\n   Output: ./CLAUDE.md\n   Contains: TDD workflow, taskmaster integration, quality gates\n\n[If CLAUDE.md exists]\nℹ️ CLAUDE.md already exists - skipped generation\n\n[If Codex selected AND codex.md doesn't exist]\n✅ codex.md Generated (identical to CLAUDE.md)\n   Output: ./codex.md\n\n[If codex.md exists]\nℹ️ codex.md already exists - skipped generation\n```\n\n---\n"
+    gold_removed: ''

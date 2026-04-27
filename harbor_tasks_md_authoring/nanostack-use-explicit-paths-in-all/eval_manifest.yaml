@@ -1,0 +1,180 @@
+version: "2.0"
+
+task:
+  name: nanostack-use-explicit-paths-in-all
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: garagon/nanostack
+  pr: 65
+  base_commit: "9cf96d680c7488352599dab2bb7727fec790889c"
+  merge_commit: "87d63c9659419067d64b727c7fa3ce96cfe78be6"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in compound/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in compound/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in compound/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plan/SKILL.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plan/SKILL.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in qa/SKILL.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in qa/SKILL.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in review/SKILL.md."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in review/SKILL.md."
+  - id: signal_12
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in review/SKILL.md."
+  - id: signal_13
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in security/SKILL.md."
+  - id: signal_14
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in security/SKILL.md."
+  - id: signal_15
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in security/SKILL.md."
+  - id: signal_16
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in ship/SKILL.md."
+  - id: signal_17
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in ship/SKILL.md."
+  - id: signal_18
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in ship/SKILL.md."
+  - id: signal_19
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in think/SKILL.md."
+
+config_edits:
+  - path: SKILL.md
+    tier: 1
+    gold_added: 'All skills reference scripts as `bin/save-artifact.sh`, `bin/find-artifact.sh`, etc. These paths are relative to the nanostack skill root, not to the user''s project directory.
+
+      **When you need to run a bin/ script, prefix it with `~/.claude/skills/nanostack/`:**
+
+      ~/.claude/skills/nanostack/bin/save-artifact.sh think ''{"phase":"think",...}''
+
+      ~/.claude/skills/nanostack/bin/find-artifact.sh plan 2
+
+      This works for all standard installations (git clone and npx). Saving artifacts is not optional — every skill must save its artifact after completing.'
+    gold_removed: ''
+  - path: compound/SKILL.md
+    tier: 1
+    gold_added: '~/.claude/skills/nanostack/bin/find-artifact.sh think 2
+
+      ~/.claude/skills/nanostack/bin/find-artifact.sh plan 2
+
+      ~/.claude/skills/nanostack/bin/find-artifact.sh review 2
+
+      ~/.claude/skills/nanostack/bin/find-artifact.sh qa 2
+
+      ~/.claude/skills/nanostack/bin/find-artifact.sh security 2
+
+      ~/.claude/skills/nanostack/bin/find-artifact.sh ship 2
+
+      ~/.claude/skills/nanostack/bin/find-solution.sh "relevant keywords"
+
+      ~/.claude/skills/nanostack/bin/find-solution.sh --tag relevant-tag
+
+      ~/.claude/skills/nanostack/bin/find-solution.sh --file affected/file/path
+
+      ~/.claude/skills/nanostack/bin/save-solution.sh <type> "<title>" "tag1,tag2,tag3"
+
+      ~/.claude/skills/nanostack/bin/save-artifact.sh compound ''<json with phase, summary including solutions_created, solutions_updated, total_solutions, context_checkpoint including summary, key_files, decisions_made, open_questions>''
+
+      - **Update, don''t duplicate.** If ~/.claude/skills/nanostack/bin/find-solution.sh returns a close match, update that document.'
+    gold_removed: ''
+  - path: plan/SKILL.md
+    tier: 1
+    gold_added: '  ~/.claude/skills/nanostack/bin/find-artifact.sh think 2
+
+      ~/.claude/skills/nanostack/bin/save-artifact.sh plan ''<json with phase, summary including planned_files array, context_checkpoint including summary, key_files, decisions_made, open_questions>'''
+    gold_removed: ''
+  - path: qa/SKILL.md
+    tier: 1
+    gold_added: '~/.claude/skills/nanostack/bin/find-artifact.sh plan 2
+
+      ~/.claude/skills/nanostack/bin/save-artifact.sh qa ''<json with phase, mode, summary including wtf_likelihood, findings, context_checkpoint including summary, key_files, decisions_made, open_questions>'''
+    gold_removed: ''
+  - path: review/SKILL.md
+    tier: 1
+    gold_added: '~/.claude/skills/nanostack/bin/find-artifact.sh plan 2
+
+      ~/.claude/skills/nanostack/bin/find-solution.sh --file <changed-file-path>
+
+      ~/.claude/skills/nanostack/bin/find-solution.sh "<relevant-keywords>"
+
+      ~/.claude/skills/nanostack/bin/scope-drift.sh
+
+      ~/.claude/skills/nanostack/bin/find-artifact.sh security 30
+
+      ~/.claude/skills/nanostack/bin/save-artifact.sh review ''<json with phase, mode, summary, scope_drift, findings, conflicts, context_checkpoint including summary, key_files, decisions_made, open_questions>'''
+    gold_removed: ''
+  - path: security/SKILL.md
+    tier: 1
+    gold_added: '~/.claude/skills/nanostack/bin/find-artifact.sh plan 2
+
+      ~/.claude/skills/nanostack/bin/find-artifact.sh review 30
+
+      ~/.claude/skills/nanostack/bin/save-artifact.sh security ''<json with phase, mode, summary, findings, conflicts, context_checkpoint including summary, key_files, decisions_made, open_questions>'''
+    gold_removed: ''
+  - path: ship/SKILL.md
+    tier: 1
+    gold_added: '~/.claude/skills/nanostack/bin/find-artifact.sh review 2
+
+      ~/.claude/skills/nanostack/bin/save-artifact.sh ship ''<json with phase, summary including pr_number, pr_url, title, status, ci_passed, context_checkpoint including summary, key_files, decisions_made, open_questions>''
+
+      ~/.claude/skills/nanostack/bin/sprint-journal.sh'
+    gold_removed: ''
+  - path: think/SKILL.md
+    tier: 1
+    gold_added: ~/.claude/skills/nanostack/bin/save-artifact.sh think '<json with phase, summary including value_proposition, scope_mode, target_user, narrowest_wedge, key_risk, premise_validated, context_checkpoint including summary, key_files, decisions_made, open_questions>'
+    gold_removed: ''

@@ -1,0 +1,62 @@
+version: "2.0"
+
+task:
+  name: nanostack-add-local-mode-for-nongit
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: garagon/nanostack
+  pr: 85
+  base_commit: "0ddd52c0697e53b31f0ba15b2469be64e2e950ee"
+  merge_commit: "f132e6ed132c081fe41866c7b2467d91174eff14"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plan/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in review/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in review/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in ship/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in ship/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in ship/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in think/SKILL.md."
+
+config_edits:
+  - path: plan/SKILL.md
+    tier: 1
+    gold_added: '**Local mode:** Run `source bin/lib/git-context.sh && detect_git_mode`. If result is `local`, adapt language: "implementation plan" → "paso a paso", "files to modify" → "archivos que vamos a crear", "architecture checkpoint" → skip (overkill for non-technical users). Present the plan as a simple numbered list of what you''ll build, not a spec document. Same rigor, accessible words. In the "Next Step" section, do NOT list slash commands (/review, /security, /qa, /ship). Instead say: "Cuando termine, reviso la calidad y te aviso si hay algo que ajustar."'
+    gold_removed: ''
+  - path: review/SKILL.md
+    tier: 1
+    gold_added: '- **Language:** replace all jargon with plain terms. "Revisé N archivos. Encontré X cosas:" instead of "Diff: N files, X findings." Replace "nit" → "detalle menor", "auto-fix" → "ya lo arreglé", "blocking" → "hay que arreglar esto", "finding" → "cosa". Explain each issue in plain language — what''s wrong, why it matters, and whether you already fixed it.
+
+      - **Next steps:** do NOT list slash commands. Instead: "¿Querés que revise la seguridad antes de darlo por terminado?"'
+    gold_removed: ''
+  - path: ship/SKILL.md
+    tier: 1
+    gold_added: "3. Detect project type and show the result immediately:\n   - HTML → run `open index.html` (or the main HTML file) so the user sees it instantly. Then say \"Se abrió en tu navegador.\"\nNever mention PR, CI, branch, merge, deploy, rollback, or slash commands. Output: \"Listo. Para verlo: [comando].\""
+    gold_removed: ''
+  - path: think/SKILL.md
+    tier: 1
+    gold_added: '**Local mode language:** Run `source bin/lib/git-context.sh && detect_git_mode`. If the result is `local` (no git repo), the user is likely non-technical. Adapt your language throughout the entire sprint: replace jargon with plain language. "Narrowest wedge" → "¿Cuál es lo mínimo que necesitás que funcione?" / "Status quo" → "¿Cómo lo estás resolviendo ahora?" / "Premise validated" → "Tiene sentido, avancemos." Same rigor, simpler words. Never mention git, branches, PRs, or diffs. Do NOT expose internal labels like "Phase 1", "Phase 1.5", "Startup mode", or "Builder mode" — these are your internal process, not something the user needs to see. Just do the work naturally.'
+    gold_removed: ''

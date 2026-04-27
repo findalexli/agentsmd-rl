@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: skills-trim-docsrecreation-from-monitoring-setup
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: qdrant/skills
+  pr: 12
+  base_commit: "10a7380e5e80d0739fae9e9698391208e1beb2dc"
+  merge_commit: "220cc4583acd20db9154c82b97e1ad4057a9b6fa"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/qdrant-monitoring/setup/SKILL.md."
+
+config_edits:
+  - path: skills/qdrant-monitoring/setup/SKILL.md
+    tier: 1
+    gold_added: '- Use `/healthz`, `/livez`, `/readyz` for basic status, liveness, and readiness [Kubernetes health endpoints](https://qdrant.tech/documentation/guides/monitoring/#kubernetes-health-endpoints)'
+    gold_removed: ''

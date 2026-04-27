@@ -1,0 +1,77 @@
+version: "2.0"
+
+task:
+  name: vibe-remote-fixskills-clarify-vibe-remote-dm
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: cyhhao/vibe-remote
+  pr: 85
+  base_commit: "8e72772ef59ba5646ff23bc3df3ccd08fc4811a5"
+  merge_commit: "47f8d1d524df0264c99f11c7e83537d432c5f3be"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/use-vibe-remote/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/use-vibe-remote/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/use-vibe-remote/SKILL.md."
+
+config_edits:
+  - path: skills/use-vibe-remote/SKILL.md
+    tier: 1
+    gold_added: 'VIBE_HOME="${VIBE_REMOTE_HOME:-$HOME/.vibe_remote}"
+
+      TARGET_FILE="$VIBE_HOME/state/settings.json"  # or the exact file you just edited
+
+      python3 -c "import json,sys; json.load(open(sys.argv[1]))" "$TARGET_FILE"
+
+      - `enabled`: for channel scopes, this is the enforceable on/off gate; for DM user scopes, do not treat it as the access-control source of truth
+
+      Important DM caveat: current DM authorization checks whether the user is bound, not whether `scopes.user.<platform>.<user_id>.enabled` is `true`. If the user wants to revoke DM access, do not rely on flipping `enabled` to `false`; use the supported unbind/remove-user path instead.
+
+
+      Behavior notes:
+
+      - Current Vibe Remote behavior does not apply channel-level Claude reasoning control. Do not promise that setting as an available per-scope feature.
+
+      - only change requested keys such as `custom_cwd`, `show_message_types`, or `routing`
+
+
+      If the user wants to revoke an existing DM binding, treat that as a bind-state change rather than a normal settings toggle. In the current implementation, removing the user entry is the reliable way to revoke bound DM access.
+
+      Remember: current Vibe Remote behavior supports Claude backend selection, model, and subagent routing, but not channel-level Claude reasoning control.
+
+      - never claim a backend feature exists if current Vibe Remote behavior does not actually support it
+
+      ## Escalation
+
+
+      If the user still cannot solve a problem after normal config fixes, `vibe doctor`, restart, and log inspection, point them to the Vibe Remote repository:
+
+
+      - repo: `https://github.com/cyhhao/vibe-remote`
+
+
+      Use that link when:
+
+
+      - the behavior looks like a real bug rather than a local misconfiguration
+
+      - the user is asking for a feature Vibe Remote does not support yet
+
+      - backend integration behavior appears inconsistent with the documented configuration surface
+
+
+      If the user wants to contribute back, suggest opening an issue or a pull request in that repository.
+
+      '
+    gold_removed: ''

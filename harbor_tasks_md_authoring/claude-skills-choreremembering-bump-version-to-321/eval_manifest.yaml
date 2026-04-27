@@ -1,0 +1,55 @@
+version: "2.0"
+
+task:
+  name: claude-skills-choreremembering-bump-version-to-321
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: oaustegard/claude-skills
+  pr: 201
+  base_commit: "627111db7d8743eb296138f5118c8f170af022bb"
+  merge_commit: "76a40aeec038c4b1b1952cc15de1bbb32d5a84d0"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in remembering/CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in remembering/CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in remembering/CLAUDE.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in remembering/SKILL.md."
+
+config_edits:
+  - path: remembering/CLAUDE.md
+    tier: 1
+    gold_added: '**🚨 CRITICAL: ALWAYS UPDATE SKILL VERSION WHEN MAKING CODE CHANGES 🚨**
+
+
+      Before ANY commit to this skill, you MUST update `metadata.version` in SKILL.md frontmatter:
+
+      - Bug fixes/cleanup: Patch bump (3.0.0 → 3.0.1)
+
+      - New features/improvements: Minor bump (3.0.0 → 3.1.0)
+
+      - Breaking changes: Major bump (3.0.0 → 4.0.0)
+
+
+      **This is NON-NEGOTIABLE.** Version changes trigger releases. Committing code changes without a version bump means users won''t get the update.
+
+
+      Other development guidelines:'
+    gold_removed: ''
+  - path: remembering/SKILL.md
+    tier: 1
+    gold_added: '  version: 3.2.1'
+    gold_removed: ''

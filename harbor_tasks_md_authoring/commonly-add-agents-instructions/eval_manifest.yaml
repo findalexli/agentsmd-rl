@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: commonly-add-agents-instructions
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Team-Commonly/commonly
+  pr: 10
+  base_commit: "ed2490e4f8fdc4325cbe3d09c3a7ff938dc0652b"
+  merge_commit: "c77ae236c74c8c12016304155fd96123f67e356e"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "\n# Codex Agent Instructions\n\nThis repository is split into a backend API and a frontend React\napplication.  Everything is containerised via `docker-compose` for local\ndevelopment.\n\n## Project structure\n\n- `backend/` – Node.js/Express API. Uses MongoDB and PostgreSQL and has\n  its own Jest test suite.\n- `frontend/` – React application bootstrapped with `react-scripts`.\n- `docs/` – Detailed architecture and development docs.\n- `docker-compose.yml` – Spins up the full stack locally.\n- `package.json` in the repo root – exposes lint scripts that call into\n  each package.\n\n## Architecture overview\n\nCommonly follows a client–server model. The backend exposes a REST API\nwith Socket.io for real-time features. Data is stored in MongoDB (general\napp data) and PostgreSQL (chat). The frontend communicates with the API\nand renders the user interface using React and Material-UI. See the\ndocuments in `docs/` for full details.\n\n## Running tests\n\n- **Backend**: run `npm test` from the `backend` directory.\n- **Frontend**: run `npm test` from the `frontend` directory.\n\n## Running lint\n\nRun `npm lint` from the repository root. This invokes the lint scripts for both backend and frontend.\n\n## Workflow\n\nWhen modifying code in either package:\n1. Run `npm lint` at the repo root.\n2. Run `npm test` in the affected package(s).\n\nThese commands require no additional setup other than installing dependencies (already included in the repository)."
+    gold_removed: ''

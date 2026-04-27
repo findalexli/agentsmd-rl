@@ -1,0 +1,124 @@
+version: "2.0"
+
+task:
+  name: dataverse-skills-fix-rename-skills-to-dv
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: microsoft/Dataverse-skills
+  pr: 28
+  base_commit: "66fae0e35aafc9d9ede16d51ff26d5de84a9e573"
+  merge_commit: "1f1a134c62d26d26894b74110ae9881838e69e6d"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/plugins/dataverse/skills/dv-init/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/plugins/dataverse/skills/dv-init/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/plugins/dataverse/skills/dv-init/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/plugins/dataverse/skills/dv-mcp-configure/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/plugins/dataverse/skills/dv-mcp-configure/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/plugins/dataverse/skills/dv-mcp-configure/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/plugins/dataverse/skills/dv-metadata/SKILL.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/plugins/dataverse/skills/dv-metadata/SKILL.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/plugins/dataverse/skills/dv-metadata/SKILL.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/plugins/dataverse/skills/dv-overview/SKILL.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/plugins/dataverse/skills/dv-overview/SKILL.md."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/plugins/dataverse/skills/dv-overview/SKILL.md."
+  - id: signal_12
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/plugins/dataverse/skills/dv-python-sdk/SKILL.md."
+  - id: signal_13
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/plugins/dataverse/skills/dv-python-sdk/SKILL.md."
+  - id: signal_14
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/plugins/dataverse/skills/dv-python-sdk/SKILL.md."
+  - id: signal_15
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/plugins/dataverse/skills/dv-setup/SKILL.md."
+  - id: signal_16
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/plugins/dataverse/skills/dv-setup/SKILL.md."
+  - id: signal_17
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/plugins/dataverse/skills/dv-solution/SKILL.md."
+  - id: signal_18
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/plugins/dataverse/skills/dv-solution/SKILL.md."
+
+config_edits:
+  - path: .github/plugins/dataverse/skills/dv-init/SKILL.md
+    tier: 1
+    gold_added: "name: dv-init\n  DO NOT USE WHEN: installing tools (use dv-setup).\nIf MCP is needed and not yet configured, use the `dv-mcp-configure` skill. **This is always the last step** because `claude mcp add` requires a Claude Code restart, which ends the current session.\nWrite and run `scripts/create_solution.py` to create the publisher and solution in the environment using the Python SDK. The script **must** follow the publisher discovery flow from the `dv-solution` skill:\nIf MCP is needed and not yet configured, use the `dv-mcp-configure` skill.\n| Add a column to an existing table | Web API (see `dv-metadata`) |\n| Create a relationship / lookup | Web API (see `dv-metadata`) |\n| Create or modify a form | Web API (see `dv-metadata`) |\n| Create or modify a view | Web API (see `dv-metadata`) |"
+    gold_removed: ''
+  - path: .github/plugins/dataverse/skills/dv-mcp-configure/SKILL.md
+    tier: 1
+    gold_added: "name: dv-mcp-configure\r\n  DO NOT USE WHEN: workspace not initialized (use dv-init first), installing tools (use dv-setup).\r\nIf at any point during the MCP configuration process you discover that the user has not initialized the Dataverse workspace yet, do that first using the `dv-init` skill (do this by default when the user does not express a preference and just wants the MCP configured), which will set up the necessary environment variables. If they refuse, remind them to do that later when then attempt any operations that require PAC CLI, Python SDK or OData Web API instead of MCP.\r\n- If `claude` and the VSCode extension is used: set it to the same value as `CLIENT_ID` if already set, otherwise offer to create a new app registration following Scenario A, step 7 in the `dv-init` skill.\r\nIf the file or the variable doesn't exist, the user has not initialized the Dataverse workspace yet. Do that first using the `dv-init` skill (do this by default when the user does not express a preference and just wants the MCP configured), which will set up the necessary environment variables. If the user refuses, remind them to do that later when they attempt any operations that require PAC CLI, Python SDK or OData Web API instead of MCP, and proceed to auto-discover the environment URL.\r\nIf the user wants to create a new environment, they can do so via `pac admin create` (see the `dv-init` skill's Environment Discovery flow).\r"
+    gold_removed: ''
+  - path: .github/plugins/dataverse/skills/dv-metadata/SKILL.md
+    tier: 1
+    gold_added: "name: dv-metadata\n  DO NOT USE WHEN: reading/writing data records (use dv-python-sdk),\n  exporting solutions (use dv-solution)."
+    gold_removed: ''
+  - path: .github/plugins/dataverse/skills/dv-overview/SKILL.md
+    tier: 1
+    gold_added: 'name: dv-overview
+
+      **Tool priority (always follow this order):** MCP (if available) for simple reads, queries, and ≤10 record CRUD → Python SDK for scripted data, bulk operations, schema creation, and analysis → Web API for operations the SDK doesn''t cover (forms, views, option sets) → PAC CLI for solution lifecycle. MCP tools not in your tool list? → Load `dv-mcp-configure` to set them up (see below).
+
+      3. Load the `dv-mcp-configure` skill to set up the MCP server'
+    gold_removed: ''
+  - path: .github/plugins/dataverse/skills/dv-python-sdk/SKILL.md
+    tier: 1
+    gold_added: "name: dv-python-sdk\n  DO NOT USE WHEN: creating forms/views (use dv-metadata with Web API),\n  exporting solutions (use dv-solution with PAC CLI).\n- **Forms** (FormXml) — use the Web API directly (see `dv-metadata`)"
+    gold_removed: ''
+  - path: .github/plugins/dataverse/skills/dv-setup/SKILL.md
+    tier: 1
+    gold_added: "name: dv-setup\n  DO NOT USE WHEN: initializing a workspace/repo (use dv-init)."
+    gold_removed: ''
+  - path: .github/plugins/dataverse/skills/dv-solution/SKILL.md
+    tier: 1
+    gold_added: "name: dv-solution\n  DO NOT USE WHEN: creating tables/columns/forms/views (use dv-metadata)."
+    gold_removed: ''

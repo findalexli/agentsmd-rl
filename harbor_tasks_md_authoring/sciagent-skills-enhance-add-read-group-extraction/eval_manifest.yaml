@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: sciagent-skills-enhance-add-read-group-extraction
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: jaechang-hits/SciAgent-Skills
+  pr: 9
+  base_commit: "34d5ff4aa38191c0edd8e8495bec848cb995ab75"
+  merge_commit: "7e822f2ce08492b6e36128558f3aabd9f0db39bf"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/genomics-bioinformatics/pysam-genomic-files/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/genomics-bioinformatics/pysam-genomic-files/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/genomics-bioinformatics/pysam-genomic-files/SKILL.md."
+
+config_edits:
+  - path: skills/genomics-bioinformatics/pysam-genomic-files/SKILL.md
+    tier: 1
+    gold_added: "description: \"Read/write SAM/BAM/CRAM alignments, VCF/BCF variants, FASTA/FASTQ sequences. Region queries, coverage/pileup analysis, variant filtering, read group extraction. Python wrapper for htslib with samtools/bcftools CLI access. For alignment pipelines use STAR/BWA; for variant calling use GATK/DeepVariant.\"\n### 5. Read Groups and Sample Information\n\nExtract and filter reads by read group (essential for multi-sample BAM files).\n\n```python\nimport pysam\n\nbam = pysam.AlignmentFile(\"multisample.bam\", \"rb\")\n\n# Access read group information from BAM header\nprint(\"Read groups in file:\")\nfor rg_dict in bam.header.get(\"RG\", []):\n    print(f\"  ID: {rg_dict['ID']}, Sample: {rg_dict.get('SM', 'N/A')}, Library: {rg_dict.get('LB', 'N/A')}, Platform: {rg_dict.get('PL', 'N/A')}\")\n\n# Get all samples in the BAM (from RG headers)\nsamples = set()\nfor rg_dict in bam.header.get(\"RG\", []):\n    if \"SM\" in rg_dict:\n        samples.add(rg_dict[\"SM\"])\nprint(f\"Samples in BAM: {sorted(samples)}\")\n\nbam.close()\n```\n\n\n\n```python\n# Filter reads by read group ID\ndef extract_reads_by_rg(bam_path, rg_id, output_path):\n    \"\"\"Extract all reads from a specific read group.\n\n    WARNING: Uses fetch(until_eof=True), which scans the entire BAM sequentially.\n    Multi-sample BAMs can be tens to hundreds of GB — this may be slow.\n    For large files, prefer region-based filtering:\n        for read in bam.fetch(\"chr1\", start, end): ...\n    Or use the samtools CLI equivalent (faster for one-off extractions):\n        samtools view -b -r <rg_id> input.bam -o output.bam\n    \"\"\"\n    with pysam.AlignmentFile(bam_path, \"rb\") as bam_in:\n        with pysam.AlignmentFile(output_path, \"wb\", header=bam_in.header) as bam_out:\n            for read in bam_in.fetch(until_eof=True):\n                if read.has_tag(\"RG\") and read.get_tag(\"RG\") == rg_id:\n                    bam_out.write(read)\n    pysam.index(output_path)\n    print(f\"Extracted reads from RG:{rg_id} → {output_path}\")\n\nextract_reads_by_rg(\"multisample.bam\", \"SAMPLE_001_LaneA\", \"sample001_laneA.bam\")\n```\n\n```python\nfrom collections import defaultdict\nimport pysam\n\n# Count reads per sample\ndef reads_per_sample(bam_path):\n    \"\"\"Count reads per sample from read group information.\n\n    Two distinct \"unknown\" cases are tracked separately:\n    - \"no_sm_field\":  RG header entry exists but is missing the SM (sample name) field.\n    - \"undefined_rg\": A read carries an RG tag not declared in the BAM header.\n    \"\"\"\n    counts = defaultdict(int)\n    rg_to_sample = {}\n\n    with pysam.AlignmentFile(bam_path, \"rb\") as bam:\n        # Build RG → sample mapping from header\n        for rg_dict in bam.header.get(\"RG\", []):\n            rg_id = rg_dict[\"ID\"]\n            # (a) RG header entry lacks SM field\n            rg_to_sample[rg_id] = rg_dict.get(\"SM\", \"no_sm_field\")\n\n        # Count reads per resolved sample name\n        for read in bam.fetch(until_eof=True):\n            if read.has_tag(\"RG\"):\n                rg_id = read.get_tag(\"RG\")\n                # (b) Read's RG tag is not declared in the header\n                sample = rg_to_sample.get(rg_id, \"undefined_rg\")\n                counts[sample] += 1\n\n    return dict(counts)\n\nsample_counts = reads_per_sample(\"multisample.bam\")\nfor sample, count in sorted(sample_counts.items()):\n    print(f\"  {sample}: {count:,} reads\")\n```\n\n### 6. Samtools/Bcftools CLI Access\n| Read group filter returns 0 reads | RG tag missing or wrong ID specified | Verify RG tag exists: `read.has_tag(\"RG\")`; list available RGs from `bam.header.get(\"RG\", [])` |"
+    gold_removed: ''

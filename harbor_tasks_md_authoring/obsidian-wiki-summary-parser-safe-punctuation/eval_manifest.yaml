@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: obsidian-wiki-summary-parser-safe-punctuation
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Ar9av/obsidian-wiki
+  pr: 3
+  base_commit: "9a87dd346500bbfbdccc2bfe25f84cf8766006ef"
+  merge_commit: "9be54d8af50ac1fe4a94fced075226373cee7f01"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .skills/wiki-update/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .skills/wiki-update/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .skills/wiki-update/SKILL.md."
+
+config_edits:
+  - path: .skills/wiki-update/SKILL.md
+    tier: 1
+    gold_added: "summary: >-\n    One or two sentences (≤200 chars) describing what this page covers.\nUse folded scalar syntax (summary: >-) for summary to keep frontmatter parser-safe across punctuation (:, #, quotes) without escaping rules.\nKeep the summary content indented by two spaces under summary: >-.\n\n**Write a `summary:` frontmatter field** on every new/updated page (1–2 sentences, ≤200 chars), using `>-` folded style. For project sync, a good summary answers \"what does this page tell me about the project I wouldn't guess from its title?\" This field powers cheap retrieval by `wiki-query`."
+    gold_removed: ''

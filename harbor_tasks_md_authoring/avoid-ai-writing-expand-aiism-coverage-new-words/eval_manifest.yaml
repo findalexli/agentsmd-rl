@@ -1,0 +1,66 @@
+version: "2.0"
+
+task:
+  name: avoid-ai-writing-expand-aiism-coverage-new-words
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: conorbronsdon/avoid-ai-writing
+  pr: 2
+  base_commit: "b0a94da3b9085347c96f901b196465fdae85e07b"
+  merge_commit: "375515b3cf8901e58efc5b49c1fad565f0ed5166"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+
+config_edits:
+  - path: SKILL.md
+    tier: 1
+    gold_added: '| nuanced | specific, subtle, detailed (or name the actual nuance) |
+
+      | crucial | important, key, necessary |
+
+      | multifaceted | (describe the actual facets, or cut) |
+
+      | ecosystem (metaphor) | system, community, network, market |
+
+      | myriad | many, numerous (or give a number) |
+
+      | plethora | many, a lot of (or give a number) |
+
+      | deep dive / dive into | look at, examine, explore |
+
+      | unpack | explain, break down, walk through |
+
+      | bolster | support, strengthen, back up |
+
+      | spearhead | lead, drive, run |
+
+      | resonate / resonates with | connect with, appeal to, matter to |
+
+      | revolutionize | change, transform, reshape (or describe what changed) |
+
+      | facilitate / facilitates | enable, help, allow, run |
+
+      | underpin | support, form the basis of |
+
+      - Note: "In order to," "Due to the fact that," and "At the end of the day" are covered in the word/phrase table and transition sections above — don''t duplicate rules.
+
+      ### "Let''s" constructions
+
+      - "Let''s explore," "Let''s take a look," "Let''s break this down," "Let''s examine" — AI uses "let''s" as a false-collaborative opener to ease into a topic. It''s filler that delays the actual point. Just start with the point. "Let''s dive in" is covered above under chatbot artifacts, but the pattern is broader than that — flag any "let''s + verb" that''s functioning as a transition rather than a genuine invitation to act.
+
+      '
+    gold_removed: ''

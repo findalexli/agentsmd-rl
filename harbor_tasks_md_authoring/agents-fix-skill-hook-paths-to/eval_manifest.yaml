@@ -1,0 +1,59 @@
+version: "2.0"
+
+task:
+  name: agents-fix-skill-hook-paths-to
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: astronomer/agents
+  pr: 56
+  base_commit: "9bb826e65cdda2b15c235ec63265089357e45138"
+  merge_commit: "31ab89799f270afb852fa1e1332d4edbb364f9ae"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/analyzing-data/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/analyzing-data/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/init/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/init/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/init/SKILL.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '**Important:** Hooks in `SKILL.md` frontmatter can use **relative paths** from the skill''s directory (e.g., `./scripts/bar.py`). Use `${CLAUDE_PLUGIN_ROOT}` in `marketplace.json` to reference the plugin root.
+
+
+      - `skills/*/hooks/*.sh` - Hook scripts (co-located with skills, referenced via relative paths from SKILL.md or `${CLAUDE_PLUGIN_ROOT}/skills/<name>/hooks/...` from marketplace.json)'
+    gold_removed: ''
+  - path: skills/analyzing-data/SKILL.md
+    tier: 1
+    gold_added: "          command: \"uv run ./scripts/cli.py ensure\"\n          command: \"uv run ./scripts/cli.py stop\""
+    gold_removed: ''
+  - path: skills/init/SKILL.md
+    tier: 1
+    gold_added: "          command: \"uv run ../analyzing-data/scripts/cli.py ensure\"\n          command: \"uv run ../analyzing-data/scripts/cli.py stop\"\n**Scripts:** `../analyzing-data/scripts/`"
+    gold_removed: ''

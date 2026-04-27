@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: cursor-security-rules-add-cnet-rules
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: matank001/cursor-security-rules
+  pr: 7
+  base_commit: "aa7f69a778c63a5457f5c0ffbf689a0078c2dc09"
+  merge_commit: "39700e61d4683f80ec647a4db818b1023441d998"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in secure-dev-c-sharp.mdc."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in secure-dev-c-sharp.mdc."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in secure-dev-c-sharp.mdc."
+
+config_edits:
+  - path: secure-dev-c-sharp.mdc
+    tier: 1
+    gold_added: "---\ndescription:\nglobs: **/*.cs, **/*.sln, **/*.csproj\nalwaysApply: false\n---\n# Secure C#/.NET Development\n\nThese rules apply to all C#/.NET code in the repository and aim to prevent common security risks through disciplined use of input validation and deserialization, output encoding, and safe APIs.\n\nAll violations must include a clear explanation of which rule was triggered and why, to help developers understand and fix the issue effectively.  \nGenerated code must not violate these rules. If a rule is violated, a comment must be added explaining the issue and suggesting a correction.\n\n## 1. Validate All external inputs\n- **Rule:** Validate all external inputs by manually checking the type, format and size of the input manually or by using libraries like `FluentValidation`.\nFor file validation, utilize MIME Type Validation libraries, like `MimeDetective` or `HeyRed.Mime` to check whether a file's type and content actually matches the expected type.\n\n## 2. Use Parameterized Queries in EntityFramework\n- **Rule:** Parameterize queries in EntityFramework using LINQ and `FromSqlInterpolated`.\n- **Unsafe:**\n  ```cs\n  // Vulnerable to SQL Injection\n  var user = dbContext.Users\n    .FromSqlRaw($\"SELECT * FROM Users WHERE Username = '{userInput}'\")\n    .FirstOrDefault();\n  ```\n- **Safe:**\n  ```cs\n  //Input is interpolated and parameterized internally\n  var user = dbContext.Users\n    .FromSqlInterpolated($\"SELECT * FROM Users WHERE Username = {userInput}\")\n    .FirstOrDefault();\n  ```\n- **Safe:**\n  ```cs\n  //LINQ is translated into parameterized SQL query\n  var user = dbContext.Users\n      .Where(u => u.Username == userInput)\n      .FirstOrDefault();\n  ```\n\n## 3. Avoid Singleton Dependency Injection On User-Specific Services\n- **Rule:** When registering services in ASP.NET Dependency Injection, choose the correct service lifetime to avoid exposing unauthorized users to other users' requests.\n\n- **Unsafe:**\n  ```cs\n  var builder = WebApplication.CreateBuilder(args);\n  // One instance is shared for all users - sensitive data is exposed to others\n  builder.Services.AddSingleton<UserAuthService>();\n  ```\n- **Safe:**\n  ```cs\n  var builder = WebApplication.CreateBuilder(args);\n  // Each created instance is scoped for a single request\n  builder.Services.AddScoped<UserAuthService>();\n  ```\n\n## 4. Avoid Handling Mutable Data in Singletons\n- **Rule:** Handling of mutable data in Singleton services should be avoided to prevent data inconsistencies. Ensure thread safety in Singletons to avoid race conditions that can cause logic bypass, for example by escalating privilages in authorization logic.\n\n## 5. Ensure Solution's Project Paths Are Within the Expected Directory Structure\n- **Rule:** Check that referenced projects inside .sln files do not point to suspicious project files outside the expected directory structure.\n\n## 6. Use Secure Deserialization Methods\n- **Rule:** When deserializing data use type-safe methods to avoid malicious code injection.\n\n- **Unsafe:**\n  ```cs\n  var formatter = new BinaryFormatter(); // No validation of untrusted data\n  using var ms = new MemoryStream(data);\n  return formatter.Deserialize(ms);\n  ```\n- **Safe:**\n  ```cs\n  var options = new JsonSerializerOptions\n  {\n      PropertyNameCaseInsensitive = true\n  };\n  return JsonSerializer.Deserialize<T>(json, options); // Type-safe\n  ```\n\n## 7. Validate and Normalize File Paths\n- **Rule:** To prevent file path manipulations, normalize and validate input file paths to prevent access to sensitive files.\n\n- **Unsafe:**\n  ```cs\n  string basePath = \"/home/files/\";\n  // Dangerous - filename can contain \"../../etc/passwd\"\n  string fullPath = Path.Combine(basePath, filename);\n  string content = System.IO.File.ReadAllText(fullPath);\n  ```\n- **Safe:**\n  ```cs\n  string basePath = \"/home/files/\";\n  // Absolute path is resolved and normalized\n  string fullPath = Path.GetFullPath(Path.Combine(basePath, filename));\n  // Ensure the resolved path starts with the base path\n  if (!fullPath.StartsWith(basePath, StringComparison.Ordinal))\n  {\n      return BadRequest(\"Invalid file path.\");\n  }\n  if (!System.IO.File.Exists(fullPath))\n  {\n      return NotFound();\n  }\n  string content = System.IO.File.ReadAllText(fullPath);\n  ```"
+    gold_removed: ''

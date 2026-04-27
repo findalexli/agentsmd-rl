@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: claude-skills-fix-boundaryaware-contour-extraction-v130
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: oaustegard/claude-skills
+  pr: 468
+  base_commit: "ac36c4903f8319f8e683638bac9021ab840923d7"
+  merge_commit: "d4c2420d7983a30c49578b623565366dd37e7fa2"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in image-to-svg/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in image-to-svg/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in image-to-svg/SKILL.md."
+
+config_edits:
+  - path: image-to-svg/SKILL.md
+    tier: 1
+    gold_added: "version: 1.2.0\n            if not (compactness > 0.08 or edge_density > 0.15\n- `compactness > 0.08`: Keeps all but the thinnest ribbon artifacts. Previous value of 0.15 was too aggressive — filtered real facial detail.\n- `edge_density > 0.15`: Keeps shapes with even modest edge alignment. Previous value of 0.3 filtered legitimate dark features like nostrils, lip shadows, brow lines."
+    gold_removed: ''

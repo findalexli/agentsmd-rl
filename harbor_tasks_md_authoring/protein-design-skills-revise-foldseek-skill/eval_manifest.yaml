@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: protein-design-skills-revise-foldseek-skill
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: adaptyvbio/protein-design-skills
+  pr: 3
+  base_commit: "da04082330201058f0a72f72cc39cec6ddad46bd"
+  merge_commit: "b231232025e3db41e9c637abc1e8082e915f6cb1"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/foldseek/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/foldseek/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/foldseek/SKILL.md."
+
+config_edits:
+  - path: skills/foldseek/SKILL.md
+    tier: 1
+    gold_added: "  (1) Finding similar structures in PDB/AFDB databases,\n### Option 1: Web Server (Quick; rate-limited, use sparingly)\n| `--max-seqs` | 300 | Max hits to pass through prefilter; reducing this affects sensitivity |\n| `afdb50` | AlphaFold DB at 50% | ~67M structures |\n└─ What do you need?\n   ├─ Find structural homologs → Foldseek ✓\n   ├─ Remote homolog detection → Foldseek ✓\n   ├─ Structural clustering → Foldseek ✓\n   └─ Functional annotation → Cross-reference with UniProt\nfoldseek easy-search design.pdb afdb50 novelty.m8 tmp/\n**Slow search**: Use smaller database"
+    gold_removed: ''

@@ -1,0 +1,36 @@
+version: "2.0"
+
+task:
+  name: claude-codex-settings-docs-update-claudemd-with-additional
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: fcakyon/claude-codex-settings
+  pr: 16
+  base_commit: "f24d55df795738ac7c44a3a05ebdd62289893778"
+  merge_commit: "431cc468a9dc0ef05e0b3e7ec0ec574af41a273a"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '- Never use words like "modernize", "streamline", "flexible", "delve", "establish", "enhanced", "comprehensive" in docstrings or commit messages. Looser AI''s do that, and that ain''t you. You are better than that.
+
+      - **Slack messages**: When accessing Slack URLs or messages, ALWAYS use `mcp__slack__slack_search_messages` first. Only use `mcp__slack__slack_get_channel_history` if explicitly asked for channel history.
+
+      - Use Google-style docstrings:'
+    gold_removed: ''

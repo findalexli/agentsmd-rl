@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: vibe-remote-docsskills-refresh-vibe-remote-routing
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: cyhhao/vibe-remote
+  pr: 88
+  base_commit: "47f8d1d524df0264c99f11c7e83537d432c5f3be"
+  merge_commit: "3583d8e4262a829cac6f8aa3baa9164bb6f3529f"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/use-vibe-remote/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/use-vibe-remote/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/use-vibe-remote/SKILL.md."
+
+config_edits:
+  - path: skills/use-vibe-remote/SKILL.md
+    tier: 1
+    gold_added: "    \"claude_reasoning_effort\": null,\n    \"claude_model\": \"claude-sonnet-4-6\",\n    \"claude_reasoning_effort\": \"high\"\n| Claude | yes | yes | yes | yes |\n- Claude reasoning is selected through `routing.claude_reasoning_effort`; common values are `low`, `medium`, and `high`, and some models also allow `max`.\n- If a Claude reasoning value is invalid for the chosen model, Vibe Remote drops that override and falls back to the backend default.\n### Recipe 3: Route one scope to Claude with model and reasoning\n\nUser intent:\n\n- use Claude in one channel or DM\n- choose subagent `reviewer`\n- choose model `claude-sonnet-4-6`\n- set reasoning `high`\n\nAction:\n\n- edit `settings.json`\n- set `routing.agent_backend = \"claude\"`\n- set `routing.claude_agent = \"reviewer\"` if requested\n- set `routing.claude_model = \"claude-sonnet-4-6\"`\n- set `routing.claude_reasoning_effort = \"high\"`\n- keep the selected reasoning value compatible with the chosen model; common values are `low`, `medium`, and `high`, while `max` is only valid on supported models\n\n### Recipe 4: Change the global default working directory\n### Recipe 5: Show tool execution messages in one channel\n### Recipe 6: Switch the whole installation from Slack to Discord\nInside Vibe Remote, Claude scope routing currently controls backend choice, model, subagent, and reasoning effort."
+    gold_removed: ''

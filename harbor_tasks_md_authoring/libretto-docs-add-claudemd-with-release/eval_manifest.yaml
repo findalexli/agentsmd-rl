@@ -1,0 +1,83 @@
+version: "2.0"
+
+task:
+  name: libretto-docs-add-claudemd-with-release
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: saffron-health/libretto
+  pr: 199
+  base_commit: "1d819f323eae0c79bd3ea2c82ad4b49880659882"
+  merge_commit: "1aa7433bb6c4456c2f639fc06a32ca11566935b9"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '# Libretto Monorepo
+
+
+      ## Releasing a New Version
+
+
+      **Never manually edit `packages/libretto/package.json` version.** Use the release script:
+
+
+      ```bash
+
+      scripts/prepare-release.sh [patch|minor|major]
+
+      ```
+
+
+      This script:
+
+      1. Checks out and updates `main`
+
+      2. Runs type-check and tests
+
+      3. Bumps the version in `packages/libretto/package.json`
+
+      4. Updates version in SKILL.md files via `set-libretto-skill-version.mjs`
+
+      5. Syncs all mirrors (`pnpm sync:mirrors`) — READMEs, skill directories, `create-libretto` version
+
+      6. Validates mirror parity (`pnpm check:mirrors`)
+
+      7. Commits, pushes a `release-v*` branch, and opens a PR
+
+
+      The release CI workflow triggers automatically when the PR merges to `main`.
+
+
+      ## Mirror System
+
+
+      Skill files and READMEs are mirrored across multiple locations. After any change to source files:
+
+
+      ```bash
+
+      pnpm sync:mirrors    # sync all mirrored files
+
+      pnpm check:mirrors   # validate everything is in sync
+
+      ```
+
+
+      Source skill files live in `packages/libretto/skills/` and are mirrored to `.agents/skills/` and `.claude/skills/`.'
+    gold_removed: ''

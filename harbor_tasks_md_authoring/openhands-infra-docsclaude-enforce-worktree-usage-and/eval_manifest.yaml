@@ -1,0 +1,100 @@
+version: "2.0"
+
+task:
+  name: openhands-infra-docsclaude-enforce-worktree-usage-and
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: zxkane/openhands-infra
+  pr: 41
+  base_commit: "32dbb12564ec78f2bdde8d53b114d30d685574a5"
+  merge_commit: "044019bdbda4e6b307fd21c3bb5f8e29c38d2173"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '**CRITICAL**: All feature development, bug fixes, and dependency updates MUST strictly follow the `github-workflow` skill.
+
+      ### Rule 1: ALWAYS Invoke the Skill First
+
+
+      Before ANY code changes — features, fixes, refactors, dependency bumps — you MUST:
+
+      1. **Invoke skill**: Use `/github-workflow` or read `.claude/skills/github-workflow/SKILL.md`
+
+      2. **Follow ALL 10 steps** in order — NO shortcuts, NO skipping steps
+
+      **Common violation**: Skipping skill invocation and jumping straight to coding. This causes missed steps (reviewer bot iteration, PR templates, E2E test selection). The skill is not optional guidance — it is the required process.
+
+
+      ### Rule 2: ALWAYS Use Git Worktrees for Code Changes
+
+
+      **Every** branch that changes code MUST use a worktree for isolation:
+
+      ```bash
+
+      git fetch origin main
+
+      git worktree add .worktrees/<name> -b <type>/<name> origin/main
+
+      cd .worktrees/<name>
+
+      npm install   # worktrees don''t share node_modules
+
+      # ... do all work here ...
+
+      ```
+
+
+      After merge, clean up:
+
+      ```bash
+
+      git worktree remove .worktrees/<name>
+
+      git branch -d <type>/<name>
+
+      ```
+
+
+      **Common violation**: Using `git checkout -b` on the main working tree. This pollutes the workspace and risks uncommitted changes interfering with the feature branch.
+
+
+      **Only exception**: Trivial docs-only changes (README typos) with zero code impact.
+
+
+      ### Rule 3: Complete ALL Workflow Steps
+
+
+      The 10-step workflow is not a suggestion — every step must be completed:
+
+      - Step 1: Create **worktree** + branch (not `git checkout -b`)
+
+      - Step 2: Implement + write/update tests
+
+      - Step 3: Build + test locally
+
+      - Step 4: Commit + create PR with checklist template
+
+      - Steps 5-7: CI checks + address ALL reviewer bot findings + iterate until clean
+
+      - Steps 8-9: Deploy to staging + run E2E tests (use `test/select-e2e-tests.sh`)
+
+      - Step 10: Report ready status (DO NOT MERGE unless user explicitly says to)'
+    gold_removed: ''

@@ -1,0 +1,46 @@
+version: "2.0"
+
+task:
+  name: skills-version-upgrade-skill
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: qdrant/skills
+  pr: 6
+  base_commit: "ab021226ad5504dfdb63ccdb0fbce4349b895fbd"
+  merge_commit: "1832a1c66cdc18b11868802a995fa38617a8708c"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/qdrant-version-upgrade/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/qdrant-version-upgrade/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/qdrant-version-upgrade/SKILL.md."
+
+config_edits:
+  - path: skills/qdrant-version-upgrade/SKILL.md
+    tier: 1
+    gold_added: 'Qdrant have the following guarantees about version compatibility:
+
+      - Major and minor versions of Qdrant and SDK are expected to match. For example, Qdrant 1.17.x is compatible with SDK 1.17.x.
+
+
+      - Qdrant is tested for backward compatibility between minor versions. For example, Qdrant 1.17.x should be compatible with SDK 1.16.x. Qdrant server 1.16.x is also expected to be compatible with SDK 1.17.x, but only for the subset of features that were available in 1.16.x.
+
+
+      - For migration to next minor version, it is recommended to first upgrade the SDK to the next minor version, and then upgrade the Qdrant server.
+
+
+      - Storage compatibility is only guaranteed for one minor version. For example, data stored with Qdrant 1.16.x is expected to be compatible with Qdrant 1.17.x. If you need to migrate more than 1 minor version, it is required do the upgrade step by step, one minor version at a time. E.g. to migrate from 1.15.x to 1.17.x, you need to first upgrade to 1.16.x, and then to 1.17.x. Note: Qdrant cloud automates this process, so you can directly upgrade from 1.15.x to 1.17.x without intermediate steps.
+
+
+      - Qdrant cluster with replication factor of 2 and above can be upgraded without downtime, by performing a rolling upgrade. This means that you can upgrade one node at a time, while the other nodes continue to serve requests. This allows you to maintain availability of your application during the upgrade process. More about replication factor: https://qdrant.tech/documentation/guides/distributed_deployment/#replication-factor'
+    gold_removed: ''

@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: autoskill-improve-changeloggenerator-skill-structure-eval
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: ECNU-ICALK/AutoSkill
+  pr: 3
+  base_commit: "fe98df68c4d621e435eba01ee6eed46ee1d2ecce"
+  merge_commit: "af11f67da41e5c6dfef7886922b51900134b9bee"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SkillBank/Common/AwesomeClaudeSkills/changelog-generator/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SkillBank/Common/AwesomeClaudeSkills/changelog-generator/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SkillBank/Common/AwesomeClaudeSkills/changelog-generator/SKILL.md."
+
+config_edits:
+  - path: SkillBank/Common/AwesomeClaudeSkills/changelog-generator/SKILL.md
+    tier: 1
+    gold_added: "description: >-\n  Generates user-facing changelogs and release notes from git commit history.\n  Parses conventional commits, categorizes changes into features, fixes,\n  breaking changes, and more, then rewrites technical messages into\n  customer-friendly language. Use when the user asks to generate a changelog,\n  write release notes, summarize recent commits, prepare CHANGELOG.md, or\n  document what changed between versions.\nGenerate structured, user-facing changelogs from git commit history.\n## Workflow\n### Step 1 — Gather commits\nDetermine the commit range from the user's request, then fetch commits:\n```bash\n# Between tags/versions\ngit log v1.2.0..v1.3.0 --oneline --no-merges\n# Since a date\ngit log --since=\"2024-03-01\" --oneline --no-merges\n# Since last tag (default when no range given)\ngit log \"$(git describe --tags --abbrev=0)\"..HEAD --oneline --no-merges\nIf there are no tags and no range specified, ask the user for a date or count.\n### Step 2 — Categorize each commit\nApply these rules based on the commit message prefix:\n| Prefix / pattern | Category |\n|---|---|\n| `feat:` `feature:` | New Features |\n| `fix:` `bugfix:` | Bug Fixes |\n| `perf:` | Performance |\n| `BREAKING CHANGE` or `!:` suffix | Breaking Changes |\n| `security:` `vuln:` | Security |\n| `docs:` `test:` `ci:` `chore:` `refactor:` `style:` `build:` | Skip (internal) |\nFor non-conventional messages, infer category from content. Exclude purely internal commits (test infra, CI config, linting, dependency bumps with no user impact).\n### Step 3 — Rewrite for a non-technical audience\nTransform each kept commit into a clear, benefit-focused sentence:\n- Strip scope tags like `(api):` or `(auth):`\n- Expand abbreviations and jargon\n- Lead with the user-visible outcome, not the implementation\n- Use present tense: \"Add\", \"Fix\", \"Improve\"\n- One sentence per entry\nExample: `fix(auth): race condition in token refresh` becomes\n\"Fix an issue where sessions could expire unexpectedly during use.\"\n### Step 4 — Format the output\n```markdown\n# Changelog — vX.Y.Z (YYYY-MM-DD)\n## Breaking Changes\n- [entry]\n## New Features\n- [entry]\n## Improvements\n- [entry]\n## Bug Fixes\n- [entry]\n## Security\n- [entry]\nOmit any empty section. Order: breaking changes, features, improvements, fixes, security. If the repo already has a `CHANGELOG.md` or `CHANGELOG_STYLE.md`, match its existing conventions instead.\n### Step 5 — Validate before presenting\n1. Confirm no internal-only commits leaked through\n2. Confirm every entry is understandable without reading source code\n3. Confirm date and version label are correct\n4. Write to `CHANGELOG.md` (prepend above existing content) or print inline, based on the user's request"
+    gold_removed: ''

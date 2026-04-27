@@ -1,0 +1,84 @@
+version: "2.0"
+
+task:
+  name: agentops-fixprresearch-add-push-access-verification
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: boshu2/agentops
+  pr: 9
+  base_commit: "c361d9cc902d1c22e74a9585d2526e44bb42cb0c"
+  merge_commit: "17b6177a4ee8111fc2559f56eb9d21a8e2bb2771"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/pr-kit/skills/pr-research/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/pr-kit/skills/pr-research/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/pr-kit/skills/pr-research/SKILL.md."
+
+config_edits:
+  - path: plugins/pr-kit/skills/pr-research/SKILL.md
+    tier: 1
+    gold_added: '| **Assume push access** | **Always verify with `gh repo view --json viewerPermission`** |
+
+
+      ---
+
+
+      ## Push Access Verification
+
+
+      **CRITICAL**: Never assume the user has push access to external repositories.
+
+
+      ### Check Access Level
+
+
+      ```bash
+
+      # Verify actual permissions
+
+      gh repo view <owner/repo> --json viewerPermission --jq ''.viewerPermission''
+
+      ```
+
+
+      | Permission | Meaning | Workflow |
+
+      |------------|---------|----------|
+
+      | `ADMIN` | Owner/admin | Can push directly |
+
+      | `WRITE` | Collaborator | Can push directly |
+
+      | `READ` | Read-only | **Must fork and PR** |
+
+      | `NONE` | No access | **Must fork and PR** |
+
+
+      ### Default Assumption
+
+
+      **Unless `viewerPermission` is `ADMIN` or `WRITE`, assume fork-based workflow is required.**
+
+
+      Do NOT tell users they have push access based on:
+
+      - Being "crew" or having a local clone
+
+      - The repo being in their workspace
+
+      - Any assumption about their role
+
+
+      **Always verify programmatically.**'
+    gold_removed: ''

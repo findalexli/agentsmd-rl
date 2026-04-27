@@ -1,0 +1,45 @@
+version: "2.0"
+
+task:
+  name: healthcare-agents-docs-streamline-pr-workflow
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: ajhcs/healthcare-agents
+  pr: 15
+  base_commit: "fe898c71493f377d811fba5254fd6404cceb5749"
+  merge_commit: "8f7c3ca3cf39236f8c34dc97b77dd5902ce99e6f"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: '## Git Workflow
+
+
+      - Do not push directly to `main`.
+
+      - For requested edits, create a short-lived branch, commit there, push the branch, open a PR, and merge the PR with `gh pr merge`.
+
+      - Do not merge the feature branch into local `main` before opening or merging the PR. That creates duplicate local merge commits and makes `main` appear ahead/behind after GitHub merges the PR.
+
+      - After a PR is merged, run `git fetch origin --prune` and align local `main` to `origin/main` before continuing work.
+
+      - For docs-only or metadata-only changes, the streamlined path is: branch -> commit -> push branch -> `gh pr create` -> `gh pr merge --merge --delete-branch` -> sync local `main`.
+
+      '
+    gold_removed: ''

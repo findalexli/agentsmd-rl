@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: openhands-infra-docsskill-add-git-worktree-guidance
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: zxkane/openhands-infra
+  pr: 33
+  base_commit: "1ae9a539d3b5160d0f427648555f4e6793e92e32"
+  merge_commit: "598d1d48f351fd7ac4bf28454680a1e5a66c2169"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/github-workflow/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/github-workflow/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/github-workflow/SKILL.md."
+
+config_edits:
+  - path: .claude/skills/github-workflow/SKILL.md
+    tier: 1
+    gold_added: "Step 1: CREATE WORKTREE + BRANCH\n  Use git worktree for isolated development:\n    git worktree add .worktrees/<name> -b fix/<name>\n  Or for simple changes:\n    git checkout -b feat/<name> or fix/<name>\n## Git Worktree Usage\n\n**Use git worktrees** to work on features, bug fixes, docs, or any git commits/PRs in an isolated workspace without affecting the current branch.\n\n### When to Use Worktrees\n\n| Scenario | Use Worktree? |\n|----------|---------------|\n| Bug fix while another branch has uncommitted work | **Yes** |\n| Feature development alongside existing work | **Yes** |\n| Parallel work on multiple PRs | **Yes** |\n| Quick single-file edit on current branch | No |\n| Docs-only change on current branch | No |\n\n### Step 1: Create Worktree\n\n```bash\n# Ensure .worktrees/ is in .gitignore (one-time setup)\ngit check-ignore -q .worktrees || echo \".worktrees/\" >> .gitignore\n\n# Create worktree with new branch from main\ngit fetch origin main\ngit worktree add .worktrees/<name> -b <branch-type>/<name> origin/main\ncd .worktrees/<name>\n\n# Install dependencies (worktrees don't share node_modules)\nnpm install\n```\n\nBranch naming: `feat/<name>`, `fix/<name>`, `refactor/<name>`, `docs/<name>`\n\n### Step 2: Work in the Worktree\n\n```bash\n# All git operations happen in the worktree directory\ncd .worktrees/<name>\n\n# Build, test, commit as usual\nnpm run build && npm run test\ngit add <files> && git commit -m \"type(scope): description\"\ngit push -u origin <branch-name>\n```\n\n**Important**: The shared `.venv/` (Python) lives in the main repo. Run Python tests with the full path:\n```bash\n/path/to/main-repo/.venv/bin/python -m pytest docker/test_*.py -v\n```\n\n### Step 3: Copy Local Files (if needed)\n\nGitignored files (deploy scripts, local config) don't exist in worktrees:\n```bash\ncp /path/to/main-repo/deploy-staging.local.sh .worktrees/<name>/\ncp /path/to/main-repo/CLAUDE.local.md .worktrees/<name>/\n```\n\n### Step 4: Cleanup After Merge\n\n```bash\n# Remove worktree after PR is merged\ngit worktree remove .worktrees/<name>\n\n# Or force-remove if there are uncommitted changes\ngit worktree remove --force .worktrees/<name>\n\n# Delete the branch\ngit branch -d <branch-type>/<name>\n```\n\n### Quick Reference\n\n```bash\ngit worktree list                              # List all worktrees\ngit worktree add .worktrees/foo -b fix/foo     # Create new worktree\ngit worktree remove .worktrees/foo             # Remove worktree\n```\n"
+    gold_removed: ''

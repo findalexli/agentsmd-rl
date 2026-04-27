@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: bria-skill-add-dependencies-and-clarify-triggers
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: Bria-AI/bria-skill
+  pr: 12
+  base_commit: "b5c5660640738a91ce2ed08eb681554dc08c441d"
+  merge_commit: "18370d17a5145a02f08bd0a35a9ba7119840abb3"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/bria-ai/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/bria-ai/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/bria-ai/SKILL.md."
+
+config_edits:
+  - path: skills/bria-ai/SKILL.md
+    tier: 1
+    gold_added: "description: Generate, edit, and transform images with commercially-safe AI models. Create images from text, edit by natural language instruction, remove backgrounds (transparent PNG), replace backgrounds, add/replace/remove objects, inpaint, outpaint, upscale (2x/4x), enhance quality, restyle (oil painting, anime, 3D), relight, reseason, restore old photos, colorize, sketch to photo, and product lifestyle shots. Use for websites, apps, presentations needing hero images, banners, product photos, product placement in scenes, icons, illustrations, or backgrounds. Also for e-commerce photography, batch generation, and pipelines. Triggers are image generation, generate/create image, edit photo, remove background, transparent PNG, replace background, product shot, lifestyle scenes, upscale, style transfer, photo restoration, colorize, sketch to image, outpaint, inpaint, cut out subject, integrate products into scene.\n  dependencies:\n    - type: env\n      name: BRIA_API_KEY\n      description: \"Bria AI API key (get one at https://platform.bria.ai/console/account/api-keys)\"\n    - type: runtime\n      name: python\n      version: \">=3.8\"\n      optional: true\n    - type: runtime\n      name: node\n      version: \">=18\"\n      optional: true"
+    gold_removed: ''

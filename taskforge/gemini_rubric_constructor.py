@@ -207,6 +207,8 @@ def call_gemini(
     system_instruction: str = "",
     max_tokens: int = 8192,
     temperature: float = 0.1,
+    service_tier: str | None = None,
+    thinking_budget: int | None = None,
 ) -> dict:
     """Call Gemini with optional structured output (constrained decoding).
 
@@ -214,6 +216,9 @@ def call_gemini(
     guaranteed-valid JSON. No manual parsing needed.
 
     When schema is None, falls back to freeform text with JSON extraction.
+
+    `service_tier="flex"` switches to the Flex pricing tier — same model,
+    50% off Standard, best-effort latency (typical 5-30s).
     """
     import urllib.request  # noqa: lazy import for standalone use
 
@@ -225,12 +230,20 @@ def call_gemini(
         gen_config["responseMimeType"] = "application/json"
         gen_config["responseSchema"] = schema
 
+    if thinking_budget is not None:
+        # Gemini 3.1 Pro thinks by default and burns the whole maxOutputTokens
+        # on thinking before emitting JSON. Set thinkingBudget=0 to disable
+        # thinking entirely for short structured-output calls (e.g. pre-judge).
+        gen_config["thinkingConfig"] = {"thinkingBudget": thinking_budget}
+
     body: dict = {
         "contents": [{"role": "user", "parts": [{"text": prompt}]}],
         "generationConfig": gen_config,
     }
     if system_instruction:
         body["systemInstruction"] = {"parts": [{"text": system_instruction}]}
+    if service_tier:
+        body["service_tier"] = service_tier
 
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
     req = urllib.request.Request(
@@ -242,8 +255,46 @@ def call_gemini(
         },
     )
 
-    with urllib.request.urlopen(req, timeout=120) as resp:
-        data = json.loads(resp.read())
+    # Retry on 503 / 429 / transient network errors. Flex tier returns 503
+    # UNAVAILABLE during high demand — keep its retry budget low so we fall
+    # back to Standard quickly rather than burning minutes on Flex retries.
+    import time as _t
+    import urllib.error as _ue
+    last_err: Exception | None = None
+    max_attempts = 2 if service_tier == "flex" else 5
+    for attempt in range(max_attempts):
+        try:
+            with urllib.request.urlopen(req, timeout=180) as resp:
+                data = json.loads(resp.read())
+                break
+        except _ue.HTTPError as e:
+            last_err = e
+            if e.code in (429, 500, 502, 503, 504):
+                _t.sleep(min(60, 2 ** attempt + 2))
+                continue
+            return {"error": f"http_{e.code}", "raw": str(e)[:300]}
+        except (TimeoutError, _ue.URLError) as e:
+            last_err = e
+            _t.sleep(min(30, 2 ** attempt + 1))
+            continue
+    else:
+        # Auto-fallback: if Flex was overloaded for all retries, try Standard once.
+        if service_tier == "flex":
+            body.pop("service_tier", None)
+            req2 = urllib.request.Request(
+                url, data=json.dumps(body).encode(),
+                headers={"Content-Type": "application/json",
+                         "x-goog-api-key": gemini_key},
+            )
+            try:
+                with urllib.request.urlopen(req2, timeout=180) as resp:
+                    data = json.loads(resp.read())
+            except Exception as e:
+                return {"error": "transient_failures",
+                        "raw": str(last_err or e)[:300]}
+        else:
+            return {"error": "transient_failures",
+                    "raw": str(last_err)[:300] if last_err else ""}
 
     # Extract text from response
     candidates = data.get("candidates", [])

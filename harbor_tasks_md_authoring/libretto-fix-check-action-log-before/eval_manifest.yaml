@@ -1,0 +1,36 @@
+version: "2.0"
+
+task:
+  name: libretto-fix-check-action-log-before
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: saffron-health/libretto
+  pr: 59
+  base_commit: "7647855c377e1d09ab140f0a51424448c9ff1b8d"
+  merge_commit: "5a1ee4096ab665bbf15f4412276d67cac27373c1"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .agents/skills/libretto/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in packages/libretto/skill/SKILL.md."
+
+config_edits:
+  - path: .agents/skills/libretto/SKILL.md
+    tier: 1
+    gold_added: '
+
+      2. Check the action log for user interactions by running `npx libretto actions --source user`. If there are any recorded user interactions, ask: "I see you performed some manual interactions in the browser (clicks, form fills, etc.). Would you like me to incorporate any of those into the generated code?" — and briefly list what you found. If there are no user interactions, skip this question entirely.'
+    gold_removed: ''
+  - path: packages/libretto/skill/SKILL.md
+    tier: 1
+    gold_added: '
+
+      2. Check the action log for user interactions by running `npx libretto actions --source user`. If there are any recorded user interactions, ask: "I see you performed some manual interactions in the browser (clicks, form fills, etc.). Would you like me to incorporate any of those into the generated code?" — and briefly list what you found. If there are no user interactions, skip this question entirely.'
+    gold_removed: ''

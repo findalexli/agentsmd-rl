@@ -1,0 +1,36 @@
+version: "2.0"
+
+task:
+  name: skybridge-feat-update-agentsmd
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: alpic-ai/skybridge
+  pr: 538
+  base_commit: "c40fd5d81f72b0f8fd961731efb0c756baf79e9f"
+  merge_commit: "e78a39202da4afd59c812a062969c527663f63b3"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in AGENTS.md."
+
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_added: "# Agents Guide\n## What is Skybridge\n\nSkybridge is a **fullstack TypeScript framework** for building ChatGPT Apps and MCP Apps — interactive React widgets that render inside AI conversations.\n\nThe core loop: an MCP server exposes tools. When the host (ChatGPT, Claude, VSCode…) calls a tool, the server returns structured data **and** a reference to a React widget. The host renders that widget in an iframe. The widget can read tool output, call other tools, send follow-up messages, and sync UI state back to the model.\n\nSkybridge wraps two host runtimes behind one API:\n- **Apps SDK** — ChatGPT's proprietary `window.openai` runtime\n- **MCP Apps** — the open `ext-apps` spec (JSON-RPC postMessage)\n\nDevelopers write one server (backend) and widget(s) (frontend). Skybridge detects the runtime at load time.\n\nFor deep understanding, read `docs/home.mdx`, `docs/fundamentals/`, and `docs/concepts/`.\n\n## Monorepo layout\n\n```\npackages/\n  core/             # npm: `skybridge` — the framework\n    src/server/     #   MCP server (extends @modelcontextprotocol/sdk), widget registration, Express\n    src/web/        #   React hooks, runtime adaptors, data-llm, Vite plugin, createStore\n    src/cli/        #   CLI entry (oclif)\n    src/commands/   #   dev / build / start commands\n  devtools/         # npm: @skybridge/devtools — local emulator UI\n  create-skybridge/ # npm create skybridge — project scaffolder\n \nexamples/           # Showcase apps — good for understanding patterns\ndocs/               # Mintlify site (docs.skybridge.tech)\nskills/             # Coding agents skills for guided app building\n```\n\nWhen you need to understand a concept, read the corresponding `docs/` page or the source in `packages/core/src/`.\n\n## Development\n\n**Prerequisites:** Node.js >= 24.14.0, pnpm 10+ (`corepack enable`).\n\n```bash\npnpm install        # setup\n```\n\n### Validation\n\n```bash\npnpm test           # unit tests (vitest) + typecheck (tsc --noEmit) + lint (biome ci)\npnpm build          # compile all packages\n```\n\nPer-package:\n\n```bash\npnpm --filter skybridge test:unit\npnpm --filter skybridge test:type\npnpm --filter skybridge test:format\n```\n\nAlways run `pnpm test && pnpm build` from root before pushing.\n\n## Code rules\n\n**Biome** handles lint + format (see `biome.json`):\n- Double quotes, 2-space indent, auto-sorted imports\n- Errors on: unused variables/imports, non-null assertions, missing block braces\n\n`packages/core/biome.json` extends root and enforces `.js` import extensions (ESM output).\n\n**TypeScript**: strict mode, no `any`, ESM-only. See `packages/core/tsconfig.base.json`.\n\nRun `pnpm format` to auto-fix.\n\n## Cross-cutting concerns\n\nWhen the public API of `packages/core/` changes (exports from `src/server/index.ts`, `src/web/index.ts`, and CLI commands in `src/commands/`):\n1. Update `skills/` references (chatgpt-app-builder)\n2. Update `docs/` — especially `api-reference/` and `guides/`\n\nPR reviewers must enforce these updates are included when a PR touches the public API."
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: AGENTS.md
+    gold_removed: ''

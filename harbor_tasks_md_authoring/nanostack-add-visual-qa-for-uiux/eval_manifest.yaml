@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: nanostack-add-visual-qa-for-uiux
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: garagon/nanostack
+  pr: 19
+  base_commit: "7cd2736e1110e69d5848068a6ea75acf8811d842"
+  merge_commit: "c76e69393fc111bf48a732434d80c4df26668a9f"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in qa/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in qa/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in qa/SKILL.md."
+
+config_edits:
+  - path: qa/SKILL.md
+    tier: 1
+    gold_added: "### Visual QA (Browser QA only)\n\nAfter functional tests pass, take screenshots of every key state and analyze the UI visually. This is not optional for web apps. A feature that works but looks broken is broken.\n\n**Take screenshots of:**\n- Home/landing page\n- Main feature in empty state (no data)\n- Main feature with data (after adding items)\n- Forms (before and after filling)\n- Error states\n- Mobile viewport (375px width)\n\n**Analyze each screenshot for:**\n\n1. **Layout**: Are elements aligned? Is spacing consistent? Are cards/sections balanced or does one side look crushed?\n2. **Visual hierarchy**: Can the user tell what's most important? Are headings, buttons and actions clearly differentiated?\n3. **Component quality**: Does it look like shadcn/ui or like raw HTML with borders? Are buttons, inputs, cards using proper component styling?\n4. **Typography**: Is text readable? Are font sizes proportional? Is there enough contrast?\n5. **Empty states**: Do empty states guide the user (\"Add your first expense\") or just show blank space?\n6. **Responsive**: Does the layout work at mobile width or does it break/overflow?\n7. **Dark mode**: If dark mode is enabled, are there contrast issues, invisible borders, or text that blends into the background?\n\n**Cross-reference against `/nano-plan` product standards.** If the plan said \"shadcn/ui + Tailwind\" and the output looks like raw HTML with inline styles, that's a finding.\n\n**Report visual findings as QA findings:**\n```\n- **UX/UI:** Layout imbalance on group page — members card 30% width, expenses 70%\n  - **Severity:** should_fix\n  - **Screenshot:** qa/results/group-page.png\n  - **Fix:** Balance grid columns, make cards equal width\n```\n\nVisual findings are should_fix by default. Blocking only if the UI is unusable (overlapping elements, invisible text, broken layout at common viewport sizes).\n\n| Visual QA | Skip | Main states + mobile | Every state + mobile + dark mode |"
+    gold_removed: ''

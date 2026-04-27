@@ -1,0 +1,31 @@
+version: "2.0"
+
+task:
+  name: teamcity-cli-docsskill-refine-syntax-guidelines-and
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: JetBrains/teamcity-cli
+  pr: 95
+  base_commit: "09111e96a4d6b2a1a4782b5da3a3a064378b27af"
+  merge_commit: "b15220fbabd1a714f12996d9c86dab69586519b6"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/teamcity-cli/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/teamcity-cli/SKILL.md."
+
+config_edits:
+  - path: skills/teamcity-cli/SKILL.md
+    tier: 1
+    gold_added: '**Do not guess subcommands, flags, or syntax.** Only use commands and flags documented in the [Command Reference](references/commands.md) or shown by `tc <command> --help`. If a command doesn''t support what you need, fall back to `tc api /app/rest/...`.
+
+
+      **Terminology:** There is no `build`, `pipeline`, or `config` subcommand. Builds are **runs** (`tc run`). Build configurations are **jobs** (`tc job`).'
+    gold_removed: ''

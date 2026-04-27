@@ -1,0 +1,55 @@
+version: "2.0"
+
+task:
+  name: ai-maestro-docs-add-prominent-prepr-checklist
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: 23blocks-OS/ai-maestro
+  pr: 86
+  base_commit: "8f5eaa49d19e16484095ef1a1366ae20feb142bf"
+  merge_commit: "7e8012144c1068e60a428ab5dedb5775b49e470a"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '## Pre-PR Checklist (MANDATORY)
+
+
+      **⚠️ STOP! Before creating ANY Pull Request to main, complete this checklist:**
+
+
+      ```
+
+      □ 1. BUMP VERSION: ./scripts/bump-version.sh patch
+
+      □ 2. BUILD PASSES: yarn build
+
+      □ 3. COMMIT version bump with your changes
+
+      ```
+
+
+      **This is NON-NEGOTIABLE.** Every PR to main MUST include a version bump. No exceptions.
+
+
+      ---
+
+
+      1. ✅ **VERSION BUMPED** (see Pre-PR Checklist above - this should already be done)'
+    gold_removed: ''

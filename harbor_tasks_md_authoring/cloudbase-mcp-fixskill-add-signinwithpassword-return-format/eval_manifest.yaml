@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: cloudbase-mcp-fixskill-add-signinwithpassword-return-format
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: TencentCloudBase/CloudBase-MCP
+  pr: 589
+  base_commit: "8dbc6e2fd5ef3ca6e18acbf02420d06ef8237fb9"
+  merge_commit: "9cda69c8cd9da626507e4eaa08cca990221479de"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in config/source/skills/auth-web/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in config/source/skills/auth-web/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in config/source/skills/auth-web/SKILL.md."
+
+config_edits:
+  - path: config/source/skills/auth-web/SKILL.md
+    tier: 1
+    gold_added: "\nAll auth methods return `{ data, error }`. Always check `error` first:\n```js\n// Login — returns { data: { user, session }, error: null } on success\nconst { data, error } = await auth.signInWithPassword({ username: 'test_user', password: 'pass123' })\nif (error) {\n  // Handle login failure (wrong password, user not found, provider not enabled)\n  console.error('Login failed:', error.message)\n  return false\n}\n// data.user.id is the uid; data.session contains the active session\nconst uid = data.user.id\n\n// Also works with email or phone:\n// await auth.signInWithPassword({ email: 'user@example.com', password: 'pass123' })\n// await auth.signInWithPassword({ phone: '13800138000', password: 'pass123' })\n```\n\n**Checking login state (for route guards / auth checks):**\n// Use auth.getLoginState() to get the current session.\n// IMPORTANT: uid alone is NOT enough — when the SDK is initialized with a\n// publishableKey it may create an anonymous session that also has a uid.\n// Route guards must reject anonymous sessions explicitly.\nconst loginState = await auth.getLoginState()\nconst isRealLogin = !!loginState\n  && !!loginState.uid\n  && loginState.loginType !== 'ANONYMOUS'\n// Use isRealLogin (not just !!uid) to gate protected routes.\n  const { data, error } = await auth.signInWithPassword({\n  // Login succeeded — data.user.id is the uid\n  return true"
+    gold_removed: ''

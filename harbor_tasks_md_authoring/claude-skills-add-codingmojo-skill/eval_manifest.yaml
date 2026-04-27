@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: claude-skills-add-codingmojo-skill
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: oaustegard/claude-skills
+  pr: 447
+  base_commit: "f13e531961741004383fa28e24dc35813463e544"
+  merge_commit: "91e0e096fc0344c954c025d43fd33f0597e94e60"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in coding-mojo/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in coding-mojo/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in coding-mojo/SKILL.md."
+
+config_edits:
+  - path: coding-mojo/SKILL.md
+    tier: 1
+    gold_added: "---\nname: coding-mojo\ndescription: Develop and run Mojo code in Claude.ai containers. Handles installation, compilation, and execution. Use when writing Mojo code, benchmarking Mojo vs Python, or when user mentions Mojo, Modular, or MAX. Routes to Modular's official skills (mojo-syntax, mojo-python-interop, mojo-gpu-fundamentals) for language-specific correction layers.\n---\n\n# Mojo Development in Claude.ai Containers\n\nMojo is a systems programming language from Modular that combines Python-like syntax with C-level performance. This skill handles container setup and execution. For **language syntax and semantics**, defer to Modular's official skills at `github.com/modular/skills` — they are authoritative correction layers for pretrained knowledge.\n\n## Installation\n\nInstall once per session. Takes ~30s.\n\n```bash\npip install --break-system-packages modular 2>&1 | tail -5\nmojo --version\n```\n\nAlternative with uv (if available):\n```bash\nuv pip install --system --break-system-packages modular\n```\n\nVerify:\n```bash\nmojo -e 'print(\"Mojo ready\")'\n```\n\n## Running Mojo Code\n\n**Inline execution** (quick tests):\n```bash\nmojo -e 'print(\"hello\")'\n```\n\n**File execution** (compile + run):\n```bash\ncat > /home/claude/example.mojo << 'EOF'\ndef main():\n    print(\"Hello from Mojo\")\nEOF\nmojo run /home/claude/example.mojo\n```\n\n**Build binary** (for benchmarking):\n```bash\nmojo build /home/claude/example.mojo -o /home/claude/example\n/home/claude/example\n```\n\nUse `mojo build` for benchmarks — `mojo run` includes compilation overhead.\n\n## Critical Syntax Corrections (v26.2)\n\nPretrained models generate outdated Mojo. These corrections are current as of Mojo 26.2:\n\n| Wrong (pretrained) | Correct (26.2) | Notes |\n|---|---|---|\n| `fn main():` | `def main():` | `fn` is deprecated; `def` is the only function keyword |\n| `let x = 5` | `var x = 5` | `let` removed; `var` for all bindings |\n| `inout self` | `mut self` / `out self` | `mut` for mutation, `out` for `__init__` |\n| `@parameter for` | `comptime for` | Compile-time loops |\n| `List[Int](1, 2, 3)` | `[1, 2, 3]` | Collection literals |\n| `from math import sqrt` | `from std.math import sqrt` | `std.` prefix required for stdlib |\n| `__str__` / `Stringable` | `write_to` / `Writable` | String conversion protocol |\n| `String(self.x)` for int→str | `String(self.x)` | This one is actually correct, but `str()` is not |\n\n## Companion Skills (Modular Official)\n\nThese skills from `github.com/modular/skills` provide deep syntax correction layers. If they are installed in the user's skill set, read them before writing Mojo code:\n\n- **mojo-syntax** — Comprehensive syntax corrections, type system, ownership model. **Always use when writing any Mojo code.**\n- **mojo-python-interop** — Calling Python from Mojo, type conversion, extension modules. Use when mixing Mojo and Python.\n- **mojo-gpu-fundamentals** — GPU programming (no CUDA syntax — Mojo has its own model). Reference only in Claude.ai containers (no GPU available).\n- **new-modular-project** — Project scaffolding with Pixi or uv. Use when starting a new Mojo/MAX project locally.\n\nIf companion skills are not installed, the correction table above covers the most common pretrained errors. For deeper work, fetch the skill content directly:\n```bash\ncurl -sL -H \"Authorization: token $GH_TOKEN\" \\\n  -H \"Accept: application/vnd.github.v3.raw\" \\\n  \"https://api.github.com/repos/modular/skills/contents/mojo-syntax/SKILL.md?ref=main\"\n```\n\n## Container Constraints\n\n- **No GPU**: Claude.ai containers are CPU-only. GPU skills are reference material for generating code the user will run locally.\n- **Session-ephemeral**: Mojo installation doesn't persist across conversations. Reinstall each session.\n- **Build artifacts**: Store in `/home/claude/`. Copy final outputs to `/mnt/user-data/outputs/`.\n- **Timeout**: Long compilations or benchmarks may hit the ~200s bash timeout. Break work into smaller units.\n\n## Benchmarking Pattern\n\nCompare Mojo vs Python on the same algorithm:\n\n```bash\n# Python baseline\npython3 -c \"\nimport time\ndef fib(n):\n    a, b = 0, 1\n    for _ in range(n):\n        a, b = b, a + b\n    return a\nstart = time.perf_counter()\nfib(90)\nprint(f'Python: {(time.perf_counter() - start)*1e6:.1f} µs')\n\"\n\n# Mojo version\ncat > /home/claude/fib.mojo << 'EOF'\nfrom std.time import perf_counter_ns\n\ndef fib(n: Int) -> Int:\n    var a = 0\n    var b = 1\n    for _ in range(n):\n        var tmp = a\n        a = b\n        b = tmp + b\n    return a\n\ndef main():\n    var start = perf_counter_ns()\n    var result = fib(90)\n    var elapsed = perf_counter_ns() - start\n    print(\"Mojo:\", elapsed, \"ns (\", result, \")\")\nEOF\nmojo build /home/claude/fib.mojo -o /home/claude/fib\n/home/claude/fib\n```\n\nExpected: Mojo is 50-100x faster than CPython on tight numeric loops. SIMD and parallelism widen the gap further but require mojo-syntax and mojo-gpu-fundamentals skills for correct usage."
+    gold_removed: ''

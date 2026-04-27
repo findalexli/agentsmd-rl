@@ -1,0 +1,41 @@
+version: "2.0"
+
+task:
+  name: julia-agent-skills-small-improvement-to-dv-skill
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: JuliaGenAI/julia-agent-skills
+  pr: 2
+  base_commit: "864698b9ff5de8d33ae62277a4fe098789a60518"
+  merge_commit: "6cee393e6a40402304b86327a9c11a0b354e88bf"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/documenter-vitepress/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/documenter-vitepress/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/documenter-vitepress/SKILL.md."
+
+config_edits:
+  - path: skills/documenter-vitepress/SKILL.md
+    tier: 1
+    gold_added: '
+
+
+      From shell (be sure to run this in the background):
+
+
+      From Julia REPL / MCP tool:
+
+
+      The server starts at `http://localhost:SOMEPORT/` with hot reload.  The port number is reported in the output of the command.'
+    gold_removed: ''

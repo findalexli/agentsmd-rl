@@ -1,0 +1,54 @@
+version: "2.0"
+
+task:
+  name: obsidian-skills-add-instructions-about-json-newline
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: kepano/obsidian-skills
+  pr: 32
+  base_commit: "4540df83fc68a68bef27e83ae79bc4f1b4d2ea7c"
+  merge_commit: "7320408e1c86898623ee9da51aa75317731dfea8"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/json-canvas/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/json-canvas/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/json-canvas/SKILL.md."
+
+config_edits:
+  - path: skills/json-canvas/SKILL.md
+    tier: 1
+    gold_added: '#### Newline Escaping (Common Pitfall)
+
+
+      In JSON, newline characters inside strings **must** be represented as `\n`. Do **not** use the literal sequence `\\n` in a `.canvas` file—Obsidian will render it as the characters `\` and `n` instead of a line break.
+
+
+      Examples:
+
+
+      ```json
+
+      { "type": "text", "text": "Line 1\nLine 2" }
+
+      ```
+
+
+      ```json
+
+      { "type": "text", "text": "Line 1\\nLine 2" }
+
+      ```
+
+      '
+    gold_removed: ''

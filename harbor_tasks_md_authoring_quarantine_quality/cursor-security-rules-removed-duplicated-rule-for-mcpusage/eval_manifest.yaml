@@ -1,0 +1,24 @@
+version: "2.0"
+
+task:
+  name: cursor-security-rules-removed-duplicated-rule-for-mcpusage
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: matank001/cursor-security-rules
+  pr: 2
+  base_commit: "9f13b713a0e60d75d8b1dae4276169c343f69672"
+  merge_commit: "dee22200b225ab3328d09dcc7f74d0a010d80486"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in secure-mcp-usage.mdc."
+
+config_edits:
+  - path: secure-mcp-usage.mdc
+    tier: 1
+    gold_added: '## 5. Require Explicit User Agreement Before Sensitive Operations'
+    gold_removed: ''

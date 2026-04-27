@@ -1,0 +1,77 @@
+version: "2.0"
+
+task:
+  name: dataverse-skills-improve-init-ux-auth-prompts
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: microsoft/Dataverse-skills
+  pr: 15
+  base_commit: "8edb634331b3bb7d7ab21496be646d6da5cdc090"
+  merge_commit: "984d1b1cb498d45817c8bbe2da5a3405a7f08761"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/plugins/dataverse/skills/init/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/plugins/dataverse/skills/init/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/plugins/dataverse/skills/init/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/plugins/dataverse/skills/mcp-configure/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/plugins/dataverse/skills/mcp-configure/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/plugins/dataverse/skills/mcp-configure/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/plugins/dataverse/skills/overview/SKILL.md."
+
+config_edits:
+  - path: .github/plugins/dataverse/skills/init/SKILL.md
+    tier: 1
+    gold_added: '- `DATAVERSE_URL`: "What is your Dataverse environment URL?" (e.g., `https://myorg.crm10.dynamics.com`). If the Environment Discovery flow already determined this, use it directly — do not re-ask.
+
+      - `TENANT_ID`: Auto-discover from the `DATAVERSE_URL` using the curl method (see Scenario A step 2). This is preferred over `pac org who` because it derives the tenant directly from the URL — no PAC CLI setup needed, and no risk of returning the wrong tenant when multiple auth profiles exist. Only ask the user if the curl method fails.
+
+      - `SOLUTION_NAME`: "What is the unique name of your solution?" (allow skipping for now)
+
+
+      **Present authentication options — always ask this explicitly with clear descriptions:**
+
+
+      > How would you like to authenticate with Dataverse?
+
+      >
+
+      > 1. **Interactive login (recommended for personal use)** — Sign in via your browser. No app registration needed. You''ll authenticate once and the token stays cached across sessions.
+
+      > 2. **Service principal (for CI/CD or shared environments)** — Uses a CLIENT_ID and CLIENT_SECRET from an Azure app registration. Required for unattended/automated scenarios.
+
+
+      - If **Interactive**: skip `CLIENT_ID` and `CLIENT_SECRET`. `auth.py` uses device code flow with persistent OS-level token caching — no re-prompt on subsequent runs.
+
+      - If **Service principal**: ask for `CLIENT_ID` and `CLIENT_SECRET`.'
+    gold_removed: ''
+  - path: .github/plugins/dataverse/skills/mcp-configure/SKILL.md
+    tier: 1
+    gold_added: "### 7. Ensure tenant-level admin consent (one-time per tenant)\r\n\r\nThe MCP client app registration must be granted admin consent on the Azure AD tenant. This is a **one-time** action per tenant — once done, it applies to all Dataverse environments in that tenant. It **requires an Azure AD Global Admin or Privileged Role Admin**.\r\n- Tool type (Copilot or Claude) from step 0\r\n- Scope from step 1\r\n- MCP Client ID from step 0\r\nAsk the user if admin consent has already been granted for this tenant. If not, provide the consent URL:\r\n> **Tenant-level admin consent** is required for the MCP client app. This is a one-time action per Azure AD tenant — once granted, it covers all environments in the tenant.\r\n>\r\n> An Azure AD Global Admin or Privileged Role Admin must open this URL and click **Accept**:\r\n> ```\r\n> https://login.microsoftonline.com/{TENANT_ID}/adminconsent?client_id={MCP_CLIENT_ID}\r\n> ```\r\n>\r\n> If you don't have admin permissions, send this URL to your Azure AD administrator.\r\nWait for the user to confirm this is done (or was already done previously) before proceeding.\r\n\r\n### 8. Add the MCP client to the environment's allowed list (one-time per environment)\r\n\r\nSeparately from tenant-level consent, each Dataverse environment must explicitly allow the MCP client. This is a **one-time** action per environment and does **NOT** require Azure AD admin permissions — any user with Environment Admin or System Administrator role in the environment can do it.\r\n\r\nPresent the two methods (PPAC portal is recommended for non-developers):\r\n\r\n> **Method A: Power Platform Admin Center (recommended — no Azure AD admin needed)**\r\n>\r\n> 1. Go to [Power Platform Admin Center](https://admin.powerplatform.microsoft.com/)\r\n> 2. Select **Environments** in the left navigation\r\n> 3. Click on your environment (e.g., the one matching `{USER_URL}`)\r\n> 4. Click **Settings** in the top toolbar\r\n> 5. Expand **Product** and click **Features**\r\n> 6. Scroll down to the **MCP Server** section\r\n> 7. Toggle **Enable MCP Server** to **On** (if not already)\r\n> 8. Under **Allowed clients**, click **Add client**\r\n> 9. Paste the MCP Client ID: `{MCP_CLIENT_ID}`\r\n> 10. Click **Save**\r\n>\r\n> **Method B: Programmatic (via script)**\r\n>\r\n> Run `scripts/enable-mcp-client.py` to add the client ID to the allowed list via the Dataverse API.\r\nIf the user completed Method A, attempt to run `scripts/enable-mcp-client.py` anyway to verify. If it reports the client is already enabled, continue. Do not ask for user confirmation.\r\n- **Tenant-level admin consent** has been granted for the MCP client app. This is a one-time per-tenant action requiring an Azure AD admin. Without it, authentication succeeds but the app is denied access. Use the admin consent URL from step 7.\r\n- **Org-level allowed clients** — the MCP client ID has been added to the environment's allowed list. To check or fix this:\r\n  1. Go to [Power Platform Admin Center](https://admin.powerplatform.microsoft.com/) > Environments > your environment > Settings > Product > Features\r\n  2. Verify **MCP Server** is toggled **On**\r\n  3. Verify the MCP Client ID appears under **Allowed clients**\r\n- If using the Preview endpoint, verify that the Preview MCP endpoint is also enabled in the same Features page\r"
+    gold_removed: ''
+  - path: .github/plugins/dataverse/skills/overview/SKILL.md
+    tier: 1
+    gold_added: '- If EITHER is missing: **Automatically run the init flow** (see the init skill). Do NOT ask the user whether to initialize — just do it. Do not create your own `.env`, `requirements.txt`, `.env.example`, or auth scripts. The init skill handles all of this.'
+    gold_removed: ''

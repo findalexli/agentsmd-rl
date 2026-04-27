@@ -1,0 +1,166 @@
+version: "2.0"
+
+task:
+  name: nanostack-revert-to-relative-bin-paths
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: garagon/nanostack
+  pr: 67
+  base_commit: "603007b1c0e8491212665a1f978291b2b35e8ab3"
+  merge_commit: "2d8c06a05198bafd1b7c49df3ced1cc734aa5489"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in compound/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in compound/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in compound/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plan/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plan/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in qa/SKILL.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in qa/SKILL.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in review/SKILL.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in review/SKILL.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in review/SKILL.md."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in security/SKILL.md."
+  - id: signal_12
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in security/SKILL.md."
+  - id: signal_13
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in security/SKILL.md."
+  - id: signal_14
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in ship/SKILL.md."
+  - id: signal_15
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in ship/SKILL.md."
+  - id: signal_16
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in ship/SKILL.md."
+  - id: signal_17
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in think/SKILL.md."
+
+config_edits:
+  - path: SKILL.md
+    tier: 1
+    gold_added: '**Saving artifacts is not optional.** Every skill must save its artifact after completing.
+
+      '
+    gold_removed: ''
+  - path: compound/SKILL.md
+    tier: 1
+    gold_added: 'bin/find-artifact.sh think 2
+
+      bin/find-artifact.sh plan 2
+
+      bin/find-artifact.sh review 2
+
+      bin/find-artifact.sh qa 2
+
+      bin/find-artifact.sh security 2
+
+      bin/find-artifact.sh ship 2
+
+      bin/find-solution.sh "relevant keywords"
+
+      bin/find-solution.sh --tag relevant-tag
+
+      bin/find-solution.sh --file affected/file/path
+
+      bin/save-solution.sh <type> "<title>" "tag1,tag2,tag3"
+
+      bin/save-artifact.sh compound ''<json with phase, summary including solutions_created, solutions_updated, total_solutions, context_checkpoint including summary, key_files, decisions_made, open_questions>''
+
+      - **Update, don''t duplicate.** If bin/find-solution.sh returns a close match, update that document.'
+    gold_removed: ''
+  - path: plan/SKILL.md
+    tier: 1
+    gold_added: '  bin/find-artifact.sh think 2
+
+      bin/save-artifact.sh plan ''<json with phase, summary including planned_files array, context_checkpoint including summary, key_files, decisions_made, open_questions>'''
+    gold_removed: ''
+  - path: qa/SKILL.md
+    tier: 1
+    gold_added: 'bin/find-artifact.sh plan 2
+
+      bin/save-artifact.sh qa ''<json with phase, mode, summary including wtf_likelihood, findings, context_checkpoint including summary, key_files, decisions_made, open_questions>'''
+    gold_removed: ''
+  - path: review/SKILL.md
+    tier: 1
+    gold_added: 'bin/find-artifact.sh plan 2
+
+      bin/find-solution.sh --file <changed-file-path>
+
+      bin/find-solution.sh "<relevant-keywords>"
+
+      bin/scope-drift.sh
+
+      bin/find-artifact.sh security 30
+
+      bin/save-artifact.sh review ''<json with phase, mode, summary, scope_drift, findings, conflicts, context_checkpoint including summary, key_files, decisions_made, open_questions>'''
+    gold_removed: ''
+  - path: security/SKILL.md
+    tier: 1
+    gold_added: 'bin/find-artifact.sh plan 2
+
+      bin/find-artifact.sh review 30
+
+      bin/save-artifact.sh security ''<json with phase, mode, summary, findings, conflicts, context_checkpoint including summary, key_files, decisions_made, open_questions>'''
+    gold_removed: ''
+  - path: ship/SKILL.md
+    tier: 1
+    gold_added: 'bin/find-artifact.sh review 2
+
+      bin/save-artifact.sh ship ''<json with phase, summary including pr_number, pr_url, title, status, ci_passed, context_checkpoint including summary, key_files, decisions_made, open_questions>''
+
+      bin/sprint-journal.sh'
+    gold_removed: ''
+  - path: think/SKILL.md
+    tier: 1
+    gold_added: bin/save-artifact.sh think '<json with phase, summary including value_proposition, scope_mode, target_user, narrowest_wedge, key_risk, premise_validated, context_checkpoint including summary, key_files, decisions_made, open_questions>'
+    gold_removed: ''

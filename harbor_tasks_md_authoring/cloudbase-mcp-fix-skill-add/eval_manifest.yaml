@@ -1,0 +1,43 @@
+version: "2.0"
+
+task:
+  name: cloudbase-mcp-fix-skill-add
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: TencentCloudBase/CloudBase-MCP
+  pr: 554
+  base_commit: "65c585d47bc0d9baa6be0ae9527e72b5ee6fd725"
+  merge_commit: "0ffecb9db547827f34cd3e613a88aa7536c84e6d"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in config/source/skills/cloud-functions/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in config/source/skills/cloud-functions/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in config/source/skills/cloud-functions/SKILL.md."
+
+config_edits:
+  - path: config/source/skills/cloud-functions/SKILL.md
+    tier: 1
+    gold_added: '- Assuming `db.collection("name").add(...)` will create a missing document-database collection automatically. Collection creation is a separate management step.
+
+      ## Database write reminder
+
+
+      - If a function will write to CloudBase document database, create the target collection first through console or management tooling.
+
+      - `db.collection("feedback").add(...)` only inserts into an existing collection; it does not auto-create `feedback` when absent.
+
+      - If the product requirement says "create when missing", implement that as an explicit collection-management step before the first write instead of assuming the runtime write call will provision it.
+
+      '
+    gold_removed: ''

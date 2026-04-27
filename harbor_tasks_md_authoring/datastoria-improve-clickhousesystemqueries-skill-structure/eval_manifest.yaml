@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: datastoria-improve-clickhousesystemqueries-skill-structure
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: FrankChen021/datastoria
+  pr: 135
+  base_commit: "be54046b0e73fad2db5a00dfe3166ac168eee2e8"
+  merge_commit: "01c8608fca63e41374711e11adc86659f39d64bd"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in resources/skills/clickhouse-system-queries/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in resources/skills/clickhouse-system-queries/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in resources/skills/clickhouse-system-queries/SKILL.md."
+
+config_edits:
+  - path: resources/skills/clickhouse-system-queries/SKILL.md
+    tier: 1
+    gold_added: "description: >\n  Query ClickHouse system tables to inspect query logs, monitor cluster health,\n  check replication status, and analyze slow queries. Use when the user mentions\n  \"system tables\", \"query_log\", \"ClickHouse monitoring\", \"cluster status\",\n  \"slow queries\", or asks to diagnose ClickHouse operational issues.\n- Confirm column shape from schema/reference before writing predicates.\n- If the user named an exact metric, pass it in the `columns` list via `explore_schema` instead of loading the full table schema.\n- If `ProfileEvents` is a `Map`, access entries as `ProfileEvents['Name']`. If flattened, use `ProfileEvent_Name`.\n\nExample — map vs flattened access:\n\n```sql\n-- Map access\nSELECT ProfileEvents['DistributedConnectionFailTry'] AS fails\nFROM system.query_log WHERE event_date = today();\n\n-- Flattened column access\nSELECT ProfileEvent_DistributedConnectionFailTry AS fails\nFROM system.query_log WHERE event_date = today();\n```\n1. **Resolve target** — identify system table and intent. Inherit the most recent time window from conversation, or default to last 60 minutes.\n\n2. **Load reference** — for `system.query_log`, call `skill_resource` to load `references/system-query-log.md` before writing any SQL. For unsupported tables, fall back to `sql-expert`.\n\n3. **Execute** — choose the right tool:\n   - `search_query_log` for standard ranked searches and filtered lookups\n   - `execute_sql` for visualization, time-bucketed aggregation, trends, or histograms\n\n   ```sql\n   -- search_query_log: standard lookup\n   -- finds top 10 slowest queries in the last hour\n   -- execute_sql: time-bucketed visualization\n   SELECT toStartOfFiveMinutes(event_time) AS bucket,\n          count() AS queries,\n          avg(query_duration_ms) AS avg_ms\n   FROM system.query_log\n   WHERE event_date = today() AND event_time > now() - INTERVAL 1 HOUR\n   GROUP BY bucket ORDER BY bucket\n   ```\n   Default to `LIMIT 50` unless the user specifies otherwise.\n4. **Summarize** with concise findings and next actions.\n- Always apply time bounds for log-like system tables\n- Always use the table-specific reference when available\n- Never generate `system.query_log` SQL until `references/system-query-log.md` is loaded in the current turn\n- Never use `search_query_log` for chart-oriented requests\n- Never omit `LIMIT` in exploratory queries"
+    gold_removed: ''

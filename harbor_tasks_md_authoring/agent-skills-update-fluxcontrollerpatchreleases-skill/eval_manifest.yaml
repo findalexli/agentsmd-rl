@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: agent-skills-update-fluxcontrollerpatchreleases-skill
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: fluxcd/agent-skills
+  pr: 19
+  base_commit: "21e8fb61fda9d5ad44118c524bddb678b3dc4e0c"
+  merge_commit: "a9f66c4ca5e07e5a298099c8e47f140750d03a64"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in internal/skills/flux-controller-patch-releases/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in internal/skills/flux-controller-patch-releases/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in internal/skills/flux-controller-patch-releases/SKILL.md."
+
+config_edits:
+  - path: internal/skills/flux-controller-patch-releases/SKILL.md
+    tier: 1
+    gold_added: "## Important rules\n\n- **Go deep until you block, then switch.** Drive one controller all the way\n  through every step you can do locally — branch, changelog commit, version\n  bump commit, push, open PR — before switching to the next. Only move on\n  when you hit something you cannot progress (CI running, PR awaiting review,\n  tag workflow running). The moment something unblocks (PR merged, CI green,\n  workflow finished), come back to it immediately — do not finish the current\n  controller's local work first if an earlier one is ready to advance.\n- **Never block the conversation on long-running operations.** CI checks,\n  release workflow runs, tag-triggered workflows, and similar waits must be\n  watched in the background so the user can keep steering and so you can pick\n  up any other controller the moment it unblocks. When a background watch\n  completes, report the result and proceed.\n- **Always quote PR/issue links as full URLs** (e.g.\n  `https://github.com/fluxcd/helm-controller/pull/1465`), never the\n  `<owner>/<repo>#<number>` shorthand — full URLs are clickable from the\n  user's terminal, the shorthand is not.\n- **Start background watches on every PR immediately after opening it.** Kick\n  off `gh pr checks <num> -R fluxcd/<repo> --watch` in the background as\n  soon as the PR is created so CI status lands in the conversation the\n  moment it finishes. Do the same for tag-triggered release workflows\n  (`gh run watch <id> -R fluxcd/<repo>` in the background). Do not wait\n  until \"everything is pushed\" to start watching — start watching the first\n  PR while you prepare the second.\n- **Also start a background approval watch per PR.** `gh pr checks --watch`\n  only covers CI; it does not fire on maintainer approval. Poll the review\n  state in the background so you are notified the moment it flips to\n  APPROVED + CLEAN:\n  ```\n  while :; do\n    state=$(gh pr view <num> -R fluxcd/<repo> --json mergeStateStatus,reviewDecision --jq '.reviewDecision+\" \"+.mergeStateStatus')\n    case \"$state\" in \"APPROVED CLEAN\") echo \"$state\"; break;; esac\n    sleep 30\n  done\n  ```\n  Run this in the background; when it exits, merge the PR and proceed.\n- Every git commit must use `-s` (sign-off). Never include Co-Authored-By\n  lines, your own name, or any AI attribution in commit messages, PR titles,\n  or PR descriptions. This applies to all PRs, including PRs that update this\n  skill file itself.\n- Always wait for CI to go green before merging any PR.\n- You cannot approve your own PRs. If a PR was opened by the git user driving\n  the session, ask a maintainer to approve it (or confirm it is already\n  approved) before merging.\n- **Merge release PRs yourself** (controller release PRs, changelog cherry-pick\n  PRs) as soon as CI is green **and** a maintainer has approved. No need to\n  ask the user to click merge — act on it immediately so the next step (tag\n  push, etc.) unblocks. This applies only to PRs opened with the user's\n  account during this session.\n- **Review feedback on release PRs is applied by amending**, not by adding\n  new commits. A release PR must stay at exactly two commits\n  (`Add changelog entry for vX.Y.Z` and `Release vX.Y.Z`). When the fix\n  belongs in the changelog, amend the changelog commit; when it belongs in\n  the release bump, amend that one. Use\n  `git reset --soft HEAD~2` + re-commit, or an interactive rebase, then\n  `git push --force-with-lease`.\n- **After applying a review fix, reply `Fixed, thanks!` on the thread and\n  resolve it.** Reply via\n  `gh api repos/<owner>/<repo>/pulls/<n>/comments/<cid>/replies -f body='Fixed, thanks!'`\n  and resolve via the GraphQL `resolveReviewThread` mutation. Find thread\n  IDs with\n  `gh api graphql -f query='{ repository(owner:\"<o>\",name:\"<r>\") { pullRequest(number:<n>) { reviewThreads(first:50) { nodes { id isResolved comments(first:1){nodes{databaseId body}} } } } } }'`.\n- Do **not** watch CI on the skill-update PR continuously — it only needs to\n  merge at the very end of the procedure, so check CI right before merging\n  rather than keeping a watch open throughout the session.\n- Tags must be annotated and signed (`git tag -s -m ...`). Never create\n  release tags through the GitHub API — that produces lightweight tags which\n  break `git tag -v` verification.\n- Strictly follow the git commands documented in the release flow below. Do\n  not invent substitutions or skip steps — each step has a reason.\n- **Do not declare a controller \"done\" until every step in the Release Flow\n  below has been executed for it**, including the final changelog\n  cherry-pick PR back to `main` (step 11). Merging the release PR and\n  tagging is *not* the last step. Before reporting completion, walk through\n  each controller against the numbered steps and confirm each one ran.\n- PRs opened by this procedure use the commit subject as the PR title and an\n  empty body.\n\n## Updating this skill\n\n- Improvements to this skill should land as a single-commit PR on a dedicated\n  branch. When accumulating more changes during a release session, amend and\n  force-push rather than adding new commits.\n- Keep the skill-update PR open during the release session and merge it\n  **last**, after all controller patch releases are done. Session learnings\n  tend to surface throughout the flow; amend them in as they come up.\n- Do not leak session-specific state, downstream/enterprise distribution\n  details, or AI attribution into the skill file.\n"
+    gold_removed: ''

@@ -1,0 +1,170 @@
+version: "2.0"
+
+task:
+  name: ox-fixclaws-clarify-openclaw-ox-install
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: sageox/ox
+  pr: 492
+  base_commit: "b8cf024d4852cc31f9356de78c283a58ef818af6"
+  merge_commit: "9e61a9260a6da9f14941bdd34d80001cbf5a37eb"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in claws/openclaw/sageox-distill/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in claws/openclaw/sageox-distill/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in claws/openclaw/sageox-distill/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in claws/openclaw/sageox-summary/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in claws/openclaw/sageox-summary/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in claws/openclaw/sageox-summary/SKILL.md."
+
+config_edits:
+  - path: claws/openclaw/sageox-distill/SKILL.md
+    tier: 1
+    gold_added: '**If the file does not exist:** STOP. This is a one-time decision that
+
+      gets persisted to disk and affects every future run of this skill — the
+
+      user must own it. You **MUST** ask the user which method they want and
+
+      **wait for their response**. Do not pick a default. Do not guess. Do not
+
+      run any install commands yet. Present both options verbatim, then stop
+
+      and wait:
+
+
+      > How do you want to install the `ox` CLI? Pick one — I won''t choose for
+
+      > you, because this gets saved to
+
+      > `~/.openclaw/memory/sageox-ox-install.json` and reused every run.
+
+      > 1. **curl install** — runs the official install script from a pinned
+
+      >    release tag. Fastest, no build toolchain needed. Lands in
+
+      >    `/usr/local/bin` (Linux) or `/opt/homebrew/bin` or `/usr/local/bin`
+
+      >    (macOS). No auto-update; you''ll re-run this flow to upgrade.
+
+      > 2. **Build from git source** — clones `github.com/sageox/ox` to a
+
+      >    directory you choose and builds with `make install`. Gives you
+
+      >    latest `main`, and optionally auto-updates on every run. Requires
+
+      >    Go ≥ 1.24.
+
+      >
+
+      > Reply `1` or `2`.
+
+
+      **Blocking rule:** do not proceed until the user replies with `1` or
+
+      `2`. If they say "you choose", "whatever", or try to skip, ask again and
+
+      explain that this is a persisted choice. Once they answer, save it to
+
+      the memory file.
+
+
+      **Do not install `ox` via Homebrew or any package manager** (e.g.
+
+      `brew install sageox/tap/ox`, `apt`, `dnf`, `pacman`). The tap exists
+
+      for general use but is not supported inside OpenClaw skills — only
+
+      `curl` and `git source` are. These two options work the same on macOS
+
+      and Linux; pick based on whether the user wants a pinned release or
+
+      `main` with optional auto-update, **not** based on their operating
+
+      system.'
+    gold_removed: ''
+  - path: claws/openclaw/sageox-summary/SKILL.md
+    tier: 1
+    gold_added: '**If the file does not exist:** STOP. This is a one-time decision that
+
+      gets persisted to disk and affects every future run of this skill — the
+
+      user must own it. You **MUST** ask the user which method they want and
+
+      **wait for their response**. Do not pick a default. Do not guess. Do not
+
+      run any install commands yet. Present both options verbatim, then stop
+
+      and wait:
+
+
+      > How do you want to install the `ox` CLI? Pick one — I won''t choose for
+
+      > you, because this gets saved to
+
+      > `~/.openclaw/memory/sageox-ox-install.json` and reused every run.
+
+      > 1. **curl install** — runs the official install script from a pinned
+
+      >    release tag. Fastest, no build toolchain needed. Lands in
+
+      >    `/usr/local/bin` (Linux) or `/opt/homebrew/bin` or `/usr/local/bin`
+
+      >    (macOS). No auto-update; you''ll re-run this flow to upgrade.
+
+      > 2. **Build from git source** — clones `github.com/sageox/ox` to a
+
+      >    directory you choose and builds with `make install`. Gives you
+
+      >    latest `main`, and optionally auto-updates on every run. Requires
+
+      >    Go ≥ 1.24.
+
+      >
+
+      > Reply `1` or `2`.
+
+
+      **Blocking rule:** do not proceed until the user replies with `1` or
+
+      `2`. If they say "you choose", "whatever", or try to skip, ask again and
+
+      explain that this is a persisted choice. Once they answer, save it to
+
+      the memory file.
+
+
+      **Do not install `ox` via Homebrew or any package manager** (e.g.
+
+      `brew install sageox/tap/ox`, `apt`, `dnf`, `pacman`). The tap exists
+
+      for general use but is not supported inside OpenClaw skills — only
+
+      `curl` and `git source` are. These two options work the same on macOS
+
+      and Linux; pick based on whether the user wants a pinned release or
+
+      `main` with optional auto-update, **not** based on their operating
+
+      system.'
+    gold_removed: ''

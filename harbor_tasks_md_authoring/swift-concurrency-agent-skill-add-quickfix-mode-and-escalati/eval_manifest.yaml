@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: swift-concurrency-agent-skill-add-quickfix-mode-and-escalati
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: AvdLee/Swift-Concurrency-Agent-Skill
+  pr: 18
+  base_commit: "1a5e08eef89e26bc6ea1c45bc934d7923fd7c5fc"
+  merge_commit: "39357e2dd37d2124ec931ecc35622963c30f0857"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in swift-concurrency/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in swift-concurrency/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in swift-concurrency/SKILL.md."
+
+config_edits:
+  - path: swift-concurrency/SKILL.md
+    tier: 1
+    gold_added: "## Triage Checklist (Before Advising)\n\n- Capture the exact compiler diagnostics and the offending symbol(s).\n- Identify the current isolation boundary and module defaults (`@MainActor`, custom actor, default isolation).\n- Confirm whether the code is UI-bound or intended to run off the main actor.\n\n## Quick Fix Mode (Use When)\n\nUse Quick Fix Mode when:\n- The errors are localized (single file or one type) and the isolation boundary is clear.\n- The fix does not require API redesign or multi-module changes.\n- You can explain the fix in 1–2 steps without changing behavior.\n\nSkip Quick Fix Mode when:\n- Default isolation or strict concurrency settings are unknown and likely affect behavior.\n- The error crosses module boundaries or involves public API changes.\n- The fix would require `@unchecked Sendable`, `@preconcurrency`, or `nonisolated(unsafe)` without a clear invariant.\n\n## Smallest Safe Fixes (Quick Wins)\n\nPrefer edits that preserve behavior while satisfying data-race safety.\n\n- **UI-bound types**: isolate the type or specific members to `@MainActor` (justify why UI-bound).\n- **Global/static mutable state**: move into an `actor` or isolate to `@MainActor` if UI-only.\n- **Background work**: for work that should always hop off the caller’s isolation, move expensive work into an `async` function marked `@concurrent`; for work that doesn’t touch isolated state but can inherit the caller’s isolation (for example with `NonisolatedNonsendingByDefault`), use `nonisolated` without `@concurrent`, or use an `actor` to guard mutable state.\n- **Sendable errors**: prefer immutable/value types; avoid `@unchecked Sendable` unless you can prove and document thread safety.\n\n## Quick Fix Playbook (Common Diagnostics -> Minimal Fix)\n\n- **\"Main actor-isolated ... cannot be used from a nonisolated context\"**\n  - Quick fix: if UI-bound, make the caller `@MainActor` or hop with `await MainActor.run { ... }`.\n  - Escalate if this is non-UI code or causes reentrancy; use `references/actors.md`.\n- **\"Actor-isolated type does not conform to protocol\"**\n  - Quick fix: add isolated conformance (e.g., `extension Foo: @MainActor SomeProtocol`).\n  - Escalate if the protocol requirements must be `nonisolated`; use `references/actors.md`.\n- **\"Sending value of non-Sendable type ... risks causing data races\"**\n  - Quick fix: confine access inside an actor or convert to a value type with immutable (`let`) state.\n  - Escalate before `@unchecked Sendable`; use `references/sendable.md` and `references/threading.md`.\n- **SwiftLint `async_without_await`**\n  - Quick fix: remove `async` if not required; if required by protocol/override/@concurrent, use narrow suppression with rationale. See `references/linting.md`.\n- **\"wait(...) is unavailable from asynchronous contexts\" (XCTest)**\n  - Quick fix: use `await fulfillment(of:)` or Swift Testing equivalents. See `references/testing.md`.\n\n## Escalation Path (When Quick Fixes Aren't Enough)\n\n1. Gather project settings (default isolation, strict concurrency level, upcoming features).\n2. Re-evaluate isolation boundaries and which types cross them.\n3. Use the decision tree + references for the deeper fix.\n4. If behavior changes are possible, document the invariant and add tests/verification steps.\n\n- \"Actor-isolated type does not conform to protocol\" (protocol conformance errors)\n  - First: determine whether the protocol requirements must execute on the actor (for example, UI work on `@MainActor`) or can safely be `nonisolated`.\n  - Then: follow the Quick Fix Playbook entry for actor-isolated protocol conformance and `references/actors.md` for implementation patterns (isolated conformances, `nonisolated` requirements, and escalation steps).\n- For Quick Fix Mode: compile the affected target/module and rerun the specific diagnostics or lints."
+    gold_removed: ''

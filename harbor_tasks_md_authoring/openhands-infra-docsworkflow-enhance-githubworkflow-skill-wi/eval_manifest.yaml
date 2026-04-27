@@ -1,0 +1,90 @@
+version: "2.0"
+
+task:
+  name: openhands-infra-docsworkflow-enhance-githubworkflow-skill-wi
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: zxkane/openhands-infra
+  pr: 12
+  base_commit: "e6e27a8efac767dc7c7a7304d406e21304973fca"
+  merge_commit: "a99f8c8943a4d94980a3481500721499383bf628"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/github-workflow/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/github-workflow/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/github-workflow/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/github-workflow/references/review-commands.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/github-workflow/references/review-commands.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/github-workflow/references/review-commands.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: .claude/skills/github-workflow/SKILL.md
+    tier: 1
+    gold_added: "description: This skill should be used when the user asks to \"create a PR\", \"address review comments\", \"resolve review threads\", \"retrigger Q review\", \"/q review\", \"respond to Amazon Q\", \"/codex review\", \"respond to Codex\", \"handle reviewer findings\", \"merge PR\", \"push changes\", \"check CI status\", or mentions PR workflow, code review, reviewer bots, or GitHub Actions checks.\nFollow this 10-step workflow for all feature development and bug fixes:\n  - Write new unit tests for new functionality\n  - Update existing tests if behavior changed\n  - Write/update E2E test cases if needed\n  - Include checklist in PR description (see template below)\n  - If PASS → Update PR checklist, proceed to Step 6\n  - Review all bot comments (Amazon Q, Codex, etc.)\n  - Retrigger review: /q review, /codex review\nStep 7: ITERATE UNTIL NO FINDINGS\n  - Check for new bot findings\n  - If new findings → Return to Step 6\n  - If no findings → Update PR checklist, proceed to Step 8\n       ↓\nStep 8: DEPLOY TO STAGING\n  - Deploy changes to test/staging environment\n  - Verify deployment succeeds\n  - Update PR checklist\n       ↓\nStep 9: EXECUTE E2E TESTS\n  - Run full E2E test suite (see E2E_TEST_CASES.md)\n  - If FAIL → Return to Step 2\n    - Fix bugs or add missing test cases\n    - Push fixes and repeat from Step 5\n  - If PASS → Update PR checklist, proceed to Step 10\n       ↓\nStep 10: READY FOR MERGE (DO NOT MERGE)\n  - All CI checks passed\n  - All reviewer comments addressed\n  - Staging deployment verified\n  - E2E tests passed\n  - Update PR checklist to show all items complete\n  - STOP HERE: Report status to user\n  - User decides when to merge\n```\n\n## PR Description Template\n\nWhen creating a PR, include this checklist in the description. Update it as each step completes:\n\n```markdown\n## Test plan\n\n- [ ] Build passes (`npm run build`)\n- [ ] Unit tests pass (`npm run test`)\n- [ ] CI checks pass\n- [ ] Reviewer bot findings addressed (no new findings)\n- [ ] Deployed to staging\n- [ ] E2E tests pass\n\n## Checklist\n\n- [ ] New unit tests written for new functionality\n- [ ] E2E test cases updated if needed\n- [ ] Documentation updated if needed\n### Update PR Checklist Command\n\nAfter completing each step, update the PR description:\n\n```bash\n# Get current PR body\ngh pr view {pr_number} --json body --jq '.body' > /tmp/pr_body.md\n\n# Edit the checklist (mark items as [x])\n# Then update the PR\ngh pr edit {pr_number} --body \"$(cat /tmp/pr_body.md)\"\n```\n\nOr use the GitHub MCP tool to update the PR body directly.\n\n| Amazon Q Developer | Security review | Address findings, retrigger with `/q review` |\n| Codex | AI code review | Address findings, retrigger with `/codex review` |\n| Other review bots | Various checks | Address findings, retrigger per bot docs |\n\n## Reviewer Bot Workflow\nMultiple review bots can provide automated code review findings on PRs:\n| Bot | Trigger Command | Bot Username |\n|-----|-----------------|--------------|\n| Amazon Q Developer | `/q review` | `amazon-q-developer[bot]` |\n| Codex | `/codex review` | `codex[bot]` |\n| Other bots | See bot documentation | Varies |\n### Handling Bot Review Findings\n5. **Retrigger review** - Comment with appropriate trigger (e.g., `/q review`, `/codex review`)\n### Retrigger Bot Reviews\n# Amazon Q Developer\n\n# Codex\ngh pr comment {pr_number} --body \"/codex review\"\n### Iteration Loop (CRITICAL)\n**Repeat until review bots find no more issues:**\n4. Trigger review command (`/q review`, `/codex review`, etc.)\n5. Wait 60-90 seconds\n6. Check for new findings\n7. **If new findings → repeat from step 1**\n8. **Only proceed to merge when no new positive findings appear**\n\nThis loop is essential - review bots may find new issues in your fixes.\n| Trigger Codex review | `gh pr comment {pr} --body \"/codex review\"` |"
+    gold_removed: ''
+  - path: .claude/skills/github-workflow/references/review-commands.md
+    tier: 1
+    gold_added: "Get the most recent Codex review:\n```bash\ngh api repos/{owner}/{repo}/pulls/{pr}/reviews \\\n  --jq '[.[] | select(.user.login == \"codex[bot]\")] | .[-1] | {id: .id, submitted_at: .submitted_at}'\n```\n\n### Trigger Bot Reviews\n\nAdd a comment to trigger bot rescans:\n# Amazon Q Developer\n\n# Codex\ngh pr comment {pr} --body \"/codex review\"\n4. **Trigger new review** (use appropriate bot command):\n# Amazon Q\n\n# Codex\ngh pr comment {pr} --body \"/codex review\"\n# Check Amazon Q\n\n# Check Codex\ngh api repos/{owner}/{repo}/pulls/{pr}/reviews \\\n  --jq '[.[] | select(.user.login == \"codex[bot]\")] | .[-1]'\n6. **Iterate until no new positive findings** - If new findings appear, repeat from step 1\n"
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '## Development Workflow (MANDATORY)
+
+
+      **CRITICAL**: All feature development and bug fixes MUST strictly follow the `github-workflow` skill.
+
+
+      Before ANY code changes involving functionality:
+
+      1. **Invoke skill**: Use `/github-workflow` or load the skill
+
+      2. **Follow the 10-step workflow** - NO shortcuts allowed
+
+      3. **Do NOT merge** - Report status and wait for user decision
+
+
+      The workflow includes:
+
+      - Step 2: Write new unit tests + update E2E test cases
+
+      - Steps 6-7: Address ALL reviewer bot findings (Q, Codex, etc.) and iterate until no new findings
+
+      - Steps 8-9: Deploy to staging + run full E2E tests
+
+      - Step 10: Report ready status (DO NOT MERGE)
+
+
+      - **GitHub workflow**: Use `.claude/skills/github-workflow/` for PR creation, review comments, reviewer bots'
+    gold_removed: ''

@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: app-store-screenshots-fix-preload-images-as-data
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: ParthJadhav/app-store-screenshots
+  pr: 13
+  base_commit: "a2a839e726574513a2fabef1537a5d1673912057"
+  merge_commit: "f3ccb20e1c7865986fe960f4ab05bcc5c09ba70a"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/app-store-screenshots/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/app-store-screenshots/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/app-store-screenshots/SKILL.md."
+
+config_edits:
+  - path: skills/app-store-screenshots/SKILL.md
+    tier: 1
+    gold_added: "### Pre-load Images as Data URIs (CRITICAL)\n\n`html-to-image` works by cloning the DOM into an SVG `<foreignObject>`, then painting it to a canvas. During cloning, it re-fetches every `<img>` src. These re-fetches are non-deterministic — some hit the browser cache, some silently fail. Failed images render as transparent rectangles in the export (black after alpha flattening).\n\n**The fix: pre-convert all images to base64 data URIs at page load and use those as `src` everywhere.** When `html-to-image` clones the DOM, data URI sources are already inline — no fetch needed.\n\n```typescript\n// At module level — list all image paths used in slides\nconst IMAGE_PATHS = [\n  \"/mockup.png\",\n  \"/app-icon.png\",\n  \"/screenshots/home.png\",\n  \"/screenshots/feature-1.png\",\n  // ... all images used in any slide\n];\n\nconst imageCache: Record<string, string> = {};\n\nasync function preloadAllImages() {\n  await Promise.all(\n    IMAGE_PATHS.map(async (path) => {\n      const resp = await fetch(path);\n      const blob = await resp.blob();\n      const dataUrl = await new Promise<string>((resolve) => {\n        const reader = new FileReader();\n        reader.onloadend = () => resolve(reader.result as string);\n        reader.readAsDataURL(blob);\n      });\n      imageCache[path] = dataUrl;\n    })\n  );\n}\n\n// Helper — use in every <img> src\nfunction img(path: string): string {\n  return imageCache[path] || path;\n}\n```\n\nIn the page component, gate rendering on preload completion:\n\n```typescript\nconst [ready, setReady] = useState(false);\nuseEffect(() => { preloadAllImages().then(() => setReady(true)); }, []);\nif (!ready) return <p>Loading images...</p>;\n```\n\nIn every slide component, use `img()` instead of raw paths:\n\n```tsx\n// Before (breaks non-deterministically):\n<img src=\"/screenshots/home.png\" />\n\n// After (always works):\n<img src={img(\"/screenshots/home.png\")} />\n```\n\n**Also flatten RGBA source images to RGB before use.** If your app screenshots are RGBA PNGs, `html-to-image` can fail to serialize them. Convert source images to RGB (no alpha) before placing them in `public/screenshots/`.\n\n- **Pre-loaded data URIs**: Always use the `img()` helper with pre-loaded base64 data URIs for all `<img>` sources. Never use raw file paths in slide components — `html-to-image` will fail to capture them non-deterministically.\n- **RGB source images**: Ensure all source screenshots in `public/screenshots/` are RGB (not RGBA). RGBA PNGs can fail during SVG serialization and produce transparent/black regions in exports.\n| Phone screens black/empty in export but visible in preview | Images not inlined — use `preloadAllImages()` + `img()` helper so all `<img>` src attributes are base64 data URIs before `toPng` runs |\n| Some slides export correctly, others have missing images | Non-deterministic `html-to-image` fetch race condition — same root cause as above, fix with pre-loaded data URIs |\n| Screenshots rejected by App Store with IMAGE_ALPHA_NOT_ALLOWED | Source PNGs have alpha channel — flatten to RGB before use (composite onto black with PIL or remove alpha in your image editor) |"
+    gold_removed: ''

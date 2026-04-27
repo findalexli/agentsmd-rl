@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: app-store-screenshots-feat-add-ipad-app-store
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: ParthJadhav/app-store-screenshots
+  pr: 2
+  base_commit: "66bfda5777ebc988ef3bbd1597a01851e976e353"
+  merge_commit: "c1da86a5a87a21ed60f7a1640d9a189b4c881ad5"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/app-store-screenshots/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/app-store-screenshots/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/app-store-screenshots/SKILL.md."
+
+config_edits:
+  - path: skills/app-store-screenshots/SKILL.md
+    tier: 1
+    gold_added: "8. **iPad screenshots** — \"Do you also have iPad screenshots? If so, we'll generate iPad App Store screenshots too (recommended for universal apps).\"\n9. **Component assets** — \"Do you have any UI element PNGs (cards, widgets, etc.) you want as floating decorations? If not, that's fine — we'll skip them.\"\n10. **Additional instructions** — \"Any specific requirements, constraints, or preferences?\"\nThe skill includes a pre-measured iPhone mockup at `mockup.png` (co-located with this SKILL.md). Copy it to the project's `public/` directory. The mockup file is in the same directory as this skill file. No iPad mockup is needed — the iPad frame is CSS-only.\n│   ├── mockup.png              # iPhone frame (included with skill)\n│   ├── screenshots/            # iPhone app screenshots\n│   │   ├── home.png\n│   │   ├── feature-1.png\n│   │   └── ...\n│   └── screenshots-ipad/       # iPad app screenshots (optional)\n**Note:** No iPad mockup PNG is needed — the iPad frame is rendered with CSS (see iPad Mockup Component below).\n\n├── Constants (IPHONE_W/H, IPAD_W/H, SIZES, design tokens)\n├── Phone component (mockup PNG with screen overlay)\n├── IPad component (CSS-only frame with screen overlay)\n├── Caption component (label + headline, accepts canvasW for scaling)\n├── iPhoneSlide1..N components (one per slide)\n├── iPadSlide1..N components (same designs, adjusted for iPad proportions)\n├── IPHONE_SCREENSHOTS / IPAD_SCREENSHOTS arrays (registries)\n└── ScreenshotsPage (grid + device toggle + size dropdown + export logic)\n### Export Sizes (Apple Required, portrait)\n\n#### iPhone\nconst IPHONE_SIZES = [\n#### iPad (Optional)\n\nIf the user provides iPad screenshots, also generate iPad App Store screenshots:\n\n```typescript\nconst IPAD_SIZES = [\n  { label: '13\" iPad', w: 2064, h: 2752 },\n  { label: '12.9\" iPad Pro', w: 2048, h: 2732 },\n] as const;\n```\n\nDesign iPad slides at 2064x2752 and scale down. iPad screenshots are optional but recommended — they're required for iPad-only apps and improve listing quality for universal apps.\n\n#### Device Toggle\n\nWhen supporting both devices, add a toggle (iPhone / iPad) in the toolbar next to the size dropdown. The size dropdown should switch between iPhone and iPad sizes based on the selected device. Support a `?device=ipad` URL parameter for headless/automated capture workflows.\n\n### iPad Mockup Component (CSS-Only)\n\nUnlike the iPhone mockup which uses a pre-measured PNG frame, the iPad uses a **CSS-only frame**. This avoids needing a separate mockup asset and looks clean at any resolution.\n\n**Critical dimension:** The frame aspect ratio must be `770/1000` so the inner screen area (92% width × 94.4% height) matches the 3:4 aspect ratio of iPad screenshots. Using incorrect proportions causes black bars or stretched screenshots.\n\n```tsx\nfunction IPad({ src, alt, style, className = \"\" }: {\n  src: string; alt: string; style?: React.CSSProperties; className?: string;\n}) {\n  return (\n    <div className={`relative ${className}`}\n      style={{ aspectRatio: \"770/1000\", ...style }}>\n      <div style={{\n        width: \"100%\", height: \"100%\", borderRadius: \"5% / 3.6%\",\n        background: \"linear-gradient(180deg, #2C2C2E 0%, #1C1C1E 100%)\",\n        position: \"relative\", overflow: \"hidden\",\n        boxShadow: \"inset 0 0 0 1px rgba(255,255,255,0.1), 0 8px 40px rgba(0,0,0,0.6)\",\n      }}>\n        {/* Front camera dot */}\n        <div style={{\n          position: \"absolute\", top: \"1.2%\", left: \"50%\",\n          transform: \"translateX(-50%)\", width: \"0.9%\", height: \"0.65%\",\n          borderRadius: \"50%\", background: \"#111113\",\n          border: \"1px solid rgba(255,255,255,0.08)\", zIndex: 20,\n        }} />\n        {/* Bezel edge highlight */}\n        <div style={{\n          position: \"absolute\", inset: 0, borderRadius: \"5% / 3.6%\",\n          border: \"1px solid rgba(255,255,255,0.06)\",\n          pointerEvents: \"none\", zIndex: 15,\n        }} />\n        {/* Screen area */}\n        <div style={{\n          position: \"absolute\", left: \"4%\", top: \"2.8%\",\n          width: \"92%\", height: \"94.4%\",\n          borderRadius: \"2.2% / 1.6%\", overflow: \"hidden\", background: \"#000\",\n        }}>\n          <img src={src} alt={alt}\n            style={{ display: \"block\", width: \"100%\", height: \"100%\",\n              objectFit: \"cover\", objectPosition: \"top\" }}\n            draggable={false} />\n        </div>\n      </div>\n    </div>\n  );\n}\n```\n\n**iPad layout adjustments vs iPhone:**\n- Use `width: \"65-70%\"` for iPad mockups (vs 82-86% for iPhone) — iPad is wider relative to its height\n- Two-iPad layouts work the same as two-phone layouts but with adjusted widths\n- Caption font sizes should scale from `canvasW` (which is 2064 for iPad vs 1320 for iPhone)\n- Same slide designs/copy can be reused — just swap the Phone component for IPad and adjust positioning\n"
+    gold_removed: ''

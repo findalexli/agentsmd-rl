@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: openjudge-featskills-add-minimaxaicli-as-default
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: agentscope-ai/OpenJudge
+  pr: 167
+  base_commit: "c8a1e8d6d1bac69ecfd64beb5424171ed5432a06"
+  merge_commit: "55b2172f4c75c3e3ce792a58dce5378f84bf2027"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/mmx-cli/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/mmx-cli/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/mmx-cli/SKILL.md."
+
+config_edits:
+  - path: skills/mmx-cli/SKILL.md
+    tier: 1
+    gold_added: "---\nname: mmx-cli\ndescription: >\n  Generate text, images, video, speech, and music via the MiniMax AI platform.\n  Covers text generation (MiniMax-M2.7 model), image generation (image-01),\n  video generation (Hailuo-2.3), speech synthesis (speech-2.8-hd, 300+ voices),\n  music generation (music-2.6 with lyrics, cover, and instrumental), and web search.\n  Use when the user needs to create AI-generated multimedia content, produce\n  narrated audio from text, compose music, or search the web through MiniMax AI services.\n---\n\n# mmx-cli Skill\n\nGenerate multimedia content (text, images, video, speech, music) via the\n[MiniMax AI](https://github.com/MiniMax-AI/cli) platform.\n\n## Install\n\n```bash\nnpx skills add MiniMax-AI/cli@skill -g -y\n```\n\nOr manually:\n\n```bash\nnpm install -g @minimax-ai/cli\n```\n\nSet your API key:\n\n```bash\nexport MINIMAX_API_KEY=your_api_key_here\n```\n\n## Capabilities\n\n| Capability | Command | Model |\n|------------|---------|-------|\n| Text generation | `mmx text generate` | MiniMax-M2.7 |\n| Image generation | `mmx image generate` | image-01 |\n| Video generation | `mmx video generate` | Hailuo-2.3 |\n| Speech synthesis | `mmx speech generate` | speech-2.8-hd |\n| Music generation | `mmx music generate` | music-2.6 |\n| Web search | `mmx search` | — |\n\n## Quick Examples\n\n```bash\n# Generate text\nmmx text generate \"Summarize the key benefits of reinforcement learning\"\n\n# Generate an image\nmmx image generate \"A futuristic city skyline at sunset, photorealistic\"\n\n# Generate a short video clip\nmmx video generate \"A golden retriever playing in autumn leaves\"\n\n# Synthesize speech from text\nmmx speech generate --text \"Hello, welcome to the demo.\" --voice Calm_Woman\n\n# Generate music with lyrics\nmmx music generate --lyrics \"Rise and shine, a brand new day\" --style \"pop upbeat\"\n\n# Web search\nmmx search \"latest advances in LLM evaluation\"\n```\n\n## Gather from user before running\n\n| Info | Required? | Notes |\n|------|-----------|-------|\n| MINIMAX_API_KEY | Yes | From [MiniMax platform](https://www.minimaxi.com/) |\n| Prompt or text | Yes | Describe what to generate |\n| Voice name | No | For speech; run `mmx speech list-voices` to browse 300+ options |\n| Output path | No | Default saves to current directory |\n\n## Tips\n\n- Use `--output json` flag for structured output suitable for pipelines.\n- Use `--non-interactive` and `--quiet` flags in automated / agent workflows.\n- Run `mmx --help` or `mmx <subcommand> --help` to see all options.\n- The [SKILL.md](https://github.com/MiniMax-AI/cli/blob/main/skill/SKILL.md)\n  in the upstream repo is always up-to-date with the latest flags and models."
+    gold_removed: ''

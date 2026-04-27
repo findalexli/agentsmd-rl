@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: skills-improve-runtests-skill-description
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: dotnet/skills
+  pr: 372
+  base_commit: "93ccead1e789917c5438562fd314a102d06da3b1"
+  merge_commit: "8cb692082ae271ec7da9040a180c895321e2add0"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/dotnet-test/skills/run-tests/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/dotnet-test/skills/run-tests/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/dotnet-test/skills/run-tests/SKILL.md."
+
+config_edits:
+  - path: plugins/dotnet-test/skills/run-tests/SKILL.md
+    tier: 1
+    gold_added: "description: >\n  Runs .NET tests with dotnet test. Use when user says \"run tests\", \"execute\n  tests\", \"dotnet test\", \"test filter\", \"tests not running\", or needs to\n  detect the test platform (VSTest or Microsoft.Testing.Platform), identify the\n  test framework, apply test filters, or troubleshoot test execution failures.\n  Covers MSTest, xUnit, NUnit, and TUnit across both VSTest and MTP platforms.\n  DO NOT USE FOR: writing or generating test code, CI/CD pipeline\n  configuration, or debugging failing test logic."
+    gold_removed: ''

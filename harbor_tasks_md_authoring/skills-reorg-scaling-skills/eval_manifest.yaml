@@ -1,0 +1,142 @@
+version: "2.0"
+
+task:
+  name: skills-reorg-scaling-skills
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: qdrant/skills
+  pr: 19
+  base_commit: "0bb4f533347247ba2ea0220380f99460b458b8e4"
+  merge_commit: "6273207c64af1827439dda360eeb9bcec24f756f"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/qdrant-scaling/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/qdrant-scaling/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/qdrant-scaling/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/qdrant-scaling/performance-scaling/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/qdrant-scaling/performance-scaling/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/qdrant-scaling/performance-scaling/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/qdrant-scaling/performance-scaling/vertical-scaling/SKILL.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/qdrant-scaling/performance-scaling/vertical-scaling/SKILL.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/qdrant-scaling/performance-scaling/vertical-scaling/SKILL.md."
+
+config_edits:
+  - path: skills/qdrant-scaling/SKILL.md
+    tier: 1
+    gold_added: '## Performance & Capacity Scaling
+
+      Vertical scaling, horizontal scaling, throughput, latency, IOPS, and memory pressure. Start vertical, go horizontal only when necessary -- horizontal scaling is effectively a one-way street. [Performance Scaling](performance-scaling/SKILL.md)
+
+      Multi-tenant workloads with payload partitioning, per-tenant indexes, and tiered multitenancy. [Tenant Scaling](tenant-scaling/SKILL.md)'
+    gold_removed: ''
+  - path: skills/qdrant-scaling/performance-scaling/SKILL.md
+    tier: 1
+    gold_added: 'description: "Guides Qdrant scaling decisions for capacity and performance. Use when someone asks about vertical vs horizontal scaling, node sizing, throughput, latency, IOPS, memory pressure, ''how to scale Qdrant'', ''need more capacity'', or when performance degrades. Routes to vertical scaling, horizontal scaling, or performance tuning as appropriate."
+
+      # Scaling Qdrant for Performance and Capacity
+
+      Scaling Qdrant means either scaling **up** (vertical -- bigger nodes) or scaling **out** (horizontal -- more nodes). The right choice depends on what you''re scaling for and where you are in your growth trajectory.
+
+      **Start vertical, go horizontal only when you must.** Horizontal scaling adds permanent operational complexity -- sharding, replication, rebalancing, network overhead -- and is effectively a one-way street. Once you distribute data across nodes, consolidating back to fewer nodes is difficult and risky. Vertical scaling is simpler, reversible, and sufficient for most workloads up to ~100M vectors per node.
+
+      ## Scaling Dimensions
+
+      Different scaling needs pull in different directions. Identify your primary constraint before choosing a strategy.
+
+
+      - **Data volume:** How much data needs to fit? RAM, disk, and quantization are the levers. Start with vertical (bigger nodes, quantization, mmap). Go horizontal only when a single node can''t hold the data or when you need fault tolerance/isolation.
+
+      - **Query throughput (QPS):** How many queries per second? Fewer segments, quantization with `always_ram=true`, and batch APIs help. Read replicas scale this horizontally.
+
+      - **Query latency:** How fast must individual queries respond? More segments (matching CPU cores), in-RAM quantized vectors, and lower `hnsw_ef`. Throughput and latency are opposite tuning directions -- you cannot optimize both on the same node.
+
+      - **Tenant count:** How many tenants share the cluster? Use payload partitioning with `is_tenant=true`. See [Tenant Scaling](../tenant-scaling/SKILL.md).
+
+
+      Understand the core tradeoff: [Latency vs throughput](https://qdrant.tech/documentation/guides/optimize/#balancing-latency-and-throughput)
+
+
+
+      ## Performance Tuning (Independent of Scaling Direction)
+
+
+      These optimizations apply regardless of whether you scale vertically or horizontally.
+
+
+      ### For Higher RPS
+
+      - Set `optimizer_cpu_budget` to limit indexing CPUs (e.g. `2` on an 8-CPU node reserves 6 for queries)
+
+      ### For Lower Latency
+
+      - Keep quantized vectors and HNSW in RAM (`always_ram=true`)
+
+      - Configure delayed read fan-out (v1.17+) for tail latency [Delayed fan-outs](https://qdrant.tech/documentation/guides/low-latency-search/#use-delayed-fan-outs)
+
+      ### For Disk I/O (IOPS)
+
+      - Upgrade to provisioned IOPS or local NVMe first
+
+      - Put sparse vectors and text payloads on disk
+
+      - If still saturated, scale out horizontally (each node adds independent IOPS)
+
+      ### For Memory Pressure
+
+      - Set `optimizer_cpu_budget` to limit background optimization CPUs
+
+      - Schedule indexing: set high `indexing_threshold` during peak hours
+
+
+
+      ## Dedicated Scaling Guides
+
+      - **[Vertical Scaling](vertical-scaling/SKILL.md)** -- Node sizing, RAM/CPU/disk guidelines, scaling up in Qdrant Cloud, and maximizing single-node capacity before going horizontal.
+
+      - **[Horizontal Scaling](horizontal-scaling/SKILL.md)** -- Sharding, resharding, shard planning, node count decisions, and prerequisites for zero-downtime distributed scaling.
+
+      - Do not scale horizontally before exhausting vertical options (adds permanent, irreversible complexity)
+
+      - Do not scale horizontally when IOPS-bound without also upgrading disk tier
+
+      - Do not scale down RAM without load testing (cache eviction causes days-long latency incidents)
+
+      - Do not ignore optimizer status during performance debugging'
+    gold_removed: ''
+  - path: skills/qdrant-scaling/performance-scaling/horizontal-scaling/SKILL.md
+    tier: 1
+    gold_added: ''
+    gold_removed: ''
+  - path: skills/qdrant-scaling/performance-scaling/vertical-scaling/SKILL.md
+    tier: 1
+    gold_added: "---\nname: qdrant-vertical-scaling\ndescription: \"Guides Qdrant vertical scaling decisions. Use when someone asks 'how to scale up a node', 'need more RAM', 'upgrade node size', 'vertical scaling', 'resize cluster', 'scale up vs scale out', or when memory/CPU is insufficient on current nodes. Also use when someone wants to avoid the complexity of horizontal scaling.\"\n---\n\n# What to Do When Qdrant Needs to Scale Vertically\n\nVertical scaling means increasing CPU, RAM, or disk on existing nodes rather than adding more nodes. This is the recommended first step before considering horizontal scaling. Vertical scaling is simpler, avoids distributed system complexity, and is reversible.\n\n- Vertical scaling for Qdrant Cloud is done through the [Qdrant Cloud Console](https://cloud.qdrant.io/)\n- For self-hosted deployments, resize the underlying VM or container resources\n- Get a snapshot of the cluster information: \n```bash\ncurl http://localhost:6333/collections/collection_name/cluster \\\n     -H \"api-key: <apiKey>\"\n```\n\n## When to Scale Vertically\n\nUse when: current node resources (RAM, CPU, disk) are insufficient, but the workload doesn't yet require distribution.\n\n- RAM usage approaching 80% of available memory (OS page cache eviction starts, severe performance degradation)\n- CPU saturation during query serving or indexing\n- Disk space running low for on-disk vectors, payloads, or WAL\n- A single node can handle up to ~100M vectors depending on dimensions and quantization\n- You want to avoid the operational complexity of sharding and replication\n\n\n## How to Scale Vertically in Qdrant Cloud\n\nVertical scaling is managed through the Qdrant Cloud Console. You cannot resize nodes via API (not yet, but planned for future release!!!)\n\n- Log into [Qdrant Cloud Console](https://cloud.qdrant.io/)\n- Select the cluster to resize\n- Choose a larger node configuration (more RAM, CPU, or both)\n- The upgrade process involves a rolling restart with minimal downtime if replication is configured\n- Ensure `replication_factor: 2` or higher before resizing to maintain availability during the rolling restart\n\n**Important:** Scaling up is straightforward. Scaling down requires care -- if the working set no longer fits in RAM after downsizing, performance will degrade severely due to cache eviction. Always load test before scaling down.\n\n\n## RAM Sizing Guidelines\n\nRAM is the most critical resource for Qdrant performance. Use these guidelines to right-size.\n\n- Base formula: `num_vectors * dimensions * 4 bytes * 1.5` for full-precision vectors in RAM\n- With scalar quantization: divide by 4 (INT8 reduces each float32 to 1 byte) [Quantization](https://qdrant.tech/documentation/guides/quantization/)\n- With binary quantization: divide by 32 [Binary quantization](https://qdrant.tech/documentation/guides/quantization/#binary-quantization)\n- Add overhead for HNSW index (~20-30% of vector data), payload indexes, and WAL\n- Reserve 20% headroom for optimizer operations and OS cache\n- Monitor actual usage via Grafana/Prometheus before and after resizing [Monitoring](https://qdrant.tech/documentation/guides/monitoring/)\n\n\n## CPU Sizing Guidelines\n\nCPU needs depend on query patterns and indexing load.\n\n- More CPU cores = more parallel segment searches = lower latency\n- Set `default_segment_number` to match available CPU cores for latency-optimized workloads [Minimizing latency](https://qdrant.tech/documentation/guides/optimize/#minimizing-latency)\n- Use `optimizer_cpu_budget` to control how many cores are reserved for indexing vs queries\n- Heavy write workloads (continuous ingestion) benefit from more cores to keep up with optimization\n\n\n## Disk Sizing Guidelines\n\nDisk matters most when using mmap or on-disk storage.\n\n- mmap storage: vectors live on disk with RAM as page cache. Size disk to hold full vector data + 2x for optimization headroom [On-disk storage](https://qdrant.tech/documentation/guides/capacity-planning/#choosing-disk-over-ram)\n- Use NVMe/SSD, never HDD. Local NVMe preferred over network-attached for latency-sensitive workloads\n- WAL (Write-Ahead Log) needs disk space proportional to write throughput\n- On-disk payload indexes need additional space if payloads are large\n\n\n## Maximizing a Single Node Before Going Horizontal\n\nBefore adding nodes, exhaust these vertical optimization strategies:\n\n- Enable quantization to reduce memory footprint 4-32x [Quantization](https://qdrant.tech/documentation/guides/quantization/)\n- Use mmap to move vectors to disk, keeping hot data in RAM cache [Capacity planning](https://qdrant.tech/documentation/guides/capacity-planning/)\n- Move infrequently filtered payload indexes to disk [On-disk payload index](https://qdrant.tech/documentation/concepts/indexing/#on-disk-payload-index)\n- Tune HNSW parameters (`m`, `ef_construct`) to trade recall for memory [HNSW configuration](https://qdrant.tech/documentation/concepts/indexing/#vector-index)\n- Use `optimizer_cpu_budget` to balance indexing and query CPU usage\n\n\n## When Vertical Scaling Is No Longer Enough\n\nRecognize these signals that it's time to go horizontal:\n\n- Data volume exceeds what a single node can hold even with quantization and mmap\n- IOPS are saturated (more nodes = more independent disk I/O)\n- Need fault tolerance (requires replication across nodes)\n- Need tenant isolation via dedicated shards\n- Single-node CPU is maxed and query latency is unacceptable\n\nWhen you hit these limits, see [Horizontal Scaling](../horizontal-scaling/SKILL.md) for guidance on sharding and node planning.\n\n\n## What NOT to Do\n\n- Do not scale down RAM without load testing first (cache eviction = severe latency degradation that can last days)\n- Do not ignore the 80% RAM threshold (performance cliff, not gradual degradation)\n- Do not skip replication before resizing in Cloud (rolling restart without replicas = downtime)\n- Do not jump to horizontal scaling before exhausting vertical options (adds permanent operational complexity)\n- Do not assume more CPU always helps (IOPS-bound workloads won't improve with more cores)"
+    gold_removed: ''

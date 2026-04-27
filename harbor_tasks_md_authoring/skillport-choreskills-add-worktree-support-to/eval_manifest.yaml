@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: skillport-choreskills-add-worktree-support-to
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: gotalab/skillport
+  pr: 72
+  base_commit: "15961dec543593d4557b2b02b19c75a13894d2e8"
+  merge_commit: "91b45ccb4e60404e347e914676ece60f8b41cebf"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .skills/experimental/git-branch-cleanup/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .skills/experimental/git-branch-cleanup/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .skills/experimental/git-branch-cleanup/SKILL.md."
+
+config_edits:
+  - path: .skills/experimental/git-branch-cleanup/SKILL.md
+    tier: 1
+    gold_added: "compatibility: Requires git 2.17+ (for worktree support). Git 2.22+ recommended for `git branch --show-current`.\n# List worktrees (branches with '+' prefix in git branch -v have worktrees)\ngit worktree list\n\n# Branches with worktrees ('+' prefix indicates worktree association)\ngit branch -v | grep '^+' || true\n\n| **Has Worktree** | Branch checked out in a worktree (`+` prefix in `git branch -v`) | Remove worktree first |\n**For branches with worktrees**, remove the worktree first:\n\n```bash\n# Check if branch has a worktree\ngit worktree list | grep \"\\\\[$branch\\\\]\"\n\n# Remove worktree before deleting branch\ngit worktree remove --force /path/to/worktree\ngit branch -D <branch-name>\n```\n\n**Bulk delete [gone] branches with worktree handling:**\n\n```bash\n# Process all [gone] branches, handling worktrees automatically\ngit branch -v | grep '\\[gone\\]' | sed 's/^[+* ]//' | awk '{print $1}' | while read branch; do\n  echo \"Processing branch: $branch\"\n  # Find and remove worktree if it exists\n  worktree=$(git worktree list | grep \"\\\\[$branch\\\\]\" | awk '{print $1}')\n  if [ ! -z \"$worktree\" ] && [ \"$worktree\" != \"$(git rev-parse --show-toplevel)\" ]; then\n    echo \"  Removing worktree: $worktree\"\n    git worktree remove --force \"$worktree\"\n  fi\n  # Delete the branch\n  echo \"  Deleting branch: $branch\"\n  git branch -D \"$branch\"\ndone\n```\n\n\n# Worktree commands\ngit worktree list                              # List all worktrees\ngit worktree remove /path/to/worktree          # Remove a worktree\ngit worktree remove --force /path/to/worktree  # Force remove (even if dirty)\ngit worktree prune                             # Clean up stale worktree refs\n- [ ] Worktree removed first (if branch has associated worktree)\n\n# Check if a branch has an associated worktree\n# ('+' prefix in git branch -v output indicates worktree)\ngit branch -v | grep \"^+\" | awk '{print $2}'\n\n# Find worktree path for a specific branch\ngit worktree list | grep \"\\\\[branch-name\\\\]\""
+    gold_removed: ''

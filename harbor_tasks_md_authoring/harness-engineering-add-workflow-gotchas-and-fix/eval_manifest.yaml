@@ -1,0 +1,48 @@
+version: "2.0"
+
+task:
+  name: harness-engineering-add-workflow-gotchas-and-fix
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: jrenaldi79/harness-engineering
+  pr: 17
+  base_commit: "d5e92135683ff253c68f1eb2e6b3965fd5e528c6"
+  merge_commit: "b8c3ca35ee403fa2edb47f36e79b759dc15a105a"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: 'npx jest --config ''{}'' tests/scripts/                                  # Unit tests for setup scripts
+
+      - [ ] Tests pass: `npx jest --config ''{}'' tests/scripts/`
+
+      - [ ] CLAUDE.md auto-updated by commit hook — verify result looks correct
+
+      - [ ] If SKILL.md changed, eval config and grader updated in the same PR
+
+      - [ ] Eval dry-run passes after eval infrastructure changes: `bash tests/evals/run-evals.sh --config setup-eval-config.json --dry-run`
+
+      - **Two sets of generate-docs**: `scripts/repo-generate-docs.js` is this repo''s auto-doc (scans `skills/`, `scripts/`, `tests/`). `skills/setup/scripts/lib/generate-docs.js` is the template installed into user projects (auto-detects source dirs). Fixing one does not fix the other.
+
+      - **Setup has two code paths**: Node/TS uses the "fast path" (scripts do the work). All other stacks use the "adaptive path" (Claude creates files). The eval uses `conversation_must_not_mention` to catch cross-contamination (e.g., Python setup mentioning npm).
+
+      - **Squash merges leave branches dirty**: After squash-merging a PR, the branch still shows unmerged commits. Always create a fresh branch from main for follow-up work — don''t reuse the old branch.
+
+      - **CLAUDE.md auto-updates on commit**: The pre-commit hook runs `repo-generate-docs.js` to regenerate AUTO markers. Don''t manually edit content between `<!-- AUTO:tree -->` and `<!-- AUTO:modules -->` markers — it will be overwritten.'
+    gold_removed: ''

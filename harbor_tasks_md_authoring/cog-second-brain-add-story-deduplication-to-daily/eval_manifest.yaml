@@ -1,0 +1,60 @@
+version: "2.0"
+
+task:
+  name: cog-second-brain-add-story-deduplication-to-daily
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: huytieu/COG-second-brain
+  pr: 15
+  base_commit: "39ccbee54404fd1276f7309fb23d0c9ef4edc912"
+  merge_commit: "3fe43cfb6e6353e82a541f37e62e4a9154330f62"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/daily-brief/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/daily-brief/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/daily-brief/SKILL.md."
+
+config_edits:
+  - path: .claude/skills/daily-brief/SKILL.md
+    tier: 1
+    gold_added: '#### Deduplication — Previous Brief Scan
+
+
+      Read up to 3 most recent daily briefs from `01-daily/briefs/` (most recent first):
+
+      - Extract `dedup_urls` from their frontmatter (if present)
+
+      - Also scan their headlines/story titles as semantic fallback for cross-source matching
+
+      - Build a set of **covered stories** to avoid repeating
+
+
+      **Matching rules (in priority order):**
+
+      1. **URL match (primary):** If a candidate story''s main source URL already appears in `dedup_urls`, it''s a known story
+
+      2. **Headline match (fallback):** If the URL is different but the headline describes the same event as a previous story, treat as duplicate — this catches the same story reported by different outlets
+
+
+      During news research (Step 2), apply dedup rules:
+
+      - **Skip** stories already covered unless there is a **material update** (new data, resolution, escalation, reversal)
+
+      - If including an update, prefix with "**Update:** _first covered [date]_"
+
+      - Stories older than 3 briefs are eligible for re-inclusion if still developing
+
+
+      dedup_urls: ["https://primary-source-url-for-each-story-covered"]'
+    gold_removed: ''

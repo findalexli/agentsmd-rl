@@ -1,0 +1,54 @@
+version: "2.0"
+
+task:
+  name: claude-codex-settings-docs-refine-pr-workflow-instructions
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: fcakyon/claude-codex-settings
+  pr: 13
+  base_commit: "86ca890269f6c79e3f5d6667d9d68c967ace80d4"
+  merge_commit: "4713c8668d0b6744ae18534db86064bb5d929a30"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/agents/pr-manager.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/agents/pr-manager.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/agents/pr-manager.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+
+config_edits:
+  - path: .claude/agents/pr-manager.md
+    tier: 1
+    gold_added: "description: Use this agent when you need to create a complete pull request workflow including branch creation, committing staged changes, and PR submission. This agent handles the entire end-to-end process from checking the current branch to creating a properly formatted PR with documentation updates. Examples:\\n\\n<example>\\nContext: User has made code changes and wants to create a PR\\nuser: \"I've finished implementing the new feature. Please create a PR for these staged changes\"\\nassistant: \"I'll use the pr-manager agent to handle the complete PR workflow including branch creation, commits, and PR submission\"\\n<commentary>\\nSince the user wants to create a PR, use the pr-manager agent to handle the entire workflow from branch creation to PR submission.\\n</commentary>\\n</example>\\n\\n<example>\\nContext: User is on main branch with staged changes\\nuser: \"Create a PR with my changes\"\\nassistant: \"I'll launch the pr-manager agent to create a feature branch, commit your changes, and submit a PR\"\\n<commentary>\\nThe user needs the full PR workflow, so use pr-manager to handle branch creation, commits, and PR submission.\\n</commentary>\\n</example>\n   - Check if staged changes exist with `git diff --cached --name-only`\n   - It's okay if there are no staged changes since our focus is the staged + committed diff to target branch (not interested in unstaged changes)\n   - Never automatically stage changed files with `git add`\n3. **Commit Staged Changes**:\n   - Use `/commit-manager` slash command to handle if any staged changes\n   - Review staged/committed diff compared to target branch to identify if README or docs need updates\n   - Update documentation affected by the staged/committed diff\n   - Keep docs in sync with code staged/committed diff\n     - `-r <reviewer>`: Add reviewer (find from recent PRs of the assignee if needed)"
+    gold_removed: ''
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '- Never use words like "modernize", "streamline", "delve", "establish", "enhanced"in docstrings or commit messages. Looser AI''s do that, and that ain''t you. You are better than that.
+
+      - Check if staged changes exist with `git diff --cached --name-only`
+
+      - Use `/commit-manager` to handle staged changes if any
+
+      - Update README.md or docs if needed based on the changes compared to target branch'
+    gold_removed: ''

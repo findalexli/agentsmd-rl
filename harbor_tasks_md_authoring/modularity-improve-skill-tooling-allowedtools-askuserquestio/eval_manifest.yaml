@@ -1,0 +1,185 @@
+version: "2.0"
+
+task:
+  name: modularity-improve-skill-tooling-allowedtools-askuserquestio
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: vladikk/modularity
+  pr: 1
+  base_commit: "f092d34ec33154c9d9267e8364f3fa245177ca87"
+  merge_commit: "7d6b7398a18e545ff0037521dbdc6cb6df1cb46d"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/document/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/document/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/document/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/high-level-design/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/high-level-design/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/high-level-design/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/review/SKILL.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/review/SKILL.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/review/SKILL.md."
+
+config_edits:
+  - path: skills/document/SKILL.md
+    tier: 1
+    gold_added: 'allowed-tools: Read, Write
+
+
+      | ----------- | ----------------------------------------------------------------------------------- | ----------------------------------------------------------------------- | --------------------------------------------------------------------------- | -------------------------------------------------------------- |
+
+      | A -> B      | ...                                                                                 | ...                                                                     | ...                                                                         | ...                                                            |
+
+
+
+
+
+
+      _This analysis was performed using the [Balanced Coupling](https://coupling.dev) model by [Vlad Khononov](https://vladikk.com)._
+
+      | Concept mentioned                                                                                           | Link to                                                                 |
+
+      | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+
+      | Balanced coupling, the balance rule, the balance formula, `STRENGTH XOR DISTANCE`, modularity vs complexity | https://coupling.dev/posts/core-concepts/balance/                       |
+
+      | Integration strength, shared knowledge, levels of coupling strength                                         | https://coupling.dev/posts/dimensions-of-coupling/integration-strength/ |
+
+      | Intrusive coupling, private interfaces, implementation detail leakage                                       | https://coupling.dev/posts/dimensions-of-coupling/integration-strength/ |
+
+      | Functional coupling, duplicated business logic, shared functional requirements                              | https://coupling.dev/posts/dimensions-of-coupling/integration-strength/ |
+
+      | Model coupling, shared domain model, shared business model                                                  | https://coupling.dev/posts/dimensions-of-coupling/integration-strength/ |
+
+      | Contract coupling, integration contracts, facades, DTOs, published language                                 | https://coupling.dev/posts/dimensions-of-coupling/integration-strength/ |
+
+      | Distance, cost of change, physical/logical separation                                                       | https://coupling.dev/posts/dimensions-of-coupling/distance/             |
+
+      | Lifecycle coupling, deployment coupling, co-deployment                                                      | https://coupling.dev/posts/dimensions-of-coupling/distance/             |
+
+      | Socio-technical distance, team boundaries, organizational structure                                         | https://coupling.dev/posts/dimensions-of-coupling/distance/             |
+
+      | Runtime coupling, synchronous/asynchronous integration                                                      | https://coupling.dev/posts/dimensions-of-coupling/distance/             |
+
+      | Volatility, probability of change, rate of change                                                           | https://coupling.dev/posts/dimensions-of-coupling/volatility/           |
+
+      | Core subdomain, competitive advantage, high volatility domain                                               | https://coupling.dev/posts/dimensions-of-coupling/volatility/           |
+
+      | Supporting subdomain, generic subdomain, subdomain classification                                           | https://coupling.dev/posts/dimensions-of-coupling/volatility/           |
+
+      | Essential vs accidental volatility                                                                          | https://coupling.dev/posts/dimensions-of-coupling/volatility/           |
+
+      | Complexity, Cynefin, unpredictable outcomes                                                                 | https://coupling.dev/posts/core-concepts/complexity/                    |
+
+      | Modularity, modular design, clear change outcomes                                                           | https://coupling.dev/posts/core-concepts/modularity/                    |
+
+      | Coupling (general concept), why coupling matters                                                            | https://coupling.dev/posts/core-concepts/coupling/                      |
+
+      | Tight coupling, distributed monolith                                                                        | https://coupling.dev/posts/core-concepts/balance/                       |
+
+      | Loose coupling, high cohesion, low cohesion                                                                 | https://coupling.dev/posts/core-concepts/balance/                       |
+
+      | Connascence, degrees of coupling                                                                            | https://coupling.dev/posts/related-topics/connascence/                  |
+
+      | Module coupling, classic coupling model                                                                     | https://coupling.dev/posts/related-topics/module-coupling/              |
+
+      | Domain-driven design, DDD, bounded contexts, aggregates                                                     | https://coupling.dev/posts/related-topics/domain-driven-design/         |
+
+
+      '
+    gold_removed: ''
+  - path: skills/high-level-design/SKILL.md
+    tier: 1
+    gold_added: 'allowed-tools: Read, Write, Edit, AskUserQuestion, TaskCreate, TaskUpdate
+
+      If `$ARGUMENTS` is empty or not a valid file path, use `AskUserQuestion` to request it. Header: "Requirements". Question: "Please provide the path to the functional requirements file."
+
+      Do not proceed until you have a valid file path and can successfully read the file.
+
+
+      Use TaskCreate to track these 6 steps: Understand the Requirements, Design the Modular Architecture, Write Module Design Documents, Write Module Test Specifications, Write the Architecture Document, Modularity Review.
+
+      | --------- | -------------- | --------- |
+
+      | {area 1}  | Core           | {why}     |
+
+      | {area 2}  | Supporting     | {why}     |
+
+      | {area 3}  | Generic        | {why}     |
+
+      | Header     | Question                                       | Options                                                                                                                                    |
+
+      | ---------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+
+      | Header   | Question                                                  | Options                                                                                                                                                   |
+
+      | -------- | --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+
+      | Integration | Strength | Distance                 | Volatility  | Balanced?           | Action                                      |
+
+      | ----------- | -------- | ------------------------ | ----------- | ------------------- | ------------------------------------------- |
+
+      | A -> B      | Model    | High (separate services) | High (core) | No — tight coupling | Reduce strength: introduce contract via API |
+
+      | Header   | Question                                     | Options                                                                                                                                                  |
+
+      | -------- | -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+
+
+
+
+
+
+
+      | Header  | Question                                                         | Options                                                                                                                                                                            |
+
+      | ------- | ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      '
+    gold_removed: ''
+  - path: skills/review/SKILL.md
+    tier: 1
+    gold_added: "allowed-tools: Read, Grep, Glob, LSP, AskUserQuestion, TaskCreate, TaskUpdate\nUse TaskCreate to track these 4 steps: Understand the Problem Domain, Map Integrations, Apply the Balance Rule, Write the Review.\n\n## Interaction Rules\n\nAlways use `AskUserQuestion` for user input. Follow these principles:\n\n- **One question at a time.** Never batch multiple questions into one message.\n- **Multiple choice preferred.** Provide 2-4 concrete options. Easier to answer than open-ended.\n- **\"Other\" is automatic.** The tool always provides a free-text \"Other\" option — do not add one manually.\n- **Use headers.** Short labels (max 12 chars) like \"Scope\", \"Domain\", \"Teams\", \"Pain points\".\n\n2. Use `AskUserQuestion` to ask which parts of the codebase to analyze. Header: \"Scope\". Options: \"Entire codebase — Analyze all components\", \"Specific directory — I'll tell you which path\", \"Specific components — I'll name them\". If the user picks a specific scope, follow up to collect details. Otherwise, explore the project structure to identify the major modules, services, and their boundaries.\n4. Use `AskUserQuestion` to ask about anything you cannot determine from the code or requirements alone. Ask each question separately — one at a time.\n\n   **Domain classification**: Header: \"Domain\". First, ask the user (free text) which business areas/components are core (competitive advantage, high volatility), supporting, or generic subdomains. Do not list all discovered components as options. If they mention many areas, either group them and ask follow-up `AskUserQuestion` prompts that classify 2–4 areas at a time, or focus on the top 2–4 most important areas they highlight.\n\n   **Team structure**: Header: \"Teams\". Options: \"Same team — Single team owns everything\", \"Multiple teams — Different teams own different parts\", \"Mixed / not sure\".\n\n   **Known pain points**: Header: \"Pain points\". Options: \"Yes — I'll describe them\", \"Not that I know of\", \"Not sure\". If the user identifies pain points, follow up for details before proceeding."
+    gold_removed: ''

@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: cc-skills-featconventionalgit-add-worktree-naming-convention
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: samber/cc-skills
+  pr: 12
+  base_commit: "1c50f96da46097c51eb44e48d9cb84a3fa7c3ecd"
+  merge_commit: "dffb76e592f498ad284d65e724c755caa8d7da11"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/conventional-git/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/conventional-git/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/conventional-git/SKILL.md."
+
+config_edits:
+  - path: skills/conventional-git/SKILL.md
+    tier: 1
+    gold_added: "description: Conventional Commits v1.0.0 branch naming, worktree naming, and commit message standards for GitHub and GitLab projects. Use when creating branches, naming worktrees, writing commits, generating commit messages, reviewing branch conventions, or setting up changelog automation. Apply when your project needs consistent git history, SemVer-driven releases, parseable changelog generation, or automatic issue closing. Trigger when the user asks how to name a worktree, create a git worktree, or organize worktrees alongside branches.\n  version: \"1.2.0\"\n## Worktree Naming\n\nWorktrees are local checkout directories — they never appear in the remote. Place them under `.claude/worktrees/` and name them by replacing the branch `/` separator with `-`.\n\n```\ngit worktree add .claude/worktrees/feat-user-authentication feat/user-authentication\ngit worktree add .claude/worktrees/fix-87-login-race-condition fix/87-login-race-condition\n```\n\nThe directory name mirrors the branch name so `git worktree list` stays readable and each worktree is immediately traceable to its branch without inspecting the checkout. Run `git worktree list` before creating a new one — reuse an existing worktree if it already covers the same branch.\n\nKeep worktrees scoped to a single branch. Doing unrelated work inside someone else's worktree obscures which changes belong where and makes cleanup error-prone.\n\nRemove the worktree once its branch is merged — either after a local merge or after the pull/merge request is closed on the remote. Stale worktrees accumulate and make `git worktree list` unreadable.\n\n```bash\ngit worktree remove .claude/worktrees/feat-user-authentication   # branch merged locally\ngit worktree prune                                                # remove refs to already-deleted directories\n```\n"
+    gold_removed: ''

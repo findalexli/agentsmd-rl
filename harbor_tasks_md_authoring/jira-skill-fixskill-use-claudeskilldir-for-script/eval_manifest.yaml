@@ -1,0 +1,104 @@
+version: "2.0"
+
+task:
+  name: jira-skill-fixskill-use-claudeskilldir-for-script
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: netresearch/jira-skill
+  pr: 58
+  base_commit: "df46bc76e9bab96fead5c4a66c571c31de99904e"
+  merge_commit: "7ea8ad04e6f99cba226b2398f08bb05c181f4b07"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/jira-communication/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/jira-communication/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/jira-communication/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/jira-syntax/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/jira-syntax/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/jira-syntax/SKILL.md."
+
+config_edits:
+  - path: skills/jira-communication/SKILL.md
+    tier: 1
+    gold_added: 'On Jira URL or issue key (PROJ-123) → run `jira-issue.py get`. Auth issues → `jira-setup.py`.
+
+      Scripts in `${CLAUDE_SKILL_DIR}/scripts/` under `core/`, `workflow/`, or `utility/`.
+
+      uv run ${CLAUDE_SKILL_DIR}/scripts/core/jira-issue.py --json get PROJ-123
+
+      uv run ${CLAUDE_SKILL_DIR}/scripts/core/jira-issue.py get PROJ-123
+
+      uv run ${CLAUDE_SKILL_DIR}/scripts/core/jira-issue.py --json get PROJ-123
+
+      uv run ${CLAUDE_SKILL_DIR}/scripts/core/jira-search.py query "assignee = currentUser() AND status != Closed"
+
+      uv run ${CLAUDE_SKILL_DIR}/scripts/core/jira-search.py query "project = PROJ ORDER BY updated DESC" -n 5 -f key,summary,status,priority
+
+      uv run ${CLAUDE_SKILL_DIR}/scripts/core/jira-issue.py update PROJ-123 --assignee me
+
+      uv run ${CLAUDE_SKILL_DIR}/scripts/core/jira-issue.py update PROJ-123 --priority Critical --summary "New title"
+
+      uv run ${CLAUDE_SKILL_DIR}/scripts/core/jira-issue.py update PROJ-123 --fields-json ''{"description": "New desc"}''
+
+      uv run ${CLAUDE_SKILL_DIR}/scripts/core/jira-issue.py delete PROJ-123 --dry-run
+
+      uv run ${CLAUDE_SKILL_DIR}/scripts/core/jira-issue.py delete PROJ-123
+
+      uv run ${CLAUDE_SKILL_DIR}/scripts/workflow/jira-comment.py add PROJ-123 "Comment text"
+
+      cat comment.txt | uv run ${CLAUDE_SKILL_DIR}/scripts/workflow/jira-comment.py add PROJ-123 -
+
+      uv run ${CLAUDE_SKILL_DIR}/scripts/workflow/jira-comment.py --json list PROJ-123
+
+      uv run ${CLAUDE_SKILL_DIR}/scripts/workflow/jira-comment.py edit PROJ-123 COMMENT_ID "Updated text"
+
+      uv run ${CLAUDE_SKILL_DIR}/scripts/workflow/jira-comment.py delete PROJ-123 COMMENT_ID --dry-run
+
+      uv run ${CLAUDE_SKILL_DIR}/scripts/workflow/jira-transition.py list PROJ-123
+
+      uv run ${CLAUDE_SKILL_DIR}/scripts/workflow/jira-transition.py do PROJ-123 "In Progress"
+
+      uv run ${CLAUDE_SKILL_DIR}/scripts/core/jira-worklog.py add PROJ-123 2h --comment "Work done"
+
+      uv run ${CLAUDE_SKILL_DIR}/scripts/workflow/jira-create.py issue PROJ "Summary" --type Task
+
+      uv run ${CLAUDE_SKILL_DIR}/scripts/workflow/jira-create.py issue PROJ "Summary" --type Bug --parent PROJ-100
+
+      uv run ${CLAUDE_SKILL_DIR}/scripts/workflow/jira-move.py issue NRS-100 SRVUC
+
+      uv run ${CLAUDE_SKILL_DIR}/scripts/workflow/jira-move.py issue NRS-100 NRS --issue-type Task
+
+      uv run ${CLAUDE_SKILL_DIR}/scripts/utility/jira-link.py create PROJ-123 PROJ-456 --type "Blocks"
+
+      uv run ${CLAUDE_SKILL_DIR}/scripts/utility/jira-fields.py types PROJ'
+    gold_removed: ''
+  - path: skills/jira-syntax/SKILL.md
+    tier: 1
+    gold_added: '${CLAUDE_SKILL_DIR}/scripts/validate-jira-syntax.sh path/to/content.txt
+
+      3. Validate with `${CLAUDE_SKILL_DIR}/scripts/validate-jira-syntax.sh`
+
+      4. Submit via jira-communication skill
+
+      - `${CLAUDE_SKILL_DIR}/scripts/validate-jira-syntax.sh` - Automated syntax checker'
+    gold_removed: ''

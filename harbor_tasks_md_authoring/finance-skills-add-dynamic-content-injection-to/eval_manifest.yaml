@@ -1,0 +1,229 @@
+version: "2.0"
+
+task:
+  name: finance-skills-add-dynamic-content-injection-to
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: himself65/finance-skills
+  pr: 18
+  base_commit: "194480e843de29f88109b7815fe91e6e47865130"
+  merge_commit: "a1cc506ae9424cf589c30bb1322a5f98073f9f7d"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in CLAUDE.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/discord/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/discord/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/discord/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/options-payoff/SKILL.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/options-payoff/SKILL.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/options-payoff/SKILL.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/stock-correlation/SKILL.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/stock-correlation/SKILL.md."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/stock-correlation/SKILL.md."
+  - id: signal_12
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/telegram/SKILL.md."
+  - id: signal_13
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/telegram/SKILL.md."
+  - id: signal_14
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/telegram/SKILL.md."
+  - id: signal_15
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/twitter/SKILL.md."
+  - id: signal_16
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/twitter/SKILL.md."
+  - id: signal_17
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/twitter/SKILL.md."
+  - id: signal_18
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/yfinance-data/SKILL.md."
+  - id: signal_19
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/yfinance-data/SKILL.md."
+  - id: signal_20
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/yfinance-data/SKILL.md."
+
+config_edits:
+  - path: CLAUDE.md
+    tier: 1
+    gold_added: '### Dynamic content with `!`command``
+
+
+      Skills can embed shell commands that Claude Code executes at skill invocation time, injecting the output inline. Use this for runtime environment checks (tool installation status, auth state, live data). Syntax: wrap in a fenced code block with `` !`command` ``.
+
+
+      Example — checking if a CLI tool is installed and authenticated:
+
+      ```
+
+      !`(command -v mytool && mytool status 2>&1 | head -5 && echo "AUTH_OK" || echo "AUTH_NEEDED") 2>/dev/null || echo "NOT_INSTALLED"`
+
+      ```
+
+
+      Guidelines:
+
+      - Use for environment/auth checks so the model skips install/auth steps when unnecessary
+
+      - Use for injecting live data (e.g., current stock prices) to replace hardcoded values
+
+      - Keep commands fast (< 2s) — they run synchronously before the skill loads
+
+      - Always include fallback output (e.g., `|| echo "UNAVAILABLE"`) so the skill degrades gracefully
+
+      - Only works on CLI-based agents (Claude Code) — Claude.ai ignores these
+
+      '
+    gold_removed: ''
+  - path: skills/discord/SKILL.md
+    tier: 1
+    gold_added: '**Current environment status:**
+
+
+      ```
+
+      !`(command -v discord && discord status 2>&1 | head -5 && echo "AUTH_OK" || echo "AUTH_NEEDED") 2>/dev/null || echo "NOT_INSTALLED"`
+
+      ```
+
+
+      If the status above shows `AUTH_OK`, skip to Step 2. If `NOT_INSTALLED`, install first:
+
+      uv tool install kabi-discord-cli
+
+      If `AUTH_NEEDED`, guide the user:'
+    gold_removed: ''
+  - path: skills/options-payoff/SKILL.md
+    tier: 1
+    gold_added: '**Critical for screenshots**: The spot price is the CURRENT price of the underlying index/stock, NOT the strikes. Never default spot to a strike price value.
+
+
+      **Current SPX reference price:**
+
+      ```
+
+      !`python3 -c "import yfinance as yf; print(f''SPX ≈ {yf.Ticker(\"^GSPC\").fast_info[\"lastPrice\"]:.0f}'')" 2>/dev/null || echo "SPX price unavailable — check market data"`
+
+      ```'
+    gold_removed: ''
+  - path: skills/stock-correlation/SKILL.md
+    tier: 1
+    gold_added: '**Current environment status:**
+
+
+      ```
+
+      !`python3 -c "import yfinance, pandas, numpy; print(f''yfinance={yfinance.__version__} pandas={pandas.__version__} numpy={numpy.__version__}'')" 2>/dev/null || echo "DEPS_MISSING"`
+
+      ```
+
+
+      If `DEPS_MISSING`, install required packages before running any code:
+
+      If all dependencies are already installed, skip the install step and proceed directly.'
+    gold_removed: ''
+  - path: skills/telegram/SKILL.md
+    tier: 1
+    gold_added: '**Current environment status:**
+
+      !`(command -v tdl && tdl version 2>&1 | head -3 || echo "TDL_NOT_INSTALLED") 2>/dev/null`
+
+      ```
+
+
+      If the status above shows a version number, tdl is installed — skip to Step 2.
+
+      **Current auth status:**
+
+      ```
+
+      !`(tdl chat ls --limit 1 2>&1 >/dev/null && echo "AUTH_OK" || echo "AUTH_NEEDED") 2>/dev/null`'
+    gold_removed: ''
+  - path: skills/twitter/SKILL.md
+    tier: 1
+    gold_added: '**Current environment status:**
+
+
+      ```
+
+      !`(command -v twitter && twitter status --yaml 2>&1 | head -5 && echo "AUTH_OK" || echo "AUTH_NEEDED") 2>/dev/null || echo "NOT_INSTALLED"`
+
+      ```
+
+
+      If the status above shows `AUTH_OK`, skip to Step 2. If `NOT_INSTALLED`, install first:
+
+      uv tool install twitter-cli
+
+      If `AUTH_NEEDED`, guide the user:'
+    gold_removed: ''
+  - path: skills/yfinance-data/SKILL.md
+    tier: 1
+    gold_added: '**Current environment status:**
+
+
+      ```
+
+      !`python3 -c "import yfinance; print(''yfinance '' + yfinance.__version__ + '' installed'')" 2>/dev/null || echo "YFINANCE_NOT_INSTALLED"`
+
+      ```
+
+
+      If `YFINANCE_NOT_INSTALLED`, install it before running any code:
+
+      If yfinance is already installed, skip the install step and proceed directly.'
+    gold_removed: ''

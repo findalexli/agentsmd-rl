@@ -1,0 +1,38 @@
+version: "2.0"
+
+task:
+  name: developer-kit-feature161-add-adr-drafting-skill
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: giuseppe-trisciuoglio/developer-kit
+  pr: 164
+  base_commit: "c5b09a5f8d19eed04ccc0ec6391733ab32981b89"
+  merge_commit: "c01d2ba3208192ac481610aa3d85f70dc332e7de"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/developer-kit-core/skills/adr-drafting/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/developer-kit-core/skills/adr-drafting/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in plugins/developer-kit-core/skills/adr-drafting/SKILL.md."
+
+config_edits:
+  - path: plugins/developer-kit-core/skills/adr-drafting/SKILL.md
+    tier: 1
+    gold_added: 'Use this skill when a user or agent has decided on a meaningful architectural change and needs to document the rationale, chosen direction, and trade-offs in a new Architecture Decision Record. It fits requests such as creating an ADR, documenting an architecture decision, writing a decision record, or preserving the project history behind an important technical choice.
+
+      6. Confirm that this request is for a **new ADR**, not for editing an existing ADR
+
+      7. Confirm the desired repository language if documentation language is unclear
+
+      8. Confirm whether any existing ADR naming convention must be preserved'
+    gold_removed: ''

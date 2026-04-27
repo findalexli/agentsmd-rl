@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: sitf-skill-update-to-stick-to
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: wiz-sec-public/SITF
+  pr: 5
+  base_commit: "28b627c961637215e5b58e82f5500e80591f771f"
+  merge_commit: "51a57ca95a2b572286337b511d8e8c747307e0e3"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/technique-proposal/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/technique-proposal/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/technique-proposal/SKILL.md."
+
+config_edits:
+  - path: .claude/skills/technique-proposal/SKILL.md
+    tier: 1
+    gold_added: "3. **Verify the attack step is within SITF scope** (see Scope Boundaries below)\n\n4. Identify the correct component:\n   - production: Production infrastructure **as it relates to supply chain attacks**\n5. Determine the attack stage:\n### Scope Boundaries\n\n**SITF covers SDLC infrastructure and software supply chain attacks specifically.** Not all attack steps in an incident warrant new SITF techniques.\n\n#### In Scope (propose technique)\n- Attacks on developer workstations, IDEs, and local development tools\n- Attacks on version control systems and source code\n- Attacks on CI/CD pipelines, runners, and build systems\n- Attacks on package/container registries\n- Production techniques that are **supply-chain-specific**:\n  - Backdooring deployed artifacts to compromise downstream consumers\n  - Stealing code signing keys or certificates\n  - Modifying release pipelines or deployment configurations\n  - Accessing production to pivot back into SDLC systems\n\n#### Out of Scope (do NOT propose technique)\n- Generic cloud infrastructure attacks (IAM privilege escalation, cloud misconfigurations)\n- Generic container/Kubernetes attacks (pod escape, RBAC abuse, kubelet exploits)\n- Generic network attacks (lateral movement via SSH, RDP exploitation)\n- Post-exploitation techniques that don't relate to software supply chain\n\n**Example:** If an attacker uses CI/CD as initial access, then pivots to cloud production and uses a Kubernetes privilege escalation technique, the K8s privesc is **out of scope** for SITF. Instead:\n\n1. For attack flows: Mark the step with `\"type\": \"out-of-scope\"` and reference the appropriate framework (e.g., \"MITRE ATT&CK: Escape to Host - T1611\")\n2. For technique proposals: Report that the attack step is outside SITF's domain and does not warrant a new technique\n\n**Rationale:** These generic infrastructure techniques are already well-documented in:\n- MITRE ATT&CK for Enterprise (Cloud, Containers matrices)\n- MITRE ATT&CK for ICS\n- Cloud-specific frameworks (AWS Security Maturity Model, Azure Security Benchmark)\n\nSITF adds value by covering the **unique attack surface of SDLC infrastructure** that these frameworks don't address comprehensively.\n\n[ ] Attack step is within SITF scope (SDLC/supply-chain-specific, not generic infra)\n**If scope check fails:** Do not generate a technique proposal. Instead, explain why the attack step is out of scope and recommend the appropriate framework (MITRE ATT&CK, etc.).\n"
+    gold_removed: ''

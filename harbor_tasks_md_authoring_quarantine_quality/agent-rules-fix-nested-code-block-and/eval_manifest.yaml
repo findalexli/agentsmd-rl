@@ -1,0 +1,40 @@
+version: "2.0"
+
+task:
+  name: agent-rules-fix-nested-code-block-and
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: steipete/agent-rules
+  pr: 11
+  base_commit: "315e98c7a9d7c9f2d97450c8cd51f7a61924a44e"
+  merge_commit: "eb33d8ddb36074bb873d09c924136cd0723d86d1"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in docs/swift6-migration.mdc."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in docs/swift6-migration.mdc."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in project-rules/continuous-improvement.mdc."
+
+config_edits:
+  - path: docs/swift6-migration.mdc
+    tier: 1
+    gold_added: 'This project is licensed under the Apache License, Version 2.0.
+
+      See: https://www.apache.org/licenses/LICENSE-2.0'
+    gold_removed: ''
+  - path: project-rules/continuous-improvement.mdc
+    tier: 1
+    gold_added: '````markdown
+
+      ````'
+    gold_removed: ''

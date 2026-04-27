@@ -1,0 +1,32 @@
+version: "2.0"
+
+task:
+  name: swift-concurrency-agent-skill-feat-improve-skill-description
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: AvdLee/Swift-Concurrency-Agent-Skill
+  pr: 31
+  base_commit: "39357e2dd37d2124ec931ecc35622963c30f0857"
+  merge_commit: "29bca636e77f56230d643dbdd4cd9f376c588513"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in swift-concurrency/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in swift-concurrency/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in swift-concurrency/SKILL.md."
+
+config_edits:
+  - path: swift-concurrency/SKILL.md
+    tier: 1
+    gold_added: "description: 'Diagnose data races, convert callback-based code to async/await, implement actor isolation patterns, resolve Sendable conformance issues, and guide Swift 6 migration. Use when developers mention: (1) Swift Concurrency, async/await, actors, or tasks, (2) \"use Swift Concurrency\" or \"modern concurrency patterns\", (3) migrating to Swift 6, (4) data races or thread safety issues, (5) refactoring closures to async/await, (6) @MainActor, Sendable, or actor isolation, (7) concurrent code architecture or performance optimization, (8) concurrency-related linter warnings (SwiftLint or similar; e.g. async_without_await, Sendable/actor isolation/MainActor lint).'\n## Agent Rules\n1. Analyze `Package.swift` or `.pbxproj` to determine Swift language mode (5.x vs 6) and toolchain before giving advice.\n6. For migration work, optimize for minimal blast radius (small, reviewable changes) and follow the validation loop: **Build → Fix errors → Rebuild → Only proceed when clean**.\nConcurrency behavior depends on build settings. Before advising, determine these via `Read` on `Package.swift` or `Grep` in `.pbxproj` files:\n| Setting | SwiftPM (`Package.swift`) | Xcode (`.pbxproj`) |\n|---------|--------------------------|---------------------|\n| Default isolation | `.defaultIsolation(MainActor.self)` | `SWIFT_DEFAULT_ACTOR_ISOLATION` |\n| Strict concurrency | `.enableExperimentalFeature(\"StrictConcurrency=targeted\")` | `SWIFT_STRICT_CONCURRENCY` |\n| Upcoming features | `.enableUpcomingFeature(\"NonisolatedNonsendingByDefault\")` | `SWIFT_UPCOMING_FEATURE_*` |\n| Language mode | `// swift-tools-version:` at top | Swift Language Version build setting |\n### Concurrency Tool Selection\n| Need | Tool | Key Guidance |\n|------|------|-------------|\n| Single async operation | `async/await` | Default choice for sequential async work |\n| Fixed parallel operations | `async let` | Known count at compile time; auto-cancelled on throw |\n| Dynamic parallel operations | `withTaskGroup` | Unknown count; structured — cancels children on scope exit |\n| Sync → async bridge | `Task { }` | Inherits actor context; use `Task.detached` only with documented reason |\n| Shared mutable state | `actor` | Prefer over locks/queues; keep isolated sections small |\n| UI-bound state | `@MainActor` | Only for truly UI-related code; justify isolation |\n**Network request with UI update**\n    let data = try await fetchData()\n    await MainActor.run { self.updateUI(with: data) }\n**Processing array items in parallel**\n### Migration Validation Loop\n\nApply this cycle for each migration change:\n\n1. **Build** — Run `swift build` or Xcode build to surface new diagnostics\n2. **Fix** — Address one category of error at a time (e.g., all Sendable issues first)\n3. **Rebuild** — Confirm the fix compiles cleanly before moving on\n4. **Test** — Run the test suite to catch regressions (`swift test` or Cmd+U)\n5. **Only proceed** to the next file/module when all diagnostics are resolved\n\nIf a fix introduces new warnings, resolve them before continuing. Never batch multiple unrelated fixes — keep commits small and reviewable.\n\n1. Confirm build settings (default isolation, strict concurrency, upcoming features) before interpreting diagnostics.\n2. **Build** — Verify the project compiles without new warnings or errors.\n3. **Test** — Run tests, especially concurrency-sensitive ones (see `references/testing.md`).\n4. **Performance** — If performance-related, verify with Instruments (see `references/performance.md`).\n5. **Lifetime** — If lifetime-related, verify deinit/cancellation behavior (see `references/memory-management.md`).\n6. Check `Task.isCancelled` in long-running operations.\n7. Never use semaphores or locks in async contexts — use actors or `Mutex` instead."
+    gold_removed: ''

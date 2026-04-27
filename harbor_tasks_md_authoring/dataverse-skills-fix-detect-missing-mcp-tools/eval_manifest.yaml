@@ -1,0 +1,79 @@
+version: "2.0"
+
+task:
+  name: dataverse-skills-fix-detect-missing-mcp-tools
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: microsoft/Dataverse-skills
+  pr: 12
+  base_commit: "67e2491186ad903cb3ebebce706975a575695659"
+  merge_commit: "8edb634331b3bb7d7ab21496be646d6da5cdc090"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/plugins/dataverse/skills/init/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/plugins/dataverse/skills/mcp-configure/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/plugins/dataverse/skills/mcp-configure/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/plugins/dataverse/skills/mcp-configure/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/plugins/dataverse/skills/overview/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/plugins/dataverse/skills/overview/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/plugins/dataverse/skills/overview/SKILL.md."
+
+config_edits:
+  - path: .github/plugins/dataverse/skills/init/SKILL.md
+    tier: 1
+    gold_added: '- The user''s immediate task does not require MCP (e.g., they asked to create tables, import data, or build a solution — all of which use the SDK or PAC CLI, not MCP) **and** the user has not explicitly mentioned MCP or asked to connect via MCP
+
+      - The user''s immediate task does not require MCP (e.g., they asked to create tables, import data, or build a solution — all of which use the SDK or PAC CLI, not MCP) **and** the user has not explicitly mentioned MCP or asked to connect via MCP'
+    gold_removed: ''
+  - path: .github/plugins/dataverse/skills/mcp-configure/SKILL.md
+    tier: 1
+    gold_added: "      \"add Dataverse to Copilot\", \"add Dataverse to Claude\",\r\n      \"connect via MCP\", \"use MCP\", \"MCP tools not available\", \"no MCP tools\", \"MCP not configured\".\r\nIf the file or the variable doesn't exist, the user has not initialized the Dataverse workspace yet. Offer to do that first using the `dataverse-init` skill, which will set up the necessary environment variables. If they refuse, remind them to do that later when they attempt any operations that require PAC CLI, Python SDK or OData Web API instead of MCP, and proceed to auto-discover the environment URL.\r\n**Auto-discovery priority order** — try each method in order, stop at the first that succeeds:\r\n1. **PAC CLI** (preferred) → step 3a\r\n2. **Azure CLI** (fallback) → step 3b\r\n3. **Manual entry** (last resort) → step 3c\r\n### 3a. Auto-discover via PAC CLI (preferred)\r\n\r\nCheck if PAC CLI is available:\r\n\r\n```\r\npac --version\r\n```\r\n\r\nIf available, check auth and list environments:\r\n\r\n```\r\npac auth list\r\npac org who\r\npac env list\r\n```\r\n\r\nIf PAC CLI is authenticated and `pac env list` returns results, present the environments to the user:\r\n\r\n> I found the following Dataverse environments via PAC CLI. Which one would you like to configure MCP for?\r\n>\r\n> 1. My Dev Org — `https://orgfbb52bb7.crm.dynamics.com`\r\n> 2. Another Env — `https://orgabc123.crm.dynamics.com`\r\n>\r\n> Or type a URL manually.\r\n\r\nIf the user wants to create a new environment, they can do so via `pac admin create` (see the `dataverse-init` skill's Environment Discovery flow).\r\n\r\nIf PAC CLI is not installed or not authenticated, fall back to step 3b.\r\n\r\n### 3b. Auto-discover via Azure CLI (fallback)\r\n- If not installed, inform the user and fall back to step 3c\r\nIf the user types \"manual\", fall back to step 3c.\r\n**If the API call fails** (user not logged in, network error, no environments found, or any other error), tell the user what went wrong and fall back to step 3c.\r\n### 3c. Manual entry — ask for the URL\r\nPause and give the user a chance to restart their editor before proceeding. Do not perform any subsequent or parallel operations until the user responds — they need MCP tools to be active first.\r\n\r"
+    gold_removed: ''
+  - path: .github/plugins/dataverse/skills/overview/SKILL.md
+    tier: 1
+    gold_added: '**When in doubt:** MCP tools not in your tool list? → Load `dataverse-mcp-configure` to set them up (see below). MCP for conversational data work (single records, simple queries) → Python SDK for scripted data, bulk operations, schema creation, and analysis → Web API for metadata the SDK doesn''t cover (forms, views, option sets) → PAC CLI for solution lifecycle.
+
+      ### MCP Availability Check
+
+
+      If the user''s request involves MCP — either explicitly ("connect via MCP", "use MCP", "query via MCP") or implicitly (conversational data queries where MCP would be the natural tool) — check whether Dataverse MCP tools are available in your current tool list (e.g., `list_tables`, `describe_table`, `read_query`, `create_record`).
+
+
+      **If MCP tools are NOT available:**
+
+      1. **Do NOT silently fall back** to the Python SDK or Web API
+
+      2. Tell the user: "Dataverse MCP tools aren''t configured in this session yet."
+
+      3. Load the `dataverse-mcp-configure` skill to set up the MCP server
+
+      4. After MCP is configured, **stop here** — the session must be restarted for MCP tools to appear. Do not fall back to the SDK or proceed with other tools. Wait for the user to restart and come back.
+
+
+      **If MCP tools ARE available**, proceed normally with the user''s task.
+
+      '
+    gold_removed: ''

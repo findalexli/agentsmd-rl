@@ -1,0 +1,127 @@
+version: "2.0"
+
+task:
+  name: dataverse-skills-improve-metadata-overview-and-pythonsdk
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: microsoft/Dataverse-skills
+  pr: 7
+  base_commit: "54cb46400e52f9709fc98def9abc15af999f5f56"
+  merge_commit: "60bd7ecd563c6b2fc113231d8cd6835e657d782c"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/plugins/dataverse/skills/metadata/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/plugins/dataverse/skills/metadata/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/plugins/dataverse/skills/metadata/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/plugins/dataverse/skills/overview/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/plugins/dataverse/skills/overview/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/plugins/dataverse/skills/overview/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/plugins/dataverse/skills/python-sdk/SKILL.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/plugins/dataverse/skills/python-sdk/SKILL.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/plugins/dataverse/skills/python-sdk/SKILL.md."
+  - id: signal_09
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/plugins/dataverse/skills/solution/SKILL.md."
+  - id: signal_10
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/plugins/dataverse/skills/solution/SKILL.md."
+  - id: signal_11
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .github/plugins/dataverse/skills/solution/SKILL.md."
+
+config_edits:
+  - path: .github/plugins/dataverse/skills/metadata/SKILL.md
+    tier: 1
+    gold_added: "**Before the first metadata change in a session, confirm the target environment with the user.** See the Multi-Environment Rule in the overview skill for the full confirmation flow.\n\n---\n\n    \"MaxLength\": 500,\n    \"FormatName\": {\"Value\": \"Text\"}   # Always use \"Text\" — see FormatName reference below\n**Valid FormatName values for StringAttributeMetadata:** `Text`, `TextArea`, `Url`, `TickerSymbol`, `PhoneticGuide`, `VersionNumber`, `Phone`. Note: `Email` is **not** a valid FormatName despite being a common assumption — use `Text` for email columns.\n\n## After Creating Columns: Report Logical Names\n\nAfter creating columns (via Web API or MCP), **always report the actual logical names** to the user. Column names may be normalized or prefixed in ways the user doesn't expect. Summarize in a table:\n\n| Display Name | Logical Name | Type |\n|---|---|---|\n| Email | cr9ac_email | String |\n| Tier | cr9ac_tier | Picklist |\n| Customer | cr9ac_customerid | Lookup |\n\nThis prevents downstream failures when the user tries to insert data using incorrect column names.\n\n---\n\n## Common Web API Error Codes\n\n| Error Code | Meaning | Recovery |\n|---|---|---|\n| `0x80040216` | Transient metadata cache error. Column or table metadata not yet propagated. | Wait 3-5 seconds and retry. Usually succeeds on second attempt. |\n| `0x80048d19` | Invalid property in payload. A field name doesn't match any column on the table. | Check logical column names — use `EntityDefinitions(LogicalName='...')/Attributes` to verify. |\n| `0x80040237` | Schema name already exists. | Verify the column/table exists before creating a new one — it may have been created by a previous timed-out call. |\n| `0x8004431a` | Publisher prefix mismatch. | Ensure all schema names use the solution's publisher prefix. |\n| `0x80060891` | Metadata cache not ready after table creation. | Call `GET EntityDefinitions(LogicalName='...')` first to force cache refresh, then retry. |\n\nAlways translate error codes to plain English before presenting them to the user.\n\n---\n\n## Metadata Propagation Delays\n\nAfter creating tables or columns via the Web API, metadata propagation can take 3-10 seconds. Common symptoms:\n\n- Picklist columns fail with `0x80040216` immediately after table creation\n- Lookup `@odata.bind` operations fail with \"Invalid property\" shortly after column creation\n- `update_table` (MCP) fails with \"EntityId not found in MetadataCache\"\n\n**Mitigation:** Add a 3-5 second delay after table creation before adding columns. After creating lookup columns, wait 5-10 seconds before inserting records that use `@odata.bind` on those lookups. If a column creation fails, verify it doesn't already exist, then retry once.\n\n---\n\n## Session Closing: Pull to Repo\n\n**After every metadata session, perform the pull-to-repo sequence.** This is not optional — work that exists only in the environment is lost if the environment is reset.\n\n```bash\npac solution export --name <SOLUTION_NAME> --path ./solutions/<SOLUTION_NAME>.zip --managed false\npac solution unpack --zipfile ./solutions/<SOLUTION_NAME>.zip --folder ./solutions/<SOLUTION_NAME>\nrm ./solutions/<SOLUTION_NAME>.zip\ngit add ./solutions/<SOLUTION_NAME>\ngit commit -m \"feat: <description of change>\"\n```\n\nIf you used the `MSCRM.SolutionName` header during creation, verify components are in the solution before exporting:\n```bash\npac solution list-components --solutionUniqueName <SOLUTION_NAME> --environment <url>\n```\n\n---\n"
+    gold_removed: ''
+  - path: .github/plugins/dataverse/skills/overview/SKILL.md
+    tier: 1
+    gold_added: '## Multi-Environment Rule (MANDATORY)
+
+      **Before the FIRST operation that touches a specific environment** — creating a table, deploying a plugin, pushing a solution, inserting data — you MUST:
+
+      1. Show the user the environment URL you intend to use
+
+      2. Ask them to confirm it is correct
+
+      3. Run `pac org who` to verify the active connection matches
+
+      > "I''m about to make changes to `<URL>`. Is this the correct target environment?"
+
+      **Do not proceed until the user explicitly confirms.** This is the single most important safety check in the plugin. Skipping it risks making irreversible changes to the wrong environment.
+
+      Once confirmed for a session, you do not need to re-confirm for every subsequent operation in the same session against the same environment.
+
+      ## Before Any Metadata Change: Confirm Solution
+
+
+      Before creating tables, columns, or other metadata, ensure a solution exists to contain the work:
+
+
+      1. Ask the user: "What solution should these components go into?"
+
+      2. If a solution name is in `.env` (`SOLUTION_NAME`), confirm it with the user
+
+      3. If no solution exists yet, create one (see the `solution` skill)
+
+      4. Use the `MSCRM.SolutionName` header on all Web API metadata calls to auto-add components
+
+
+      Creating metadata without a solution means it exists only in the default solution and cannot be cleanly exported or deployed. Always solution-first.
+
+
+      ---
+
+
+      ## After Any Change: Pull to Repo (MANDATORY)
+
+      Any time you make a metadata change (via MCP, Web API, or the maker portal), **you must** end the session by pulling:'
+    gold_removed: ''
+  - path: .github/plugins/dataverse/skills/python-sdk/SKILL.md
+    tier: 1
+    gold_added: '**Lookup binding (`@odata.bind`) notes:**
+
+      - If you just created lookup columns, wait 5-10 seconds before inserting records that reference them. Metadata propagation delays can cause "Invalid property" errors.
+
+      - Choice (picklist) columns use integer values, not strings: `"new_status": 100000000` (not `"Draft"`).
+
+      - If a record insert fails with "Invalid property", verify the lookup column''s logical name and navigation property name by querying `EntityDefinitions(LogicalName=''...'')/Attributes`.
+
+      '
+    gold_removed: ''
+  - path: .github/plugins/dataverse/skills/solution/SKILL.md
+    tier: 1
+    gold_added: "### Alternative: Auto-add via MSCRM.SolutionName Header\n\nWhen creating metadata via the Web API, include the `MSCRM.SolutionName` header to auto-add components to the solution:\n```python\nheaders = {\n    \"Authorization\": f\"Bearer {token}\",\n    \"Content-Type\": \"application/json\",\n    \"MSCRM.SolutionName\": \"<UniqueName>\"\n}\n```\n\n**Important:** After using this approach, verify components were added by listing them:\n```bash\npac solution list-components --solutionUniqueName <UniqueName> --environment <url>\n```\n\nIf the header was misspelled or the solution doesn't exist, components will be created in the default solution instead — silently. Always verify.\n"
+    gold_removed: ''

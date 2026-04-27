@@ -1,0 +1,50 @@
+version: "2.0"
+
+task:
+  name: review-gate-update-reviewgatev2mdc
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: LakshmanTurlapati/Review-Gate
+  pr: 47
+  base_commit: "f1211d956974394b661e1cd2013da1a7db5867f7"
+  merge_commit: "7b5482cace69aeb66d514949d7c878c55413b8b0"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in V2/ReviewGateV2.mdc."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in V2/ReviewGateV2.mdc."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in V2/ReviewGateV2.mdc."
+
+config_edits:
+  - path: V2/ReviewGateV2.mdc
+    tier: 1
+    gold_added: '
+
+      ## MANDATORY CHECKPOINT (Must be included in every response):
+
+      Before ending any response, I MUST:
+
+      1. State: "CHECKPOINT: Transitioning to Review Gate V2"
+
+      2. Immediately call review_gate_chat tool
+
+      3. Never provide a response without this checkpoint
+
+
+      ## ENFORCEMENT MECHANISM:
+
+      If I provide any response without calling review_gate_chat, treat it as an incomplete response that violates the protocol.
+
+
+      - Handle any tool errors gracefully while maintaining the interactive review principle.'
+    gold_removed: ''

@@ -1,0 +1,60 @@
+version: "2.0"
+
+task:
+  name: cloudbase-mcp-fix-node-sdk-version-gen
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: TencentCloudBase/CloudBase-MCP
+  pr: 285
+  base_commit: "32c52d34f0b6cdcde77383c3525a58e5246db35d"
+  merge_commit: "84e1cef6467c0e85d1c3c3b124d549f8ade2131a"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in config/.claude/skills/ai-model-cloudbase/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in config/.claude/skills/ai-model-cloudbase/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in config/.claude/skills/ai-model-cloudbase/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in config/.cursor/rules/cloudbase-rules.mdc."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in config/.cursor/rules/cloudbase-rules.mdc."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in config/.cursor/rules/cloudbase-rules.mdc."
+
+config_edits:
+  - path: config/.claude/skills/ai-model-cloudbase/SKILL.md
+    tier: 1
+    gold_added: '| Node.js (Server/Cloud Functions) | `@cloudbase/node-sdk` ≥3.16.0 | Part 1 (same API, different init) |
+
+      # For Node.js (Server/Cloud Functions)
+
+      ⚠️ **Node SDK AI feature requires version 3.16.0 or above.** Check your version with `npm list @cloudbase/node-sdk`.
+
+
+      ⚠️ **Image generation is currently only available in Node SDK**, not in JS SDK (Web) or WeChat Mini Program.
+
+
+      // Node SDK only
+
+      | **Image generation** | Node SDK only | Not available |'
+    gold_removed: ''
+  - path: config/.cursor/rules/cloudbase-rules.mdc
+    tier: 1
+    gold_added: "| `ai-model-cloudbase` | AI Model Calling (CloudBase) |\n   - `rules/ai-model-cloudbase/rule.md` - AI model calling (text generation, streaming, image generation via Node SDK ≥3.16.0)\n- **AI Model Integration**: Projects requiring AI capabilities (text generation, streaming responses, image generation)\n   - `rules/ai-model-cloudbase/rule.md` - AI model calling (text generation, streaming, image generation via Node SDK ≥3.16.0)\n   - `rules/ai-model-cloudbase/rule.md` - AI model calling (text generation, streaming, image generation via Node SDK ≥3.16.0)\n   - `rules/ai-model-cloudbase/rule.md` - AI model calling (text generation, streaming, image generation via Node SDK ≥3.16.0)\n### AI Skills\n- **AI Model Calling**: `rules/ai-model-cloudbase/rule.md` - Call AI models (Hunyuan, DeepSeek) via CloudBase JS/Node SDK, HTTP API, and WeChat Mini Program. Supports text generation, streaming, and image generation (Node SDK only, requires ≥3.16.0)\n\n2. **[ ] Scenario Identification**: Clearly identify what type of project this is (Web/Mini Program/Database/UI/AI)"
+    gold_removed: ''

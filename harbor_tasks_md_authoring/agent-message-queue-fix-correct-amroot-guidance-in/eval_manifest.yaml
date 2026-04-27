@@ -1,0 +1,64 @@
+version: "2.0"
+
+task:
+  name: agent-message-queue-fix-correct-amroot-guidance-in
+  kind: markdown_authoring
+  difficulty: easy
+
+source:
+  repo: avivsinai/agent-message-queue
+  pr: 33
+  base_commit: "9162237d14c23c6923a44fd9e2715cede9a25d05"
+  merge_commit: "3b40a9e3952a43a6f786ba349315f0a8115f9ada"
+
+checks:
+  - id: signal_00
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/amq-cli/SKILL.md."
+  - id: signal_01
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/amq-cli/SKILL.md."
+  - id: signal_02
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .claude/skills/amq-cli/SKILL.md."
+  - id: signal_03
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .codex/skills/amq-cli/SKILL.md."
+  - id: signal_04
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .codex/skills/amq-cli/SKILL.md."
+  - id: signal_05
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in .codex/skills/amq-cli/SKILL.md."
+  - id: signal_06
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/amq-cli/SKILL.md."
+  - id: signal_07
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/amq-cli/SKILL.md."
+  - id: signal_08
+    type: fail_to_pass
+    origin: pr_diff
+    description: "Distinctive line from gold patch must appear in skills/amq-cli/SKILL.md."
+
+config_edits:
+  - path: .claude/skills/amq-cli/SKILL.md
+    tier: 1
+    gold_added: "- **Use `amq env` to resolve the root** — it reads `.amqrc` and returns the base root:\n  eval \"$(amq env --me claude)\"          # sets AM_ME + AM_ROOT from .amqrc\n- Or resolve and pin explicitly per command:\n  ```bash\n  AM_ME=claude AM_ROOT=.agent-mail amq send --to codex --body \"hello\"\n  ```\n- **Do NOT append a session name** (e.g. `/collab`) unless you intentionally want an isolated session. Outside `coop exec`, the base root from `.amqrc` is where agents live.\n- **Pitfall**: `coop exec` defaults to `--session collab` (i.e. `.agent-mail/collab`). If you manually use `.agent-mail/collab` outside `coop exec`, messages go to a different mailbox tree than `.agent-mail`. Only use a session path if the target agent is also in that session.\n\n### Root Resolution Truth-Table\n\n| Context | Command | AM_ROOT resolves to |\n|---------|---------|---------------------|\n| Outside `coop exec` | `amq env --me claude` | base root from `.amqrc` (e.g. `.agent-mail`) |\n| Outside `coop exec`, isolated session | `amq env --session auth --me claude` | `.agent-mail/auth` |\n| Inside `coop exec` (no flags) | automatic | `.agent-mail/collab` (default session) |\n| Inside `coop exec --session X` | automatic | `.agent-mail/X` |"
+    gold_removed: ''
+  - path: .codex/skills/amq-cli/SKILL.md
+    tier: 1
+    gold_added: "- **Use `amq env` to resolve the root** — it reads `.amqrc` and returns the base root:\n  eval \"$(amq env --me claude)\"          # sets AM_ME + AM_ROOT from .amqrc\n- Or resolve and pin explicitly per command:\n  ```bash\n  AM_ME=claude AM_ROOT=.agent-mail amq send --to codex --body \"hello\"\n  ```\n- **Do NOT append a session name** (e.g. `/collab`) unless you intentionally want an isolated session. Outside `coop exec`, the base root from `.amqrc` is where agents live.\n- **Pitfall**: `coop exec` defaults to `--session collab` (i.e. `.agent-mail/collab`). If you manually use `.agent-mail/collab` outside `coop exec`, messages go to a different mailbox tree than `.agent-mail`. Only use a session path if the target agent is also in that session.\n\n### Root Resolution Truth-Table\n\n| Context | Command | AM_ROOT resolves to |\n|---------|---------|---------------------|\n| Outside `coop exec` | `amq env --me claude` | base root from `.amqrc` (e.g. `.agent-mail`) |\n| Outside `coop exec`, isolated session | `amq env --session auth --me claude` | `.agent-mail/auth` |\n| Inside `coop exec` (no flags) | automatic | `.agent-mail/collab` (default session) |\n| Inside `coop exec --session X` | automatic | `.agent-mail/X` |"
+    gold_removed: ''
+  - path: skills/amq-cli/SKILL.md
+    tier: 1
+    gold_added: "- **Use `amq env` to resolve the root** — it reads `.amqrc` and returns the base root:\n  eval \"$(amq env --me claude)\"          # sets AM_ME + AM_ROOT from .amqrc\n- Or resolve and pin explicitly per command:\n  ```bash\n  AM_ME=claude AM_ROOT=.agent-mail amq send --to codex --body \"hello\"\n  ```\n- **Do NOT append a session name** (e.g. `/collab`) unless you intentionally want an isolated session. Outside `coop exec`, the base root from `.amqrc` is where agents live.\n- **Pitfall**: `coop exec` defaults to `--session collab` (i.e. `.agent-mail/collab`). If you manually use `.agent-mail/collab` outside `coop exec`, messages go to a different mailbox tree than `.agent-mail`. Only use a session path if the target agent is also in that session.\n\n### Root Resolution Truth-Table\n\n| Context | Command | AM_ROOT resolves to |\n|---------|---------|---------------------|\n| Outside `coop exec` | `amq env --me claude` | base root from `.amqrc` (e.g. `.agent-mail`) |\n| Outside `coop exec`, isolated session | `amq env --session auth --me claude` | `.agent-mail/auth` |\n| Inside `coop exec` (no flags) | automatic | `.agent-mail/collab` (default session) |\n| Inside `coop exec --session X` | automatic | `.agent-mail/X` |"
+    gold_removed: ''
