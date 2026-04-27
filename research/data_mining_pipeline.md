@@ -70,6 +70,25 @@ Every drop in the pipeline maps to one of five assumptions. Below: the assumptio
 
 The pipelines split on **A3**. Pipeline A admits any code-bearing PR from a rule-equipped repo and then leans on the rule-relevance check (A4) to decide what's worth building. Pipeline B starts strict on A3 — every file must be a rule file — so the LLM judges in A4 are smaller and cheaper. PRs that A3 drops in Pipeline B are not lost; they are routed to a side queue (`*_codebearing.jsonl`, 34,358 cumulative rows) for later processing through Pipeline A.
 
+### Why A3 specifically — the *scope* filter
+
+A3 is the easiest assumption to misread as "redundant with A4." It is not. A3 and A4 do different jobs:
+
+- **A4 (rule-relevance) decides whether the PR's gold fix was *shaped by* the rule files.** It enforces the core assumption from §2. It is expensive — an LLM call per PR.
+- **A3 (in-scope) decides whether the PR is the kind of thing this pipeline can produce a valid task for at all.** It enforces no research property; it enforces *operational feasibility*. It is cheap — pure regex / set membership, no LLM.
+
+Without A3, each pipeline would still produce correct tasks for the small surviving subset, but it would do so wastefully or unsafely:
+
+**Pipeline A — without A3 (skip-on-slug + rule-equipped repo)**
+- *Skip-on-slug* exists because a single repo gets re-scouted across passes. Without it, we'd re-fetch, re-judge, and possibly re-build PRs we already have, paying Gemini and Opus costs for zero new tasks.
+- *Rule-equipped repo* exists because a PR from a repo with **no rule files** literally cannot satisfy A4 — there are no rules for the fix to be shaped by. The rule-relevance judge would dutifully label every such PR as class C and drop it. We avoid the LLM cost (≈ 1,500 PRs × $0.005 ≈ $7.50 per pass, plus latency) by filtering structurally first.
+
+**Pipeline B — without A3 (every-file-is-a-rule-file)**
+- The build script extracts distinctive `+` lines from the gold patch and writes a test that greps for them in a *single, named* rule file. This only works when every changed file is a rule file we can grep. A mixed PR (some code, some markdown) would either: (a) generate a test that asserts on lines that don't exist in the file we're checking, producing a broken task, or (b) require the script to know how to scaffold code changes — which is exactly why we have Pipeline A.
+- A3 here is not a quality filter. It is a *type* filter: "Pipeline B's transform is undefined for this input shape." The 96.7 % of PRs A3 drops aren't slop; they're routed to Pipeline A's side queue and processed there.
+
+**A3 fails open, A4 fails closed.** A3 says: "if I can't tell whether this is in scope, drop it — it's cheap to drop and there are 30K candidates." A4 says: "if I can't tell whether the rules mattered, *examine it carefully*." Putting A3 before A4 means the LLM only sees PRs it has a chance of judging usefully.
+
 ## 5. The two pipelines at a glance
 
 | | Pipeline A — code-fix | Pipeline B — markdown-authoring |
