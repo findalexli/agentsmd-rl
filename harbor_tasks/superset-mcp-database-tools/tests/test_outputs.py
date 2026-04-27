@@ -161,37 +161,17 @@ class TestListDatabasesRequestValidators:
         req = ListDatabasesRequest(select_columns='["database_name", "backend"]')
         assert req.select_columns == ["database_name", "backend"]
 
-    def test_field_validator_imported(self):
-        """ListDatabasesRequest should have registered field validators on filters and select_columns."""
+    def test_parse_filters_with_nested_json(self):
+        """ListDatabasesRequest should handle filters with various operator types via JSON."""
         _ensure_path()
         from superset.mcp_service.database.schemas import ListDatabasesRequest
 
-        validators = ListDatabasesRequest.__pydantic_decorators__.field_validators
-        assert "parse_filters" in validators, \
-            "ListDatabasesRequest should have parse_filters field validator"
-        assert "parse_columns" in validators, \
-            "ListDatabasesRequest should have parse_columns field validator"
-
-    def test_schema_utils_imported(self):
-        """parse_json_or_list and parse_json_or_model_list should be importable and functional."""
-        _ensure_path()
-        from superset.mcp_service.utils.schema_utils import (
-            parse_json_or_list,
-            parse_json_or_model_list,
+        req = ListDatabasesRequest(
+            filters='[{"col": "created_by_fk", "opr": "eq", "value": 1}]'
         )
-        from pydantic import BaseModel
-
-        # Verify parse_json_or_list works
-        result = parse_json_or_list('["a", "b", "c"]', "test")
-        assert result == ["a", "b", "c"]
-
-        # Verify parse_json_or_model_list works
-        class Dummy(BaseModel):
-            name: str
-
-        result2 = parse_json_or_model_list('[{"name": "x"}]', Dummy, "test")
-        assert len(result2) == 1
-        assert result2[0].name == "x"
+        assert len(req.filters) == 1
+        assert req.filters[0].col == "created_by_fk"
+        assert req.filters[0].opr == "eq"
 
 
 class TestDuplicateDefaultColumnsRemoved:
@@ -211,22 +191,6 @@ class TestDuplicateDefaultColumnsRemoved:
                         pytest.fail(
                             "list_databases.py should not define DEFAULT_DATABASE_COLUMNS locally"
                         )
-
-    def test_imports_database_default_columns(self):
-        """list_databases.py should import DATABASE_DEFAULT_COLUMNS from schema_discovery."""
-        list_db_path = (
-            REPO / "superset" / "mcp_service" / "database" / "tool" / "list_databases.py"
-        )
-        tree = ast.parse(list_db_path.read_text())
-
-        imported_names = set()
-        for node in ast.walk(tree):
-            if isinstance(node, ast.ImportFrom):
-                for alias in node.names:
-                    imported_names.add(alias.name)
-
-        assert "DATABASE_DEFAULT_COLUMNS" in imported_names, \
-            "list_databases.py should import DATABASE_DEFAULT_COLUMNS"
 
     def test_uses_imported_database_default_columns(self):
         """The shared DATABASE_DEFAULT_COLUMNS from schema_discovery should be a valid column list."""

@@ -11,10 +11,14 @@ Data requests and cached HTML responses served by the Pages Router are not retur
 - Data requests (`/_next/data/`) should return with `Content-Length` and `ETag` headers
 - Cached HTML responses should also include these headers
 
+## Key Mechanism
+
+In `render-result.ts`, the `RenderResult` class has an `isDynamic` getter that returns `true` when the response is not a string (e.g., a `Buffer` or stream). When `isDynamic` is `true`, the server skips setting `Content-Length` and `ETag` headers on the response. Understanding what causes `isDynamic` to return `true` for data requests and cached HTML responses is key to diagnosing and fixing this bug.
+
 ## Files to Examine
 
-- `packages/next/src/server/route-modules/pages/pages-handler.ts` — Pages Router request handler
-- `packages/next/src/server/render-result.ts` — `RenderResult` class definition
+- `packages/next/src/server/route-modules/pages/pages-handler.ts` — Pages Router request handler; look at how `RenderResult` is constructed for data requests and cached HTML responses
+- `packages/next/src/server/render-result.ts` — `RenderResult` class definition, particularly the `isDynamic` getter
 
 ## Additional Task: Update AGENTS.md
 

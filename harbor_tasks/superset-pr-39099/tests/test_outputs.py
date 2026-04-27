@@ -66,9 +66,13 @@ def test_get_foreign_key_names_returns_set():
         {"name": "fk_test_2", "constrained_columns": ["col2"]},
     ]
 
+    # Patch both Inspector.from_engine and inspect so the test works regardless
+    # of whether the implementation uses Inspector.from_engine() or inspect()
     with patch.object(utils, 'op') as mock_op, \
-         patch.object(utils, 'Inspector') as mock_inspector_cls:
+         patch.object(utils, 'Inspector') as mock_inspector_cls, \
+         patch.object(utils, 'inspect', return_value=mock_inspector):
         mock_op.get_bind.return_value = mock_connection
+        mock_op.get_context.return_value.bind = mock_connection
         mock_inspector_cls.from_engine.return_value = mock_inspector
 
         result = utils.get_foreign_key_names("test_table")
@@ -92,8 +96,10 @@ def test_get_foreign_key_names_empty_table():
     mock_inspector.get_foreign_keys.return_value = []
 
     with patch.object(utils, 'op') as mock_op, \
-         patch.object(utils, 'Inspector') as mock_inspector_cls:
+         patch.object(utils, 'Inspector') as mock_inspector_cls, \
+         patch.object(utils, 'inspect', return_value=mock_inspector):
         mock_op.get_bind.return_value = mock_connection
+        mock_op.get_context.return_value.bind = mock_connection
         mock_inspector_cls.from_engine.return_value = mock_inspector
 
         result = utils.get_foreign_key_names("empty_table")
@@ -123,8 +129,10 @@ def test_get_foreign_key_names_multiple_tables():
     mock_inspector.get_foreign_keys = mock_get_fks
 
     with patch.object(utils, 'op') as mock_op, \
-         patch.object(utils, 'Inspector') as mock_inspector_cls:
+         patch.object(utils, 'Inspector') as mock_inspector_cls, \
+         patch.object(utils, 'inspect', return_value=mock_inspector):
         mock_op.get_bind.return_value = mock_connection
+        mock_op.get_context.return_value.bind = mock_connection
         mock_inspector_cls.from_engine.return_value = mock_inspector
 
         result_a = utils.get_foreign_key_names("table_a")
@@ -147,7 +155,6 @@ def test_create_fks_skips_existing_foreign_key():
 
     mock_connection = MagicMock()
     mock_connection.dialect = MagicMock()
-    # Not SQLite dialect - make isinstance return False for SQLiteDialect check
     type(mock_connection.dialect).__name__ = "PostgresDialect"
 
     mock_inspector = MagicMock()
@@ -158,11 +165,13 @@ def test_create_fks_skips_existing_foreign_key():
 
     with patch.object(utils, 'op') as mock_op, \
          patch.object(utils, 'Inspector') as mock_inspector_cls, \
+         patch.object(utils, 'inspect', return_value=mock_inspector), \
          patch.object(utils, 'has_table', return_value=True), \
          patch.object(utils, 'logger') as mock_logger, \
          patch.object(utils, 'SQLiteDialect', MagicMock()):
 
         mock_op.get_bind.return_value = mock_connection
+        mock_op.get_context.return_value.bind = mock_connection
         mock_inspector_cls.from_engine.return_value = mock_inspector
 
         # Call with FK name that already exists
@@ -201,11 +210,13 @@ def test_create_fks_skips_various_existing_fks():
 
         with patch.object(utils, 'op') as mock_op, \
              patch.object(utils, 'Inspector') as mock_inspector_cls, \
+             patch.object(utils, 'inspect', return_value=mock_inspector), \
              patch.object(utils, 'has_table', return_value=True), \
              patch.object(utils, 'logger'), \
              patch.object(utils, 'SQLiteDialect', MagicMock()):
 
             mock_op.get_bind.return_value = mock_connection
+            mock_op.get_context.return_value.bind = mock_connection
             mock_inspector_cls.from_engine.return_value = mock_inspector
 
             utils.create_fks_for_table(
@@ -226,27 +237,26 @@ def test_drop_fks_uses_helper_function():
 
     (fail_to_pass) After refactoring, drop_fks_for_table should call the helper.
     """
-    # Read the source code and verify it calls get_foreign_key_names
-    source = UTILS_PATH.read_text()
+    utils = load_utils_module()
 
-    # Check that drop_fks_for_table calls get_foreign_key_names
-    # Find the function definition
-    lines = source.split('\n')
-    in_drop_fks = False
-    found_helper_call = False
+    # The helper must exist for drop_fks to use it
+    assert hasattr(utils, 'get_foreign_key_names'), \
+        "get_foreign_key_names function not found - drop_fks_for_table should use the shared helper"
 
-    for line in lines:
-        if 'def drop_fks_for_table' in line:
-            in_drop_fks = True
-        elif in_drop_fks and line.startswith('def '):
-            # Reached next function
-            break
-        elif in_drop_fks and 'get_foreign_key_names' in line:
-            found_helper_call = True
-            break
+    mock_connection = MagicMock()
+    mock_connection.dialect = MagicMock()
 
-    assert found_helper_call, \
-        "drop_fks_for_table should use get_foreign_key_names helper"
+    with patch.object(utils, 'op') as mock_op, \
+         patch.object(utils, 'get_foreign_key_names', return_value={"fk_1"}) as mock_helper, \
+         patch.object(utils, 'has_table', return_value=True), \
+         patch.object(utils, 'logger'):
+
+        mock_op.get_bind.return_value = mock_connection
+
+        utils.drop_fks_for_table("test_table")
+
+        # Verify the helper was called with the table name
+        mock_helper.assert_called_with("test_table")
 
 
 # =============================================================================
@@ -354,14 +364,6 @@ def test_repo_ruff_lint():
 
     (pass_to_pass) Ruff linting must pass per repo CI.
     """
-    # First ensure ruff is installed
-    install = subprocess.run(
-        ["pip", "install", "-q", "ruff"],
-        capture_output=True,
-        text=True,
-        timeout=120
-    )
-
     result = subprocess.run(
         ["ruff", "check", str(UTILS_PATH), "--select=E,F,W", "--ignore=E501"],
         capture_output=True,
@@ -378,14 +380,6 @@ def test_repo_ruff_format():
 
     (pass_to_pass) Code must be properly formatted per repo CI.
     """
-    # First ensure ruff is installed
-    install = subprocess.run(
-        ["pip", "install", "-q", "ruff"],
-        capture_output=True,
-        text=True,
-        timeout=120
-    )
-
     result = subprocess.run(
         ["ruff", "format", "--check", str(UTILS_PATH)],
         capture_output=True,

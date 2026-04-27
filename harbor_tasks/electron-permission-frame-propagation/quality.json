@@ -3,55 +3,54 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "Instruction names all four affected files and the specific methods (CheckPermission, CheckMediaAccessPermission, CheckSerialAccessPermission, CanRequestPortPermission) that tests inspect."
+      "reason": "All file paths and function names asserted in tests (WebContentsPermissionHelper::CheckPermission, CheckMediaAccessPermission, CheckSerialAccessPermission, electron_api_web_contents.cc, electron_serial_delegate.cc) are explicitly named in instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "Instruction describes the bug (main frame origin used instead of requesting frame) without specifying exact code changes or signatures."
+      "reason": "Instruction describes the problem (origin should come from requesting frame) without dictating the exact signature change or implementation."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests assert exact literals like 'CheckSerialAccessPermission(frame)', 'requesting_frame->GetLastCommittedOrigin().GetURL().spec()', and exact parameter name 'requesting_frame' as first parameter, forbidding alternative valid names/approaches."
+      "outcome": "pass",
+      "reason": "Tests use flexible regex patterns for parameter names (\\w+) and check for behavioral patterns like GetLastCommittedOrigin().GetURL() rather than exact gold-specific identifiers."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "All f2p tests are regex/substring checks on source files (e.g., 're.search(pattern, content)'); no compilation or runtime behavior is tested \u2014 only clang-format/cpplint subprocess runs."
+      "reason": "All f2p tests use regex/string inspection of source files (read_file + re.search); no test compiles, imports, or executes the modified code."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "Tests require specific signature changes and origin derivation from requesting_frame that a stub cannot satisfy without implementing the fix."
+      "reason": "Tests require specific signature changes (RenderFrameHost* parameter), absence of GetPrimaryMainFrame, and correct call-site propagation which cannot be satisfied by stub."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "Instruction's described behavior (frame origin propagation across the three methods and their callers) is covered by the test assertions."
+      "reason": "Tests cover the three methods mentioned (CheckPermission, CheckMediaAccessPermission, CheckSerialAccessPermission) and their callers in electron_api_web_contents.cc and electron_serial_delegate.cc."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are individually named functions with docstrings labeling F2P/P2P categorization."
+      "reason": "Tests are individually named functions with docstrings marking F2P/P2P status and describing what each verifies."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task is a C++ code fix, no structured data output."
+      "reason": "Task is a C++ code change, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths and method names match between instruction, tests, and solution."
+      "reason": "Filenames and paths in instruction.md match those asserted in tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "Instruction identifies affected files and methods at an appropriate level since localization is part of the task context, without pointing to line numbers."
+      "reason": "Instruction names the affected files/methods (necessary for task scope) but does not specify exact line numbers or the precise code edit."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "Code-only task, no config edits."
+      "reason": "Code-only task, no config edits involved."
     }
   },
   "tier_a_fails": [
-    "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 7,
-  "fail_count": 2
+  "pass_count": 8,
+  "fail_count": 1
 }

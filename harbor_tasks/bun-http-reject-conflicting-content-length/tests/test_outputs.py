@@ -405,7 +405,7 @@ def test_repo_bun_types():
     )
     assert r.returncode == 0, f"bun install failed: {r.stderr[-500:]}"
     r = subprocess.run(
-        ["bunx", "tsc", "--noEmit", "-p", "packages/bun-types/tsconfig.json"],
+        ["npx", "tsc", "--noEmit", "-p", "packages/bun-types/tsconfig.json"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"Bun types check failed:\n{r.stderr[-500:]}"

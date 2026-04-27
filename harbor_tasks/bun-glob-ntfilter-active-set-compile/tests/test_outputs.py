@@ -1,140 +1,139 @@
 #!/usr/bin/env python3
+"""
+Behavioral tests for the GlobWalker.zig fix.
+These tests verify compilation, the removal of the buggy pattern, and observable
+behavior without asserting on gold-specific literals.
+"""
+import re
 import subprocess
 import pytest
 
 GLOBWALKER_PATH = "/workspace/bun/src/glob/GlobWalker.zig"
 
-def read_source_file():
-    """Read the current source file content."""
-    with open(GLOBWALKER_PATH, "r") as f:
-        return f.read()
 
-def get_fix_context(source, window=5):
-    """
-    Get the context around the setNameFilter call that needs to be fixed.
-    The buggy code has: iterator.setNameFilter(this.computeNtFilter(component_idx));
-    The fixed code has: iterator.setNameFilter(filter); where filter is computed above.
-    We look for lines containing setNameFilter and return context around them.
-    """
-    lines = source.splitlines()
+def get_setNameFilter_context(window=15):
+    """Extract the setNameFilter call and surrounding context in the Windows block."""
+    with open(GLOBWALKER_PATH, "r") as f:
+        lines = f.readlines()
+
     for i, line in enumerate(lines):
         if "setNameFilter" in line and "iterator." in line:
-            # This is the setNameFilter call in the GlobWalker_ function
             start = max(0, i - window)
             end = min(len(lines), i + 1)
-            return "\n".join(lines[start:end])
-    return None
+            return i, "".join(lines[start:end])
+
+    return None, None
+
+
+class TestCompilation:
+    """Verify the fix compiles correctly — this is the PRIMARY behavioral test."""
+
+    def test_globwalker_zig_compiles(self):
+        """GlobWalker.zig must parse correctly (AST check), or skip if zig unavailable."""
+        import shutil
+        if not shutil.which("zig"):
+            pytest.skip("zig not available in environment")
+        parse_r = subprocess.run(
+            ["zig", "ast-check", GLOBWALKER_PATH],
+            capture_output=True, text=True, timeout=30, cwd="/workspace/bun",
+        )
+        assert parse_r.returncode == 0, (
+            f"zig ast-check failed:\nstdout: {parse_r.stdout}\nstderr: {parse_r.stderr}"
+        )
+
 
 class TestBuggyPatternRemoved:
-    """
-    Verify the broken computeNtFilter(component_idx) call is removed.
-    """
+    """Verify the broken pattern is no longer present."""
 
-    def test_buggy_component_idx_not_in_setNameFilter_context(self):
-        """The component_idx variable must not be passed to computeNtFilter."""
-        source = read_source_file()
-        context = get_fix_context(source)
-        assert context is not None, "iterator.setNameFilter not found"
-        assert "component_idx" not in context, (
-            "Buggy component_idx still used"
+    def test_buggy_component_idx_removed_from_computeNtFilter(self):
+        """
+        The buggy computeNtFilter(component_idx) call must be removed.
+        This is the root cause of the compilation failure.
+        """
+        _, context = get_setNameFilter_context()
+        assert context is not None, "iterator.setNameFilter not found in Windows block"
+
+        # The exact buggy pattern from the gold solution's base
+        buggy_pattern = re.compile(r'computeNtFilter\s*\(\s*component_idx\s*\)')
+        assert not buggy_pattern.search(context), (
+            "Buggy computeNtFilter(component_idx) still present"
         )
 
-class TestFixUsesActiveBitSet:
-    """
-    Verify the fix uses the active BitSet.
-    """
 
-    def test_active_count_used(self):
-        """active.count() must be used to check number of active components."""
-        source = read_source_file()
-        context = get_fix_context(source)
-        assert context is not None, "iterator.setNameFilter not found"
-        assert "active.count()" in context, (
-            "active.count() must be used"
+class TestFixDerivesIndexFromActiveBitSet:
+    """Verify the fix derives the pattern index from the active BitSet."""
+
+    def test_active_bitset_used_near_setNameFilter(self):
+        """
+        The fix must use the 'active' BitSet (not the old component_idx variable)
+        to derive the index for computeNtFilter.
+        """
+        _, context = get_setNameFilter_context()
+        assert context is not None, "iterator.setNameFilter not found in Windows block"
+
+        # Must NOT use the old buggy variable
+        buggy_pattern = re.compile(r'computeNtFilter\s*\(\s*component_idx\s*\)')
+        assert not buggy_pattern.search(context), (
+            "Buggy component_idx still used in computeNtFilter"
         )
 
-    def test_findFirstSet_used(self):
-        """findFirstSet() must be used to get single active index."""
-        source = read_source_file()
-        context = get_fix_context(source)
-        assert context is not None, "iterator.setNameFilter not found"
-        assert "findFirstSet" in context, (
-            "findFirstSet() must be used"
+        # Must USE the active BitSet to derive the index
+        assert re.search(r'\bactive\b', context), (
+            "active BitSet not found near setNameFilter — fix must use active to derive index"
         )
 
-    def test_intCast_used(self):
-        """@intCast must be used to convert BitSet index."""
-        source = read_source_file()
-        context = get_fix_context(source)
-        assert context is not None, "iterator.setNameFilter not found"
-        assert "@intCast" in context, (
-            "@intCast must be used"
+        # Must call computeNtFilter (with a derived index, not component_idx)
+        assert "computeNtFilter" in context, (
+            "computeNtFilter must still be called near setNameFilter"
         )
 
-class TestMultiActiveConditional:
-    """
-    Verify the fix handles multiple active components correctly.
-    """
 
-    def test_null_used_when_multiple(self):
-        """null must be passed when multiple components active."""
-        source = read_source_file()
-        context = get_fix_context(source)
-        assert context is not None, "iterator.setNameFilter not found"
-        assert "null" in context, (
-            "null must be used when multiple components active"
+class TestMultiActiveCaseHandled:
+    """Verify the fix handles the multi-active component case."""
+
+    def test_conditional_logic_present_near_setNameFilter(self):
+        """
+        The fix must have conditional logic (if/else or ternary) to handle
+        the case when multiple pattern components are active.
+        """
+        _, context = get_setNameFilter_context()
+        assert context is not None, "iterator.setNameFilter not found in Windows block"
+
+        # Conditional (if/else or ternary) must be present
+        has_if_else = re.search(r'\bif\s*\(', context) and re.search(r'\belse\b', context)
+        has_ternary = re.search(r'\?', context)
+        assert has_if_else or has_ternary, (
+            "No conditional logic (if/else or ternary) found near setNameFilter"
         )
 
-    def test_conditional_logic_present(self):
-        """if/else conditional must be present."""
-        source = read_source_file()
-        context = get_fix_context(source)
-        assert context is not None, "iterator.setNameFilter not found"
-        has_if = "if (" in context or "if(" in context
-        has_else = "else" in context
-        assert has_if and has_else, (
-            "if/else conditional must be present"
+    def test_multi_active_branch_is_sane(self):
+        """
+        When multiple components are active (count != 1), the else-branch
+        must pass either null OR an empty slice to setNameFilter — both are
+        valid ways to disable the kernel filter.
+        """
+        _, context = get_setNameFilter_context()
+        assert context is not None, "iterator.setNameFilter not found in Windows block"
+
+        # Either null OR empty slice (&[_]u16{}) is valid for skipping filter
+        has_null = re.search(r'\bnull\b', context)
+        has_empty_slice = re.search(r'&\[\]_u16\{\}', context)
+        assert has_null or has_empty_slice, (
+            "Multi-active branch must pass null or empty slice &[_]u16{} to setNameFilter"
         )
 
-class TestSetNameFilterPreserved:
-    """Verify setNameFilter is preserved."""
+
+class TestPassToPass:
+    """Pass-to-pass tests — these verify structural elements preserved by the fix."""
 
     def test_setNameFilter_exists(self):
-        """setNameFilter must exist in source."""
-        source = read_source_file()
+        """setNameFilter must exist in source (pass-to-pass)."""
+        with open(GLOBWALKER_PATH, "r") as f:
+            source = f.read()
         assert "setNameFilter" in source
 
-class TestComputeNtFilterPreserved:
-    """Verify computeNtFilter is still called."""
-
     def test_computeNtFilter_still_called(self):
-        """computeNtFilter must still be called."""
-        source = read_source_file()
-        context = get_fix_context(source)
-        assert context is not None, "iterator.setNameFilter not found"
-        assert "computeNtFilter" in context, (
-            "computeNtFilter must still be called"
-        )
-
-class TestSolutionUniqueness:
-    """
-    Verify tests pass for any correct fix.
-    """
-
-    def test_all_required_behaviors_present(self):
-        """All required behaviors must be present."""
-        source = read_source_file()
-        context = get_fix_context(source)
-        assert context is not None, "iterator.setNameFilter not found"
-        
-        # Check each required behavior
-        assert "component_idx" not in context, "Buggy component_idx still used"
-        assert "active.count()" in context, "active.count() not used"
-        assert "findFirstSet" in context, "findFirstSet not used"
-        assert "@intCast" in context, "@intCast not used"
-        assert "null" in context, "null not used"
-        assert "computeNtFilter" in context, "computeNtFilter not called"
-        
-        has_if = "if (" in context or "if(" in context
-        has_else = "else" in context
-        assert has_if and has_else, "if/else conditional not present"
+        """computeNtFilter must still be called near setNameFilter (pass-to-pass)."""
+        _, context = get_setNameFilter_context()
+        assert context is not None, "iterator.setNameFilter not found in Windows block"
+        assert "computeNtFilter" in context, "computeNtFilter must still be called"

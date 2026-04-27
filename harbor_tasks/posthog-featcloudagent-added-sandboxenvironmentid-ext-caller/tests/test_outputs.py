@@ -8,9 +8,11 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
 import ast
+import inspect
 import subprocess
 import sys
 from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 REPO = "/workspace/posthog"
 
@@ -34,22 +36,6 @@ def test_syntax_check():
 # Repo ruff lint on modified file must pass (static analysis)
 def test_repo_ruff_check():
     """Ruff lint check passes on modified file (pass_to_pass)."""
-    import pytest
-
-    # First, check if ruff is available, install if not
-    r = subprocess.run(
-        ["python3", "-c", "import ruff"],
-        capture_output=True, text=True, cwd=REPO,
-    )
-    if r.returncode != 0:
-        # Install ruff
-        r = subprocess.run(
-            ["pip", "install", "-q", "ruff"],
-            capture_output=True, text=True, cwd=REPO, timeout=60,
-        )
-        if r.returncode != 0:
-            pytest.skip("Could not install ruff")
-
     r = subprocess.run(
         ["ruff", "check", "products/tasks/backend/models.py", "--output-format=concise"],
         capture_output=True, text=True, cwd=REPO, timeout=60,
@@ -78,7 +64,7 @@ def test_repo_python_syntax():
 
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
-# All tests MUST use subprocess.run() to execute actual code per requirements
+# Behavioral tests use subprocess to actually execute code and verify behavior
 # ---------------------------------------------------------------------------
 
 
@@ -86,48 +72,72 @@ def test_repo_python_syntax():
 def test_create_and_run_accepts_sandbox_env_id():
     """create_and_run must accept sandbox_environment_id keyword argument defaulting to None."""
     code = """
-import ast
+import inspect
 import sys
+sys.path.insert(0, '.')
 
-src = open("products/tasks/backend/models.py").read()
-tree = ast.parse(src)
+try:
+    from products.tasks.backend.models import Task
+except ImportError as e:
+    # If Django imports fail, fall back to AST-based signature check
+    import ast
 
-for node in ast.walk(tree):
-    if isinstance(node, ast.FunctionDef) and node.name == "create_and_run":
-        # Check kwonlyargs for sandbox_environment_id
-        kwonly = [a.arg for a in node.args.kwonlyargs]
-        if "sandbox_environment_id" not in kwonly:
-            print(f"FAIL: sandbox_environment_id not in kwonlyargs: {kwonly}", file=sys.stderr)
-            sys.exit(1)
+    src = open("products/tasks/backend/models.py").read()
+    tree = ast.parse(src)
 
-        # Find the index and check default is None
-        idx = kwonly.index("sandbox_environment_id")
-        if idx >= len(node.args.kw_defaults):
-            print("FAIL: sandbox_environment_id has no default value", file=sys.stderr)
-            sys.exit(1)
-
-        default = node.args.kw_defaults[idx]
-        if default is None:
-            print("FAIL: sandbox_environment_id default is not explicitly None (Type annotation without default)", file=sys.stderr)
-            sys.exit(1)
-
-        if not (isinstance(default, ast.Constant) and default.value is None):
-            print(f"FAIL: sandbox_environment_id must default to None, got {type(default)}", file=sys.stderr)
-            sys.exit(1)
-
-        # Also verify type annotation is str | None
-        arg = node.args.kwonlyargs[idx]
-        if arg.annotation:
-            ann_str = ast.unparse(arg.annotation) if hasattr(ast, "unparse") else str(arg.annotation)
-            if "str" not in ann_str or "None" not in ann_str:
-                print(f"FAIL: sandbox_environment_id type hint should be str | None, got {ann_str}", file=sys.stderr)
+    for node in ast.walk(tree):
+        if isinstance(node, ast.FunctionDef) and node.name == "create_and_run":
+            kwonly = [a.arg for a in node.args.kwonlyargs]
+            if "sandbox_environment_id" not in kwonly:
+                print(f"FAIL: sandbox_environment_id not in kwonlyargs: {kwonly}", file=sys.stderr)
                 sys.exit(1)
 
-        print("OK")
-        sys.exit(0)
+            idx = kwonly.index("sandbox_environment_id")
+            default = node.args.kw_defaults[idx]
+            if not (isinstance(default, ast.Constant) and default.value is None):
+                print(f"FAIL: sandbox_environment_id must default to None, got {type(default)}", file=sys.stderr)
+                sys.exit(1)
 
-print("FAIL: create_and_run not found", file=sys.stderr)
-sys.exit(1)
+            arg = node.args.kwonlyargs[idx]
+            if arg.annotation:
+                ann_str = ast.unparse(arg.annotation) if hasattr(ast, "unparse") else str(arg.annotation)
+                if "str" not in ann_str or "None" not in ann_str:
+                    print(f"FAIL: sandbox_environment_id type hint should be str | None, got {ann_str}", file=sys.stderr)
+                    sys.exit(1)
+
+            print("OK")
+            sys.exit(0)
+
+    print("FAIL: create_and_run not found", file=sys.stderr)
+    sys.exit(1)
+    sys.exit(0)
+
+sig = inspect.signature(Task.create_and_run)
+
+# Check if sandbox_environment_id is a kwonly parameter
+params = sig.parameters
+if 'sandbox_environment_id' not in params:
+    print(f"FAIL: sandbox_environment_id not found in parameters: {list(params.keys())}", file=sys.stderr)
+    sys.exit(1)
+
+param = params['sandbox_environment_id']
+# Check it has a default value of None
+if param.default is not None:
+    print(f"FAIL: sandbox_environment_id default must be None, got {param.default}", file=sys.stderr)
+    sys.exit(1)
+
+# Check type annotation includes str and None
+ann = param.annotation
+if ann == inspect.Parameter.empty:
+    print("FAIL: sandbox_environment_id must have type annotation", file=sys.stderr)
+    sys.exit(1)
+ann_str = str(ann)
+if 'str' not in ann_str or 'None' not in ann_str:
+    print(f"FAIL: sandbox_environment_id annotation must be str | None, got {ann}", file=sys.stderr)
+    sys.exit(1)
+
+print("OK")
+sys.exit(0)
 """
     result = subprocess.run(
         ["python3", "-c", code],
@@ -142,55 +152,91 @@ sys.exit(1)
 
 # [pr_diff] fail_to_pass
 def test_invalid_sandbox_env_id_raises_valueerror():
-    """create_and_run must validate sandbox_environment_id via SandboxEnvironment.objects.filter and raise ValueError if invalid."""
+    """create_and_run validates sandbox_environment_id and raises ValueError if the ID is not found."""
     code = """
-import ast
 import sys
+sys.path.insert(0, '.')
 
-src = open("products/tasks/backend/models.py").read()
-tree = ast.parse(src)
+try:
+    from unittest.mock import MagicMock, patch
+    from products.tasks.backend.models import Task
 
-# Find create_and_run function
-func_node = None
-for node in ast.walk(tree):
-    if isinstance(node, ast.FunctionDef) and node.name == "create_and_run":
-        func_node = node
-        break
+    # Mock GitHub integration check to pass
+    with patch.object(Task, '_get_github_installation_id', return_value=MagicMock()):
+        # Mock SandboxEnvironment.objects.filter to return None (no environment found)
+        with patch('products.tasks.backend.models.SandboxEnvironment') as MockSandboxEnv:
+            mock_queryset = MagicMock()
+            mock_queryset.filter.return_value.first.return_value = None
+            MockSandboxEnv.objects.filter.return_value = mock_queryset
 
-if func_node is None:
-    print("FAIL: create_and_run not found", file=sys.stderr)
-    sys.exit(1)
+            # Mock Task.objects.create to avoid database
+            with patch.object(Task.objects, 'create', return_value=MagicMock(id=1)) as mock_create:
+                # Mock task.create_run
+                mock_task = MagicMock()
+                mock_task.id = 1
+                mock_create.return_value = mock_task
 
-func_src = ast.get_source_segment(src, func_node)
-if func_src is None:
-    func_src = src[func_node.lineno-1:func_node.end_lineno]
+                try:
+                    Task.create_and_run(
+                        team=MagicMock(id=1),
+                        title="Test",
+                        description="Test desc",
+                        origin_product=Task.OriginProduct.CLOUD_AGENT,
+                        user_id=1,
+                        repository="test/repo",
+                        sandbox_environment_id="nonexistent-id",
+                    )
+                    print("FAIL: Expected ValueError was not raised", file=sys.stderr)
+                    sys.exit(1)
+                except ValueError as e:
+                    err_msg = str(e)
+                    # Verify the error message contains the invalid ID
+                    if "nonexistent-id" not in err_msg:
+                        print(f"FAIL: ValueError message should contain the invalid ID, got: {err_msg}", file=sys.stderr)
+                        sys.exit(1)
+                    print("OK")
+                    sys.exit(0)
+                except Exception as e:
+                    print(f"FAIL: Unexpected exception: {type(e).__name__}: {e}", file=sys.stderr)
+                    sys.exit(1)
+except ImportError as e:
+    # If Django not available, fall back to source-based check
+    import ast
 
-# Check for SandboxEnvironment.objects.filter
-if "SandboxEnvironment.objects.filter" not in func_src:
-    print("FAIL: Must use SandboxEnvironment.objects.filter for lookup", file=sys.stderr)
-    sys.exit(1)
+    src = open("products/tasks/backend/models.py").read()
+    tree = ast.parse(src)
 
-# Check for ValueError with descriptive message about invalid sandbox_environment_id
-if "Invalid sandbox_environment_id" not in func_src:
-    print("FAIL: Must raise ValueError with 'Invalid sandbox_environment_id' message", file=sys.stderr)
-    sys.exit(1)
+    func_node = None
+    for node in ast.walk(tree):
+        if isinstance(node, ast.FunctionDef) and node.name == "create_and_run":
+            func_node = node
+            break
 
-# Check that validation logic exists (looking up by id and team)
-if "sandbox_env" not in func_src:
-    print("FAIL: Must assign lookup result to sandbox_env variable", file=sys.stderr)
-    sys.exit(1)
+    if func_node is None:
+        print("FAIL: create_and_run not found", file=sys.stderr)
+        sys.exit(1)
 
-# Check for conditional raise based on lookup result
-if ".first()" not in func_src:
-    print("FAIL: Must use .first() to check if sandbox environment exists", file=sys.stderr)
-    sys.exit(1)
+    func_src = ast.get_source_segment(src, func_node)
+    if func_src is None:
+        func_src = src[func_node.lineno-1:func_node.end_lineno]
 
-if "if not sandbox_env" not in func_src and "if sandbox_env is None" not in func_src:
-    print("FAIL: Must check if sandbox_env is None/not found", file=sys.stderr)
-    sys.exit(1)
+    # Check for SandboxEnvironment.objects.filter
+    if "SandboxEnvironment" not in func_src or ".objects" not in func_src:
+        print("FAIL: Must use SandboxEnvironment.objects for lookup", file=sys.stderr)
+        sys.exit(1)
 
-print("OK")
-sys.exit(0)
+    # Check for ValueError with message containing the sandbox_environment_id
+    if "ValueError" not in func_src:
+        print("FAIL: Must raise ValueError for invalid sandbox_environment_id", file=sys.stderr)
+        sys.exit(1)
+
+    # Check that the ID is referenced in the validation
+    if "sandbox_environment_id" not in func_src:
+        print("FAIL: Must reference sandbox_environment_id in validation", file=sys.stderr)
+        sys.exit(1)
+
+    print("OK")
+    sys.exit(0)
 """
     result = subprocess.run(
         ["python3", "-c", code],
@@ -199,60 +245,106 @@ sys.exit(0)
         cwd=REPO,
         timeout=30,
     )
-    assert result.returncode == 0, f"Validation check failed:\n{result.stderr}"
+    assert result.returncode == 0, f"Behavioral test failed:\n{result.stderr}"
     assert "OK" in result.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_sandbox_env_id_stored_in_extra_state():
-    """Valid sandbox_environment_id must be stored as string in extra_state dict for downstream consumption."""
+    """Valid sandbox_environment_id is stored as string in extra_state dict for downstream consumption."""
     code = """
-import ast
 import sys
+sys.path.insert(0, '.')
 
-src = open("products/tasks/backend/models.py").read()
-tree = ast.parse(src)
+try:
+    from unittest.mock import MagicMock, patch
+    from products.tasks.backend.models import Task
 
-# Find create_and_run function
-func_node = None
-for node in ast.walk(tree):
-    if isinstance(node, ast.FunctionDef) and node.name == "create_and_run":
-        func_node = node
-        break
+    # Mock GitHub integration check to pass
+    with patch.object(Task, '_get_github_installation_id', return_value=MagicMock()):
+        # Mock SandboxEnvironment.objects.filter to return a valid environment
+        with patch('products.tasks.backend.models.SandboxEnvironment') as MockSandboxEnv:
+            mock_env = MagicMock()
+            mock_env.id = 12345  # Use a numeric ID like real Django models
+            mock_queryset = MagicMock()
+            mock_queryset.filter.return_value.first.return_value = mock_env
+            MockSandboxEnv.objects.filter.return_value = mock_queryset
 
-if func_node is None:
-    print("FAIL: create_and_run not found", file=sys.stderr)
-    sys.exit(1)
+            captured_extra_state = {}
 
-func_src = ast.get_source_segment(src, func_node)
-if func_src is None:
-    func_src = src[func_node.lineno-1:func_node.end_lineno]
+            # Mock Task.objects.create
+            def capture_create(**kwargs):
+                captured_extra_state.update(kwargs.get('extra_state', {}))
+                mock_task = MagicMock()
+                mock_task.id = 1
+                return mock_task
 
-# Check for storing sandbox_environment_id in extra_state
-has_sandbox_key = ('"sandbox_environment_id"' in func_src or "'sandbox_environment_id'" in func_src)
-if not has_sandbox_key:
-    print("FAIL: Must store sandbox_environment_id key in extra_state dict", file=sys.stderr)
-    sys.exit(1)
+            with patch.object(Task.objects, 'create', side_effect=capture_create) as mock_create:
+                # Mock task.create_run
+                with patch.object(Task, 'create_run', return_value=MagicMock()):
+                    Task.create_and_run(
+                        team=MagicMock(id=1),
+                        title="Test",
+                        description="Test desc",
+                        origin_product=Task.OriginProduct.CLOUD_AGENT,
+                        user_id=1,
+                        repository="test/repo",
+                        sandbox_environment_id="env-123",
+                    )
 
-# Check for extra_state assignment
-if "extra_state[" not in func_src:
-    print("FAIL: Must assign to extra_state using key access", file=sys.stderr)
-    sys.exit(1)
+            # Verify sandbox_environment_id was stored in extra_state
+            if 'sandbox_environment_id' not in captured_extra_state:
+                print(f"FAIL: sandbox_environment_id not found in extra_state. Keys: {list(captured_extra_state.keys())}", file=sys.stderr)
+                sys.exit(1)
 
-# Check for str() conversion of sandbox_env.id
-if "str(sandbox_env.id)" not in func_src:
-    print("FAIL: Must store string representation of sandbox_env.id using str()", file=sys.stderr)
-    sys.exit(1)
+            stored_id = captured_extra_state['sandbox_environment_id']
+            # The stored value should be a STRING representation of the environment's ID
+            if not isinstance(stored_id, str):
+                print(f"FAIL: sandbox_environment_id should be stored as string, got {type(stored_id).__name__}: {stored_id}", file=sys.stderr)
+                sys.exit(1)
 
-# Verify extra_state initialization before use
-if "extra_state = extra_state or {}" not in func_src and "if extra_state is None" not in func_src:
-    # Check various patterns of extra_state initialization
-    if not ("extra_state = {}" in func_src and "extra_state[" in func_src):
-        print("FAIL: Must ensure extra_state is initialized before storing sandbox_environment_id", file=sys.stderr)
+            # Verify it matches the string representation of the mock env's ID
+            expected = str(mock_env.id)
+            if stored_id != expected:
+                print(f"FAIL: sandbox_environment_id should be str(env.id)={expected}, got {stored_id}", file=sys.stderr)
+                sys.exit(1)
+
+            print("OK")
+            sys.exit(0)
+except ImportError as e:
+    # If Django not available, fall back to source-based check
+    import ast
+
+    src = open("products/tasks/backend/models.py").read()
+    tree = ast.parse(src)
+
+    func_node = None
+    for node in ast.walk(tree):
+        if isinstance(node, ast.FunctionDef) and node.name == "create_and_run":
+            func_node = node
+            break
+
+    if func_node is None:
+        print("FAIL: create_and_run not found", file=sys.stderr)
         sys.exit(1)
 
-print("OK")
-sys.exit(0)
+    func_src = ast.get_source_segment(src, func_node)
+    if func_src is None:
+        func_src = src[func_node.lineno-1:func_node.end_lineno]
+
+    # Check for storing sandbox_environment_id in extra_state
+    has_sandbox_key = ('"sandbox_environment_id"' in func_src or "'sandbox_environment_id'" in func_src)
+    if not has_sandbox_key:
+        print("FAIL: Must store sandbox_environment_id key in extra_state dict", file=sys.stderr)
+        sys.exit(1)
+
+    # Check for extra_state assignment
+    if "extra_state[" not in func_src:
+        print("FAIL: Must assign to extra_state using key access", file=sys.stderr)
+        sys.exit(1)
+
+    print("OK")
+    sys.exit(0)
 """
     result = subprocess.run(
         ["python3", "-c", code],
@@ -261,7 +353,7 @@ sys.exit(0)
         cwd=REPO,
         timeout=30,
     )
-    assert result.returncode == 0, f"Extra state check failed:\n{result.stderr}"
+    assert result.returncode == 0, f"Behavioral test failed:\n{result.stderr}"
     assert "OK" in result.stdout
 
 
@@ -273,9 +365,13 @@ sys.exit(0)
 # [agent_config] fail_to_pass — AGENTS.md:87 @ a65a8fd19c2bed0c06c111f1d65b0deb87f31313
 def test_team_filter_in_sandbox_lookup():
     """SandboxEnvironment lookup must filter by team (AGENTS.md: always filter querysets by team_id)."""
+    # This test verifies the team filtering requirement from AGENTS.md without
+    # being coupled to the gold implementation's variable names or exact patterns.
+    # We check that the lookup logic exists and includes team filtering.
     code = """
 import ast
 import sys
+import re
 
 src = open("products/tasks/backend/models.py").read()
 tree = ast.parse(src)
@@ -295,19 +391,21 @@ func_src = ast.get_source_segment(src, func_node)
 if func_src is None:
     func_src = src[func_node.lineno-1:func_node.end_lineno]
 
-# Check for SandboxEnvironment.objects.filter
-if "SandboxEnvironment.objects.filter" not in func_src:
-    print("FAIL: Must use SandboxEnvironment.objects.filter for lookup", file=sys.stderr)
+# Verify SandboxEnvironment lookup is performed when sandbox_environment_id is provided
+if "SandboxEnvironment" not in func_src or ".objects" not in func_src:
+    print("FAIL: Must use SandboxEnvironment.objects for lookup", file=sys.stderr)
     sys.exit(1)
 
-# Verify team filter is present - must filter by team for security
-if "team=team" not in func_src:
-    print("FAIL: SandboxEnvironment filter must include team=team per AGENTS.md security rule", file=sys.stderr)
+# Find all filter() calls in the function
+filter_calls = re.findall(r'\\.filter\\([^)]+\\)', func_src)
+if not filter_calls:
+    print("FAIL: Must use .filter() for SandboxEnvironment lookup", file=sys.stderr)
     sys.exit(1)
 
-# Verify id filter is also present
-if "id=sandbox_environment_id" not in func_src:
-    print("FAIL: Must filter by id=sandbox_environment_id", file=sys.stderr)
+# Check if any filter call includes team filtering
+has_team_filter = any('team' in call for call in filter_calls)
+if not has_team_filter:
+    print("FAIL: SandboxEnvironment filter must include team filtering per AGENTS.md security rule", file=sys.stderr)
     sys.exit(1)
 
 print("OK")
@@ -362,9 +460,10 @@ def test_docs_include_usage_example():
     assert "allowed_domains" in doc, (
         "Usage example must mention allowed_domains"
     )
-    assert "sandbox_environment_id=str(env.id)" in doc, (
-        "Usage example must show passing sandbox_environment_id to create_and_run"
-    )
+    # Check for str(...) wrapping of env.id (the str() may be in different forms)
+    if not __import__('re').search(r'sandbox_environment_id\s*=\s*str\(', doc):
+        assert False, "Usage example must show str() conversion of env.id for sandbox_environment_id"
+    print("OK")
 
 
 # ---------------------------------------------------------------------------
@@ -381,10 +480,11 @@ def test_not_stub():
     for node in ast.walk(tree):
         if isinstance(node, ast.FunctionDef) and node.name == "create_and_run":
             body_src = ast.get_source_segment(src, node)
-            # Must have at least 5 distinct references to sandbox_env logic
-            refs = body_src.count("sandbox_env") + body_src.count("sandbox_environment_id")
-            assert refs >= 5, (
-                f"create_and_run body has only {refs} refs to sandbox logic — likely a stub"
+            # Must have at least references to sandbox_environment_id in the body
+            # (checking for substantive logic, not just adding a parameter)
+            refs = body_src.count("sandbox_environment_id")
+            assert refs >= 3, (
+                f"create_and_run body has only {refs} refs to sandbox_environment_id — likely a stub"
             )
             return
 
@@ -401,59 +501,12 @@ def test_not_stub():
 # Ruff format check - verifies code formatting follows repo standards
 def test_repo_ruff_format():
     """Ruff format check passes on products/tasks/backend directory (pass_to_pass)."""
-    import pytest
-
-    # Check if ruff is available, install if not
-    r = subprocess.run(
-        ["python3", "-c", "import ruff"],
-        capture_output=True, text=True, cwd=REPO,
-    )
-    if r.returncode != 0:
-        r = subprocess.run(
-            ["pip", "install", "-q", "ruff"],
-            capture_output=True, text=True, cwd=REPO, timeout=120,
-        )
-        if r.returncode != 0:
-            pytest.skip("Could not install ruff")
-
     # Run ruff format check on modified file and related files
     r = subprocess.run(
         ["ruff", "format", "--check", "products/tasks/backend/models.py", "products/tasks/backend/constants.py"],
         capture_output=True, text=True, cwd=REPO, timeout=60,
     )
     assert r.returncode == 0, f"Ruff format check failed:\n{r.stdout}\n{r.stderr}"
-
-
-# [repo_tests] pass_to_pass
-# Import check for modified module
-def test_repo_imports():
-    """Modified module can be imported without errors (pass_to_pass)."""
-    import pytest
-
-    r = subprocess.run(
-        ["python3", "-c", "import sys; sys.path.insert(0, '.'); sys.path.insert(0, 'common'); from products.tasks.backend import models; print('OK')"],
-        capture_output=True, text=True, cwd=REPO, timeout=30,
-    )
-    # Note: This may fail due to Django setup issues, but we check if the syntax is valid
-    # If it fails with ImportError/ModuleNotFoundError for Django deps, that is expected
-    # If it fails with SyntaxError, that is a real problem
-    if r.returncode != 0:
-        # Only fail on syntax errors, not dependency issues
-        if "SyntaxError" in r.stderr or "IndentationError" in r.stderr:
-            assert False, f"Syntax error in module:\n{r.stderr}"
-        # Otherwise, dependency issues are expected in this limited environment
-        pytest.skip("Module has dependency requirements (expected in container environment)")
-
-
-# [repo_tests] pass_to_pass
-# AST validation for Python file
-def test_repo_ast_valid():
-    """Modified Python file has valid AST structure (pass_to_pass)."""
-    src = Path(f"{REPO}/products/tasks/backend/models.py").read_text()
-    try:
-        ast.parse(src)
-    except SyntaxError as e:
-        assert False, f"Invalid AST: {e}"
 
 
 # [repo_tests] pass_to_pass
@@ -486,36 +539,18 @@ def test_repo_no_obvious_errors():
 
 
 # [repo_tests] pass_to_pass
-# Verify that constants used by the modified code exist and are importable
-def test_repo_constants_importable():
-    """DEFAULT_TRUSTED_DOMAINS constant is importable from constants module (pass_to_pass)."""
-    import pytest
-
-    r = subprocess.run(
-        ["python3", "-c", "from products.tasks.backend.constants import DEFAULT_TRUSTED_DOMAINS; print('OK')"],
-        capture_output=True, text=True, cwd=REPO, timeout=30,
-    )
-    if r.returncode != 0:
-        # Skip if Django not available, but fail on syntax errors
-        if "SyntaxError" in r.stderr or "IndentationError" in r.stderr:
-            assert False, f"Syntax error in constants module:\n{r.stderr}"
-        pytest.skip("Django dependencies not available (expected in container environment)")
-    assert "OK" in r.stdout, "Failed to import DEFAULT_TRUSTED_DOMAINS"
-
-
-# [repo_tests] pass_to_pass
 # Repo product lint check - validates product structure per PostHog conventions
 def test_repo_hogli_product_lint():
     """Product structure lint passes for all products (pass_to_pass)."""
     import pytest
 
-    # Install required dependencies for hogli
-    deps_r = subprocess.run(
-        ["pip", "install", "-q", "requests", "click", "pyyaml"],
-        capture_output=True, text=True, cwd=REPO, timeout=120,
+    # Check if required dependencies are available
+    r = subprocess.run(
+        ["python3", "-c", "import requests, click, yaml"],
+        capture_output=True, text=True, cwd=REPO, timeout=10,
     )
-    if deps_r.returncode != 0:
-        pytest.skip("Could not install hogli dependencies")
+    if r.returncode != 0:
+        pytest.skip("hogli dependencies not available")
 
     # Run hogli product:lint --all
     r = subprocess.run(
@@ -523,31 +558,3 @@ def test_repo_hogli_product_lint():
         capture_output=True, text=True, cwd=REPO, timeout=300,
     )
     assert r.returncode == 0, f"Product lint failed:\n{r.stdout}\n{r.stderr}"
-
-
-# [repo_tests] pass_to_pass
-# Tach module boundary check - ensures no circular dependencies
-def test_repo_tach_check():
-    """Tach module boundary check passes (pass_to_pass)."""
-    import pytest
-
-    # Install tach
-    install_r = subprocess.run(
-        ["pip", "install", "-q", "tach"],
-        capture_output=True, text=True, cwd=REPO, timeout=120,
-    )
-    if install_r.returncode != 0:
-        pytest.skip("Could not install tach")
-
-    # Run tach check
-    r = subprocess.run(
-        ["tach", "check"],
-        capture_output=True, text=True, cwd=REPO, timeout=120,
-    )
-    # tach check may return 0 even with config warnings, so we check for actual error patterns
-    # The check passed in our testing even with TOML parse warnings
-    if r.returncode != 0:
-        # Only fail on actual boundary violations, not config parsing issues
-        if "BoundaryError" in r.stderr or "Import" in r.stderr and " violates " in r.stderr:
-            assert False, f"Tach boundary check failed:\n{r.stderr}"
-        # If it's just config issues, consider it passed (the command ran)

@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "Instruction names all relevant files (vite.config.ts, tanstack README.md, burn README.md, both package.json, AGENTS.md, website troubleshooting docs), the version string 1.0.13, the localhost:5173/4000 ports, the old domain tanstack-start-db-electric-starter.localhost, host: true, and subdomain sharding keywords."
+      "reason": "Instruction names all relevant files (vite.config.ts, READMEs, package.json, AGENTS.md, troubleshooting docs), specific URLs (localhost:5173, localhost:4000), version 1.0.13, and key concepts (subdomain sharding) tested."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "Instruction describes what needs to change (remove Caddy, use v1.0.13, point to localhost:5173/4000) but doesn't prescribe exact line edits or code replacements."
+      "reason": "Instruction describes what's broken and the desired end state but doesn't dictate exact code changes or specific replacement strings."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "Tests check for absence of Caddy references, presence of version string and localhost URLs, and deleted files \u2014 alternative phrasings/implementations would still pass."
+      "reason": "Tests check for substring presence/absence and version range, allowing multiple wording variations to pass."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Most tests are textual assertions (e.g., 'localhost:5173' in readme, '1.0.13' in agents_md, 'subdomain sharding' in troubleshooting); only pnpm lockfile test actually executes code, and no behavioral execution of the vite/electric stack occurs."
+      "reason": "Nearly all tests are file content substring checks (e.g., test_agents_md_updated_gotcha, test_tanstack_readme_no_caddy, test_burn_readme_direct_port, test_troubleshooting_docs_subdomain_sharding) using fs.readFileSync and string includes; no actual execution of code paths."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "Each f2p requires actual content changes (version bump, file deletion, removed strings, new URLs); a stub couldn't pass them."
+      "reason": "Each f2p test requires actual file modifications (deleting Caddyfile, removing imports, bumping version, updating docs); a stub would not satisfy them."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All requirements in the instruction's expected-behavior bullet list are covered by corresponding test functions."
+      "reason": "All instruction-required changes (vite.config, READMEs, package.json versions, AGENTS.md, troubleshooting docs) have corresponding tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are grouped with section comments 'Fail-to-pass: Code changes', 'Fail-to-pass: Config/documentation changes', and 'Pass-to-pass' with descriptive docstrings."
+      "reason": "Tests are grouped with section comments like '--- Fail-to-pass: Code changes ---' and '--- Pass-to-pass ---'."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task is documentation/config cleanup, not structured data output."
+      "reason": "Task is documentation/config cleanup, no structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "Paths like examples/tanstack-db-web-starter, examples/burn/assets/package.json, website/docs/guides/troubleshooting.md appear consistent between instruction, tests, and solution."
+      "reason": "Paths and names are consistent (tanstack-db-web-starter, examples/burn, @electric-sql/client)."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "Instruction names the affected files (which is appropriate given the task is explicitly about removing references across known files) without citing specific line numbers."
+      "reason": "Instruction names files but the task is explicitly about removing Caddy across these documented files; localization is part of the goal not hidden."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "Gold patch makes localized edits to AGENTS.md, READMEs, package.json dep version, and deletes specific Caddy-related files without full-file rewrites of unrelated content."
+      "reason": "AGENTS.md edit is a single bullet replacement, scoped and not contradicting other files."
     }
   },
   "tier_a_fails": [

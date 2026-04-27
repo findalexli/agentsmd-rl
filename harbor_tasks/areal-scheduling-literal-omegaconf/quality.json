@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "Instruction names SchedulingSpec, areal/api/cli_args.py, ray_placement_strategy, valid values shared/separate/deferred, default shared, ValueError requirement with field name, and AGENTS.md rules."
+      "reason": "instruction.md names SchedulingSpec, areal/api/cli_args.py, ray_placement_strategy field, valid values shared/separate/deferred, default 'shared', ValueError with field name, AGENTS.md rules about wildcard imports, Literal cleanup, print(), and ruff formatting."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "Instruction says to change the type annotation while preserving runtime validation but doesn't specify the exact implementation (e.g., __post_init__ vs validators)."
+      "reason": "Instruction describes the problem (Literal incompatible with omegaconf) and constraints, but doesn't dictate the exact replacement type or the use of __post_init__."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "Tests check behavior (OmegaConf works, ValueError raised, field name in message) not implementation; multiple valid fixes (str+__post_init__, custom validator, etc.) would pass."
+      "reason": "Tests check behavior (OmegaConf works, ValueError raised with field name, valid values accepted, Literal removed if unused) \u2014 alternative fixes (str + validator, Enum-based approach with str alias) would pass."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests instantiate SchedulingSpec, call OmegaConf.structured, run subprocess for ruff/pytest."
+      "reason": "Tests instantiate SchedulingSpec, call OmegaConf.structured, do roundtrip yaml, and run subprocess for ruff/pytest."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "f2p tests require actual ValueError on invalid values and successful OmegaConf.structured call \u2014 stub can't satisfy both."
+      "reason": "f2p tests require actual behavior: OmegaConf.structured succeeds, invalid values raise ValueError matching 'ray_placement_strategy', and yaml roundtrip preserves values \u2014 a stub couldn't satisfy these."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All four behavioral requirements from instruction (omegaconf works, valid values, ValueError with field name, default shared) are tested."
+      "reason": "All instruction requirements (omegaconf works, valid values, ValueError with field name, default 'shared', no wildcard, no print, ruff, Literal cleanup) are tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests grouped by section headers (Gates, Fail-to-pass, Pass-to-pass, Config-derived, Repo CI/CD) with comments."
+      "reason": "Tests are grouped with section comments (Gates, Fail-to-pass, Pass-to-pass, Config-derived, Repo CI/CD) and tagged with [pr_diff]/[agent_config]/[repo_tests]."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "No structured data output produced."
+      "reason": "Task does not produce structured data outputs."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "Paths and names consistent across instruction, tests, and solution."
+      "reason": "Filenames and identifiers consistent across instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "Instruction identifies the SchedulingSpec class and ray_placement_strategy field which is the task scope, but does not state the specific fix line or patch."
+      "reason": "Instruction names the file and field, which is necessary for the bug report; doesn't reveal exact line numbers or replacement code."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "Code-only task, not an agentmd-edits config task."
+      "reason": "This is a code-fix task, not an agentmd config edit task."
     }
   },
   "tier_a_fails": [],

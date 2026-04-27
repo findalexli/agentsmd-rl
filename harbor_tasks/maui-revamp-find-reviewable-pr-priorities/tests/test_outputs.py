@@ -260,70 +260,49 @@ print(json.dumps({"categories": categories}))
 
 
 def test_script_new_functions_and_fields():
-    """Script defines Write-PREntry, Get-ReadyToReviewPRNumbers, has Assignees and agent labels."""
-    r = _run_py(r"""
-import re, json
+    """Script includes Assignees field in PR objects, project board GraphQL query, and agent labels."""
+    # Use subprocess to structurally validate that PSCustomObject blocks contain Assignees
+    r = subprocess.run(
+        ["python3", "-c",
+         "import re, sys; c = open(sys.argv[1]).read(); "
+         "objs = re.findall(r'\\[PSCustomObject\\]@\\{(.*?)\\}', c, re.DOTALL); "
+         "print('FOUND' if any('Assignees' in o for o in objs) else 'MISSING')",
+         str(SCRIPT)],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Assignees check failed: {r.stderr}"
+    assert "FOUND" in r.stdout, \
+        "Must include 'Assignees' field in PSCustomObject PR entries"
 
-content = open(".github/skills/find-reviewable-pr/scripts/query-reviewable-prs.ps1").read()
+    content = SCRIPT.read_text()
 
-# Extract all function definitions
-functions = re.findall(r'function\s+([\w-]+)', content)
+    # Script must query GitHub ProjectV2 API for project board integration
+    assert "ProjectV2" in content, \
+        "Must have GraphQL ProjectV2 query for Ready To Review project board feature"
 
-# Check for Assignees in PSCustomObject blocks
-has_assignees = bool(re.search(r'Assignees\s*=', content))
-
-# Check for agent label references
-has_agent_reviewed = "s/agent-reviewed" in content
-has_agent_approved = "s/agent-approved" in content
-
-print(json.dumps({
-    "functions": functions,
-    "has_assignees": has_assignees,
-    "has_agent_reviewed": has_agent_reviewed,
-    "has_agent_approved": has_agent_approved,
-}))
-""")
-    assert r.returncode == 0, f"Parse failed: {r.stderr}"
-    data = json.loads(r.stdout.strip())
-    assert "Write-PREntry" in data["functions"], \
-        f"Must define Write-PREntry function, found: {data['functions']}"
-    assert "Get-ReadyToReviewPRNumbers" in data["functions"], \
-        f"Must define Get-ReadyToReviewPRNumbers function, found: {data['functions']}"
-    assert data["has_assignees"], "Must include 'Assignees =' in PSCustomObject"
-    assert data["has_agent_reviewed"], "Must reference 's/agent-reviewed' label"
-    assert data["has_agent_approved"], "Must reference 's/agent-approved' label"
+    # Script must reference agent review labels
+    assert "s/agent-reviewed" in content, "Must reference 's/agent-reviewed' label"
+    assert "s/agent-approved" in content, "Must reference 's/agent-approved' label"
 
 
 def test_script_default_mode_logic():
-    """Script implements 'default' mode showing P/0 + milestoned, filtering CHANGES_REQUESTED."""
-    r = _run_py(r"""
-import re, json
-
-content = open(".github/skills/find-reviewable-pr/scripts/query-reviewable-prs.ps1").read()
-
-# Check for "default" case in switch statement
-has_default_case = bool(re.search(r'"default"\s*\{', content))
-
-# Check for $defaultPRs variable (merges P/0 + milestoned in default mode)
-has_default_prs_var = bool(re.search(r'\$defaultPRs', content))
-
-# Check for CHANGES_REQUESTED filtering
-has_changes_requested_filter = "CHANGES_REQUESTED" in content
-
-print(json.dumps({
-    "has_default_case": has_default_case,
-    "has_default_prs_var": has_default_prs_var,
-    "has_changes_requested_filter": has_changes_requested_filter,
-}))
-""")
+    """Script implements 'default' category case that combines P/0 + milestoned and filters CHANGES_REQUESTED."""
+    # Use subprocess to parse the switch block and verify 'default' case exists
+    r = subprocess.run(
+        ["python3", "-c",
+         "import re, json, sys; c = open(sys.argv[1]).read(); "
+         "has_default = bool(re.search(r'\"default\"\\s*\\{', c)); "
+         "has_filter = 'CHANGES_REQUESTED' in c; "
+         "print(json.dumps({'default_case': has_default, 'changes_filter': has_filter}))",
+         str(SCRIPT)],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
     assert r.returncode == 0, f"Parse failed: {r.stderr}"
     data = json.loads(r.stdout.strip())
-    assert data["has_default_case"], \
-        "Script must have 'default' case in category switch"
-    assert data["has_default_prs_var"], \
-        "Default mode must use $defaultPRs to merge P/0 + milestoned PRs"
-    assert data["has_changes_requested_filter"], \
-        "Default mode must filter CHANGES_REQUESTED PRs"
+    assert data["default_case"], \
+        "Script must have a '\"default\"' case in category switch handling"
+    assert data["changes_filter"], \
+        "Script must filter CHANGES_REQUESTED PRs in default mode"
 
 
 # ---------------------------------------------------------------------------

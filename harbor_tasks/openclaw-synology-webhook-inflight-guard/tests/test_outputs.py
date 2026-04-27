@@ -319,7 +319,8 @@ process.exit(1);
         r"(?:begin|guard|acquire)\w*(?:Pipeline|Request|Webhook)\w*(?:OrReject)?\s*\(", handler_body.group()
     )
     assert guard_call, "No guard call in handler"
-    args = guard_call.group(1)
+    # Extract the argument block following the opening paren
+    args = handler_body.group()[guard_call.end():guard_call.end() + 500]
     assert re.search(r"[Kk]ey.*account[Ii]d", args) or re.search(
         r"[Kk]ey.*\w+\(\s*account\b", args
     ), "In-flight key does not use accountId"
@@ -345,11 +346,7 @@ def test_upstream_vitest_passes(vitest_behavioral):
          "--reporter=verbose"],
         cwd=REPO, capture_output=True, text=True, timeout=60,
     )
-    output = r.stdout + r.stderr
-    passed = r.returncode == 0 or (
-        "Tests" in output and "passed" in output and "FAIL" not in output
-    )
-    assert passed, f"Vitest failed:\n{output[-1000:]}"
+    assert r.returncode == 0, f"Vitest failed:\n{(r.stdout + r.stderr)[-1000:]}"
 
 
 # [repo_tests] pass_to_pass
@@ -360,11 +357,7 @@ def test_repo_core_tests():
          "--reporter=verbose"],
         cwd=REPO, capture_output=True, text=True, timeout=60,
     )
-    output = r.stdout + r.stderr
-    passed = r.returncode == 0 or (
-        "Tests" in output and "passed" in output and "FAIL" not in output
-    )
-    assert passed, f"Core tests failed:\n{output[-1000:]}"
+    assert r.returncode == 0, f"Core tests failed:\n{(r.stdout + r.stderr)[-1000:]}"
 
 
 # [repo_tests] pass_to_pass
@@ -375,11 +368,7 @@ def test_repo_client_tests():
          "--reporter=verbose"],
         cwd=REPO, capture_output=True, text=True, timeout=60,
     )
-    output = r.stdout + r.stderr
-    passed = r.returncode == 0 or (
-        "Tests" in output and "passed" in output and "FAIL" not in output
-    )
-    assert passed, f"Client tests failed:\n{output[-1000:]}"
+    assert r.returncode == 0, f"Client tests failed:\n{(r.stdout + r.stderr)[-1000:]}"
 
 
 # [repo_tests] pass_to_pass
@@ -390,11 +379,7 @@ def test_repo_channel_tests():
          "--reporter=verbose"],
         cwd=REPO, capture_output=True, text=True, timeout=60,
     )
-    output = r.stdout + r.stderr
-    passed = r.returncode == 0 or (
-        "Tests" in output and "passed" in output and "FAIL" not in output
-    )
-    assert passed, f"Channel tests failed:\n{output[-1000:]}"
+    assert r.returncode == 0, f"Channel tests failed:\n{(r.stdout + r.stderr)[-1000:]}"
 
 
 # [repo_tests] pass_to_pass
@@ -405,23 +390,23 @@ def test_repo_approval_auth_tests():
          "--reporter=verbose"],
         cwd=REPO, capture_output=True, text=True, timeout=60,
     )
-    output = r.stdout + r.stderr
-    passed = r.returncode == 0 or (
-        "Tests" in output and "passed" in output and "FAIL" not in output
-    )
-    assert passed, f"Approval-auth tests failed:\n{output[-1000:]}"
+    assert r.returncode == 0, f"Approval-auth tests failed:\n{(r.stdout + r.stderr)[-1000:]}"
 
 
 # [repo_tests] pass_to_pass
 def test_repo_oxlint():
     """oxlint passes on modified synology-chat files (pass_to_pass)."""
+    # The repo .oxlintrc.json ignores extensions/; use a minimal config to lint them directly.
+    minimal_cfg = Path("/tmp/_oxlint_ext.json")
+    minimal_cfg.write_text('{}')
     r = subprocess.run(
-        ["npx", "oxlint",
+        ["npx", "oxlint", "-c", str(minimal_cfg),
          "extensions/synology-chat/src/webhook-handler.ts",
          "extensions/synology-chat/src/test-http-utils.ts"],
         cwd=REPO, capture_output=True, text=True, timeout=30,
     )
-    assert r.returncode == 0, f"oxlint failed:\n{r.stderr[-500:]}"
+    minimal_cfg.unlink(missing_ok=True)
+    assert r.returncode == 0, f"oxlint failed:\n{(r.stdout + r.stderr)[-500:]}"
 
 
 # [repo_tests] pass_to_pass

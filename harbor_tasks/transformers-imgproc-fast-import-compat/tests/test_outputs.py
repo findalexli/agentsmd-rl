@@ -185,10 +185,13 @@ def test_repo_import_transformers():
 
 # [pr_diff] pass_to_pass
 def test_direct_import_image_processing_backends():
-    """Direct import from image_processing_backends still works."""
+    """Direct import from image_processing_backends still works and provides a real class."""
+    import inspect
+
     from transformers.image_processing_backends import TorchvisionBackend
 
-    assert TorchvisionBackend is not None
+    assert inspect.isclass(TorchvisionBackend), "TorchvisionBackend should be a class"
+    assert hasattr(TorchvisionBackend, "to_dict"), "TorchvisionBackend missing to_dict method"
 
 
 # ---------------------------------------------------------------------------

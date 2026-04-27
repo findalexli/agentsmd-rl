@@ -1,11 +1,11 @@
 #!/bin/bash
-# Standard test runner - DO NOT MODIFY
+# Standard test runner
 # Runs test_outputs.py and writes binary reward
 
 set -e
 
 # Install pytest if not available
-pip3 install pytest -q 2>/dev/null || true
+pip3 install pytest -q 2>/dev/null
 
 # Run pytest and capture exit code
 cd /tests
@@ -19,7 +19,6 @@ else
     echo "0" > /logs/verifier/reward.txt
 fi
 
-# exit 0   # auto-disabled (prevented judge block from running)
 # --- LLM Judge (Track 3 + Track 4) ---
 if [ -f /tests/eval_manifest.yaml ] && [ -f /tests/standalone_judge.py ]; then
     # Capture agent diff

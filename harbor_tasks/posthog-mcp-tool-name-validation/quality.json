@@ -3,54 +3,52 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "Instruction names all file paths, constant names (TOOL_NAME_PATTERN, FEATURE_NAME_PATTERN, MAX_TOOL_NAME_LENGTH implied via '52'), TOOL_MAP, GENERATED_TOOL_MAP, schema key CategoryConfigSchema validation, JSON filenames, and documentation heading keywords."
+      "reason": "Instruction names all key files (yaml-config-schema.ts, lint-tool-names.ts, tool-name-validation.test.ts, SKILL.md, handbook md), constants TOOL_NAME_PATTERN/FEATURE_NAME_PATTERN (implicitly via behavior), length 52, accept/reject examples, TOOL_MAP/GENERATED_TOOL_MAP."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "Instruction describes required behaviors and constraints without dictating exact code changes or line edits."
+      "reason": "Instruction describes required behavior and constraints, not exact code or line edits."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests assert specific identifier names like TOOL_NAME_PATTERN, FEATURE_NAME_PATTERN, MAX_TOOL_NAME_LENGTH via substring checks; an alternative correct implementation using different names (e.g., TOOL_NAME_REGEX) would fail test_tool_name_pattern_validation and test_vitest_file_created."
+      "outcome": "pass",
+      "reason": "Tests check regex behavior via Node execution and substring presence of constant names mandated by the spec; alternative valid implementations that satisfy the naming/length rules would still pass."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests execute pnpm typecheck/build/test/lint-tool-names and run Node subprocesses to exercise the regex patterns, beyond simple text grep."
+      "reason": "Tests run pnpm typecheck/lint/test/build and execute Node to evaluate regex patterns against sample names."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "Behavioral tests extract the regex and test accept/reject cases; lint and unit tests run actual scripts that would fail for stubs."
+      "reason": "Stub implementations would fail: pattern tests require specific accept/reject outcomes, and build/typecheck/lint/unit tests must pass."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "Pattern validation, Zod schema, JSON file linting, unit test creation, and documentation sections are each covered by a test."
+      "reason": "Tests cover pattern constants, zod schema refs, lint JSON validation, vitest file existence, docs updates, and build gates."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are grouped with header comments (Gates, Fail-to-pass behavioral, documentation) and have descriptive names."
+      "reason": "Tests are grouped by section headers (Gates, fail-to-pass behavioral, documentation)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data output."
+      "reason": "No structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "Filenames and identifiers appear consistent between instruction and tests."
+      "reason": "Paths and commands look consistent."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "Instruction points to the right files (appropriate for this task) without revealing exact buggy lines."
+      "reason": "Instruction points to the relevant files (expected for the task) without specifying exact lines."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "Not an agentmd-edits task."
+      "reason": "Not an agentmd-edits-only task."
     }
   },
-  "tier_a_fails": [
-    "solution_uniqueness_guard"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 8,
-  "fail_count": 1
+  "pass_count": 9,
+  "fail_count": 0
 }

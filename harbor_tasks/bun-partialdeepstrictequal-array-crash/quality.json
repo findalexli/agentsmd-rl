@@ -1,59 +1,56 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file (src/js/node/assert.ts), the function (compareBranch), the SafeMap issue, the $set/$delete methods, and the prototype-based fix pattern. The tests check assert.ts existence, compareBranch function, and Map prototype call patterns \u2014 all discoverable from the instruction."
+      "reason": "instruction.md names the file context (assert.partialDeepStrictEqual in node:assert/strict), the error TypeError, and the compareBranch function; tests reference src/js/node/assert.ts which is the obvious file for this module."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction's 'Root Cause' section explicitly states the fix: 'The fix requires using prototype-based method calls on SafeMap.prototype.set and SafeMap.prototype.delete... invoked with the expectedCounts instance as the receiver. Bun's JavaScript runtime uses special intrinsic syntax for these prototype calls.' This tells the agent exactly what to change and how."
+      "outcome": "pass",
+      "reason": "Instruction describes the bug symptom and constraints (use .$call, not .call) but doesn't state the exact fix of extracting SafeMap.prototype.set/delete."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_all_four_map_patterns_present (truncated but visible in structure) and test_source_uses_prototype_calls_not_direct likely grep for specific patterns in the source code. The gold solution uses SafeMapPrototypeSet.$call and SafeMapPrototypeDelete.$call. Alternative correct fixes (e.g., using a regular Map instead of SafeMap, or wrapping SafeMap with helper functions) would likely fail these source-inspection tests."
+      "reason": "test_prototype_extraction_exists_and_used requires a prototype extraction assignment like `Map.prototype.set` AND test_comparebranch_uses_prototype_call_pattern requires `.$call` pattern with capitalized PrototypeX naming; alternative valid fixes (e.g., restoring the map's prototype with Object.setPrototypeOf, or using Reflect, or using a plain Map) would fail these structural checks."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "The visible f2p tests (test_null_proto_map_operations_work, test_direct_calls_fail_prototype_calls_succeed) run actual Node.js subprocesses that execute code and verify runtime behavior, not just text matching."
+      "reason": "Tests execute node subprocesses to verify null-prototype Map behavior and the counting algorithm, in addition to source-structure checks."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The behavioral tests execute real Map operations on null-prototype Maps and verify correctness of the algorithm. A stub or no-op implementation would not pass test_null_proto_map_operations_work which checks actual array subset matching results, or test_syntax_check which verifies the file parses correctly."
+      "reason": "Source structure tests require actual removal of expectedCounts.$set/.delete and addition of prototype extractions, which a stub cannot satisfy."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction says partialDeepStrictEqual should work with array inputs without throwing TypeError. The tests verify the underlying fix mechanism (prototype-based Map calls on null-proto Maps) and the source code changes needed to fix this behavior."
+      "reason": "Instruction's described crash scenario (array partialDeepStrictEqual) is validated via the counting-algorithm behavioral test and source checks on compareBranch."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_syntax_check, test_null_proto_map_operations_work, etc.), grouped into gates (pass_to_pass) and fix verification (fail_to_pass), and have detailed docstrings explaining what each test verifies."
+      "reason": "Tests are grouped with section comment headers (BEHAVIORAL TESTS, SOURCE-STRUCTURE TESTS, PASS_TO_PASS TESTS) and descriptive docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing a bug in a TypeScript assertion module, not producing structured data output."
+      "reason": "Task is a code bug fix; no structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames (src/js/node/assert.ts), function names (compareBranch, SafeMap), or method names ($set, $delete, $call) in the instruction."
+      "reason": "Paths (src/js/node/assert.ts), function names (compareBranch, partialDeepStrictEqual) are consistent and correct."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly names the file (src/js/node/assert.ts), the function (compareBranch), the exact buggy pattern (expectedCounts.$set and expectedCounts.$delete), and the exact fix approach (SafeMap.prototype.set/delete with prototype-based calls). This goes far beyond describing the bug \u2014 it localizes and prescribes the solution."
+      "outcome": "pass",
+      "reason": "Instruction mentions compareBranch as the location of the bug, which is already evident from the error trace; doesn't specify the exact line or fix."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "Code-only task, not an agentmd-edits task."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
     "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 6,
-  "fail_count": 3
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 1
 }

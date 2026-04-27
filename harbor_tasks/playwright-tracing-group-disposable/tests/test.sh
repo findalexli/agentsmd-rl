@@ -1,40 +1,32 @@
-#!/bin/bash
-set -e
+#!/usr/bin/env bash
+# Test runner: rebuild compiled JS / regenerated types from any source changes,
+# then run pytest. Reward is pytest's exit code.
 
-# Ensure log directory exists
+set +e
+
 mkdir -p /logs/verifier
 
-# Run pytest and capture result
-cd /tests
-if /opt/venv/bin/python -m pytest test_outputs.py -v; then
-    echo "1" > /logs/verifier/reward.txt
+cd /workspace/playwright
+
+# Rebuild lib/ and regenerate types.d.ts so tests see the agent's edits.
+# Stay loud on real failures (no `|| true`); a broken build = reward 0.
+node utils/build/build.js --disable-install >/logs/verifier/build.log 2>&1
+build_status=$?
+if [ "$build_status" -ne 0 ]; then
+    echo "Build failed (exit=$build_status); see /logs/verifier/build.log" >&2
+    tail -50 /logs/verifier/build.log >&2
+fi
+
+# Run pytest. Reward = pytest exit code (literal "0" or "1").
+pytest -v --tb=short \
+    --ctrf /logs/verifier/ctrf.json \
+    /tests/test_outputs.py
+pytest_exit=$?
+
+if [ "$pytest_exit" -eq 0 ]; then
+    echo 1 > /logs/verifier/reward.txt
 else
-    echo "0" > /logs/verifier/reward.txt
+    echo 0 > /logs/verifier/reward.txt
 fi
 
-# --- LLM Judge (Track 3 + Track 4) ---
-if [ -f /tests/eval_manifest.yaml ] && [ -f /tests/standalone_judge.py ]; then
-    # Capture agent diff
-    mkdir -p /logs/verifier
-    _repo_dir=""
-    for candidate in /workspace/*/ /repo /app /src; do
-        if [ -d "${candidate}/.git" ]; then
-            _repo_dir="$candidate"
-            break
-        fi
-    done
-    if [ -z "$_repo_dir" ]; then
-        _repo_dir=$(find /workspace /repo /app /src -maxdepth 3 -type d -name .git 2>/dev/null | head -1 | xargs -r dirname)
-    fi
-    if [ -n "$_repo_dir" ] && [ -d "$_repo_dir/.git" ]; then
-        (cd "$_repo_dir" && git add -A 2>/dev/null && git diff --cached > /logs/verifier/agent.diff 2>/dev/null) || true
-    fi
-
-    # Install PyYAML if needed (lightweight, <1s)
-    python3 -c "import yaml" 2>/dev/null || \
-        python3 -m pip install -q pyyaml 2>/dev/null || \
-        pip3 install -q --break-system-packages pyyaml 2>/dev/null || true
-
-    # Run LLM judge (writes track3_rubric.json + track4_distractors.json)
-    python3 /tests/standalone_judge.py /tests/eval_manifest.yaml /logs/verifier/agent.diff 2>&1 || true
-fi
+echo "Reward written: $(cat /logs/verifier/reward.txt) (pytest exit=$pytest_exit)"

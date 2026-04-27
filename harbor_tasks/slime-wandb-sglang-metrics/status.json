@@ -1,15 +1,16 @@
 {
   "schema_version": 2,
-  "valid": true,
-  "verdict": "pass",
-  "nop_reward": 0.0,
-  "gold_reward": 1.0,
-  "validated_at": "2026-04-16T08:07:17.707557",
-  "total_time": 1065.08,
-  "sandbox_id": "ir4ro5zkestpare72uoib",
-  "backend": "anthropic",
+  "valid": false,
+  "verdict": "fail",
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-22T07:55:16.891069",
+  "total_time": 16470.69,
+  "sandbox_id": "ipjfshxhw1h4zqybwcwfb",
+  "backend": "minimax",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "fix_quality",
+  "error": "rate limited during fix_quality: {\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":185711,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 429 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"rate_limit_error\\\",\\\"message\\\":\\\"usage limit exceeded (2056)\\\"},\\\"request_id\\\":\\\"06381453f0710edd2697f4dc8b1961d1\\\"}\",\"stop_reason\":\"stop_sequence\",\"session_id\":\"c9de83e6-5d3b-4f96-8bb6-88e5bc7c85f6\",\"total_cost_usd\":0,\"usage\":{\"input_tokens\":0,\"cache_creation_input_tokens\":0,\"cache_read_inp",
   "nodes": {
     "p2p_enrich": {
       "status": "rate_limited",
@@ -68,10 +69,10 @@
     },
     "quality_gate": {
       "status": "passed",
-      "model": "claude-opus-4-6",
-      "backend": "anthropic",
-      "time": 0.24,
-      "notes": "flags=['lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:22: unpinned pip deps: numpy, 2>/dev/null']"
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.43,
+      "notes": "flags=['lint_tier_b:2', 'B:[B] pinned_dependencies @ environment/Dockerfile:22: unpinned pip deps: numpy, 2>/dev/null', 'B:[B] no_network_during_tests @ tests/test.sh:44: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
@@ -83,17 +84,16 @@
       "tier_b_fails": [],
       "pass_count": 6,
       "fail_count": 3
+    },
+    "fix_quality": {
+      "status": "rate_limited",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 187.47,
+      "notes": ""
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 1240.37,
-      "at": "2026-04-12T03:06:18.699202"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -125,6 +125,14 @@
       "backend": "anthropic",
       "time": 1065.08,
       "at": "2026-04-16T08:07:17.707557"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "minimax",
+      "time": 16470.69,
+      "at": "2026-04-22T07:55:16.891069"
     }
   ]
 }

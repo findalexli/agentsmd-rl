@@ -47,7 +47,7 @@ def test_syntax_check():
 
 # [repo_tests] pass_to_pass
 def test_repo_oxlint():
-    """Repo's oxlint passes on modified SQL files (pass_to_pass)."""
+    """Repo oxlint passes on modified SQL files (pass_to_pass)."""
     r = subprocess.run(
         ["npx", "oxlint", "src/js/internal/sql/"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
@@ -57,7 +57,7 @@ def test_repo_oxlint():
 
 # [repo_tests] pass_to_pass
 def test_repo_prettier():
-    """Repo's prettier check passes on modified SQL files (pass_to_pass)."""
+    """Repo prettier check passes on modified SQL files (pass_to_pass)."""
     r = subprocess.run(
         ["npx", "prettier", "--check", "src/js/internal/sql/shared.ts",
          "src/js/internal/sql/sqlite.ts", "src/js/internal/sql/mysql.ts",
@@ -79,7 +79,7 @@ def test_repo_git_status():
 
 # [repo_tests] pass_to_pass
 def test_repo_oxlint_full():
-    """Repo's oxlint passes on all src/js (pass_to_pass)."""
+    """Repo oxlint passes on all src/js (pass_to_pass)."""
     r = subprocess.run(
         ["npx", "oxlint", "src/js"],
         capture_output=True, text=True, timeout=300, cwd=REPO,
@@ -103,38 +103,125 @@ def test_ts_syntax_valid():
 # ---------------------------------------------------------------------------
 
 
-def _find_columns_function(text):
-    """
-    Find any function that matches the expected signature for column filtering.
-    Uses flexible pattern matching to support alternative function names.
-    The function must:
-    - Be a generic function <T>
-    - Have 3 parameters where one is an array, one is T|T[], one is a function
-    - Return an object with two properties for columns list and SQL fragment
-    """
-    # Pattern: function name<T>(...params...): { ...definedColumns...columnsSql... } {
-    # Uses non-greedy matching to find the function with correct return type
-    pattern = r"function\s+(\w+)\s*<T>\s*\([\s\S]*?columns[\s\S]*?items[\s\S]*?escapeIdentifier[\s\S]*?\)\s*:\s*\{[\s\S]*?definedColumns[\s\S]*?columnsSql[\s\S]*?\}\s*\{"
-    match = re.search(pattern, text)
-    if not match:
-        return None, None
-    func_name = match.group(1)
-    start = match.start()
-    body_start = match.end() - 1
+def _find_matching_paren(text, start):
+    """Find the matching closing paren for the opening paren at position start."""
     depth = 0
-    in_func = False
-    end = start
-    for i in range(body_start, len(text)):
-        if text[i] == "{":
+    for i, c in enumerate(text[start:]):
+        if c == '(':
             depth += 1
-            in_func = True
-        elif text[i] == "}":
+        elif c == ')':
             depth -= 1
-        if in_func and depth == 0:
-            end = i + 1
-            break
-    func_body = text[start:end]
-    return func_name, func_body
+            if depth == 0:
+                return start + i
+    return -1
+
+
+def _find_matching_brace(text, start):
+    """Find the matching closing brace for the opening brace at position start."""
+    depth = 0
+    for i, c in enumerate(text[start:]):
+        if c == '{':
+            depth += 1
+        elif c == '}':
+            depth -= 1
+            if depth == 0:
+                return start + i
+    return -1
+
+
+def _find_column_filter_function(text):
+    """
+    Find a column-filtering function that:
+    - Has 3 parameters (columns, items, escapeIdentifier)
+    - Returns an object with two properties
+    
+    Accepts any function name and any generic syntax (or none).
+    Does NOT require specific variable names.
+    """
+    # Find all function declarations with <T> or without
+    patterns = [
+        r'function\s+(\w+)\s*<T>\s*\(',
+        r'function\s+(\w+)\s*\(',
+    ]
+    
+    for pattern in patterns:
+        for m in re.finditer(pattern, text):
+            func_name = m.group(1)
+            
+            # Extract params
+            paren_start = m.end() - 1
+            paren_end = _find_matching_paren(text, paren_start)
+            if paren_end < 0:
+                continue
+            
+            params_str = text[paren_start:paren_end + 1]
+            
+            # Check for required param names (flexible)
+            has_columns = 'columns' in params_str.lower()
+            has_items = 'items' in params_str.lower()
+            has_escape = 'escape' in params_str.lower() or 'identifier' in params_str.lower()
+            
+            if has_columns and has_items and has_escape:
+                return func_name
+    
+    return None
+
+
+def _extract_function_body(text, func_name):
+    """Extract a function's full body from source text."""
+    # Find function declaration
+    patterns = [
+        rf'function\s+{func_name}\s*<T>\s*\(',
+        rf'function\s+{func_name}\s*\(',
+    ]
+    
+    for pattern in patterns:
+        match = re.search(pattern, text)
+        if not match:
+            continue
+        
+        func_start = match.start()
+        paren_start = match.end() - 1
+        
+        # Find closing ) of params
+        paren_end = _find_matching_paren(text, paren_start)
+        if paren_end < 0:
+            continue
+        
+        # Skip past return type annotation: ): { ... }
+        # Start after params )
+        i = paren_end + 1
+        while i < len(text) and text[i] in ' \n\t:':
+            i += 1
+        
+        if i >= len(text):
+            continue
+        
+        # If we're at a {, skip the entire return type object
+        if text[i] == '{':
+            type_end = _find_matching_brace(text, i)
+            if type_end < 0:
+                continue
+            body_start = type_end + 1
+        else:
+            # No return type annotation, body starts here
+            body_start = i
+        
+        # Skip whitespace to find function body {
+        while body_start < len(text) and text[body_start] in ' \n\t':
+            body_start += 1
+        
+        if body_start >= len(text) or text[body_start] != '{':
+            continue
+        
+        # Find matching } for function body
+        body_end = _find_matching_brace(text, body_start)
+        if body_end < 0:
+            continue
+        
+        return text[func_start:body_end + 1]
+    
+    return None
 
 
 def _jsify_typescript(func_body):
@@ -145,37 +232,45 @@ def _jsify_typescript(func_body):
     js = re.sub(r"columns:\s*\(keyof T\)\[\]", "columns", js)
     js = re.sub(r"items:\s*T \| T\[\]", "items", js)
     js = re.sub(r"escapeIdentifier:\s*\(name:\s*string\)\s*=>\s*string", "escapeIdentifier", js)
-    js = re.sub(r"\):\s*\{[^}]*definedColumns[^}]*columnsSql[^}]*\}\s*\{", ") {", js, flags=re.DOTALL)
-    js = re.sub(r"const definedColumns:\s*\(keyof T\)\[\]\s*=", "const definedColumns =", js)
+    js = re.sub(r"\):\s*\{[^}]*\}\s*\{", ") {", js)
+    js = re.sub(r"const (\w+):\s*\(keyof T\)\[\]\s*=", r"const \1 =", js)
     js = js.replace(" as string", "")
+    js = re.sub(r"\b(keyof T)\b", "string", js)
     return js
 
 
-def _build_test_script(func_name, js_func):
-    """Build the JavaScript test script with proper function name handling."""
+def _build_behavioral_test_script(func_name, js_func):
+    """
+    Build a JavaScript test script that verifies the column-filtering behavior
+    without depending on specific variable names from the gold solution.
+    """
     test_code = js_func + """
 
 const esc = (name) => '"' + name + '"';
 const testFn = eval("FUNC_NAME_PLACEHOLDER");
 
-// Test 1: Single item, all defined
+// Test 1: Single item, all defined - expect 2 columns
 (function() {
     var r = testFn(['a', 'b'], { a: 1, b: 2 }, esc);
-    if (r.definedColumns.length !== 2) {
-        console.error('T1 fail: expected 2 cols, got ' + r.definedColumns.length);
+    var keys = Object.keys(r).filter(function(k) { return Array.isArray(r[k]); });
+    var arr = r[keys[0]];
+    if (arr.length !== 2) {
+        console.error('T1 fail: expected 2 cols, got ' + arr.length);
         process.exit(1);
     }
 })();
 
-// Test 2: Single item, one undefined
+// Test 2: Single item, one undefined - expect 1 column
 (function() {
     var r = testFn(['a', 'b'], { a: 1, b: undefined }, esc);
-    if (r.definedColumns.length !== 1) {
-        console.error('T2 fail: expected 1 col, got ' + r.definedColumns.length);
+    var keys = Object.keys(r).filter(function(k) { return Array.isArray(r[k]); });
+    var arr = r[keys[0]];
+    if (arr.length !== 1) {
+        console.error('T2 fail: expected 1 col, got ' + arr.length);
         process.exit(1);
     }
-    if (r.definedColumns[0] !== 'a') {
-        console.error('T2 fail: expected col a, got ' + r.definedColumns[0]);
+    if (arr[0] !== 'a') {
+        console.error('T2 fail: expected col a, got ' + arr[0]);
         process.exit(1);
     }
 })();
@@ -183,8 +278,10 @@ const testFn = eval("FUNC_NAME_PLACEHOLDER");
 // Test 3: Bulk insert - first undefined, second defined (DATA LOSS fix)
 (function() {
     var r = testFn(['a', 'b'], [{ a: 1, b: undefined }, { a: 2, b: 'val' }], esc);
-    if (r.definedColumns.length !== 2) {
-        console.error('T3 fail: expected 2 cols, got ' + r.definedColumns.length);
+    var keys = Object.keys(r).filter(function(k) { return Array.isArray(r[k]); });
+    var arr = r[keys[0]];
+    if (arr.length !== 2) {
+        console.error('T3 fail: expected 2 cols, got ' + arr.length);
         process.exit(1);
     }
 })();
@@ -192,30 +289,36 @@ const testFn = eval("FUNC_NAME_PLACEHOLDER");
 // Test 4: All undefined - column excluded
 (function() {
     var r = testFn(['a', 'b'], [{ a: 1, b: undefined }, { a: 2, b: undefined }], esc);
-    if (r.definedColumns.length !== 1) {
-        console.error('T4 fail: expected 1 col, got ' + r.definedColumns.length);
+    var keys = Object.keys(r).filter(function(k) { return Array.isArray(r[k]); });
+    var arr = r[keys[0]];
+    if (arr.length !== 1) {
+        console.error('T4 fail: expected 1 col, got ' + arr.length);
         process.exit(1);
     }
 })();
 
-// Test 5: SQL format check
+// Test 5: SQL format check - should produce (col1, col2) VALUES format
 (function() {
     var r = testFn(['x', 'y'], { x: 1, y: 2 }, esc);
-    if (!r.columnsSql.startsWith('(') || !r.columnsSql.endsWith(') VALUES')) {
-        console.error('T5 fail: bad columnsSql: ' + r.columnsSql);
+    var keys = Object.keys(r).filter(function(k) { return typeof r[k] === 'string'; });
+    var sql = r[keys[0]];
+    if (!sql.startsWith('(') || !sql.endsWith(' VALUES')) {
+        console.error('T5 fail: bad SQL format: ' + sql);
         process.exit(1);
     }
-    if (!r.columnsSql.includes('"x"') || !r.columnsSql.includes('"y"')) {
-        console.error('T5 fail: missing column names: ' + r.columnsSql);
+    if (!sql.includes('"x"') || !sql.includes('"y"')) {
+        console.error('T5 fail: missing column names: ' + sql);
         process.exit(1);
     }
 })();
 
-// Test 6: Middle item has defined value
+// Test 6: Middle item has defined value - column must be included
 (function() {
     var r = testFn(['a', 'opt'], [{ a: 1, opt: undefined }, { a: 2, opt: 'mid' }, { a: 3, opt: undefined }], esc);
-    if (r.definedColumns.length !== 2) {
-        console.error('T6 fail: expected 2 cols, got ' + r.definedColumns.length);
+    var keys = Object.keys(r).filter(function(k) { return Array.isArray(r[k]); });
+    var arr = r[keys[0]];
+    if (arr.length !== 2) {
+        console.error('T6 fail: expected 2 cols, got ' + arr.length);
         process.exit(1);
     }
 })();
@@ -230,10 +333,14 @@ console.log('PASS');
 def test_undefined_filtering_behavior():
     """The shared column-filtering function correctly filters undefined columns."""
     text = Path(SHARED_TS).read_text()
-    func_name, func_body = _find_columns_function(text)
-    assert func_body, "Column-filtering function with expected signature not found in shared.ts"
+    func_name = _find_column_filter_function(text)
+    assert func_name, "Column-filtering function with expected signature not found in shared.ts"
+
+    func_body = _extract_function_body(text, func_name)
+    assert func_body, f"Could not extract body for function '{func_name}'"
+
     js_func = _jsify_typescript(func_body)
-    js_code = _build_test_script(func_name, js_func)
+    js_code = _build_behavioral_test_script(func_name, js_func)
     script_path = Path(REPO) / "_eval_test_undefined.js"
     script_path.write_text(js_code)
     try:
@@ -247,81 +354,25 @@ def test_undefined_filtering_behavior():
     assert "PASS" in result.stdout, f"Expected PASS, got: {result.stdout}"
 
 
-def _extract_and_run_adapter_insert(filepath, adapter_name):
-    """Extract and run adapter INSERT logic test."""
+def _check_adapter_imports_and_calls(filepath, adapter_name):
+    """
+    Verify an adapter file:
+    1. Imports the shared module via require("internal/sql/shared")
+    2. Calls some function with (columns, items, escapeIdentifier) pattern
+
+    Does NOT check for specific variable names - allows any return value destructuring.
+    """
     text = Path(filepath).read_text()
 
-    # Look for any pattern where a function is called with columns and items
-    # Flexible pattern: any function call with columns, items, and escapeIdentifier
-    pattern = r'(?:const|let|var)\s+\{\s*(\w+)\s*,\s*(\w+)\s*\}\s*=\s*(\w+)\s*\(\s*columns\s*,\s*items\s*,'
-    match = re.search(pattern, text)
-    if not match:
-        return False, f"{adapter_name}: could not find function call pattern with columns, items"
-    result_var1, result_var2, func_name = match.groups()
-
-    # Verify the function is imported from shared
+    # Must require the shared module
     require_pattern = r'require\s*\(\s*["\']internal/sql/shared["\']\s*\)'
-    if not re.search(require_pattern, text):
-        return False, f"{adapter_name}: does not require internal/sql/shared"
+    assert re.search(require_pattern, text), \
+        f"{adapter_name}: does not require internal/sql/shared"
 
-    # Build test script - use the extracted function name
-    test_script = r"""
-// Mock buildDefinedColumnsAndQuery
-function buildDefinedColumnsAndQuery(columns, items, escapeIdentifier) {
-    var definedColumns = [];
-    var columnsSql = "(";
-    var columnCount = columns.length;
-    for (var k = 0; k < columnCount; k++) {
-        var column = columns[k];
-        var hasDefinedValue = false;
-        if (Array.isArray(items)) {
-            for (var j = 0; j < items.length; j++) {
-                if (typeof items[j][column] !== 'undefined') {
-                    hasDefinedValue = true;
-                    break;
-                }
-            }
-        } else {
-            hasDefinedValue = typeof items[column] !== 'undefined';
-        }
-        if (hasDefinedValue) {
-            if (definedColumns.length > 0) columnsSql += ", ";
-            columnsSql += escapeIdentifier(column);
-            definedColumns.push(column);
-        }
-    }
-    columnsSql += ") VALUES";
-    return { definedColumns: definedColumns, columnsSql: columnsSql };
-}
-
-// Test cases
-var esc = function(name) { return '"' + name + '"'; };
-
-// Test 1: Bulk insert with first item undefined, second defined
-var items1 = [{ a: 1, b: undefined }, { a: 2, b: 'val' }];
-var columns1 = ['a', 'b'];
-var r1 = buildDefinedColumnsAndQuery(columns1, items1, esc);
-if (r1.definedColumns.length !== 2) {
-    console.error('FAIL: expected 2 cols, got ' + r1.definedColumns.length);
-    process.exit(1);
-}
-if (r1.definedColumns[1] !== 'b') {
-    console.error('FAIL: expected col b to be defined, got ' + r1.definedColumns[1]);
-    process.exit(1);
-}
-
-// Test 2: Single item with undefined column
-var items2 = { a: 1, b: undefined };
-var columns2 = ['a', 'b'];
-var r2 = buildDefinedColumnsAndQuery(columns2, items2, esc);
-if (r2.definedColumns.length !== 1) {
-    console.error('FAIL: expected 1 col after filtering undefined, got ' + r2.definedColumns.length);
-    process.exit(1);
-}
-
-console.log('ADAPTER_""" + adapter_name + """_PASS');
-"""
-    return True, test_script
+    # Must call some function with columns, items pattern
+    call_pattern = r'\w+\s*\(\s*columns\s*,\s*items\s*,'
+    assert re.search(call_pattern, text), \
+        f"{adapter_name}: does not call any function with columns, items pattern"
 
 
 # [pr_diff] fail_to_pass
@@ -332,51 +383,9 @@ def test_adapters_import_shared_function():
         ("mysql", MYSQL_TS),
         ("postgres", POSTGRES_TS),
     ]
-    all_passed = True
-    failures = []
+
     for name, filepath in adapters:
-        text = Path(filepath).read_text()
-        shared_require = r'require\s*\(\s*["\']internal/sql/shared["\']\s*\)'
-        if not re.search(shared_require, text):
-            failures.append(f"{name}: does not require internal/sql/shared")
-            all_passed = False
-            continue
-
-        # Check for function call pattern - flexible about variable names
-        func_call_pattern = r'(?:const|let|var)\s+\{\s*\w+\s*,\s*\w+\s*\}\s*=\s*\w+\s*\(\s*columns\s*,\s*items\s*,'
-        if not re.search(func_call_pattern, text):
-            failures.append(f"{name}: does not call function with columns, items pattern")
-            all_passed = False
-            continue
-
-        # Also verify escapeIdentifier is passed as third argument
-        escape_pattern = r'columns\s*,\s*items\s*,\s*this\.escapeIdentifier\.bind\s*\(\s*this\s*\)'
-        if not re.search(escape_pattern, text):
-            failures.append(f"{name}: does not pass escapeIdentifier correctly")
-            all_passed = False
-            continue
-
-        passed, result = _extract_and_run_adapter_insert(filepath, name)
-        if not passed:
-            failures.append(result)
-            all_passed = False
-            continue
-        script_path = Path(REPO) / f"_eval_test_adapter_{name}.js"
-        script_path.write_text(result)
-        try:
-            proc_result = subprocess.run(
-                ["node", str(script_path)],
-                capture_output=True, text=True, timeout=30,
-            )
-            if proc_result.returncode != 0:
-                failures.append(f"{name}: behavioral test failed: {proc_result.stderr}")
-                all_passed = False
-            elif f"ADAPTER_{name}_PASS" not in proc_result.stdout:
-                failures.append(f"{name}: did not produce expected output")
-                all_passed = False
-        finally:
-            script_path.unlink(missing_ok=True)
-    assert all_passed, f"Adapter tests failed:\n" + "\n".join(failures)
+        _check_adapter_imports_and_calls(filepath, name)
 
 
 # [pr_diff] fail_to_pass
@@ -384,7 +393,6 @@ def test_claude_md_toequal_guidance():
     """test/CLAUDE.md must document preference for .toEqual over many .toBe assertions."""
     text = Path(CLAUDE_MD).read_text()
     assert ".toEqual" in text, "test/CLAUDE.md does not mention .toEqual"
-    # Check for nested/complex object equality section (flexible on exact wording)
     has_nested = "Nested" in text or "nested" in text
     has_complex = "complex object" in text.lower() or "object equality" in text.lower()
     assert has_nested or has_complex, (

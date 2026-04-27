@@ -81,7 +81,7 @@ from dataclasses import fields
 
 src = Path("/workspace/AReaL/areal/api/cli_args.py").read_text()
 # Match @dataclass ... class TrackioConfig: block
-pattern = r'(@dataclass[^\n]*\nclass TrackioConfig:.*?)(?=\n@dataclass|\nclass \w)'
+pattern = r'(@dataclass[^\\n]*\\nclass TrackioConfig:.*?)(?=\\n@dataclass|\\nclass \\w)'
 match = re.search(pattern, src, re.DOTALL)
 
 if not match:
@@ -89,7 +89,7 @@ if not match:
     exit(1)
 
 ns = {"__builtins__": __builtins__}
-exec("from dataclasses import dataclass, field\n" + match.group(1), ns)
+exec("from dataclasses import dataclass, field\\n" + match.group(1), ns)
 TrackioConfig = ns["TrackioConfig"]
 
 field_names = {f.name for f in fields(TrackioConfig)}
@@ -111,7 +111,7 @@ import re
 from pathlib import Path
 
 src = Path("/workspace/AReaL/areal/api/cli_args.py").read_text()
-pattern = r'(@dataclass[^\n]*\nclass TrackioConfig:.*?)(?=\n@dataclass|\nclass \w)'
+pattern = r'(@dataclass[^\\n]*\\nclass TrackioConfig:.*?)(?=\\n@dataclass|\\nclass \\w)'
 match = re.search(pattern, src, re.DOTALL)
 
 if not match:
@@ -119,7 +119,7 @@ if not match:
     exit(1)
 
 ns = {"__builtins__": __builtins__}
-exec("from dataclasses import dataclass, field\n" + match.group(1), ns)
+exec("from dataclasses import dataclass, field\\n" + match.group(1), ns)
 TrackioConfig = ns["TrackioConfig"]
 
 invalid_modes = ["invalid", "remote", "cloud", "off", "enabled", ""]
@@ -146,7 +146,7 @@ import re
 from pathlib import Path
 
 src = Path("/workspace/AReaL/areal/api/cli_args.py").read_text()
-pattern = r'(@dataclass[^\n]*\nclass TrackioConfig:.*?)(?=\n@dataclass|\nclass \w)'
+pattern = r'(@dataclass[^\\n]*\\nclass TrackioConfig:.*?)(?=\\n@dataclass|\\nclass \\w)'
 match = re.search(pattern, src, re.DOTALL)
 
 if not match:
@@ -154,7 +154,7 @@ if not match:
     exit(1)
 
 ns = {"__builtins__": __builtins__}
-exec("from dataclasses import dataclass, field\n" + match.group(1), ns)
+exec("from dataclasses import dataclass, field\\n" + match.group(1), ns)
 TrackioConfig = ns["TrackioConfig"]
 
 for mode in ("disabled", "online", "local"):
@@ -175,7 +175,7 @@ import re
 from pathlib import Path
 
 src = Path("/workspace/AReaL/areal/api/cli_args.py").read_text()
-pattern = r'(@dataclass[^\n]*\nclass TrackioConfig:.*?)(?=\n@dataclass|\nclass \w)'
+pattern = r'(@dataclass[^\\n]*\\nclass TrackioConfig:.*?)(?=\\n@dataclass|\\nclass \\w)'
 match = re.search(pattern, src, re.DOTALL)
 
 if not match:
@@ -183,7 +183,7 @@ if not match:
     exit(1)
 
 ns = {"__builtins__": __builtins__}
-exec("from dataclasses import dataclass, field\n" + match.group(1), ns)
+exec("from dataclasses import dataclass, field\\n" + match.group(1), ns)
 TrackioConfig = ns["TrackioConfig"]
 
 cfg = TrackioConfig()
@@ -245,258 +245,253 @@ print("PASS: StatsLoggerConfig.trackio field exists")
     assert "PASS" in r.stdout
 
 
-def test_stats_logger_trackio_init():
-    """Behavioral test: StatsLogger.init() calls trackio.init with correct kwargs.
-    
-    Uses mock to verify actual call arguments, without being tied to
-    the specific variable name used for the trackio import.
-    """
-    code = """
-import sys
-sys.path.insert(0, "/workspace/AReaL")
+def _stats_logger_preamble():
+    """Return common preamble code for StatsLogger subprocess tests.
 
+    Mocks all heavy deps and loads stats_logger.py via importlib so the test
+    is not coupled to any specific import pattern for trackio.
+    """
+    return """
+import sys, importlib.util
 import unittest.mock as mock
 
+# Mock all heavy deps that stats_logger.py and its transitive imports need
+for mod_name in [
+    "swanlab", "wandb", "torch", "torch.cuda",
+    "tensorboardX", "aiohttp", "aiohttp.web",
+    "areal", "areal.api", "areal.infra",
+    "areal.utils", "areal.utils.logging", "areal.utils.printing",
+    "areal.version",
+]:
+    sys.modules.setdefault(mod_name, mock.MagicMock())
+
+# Wire torch.distributed so 'import torch.distributed as dist' gets the same mock
+_torch_dist = mock.MagicMock()
+_torch_dist.is_initialized.return_value = False
+sys.modules["torch"].distributed = _torch_dist
+sys.modules["torch.distributed"] = _torch_dist
+
+# areal.api.cli_args needs real types for isinstance() checks in StatsLogger
+_cli_args_mod = mock.MagicMock()
+_cli_args_mod.StatsLoggerConfig = type("StatsLoggerConfig", (), {})
+_cli_args_mod.BaseExperimentConfig = type("BaseExperimentConfig", (), {})
+sys.modules["areal.api.cli_args"] = _cli_args_mod
+"""
+
+
+def _stats_logger_load():
+    """Return code to load StatsLogger via importlib."""
+    return """
+# Load stats_logger.py directly via importlib (bypasses areal/__init__.py)
+spec = importlib.util.spec_from_file_location(
+    "areal.utils.stats_logger",
+    "/workspace/AReaL/areal/utils/stats_logger.py",
+)
+_sl_mod = importlib.util.module_from_spec(spec)
+sys.modules["areal.utils.stats_logger"] = _sl_mod
+spec.loader.exec_module(_sl_mod)
+StatsLogger = _sl_mod.StatsLogger
+"""
+
+
+def _stats_logger_dummy_config(
+    trackio_mode="online",
+    trackio_project='"my_project"',
+    trackio_name='"my_name"',
+    trackio_space_id="None",
+    experiment_name="test_exp",
+    trial_name="test_trial",
+):
+    """Return code that defines dummy config classes and creates a StatsLogger."""
+    return f"""
+from dataclasses import dataclass, field
+
+@dataclass
+class DummyWandBConfig:
+    mode: str = "disabled"
+    wandb_base_url: str = ""
+    wandb_api_key: str = ""
+    entity: str = ""
+    project: str | None = None
+    name: str | None = None
+    job_type: str = ""
+    group: str = ""
+    notes: str = ""
+    tags: list = field(default_factory=list)
+    id_suffix: str = ""
+
+@dataclass
+class DummySwanlabConfig:
+    mode: str = "disabled"
+    api_key: str = ""
+    project: str | None = None
+    name: str | None = None
+    config: dict | None = None
+
+@dataclass
+class DummyTensorBoardConfig:
+    path: str | None = None
+
+@dataclass
+class DummyTrackioConfig:
+    mode: str = "{trackio_mode}"
+    project: str | None = {trackio_project}
+    name: str | None = {trackio_name}
+    space_id: str | None = {trackio_space_id}
+
+@dataclass
+class DummyStatsLoggerConfig:
+    experiment_name: str = "{experiment_name}"
+    trial_name: str = "{trial_name}"
+    fileroot: str = "/tmp/test_logs"
+    wandb: DummyWandBConfig = field(default_factory=DummyWandBConfig)
+    swanlab: DummySwanlabConfig = field(default_factory=DummySwanlabConfig)
+    tensorboard: DummyTensorBoardConfig = field(default_factory=DummyTensorBoardConfig)
+    trackio: DummyTrackioConfig = field(default_factory=DummyTrackioConfig)
+
+# Wrap in a top-level config with .stats_logger attribute
+@dataclass
+class DummyBaseConfig:
+    experiment_name: str = "{experiment_name}"
+    trial_name: str = "{trial_name}"
+    stats_logger: DummyStatsLoggerConfig = field(default_factory=DummyStatsLoggerConfig)
+
+top_config = DummyBaseConfig()
+logger = StatsLogger(top_config, ft_spec=mock.MagicMock())
+"""
+
+
+def test_stats_logger_trackio_init():
+    """Behavioral test: StatsLogger.init() calls trackio.init with correct kwargs.
+
+    Uses importlib to load stats_logger.py directly with all heavy deps mocked,
+    so the test works regardless of the import pattern used (import trackio,
+    import trackio as tio, from trackio import init, etc.).
+    """
+    code = _stats_logger_preamble() + """
+# Set up custom trackio mock to capture init calls
+init_calls = []
+def capture_init(**kwargs):
+    init_calls.append(kwargs)
+
 mock_trackio = mock.MagicMock()
-mock_init_call_args = []
-
-def mock_init(**kwargs):
-    mock_init_call_args.append(kwargs)
-
-mock_trackio.init = mock_init
+mock_trackio.init = capture_init
 mock_trackio.log = mock.MagicMock()
 mock_trackio.finish = mock.MagicMock()
+sys.modules["trackio"] = mock_trackio
+""" + _stats_logger_load() + _stats_logger_dummy_config(
+        trackio_project='"my_project"',
+        trackio_name='"my_name"',
+        trackio_space_id='"user/my-space"',
+    ) + """
+if not init_calls:
+    print("FAIL: trackio.init was never called")
+    sys.exit(1)
 
-with mock.patch("areal.utils.stats_logger.trackio", mock_trackio):
-    import areal.utils.stats_logger as stats_logger
-    from areal.utils.stats_logger import StatsLogger
-    from dataclasses import dataclass, field
+call_kwargs = init_calls[0]
 
-    @dataclass
-    class DummyWandBConfig:
-        mode: str = "disabled"
+if "project" not in call_kwargs:
+    print("FAIL: trackio.init missing 'project' kwarg")
+    sys.exit(1)
+if "name" not in call_kwargs:
+    print("FAIL: trackio.init missing 'name' kwarg")
+    sys.exit(1)
+if "space_id" not in call_kwargs:
+    print("FAIL: trackio.init missing 'space_id' kwarg")
+    sys.exit(1)
 
-    @dataclass
-    class DummySwanlabConfig:
-        mode: str = "disabled"
-
-    @dataclass
-    class DummyTensorBoardConfig:
-        path: str | None = None
-
-    @dataclass
-    class DummyTrackioConfig:
-        mode: str = "online"
-        project: str | None = "my_project"
-        name: str | None = "my_name"
-        space_id: str | None = "user/my-space"
-
-    @dataclass
-    class DummyStatsLoggerConfig:
-        experiment_name: str = "test_exp"
-        trial_name: str = "test_trial"
-        wandb: DummyWandBConfig = field(default_factory=DummyWandBConfig)
-        swanlab: DummySwanlabConfig = field(default_factory=DummySwanlabConfig)
-        tensorboard: DummyTensorBoardConfig = field(default_factory=DummyTensorBoardConfig)
-        trackio: DummyTrackioConfig = field(default_factory=DummyTrackioConfig)
-
-    config = DummyStatsLoggerConfig()
-    logger = StatsLogger(config)
-
-    try:
-        logger.init()
-    except Exception:
-        pass
-
-    if not mock_init_call_args:
-        print("FAIL: trackio.init was never called")
-        sys.exit(1)
-
-    call_kwargs = mock_init_call_args[0]
-
-    if "project" not in call_kwargs:
-        print("FAIL: trackio.init missing 'project' kwarg")
-        sys.exit(1)
-    if "name" not in call_kwargs:
-        print("FAIL: trackio.init missing 'name' kwarg")
-        sys.exit(1)
-    if "space_id" not in call_kwargs:
-        print("FAIL: trackio.init missing 'space_id' kwarg")
-        sys.exit(1)
-
-    print("PASS: trackio.init called with project, name, space_id kwargs")
+print("PASS: trackio.init called with project, name, space_id kwargs")
 """
-    r = _exec_code_via_subprocess(code)
+    r = _exec_code_via_subprocess(code, timeout=60)
     assert r.returncode == 0, f"Test failed: stdout={r.stdout}, stderr={r.stderr}"
     assert "PASS" in r.stdout
 
 
 def test_stats_logger_trackio_init_fallback():
     """Behavioral test: project defaults to experiment_name, name to trial_name when None."""
-    code = """
-import sys
-sys.path.insert(0, "/workspace/AReaL")
-
-import unittest.mock as mock
+    code = _stats_logger_preamble() + """
+init_calls = []
+def capture_init(**kwargs):
+    init_calls.append(kwargs)
 
 mock_trackio = mock.MagicMock()
-mock_init_call_args = []
-
-def mock_init(**kwargs):
-    mock_init_call_args.append(kwargs)
-
-mock_trackio.init = mock_init
+mock_trackio.init = capture_init
 mock_trackio.log = mock.MagicMock()
 mock_trackio.finish = mock.MagicMock()
+sys.modules["trackio"] = mock_trackio
+""" + _stats_logger_load() + _stats_logger_dummy_config(
+        trackio_project="None",
+        trackio_name="None",
+        trackio_space_id='"user/my-space"',
+        experiment_name="my_experiment",
+        trial_name="my_trial",
+    ) + """
+if not init_calls:
+    print("FAIL: trackio.init was never called")
+    sys.exit(1)
 
-with mock.patch("areal.utils.stats_logger.trackio", mock_trackio):
-    import areal.utils.stats_logger as stats_logger
-    from areal.utils.stats_logger import StatsLogger
-    from dataclasses import dataclass, field
+call_kwargs = init_calls[0]
 
-    @dataclass
-    class DummyWandBConfig:
-        mode: str = "disabled"
+if call_kwargs.get("project") != "my_experiment":
+    print(f"FAIL: Expected project='my_experiment', got {call_kwargs.get('project')!r}")
+    sys.exit(1)
+if call_kwargs.get("name") != "my_trial":
+    print(f"FAIL: Expected name='my_trial', got {call_kwargs.get('name')!r}")
+    sys.exit(1)
 
-    @dataclass
-    class DummySwanlabConfig:
-        mode: str = "disabled"
-
-    @dataclass
-    class DummyTensorBoardConfig:
-        path: str | None = None
-
-    @dataclass
-    class DummyTrackioConfig:
-        mode: str = "online"
-        project: str | None = None
-        name: str | None = None
-        space_id: str | None = "user/my-space"
-
-    @dataclass
-    class DummyStatsLoggerConfig:
-        experiment_name: str = "my_experiment"
-        trial_name: str = "my_trial"
-        wandb: DummyWandBConfig = field(default_factory=DummyWandBConfig)
-        swanlab: DummySwanlabConfig = field(default_factory=DummySwanlabConfig)
-        tensorboard: DummyTensorBoardConfig = field(default_factory=DummyTensorBoardConfig)
-        trackio: DummyTrackioConfig = field(default_factory=DummyTrackioConfig)
-
-    config = DummyStatsLoggerConfig()
-    logger = StatsLogger(config)
-
-    try:
-        logger.init()
-    except Exception:
-        pass
-
-    if not mock_init_call_args:
-        print("FAIL: trackio.init was never called")
-        sys.exit(1)
-
-    call_kwargs = mock_init_call_args[0]
-
-    if call_kwargs.get("project") != "my_experiment":
-        print(f"FAIL: Expected project='my_experiment', got {call_kwargs.get('project')!r}")
-        sys.exit(1)
-    if call_kwargs.get("name") != "my_trial":
-        print(f"FAIL: Expected name='my_trial', got {call_kwargs.get('name')!r}")
-        sys.exit(1)
-
-    print("PASS: trackio.init uses experiment_name/trial_name fallback correctly")
+print("PASS: trackio.init uses experiment_name/trial_name fallback correctly")
 """
-    r = _exec_code_via_subprocess(code)
+    r = _exec_code_via_subprocess(code, timeout=60)
     assert r.returncode == 0, f"Test failed: stdout={r.stdout}, stderr={r.stderr}"
     assert "PASS" in r.stdout
 
 
 def test_stats_logger_trackio_commit():
-    """Behavioral test: StatsLogger.commit() calls trackio.log when enabled."""
-    code = """
-import sys
-sys.path.insert(0, "/workspace/AReaL")
+    """Behavioral test: StatsLogger.commit() calls trackio.log when enabled.
 
-import unittest.mock as mock
-
+    Uses sys.modules mocking + importlib so any import pattern works.
+    """
+    code = _stats_logger_preamble() + """
 mock_trackio = mock.MagicMock()
 mock_trackio.init = mock.MagicMock()
 mock_trackio.finish = mock.MagicMock()
 mock_log_calls = []
 
-def mock_log(**kwargs):
-    mock_log_calls.append(kwargs)
+def mock_log(*args, **kwargs):
+    mock_log_calls.append({"args": args, "kwargs": kwargs})
 
 mock_trackio.log = mock_log
+sys.modules["trackio"] = mock_trackio
+""" + _stats_logger_load() + _stats_logger_dummy_config() + """
+mock_log_calls.clear()
 
-with mock.patch("areal.utils.stats_logger.trackio", mock_trackio):
-    import areal.utils.stats_logger as stats_logger
-    from areal.utils.stats_logger import StatsLogger
-    from dataclasses import dataclass, field
+logger.commit(epoch=1, step=100, global_step=100, data={"loss": 0.5})
 
-    @dataclass
-    class DummyWandBConfig:
-        mode: str = "disabled"
+if not mock_log_calls:
+    print("FAIL: trackio.log was never called during commit")
+    sys.exit(1)
 
-    @dataclass
-    class DummySwanlabConfig:
-        mode: str = "disabled"
+# Check that log data contains 'loss' -- could be positional or keyword arg
+call = mock_log_calls[0]
+all_items = list(call["args"]) + [call["kwargs"]]
+found_loss = any(isinstance(a, dict) and "loss" in a for a in all_items)
+if not found_loss:
+    print(f"FAIL: trackio.log call missing 'loss' data: {mock_log_calls}")
+    sys.exit(1)
 
-    @dataclass
-    class DummyTensorBoardConfig:
-        path: str | None = None
-
-    @dataclass
-    class DummyTrackioConfig:
-        mode: str = "online"
-        project: str | None = "my_project"
-        name: str | None = "my_name"
-        space_id: str | None = None
-
-    @dataclass
-    class DummyStatsLoggerConfig:
-        experiment_name: str = "test_exp"
-        trial_name: str = "test_trial"
-        wandb: DummyWandBConfig = field(default_factory=DummyWandBConfig)
-        swanlab: DummySwanlabConfig = field(default_factory=DummySwanlabConfig)
-        tensorboard: DummyTensorBoardConfig = field(default_factory=DummyTensorBoardConfig)
-        trackio: DummyTrackioConfig = field(default_factory=DummyTrackioConfig)
-
-    config = DummyStatsLoggerConfig()
-    logger = StatsLogger(config)
-
-    try:
-        logger.init()
-    except Exception:
-        pass
-
-    mock_log_calls.clear()
-
-    logger.commit(epoch=1, step=100, global_step=100, data={"loss": 0.5})
-
-    if not mock_log_calls:
-        print("FAIL: trackio.log was never called during commit")
-        sys.exit(1)
-
-    call_kwargs = mock_log_calls[0]
-    if "loss" not in call_kwargs:
-        print(f"FAIL: trackio.log call missing 'loss' data")
-        sys.exit(1)
-
-    print("PASS: trackio.log called with data during commit")
+print("PASS: trackio.log called with data during commit")
 """
-    r = _exec_code_via_subprocess(code)
+    r = _exec_code_via_subprocess(code, timeout=60)
     assert r.returncode == 0, f"Test failed: stdout={r.stdout}, stderr={r.stderr}"
     assert "PASS" in r.stdout
 
 
 def test_stats_logger_trackio_close():
-    """Behavioral test: StatsLogger.close() calls trackio.finish when enabled."""
-    code = """
-import sys
-sys.path.insert(0, "/workspace/AReaL")
+    """Behavioral test: StatsLogger.close() calls trackio.finish when enabled.
 
-import unittest.mock as mock
-
+    Uses sys.modules mocking + importlib so any import pattern works.
+    """
+    code = _stats_logger_preamble() + """
 mock_trackio = mock.MagicMock()
 mock_trackio.init = mock.MagicMock()
 mock_trackio.log = mock.MagicMock()
@@ -506,59 +501,19 @@ def mock_finish():
     mock_finish_called.append(True)
 
 mock_trackio.finish = mock_finish
+sys.modules["trackio"] = mock_trackio
+""" + _stats_logger_load() + _stats_logger_dummy_config() + """
+mock_finish_called.clear()
 
-with mock.patch("areal.utils.stats_logger.trackio", mock_trackio):
-    import areal.utils.stats_logger as stats_logger
-    from areal.utils.stats_logger import StatsLogger
-    from dataclasses import dataclass, field
+logger.close()
 
-    @dataclass
-    class DummyWandBConfig:
-        mode: str = "disabled"
+if not mock_finish_called:
+    print("FAIL: trackio.finish was never called during close")
+    sys.exit(1)
 
-    @dataclass
-    class DummySwanlabConfig:
-        mode: str = "disabled"
-
-    @dataclass
-    class DummyTensorBoardConfig:
-        path: str | None = None
-
-    @dataclass
-    class DummyTrackioConfig:
-        mode: str = "online"
-        project: str | None = "my_project"
-        name: str | None = "my_name"
-        space_id: str | None = None
-
-    @dataclass
-    class DummyStatsLoggerConfig:
-        experiment_name: str = "test_exp"
-        trial_name: str = "test_trial"
-        wandb: DummyWandBConfig = field(default_factory=DummyWandBConfig)
-        swanlab: DummySwanlabConfig = field(default_factory=DummySwanlabConfig)
-        tensorboard: DummyTensorBoardConfig = field(default_factory=DummyTensorBoardConfig)
-        trackio: DummyTrackioConfig = field(default_factory=DummyTrackioConfig)
-
-    config = DummyStatsLoggerConfig()
-    logger = StatsLogger(config)
-
-    try:
-        logger.init()
-    except Exception:
-        pass
-
-    mock_finish_called.clear()
-
-    logger.close()
-
-    if not mock_finish_called:
-        print("FAIL: trackio.finish was never called during close")
-        sys.exit(1)
-
-    print("PASS: trackio.finish called during close")
+print("PASS: trackio.finish called during close")
 """
-    r = _exec_code_via_subprocess(code)
+    r = _exec_code_via_subprocess(code, timeout=60)
     assert r.returncode == 0, f"Test failed: stdout={r.stdout}, stderr={r.stderr}"
     assert "PASS" in r.stdout
 

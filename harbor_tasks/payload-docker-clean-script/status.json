@@ -4,13 +4,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-16T09:51:10.280293",
-  "total_time": 963.41,
-  "sandbox_id": "iffhsta4d1uatob1acxv2",
-  "backend": "fireworks",
+  "validated_at": "2026-04-22T04:06:11.579751",
+  "total_time": 2724.04,
+  "sandbox_id": "ijdd6a6r8nj1q96hi4k56",
+  "backend": "minimax",
   "pipeline": "pipeline",
-  "start_at": "judge",
-  "error": "The sandbox was not found: This error is likely due to sandbox timeout. You can modify the sandbox timeout by passing 'timeout' when starting the sandbox or calling '.set_timeout' on the sandbox with the desired timeout.",
+  "start_at": "fix_quality",
   "nodes": {
     "p2p_enrich": {
       "status": "ok",
@@ -32,9 +31,9 @@
       "gold_reward": 1.0,
       "attempts": 1,
       "notes": "All 4 validations passed: Docker build OK, NOP reward=0 (8 f2p tests correctly fail on base commit), Gold reward=1 (11 tests pass), Rubric ICR=1.00 (6/6 rules pass)",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 240.48
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 1263.17
     },
     "rubric_judge": {
       "status": "pass",
@@ -64,32 +63,26 @@
       "status": "passed",
       "model": "MiniMax-M2.7",
       "backend": "minimax",
-      "time": 0.31,
-      "notes": "flags=[]"
+      "time": 0.51,
+      "notes": "flags=['lint_tier_b:1', 'B:[B] no_network_during_tests @ tests/test.sh:44: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 23.55,
-      "tier_a_fails": [
-        "no_solution_leakage",
-        "solution_uniqueness_guard",
-        "tests_verify_behavior_not_text",
-        "test_not_tautological"
-      ],
+      "time": 14.23,
+      "tier_a_fails": [],
       "tier_b_fails": [],
-      "pass_count": 5,
-      "fail_count": 5
+      "pass_count": 10,
+      "fail_count": 0
+    },
+    "fix_quality": {
+      "status": "ok",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 1369.36,
+      "notes": ""
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 1919.58,
-      "at": "2026-04-12T03:48:58.222687"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -121,6 +114,14 @@
       "backend": "fireworks",
       "time": 963.41,
       "at": "2026-04-16T09:51:10.280293"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 2724.04,
+      "at": "2026-04-22T04:06:11.579751"
     }
   ]
 }

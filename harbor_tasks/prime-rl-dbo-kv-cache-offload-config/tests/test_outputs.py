@@ -33,6 +33,7 @@ _GPU_ONLY = [
     "jaxtyping", "beartype",
     "pyarrow", "datasets", "openai", "aiolimiter", "tenacity",
     "setproctitle", "uvloop", "pyzmq", "zmq", "rich",
+    "pynvml",
 ]
 for _m in _GPU_ONLY:
     sys.modules.setdefault(_m, MagicMock())
@@ -457,3 +458,163 @@ def test_inference_config_existing_fields():
     ns = cfg.to_vllm()
     assert ns.enable_lora is True
     assert ns.seed == 42
+
+
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) — entrypoint and template behavioral tests
+# ---------------------------------------------------------------------------
+
+# [pr_diff] fail_to_pass
+def test_inference_entrypoint_passes_kv_offload_params():
+    """Inference entrypoint passes KV offload params to template context via slurm script."""
+    import tempfile
+    from prime_rl.configs.inference import InferenceConfig, DisaggregatedInferenceDeploymentConfig, KVCacheOffloadConfig, ServerConfig
+    from prime_rl.configs.shared import SlurmConfig
+    from pathlib import Path
+
+    # Create a config with disaggregated deployment and slurm with template
+    cfg = InferenceConfig(
+        server=ServerConfig(),
+        slurm=SlurmConfig(
+            template_path=Path("/workspace/prime-rl/src/prime_rl/templates/inference.sbatch.j2"),
+        ),
+        deployment=DisaggregatedInferenceDeploymentConfig(
+            num_prefill_nodes=1,
+            num_decode_nodes=1,
+            prefill_port=8000,
+            decode_port=8001,
+            router_port=8002,
+            kv_cache_offload=KVCacheOffloadConfig(block_size=32, cpu_bytes=500_000_000),
+        ),
+        output_dir=Path("/tmp/test_output"),
+    )
+
+    # Write the slurm script and check its content
+    with tempfile.TemporaryDirectory() as tmpdir:
+        config_path = Path(tmpdir) / "config.toml"
+        script_path = Path(tmpdir) / "script.sbatch"
+
+        from prime_rl.entrypoints import inference
+        inference.write_slurm_script(cfg, config_path, script_path)
+
+        script_content = script_path.read_text()
+
+        # Should contain MultiConnector with OffloadingConnector in PREFILL_KV_CFG
+        # Note: kv_offload is a Jinja2 variable that controls the conditional; the literal string
+        # "kv_offload" doesn't appear in the rendered script - only the result of the conditional
+        assert "MultiConnector" in script_content, "Script should use MultiConnector for kv offload"
+        assert "OffloadingConnector" in script_content, "Script should use OffloadingConnector for kv offload"
+
+
+# [pr_diff] fail_to_pass
+def test_rl_entrypoint_passes_kv_offload_params():
+    """RL entrypoint passes KV offload params to template context via slurm script."""
+    import tempfile
+    from pathlib import Path
+
+    from prime_rl.configs.rl import RLConfig, MultiNodeDeploymentConfig
+    from prime_rl.configs.trainer import TrainerConfig
+    from prime_rl.configs.orchestrator import OrchestratorConfig
+    from prime_rl.configs.inference import InferenceConfig, DisaggregatedInferenceDeploymentConfig, KVCacheOffloadConfig
+    from prime_rl.configs.shared import SlurmConfig
+
+    # Create minimal required configs
+    tc = TrainerConfig()
+    oc = OrchestratorConfig()
+
+    # Create inference config with disaggregated deployment and kv_cache_offload
+    inf = InferenceConfig(
+        deployment=DisaggregatedInferenceDeploymentConfig(
+            num_prefill_nodes=1,
+            num_decode_nodes=1,
+            prefill_port=8000,
+            decode_port=8001,
+            router_port=8002,
+            kv_cache_offload=KVCacheOffloadConfig(block_size=128, cpu_bytes=2_000_000_000),
+        ),
+        slurm=None,
+    )
+
+    # Create the RLConfig
+    cfg = RLConfig(trainer=tc, orchestrator=oc, inference=inf)
+
+    # Override output_dir and slurm for this test
+    cfg.output_dir = Path("/tmp/test_output")
+    cfg.slurm = SlurmConfig(
+        template_path=Path("/workspace/prime-rl/src/prime_rl/templates/multi_node_rl.sbatch.j2"),
+    )
+    # Set multi_node deployment type (this is RLConfig's own deployment, not inference.deployment)
+    cfg.deployment = MultiNodeDeploymentConfig(
+        type="multi_node",
+        num_train_nodes=1,
+        num_infer_nodes=1,
+        gpus_per_node=8,
+    )
+
+    # Write the slurm script and check its content
+    with tempfile.TemporaryDirectory() as tmpdir:
+        config_path = Path(tmpdir) / "config.toml"
+        script_path = Path(tmpdir) / "script.sbatch"
+
+        from prime_rl.entrypoints import rl
+        rl.write_slurm_script(cfg, config_path, script_path)
+
+        script_content = script_path.read_text()
+
+        # Should contain kv_offload reference and MultiConnector
+        # Note: kv_offload is a Jinja2 variable that controls the conditional; the literal string
+        # "kv_offload" doesn't appear in the rendered script - only the result of the conditional
+        assert "MultiConnector" in script_content, "Script should use MultiConnector for kv offload"
+        assert "OffloadingConnector" in script_content, "Script should use OffloadingConnector for kv offload"
+
+
+# [pr_diff] fail_to_pass
+def test_inference_template_uses_separate_kv_cfgs():
+    """Inference template uses PREFILL_KV_CFG and DECODE_KV_CFG instead of single KV_CFG."""
+    template_path = f"{REPO}/src/prime_rl/templates/inference.sbatch.j2"
+    with open(template_path) as f:
+        content = f.read()
+
+    # Must define PREFILL_KV_CFG
+    assert "PREFILL_KV_CFG" in content, "Template missing PREFILL_KV_CFG variable"
+    # Must define DECODE_KV_CFG
+    assert "DECODE_KV_CFG" in content, "Template missing DECODE_KV_CFG variable"
+
+
+# [pr_diff] fail_to_pass
+def test_inference_template_multiconnector_when_offload():
+    """Inference template uses MultiConnector for prefill when kv_offload is enabled."""
+    template_path = f"{REPO}/src/prime_rl/templates/inference.sbatch.j2"
+    with open(template_path) as f:
+        content = f.read()
+
+    # When kv_offload is True, should use MultiConnector with OffloadingConnector
+    assert "kv_offload" in content, "Template should check kv_offload flag"
+    assert "MultiConnector" in content, "Template should use MultiConnector when offload enabled"
+    assert "OffloadingConnector" in content, "Template should use OffloadingConnector"
+
+
+# [pr_diff] fail_to_pass
+def test_multi_node_rl_template_uses_separate_kv_cfgs():
+    """Multi-node RL template uses PREFILL_KV_CFG and DECODE_KV_CFG instead of single KV_CFG."""
+    template_path = f"{REPO}/src/prime_rl/templates/multi_node_rl.sbatch.j2"
+    with open(template_path) as f:
+        content = f.read()
+
+    # Must define PREFILL_KV_CFG
+    assert "PREFILL_KV_CFG" in content, "Multi-node RL template missing PREFILL_KV_CFG variable"
+    # Must define DECODE_KV_CFG
+    assert "DECODE_KV_CFG" in content, "Multi-node RL template missing DECODE_KV_CFG variable"
+
+
+# [pr_diff] fail_to_pass
+def test_multi_node_rl_template_multiconnector_when_offload():
+    """Multi-node RL template uses MultiConnector for prefill when kv_offload is enabled."""
+    template_path = f"{REPO}/src/prime_rl/templates/multi_node_rl.sbatch.j2"
+    with open(template_path) as f:
+        content = f.read()
+
+    # When kv_offload is True, should use MultiConnector with OffloadingConnector
+    assert "kv_offload" in content, "Multi-node RL template should check kv_offload flag"
+    assert "MultiConnector" in content, "Multi-node RL template should use MultiConnector when offload enabled"
+    assert "OffloadingConnector" in content, "Multi-node RL template should use OffloadingConnector"

@@ -2,7 +2,7 @@
 
 This validates that:
 1. Type stub files (.pyi) exist for lazy-imported modules
-2. mypy can resolve types from these stubs
+2. mypy can resolve real types (not Any) from these stubs
 3. The import fix in remote_connection.py works correctly
 4. pyproject.toml includes .pyi files in package data
 """
@@ -81,14 +81,22 @@ def test_wpewebkit_stub_exists():
 
 
 def test_mypy_can_resolve_webdriver_imports():
-    """mypy should be able to resolve types from selenium.webdriver."""
-    test_code = """
-from selenium.webdriver import Chrome, Firefox, ChromeOptions, Keys
+    """mypy should resolve real types from stubs, not Any via __getattr__.
 
-def test_types() -> None:
-    driver: Chrome
-    options: ChromeOptions
-    key: Keys
+    Without stubs, __getattr__ makes all webdriver attributes resolve to Any
+    in mypy. With proper stubs, Chrome/ChromeOptions resolve to real types.
+    We verify this by checking that mypy catches deliberate type mismatches.
+    """
+    test_code = """
+from selenium.webdriver import Chrome, ChromeOptions
+
+# If stubs provide real types, these return-type mismatches are caught.
+# If types fall back to Any (no stubs), mypy won't flag them.
+def check_chrome() -> int:
+    return Chrome  # error: incompatible return type
+
+def check_opts() -> int:
+    return ChromeOptions  # error: incompatible return type
 """
     test_file = PY_DIR / "_test_type_resolve.py"
     test_file.write_text(test_code)
@@ -96,31 +104,17 @@ def test_types() -> None:
     try:
         result = subprocess.run(
             [sys.executable, "-m", "mypy", str(test_file), "--ignore-missing-imports",
-             "--disable-error-code", "unused-ignore"],
+             "--disable-error-code", "unused-ignore", "--no-error-summary"],
             capture_output=True, text=True, timeout=60, cwd=str(PY_DIR)
         )
         output = result.stdout + result.stderr
-        critical_errors = [line for line in output.split("\n")
-                          if "error" in line.lower()
-                          and "cannot find" in line.lower()
-                          and "webdriver" in line.lower()]
-        assert not critical_errors, f"Type resolution failed:\n{output}"
+        error_lines = [l for l in output.split("\n")
+                       if "error" in l.lower() and "return" in l.lower()]
+        assert len(error_lines) >= 2, (
+            f"Expected mypy to catch return-type errors (stubs may resolve to Any):\n{output}"
+        )
     finally:
         test_file.unlink(missing_ok=True)
-
-
-def test_import_desired_capabilities_directly():
-    """Import DesiredCapabilities from common submodule directly."""
-    code = """
-from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
-print("OK")
-"""
-    result = subprocess.run(
-        [sys.executable, "-c", code],
-        capture_output=True, text=True, timeout=30, cwd=str(PY_DIR)
-    )
-    assert result.returncode == 0, f"Import failed: {result.stderr}"
-    assert "OK" in result.stdout
 
 
 def test_pyproject_includes_pyi():
@@ -134,8 +128,7 @@ def test_pyproject_includes_pyi():
 def test_webdriver_stub_has_all_exports():
     """Main webdriver stub should export all expected classes."""
     stub_path = SELENIUM_PKG / "webdriver" / "__init__.pyi"
-    if not stub_path.exists():
-        pytest.skip("Stub file doesn't exist yet")
+    assert stub_path.exists(), f"Missing type stub: {stub_path}"
 
     content = stub_path.read_text()
     expected = [
@@ -172,34 +165,46 @@ def test_webdriver_package_imports():
     assert result.returncode == 0, f"Import failed: {result.stderr}"
 
 
-def test_stub_syntax_valid():
-    """All .pyi stub files should have valid Python syntax."""
-    stub_files = [
-        SELENIUM_PKG / "webdriver" / "__init__.pyi",
-        SELENIUM_PKG / "webdriver" / "chrome" / "__init__.pyi",
-        SELENIUM_PKG / "webdriver" / "edge" / "__init__.pyi",
-        SELENIUM_PKG / "webdriver" / "firefox" / "__init__.pyi",
-        SELENIUM_PKG / "webdriver" / "safari" / "__init__.pyi",
-        SELENIUM_PKG / "webdriver" / "ie" / "__init__.pyi",
-        SELENIUM_PKG / "webdriver" / "webkitgtk" / "__init__.pyi",
-        SELENIUM_PKG / "webdriver" / "wpewebkit" / "__init__.pyi",
-    ]
-    for stub_path in stub_files:
-        if not stub_path.exists():
-            continue
-        content = stub_path.read_text()
-        try:
-            compile(content, str(stub_path), "exec")
-        except SyntaxError as e:
-            assert False, f"Syntax error in {stub_path}: {e}"
+def test_import_desired_capabilities_directly():
+    """Import DesiredCapabilities from common submodule directly."""
+    code = """
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+print("OK")
+"""
+    result = subprocess.run(
+        [sys.executable, "-c", code],
+        capture_output=True, text=True, timeout=30, cwd=str(PY_DIR)
+    )
+    assert result.returncode == 0, f"Import failed: {result.stderr}"
+    assert "OK" in result.stdout
 
 
-import pytest
+def test_mypy_can_resolve_submodule_stubs():
+    """mypy should resolve submodule types via stub files (pass_to_pass)."""
+    test_code = """
+from selenium.webdriver import chrome
 
+def check_submodule() -> int:
+    return chrome  # type error: module vs int
+"""
+    test_file = PY_DIR / "_test_submod_resolve.py"
+    test_file.write_text(test_code)
 
-# ============================================================================
-# Pass-to-pass tests: repo CI/CD checks that should always pass
-# ============================================================================
+    try:
+        result = subprocess.run(
+            [sys.executable, "-m", "mypy", str(test_file), "--ignore-missing-imports",
+             "--disable-error-code", "unused-ignore", "--no-error-summary"],
+            capture_output=True, text=True, timeout=60, cwd=str(PY_DIR)
+        )
+        output = result.stdout + result.stderr
+        error_lines = [l for l in output.split("\n")
+                       if "error" in l.lower() and "return" in l.lower()]
+        assert len(error_lines) >= 1, (
+            f"Expected mypy to catch return-type error:\n{output}"
+        )
+    finally:
+        test_file.unlink(missing_ok=True)
+
 
 def test_repo_validate_pyproject():
     """Repo's pyproject.toml passes validation (pass_to_pass)."""

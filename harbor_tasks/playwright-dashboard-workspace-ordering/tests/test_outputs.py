@@ -35,22 +35,30 @@ def _node(script: str, timeout: int = 30) -> subprocess.CompletedProcess:
 # [pr_diff] fail_to_pass
 def test_grid_workspace_ordering():
     """Grid must sort current workspace first, defaulting to 'Global' when
-    workspaceDir is undefined. Extracts the fallback from source and
-    simulates the sorting logic to verify behavior."""
+    workspaceDir is undefined. Verifies behavior: a local fallback variable
+    holds the current workspace value and is used consistently in filters."""
     script = r"""
 const fs = require('fs');
 const src = fs.readFileSync('packages/dashboard/src/grid.tsx', 'utf8');
 
-// 1) Extract the fallback value from: const currentWorkspace = clientInfo?.workspaceDir || 'Global'
-const m = src.match(/currentWorkspace\s*=\s*clientInfo\?\.workspaceDir\s*\|\|\s*['"]([^'"]+)['"]/);
-if (!m) throw new Error('Missing: currentWorkspace = clientInfo?.workspaceDir || "Global"');
-if (m[1] !== 'Global') throw new Error('Expected Global fallback, got: ' + m[1]);
+// 1) There must be a local variable that falls back to 'Global' when workspaceDir is absent
+// Accept any variable name; check that the fallback value is 'Global'
+const fallbackMatch = src.match(/=\s*clientInfo\?\.workspaceDir\s*\|\|\s*['"]([^'"]+)['"]/);
+if (!fallbackMatch) throw new Error('Missing: clientInfo?.workspaceDir || \'Global\' fallback');
+const fallbackValue = fallbackMatch[1];
+if (fallbackValue !== 'Global') throw new Error('Expected fallback to be \'Global\', got: ' + fallbackValue);
 
-// 2) Verify currentWorkspace is used in the filter (not raw clientInfo?.workspaceDir)
-if (!src.includes('key === currentWorkspace'))
-  throw new Error('Filter must use currentWorkspace, not clientInfo?.workspaceDir');
+// 2) Extract the variable name used for the fallback (capture the identifier before the =)
+const varMatch = src.match(/(\w+)\s*=\s*clientInfo\?\.workspaceDir\s*\|\|\s*['"]Global['"]/);
+if (!varMatch) throw new Error('Could not find fallback variable assignment');
+const fallbackVar = varMatch[1];
 
-// 3) Simulate the sorting logic with the extracted fallback
+// 3) Verify that THIS variable (not raw clientInfo?.workspaceDir) is used in BOTH filter calls
+// The variable must appear in both the '===' filter and '!==' filter for current/other groups
+if (!src.includes('key === ' + fallbackVar) || !src.includes('key !== ' + fallbackVar))
+  throw new Error('Fallback variable must be used consistently in both filters (=== and !==)');
+
+// 4) Simulate the sorting logic to verify behavior
 function sortGroups(groups, workspaceDir) {
   const cw = workspaceDir || 'Global';
   const entries = [...groups.entries()];
@@ -86,7 +94,8 @@ console.log('OK');
 # [pr_diff] fail_to_pass
 def test_dashboard_api_sends_client_info():
     """dashboardApp.ts must import createClientInfo and include clientInfo
-    in the /api/sessions/list response."""
+    in the /api/sessions/list response. Verifies behavior: the API returns
+    both sessions and workspace info without requiring specific property ordering."""
     script = r"""
 const fs = require('fs');
 const src = fs.readFileSync('packages/playwright-core/src/tools/dashboard/dashboardApp.ts', 'utf8');
@@ -95,20 +104,27 @@ const src = fs.readFileSync('packages/playwright-core/src/tools/dashboard/dashbo
 if (!src.includes("import { createClientInfo } from '../cli-client/registry'"))
   throw new Error("Missing: import { createClientInfo } from '../cli-client/registry'");
 
-// 2) The /api/sessions/list handler must create clientInfo
+// 2) The /api/sessions/list handler must create clientInfo via createClientInfo() call
 const listSection = src.match(/api\/sessions\/list[\s\S]*?return;\s*\}/);
 if (!listSection) throw new Error('Could not find /api/sessions/list handler');
 const handler = listSection[0];
 if (!handler.includes('createClientInfo()'))
   throw new Error('/api/sessions/list handler must call createClientInfo()');
 
-// 3) sendJSON must include clientInfo alongside sessions
-if (!handler.includes('clientInfo'))
+// 3) sendJSON must include clientInfo alongside sessions (property order flexible)
+const sendJSONMatch = handler.match(/sendJSON\s*\(\s*response\s*,\s*\{[^}]+\}\s*\)/);
+if (!sendJSONMatch) throw new Error('Could not find sendJSON call with object literal');
+const responseObj = sendJSONMatch[0];
+
+// Check both properties exist - order doesn't matter
+if (!responseObj.includes('sessions'))
+  throw new Error('sendJSON response must include sessions');
+if (!responseObj.includes('clientInfo'))
   throw new Error('sendJSON response must include clientInfo');
 
-// 4) Verify the response shape: { sessions, clientInfo }
-if (!handler.match(/sendJSON\(response,\s*\{\s*sessions\s*,\s*clientInfo\s*\}\)/))
-  throw new Error('sendJSON must send { sessions, clientInfo }');
+// 4) Verify the sendJSON is in the /api/sessions/list handler (not elsewhere)
+if (!handler.includes('sendJSON'))
+  throw new Error('sendJSON must be called in /api/sessions/list handler');
 
 console.log('OK');
 """

@@ -3,57 +3,52 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "All literal strings tested (MAX_FILE_SIZE expression, LARGE_FILE_WHITELIST, STAT_FMT_FLAG, STAT_FMT, git ls-files, warning message, whitelist patterns, comment text) are explicitly listed in instruction.md."
+      "reason": "Instruction names the script path, whitelist patterns tested (multi_column_bf.gz.parquet, libcatboostmodel.so_*, keeper-java-client-test.jar, paimon-rest-catalog/chunk_, ghdata_sample.json), the 5 MB threshold, and the literal phrases 'is larger than 5 MB' and 'download them at test time or build from source' that tests assert."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "Instruction.md essentially dictates the implementation: exact variable names (MAX_FILE_SIZE, LARGE_FILE_WHITELIST, STAT_FMT_FLAG, STAT_FMT), exact expression `MAX_FILE_SIZE=$((5 * 1024 * 1024))`, exact stat probe `stat -c '%s %n' /dev/null`, exact warning text, and exact whitelist entries \u2014 leaving little reasoning about what to change."
+      "outcome": "pass",
+      "reason": "Instruction describes what to detect and required output phrases but does not dictate specific implementation (stat flags, awk, xargs); the agent must design the approach."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details (variable names STAT_FMT_FLAG/STAT_FMT, array name LARGE_FILE_WHITELIST, exact expression `MAX_FILE_SIZE=$((5 * 1024 * 1024))`); a correct alternative using different names or `find` instead of stat probe would fail."
+      "outcome": "pass",
+      "reason": "Tests check for file path substrings in output, whitelist patterns existing in script text, and a specific warning message pattern \u2014 all are behavior-level or stated in instruction, not gold-specific variable names."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "test_large_file_check_logic creates a real git repo and executes git commands; other tests run bash -n and source the script."
+      "reason": "Tests create real git repos with large files and execute the script via subprocess to validate detection behavior, in addition to some text checks."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "Tests require specific strings and valid bash syntax; a stub script wouldn't contain the required markers or execute cleanly."
+      "reason": "test_large_file_check_exists and test_large_file_check_logic require actual detection of a created 6MB file; a stub cannot satisfy them."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "Instruction's requirements (threshold, whitelist, warning text, stat detection, git ls-files) all have corresponding assertions."
+      "reason": "Tests cover detection, whitelist exclusion, warning message format, and script syntax \u2014 matching the requirements in instruction.md."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are individually named with docstrings indicating fail-to-pass vs pass-to-pass purpose."
+      "reason": "Tests are individually named with docstrings indicating fail-to-pass vs pass-to-pass categorization."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task produces shell script output, not structured data."
+      "reason": "Task produces shell output, not structured data."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos observed in paths or variable names."
+      "reason": "Paths and names in instruction match those referenced in tests."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "Instruction names the exact file (`ci/jobs/scripts/check_style/various_checks.sh`), exact variable names, and exact code expressions to include, which goes beyond localization hints into implementation prescription."
+      "outcome": "pass",
+      "reason": "Instruction references the target file (various_checks.sh) as part of the task scope, which is appropriate, and doesn't reveal specific line numbers or exact code."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "Code-only task, not a config edit task."
+      "reason": "This is a code-edit task, not an agentmd-edits config task."
     }
   },
-  "tier_a_fails": [
-    "no_solution_leakage",
-    "solution_uniqueness_guard"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 6,
-  "fail_count": 3
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
 }

@@ -4,12 +4,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-16T12:06:56.938838",
-  "total_time": 63.12,
-  "sandbox_id": "imvbg5g3nsdyg8qloerb8",
+  "validated_at": "2026-04-25T13:22:52.567572",
+  "total_time": 3913.78,
+  "sandbox_id": "ipscer4kbzj4o5xz7p1of",
   "backend": "anthropic",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "oneshot_repair",
   "nodes": {
     "p2p_enrich": {
       "status": "rate_limited",
@@ -33,14 +33,15 @@
       "notes": "tests look good"
     },
     "validate": {
-      "status": "pass",
-      "nop_reward": 0.0,
-      "gold_reward": 1.0,
-      "attempts": 1,
-      "notes": "All 4 checks verified: Docker build OK, NOP reward=0 (9 tests fail), Gold reward=1 (13 tests pass). Rubric judge infrastructure limitation (taskforge module missing).",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 61.03
+      "status": "fail",
+      "nop_reward": -1.0,
+      "gold_reward": -1.0,
+      "attempts": 0,
+      "notes": "Cannot validate: Bash tool is non-functional in this sandbox. Every invocation fails before executing the user command with 'EACCES: permission denied, mkdir /home/worker/.claude/session-env'. The wrapper attempts to create its per-session env directory and aborts when the parent /home/worker/.claude/ is not writable. Reproduced via direct Bash calls and via a sub-agent. Without a shell I cannot run docker build, the NOP test, the gold test, or the rubric judge. This is an environment/harness issue, not a task issue. Prior validate node (overwritten) reported pass with nop=0.0/gold=1.0 from an earlier successful run; the task files have not been modified by me in this session.",
+      "model": "claude-opus-4-7",
+      "backend": "oauth",
+      "time": 126.85,
+      "error": "bash_tool_init_failure: EACCES /home/worker/.claude/session-env"
     },
     "rubric_judge": {
       "status": "pass",
@@ -61,10 +62,10 @@
     },
     "quality_gate": {
       "status": "passed",
-      "model": "claude-opus-4-7",
+      "model": "claude-opus-4-6",
       "backend": "anthropic",
       "time": 0.28,
-      "notes": "flags=[]"
+      "notes": "flags=['lint_tier_b:1', 'B:[B] no_network_during_tests @ tests/test.sh:44: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
@@ -81,6 +82,13 @@
       "status": "error",
       "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":617,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 400 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"invalid_request_error\\\",\\\"message\\\":\\\"\\\\\\\"thinking.type.enabled\\\\\\\" is not supported for this model. Use \\\\\\\"thinking.type.adapt",
       "time": 2.46
+    },
+    "fix_quality": {
+      "status": "ok",
+      "model": "claude-opus-4-6",
+      "backend": "anthropic",
+      "time": 1283.37,
+      "notes": ""
     }
   },
   "history": [
@@ -88,41 +96,41 @@
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
-      "backend": "fireworks",
-      "time": 870.74,
-      "at": "2026-04-11T23:13:32.498315"
+      "backend": "anthropic",
+      "time": 63.12,
+      "at": "2026-04-16T12:06:56.938838"
     },
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 1118.38,
-      "at": "2026-04-15T04:34:38.907118"
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 5140.72,
+      "at": "2026-04-25T00:50:35.171131"
     },
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 14433.72,
+      "at": "2026-04-25T04:51:45.609004"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
       "backend": "oauth",
-      "time": 504.96,
-      "at": "2026-04-15T12:58:14.578097"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "minimax",
-      "time": 3861.2,
-      "at": "2026-04-16T00:20:18.982940"
+      "time": 3357.41,
+      "at": "2026-04-25T09:37:28.840861"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "anthropic",
-      "time": 63.12,
-      "at": "2026-04-16T12:06:56.938838"
+      "time": 3913.78,
+      "at": "2026-04-25T13:22:52.567572"
     }
   ]
 }

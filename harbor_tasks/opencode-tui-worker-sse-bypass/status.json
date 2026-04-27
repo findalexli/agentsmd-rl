@@ -4,12 +4,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-16T18:46:40.785144",
-  "total_time": 1058.26,
-  "sandbox_id": "i3xm5omhuiczvfgnmro5c",
-  "backend": "minimax",
+  "validated_at": "2026-04-25T13:45:38.335332",
+  "total_time": 5279.88,
+  "sandbox_id": "i37wmpvasxyeyqc6frqmt",
+  "backend": "anthropic",
   "pipeline": "pipeline",
-  "start_at": "validate",
+  "start_at": "oneshot_repair",
   "nodes": {
     "p2p_enrich": {
       "status": "completed",
@@ -62,10 +62,10 @@
     },
     "quality_gate": {
       "status": "DELETE",
-      "model": "MiniMax-M2.7",
-      "backend": "minimax",
-      "time": 0.25,
-      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:2', 'A:[A] test_not_tautological @ tests/test_outputs.py:882: test `test_repo_tsc_syntax_validation` has 2 assert(s), all pass ', 'A:[A] test_not_tautological @ tests/test_outputs.py:945: test `test_repo_worker_file_structure` has 2 assert(s), all pass ']"
+      "model": "claude-opus-4-6",
+      "backend": "anthropic",
+      "time": 0.57,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:2', 'A:[A] test_not_tautological @ tests/test_outputs.py:882: test `test_repo_tsc_syntax_validation` has 2 assert(s), all pass ', 'A:[A] test_not_tautological @ tests/test_outputs.py:945: test `test_repo_worker_file_structure` has 2 assert(s), all pass ', 'lint_tier_b:1', 'B:[B] no_network_during_tests @ tests/test.sh:44: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
@@ -79,48 +79,55 @@
       "status": "error",
       "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":109,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"Not logged in \u00b7 Please run /login\",\"stop_reason\":\"stop_sequence\",\"session_id\":\"f3dccdd7-354b-419b-83e9-0e69ae184852\",\"total_cost_usd\":0,\"usage\":{\"input_tokens\":0,\"cache_creation_input_t",
       "time": 1.39
+    },
+    "fix_quality": {
+      "status": "ok",
+      "model": "claude-opus-4-6",
+      "backend": "anthropic",
+      "time": 354.26,
+      "notes": ""
     }
   },
   "history": [
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
       "backend": "oauth",
-      "time": 431.35,
-      "at": "2026-04-15T13:02:47.171420"
+      "time": 5122.21,
+      "at": "2026-04-25T10:06:54.212323"
     },
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
       "backend": "oauth",
-      "time": 354.13,
-      "at": "2026-04-15T19:05:41.366186"
+      "time": 2487.65,
+      "at": "2026-04-25T10:49:20.189465"
     },
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 2728.99,
-      "at": "2026-04-16T00:46:44.884016"
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "oauth",
+      "time": 1990.24,
+      "at": "2026-04-25T11:23:33.535400"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "oauth",
+      "time": 1834.13,
+      "at": "2026-04-25T11:56:38.003248"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "anthropic",
-      "time": 116.57,
-      "at": "2026-04-16T10:35:39.062604"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "minimax",
-      "time": 1058.26,
-      "at": "2026-04-16T18:46:40.785144"
+      "time": 5279.88,
+      "at": "2026-04-25T13:45:38.335332"
     }
   ]
 }

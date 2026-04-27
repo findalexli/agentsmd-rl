@@ -1,128 +1,252 @@
-"""Tests for excalidraw clipboard fix.
+"""Tests for clipboard.ts fix - behavioral verification.
 
-The bug: copyTextToSystemClipboard had a return statement outside the
-if (clipboardEvent) block, causing it to return early even when no clipboardEvent
-was provided, thus never attempting the navigator.clipboard.writeText() fallback.
+These tests verify the fix by:
+1. Behavioral execution with mocked browser APIs to verify fallback works
+2. Structural analysis of control flow via Node.js brace-counting
+3. Using prettier for syntax validation
 
-The fix:
-1. Move return inside the if (clipboardEvent) block
-2. Add return after successful navigator.clipboard.writeText()
-3. Change let to const for plainTextEntry
-4. Remove redundant plainTextEntry = undefined assignment
+The bug: copyTextToSystemClipboard returns early when no clipboardEvent is provided,
+preventing the navigator.clipboard.writeText() fallback from executing.
 """
 
+import os
 import re
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
-REPO = Path("/workspace/excalidraw")
+REPO = Path(os.environ.get("REPO_PATH", "/workspace/excalidraw"))
 CLIPBOARD_TS = REPO / "packages" / "excalidraw" / "clipboard.ts"
 BUTTON_SCSS = REPO / "packages" / "excalidraw" / "components" / "FilledButton.scss"
 
 
-def _extract_copyTextToSystemClipboard_function(content: str) -> str:
-    """Extract the copyTextToSystemClipboard function body using brace balancing."""
-    # Find the start of the function
-    start_match = re.search(r'export const copyTextToSystemClipboard = async', content)
-    if not start_match:
-        return ""
+def _run_node(script: str) -> subprocess.CompletedProcess:
+    """Write script to temp file and run with Node.js."""
+    with tempfile.NamedTemporaryFile(
+        mode="w", suffix=".js", delete=False
+    ) as f:
+        f.write(script)
+        f.flush()
+        try:
+            return subprocess.run(
+                ["node", f.name],
+                capture_output=True,
+                text=True,
+                timeout=30,
+                cwd=str(REPO),
+            )
+        finally:
+            Path(f.name).unlink(missing_ok=True)
 
-    start_idx = start_match.start()
 
-    # Find the opening brace of the function body (after the =>)
-    # The function signature is multi-line, so we need to find the => { pattern
-    arrow_match = re.search(r'\) => \{', content[start_idx:])
-    if not arrow_match:
-        return ""
+def _flow_control_script() -> str:
+    """Node.js script: structural flow-control analysis with brace-counting."""
+    return (
+        "const fs = require('fs');\n"
+        "const content = fs.readFileSync('"
+        + str(CLIPBOARD_TS).replace("\\", "\\\\")
+        + "', 'utf8');\n"
+        + r"""
+const funcMatch = content.match(/export const copyTextToSystemClipboard = async[\s\S]*?^};/m);
+if (!funcMatch) { console.error('FUNC_NOT_FOUND'); process.exit(1); }
+const funcBody = funcMatch[0];
 
-    brace_start = start_idx + arrow_match.start() + len(") => ")  # Position at the {
+// === Check 1: No unconditional return in try block ===
+const tryStart = funcBody.indexOf('try {');
+if (tryStart === -1) { console.error('NO_TRY_BLOCK'); process.exit(1); }
 
-    # Now balance braces to find the end of the function
-    brace_count = 0
-    end_idx = brace_start
-    for i in range(brace_start, len(content)):
-        if content[i] == '{':
-            brace_count += 1
-        elif content[i] == '}':
-            brace_count -= 1
-            if brace_count == 0:
-                end_idx = i + 1
-                break
+// Brace-counting to find try body
+let depth = 0;
+let tryBodyStart = -1;
+let tryBodyEnd = -1;
+for (let i = tryStart; i < funcBody.length; i++) {
+    if (funcBody[i] === '{') {
+        if (depth === 0) tryBodyStart = i + 1;
+        depth++;
+    }
+    if (funcBody[i] === '}') {
+        depth--;
+        if (depth === 0) { tryBodyEnd = i; break; }
+    }
+}
+const tryBody = funcBody.substring(tryBodyStart, tryBodyEnd);
 
-    return content[start_idx:end_idx]
+// Find if (clipboardEvent) { ... } using brace counting
+const ifIdx = tryBody.indexOf('if (clipboardEvent)');
+if (ifIdx === -1) { console.error('NO_IF_CLIPBOARDEVENT'); process.exit(1); }
+const ifBraceStart = tryBody.indexOf('{', ifIdx);
+depth = 0;
+let ifBodyEnd = -1;
+for (let i = ifBraceStart; i < tryBody.length; i++) {
+    if (tryBody[i] === '{') depth++;
+    if (tryBody[i] === '}') {
+        depth--;
+        if (depth === 0) { ifBodyEnd = i; break; }
+    }
+}
+
+// Text after the if block within tryBody — check for stray return
+const afterIf = tryBody.substring(ifBodyEnd + 1).trim();
+const hasUnconditionalReturn = /^return\s*;/.test(afterIf);
+
+if (hasUnconditionalReturn) {
+    console.log('HAS_UNCONDITIONAL_RETURN');
+} else {
+    console.log('NO_UNCONDITIONAL_RETURN');
+}
+
+// === Check 2: Return after navigator.clipboard.writeText ===
+const writeTextReturn = /await\s+navigator\.clipboard\.writeText\([^)]*\)\s*;[\s\S]*?return\s*;/;
+if (writeTextReturn.test(funcBody)) {
+    console.log('HAS_RETURN_AFTER_WRITETEXT');
+} else {
+    console.log('MISSING_RETURN_AFTER_WRITETEXT');
+}
+
+if (hasUnconditionalReturn || !writeTextReturn.test(funcBody)) {
+    process.exit(1);
+}
+"""
+    )
+
+
+def _behavioral_script() -> str:
+    """Node.js script: extract function, strip types, mock globals, execute."""
+    return (
+        "const fs = require('fs');\n"
+        "const path = require('path');\n"
+        "const os = require('os');\n"
+        "const content = fs.readFileSync('"
+        + str(CLIPBOARD_TS).replace("\\", "\\\\")
+        + "', 'utf8');\n"
+        + r"""
+const funcMatch = content.match(/export const copyTextToSystemClipboard = async[\s\S]*?^};/m);
+if (!funcMatch) { console.error('FUNC_NOT_FOUND'); process.exit(1); }
+
+let func = funcMatch[0];
+
+// Strip TypeScript type annotations to make valid JavaScript
+func = func.replace('export const', 'const');
+func = func.replace(/<\s*\n?\s*MimeType[\s\S]*?>\s*\(/s, '(');
+func = func.replace(/text\s*:\s*string[^,]*,/s, 'text,');
+func = func.replace(/clipboardEvent\??\s*:\s*ClipboardEvent[^,)]*,?/s, 'clipboardEvent,');
+func = func.replace(/error\s*:\s*any/g, 'error');
+
+const testCode = `
+const MIME_TYPES = { text: 'text/plain' };
+let _writeTextCalled = false;
+let _writeTextValue = null;
+const probablySupportsClipboardWriteText = true;
+const navigator = {
+  clipboard: { writeText: async (val) => { _writeTextCalled = true; _writeTextValue = val; } }
+};
+const copyTextViaExecCommand = () => true;
+
+${func}
+
+(async () => {
+  try {
+    await copyTextToSystemClipboard("hello world", null);
+    if (_writeTextCalled) console.log('WRITETEXT_CALLED');
+    else { console.log('WRITETEXT_NOT_CALLED'); process.exit(1); }
+    if (_writeTextValue === 'hello world') console.log('CORRECT_VALUE');
+    else { console.log('WRONG_VALUE:' + _writeTextValue); process.exit(1); }
+  } catch(e) {
+    console.error('EXEC_ERROR:' + e.message);
+    process.exit(1);
+  }
+})();
+`;
+
+const tmpFile = path.join(os.tmpdir(), '_behavioral_test_' + process.pid + '.js');
+fs.writeFileSync(tmpFile, testCode);
+
+const { execSync } = require('child_process');
+try {
+    const output = execSync('node ' + tmpFile, { encoding: 'utf8', timeout: 10000 });
+    process.stdout.write(output);
+} catch(e) {
+    process.stderr.write(e.stderr || e.message || 'unknown error');
+    process.exit(1);
+} finally {
+    try { fs.unlinkSync(tmpFile); } catch(x) {}
+}
+"""
+    )
 
 
 def test_clipboard_flow_control():
-    """Test that return statements are in correct scopes.
+    """Test that return is correctly scoped inside if(clipboardEvent), not at try-block level.
 
-    The function should:
-    - Return inside if (clipboardEvent) block (when event is used)
-    - Return after navigator.clipboard.writeText succeeds
-    - Continue to execCommand fallback if clipboard.writeText fails
+    Uses brace-counting analysis to verify:
+    - No unconditional return between if(clipboardEvent) block and catch
+    - A return exists after navigator.clipboard.writeText succeeds
     """
-    content = CLIPBOARD_TS.read_text()
-
-    # Find the copyTextToSystemClipboard function
-    func_body = _extract_copyTextToSystemClipboard_function(content)
-    assert func_body, "copyTextToSystemClipboard function not found"
-
-    # Check that there's a return inside the if (clipboardEvent) block
-    # After the fix, the structure should be:
-    # if (clipboardEvent) {
-    #   ...
-    #   return;
-    # }
-    # Use non-greedy match to handle nested braces properly
-    clipboard_event_pattern = r'if \(clipboardEvent\) \{.*?return;.*?\}\s*\} catch'
-    assert re.search(clipboard_event_pattern, func_body, re.DOTALL), \
-        "Missing return inside if (clipboardEvent) block"
-
-    # Check that there's a return after successful navigator.clipboard.writeText
-    write_text_pattern = r'await navigator\.clipboard\.writeText\([^)]*\);\s*return;'
-    assert re.search(write_text_pattern, func_body, re.DOTALL), \
+    r = _run_node(_flow_control_script())
+    assert r.returncode == 0, f"Flow control check failed: {r.stderr}"
+    assert "NO_UNCONDITIONAL_RETURN" in r.stdout, \
+        "Unconditional return found between if(clipboardEvent) and catch"
+    assert "HAS_RETURN_AFTER_WRITETEXT" in r.stdout, \
         "Missing return after navigator.clipboard.writeText"
 
 
 def test_plain_text_const():
     """Test that plainTextEntry is declared as const, not let."""
     content = CLIPBOARD_TS.read_text()
+    func_match = re.search(
+        r'export const copyTextToSystemClipboard = async[\s\S]*?^};',
+        content,
+        re.MULTILINE,
+    )
+    assert func_match, "copyTextToSystemClipboard function not found"
 
-    # Find the copyTextToSystemClipboard function
-    func_body = _extract_copyTextToSystemClipboard_function(content)
-    assert func_body, "copyTextToSystemClipboard function not found"
-
-    # plainTextEntry should be const, not let
-    assert "const plainTextEntry" in func_body, \
-        "plainTextEntry should be declared as const, not let"
-    assert "let plainTextEntry" not in func_body, \
+    func_body = func_match.group(0)
+    assert re.search(r'\bconst\s+plainTextEntry\b', func_body), \
+        "plainTextEntry should be declared as const"
+    assert not re.search(r'\blet\s+plainTextEntry\b', func_body), \
         "plainTextEntry should not be declared as let"
 
 
 def test_no_redundant_undefined():
     """Test that plainTextEntry is not set to undefined after writeText."""
     content = CLIPBOARD_TS.read_text()
+    func_match = re.search(
+        r'export const copyTextToSystemClipboard = async[\s\S]*?^};',
+        content,
+        re.MULTILINE,
+    )
+    assert func_match, "copyTextToSystemClipboard function not found"
 
-    # Find the copyTextToSystemClipboard function
-    func_body = _extract_copyTextToSystemClipboard_function(content)
-    assert func_body, "copyTextToSystemClipboard function not found"
-
-    # Should NOT have plainTextEntry = undefined
-    # (This was the old pattern that should be removed)
+    func_body = func_match.group(0)
     assert "plainTextEntry = undefined" not in func_body, \
         "plainTextEntry should not be set to undefined - use return instead"
+    assert "plainTextEntry = void 0" not in func_body, \
+        "plainTextEntry should not be nullified"
 
 
 def test_scss_success_color():
     """Test that FilledButton.scss includes background-color for success state."""
     content = BUTTON_SCSS.read_text()
 
-    # Find the loading/success state block
-    # Should contain background-color: var(--color-success)
-    # Use non-greedy match to handle nested braces properly
-    pattern = r'\&\.ExcButton--status-loading,\s*\&\.ExcButton--status-success \{.*?background-color:\s*var\(--color-success\)'
+    pattern = r'&\.ExcButton--status-loading,\s*&\.ExcButton--status-success\s*\{[^}]*background-color:\s*var\(--color-success\)'
     assert re.search(pattern, content, re.DOTALL), \
         "FilledButton.scss should have background-color: var(--color-success) for loading/success states"
+
+
+def test_clipboard_fallback_behavior():
+    """Behavioral test: when clipboardEvent is null, the function must call writeText.
+
+    Extracts the function from clipboard.ts, strips TypeScript annotations,
+    mocks browser APIs (navigator.clipboard, etc.), executes with null clipboardEvent,
+    and verifies that navigator.clipboard.writeText is called with the correct value.
+    """
+    r = _run_node(_behavioral_script())
+    assert r.returncode == 0, f"Behavioral test failed: {r.stderr}"
+    assert "WRITETEXT_CALLED" in r.stdout, \
+        "writeText was not called when clipboardEvent is null"
+    assert "CORRECT_VALUE" in r.stdout, \
+        "writeText was called with incorrect value"
 
 
 # =============================================================================
@@ -135,7 +259,6 @@ def test_repo_clipboard_ts_syntax():
     """Repo's clipboard.ts has valid TypeScript syntax (pass_to_pass).
 
     Uses prettier --parser typescript to validate the file can be parsed.
-    This catches syntax errors without requiring full type checking.
     """
     r = subprocess.run(
         ["npx", "prettier", "--no-config", "--parser", "typescript", str(CLIPBOARD_TS)],
@@ -144,14 +267,13 @@ def test_repo_clipboard_ts_syntax():
         timeout=60,
         cwd=REPO,
     )
-    assert r.returncode == 0, f"clipboard.ts has TypeScript syntax errors"
+    assert r.returncode == 0, "clipboard.ts has TypeScript syntax errors"
 
 
 def test_repo_clipboard_test_ts_syntax():
     """Repo's clipboard.test.ts has valid TypeScript syntax (pass_to_pass).
 
     Uses prettier --parser typescript to validate test file syntax.
-    This is a repo CI gate - the test file must be syntactically valid.
     """
     test_file = REPO / "packages" / "excalidraw" / "clipboard.test.ts"
     r = subprocess.run(
@@ -161,14 +283,13 @@ def test_repo_clipboard_test_ts_syntax():
         timeout=60,
         cwd=REPO,
     )
-    assert r.returncode == 0, f"clipboard.test.ts has TypeScript syntax errors"
+    assert r.returncode == 0, "clipboard.test.ts has TypeScript syntax errors"
 
 
 def test_repo_filledbutton_scss_syntax():
     """Repo's FilledButton.scss has valid SCSS syntax (pass_to_pass).
 
     Uses prettier --parser scss to validate the file can be parsed.
-    This catches syntax errors without requiring full SCSS compilation.
     """
     r = subprocess.run(
         ["npx", "prettier", "--no-config", "--parser", "scss", str(BUTTON_SCSS)],
@@ -177,15 +298,13 @@ def test_repo_filledbutton_scss_syntax():
         timeout=60,
         cwd=REPO,
     )
-    assert r.returncode == 0, f"FilledButton.scss has SCSS syntax errors"
-
+    assert r.returncode == 0, "FilledButton.scss has SCSS syntax errors"
 
 
 def test_repo_charts_test_syntax():
     """Repo's charts.test.ts has valid TypeScript syntax (pass_to_pass).
 
-    Uses prettier --parser typescript to validate the test file can be parsed.
-    This is a repo CI gate - the test file must be syntactically valid.
+    Uses prettier --parser typescript to validate the test file syntax.
     """
     test_file = REPO / "packages" / "excalidraw" / "charts.test.ts"
     r = subprocess.run(
@@ -195,14 +314,13 @@ def test_repo_charts_test_syntax():
         timeout=60,
         cwd=REPO,
     )
-    assert r.returncode == 0, f"charts.test.ts has TypeScript syntax errors"
+    assert r.returncode == 0, "charts.test.ts has TypeScript syntax errors"
 
 
 def test_repo_utils_test_syntax():
     """Repo's utils.test.ts has valid TypeScript syntax (pass_to_pass).
 
-    Uses prettier --parser typescript to validate the test file can be parsed.
-    This is a repo CI gate - the test file must be syntactically valid.
+    Uses prettier --parser typescript to validate the test file syntax.
     """
     test_file = REPO / "packages" / "common" / "src" / "utils.test.ts"
     r = subprocess.run(
@@ -212,7 +330,7 @@ def test_repo_utils_test_syntax():
         timeout=60,
         cwd=REPO,
     )
-    assert r.returncode == 0, f"utils.test.ts has TypeScript syntax errors"
+    assert r.returncode == 0, "utils.test.ts has TypeScript syntax errors"
 
 
 def test_repo_constants_ts_syntax():
@@ -229,170 +347,7 @@ def test_repo_constants_ts_syntax():
         timeout=60,
         cwd=REPO,
     )
-    assert r.returncode == 0, f"constants.ts has TypeScript syntax errors"
-
-
-def test_repo_clipboard_return_placement():
-    """Repo's clipboard.ts has correct return statement placement (pass_to_pass).
-
-    Uses Node.js to parse and verify that return statements are correctly
-    placed inside the if (clipboardEvent) block and after writeText.
-    This is a repo CI gate - the control flow must be correct.
-    """
-    script = """
-    const fs = require('fs');
-    const content = fs.readFileSync('/workspace/excalidraw/packages/excalidraw/clipboard.ts', 'utf8');
-
-    // Find the copyTextToSystemClipboard function
-    const funcMatch = content.match(/export const copyTextToSystemClipboard[\\s\\S]*?^};/m);
-    if (!funcMatch) {
-        console.error('Function not found');
-        process.exit(1);
-    }
-    const funcBody = funcMatch[0];
-
-    // Check for the correct return placement inside if (clipboardEvent) block
-    // Look for: if (clipboardEvent) { ... return; } catch
-    const clipboardEventPattern = /if \\(clipboardEvent\\) \\{[\\s\\S]*?return;[\\s\\S]*?\\}[\\s\\S]*?\\} catch/;
-    if (!clipboardEventPattern.test(funcBody)) {
-        console.error('Missing return inside if (clipboardEvent) block');
-        process.exit(1);
-    }
-
-    // Check for return after successful navigator.clipboard.writeText
-    const writeTextPattern = /await navigator\\.clipboard\\.writeText[\\s\\S]*?return;/;
-    if (!writeTextPattern.test(funcBody)) {
-        console.error('Missing return after navigator.clipboard.writeText');
-        process.exit(1);
-    }
-
-    console.log('Clipboard return placement verified');
-    process.exit(0);
-    """
-    r = subprocess.run(
-        ["node", "-e", script],
-        capture_output=True,
-        text=True,
-        timeout=60,
-    )
-    assert r.returncode == 0, f"clipboard.ts return placement check failed: {r.stderr}"
-
-
-def test_repo_clipboard_const_variable():
-    """Repo's clipboard.ts uses const for plainTextEntry (pass_to_pass).
-
-    Uses Node.js to verify that plainTextEntry is declared as const,
-    not let, ensuring the variable is not reassigned.
-    This is a repo CI gate for code quality.
-    """
-    script = """
-    const fs = require('fs');
-    const content = fs.readFileSync('/workspace/excalidraw/packages/excalidraw/clipboard.ts', 'utf8');
-
-    // Find the copyTextToSystemClipboard function
-    const funcMatch = content.match(/export const copyTextToSystemClipboard[\\s\\S]*?^};/m);
-    if (!funcMatch) {
-        console.error('Function not found');
-        process.exit(1);
-    }
-    const funcBody = funcMatch[0];
-
-    // Check for const plainTextEntry
-    if (!funcBody.includes('const plainTextEntry')) {
-        console.error('plainTextEntry should be declared as const');
-        process.exit(1);
-    }
-
-    // Check there's no let plainTextEntry
-    if (funcBody.includes('let plainTextEntry')) {
-        console.error('plainTextEntry should not be declared as let');
-        process.exit(1);
-    }
-
-    console.log('Clipboard const declaration verified');
-    process.exit(0);
-    """
-    r = subprocess.run(
-        ["node", "-e", script],
-        capture_output=True,
-        text=True,
-        timeout=60,
-    )
-    assert r.returncode == 0, f"clipboard.ts const variable check failed: {r.stderr}"
-
-
-def test_repo_filledbutton_scss_structure():
-    """Repo's FilledButton.scss has correct structure for success states (pass_to_pass).
-
-    Uses Node.js to verify that the SCSS file has the correct structure
-    with background-color defined for loading/success states.
-    This is a repo CI gate - the styles must be properly structured.
-    """
-    script = """
-    const fs = require('fs');
-    const content = fs.readFileSync('/workspace/excalidraw/packages/excalidraw/components/FilledButton.scss', 'utf8');
-
-    // Check for the loading/success state selector
-    if (!content.includes('&.ExcButton--status-loading') ||
-        !content.includes('&.ExcButton--status-success')) {
-        console.error('Missing loading/success state selectors');
-        process.exit(1);
-    }
-
-    // Check for background-color: var(--color-success)
-    const blockPattern = /&\\.ExcButton--status-loading,[\\s\\n]*&\\.ExcButton--status-success \\{[\\s\\S]*?background-color:\\s*var\\(--color-success\\)/;
-    if (!blockPattern.test(content)) {
-        console.error('Missing background-color: var(--color-success) in loading/success block');
-        process.exit(1);
-    }
-
-    console.log('FilledButton.scss structure verified');
-    process.exit(0);
-    """
-    r = subprocess.run(
-        ["node", "-e", script],
-        capture_output=True,
-        text=True,
-        timeout=60,
-    )
-    assert r.returncode == 0, f"FilledButton.scss structure check failed: {r.stderr}"
-
-
-def test_repo_clipboard_no_redundant_undefined():
-    """Repo's clipboard.ts has no redundant undefined assignment (pass_to_pass).
-
-    Uses Node.js to verify that plainTextEntry is not set to undefined
-    after writeText (the old pattern that should be removed).
-    This is a repo CI gate - the code should use return instead.
-    """
-    script = """
-    const fs = require('fs');
-    const content = fs.readFileSync('/workspace/excalidraw/packages/excalidraw/clipboard.ts', 'utf8');
-
-    // Find the copyTextToSystemClipboard function
-    const funcMatch = content.match(/export const copyTextToSystemClipboard[\\s\\S]*?^};/m);
-    if (!funcMatch) {
-        console.error('Function not found');
-        process.exit(1);
-    }
-    const funcBody = funcMatch[0];
-
-    // Check that there's no plainTextEntry = undefined
-    if (funcBody.includes('plainTextEntry = undefined')) {
-        console.error('Should not set plainTextEntry to undefined - use return instead');
-        process.exit(1);
-    }
-
-    console.log('Clipboard no redundant undefined assignment verified');
-    process.exit(0);
-    """
-    r = subprocess.run(
-        ["node", "-e", script],
-        capture_output=True,
-        text=True,
-        timeout=60,
-    )
-    assert r.returncode == 0, f"clipboard.ts no-redundant-undefined check failed: {r.stderr}"
+    assert r.returncode == 0, "constants.ts has TypeScript syntax errors"
 
 
 if __name__ == "__main__":

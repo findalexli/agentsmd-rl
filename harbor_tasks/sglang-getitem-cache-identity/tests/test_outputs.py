@@ -7,7 +7,6 @@ Tests that GenerateReqInput and EmbeddingReqInput cache sub-objects
 returned by __getitem__ to ensure identity stability.
 """
 
-import ast
 import subprocess
 import sys
 from pathlib import Path
@@ -15,39 +14,75 @@ from pathlib import Path
 REPO = "/workspace/sglang"
 PYTHON_DIR = f"{REPO}/python"
 
+# ---------------------------------------------------------------------------
+# Mock setup: allows importing io_struct.py without full sglang dependencies
+# ---------------------------------------------------------------------------
+
+_MOCK_SETUP = """\
+import sys, types, importlib.util
+
+def _m(name, **a):
+    m = types.ModuleType(name)
+    for k, v in a.items():
+        setattr(m, k, v)
+    return m
+
+_D = type("_D", (), {})
+for p in ["sglang", "sglang.srt", "sglang.srt.lora", "sglang.srt.managers",
+          "sglang.srt.multimodal", "sglang.srt.observability", "sglang.srt.sampling"]:
+    sys.modules[p] = _m(p)
+sys.modules["torch"] = _m("torch")
+sys.modules["sglang.srt.lora.lora_registry"] = _m("x", LoRARef=_D)
+sys.modules["sglang.srt.managers.schedule_batch"] = _m(
+    "x", BaseFinishReason=_D, Modality=_D)
+sys.modules["sglang.srt.multimodal.mm_utils"] = _m(
+    "x", has_valid_data=lambda x: x is not None)
+sys.modules["sglang.srt.observability.req_time_stats"] = _m(
+    "x", APIServerReqTimeStats=_D, DPControllerReqTimeStats=_D,
+    SchedulerReqTimeStats=_D)
+sys.modules["sglang.srt.sampling.sampling_params"] = _m("x", SamplingParams=_D)
+sys.modules["sglang.srt.utils"] = _m("x", ImageData=_D)
+
+_spec = importlib.util.spec_from_file_location(
+    "sglang.srt.managers.io_struct",
+    "/workspace/sglang/python/sglang/srt/managers/io_struct.py",
+)
+_mod = importlib.util.module_from_spec(_spec)
+sys.modules["sglang.srt.managers.io_struct"] = _mod
+_spec.loader.exec_module(_mod)
+GenerateReqInput = _mod.GenerateReqInput
+EmbeddingReqInput = _mod.EmbeddingReqInput
+"""
+
+
+def _run_behavioral(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Write mock-setup + test code to a temp script and run it."""
+    script = Path(REPO) / "_eval_behavioral.py"
+    script.write_text(_MOCK_SETUP + "\n" + code)
+    try:
+        return subprocess.run(
+            [sys.executable, str(script)],
+            capture_output=True, text=True, timeout=timeout, cwd=REPO,
+        )
+    finally:
+        script.unlink(missing_ok=True)
+
 
 def _ensure_tool(name):
     """Ensure a Python tool is installed."""
     try:
         subprocess.run([name, "--version"], capture_output=True, check=True)
     except (subprocess.CalledProcessError, FileNotFoundError):
-        subprocess.run([sys.executable, "-m", "pip", "install", "-q", name], check=True)
+        subprocess.run(
+            [sys.executable, "-m", "pip", "install", "-q", name], check=True)
 
 
 def _get_io_struct_path():
-    """Get path to io_struct.py"""
     return Path(f"{REPO}/python/sglang/srt/managers/io_struct.py")
 
 
 def _get_tokenizer_manager_path():
-    """Get path to tokenizer_manager.py"""
     return Path(f"{REPO}/python/sglang/srt/managers/tokenizer_manager.py")
-
-
-def _find_class_and_method(tree, class_name, method_name):
-    """Find a method in a class in the AST."""
-    for node in ast.walk(tree):
-        if isinstance(node, ast.ClassDef) and node.name == class_name:
-            for item in node.body:
-                if isinstance(item, ast.FunctionDef) and item.name == method_name:
-                    return item
-    return None
-
-
-def _method_contains_pattern(method_node, pattern):
-    """Check if method source contains a pattern string."""
-    method_src = ast.unparse(method_node)
-    return pattern in method_src
 
 
 # ---------------------------------------------------------------------------
@@ -56,445 +91,245 @@ def _method_contains_pattern(method_node, pattern):
 
 def test_syntax_check():
     """Modified files must parse without errors."""
-    io_struct_path = _get_io_struct_path()
-    tokenizer_manager_path = _get_tokenizer_manager_path()
-
-    # Check io_struct.py parses
-    src = io_struct_path.read_text()
-    ast.parse(src)
-
-    # Check tokenizer_manager.py parses
-    src2 = tokenizer_manager_path.read_text()
-    ast.parse(src2)
+    import ast
+    for p in [_get_io_struct_path(), _get_tokenizer_manager_path()]:
+        ast.parse(p.read_text())
 
 
 def test_ruff_check():
-    """Modified files must pass ruff syntax/error checks (pass_to_pass)."""
+    """Modified files must pass ruff syntax/error checks."""
     _ensure_tool("ruff")
-    io_struct_path = _get_io_struct_path()
-    tokenizer_manager_path = _get_tokenizer_manager_path()
-
-    # Run ruff with syntax/error-only rules
     r = subprocess.run(
-        [
-            "ruff", "check",
-            str(io_struct_path), str(tokenizer_manager_path),
-            "--select=E9,F63,F7,F82"
-        ],
-        capture_output=True,
-        text=True,
-        timeout=60,
-        cwd=PYTHON_DIR,
+        ["ruff", "check",
+         str(_get_io_struct_path()), str(_get_tokenizer_manager_path()),
+         "--select=E9,F63,F7,F82"],
+        capture_output=True, text=True, timeout=60, cwd=PYTHON_DIR,
     )
     assert r.returncode == 0, f"Ruff check failed:\n{r.stdout}\n{r.stderr}"
 
 
 def test_ruff_import_check():
-    """Modified files must pass ruff import checks (pass_to_pass)."""
+    """Modified files must pass ruff import checks."""
     _ensure_tool("ruff")
-    io_struct_path = _get_io_struct_path()
-    tokenizer_manager_path = _get_tokenizer_manager_path()
-
-    # Run ruff with import/unused check rules (matching pre-commit config)
     r = subprocess.run(
-        [
-            "ruff", "check",
-            str(io_struct_path), str(tokenizer_manager_path),
-            "--select=F401,F821"
-        ],
-        capture_output=True,
-        text=True,
-        timeout=60,
-        cwd=PYTHON_DIR,
+        ["ruff", "check",
+         str(_get_io_struct_path()), str(_get_tokenizer_manager_path()),
+         "--select=F401,F821"],
+        capture_output=True, text=True, timeout=60, cwd=PYTHON_DIR,
     )
     assert r.returncode == 0, f"Ruff import check failed:\n{r.stdout}\n{r.stderr}"
 
 
 def test_black_format_check():
-    """Modified files must be formatted with black (pass_to_pass)."""
+    """Modified files must be formatted with black."""
     _ensure_tool("black")
-    io_struct_path = _get_io_struct_path()
-    tokenizer_manager_path = _get_tokenizer_manager_path()
-
     r = subprocess.run(
-        ["black", "--check", str(io_struct_path), str(tokenizer_manager_path)],
-        capture_output=True,
-        text=True,
-        timeout=60,
-        cwd=PYTHON_DIR,
+        ["black", "--check",
+         str(_get_io_struct_path()), str(_get_tokenizer_manager_path())],
+        capture_output=True, text=True, timeout=60, cwd=PYTHON_DIR,
     )
     assert r.returncode == 0, f"Black format check failed:\n{r.stdout}\n{r.stderr}"
 
 
 def test_isort_check():
-    """Modified files must have sorted imports (pass_to_pass)."""
+    """Modified files must have sorted imports."""
     _ensure_tool("isort")
-    io_struct_path = _get_io_struct_path()
-    tokenizer_manager_path = _get_tokenizer_manager_path()
-
     r = subprocess.run(
-        ["isort", "--check-only", str(io_struct_path), str(tokenizer_manager_path)],
-        capture_output=True,
-        text=True,
-        timeout=60,
-        cwd=REPO,
+        ["isort", "--check-only",
+         str(_get_io_struct_path()), str(_get_tokenizer_manager_path())],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"isort check failed:\n{r.stdout}\n{r.stderr}"
 
 
 def test_pyflakes_check():
-    """Modified files must pass pyflakes static analysis (pass_to_pass)."""
+    """Modified files must pass pyflakes static analysis."""
     _ensure_tool("pyflakes")
-    io_struct_path = _get_io_struct_path()
-    tokenizer_manager_path = _get_tokenizer_manager_path()
-
     r = subprocess.run(
-        ["pyflakes", str(io_struct_path), str(tokenizer_manager_path)],
-        capture_output=True,
-        text=True,
-        timeout=60,
-        cwd=REPO,
+        ["pyflakes",
+         str(_get_io_struct_path()), str(_get_tokenizer_manager_path())],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"pyflakes check failed:\n{r.stdout}\n{r.stderr}"
 
 
 def test_codespell_check():
-    """Modified files must pass codespell spelling check (pass_to_pass)."""
+    """Modified files must pass codespell spelling check."""
     _ensure_tool("codespell")
-    io_struct_path = _get_io_struct_path()
-    tokenizer_manager_path = _get_tokenizer_manager_path()
-
     r = subprocess.run(
-        ["codespell", str(io_struct_path), str(tokenizer_manager_path)],
-        capture_output=True,
-        text=True,
-        timeout=60,
-        cwd=REPO,
+        ["codespell",
+         str(_get_io_struct_path()), str(_get_tokenizer_manager_path())],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"codespell check failed:\n{r.stdout}\n{r.stderr}"
 
 
-# ---------------------------------------------------------------------------
-# Additional pass_to_pass gates from repo's pre-commit / CI
-# ---------------------------------------------------------------------------
-
 def test_check_ast():
-    """Modified Python files must have valid AST (pass_to_pass)."""
-    io_struct_path = _get_io_struct_path()
-    tokenizer_manager_path = _get_tokenizer_manager_path()
-
+    """Modified Python files must have valid AST."""
+    io_p = str(_get_io_struct_path())
+    tm_p = str(_get_tokenizer_manager_path())
     r = subprocess.run(
-        ["python3", "-c", f"""
-import ast
-import sys
-from pathlib import Path
-
-files = ["{io_struct_path}", "{tokenizer_manager_path}"]
-for f in files:
-    try:
-        ast.parse(Path(f).read_text())
-    except SyntaxError as e:
-        print(f"Syntax error in {{f}}: {{e}}")
-        sys.exit(1)
-print("All Python files have valid AST")
-"""],
-        capture_output=True,
-        text=True,
-        timeout=60,
-        cwd=REPO,
+        [sys.executable, "-c",
+         f'import ast; from pathlib import Path; '
+         f'[ast.parse(Path(f).read_text()) for f in ["{io_p}", "{tm_p}"]]; '
+         f'print("OK")'],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"AST validation failed:\n{r.stderr}\n{r.stdout}"
 
 
 def test_no_trailing_whitespace():
-    """Modified files must not have trailing whitespace (pass_to_pass)."""
-    io_struct_path = _get_io_struct_path()
-    tokenizer_manager_path = _get_tokenizer_manager_path()
-
-    r = subprocess.run(
-        ["python3", "-c", f"""
-import sys
-from pathlib import Path
-
-files = ["{io_struct_path}", "{tokenizer_manager_path}"]
-errors = []
-for f in files:
-    content = Path(f).read_text()
-    lines = content.split('\\n')
-    for i, line in enumerate(lines, 1):
-        if line.rstrip() != line and line.strip():
-            errors.append(f"{{f}}:{{i}}: trailing whitespace")
-if errors:
-    print('\\\\n'.join(errors))
-    sys.exit(1)
-print("No trailing whitespace found")
-"""],
-        capture_output=True,
-        text=True,
-        timeout=60,
-        cwd=REPO,
-    )
-    assert r.returncode == 0, f"Trailing whitespace check failed:\n{r.stderr}\n{r.stdout}"
+    """Modified files must not have trailing whitespace."""
+    for p in [_get_io_struct_path(), _get_tokenizer_manager_path()]:
+        for i, line in enumerate(p.read_text().splitlines(), 1):
+            if line.rstrip() != line and line.strip():
+                raise AssertionError(f"{p}:{i}: trailing whitespace")
 
 
 def test_end_of_file_fixer():
-    """Modified files must end with a single newline (pass_to_pass)."""
-    io_struct_path = _get_io_struct_path()
-    tokenizer_manager_path = _get_tokenizer_manager_path()
-
-    r = subprocess.run(
-        ["python3", "-c", f"""
-import sys
-from pathlib import Path
-
-files = ["{io_struct_path}", "{tokenizer_manager_path}"]
-errors = []
-for f in files:
-    content = Path(f).read_bytes()
-    if not content.endswith(b'\\n'):
-        errors.append(f"{{f}}: missing final newline")
-    elif content.endswith(b'\\n\\n'):
-        errors.append(f"{{f}}: multiple trailing newlines")
-if errors:
-    print('\\\\n'.join(errors))
-    sys.exit(1)
-print("All files end with single newline")
-"""],
-        capture_output=True,
-        text=True,
-        timeout=60,
-        cwd=REPO,
-    )
-    assert r.returncode == 0, f"End-of-file check failed:\n{r.stderr}\n{r.stdout}"
-
-
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests via AST inspection
-# ---------------------------------------------------------------------------
-
-def test_generate_req_caching_implemented():
-    """GenerateReqInput.__getitem__ implements identity caching with _sub_obj_cache."""
-    io_struct_path = _get_io_struct_path()
-    src = io_struct_path.read_text()
-    tree = ast.parse(src)
-
-    method = _find_class_and_method(tree, "GenerateReqInput", "__getitem__")
-    assert method is not None, "GenerateReqInput.__getitem__ method not found"
-
-    method_src = ast.unparse(method)
-
-    # Check for the caching logic pattern
-    assert "_sub_obj_cache" in method_src, (
-        "GenerateReqInput.__getitem__ must use _sub_obj_cache for caching"
-    )
-    assert "setdefault" in method_src, (
-        "GenerateReqInput.__getitem__ must use setdefault to initialize cache"
-    )
-    assert "cache[" in method_src or "cache.get" in method_src, (
-        "GenerateReqInput.__getitem__ must check cache before creating sub-object"
-    )
-    # Should store in cache before returning
-    assert "cache[i]" in method_src, (
-        "GenerateReqInput.__getitem__ must store sub-object in cache[i]"
-    )
-
-
-def test_embedding_req_caching_implemented():
-    """EmbeddingReqInput.__getitem__ implements identity caching with _sub_obj_cache."""
-    io_struct_path = _get_io_struct_path()
-    src = io_struct_path.read_text()
-    tree = ast.parse(src)
-
-    method = _find_class_and_method(tree, "EmbeddingReqInput", "__getitem__")
-    assert method is not None, "EmbeddingReqInput.__getitem__ method not found"
-
-    method_src = ast.unparse(method)
-
-    # Check for the caching logic pattern
-    assert "_sub_obj_cache" in method_src, (
-        "EmbeddingReqInput.__getitem__ must use _sub_obj_cache for caching"
-    )
-    assert "setdefault" in method_src, (
-        "EmbeddingReqInput.__getitem__ must use setdefault to initialize cache"
-    )
-    assert "cache[" in method_src or "cache.get" in method_src, (
-        "EmbeddingReqInput.__getitem__ must check cache before creating sub-object"
-    )
-    # Should store in cache before returning
-    assert "cache[i]" in method_src, (
-        "EmbeddingReqInput.__getitem__ must store sub-object in cache[i]"
-    )
-
-
-def test_lora_id_propagation_to_cached_subobjects():
-    """tokenizer_manager._resolve_lora_path propagates lora_id to cached sub-objects."""
-    tokenizer_manager_path = _get_tokenizer_manager_path()
-    src = tokenizer_manager_path.read_text()
-    tree = ast.parse(src)
-
-    # Find the _resolve_lora_path method (it's an async method, so AsyncFunctionDef)
-    method = None
-    for node in ast.walk(tree):
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == "_resolve_lora_path":
-            method = node
-            break
-
-    assert method is not None, "_resolve_lora_path method not found"
-
-    method_src = ast.unparse(method)
-
-    # Check for propagation logic
-    assert "_sub_obj_cache" in method_src, (
-        "_resolve_lora_path must access _sub_obj_cache to propagate lora_id"
-    )
-    assert "lora_id" in method_src, (
-        "_resolve_lora_path must handle lora_id assignment to sub-objects"
-    )
-
-
-# ---------------------------------------------------------------------------
-# Pass-to-pass (static) — anti-stub
-# ---------------------------------------------------------------------------
-
-def test_not_stub():
-    """Modified __getitem__ methods have real caching logic, not just return statements."""
-    io_struct_path = _get_io_struct_path()
-    src = io_struct_path.read_text()
-    tree = ast.parse(src)
-
-    # Find GenerateReqInput class and its __getitem__ method
-    found_generate_cache_logic = False
-    found_embedding_cache_logic = False
-
-    for node in ast.walk(tree):
-        if isinstance(node, ast.ClassDef):
-            if node.name == "GenerateReqInput":
-                for item in node.body:
-                    if isinstance(item, ast.FunctionDef) and item.name == "__getitem__":
-                        # Check for _sub_obj_cache reference in the method body
-                        method_src = ast.unparse(item)
-                        if "_sub_obj_cache" in method_src and "cache" in method_src:
-                            found_generate_cache_logic = True
-
-            elif node.name == "EmbeddingReqInput":
-                for item in node.body:
-                    if isinstance(item, ast.FunctionDef) and item.name == "__getitem__":
-                        # Check for _sub_obj_cache reference in the method body
-                        method_src = ast.unparse(item)
-                        if "_sub_obj_cache" in method_src and "cache" in method_src:
-                            found_embedding_cache_logic = True
-
-    assert found_generate_cache_logic, (
-        "GenerateReqInput.__getitem__ must have _sub_obj_cache caching logic"
-    )
-    assert found_embedding_cache_logic, (
-        "EmbeddingReqInput.__getitem__ must have _sub_obj_cache caching logic"
-    )
-
-
-# -----------------------------------------------------------------------------
-# Additional pass_to_pass gates - Repo CI checks (require tools installed)
-# -----------------------------------------------------------------------------
-
-def _install_tool(name):
-    """Install a Python tool if not already installed."""
-    r = subprocess.run([sys.executable, "-m", "pip", "install", "-q", name], capture_output=True, timeout=120)
-    return r.returncode == 0
-
-
-def test_repo_check_yaml():
-    """Repo's CI workflow YAML files are valid (pass_to_pass)."""
-    _install_tool("pyyaml")
-    # Check that key workflow YAML files are valid
-    workflow_dir = Path(f"{REPO}/.github/workflows")
-    if not workflow_dir.exists():
-        return  # Skip if no workflows
-
-    r = subprocess.run(
-        [sys.executable, "-c", f"""
-import yaml
-import sys
-from pathlib import Path
-
-workflow_dir = Path("{workflow_dir}")
-errors = []
-for f in workflow_dir.glob("*.yml"):
-    try:
-        yaml.safe_load(f.read_text())
-    except yaml.YAMLError as e:
-        errors.append(f"{{f.name}}: {{e}}")
-
-if errors:
-    print("\\n".join(errors))
-    sys.exit(1)
-print(f"Validated {{len(list(workflow_dir.glob('*.yml')))}} workflow YAML files")
-"""],
-        capture_output=True,
-        text=True,
-        timeout=60,
-        cwd=REPO,
-    )
-    assert r.returncode == 0, f"YAML validation failed:\\n{r.stderr}\\n{r.stdout}"
-
-
-def test_repo_check_toml():
-    """Repo's pyproject.toml is valid (pass_to_pass)."""
-    pyproject_path = Path(f"{REPO}/python/pyproject.toml")
-    if not pyproject_path.exists():
-        return  # Skip if no pyproject.toml
-
-    r = subprocess.run(
-        [sys.executable, "-c", f"""
-import tomllib
-import sys
-
-with open("{pyproject_path}", "rb") as f:
-    try:
-        tomllib.load(f)
-        print("pyproject.toml is valid")
-    except Exception as e:
-        print(f"Invalid TOML: {{e}}")
-        sys.exit(1)
-"""],
-        capture_output=True,
-        text=True,
-        timeout=60,
-        cwd=REPO,
-    )
-    assert r.returncode == 0, f"TOML validation failed:\\n{r.stderr}\\n{r.stdout}"
+    """Modified files must end with a single newline."""
+    for p in [_get_io_struct_path(), _get_tokenizer_manager_path()]:
+        content = p.read_bytes()
+        assert content.endswith(b"\n"), f"{p}: missing final newline"
+        assert not content.endswith(b"\n\n"), f"{p}: multiple trailing newlines"
 
 
 def test_repo_check_debug_statements():
-    """Modified files have no debug statements (breakpoint, pdb) (pass_to_pass)."""
-    io_struct_path = _get_io_struct_path()
-    tokenizer_manager_path = _get_tokenizer_manager_path()
+    """Modified files have no debug statements."""
+    patterns = ["breakpoint()", "import pdb", "from pdb import",
+                "pdb.set_trace", "console.log", "debugger"]
+    for p in [_get_io_struct_path(), _get_tokenizer_manager_path()]:
+        for i, line in enumerate(p.read_text().splitlines(), 1):
+            if line.strip().startswith("#"):
+                continue
+            for pat in patterns:
+                if pat in line:
+                    raise AssertionError(f"{p}:{i}: found '{pat}'")
 
-    r = subprocess.run(
-        [sys.executable, "-c", f"""
-import sys
-from pathlib import Path
 
-files = ["{io_struct_path}", "{tokenizer_manager_path}"]
-errors = []
-debug_patterns = ['breakpoint()', 'import pdb', 'from pdb import', 'pdb.set_trace', 'console.log', 'debugger']
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) — behavioral tests
+# ---------------------------------------------------------------------------
 
-for f in files:
-    content = Path(f).read_text()
-    lines = content.split('\\n')
-    for i, line in enumerate(lines, 1):
-        for pattern in debug_patterns:
-            if pattern in line and not line.strip().startswith('#'):
-                errors.append(f"{{f}}:{{i}}: found '{{pattern}}'")
-                break
+def test_generate_req_identity():
+    """GenerateReqInput.__getitem__ returns the same instance for the same index."""
+    r = _run_behavioral("""\
+obj = GenerateReqInput(
+    text=["hello", "world"],
+    image_data=[None, None],
+    video_data=[None, None],
+    audio_data=[None, None],
+    sampling_params=[{}, {}],
+    rid=["r1", "r2"],
+    return_logprob=[False, False],
+    logprob_start_len=[-1, -1],
+    top_logprobs_num=[0, 0],
+    token_ids_logprob=[None, None],
+)
 
-if errors:
-    print('\\n'.join(errors))
-    sys.exit(1)
-print("No debug statements found")
-"""],
-        capture_output=True,
-        text=True,
-        timeout=60,
-        cwd=REPO,
-    )
-    assert r.returncode == 0, f"Debug statement check failed:\\n{r.stderr}\\n{r.stdout}"
+sub0_a = obj[0]
+sub0_b = obj[0]
+sub1 = obj[1]
+
+assert sub0_a is sub0_b, "req[0] is req[0] must be True (identity caching)"
+assert sub0_a is not sub1, "Different indices must return different objects"
+assert sub0_a.text == "hello"
+assert sub1.text == "world"
+print("PASS")
+""")
+    assert r.returncode == 0, f"Failed:\n{r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
+
+
+def test_embedding_req_identity():
+    """EmbeddingReqInput.__getitem__ returns the same instance for the same index."""
+    r = _run_behavioral("""\
+obj = EmbeddingReqInput(
+    text=["hello", "world"],
+    sampling_params=[{}, {}],
+    rid=["r1", "r2"],
+)
+
+sub0_a = obj[0]
+sub0_b = obj[0]
+sub1 = obj[1]
+
+assert sub0_a is sub0_b, "req[0] is req[0] must be True (identity caching)"
+assert sub0_a is not sub1, "Different indices must return different objects"
+assert sub0_a.text == "hello"
+assert sub1.text == "world"
+print("PASS")
+""")
+    assert r.returncode == 0, f"Failed:\n{r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
+
+
+def test_lora_id_propagation_to_cached_subobjects():
+    """After lora_id is set on parent, cached sub-objects reflect the update."""
+    r = _run_behavioral("""\
+import ast
+
+obj = GenerateReqInput(
+    text=["hello", "world"],
+    lora_path=["path_a", "path_b"],
+    image_data=[None, None],
+    video_data=[None, None],
+    audio_data=[None, None],
+    sampling_params=[{}, {}],
+    rid=["r1", "r2"],
+    return_logprob=[False, False],
+    logprob_start_len=[-1, -1],
+    top_logprobs_num=[0, 0],
+    token_ids_logprob=[None, None],
+)
+
+# Access sub-objects to trigger caching
+sub0 = obj[0]
+sub1 = obj[1]
+assert sub0.lora_id is None, "lora_id should be None before resolution"
+
+# Simulate _resolve_lora_path: parent gets lora_id assigned
+obj.lora_id = ["id_a", "id_b"]
+
+# Read _resolve_lora_path and extract + execute its propagation logic
+tm_path = "/workspace/sglang/python/sglang/srt/managers/tokenizer_manager.py"
+tm_src = open(tm_path).read()
+tree = ast.parse(tm_src)
+
+func = None
+for node in ast.walk(tree):
+    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+        if node.name == "_resolve_lora_path":
+            func = node
+            break
+
+assert func is not None, "_resolve_lora_path must exist in tokenizer_manager.py"
+
+# Collect statements after the 'obj.lora_id = await ...' assignment
+propagation = []
+past_acquire = False
+for stmt in func.body:
+    s = ast.unparse(stmt)
+    if "lora_id" in s and ("acquire" in s or "await" in s):
+        past_acquire = True
+        continue
+    if past_acquire:
+        propagation.append(stmt)
+
+assert len(propagation) > 0, (
+    "_resolve_lora_path must have propagation logic after lora_id assignment"
+)
+
+# Execute the actual propagation code from the codebase
+prop_mod = ast.Module(body=propagation, type_ignores=[])
+ast.fix_missing_locations(prop_mod)
+exec(compile(prop_mod, "<propagation>", "exec"))
+
+# Verify propagation: sub-objects should have updated lora_id
+assert sub0.lora_id == "id_a", f"Expected 'id_a', got {sub0.lora_id!r}"
+assert sub1.lora_id == "id_b", f"Expected 'id_b', got {sub1.lora_id!r}"
+assert obj[0].lora_id == "id_a", "Cached sub-object via __getitem__ should reflect update"
+print("PASS")
+""")
+    assert r.returncode == 0, f"Failed:\n{r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout

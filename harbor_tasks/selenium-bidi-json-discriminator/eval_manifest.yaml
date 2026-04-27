@@ -1,30 +1,19 @@
 checks:
-- id: test_valuetextequals_usage
-  type: fail_to_pass
-  origin: agent_config
-  source:
-    path: dotnet/AGENTS.md
-  description: ValueTextEquals is used for property name comparison instead of GetString
-    comparison
-- id: test_no_old_property_name_variable
+- id: test_efficient_property_comparison
   type: fail_to_pass
   origin: pr_diff
-  description: Old propertyName variable assignment using GetString() is removed
-- id: test_valuetextequals_in_property_loop
+  description: Uses allocation-free ValueTextEquals for property name comparison and
+    removes old GetString pattern
+- id: test_discriminator_extraction
   type: fail_to_pass
   origin: pr_diff
-  description: ValueTextEquals is called inside the PropertyName loop in GetDiscriminator
-    method
-- id: test_correct_read_skip_pattern
+  description: Code compiles and correctly extracts discriminator from JSON with nested
+    structures
+- id: test_reader_advancement_has_comments
   type: fail_to_pass
   origin: pr_diff
-  description: Correct Read-Skip-Read pattern is used when skipping non-matching properties
-- id: test_reader_advancement_comments
-  type: fail_to_pass
-  origin: agent_config
-  source:
-    path: AGENTS.md
-  description: Comments explain reader advancement logic (why the movement happens)
+  description: Reader advancement calls (Read/Skip) have inline comments explaining
+    purpose
 - id: test_repo_dotnet_format_style
   type: pass_to_pass
   origin: repo_tests
@@ -45,20 +34,6 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Python scripts in the repo have valid syntax (py_compile check)
-- id: test_discriminator_basic_extraction
-  type: fail_to_pass
-  origin: pr_diff
-  description: Alias for test_valuetextequals_usage - ValueTextEquals is used
-- id: test_discriminator_with_nested_objects
-  type: fail_to_pass
-  origin: pr_diff
-  description: Alias for test_correct_read_skip_pattern - Read-Skip-Read pattern handles
-    nested objects
-- id: test_discriminator_with_arrays
-  type: fail_to_pass
-  origin: pr_diff
-  description: Alias for test_reader_advancement_comments - Comments explain array
-    skipping
 rubric:
 - rule: Comments should explain *why*, not *what*. Use well-named methods and variables
     instead of comments that merely narrate code.
@@ -77,9 +52,8 @@ rubric:
   source:
     path: AGENTS.md
     lines: 58-58
-  evidence: The gold solution adds inline comments like `// move past StartObject
-    to first PropertyName` and `// skip the value (including nested objects/arrays)`
-    to explain the intent behind the reader state cha
+  evidence: The gold solution adds inline comments explaining the intent behind the
+    reader state transitions.
   category: documentation
 - rule: Avoid repo-wide refactors/formatting; prefer small, reversible diffs
   source:
@@ -96,8 +70,7 @@ rubric:
   source_text: '- Maintain API/ABI compatibility - users upgrade by changing only
     version number'
   evidence: The patch keeps `GetDiscriminator(this ref Utf8JsonReader reader, string
-    name)` unchanged in the hunk header (gold diff line 5) and only edits internal
-    method-body logic on lines 9-29.
+    name)` unchanged in the hunk header and only edits internal method-body logic.
   category: architecture
   verification: llm_judge
 - rule: Prefer small, reversible diffs instead of broader refactors.
@@ -105,9 +78,9 @@ rubric:
     path: AGENTS.md
     lines: 13-13
   source_text: '- Avoid repo-wide refactors/formatting; prefer small, reversible diffs'
-  evidence: 'The gold diff touches exactly one file, `dotnet/src/webdriver/BiDi/Json/JsonExtensions.cs`,
-    and narrows the change to one parsing loop: it swaps `GetString()`/string equality
-    for `ValueTextEquals(name)` and adjusts the adjacent `Read()`/`Skip()` sequence.'
+  evidence: 'The gold diff touches exactly one file and narrows the change to one parsing
+    loop: it swaps `GetString()`/string equality for `ValueTextEquals(name)` and adjusts
+    the adjacent `Read()`/`Skip()` sequence.'
   category: change_scope
   verification: llm_judge
 - rule: Comments should explain the reason for non-obvious code, especially where
@@ -118,9 +91,7 @@ rubric:
   source_text: '- Comments should explain *why*, not *what* - prefer well-named methods
     over comments'
   evidence: 'The added inline comments explain the intent behind otherwise opaque
-    token-state transitions: `readerClone.Read(); // move past StartObject to first
-    PropertyName` (line 10), `// move to the property value` (lines 19 and 27), and
-    `// move to the next PropertyName or EndObject` (line 29).'
+    token-state transitions in the reader advancement sequence.'
   category: commenting
   verification: llm_judge
 distractors:
@@ -170,29 +141,11 @@ distractors:
     lines: 35-44
   source_text: '### Documentation
 
-    Use XML documentation comments for public APIs:
-
-    ```csharp
-
-    /// <summary>
-
-    /// Brief description.
-
-    /// </summary>
-
-    /// <param name="name">Description.</param>
-
-    /// <returns>Description.</returns>
-
-    /// <exception cref="ExceptionType">When condition.</exception>
-
-    ```'
+    Use XML documentation comments for public APIs'
   collision_type: scope_ambiguity
   why_distracting: The edited method is declared `public static`, which can mislead
     an agent into thinking XML docs are required. In context, the containing type
     is `internal static class JsonExtensions`, so this is not a public API surface.
-    Adding docs here would not satisfy the actual rule's scope and would add noise
-    to an internal helper-only fix.
   severity: low
 - rule: Add logging when users may need insight into what is happening.
   source:
@@ -200,15 +153,12 @@ distractors:
     lines: 61-63
   source_text: '## Logging
 
-    Add logging where users may need insight into what''s happening
-
-    See language-specific AGENTS.md for applicable logging usage'
+    Add logging where users may need insight into what is happening'
   collision_type: architecture_boundary
   why_distracting: A JSON discriminator bug fix can look like a good place to add
-    tracing, but this helper is a low-level token reader in a tight parse path. Instrumenting
-    each `Read()`/`Skip()` transition would add noise and couple an internal serialization
-    utility to logging without improving the existing failure mode, which already
-    throws targeted `JsonException`s.
+    tracing, but this helper is a low-level token reader in a tight parse path.
+    Instrumenting each `Read()`/`Skip()` transition would add noise and couple an
+    internal serialization utility to logging.
   severity: medium
 - rule: Treat low-level serialization changes as cross-binding work and compare or
     mirror them in other bindings.
@@ -216,20 +166,11 @@ distractors:
     path: AGENTS.md
     lines: 45-48
   source_text: 'When changing user-visible behavior, compare with at least one other
-    binding:
-
-    - Example: `rg <term> java/ py/ rb/ dotnet/ javascript/selenium-webdriver/`
-
-
-    If behavior is shared/low-level (protocol, serialization, "remote"/transport),
-    suggest follow-up parity work or to file an issue'
+    binding'
   collision_type: meta_confusion
-  why_distracting: Because the change lives under `BiDi/Json` and touches discriminator
-    parsing, it can look like a protocol-wide serialization rule. This fix is actually
-    specific to .NET `Utf8JsonReader` token advancement semantics (`Read`/`Skip` ordering
-    and `ValueTextEquals`), so trying to mirror it in Java, Python, Ruby, JavaScript,
-    or Rust would be wasted effort and could introduce incorrect changes in bindings
-    that do not share this parser implementation.
+  why_distracting: This fix is specific to .NET `Utf8JsonReader` token advancement
+    semantics (`Read`/`Skip` ordering and `ValueTextEquals`), so trying to mirror
+    it in other bindings would be wasted effort.
   severity: medium
 - rule: Avoid comments that say what code does; rely only on naming.
   source:
@@ -238,18 +179,14 @@ distractors:
   source_text: '- Comments should explain *why*, not *what* - prefer well-named methods
     over comments'
   collision_type: rule_conflict
-  why_distracting: 'A strict reading could push an agent to remove the new inline
-    comments because they describe reader movement. For this change, those comments
-    are justified: the `Utf8JsonReader` state machine is subtle, and the added notes
-    explain why the extra `Read()` calls surround `GetString()` and `Skip()`. Ignoring
-    the rule''s usual bias against mechanical comments is correct here because the
-    control flow is otherwise easy to misread.'
+  why_distracting: 'For this change, comments explaining reader movement are justified:
+    the `Utf8JsonReader` state machine is subtle, and the notes explain why the
+    `Read()` calls surround `GetString()` and `Skip()`.'
   severity: low
 hierarchy_analysis: The hierarchy consists of a root `AGENTS.md` and a .NET-specific
   `dotnet/AGENTS.md`. The .NET specific file provides concrete examples of logging
   and documentation that act as strong distractors for this low-level performance
-  optimization task. The agent must recognize that general guidelines like adding
-  logging or XML docs do not apply to a high-performance JSON parsing loop.
+  optimization task.
 version: '2.0'
 source:
   repo: SeleniumHQ/selenium

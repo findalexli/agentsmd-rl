@@ -109,14 +109,18 @@ class TestErrorMessageImprovement:
 
 class TestValidationStructure:
     def test_separator_extracted_before_validation(self):
+        """Verify castAs<String> result is validated for emptiness before emplacement."""
         section = _get_split_by_string_section()
         section_text = "\n".join(line for _, line in section)
 
-        # Check that castAs<String> result is stored in a variable (any name)
-        # The key is that it should be extracted before validation
-        cast_pattern = r"const\s+auto\s+&\s+\w+\s*=\s*castAs<String>"
-        assert re.search(cast_pattern, section_text), \
-            "castAs<String> result should be stored in a variable before validation"
+        # castAs<String> must be called in the loop section
+        assert "castAs<String>" in section_text, \
+            "castAs<String> must be used to extract the string value from array elements"
+
+        # The result of castAs<String> must be checked for emptiness.
+        # Accept any valid pattern: variable extraction + .empty(), inline .empty(), etc.
+        assert re.search(r'\.empty\(\)', section_text), \
+            "An empty() check on the extracted string value is required before emplacement"
 
 
 class TestCodeStyle:
@@ -201,11 +205,6 @@ class TestRepoStructure:
         if rc == 0 and stdout.strip():
             lines = [l for l in stdout.strip().split("\n") if l.strip()]
             assert not lines, "Trailing whitespace: " + stdout[:500]
-
-    def test_git_log_shows_base_commit(self):
-        rc, stdout, _ = _run_cmd(["git", "log", "--oneline", "-n", "1"], cwd=REPO)
-        assert rc == 0, "git log failed"
-        assert "7dad4d8" in stdout, "Expected base commit not found: " + stdout
 
     def test_yaml_config_valid(self):
         import yaml

@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "Instruction names the file area (C++ binding function converting BunString to JS URL), mentions throw scope and C-style cast, sufficient to locate BunString__toJSDOMURL in BunString.cpp."
+      "reason": "Instruction mentions server.url, Bun.serve, and the requirement that the fix be a pure insertion preventing null deref after DOMURL creation; tests check BunString.cpp structure which is the natural location, and pure-insertion requirement is explicit."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "Instruction describes that a guard is needed to return early if exception pending, but does not give the exact macro/line; agent must still write the code."
+      "reason": "Instruction describes the bug behavior and the conceptual requirement (guard between DOMURL creation and subsequent use) without naming RETURN_IF_EXCEPTION or the exact file/line."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "Tests accept multiple guard patterns (RETURN_IF_EXCEPTION, if+return, any return) between toJSNewlyCreated and jsCast, not just the gold RETURN_IF_EXCEPTION macro."
+      "reason": "Tests accept either RETURN_IF_EXCEPTION(throwScope, {}) or if-check with return, allowing multiple valid guard idioms."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Since Bun can't be built, tests only do regex/static analysis on BunString.cpp source (re.search for 'return', 'RETURN_IF_EXCEPTION', etc.) and git diff inspection \u2014 no code execution of the fix."
+      "reason": "Tests only parse source text with regex (re.search for guard patterns, git diff inspection) rather than executing the Bun binary to verify server.url throws instead of crashing; the rubric asks to FAIL if every test is text inspection without execution."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "Tests require a control-flow guard insertion between toJSNewlyCreated and jsCast plus diff having additions and no deletions; a stub/no-op wouldn't satisfy this."
+      "reason": "A stub cannot pass: test_fix_adds_control_flow_guard requires a proper JSC guard idiom between toJSNewlyCreated and jsCast in the actual source."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "Instruction requirements (guard inserted, pure insertion, between specific calls) are each mapped to tests (test_fix_adds_return_if_exception, test_fix_is_minimal, test_guard_prevents_null_deref_on_error, test_success_path_preserved)."
+      "reason": "Requirements 2 (pure insertion) and 3 (control-flow guard before jsCast) are tested; requirement 1 (JS exception) is verified indirectly via the guard structure."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are grouped with section headers (fail_to_pass pr_diff, pass_to_pass pr_diff, pass_to_pass static) and clearly named."
+      "reason": "Tests are grouped with comment banners (fail_to_pass pr_diff, pass_to_pass pr_diff, pass_to_pass static) and descriptive names."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task is a C++ source code fix, no structured data output."
+      "reason": "Task is a C++ code fix, no structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "Filenames and identifiers (BunString.cpp, BunString__toJSDOMURL, jsCast, toJSNewlyCreated) are consistent and correct."
+      "reason": "Paths and identifiers (BunString.cpp, BunString__toJSDOMURL, toJSNewlyCreated, jsCast) match consistently."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "Instruction describes the function by characteristics (throw scope, C-style cast, BunString\u2192JS URL) without naming the exact file path or line; localization remains part of the task."
+      "reason": "Instruction does not name the specific file (BunString.cpp) or line; only describes the symptom and required fix behavior."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "Not an agentmd-edits/config task."
+      "reason": "Code-only task, not a config edit."
     }
   },
   "tier_a_fails": [

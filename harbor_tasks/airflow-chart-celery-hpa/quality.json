@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "Instruction names the values paths (workers.celery.hpa.*), executors, default metrics literal, scaleTargetRef kinds, KEDA mutex, schema properties (enabled, minReplicaCount, maxReplicaCount, metrics, behavior), and the 'deprecated' keyword requirement."
+      "reason": "Instruction names the relevant config paths (workers.celery.hpa, workers.hpa), executor names, schema property names (enabled, minReplicaCount, maxReplicaCount, metrics, behavior), and the 'deprecated' keyword requirement. The repo test file paths used in P2P tests are standard Airflow chart test paths."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "Instruction describes desired behavior and schema requirements without specifying file paths, line numbers, or implementation details."
+      "reason": "Instruction describes desired behavior and config paths but doesn't dictate template implementation, file edits, or specific helper function names."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "Tests assert on rendered Helm output (kind, spec.minReplicas, spec.metrics, etc.), not on internal template variable names or implementation specifics."
+      "reason": "Tests assert on rendered Helm output (kind, spec.minReplicas, spec.metrics, scaleTargetRef.kind) which any correct implementation must produce; no internal naming is checked."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests invoke `helm template` subprocess and parse YAML output, plus run repo's pytest suites."
+      "reason": "Tests invoke `helm template` via subprocess and parse YAML output, asserting on rendered Kubernetes resources."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "Each f2p test requires actual HPA rendering with specific spec values (e.g., minReplicas==2, metrics==specific list) that a stub cannot satisfy."
+      "reason": "Each F2P test asserts specific values (e.g., spec.minReplicas==2, default cpu metric block, kind=='HorizontalPodAutoscaler') that require actual template rendering logic."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "Tests cover new path, replicas, default/custom metrics, behavior, executor gating, KEDA mutex, scaleTargetRef, worker sets, backward compat, and disabled-by-default."
+      "reason": "Tests cover executor gating, KEDA exclusion, default metrics, custom metrics, behavior, persistence target ref, worker sets, backward compat, and disabled-by-default."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests grouped under FAIL-TO-PASS and PASS-TO-PASS section comments with descriptive names and parametrization."
+      "reason": "Tests are grouped with clear section comments (FAIL-TO-PASS, PASS-TO-PASS) and descriptive names."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "JSON schema property names (enabled, minReplicaCount, etc.) and required HPA spec literal are documented in instruction.md."
+      "reason": "Instruction documents required schema properties (enabled, minReplicaCount, maxReplicaCount, metrics, behavior) and the deprecated description requirement."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "Paths like /workspace/airflow, templates/workers/worker-hpa.yaml, and value keys appear consistent."
+      "reason": "Paths and identifiers (workers.celery.hpa, CeleryKubernetesExecutor, ScaledObject, scaleTargetRef) are spelled correctly."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "Instruction references general areas (chart values, JSON schema) without naming specific template files or line numbers to edit."
+      "reason": "Instruction refers to chart and HPA template areas in general terms without naming specific lines or template files to edit."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code/template implementation task, not an agentmd-edits config task."
+      "reason": "This is a code/template change task, not an agentmd config-edit task."
     }
   },
   "tier_a_fails": [],

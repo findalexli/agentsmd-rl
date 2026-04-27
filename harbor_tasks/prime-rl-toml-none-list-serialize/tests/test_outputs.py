@@ -15,7 +15,7 @@ from pathlib import Path
 REPO = "/workspace/prime-rl"
 CONFIG_PY = Path(f"{REPO}/src/prime_rl/utils/config.py")
 
-TARGET_FUNCS = {"none_to_none_str", "_convert_none"}
+TARGET_FUNCS = {"none_to_none_str"}
 
 
 def _run_py(code: str, timeout: int = 30) -> subprocess.CompletedProcess:

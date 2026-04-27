@@ -8,77 +8,83 @@ source:
   title: "http: reject conflicting duplicate Content-Length headers"
 
 checks:
-  # Category 1: Code behavior tests (HTTP parser security fix)
-  - id: http_parser_duplicate_check
+  # Category 1: HTTP Parser behavior tests (security fix)
+  - id: test_http_parser_has_security_fix
     type: fail_to_pass
     origin: pr_diff
-    description: "HttpParser.h must have logic to detect and reject duplicate Content-Length headers"
+    description: "HttpParser.h must use bloom filter and HTTP_PARSER_ERROR_INVALID_CONTENT_LENGTH for duplicate Content-Length detection"
 
-  - id: http_parser_empty_rejection
+  - id: test_http_parser_content_length_behavior
     type: fail_to_pass
     origin: pr_diff
-    description: "HttpParser.h must reject empty Content-Length values (RFC 9112 6.3)"
+    description: "Extracted CL validation code must compile and pass behavioral tests: accept single/identical CL, reject conflicting/empty CL"
 
-  - id: http_parser_bloom_filter
+  - id: test_http_parser_has_rfc_reference
     type: fail_to_pass
     origin: pr_diff
-    description: "HttpParser.h should use bloom filter to short-circuit when no Content-Length present"
+    description: "HttpParser.h must reference RFC 9112 or RFC 9110 in comments"
 
-  - id: http_parser_400_error
+  # Category 2: TypeScript pr:comments script tests
+  - id: test_pr_comments_script_exists
     type: fail_to_pass
     origin: pr_diff
-    description: "HttpParser.h must return HTTP 400 error when conflicting Content-Length headers detected"
+    description: "scripts/pr-comments.ts must exist and be a valid Bun/TypeScript script"
 
-  - id: http_parser_rfc_reference
+  - id: test_pr_comments_script_runs_without_crash
     type: fail_to_pass
     origin: pr_diff
-    description: "HttpParser.h must reference RFC 9112 6.3 in comments"
+    description: "pr-comments.ts must execute without JavaScript syntax/type errors"
 
-  # Category 2: Config/documentation update tests (REQUIRED for agentmd-edit)
-  - id: claude_md_pr_feedback_section
+  - id: test_pr_comments_script_has_pagination
     type: fail_to_pass
     origin: pr_diff
-    description: "CLAUDE.md must have a 'Reading PR Feedback' section documenting the pr:comments command"
+    description: "pr-comments.ts must use gh api --paginate for large result sets"
 
-  - id: claude_md_pr_comments_command
+  - id: test_pr_comments_script_fetches_all_endpoints
+    type: fail_to_pass
+    origin: pr_diff
+    description: "pr-comments.ts must fetch /issues/N/comments, /pulls/N/reviews, and /pulls/N/comments"
+
+  - id: test_pr_comments_script_uses_graphql
+    type: fail_to_pass
+    origin: pr_diff
+    description: "pr-comments.ts must use GraphQL for thread state (isResolved, isOutdated)"
+
+  - id: test_pr_comments_script_has_json_output
+    type: fail_to_pass
+    origin: pr_diff
+    description: "pr-comments.ts must support --json flag and label entries with kind (issue comment, review, line comment)"
+
+  # Category 3: Documentation and package.json tests
+  - id: test_claude_md_has_pr_feedback_section
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CLAUDE.md must have a 'Reading PR Feedback' section"
+
+  - id: test_claude_md_explains_gh_pr_view_limitation
+    type: fail_to_pass
+    origin: pr_diff
+    description: "CLAUDE.md must explain the limitation of 'gh pr view --comments' (silently omits review comments)"
+
+  - id: test_claude_md_documents_pr_comments_command
     type: fail_to_pass
     origin: pr_diff
     description: "CLAUDE.md must document the 'bun run pr:comments' command"
 
-  - id: claude_md_explains_footgun
+  - id: test_claude_md_has_json_output_documentation
     type: fail_to_pass
     origin: pr_diff
-    description: "CLAUDE.md must explain the footgun with 'gh pr view --comments' omitting review comments"
+    description: "CLAUDE.md must document the --json flag and JSON output fields (user, kind, etc.)"
 
-  - id: claude_md_graphql_fields
+  - id: test_claude_md_has_resolved_field_documentation
     type: fail_to_pass
     origin: pr_diff
-    description: "CLAUDE.md must document the JSON output fields including resolved/outdated thread state"
+    description: "CLAUDE.md must document the 'resolved' thread state field"
 
-  - id: claude_md_usage_examples
+  - id: test_package_json_has_pr_comments_script
     type: fail_to_pass
     origin: pr_diff
-    description: "CLAUDE.md must have usage examples for the pr:comments command with jq filtering"
-
-  - id: package_json_pr_comments_script
-    type: fail_to_pass
-    origin: pr_diff
-    description: "package.json must have the 'pr:comments' script entry"
-
-  - id: pr_comments_script_exists
-    type: fail_to_pass
-    origin: pr_diff
-    description: "scripts/pr-comments.ts file must exist with the implementation"
-
-  - id: pr_comments_pagination
-    type: fail_to_pass
-    origin: pr_diff
-    description: "pr-comments.ts must handle pagination with --paginate flag"
-
-  - id: pr_comments_all_endpoints
-    type: fail_to_pass
-    origin: pr_diff
-    description: "pr-comments.ts must fetch all three endpoints: issues, pulls/reviews, pulls/comments"
+    description: "package.json must have 'pr:comments' script entry referencing pr-comments.ts"
 
 # Track 2: Gold config edits (extracted deterministically from solve.sh)
 config_edits:

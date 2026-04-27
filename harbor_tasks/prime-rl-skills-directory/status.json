@@ -4,12 +4,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-16T10:21:33.719342",
-  "total_time": 924.71,
-  "sandbox_id": "i8gu44f036lgpkcmcvlch",
-  "backend": "fireworks",
+  "validated_at": "2026-04-25T14:24:48.385955",
+  "total_time": 7630.45,
+  "sandbox_id": "i6tob2x09j50z09jnvqkq",
+  "backend": "anthropic",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "oneshot_repair",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -90,10 +90,10 @@
     },
     "quality_gate": {
       "status": "DELETE",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 0.8,
-      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:105: test `test_repo_python_syntax_valid` has 1 assert(s), all pass on', 'lint_tier_b:1', 'B:[B] no_network_during_tests @ tests/test.sh:18: network call at test time: `pip install`']"
+      "model": "claude-opus-4-6",
+      "backend": "anthropic",
+      "time": 0.24,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:2', \"A:[A] test_deps_in_dockerfile @ environment/Dockerfile: tests call 1 binary not installed in Dockerfile: ['uv']\", 'A:[A] test_not_tautological @ tests/test_outputs.py:107: test `test_repo_python_syntax_valid` has 1 assert(s), all pass on', 'lint_tier_b:4', 'B:[B] pinned_dependencies @ environment/Dockerfile:24: unpinned pip deps: ruff, 2>/dev/null', 'B:[B] pinned_dependencies @ environment/Dockerfile:24: unpinned pip deps: ruff', 'B:[B] no_network_during_tests @ tests/test.sh:18: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
@@ -104,48 +104,55 @@
       "tier_b_fails": [],
       "pass_count": 10,
       "fail_count": 1
+    },
+    "fix_quality": {
+      "status": "ok",
+      "model": "claude-opus-4-6",
+      "backend": "anthropic",
+      "time": 535.71,
+      "notes": ""
     }
   },
   "history": [
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 1350.91,
-      "at": "2026-04-12T05:52:11.730273"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "minimax",
-      "time": 934.94,
-      "at": "2026-04-15T05:17:19.192223"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
       "backend": "oauth",
-      "time": 628.55,
-      "at": "2026-04-15T13:13:08.268855"
+      "time": 5899.86,
+      "at": "2026-04-25T10:19:51.972398"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "oauth",
+      "time": 2163.93,
+      "at": "2026-04-25T10:56:44.962514"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 2116.06,
+      "at": "2026-04-25T11:33:05.191342"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "oauth",
+      "time": 1812.16,
+      "at": "2026-04-25T12:05:27.086589"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
-      "backend": "minimax",
-      "time": 4449.64,
-      "at": "2026-04-16T01:54:47.237720"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 924.71,
-      "at": "2026-04-16T10:21:33.719342"
+      "backend": "anthropic",
+      "time": 7630.45,
+      "at": "2026-04-25T14:24:48.385955"
     }
   ]
 }

@@ -1,15 +1,16 @@
 {
   "schema_version": 2,
-  "valid": true,
-  "verdict": "pass",
-  "nop_reward": 0.0,
-  "gold_reward": 1.0,
-  "validated_at": "2026-04-16T10:50:57.821940",
-  "total_time": 719.36,
-  "sandbox_id": "i3l5tko51o63jgv1z98lx",
-  "backend": "fireworks",
+  "valid": false,
+  "verdict": "fail",
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-22T07:42:37.084563",
+  "total_time": 32213.81,
+  "sandbox_id": "i37ff1uw4sd4fwtkjph0i",
+  "backend": "minimax",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "fix_quality",
+  "error": "rate limited during fix_quality: {\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":190871,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 429 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"rate_limit_error\\\",\\\"message\\\":\\\"usage limit exceeded (2056)\\\"},\\\"request_id\\\":\\\"0638115bc1b7b0e72f98ef085e84e895\\\"}\",\"stop_reason\":\"stop_sequence\",\"session_id\":\"f38331dc-07af-478d-a64b-4a42afbfe01e\",\"total_cost_usd\":0,\"usage\":{\"input_tokens\":0,\"cache_creation_input_tokens\":0,\"cache_read_inp",
   "nodes": {
     "p2p_enrich": {
       "status": "completed",
@@ -62,10 +63,10 @@
     },
     "quality_gate": {
       "status": "passed",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 0.38,
-      "notes": "flags=[]"
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.5,
+      "notes": "flags=['lint_tier_b:1', 'B:[B] no_network_during_tests @ tests/test.sh:44: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
@@ -81,17 +82,16 @@
       "status": "error",
       "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":101,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"Not logged in \u00b7 Please run /login\",\"stop_reason\":\"stop_sequence\",\"session_id\":\"6def9a54-befa-4e35-b768-139f65c833fc\",\"total_cost_usd\":0,\"usage\":{\"input_tokens\":0,\"cache_creation_input_t",
       "time": 1.27
+    },
+    "fix_quality": {
+      "status": "rate_limited",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 193.47,
+      "notes": ""
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 1032.38,
-      "at": "2026-04-15T04:11:25.116055"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -123,6 +123,14 @@
       "backend": "fireworks",
       "time": 719.36,
       "at": "2026-04-16T10:50:57.821940"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "minimax",
+      "time": 32213.81,
+      "at": "2026-04-22T07:42:37.084563"
     }
   ]
 }

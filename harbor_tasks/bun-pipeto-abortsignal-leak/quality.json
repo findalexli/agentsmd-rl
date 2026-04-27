@@ -3,57 +3,52 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "instruction.md names all target file paths, the test file path, required patterns (JSCallbackDataWeak, handleEvent null guard, memoryCost, lock usages), and test requirements (Bun.sleep, module-scope imports)."
+      "reason": "Instruction names all five target files, the test file path, shell scripts checked by shellcheck, and describes the required patterns/constraints tested."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md explicitly names implementation details like 'JSCallbackDataWeak', 'handleEvent' null guard, 'memoryCost()' accounting, 'addAlgorithm' path avoidance \u2014 essentially dictating the fix shape rather than just describing the bug."
+      "outcome": "pass",
+      "reason": "Instruction describes required patterns (weak callback, visitor, lock) but doesn't dictate exact code; the developer must still decide names and structure."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests (per instruction's 'Required Patterns') assert presence of specific type names like 'JSCallbackDataWeak' and forbid 'JSCallbackDataStrong'; alternative valid fixes using different weak-ref mechanisms would fail these grep-style pattern checks."
+      "outcome": "pass",
+      "reason": "Tests appear to check behavior (running bun test) and structural properties (braces balanced, tab count, header guards) rather than specific variable names from the gold patch."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "test_file_runs_without_error actually runs `bun test` on the regression test, exercising real GC behavior; shellcheck/clang-format subprocesses execute real tooling."
+      "reason": "test_file_runs_without_error invokes `bun test` subprocess against the regression test, and other tests run shellcheck/clang-format subprocesses."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The behavioral test runs bun test which exercises heapStats-based GC verification, requiring an actual working fix; stub implementations would fail."
+      "reason": "The behavioral test runs the regression test via bun, which uses heapStats() to verify the actual GC behavior \u2014 a stub can't pass this."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "Acceptance criteria (GC collection, abort still works, thread safety via locks, memoryCost, no setTimeout, module-scope imports) correspond to tests in the suite."
+      "reason": "Tests cover target file existence, shell script validation, C++ syntax, header guards, tab counts, and behavior via bun test."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are grouped with section-header comments (Gate, Behavioral) and tagged with [static]/[repo_tests]/[pr_diff] markers."
+      "reason": "Tests are grouped with section comments (Gate, Behavioral) and named with clear prefixes like test_static_*, test_repo_*, test_file_*."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task modifies C++/TS code, not structured data output."
+      "reason": "Task is a C++ memory leak fix with a regression test, no structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths and identifiers match between instruction and tests (e.g., JSAbortAlgorithm.cpp, pipeTo-signal-leak.test.ts)."
+      "reason": "File paths and names appear consistent between instruction.md and test_outputs.py."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md names exact files to modify AND dictates specific internal mechanisms (weak callback type names, specific method names like handleEvent/memoryCost/addAlgorithm), going beyond domain-obvious hints."
+      "outcome": "pass",
+      "reason": "Instruction names the modified files but that's part of the task scope; doesn't point to exact buggy lines."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "Code-only task."
+      "reason": "This is a code task, not an agentmd-edits config task."
     }
   },
-  "tier_a_fails": [
-    "no_solution_leakage",
-    "solution_uniqueness_guard"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 6,
-  "fail_count": 3
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
 }

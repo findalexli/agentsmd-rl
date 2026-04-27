@@ -5,44 +5,56 @@ source:
   base_commit: 5b3ca83b84f90ccc9c71005db0ab9bd87850bc70
   merge_commit: 196ed8a1bd4d5c9915e71816ce64a6a281eee23e
 checks:
-- id: http_parser_validates_duplicate_content_length
+- id: test_http_parser_rejects_conflicting_duplicate_content_length
   type: fail_to_pass
   origin: pr_diff
-  description: HttpParser validates all Content-Length headers and rejects conflicting
-    values
-- id: http_parser_rejects_empty_content_length
+  description: HttpParser rejects requests with conflicting Content-Length headers
+    with 400
+- id: test_http_parser_rejects_empty_content_length
   type: fail_to_pass
   origin: pr_diff
   description: Empty Content-Length values are rejected to prevent smuggling bypass
-- id: pr_comments_script_parses
+- id: test_http_parser_accepts_identical_duplicate_content_length
+  type: fail_to_pass
+  origin: pr_diff
+  description: Duplicate Content-Length headers with identical values are accepted
+- id: test_pr_comments_script_parses
   type: fail_to_pass
   origin: pr_diff
   description: pr-comments.ts exists and is valid TypeScript that bun can transpile
-- id: claude_md_documents_pr_comments
+- id: test_pr_comments_accepts_pr_number_argument
+  type: fail_to_pass
+  origin: pr_diff
+  description: pr-comments.ts accepts a PR number as a positional argument
+- id: test_pr_comments_accepts_json_flag
+  type: fail_to_pass
+  origin: pr_diff
+  description: pr-comments.ts supports --json flag for machine-readable output
+- id: test_claude_md_documents_pr_comments
   type: fail_to_pass
   origin: pr_diff
   description: CLAUDE.md documents the pr:comments script with usage examples
-- id: package_json_has_pr_comments
+- id: test_package_json_has_pr_comments
   type: fail_to_pass
   origin: pr_diff
   description: package.json includes pr:comments script entry pointing to pr-comments.ts
-- id: http_parser_content_length_parsing_preserved
+- id: test_http_parser_content_length_preserved
   type: pass_to_pass
   origin: static
   description: Basic Content-Length and Transfer-Encoding parsing still intact
-- id: repo_lint
+- id: test_repo_lint
   type: pass_to_pass
   origin: repo_tests
   description: Repo's JavaScript linting (oxlint) passes
-- id: repo_ban_words
+- id: test_repo_ban_words
   type: pass_to_pass
   origin: repo_tests
   description: Banned words check passes
-- id: repo_bun_types
+- id: test_repo_bun_types
   type: pass_to_pass
   origin: repo_tests
   description: Bun types TypeScript check passes
-- id: repo_http_smuggling_tests
+- id: test_repo_http_smuggling_tests
   type: pass_to_pass
   origin: repo_tests
   description: HTTP request smuggling tests pass (50 tests for Transfer-Encoding validation,

@@ -7,40 +7,39 @@
 
 ## Overview
 
-AReaL contains two categories of resource leaks that cause test failures. All modified files must pass the full test suite for a reward of 1; any failure yields 0.
+AReaL contains two categories of resource management bugs that need to be fixed. All modified files must pass the full test suite for a reward of 1; any failure yields 0.
 
 ---
 
-## Bug 1 — Socket leak when port binding fails
+## Bug 1 — Socket file descriptor leaks in network utilities
 
 ### Symptom
 
-The codebase contains a utility function that checks whether a network port is available by attempting to bind to it with both TCP and UDP sockets. When the bind operation fails (because the port is already in use), the function returns `False` immediately — but the socket file descriptor is never closed. This leaks a file descriptor every time the port is already in use (the common failure case).
+The port availability checking logic in `areal/utils/network.py` leaks socket file descriptors. When ports are already in use (the common failure case), sockets are allocated but never properly released. Over time, under heavy port-scanning workloads, this exhausts the OS file descriptor limit.
 
 ### Required behavior
 
-- When a bind operation raises an `OSError`, the socket must be closed before returning.
-- Both TCP and UDP code paths must clean up their socket on bind failure.
-- Sockets that bind successfully must also be closed (existing behavior, not a change).
-- The function should continue to return `True` if the port is free, `False` otherwise.
+- All allocated sockets must be properly closed regardless of whether operations succeed or fail.
+- Both TCP and UDP code paths must ensure proper socket cleanup.
+- The port-checking logic should continue to return `True` if the port is free, `False` otherwise.
 
 ---
 
-## Bug 2 — Traceback destruction in trainer context managers
+## Bug 2 — Lost exception tracebacks in trainer context managers
 
 ### Symptom
 
-Two trainer classes in the codebase implement context manager `__exit__` methods. When an exception is propagating out of a `with` block using these trainers, the `__exit__` method re-raises the exception using `raise exc_value`. This replaces the original traceback with a new one that points at the `raise` statement inside `__exit__`, making debugging difficult because the true origin of the exception is lost.
+The trainer classes in `areal/trainer/rl_trainer.py` and `areal/trainer/sft_trainer.py` implement context manager protocols. When an exception occurs inside a `with` block using these trainers, the original traceback is destroyed and replaced with one that points to the trainer's internal code. This makes debugging training failures very difficult because developers cannot see where the error actually originated.
 
 ### Required behavior
 
-- `__exit__` must not re-raise the exception manually.
-- It must return a falsy value (`False`, `None`, etc.) so that Python re-raises the original exception with its full traceback intact.
-- Cleanup operations must still run regardless of whether an exception is propagating.
+- The context manager protocol must preserve the original exception's full traceback.
+- Python's default exception propagation mechanism should be used rather than manual exception handling that destroys traceback information.
+- Cleanup operations (like resource release) must still run regardless of whether an exception is propagating.
 
 ---
 
-## File list (all must be modified)
+## Files that must be modified
 
 - `areal/utils/network.py`
 - `areal/trainer/rl_trainer.py`
@@ -57,4 +56,3 @@ All modified files must:
 - Have no bare `print()` calls used for logging
 - Pass `ruff check` and `ruff format --check`
 - End with a single newline and have no trailing whitespace
-- Contain at least 3 real statements in the fixed functions (not just `pass` stubs)

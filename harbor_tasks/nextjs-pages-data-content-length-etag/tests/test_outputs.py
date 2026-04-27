@@ -30,27 +30,97 @@ def _strip_comments(code: str) -> str:
 
 # [pr_diff] fail_to_pass
 def test_data_response_path_no_buffer():
-    """The isNextDataRequest code path must NOT wrap JSON.stringify in Buffer.from.
-    The buggy pattern Buffer.from(JSON.stringify(result.value.pageData)) causes
-    isDynamic=true, which prevents Content-Length and ETag headers from being set."""
-    code = Path(HANDLER).read_text()
-    # AST-only because: TypeScript with complex build deps, cannot import handler directly
-    assert "Buffer.from(JSON.stringify(result.value.pageData))" not in code, (
-        "Data response path still wraps JSON.stringify in Buffer.from — "
-        "this causes isDynamic=true, preventing Content-Length and ETag headers"
+    """The isNextDataRequest code path must construct RenderResult with a string
+    payload, not a Buffer. Wrapping in Buffer.from() causes isDynamic=true,
+    which prevents Content-Length and ETag headers from being set."""
+    r = subprocess.run(
+        ["node", "-e", r"""
+const fs = require('fs');
+const code = fs.readFileSync(
+    '/workspace/next.js/packages/next/src/server/route-modules/pages/pages-handler.ts', 'utf8'
+);
+// Remove comments
+const clean = code.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');
+// Find the isNextDataRequest section and check that the RenderResult
+// for JSON data responses is not constructed with Buffer.from() wrapping.
+const lines = clean.split('\n');
+let nearDataPath = false;
+let countdown = 0;
+let found = false;
+for (let i = 0; i < lines.length; i++) {
+    if (/isNextDataRequest/.test(lines[i])) {
+        nearDataPath = true;
+        countdown = 15;
+    }
+    if (nearDataPath) {
+        countdown--;
+        if (countdown <= 0) nearDataPath = false;
+        const chunk = lines.slice(i, Math.min(i + 4, lines.length)).join(' ');
+        if (/new\s+RenderResult\s*\(\s*Buffer\.from\s*\(/.test(chunk)) {
+            found = true;
+            break;
+        }
+    }
+}
+if (found) {
+    console.log('FAIL: Data response path wraps payload in Buffer.from() for RenderResult');
+    process.exit(1);
+}
+console.log('PASS: Data response path constructs RenderResult with string payload');
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, (
+        f"Data response path still wraps payload in Buffer.from() for RenderResult — "
+        f"this causes isDynamic=true, preventing Content-Length and ETag headers\n{r.stdout}\n{r.stderr}"
     )
 
 
 # [pr_diff] fail_to_pass
 def test_isr_fallback_path_no_buffer():
-    """ISR fallback path must NOT wrap previousCacheEntry.value.html in Buffer.from.
-    The buggy pattern Buffer.from(previousCacheEntry.value.html) causes isDynamic=true,
-    preventing Content-Length and ETag headers from being set on ISR fallback responses."""
-    code = Path(HANDLER).read_text()
-    # AST-only because: TypeScript with complex build deps, cannot import handler directly
-    assert "Buffer.from(previousCacheEntry.value.html)" not in code, (
-        "ISR fallback still wraps previousCacheEntry.value.html in Buffer.from — "
-        "this causes isDynamic=true, preventing Content-Length and ETag"
+    """ISR fallback path must construct RenderResult with a string payload,
+    not a Buffer. Wrapping in Buffer.from() causes isDynamic=true,
+    preventing Content-Length and ETag headers from being set."""
+    r = subprocess.run(
+        ["node", "-e", r"""
+const fs = require('fs');
+const code = fs.readFileSync(
+    '/workspace/next.js/packages/next/src/server/route-modules/pages/pages-handler.ts', 'utf8'
+);
+// Remove comments
+const clean = code.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');
+// Find the ISR fallback section (previousCacheEntry area) and check that
+// the RenderResult for HTML content is not constructed with Buffer.from().
+const lines = clean.split('\n');
+let nearFallback = false;
+let countdown = 0;
+let found = false;
+for (let i = 0; i < lines.length; i++) {
+    if (/previousCacheEntry/.test(lines[i])) {
+        nearFallback = true;
+        countdown = 20;
+    }
+    if (nearFallback) {
+        countdown--;
+        if (countdown <= 0) nearFallback = false;
+        const chunk = lines.slice(i, Math.min(i + 4, lines.length)).join(' ');
+        if (/new\s+RenderResult\s*\(\s*Buffer\.from\s*\(/.test(chunk)) {
+            found = true;
+            break;
+        }
+    }
+}
+if (found) {
+    console.log('FAIL: ISR fallback path wraps payload in Buffer.from() for RenderResult');
+    process.exit(1);
+}
+console.log('PASS: ISR fallback path constructs RenderResult with string payload');
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, (
+        f"ISR fallback still wraps payload in Buffer.from() for RenderResult — "
+        f"this causes isDynamic=true, preventing Content-Length and ETag headers\n{r.stdout}\n{r.stderr}"
     )
 
 

@@ -408,8 +408,15 @@ def test_agents_md_terminal_testing_guidelines():
     agents_md = APP / "e2e" / "AGENTS.md"
     content = agents_md.read_text()
     lower = content.lower()
-    # Check for key guidelines
-    has_terminal_tests = "terminal" in lower and "test" in lower
-    has_browser_typing = "type" in lower and ("browser" in lower or "page.keyboard" in lower)
-    assert has_terminal_tests, "AGENTS.md should have terminal testing guidelines"
-    assert has_browser_typing, "Terminal testing section should advise typing through the browser"
+    # Must have a dedicated terminal tests section
+    assert "terminal test" in lower or "terminal tests" in lower, \
+        "AGENTS.md should have a 'Terminal Tests' section"
+    # Must advise typing through the browser
+    assert "type" in lower and "browser" in lower, \
+        "Terminal testing section should advise typing through the browser"
+    # Must warn against waitForTimeout
+    assert "waitfortimeout" in lower, \
+        "Terminal testing section should mention avoiding waitForTimeout"
+    # Must warn against custom DOM readiness checks
+    assert "dom" in lower or "data-" in content, \
+        "Terminal testing section should warn against custom DOM checks"

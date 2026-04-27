@@ -3,58 +3,52 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "instruction.md names models.py path, create_and_run method, sandbox_environment_id parameter, SandboxEnvironment.objects.filter(team=team, id=...).first() pattern, exact ValueError message, str(sandbox_env.id), and extra_state = extra_state or {} initialization."
+      "reason": "instruction names models.py, Task.create_and_run, sandbox_environment_id parameter, SandboxEnvironment, extra_state key, ValueError requirement, and the docs file path\u2014all test assertions map to these."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "Instruction gives near-verbatim implementation: 'SandboxEnvironment.objects.filter(team=team, id=sandbox_environment_id).first()', exact error message 'Invalid sandbox_environment_id: {sandbox_environment_id}', exact expression 'str(sandbox_env.id)', and exact initialization pattern 'extra_state = extra_state or {}'."
+      "outcome": "pass",
+      "reason": "Instruction describes requirements (accept param, validate, store in extra_state) without giving exact code lines."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests assert on gold-specific variable name 'sandbox_env' (test_invalid_sandbox_env_id_raises_valueerror checks 'sandbox_env' in source), exact expression 'str(sandbox_env.id)', and '.first()' usage\u2014alternative correct fixes using .get() or different variable names would fail."
+      "outcome": "pass",
+      "reason": "Tests check parameter signature, ValueError on invalid id containing the id string, and extra_state storage\u2014all behavior-level checks an alternative correct implementation would satisfy."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "All f2p tests use ast parsing and substring checks on source code (e.g., '\"SandboxEnvironment.objects.filter\" not in func_src', 'str(sandbox_env.id)' not in func_src); no test actually calls create_and_run or executes behavior."
+      "outcome": "pass",
+      "reason": "Tests use subprocess to import Task, call create_and_run with mocks, and verify ValueError/extra_state behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "Tests verify multiple specific structural requirements (kwonlyarg with None default, str|None annotation, filter call, ValueError message, extra_state assignment) that a stub couldn't trivially satisfy."
+      "reason": "A stub returning None would fail signature/kwonly check, ValueError raising check, and extra_state storage check."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "Tests cover the signature change, validation with ValueError, extra_state storage, and team filtering requirement from AGENTS.md."
+      "reason": "Signature, validation error, and extra_state storage are all tested as required."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are grouped with section comment headers (Gates, Fail-to-pass, Agent config compliance) and descriptive names/docstrings."
+      "reason": "Tests are grouped with section comments (Gates, Fail-to-pass) and descriptive names."
     },
     "structured_data_schema": {
-      "outcome": "not_applicable",
-      "reason": "Task does not produce structured data output."
+      "outcome": "pass",
+      "reason": "extra_state key 'sandbox_environment_id' is explicitly documented in instruction.md."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, method name create_and_run, parameter name sandbox_environment_id all consistent."
+      "reason": "Paths and identifiers are consistent and correct."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "Instruction provides exact implementation expressions like 'SandboxEnvironment.objects.filter(team=team, id=sandbox_environment_id).first()', 'str(sandbox_env.id)', and 'extra_state = extra_state or {}'\u2014this is solution spec, not hint about localization."
+      "outcome": "pass",
+      "reason": "Instruction names the file to modify, which is appropriate scoping without line-level leakage."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "Not an agentmd-edits task; this is a code + docs change."
+      "reason": "This is a code+docs task, not an agentmd-edits task."
     }
   },
-  "tier_a_fails": [
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 5,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 10,
+  "fail_count": 0
 }

@@ -81,6 +81,78 @@ def _extract_cached_invalidate_region(content: str) -> str | None:
 # Fail-to-pass (pr_diff)
 # -----------------------------------------------------------------------------
 
+def test_cache_invalidation_uses_effect_primitive():
+    """Verify via Node.js execution that the cache uses Effect.cachedInvalidateWithTTL
+    instead of mutable let reassignment, and that errors are logged before fallback."""
+    script = Path(REPO) / "_eval_tmp.mjs"
+    js_code = r"""
+import { readFileSync } from 'fs';
+
+const src = readFileSync('packages/opencode/src/config/config.ts', 'utf-8');
+
+// Strip single-line and multi-line comments for analysis
+const code = src.replace(/\/\/.*/g, '').replace(/\/\*[\s\S]*?\*\//g, '');
+
+const errors = [];
+
+// 1. Must use cachedInvalidateWithTTL (Effect's cache invalidation primitive)
+if (!code.includes('cachedInvalidateWithTTL')) {
+  errors.push('cachedInvalidateWithTTL not found');
+}
+
+// 2. Must NOT have mutable let for cache variable (old pattern)
+if (/\blet\s+cachedGlobal\b/.test(code)) {
+  errors.push('mutable let cachedGlobal still present');
+}
+
+// 3. Must have error logging message in cache region
+const cacheStart = code.indexOf('cachedInvalidateWithTTL');
+if (cacheStart >= 0) {
+  const region = code.slice(cacheStart, cacheStart + 800);
+  if (!region.includes('failed to load global config')) {
+    errors.push('error logging message not found near cache initialization');
+  }
+}
+
+// 4. Find invalidate function - verify it does NOT recreate the cache
+const invMatch = code.match(
+  /Effect\.fn\([^)]*invalidate[^)]*\)\s*\(\s*function\*\s*\([^)]*\)\s*\{/
+);
+if (invMatch) {
+  const invStart = code.indexOf(invMatch[0]) + invMatch[0].length;
+  let depth = 1, pos = invStart;
+  while (pos < code.length && depth > 0) {
+    if (code[pos] === '{') depth++;
+    if (code[pos] === '}') depth--;
+    pos++;
+  }
+  const invBody = code.slice(invStart, pos - 1);
+  if (invBody.includes('Effect.cached(')) {
+    errors.push('invalidate() still recreates cache with Effect.cached()');
+  }
+  if (/cachedGlobal\s*=/.test(invBody)) {
+    errors.push('invalidate() still reassigns cachedGlobal');
+  }
+}
+
+if (errors.length > 0) {
+  console.error('FAIL: ' + errors.join('; '));
+  process.exit(1);
+}
+console.log('PASS');
+"""
+    script.write_text(js_code)
+    try:
+        r = subprocess.run(
+            ["node", str(script)],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+    finally:
+        script.unlink(missing_ok=True)
+    assert r.returncode == 0, f"Cache behavioral check failed: {r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
+
+
 def test_duration_imported_from_effect():
     """Duration must be imported from 'effect' package."""
     content = FILE.read_text()

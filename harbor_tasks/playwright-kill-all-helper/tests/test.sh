@@ -1,6 +1,11 @@
 #!/bin/bash
 set -e
 
+# Install pytest if needed
+python3 -c "import pytest" 2>/dev/null || \
+    pip3 install -q --break-system-packages pytest 2>/dev/null || \
+    python3 -m pip install -q pytest 2>/dev/null || true
+
 # Run pytest and capture result
 cd /tests
 if python3 -m pytest test_outputs.py -v --tb=short 2>&1; then

@@ -61,18 +61,14 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Node.js syntax check passes on render-result.ts
-- id: no_buffer_from_in_data_request
+- id: render_result_isDynamic_behavior
+  type: pass_to_pass
+  origin: pr_diff
+  description: Execute the actual RenderResult class to verify string responses have isDynamic=false (enables Content-Length/ETag) and Buffer responses have isDynamic=true
+- id: pages_handler_no_buffer_wrapping
   type: fail_to_pass
   origin: pr_diff
-  description: Data request handler should NOT wrap JSON.stringify with Buffer.from
-- id: no_buffer_from_in_cached_html
-  type: fail_to_pass
-  origin: pr_diff
-  description: Cached HTML handler should NOT wrap html with Buffer.from
-- id: render_result_accepts_string
-  type: fail_to_pass
-  origin: pr_diff
-  description: Verify RenderResult accepts string (isDynamic=false) vs Buffer (isDynamic=true)
+  description: Verify pages-handler.ts does not wrap RenderResult args with Buffer.from() using TypeScript AST analysis
 - id: handler_has_real_logic
   type: pass_to_pass
   origin: static

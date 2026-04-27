@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "All file paths, method names (hasExplicitCliParams implied via 'detect explicit CLI parameters', Runtime::enableCoroutine via 'Swoole's Runtime'), and strings like 'Updating Appwrite'/'Updating your app' and 'data-upgrade' are discoverable from instruction.md."
+      "reason": "All file paths and behavior expectations mentioned in tests (Install.php, Server.php, step-4.phtml, step-5.phtml, styles.css, AGENTS.md) are named in instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "Instruction describes symptoms and requirements (e.g., 'enable coroutines before async', 'hide badge when upgrade') without specifying exact code changes or line numbers."
+      "reason": "Instruction describes symptoms and expected behaviors without providing exact code replacements."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific identifiers: test_has_explicit_cli_params_behavior requires method named exactly 'hasExplicitCliParams', test_on_complete_callback_behavior requires variable named exactly '$onComplete', and test_dns_failure_handling_behavior requires specific variable 'hostIp' in the regex \u2014 alternative correct fixes using different names would fail."
+      "reason": "test_coroutine_hooks_enabled_before_async_work requires literal 'Runtime::enableCoroutine' and 'use Swoole\\Runtime' imports, and test_completion_callback_called_before_telemetry requires the specific variable name '$onComplete' \u2014 alternative valid implementations using different names or fully-qualified calls would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Most f2p tests use php_run_script to read source files and regex-match contents (e.g., test_runtime_enable_coroutine_behavior, test_on_complete_callback_behavior) rather than actually invoking the fixed functionality; they are text inspection wrapped in PHP."
+      "reason": "Most tests are regex/token inspections of source files (e.g., checking for 'Runtime::enableCoroutine' string, '$onComplete' token, '@gethostbyname' string) rather than executing the fixed code."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "Each f2p test requires specific source patterns (method definitions, imports, strings) that a stub couldn't satisfy without actually implementing the change."
+      "reason": "Each test checks for specific implementation markers that a no-op stub would not satisfy."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "Each of the 8 issues in instruction.md has a corresponding test in test_outputs.py."
+      "reason": "All 8 issues from instruction.md have corresponding tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are clearly grouped with comment headers separating f2p and p2p sections, with descriptive names and docstrings."
+      "reason": "Tests are named descriptively and grouped with comments like 'Fail-to-Pass (f2p) tests'."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task doesn't produce structured data output."
+      "reason": "Task does not produce structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths and commands appear consistent and correct."
+      "reason": "Filenames and paths appear consistent across instruction and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "Instruction names the buggy files (which is appropriate since localization isn't the challenge) but doesn't give exact line numbers or code replacements."
+      "reason": "Instruction names files but not specific line numbers; file localization is part of the task context."
     },
     "config_edit_scope_bounded": {
-      "outcome": "not_applicable",
-      "reason": "This is primarily a code-fix task, not a config-edit task."
+      "outcome": "pass",
+      "reason": "Gold patch modifications are localized additions/replacements, not full-file rewrites."
     }
   },
   "tier_a_fails": [
@@ -52,6 +52,6 @@
   ],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 7,
+  "pass_count": 8,
   "fail_count": 2
 }

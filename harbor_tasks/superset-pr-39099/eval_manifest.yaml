@@ -1,3 +1,5 @@
+version: "2.0"
+
 # Evaluation manifest for apache/superset#39099
 # Check pre-existing foreign keys on create utility
 
@@ -13,37 +15,37 @@ checks:
   # Fail-to-pass tests - must fail on base commit, pass after fix
   - id: test_get_foreign_key_names_exists
     type: fail_to_pass
-    origin: pr_behavior
+    origin: pr_diff
     description: Verify get_foreign_key_names() helper function exists
 
   - id: test_get_foreign_key_names_returns_set
     type: fail_to_pass
-    origin: pr_behavior
+    origin: pr_diff
     description: Verify get_foreign_key_names() returns a set of FK names
 
   - id: test_get_foreign_key_names_empty_table
     type: fail_to_pass
-    origin: pr_behavior
+    origin: pr_diff
     description: Verify get_foreign_key_names() handles tables with no FKs
 
   - id: test_get_foreign_key_names_multiple_tables
     type: fail_to_pass
-    origin: pr_behavior
+    origin: pr_diff
     description: Verify get_foreign_key_names() works with different table names
 
   - id: test_create_fks_skips_existing_foreign_key
     type: fail_to_pass
-    origin: pr_behavior
+    origin: pr_diff
     description: Verify create_fks_for_table() skips creating FK if it already exists
 
   - id: test_create_fks_skips_various_existing_fks
     type: fail_to_pass
-    origin: pr_behavior
+    origin: pr_diff
     description: Verify create_fks_for_table() skips for different FK names
 
   - id: test_drop_fks_uses_helper_function
     type: fail_to_pass
-    origin: pr_behavior
+    origin: pr_diff
     description: Verify drop_fks_for_table() uses get_foreign_key_names helper
 
   # Pass-to-pass tests - must pass on both versions
@@ -101,8 +103,4 @@ checks:
     origin: static
     description: Verify import statements are valid AST
 
-# Rubric: This is a code-only task (modifying utils.py) with no config/documentation
-# file edits required. The fail_to_pass and pass_to_pass tests in the checks section
-# validate code correctness, style (ruff), and patterns. Config-edit rubric rules
-# are not applicable for this task type.
 rubric: []

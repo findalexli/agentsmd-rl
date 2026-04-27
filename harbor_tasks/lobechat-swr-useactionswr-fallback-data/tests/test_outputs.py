@@ -65,27 +65,58 @@ def test_repo_swr_prettier():
     assert r.returncode == 0, f"Prettier check failed:\n{r.stderr[-500:]}"
 
 
-def test_use_action_swr_uses_fallback_data():
-    """useActionSWR uses useSWR with fallbackData, not useSWRMutation."""
-    swr_file = Path(REPO) / "src" / "libs" / "swr" / "index.ts"
-    content = swr_file.read_text()
+def test_use_action_swr_no_auto_fetch():
+    """useActionSWR must not auto-fetch on mount and must provide initial data."""
+    test_file = Path(REPO) / "src" / "libs" / "swr" / "_eval_action_swr.test.ts"
+    test_code = """\
+import { renderHook, act } from '@testing-library/react';
+import { createElement } from 'react';
+import { SWRConfig } from 'swr';
+import { useActionSWR } from './index';
 
-    # Extract useActionSWR function using regex
-    match = re.search(r"export const useActionSWR[\s\S]*?(?=\nexport |\n// |\n\nexport |$)", content)
-    assert match, "Could not find useActionSWR function"
-    func_content = match.group(0)
+describe('useActionSWR behavioral', () => {
+  it('should not auto-fetch on mount and should provide initial data', async () => {
+    const fetcher = vi.fn().mockImplementation(() => new Promise(() => {}));
+    const uniqueKey = 'eval-test-' + Date.now() + '-' + Math.random();
 
-    # Must NOT use useSWRMutation
-    assert "useSWRMutation" not in func_content, "useActionSWR still uses useSWRMutation"
+    // Isolate cache so no stale data interferes
+    const wrapper = ({ children }: { children: React.ReactNode }) =>
+      createElement(SWRConfig, { value: { provider: () => new Map() } }, children);
 
-    # Must call useSWR
-    assert "useSWR" in func_content, "useActionSWR does not call useSWR"
+    const { result } = renderHook(
+      () => (useActionSWR as any)(uniqueKey, fetcher),
+      { wrapper }
+    );
 
-    # Must use fallbackData
-    assert "fallbackData" in func_content, "useActionSWR missing fallbackData"
+    // Allow async effects to settle
+    await act(async () => {
+      await new Promise(r => setTimeout(r, 200));
+    });
 
-    # Must disable revalidateOnMount
-    assert "revalidateOnMount" in func_content, "useActionSWR missing revalidateOnMount"
+    // data should be defined (not undefined) on mount - indicates initial/fallback data
+    expect(result.current.data).toBeDefined();
+
+    // Fetcher should NOT be called on mount - no auto-fetch
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+});
+"""
+    test_file.write_text(test_code)
+    try:
+        r = subprocess.run(
+            ["npx", "vitest", "run", str(test_file), "--reporter=verbose"],
+            capture_output=True,
+            text=True,
+            timeout=120,
+            cwd=REPO,
+        )
+        assert r.returncode == 0, (
+            f"useActionSWR behavioral test failed:\n"
+            f"STDOUT:\n{r.stdout[-2000:]}\n"
+            f"STDERR:\n{r.stderr[-1000:]}"
+        )
+    finally:
+        test_file.unlink(missing_ok=True)
 
 
 def test_swr_comments_english_only():

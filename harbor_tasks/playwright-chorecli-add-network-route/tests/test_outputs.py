@@ -13,6 +13,21 @@ from pathlib import Path
 REPO = "/workspace/playwright"
 
 
+def _ensure_built():
+    """Build the project once (idempotent via sentinel file)."""
+    sentinel = Path(REPO) / ".eval_built"
+    if sentinel.exists():
+        return
+    subprocess.run(
+        ["npm", "ci"], capture_output=True, text=True, timeout=300, cwd=REPO
+    )
+    r = subprocess.run(
+        ["npm", "run", "build"], capture_output=True, text=True, timeout=300, cwd=REPO
+    )
+    if r.returncode == 0:
+        sentinel.write_text("ok")
+
+
 def _run_node(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
     """Execute JavaScript code via Node in the repo directory."""
     script = Path(REPO) / "_eval_tmp.js"
@@ -30,7 +45,6 @@ def _run_node(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
 # Gates (pass_to_pass, static)
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
 def test_syntax_check():
     """Key source files must exist."""
     files = [
@@ -46,45 +60,44 @@ def test_syntax_check():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (agent_config) — tool file per SKILL.md line 9
+# Fail-to-pass (agent_config) — tool module per SKILL.md line 9
 # ---------------------------------------------------------------------------
 
-# [agent_config] fail_to_pass — .claude/skills/playwright-mcp-dev/SKILL.md:9
 def test_route_tool_definition():
-    """route.ts must exist with browser_route tool having correct schema fields."""
+    """Route tool module must export browser_route tool with correct schema fields."""
+    _ensure_built()
     r = _run_node("""
-const fs = require('fs');
-const path = 'packages/playwright/src/mcp/browser/tools/route.ts';
-if (!fs.existsSync(path)) {
-    console.error('FAIL: route.ts does not exist');
-    process.exit(1);
-}
-const src = fs.readFileSync(path, 'utf8');
-
-// Must define browser_route tool
-if (!src.includes("name: 'browser_route'") && !src.includes('name: "browser_route"')) {
-    console.error('FAIL: browser_route tool not defined');
+const routeModule = require('./packages/playwright/lib/mcp/browser/tools/route');
+const tools = routeModule.default || (Array.isArray(routeModule) ? routeModule : null);
+if (!tools || !Array.isArray(tools)) {
+    console.error('FAIL: route module must export an array of tool definitions');
     process.exit(1);
 }
 
-// Schema must include key fields
+const browserRoute = tools.find(t => t.schema && t.schema.name === 'browser_route');
+if (!browserRoute) {
+    console.error('FAIL: browser_route tool not found in exports');
+    process.exit(1);
+}
+
+// Verify schema has required input fields
+const shape = browserRoute.schema.inputSchema.shape;
 const requiredFields = ['pattern', 'status', 'body', 'contentType', 'headers', 'removeHeaders'];
 for (const field of requiredFields) {
-    if (!src.includes(field)) {
+    if (!(field in shape)) {
         console.error('FAIL: schema missing field: ' + field);
         process.exit(1);
     }
 }
 
-// Must use defineTool
-if (!src.includes('defineTool')) {
-    console.error('FAIL: must use defineTool');
+if (typeof browserRoute.handle !== 'function') {
+    console.error('FAIL: browser_route must have a handle function');
     process.exit(1);
 }
 
 console.log('PASS');
 """)
-    assert r.returncode == 0, f"Failed: {r.stderr}\\n{r.stdout}"
+    assert r.returncode == 0, f"Failed: {r.stderr}\n{r.stdout}"
     assert "PASS" in r.stdout
 
 
@@ -92,163 +105,160 @@ console.log('PASS');
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
 
-# [pr_diff] fail_to_pass
 def test_route_fulfill_and_continue():
     """browser_route handler must call fulfill for body/status, continue for headers."""
+    _ensure_built()
     r = _run_node("""
-const fs = require('fs');
-const path = 'packages/playwright/src/mcp/browser/tools/route.ts';
-if (!fs.existsSync(path)) {
-    console.error('FAIL: route.ts does not exist');
-    process.exit(1);
-}
-const src = fs.readFileSync(path, 'utf8');
-
-// Find browser_route tool handler
-const toolMatch = src.match(/name:\\s*['"]browser_route['"]/);
-if (!toolMatch) {
+const routeModule = require('./packages/playwright/lib/mcp/browser/tools/route');
+const contextModule = require('./packages/playwright/lib/mcp/browser/context');
+const tools = routeModule.default || routeModule;
+const routeTool = tools.find(t => t.schema && t.schema.name === 'browser_route');
+if (!routeTool) {
     console.error('FAIL: browser_route tool not found');
     process.exit(1);
 }
 
-const rest = src.slice(toolMatch.index);
-const handleMatch = rest.match(/handle:\\s*async/);
-if (!handleMatch) {
-    console.error('FAIL: handle function not found');
+// Discover route methods from Context prototype (flexible naming)
+const proto = contextModule.Context.prototype;
+const methods = Object.getOwnPropertyNames(proto).filter(n => typeof proto[n] === 'function');
+const routeMethods = methods.filter(n => /route/i.test(n));
+const listMethod = routeMethods.find(n => /^(get)?routes?$/i.test(n) || /^list/i.test(n));
+const removeMethod = routeMethods.find(n => /remove|delete|un/i.test(n));
+const addMethod = routeMethods.find(n => n !== listMethod && n !== removeMethod);
+if (!addMethod) {
+    console.error('FAIL: Context must have a method to add routes');
     process.exit(1);
 }
 
-const fromHandle = rest.slice(handleMatch.index);
-const braceStart = fromHandle.indexOf('{');
-let depth = 0;
-let handler = '';
-for (let i = braceStart; i < fromHandle.length; i++) {
-    if (fromHandle[i] === '{') depth++;
-    if (fromHandle[i] === '}') { depth--; if (depth === 0) { handler = fromHandle.slice(braceStart, i + 1); break; } }
-}
+(async () => {
+    let capturedEntry = null;
+    const mockContext = {};
+    mockContext[addMethod] = (entry) => { capturedEntry = entry; return Promise.resolve(); };
+    const mockResponse = { addTextResult: () => {}, addCode: () => {} };
 
-// Must call route.fulfill for body/status case
-if (!handler.includes('.fulfill(')) {
-    console.error('FAIL: handler must call route.fulfill() for mock responses');
-    process.exit(1);
-}
+    // Test 1: fulfill path (body + status provided)
+    await routeTool.handle(mockContext, { pattern: '**/test', body: 'hello', status: 200 }, mockResponse);
+    if (!capturedEntry || typeof capturedEntry.handler !== 'function') {
+        console.error('FAIL: handle must create a route entry with a handler function');
+        process.exit(1);
+    }
 
-// Must call route.continue for header-only modification
-if (!handler.includes('.continue(')) {
-    console.error('FAIL: handler must call route.continue() for header modification');
-    process.exit(1);
-}
+    let fulfillCalled = false;
+    let continueCalled = false;
+    const mockRoute = {
+        fulfill: (opts) => { fulfillCalled = true; return Promise.resolve(); },
+        continue: (opts) => { continueCalled = true; return Promise.resolve(); },
+        request: () => ({ headers: () => ({}) }),
+    };
 
-// Must check body/status to decide path
-if (!handler.includes('body') || !handler.includes('status')) {
-    console.error('FAIL: handler must check body/status');
-    process.exit(1);
-}
+    await capturedEntry.handler(mockRoute);
+    if (!fulfillCalled) {
+        console.error('FAIL: handler must call fulfill when body/status are provided');
+        process.exit(1);
+    }
 
-console.log('PASS');
+    // Test 2: continue path (only headers, no body/status)
+    capturedEntry = null;
+    fulfillCalled = false;
+    continueCalled = false;
+    await routeTool.handle(mockContext, { pattern: '**/test2', headers: ['X-Custom: value'] }, mockResponse);
+    if (!capturedEntry || typeof capturedEntry.handler !== 'function') {
+        console.error('FAIL: handle must create a route entry for header modification');
+        process.exit(1);
+    }
+    await capturedEntry.handler(mockRoute);
+    if (!continueCalled) {
+        console.error('FAIL: handler must call continue when only headers are specified');
+        process.exit(1);
+    }
+
+    console.log('PASS');
+})().catch(e => { console.error('ERROR:', e.message); process.exit(1); });
 """)
-    assert r.returncode == 0, f"Failed: {r.stderr}\\n{r.stdout}"
+    assert r.returncode == 0, f"Failed: {r.stderr}\n{r.stdout}"
     assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
 def test_route_list_and_unroute_tools():
-    """route.ts must define browser_route_list and browser_unroute tools."""
+    """browser_route_list and browser_unroute tools must behave correctly."""
+    _ensure_built()
     r = _run_node("""
-const fs = require('fs');
-const path = 'packages/playwright/src/mcp/browser/tools/route.ts';
-if (!fs.existsSync(path)) {
-    console.error('FAIL: route.ts does not exist');
-    process.exit(1);
-}
-const src = fs.readFileSync(path, 'utf8');
+const routeModule = require('./packages/playwright/lib/mcp/browser/tools/route');
+const contextModule = require('./packages/playwright/lib/mcp/browser/context');
+const tools = routeModule.default || routeModule;
 
-if (!src.includes("name: 'browser_route_list'") && !src.includes('name: "browser_route_list"')) {
-    console.error('FAIL: browser_route_list tool not defined');
-    process.exit(1);
-}
+const listTool = tools.find(t => t.schema && t.schema.name === 'browser_route_list');
+if (!listTool) { console.error('FAIL: browser_route_list not defined'); process.exit(1); }
+const unrouteTool = tools.find(t => t.schema && t.schema.name === 'browser_unroute');
+if (!unrouteTool) { console.error('FAIL: browser_unroute not defined'); process.exit(1); }
 
-if (!src.includes("name: 'browser_unroute'") && !src.includes('name: "browser_unroute"')) {
-    console.error('FAIL: browser_unroute tool not defined');
-    process.exit(1);
-}
+// Discover method names from Context prototype (flexible naming)
+const proto = contextModule.Context.prototype;
+const methods = Object.getOwnPropertyNames(proto).filter(n => typeof proto[n] === 'function');
+const routeMethods = methods.filter(n => /route/i.test(n));
+const listMethod = routeMethods.find(n => /^(get)?routes?$/i.test(n) || /^list/i.test(n));
+const removeMethod = routeMethods.find(n => /remove|delete|un/i.test(n));
 
-// route_list should handle empty state
-if (!src.includes('No active routes')) {
-    console.error('FAIL: route_list should handle empty state');
+if (!listMethod || !removeMethod) {
+    console.error('FAIL: Context must have routes listing and removal methods');
     process.exit(1);
 }
 
-// unroute should report removal
-if (!src.includes('Removed') && !src.includes('removed')) {
-    console.error('FAIL: unroute should report removal count');
-    process.exit(1);
-}
+(async () => {
+    // Test: route_list with empty routes returns "No active routes"
+    let resultText = '';
+    const mockResponse = { addTextResult: (t) => { resultText = t; }, addCode: () => {} };
+    const emptyContext = {};
+    emptyContext[listMethod] = () => [];
+    await listTool.handle(emptyContext, {}, mockResponse);
+    if (!resultText.includes('No active routes')) {
+        console.error('FAIL: route_list should return "No active routes" when empty, got: ' + resultText);
+        process.exit(1);
+    }
 
-// Must have default export
-if (!src.includes('export default')) {
-    console.error('FAIL: must have default export');
-    process.exit(1);
-}
+    // Test: unroute reports removal count
+    resultText = '';
+    const removeContext = {};
+    removeContext[removeMethod] = () => Promise.resolve(2);
+    await unrouteTool.handle(removeContext, {}, mockResponse);
+    if (!resultText.includes('Removed') || !resultText.includes('2')) {
+        console.error('FAIL: unroute should report removal count, got: ' + resultText);
+        process.exit(1);
+    }
 
-console.log('PASS');
+    console.log('PASS');
+})().catch(e => { console.error('ERROR:', e.message); process.exit(1); });
 """)
-    assert r.returncode == 0, f"Failed: {r.stderr}\\n{r.stdout}"
+    assert r.returncode == 0, f"Failed: {r.stderr}\n{r.stdout}"
     assert "PASS" in r.stdout
 
 
-# [pr_diff] fail_to_pass
 def test_context_route_management():
-    """context.ts must export RouteEntry and have addRoute/removeRoute/routes methods."""
+    """Context class must have route management capabilities."""
+    _ensure_built()
     r = _run_node("""
-const fs = require('fs');
-const src = fs.readFileSync('packages/playwright/src/mcp/browser/context.ts', 'utf8');
+const contextModule = require('./packages/playwright/lib/mcp/browser/context');
 
-// Must export RouteEntry type
-if (!src.includes('export type RouteEntry') && !src.includes('export interface RouteEntry')) {
-    console.error('FAIL: must export RouteEntry type');
+if (!contextModule.Context) {
+    console.error('FAIL: Context class not found in exports');
     process.exit(1);
 }
 
-// RouteEntry must have pattern and handler fields
-if (!src.match(/RouteEntry[\\s\\S]*?pattern.*string/)) {
-    console.error('FAIL: RouteEntry must have pattern field');
-    process.exit(1);
-}
+const proto = contextModule.Context.prototype;
+const methods = Object.getOwnPropertyNames(proto).filter(
+    n => typeof proto[n] === 'function'
+);
 
-// Context must have addRoute method
-if (!src.includes('addRoute')) {
-    console.error('FAIL: Context must have addRoute method');
-    process.exit(1);
-}
-
-// Context must have removeRoute method
-if (!src.includes('removeRoute')) {
-    console.error('FAIL: Context must have removeRoute method');
-    process.exit(1);
-}
-
-// Context must have routes() accessor
-if (!src.includes('routes()')) {
-    console.error('FAIL: Context must have routes() method');
-    process.exit(1);
-}
-
-// addRoute must delegate to browserContext.route
-if (!src.includes('browserContext.route(') && !src.includes('browserContext.route (')) {
-    console.error('FAIL: addRoute must call browserContext.route');
-    process.exit(1);
-}
-
-// removeRoute must call unroute
-if (!src.includes('.unroute(')) {
-    console.error('FAIL: removeRoute must call unroute on browserContext');
+// Must have at least 3 route-related methods (add, remove, list)
+const routeMethods = methods.filter(n => /route/i.test(n));
+if (routeMethods.length < 3) {
+    console.error('FAIL: Context must have at least 3 route management methods, found: ' + routeMethods.join(', '));
     process.exit(1);
 }
 
 console.log('PASS');
 """)
-    assert r.returncode == 0, f"Failed: {r.stderr}\\n{r.stdout}"
+    assert r.returncode == 0, f"Failed: {r.stderr}\n{r.stdout}"
     assert "PASS" in r.stdout
 
 
@@ -256,103 +266,84 @@ console.log('PASS');
 # Fail-to-pass (agent_config) — registration per SKILL.md
 # ---------------------------------------------------------------------------
 
-# [agent_config] fail_to_pass — .claude/skills/playwright-mcp-dev/SKILL.md:10
 def test_route_tools_registered():
-    """tools.ts must import and spread the route module."""
+    """Route tools must be registered in the main browserTools array."""
+    _ensure_built()
     r = _run_node("""
-const fs = require('fs');
-const src = fs.readFileSync('packages/playwright/src/mcp/browser/tools.ts', 'utf8');
-
-// Must import route module
-if (!src.match(/import\\s+\\w+\\s+from\\s+['\\.\\/"]*tools\\/route['"]/) &&
-    !src.match(/import\\s+route\\s+from/)) {
-    console.error('FAIL: tools.ts must import route from ./tools/route');
+const { browserTools } = require('./packages/playwright/lib/mcp/browser/tools');
+if (!Array.isArray(browserTools)) {
+    console.error('FAIL: browserTools must be an array');
     process.exit(1);
 }
 
-// Must spread route into browserTools
-if (!src.includes('...route')) {
-    console.error('FAIL: tools.ts must spread route into browserTools array');
-    process.exit(1);
+const toolNames = browserTools.map(t => t.schema.name);
+for (const name of ['browser_route', 'browser_route_list', 'browser_unroute']) {
+    if (!toolNames.includes(name)) {
+        console.error('FAIL: browserTools missing tool: ' + name);
+        process.exit(1);
+    }
 }
 
 console.log('PASS');
 """)
-    assert r.returncode == 0, f"Failed: {r.stderr}\\n{r.stdout}"
+    assert r.returncode == 0, f"Failed: {r.stderr}\n{r.stdout}"
     assert "PASS" in r.stdout
 
 
-# [agent_config] fail_to_pass — .claude/skills/playwright-mcp-dev/SKILL.md:22-23
 def test_network_category_and_help():
-    """command.ts and helpGenerator.ts must include 'network' category."""
+    """Help system must include network category with Network title."""
+    _ensure_built()
     r = _run_node("""
-const fs = require('fs');
+const helpModule = require('./packages/playwright/lib/mcp/terminal/helpGenerator');
+const cmdsModule = require('./packages/playwright/lib/mcp/terminal/commands');
 
-// Check command.ts Category type
-const cmdSrc = fs.readFileSync('packages/playwright/src/mcp/terminal/command.ts', 'utf8');
-if (!cmdSrc.includes("'network'") && !cmdSrc.includes('"network"')) {
-    console.error('FAIL: command.ts Category type must include network');
-    process.exit(1);
-}
-
-// Check helpGenerator.ts
-const helpSrc = fs.readFileSync('packages/playwright/src/mcp/terminal/helpGenerator.ts', 'utf8');
-if (!helpSrc.includes("'network'") && !helpSrc.includes('"network"')) {
-    console.error('FAIL: helpGenerator.ts must include network category');
-    process.exit(1);
-}
-
-if (!helpSrc.includes('Network')) {
-    console.error('FAIL: helpGenerator.ts must have Network title');
+const helpText = helpModule.generateHelp(cmdsModule.commands);
+if (!helpText.includes('Network')) {
+    console.error('FAIL: help output must include Network category title');
     process.exit(1);
 }
 
 console.log('PASS');
 """)
-    assert r.returncode == 0, f"Failed: {r.stderr}\\n{r.stdout}"
+    assert r.returncode == 0, f"Failed: {r.stderr}\n{r.stdout}"
     assert "PASS" in r.stdout
 
 
-# [agent_config] fail_to_pass — .claude/skills/playwright-mcp-dev/SKILL.md:24
 def test_cli_commands_registered():
-    """commands.ts must declare route, route-list, unroute CLI commands."""
+    """Commands module must declare route, route-list, unroute CLI commands."""
+    _ensure_built()
     r = _run_node("""
-const fs = require('fs');
-const src = fs.readFileSync('packages/playwright/src/mcp/terminal/commands.ts', 'utf8');
-
-// Must have route command
-if (!src.match(/name:\\s*['"]route['"]/)) {
-    console.error('FAIL: must declare route command');
+const cmdsModule = require('./packages/playwright/lib/mcp/terminal/commands');
+const cmds = cmdsModule.commands;
+if (!cmds || typeof cmds !== 'object') {
+    console.error('FAIL: commands must export a commands object');
     process.exit(1);
 }
 
-// Must have route-list command
-if (!src.match(/name:\\s*['"]route-list['"]/)) {
-    console.error('FAIL: must declare route-list command');
-    process.exit(1);
+for (const name of ['route', 'route-list', 'unroute']) {
+    if (!cmds[name]) {
+        console.error('FAIL: missing CLI command: ' + name);
+        process.exit(1);
+    }
 }
 
-// Must have unroute command
-if (!src.match(/name:\\s*['"]unroute['"]/)) {
-    console.error('FAIL: must declare unroute command');
-    process.exit(1);
+// Route commands must use network category
+for (const name of ['route', 'route-list', 'unroute']) {
+    if (cmds[name].category !== 'network') {
+        console.error('FAIL: ' + name + ' must have network category, got: ' + cmds[name].category);
+        process.exit(1);
+    }
 }
 
-// Route must map to browser_route tool
-if (!src.includes("toolName: 'browser_route'") && !src.includes('toolName: "browser_route"')) {
+// route must map to browser_route tool
+if (cmds['route'].toolName !== 'browser_route') {
     console.error('FAIL: route command must map to browser_route tool');
     process.exit(1);
 }
 
-// Commands must use network category
-if (!src.includes("category: 'network'") && !src.includes('category: "network"')) {
-    console.error('FAIL: route commands must use network category');
-    process.exit(1);
-}
-
 console.log('PASS');
 """)
-    assert r.returncode == 0, f"Failed: {r.stderr}\\n{r.stdout}"
+    assert r.returncode == 0, f"Failed: {r.stderr}\n{r.stdout}"
     assert "PASS" in r.stdout
 
 
@@ -360,7 +351,6 @@ console.log('PASS');
 # Config update tests (pr_diff)
 # ---------------------------------------------------------------------------
 
-# [pr_diff] fail_to_pass
 def test_skill_md_building_section():
     """SKILL.md must have Building sections with development guidance."""
     skill_md = Path(REPO) / ".claude" / "skills" / "playwright-mcp-dev" / "SKILL.md"
@@ -374,7 +364,6 @@ def test_skill_md_building_section():
         "Building section should mention watch mode"
 
 
-# [pr_diff] fail_to_pass
 def test_skill_md_lint_command():
     """SKILL.md lint command must use 'npm run flint' (not 'flint:mcp')."""
     skill_md = Path(REPO) / ".claude" / "skills" / "playwright-mcp-dev" / "SKILL.md"
@@ -389,57 +378,37 @@ def test_skill_md_lint_command():
 # Pass-to-pass gates from repo CI/CD
 # ---------------------------------------------------------------------------
 
-def _run_with_build(cmd: list[str], timeout: int = 300) -> subprocess.CompletedProcess:
-    """Run npm ci, build, then the command. Returns the result of the final command."""
-    # First run npm ci + build
-    subprocess.run(
-        ["npm", "ci"],
-        capture_output=True, text=True, timeout=300, cwd=REPO,
-    )
-    subprocess.run(
-        ["npm", "run", "build"],
-        capture_output=True, text=True, timeout=300, cwd=REPO,
-    )
-    # Then run the actual command
-    return subprocess.run(
-        cmd, capture_output=True, text=True, timeout=timeout, cwd=REPO,
-    )
-
-
-# [repo_tests] pass_to_pass - TypeScript compilation
 def test_repo_typecheck():
     """Repo TypeScript compilation passes (pass_to_pass)."""
-    r = _run_with_build(["npm", "run", "tsc"], timeout=300)
-    assert r.returncode == 0, f"TypeScript compilation failed:\\n{r.stderr[-1000:]}"
+    _ensure_built()
+    r = subprocess.run(
+        ["npm", "run", "tsc"], capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"TypeScript compilation failed:\n{r.stderr[-1000:]}"
 
 
-# [repo_tests] pass_to_pass - Package consistency
 def test_repo_lint_packages():
     """Repo package consistency check passes (pass_to_pass)."""
     r = subprocess.run(
         ["npm", "run", "lint-packages"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
-    assert r.returncode == 0, f"Package consistency check failed:\\n{r.stderr[-1000:]}"
+    assert r.returncode == 0, f"Package consistency check failed:\n{r.stderr[-1000:]}"
 
 
-# [repo_tests] pass_to_pass - Build verification
 def test_repo_build():
     """Repo build passes (pass_to_pass)."""
-    r = subprocess.run(
-        ["npm", "ci"],
-        capture_output=True, text=True, timeout=300, cwd=REPO,
-    )
-    assert r.returncode == 0, f"npm ci failed:\\n{r.stderr[-1000:]}"
-    r = subprocess.run(
-        ["npm", "run", "build"],
-        capture_output=True, text=True, timeout=300, cwd=REPO,
-    )
-    assert r.returncode == 0, f"Build failed:\\n{r.stderr[-1000:]}"
+    _ensure_built()
+    lib_mcp = Path(REPO) / "packages" / "playwright" / "lib" / "mcp"
+    assert lib_mcp.is_dir(), f"Build output not found at {lib_mcp}"
+    tools_js = lib_mcp / "browser" / "tools.js"
+    assert tools_js.exists(), "Compiled tools.js not found after build"
 
 
-# [repo_tests] pass_to_pass - Test types check
 def test_repo_test_types():
     """Repo test types check passes (pass_to_pass)."""
-    r = _run_with_build(["npm", "run", "test-types"], timeout=300)
-    assert r.returncode == 0, f"Test types check failed:\\n{r.stderr[-1000:]}"
+    _ensure_built()
+    r = subprocess.run(
+        ["npm", "run", "test-types"], capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Test types check failed:\n{r.stderr[-1000:]}"

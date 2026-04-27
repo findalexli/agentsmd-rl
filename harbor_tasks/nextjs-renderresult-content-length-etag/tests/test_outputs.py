@@ -14,17 +14,17 @@ from pathlib import Path
 REPO = "/workspace/next.js"
 
 
-def _run_node_ts(script: str, timeout: int = 30) -> subprocess.CompletedProcess:
-    """Execute TypeScript code using Node.js with experimental strip types."""
-    script_path = Path(REPO) / "_eval_tmp.ts"
-    script_path.write_text(script)
+def _run_node(code: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Execute JavaScript code using Node.js (CommonJS mode)."""
+    script = Path(REPO) / "_eval_tmp.cjs"
+    script.write_text(code)
     try:
         return subprocess.run(
-            ["node", "--experimental-strip-types", "--no-warnings", str(script_path)],
+            ["node", str(script)],
             capture_output=True, text=True, timeout=timeout, cwd=REPO,
         )
     finally:
-        script_path.unlink(missing_ok=True)
+        script.unlink(missing_ok=True)
 
 
 # ---------------------------------------------------------------------------
@@ -37,7 +37,6 @@ def test_typescript_syntax_check():
     target_file = Path(REPO) / "packages/next/src/server/route-modules/pages/pages-handler.ts"
     assert target_file.exists(), f"Target file not found: {target_file}"
 
-    # Use Node.js --check to verify syntax (TypeScript-aware in Node 22+)
     r = subprocess.run(
         ["node", "--check", str(target_file)],
         capture_output=True, text=True, timeout=30, cwd=REPO,
@@ -50,71 +49,144 @@ def test_typescript_syntax_check():
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
-def test_no_buffer_from_in_data_request():
-    """Data request handler should NOT wrap JSON.stringify with Buffer.from."""
-    handler_file = Path(REPO) / "packages/next/src/server/route-modules/pages/pages-handler.ts"
-    content = handler_file.read_text()
+def test_render_result_isDynamic_behavior():
+    """Execute the actual RenderResult class: string->isDynamic=false, Buffer->isDynamic=true.
 
-    # Find the isNextDataRequest && !isErrorPage && !is500Page block
-    # After fix, this should use JSON.stringify directly, NOT Buffer.from(JSON.stringify(...))
-    # Pattern to search for the problematic code
-    import re
-
-    # Look for the data request RenderResult construction
-    # Before fix: Buffer.from(JSON.stringify(result.value.pageData))
-    # After fix: JSON.stringify(result.value.pageData)
-    data_request_pattern = r'isNextDataRequest[^,]+\?\s*new\s+RenderResult\(\s*(Buffer\.from\()?JSON\.stringify'
-    match = re.search(data_request_pattern, content, re.DOTALL)
-
-    if match:
-        # If Buffer.from is present, the fix hasn't been applied
-        has_buffer_from = match.group(1) is not None
-        assert not has_buffer_from, \
-            "BUG NOT FIXED: Data request still uses Buffer.from(JSON.stringify(...)) - " \
-            "this causes isDynamic to return true, skipping Content-Length and ETag headers"
-
-
-# [pr_diff] fail_to_pass
-def test_no_buffer_from_in_cached_html():
-    """Cached HTML handler should NOT wrap previousCacheEntry.value.html with Buffer.from."""
-    handler_file = Path(REPO) / "packages/next/src/server/route-modules/pages/pages-handler.ts"
-    content = handler_file.read_text()
-
-    # Look for the cached HTML RenderResult construction
-    # Before fix: Buffer.from(previousCacheEntry.value.html)
-    # After fix: previousCacheEntry.value.html
-    if "Buffer.from(previousCacheEntry.value.html)" in content:
-        assert False, \
-            "BUG NOT FIXED: Cached HTML handler still uses Buffer.from() - " \
-            "this causes isDynamic to return true, skipping Content-Length and ETag headers"
-
-
-# [pr_diff] fail_to_pass
-def test_render_result_accepts_string():
-    """Verify RenderResult isDynamic is false for strings, true for Buffers.
-
-    This test validates that the fix properly removes Buffer.from() wrappers,
-    which would cause isDynamic=true and skip Content-Length/ETag headers.
-
-    Since importing the full module has complex dependencies, we verify the
-    behavior by checking the source code pattern that controls isDynamic:
-    - typeof this.response !== 'string' determines isDynamic
-    - String responses are NOT dynamic (allows Content-Length/ETag)
-    - Buffer responses ARE dynamic (streams, no Content-Length/ETag)
+    The fix removes Buffer.from() wrappers so RenderResult receives strings.
+    When isDynamic=false (string response), Content-Length and ETag headers
+    are added to the response. This test verifies that core mechanism by
+    transpiling and executing the real RenderResult class from the repo.
     """
-    # Read the render-result.ts source to verify isDynamic logic
-    render_result_file = Path(REPO) / "packages/next/src/server/render-result.ts"
-    content = render_result_file.read_text()
+    r = _run_node("""
+const ts = require('typescript');
+const fs = require('fs');
 
-    # Verify the isDynamic getter checks if response is a string
-    # This is the core logic: if response is string -> isDynamic=false
-    assert "typeof this.response !== 'string'" in content, \
-        "Cannot find isDynamic getter logic in render-result.ts"
+// Read and transpile the actual render-result.ts to JavaScript
+const source = fs.readFileSync('packages/next/src/server/render-result.ts', 'utf8');
+const { outputText } = ts.transpileModule(source, {
+  compilerOptions: { module: 1 /* CommonJS */, target: 9 /* ES2022 */ }
+});
 
-    # The fix removes Buffer.from() so that isDynamic returns false for strings.
-    # We verify the pages-handler.ts no longer wraps with Buffer.from() via
-    # the test_no_buffer_from_* tests above.
-    # This test confirms the RenderResult class supports string responses.
+// Stub external imports so the class can be instantiated standalone
+let js = outputText;
+js = js.replaceAll(
+  'require("./stream-utils/node-web-streams-helper")',
+  '({ chainStreams: (...a) => a[0], streamFromBuffer: () => new ReadableStream(), streamFromString: () => new ReadableStream(), streamToString: async () => "" })'
+);
+js = js.replaceAll(
+  'require("./pipe-readable")',
+  '({ isAbortError: () => false, pipeToNodeResponse: async () => {} })'
+);
+js = js.replaceAll(
+  'require("../shared/lib/invariant-error")',
+  '({ InvariantError: class InvariantError extends Error {} })'
+);
+
+// Execute in a module sandbox
+const moduleExports = {};
+const moduleObj = { exports: moduleExports };
+const fn = new Function('module', 'exports', 'require', 'Buffer', 'ReadableStream', js);
+fn(moduleObj, moduleExports, require, Buffer, ReadableStream);
+
+const RenderResult = moduleObj.exports.default || moduleExports.default;
+
+// Test: string response should be non-dynamic (enables Content-Length/ETag)
+const strResult = new RenderResult('{"page":"data"}', { contentType: null, metadata: {} });
+// Test: Buffer response should be dynamic (skips Content-Length/ETag)
+const bufResult = new RenderResult(Buffer.from('{"page":"data"}'), { contentType: null, metadata: {} });
+
+console.log(JSON.stringify({
+  stringIsDynamic: strResult.isDynamic,
+  bufferIsDynamic: bufResult.isDynamic,
+}));
+""")
+    assert r.returncode == 0, f"Failed to execute RenderResult: {r.stderr}"
+    data = json.loads(r.stdout.strip())
+    assert data["stringIsDynamic"] is False, \
+        "RenderResult with string should have isDynamic=false (enables Content-Length/ETag headers)"
+    assert data["bufferIsDynamic"] is True, \
+        "RenderResult with Buffer should have isDynamic=true (skips Content-Length/ETag headers)"
+
+
+# [pr_diff] fail_to_pass
+def test_pages_handler_no_buffer_wrapping():
+    """Verify pages-handler.ts does not wrap RenderResult args with Buffer.from().
+
+    Uses TypeScript AST analysis (not regex) to find any
+    new RenderResult(Buffer.from(...)) patterns. This is robust to code
+    formatting, variable naming, and alternative fix structures.
+    """
+    r = _run_node("""
+const ts = require('typescript');
+const fs = require('fs');
+
+const source = fs.readFileSync(
+  'packages/next/src/server/route-modules/pages/pages-handler.ts', 'utf8'
+);
+const sourceFile = ts.createSourceFile(
+  'pages-handler.ts', source, ts.ScriptTarget.Latest, true
+);
+
+const issues = [];
+
+function visit(node) {
+  // Find: new RenderResult(Buffer.from(...), ...)
+  if (ts.isNewExpression(node) &&
+      ts.isIdentifier(node.expression) &&
+      node.expression.text === 'RenderResult' &&
+      node.arguments && node.arguments.length > 0) {
+    const firstArg = node.arguments[0];
+    if (ts.isCallExpression(firstArg) &&
+        ts.isPropertyAccessExpression(firstArg.expression) &&
+        ts.isIdentifier(firstArg.expression.expression) &&
+        firstArg.expression.expression.text === 'Buffer' &&
+        firstArg.expression.name.text === 'from') {
+      const { line } = sourceFile.getLineAndCharacterOfPosition(node.getStart());
+      issues.push(line + 1);
+    }
+  }
+  ts.forEachChild(node, visit);
+}
+
+visit(sourceFile);
+console.log(JSON.stringify({ count: issues.length, lines: issues }));
+""")
+    assert r.returncode == 0, f"AST analysis failed: {r.stderr}"
+    data = json.loads(r.stdout.strip())
+    assert data["count"] == 0, \
+        f"pages-handler.ts still wraps RenderResult first argument with Buffer.from() " \
+        f"at line(s) {data['lines']}. Wrapping with Buffer.from() causes " \
+        f"RenderResult.isDynamic=true, which prevents Content-Length and ETag headers " \
+        f"from being set on the response."
+
+
+# [pr_diff] fail_to_pass
+def test_agents_md_new_test_syntax_fixed():
+    """AGENTS.md must show correct pnpm new-test syntax with '-- --args' separator."""
+    agents_file = Path(REPO) / "AGENTS.md"
+    assert agents_file.exists(), "AGENTS.md not found"
+
+    content = agents_file.read_text()
+
+    assert "pnpm new-test -- --args" in content, \
+        "AGENTS.md NOT UPDATED: Missing correct 'pnpm new-test -- --args' syntax. " \
+        "The command needs '--' separator to properly forward args to the script."
+
+
+# [pr_diff] fail_to_pass
+def test_agents_md_no_bare_args_flag():
+    """AGENTS.md should NOT show the incorrect bare '--args' without separator."""
+    agents_file = Path(REPO) / "AGENTS.md"
+    content = agents_file.read_text()
+
+    import re
+    bare_args_pattern = r'pnpm\s+new-test\s+--args\s'
+    matches = re.findall(bare_args_pattern, content)
+
+    assert len(matches) == 0, \
+        f"AGENTS.md HAS INCORRECT SYNTAX: Found {len(matches)} instance(s) of bare " \
+        f"'pnpm new-test --args' without '--' separator. " \
+        f"The correct syntax is 'pnpm new-test -- --args ...'"
 
 
 # ---------------------------------------------------------------------------
@@ -168,13 +240,8 @@ def test_repo_alex_linting():
         ["pnpm", "run", "lint-language"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
-    # alex passes if no errors found in the content (warnings/filename matches are OK)
-    # The check looks for actual errors in file content, not filenames containing "error"
-    # Alex outputs like "error: must not ..." for actual content issues
     import re
-    # Find lines with error: that are about content (not just filenames)
     content_errors = re.findall(r'^\s*error:.*$', r.stderr, re.MULTILINE | re.IGNORECASE)
-    # Filter out false positives - lines that just show filenames with "error" in them
     real_errors = [e for e in content_errors if 'no issues found' not in e.lower()]
     assert len(real_errors) == 0, f"Alex language linting found errors:\n{r.stderr[-1000:]}"
 
@@ -229,31 +296,29 @@ def test_repo_prettier_render_result():
     assert r.returncode == 0, f"Prettier check failed on render-result.ts:\n{r.stderr[-500:]}"
 
 
-# [repo_tests] pass_to_pass - NEW: TypeScript compilation checks
+# [repo_tests] pass_to_pass
 def test_repo_tsc_pages_handler():
     """TypeScript compilation check on pages-handler.ts (pass_to_pass)."""
     r = subprocess.run(
         ["npx", "tsc", "--noEmit", "--skipLibCheck", "packages/next/src/server/route-modules/pages/pages-handler.ts"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
-    # tsc returns 0 on success, 2 on errors; pass if returncode is 0 or no errors in target file
     assert r.returncode == 0 or "pages-handler.ts" not in r.stderr, \
         f"TypeScript check failed on pages-handler.ts:\n{r.stderr[-500:]}"
 
 
-# [repo_tests] pass_to_pass - NEW: TypeScript compilation checks
+# [repo_tests] pass_to_pass
 def test_repo_tsc_render_result():
     """TypeScript compilation check on render-result.ts (pass_to_pass)."""
     r = subprocess.run(
         ["npx", "tsc", "--noEmit", "--skipLibCheck", "packages/next/src/server/render-result.ts"],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
-    # tsc returns 0 on success, 2 on errors; pass if returncode is 0 or no errors in target file
     assert r.returncode == 0 or "render-result.ts" not in r.stderr, \
         f"TypeScript check failed on render-result.ts:\n{r.stderr[-500:]}"
 
 
-# [repo_tests] pass_to_pass - NEW: Node syntax check on render-result.ts
+# [repo_tests] pass_to_pass
 def test_repo_node_syntax_render_result():
     """Node.js syntax check passes on render-result.ts (pass_to_pass)."""
     r = subprocess.run(
@@ -273,54 +338,9 @@ def test_handler_has_real_logic():
     handler_file = Path(REPO) / "packages/next/src/server/route-modules/pages/pages-handler.ts"
     content = handler_file.read_text()
 
-    # Check that the file has substantial content
     lines = content.split('\n')
     non_empty = [l for l in lines if l.strip() and not l.strip().startswith('//')]
     assert len(non_empty) > 50, "Handler file appears to be a stub or empty"
 
-    # Check for key function signatures
     assert "export const getHandler" in content, "Missing getHandler export"
     assert "RenderResult" in content, "Missing RenderResult usage"
-
-
-# ---------------------------------------------------------------------------
-# Config-derived (agent_config / pr_diff) — documentation update tests
-# ---------------------------------------------------------------------------
-
-# [pr_diff] fail_to_pass
-def test_agents_md_new_test_syntax_fixed():
-    """AGENTS.md must show correct pnpm new-test syntax with '-- --args' separator."""
-    agents_file = Path(REPO) / "AGENTS.md"
-    assert agents_file.exists(), "AGENTS.md not found"
-
-    content = agents_file.read_text()
-
-    # The fix adds '--' before '--args' in the pnpm new-test command
-    # Before fix: pnpm new-test --args true my-feature e2e
-    # After fix: pnpm new-test -- --args true my-feature e2e
-
-    # Check that the correct syntax with '-- --args' is present
-    if "pnpm new-test -- --args" not in content:
-        assert False, \
-            "AGENTS.md NOT UPDATED: Missing correct 'pnpm new-test -- --args' syntax. " \
-            "The command needs '--' separator to properly forward args to the script. " \
-            "Without this, users get errors when running pnpm new-test non-interactively."
-
-
-# [pr_diff] fail_to_pass
-def test_agents_md_no_bare_args_flag():
-    """AGENTS.md should NOT show the incorrect bare '--args' without separator."""
-    agents_file = Path(REPO) / "AGENTS.md"
-    content = agents_file.read_text()
-
-    # Look for instances of bare '--args' without the '--' separator
-    import re
-    # Pattern: pnpm new-test --args (without -- before it)
-    # But allow for lines that might have comments or other contexts
-    bare_args_pattern = r'pnpm\s+new-test\s+--args\s'
-    matches = re.findall(bare_args_pattern, content)
-
-    if matches:
-        assert False, \
-            "AGENTS.md HAS INCORRECT SYNTAX: Found bare 'pnpm new-test --args' without '--' separator. " \
-            "This is the bug - the correct syntax is 'pnpm new-test -- --args ...'"

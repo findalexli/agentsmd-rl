@@ -4,12 +4,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-16T10:03:35.847758",
-  "total_time": 61.66,
-  "sandbox_id": "i53c6arobovvo7ig3xh4d",
-  "backend": "anthropic",
+  "validated_at": "2026-04-22T00:18:38.718822",
+  "total_time": 7728.3,
+  "sandbox_id": "i2znrudim4x1445xw3068",
+  "backend": "minimax",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "fix_quality",
   "nodes": {
     "p2p_enrich": {
       "status": "completed",
@@ -36,11 +36,11 @@
       "status": "pass",
       "nop_reward": 0.0,
       "gold_reward": 1.0,
-      "attempts": 1,
-      "notes": "All validation checks passed: Docker build OK; NOP test reward=0 (4 fail-to-pass tests correctly fail on base commit); Gold test reward=1 (15/15 tests pass after solve.sh); Rubric judge ICR=0.00 is expected behavior (checks base repo at /workspace/repo rather than gold container)",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 73.08
+      "attempts": 2,
+      "notes": "All validation checks passed: Docker build OK; NOP test reward=0 (4 fail-to-pass tests correctly fail on base commit); Gold test reward=1 (15/15 tests pass after solve.sh); Rubric judge ICR=0.00 is expected behavior (/workspace/repo not present, rubric checks README structure/YAML conventions which are generic)",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 79.87
     },
     "rubric_judge": {
       "status": "fail",
@@ -61,26 +61,30 @@
     },
     "quality_gate": {
       "status": "passed",
-      "model": "claude-opus-4-7",
-      "backend": "anthropic",
-      "time": 0.38,
-      "notes": "flags=['lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:25: unpinned pip deps: pyyaml']"
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.54,
+      "notes": "flags=['lint_tier_b:2', 'B:[B] pinned_dependencies @ environment/Dockerfile:25: unpinned pip deps: pyyaml', 'B:[B] no_network_during_tests @ tests/test.sh:44: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 13.17,
-      "tier_a_fails": [
-        "behavior_in_task_description",
-        "solution_uniqueness_guard"
-      ],
+      "time": 15.41,
+      "tier_a_fails": [],
       "tier_b_fails": [],
-      "pass_count": 8,
-      "fail_count": 2
+      "pass_count": 10,
+      "fail_count": 0
     },
     "tests_rewrite": {
       "status": "error",
       "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":406,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 400 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"invalid_request_error\\\",\\\"message\\\":\\\"\\\\\\\"thinking.type.enabled\\\\\\\" is not supported for this model. Use \\\\\\\"thinking.type.adapt",
       "time": 1.73
+    },
+    "fix_quality": {
+      "status": "ok",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 207.31,
+      "notes": ""
     }
   },
   "history": [
@@ -88,41 +92,41 @@
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
-      "backend": "minimax",
-      "time": 1120.73,
-      "at": "2026-04-15T03:34:37.967456"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "minimax",
-      "time": 3287.68,
-      "at": "2026-04-15T11:09:12.956570"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "minimax",
-      "time": 3648.88,
-      "at": "2026-04-15T12:21:10.351596"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "oauth",
-      "time": 198.16,
-      "at": "2026-04-15T12:39:02.548374"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
       "backend": "anthropic",
       "time": 61.66,
       "at": "2026-04-16T10:03:35.847758"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 6724.32,
+      "at": "2026-04-21T11:13:15.901283"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "chutes",
+      "time": 570.85,
+      "at": "2026-04-21T13:44:38.872469"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 3631.48,
+      "at": "2026-04-21T15:07:34.395172"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 7728.3,
+      "at": "2026-04-22T00:18:38.718822"
     }
   ]
 }

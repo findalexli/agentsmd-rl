@@ -3,31 +3,31 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "Instruction names the skill doc path, exact section header, text, command, and separator '\\n\\n'; the Go type/field names (ExitError, Original) are discoverable from the repo."
+      "reason": "Instruction names exit.go, ExitError.Error(), the SKILL.md path, and the exact content to append; tests check exit code presence, original message inclusion, and absence of 'nil'."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "Instruction describes what's broken (wrapped error message not in Error()) without specifying the exact file/line or code to write."
+      "reason": "Instruction describes what must appear in the output (code + original message) but leaves formatting to the agent."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "Tests only check that Error() contains the original message and exit code, and doesn't contain 'nil' when Original is unset \u2014 multiple valid implementations pass."
+      "reason": "Tests use strings.Contains for the code and original message, allowing any reasonable formatting."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests compile and execute Go code via `go test` and inspect Error() output behavior."
+      "reason": "Tests compile and run Go code via _run_go_test, calling Error() and asserting on its returned string."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "f2p tests require Error() to actually include the original error string; a stub returning only exit code would fail test_error_includes_original."
+      "reason": "f2p tests require the original error string to appear, which a stub returning 'exit code N' cannot satisfy."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "The instruction mandates adding a section to skills/dagger-chores/SKILL.md with exact content, but the config_edit tests in test_outputs.py are empty stubs (only comments '# [config_edit] fail_to_pass'), so the SKILL.md behavior is not tested."
+      "reason": "Instruction requires SKILL.md updates with specific header/line/numbered step, but the config_edit test stubs are empty (no actual assertions for SKILL.md content)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are grouped with section headers (Gates, Fail-to-pass, Pass-to-pass, Config edit) and descriptive names."
+      "reason": "Tests are grouped with section comment headers (Gates, Fail-to-pass, Pass-to-pass, Config edit) and descriptive names."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
@@ -39,11 +39,11 @@
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "Instruction refers generically to 'the error type that wraps underlying errors with an exit code' rather than naming exit.go/ExitError directly."
+      "reason": "Instruction names the file but localization is given as part of the task scope, which is acceptable."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "Gold patch to SKILL.md is a localized append of a new section, not a full-file rewrite."
+      "reason": "SKILL.md change is an appended section, localized and not contradicting other files."
     }
   },
   "tier_a_fails": [],

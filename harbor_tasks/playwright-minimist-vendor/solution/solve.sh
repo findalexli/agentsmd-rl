@@ -48,7 +48,7 @@ index 94f09f6995ab9..79c1b9fda82ca 100644
 -    },
      "node_modules/@types/node": {
        "version": "18.19.76",
-       "resolved": "https://registry.npmjs.org/@types/node/-/minimist-1.2.5.tgz",
+       "resolved": "https://registry.npmjs.org/@types/node/-/node-18.19.76.tgz",
 diff --git a/package.json b/package.json
 index df5fe7fe4af65..e209868709e1f 100644
 --- a/package.json
@@ -358,6 +358,7 @@ index 2702c346efd17..577b665a61245 100644
 +    const sessionName = resolveSessionName(cliArgs.session as string);
      const errLog = path.join(clientInfo.daemonProfilesDir, sessionName + '.err');
      const err = fs.openSync(errLog, 'w');
- PATCH_EOF
+
+PATCH_EOF
 
 echo "Gold patch applied successfully!"

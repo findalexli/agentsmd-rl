@@ -2,58 +2,53 @@
   "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "The instruction says the marker is 'the identifier registered for this test suite' but never names it; tests assert specifically that pytestmark evaluates to pytest.mark.sglang, and 'sglang' is not mentioned anywhere in instruction.md."
+      "outcome": "pass",
+      "reason": "All file paths, fixture names, parameter names, markers, and thresholds (max_head_offpolicyness>=100, consumer_batch_size>=3, should_accept_fn removal) are explicitly stated in instruction.md."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "Instruction specifies exact parameter changes: 'consumer_batch_size argument must be >= 3', 'max_head_offpolicyness argument must be >= 100', 'must be changed to use tmp_path_factory parameter instead of tmp_path', and 'any test method whose name contains should_accept_fn must be removed' \u2014 these are the fix itself, not just the bug."
+      "outcome": "pass",
+      "reason": "Instruction describes required outcomes (scope, parameter constraints, marker removal) without providing the exact diff or code."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "Tests accept scope in ('module','session'), values >= thresholds, and check general structure rather than exact gold values (e.g., gold uses 4 and 1024, tests accept >=3 and >=100)."
+      "reason": "Tests check ranges (>=100, >=3) and scope in {'module','session'}, allowing multiple valid implementations."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests use AST parsing and subprocess evaluation of decorator expressions with mocked pytest to verify runtime values, not raw text matching."
+      "reason": "Tests use AST parsing plus exec/eval of decorator and assignment expressions with mock pytest to verify runtime behavior, not just text matches."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "Each f2p check requires actual code changes (module scope, pytestmark assignment, removed decorators, raised constants); a stub cannot satisfy them."
+      "reason": "Each f2p asserts a concrete state change (scope kwarg, keyword values, removed decorators/methods) that a stub cannot trivially satisfy."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All five expected behaviors in instruction.md (module scope, tmp_path_factory, pytestmark marker, removed @pytest.mark.slow, raised settings, removed should_accept_fn tests) have corresponding tests."
+      "reason": "Tests cover fixture scope, tmp_path_factory param, pytestmark, slow removal, should_accept_fn removal, and threshold values as required."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are grouped by section comments (Gate, Fail-to-pass pr_diff, Fail-to-pass agent_config) with descriptive names and docstrings."
+      "reason": "Tests are grouped with section comment headers (Gate, Fail-to-pass) and have descriptive names/docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task modifies test files, not structured data output."
+      "reason": "Not a structured-data-producing task."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "Paths and identifiers in instruction.md match the repo layout and test assertions."
+      "reason": "Filenames and identifiers are consistent across instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "Instruction names exact fixture names (gateway_controller, gateway_controller_full_init, local_scheduler), exact kwargs (consumer_batch_size, max_head_offpolicyness), and exact parameter substitution (tmp_path_factory replacing tmp_path) \u2014 fully localizing the fix."
+      "outcome": "pass",
+      "reason": "Instruction names fixtures and files but does not pinpoint specific line numbers or provide literal replacement code."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "Code-only task; no config edits involved."
+      "reason": "Not an agentmd-edits/config task."
     }
   },
-  "tier_a_fails": [
-    "behavior_in_task_description",
-    "no_solution_leakage"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 6,
-  "fail_count": 3
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
 }

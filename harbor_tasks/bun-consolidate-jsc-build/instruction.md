@@ -1,29 +1,28 @@
-# Consolidate jsc:build into build.ts, add BUN_WEBKIT_PATH support
+# Simplify local WebKit builds to auto-configure and build JSC
 
 ## Problem
 
-The Bun project's build system has several issues that need addressing:
+Building Bun with a local WebKit clone (`-DWEBKIT_LOCAL=ON`) currently requires developers to manually configure and build JSC in separate steps before building Bun itself. The workflow documented in CONTRIBUTING.md involves running `bun run jsc:build:debug` followed by a manual `cmake --build vendor/WebKit/WebKitBuild/Debug --target jsc` command, plus deleting a generated header file each time. This is error-prone and confusing for contributors.
 
-1. **Standalone build-jsc.ts script exists**: There is a `scripts/build-jsc.ts` file that exists outside the consolidated build system. This should be removed and its functionality properly integrated.
+Several related issues need to be addressed:
 
-2. **package.json scripts reference obsolete file**: The `jsc:build`, `jsc:build:debug`, and `jsc:build:lto` npm scripts currently call `scripts/build-jsc.ts` directly instead of routing through the main build system entry point at `scripts/build.ts`.
+1. **No automatic JSC configuration**: When `WEBKIT_LOCAL` is enabled in cmake, the build system assumes JSC has already been configured and built externally. It should instead auto-configure JSC by invoking cmake on the WebKit source and create a build target so JSC is built as part of the normal build.
 
-3. **Clean presets reference wrong directories**: The `scripts/build/clean.ts` file contains references to `vendor/WebKit/WebKitBuild` in preset descriptions. These references are incorrect for local builds which now use `build/<profile>/deps/WebKit/` paths.
+2. **No way to decouple JSC build type**: There is no way to set the JSC build type independently of the main Bun build type. A new cmake option is needed so developers can, for example, build Bun in Debug mode while building JSC in Release mode.
 
-4. **No support for shared WebKit clone**: Developers working across multiple Bun worktrees need a way to share a single WebKit clone. The system currently does not support a `BUN_WEBKIT_PATH` environment variable for specifying an alternative WebKit source path, nor does it implement path resolution with home directory expansion (tilde `~` support).
+3. **vcpkg dependency for Windows ICU**: On Windows, the current code uses pre-installed vcpkg packages for ICU headers. This should be replaced with building ICU from the WebKit source tree so the build is self-contained.
 
-5. **Local source type lacks path override and error hints**: The local source type in `scripts/build/source.ts` needs to support:
-   - An optional path property for absolute path overrides when resolving local dependencies
-   - An optional hint property for custom error messages when a source is not found
+4. **Hardcoded ICU library paths on Linux**: For local builds on Linux, ICU libraries are linked via hardcoded paths that assume the prebuilt WebKit layout. Local builds should use the system's ICU installation via cmake's `find_package`.
 
-6. **Documentation table needs reformatting**: The "Module inventory" table in `scripts/build/CLAUDE.md` needs to be reformatted to use wider column alignment consistent with other sections.
+5. **Missing build ordering**: There is no build dependency ensuring JSC is compiled before Bun's C++ sources when using a local WebKit. This can cause build failures on clean builds.
+
+6. **Stale documentation**: Both `CONTRIBUTING.md` and `docs/project/contributing.mdx` describe the old multi-step manual process (including commands like `jsc:build:debug && rm ...` and `cmake --build vendor/WebKit/WebKitBuild/...`). They also contain a typo: "if you change make changes" should be "if you make changes".
 
 ## Acceptance Criteria
 
-- `scripts/build-jsc.ts` must not exist
-- All `jsc:build*` npm scripts must reference `build.ts` with `--target=WebKit`
-- `scripts/build/clean.ts` must not contain "WebKitBuild" or "vendor/WebKit"
-- `scripts/build/deps/webkit.ts` must support an alternative WebKit source path via environment variable, with path resolution that handles tilde expansion, and must provide helpful error messages when a local source is not found
-- `scripts/build/source.ts` must define optional path and hint properties for local sources, and use these properties during resolution and error handling
-- `scripts/build/CLAUDE.md` must have a reformatted table with wider columns containing entries for `build.ts`, `clean.ts`, `source.ts`, and `deps/*.ts`
-- All modified TypeScript files must have valid syntax
+- `cmake/tools/SetupWebKit.cmake` must define a `WEBKIT_BUILD_TYPE` cmake option for setting the local JSC build type independently
+- `cmake/tools/SetupWebKit.cmake` must auto-configure JSC via `execute_process` when `WEBKIT_LOCAL` is enabled, and create a build target via `add_custom_target` so JSC is built automatically
+- `cmake/tools/SetupWebKit.cmake` must not use vcpkg for ICU; Windows ICU should be built from the WebKit source tree
+- `cmake/targets/BuildBun.cmake` must add a build dependency (via `add_dependencies`) to ensure JSC is built before Bun when using a local WebKit
+- `cmake/targets/BuildBun.cmake` must use `find_package(ICU)` for local WebKit builds on Linux instead of hardcoded prebuilt library paths
+- `CONTRIBUTING.md` and `docs/project/contributing.mdx` must remove the old multi-step manual JSC build commands and fix the "change make changes" typo

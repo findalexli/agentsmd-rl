@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "Instruction names binding.ts, updateBoundPoint logic, pointsEqual, pointFrom, and the specific patterns (binding == null, elementId !== bindableElement.id, arrow.points.length > 2) that tests check for."
+      "reason": "Instruction names binding.ts, pointsEqual, pointFrom, and the required preserved patterns like 'binding == null', 'elementId !== bindableElement.id', 'arrow.points.length > 2'."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "Instruction describes the bug and hints at useful utilities but doesn't state the exact fix code or line."
+      "reason": "Instruction describes the bug and hints at utilities but doesn't specify exact code changes."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_fix_has_required_import asserts 'pointsEqual' import specifically; an alternative fix using e.g. direct comparison `arrow.points[n][0] === 0 && ...` would fail despite being correct."
+      "reason": "test_fix_has_required_import asserts 'pointsEqual' must be imported, rejecting alternative correct fixes using e.g. direct comparison like arrow.points[last][0] === 0 && arrow.points[last][1] === 0."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests execute yarn test:app subprocesses running actual behavior tests (move.test.tsx, history.test.tsx, binding.test.tsx)."
+      "reason": "Tests execute yarn test:app subprocess commands that run real unit tests like move.test.tsx and binding.test.tsx."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "Behavior tests (move, history, binding) require the actual fix; stubs wouldn't pass."
+      "reason": "The move/history/binding behavioral tests run actual runtime checks on arrow coordinates that require the fix."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All success criteria in instruction.md map to test functions."
+      "reason": "All success criteria in instruction map to test functions (typecheck, move tests, history tests, eslint, prettier, package tests, binding tests)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are named descriptively and grouped with a 'Pass-to-Pass Tests' section comment."
+      "reason": "Tests have clear docstrings and are grouped with a comment separator for pass-to-pass tests."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task is a code fix, no structured data output."
+      "reason": "Task modifies code, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "Paths and commands appear correct."
+      "reason": "Paths like packages/element/src/binding.ts and commands appear correct."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "Instruction mentions the file packages/element/src/binding.ts which is reasonable context, not line-level leakage."
+      "reason": "Instruction points to binding.ts file which is necessary domain context but doesn't specify the exact line or function."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "Code-only task."
+      "reason": "This is a code-fix task, not an agentmd-edits task."
     }
   },
   "tier_a_fails": [

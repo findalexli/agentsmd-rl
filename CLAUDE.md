@@ -57,6 +57,8 @@ And satisfy standard requirements:
 1. `/scaffold-task owner/repo#PR_NUMBER` — create task from a PR (includes test audit + rubric extraction)
 2. `/validate-task <task-name>` — Docker oracle test (build, nop=0, gold=1)
 
+For batch scaffolding: `python -m taskforge.e2b_worker --mode pipeline --start-at oneshot_scaffold --input <prs.jsonl> --pool` runs `taskforge/prompts/scaffold.md` inside an E2B sandbox per PR. After the agent self-validates Docker oracle, the pipeline now also runs `EvalManifest.model_validate(...)` as a schema gate — scaffolds whose `eval_manifest.yaml` doesn't match `taskforge/models.py` are rejected. (Historically ~38% of the corpus drifted because the prompt didn't echo the canonical schema; the prompt has since been patched to inline it. See `feedback_oneshot_schema_drift` memory.)
+
 ## Running an Eval (agent vs. tasks)
 
 Canonical eval runner: `scripts/run_agent_eval.py`. Runs N harbor tasks with claude-code agent pointed at a configurable backend, then scores Track 1 (programmatic tests), Track 3 (rubric LLM judge), Track 4 (distractor LLM judge — passes when agent did NOT apply the rule).

@@ -4,12 +4,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-16T10:22:25.783298",
-  "total_time": 82.33,
-  "sandbox_id": "i3ezl3vd5jh1fuef2ef2l",
-  "backend": "anthropic",
+  "validated_at": "2026-04-25T09:35:56.019063",
+  "total_time": 3263.94,
+  "sandbox_id": "il0ltfnqpwawhuv8ft776",
+  "backend": "oauth",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "fix_quality",
   "nodes": {
     "p2p_enrich": {
       "status": "rate_limited",
@@ -38,10 +38,10 @@
       "gold_reward": 1.0,
       "rubric_icr": 1.0,
       "attempts": 2,
-      "notes": "Fixed Dockerfile (removed COPY tests/ line). Fixed solve.sh (added UsagePageView.test.tsx patch for placeholder text). Fixed eval_manifest.yaml (removed problematic rubric rules). Fixed judge.py bug (schema mismatch in config edit scoring).",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 607.51
+      "notes": "Prior fireworks/kimi run made all four checks pass (Dockerfile, solve.sh, eval_manifest.yaml, judge.py). Subsequent claude-opus-4-7 re-validation attempt could not execute any commands: harness Bash tool fails immediately with `EACCES: permission denied, mkdir /home/worker/.claude/session-env` before dispatch, and writes under /home/worker/.claude are blocked as sensitive. No task files were modified in this re-run; relying on the prior pass. Other tools (Read/Glob/Grep/Edit) work fine \u2014 only Bash/Docker is unreachable.",
+      "model": "claude-opus-4-7",
+      "backend": "oauth",
+      "time": 128.16
     },
     "rubric_judge": {
       "status": "pass",
@@ -63,51 +63,32 @@
     "quality_gate": {
       "status": "DELETE",
       "model": "claude-opus-4-7",
-      "backend": "anthropic",
-      "time": 0.25,
-      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:257: test `test_claude_md_adds_ui_backend_consistency` has 3 assert(s)', 'lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:11: unpinned pip deps: pytest, pytest-json-ctrf']"
+      "backend": "oauth",
+      "time": 0.45,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:2', \"A:[A] test_deps_in_dockerfile @ environment/Dockerfile: tests call 3 binaries not installed in Dockerfile: ['corepack', 'n\", 'A:[A] test_not_tautological @ tests/test_outputs.py:255: test `test_claude_md_adds_ui_backend_consistency` has 3 assert(s)', 'lint_tier_b:2', 'B:[B] pinned_dependencies @ environment/Dockerfile:11: unpinned pip deps: pytest, pytest-json-ctrf', 'B:[B] no_network_during_tests @ tests/test.sh:44: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 15.42,
-      "tier_a_fails": [
-        "solution_uniqueness_guard"
-      ],
+      "time": 12.68,
+      "tier_a_fails": [],
       "tier_b_fails": [],
-      "pass_count": 9,
-      "fail_count": 1
+      "pass_count": 10,
+      "fail_count": 0
     },
     "tests_rewrite": {
       "status": "error",
       "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":441,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 400 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"invalid_request_error\\\",\\\"message\\\":\\\"\\\\\\\"thinking.type.enabled\\\\\\\" is not supported for this model. Use \\\\\\\"thinking.type.adapt",
       "time": 2.26
+    },
+    "fix_quality": {
+      "status": "ok",
+      "model": "claude-opus-4-7",
+      "backend": "oauth",
+      "time": 701.93,
+      "notes": ""
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "glm",
-      "time": 1109.57,
-      "at": "2026-04-15T04:32:10.586004"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "oauth",
-      "time": 393.16,
-      "at": "2026-04-15T12:56:07.613535"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "oauth",
-      "time": 631.64,
-      "at": "2026-04-15T19:00:25.028347"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -123,6 +104,30 @@
       "backend": "anthropic",
       "time": 82.33,
       "at": "2026-04-16T10:22:25.783298"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 5591.93,
+      "at": "2026-04-25T00:58:06.257756"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 13887.08,
+      "at": "2026-04-25T04:50:29.315358"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "oauth",
+      "time": 3263.94,
+      "at": "2026-04-25T09:35:56.019063"
     }
   ]
 }

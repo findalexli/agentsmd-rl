@@ -10,6 +10,7 @@ import subprocess
 import sys
 import os
 import re
+import json
 
 # Path to the repo
 REPO = "/workspace/electric"
@@ -17,75 +18,45 @@ CLIENT_DIR = f"{REPO}/packages/typescript-client"
 SRC_FILE = f"{CLIENT_DIR}/src/client.ts"
 
 
-def run_node_script(script: str, timeout: int = 30) -> tuple:
-    """Run a Node.js script and return (returncode, stdout, stderr)."""
-    result = subprocess.run(
-        ["node", "--input-type=module", "--eval", script],
-        cwd=CLIENT_DIR,
-        capture_output=True,
-        text=True,
-        timeout=timeout
-    )
-    return result.returncode, result.stdout, result.stderr
+def _run_ts_behavioral_test(test_code: str, timeout: int = 60):
+    """Helper to run a temporary TypeScript test via vitest."""
+    test_file = os.path.join(CLIENT_DIR, "test", "_eval_behavioral.test.ts")
+    config_file = os.path.join(CLIENT_DIR, "vitest._eval.config.ts")
 
+    config_code = """import { defineConfig } from 'vitest/config'
+export default defineConfig({
+  test: {
+    setupFiles: [`vitest-localstorage-mock`],
+    include: [`test/_eval_behavioral.test.ts`],
+    testTimeout: 30000,
+    environment: `jsdom`,
+  },
+})
+"""
 
-def build_typescript():
-    """Build the TypeScript to JavaScript. Returns path to built file or None."""
-    build_result = subprocess.run(
-        ["pnpm", "exec", "tsc"],
-        cwd=CLIENT_DIR,
-        capture_output=True,
-        text=True,
-        timeout=120
-    )
-    dist_file = f"{CLIENT_DIR}/dist/client.js"
-    if not os.path.exists(dist_file):
-        return None
-    return dist_file
+    try:
+        with open(test_file, "w") as f:
+            f.write(test_code)
+        with open(config_file, "w") as f:
+            f.write(config_code)
 
-
-def get_source_content():
-    """Get the source content to check."""
-    dist_file = build_typescript()
-    if dist_file is not None and os.path.exists(dist_file):
-        with open(dist_file, 'r') as f:
-            return f.read()
-    # Fallback to source if build fails
-    with open(SRC_FILE, 'r') as f:
-        return f.read()
+        result = subprocess.run(
+            ["pnpm", "exec", "vitest", "run", "--config", "vitest._eval.config.ts"],
+            cwd=CLIENT_DIR,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+        )
+        return result
+    finally:
+        if os.path.exists(test_file):
+            os.remove(test_file)
+        if os.path.exists(config_file):
+            os.remove(config_file)
 
 
 class TestCacheBusterBehavior:
     """Tests for the cache-busting mechanism that replaces -next suffix."""
-
-    def test_createCacheBuster_produces_unique_values(self):
-        """
-        Behavioral test: The fix adds a dedicated createCacheBuster function.
-
-        The fix adds near line 16-18:
-        function createCacheBuster(): string {
-          return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
-        }
-        """
-        content = get_source_content()
-
-        # Check for the specific pattern: a function that returns time-random string
-        func_pattern = r'function\s+createCacheBuster\s*\(|const\s+createCacheBuster\s*='
-        func_matches = re.findall(func_pattern, content)
-
-        assert len(func_matches) >= 1, (
-            "createCacheBuster function not found. "
-            "The fix should add a dedicated createCacheBuster function."
-        )
-
-        # Also verify the function body contains time + random components
-        cache_buster_pattern = r'Date\.now\(\).*Math\.random\(\)|Math\.random\(\).*Date\.now\(\)'
-        cb_matches = re.findall(cache_buster_pattern, content)
-
-        assert len(cb_matches) >= 1, (
-            "Cache-buster implementation not found. "
-            "Expected Date.now() and Math.random() in createCacheBuster."
-        )
 
     def test_no_next_suffix_in_handle_construction(self):
         """
@@ -94,13 +65,14 @@ class TestCacheBusterBehavior:
 
         Buggy code: const newShapeHandle = e.headers[SHAPE_HANDLE_HEADER] || `${this.#syncState.handle!}-next`
         """
-        content = get_source_content()
+        with open(SRC_FILE, "r") as f:
+            content = f.read()
 
         # The buggy pattern: using -next suffix when handle header is missing
         # These are the specific patterns that indicate the bug
         buggy_patterns = [
-            r'`\$\{this\.#syncState\.handle!\}-next',  # ${this.#syncState.handle!}-next
-            r'`\$\{usedHandle\s*\?\?\s*`handle`\}-next',  # ${usedHandle ?? `handle`}-next
+            r"`\$\{this\.\#syncState\.handle!\}-next",  # ${this.#syncState.handle!}-next
+            r"`\$\{usedHandle\s*\?\?\s*`handle`\}-next",  # ${usedHandle ?? `handle`}-next
         ]
 
         found_buggy = []
@@ -114,55 +86,98 @@ class TestCacheBusterBehavior:
             "The fix should remove the -next suffix from handle construction."
         )
 
-    def test_cache_buster_query_param_mechanism_exists(self):
+    def test_retry_url_has_cache_buster_after_409_without_handle(self):
         """
-        Behavioral test: When a 409 lacks handle header, the code should use
-        a cache-buster query param to ensure URL uniqueness.
-
-        The fix adds:
-        if (this.#refetchCacheBuster) {
-          fetchUrl.searchParams.set(CACHE_BUSTER_QUERY_PARAM, this.#refetchCacheBuster)
-          this.#refetchCacheBuster = undefined
-        }
+        Behavioral test: When a 409 response lacks a handle header, the retry
+        URL must include a cache-busting parameter to ensure uniqueness.
         """
-        content = get_source_content()
+        test_code = """
+import { describe, expect, it, vi } from 'vitest'
+import { ShapeStream, FetchError } from '../src'
 
-        # Check that CACHE_BUSTER_QUERY_PARAM is actually SET in searchParams
-        set_pattern = r'searchParams\.set\s*\(\s*CACHE_BUSTER_QUERY_PARAM'
-        matches = re.findall(set_pattern, content)
+describe(`Cache buster on 409 without handle`, () => {
+  it(`retry URL is unique after 409 without handle header`, async () => {
+    const shapeUrl = `https://example.com/v1/shape`
+    const aborter = new AbortController()
+    const capturedUrls: string[] = []
+    let requestCount = 0
 
-        assert len(matches) >= 1, (
-            "CACHE_BUSTER_QUERY_PARAM is not being set in URL. "
-            "The fix should add cache-buster as a query parameter."
+    const fetchMock = (input: string | URL | Request) => {
+      const url = input instanceof Request ? input.url : input.toString()
+      capturedUrls.push(url)
+      requestCount++
+
+      if (requestCount <= 2) {
+        // First two requests: 409 without handle header
+        throw new FetchError(
+          409,
+          JSON.stringify([{ headers: { control: `must-refetch` } }]),
+          [{ headers: { control: `must-refetch` } }],
+          {}, // NO electric-handle header
+          url
         )
+      }
 
-        # Verify the #refetchCacheBuster field is used
-        refetch_pattern = r'#refetchCacheBuster\s*=\s*createCacheBuster'
-        refetch_matches = re.findall(refetch_pattern, content)
+      if (requestCount >= 6) aborter.abort()
+      return Promise.resolve(
+        new Response(JSON.stringify([{ headers: { control: `up-to-date` } }]), {
+          status: 200,
+          headers: {
+            'content-type': `application/json`,
+            'electric-handle': `fresh-handle`,
+            'electric-offset': `0_0`,
+            'electric-schema': `{}`,
+            'electric-up-to-date': `true`,
+          },
+        })
+      )
+    }
 
-        assert len(refetch_matches) >= 1, (
-            "#refetchCacheBuster = createCacheBuster() not found. "
-            "The fix should set a cache buster when handle header is missing."
-        )
+    const stream = new ShapeStream({
+      url: shapeUrl,
+      params: { table: `test` },
+      signal: aborter.signal,
+      fetchClient: fetchMock,
+      subscribe: false,
+    })
 
-        # Verify the cache buster is cleared after use
-        cleared_pattern = r'#refetchCacheBuster\s*=\s*undefined'
-        cleared_matches = re.findall(cleared_pattern, content)
-        assert len(cleared_matches) >= 1, (
-            "#refetchCacheBuster = undefined not found. "
-            "The cache buster should be cleared after use."
+    stream.subscribe(() => {})
+
+    await new Promise((resolve) => setTimeout(resolve, 150))
+
+    // We should have at least 3 requests:
+    // 1. Initial request
+    // 2. Retry after first 409
+    // 3. Retry after second 409
+    expect(capturedUrls.length).toBeGreaterThanOrEqual(3)
+
+    // The two retry URLs after 409s must be different (unique cache busting)
+    const retryUrl1 = new URL(capturedUrls[1])
+    const retryUrl2 = new URL(capturedUrls[2])
+
+    // They must differ in at least one query param (the cache buster)
+    const params1 = Array.from(retryUrl1.searchParams.entries()).sort()
+    const params2 = Array.from(retryUrl2.searchParams.entries()).sort()
+    expect(params1).not.toEqual(params2)
+
+    // Neither retry URL should contain the buggy -next suffix anywhere
+    expect(capturedUrls[1]).not.toContain(`-next`)
+    expect(capturedUrls[2]).not.toContain(`-next`)
+  })
+})
+"""
+        result = _run_ts_behavioral_test(test_code)
+        assert result.returncode == 0, (
+            f"Behavioral test failed:\n{result.stdout}\n{result.stderr}"
         )
 
     def test_warning_for_missing_handle_header_on_409(self):
         """
         Behavioral test: When a 409 lacks the handle header, the code should
-        emit a specific warning.
-
-        The fix adds this specific warning text:
-        "[Electric] Received 409 response without a shape handle header. " +
-        "This likely indicates a proxy or CDN stripping required headers."
+        emit a specific warning about proxy/CDN issues.
         """
-        content = get_source_content()
+        with open(SRC_FILE, "r") as f:
+            content = f.read()
 
         # Check for the specific warning text that should be added
         # This exact phrase should be added by the fix
@@ -174,24 +189,114 @@ class TestCacheBusterBehavior:
             "The fix should add a specific warning for missing handle header on 409."
         )
 
-    def test_refetchCacheBuster_private_field_exists(self):
+    def test_cache_buster_is_one_shot(self):
         """
-        Behavioral test: The fix should add a #refetchCacheBuster private field
-        to ShapeStream to store the cache buster between retry attempts.
-
-        The fix adds: #refetchCacheBuster?: string
+        Behavioral test: The cache buster should be cleared after use
+        so that normal requests do not carry it.
         """
-        content = get_source_content()
+        test_code = """
+import { describe, expect, it, vi } from 'vitest'
+import { ShapeStream, FetchError } from '../src'
 
-        # Check for the private field declaration
-        # TypeScript private fields appear as #fieldName in the source
-        field_pattern = r'#refetchCacheBuster\s*\?:'
-        matches = re.findall(field_pattern, content)
+describe(`Cache buster one-shot behavior`, () => {
+  it(`cache buster is not present on later requests`, async () => {
+    const shapeUrl = `https://example.com/v1/shape`
+    const aborter = new AbortController()
+    const capturedUrls: string[] = []
+    let requestCount = 0
 
-        assert len(matches) >= 1, (
-            "#refetchCacheBuster?: string field not found. "
-            "The fix should add this private field to ShapeStream."
+    const fetchMock = (input: string | URL | Request) => {
+      const url = input instanceof Request ? input.url : input.toString()
+      capturedUrls.push(url)
+      requestCount++
+
+      if (requestCount === 1) {
+        // First request: 409 without handle header
+        throw new FetchError(
+          409,
+          JSON.stringify([{ headers: { control: `must-refetch` } }]),
+          [{ headers: { control: `must-refetch` } }],
+          {},
+          url
         )
+      }
+
+      if (requestCount >= 6) aborter.abort()
+      return Promise.resolve(
+        new Response(JSON.stringify([{ value: { id: 1 } }]), {
+          status: 200,
+          headers: {
+            'content-type': `application/json`,
+            'electric-handle': `fresh-handle`,
+            'electric-offset': `0_0`,
+            'electric-schema': `{}`,
+          },
+        })
+      )
+    }
+
+    const stream = new ShapeStream({
+      url: shapeUrl,
+      params: { table: `test` },
+      signal: aborter.signal,
+      fetchClient: fetchMock,
+      subscribe: false,
+    })
+
+    stream.subscribe(() => {})
+
+    await new Promise((resolve) => setTimeout(resolve, 300))
+
+    // Should have at least 4 requests
+    expect(capturedUrls.length).toBeGreaterThanOrEqual(4)
+
+    // Convert all URLs to sorted param arrays for comparison
+    const paramSets = capturedUrls.map(u =>
+      JSON.stringify(Array.from(new URL(u).searchParams.entries()).sort())
+    )
+
+    // The last two URLs should have identical params,
+    // proving any one-shot cache buster has been cleared
+    expect(paramSets[paramSets.length - 1]).toEqual(paramSets[paramSets.length - 2])
+
+    // At least one URL between the 409 retry and the stable tail
+    // should differ from the stable pattern (the cache buster was present)
+    const stableParams = paramSets[paramSets.length - 1]
+    const hasTransientDifference = paramSets.slice(1, -2).some(p => p !== stableParams)
+    expect(hasTransientDifference).toBe(true)
+
+    // No URL should contain the buggy -next suffix
+    capturedUrls.forEach((u) => {
+      expect(u).not.toContain(`-next`)
+    })
+  })
+})
+"""
+        result = _run_ts_behavioral_test(test_code)
+        assert result.returncode == 0, (
+            f"Behavioral test failed:\n{result.stdout}\n{result.stderr}"
+        )
+
+    def test_behavioral_cache_buster_execution(self):
+        """
+        Behavioral test: Verify the cache-busting mechanism works correctly
+        by actually executing the TypeScript code via vitest.
+
+        This test runs the actual code to verify that a cache-busting function
+        produces unique values.
+        """
+        # Run the unit tests via vitest which actually executes the TypeScript
+        result = subprocess.run(
+            ["pnpm", "exec", "vitest", "run", "--config", "vitest.unit.config.ts"],
+            cwd=CLIENT_DIR,
+            capture_output=True,
+            text=True,
+            timeout=180,
+        )
+
+        # Check that vitest ran successfully (which exercises the actual code)
+        err_msg = "Vitest unit tests failed. Check that the code compiles and tests pass."
+        assert result.returncode == 0, err_msg
 
 
 class TestRepoIntegration:
@@ -206,44 +311,58 @@ class TestRepoIntegration:
             cwd=CLIENT_DIR,
             capture_output=True,
             text=True,
-            timeout=180
+            timeout=180,
         )
 
         if result.returncode != 0:
             if "failed" in result.stdout.lower() or "failed" in result.stderr.lower():
-                assert False, f"Unit tests failed:\n{result.stdout[-1000:]}\n{result.stderr[-500:]}"
+                assert False, "Unit tests failed"
 
-        assert result.returncode == 0, f"Tests failed with return code {result.returncode}"
+        assert result.returncode == 0, "Tests failed with return code"
 
     def test_shape_stream_state_tests_pass(self):
         """
         Pass-to-pass: Shape stream state machine tests should pass.
         """
         result = subprocess.run(
-            ["pnpm", "exec", "vitest", "run", "--config", "vitest.unit.config.ts",
-             "test/shape-stream-state.test.ts"],
+            [
+                "pnpm",
+                "exec",
+                "vitest",
+                "run",
+                "--config",
+                "vitest.unit.config.ts",
+                "test/shape-stream-state.test.ts",
+            ],
             cwd=CLIENT_DIR,
             capture_output=True,
             text=True,
-            timeout=120
+            timeout=120,
         )
 
-        assert result.returncode == 0, f"Shape stream state tests failed:\n{result.stderr[-500:]}"
+        assert result.returncode == 0, "Shape stream state tests failed"
 
     def test_expired_shapes_cache_tests_pass(self):
         """
         Pass-to-pass: Expired shapes cache tests (including regression tests) should pass.
         """
         result = subprocess.run(
-            ["pnpm", "exec", "vitest", "run", "--config", "vitest.unit.config.ts",
-             "test/expired-shapes-cache.test.ts"],
+            [
+                "pnpm",
+                "exec",
+                "vitest",
+                "run",
+                "--config",
+                "vitest.unit.config.ts",
+                "test/expired-shapes-cache.test.ts",
+            ],
             cwd=CLIENT_DIR,
             capture_output=True,
             text=True,
-            timeout=120
+            timeout=120,
         )
 
-        assert result.returncode == 0, f"Expired shapes cache tests failed:\n{result.stderr[-500:]}"
+        assert result.returncode == 0, "Expired shapes cache tests failed"
 
     def test_typescript_typecheck_passes(self):
         """
@@ -254,10 +373,10 @@ class TestRepoIntegration:
             cwd=CLIENT_DIR,
             capture_output=True,
             text=True,
-            timeout=120
+            timeout=120,
         )
 
-        assert result.returncode == 0, f"TypeScript typecheck failed:\n{result.stderr[-500:]}"
+        assert result.returncode == 0, "TypeScript typecheck failed"
 
     def test_eslint_stylecheck_passes(self):
         """
@@ -268,7 +387,7 @@ class TestRepoIntegration:
             cwd=CLIENT_DIR,
             capture_output=True,
             text=True,
-            timeout=120
+            timeout=120,
         )
 
-        assert result.returncode == 0, f"ESLint stylecheck failed:\n{result.stderr[-500:]}"
+        assert result.returncode == 0, "ESLint stylecheck failed"

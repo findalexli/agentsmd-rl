@@ -4,12 +4,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-15T22:12:49.229926",
-  "total_time": 2115.46,
-  "sandbox_id": "i0efs7u6jjngm6w7lei3a",
-  "backend": "minimax",
+  "validated_at": "2026-04-25T12:41:14.856246",
+  "total_time": 1415.95,
+  "sandbox_id": "ik1q0egf572a1hy1tiye3",
+  "backend": "anthropic",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "oneshot_repair",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -33,14 +33,14 @@
       "notes": "tests look good"
     },
     "validate": {
-      "status": "pass",
-      "nop_reward": 0.0,
-      "gold_reward": 1.0,
-      "attempts": 2,
-      "notes": "Fixed test bug: changed re.match to re.search in test_trailing_partial_lines_preserved (line 131). The test was using re.match() which anchors at start of string, but the pattern str=\" appears after let in the code. Changed to re.search() to properly detect the pattern anywhere in the line. All 4 validation checks now pass: Docker build, NOP test (reward=0), Gold test (reward=1). Rubric judge returns 0.5 due to API rate limiting but gold solution follows all rubric conventions (Promise.race, await using, async/await).",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 238.22
+      "status": "blocked",
+      "nop_reward": -1.0,
+      "gold_reward": -1.0,
+      "attempts": 0,
+      "notes": "Cannot re-validate: Bash tool is non-functional in this session \u2014 every invocation fails with 'EACCES: permission denied, mkdir /home/worker/.claude/session-env'. The harness cannot create its session-env directory, so no docker/python commands can be executed. Reviewed artifacts statically: Dockerfile clones bun@af24e281 and installs python3/git/build-essential (looks correct); test_outputs.py contains the expected behavioral checks (data_loss_pattern_fixed, trailing_partial_lines_preserved, bundler_no_inherit_pipes, early_bundler_exit_detection, buffer_alloc_convention) plus pass_to_pass gates; solve.sh git-applies a patch matching all f2p assertions (introduces driveErrorReloadCycle helper with .pop() trailing save, uses Promise.race with bundler.exited, switches inherit\u2192pipe/ignore, uses Buffer.alloc instead of .repeat()). Previous validate run (MiniMax-M2.7 backend) reported nop_reward=0, gold_reward=1; three earlier history entries also show pass. The current 'fail' verdict in the top-level file came from a 429 rate-limit during fix_quality, not a validation failure. Needs the environment fixed (chmod +w /home/worker/.claude or equivalent) before validation can actually be re-run.",
+      "model": "claude-opus-4-7",
+      "backend": "oauth",
+      "time": 131.16
     },
     "rubric_judge": {
       "status": "fail",
@@ -61,20 +61,28 @@
     },
     "quality_gate": {
       "status": "passed",
-      "model": "MiniMax-M2.7",
-      "backend": "minimax",
-      "time": 0.39,
-      "notes": "flags=[]"
+      "model": "claude-opus-4-6",
+      "backend": "anthropic",
+      "time": 0.24,
+      "notes": "flags=['lint_tier_b:1', 'B:[B] no_network_during_tests @ tests/test.sh:44: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 22.77,
+      "time": 15.05,
       "tier_a_fails": [
-        "no_solution_leakage"
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text"
       ],
       "tier_b_fails": [],
       "pass_count": 7,
       "fail_count": 2
+    },
+    "fix_quality": {
+      "status": "ok",
+      "model": "claude-opus-4-6",
+      "backend": "anthropic",
+      "time": 1119.93,
+      "notes": ""
     }
   },
   "history": [
@@ -83,40 +91,40 @@
       "nop": 0.0,
       "gold": 1.0,
       "backend": "minimax",
-      "time": 3074.87,
-      "at": "2026-04-15T11:17:29.030495"
+      "time": 22608.37,
+      "at": "2026-04-22T04:26:38.440478"
     },
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 3134.95,
+      "at": "2026-04-25T00:17:09.798506"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 13186.79,
+      "at": "2026-04-25T03:57:51.408117"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
       "backend": "oauth",
-      "time": 410.64,
-      "at": "2026-04-15T12:42:35.774240"
+      "time": 1736.97,
+      "at": "2026-04-25T09:10:28.516808"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
-      "backend": "fireworks",
-      "time": 1201.7,
-      "at": "2026-04-15T18:59:52.446881"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "minimax",
-      "time": 3619.94,
-      "at": "2026-04-15T21:16:39.039927"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "minimax",
-      "time": 2115.46,
-      "at": "2026-04-15T22:12:49.229926"
+      "backend": "anthropic",
+      "time": 1415.95,
+      "at": "2026-04-25T12:41:14.856246"
     }
   ]
 }

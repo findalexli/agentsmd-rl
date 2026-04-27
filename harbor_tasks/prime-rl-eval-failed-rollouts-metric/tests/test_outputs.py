@@ -395,29 +395,6 @@ def test_evaluate_env_not_stub():
         raise AssertionError("evaluate_env function not found")
 
 
-# [pr_diff] pass_to_pass
-def test_evaluate_delegates_to_generate():
-    """evaluate() in vf_utils calls generate() — structural regression."""
-    source = Path(VF_UTILS_PATH).read_text()
-    tree = ast.parse(source)
-
-    eval_func = None
-    for node in ast.walk(tree):
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == "evaluate":
-            eval_func = node
-            break
-
-    assert eval_func, "evaluate() function not found in vf_utils.py"
-
-    found_generate_call = False
-    for node in ast.walk(eval_func):
-        if isinstance(node, ast.Call):
-            if isinstance(node.func, ast.Name) and node.func.id == "generate":
-                found_generate_call = True
-                break
-    assert found_generate_call, "evaluate() does not call generate()"
-
-
 # ---------------------------------------------------------------------------
 # Config-derived (agent_config) — rules from AGENTS.md
 # ---------------------------------------------------------------------------

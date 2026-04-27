@@ -5,7 +5,7 @@ source:
   base_commit: ecd6428d324e395ca07f8d375600c0fc93d0dd3c
   merge_commit: 84e28fac0179cc829e166eb1f40d69a5cec4578b
 checks:
-- id: csharp_syntax_valid
+- id: test_csharp_syntax_valid
   type: pass_to_pass
   origin: static
   description: Modified C# files must have valid syntax
@@ -29,26 +29,21 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo code passes dotnet format style checks
-- id: header_footer_guard_exists
+- id: test_header_footer_selection_guard_behavior
   type: fail_to_pass
   origin: pr_diff
   description: SelectableItemsViewAdapter has the header/footer selection guard that
     prevents ArgumentOutOfRangeException
-- id: guard_has_correct_comment
+- id: test_guard_comment_explains_crash
   type: fail_to_pass
   origin: pr_diff
   description: The guard includes explanatory comment about why header/footer ViewHolders
     are excluded from selection tracking
-- id: adapter_compiles_with_fix
-  type: fail_to_pass
-  origin: pr_diff
-  description: The Controls.Core project compiles successfully with the guard fix
-    applied
-- id: not_stub
+- id: test_adapter_compiles
   type: pass_to_pass
   origin: static
-  description: Modified OnBindViewHolder method has real logic, not just pass/return
-- id: nullable_enable_documented
+  description: The Controls.Core project compiles successfully
+- id: test_nullable_enable_documented
   type: fail_to_pass
   origin: agent_config
   description: 'copilot-instructions.md documents the #nullable enable must be line
@@ -57,7 +52,7 @@ checks:
     path: .github/copilot-instructions.md
     lines: 141-160
     commit: ecd6428d324e395ca07f8d375600c0fc93d0dd3c
-- id: bash_script_provided
+- id: test_bash_script_provided
   type: fail_to_pass
   origin: agent_config
   description: copilot-instructions.md includes the safe bash pattern for PublicAPI.Unshipped.txt

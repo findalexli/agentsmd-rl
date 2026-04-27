@@ -14,12 +14,13 @@ In stress tests with `ignore_drop_queries_probability` enabled:
 
 ## Requirements
 
-The fix must ensure that when a refreshable materialized view is being dropped, the `DROP TABLE` statement is NOT converted to `TRUNCATE TABLE`.
+The fix must be implemented in `src/Interpreters/InterpreterDropQuery.cpp`.
 
-The implementation should:
-1. Check if the table being dropped is a refreshable materialized view
-2. Skip the DROP-to-TRUNCATE conversion for such views
-3. Include a comment explaining why refreshable views need special handling
+Before the existing check for `ignore_drop_queries_probability`, the code must determine whether the table being dropped is a refreshable materialized view. Use `dynamic_cast<StorageMaterializedView *>` on the table and call `isRefreshable()` to make this determination.
+
+If the table is a refreshable materialized view, the `DROP TABLE` statement must NOT be converted to `TRUNCATE TABLE`. The `ignore_drop_queries_probability` condition must be guarded with a negated check (e.g., `!is_refreshable_view`) so that refreshable views bypass the DROP-to-TRUNCATE conversion.
+
+Include a comment explaining why refreshable views need special handling — specifically, that `TRUNCATE` does not stop the periodic refresh task, which would leave orphaned views consuming background pool threads.
 
 ## Agent Configuration Rules
 

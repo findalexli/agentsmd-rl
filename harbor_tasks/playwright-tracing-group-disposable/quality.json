@@ -3,57 +3,54 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "Instruction names tracing module, DisposableStub import from './disposable', groupEnd(), type definition files, docs/src/api directory, 'returns: <[Disposable]>' literal, CLAUDE.md Commit Convention section, and 'npm run flint' string."
+      "reason": "Instruction names tracing.ts (playwright-core client), DisposableStub from './disposable', both types.d.ts files, docs/src/api class-tracing.md, and CLAUDE.md with 'Commit Convention' section and 'npm run flint' command."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "Instruction directly states the fix: 'Return `new DisposableStub(() => this.groupEnd())` from the `group()` method' and 'Add the line: `returns: <[Disposable]>`', leaving no reasoning about what to change."
+      "outcome": "pass",
+      "reason": "Instruction describes what needs to change but doesn't show the exact code/line; agent must figure out how to wire DisposableStub and where to edit."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "test_tracing_ts_imports_disposable asserts literal \"from './disposable'\" and test_claude_md_has_flint_rule requires exact 'Before committing' phrasing; alternative valid implementations (e.g., importing from a different path alias or phrasing the CLAUDE rule differently) would fail."
+      "outcome": "pass",
+      "reason": "Tests check for 'Disposable' in return type and 'flint' in commit section, not specific variable names or code shape; alternative implementations would pass."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "test_typescript_compiles and test_flint_linting execute subprocesses (tsc, eslint), beyond just text inspection."
+      "reason": "Tests run ESLint subprocess and parse .d.ts return type via regex; not pure string-literal matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "Tests require specific code changes (DisposableStub return, Promise<Disposable> in types, docs annotation) that a stub implementation cannot satisfy."
+      "reason": "Tests require actual Disposable return type in .d.ts files and flint mention in CLAUDE.md; a stub wouldn't satisfy them."
     },
     "behavior_in_tests": {
-      "outcome": "pass",
-      "reason": "Each of the four instruction bullets (core impl, type defs, API docs, CLAUDE.md) has corresponding tests."
+      "outcome": "fail",
+      "reason": "Instruction requires the 'await using' pattern to work and groupEnd() called on disposal, but no test actually invokes tracing.group() or verifies dispose triggers groupEnd\u2014only type signatures are checked."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests have descriptive names and docstrings with tags like [code_edit] fail_to_pass and [config_edit]."
+      "reason": "Tests are well-named with docstrings tagging [code_edit]/[config_edit] and clear behavior descriptions."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data output."
+      "reason": "No structured data output produced."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "Paths and identifiers (tracing.ts, DisposableStub, class-tracing.md, CLAUDE.md) appear correctly spelled."
+      "reason": "Paths and commands appear correct."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "Instruction specifies the exact code to write ('Return `new DisposableStub(() => this.groupEnd())`') and exact doc line ('returns: <[Disposable]>'), eliminating localization reasoning."
+      "outcome": "pass",
+      "reason": "Instruction names the module (tracing client) without citing exact line numbers; localization still required."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "CLAUDE.md gold diff adds only two lines and docs change adds a single line; scope is localized."
+      "reason": "CLAUDE.md diff adds a single line; docs add a single annotation line \u2014 localized."
     }
   },
-  "tier_a_fails": [
-    "no_solution_leakage",
-    "solution_uniqueness_guard"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "instruction_no_hint_leakage"
+    "behavior_in_tests"
   ],
-  "pass_count": 7,
-  "fail_count": 3
+  "pass_count": 9,
+  "fail_count": 1
 }

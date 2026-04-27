@@ -3,55 +3,57 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "Instruction names all asserted files, function names (decorateServer, sessionConfigFromArgs, runDaemonForContext, startMcpDaemonServer, _onDidFinishTestFunctionCallbacks), literal strings (PWPAUSE=cli, timeout=0, actionTimeout=5000, Bash(npx:*), Bash(npm:*)), and paths (references/playwright-tests.md)."
+      "reason": "Instruction explicitly names all asserted paths (network.ts, testInfo.ts, program.ts, daemon.ts, browserBackend.ts, SKILL.md, playwright-tests.md), function names (decorateServer, sessionConfigFromArgs, runDaemonForContext, startMcpDaemonServer), property name (_onDidFinishTestFunctionCallbacks), literal values (timeout=0, actionTimeout=5000, PWPAUSE='cli'), and SKILL.md frontmatter keys."
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "Instruction describes what behavior is required but does not specify exact line changes or patches; agent must still determine how to wire things."
+      "outcome": "fail",
+      "reason": "Instruction prescribes exact names and values: '_onDidFinishTestFunctionCallbacks' (plural, Set), 'timeout = 0', 'actionTimeout = 5000', 'for...of loop', 'noShutdown' parameter name \u2014 these are implementation details rather than behavioral descriptions."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests enforce gold-specific implementation details: test_finish_callbacks_is_set requires exact name `_onDidFinishTestFunctionCallbacks`, a `new Set<` initializer, and a `for...of` iteration, excluding valid alternatives like arrays or forEach; test_pwpause_cli_overrides requires an `else if` structure and exact `overrides.timeout = 0` assignment form."
+      "reason": "Tests assert gold-specific details: test_finish_callbacks_is_set requires literal 'Set()' in compiled JS and exact identifier '_onDidFinishTestFunctionCallbacks'; test_pwpause_cli_overrides greps for literal 'process.env.PWPAUSE === \"cli\"' and 'timeout = 0'; test_daemon_accepts_no_shutdown requires literal '!noShutdown' or 'noShutdown === false' \u2014 alternative correct implementations (e.g., Map, different param name, different equality style) would fail."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Tests primarily regex source files via _run_node (e.g., test_decorate_server_exported, test_session_config_exported, test_pwpause_cli_overrides, test_run_daemon_for_context_exported) rather than executing the code paths; only tsc/lint are executed."
+      "outcome": "pass",
+      "reason": "Tests execute npm run tsc/lint/test-types and use node to require() compiled modules and inspect exports/function signatures rather than just grepping source."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "Each f2p test checks for the presence of specific named symbols/behaviors that a stub would not satisfy."
+      "reason": "Stubs returning defaults wouldn't satisfy export checks, function-signature inspection for 'noShutdown', or the compiled-JS literal checks."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All eight instruction requirements map to corresponding tests (network export, program.ts overrides, testInfo callbacks, daemon noShutdown, browserBackend export, program.ts client export, SKILL.md, playwright-tests.md)."
+      "reason": "All 8 required behaviors in instruction (PWPAUSE=cli, callbacks Set, noShutdown, runDaemonForContext, decorateServer export, sessionConfigFromArgs export, SKILL.md, reference doc) have corresponding tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are clearly grouped with section headers (pass-to-pass, gates, fail-to-pass code, fail-to-pass agent_config) and descriptive docstrings."
+      "reason": "Tests are grouped with section comments (pass-to-pass, Gates, fail-to-pass behavioral, agent_config) and descriptive names."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task is not about producing structured data output."
+      "reason": "Task is code changes, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "Filenames, paths, and symbol names in instruction are consistent with tests."
+      "reason": "Paths and identifiers in instruction.md match test assertions (e.g., _onDidFinishTestFunctionCallbacks, runDaemonForContext, decorateServer)."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "Instruction identifies files in the spec naturally since the task scope is wiring across these files; no line-specific guidance given."
+      "outcome": "fail",
+      "reason": "Instruction names exact variable names, parameter names, and literal values to be used ('_onDidFinishTestFunctionCallbacks', 'noShutdown', 'timeout = 0', 'actionTimeout = 5000', 'for...of'), removing the localization/design work."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "SKILL.md edits are localized to frontmatter allowed-tools, description, and a link to the new reference file."
+      "reason": "SKILL.md edits are scoped to frontmatter allowed-tools addition, description tweak, and specific tasks link \u2014 localized, not full rewrites."
     }
   },
   "tier_a_fails": [
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "no_solution_leakage",
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [],
-  "pass_count": 8,
-  "fail_count": 2
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 7,
+  "fail_count": 3
 }

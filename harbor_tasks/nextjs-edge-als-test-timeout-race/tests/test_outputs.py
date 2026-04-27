@@ -329,7 +329,9 @@ def test_no_broken_imports():
     code = TEST_FILE.read_text()
     # Check that imports reference existing paths
     import_pattern = r"import\s+.*?\s+from\s+['\"]([^'\"]+)['\"]"
-    for match in re.finditer(import_pattern, code):
+    all_imports = list(re.finditer(import_pattern, code))
+    assert len(all_imports) >= 1, "Test file must have at least one import statement"
+    for match in all_imports:
         import_path = match.group(1)
         # Skip external packages (no slash or starts with non-relative)
         if not import_path.startswith('.') and not import_path.startswith('/'):
@@ -387,18 +389,19 @@ def test_repo_it_test_pattern():
 # [repo_ci] pass_to_pass
 def test_repo_als_pattern():
     """Repo test or fixture files reference AsyncLocalStorage pattern (pass_to_pass)."""
+    found = False
     test_code = TEST_FILE.read_text()
-    # Check in test file first, then in fixture files if they exist
     if "AsyncLocalStorage" in test_code:
-        return
-    # Check fixture files (gold fix has fixtures)
-    for name in ["single", "multiple"]:
-        fixture = _find_fixture(name)
-        if fixture:
-            fixture_code = Path(fixture).read_text()
-            if "AsyncLocalStorage" in fixture_code:
-                return
-    assert False, "AsyncLocalStorage pattern not found in test or fixture files"
+        found = True
+    if not found:
+        for name in ["single", "multiple"]:
+            fixture = _find_fixture(name)
+            if fixture:
+                fixture_code = Path(fixture).read_text()
+                if "AsyncLocalStorage" in fixture_code:
+                    found = True
+                    break
+    assert found, "AsyncLocalStorage pattern not found in test or fixture files"
 
 
 # [repo_ci] pass_to_pass
@@ -422,18 +425,19 @@ def test_repo_promise_all_pattern():
 # [repo_ci] pass_to_pass
 def test_repo_edge_runtime_pattern():
     """Repo test or fixture files reference edge runtime config (pass_to_pass)."""
+    found = False
     test_code = TEST_FILE.read_text()
-    # Check in test file first, then in fixture files if they exist
     if "runtime: 'edge'" in test_code or 'runtime: "edge"' in test_code:
-        return
-    # Check fixture files (gold fix has fixtures)
-    for name in ["single", "multiple"]:
-        fixture = _find_fixture(name)
-        if fixture:
-            fixture_code = Path(fixture).read_text()
-            if "runtime: 'edge'" in fixture_code or 'runtime: "edge"' in fixture_code:
-                return
-    assert False, "Edge runtime config not found in test or fixture files"
+        found = True
+    if not found:
+        for name in ["single", "multiple"]:
+            fixture = _find_fixture(name)
+            if fixture:
+                fixture_code = Path(fixture).read_text()
+                if "runtime: 'edge'" in fixture_code or 'runtime: "edge"' in fixture_code:
+                    found = True
+                    break
+    assert found, "Edge runtime config not found in test or fixture files"
 
 
 # [repo_ci] pass_to_pass

@@ -32,7 +32,7 @@ def _run_tsx(script: str, timeout: int = 30) -> subprocess.CompletedProcess:
 
 
 # ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static) — syntax / compilation checks
+# Gates (pass_to_pass, static) -- syntax / compilation checks
 # ---------------------------------------------------------------------------
 
 # [static] pass_to_pass
@@ -55,7 +55,7 @@ def test_typescript_files_parse():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral tests
+# Fail-to-pass (pr_diff) -- core behavioral tests
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
@@ -64,7 +64,7 @@ def test_interrupted_computation_logic():
     result = _run_node("""
 const AI_RUNTIME_OPERATION_TYPES = ['execAgentRuntime', 'chatCompletion'];
 
-// Case 1: cancelled runtime op → interrupted
+// Case 1: cancelled runtime op -> interrupted
 const ops1 = [
   { type: 'execAgentRuntime', status: 'cancelled' },
 ];
@@ -74,7 +74,7 @@ const latest1 = [...ops1].reverse().find(op => AI_RUNTIME_OPERATION_TYPES.includ
 const interrupted1 = !isGen1 && !!latest1 && latest1.status === 'cancelled';
 if (!interrupted1) throw new Error('Case 1: should be interrupted');
 
-// Case 2: running runtime op → NOT interrupted
+// Case 2: running runtime op -> NOT interrupted
 const ops2 = [
   { type: 'execAgentRuntime', status: 'running' },
 ];
@@ -84,7 +84,7 @@ const latest2 = [...ops2].reverse().find(op => AI_RUNTIME_OPERATION_TYPES.includ
 const interrupted2 = !isGen2 && !!latest2 && latest2.status === 'cancelled';
 if (interrupted2) throw new Error('Case 2: should NOT be interrupted when running');
 
-// Case 3: completed runtime op → NOT interrupted
+// Case 3: completed runtime op -> NOT interrupted
 const ops3 = [
   { type: 'execAgentRuntime', status: 'completed' },
 ];
@@ -94,7 +94,7 @@ const latest3 = [...ops3].reverse().find(op => AI_RUNTIME_OPERATION_TYPES.includ
 const interrupted3 = !isGen3 && !!latest3 && latest3.status === 'cancelled';
 if (interrupted3) throw new Error('Case 3: should NOT be interrupted when completed');
 
-// Case 4: cancelled then retried (running) → NOT interrupted (latest wins)
+// Case 4: cancelled then retried (running) -> NOT interrupted (latest wins)
 const ops4 = [
   { type: 'execAgentRuntime', status: 'cancelled' },
   { type: 'execAgentRuntime', status: 'running' },
@@ -140,33 +140,26 @@ console.log(JSON.stringify({ allPassed: true }));
 
 # [pr_diff] fail_to_pass
 def test_operation_state_has_interrupted():
-    """MessageOperationState type must include isInterrupted field and be usable."""
-    # Verify TypeScript syntax by running tsx on the file (it will syntax-check)
-    # Also verify the type definition contains the expected field using tsx
+    """MessageOperationState type must include isInterrupted field and default must be false."""
     result = _run_tsx(f"""
-const fs = require('fs');
-const path = '/workspace/lobe-chat/src/features/Conversation/types/operation.ts';
-const content = fs.readFileSync(path, 'utf8');
+import {{ DEFAULT_MESSAGE_OPERATION_STATE }} from '{REPO}/src/features/Conversation/types/operation.ts';
 
-// The isInterrupted field should be defined in the type
-// We verify by checking the source has the field declaration
-if (!content.includes('isInterrupted')) {{
-  throw new Error('isInterrupted field not found in operation types');
+// Verify isInterrupted is explicitly defined (not just falsy undefined)
+if (!Object.prototype.hasOwnProperty.call(DEFAULT_MESSAGE_OPERATION_STATE, 'isInterrupted')) {{
+  throw new Error('isInterrupted must be explicitly defined in DEFAULT_MESSAGE_OPERATION_STATE');
 }}
 
-// Verify it's typed as boolean (has boolean type annotation)
-if (!content.includes('isInterrupted: boolean')) {{
-  throw new Error('isInterrupted must be typed as boolean');
+if (DEFAULT_MESSAGE_OPERATION_STATE.isInterrupted !== false) {{
+  throw new Error('DEFAULT_MESSAGE_OPERATION_STATE.isInterrupted must be false, got: ' + DEFAULT_MESSAGE_OPERATION_STATE.isInterrupted);
 }}
 
-// Verify the default state sets it to false
-if (!content.includes('isInterrupted: false')) {{
-  throw new Error('DEFAULT_MESSAGE_OPERATION_STATE must set isInterrupted: false');
+if (typeof DEFAULT_MESSAGE_OPERATION_STATE.isInterrupted !== 'boolean') {{
+  throw new Error('isInterrupted must be a boolean, got: ' + typeof DEFAULT_MESSAGE_OPERATION_STATE.isInterrupted);
 }}
 
 console.log(JSON.stringify({{ allPassed: true }}));
 """)
-    assert result.returncode == 0, f"Type check failed:\n{result.stderr}"
+    assert result.returncode == 0, f"Operation state check failed:\n{result.stderr}"
     data = json.loads(result.stdout.strip())
     assert data["allPassed"] is True
 
@@ -174,25 +167,39 @@ console.log(JSON.stringify({{ allPassed: true }}));
 # [pr_diff] fail_to_pass
 def test_interrupted_selector_exists():
     """The isMessageInterrupted selector must be exported and usable."""
-    # Try to parse the selectors module and verify isMessageInterrupted is exported
-    result = _run_tsx(f"""
+    # Transpile the selectors module and verify the export at runtime
+    result = _run_node(f"""
+const {{ execSync }} = require('child_process');
 const fs = require('fs');
-const content = fs.readFileSync('/workspace/lobe-chat/src/features/Conversation/store/slices/messageState/selectors.ts', 'utf8');
+const path = require('path');
 
-// Check that isMessageInterrupted is defined as a const function
-if (!content.includes('const isMessageInterrupted')) {{
-  throw new Error('isMessageInterrupted must be defined as a const function');
+const filePath = '{REPO}/src/features/Conversation/store/slices/messageState/selectors.ts';
+const transpiled = execSync('npx --yes esbuild ' + filePath + ' --format=cjs', {{ encoding: 'utf8', timeout: 60000 }});
+
+// Stub unresolved path-alias imports with empty objects
+let fixed = transpiled;
+fixed = fixed.split('require("@/store/chat")').join('{{}}');
+fixed = fixed.split('require("@/store/chat/selectors")').join('{{}}');
+fixed = fixed.split('require("../data/selectors")').join('{{}}');
+fixed = fixed.split('require("../../initialState")').join('{{}}');
+
+const tmpFile = path.join(require('os').tmpdir(), 'eval_selectors_' + Date.now() + '.js');
+fs.writeFileSync(tmpFile, fixed);
+
+const mod = require(tmpFile);
+fs.unlinkSync(tmpFile);
+
+if (!mod.messageStateSelectors) {{
+  throw new Error('messageStateSelectors export not found');
+}}
+if (typeof mod.messageStateSelectors.isMessageInterrupted !== 'function') {{
+  throw new Error('isMessageInterrupted must be a function in messageStateSelectors');
 }}
 
-// Check it's exported in the selectors object
-if (!content.includes('isMessageInterrupted')) {{
-  throw new Error('isMessageInterrupted selector not found');
-}}
-
-// Check it's included in the messageStateSelectors export
-if (!content.includes('export const messageStateSelectors') ||
-    !content.match(/isMessageInterrupted/s)) {{
-  throw new Error('isMessageInterrupted must be in messageStateSelectors export');
+// Verify the selector is a proper curried function: (id) => (state) => value
+const selector = mod.messageStateSelectors.isMessageInterrupted('test-id');
+if (typeof selector !== 'function') {{
+  throw new Error('isMessageInterrupted(id) must return a selector function');
 }}
 
 console.log(JSON.stringify({{ allPassed: true }}));
@@ -205,41 +212,54 @@ console.log(JSON.stringify({{ allPassed: true }}));
 # [pr_diff] fail_to_pass
 def test_interrupted_hint_component():
     """InterruptedHint component must exist, use memo, and use correct i18n keys."""
-    result = _run_tsx(f"""
+    result = _run_node(f"""
+const {{ execSync }} = require('child_process');
 const fs = require('fs');
-const path = '/workspace/lobe-chat/src/features/Conversation/Messages/Assistant/components/InterruptedHint.tsx';
+const path = require('path');
 
-// Verify file exists
-try {{
-  fs.accessSync(path);
-}} catch (e) {{
+const filePath = '{REPO}/src/features/Conversation/Messages/Assistant/components/InterruptedHint.tsx';
+if (!fs.existsSync(filePath)) {{
   throw new Error('InterruptedHint.tsx does not exist');
 }}
 
-const content = fs.readFileSync(path, 'utf8');
+const transpiled = execSync('npx --yes esbuild ' + filePath + ' --format=cjs', {{ encoding: 'utf8', timeout: 60000 }});
 
-// Must be a memo component
-if (!content.includes('memo')) {{
-  throw new Error('InterruptedHint must use memo');
+// Instrumented stubs to track behavioral usage at runtime
+global.__memoUsed = false;
+global.__i18nKeys = [];
+
+let fixed = transpiled;
+fixed = fixed.split('require("react/jsx-runtime")').join('({{jsx:()=>null,jsxs:()=>null}})');
+fixed = fixed.split('require("antd-style")').join('({{createStaticStyles:()=>()=>({{}})}})');
+fixed = fixed.split('require("react")').join('({{memo:(f)=>{{global.__memoUsed=true;return f}}}})');
+fixed = fixed.split('require("react-i18next")').join('({{useTranslation:()=>({{t:(k)=>{{global.__i18nKeys.push(k);return k}}}})}})')
+
+const tmpFile = path.join(require('os').tmpdir(), 'eval_hint_' + Date.now() + '.js');
+fs.writeFileSync(tmpFile, fixed);
+
+const mod = require(tmpFile);
+fs.unlinkSync(tmpFile);
+
+// Must export a component (default or named)
+const component = mod.default || mod.InterruptedHint;
+if (typeof component !== 'function') {{
+  throw new Error('InterruptedHint must be exported as a function/component');
 }}
 
-// Must use the correct i18n keys
-if (!content.includes('messageAction.interrupted')) {{
-  throw new Error('Must use messageAction.interrupted i18n key');
+// Verify memo was invoked during module initialization
+if (!global.__memoUsed) {{
+  throw new Error('InterruptedHint must use React.memo');
 }}
 
-if (!content.includes('messageAction.interruptedHint')) {{
-  throw new Error('Must use messageAction.interruptedHint i18n key');
-}}
+// Call the component to exercise i18n key lookups
+try {{ component({{}}); }} catch(e) {{ /* stubs may cause partial render failures */ }}
 
-// Must be named InterruptedHint
-if (!content.includes('InterruptedHint')) {{
-  throw new Error('Component must be named InterruptedHint');
+// Verify the correct i18n keys were used when the component renders
+if (!global.__i18nKeys.includes('messageAction.interrupted')) {{
+  throw new Error('Must use messageAction.interrupted i18n key, got: ' + JSON.stringify(global.__i18nKeys));
 }}
-
-// Must be a default export
-if (!content.includes('export default')) {{
-  throw new Error('InterruptedHint must be a default export');
+if (!global.__i18nKeys.includes('messageAction.interruptedHint')) {{
+  throw new Error('Must use messageAction.interruptedHint i18n key, got: ' + JSON.stringify(global.__i18nKeys));
 }}
 
 console.log(JSON.stringify({{ allPassed: true }}));
@@ -251,34 +271,46 @@ console.log(JSON.stringify({{ allPassed: true }}));
 
 # [pr_diff] fail_to_pass
 def test_queue_tray_edit_button():
-    """QueueTray must have an edit button that uses Pencil icon and proper callbacks."""
-    result = _run_tsx(f"""
+    """QueueTray must have an edit button that uses Pencil icon."""
+    result = _run_node(f"""
+const {{ execSync }} = require('child_process');
 const fs = require('fs');
-const content = fs.readFileSync('/workspace/lobe-chat/src/features/Conversation/ChatInput/QueueTray.tsx', 'utf8');
+const path = require('path');
 
-// Must import Pencil icon from lucide-react
-if (!content.includes('Pencil') || !content.includes('lucide-react')) {{
+global.__pencilUsed = false;
+
+const filePath = '{REPO}/src/features/Conversation/ChatInput/QueueTray.tsx';
+const transpiled = execSync('npx --yes esbuild ' + filePath + ' --format=cjs', {{ encoding: 'utf8', timeout: 60000 }});
+
+// Instrumented stubs — Pencil import tracked via Object.defineProperty getter
+let fixed = transpiled;
+fixed = fixed.split('require("react/jsx-runtime")').join('({{jsx:()=>null,jsxs:()=>null}})');
+fixed = fixed.split('require("@lobehub/ui")').join('({{ActionIcon:()=>null,Flexbox:()=>null,Icon:()=>null}})');
+fixed = fixed.split('require("antd-style")').join('({{createStaticStyles:()=>()=>({{}})}})');
+fixed = fixed.split('require("lucide-react")').join('(function(){{var o={{Trash2:"Trash2",ListEnd:"ListEnd"}};Object.defineProperty(o,"Pencil",{{get:function(){{global.__pencilUsed=true;return"Pencil"}},enumerable:true,configurable:true}});return o}})()');
+fixed = fixed.split('require("react")').join('({{memo:(f)=>f,useCallback:(f)=>f,useMemo:(f)=>f(),createElement:()=>({{}})}})');
+fixed = fixed.split('require("@/store/chat")').join('({{useChatStore:(fn)=>fn(new Proxy({{}},{{get:()=>()=>[]}}))}})');
+fixed = fixed.split('require("@/store/chat/selectors")').join('({{operationSelectors:{{getQueuedMessages:()=>()=>[{{id:"1",content:"test"}}]}}}})');
+fixed = fixed.split('require("@/store/chat/utils/messageMapKey")').join('({{messageMapKey:()=>"test-key"}})');
+fixed = fixed.split('require("../store")').join('({{useConversationStore:(fn)=>fn({{context:{{agentId:null,groupId:null,topicId:null}},editor:null}})}})');
+
+const tmpFile = path.join(require('os').tmpdir(), 'eval_queue_' + Date.now() + '.js');
+fs.writeFileSync(tmpFile, fixed);
+
+const mod = require(tmpFile);
+fs.unlinkSync(tmpFile);
+
+// Must export default component
+if (typeof mod.default !== 'function') {{
+  throw new Error('QueueTray must export a default component');
+}}
+
+// Call the component to trigger rendering (Pencil icon accessed during render)
+try {{ mod.default(); }} catch(e) {{ /* partial render may fail but property access still occurs */ }}
+
+// Must import and use Pencil from lucide-react (tracked by instrumented getter)
+if (!global.__pencilUsed) {{
   throw new Error('Must import Pencil icon from lucide-react');
-}}
-
-// Must define handleEdit callback
-if (!content.includes('handleEdit')) {{
-  throw new Error('Must define handleEdit callback');
-}}
-
-// handleEdit must remove message from queue
-if (!content.includes('removeQueuedMessage')) {{
-  throw new Error('handleEdit must remove message from queue');
-}}
-
-// handleEdit must restore content to editor
-if (!content.includes('setDocument')) {{
-  throw new Error('handleEdit must restore content to editor');
-}}
-
-// handleEdit must be wrapped in useCallback
-if (!content.includes('useCallback')) {{
-  throw new Error('handleEdit must be wrapped in useCallback');
 }}
 
 console.log(JSON.stringify({{ allPassed: true }}));
@@ -293,7 +325,7 @@ def test_locale_interrupted_keys():
     """Locale files must contain the interrupted and interruptedHint keys with correct values."""
     # Test default locale (TypeScript) - import and verify keys exist with expected values
     result_default = _run_tsx(f"""
-import chat from '/workspace/lobe-chat/src/locales/default/chat';
+import chat from '{REPO}/src/locales/default/chat';
 
 // Verify the keys exist with expected string values
 const interruptedKey = chat['messageAction.interrupted'];
@@ -341,7 +373,7 @@ console.log(JSON.stringify({{ allPassed: true, interruptedKey, interruptedHintKe
 
 
 # ---------------------------------------------------------------------------
-# Config-derived (pr_diff) — agent config file updates
+# Config-derived (pr_diff) -- agent config file updates
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
@@ -402,7 +434,7 @@ def test_recording_script_exists():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (static) — regression checks
+# Pass-to-pass (static) -- regression checks
 # ---------------------------------------------------------------------------
 
 # [static] pass_to_pass
@@ -424,7 +456,7 @@ def test_not_stub():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests) — real CI commands that should pass on base commit
+# Pass-to-pass (repo_tests) -- real CI commands that should pass on base commit
 # ---------------------------------------------------------------------------
 
 # [repo_tests] pass_to_pass

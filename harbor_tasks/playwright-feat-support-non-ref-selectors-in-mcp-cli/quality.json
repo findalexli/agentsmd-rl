@@ -3,54 +3,55 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "Instruction names all relevant files, parameter names (target, startElement, endElement), schema field (selector), regex pattern ^(f\\d+)?e\\d+$, error message 'does not match any elements', and required SKILL.md content."
+      "reason": "Instruction names all files (commands.ts, tab.ts, tools.ts, snapshot.ts, evaluate.ts, form.ts, screenshot.ts, verify.ts, SKILL.md), the regex pattern ^(f\\d+)?e\\d+$, parameter names (target, startElement, endElement, selector, startSelector, endSelector), error message 'does not match any elements', and schema specifics like z.string().optional() with 'CSS or role selector'."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "Instruction describes what should happen (classify inputs, use target param, spread results) without giving exact code; developer must still reason about implementation."
+      "reason": "Instruction describes what to change (parameter names, schema additions) but doesn't provide literal code; agent must still implement asRef helper, modify methods, and write SKILL.md content."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert gold-specific implementation details: 'function asRef(' name is required (test_asref_function_classifies_inputs, test_cli_commands_use_target_param), specific return shape strings like \"return { ref: '', selector: refOrSelector }\", '.omit(' usage with 'selector: true'. Alternative correct fixes using different helper names or pick() instead of omit() would fail."
+      "reason": "test_cli_commands_use_target_param asserts NOT clickHasRef but click's toolParams could legitimately still reference 'ref' field when spreading; also test_drag_uses_start_end_element regex-scans only args section which is OK, but test_asref_function_classifies_inputs tests an inline reimplementation rather than importing, so not unique-guard issue \u2014 however tests rely on specific substrings like 'element:' in evaluate command which is gold-specific naming."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "pass",
-      "reason": "test_asref_function_classifies_inputs actually executes TypeScript logic via node subprocess, though many other tests are grep-based."
+      "outcome": "fail",
+      "reason": "Most tests (test_cli_commands_use_target_param, test_drag_uses_start_end_element, test_tab_reflocator_accepts_selector, test_tool_schemas_include_selector) are fs.readFileSync + substring/regex checks rather than importing and calling the actual code; test_asref_function_classifies_inputs re-implements the helper inline rather than importing it."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "Tests require specific behavioral substrings and TypeScript execution of classification logic; stubs would not produce the correct mapping outputs."
+      "reason": "Tests require specific substrings to be present/absent in specific files which a no-op stub would not satisfy; agent must actually modify the files."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "Tests cover asRef classification, CLI target params, drag start/end, tab.refLocator selector support, schema selector fields, filteredTools stripping, and SKILL.md doc updates."
+      "reason": "Tests cover classification helper semantics, CLI param renames, drag params, tab.ts refLocator, schema selector fields, and filteredTools stripping as required by instruction."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are grouped by section headers (Gates, Fail-to-pass, Config/doc updates) with clear naming and comments tagging each test."
+      "reason": "Tests are grouped with comment headers ('Gates', 'Fail-to-pass') and have descriptive docstrings per test."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task is code/schema changes, not producing structured data output."
+      "reason": "No JSON/CSV/API output schema; output is code changes."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "Filenames and identifiers are consistent between instruction and tests."
+      "reason": "File paths and identifiers (refLocator, refLocators, startElement, endElement, filteredTools) are consistent across instruction and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "Instruction lists relevant files but doesn't give line numbers or exact replacements; localization is still meaningful work."
+      "reason": "Instruction cites module files appropriate for the domain task scope without pointing to specific line numbers."
     },
     "config_edit_scope_bounded": {
-      "outcome": "pass",
-      "reason": "SKILL.md doc update is a bounded addition describing new selector support, not a full rewrite, and aligns with code changes."
+      "outcome": "not_applicable",
+      "reason": "Code-only task, not an agentmd-edits config task."
     }
   },
   "tier_a_fails": [
-    "solution_uniqueness_guard"
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 9,
-  "fail_count": 1
+  "pass_count": 7,
+  "fail_count": 2
 }

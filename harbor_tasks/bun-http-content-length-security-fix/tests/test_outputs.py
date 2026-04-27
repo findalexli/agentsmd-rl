@@ -25,7 +25,6 @@ def test_pr_comments_script_is_executable():
     assert script_path.exists(), "scripts/pr-comments.ts must exist"
 
     # Behavioral: try to build/parse the script with bun
-    # This actually executes bun on the script file
     result = subprocess.run(
         ["bun", "build", str(script_path), "--no-bundle"],
         cwd=REPO,
@@ -33,7 +32,6 @@ def test_pr_comments_script_is_executable():
         text=True,
         timeout=30
     )
-    # bun build returns 0 on success (can parse/compile the script)
     assert result.returncode == 0, (
         f"pr-comments.ts is not valid TypeScript that bun can build.\n"
         f"stderr: {result.stderr}\n"
@@ -41,71 +39,103 @@ def test_pr_comments_script_is_executable():
     )
 
 
-def test_pr_comments_script_has_required_imports():
-    """pr-comments.ts must import from 'bun' for shell execution."""
+def test_pr_comments_script_has_bun_import():
+    """pr-comments.ts must import from 'bun' for shell execution and gh api calls."""
     script_path = Path(REPO) / "scripts" / "pr-comments.ts"
     assert script_path.exists(), "scripts/pr-comments.ts must exist"
 
     content = script_path.read_text()
 
-    # Behavioral: the script must import from 'bun' to use $ for shell commands
-    # This is load-bearing for the script to work
     assert 'from "bun"' in content or "from 'bun'" in content, (
         "pr-comments.ts must import from 'bun' to use the $ template literal for gh api calls"
     )
 
 
-def test_httpparser_validates_content_length_behavior():
-    """HttpParser.h must implement RFC 9112 6.3 Content-Length validation.
+def test_httpparser_iterates_all_content_length_headers():
+    """HttpParser.h must iterate over ALL headers to detect duplicate Content-Length values.
 
-    A correct fix MUST iterate over headers to find ALL Content-Length headers
-    (not just call getHeader once) and compare their values to detect conflicts.
+    A correct fix MUST loop over the headers array and check each Content-Length header
+    (not just call getHeader once which ignores duplicates). The test verifies that:
+    1. A header iteration loop exists
+    2. The code identifies content-length by comparing the header name (any method accepted)
+    3. The code returns an error for empty content-length values
 
-    The fix behavior:
-    1. Header iteration: loop over req->headers to find all content-length headers
-    2. Value comparison: compare content-length values to detect conflicts
+    We accept ANY legitimate comparison method: strcmp, strncmp, ==, compare, memcmp,
+    std::equal, std::string_view comparison, etc. - not just the specific patterns
+    in the gold patch.
     """
     http_parser = Path(REPO) / "packages" / "bun-uws" / "src" / "HttpParser.h"
     assert http_parser.exists(), "HttpParser.h must exist"
 
     content = http_parser.read_text()
 
-    # The fix iterates over req->headers to find ALL content-length headers
-    # The base code just calls getHeader() once which ignores duplicates
-    # We look for evidence of content-length specific header iteration:
-    # - The string "content-length" should appear in the header processing section
-    # - There should be a loop over headers
-    # - Inside that loop, content-length values should be compared
-    has_content_length_header_loop = (
-        # Check for content-length string comparison in context of header iteration
-        re.search(r'content-length.*strncmp', content, re.IGNORECASE) is not None or
-        re.search(r'contentLength.*strncmp', content) is not None or
-        # Check for length comparison pattern that would detect duplicates
-        (re.search(r'for\s*\([^)]*headers', content) is not None and
-         re.search(r'content-length.*!=.*content-length', content, re.IGNORECASE) is not None)
+    # Check for a header iteration pattern
+    has_header_loop = re.search(r'for\s*\([^)]*headers', content) is not None
+
+    # Check for content-length identification via ANY string comparison method.
+    # The fix must identify "content-length" by comparing header names.
+    # We accept: strcmp, strncmp, memcmp, ==, compare, std::equal, etc.
+    has_content_length_comparison = (
+        re.search(r'strncmp.*content-length', content) is not None or
+        re.search(r'strcmp.*content-length', content) is not None or
+        re.search(r'==.*"content-length"', content) is not None or
+        re.search(r'\.compare.*content-length', content) is not None
     )
-    assert has_content_length_header_loop, (
-        "HttpParser.h must loop over headers AND compare Content-Length values to detect duplicates. "
+
+    # Also verify there's a check for empty content-length value.
+    # Accept ANY legitimate C++ idiom for "is empty": .length()==0, .empty(), !.length(), ==""
+    has_empty_value_check = (
+        re.search(r'value\.length\(\)\s*==\s*0', content) is not None or
+        re.search(r'value\.empty\(\)', content) is not None or
+        re.search(r'!value\.length\(\)', content) is not None or
+        re.search(r'value\s*==\s*""', content) is not None
+    )
+
+    assert has_header_loop, (
+        "HttpParser.h must loop over ALL headers to detect duplicate Content-Length values. "
         "The base code just calls getHeader() once which ignores duplicate headers. "
-        "A correct fix iterates through all headers, finds every content-length header, "
-        "and compares their values."
+        "A correct fix iterates through the headers array to find every content-length header."
+    )
+
+    assert has_content_length_comparison, (
+        "HttpParser.h must identify the content-length header by name within the header loop. "
+        "A correct fix compares header names to find 'content-length' using any comparison method. "
+        "Without this, duplicate detection is impossible."
+    )
+
+    assert has_empty_value_check, (
+        "HttpParser.h must reject empty content-length values to prevent smuggling. "
+        "An empty content-length with another content-length is ambiguous."
+    )
+
+
+def test_httpparser_rejects_conflicting_content_length():
+    """HttpParser.h must reject conflicting duplicate Content-Length headers.
+
+    The fix should return HTTP 400 when it detects conflicting Content-Length values.
+    """
+    http_parser = Path(REPO) / "packages" / "bun-uws" / "src" / "HttpParser.h"
+    assert http_parser.exists(), "HttpParser.h must exist"
+
+    content = http_parser.read_text()
+
+    has_http400_in_content_length_context = (
+        re.search(r'HTTP_PARSER_ERROR_INVALID_CONTENT_LENGTH', content) is not None
+    )
+
+    assert has_http400_in_content_length_context, (
+        "HttpParser.h must return HTTP 400 when it detects conflicting Content-Length headers. "
+        "The parser should reject ambiguous requests per RFC 9112 6.3."
     )
 
 
 def test_request_smuggling_test_cases_are_present():
-    """request-smuggling.test.ts must have the three required test cases.
-
-    The instruction specifies these exact test names to be added:
-    - "rejects conflicting duplicate Content-Length headers"
-    - "accepts duplicate Content-Length headers with identical values"
-    - "rejects empty-valued Content-Length followed by smuggled Content-Length"
-    """
+    """request-smuggling.test.ts must have the three required test cases."""
     test_file = Path(REPO) / "test" / "js" / "bun" / "http" / "request-smuggling.test.ts"
     assert test_file.exists(), "request-smuggling.test.ts must exist"
 
     content = test_file.read_text()
 
-    # Check for all three required test case names
     required_tests = [
         "rejects conflicting duplicate Content-Length headers",
         "accepts duplicate Content-Length headers with identical values",
@@ -119,15 +149,10 @@ def test_request_smuggling_test_cases_are_present():
 
 
 def test_request_smuggling_test_file_is_valid_typescript():
-    """request-smuggling.test.ts must be valid TypeScript that bun can parse.
-
-    Behavioral test: actually try to check the file's validity.
-    """
+    """request-smuggling.test.ts must be valid TypeScript that bun can parse."""
     test_file = Path(REPO) / "test" / "js" / "bun" / "http" / "request-smuggling.test.ts"
     assert test_file.exists(), "request-smuggling.test.ts must exist"
 
-    # Try to build the test file with bun to verify it's valid TypeScript
-    # (don't run it, just check it parses correctly)
     result = subprocess.run(
         ["bun", "build", str(test_file), "--no-bundle"],
         cwd=REPO,
@@ -135,7 +160,6 @@ def test_request_smuggling_test_file_is_valid_typescript():
         text=True,
         timeout=30
     )
-    # bun build returns 0 if the file is valid TypeScript
     assert result.returncode == 0, (
         f"request-smuggling.test.ts is not valid TypeScript.\n"
         f"stderr: {result.stderr}"
@@ -143,33 +167,25 @@ def test_request_smuggling_test_file_is_valid_typescript():
 
 
 def test_claude_md_documents_pr_comments():
-    """CLAUDE.md must document the pr:comments script (config edit test)."""
+    """CLAUDE.md must document the pr:comments script."""
     claude_md = Path(REPO) / "CLAUDE.md"
     content = claude_md.read_text()
 
-    # Check for the new "Reading PR Feedback" section
     assert "Reading PR Feedback" in content, \
         "CLAUDE.md should have a 'Reading PR Feedback' section"
-
-    # Check for pr:commands documentation
     assert "pr:comments" in content, \
         "CLAUDE.md should document the pr:comments command"
-
-    # Check for usage examples
     assert "bun run pr:comments" in content, \
         "CLAUDE.md should show 'bun run pr:comments' usage"
-
-    # Check for mention of the footgun it solves
     assert "footgun" in content.lower() or "silently omits" in content.lower(), \
         "CLAUDE.md should explain the footgun gh pr view --comments has"
 
 
 def test_package_json_has_pr_comments_script():
-    """package.json must have the pr:comments script entry (config edit test)."""
+    """package.json must have the pr:comments script entry."""
     package_json = Path(REPO) / "package.json"
     content = package_json.read_text()
 
-    # Check for the script entry
     assert '"pr:comments":' in content, \
         "package.json should have 'pr:comments' script"
     assert 'scripts/pr-comments.ts' in content, \
@@ -181,13 +197,10 @@ def test_http_parser_syntax_valid():
     http_parser = Path(REPO) / "packages" / "bun-uws" / "src" / "HttpParser.h"
     content = http_parser.read_text()
 
-    # Basic C++ syntax validation
     open_braces = content.count("{")
     close_braces = content.count("}")
     assert open_braces == close_braces, \
         f"Mismatched braces: {open_braces} open, {close_braces} close"
-
-    # Check for valid namespace structure
     assert "namespace uWS" in content, "Should have uWS namespace"
 
 
@@ -196,11 +209,8 @@ def test_claude_md_syntax_valid():
     claude_md = Path(REPO) / "CLAUDE.md"
     content = claude_md.read_text()
 
-    # Check for balanced code fences (``` should appear in pairs)
     fence_count = content.count("```")
     assert fence_count % 2 == 0, "Markdown code fences should be balanced"
-
-    # Should have some content
     assert len(content) > 100, "CLAUDE.md should have meaningful content"
 
 
@@ -209,11 +219,9 @@ def test_package_json_valid():
     package_json = Path(REPO) / "package.json"
     content = package_json.read_text()
 
-    # Try to parse as JSON
     try:
         data = json.loads(content)
     except json.JSONDecodeError as e:
         raise AssertionError(f"package.json is not valid JSON: {e}")
 
-    # Check structure
     assert "scripts" in data, "package.json should have scripts section"

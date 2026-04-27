@@ -12,17 +12,18 @@ checks:
 - id: asref_function_classifies_inputs
   type: fail_to_pass
   origin: pr_diff
-  description: 'CLI asRef helper correctly distinguishes refs (e15, f1e2) from selectors
-    (button, #main, role=button)'
+  description: 'CLI classification helper correctly distinguishes refs (e15, f1e2) from selectors
+    (#main, role=button) by calling parseCommand on actual CLI commands'
 - id: cli_commands_use_target_param
   type: fail_to_pass
   origin: pr_diff
-  description: CLI click/fill/hover/select/check/uncheck use 'target' instead of 'ref'
-    as the element arg
+  description: CLI click/fill/hover/select/check/uncheck route selectors correctly
+    through parseCommand behavioral tests
 - id: drag_uses_start_end_element
   type: fail_to_pass
   origin: pr_diff
-  description: Drag command uses startElement/endElement instead of startRef/endRef
+  description: Drag command maps inputs to startRef/startSelector/endRef/endSelector
+    via parseCommand behavioral tests
 - id: tab_reflocator_accepts_selector
   type: fail_to_pass
   origin: pr_diff
@@ -32,7 +33,7 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: MCP tool schemas (snapshot, evaluate, verify, form, screenshot) include
-    optional selector field
+    optional selector field validated via Zod safeParse
 - id: filtered_tools_strips_selector
   type: fail_to_pass
   origin: pr_diff
@@ -57,24 +58,12 @@ checks:
 - id: ref_pattern_still_works
   type: pass_to_pass
   origin: static
-  description: 'asRef preserves existing ref-based behavior (ref patterns return {
-    ref: value })'
+  description: 'Classification preserves existing ref-based behavior (ref patterns
+    produce correct toolParams)'
 - id: repo_check_deps
   type: pass_to_pass
   origin: repo_tests
-  description: Repo dependency checks pass for playwright-core (node utils/check_deps.js)
-- id: repo_check_deps_tools
-  type: pass_to_pass
-  origin: repo_tests
-  description: Repo dependency checks pass for tools directory (node utils/check_deps.js)
-- id: repo_check_deps_cli
-  type: pass_to_pass
-  origin: repo_tests
-  description: Repo dependency checks pass for cli directory (node utils/check_deps.js)
-- id: repo_modified_files_exist
-  type: pass_to_pass
-  origin: repo_tests
-  description: All modified files exist and contain valid code
+  description: Repo dependency checks pass (npm run check-deps)
 - id: repo_eslint_tools
   type: pass_to_pass
   origin: repo_tests

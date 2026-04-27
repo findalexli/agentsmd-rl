@@ -4,6 +4,11 @@ Repo: oven-sh/bun @ ba05a72939569c1a371a513c3bd64a2cab6a60ee
 
 All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
+
+Behavioral tests verify the actual runtime behavior of _final by:
+1. Extracting _final from the patched file (flexible extraction)
+2. Executing it in Node.js with a mock sink
+3. Asserting on observable outcomes (flush called, callback invoked, errors propagated)
 """
 
 import json
@@ -19,59 +24,80 @@ TARGET = f"{REPO}/src/js/builtins/ProcessObjectInternals.ts"
 # Helpers
 # ---------------------------------------------------------------------------
 
-# Node.js helper module: extracts _final from the TS source file, polyfills
-# bun-specific globals ($ intrinsics etc.), and exposes the function for testing.
-# Cannot run ProcessObjectInternals.ts directly because it requires bun's
-# TypeScript preprocessor ($ intrinsics, internal require paths).
+# Node.js helper: extracts _final from the TS source file (flexibly) and exposes
+# it for behavioral testing. Handles multiple function forms and closure styles.
 _HELPER_JS = r"""
 const fs = require('fs');
 const source = fs.readFileSync(process.env.BUN_TARGET, 'utf8');
 
-// Find the _final assignment
-const match = source.match(/_final\s*=\s*(?:async\s+)?function\s*\((\w+)\)\s*\{/);
-if (!match) {
-    module.exports = { found: false };
-} else {
-    const cbArg = match[1];
-    const matchPos = source.indexOf(match[0]);
-    const braceStart = matchPos + match[0].length - 1;
-    let depth = 1, pos = braceStart + 1;
+// --- Flexible extraction: find stream._final assignment ---
+// Handles: stream._final = function(cb) {...}, stream._final = async function(cb) {...},
+//          stream._final = (cb) => {...}, stream._final = async (cb) => {...}
+//          Object.defineProperty(stream, '_final', { value: function(cb) {...} })
+const definePropPattern = /Object\.defineProperty\s*\(\s*stream\s*,\s*['"]_final['"]\s*,\s*\{/;
+const arrowPattern = /stream\._final\s*=\s*(?:async\s+)?\((\w+)\)\s*=>/;
+const funcPattern = /stream\._final\s*=\s*(?:async\s+)?function\s*\((\w+)\)/;
+
+let match = definePropPattern.exec(source);
+if (match) {
+    // Find the value:function(...) { ... } inside the defineProperty call
+    const startIdx = match.index + match[0].length;
+    const afterStart = source.substring(startIdx);
+    const funcMatch = afterStart.match(/value\s*:\s*(?:async\s+)?function\s*\((\w+)\)\s*\{/);
+    if (!funcMatch) { module.exports = { found: false }; process.exit(0); }
+    const cbArg = funcMatch[1];
+    const funcStart = startIdx + afterStart.indexOf(funcMatch[0]) + funcMatch[0].length - 1;
+    let depth = 1, pos = funcStart + 1;
     while (depth > 0 && pos < source.length) {
         if (source[pos] === '{') depth++;
         else if (source[pos] === '}') depth--;
         pos++;
     }
-    const body = source.substring(braceStart + 1, pos - 1);
-
-    // Polyfill bun JSC intrinsics
-    globalThis.$isPromise = (x) => x != null && typeof x === 'object' && typeof x.then === 'function';
-    globalThis.$isCallable = (x) => typeof x === 'function';
-    globalThis.$isObject = (x) => x != null && typeof x === 'object';
-
-    // Find closure variables referenced as this[VAR] in the body
-    const thisVarMatch = body.match(/this\[(\w+)\]/);
-    const closureVar = thisVarMatch ? thisVarMatch[1] : null;
-    const sinkKey = Symbol('sinkKey');
-
-    let _final;
-    try {
-        if (closureVar) {
-            // Wrap so the closure variable resolves to our sinkKey symbol
-            _final = eval('(function(' + closureVar + ') { return function(' + cbArg + ') {' + body + '}; })')(sinkKey);
-        } else {
-            _final = eval('(function(' + cbArg + ') {' + body + '})');
-        }
-    } catch(e) {
-        _final = null;
-    }
-
-    function makeContext(sinkObj) {
-        if (closureVar) return { [sinkKey]: sinkObj };
-        return {};
-    }
-
-    module.exports = { found: true, _final, makeContext, sinkKey, body, cbArg };
+    const finalBody = source.substring(funcStart + 1, pos - 1);
+    module.exports = { found: true, _final: null, makeContext: () => ({}), sinkKey: Symbol('sinkKey'), body: finalBody, cbArg, closureVar: 'stream', isDefineProperty: true };
+    process.exit(0);
 }
+
+match = arrowPattern.exec(source) || funcPattern.exec(source);
+if (!match) { module.exports = { found: false }; process.exit(0); }
+
+const isArrow = arrowPattern.exec(source) !== null;
+const cbArg = match[1];
+const matchPos = source.indexOf(match[0]);
+const braceStart = matchPos + match[0].length - 1;
+let depth = 1, pos = braceStart + 1;
+while (depth > 0 && pos < source.length) {
+    if (source[pos] === '{') depth++;
+    else if (source[pos] === '}') depth--;
+    pos++;
+}
+const finalBody = source.substring(braceStart + 1, pos - 1);
+
+// Polyfill bun JSC intrinsics
+globalThis.$isPromise = (x) => x != null && typeof x === 'object' && typeof x.then === 'function';
+globalThis.$isCallable = (x) => typeof x === 'function';
+globalThis.$isObject = (x) => x != null && typeof x === 'object';
+
+// Determine how sink is accessed: this[VAR] pattern, or direct closure variable
+const thisVarMatch = finalBody.match(/this\[(\w+)\]/);
+const closureVar = thisVarMatch ? thisVarMatch[1] : null;
+const sinkKey = Symbol('sinkKey');
+
+let _final;
+try {
+    if (closureVar) {
+        _final = eval('(function(' + closureVar + ') { return function(' + cbArg + ') {' + finalBody + '}; })')(sinkKey);
+    } else {
+        _final = eval('(function(' + cbArg + ') {' + finalBody + '})');
+    }
+} catch(e) { _final = null; }
+
+function makeContext(sinkObj) {
+    if (closureVar) return { [sinkKey]: sinkObj };
+    return { kFastPath: sinkObj };
+}
+
+module.exports = { found: true, _final, makeContext, sinkKey, body: finalBody, cbArg, closureVar };
 """
 
 _helper_written = False
@@ -101,12 +127,36 @@ def _run_node_test(script: str, timeout: int = 15) -> str:
 
 
 def _get_final_body():
-    """Extract _final function body from ProcessObjectInternals.ts using Python regex."""
+    """Extract _final function body from ProcessObjectInternals.ts using flexible regex."""
     source = Path(TARGET).read_text()
-    match = re.search(r'_final\s*=\s*(?:async\s+)?function\s*\(\w+\)\s*\{', source)
+    # Handle multiple forms: function, async function, arrow, Object.defineProperty
+    define_prop_match = re.search(
+        r'Object\.defineProperty\s*\(\s*stream\s*,\s*[\'\"]_final[\'\"]\s*,\s*\{[^}]*value\s*:\s*(?:async\s+)?function\s*\((\w+)\)\s*\{',
+        source
+    )
+    if define_prop_match:
+        cbArg = define_prop_match.group(1)
+        start = define_prop_match.end() - 1
+        depth = 1
+        pos = start + 1
+        while depth > 0 and pos < len(source):
+            if source[pos] == '{':
+                depth += 1
+            elif source[pos] == '}':
+                depth -= 1
+            pos += 1
+        return source[start + 1:pos - 1]
+    
+    # Arrow function: stream._final = (cb) => {...}
+    arrow_match = re.search(r'stream\._final\s*=\s*(?:async\s+)?\((\w+)\)\s*=>', source)
+    # Function expression: stream._final = function(cb) {...}
+    func_match = re.search(r'stream\._final\s*=\s*(?:async\s+)?function\s*\((\w+)\)', source)
+    
+    match = arrow_match or func_match
     if not match:
         return None
-    start = match.end() - 1  # position of opening {
+    cbArg = match.group(1)
+    start = match.end() - 1
     depth = 1
     pos = start + 1
     while depth > 0 and pos < len(source):
@@ -211,8 +261,6 @@ def test_repo_oxlint():
         ["npx", "oxlint", TARGET],
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
-    # Allow warnings (0 warnings is ideal, but codebase has existing warnings)
-    # Only fail if there are errors (errors would indicate new issues introduced)
     assert "0 errors" in r.stdout or r.returncode == 0, \
         f"oxlint found errors:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
 
@@ -257,7 +305,6 @@ def test_repo_node_syntax():
         ["node", "-e", f"""
 const fs = require('fs');
 const content = fs.readFileSync('{TARGET}', 'utf8');
-// Basic validation: file should be non-empty and contain expected exports
 if (content.length < 100) {{ console.log('File too small'); process.exit(1); }}
 if (!content.includes('export function getStdioWriteStream')) {{ console.log('Missing key export'); process.exit(1); }}
 console.log('Syntax check passed');
@@ -351,7 +398,6 @@ def test_ts_builtins_basic_syntax():
         ["node", "-e", f"""
 const fs = require('fs');
 const content = fs.readFileSync('{TARGET}', 'utf8');
-// Check for balanced braces
 let depth = 0;
 for (const char of content) {{
     if (char === '{{') depth++;
@@ -398,7 +444,6 @@ def test_getstdiowritestream_function():
 def test_stream_properties():
     """Stream setup must include required properties (fd, _type, _isStdio)."""
     source = Path(TARGET).read_text()
-    # These are existing properties that should be set on the stream
     assert "stream._isStdio = true" in source, "stream._isStdio assignment missing"
     assert "stream.fd = fd" in source, "stream.fd assignment missing"
     assert "stream._type" in source, "stream._type assignment missing"
@@ -410,17 +455,15 @@ def test_stream_properties():
 
 # [agent_config] fail_to_pass — src/js/CLAUDE.md:56 @ ba05a72939569c1a371a513c3bd64a2cab6a60ee
 def test_no_dot_call_apply():
-    """_final must use .\$call/.\$apply, never .call/.apply (src/js/CLAUDE.md:56)."""
-    # Structural check because: bun TS preprocessor converts $-prefixed calls at build time
+    """_final must use .$call/.$apply, never .call/.apply (src/js/CLAUDE.md:56)."""
     body = _get_final_body()
     assert body is not None, "_final hook not found in ProcessObjectInternals.ts"
-    # Strip comments before checking
     lines = [l for l in body.split("\n") if not l.strip().startswith("//")]
     code = "\n".join(lines)
     assert not re.search(r'(?<!\$)\.call\s*\(', code), \
-        "Uses .call() instead of .\$call() — violates src/js/CLAUDE.md:56"
+        "Uses .call() instead of .$call() — violates src/js/CLAUDE.md:56"
     assert not re.search(r'(?<!\$)\.apply\s*\(', code), \
-        "Uses .apply() instead of .\$apply() — violates src/js/CLAUDE.md:56"
+        "Uses .apply() instead of .$apply() — violates src/js/CLAUDE.md:56"
 
 
 # [agent_config] pass_to_pass — src/js/CLAUDE.md:103 @ ba05a72939569c1a371a513c3bd64a2cab6a60ee
@@ -438,7 +481,6 @@ def test_string_literal_require():
 # [agent_config] fail_to_pass — src/js/CLAUDE.md:105 @ ba05a72939569c1a371a513c3bd64a2cab6a60ee
 def test_jsc_intrinsics_used():
     """_final must use $isPromise, not instanceof Promise (src/js/CLAUDE.md:105)."""
-    # Structural check because: $isPromise is a JSC intrinsic only available in bun runtime
     body = _get_final_body()
     assert body is not None, "_final hook not found in ProcessObjectInternals.ts"
     lines = [l for l in body.split("\n") if not l.strip().startswith("//")]

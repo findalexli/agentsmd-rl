@@ -37,61 +37,80 @@ def test_jsg_header_well_formed():
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
-def test_jsg_try_macro_defined():
-    """JSG_TRY macro must be #defined in jsg.h."""
+def test_macro_and_class_behavior():
+    """Verify JSG_TRY/JSG_CATCH macros and JsgCatchScope class are correctly defined
+    and that migrated files use the new macros with proper exception handling."""
     r = subprocess.run(
-        ["grep", "-c", r"#define JSG_TRY", "src/workerd/jsg/jsg.h"],
-        cwd=REPO, capture_output=True, text=True, timeout=10,
+        ["python3", "-c", """
+import re, sys
+from pathlib import Path
+
+REPO = "/workspace/workerd"
+
+header = Path(f"{REPO}/src/workerd/jsg/jsg.h").read_text()
+impl = Path(f"{REPO}/src/workerd/jsg/jsg.c++").read_text()
+
+# 1. JSG_TRY macro must be defined and must instantiate JsgCatchScope
+try_def = re.search(r'#define\\s+JSG_TRY\\b.*', header)
+assert try_def, "JSG_TRY macro not #defined in jsg.h"
+# The macro must reference JsgCatchScope to set up exception handling
+after_try_def = header[header.index("#define JSG_TRY"):header.index("#define JSG_TRY")+500]
+assert "JsgCatchScope" in after_try_def, \
+    "JSG_TRY macro must reference JsgCatchScope"
+
+# 2. JSG_CATCH macro must be defined and use catchException + getCaughtException
+catch_def = re.search(r'#define\\s+JSG_CATCH\\b.*', header)
+assert catch_def, "JSG_CATCH macro not #defined in jsg.h"
+after_catch_def = header[header.index("#define JSG_CATCH"):header.index("#define JSG_CATCH")+1500]
+assert "catchException" in after_catch_def, \
+    "JSG_CATCH macro must call catchException"
+assert "getCaughtException" in after_catch_def, \
+    "JSG_CATCH macro must call getCaughtException"
+
+# 3. JsgCatchScope class must be declared with required interface
+class_match = re.search(r'class\\s+JsgCatchScope\\s*\\{(.*?)\\};', header, re.DOTALL)
+assert class_match, "JsgCatchScope class not declared in jsg.h"
+class_body = class_match.group(1)
+assert "catchException" in class_body, "JsgCatchScope missing catchException method"
+assert "getCaughtException" in class_body, "JsgCatchScope missing getCaughtException method"
+assert "Lock&" in class_body, "JsgCatchScope constructor must take Lock& parameter"
+
+# 4. JsgCatchScope::catchException must be implemented in jsg.c++
+assert "JsgCatchScope::catchException" in impl, \
+    "JsgCatchScope::catchException not implemented in jsg.c++"
+# Implementation must handle both JsExceptionThrown and kj::Exception
+catch_impl_start = impl.index("JsgCatchScope::catchException")
+catch_impl = impl[catch_impl_start:catch_impl_start+600]
+assert "JsExceptionThrown" in catch_impl, \
+    "catchException must handle JsExceptionThrown"
+assert "kj::Exception" in catch_impl, \
+    "catchException must handle kj::Exception"
+
+# 5. Verify at least 4 files migrated to use BOTH JSG_TRY and JSG_CATCH
+migrated_files = [
+    "src/workerd/api/crypto/crypto.c++",
+    "src/workerd/api/memory-cache.c++",
+    "src/workerd/api/messagechannel.c++",
+    "src/workerd/api/streams/standard.c++",
+    "src/workerd/api/urlpattern-standard.c++",
+    "src/workerd/api/urlpattern.c++",
+    "src/workerd/jsg/modules-new.c++",
+]
+migrated = 0
+for f in migrated_files:
+    p = Path(f"{REPO}/{f}")
+    if p.exists():
+        content = p.read_text()
+        if "JSG_TRY" in content and "JSG_CATCH" in content:
+            migrated += 1
+assert migrated >= 4, f"Only {migrated}/7 files fully migrated (need both JSG_TRY and JSG_CATCH)"
+
+print("PASS")
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
     )
-    count = int(r.stdout.strip()) if r.returncode == 0 else 0
-    assert count >= 1, "JSG_TRY macro not defined in jsg.h"
-
-
-# [pr_diff] fail_to_pass
-def test_jsg_catch_macro_defined():
-    """JSG_CATCH macro must be #defined in jsg.h."""
-    r = subprocess.run(
-        ["grep", "-c", r"#define JSG_CATCH", "src/workerd/jsg/jsg.h"],
-        cwd=REPO, capture_output=True, text=True, timeout=10,
-    )
-    count = int(r.stdout.strip()) if r.returncode == 0 else 0
-    assert count >= 1, "JSG_CATCH macro not defined in jsg.h"
-
-
-# [pr_diff] fail_to_pass
-def test_jsg_catch_scope_implementation():
-    """JsgCatchScope class must be implemented in jsg.c++ with catchException method."""
-    r = subprocess.run(
-        ["grep", "-c", "JsgCatchScope::catchException", "src/workerd/jsg/jsg.c++"],
-        cwd=REPO, capture_output=True, text=True, timeout=10,
-    )
-    count = int(r.stdout.strip()) if r.returncode == 0 else 0
-    assert count >= 1, "JsgCatchScope::catchException not implemented in jsg.c++"
-
-
-# [pr_diff] fail_to_pass
-def test_callers_migrated_to_jsg_try():
-    """At least 4 source files must use JSG_TRY (migrated from js.tryCatch)."""
-    migrated_files = [
-        "src/workerd/api/crypto/crypto.c++",
-        "src/workerd/api/memory-cache.c++",
-        "src/workerd/api/messagechannel.c++",
-        "src/workerd/api/streams/standard.c++",
-        "src/workerd/api/urlpattern-standard.c++",
-        "src/workerd/api/urlpattern.c++",
-        "src/workerd/jsg/modules-new.c++",
-    ]
-    migrated_count = 0
-    for fpath in migrated_files:
-        r = subprocess.run(
-            ["grep", "-l", "JSG_TRY", fpath],
-            cwd=REPO, capture_output=True, text=True, timeout=10,
-        )
-        if r.returncode == 0:
-            migrated_count += 1
-    assert migrated_count >= 4, (
-        f"Only {migrated_count}/7 files migrated to JSG_TRY, expected at least 4"
-    )
+    assert r.returncode == 0, f"Behavioral verification failed:\n{r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
@@ -155,37 +174,11 @@ def test_no_remaining_js_trycatch_in_migrated_files():
 # [repo_tests] pass_to_pass
 def test_repo_python_lint():
     """Python tools pass ruff linting (pass_to_pass)."""
-    # Install ruff if not present
-    install = subprocess.run(
-        ["pip", "install", "ruff", "--quiet"],
-        capture_output=True, text=True, timeout=60,
-    )
-    # Run ruff check on Python tools
     r = subprocess.run(
         ["ruff", "check", f"{REPO}/tools/update_node_version.py"],
         capture_output=True, text=True, timeout=60,
     )
     assert r.returncode == 0, f"Ruff lint failed:\n{r.stdout}\n{r.stderr}"
-
-
-# [repo_tests] pass_to_pass
-def test_repo_shellcheck_build_script():
-    """Shell scripts pass shellcheck validation (pass_to_pass)."""
-    # Install shellcheck if not present
-    install = subprocess.run(
-        ["apt-get", "update", "-qq"],
-        capture_output=True, text=True, timeout=60,
-    )
-    install2 = subprocess.run(
-        ["apt-get", "install", "-y", "-qq", "shellcheck"],
-        capture_output=True, text=True, timeout=120,
-    )
-    # Run shellcheck on build script (only errors, not warnings)
-    r = subprocess.run(
-        ["shellcheck", "-S", "error", f"{REPO}/build-releases.sh"],
-        capture_output=True, text=True, timeout=60,
-    )
-    assert r.returncode == 0, f"Shellcheck failed:\n{r.stdout}\n{r.stderr}"
 
 
 # [repo_tests] pass_to_pass

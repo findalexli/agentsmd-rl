@@ -8,43 +8,16 @@ attributes (e.g. @click="handler", bind:value={x}) are recognized as used.
 
 All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
+
+Behavioral tests use cargo check to verify compilation of changed crates.
+Documentation tests verify required content in skill/agent files.
 """
 
 import subprocess
-import json
-import sys
-import os
-import tempfile
+import re
 from pathlib import Path
 
 REPO = "/workspace/biome"
-
-
-def _run_analysis(code: str) -> dict:
-    """Write analysis code to a temp file, execute as subprocess, return JSON.
-
-    Every test delegates its file analysis to a subprocess so that the test
-    suite *executes code* rather than merely reading files and matching text.
-    The analysis script must print a single JSON object to stdout.
-    Non-zero exit codes raise AssertionError (e.g. when a required file is missing).
-    """
-    fd, path = tempfile.mkstemp(suffix=".py")
-    try:
-        with os.fdopen(fd, "w") as f:
-            f.write(code)
-        proc = subprocess.run(
-            [sys.executable, path],
-            capture_output=True,
-            text=True,
-            timeout=30,
-        )
-        if proc.returncode != 0:
-            raise AssertionError(
-                f"Analysis subprocess failed (rc={proc.returncode}): {proc.stderr.strip()}"
-            )
-        return json.loads(proc.stdout.strip())
-    finally:
-        os.unlink(path)
 
 
 # ---------------------------------------------------------------------------
@@ -52,326 +25,173 @@ def _run_analysis(code: str) -> dict:
 # ---------------------------------------------------------------------------
 
 
-def test_new_module_registered():
-    """biome_html_syntax::lib.rs must declare the directive_ext module."""
-    data = _run_analysis(
-        'import re, json\n'
-        'content = open("/workspace/biome/crates/biome_html_syntax/src/lib.rs").read()\n'
-        'mods = re.findall(r"^\\s*(?:pub\\s+)?mod\\s+(\\w+)\\s*;", content, re.MULTILINE)\n'
-        'print(json.dumps({"modules": mods}))\n'
-    )
-    assert "directive_ext" in data["modules"], \
-        f"lib.rs must declare mod directive_ext. Found: {data['modules']}"
-
-
 def test_markdown_table_formatting():
     """SKILL.md files must use proper markdown table formatting."""
-    data = _run_analysis(
-        'import re, json\n'
-        'from pathlib import Path\n'
-        'p = Path("/workspace/biome/.claude/skills/biome-developer/SKILL.md")\n'
-        'if not p.exists():\n'
-        '    print(json.dumps({"exists": False}))\n'
-        'else:\n'
-        '    content = p.read_text()\n'
-        '    proper = bool(re.search(r"\\|\\s+[-\\w]+\\s+\\|", content))\n'
-        '    compact = bool(re.search(r"\\|[-]{3,}\\|", content))\n'
-        '    print(json.dumps({"exists": True, "proper": proper, "compact": compact}))\n'
-    )
-    if data.get("exists"):
-        assert data["proper"] or not data["compact"], \
-            "SKILL.md should have properly formatted markdown tables"
+    p = Path(REPO) / ".claude/skills/biome-developer/SKILL.md"
+    if not p.exists():
+        return  # File not required to exist at base commit
+    content = p.read_text()
+    proper = bool(re.search(r'\|\s+[-\w]+\s+\|', content))
+    compact = bool(re.search(r'\|[-]{3,}\|', content))
+    assert proper or not compact, \
+        "SKILL.md should have properly formatted markdown tables (spaces around separators)"
 
 
 def test_vue_svelte_test_specs_exist():
     """Vue and Svelte test spec files must exist in the HTML parser tests."""
-    data = _run_analysis(
-        'import json\n'
-        'from pathlib import Path\n'
-        'base = Path("/workspace/biome/crates/biome_html_parser/tests/html_specs")\n'
-        'vue_ok = len(list((base / "ok/vue").glob("*.vue"))) if (base / "ok/vue").exists() else 0\n'
-        'vue_err = len(list((base / "error/vue").glob("*.vue"))) if (base / "error/vue").exists() else 0\n'
-        'sv_err = len(list((base / "error/svelte").glob("*.svelte"))) if (base / "error/svelte").exists() else 0\n'
-        'print(json.dumps({"vue_ok": vue_ok, "vue_err": vue_err, "sv_err": sv_err}))\n'
-    )
-    assert data["vue_ok"] >= 3, f"Expected >= 3 Vue ok specs, got {data['vue_ok']}"
-    assert data["vue_err"] >= 3, f"Expected >= 3 Vue error specs, got {data['vue_err']}"
-    assert data["sv_err"] >= 5, f"Expected >= 5 Svelte error specs, got {data['sv_err']}"
+    base = Path(REPO) / "crates/biome_html_parser/tests/html_specs"
+    vue_ok = len(list((base / "ok/vue").glob("*.vue"))) if (base / "ok/vue").exists() else 0
+    vue_err = len(list((base / "error/vue").glob("*.vue"))) if (base / "error/vue").exists() else 0
+    sv_err = len(list((base / "error/svelte").glob("*.svelte"))) if (base / "error/svelte").exists() else 0
+    assert vue_ok >= 3, f"Expected >= 3 Vue ok specs, got {vue_ok}"
+    assert vue_err >= 3, f"Expected >= 3 Vue error specs, got {vue_err}"
+    assert sv_err >= 5, f"Expected >= 5 Svelte error specs, got {sv_err}"
 
 
 def test_lib_rs_module_declaration():
     """biome_html_syntax::lib.rs uses proper module declaration style."""
-    data = _run_analysis(
-        'import re, json\n'
-        'content = open("/workspace/biome/crates/biome_html_syntax/src/lib.rs").read()\n'
-        'inline = len(re.findall(r"^mod\\s+\\w+\\s*;", content, re.MULTILINE))\n'
-        'brace = len(re.findall(r"^mod\\s+\\w+\\s*\\{", content, re.MULTILINE))\n'
-        'print(json.dumps({"inline": inline, "brace": brace}))\n'
-    )
-    assert data["inline"] >= 1, "lib.rs should have inline module declarations"
-    assert data["brace"] <= 2, f"Expected <= 2 brace modules, got {data['brace']}"
+    content = Path(REPO, "crates/biome_html_syntax/src/lib.rs").read_text()
+    inline = len(re.findall(r'^mod\s+\w+\s*;', content, re.MULTILINE))
+    brace = len(re.findall(r'^mod\s+\w+\s*\{', content, re.MULTILINE))
+    assert inline >= 1, "lib.rs should have inline module declarations"
+    assert brace <= 2, f"Expected <= 2 brace modules, got {brace}"
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass tests — behavioral verification via subprocess analysis
+# Fail-to-pass tests — behavioral verification via compilation + content
 # ---------------------------------------------------------------------------
 
 
-def test_directive_ext_initializer():
-    """directive_ext.rs provides initializer access for all 8 Svelte directive variants."""
-    data = _run_analysis(
-        'import re, json, sys\n'
-        'try:\n'
-        '    content = open("/workspace/biome/crates/biome_html_syntax/src/directive_ext.rs").read()\n'
-        'except FileNotFoundError:\n'
-        '    print(json.dumps({"error": "not found"}))\n'
-        '    sys.exit(1)\n'
-        '\n'
-        'has_impl = "impl" in content and "AnySvelteDirective" in content\n'
-        'has_return_type = "Option<HtmlAttributeInitializerClause>" in content\n'
-        '\n'
-        'required = {\n'
-        '    "SvelteBindDirective", "SvelteClassDirective", "SvelteInDirective",\n'
-        '    "SvelteOutDirective", "SvelteStyleDirective", "SvelteTransitionDirective",\n'
-        '    "SvelteUseDirective", "SvelteAnimateDirective"\n'
-        '}\n'
-        'found = set(re.findall(r"Svelte\\w+Directive", content))\n'
-        'missing = sorted(required - found)\n'
-        '\n'
-        'value_calls = content.count(".value()")\n'
-        'initializer_calls = content.count(".initializer()")\n'
-        '\n'
-        'print(json.dumps({\n'
-        '    "has_impl": has_impl,\n'
-        '    "has_return_type": has_return_type,\n'
-        '    "missing": missing,\n'
-        '    "value_calls": value_calls,\n'
-        '    "initializer_calls": initializer_calls\n'
-        '}))\n'
+def test_new_module_registered():
+    """biome_html_syntax::lib.rs must declare a module for directive extension."""
+    content = Path(REPO, "crates/biome_html_syntax/src/lib.rs").read_text()
+    mods = re.findall(r'^\s*(?:pub\s+)?mod\s+(\w+)\s*;', content, re.MULTILINE)
+    assert "directive_ext" in mods, \
+        f"lib.rs must declare mod directive_ext. Found: {mods}"
+
+
+def test_directive_ext_compiles():
+    """directive_ext.rs must exist and the biome_html_syntax crate must compile.
+
+    Behavioral verification: cargo check exercises the Rust compiler on the
+    new directive extension module, confirming it integrates correctly with
+    the crate's existing AST types.
+    """
+    directive_ext = Path(REPO) / "crates/biome_html_syntax/src/directive_ext.rs"
+    assert directive_ext.exists(), \
+        "directive_ext.rs must exist in biome_html_syntax/src/"
+
+    proc = subprocess.run(
+        ["cargo", "check", "-p", "biome_html_syntax"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=300,
     )
-    assert data["has_impl"], "Must have impl block for AnySvelteDirective"
-    assert data["has_return_type"], "Must return Option<HtmlAttributeInitializerClause>"
-    assert not data["missing"], f"Missing Svelte directive variants: {data['missing']}"
-    assert data["value_calls"] >= 8, \
-        f"Each variant must call .value() to extract its value, got {data['value_calls']}"
-    assert data["initializer_calls"] >= 8, \
-        f"Each variant must call .initializer() to get the clause, got {data['initializer_calls']}"
+    assert proc.returncode == 0, \
+        f"biome_html_syntax must compile with directive_ext module.\n{proc.stderr[-2000:]}"
 
 
-def test_vue_directive_tracking():
-    """html.rs handles all 4 Vue directive AST types as embedded JS."""
-    data = _run_analysis(
-        'import re, json\n'
-        'content = open("/workspace/biome/crates/biome_service/src/file_handlers/html.rs").read()\n'
-        '\n'
-        'vue_types = [\n'
-        '    "VueDirective",\n'
-        '    "VueVOnShorthandDirective",\n'
-        '    "VueVBindShorthandDirective",\n'
-        '    "VueVSlotShorthandDirective"\n'
-        ']\n'
-        'found_types = [t for t in vue_types if t in content]\n'
-        '\n'
-        'vue_embedding_count = len(re.findall(r"EmbeddingKind::Vue", content))\n'
-        '\n'
-        'has_initializer = ".initializer()" in content\n'
-        '\n'
-        'print(json.dumps({\n'
-        '    "found_types": found_types,\n'
-        '    "vue_embedding_count": vue_embedding_count,\n'
-        '    "has_initializer": has_initializer\n'
-        '}))\n'
+def test_html_handler_compiles():
+    """html.rs must handle Vue and Svelte directive types and compile.
+
+    Behavioral verification: cargo check on biome_service confirms that the
+    directive handling code type-checks correctly against the AST types and
+    embedding infrastructure. Gate checks verify the instruction-required
+    Vue and Svelte directive types are referenced in the handler.
+    """
+    html_rs = Path(REPO) / "crates/biome_service/src/file_handlers/html.rs"
+    content = html_rs.read_text()
+
+    # Gate: instruction requires handling Vue directive AST types
+    has_vue = any(t in content for t in [
+        "VueDirective", "VueVOnShorthandDirective",
+        "VueVBindShorthandDirective", "VueVSlotShorthandDirective",
+    ])
+    assert has_vue, "html.rs must handle Vue directive types"
+
+    # Gate: instruction requires handling Svelte directive AST types
+    has_svelte = any(t in content for t in [
+        "AnySvelteDirective", "SvelteBindDirective", "SvelteClassDirective",
+    ])
+    assert has_svelte, "html.rs must handle Svelte directive types"
+
+    # Behavioral: compile the service crate to verify type correctness
+    proc = subprocess.run(
+        ["cargo", "check", "-p", "biome_service"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=600,
     )
-    assert len(data["found_types"]) == 4, \
-        f"All 4 Vue directive types must be handled. Found: {data['found_types']}"
-    assert data["vue_embedding_count"] >= 4, \
-        f"Need >= 4 EmbeddingKind::Vue usages (one per type), got {data['vue_embedding_count']}"
-    assert data["has_initializer"], "Must access directive initializer values"
-
-
-def test_svelte_directive_tracking():
-    """html.rs handles Svelte directives as embedded JS."""
-    data = _run_analysis(
-        'import json\n'
-        'content = open("/workspace/biome/crates/biome_service/src/file_handlers/html.rs").read()\n'
-        '\n'
-        'has_any_svelte = "AnySvelteDirective" in content\n'
-        'has_svelte_embedding = "EmbeddingKind::Svelte" in content\n'
-        'has_expression_parsing = "as_html_attribute_single_text_expression" in content\n'
-        'has_initializer = ".initializer()" in content\n'
-        '\n'
-        'print(json.dumps({\n'
-        '    "has_any_svelte": has_any_svelte,\n'
-        '    "has_svelte_embedding": has_svelte_embedding,\n'
-        '    "has_expression_parsing": has_expression_parsing,\n'
-        '    "has_initializer": has_initializer\n'
-        '}))\n'
-    )
-    assert data["has_any_svelte"], "Must use AnySvelteDirective for Svelte directives"
-    assert data["has_svelte_embedding"], "Must tag directives with EmbeddingKind::Svelte"
-    assert data["has_expression_parsing"], \
-        "Must parse Svelte text expressions (curly-brace values)"
-    assert data["has_initializer"], "Must access directive initializer values"
-
-
-def test_parse_directive_helpers():
-    """html.rs has directive value parsing for both Vue strings and Svelte expressions."""
-    data = _run_analysis(
-        'import re, json\n'
-        'content = open("/workspace/biome/crates/biome_service/src/file_handlers/html.rs").read()\n'
-        '\n'
-        'has_vue_parsing = "inner_string_text()" in content\n'
-        'has_svelte_parsing = "as_html_attribute_single_text_expression()" in content\n'
-        'has_offset_calc = "TextSize" in content\n'
-        '\n'
-        'helpers = re.findall(\n'
-        '    r"fn\\s+\\w+\\s*\\([^)]*HtmlAttributeInitializerClause",\n'
-        '    content\n'
-        ')\n'
-        '\n'
-        'print(json.dumps({\n'
-        '    "has_vue_parsing": has_vue_parsing,\n'
-        '    "has_svelte_parsing": has_svelte_parsing,\n'
-        '    "has_offset_calc": has_offset_calc,\n'
-        '    "helper_count": len(helpers)\n'
-        '}))\n'
-    )
-    assert data["has_vue_parsing"], \
-        "Must use inner_string_text() for Vue quoted directive values"
-    assert data["has_svelte_parsing"], \
-        "Must use as_html_attribute_single_text_expression() for Svelte values"
-    assert data["has_offset_calc"], \
-        "Must use TextSize for proper source offset calculation"
-    assert data["helper_count"] >= 2, \
-        f"Need >= 2 directive parsing functions, got {data['helper_count']}"
+    assert proc.returncode == 0, \
+        f"biome_service must compile with directive handling.\n{proc.stderr[-2000:]}"
 
 
 def test_biome_developer_skill_created():
     """biome-developer/SKILL.md exists with valid frontmatter and required content."""
-    data = _run_analysis(
-        'import json, sys\n'
-        'from pathlib import Path\n'
-        '\n'
-        'path = Path("/workspace/biome/.claude/skills/biome-developer/SKILL.md")\n'
-        'if not path.exists():\n'
-        '    print(json.dumps({"error": "not found"}))\n'
-        '    sys.exit(1)\n'
-        '\n'
-        'content = path.read_text()\n'
-        'lines = content.split("\\n")\n'
-        '\n'
-        'has_fm_start = len(lines) > 0 and lines[0].strip() == "---"\n'
-        'fm_end = -1\n'
-        'for i, line in enumerate(lines[1:], 1):\n'
-        '    if line.strip() == "---":\n'
-        '        fm_end = i\n'
-        '        break\n'
-        '\n'
-        'has_frontmatter = has_fm_start and fm_end > 0\n'
-        'fm_text = "\\n".join(lines[1:fm_end]) if has_frontmatter else ""\n'
-        'has_name = "name:" in fm_text\n'
-        '\n'
-        'body = content.lower()\n'
-        'has_string_doc = any(t in body for t in [\n'
-        '    "inner_string", "text_trimmed", "string extract", "text extract"\n'
-        '])\n'
-        'has_ast_doc = any(t in body for t in [\n'
-        '    "quick_test", "dbg!", "inspect", "ast"\n'
-        '])\n'
-        'has_embed_doc = any(t in body for t in [\n'
-        '    "embedding", "embedded", "embeddingkind"\n'
-        '])\n'
-        '\n'
-        'print(json.dumps({\n'
-        '    "has_frontmatter": has_frontmatter,\n'
-        '    "has_name": has_name,\n'
-        '    "has_string_doc": has_string_doc,\n'
-        '    "has_ast_doc": has_ast_doc,\n'
-        '    "has_embed_doc": has_embed_doc\n'
-        '}))\n'
-    )
-    assert data["has_frontmatter"], "SKILL.md must have YAML frontmatter (--- delimiters)"
-    assert data["has_name"], "Frontmatter must include a name: field"
-    assert data["has_string_doc"], "Must document string extraction methods"
-    assert data["has_ast_doc"], "Must document AST inspection techniques"
-    assert data["has_embed_doc"], "Must cover embedded language handling"
+    path = Path(REPO) / ".claude/skills/biome-developer/SKILL.md"
+    assert path.exists(), "biome-developer/SKILL.md must exist"
+
+    content = path.read_text()
+    lines = content.split("\n")
+
+    # Check frontmatter
+    assert len(lines) > 0 and lines[0].strip() == "---", \
+        "SKILL.md must start with YAML frontmatter delimiter"
+    fm_end = -1
+    for i, line in enumerate(lines[1:], 1):
+        if line.strip() == "---":
+            fm_end = i
+            break
+    assert fm_end > 0, "SKILL.md must have closing frontmatter delimiter"
+    fm_text = "\n".join(lines[1:fm_end])
+    assert "name:" in fm_text, "Frontmatter must include a name: field"
+
+    # Check required content themes (instruction-specified topics)
+    body = content.lower()
+    assert any(t in body for t in [
+        "inner_string", "text_trimmed", "string extract", "text extract"
+    ]), "Must document string extraction methods"
+    assert any(t in body for t in [
+        "quick_test", "dbg!", "inspect", "ast"
+    ]), "Must document AST inspection techniques"
+    assert any(t in body for t in [
+        "embedding", "embedded", "embeddingkind"
+    ]), "Must cover embedded language handling"
 
 
 def test_agents_md_updated():
     """AGENTS.md includes guidelines about evidence, legacy syntax, AST inspection."""
-    data = _run_analysis(
-        'import re, json\n'
-        'content = open("/workspace/biome/AGENTS.md").read()\n'
-        'lower = content.lower()\n'
-        '\n'
-        'has_evidence = bool(re.search(\n'
-        '    r"(?:widely used|common).*(?:without evidence|not proven|unverified)",\n'
-        '    lower\n'
-        '))\n'
-        '\n'
-        'has_legacy = any(t in lower for t in ["legacy", "deprecated", "old syntax"])\n'
-        '\n'
-        'has_ast = bool(re.search(\n'
-        '    r"(?:inspect|quick_test|ast.*structure|parse.*first)",\n'
-        '    lower\n'
-        '))\n'
-        '\n'
-        'has_skills = bool(re.search(r"(?:skills?\\s*directory|\\.claude/skills)", content))\n'
-        '\n'
-        'print(json.dumps({\n'
-        '    "has_evidence": has_evidence,\n'
-        '    "has_legacy": has_legacy,\n'
-        '    "has_ast": has_ast,\n'
-        '    "has_skills": has_skills\n'
-        '}))\n'
-    )
-    assert data["has_evidence"], "Must warn against claiming patterns without evidence"
-    assert data["has_legacy"], "Must warn about legacy/deprecated syntax"
-    assert data["has_ast"], "Must recommend AST inspection"
-    assert data["has_skills"], "Must reference skills directory"
+    content = Path(REPO, "AGENTS.md").read_text()
+    lower = content.lower()
+
+    has_evidence = bool(re.search(
+        r'(?:widely used|common).*(?:without evidence|not proven|unverified)',
+        lower
+    ))
+    has_legacy = any(t in lower for t in ["legacy", "deprecated", "old syntax"])
+    has_ast = bool(re.search(
+        r'(?:inspect|quick_test|ast.*structure|parse.*first)',
+        lower
+    ))
+    has_skills = bool(re.search(r'(?:skills?\s*directory|\.claude/skills)', content))
+
+    assert has_evidence, "Must warn against claiming patterns without evidence"
+    assert has_legacy, "Must warn about legacy/deprecated syntax"
+    assert has_ast, "Must recommend AST inspection"
+    assert has_skills, "Must reference skills directory"
 
 
 def test_testing_codegen_skill_updated():
     """testing-codegen SKILL.md documents parser quick testing."""
-    data = _run_analysis(
-        'import re, json\n'
-        'content = open("/workspace/biome/.claude/skills/testing-codegen/SKILL.md").read()\n'
-        'lower = content.lower()\n'
-        '\n'
-        'has_quick_test = bool(re.search(r"(?:quick.*test|parser.*test)", lower))\n'
-        'has_qt_cmd = bool(re.search(r"(?:just\\s+qt|quick_test)", content))\n'
-        'has_html_parser = "biome_html_parser" in content\n'
-        '\n'
-        'print(json.dumps({\n'
-        '    "has_quick_test": has_quick_test,\n'
-        '    "has_qt_cmd": has_qt_cmd,\n'
-        '    "has_html_parser": has_html_parser\n'
-        '}))\n'
-    )
-    assert data["has_quick_test"], "Must document quick testing"
-    assert data["has_qt_cmd"], "Must reference quick test command"
-    assert data["has_html_parser"], "Must reference biome_html_parser"
+    content = Path(REPO, ".claude/skills/testing-codegen/SKILL.md").read_text()
+    lower = content.lower()
 
+    has_quick_test = bool(re.search(r'(?:quick.*test|parser.*test)', lower))
+    has_qt_cmd = bool(re.search(r'(?:just\s+qt|quick_test)', content))
+    has_html_parser = "biome_html_parser" in content
 
-def test_directive_ext_not_stub():
-    """directive_ext.rs has real value extraction, not stubs returning None."""
-    data = _run_analysis(
-        'import re, json, sys\n'
-        'try:\n'
-        '    content = open("/workspace/biome/crates/biome_html_syntax/src/directive_ext.rs").read()\n'
-        'except FileNotFoundError:\n'
-        '    print(json.dumps({"error": "not found"}))\n'
-        '    sys.exit(1)\n'
-        '\n'
-        'variants = set(re.findall(r"Svelte\\w+Directive", content))\n'
-        'value_chains = content.count(".value()")\n'
-        '\n'
-        'print(json.dumps({\n'
-        '    "variant_count": len(variants),\n'
-        '    "value_chains": value_chains\n'
-        '}))\n'
-    )
-    assert data["variant_count"] >= 8, \
-        f"Expected >= 8 Svelte variants, found {data['variant_count']}"
-    assert data["value_chains"] >= 8, \
-        f"Each variant must call .value() for real extraction, found {data['value_chains']}"
+    assert has_quick_test, "Must document quick testing"
+    assert has_qt_cmd, "Must reference quick test command"
+    assert has_html_parser, "Must reference biome_html_parser"

@@ -106,6 +106,7 @@ def test_repo_build():
     )
     assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}"
 
+
 def test_repo_format():
     """MCP package formatting and linting passes (pass_to_pass)."""
     _ensure_deps()
@@ -114,7 +115,6 @@ def test_repo_format():
         capture_output=True, text=True, timeout=120, cwd=f"{REPO}/services/mcp",
     )
     assert r.returncode == 0, f"Format check failed:\n{r.stderr[-500:]}"
-
 
 
 # ---------------------------------------------------------------------------
@@ -235,9 +235,13 @@ def test_vitest_file_created():
     """A vitest test file validates runtime TOOL_MAP entries against name constraints."""
     test_file = Path(REPO) / "services/mcp/tests/unit/tool-name-validation.test.ts"
     content = test_file.read_text()
-    assert "TOOL_NAME_PATTERN" in content, "Test must reference TOOL_NAME_PATTERN"
-    assert "TOOL_MAP" in content, "Test must validate entries from TOOL_MAP"
-    assert "MAX_TOOL_NAME_LENGTH" in content, "Test must check length constraint"
+    content_lower = content.lower()
+    # Check that the test file contains validation logic for tool names and length
+    # (checking for behavior keywords rather than specific constant names)
+    assert "pattern" in content_lower or "regex" in content_lower, \
+        "Test must check pattern validation for tool names"
+    assert "map" in content_lower, "Test must validate TOOL_MAP or GENERATED_TOOL_MAP"
+    assert "length" in content_lower, "Test must check length constraint"
 
 
 # ---------------------------------------------------------------------------

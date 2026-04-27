@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "Instruction names all affected files, deprecated tokens (:filename, :slugorfilename, .Site.Data), and replacements (:contentbasename, :slugorcontentbasename, hugo.Data), plus test commands."
+      "reason": "Instruction names all affected files, the deprecated tokens (:filename, :slugorfilename, .Site.Data), replacements (:contentbasename, :slugorcontentbasename, hugo.Data), and the expected URL paths asserted in tests."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "Instruction explicitly states the fix: 'Replace :filename with :contentbasename', 'Replace :slugorfilename with :slugorcontentbasename', 'Replace .Site.Data with hugo.Data' \u2014 this is the exact mechanical fix."
+      "reason": "Instruction explicitly states the exact replacements: 'use :contentbasename instead of :filename', 'use :slugorcontentbasename instead of :slugorfilename', and 'use hugo.Data instead of .Site.Data' \u2014 this is the fix verbatim."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "Tests check for the new token strings and that Go tests pass; any correct replacement would satisfy these checks."
+      "reason": "Tests check for the presence of the new tokens/strings and run Go tests; any correct fix using these replacements will pass."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests run `go test` subprocesses for TestPermalinks, TestMultiHost, TestHTMLFilesIsue11999, TestMount, TestPagePathDisablePathToLower to verify behavior."
+      "reason": "Tests invoke `go test`, `go build`, `go vet`, `gofmt`, and `go mod verify` subprocesses in addition to text checks."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "Go test execution checks would fail without the actual token replacements being applied correctly."
+      "reason": "The f2p tests run actual Go tests (TestPermalinks, TestHTMLFilesIsue11999, TestMultiHost, TestMount, TestPagePathDisablePathToLower) which must pass behaviorally."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All three replacements and the referenced test commands are covered by corresponding pytest functions."
+      "reason": "Each behavior listed in instruction (token replacements, data access change, URL paths) is covered by corresponding tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are organized into separate functions with docstrings indicating f2p/p2p classification."
+      "reason": "Tests are well-named with docstrings indicating f2p vs p2p categorization."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "No structured data output; this is code changes."
+      "reason": "No structured data output produced."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, commands, and token names match between instruction, tests, and solution."
+      "reason": "Filenames, commands, and tokens appear consistent between instruction and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "Instruction lists the exact files and exact token replacements, reducing the task to find-and-replace rather than requiring the agent to localize the bug."
+      "reason": "Instruction names exact files and the exact tokens to replace ('use :contentbasename instead of :filename'), removing the localization/diagnosis step that would otherwise be part of the task."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "Not an agentmd-edits/config task."
+      "reason": "Not an agentmd-edits config task."
     }
   },
   "tier_a_fails": [

@@ -48,44 +48,45 @@ checks:
       commit: "ea032c28046c9f6cb1c2801fa80a9111f7e5fcd1"
       rule: "Follow PSR-12 coding standard"
 
-  - id: test_has_explicit_cli_params_exists
+  - id: test_has_explicit_cli_params_behavior
     type: fail_to_pass
-    description: "Install.php defines the hasExplicitCliParams() method"
+    description: "Install.php has a method that detects explicit CLI params and uses it to skip web installer"
     origin: code_behavior
 
-  - id: test_runtime_enable_coroutine_exists
+  - id: test_runtime_enable_coroutine_behavior
     type: fail_to_pass
-    description: "Server.php calls Runtime::enableCoroutine()"
+    description: "Server.php calls Runtime::enableCoroutine() before async operations"
     origin: code_behavior
 
-  - id: test_on_complete_callback_param
+  - id: test_on_complete_callback_behavior
     type: fail_to_pass
-    description: "performInstallation accepts an onComplete callback parameter"
+    description: "performInstallation accepts an onComplete callback and calls it before telemetry"
     origin: code_behavior
 
-  - id: test_upgrade_api_key_hidden
+  - id: test_upgrade_api_key_hidden_behavior
     type: fail_to_pass
     description: "step-4.phtml hides API key badge when !$isUpgrade"
     origin: code_behavior
 
-  - id: test_copy_appwrite_not_app
+  - id: test_copy_appwrite_not_app_behavior
     type: fail_to_pass
     description: "step-5.phtml says 'Updating Appwrite…' not 'Updating your app…'"
     origin: code_behavior
 
-  - id: test_css_installer_page_upgrade
+  - id: test_css_installer_page_upgrade_behavior
     type: fail_to_pass
     description: "styles.css adds min-height:0 for upgrade page"
     origin: code_behavior
 
-  - id: test_agents_md_improved
-    type: pass_to_pass
+  - id: test_agents_md_improved_behavior
+    type: fail_to_pass
     description: "AGENTS.md has improved content (table-based commands)"
-    origin: agent_config
-    source:
-      config_file: "AGENTS.md"
-      commit: "ea032c28046c9f6cb1c2801fa80a9111f7e5fcd1"
-      rule: "Update documentation if adding features"
+    origin: code_behavior
+
+  - id: test_dns_failure_handling_behavior
+    type: fail_to_pass
+    description: "Install.php handles gethostbyname failure with @ suppression and null check"
+    origin: code_behavior
 
   - id: test_p2p_install_php_syntax
     type: pass_to_pass

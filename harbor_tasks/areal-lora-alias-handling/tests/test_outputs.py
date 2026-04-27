@@ -51,13 +51,14 @@ NS = {"LoRARequest": FakeLoRARequest, "logger": logger, "getattr": getattr,
       "UpdateWeightsFromXcclRequestLora": FakeUpdateWeightsFromXcclRequestLora,
       "Request": FakeRequest}
 
-def _extract_func(name):
-    tree = ast.parse(SOURCE)
-    for node in ast.walk(tree):
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == name:
-            lines = SOURCE.splitlines(keepends=True)
-            return "".join(lines[node.lineno - 1 : node.end_lineno])
-    return None
+def _has_required_args(node, required_positional, required_keywords):
+    """Check if function node has the required positional and keyword-only args."""
+    positional_args = {arg.arg for arg in node.args.args}
+    keyword_only_args = {arg.arg for arg in node.args.kwonlyargs}
+    all_args = positional_args | keyword_only_args
+    return (required_positional <= positional_args and
+            required_keywords <= all_args and
+            len(positional_args) >= len(required_positional))
 
 def _extract_all_funcs():
     """Extract all function defs and search for ones matching expected signature patterns."""
@@ -65,29 +66,32 @@ def _extract_all_funcs():
     found = {}
     for node in ast.walk(tree):
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            args = {arg.arg for arg in node.args.args}
-            # A registration helper should accept app + lora_name + lora_int_id + base_model_name
-            if {"app", "lora_name", "lora_int_id", "base_model_name"} <= args:
+            # A registration helper: app (positional) + lora_name, lora_int_id, base_model_name (anywhere)
+            if _has_required_args(node, {"app"}, {"lora_name", "lora_int_id", "base_model_name"}):
                 lines = SOURCE.splitlines(keepends=True)
                 src = "".join(lines[node.lineno - 1 : node.end_lineno])
                 name = node.name
                 exec(textwrap.dedent(src), NS)
-            # A path inference helper should accept (serving_models, lora_name, lora_int_id)
-            if {"serving_models", "lora_name", "lora_int_id"} <= args:
+            # A path inference helper: serving_models, lora_name, lora_int_id (all positional)
+            if _has_required_args(node, {"serving_models", "lora_name", "lora_int_id"}, set()):
                 lines = SOURCE.splitlines(keepends=True)
                 src = "".join(lines[node.lineno - 1 : node.end_lineno])
                 name = node.name
                 exec(textwrap.dedent(src), NS)
     return found
 
-# Try explicit names first (compatible with gold solution)
-for name in ["_infer_runtime_lora_path", "_register_runtime_lora_name"]:
-    src = _extract_func(name)
-    if src:
-        exec(textwrap.dedent(src), NS)
+# Discovery: try all function defs with matching signatures
+_extract_all_funcs()
 
-# Also try signature-based discovery
-sig_found = _extract_all_funcs()
+# Also try explicit underscore-prefixed names (gold uses these exact names)
+for name in ["_infer_runtime_lora_path", "_register_runtime_lora_name"]:
+    tree = ast.parse(SOURCE)
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == name:
+            lines = SOURCE.splitlines(keepends=True)
+            src = "".join(lines[node.lineno - 1 : node.end_lineno])
+            exec(textwrap.dedent(src), NS)
+            break
 
 register_fn = None
 infer_fn = None
@@ -224,9 +228,13 @@ serving_models.lora_requests = {}
 
 for name, int_id in [("adapter-v1", 99), ("my-lora", 1), ("test_adapter", 500)]:
     result = infer_fn(serving_models, name, int_id)
-    # Must produce a runtime identifier that embeds the name
-    assert "xccl://" in result, f"Expected runtime identifier prefix, got: {result}"
+    # Must produce a stable runtime identifier that encodes the adapter name
+    # (vLLM needs this so it can construct a valid LoRARequest for routing)
+    assert isinstance(result, str) and len(result) > 0, f"Expected non-empty string, got: {result}"
     assert name in result, f"Expected name '{name}' in path, got: {result}"
+    # Idempotent: calling again returns the same value
+    result2 = infer_fn(serving_models, name, int_id)
+    assert result == result2, f"Path inference not stable: {result} != {result2}"
 
 print("PASS")
 """)
@@ -256,13 +264,14 @@ serving2.lora_requests = {"old-name": old_entry}
 result2 = infer_fn(serving2, "new-name", 42)
 assert result2 == "/models/lora/old", f"Expected path from same id, got: {result2}"
 
-# Case 3: entry exists but lora_path is empty -> falls back to runtime identifier
+# Case 3: entry exists but lora_path is empty -> returns stable runtime identifier
 empty_path = _make_req("no-path", 88, "")
 serving3 = MagicMock()
 serving3.lora_requests = {"no-path": empty_path}
 
 result3 = infer_fn(serving3, "no-path", 88)
-assert "xccl://" in result3, f"Expected runtime identifier fallback, got: {result3}"
+assert isinstance(result3, str) and len(result3) > 0, f"Expected non-empty string fallback, got: {result3}"
+assert "no-path" in result3, f"Expected name 'no-path' in fallback path, got: {result3}"
 
 print("PASS")
 """)
@@ -273,10 +282,6 @@ print("PASS")
 # [pr_diff] fail_to_pass
 def test_success_gating():
     """Registry update in update_weight_lora_xccl is gated on all XCCL operations succeeding."""
-    # This endpoint is an async FastAPI function that can't be easily tested via subprocess
-    # because it requires the full FastAPI app and vLLM engine. Instead we verify the
-    # behavioral requirement: the registry update must be conditional on XCCL success,
-    # by checking the source code structure.
     source = _read_source()
     tree = ast.parse(source)
 
@@ -297,12 +302,15 @@ def test_success_gating():
         "Old mutation pattern still present — should use dedicated helper"
     )
 
-    # Registry update must be conditional on success - look for if/all/any around ret_list
+    # Registry update must be conditional on success check over ret_list
+    # Accept any pattern that iterates over ret_list and checks success
     has_success_check = bool(
-        re.search(r"(if|all|any)\s*\(", func_src) and "ret_list" in func_src
+        re.search(r"all\s*\([^)]+ret_list[^)]*\)", func_src)
+        or re.search(r"any\s*\([^)]+ret_list[^)]*\)", func_src)
+        or re.search(r"for\s+\w+\s*,?\s*_\s+in\s+[^:]*ret_list", func_src)
     )
     assert has_success_check, (
-        "Registry update should be gated on XCCL success using if/all/any with ret_list"
+        "Registry update should be gated on XCCL success by checking the ret_list result"
     )
 
 

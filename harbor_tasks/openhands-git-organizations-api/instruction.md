@@ -25,18 +25,17 @@ The endpoint should:
 2. Determine which provider is active (SaaS users sign in with one provider at a time)
 3. Fetch organizations from the appropriate provider:
    - For GitHub: delegate to a method on the provider handler that calls `get_organizations_from_installations` on the GitHub service
-   - For GitLab: delegate to a method on the provider handler that calls `get_user_groups` on the GitLab service (use `min_access_level=10` to get all groups)
+   - For GitLab: delegate to a method on the provider handler that calls `get_user_groups` on the GitLab service to get the user's groups
    - For Bitbucket: delegate to a method that retrieves workspaces from installations
 4. Return JSON like: `{"provider": "github", "organizations": ["org1", "org2"]}`
 
-## Implementation Details to Implement
+## API Contract
 
-The implementation must provide the following as implementable components:
+The following components are expected:
 
-- A handler function `saas_get_user_git_organizations` exposed at `GET /git-organizations` in the enterprise server user routes (importable as `server.routes.user`)
-- On the GitLab service: a method `get_user_groups` that fetches user groups via the GitLab `/groups` API with parameters `min_access_level` and `per_page` — both passed as **string** values (e.g., `{'min_access_level': '10', 'per_page': '100'}`)
-- On the provider handler: methods `get_github_organizations` and `get_gitlab_groups` that delegate to the appropriate service for each provider type
-- For the GitLab groups API: the response should return the `path` field from each group dict
+- An async endpoint handler `saas_get_user_git_organizations` at `GET /git-organizations` in the enterprise server user routes
+- A `get_user_groups` method on the GitLab service that fetches groups via the GitLab `/groups` API and returns a list of group path strings (e.g., `['my-team', 'open-source']`)
+- Methods `get_github_organizations` and `get_gitlab_groups` on the provider handler that delegate to the appropriate service and return empty lists on error
 
 ## Testing
 

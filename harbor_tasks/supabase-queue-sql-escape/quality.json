@@ -1,56 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the four vulnerable files in `apps/studio/data/database-queues/`, the functions (send, query, archive, delete mutations), the `literal()` function from `@supabase/pg-meta/src/pg-format`, and the escaping behaviors for strings/objects/null/numbers. The test asserts on these same files, functions, and escaping behaviors. All test-specific details (file paths, function names, escaping rules) are discoverable from instruction.md."
+      "reason": "Instruction names the directory apps/studio/data/database-queues/, the four operations (send/query/archive/delete), the literal() function from @supabase/pg-meta/src/pg-format, and behavioral examples of escaping that tests assert on."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what's broken (raw template interpolation) and points to the available escaping function `literal()`, but does not specify exact line changes or the precise code to write. A developer must still reason about which interpolations to wrap and how to import the function."
+      "reason": "Instruction describes the vulnerability and mentions the available literal() helper but doesn't dictate exact line changes; the agent must identify and modify each interpolation."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "The tests check behavioral properties: that SQL output properly escapes single quotes (doubled quotes appear), that `literal()` produces correct outputs for various types, and that exported function names exist. They don't assert on exact line positions, specific variable names, or import ordering. Alternative correct implementations (e.g., using a wrapper around `literal()`, different import paths that resolve the same module) would pass as long as the escaping behavior is correct."
+      "reason": "Tests capture SQL output and check that escaped forms (e.g., O''Reilly) appear \u2014 any correct use of literal() or equivalent proper escaping would pass, not specific variable names."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests actually execute the code via `tsx`, call functions like `sendDatabaseQueueMessage`, `getDatabaseQueue`, `archiveDatabaseQueueMessage`, `deleteDatabaseQueueMessage`, capture the generated SQL, and assert on the escaped output. The gate tests do include text checks (`executeSql in src`) but the critical behavioral tests execute code."
+      "reason": "Tests run tsx to execute the actual modified functions and capture SQL via a mock executeSql, then assert on runtime output."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub implementation returning empty/default values would not produce SQL containing properly escaped single quotes like `O''Reilly`. The tests assert specific escaped patterns in the generated SQL, so a no-op or pass-through implementation would fail. The `_assert_value_escaped_in_sql` function checks that doubled quotes appear in the SQL output."
+      "reason": "A stub returning empty would fail _assert_value_escaped_in_sql which checks the doubled-quote escaped form appears in captured SQL."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires escaping user-controlled values in send, query, archive, and delete operations. The tests cover all four files with behavioral checks for SQL injection prevention. The constraint about no `as any` casts and TypeScript type checking are covered by `test_no_as_any_in_modified_files` (visible in the test file pattern)."
+      "reason": "Tests cover all four operations (send/query/archive/delete) and the literal() behaviors (string, object, null, number) described in the instruction."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-structured with descriptive names (`test_literal_escapes_sql_injection`, `test_send_payload_escaped`, etc.), grouped into gates (pass_to_pass, static) and fail-to-pass (behavioral) sections with clear comments, and each has a docstring explaining its purpose."
+      "reason": "Tests are grouped with section comments (Gates / Fail-to-pass) and descriptive function names like test_literal_escapes_sql_injection, test_send_payload_escaped."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task does not produce structured data output like JSON/CSV/API/DB schemas; it modifies TypeScript source files to fix SQL injection vulnerabilities."
+      "reason": "Task is code modification, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, function names, commands, and variable names in the instruction are consistent with the test file and solution. No typos detected."
+      "reason": "Paths and function names (sendDatabaseQueueMessage, getDatabaseQueue, etc.) are consistent between instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly names the exact directory (`apps/studio/data/database-queues/`) and describes the specific files (send, query/infinite/paginated, archive, delete mutation files) along with the exact function to use (`literal()` from `@supabase/pg-meta/src/pg-format`) and precise import syntax. While file-level identification may be acceptable for this domain, the instruction goes further by specifying the exact parameters that need escaping ('queue names, payloads, delays, message IDs"
+      "outcome": "pass",
+      "reason": "The domain area (database-queues) is part of the task description, which is appropriate; no specific line numbers are given."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits task involving config files."
+      "reason": "Code-only task, not a config edit."
     }
   },
   "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 8,
-  "fail_count": 1
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
 }

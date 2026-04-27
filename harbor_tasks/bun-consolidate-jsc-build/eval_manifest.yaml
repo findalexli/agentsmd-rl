@@ -3,147 +3,130 @@ version: "2.0"
 source:
   repo: "oven-sh/bun"
   pr: 28863
-  base_commit: "d27d84f45ddb3f2bca3fdb3112e08729a8d2533b"
-  merge_commit: "d8ebb9b9df86f86e4f99dc30cb1e867c3b733aaa"
+  base_commit: "a14a89ca953910e89697895dfdfb4cdf4c90a151"
 
 # Track 1: Hard tests (binary pass/fail via test.sh)
 checks:
-  # Pass-to-pass: Syntax validation
-  - id: clean_ts_syntax
+  # Pass-to-pass: file existence
+  - id: setup_webkit_cmake_exists
     type: pass_to_pass
     origin: static
-    description: "scripts/build/clean.ts has valid TypeScript syntax"
+    description: "cmake/tools/SetupWebKit.cmake exists and references WEBKIT_LOCAL"
 
-  - id: webkit_ts_syntax
+  - id: build_bun_cmake_exists
     type: pass_to_pass
     origin: static
-    description: "scripts/build/deps/webkit.ts has valid TypeScript syntax"
+    description: "cmake/targets/BuildBun.cmake exists and references WEBKIT_LIB_PATH"
 
-  - id: source_ts_syntax
+  - id: contributing_docs_exist
     type: pass_to_pass
     origin: static
-    description: "scripts/build/source.ts has valid TypeScript syntax"
+    description: "CONTRIBUTING.md and docs/project/contributing.mdx exist"
 
-  - id: claude_md_exists
-    type: pass_to_pass
-    origin: static
-    description: "scripts/build/CLAUDE.md exists with content"
-
-  # Fail-to-pass: Code changes
-  - id: build_jsc_ts_deleted
+  # Fail-to-pass: cmake behavior changes
+  - id: setup_webkit_build_type_option
     type: fail_to_pass
     origin: pr_diff
-    description: "scripts/build-jsc.ts is deleted (replaced by build.ts integration)"
+    description: "SetupWebKit.cmake defines WEBKIT_BUILD_TYPE option for independent JSC build type"
 
-  - id: package_json_uses_build_ts
+  - id: setup_webkit_auto_configures_jsc
     type: fail_to_pass
     origin: pr_diff
-    description: "package.json jsc:build* scripts route through build.ts with --target=WebKit"
+    description: "SetupWebKit.cmake auto-configures JSC via execute_process when WEBKIT_LOCAL is set"
 
-  - id: clean_ts_no_webkit_build
+  - id: setup_webkit_jsc_build_target
     type: fail_to_pass
     origin: pr_diff
-    description: "scripts/build/clean.ts removes WebKitBuild references (now builds in build/<profile>/deps/WebKit/)"
+    description: "SetupWebKit.cmake creates a jsc build target via add_custom_target"
 
-  - id: webkit_ts_has_env_var
+  - id: setup_webkit_no_vcpkg
     type: fail_to_pass
     origin: pr_diff
-    description: "scripts/build/deps/webkit.ts supports $BUN_WEBKIT_PATH for shared clones"
+    description: "SetupWebKit.cmake no longer uses vcpkg for ICU (builds from source on Windows)"
 
-  - id: webkit_ts_local_source_with_path
+  - id: buildbun_jsc_build_dependency
     type: fail_to_pass
     origin: pr_diff
-    description: "webkit.ts returns local source with path and hint properties"
+    description: "BuildBun.cmake adds build dependency to ensure JSC is built before Bun"
 
-  - id: source_ts_has_path_hint
+  - id: buildbun_system_icu_for_local
     type: fail_to_pass
     origin: pr_diff
-    description: "scripts/build/source.ts has path and hint options for local sources"
+    description: "BuildBun.cmake uses find_package(ICU) for local builds on Linux"
 
-  - id: claude_md_table_reformatted
+  - id: contributing_no_manual_jsc_build
     type: fail_to_pass
     origin: pr_diff
-    description: "scripts/build/CLAUDE.md module inventory table is reformatted with wider columns"
+    description: "CONTRIBUTING.md removes old multi-step manual JSC build commands and fixes typo"
 
-# Track 2: Gold config edits (for agentmd-edit tasks)
-config_edits:
-  - path: "scripts/build/CLAUDE.md"
-    tier: 1
-    gold_added: "| File                           | Owns                                                                               |\n| ------------------------------ | ---------------------------------------------------------------------------------- |"
-    gold_removed: "| File                           | Owns                                                                    |\n| ------------------------------ | ----------------------------------------------------------------------- |"
+  - id: contributing_mdx_no_manual_jsc_build
+    type: fail_to_pass
+    origin: pr_diff
+    description: "docs/project/contributing.mdx removes old manual commands and fixes typo"
 
-# Track 3: Positive rubric — conventions the gold solution FOLLOWS
+# Track 3: Positive rubric
 rubric:
-  - rule: "TypeScript local imports should use explicit node: prefix (e.g., node:os, node:path)"
+  - rule: "Local WebKit builds should auto-configure JSC instead of requiring manual steps"
     source:
-      path: "scripts/build/CLAUDE.md"
-      lines: "80-100"
-      commit: "d27d84f45ddb3f2bca3fdb3112e08729a8d2533b"
-    evidence: "Gold adds import { homedir } from node:os in webkit.ts"
-    category: imports
-    verification: programmatic
-
-  - rule: "Local source dependencies can specify custom path and hint for better error messages"
-    source:
-      path: "scripts/build/CLAUDE.md"
-      lines: "130-150"
-      commit: "d27d84f45ddb3f2bca3fdb3112e08729a8d2533b"
-    evidence: "Gold adds path and hint to Source type in source.ts"
-    category: api_design
-    verification: programmatic
-
-  - rule: "Environment variables that affect build behavior should be documented in comments"
-    source:
-      path: "scripts/build/CLAUDE.md"
+      path: "cmake/tools/SetupWebKit.cmake"
       lines: "1-50"
-      commit: "d27d84f45ddb3f2bca3fdb3112e08729a8d2533b"
-    evidence: "Gold adds detailed comments about BUN_WEBKIT_PATH in webkit.ts"
+      commit: "a14a89ca953910e89697895dfdfb4cdf4c90a151"
+    evidence: "Gold adds execute_process to invoke cmake on WebKit source and add_custom_target(jsc) for automatic building"
+    category: build_system
+    verification: programmatic
+
+  - rule: "Build type for JSC should be independently configurable"
+    source:
+      path: "cmake/tools/SetupWebKit.cmake"
+      lines: "1-10"
+      commit: "a14a89ca953910e89697895dfdfb4cdf4c90a151"
+    evidence: "Gold adds option(WEBKIT_BUILD_TYPE) that defaults to CMAKE_BUILD_TYPE"
+    category: build_system
+    verification: programmatic
+
+  - rule: "Windows ICU should be built from source rather than depending on vcpkg"
+    source:
+      path: "cmake/tools/SetupWebKit.cmake"
+      lines: "30-70"
+      commit: "a14a89ca953910e89697895dfdfb4cdf4c90a151"
+    evidence: "Gold removes vcpkg detection and adds ICU build from WebKit source tree"
+    category: build_system
+    verification: programmatic
+
+  - rule: "Local builds on Linux should use system ICU via find_package"
+    source:
+      path: "cmake/targets/BuildBun.cmake"
+      lines: "1320-1340"
+      commit: "a14a89ca953910e89697895dfdfb4cdf4c90a151"
+    evidence: "Gold adds find_package(ICU REQUIRED COMPONENTS data i18n uc) for WEBKIT_LOCAL on Linux"
+    category: build_system
+    verification: programmatic
+
+  - rule: "Contributing docs should describe simplified build process"
+    source:
+      path: "CONTRIBUTING.md"
+      lines: "250-290"
+      commit: "a14a89ca953910e89697895dfdfb4cdf4c90a151"
+    evidence: "Gold simplifies multi-step instructions to single bun run build:local command"
     category: documentation
     verification: llm_judge
 
-  - rule: "Build scripts should support worktree workflows with shared dependencies"
-    source:
-      path: "scripts/build/CLAUDE.md"
-      lines: "50-100"
-      commit: "d27d84f45ddb3f2bca3fdb3112e08729a8d2533b"
-    evidence: "Gold implements path resolution to support BUN_WEBKIT_PATH for shared WebKit clones"
-    category: build_system
-    verification: programmatic
-
-  - rule: "Package.json scripts should be explicit about targets and build directories"
-    source:
-      path: "scripts/build/CLAUDE.md"
-      lines: "100-130"
-      commit: "d27d84f45ddb3f2bca3fdb3112e08729a8d2533b"
-    evidence: "Gold updates scripts to use explicit --profile, --build-dir, and --target flags"
-    category: build_system
-    verification: programmatic
-
-# Track 4: Distractors — conventions that create COLLISIONS
+# Track 4: Distractors
 distractors:
-  - rule: "All build output should be in vendor/ directories for consistency"
+  - rule: "All build output should go to vendor/ directories for consistency"
     source:
-      path: "CLAUDE.md"
-      lines: "1-50"
-      commit: "d27d84f45ddb3f2bca3fdb3112e08729a8d2533b"
+      path: "CONTRIBUTING.md"
+      lines: "250-270"
+      commit: "a14a89ca953910e89697895dfdfb4cdf4c90a151"
     collision_type: architecture_boundary
-    why_distracting: "PR specifically moves away from vendor/WebKit/WebKitBuild to build/<profile>/deps/WebKit/"
+    why_distracting: "The build uses vendor/WebKit as source but outputs to build/<profile>/deps/WebKit/"
     severity: medium
 
-  - rule: "Environment variables should be minimized; prefer configuration files"
+  - rule: "External dependencies should be pre-installed, not built from source during cmake configure"
     source:
-      path: "scripts/build/CLAUDE.md"
-      lines: "50-100"
-      commit: "d27d84f45ddb3f2bca3fdb3112e08729a8d2533b"
+      path: "cmake/tools/SetupWebKit.cmake"
+      lines: "30-70"
+      commit: "a14a89ca953910e89697895dfdfb4cdf4c90a151"
     collision_type: rule_conflict
-    why_distracting: "PR adds BUN_WEBKIT_PATH env var specifically for worktree flexibility"
-    severity: low
-
-  - rule: "Deleted files should be kept for backwards compatibility with deprecation warnings"
-    source:
-      path: "CLAUDE.md"
-      lines: "1-30"
-      commit: "d27d84f45ddb3f2bca3fdb3112e08729a8d2533b"
-    collision_type: meta_confusion
-    why_distracting: "PR deletes build-jsc.ts entirely, not deprecating it"
+    why_distracting: "Gold builds ICU from source on Windows during cmake configure for self-contained local builds"
     severity: low

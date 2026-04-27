@@ -3,54 +3,52 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "All asserted file paths, command names (list, close-all, kill-all), flag (-b), category (browsers), strings (Browser ', [open], [closed]) are named explicitly in instruction.md."
+      "reason": "Instruction names all target files, the new command names (list, close-all, kill-all), -b flag, 'Browser' terminology, [open]/[closed] markers, and the 'browsers' category rename."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "Instruction describes the desired behavior and naming but does not provide code-level edits or line numbers."
+      "reason": "Instruction describes what should change (command names, terminology) without giving line-level code replacements."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "test_b_flag_alias extracts via regex /if\\s*\\(\\s*args\\.b\\s*\\)\\s*\\{([\\s\\S]*?)\\}/ and requires deleting args.b; a valid implementation using yargs alias config or 'args.session = args.b' without a wrapping `if (args.b) {...}` block would fail."
+      "outcome": "pass",
+      "reason": "The -b flag test explicitly accepts yargs alias OR manual normalization, and other tests check behavioral/textual requirements that any correct fix would satisfy."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests execute Node scripts and even eval extracted code (e.g., new Function to run the -b normalization block) rather than only doing string checks."
+      "reason": "Tests execute Node scripts that parse and validate source structure (regex on declareCommand, category types, switch cases); while they inspect source rather than runtime behavior, they use execution-based checks."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "Tests require both presence of new names and absence of old names, plus executing extracted logic \u2014 a stub cannot satisfy them."
+      "reason": "Tests require both presence of new names AND absence of old ones (e.g., forbidden.filter check), so a stub can't pass."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "Renamed commands, -b alias, browsers category, Browser terminology, [open]/[closed] markers, and doc updates are each tested."
+      "reason": "All behaviors mentioned in instruction (command renames, -b flag, category, Browser messages, [open]/[closed]) have corresponding tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are grouped with section comments (Gates, Fail-to-pass pr_diff, agent_config) and named descriptively."
+      "reason": "Tests are grouped with section comments (Gates, Fail-to-pass behavioral, documentation) and named clearly by concern."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data output."
+      "reason": "Task is CLI/code refactor, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths and command names in instruction.md are consistent with tests."
+      "reason": "File paths and command names are consistent between instruction and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "Instruction names files to look at (appropriate for the task scope) without pointing at specific lines or the exact code change."
+      "reason": "Files are named at module level (e.g., program.ts) which is reasonable scope guidance, no line numbers cited."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is primarily a code change task, not an agentmd-edits config task."
+      "reason": "This is a code+doc edit task, not an agent-config edit task."
     }
   },
-  "tier_a_fails": [
-    "solution_uniqueness_guard"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 8,
-  "fail_count": 1
+  "pass_count": 9,
+  "fail_count": 0
 }

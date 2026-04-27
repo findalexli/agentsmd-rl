@@ -12,15 +12,15 @@ The Superset MCP (Model Context Protocol) database tools have several gaps compa
 
 ### 2. ListDatabasesRequest fails on JSON string parameters
 
-When MCP CLI clients pass `filters` or `select_columns` as JSON strings rather than native Python objects, `ListDatabasesRequest` in `superset/mcp_service/database/schemas.py` raises a parsing error. `ListChartsRequest` and `ListDashboardsRequest` already handle this with pydantic field validators. The corrected `schemas.py` should have a validator function `parse_filters` decorated as `@field_validator("filters")` and a validator `parse_columns` decorated as `@field_validator("select_columns")`. The file should also import `field_validator` from pydantic and reference the utilities `parse_json_or_list` and `parse_json_or_model_list` from the `schema_utils` module.
+When MCP CLI clients pass `filters` or `select_columns` as JSON strings rather than native Python objects, `ListDatabasesRequest` in `superset/mcp_service/database/schemas.py` raises a parsing error. `ListChartsRequest` and `ListDashboardsRequest` already handle this correctly via pydantic field validators. `ListDatabasesRequest` needs the same treatment so that both `filters` and `select_columns` accept JSON string inputs as well as native Python lists.
 
-### 3. Duplicate DEFAULT_DATABASE_COLUMNS across modules
+### 3. Duplicate default database columns across modules
 
-The list of default database columns is independently defined in both `superset/mcp_service/database/tool/schema_discovery.py` (where the constant is named `DATABASE_DEFAULT_COLUMNS`) and `superset/mcp_service/database/tool/list_databases.py` (where it's named `DEFAULT_DATABASE_COLUMNS`). When one copy is updated, the other drifts. After fixing, `list_databases.py` should no longer contain `DEFAULT_DATABASE_COLUMNS = [` and should instead import `DATABASE_DEFAULT_COLUMNS,` from schema_discovery, passing it as `default_columns=DATABASE_DEFAULT_COLUMNS`.
+The list of default database columns is independently defined in both `superset/mcp_service/database/tool/schema_discovery.py` and `superset/mcp_service/database/tool/list_databases.py`. When one copy is updated, the other drifts. There should be a single source of truth — `list_databases.py` should reuse the canonical list from `schema_discovery.py` instead of maintaining its own duplicate copy.
 
 ### 4. Timestamps are timezone-naive
 
-`DatabaseError.create()` in `superset/mcp_service/database/schemas.py` produces naive timestamps (no timezone info). Similarly, `_humanize_timestamp()` does not handle timezone-aware datetime inputs — when a timezone-aware datetime is passed, the subtraction `datetime.now() - dt` fails. After fixing, `schemas.py` should import `from datetime import datetime, timezone`, call `datetime.now(timezone.utc)` for UTC-aware timestamps, and check `dt.tzinfo` in `_humanize_timestamp` to use a timezone-compatible "now" value.
+`DatabaseError.create()` in `superset/mcp_service/database/schemas.py` produces naive timestamps (no timezone info). Similarly, `_humanize_timestamp()` does not handle timezone-aware datetime inputs — when a timezone-aware datetime is passed, the subtraction `datetime.now() - dt` fails with a TypeError. After fixing, `DatabaseError.create()` should produce UTC-aware timestamps, and `_humanize_timestamp()` should handle both naive and timezone-aware datetime inputs correctly.
 
 ### 5. Test helper missing type annotations
 
@@ -37,9 +37,9 @@ The `ModelGetSchemaCore` docstring in `superset/mcp_service/mcp_core.py` lists v
 ## Reference Patterns
 
 For issues 1 and 2, look at the existing chart/dashboard implementations:
-- `ChartFilter` and `DashboardFilter` for user ownership column support
+- `ChartFilter` and `DashboardFilter` in `superset/mcp_service/chart/schemas.py` and `superset/mcp_service/dashboard/schemas.py` for user ownership column support
 - `ListChartsRequest` and `ListDashboardsRequest` for JSON string parameter handling via field validators
-- `superset/mcp_service/utils/schema_utils` for `parse_json_or_list` and `parse_json_or_model_list`
+- `superset/mcp_service/utils/schema_utils` for JSON parsing utility functions
 
 ## Affected Files
 

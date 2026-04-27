@@ -9,6 +9,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 
 import ast
 import json
+import os
 import subprocess
 import tempfile
 import textwrap
@@ -208,10 +209,20 @@ def test_check_repo_runs_linter():
 
     In Make, a '-' prefix before a command means 'ignore errors'. The linter
     must run WITHOUT this prefix so violations are not silently swallowed.
-    We parse the Makefile directly since 'make -n' strips the prefix.
     """
+    # Behavioral: verify check-repo dry run includes the linter
+    r = subprocess.run(
+        ["make", "-n", "check-repo"],
+        cwd=REPO, capture_output=True, text=True, timeout=10,
+    )
+    assert r.returncode == 0, f"make -n check-repo failed: {r.stderr}"
+    assert "check_modeling_structure" in (r.stdout + r.stderr), (
+        "check-repo target must invoke check_modeling_structure"
+    )
+
+    # Structural: parse Makefile to verify EVERY invocation of the linter
+    # in check-repo is strict (no '-' error-ignore prefix).
     makefile = Path(f"{REPO}/Makefile").read_text()
-    # Extract the check-repo target body (lines after "check-repo:" until next target)
     in_target = False
     linter_lines = []
     for line in makefile.split("\n"):
@@ -225,15 +236,12 @@ def test_check_repo_runs_linter():
                 linter_lines.append(line)
 
     assert linter_lines, "check-repo must invoke check_modeling_structure"
-    # At least one invocation must NOT have the error-ignore prefix '-'
-    has_non_ignored = any(
-        l.strip().startswith("python") or l.strip().startswith("$(")
-        for l in linter_lines
-    )
-    assert has_non_ignored, (
-        "check-repo runs check_modeling_structure only with error-ignore prefix (-); "
-        "violations would be silently swallowed"
-    )
+    for line in linter_lines:
+        stripped = line.strip()
+        assert not stripped.startswith("-"), (
+            f"check-repo runs check_modeling_structure with error-ignore "
+            f"prefix (-): {stripped!r}; violations would be silently swallowed"
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -270,17 +278,33 @@ def test_parse_args_backward_compat():
 
 # [pr_diff] fail_to_pass
 def test_gitignore_excludes_cache():
-    """.gitignore has an entry for the model linter cache file."""
-    content = Path(f"{REPO}/.gitignore").read_text()
-    lines = [l for l in content.split("\n") if not l.strip().startswith("#")]
-    found = any(
-        "cache" in line.lower() and ".json" in line.lower()
-        for line in lines
-    ) or any(
-        "check_modeling_structure" in line and "cache" in line.lower()
-        for line in lines
+    """.gitignore excludes the model linter cache file."""
+    # Find the cache path constant in the linter module
+    source = Path(LINTER).read_text()
+    tree = ast.parse(source)
+    cache_var = None
+    for node in ast.iter_child_nodes(tree):
+        if isinstance(node, ast.Assign):
+            for target in node.targets:
+                if isinstance(target, ast.Name):
+                    src_segment = ast.get_source_segment(source, node.value) or ""
+                    if ".json" in src_segment and "cache" in src_segment.lower():
+                        cache_var = target.id
+    assert cache_var, "No cache path constant found in module"
+
+    # Extract and evaluate the constant to get the actual cache file path
+    ns = _extract_and_exec(LINTER, [], const_names=[cache_var])
+    cache_path = ns[cache_var]
+    cache_rel = os.path.relpath(str(cache_path), REPO)
+
+    # Behavioral: verify git actually ignores this path
+    r = subprocess.run(
+        ["git", "check-ignore", "-q", cache_rel],
+        cwd=REPO, capture_output=True, text=True, timeout=10,
     )
-    assert found, "No model linter cache exclusion found in .gitignore"
+    assert r.returncode == 0, (
+        f"Cache file '{cache_rel}' is not excluded by .gitignore"
+    )
 
 
 # [pr_diff] fail_to_pass

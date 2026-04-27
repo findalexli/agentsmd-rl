@@ -25,14 +25,19 @@ echo '{"abandoned": true, "reason": "your reason"}' > /workspace/task/status.jso
 ```
 
 Abandon if ANY of these apply:
-- **Docs/CI only**: PR only changes markdown, workflows, configs with no functional code
+- **CI-only**: PR only changes `.github/workflows/`, CI configs, with no code or instruction-file changes
 - **Too large**: PR touches >10 files or >500 lines of functional code changes
 - **Needs secrets/accounts**: Requires API keys, OAuth tokens, cloud accounts, or paid services
 - **Needs GPU/special hardware**: CUDA kernels, model weights, TPU, etc. that can't be tested on CPU
 - **Repo deleted/archived**: Can't clone or checkout the base commit
-- **Trivial rename/typo**: One-line change with no behavioral difference to test
+- **Trivial rename/typo**: One-line change with no behavioral or instruction-rule difference
 - **Reverted PR**: The merge commit was later reverted
-- **No testable behavior**: The change is purely visual (CSS, UI layout) with no programmatic way to verify
+- **No testable behavior AND no agent-instruction edit**: e.g. pure CSS/UI layout, *and* the PR doesn't modify any tier-1 instruction file
+
+**EXCEPTION — agent-instruction-file edits are valid even without behavioral tests.**
+If the PR's diff includes changes to an agent-instruction file (CLAUDE.md, AGENTS.md, SKILL.md anywhere, .cursorrules, .cursor/rules/*, .github/copilot-instructions.md, .agents/skills/*/SKILL.md, .claude/skills/*/SKILL.md, .opencode/skills/*/SKILL.md, .codex/skills/*/SKILL.md), this is a valid task even if the rest of the PR is docs-only. Set `task.kind = markdown_authoring` (or `code_with_config` if there are bundled code changes) and use the markdown-authoring scaffold rules in step 6 below.
+
+**Lockfile/dependency-only PRs** (only `*.lock` / `pyproject.toml` / `package.json` version bumps with no functional code) → STILL ABANDON. The behavior the rule "regenerate the lockfile" tests doesn't have a stable in-repo verification — the agent's job there is mechanical, not behavioral, and the fix lives upstream in the dependency.
 
 If the PR looks good, continue to step 2.
 
@@ -94,6 +99,25 @@ Replace all `{{PLACEHOLDER}}` tokens across files:
 | `{{CONFIG_FILE}}`, `{{LINES}}`, `{{COMMIT}}` | Agent config source refs |
 
 ### 4. Fill in the files (this order)
+
+#### 4a. Branch on `task.kind`
+
+Before writing files, decide which kind of task this is. Set `task.kind` in `eval_manifest.yaml.task` and follow the matching scaffold rules:
+
+| `task.kind` | When | Track 1 (test.sh) | Track 2 (config diff) |
+|---|---|---|---|
+| `code_fix` | PR has functional code changes, no tier-1 markdown changes | **Behavioral fail_to_pass tests** (canonical) | not used |
+| `code_with_config` | PR has BOTH functional code AND tier-1 markdown changes | Behavioral tests on the code changes | Gemini compares gold markdown vs agent diff |
+| `markdown_authoring` | PR's diff is **only** tier-1 markdown changes (no functional code) | Lightweight structural check — see below | Gemini compares gold markdown vs agent diff (this is the real eval signal) |
+
+**For `markdown_authoring` tasks, write `test.sh` like this:**
+- Pick 1-3 unique signal lines from the gold markdown (specific phrases the gold diff added — e.g., `name: <skill-name>` from frontmatter, a distinctive sentence, a heading).
+- `test.sh` greps for those lines in `/workspace/<repo>/<tier1_path>` and writes `1` to `/logs/verifier/reward.txt` if all are present, else `0`.
+- This gives a clean nop=0 / gold=1 oracle without requiring behavioral tests.
+- Populate `eval_manifest.yaml.config_edits` with the gold added/removed markdown chunks for Gemini's Track 2 semantic-diff judgment — that is the actual evaluation signal. Track 1 is a sanity gate.
+- `eval_manifest.yaml.checks` can be empty (or one structural pass_to_pass) for `markdown_authoring`.
+
+**For `code_with_config`,** scaffold the behavioral tests as for `code_fix` AND populate `config_edits` with the markdown delta. Both tracks score.
 
 #### Dockerfile — reproducibility rules
 
@@ -200,10 +224,70 @@ The template test.sh is standardized boilerplate. It installs pytest, runs test_
 
 #### eval_manifest.yaml
 
-- Fill in source PR metadata
-- One `check` entry per `def test_*` function in test_outputs.py (keep ids in sync)
-- Add `source` refs for all `agent_config` checks
-- Add rubric rules from agent config files. Every soft/subjective rule from CLAUDE.md, AGENTS.md, SKILL.md etc. that is relevant to this PR's changes MUST become a rubric entry with source ref. If the repo has agent configs, the rubric section MUST NOT be empty — extract at least 2-3 rules. Only leave `rubric: []` if the repo has NO agent config files at all.
+**The schema is enforced by Pydantic in `taskforge/models.py` — these field names and enum values are NOT optional.** Use exactly these names, in this shape:
+
+```yaml
+version: "2.0"
+
+source:                          # toplevel — NOT under metadata.source_pr
+  repo: "{{OWNER}}/{{REPO}}"
+  pr: {{PR_NUMBER}}
+  base_commit: "{{BASE_COMMIT}}"
+  merge_commit: "{{MERGE_COMMIT}}"
+
+task:
+  kind: code_fix                 # one of: code_fix | code_with_config | markdown_authoring
+
+checks:
+  - id: <slug>
+    type: fail_to_pass            # fail_to_pass | pass_to_pass — ONLY these two
+    origin: pr_diff               # pr_diff | repo_tests | agent_config | static — ONLY these four
+    description: "<one line>"
+    source:                       # REQUIRED iff origin == agent_config
+      path: "AGENTS.md"           # NOT `file:` — the field is `path`
+      lines: "30"                 # numeric line or range like "30-35" — NOT a section name
+      commit: "{{BASE_COMMIT}}"
+
+config_edits:                     # REQUIRED for code_with_config & markdown_authoring kinds
+  - path: "AGENTS.md"             # NOT `file:`
+    tier: 1                       # 1 = agent instruction, 2 = doc
+    gold_added: "<lines added>"   # NOT `added:`
+    gold_removed: "<lines removed>"  # NOT `removed:`
+
+rubric:
+  - rule: "<verbatim text from agent config>"   # NOT `description:` — the field is `rule`
+    source:
+      path: "AGENTS.md"
+      lines: "45"
+      commit: "{{BASE_COMMIT}}"
+    evidence: "<how gold demonstrates this>"
+    category: "naming"            # naming | style | architecture | testing | etc.
+    verification: llm_judge       # programmatic | llm_judge | semantic_diff
+
+distractors:                      # negative rubric — collisions to ignore
+  - rule: "<verbatim text>"
+    source: { path: "...", lines: "...", commit: "..." }
+    collision_type: rule_conflict # rule_conflict | scope_ambiguity | meta_confusion | architecture_boundary | would_cause_bug
+    why_distracting: "<one line>"
+    severity: medium              # high | medium | low
+```
+
+**Common drift to AVOID** (we have hundreds of legacy tasks with these mistakes — don't add to the pile):
+- ❌ Inventing new `origin:` values (e.g. `task_specific`, `pr_behavior`, `gold_diff`). The four canonical values are exhaustive — pick the closest match. Behavioral PR tests are `pr_diff`. Pre-existing repo tests are `repo_tests`. Anti-stub / syntax gates are `static`.
+- ❌ Using `file:` instead of `path:` (anywhere — checks, rubric, config_edits)
+- ❌ Using `description:` for rubric items instead of `rule:`
+- ❌ Putting `lines:` as a section name like `"Intent Layer Maintenance"` — it must be a line number or range.
+- ❌ Putting source PR metadata under `metadata.source_pr` instead of toplevel `source`.
+- ❌ Leaving `rubric: []` when applicable agent-config files exist with relevant rules.
+- ❌ Omitting `distractors:` — every code_with_config task should ship at least 1-2 distractor rules.
+
+The agent that runs YOU does not see CLAUDE.md, only this prompt. The Pydantic model in `taskforge/models.py` is the single source of truth — what's written above mirrors it exactly.
+
+**Other manifest authoring rules:**
+- Fill in source PR metadata (the toplevel `source:` block) from the PR fetch in Step 1.
+- One `check:` entry per `def test_*` function in test_outputs.py (keep ids in sync).
+- Add `source:` refs for ALL `agent_config` checks (Pydantic enforces this).
+- Every soft/subjective rule from CLAUDE.md, AGENTS.md, SKILL.md etc. that is relevant to this PR's changes MUST become a rubric entry with source ref. If the repo has agent configs, the rubric section MUST NOT be empty — extract at least 2-3 rules. Only leave `rubric: []` if the repo has NO agent config files at all.
 
 #### instruction.md — WRITE THIS LAST
 
@@ -351,13 +435,28 @@ Self-audit:
 
 ### 8. Write final verdict
 
-Before writing the verdict, do two final mechanical checks:
+Before writing the verdict, do these final mechanical checks:
 
-1. **eval_manifest schema** must be **`version: "2.0"`** (string, with quotes)
-   at the top of the file. Run:
+1. **eval_manifest.yaml MUST exist**. If you skipped it, go back and write it now — the task is worthless without a manifest.
    ```bash
-   grep -q '^version: "2.0"' /workspace/task/eval_manifest.yaml || \
-     sed -i '1i version: "2.0"\n' /workspace/task/eval_manifest.yaml
+   test -f /workspace/task/eval_manifest.yaml || echo "MISSING — write it now"
+   ```
+
+2. **eval_manifest schema must validate** against the canonical Pydantic model. Run:
+   ```bash
+   cd /workspace && python3 -c "
+   import yaml
+   from taskforge.models import EvalManifest
+   data = yaml.safe_load(open('/workspace/task/eval_manifest.yaml').read())
+   EvalManifest.model_validate(data)
+   print('SCHEMA OK')
+   "
+   ```
+   If that errors, **read the error carefully and fix the manifest** — the most common drifts are listed in section 4 (eval_manifest.yaml). Re-run until it prints `SCHEMA OK`. Do NOT proceed to write `scaffolded: true` until the schema passes — the pipeline will reject your work otherwise.
+
+3. **task.toml** is required (not just instruction.md + tests). Verify it exists.
+   ```bash
+   test -f /workspace/task/task.toml || echo "MISSING task.toml"
    ```
 2. **No scratch files in tests/**. The only files allowed in
    `/workspace/task/tests/` are `test.sh`, `test_outputs.py`,

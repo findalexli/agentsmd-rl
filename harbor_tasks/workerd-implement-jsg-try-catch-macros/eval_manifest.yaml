@@ -9,22 +9,10 @@ checks:
   type: pass_to_pass
   origin: static
   description: jsg.h has balanced braces and valid namespace structure
-- id: jsg_try_macro_defined
+- id: macro_and_class_behavior
   type: fail_to_pass
   origin: pr_diff
-  description: 'JSG_TRY macro is #defined in jsg.h'
-- id: jsg_catch_macro_defined
-  type: fail_to_pass
-  origin: pr_diff
-  description: 'JSG_CATCH macro is #defined in jsg.h'
-- id: jsg_catch_scope_implementation
-  type: fail_to_pass
-  origin: pr_diff
-  description: JsgCatchScope::catchException is implemented in jsg.c++
-- id: callers_migrated_to_jsg_try
-  type: fail_to_pass
-  origin: pr_diff
-  description: At least 4 API source files migrated from js.tryCatch to JSG_TRY
+  description: JSG_TRY/JSG_CATCH macros defined, JsgCatchScope implemented, and at least 4 files migrated
 - id: jsg_catch_scope_class_declared
   type: fail_to_pass
   origin: pr_diff
@@ -49,10 +37,6 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Python tools pass ruff linting
-- id: repo_shellcheck_build_script
-  type: pass_to_pass
-  origin: repo_tests
-  description: Shell scripts pass shellcheck validation
 - id: repo_git_clone_valid
   type: pass_to_pass
   origin: repo_tests

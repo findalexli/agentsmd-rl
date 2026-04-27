@@ -4,12 +4,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-16T10:55:28.658989",
-  "total_time": 85.14,
-  "sandbox_id": "i2jmbku93y5j8lo9t9qv4",
-  "backend": "anthropic",
+  "validated_at": "2026-04-22T03:08:11.464882",
+  "total_time": 17901.32,
+  "sandbox_id": "iihn37pgxoijcqbwq9gdp",
+  "backend": "minimax",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "fix_quality",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -29,11 +29,11 @@
       "status": "pass",
       "nop_reward": 0.0,
       "gold_reward": 1.0,
-      "attempts": 1,
-      "notes": "All validation checks passed: Docker build OK, NOP test correctly returns 0 (4 f2p tests fail on buggy code), Gold test returns 1 (all 28 tests pass after fix). Rubric judge requires API keys (returns 0.0 without).",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 139.97
+      "attempts": 2,
+      "notes": "Docker build OK, NOP test returns 0 (4 f2p tests fail on buggy code), Gold test returns 1 (all 29 tests pass after fix). Rubric judge returns 0.0 because /workspace/task is not a git repo and get_diff() returns empty - infrastructure issue, not test quality issue. Gold container has proper git history and diff.",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 258.95
     },
     "rubric_judge": {
       "status": "pass",
@@ -54,67 +54,75 @@
     },
     "quality_gate": {
       "status": "DELETE",
-      "model": "claude-opus-4-7",
-      "backend": "anthropic",
-      "time": 0.24,
-      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:2', 'A:[A] test_not_tautological @ tests/test_outputs.py:239: test `test_repo_package_json_valid` has 1 assert(s), all pass on ', 'A:[A] test_not_tautological @ tests/test_outputs.py:256: test `test_repo_typos_toml_valid` has 1 assert(s), all pass on a ']"
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.59,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:2', 'A:[A] test_not_tautological @ tests/test_outputs.py:208: test `test_repo_package_json_valid` has 1 assert(s), all pass on ', 'A:[A] test_not_tautological @ tests/test_outputs.py:225: test `test_repo_typos_toml_valid` has 1 assert(s), all pass on a ', 'lint_tier_b:1', 'B:[B] no_network_during_tests @ tests/test.sh:44: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 15.11,
+      "time": 15.33,
       "tier_a_fails": [
-        "tests_verify_behavior_not_text"
+        "tests_verify_behavior_not_text",
+        "test_not_tautological"
       ],
       "tier_b_fails": [],
-      "pass_count": 8,
-      "fail_count": 1
+      "pass_count": 7,
+      "fail_count": 2
     },
     "tests_rewrite": {
       "status": "error",
       "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":343,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 400 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"invalid_request_error\\\",\\\"message\\\":\\\"\\\\\\\"thinking.type.enabled\\\\\\\" is not supported for this model. Use \\\\\\\"thinking.type.adapt",
       "time": 2.11
+    },
+    "fix_quality": {
+      "status": "ok",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 1098.79,
+      "notes": ""
     }
   },
   "history": [
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "oauth",
-      "time": 335.54,
-      "at": "2026-04-15T12:41:20.469168"
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 11876.41,
+      "at": "2026-04-20T17:14:33.399829"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "minimax",
+      "time": 14021.71,
+      "at": "2026-04-21T13:14:51.939931"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 1082.12,
+      "at": "2026-04-21T13:53:10.506702"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "minimax",
-      "time": 1166.16,
-      "at": "2026-04-15T18:59:16.082360"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "oauth",
-      "time": 2383.9,
-      "at": "2026-04-15T20:50:15.951188"
+      "time": 11442.63,
+      "at": "2026-04-21T17:17:45.378632"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "minimax",
-      "time": 3163.56,
-      "at": "2026-04-15T22:30:16.396488"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "anthropic",
-      "time": 85.14,
-      "at": "2026-04-16T10:55:28.658989"
+      "time": 17901.32,
+      "at": "2026-04-22T03:08:11.464882"
     }
   ]
 }

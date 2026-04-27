@@ -4,12 +4,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-16T12:12:36.339204",
-  "total_time": 70.15,
-  "sandbox_id": "ihmtj5merjr3n3j1duf8n",
-  "backend": "anthropic",
+  "validated_at": "2026-04-22T03:22:12.131110",
+  "total_time": 18125.51,
+  "sandbox_id": "irb6wzkta4z6c74s6mgdp",
+  "backend": "minimax",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "fix_quality",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -36,18 +36,17 @@
       "nop_reward": 0.0,
       "gold_reward": 1.0,
       "attempts": 1,
-      "notes": "All validation checks passed. Docker build succeeded. NOP test correctly fails on base commit (vulnerable 1024-byte buffer present). Gold solution correctly applies the fix (stackFallback allocator with dupeZ and defer free). All tests pass on gold solution. Rubric judge failed with HTTP 429 rate limit error - infrastructure issue.",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 143.56,
-      "rubric_judge_status": "api_rate_limit"
+      "notes": "All 4 checks passed. Docker build succeeds. NOP test correctly fails on base commit (2 tests detect vulnerable 1024-byte buffer and missing memory cleanup). Gold solution passes all 13 tests. Rubric judge ICR=1.00 (3/3 rules pass).",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 422.41
     },
     "rubric_judge": {
-      "status": "fail",
+      "status": "pass",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
       "time": 1.23,
-      "notes": "ICR=0.50"
+      "notes": "ICR=1.00"
     },
     "rubric_quality_loop": {
       "status": "ok",
@@ -60,27 +59,34 @@
       "abandon_reason": ""
     },
     "quality_gate": {
-      "status": "passed",
-      "model": "claude-opus-4-7",
-      "backend": "anthropic",
-      "time": 0.21,
-      "notes": "flags=[]"
+      "status": "DELETE",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.39,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:4', 'A:[A] test_not_tautological @ tests/test_outputs.py:207: test `test_stack_fallback_allocator_used` has 1 assert(s), all pa', 'A:[A] test_not_tautological @ tests/test_outputs.py:226: test `test_dynamic_string_duplication` has 2 assert(s), all pass ', 'A:[A] test_not_tautological @ tests/test_outputs.py:247: test `test_memory_cleanup_with_defer` has 1 assert(s), all pass o', 'A:[A] test_not_tautological @ tests/test_outputs.py:265: test `test_allocation_and_cleanup_both_present` has 2 assert(s), ', 'lint_tier_b:1', 'B:[B] no_network_during_tests @ tests/test.sh:44: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 12.42,
+      "time": 12.09,
       "tier_a_fails": [
-        "no_solution_leakage",
-        "solution_uniqueness_guard"
+        "tests_verify_behavior_not_text",
+        "test_not_tautological"
       ],
       "tier_b_fails": [],
-      "pass_count": 6,
-      "fail_count": 3
+      "pass_count": 7,
+      "fail_count": 2
     },
     "tests_rewrite": {
       "status": "error",
       "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":445,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 400 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"invalid_request_error\\\",\\\"message\\\":\\\"\\\\\\\"thinking.type.enabled\\\\\\\" is not supported for this model. Use \\\\\\\"thinking.type.adapt",
       "time": 1.74
+    },
+    "fix_quality": {
+      "status": "ok",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 684.76,
+      "notes": ""
     }
   },
   "history": [
@@ -88,41 +94,41 @@
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
-      "backend": "fireworks",
-      "time": 3652.16,
-      "at": "2026-04-15T12:21:13.092540"
+      "backend": "minimax",
+      "time": 12872.71,
+      "at": "2026-04-21T12:55:44.098823"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
-      "backend": "oauth",
-      "time": 348.84,
-      "at": "2026-04-15T12:41:33.827555"
+      "backend": "chutes",
+      "time": 823.68,
+      "at": "2026-04-21T13:48:51.994517"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
-      "backend": "fireworks",
-      "time": 2748.31,
-      "at": "2026-04-15T20:55:57.332727"
+      "backend": "MiniMax-M2.7",
+      "time": 1.45,
+      "at": "2026-04-21T23:22:18.123456"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "minimax",
-      "time": 2311.71,
-      "at": "2026-04-15T22:16:04.331196"
+      "time": 9151.93,
+      "at": "2026-04-21T16:50:07.170140"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
-      "backend": "anthropic",
-      "time": 70.15,
-      "at": "2026-04-16T12:12:36.339204"
+      "backend": "minimax",
+      "time": 18125.51,
+      "at": "2026-04-22T03:22:12.131110"
     }
   ]
 }

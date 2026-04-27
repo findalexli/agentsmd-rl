@@ -5,7 +5,7 @@ source:
   base_commit: c8e45e79c699ef6df8847824833aeefab3b5767a
   merge_commit: f7bdf517ccb9d7ff9a1a71f6850ceeaa3f4085ef
 checks:
-- id: syntax_check
+- id: test_syntax_check
   type: pass_to_pass
   origin: static
   description: Modified files must parse without errors
@@ -61,34 +61,32 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: vllm_inference.py has no pylint errors
-- id: parse_args_default_max_num_seqs
+- id: test_parse_args_accepts_max_num_seqs_flag
   type: fail_to_pass
   origin: pr_diff
-  description: parse_known_args exposes --vllm_max_num_seqs with a reasonable int
-    default
-- id: parse_args_default_gpu_memory_utilization
+  description: parse_known_args accepts --vllm_max_num_seqs and parses it as int
+- id: test_parse_args_accepts_gpu_memory_utilization_flag
   type: fail_to_pass
   origin: pr_diff
-  description: parse_known_args exposes --vllm_gpu_memory_utilization with a reasonable
-    float default
-- id: parse_args_custom_overrides
+  description: parse_known_args accepts --vllm_gpu_memory_utilization and parses it
+    as float
+- id: test_parse_args_provides_sensible_defaults
   type: fail_to_pass
   origin: pr_diff
-  description: CLI flags accept custom values for max_num_seqs and gpu_memory_utilization
-- id: build_vllm_server_kwargs
+  description: parse_known_args provides sensible defaults for vLLM flags
+- id: test_kwargs_helper_returns_dict_with_server_flags
   type: fail_to_pass
   origin: pr_diff
   description: Helper builds a dict of vLLM server CLI flags from parsed args
-- id: build_vllm_server_kwargs_propagates_values
+- id: test_kwargs_helper_converts_numeric_values_to_strings
   type: fail_to_pass
   origin: pr_diff
-  description: build_vllm_server_kwargs converts numeric args to string CLI flags
-    correctly
-- id: run_accepts_vllm_server_kwargs
+  description: Helper converts numeric args to string CLI flags correctly
+- id: test_run_function_supports_external_kwargs
   type: fail_to_pass
   origin: pr_diff
   description: run() accepts a vllm_server_kwargs parameter for programmatic use
-- id: test_readme_documents_gpu_memory_settings
+- id: test_readme_documents_gpu_memory_constraints
   type: fail_to_pass
   origin: pr_diff
   description: README.md documents GPU memory constraints and vLLM tuning flags

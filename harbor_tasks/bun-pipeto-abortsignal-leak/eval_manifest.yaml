@@ -45,6 +45,10 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Required repo directories and build files exist
+- id: test_file_runs_without_error
+  type: fail_to_pass
+  origin: pr_diff
+  description: TypeScript regression test runs without error via bun test
 - id: test_cpp_pattern_compiles
   type: fail_to_pass
   origin: pr_diff
@@ -130,7 +134,7 @@ rubric:
     path: test/AGENTS.md
     lines: 19-19
   source_text: Use `bun:test` with files that end in `*.test.{ts,js,jsx,tsx,mjs,cjs}`.
-    If it's a test/js/node/test/{parallel,sequential}/\*.js without a .test.extension,
+    If it's a test/js/node/test/{parallel,sequential}/*.js without a .test.extension,
     use `bun bd <file>` instead of `bun bd test <file>` since those expect exit code
     0 and don't use bun's test runner.
   evidence: The new test file is named `pipeTo-signal-leak.test.ts` and imports `describe,
@@ -177,7 +181,6 @@ distractors:
     path: src/CLAUDE.md
     lines: 14-16
   source_text: '## Prefer Bun APIs over `std`
-
 
     **Always use `bun.*` APIs instead of `std.*`.** The `bun` namespace (`@import("bun")`)
     provides cross-platform wrappers that preserve OS error info and never use `unreachable`.

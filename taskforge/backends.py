@@ -36,13 +36,14 @@ class Backend:
     name: str
     base_url: str                          # "" → https://api.anthropic.com
     api_key: str
-    auth_type: Literal["x-api-key", "bearer"] = "x-api-key"
+    auth_type: Literal["x-api-key", "bearer", "openrouter"] = "x-api-key"
     api_format: Literal["anthropic", "openai"] = "anthropic"
     model_map: dict[str, str] = field(default_factory=dict)
     max_concurrent: int = 4
     cost_tier: int = 0                     # 0 free → 1 sub → 2 paid → 3 cheap-paid
     supports_direct: bool = True           # False for OAuth
     supports_subprocess: bool = True       # False for OpenAI-format without proxy
+    extra_env: dict[str, str] = field(default_factory=dict)  # backend-specific env passthrough (e.g. CLAUDE_CODE_EFFORT_LEVEL)
 
     def resolve_model(self, logical: str) -> str:
         return self.model_map.get(logical, logical)
@@ -76,6 +77,11 @@ class Backend:
             env["ANTHROPIC_BASE_URL"] = self.base_url
         if self.auth_type == "bearer":
             env["CLAUDE_ACCESS_TOKEN"] = self.api_key
+        elif self.auth_type == "openrouter":
+            # OpenRouter Anthropic-Skin: ANTHROPIC_API_KEY MUST be empty string
+            # to prevent Claude Code from preferring real Anthropic creds.
+            env["ANTHROPIC_AUTH_TOKEN"] = self.api_key
+            env["ANTHROPIC_API_KEY"] = ""
         else:
             env["ANTHROPIC_API_KEY"] = self.api_key
             env["ANTHROPIC_AUTH_TOKEN"] = self.api_key
@@ -85,7 +91,12 @@ class Backend:
         primary = self.model_map.get("opus") or self.model_map.get("sonnet") or ""
         if primary:
             env["ANTHROPIC_MODEL"] = primary
-            env["ANTHROPIC_SMALL_FAST_MODEL"] = primary
+            # Default SMALL_FAST_MODEL to the haiku slot if mapped, else fall
+            # back to primary. DeepSeek-style backends with separate flash
+            # variants want the cheaper one for subagents.
+            env["ANTHROPIC_SMALL_FAST_MODEL"] = self.model_map.get("haiku") or primary
+        # extra_env wins (e.g. CLAUDE_CODE_EFFORT_LEVEL=max for DeepSeek)
+        env.update(self.extra_env)
         return env
 
 
@@ -479,6 +490,49 @@ def backends_from_env(env_file: Path | None = None) -> list[Backend]:
         return _get(key) == "1"
 
     backends: list[Backend] = []
+
+    # DeepSeek V4 Pro via DeepSeek's native Anthropic-compatible endpoint.
+    # Handles thinking-block signature round-trip internally (OpenRouter does not).
+    # Set DEEPSEEK_ENABLED=1. Models overridable via DEEPSEEK_MODEL / DEEPSEEK_HAIKU.
+    #
+    # Model name conventions on DeepSeek's Anthropic shim:
+    #   - "deepseek-v4-pro[1m]" routes to the 1M-context variant (use this)
+    #   - "deepseek-v4-pro"     standard context
+    #   - "deepseek-v4-flash"   cheap fast model for subagents/haiku slot
+    # CLAUDE_CODE_EFFORT_LEVEL=max maximizes thinking budget per turn.
+    ds_key = _get("DEEPSEEK_API_KEY") or _get("deepseek_api_key")
+    if ds_key and _enabled("DEEPSEEK_ENABLED"):
+        ds_model = _get("DEEPSEEK_MODEL") or "deepseek-v4-pro[1m]"
+        ds_haiku = _get("DEEPSEEK_HAIKU") or "deepseek-v4-flash"
+        ds_effort = _get("DEEPSEEK_EFFORT_LEVEL") or "max"
+        backends.append(Backend(
+            name="deepseek",
+            base_url="https://api.deepseek.com/anthropic",
+            api_key=ds_key,
+            auth_type="x-api-key",
+            model_map={"opus": ds_model, "sonnet": ds_model, "haiku": ds_haiku},
+            max_concurrent=int(_get("DEEPSEEK_MAX_CONCURRENT") or 10),
+            cost_tier=1,
+            extra_env={
+                "CLAUDE_CODE_EFFORT_LEVEL": ds_effort,
+                "CLAUDE_CODE_SUBAGENT_MODEL": ds_haiku,
+            },
+        ))
+
+    # OpenRouter + DeepSeek V4 Pro via Anthropic-Skin (ANTHROPIC_API_KEY must be "")
+    # Set OPENROUTER_DEEPSEEK_ENABLED=1. Model overridable via OPENROUTER_DEEPSEEK_MODEL.
+    if _get("OPENROUTER_API_KEY") and _enabled("OPENROUTER_DEEPSEEK_ENABLED"):
+        ds_model = _get("OPENROUTER_DEEPSEEK_MODEL") or "deepseek/deepseek-v4-pro"
+        ds_haiku = _get("OPENROUTER_DEEPSEEK_HAIKU") or "deepseek/deepseek-v4-flash"
+        backends.append(Backend(
+            name="openrouter-deepseek",
+            base_url="https://openrouter.ai/api",
+            api_key=_get("OPENROUTER_API_KEY"),
+            auth_type="openrouter",
+            model_map={"opus": ds_model, "sonnet": ds_model, "haiku": ds_haiku},
+            max_concurrent=int(_get("OPENROUTER_DEEPSEEK_MAX_CONCURRENT") or 10),
+            cost_tier=1,
+        ))
 
     # GLM-5.1 — free via Z.AI Anthropic proxy (set GLM_ENABLED=1)
     if _get("GLM_API_KEY") and _enabled("GLM_ENABLED"):

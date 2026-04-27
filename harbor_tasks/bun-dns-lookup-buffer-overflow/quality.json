@@ -3,58 +3,54 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "instruction.md explicitly names the file src/bun.js/api/bun/dns.zig and the exact patterns the tests check for: 'std.heap.stackFallback(1024, bun.default_allocator)', 'name_allocator.dupeZ(u8, query.name)', 'defer name_allocator.free(name_z)', and the banned 'var name_buf: [1024]u8 = undefined'."
+      "reason": "instruction.md names the file src/bun.js/api/bun/dns.zig and the buffer pattern 'var name_buf: [1024]u8 = undefined' which is what tests assert on."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction dictates the exact literal patterns that must appear (e.g. 'std.heap.stackFallback(1024, bun.default_allocator)', 'name_allocator.dupeZ(u8, query.name)', 'defer name_allocator.free(name_z)'), which essentially spells out the fix including variable name 'name_allocator' and 'name_z'."
+      "outcome": "pass",
+      "reason": "Instruction describes the problem (no fixed buffer, use heap alloc, free memory) but doesn't give exact code changes."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests require literal strings like 'defer name_allocator.free(name_z)' and 'name_allocator.dupeZ(u8, query.name)' \u2014 a correct alternative fix using different variable names (e.g. 'allocator.dupeZ' or 'defer alloc.free(name)') would fail."
+      "outcome": "pass",
+      "reason": "Tests accept multiple allocation patterns (stackFallback, .alloc, arena.create, .dupeZ, .dupe, GeneralPurposeAllocator) scoped to the lookup function."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Most fail-to-pass tests are regex text checks on dns.zig (e.g. test_no_fixed_buffer_used, test_stack_fallback_allocator_used, test_dynamic_string_duplication); subprocess calls only run 'zig fmt --check' and 'zig ast-check', not behavioral DNS tests."
+      "reason": "Tests primarily do regex pattern matching on source text (e.g., _extract_lookup_fn_body + regex for 'stackFallback', 'var name_buf:[1024]u8'); zig ast-check only verifies parse, not runtime behavior against hostnames >1024 bytes."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "Tests require specific patterns to be present and absent in the real code (non-comment), so a stub wouldn't pass \u2014 though they're text-based, they do require the actual change."
+      "reason": "A stub/no-op cannot pass because test_no_fixed_buffer_used requires removing the buffer AND test_dynamic_allocation_in_lookup requires alloc patterns within the lookup fn body, plus test_lookup_function_has_real_logic guards against empty stubs."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All three required patterns from the instruction (stackFallback, dupeZ, defer free) and the banned fixed buffer pattern are tested."
+      "reason": "Tests check removal of fixed buffer, presence of dynamic alloc, and (likely) defer/free patterns matching the three instruction requirements."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are grouped by comment banners into pass-to-pass static, repo_tests, and fail-to-pass sections with descriptive docstrings."
+      "reason": "Tests are grouped with comment headers (pass-to-pass static, repo_tests, fail-to-pass pr_diff) and descriptive names."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data."
+      "reason": "Task is a code fix, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "Filenames and patterns in instruction.md match those used in tests and solution."
+      "reason": "Paths and commands appear correct (src/bun.js/api/bun/dns.zig, zig ast-check, zig fmt)."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md names the exact file 'src/bun.js/api/bun/dns.zig' and the exact literal patterns to insert, leaving nothing to localize or design."
+      "outcome": "pass",
+      "reason": "Instruction names the file but localization of the specific lookup function within it is left to the agent; the 1024 size is part of the bug description."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "Not a config-edit task."
+      "reason": "This is a code fix task, not an agentmd/config edit."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 5,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 1
 }

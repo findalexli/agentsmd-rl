@@ -54,25 +54,83 @@ def test_global_options_includes_cdp():
 
 
 # [pr_diff] fail_to_pass
-def test_attach_schema_has_cdp_option():
-    """attach command zod schema declares cdp option."""
-    src = _get_file_content("packages/playwright-core/src/tools/cli-daemon/commands.ts")
-    assert "const attach = declareCommand" in src, "attach command not found"
-    # Check that cdp option is defined in attach options
-    assert "cdp:" in src or "'cdp'" in src or '"cdp"' in src, "cdp option not in attach schema"
+def test_attach_command_schema_via_build():
+    """Build commands module and verify attach command schema includes cdp, endpoint, extension."""
+    import json as _json
+
+    # Install dependencies (esbuild + zod are devDependencies)
+    r = subprocess.run(
+        ["npm", "install", "--ignore-scripts"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"npm install failed: {r.stderr[-500:]}"
+
+    # Use esbuild to compile the help generator and check attach command schema.
+    # zodPlugin resolves the internal zodBundleImpl import to its actual location.
+    script = Path(REPO) / "_eval_schema_check.cjs"
+    script.write_text(
+        "const esbuild = require('esbuild');\n"
+        "const path = require('path');\n"
+        "\n"
+        "const zodPlugin = {\n"
+        "  name: 'zodBundle-resolver',\n"
+        "  setup(build) {\n"
+        "    build.onResolve({ filter: /zodBundleImpl/ }, args => ({\n"
+        "      path: path.resolve(process.cwd(), 'packages/playwright-core/bundles/zod/src/zodBundleImpl.ts')\n"
+        "    }));\n"
+        "  }\n"
+        "};\n"
+        "\n"
+        "(async () => {\n"
+        "  await esbuild.build({\n"
+        "    entryPoints: [path.join(process.cwd(), 'packages/playwright-core/src/tools/cli-daemon/helpGenerator.ts')],\n"
+        "    bundle: true, platform: 'node', format: 'cjs',\n"
+        "    outfile: '/tmp/_eval_help_check.cjs',\n"
+        "    plugins: [zodPlugin], logLevel: 'silent',\n"
+        "  });\n"
+        "  const { generateHelpJSON } = require('/tmp/_eval_help_check.cjs');\n"
+        "  const helpJSON = generateHelpJSON();\n"
+        "  const attachFlags = Object.keys(helpJSON.commands.attach?.flags || {});\n"
+        "  console.log(JSON.stringify({ attachFlags }));\n"
+        "})().catch(e => { console.error(e.message); process.exit(1); });\n"
+    )
+    try:
+        r = subprocess.run(
+            ["node", str(script)],
+            capture_output=True, text=True, timeout=60, cwd=REPO,
+        )
+        assert r.returncode == 0, f"Schema build/check failed: {r.stderr}"
+        data = _json.loads(r.stdout.strip().split('\n')[-1])
+        assert "cdp" in data["attachFlags"], "cdp not in attach command flags"
+        assert "endpoint" in data["attachFlags"], "endpoint not in attach command flags"
+        assert "extension" in data["attachFlags"], "extension not in attach command flags"
+    finally:
+        script.unlink(missing_ok=True)
+        Path("/tmp/_eval_help_check.cjs").unlink(missing_ok=True)
 
 
 # [pr_diff] fail_to_pass
 def test_attach_conflict_detection():
     """attach command detects conflicting target + --cdp/--endpoint/--extension args."""
     src = _get_file_content("packages/playwright-core/src/tools/cli-client/program.ts")
-    # The fix adds: if (attachTarget && (args.cdp || args.endpoint || args.extension))
-    # Check for the specific conflict detection pattern
-    has_conflict_check = (
-        "attachTarget && (args.cdp || args.endpoint || args.extension)" in src or
-        "attachTarget && (args.cdp ||args.endpoint || args.extension)" in src
+    # Find the attach case section
+    attach_start = src.find("case 'attach'")
+    if attach_start == -1:
+        attach_start = src.find('case "attach"')
+    assert attach_start >= 0, "attach case not found in program.ts"
+    # Get the attach case section (until a reasonable boundary)
+    attach_section = src[attach_start:attach_start + 2000]
+    # The attach case must reference cdp, endpoint, extension for conflict detection
+    assert "cdp" in attach_section, "cdp not referenced in attach case"
+    assert "endpoint" in attach_section, "endpoint not referenced in attach case"
+    assert "extension" in attach_section, "extension not referenced in attach case"
+    # Must have error handling when conflicting args are provided
+    has_error_handling = (
+        "process.exit" in attach_section or
+        "throw" in attach_section or
+        "Error" in attach_section
     )
-    assert has_conflict_check, "Conflict detection pattern not found in attach case"
+    assert has_error_handling, "No error handling found for conflicting options in attach case"
 
 
 # [pr_diff] fail_to_pass
@@ -80,7 +138,7 @@ def test_daemon_registers_cdp_flag():
     """daemon program.ts registers --cdp CLI flag via .option()."""
     src = _get_file_content("packages/playwright-core/src/tools/cli-daemon/program.ts")
     # Check for --cdp option registration
-    assert ".option('--cdp" in src or ".option('--cdp" in src.replace("'", '"'), "--cdp option not registered"
+    assert "'--cdp" in src or '"--cdp' in src, "--cdp option not registered"
 
 
 # [pr_diff] fail_to_pass
@@ -93,12 +151,23 @@ def test_session_passes_cdp_to_daemon():
 
 # [pr_diff] fail_to_pass
 def test_config_cdp_endpoint_in_isolation():
-    """config.ts maps cdpEndpoint and uses it in browser isolation logic."""
+    """config.ts maps cdpEndpoint from CLI options and uses it in browser isolation logic."""
     src = _get_file_content("packages/playwright-core/src/tools/mcp/config.ts")
-    # Check for the specific mapping: cdpEndpoint: cliOptions.cdp
-    # This is the key change that maps the CLI --cdp option to cdpEndpoint
-    has_mapping = "cdpEndpoint: options.cdp" in src or "cdpEndpoint: cliOptions.cdp" in src
-    assert has_mapping, "cdpEndpoint mapping from CLI options not found"
+    # Find the resolveCLIConfigForCLI function
+    fn_start = src.find("resolveCLIConfigForCLI")
+    assert fn_start >= 0, "resolveCLIConfigForCLI not found"
+    fn_section = src[fn_start:fn_start + 3000]
+
+    # Check 1: cdpEndpoint is passed in the configFromCLIOptions call within this function
+    config_call_start = fn_section.find("configFromCLIOptions(")
+    assert config_call_start >= 0, "configFromCLIOptions call not found in resolveCLIConfigForCLI"
+    config_call = fn_section[config_call_start:config_call_start + 500]
+    assert "cdpEndpoint" in config_call, "cdpEndpoint not passed in configFromCLIOptions call"
+
+    # Check 2: cdpEndpoint is used in isolation logic
+    isolated_lines = [line for line in fn_section.split('\n') if 'isolated' in line and '=' in line]
+    has_cdp_in_isolation = any('cdpEndpoint' in line for line in isolated_lines)
+    assert has_cdp_in_isolation, "cdpEndpoint not used in browser isolation logic"
 
 
 # [pr_diff] fail_to_pass

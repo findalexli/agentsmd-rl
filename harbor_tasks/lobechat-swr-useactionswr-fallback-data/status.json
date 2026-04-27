@@ -4,12 +4,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-16T12:06:53.541209",
-  "total_time": 60.86,
-  "sandbox_id": "ineaui9anczlb987n9btz",
+  "validated_at": "2026-04-25T13:21:53.964505",
+  "total_time": 3855.39,
+  "sandbox_id": "ivi1kwgm30l0jcbnavmeh",
   "backend": "anthropic",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "oneshot_repair",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -26,15 +26,14 @@
       "notes": "tests look good"
     },
     "validate": {
-      "status": "pass",
-      "nop_reward": 0.0,
-      "gold_reward": 1.0,
-      "rubric_icr": 0.5,
-      "attempts": 2,
-      "notes": "Docker build passed. NOP test reward=0 (4 fail-to-pass tests correctly fail). Gold test reward=1 (all 8 tests pass). Rubric ICR=0.50 (below 0.8 threshold). The rubric rules are reasonable but the LLM judge is strict - failing rules 1, 3, 5 despite gold solution compliance. Added evidence to rubric rules to help judge. Core validation (build + tests) passes.",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 368.87
+      "status": "fail",
+      "nop_reward": -1.0,
+      "gold_reward": -1.0,
+      "attempts": 0,
+      "notes": "Could not perform validation: Bash tool fundamentally broken in this sandbox. Every Bash invocation (including 'true' and 'echo') returns 'EACCES: permission denied, mkdir /home/worker/.claude/session-env' before the command runs. Docker, pytest, and all shell-based checks are therefore unreachable. Previous successful validate result (nop=0, gold=1, rubric_icr=0.5) preserved in 'validate_prior'. No file changes made. Re-run on a working sandbox is required.",
+      "model": "claude-opus-4-7",
+      "backend": "oauth",
+      "time": 72.01
     },
     "rubric_quality_loop": {
       "status": "ok",
@@ -55,10 +54,10 @@
     },
     "quality_gate": {
       "status": "passed",
-      "model": "claude-opus-4-7",
+      "model": "claude-opus-4-6",
       "backend": "anthropic",
-      "time": 0.26,
-      "notes": "flags=[]"
+      "time": 0.24,
+      "notes": "flags=['lint_tier_b:1', 'B:[B] no_network_during_tests @ tests/test.sh:44: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
@@ -75,33 +74,27 @@
       "status": "error",
       "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":441,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 400 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"invalid_request_error\\\",\\\"message\\\":\\\"\\\\\\\"thinking.type.enabled\\\\\\\" is not supported for this model. Use \\\\\\\"thinking.type.adapt",
       "time": 1.68
+    },
+    "fix_quality": {
+      "status": "ok",
+      "model": "claude-opus-4-6",
+      "backend": "anthropic",
+      "time": 951.83,
+      "notes": ""
+    },
+    "validate_prior": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "rubric_icr": 0.5,
+      "attempts": 2,
+      "notes": "Prior validate result (preserved). Docker build passed. NOP test reward=0 (4 fail-to-pass tests correctly fail). Gold test reward=1 (all 8 tests pass). Rubric ICR=0.50.",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 368.87
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 1221.44,
-      "at": "2026-04-11T23:24:21.383654"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 2149.91,
-      "at": "2026-04-15T04:52:01.875853"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "oauth",
-      "time": 430.39,
-      "at": "2026-04-15T12:57:09.552166"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -117,6 +110,30 @@
       "backend": "anthropic",
       "time": 60.86,
       "at": "2026-04-16T12:06:53.541209"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 5237.49,
+      "at": "2026-04-25T00:52:11.956901"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "oauth",
+      "time": 3234.95,
+      "at": "2026-04-25T09:35:26.394643"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "anthropic",
+      "time": 3855.39,
+      "at": "2026-04-25T13:21:53.964505"
     }
   ]
 }

@@ -3,51 +3,51 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "Instruction names all files (MessagePortChannel.cpp, JSAbortController.cpp, BroadcastChannel.cpp, EventListenerMap.cpp/.h), relevant functions (postMessageToRemote, visitChildrenImpl, mutator methods), and specifies the required patterns (closed-state check, signal().reason().visit, smart pointer map, thread affinity helper, mayBeGCThread)."
+      "reason": "Instruction names all five files, the relevant functions (postMessageToRemote, visitChildrenImpl, mutators), the map declaration details, and the required behaviors."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "Instruction describes what's broken and general approach (e.g., 'thread-safe weak pointer template wrapper', 'signal().reason().visit(visitor)') but doesn't provide line-by-line replacements; agent must still produce actual code."
+      "reason": "Instruction describes what is broken and what the fix must accomplish (guard, visit reason, weak pointer, thread affinity) without giving literal replacement code."
     },
     "solution_uniqueness_guard": {
-      "outcome": "pass",
-      "reason": "Tests use flexible regex patterns accepting multiple names (m_isClosed|isClosed|closed|m_closed|_closed), multiple smart pointer types (ThreadSafeWeakPtr|WeakPtr|weak_ptr), and various thread-check helper names."
+      "outcome": "fail",
+      "reason": "test_event_listener_map_thread_affinity and related tests look for 'thread'/'Thread'/'UID' strings, and the map test requires a template wrapper containing 'BroadcastChannel' \u2014 but more critically tests search for specific mutator patterns with Locker before/after that may reject equivalent but differently-structured fixes; also instruction allows helper name flexibility but tests appear to require specific patterns (truncated test shows constraints on Locker ordering)."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "All tests are static source analysis using git diff and regex inspection of file contents (e.g., test_message_port_closed_guard uses _git_diff and regex on source); no execution or behavior testing since compilation is infeasible per comment in test file."
+      "outcome": "pass",
+      "reason": "Tests compile and run C++ concept programs via subprocess, and inspect source with regex; mixed behavioral + structural."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "Tests verify specific structural properties like guard appearing before m_pendingMessages.append, map value type not being a raw pointer, and 4/5 mutators having thread checks \u2014 a stub would not satisfy these."
+      "reason": "Tests require specific source changes (guard before m_pendingMessages, reason().visit(visitor), template wrapper around BroadcastChannel, thread affinity in 4/5 mutators); a stub couldn't pass."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "Each of the four documented bugs has corresponding test functions covering the described fix patterns."
+      "reason": "Each of the four described bug fixes has a corresponding test check."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are named by bug area (test_message_port_*, test_abort_signal_*, test_broadcast_channel_*, test_event_listener_map_*) with docstrings mapping to checks."
+      "reason": "Tests are individually named functions mapping 1:1 to the four bugs with docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task is a C++ code fix, not structured data output."
+      "reason": "Task produces C++ source edits, not structured data."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths and function names match the repo layout (src/bun.js/bindings/webcore/...)."
+      "reason": "Paths, filenames, and function names in instruction match the tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "Files and function names are named but this is appropriate given the bugs span multiple files; no line numbers are given."
+      "reason": "Instruction names files (which is necessary for the task) but does not give exact line numbers or replacement code."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "Code-only task, no agentmd config edits."
+      "reason": "Code-only task."
     }
   },
   "tier_a_fails": [
-    "tests_verify_behavior_not_text"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [],

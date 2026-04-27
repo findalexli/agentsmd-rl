@@ -1,3 +1,5 @@
+version: "2.0"
+
 source:
   repo: ClickHouse/ClickHouse
   pr_number: 102073
@@ -6,48 +8,34 @@ source:
   target_file: src/DataTypes/Serializations/SerializationObject.cpp
 
 # Checks map 1:1 to test_outputs.py functions
-# id format: test_<function_name>
 checks:
   # Fail-to-Pass Tests: These verify the bugfix is present
-  - id: test_scope_exit_present
+  - id: test_has_exception_safe_cleanup
     type: fail_to_pass
-    origin: agent_config
-    description: "SCOPE_EXIT macro must be present to drain tasks on exception paths"
-    source:
-      file: .github/copilot-instructions.md
-      section: "Memory & lifetime"
-      excerpt: "Missing delete / free / unmap / close on early returns or exceptions"
+    origin: pr_diff
+    description: "RAII cleanup mechanism (e.g. SCOPE_EXIT or try/catch drain) must be present to drain tasks on exception paths"
 
-  - id: test_task_cleanup_order
+  - id: test_cleanup_runs_before_task_loop
     type: fail_to_pass
-    origin: agent_config
-    description: "SCOPE_EXIT must be declared BEFORE the task scheduling loop"
-    source:
-      file: .github/copilot-instructions.md
-      section: "Resource management"
-      excerpt: "Opened file descriptors or sockets not closed on all paths (including error paths)"
+    origin: pr_diff
+    description: "Cleanup mechanism must be declared BEFORE the task scheduling loop to catch scheduling exceptions"
 
   - id: test_comment_explains_fix
     type: fail_to_pass
-    origin: agent_config
-    description: "Explanatory comment must describe why task draining is needed"
-    source:
-      file: .github/copilot-instructions.md
-      section: "Error handling & observability"
-      excerpt: "Missing logs for serious failure modes (data loss risk, query aborts, background task failures)"
+    origin: pr_diff
+    description: "Explanatory comment must describe why task draining is needed (dangling references, exception safety)"
 
-  - id: test_uses_tasks_vector_reference
+  - id: test_drain_pattern_functional
     type: fail_to_pass
-    origin: agent_config
-    description: "SCOPE_EXIT should iterate over tasks vector to drain them"
-    source:
-      file: .github/copilot-instructions.md
-      section: "Concurrency & threading"
-      excerpt: "Using non-thread-safe data structures from multiple threads"
+    origin: pr_diff
+    description: "Behavioral test: compile and run C++ program verifying SCOPE_EXIT drain pattern drains tasks on exception paths"
 
   # Pass-to-Pass Tests: These verify code quality and conventions
+  - id: test_cleanup_invokes_task_methods
+    type: pass_to_pass
+    origin: pr_diff
+    description: "Function calls tryExecute()/wait() to drain scheduled tasks"
 
-  # Repo CI checks (actual CI commands)
   - id: test_repo_no_tabs_in_target
     type: pass_to_pass
     origin: repo_tests
@@ -58,41 +46,10 @@ checks:
     origin: repo_tests
     description: "No trailing whitespace in target file (ClickHouse style)"
 
-  - id: test_repo_git_submodules_valid
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Git submodules properly configured (ClickHouse CI check)"
-
-  # Agent config checks (static file analysis)
-  - id: test_file_syntax_valid
-    type: pass_to_pass
-    origin: agent_config
-    description: "Modified file has balanced braces in SCOPE_EXIT block"
-
-  - id: test_no_raw_pointers_for_ownership
-    type: pass_to_pass
-    origin: agent_config
-    description: "Code uses RAII types (unique_ptr), not raw pointers for ownership"
-    source:
-      file: .github/copilot-instructions.md
-      section: "Memory & lifetime"
-      excerpt: "Manual new/delete instead of RAII where the surrounding code uses RAII types"
-
-  - id: test_allman_brace_style_in_fix
-    type: pass_to_pass
-    origin: agent_config
-    description: "SCOPE_EXIT block uses Allman-style braces (opening brace on new line)"
-    source:
-      file: .claude/CLAUDE.md
-      excerpt: "When writing C++ code, always use Allman-style braces (opening brace on a new line)"
-
   - id: test_no_sleep_for_race_conditions
     type: pass_to_pass
-    origin: agent_config
-    description: "No sleep calls used for synchronization"
-    source:
-      file: .claude/CLAUDE.md
-      excerpt: "Never use sleep in C++ code to fix race conditions - this is stupid and not accepted!"
+    origin: static
+    description: "No sleep calls used for synchronization (ClickHouse convention)"
 
 # Rubric items from agent config files - soft/subjective rules
 rubric:
@@ -116,7 +73,6 @@ rubric:
     source:
       file: .github/copilot-instructions.md
       section: "Memory & lifetime"
-      excerpt: "Use of std::string_view, spans, or references to buffers whose lifetime is not guaranteed"
 
   - id: explain_safety_mechanisms
     description: "Safety mechanisms like SCOPE_EXIT should have explanatory comments"

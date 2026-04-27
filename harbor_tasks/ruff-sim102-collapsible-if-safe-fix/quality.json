@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "Instruction mentions the SIM102 rule, flake8_simplify module, and preview module; the function name 'is_collapsible_if_fix_safe_enabled' is inferable from the description of a preview-aware gating function, though not explicit."
+      "reason": "Instruction names SIM102, preview mode, the flake8_simplify rules module, and the preview module; the specific function name 'is_collapsible_if_fix_safe_enabled' is asserted by a test but the instruction's hint 'Preview mode gating functions are typically defined in the preview module' guides the agent, though the exact name is not specified \u2014 however this is a reasonable naming derivable from convention."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "Instruction describes what to change (safety applicability gated by preview) without specifying exact code or lines."
+      "reason": "Instruction describes the desired behavior (preview-aware safe applicability) without specifying exact code changes, function names to add, or line numbers to modify."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_preview_function_defined asserts the exact literal 'is_collapsible_if_fix_safe_enabled' in preview.rs, which is a gold-specific function name an alternative correct fix (e.g., different naming or inlined preview check) wouldn't necessarily share."
+      "reason": "test_preview_function_defined asserts the exact string 'is_collapsible_if_fix_safe_enabled' must exist in preview.rs; an alternative correct fix using a different function name (e.g., 'is_sim102_safe_fix_enabled') would fail this test even though it's behaviorally equivalent."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests build and execute ruff via subprocess and parse JSON output to verify applicability behavior."
+      "reason": "Tests run cargo build, invoke the ruff binary via subprocess, and parse JSON output to verify applicability behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "f2p tests verify actual applicability='safe' in JSON output from ruff execution, which requires implementing the fix."
+      "reason": "f2p tests require actual JSON output with 'safe' applicability from running ruff with --preview, which cannot be satisfied by a stub."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "Tests cover both preview=safe and non-preview=unsafe behaviors described in instruction."
+      "reason": "Tests cover preview=safe, no-preview=unsafe, and AGENTS.md constraints (no unwrap, imports at top)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests grouped by section headers (Gates, Fail-to-pass, Pass-to-pass, Config-derived) with clear docstrings."
+      "reason": "Tests are grouped under clear section comments (Gates, Fail-to-pass, Pass-to-pass, Config-derived) with docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task uses ruff's existing JSON output schema, not producing new structured data."
+      "reason": "Task modifies Rust code behavior, not a user-facing structured data schema."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "Paths and names are consistent and correct."
+      "reason": "File paths and commands are consistent and correct."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "Instruction points to module-level locations (flake8_simplify, preview module) without specifying exact lines."
+      "reason": "Instruction points to the relevant module (flake8_simplify, preview) without naming specific lines or the exact function to add."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "Code-only task, no agent config edits."
+      "reason": "This is a code-change task, not an agent-config-edit task."
     }
   },
   "tier_a_fails": [

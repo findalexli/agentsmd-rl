@@ -4,12 +4,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-16T09:26:38.891642",
-  "total_time": 898.59,
-  "sandbox_id": "i28foq5m54xibf254q6bi",
-  "backend": "fireworks",
+  "validated_at": "2026-04-25T10:31:59.975092",
+  "total_time": 6628.05,
+  "sandbox_id": "i8hnppoweroebkmcneqkf",
+  "backend": "ark-kimi-k2.6",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "fix_quality",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -36,11 +36,11 @@
       "status": "pass",
       "nop_reward": 0.0,
       "gold_reward": 1.0,
-      "attempts": 1,
-      "notes": "All validation steps passed. Minor fix needed: solve.sh version bump in client.ts caused prettier/eslint formatting issues, requiring 'pnpm run format' to pass test_typescript_client_stylecheck.",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 1039.71
+      "attempts": 2,
+      "notes": "All four validation checks passed. Docker build OK, NOP reward=0, Gold reward=1, Rubric ICR=1.00. Fixed judge.py schema mismatch bug where _call_gemini used rubric schema for config edits judge, causing config_edits score=0.00.",
+      "model": "kimi-k2.6",
+      "backend": "ark-kimi-k2.6",
+      "time": 1875.88
     },
     "rubric_judge": {
       "status": "pass",
@@ -61,14 +61,14 @@
     },
     "quality_gate": {
       "status": "passed",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 0.95,
-      "notes": "flags=[]"
+      "model": "kimi-k2.6",
+      "backend": "ark-kimi-k2.6",
+      "time": 0.48,
+      "notes": "flags=['lint_tier_b:1', 'B:[B] no_network_during_tests @ tests/test.sh:44: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 16.56,
+      "time": 14.16,
       "tier_a_fails": [
         "tests_verify_behavior_not_text"
       ],
@@ -80,48 +80,55 @@
       "status": "error",
       "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":104,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"Not logged in \u00b7 Please run /login\",\"stop_reason\":\"stop_sequence\",\"session_id\":\"a1da281c-1b42-4864-9770-cce6a4fe379b\",\"total_cost_usd\":0,\"usage\":{\"input_tokens\":0,\"cache_creation_input_t",
       "time": 1.38
+    },
+    "fix_quality": {
+      "status": "ok",
+      "model": "kimi-k2.6",
+      "backend": "ark-kimi-k2.6",
+      "time": 2113.12,
+      "notes": ""
     }
   },
   "history": [
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 820.84,
+      "at": "2026-04-21T22:23:04.089102"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
       "backend": "minimax",
-      "time": 2985.22,
-      "at": "2026-04-15T04:35:26.380750"
+      "time": 19072.76,
+      "at": "2026-04-22T04:03:36.294072"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 3883.59,
+      "at": "2026-04-25T00:29:38.086290"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 12104.17,
+      "at": "2026-04-25T03:52:14.631300"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
-      "backend": "oauth",
-      "time": 443.49,
-      "at": "2026-04-15T12:49:02.235662"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "oauth",
-      "time": 551.21,
-      "at": "2026-04-15T18:49:00.743334"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "glm",
-      "time": 4692.44,
-      "at": "2026-04-15T23:28:04.345695"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 898.59,
-      "at": "2026-04-16T09:26:38.891642"
+      "backend": "ark-kimi-k2.6",
+      "time": 6628.05,
+      "at": "2026-04-25T10:31:59.975092"
     }
   ]
 }

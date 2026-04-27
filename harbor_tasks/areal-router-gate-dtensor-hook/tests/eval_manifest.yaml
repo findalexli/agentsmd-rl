@@ -21,11 +21,13 @@ checks:
 - id: router_gate_linear_class_exists
   type: fail_to_pass
   origin: pr_diff
-  description: RouterGateLinear(nn.Linear) subclass exists in router.py
+  description: RouterGateLinear(nn.Linear) subclass exists in router.py and its forward
+    calls router_gating_linear — verified via AST analysis and type checking
 - id: gate_is_router_gate_linear
   type: fail_to_pass
   origin: pr_diff
-  description: router.gate is an instance of RouterGateLinear, not plain nn.Linear
+  description: router.gate is an nn.Linear subclass (not plain nn.Linear) and its
+    forward produces correct expert indices — behavior verified via actual router forward
 - id: state_dict_compat
   type: pass_to_pass
   origin: pr_diff

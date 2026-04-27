@@ -1,18 +1,18 @@
 checks:
-- id: test_session_renewal_in_retry_loop
+- id: test_session_renewal_behavior
   type: fail_to_pass
   origin: pr_diff
   description: Session renewal check (isRetry + getZooKeeper) exists inside retry
     loop
-- id: test_getobjectnames_inside_retry_loop
+- id: test_watches_registered_in_loop
   type: fail_to_pass
   origin: pr_diff
   description: getObjectNamesAndSetWatch is called inside retry loop, not before
-- id: test_current_zookeeper_variable_used
+- id: test_consistent_session_usage
   type: fail_to_pass
   origin: pr_diff
-  description: current_zookeeper variable is declared and used instead of stale parameter
-- id: test_session_renewal_pattern_complete
+  description: ZooKeeper operations use the same session variable consistently
+- id: test_session_refresh_complete
   type: fail_to_pass
   origin: pr_diff
   description: Complete session renewal pattern exists (isRetry check + assignment)

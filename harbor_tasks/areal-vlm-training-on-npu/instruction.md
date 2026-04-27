@@ -64,7 +64,6 @@ The repository must continue to pass all existing CI checks:
 - No wildcard imports in areal/
 - Ruff linting passes on areal/ and examples/
 - Ruff format check passes on areal/ and examples/
-- All C++ files pass clang-format check
 - All JSON files are valid
 - All Python files end with a newline
 - No trailing whitespace in Python files

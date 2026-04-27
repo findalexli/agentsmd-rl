@@ -5,12 +5,12 @@ source:
   base_commit: 49d063396f4c87bc7323be84fbd961b010a09460
   merge_commit: ff41b070947de43c1ab6b2e4ff65a960d3d7c974
 checks:
-- id: vite_config_valid_structure
+- id: test_vite_config_valid_structure
   type: pass_to_pass
   origin: static
   description: vite.config.ts must exist with valid structure (defineConfig, balanced
     braces)
-- id: jsx_runtime_alias_preserved
+- id: test_jsx_runtime_alias_preserved
   type: pass_to_pass
   origin: static
   description: Existing react/jsx-runtime.js alias must be preserved
@@ -39,22 +39,22 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Vite-plugin package builds successfully (dependency of workers-playground)
-- id: style_provider_cjs_alias
+- id: test_createRenderer_in_bundle
   type: fail_to_pass
   origin: pr_diff
-  description: '@cloudflare/style-provider must be aliased to its CJS build (lib/)
-    to avoid rolldown crash'
-- id: no_base_playground_option
+  description: Built bundle must include createRenderer from @cloudflare/style-provider
+    (no runtime TypeError)
+- id: test_static_resources_no_playground_prefix
   type: fail_to_pass
   origin: pr_diff
-  description: 'base: ''/playground'' must not be used — causes Wrangler asset path
-    mismatch'
-- id: assets_dir_playground
+  description: Static resources in generated HTML must not have a /playground/ prefix
+    (causes 404 in production)
+- id: test_js_css_assets_under_playground_dir
   type: fail_to_pass
   origin: pr_diff
-  description: assetsDir must route assets under playground/ for correct Wrangler
-    deployment
-- id: changeset_for_workers_playground
+  description: Built JS/CSS assets must be physically under dist/playground/ for correct
+    Wrangler deployment
+- id: test_changeset_for_workers_playground
   type: fail_to_pass
   origin: agent_config
   description: A changeset must exist for @cloudflare/workers-playground package changes

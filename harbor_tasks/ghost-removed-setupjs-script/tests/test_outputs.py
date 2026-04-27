@@ -393,18 +393,17 @@ print('CI_YAML_OK')
 def test_setup_script_removed():
     """The .github/scripts/setup.js file must be deleted.
 
-    BEHAVIORAL test: We verify the file removal by:
-    1. Checking the file path via file system operations
-    2. If node is available, verifying the script cannot be executed
-
-    This ensures the fix actually removes the dead code, not just hides it.
+    BEHAVIORAL test: We verify the file removal by checking:
+    1. The file does not exist on the filesystem
+    2. The .github/scripts/ directory still exists with other valid scripts
+    3. package.json no longer references setup.js
     """
     r = subprocess.run(
         ["python3", "-c", """
 import subprocess
 import sys
 import os
-import shutil
+import glob
 
 # BEHAVIOR 1: File system check - the file should not exist
 setup_js_path = '.github/scripts/setup.js'
@@ -412,19 +411,25 @@ if os.path.exists(setup_js_path):
     print('FAIL: setup.js file still exists on filesystem', file=sys.stderr)
     sys.exit(1)
 
-# BEHAVIOR 2: If node is available, verify the script cannot be executed
-# This catches cases where the file might exist under a different path
-node_available = shutil.which('node') is not None
-if node_available:
-    result = subprocess.run(
-        ['node', setup_js_path],
-        capture_output=True,
-        timeout=5
-    )
-    # The script should fail to run (exit code != 0 or file not found error)
-    if result.returncode == 0:
-        print('FAIL: setup.js still executes successfully', file=sys.stderr)
-        sys.exit(1)
+# BEHAVIOR 2: The scripts directory should still exist with other scripts
+scripts_dir = '.github/scripts'
+if not os.path.isdir(scripts_dir):
+    print('FAIL: .github/scripts/ directory is missing', file=sys.stderr)
+    sys.exit(1)
+
+remaining_scripts = glob.glob(os.path.join(scripts_dir, '*.js'))
+if len(remaining_scripts) == 0:
+    print('FAIL: all scripts were deleted, not just setup.js', file=sys.stderr)
+    sys.exit(1)
+
+# BEHAVIOR 3: Verify package.json no longer references setup.js
+result = subprocess.run(
+    ['grep', '-c', 'setup.js', 'package.json'],
+    capture_output=True, text=True, timeout=5
+)
+if result.returncode == 0 and result.stdout.strip() != '0':
+    print('FAIL: package.json still references setup.js', file=sys.stderr)
+    sys.exit(1)
 
 print('PASS')
 """],

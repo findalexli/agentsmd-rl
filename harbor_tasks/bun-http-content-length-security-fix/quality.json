@@ -1,61 +1,58 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert on implementation-specific details not mentioned in instruction.md: test_httpparser_has_duplicate_content_length_fix checks for 'mightHave(\"content-length\")' (bloom filter method), 'HTTP_PARSER_ERROR_INVALID_CONTENT_LENGTH' (specific error code), and 'strncmp(h->value.data())' or 'contentLengthString' (specific variable/function names). The instruction never mentions these identifiers. Also test_pr_comments_script_exists checks for 'gh api --paginate' and 'graphql' which are mention"
+      "outcome": "pass",
+      "reason": "instruction.md names test file paths, the three exact test names, package.json script key, CLAUDE.md section name, and JSON schema fields."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the problem (parser only inspects first Content-Length header) and the requirements (reject conflicting duplicates, reject empty values, accept identical duplicates) without specifying exact code changes, line numbers, or variable names to use."
+      "reason": "Instruction describes the bug (only first Content-Length inspected) and required behavior, without dictating specific code changes."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_httpparser_has_duplicate_content_length_fix asserts gold-specific implementation details: 'mightHave(\"content-length\")' (the bloom filter call), 'HTTP_PARSER_ERROR_INVALID_CONTENT_LENGTH' (specific error constant), and 'strncmp(h->value.data())' or 'contentLengthString' (specific variable name). An alternative correct fix using different variable names, different comparison methods, or a different error constant would fail these assertions."
+      "reason": "test_httpparser_iterates_all_content_length_headers requires a literal 'for...headers' regex match and HTTP_PARSER_ERROR_INVALID_CONTENT_LENGTH symbol; a correct fix using std::find_if, range-for, or a different error constant would fail."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Nearly all tests are pure text-matching: they read file contents and assert substrings (e.g., 'assert \"RFC 9112\" in content', 'assert \"mightHave\" in content', 'assert \"pr:comments\" in content'). No test compiles the C++ code, runs the HTTP server, executes the TypeScript script, or checks any runtime behavior. Every single test function uses only `Path.read_text()` and string assertions."
+      "outcome": "pass",
+      "reason": "Tests run `bun build` on scripts and test files, parse package.json JSON, and inspect content; partial behavioral execution is present."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "A stub pr-comments.ts file containing the right keywords ('gh api --paginate', 'graphql', 'resolved', 'import', 'async', 'await') without any real implementation would pass test_pr_comments_script_exists and test_pr_comments_script_typescript_valid. Similarly, adding the right string literals to HttpParser.h without a correct fix would pass test_httpparser_has_duplicate_content_length_fix. The tests only check for text presence, not behavior."
+      "outcome": "pass",
+      "reason": "Tests require existence of the parser fix patterns, valid TypeScript, and JSON parseability\u2014stubs would not pass."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "Instruction requires actual HTTP 400 rejection behavior for conflicting Content-Length headers, but no test verifies this runtime behavior. The tests only check that certain strings exist in source files. The security fix behavior (rejecting/accepting specific HTTP requests) is never tested."
+      "reason": "Instruction requires actual HTTP smuggling rejection behavior tests using Bun.serve/net.connect, but test_outputs.py only checks that test names exist as strings, not that the runtime behavior is verified; also no test checks --json flag of pr-comments."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings explaining what each test checks (e.g., 'config edit test', 'code edit test', 'pass_to_pass'), and are organized by concern (CLAUDE.md, package.json, script, parser, test file, syntax validation)."
+      "reason": "Tests have descriptive names and docstrings grouping by concern (parser, scripts, config)."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The instruction documents the JSON mode schema for pr:comments with specific fields: when, user, kind, location, body, url, resolved, outdated. This matches what the tests check for ('resolved' in content)."
+      "reason": "JSON schema fields (when, user, kind, location, body, url, resolved, outdated) listed in instruction.md."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "Paths and names are consistent across instruction and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction says 'Locate the HTTP parser code that handles the Content-Length header validation' without naming the specific file (HttpParser.h) or specific lines/functions. Finding the exact file is left to the agent."
+      "reason": "Instruction says 'Locate the HTTP parser code' without specifying file/line; localization remains the agent's job."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold config diffs are localized: appending a section to CLAUDE.md, adding one line to package.json scripts, and creating a new file. No full-file rewrites or contradictions with other files."
+      "reason": "package.json patch adds one line; CLAUDE.md appends a new section\u2014both localized."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "behavior_in_tests"
   ],
-  "pass_count": 6,
-  "fail_count": 5
+  "pass_count": 9,
+  "fail_count": 2
 }

@@ -5,9 +5,9 @@ source:
   base_commit: 8283b1260ba3eb187baf20727e739fbd8ba7bbf6
   merge_commit: a060fbf9f7ba603bb32ab9cf9da48bfa9d3739d2
 checks:
-- id: link_accordion_component_exists
+- id: test_link_accordion_component_exists
   type: pass_to_pass
-  origin: repo_tests
+  origin: static
   description: LinkAccordion component exists at expected path (pre-existing fixture)
 - id: test_repo_prettier_segment_cache
   type: pass_to_pass
@@ -45,60 +45,63 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo alex language linting passes on Next.js docs
-- id: hub_pages_structure
+- id: test_hub_pages_valid_tsx
   type: fail_to_pass
   origin: pr_diff
-  description: Hub pages (hub-a, hub-b, hub-c) exist with LinkAccordion, connection(),
-    and Suspense
-- id: stale_pages_link_to_hubs
+  description: New intermediate hub pages exist as valid TSX with correct imports and
+    default export
+- id: test_stale_pages_link_to_hub_pages
   type: fail_to_pass
   origin: pr_diff
-  description: Dynamic stale pages have LinkAccordion links to hub pages
-- id: test_uses_hub_navigation
+  description: Dynamic stale pages import LinkAccordion for controlled hub navigation
+- id: test_deflaked_test_forward_navigation
   type: fail_to_pass
   origin: pr_diff
-  description: Test navigates via hub pages instead of browser.back()
-- id: agents_md_router_act_rule
+  description: Flaky test uses forward navigation to intermediate pages instead of
+    browser.back()
+- id: test_agents_md_documents_pattern
   type: fail_to_pass
   origin: pr_diff
-  description: AGENTS.md documents the LinkAccordion/router-act rule with BFCache
-    warning
-- id: router_act_skill_created
+  description: AGENTS.md documents the LinkAccordion/router-act testing pattern
+- id: test_router_act_skill
   type: fail_to_pass
   origin: pr_diff
-  description: 'Router act SKILL.md exists with core patterns: LinkAccordion, hub
-    pages, no-requests, BFCache'
-- id: skill_documents_no_requests_pattern
-  type: fail_to_pass
-  origin: pr_diff
-  description: SKILL.md documents the no-requests assertion and includes matching
-    patterns
+  description: Router-act skill exists with frontmatter and key testing pattern documentation
 rubric:
-- rule: Router-act skill (.agents/skills/router-act/SKILL.md) is created with proper frontmatter (name, description, user-invocable) and comprehensive documentation covering LinkAccordion, hub pages, no-requests assertions, BFCache warnings, and fake clock setup.
+- rule: Router-act skill (.agents/skills/router-act/SKILL.md) is created with proper
+    frontmatter (name, description, user-invocable) and comprehensive documentation
+    covering LinkAccordion, hub pages, no-requests assertions, BFCache warnings, and
+    fake clock setup.
   source:
     path: .agents/skills/router-act/SKILL.md
     lines: 1-50
     commit: 8283b1260ba3eb187baf20727e739fbd8ba7bbf6
   category: documentation
-- rule: Hub pages (hub-a, hub-b, hub-c) are created in test/e2e/app-dir/segment-cache/staleness/app/per-page-config/ with LinkAccordion, connection(), Suspense, and links to dynamic-stale pages.
+- rule: Hub pages (hub-a, hub-b, hub-c) are created in test/e2e/app-dir/segment-cache/staleness/app/per-page-config/
+    with LinkAccordion, connection(), Suspense, and links to dynamic-stale pages.
   source:
     path: test/e2e/app-dir/segment-cache/staleness/app/per-page-config/hub-a/page.tsx
     lines: 1-30
     commit: 8283b1260ba3eb187baf20727e739fbd8ba7bbf6
   category: architecture
-- rule: AGENTS.md is updated with the LinkAccordion/router-act rule documenting that tests must use LinkAccordion to control prefetches and must not use browser.back() due to BFCache-triggered re-prefetches.
+- rule: AGENTS.md is updated with the LinkAccordion/router-act rule documenting that
+    tests must use LinkAccordion to control prefetches and must not use browser.back()
+    due to BFCache-triggered re-prefetches.
   source:
     path: AGENTS.md
     lines: 400-420
     commit: 8283b1260ba3eb187baf20727e739fbd8ba7bbf6
   category: documentation
-- rule: Test file segment-cache-per-page-dynamic-stale-time.test.ts is updated to navigate via hub pages (hub-a, hub-b, hub-c) instead of using browser.back(), with accordion toggles before each navigation.
+- rule: Test file segment-cache-per-page-dynamic-stale-time.test.ts is updated to
+    navigate via hub pages (hub-a, hub-b, hub-c) instead of using browser.back(),
+    with accordion toggles before each navigation.
   source:
     path: test/e2e/app-dir/segment-cache/staleness/segment-cache-per-page-dynamic-stale-time.test.ts
     lines: 217-250
     commit: 8283b1260ba3eb187baf20727e739fbd8ba7bbf6
   category: testing
-- rule: Dynamic stale pages (dynamic-stale-10, dynamic-stale-60) are updated with LinkAccordion links to hub pages (hub-a, hub-b, hub-c).
+- rule: Dynamic stale pages (dynamic-stale-10, dynamic-stale-60) are updated with
+    LinkAccordion links to hub pages (hub-a, hub-b, hub-c).
   source:
     path: test/e2e/app-dir/segment-cache/staleness/app/per-page-config/dynamic-stale-10/page.tsx
     lines: 1-30

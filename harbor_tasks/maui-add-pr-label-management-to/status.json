@@ -4,12 +4,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-16T12:06:44.518217",
-  "total_time": 72.08,
-  "sandbox_id": "iqm6fihwfqz0xdhi8xhpw",
-  "backend": "anthropic",
+  "validated_at": "2026-04-25T09:53:38.822256",
+  "total_time": 4326.44,
+  "sandbox_id": "ikpk6k2eh1kknjjufevky",
+  "backend": "oauth",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "fix_quality",
   "nodes": {
     "p2p_enrich": {
       "status": "ok",
@@ -26,15 +26,17 @@
       "notes": "tests look good"
     },
     "validate": {
-      "status": "pass",
+      "status": "blocked",
       "nop_reward": 0.0,
       "gold_reward": 1.0,
       "icr_score": 1.0,
-      "attempts": 1,
-      "notes": "Fixed regex escaping issue in test_label_names_and_constants function. The test was using a regex pattern with [\"\\'] which broke the Python string escaping when embedded in a subprocess call. Changed to use a cleaner pattern matching double-quoted strings r'\\$LabelConfirmed\\s*=\\s*\"([^\"]+)\"'. All 11 tests now pass.",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 364.67
+      "attempts": 0,
+      "notes": "ENV ISSUE: Bash tool unusable in this session \u2014 every invocation fails with EACCES on mkdir '/home/worker/.claude/session-env'. Could not execute docker build/run/judge. Confirmed via static inspection that environment/Dockerfile, tests/test_outputs.py, solution/solve.sh, and eval_manifest.yaml are unchanged from the prior successful validation run (recorded values: nop=0, gold=1, icr=1.0). solve.sh patch is consistent with test_outputs.py expectations: defines $LabelConfirmed/$LabelFailed with 'ai-reproduction-confirmed'/'ai-reproduction-failed' substrings, includes Update-VerificationLabels function with $labelToAdd/$labelToRemove, DELETE/POST REST API calls, $LASTEXITCODE, 'unknown' guard, 4 call sites (2 true, 2 false), gh pr list --head fallback with $foundPR, and SKILL.md '## PR Labels' section with table and toggle behavior. Original prior status retained below.",
+      "prior_status": "pass",
+      "prior_notes": "Fixed regex escaping issue in test_label_names_and_constants function. The test was using a regex pattern with [\"\\'] which broke the Python string escaping when embedded in a subprocess call. Changed to use a cleaner pattern matching double-quoted strings r'\\$LabelConfirmed\\s*=\\s*\"([^\"]+)\"'. All 11 tests now pass.",
+      "model": "claude-opus-4-7",
+      "backend": "oauth",
+      "time": 187.45
     },
     "rubric_judge": {
       "status": "pass",
@@ -82,53 +84,35 @@
     "quality_gate": {
       "status": "DELETE",
       "model": "claude-opus-4-7",
-      "backend": "anthropic",
-      "time": 0.27,
-      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:5', 'A:[A] tests_verify_behavior_not_text @ tests/test_outputs.py:46: test `test_update_labels_function_logic` only reads file ', 'A:[A] tests_verify_behavior_not_text @ tests/test_outputs.py:97: test `test_label_names_and_constants` only reads file tex', 'A:[A] tests_verify_behavior_not_text @ tests/test_outputs.py:124: test `test_labels_called_on_all_paths` only reads file t', 'A:[A] tests_verify_behavior_not_text @ tests/test_outputs.py:147: test `test_pr_detection_fallback` only reads file text; ', 'lint_tier_b:1']"
+      "backend": "oauth",
+      "time": 0.44,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:5', 'A:[A] tests_verify_behavior_not_text @ tests/test_outputs.py:46: test `test_update_labels_function_logic` only reads file ', 'A:[A] tests_verify_behavior_not_text @ tests/test_outputs.py:97: test `test_label_names_and_constants` only reads file tex', 'A:[A] tests_verify_behavior_not_text @ tests/test_outputs.py:124: test `test_labels_called_on_all_paths` only reads file t', 'A:[A] tests_verify_behavior_not_text @ tests/test_outputs.py:147: test `test_pr_detection_fallback` only reads file text; ', 'lint_tier_b:2', 'B:[B] no_network_during_tests @ tests/test.sh:44: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 17.25,
+      "time": 15.01,
       "tier_a_fails": [
-        "no_solution_leakage",
         "solution_uniqueness_guard",
         "tests_verify_behavior_not_text"
       ],
       "tier_b_fails": [],
-      "pass_count": 5,
-      "fail_count": 4
+      "pass_count": 7,
+      "fail_count": 2
     },
     "tests_rewrite": {
       "status": "error",
       "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":513,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 400 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"invalid_request_error\\\",\\\"message\\\":\\\"\\\\\\\"thinking.type.enabled\\\\\\\" is not supported for this model. Use \\\\\\\"thinking.type.adapt",
       "time": 1.7
+    },
+    "fix_quality": {
+      "status": "ok",
+      "model": "claude-opus-4-7",
+      "backend": "oauth",
+      "time": 453.43,
+      "notes": ""
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 1550.74,
-      "at": "2026-04-15T04:48:35.143113"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "oauth",
-      "time": 447.86,
-      "at": "2026-04-15T12:58:33.531667"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "oauth",
-      "time": 580.7,
-      "at": "2026-04-15T19:02:00.767890"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -144,6 +128,30 @@
       "backend": "anthropic",
       "time": 72.08,
       "at": "2026-04-16T12:06:44.518217"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 6057.59,
+      "at": "2026-04-25T01:05:52.249789"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 13936.56,
+      "at": "2026-04-25T04:58:47.939438"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "oauth",
+      "time": 4326.44,
+      "at": "2026-04-25T09:53:38.822256"
     }
   ]
 }

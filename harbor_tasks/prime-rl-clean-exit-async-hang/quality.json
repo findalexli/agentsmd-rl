@@ -3,56 +3,52 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "Instruction names the file src/prime_rl/utils/utils.py, the clean_exit decorator, async_wrapper/sync_wrapper, and explicitly states sys.exit(1)/SystemExit(1) expected behavior which the tests assert."
+      "reason": "instruction.md names src/prime_rl/utils/utils.py, clean_exit decorator, async_wrapper/sync_wrapper, wandb.finish(exit_code=1), destroy_process_group, and exit code 1 \u2014 all items tests check."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "Instruction explicitly says 'The process must call sys.exit(1) to raise SystemExit(1)' which directly specifies the fix rather than just describing the bug."
+      "outcome": "pass",
+      "reason": "Instruction describes symptoms and requirements (terminate with exit code 1, finally must run) without specifying sys.exit(1) or the exact code change."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "Tests check for SystemExit with code 1, finally block cleanup, and wandb.finish(exit_code=1); any correct implementation satisfying the spec would pass without asserting on gold-specific names."
+      "reason": "Tests check for SystemExit with code 1 and cleanup execution \u2014 any correct fix (sys.exit, raise SystemExit(1)) would pass; tests explicitly note they don't assert on specific mechanism."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests execute clean_exit via subprocess and in-process exec, invoking decorated functions and checking exception/callback behavior."
+      "reason": "Tests execute clean_exit via subprocess, call decorated functions, and check runtime behavior (SystemExit, cleanup calls)."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub decorator would not raise SystemExit(1) nor call wandb.finish(exit_code=1) nor destroy_process_group, so tests require the actual fix."
+      "reason": "A stub that just re-raises would not produce SystemExit with code 1; tests require actual termination behavior."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "Tests cover SystemExit raising, finally cleanup, wandb.finish(exit_code=1), and success paths as described in instruction."
+      "reason": "Tests cover async and sync termination with exit code 1, multiple exception types, and finally-block cleanup execution \u2014 matches instruction's expected behavior list."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are grouped with section comment headers (Gates, Fail-to-pass, Pass-to-pass, Config-derived) and tagged [static]/[pr_diff]/[repo_tests]/[agent_config]."
+      "reason": "Tests are grouped with section comments (Gates, Fail-to-pass, Additional behavioral test) and descriptive names/docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task is a code bugfix, no structured data output."
+      "reason": "Task is a code bug fix, no structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "Paths and names are consistent between instruction, tests, and solution."
+      "reason": "No typos observed in paths or names."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "Instruction explicitly prescribes 'The process must call sys.exit(1)' \u2014 this is the exact fix, not just localization; combined with naming async_wrapper/sync_wrapper, it removes both localization and solution reasoning."
+      "outcome": "pass",
+      "reason": "Instruction names the decorator and file but does not specify the exact line fix; localization is reasonable given the bug domain."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "Code-only task, no agentmd config edits."
+      "reason": "Code-only task, no config edits."
     }
   },
-  "tier_a_fails": [
-    "no_solution_leakage"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 7,
-  "fail_count": 2
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
 }

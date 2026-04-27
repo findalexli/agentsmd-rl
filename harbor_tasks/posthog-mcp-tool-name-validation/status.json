@@ -4,12 +4,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-16T11:16:03.518235",
-  "total_time": 63.25,
-  "sandbox_id": "ihpjtef808nsc5fo2jfke",
-  "backend": "anthropic",
+  "validated_at": "2026-04-21T19:38:39.623189",
+  "total_time": 5634.4,
+  "sandbox_id": "ix1jgtkmqskabpg2wa5lj",
+  "backend": "minimax",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "fix_quality",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -38,10 +38,10 @@
       "gold_reward": 1.0,
       "rubric_icr": 1.0,
       "attempts": 1,
-      "notes": "All 4 validation checks passed: 1) Docker build succeeds, 2) NOP test returns reward=0, 3) GOLD test returns reward=1, 4) Rubric judge ICR=1.00. Fixed rubric rules and CONFIG_PATTERNS.",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 300.7
+      "notes": "All 4 validation checks passed: 1) Docker build succeeds, 2) NOP test returns reward=0, 3) GOLD test returns reward=1, 4) Rubric judge ICR=1.00. No fixes needed \u2014 task already valid.",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 388.22
     },
     "rubric_enrichment": {
       "status": "ok",
@@ -87,36 +87,33 @@
     },
     "quality_gate": {
       "status": "passed",
-      "model": "claude-opus-4-7",
-      "backend": "anthropic",
-      "time": 0.34,
-      "notes": "flags=[]"
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.23,
+      "notes": "flags=['lint_tier_b:1', 'B:[B] no_network_during_tests @ tests/test.sh:44: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 13.07,
-      "tier_a_fails": [
-        "solution_uniqueness_guard"
-      ],
+      "time": 12.03,
+      "tier_a_fails": [],
       "tier_b_fails": [],
-      "pass_count": 8,
-      "fail_count": 1
+      "pass_count": 9,
+      "fail_count": 0
     },
     "tests_rewrite": {
       "status": "error",
       "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":377,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 400 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"invalid_request_error\\\",\\\"message\\\":\\\"\\\\\\\"thinking.type.enabled\\\\\\\" is not supported for this model. Use \\\\\\\"thinking.type.adapt",
       "time": 2.34
+    },
+    "fix_quality": {
+      "status": "ok",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 1418.7,
+      "notes": ""
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 1587.27,
-      "at": "2026-04-12T05:29:10.505791"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -148,6 +145,14 @@
       "backend": "anthropic",
       "time": 63.25,
       "at": "2026-04-16T11:16:03.518235"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 5634.4,
+      "at": "2026-04-21T19:38:39.623189"
     }
   ]
 }

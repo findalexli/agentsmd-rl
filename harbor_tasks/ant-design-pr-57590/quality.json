@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "Instruction names both files (components/notification/PurePanel.tsx and components/notification/style/index.ts) that tests inspect."
+      "reason": "Instruction names both files (PurePanel.tsx and style/index.ts) that tests inspect."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "Instruction describes the symptom and expected behavior without specifying the conditional rendering or CSS changes needed."
+      "reason": "Instruction describes the bug symptom without specifying the conditional rendering or &:first-child CSS fix."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_description_spacing_without_title requires either &:first-child with margin OR both marginInlineEnd AND marginRight; a valid alternative fix using only padding, or using a different selector like :not(:has(title)), would fail. Also test_title_conditional_rendering only accepts specific patterns like 'title && (' or 'title ? ('\u2014a fix using early-return or extracting to a variable like 'const titleNode = title ? <div/> : null' would fail."
+      "reason": "Tests assert specific implementation patterns: test_description_spacing requires literal '&:first-child' string and test_title_conditionally_rendered requires specific regex patterns like /title\\s*&&/; an alternative fix using CSS-only approach (e.g., targeting .ant-notification-notice without title class) or different conditional structure would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "All f2p tests are regex/string checks on source file contents (fs.readFileSync then regex matching) \u2014 none execute the component or render the notification to verify the overlap is actually fixed."
+      "reason": "All TestConditionalTitleRendering, TestDescriptionSpacing, and TestLayoutBehavior tests only read source files and grep for patterns (source.includes('&:first-child'), regex on source); no actual component rendering or behavior execution."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "Tests check for specific pattern changes that wouldn't exist in an unfixed/stub version."
+      "reason": "Tests require specific conditional patterns and CSS rules that a stub wouldn't satisfy without implementing the fix."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "Tests cover conditional title rendering and description spacing as described in instruction."
+      "reason": "Tests cover conditional title rendering and description spacing, the two behaviors implied by the bug description."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are organized into named classes like TestConditionalTitleRendering, TestDescriptionSpacing, TestLayoutBehavior with docstrings."
+      "reason": "Tests are grouped into TestConditionalTitleRendering, TestDescriptionSpacing, TestLayoutBehavior, and TestRepoIntegration classes with docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task doesn't produce structured data."
+      "reason": "Task is a UI component fix, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths and names appear correct."
+      "reason": "File paths and names are consistent and correct."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "Instruction names the two files but doesn't point to specific lines; file localization is reasonable given the domain."
+      "reason": "Instruction names the two relevant files but doesn't point to specific lines or name the fix technique."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "Code-only task, not an agentmd-edits task."
+      "reason": "Code-only task, not a config edit task."
     }
   },
   "tier_a_fails": [

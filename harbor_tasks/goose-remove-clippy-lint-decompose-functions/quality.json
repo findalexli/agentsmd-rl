@@ -3,54 +3,52 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "All asserted file paths, helper function names, literal strings ('Merge without running clippy', 'CI handles this (clippy)', 'cargo clippy --all-targets', 'clippy.toml', 'too-many-lines-threshold'), and the >=10 fn requirement are explicitly named in instruction.md."
+      "reason": "All asserted paths (clippy.toml, scripts/clippy-lint.sh, AGENTS.md, etc.) and literal strings ('cargo clippy --all-targets', 'Merge without running clippy', 'CI handles this (clippy)', 'too-many-lines-threshold', 'clippy.toml') are explicitly stated in instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "Instruction describes what to refactor and what files to update, but does not provide literal code/line replacements beyond the required string tokens."
+      "reason": "Instruction describes what to change (remove scripts, create clippy.toml, decompose function) without giving exact code or line-by-line edits."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests assert on specific helper function names (resolve_provider_and_model, resolve_session_id, handle_resumed_session_workdir, resolve_and_load_extensions, configure_session_prompts) \u2014 an alternative valid decomposition using different names would fail, though instruction does specify these exact names so it's consistent with instruction."
+      "outcome": "pass",
+      "reason": "Tests check structural properties (function count >=10, body <200 lines, >=3 calls) without naming specific helper functions, and string assertions match the explicit literal requirements stated in instruction.md."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests execute cargo fmt, cargo check, cargo clippy subprocesses in addition to text inspection."
+      "reason": "Tests run cargo fmt, cargo check, cargo clippy as subprocesses to verify the build still works, beyond just text matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "Cargo clippy/check subprocess tests require actual code compilation and linting to succeed; stubs wouldn't pass."
+      "reason": "Tests require actual file deletions, file creations with valid content, and a function decomposition that compiles and passes clippy --all-targets, which a stub cannot satisfy."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "Each instruction requirement (file deletions, clippy.toml, doc updates, helper functions, build_session calling them) has a corresponding test."
+      "reason": "All behaviors required by instruction (file removal, clippy.toml, doc updates with specific strings, function decomposition) are tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are grouped under commented sections: fail-to-pass behavioral, config file updates, pass-to-pass CI, and static checks."
+      "reason": "Tests are grouped with section headers (Fail-to-pass, Pass-to-pass, static checks) and have descriptive names and docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task doesn't produce structured data output."
+      "reason": "Task does not produce structured data."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths and commands appear correct and consistent between instruction and tests."
+      "reason": "Filenames and commands match across instruction and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "Instruction names the file to refactor (builder.rs) which is legitimate task scoping, not line-level leakage."
+      "reason": "Instruction names files to update because the task is explicitly about updating documentation files; localization is not part of the challenge."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "Config edits are localized string replacements for clippy command references across specific listed files."
+      "reason": "Gold patch makes localized edits to specific lines in each config/doc file rather than full rewrites."
     }
   },
-  "tier_a_fails": [
-    "solution_uniqueness_guard"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 9,
-  "fail_count": 1
+  "pass_count": 10,
+  "fail_count": 0
 }

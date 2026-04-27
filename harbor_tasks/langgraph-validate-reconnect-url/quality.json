@@ -1,57 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests import `_validate_reconnect_location` and `_default_port` from `langgraph_sdk._shared.utilities`, asserting these exact function names and module path. The instruction.md never specifies these function names or that they must live in `_shared/utilities.py`. A developer reading only instruction.md cannot discover these specific names."
+      "outcome": "pass",
+      "reason": "Instruction names version 0.3.13, __init__.py path, error message keywords 'cross-origin'/'refusing', ValueError type, default ports 443/80, and async/sync HTTP client integration points."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the problem (no validation of Location headers) and requirements (same-origin check, port normalization, etc.) but does not specify exact code changes, line numbers, or implementation details like specific function names."
+      "reason": "Instruction describes what to validate but not the exact helper function name or implementation; agent must decide structure."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests assert on gold-specific implementation details: exact function names `_validate_reconnect_location` and `_default_port` imported from `langgraph_sdk._shared.utilities`. An alternative correct fix placing validation logic elsewhere (e.g., inline in the HTTP clients, or in a differently-named function, or in a different module) would fail these tests."
+      "outcome": "pass",
+      "reason": "Tests call public methods (request_reconnect, stream) and check ValueError + message keywords; no assertions on internal helper names."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests import and call `_validate_reconnect_location` and `_default_port`, check for raised `ValueError` exceptions, run subprocess commands (`make format`, `make lint`, `make test`, etc.), and verify version imports. They test behavior, not just text content (except `test_no_double_backticks` which is a text check but supplementary)."
+      "reason": "Tests execute subprocesses that import and call HttpClient/SyncHttpClient with mocked transports."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests (`test_cross_origin_reconnect_blocked`, `test_import_validation_function`, `test_version_updated`) require actual implementation: cross-origin must raise ValueError with specific message content, the function must be callable, and version must be '0.3.13'. A stub returning None/pass would fail these."
+      "reason": "Same-origin and relative tests require allowing the call to succeed; cross-origin tests require raising specific ValueError, so a stub cannot satisfy both."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All behaviors from instruction.md are tested: cross-origin rejection, same-origin acceptance, relative URL acceptance, default port normalization, version update, formatting/linting, and the backtick formatting rule."
+      "reason": "Tests cover cross-origin blocking, same-origin allowance, relative URLs, default ports, version, format/lint."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive docstrings (e.g., 'Cross-origin reconnect Location headers should raise ValueError'), grouped logically, and annotated with f2p/p2p markers."
+      "reason": "Tests are organized into named functions with docstrings (test_cross_origin_reconnect_blocked, test_same_origin_reconnect_allowed, etc.)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB output."
+      "reason": "Task is code behavior, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "Paths and commands look correct."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction mentions general areas (async/sync HTTP clients, reconnection logic, utilities) but doesn't name exact buggy lines or specific file paths that would over-localize the fix."
+      "reason": "Instruction references HTTP client modules generically without specifying line numbers."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits task."
+      "reason": "Code-only task."
     }
   },
-  "tier_a_fails": [
-    "behavior_in_task_description",
-    "solution_uniqueness_guard"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 7,
-  "fail_count": 2
+  "pass_count": 9,
+  "fail_count": 0
 }

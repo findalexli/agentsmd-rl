@@ -18,31 +18,33 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Prettier code formatting check passes on modified files
-- id: syntax_valid
+- id: test_syntax_valid
   type: pass_to_pass
   origin: static
   description: Modified TypeScript files are syntactically well-formed
-- id: with_timeout_behavior
+- id: test_with_timeout_behavior
   type: pass_to_pass
   origin: static
   description: withTimeout utility resolves within timeout correctly
-- id: thread_imports_with_timeout
+- id: test_thread_imports_with_timeout
   type: fail_to_pass
   origin: pr_diff
-  description: thread.ts imports withTimeout for bounded shutdown
-- id: thread_idempotent_stop
+  description: thread.ts uses withTimeout utility and wraps TUI invocation in try/finally
+- id: test_thread_idempotent_stop
   type: fail_to_pass
   origin: pr_diff
-  description: thread.ts has idempotent stop() function with stopped guard and worker.terminate()
-- id: thread_helpers_extracted
+  description: thread.ts cleanup function is idempotent, unregisters process listeners,
+    terminates worker once, and uses timeout-bounded shutdown
+- id: test_thread_helpers_extracted
   type: fail_to_pass
   origin: pr_diff
-  description: thread.ts extracts target() and input() as standalone helper functions
-- id: worker_shutdown_simplified
+  description: thread.ts extracts worker path resolution and input handling into standalone
+    top-level helpers
+- id: test_worker_shutdown_simplified
   type: fail_to_pass
   origin: pr_diff
   description: worker.ts shutdown calls Instance.disposeAll() directly without Promise.race
-- id: short_variable_names
+- id: test_short_variable_names
   type: fail_to_pass
   origin: agent_config
   description: thread.ts uses short single-word variable names per AGENTS.md naming
@@ -51,7 +53,7 @@ checks:
     path: AGENTS.md
     lines: '21'
     commit: 2a0be8316be7ae6ec78f5d221851fc1cc0cdddb2
-- id: agents_md_naming_enforcement
+- id: test_agents_md_naming_enforcement
   type: fail_to_pass
   origin: pr_diff
   description: AGENTS.md contains Naming Enforcement section with mandatory single-word
@@ -85,7 +87,7 @@ rubric:
     `state`, `timeout`.
 
     - Examples to avoid unless truly required: `inputPID`, `existingClient`, `connectTimeout`,
-    `workerPath`.'
+    `workerPath`.''
 - rule: Prefer single word names for variables and functions.
   source:
     path: AGENTS.md
@@ -124,7 +126,7 @@ config_edits:
     `state`, `timeout`.
 
     - Examples to avoid unless truly required: `inputPID`, `existingClient`, `connectTimeout`,
-    `workerPath`.'
+    `workerPath`.''
   gold_removed: ''
 distractors:
 - rule: Avoid `try`/`catch` where possible

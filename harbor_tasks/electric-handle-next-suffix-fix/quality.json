@@ -3,56 +3,55 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "fail",
-      "reason": "Tests assert on specific internal names like `createCacheBuster` function, `#refetchCacheBuster` private field, and `CACHE_BUSTER_QUERY_PARAM` constant usage which are not mentioned in instruction.md."
+      "reason": "Tests assert on specific internal identifiers like `#refetchCacheBuster` (test_cache_buster_cleared_after_use) and `CACHE_BUSTER_QUERY_PARAM` (test_cache_buster_query_param_added_to_url) that are not mentioned in instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "Instruction describes the problem and expected behavior without specifying exact line changes or internal symbol names."
+      "reason": "Instruction describes the problem and desired behavior (no -next, warning, undefined handle, unique cache busting) without dictating exact code changes."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_createCacheBuster_produces_unique_values requires a function named exactly `createCacheBuster`, and test_refetchCacheBuster_private_field_exists requires exactly `#refetchCacheBuster?:`, and test_cache_buster_query_param_mechanism_exists requires `#refetchCacheBuster = createCacheBuster` \u2014 alternative correct implementations (e.g., inline or different naming) would fail."
+      "reason": "test_cache_buster_cleared_after_use requires exact field name `#refetchCacheBuster = undefined`, and test_cache_buster_query_param_added_to_url requires the exact constant `CACHE_BUSTER_QUERY_PARAM`\u2014alternative fixes using different names would fail."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "TestCacheBusterBehavior tests all use `re.findall` on source/dist content to check for specific patterns like `#refetchCacheBuster\\s*\\?:` rather than executing the code; only the integration tests actually run code."
+      "outcome": "pass",
+      "reason": "Several tests run vitest, typecheck, and stylecheck via subprocess, executing real code."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "Tests require specific behavioral artifacts (warning text, cache buster param setting, absence of `-next`), not trivially satisfiable by stubs."
+      "reason": "Tests require specific source patterns and passing vitest suites; a stub cannot satisfy them."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "Instruction requirements (no -next suffix, warning text, reset with undefined, cache-busting strategy) are covered by the tests."
+      "reason": "All four behaviors from instruction (no -next, warning text, undefined handle/cache-busting, unique values) have corresponding tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are organized into TestCacheBusterBehavior and TestRepoIntegration classes with docstrings."
+      "reason": "Tests are grouped into TestCacheBusterBehavior and TestRepoIntegration classes with descriptive names and docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task is a code fix, not structured data output."
+      "reason": "Task is code behavior, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "Paths and commands look correct."
+      "reason": "Paths and names are consistent."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "Instruction names `packages/typescript-client/src/client.ts` and `ShapeStream` class, which is appropriate scoping rather than pinpoint leakage."
+      "reason": "Instruction points to `ShapeStream` in `client.ts` which is appropriate domain-level guidance, not a line-level hint."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "Code-only task, no config edits."
+      "reason": "Code-only task."
     }
   },
   "tier_a_fails": [
     "behavior_in_task_description",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 6,
-  "fail_count": 3
+  "pass_count": 7,
+  "fail_count": 2
 }

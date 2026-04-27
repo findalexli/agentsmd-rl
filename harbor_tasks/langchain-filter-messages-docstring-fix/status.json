@@ -4,12 +4,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-16T09:30:22.100797",
-  "total_time": 32.54,
-  "sandbox_id": "imz14igoh0oi3qqxxskei",
-  "backend": "anthropic",
+  "validated_at": "2026-04-25T04:20:47.046271",
+  "total_time": 12932.11,
+  "sandbox_id": "ii5myqkuymrqetnsyp0n6",
+  "backend": "ark-kimi-k2.6",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "fix_quality",
   "nodes": {
     "scaffold": {
       "status": "ok",
@@ -37,38 +37,35 @@
       "nop_reward": 0.0,
       "gold_reward": 1.0,
       "attempts": 1,
-      "notes": "All 4 checks pass: (1) Docker build succeeds, (2) NOP test reward=0 (fail-to-pass tests correctly identify the bug with incorrect parameter names incl_names/incl_types/excl_ids), (3) Gold test reward=1 (all 8 tests pass after fix), (4) Rubric judge has API issues (empty failure reasons) but the gold fix follows all conventions: uses single backticks per CLAUDE.md, function already has Google-style docstring with Args section, test coverage exists in test_outputs.py. Fixed solve.sh to create a git commit so judge can evaluate properly.",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 257.24
+      "notes": "All 4 checks pass: (1) Docker build succeeds, (2) NOP test reward=0 (docstring example with incorrect param names fails), (3) Gold test reward=1 (all 8 tests pass after sed fix), (4) Rubric judge ICR=1.00 (3/3 rules pass).",
+      "model": "kimi-k2.6",
+      "backend": "ark-kimi-k2.6",
+      "time": 248.84
     },
     "quality_gate": {
-      "status": "passed",
-      "model": "claude-opus-4-7",
-      "backend": "anthropic",
-      "time": 0.47,
-      "notes": "flags=['lint_tier_b:2', 'B:[B] pinned_dependencies @ environment/Dockerfile:22: unpinned pip deps: ruff', 'B:[B] no_network_during_tests @ tests/test.sh:5: network call at test time: `pip install`']"
+      "status": "DELETE",
+      "model": "kimi-k2.6",
+      "backend": "ark-kimi-k2.6",
+      "time": 0.24,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] reward_is_pure_pytest @ tests/test.sh:5: critical pytest/plugin install with `|| true` \u2014 silent dep failure makes re', 'lint_tier_b:3', 'B:[B] pinned_dependencies @ environment/Dockerfile:22: unpinned pip deps: ruff', 'B:[B] no_network_during_tests @ tests/test.sh:5: network call at test time: `pip install`', 'B:[B] no_network_during_tests @ tests/test.sh:50: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 10.73,
-      "tier_a_fails": [
-        "no_solution_leakage"
-      ],
+      "time": 9.55,
+      "tier_a_fails": [],
       "tier_b_fails": [],
-      "pass_count": 7,
-      "fail_count": 2
+      "pass_count": 9,
+      "fail_count": 0
+    },
+    "fix_quality": {
+      "status": "ok",
+      "model": "kimi-k2.6",
+      "backend": "ark-kimi-k2.6",
+      "time": 932.3,
+      "notes": ""
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 3027.28,
-      "at": "2026-04-14T05:59:18.009902"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -84,6 +81,30 @@
       "backend": "anthropic",
       "time": 32.54,
       "at": "2026-04-16T09:30:22.100797"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 1015.88,
+      "at": "2026-04-22T14:14:07.284263"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 4766.85,
+      "at": "2026-04-25T00:44:21.311812"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 12932.11,
+      "at": "2026-04-25T04:20:47.046271"
     }
   ]
 }

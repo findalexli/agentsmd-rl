@@ -3,8 +3,8 @@ set -e
 
 cd /workspace/electron
 
-# Check if already patched
-if grep -q "requesting_frame->GetLastCommittedOrigin().GetURL()" shell/browser/web_contents_permission_helper.cc; then
+# Check if already patched (look for RenderFrameHost* in CheckPermission signature specifically)
+if grep -q "bool CheckPermission(content::RenderFrameHost\*" shell/browser/web_contents_permission_helper.h; then
     echo "Patch already applied, skipping"
     exit 0
 fi

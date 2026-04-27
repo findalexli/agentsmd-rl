@@ -1,21 +1,24 @@
 checks:
-- id: test_session_renewal_in_retry_loop
+- id: test_session_renewal_behavior
   type: fail_to_pass
   origin: pr_diff
   description: Session renewal check (isRetry + getZooKeeper) exists inside retry
-    loop
-- id: test_getobjectnames_inside_retry_loop
+    loop via AST behavioral check
+- id: test_watches_registered_in_loop
   type: fail_to_pass
   origin: pr_diff
   description: getObjectNamesAndSetWatch is called inside retry loop, not before
-- id: test_current_zookeeper_variable_used
+    via AST behavioral check
+- id: test_consistent_session_usage
   type: fail_to_pass
   origin: pr_diff
-  description: current_zookeeper variable is declared and used instead of stale parameter
-- id: test_session_renewal_pattern_complete
+  description: ZooKeeper operations consistently use the same session variable
+    via AST behavioral check
+- id: test_session_refresh_complete
   type: fail_to_pass
   origin: pr_diff
   description: Complete session renewal pattern exists (isRetry check + assignment)
+    via AST behavioral check
 - id: test_clang_syntax_only
   type: pass_to_pass
   origin: repo_tests
@@ -77,10 +80,10 @@ checks:
     path: .claude/CLAUDE.md
   description: 'CLAUDE.md rule: say ''exception'' not ''crash'' for logical errors'
 rubric:
-- rule: Ensure session renewal happens before using the ZooKeeper handle by checking
-    retries_ctl.isRetry() inside the retry loop
-- rule: Use current_zookeeper variable inside the retry loop instead of the stale
-    zookeeper parameter
+- rule: Ensure session renewal happens inside the retry loop by checking
+    retries_ctl.isRetry() before obtaining a fresh session
+- rule: Perform all ZooKeeper operations (getObjectNamesAndSetWatch, tryLoadObject)
+    with the same session variable
 - rule: When mentioning logical errors in comments, say 'exception' instead of 'crash'
 - rule: When writing text such as documentation, comments, or commit messages, write
     names of functions and methods as `f` instead of `f()`

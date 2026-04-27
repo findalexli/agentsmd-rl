@@ -4,32 +4,56 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-15T22:39:59.935541",
-  "total_time": 3748.04,
-  "sandbox_id": "i1x59ml7y46cjqsjk3lx4",
-  "backend": "minimax",
+  "validated_at": "2026-04-25T09:02:42.582820",
+  "total_time": 1270.08,
+  "sandbox_id": "i0jxdc6q8a1g94k34zltg",
+  "backend": "oauth",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "fix_quality",
   "nodes": {
     "quality_gate": {
       "status": "passed",
-      "model": "MiniMax-M2.7",
-      "backend": "minimax",
-      "time": 0.34,
+      "model": "claude-opus-4-7",
+      "backend": "oauth",
+      "time": 0.24,
       "notes": "flags=['lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:16: unpinned pip deps: pytest, pyyaml']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 23.84,
+      "time": 14.93,
       "tier_a_fails": [
-        "behavior_in_task_description",
-        "solution_uniqueness_guard",
-        "tests_verify_behavior_not_text",
-        "test_not_tautological"
+        "solution_uniqueness_guard"
       ],
       "tier_b_fails": [],
-      "pass_count": 6,
-      "fail_count": 5
+      "pass_count": 9,
+      "fail_count": 2
+    },
+    "fix_quality": {
+      "status": "ok",
+      "model": "claude-opus-4-7",
+      "backend": "oauth",
+      "time": 247.4,
+      "notes": ""
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "icr": 1.0,
+      "attempts": 3,
+      "notes": "Fixed test_httpparser_iterates_all_content_length_headers and test_httpparser_rejects_conflicting_content_length tests. The original regex pattern content-length.*[!=]= did not match the gold code where content-length header name is checked via strncmp and length comparison is done via contentLengthString.length() != .... Changed to check for strncmp with content-length and contentLengthString.length() presence with length comparison. Rubric ICR=1.00. All 4 checks pass.",
+      "model": "claude-opus-4-7",
+      "backend": "oauth",
+      "time": 153.72
+    },
+    "validate_reattempt": {
+      "status": "blocked_by_environment",
+      "nop_reward": null,
+      "gold_reward": null,
+      "attempts": 1,
+      "notes": "Could not re-execute Docker validation: every Bash invocation in this session fails with 'EACCES: permission denied, mkdir /home/worker/.claude/session-env'. The harness is unable to create its session-env scratch directory (only .credentials.json exists in /home/worker/.claude/, and Write to that path is blocked as a sensitive file). Spawned an Agent subagent which hit the identical EACCES on its first Bash call. No docker/python commands could be run. Inspected files via Read instead: tests/test_outputs.py contains the relaxed regex patterns described in the prior validate note (strncmp / .length() / .empty() / etc.) and solution/solve.sh's HEREDOC patch matches HttpParser.h, package.json, CLAUDE.md and scripts/pr-comments.ts changes consistent with the gold solution. Prior validate node (status=pass, nop=0, gold=1, icr=1.0) reflects the on-disk state; not re-verified this run.",
+      "model": "claude-opus-4-7",
+      "backend": "oauth"
     }
   },
   "history": [
@@ -38,32 +62,40 @@
       "nop": 0.0,
       "gold": 1.0,
       "backend": "minimax",
-      "time": 953.02,
-      "at": "2026-04-15T03:42:05.371400"
+      "time": 17171.6,
+      "at": "2026-04-21T18:53:13.466845"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "minimax",
-      "time": 3072.82,
-      "at": "2026-04-15T11:17:28.867430"
+      "time": 23130.31,
+      "at": "2026-04-22T04:35:19.604525"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 3150.84,
+      "at": "2026-04-25T00:17:25.539999"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 13192.15,
+      "at": "2026-04-25T03:58:09.551900"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
-      "backend": "fireworks",
-      "time": 2744.66,
-      "at": "2026-04-15T21:02:05.357602"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "minimax",
-      "time": 3748.04,
-      "at": "2026-04-15T22:39:59.935541"
+      "backend": "oauth",
+      "time": 1270.08,
+      "at": "2026-04-25T09:02:42.582820"
     }
   ]
 }

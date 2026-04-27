@@ -14,8 +14,15 @@ The `#[jsg_method]` macro should automatically detect whether a method has a rec
 - **Static methods** (without receiver): registered on the constructor, called on the class itself — new behavior.
 
 This requires changes across several layers:
-1. The proc macro (`jsg-macros/lib.rs`) must detect the presence of a receiver and generate the appropriate invocation code and member registration.
-2. The V8 FFI layer (`jsg/ffi.h`, `jsg/ffi.c++`, `jsg/v8.rs`) must support extracting the constructor `Function` from a `FunctionTemplate` so static methods can be exposed on it.
+
+1. The proc macro (`jsg-macros/lib.rs`) must use the `syn` crate's `FnArg::Receiver` variant to detect the presence of a receiver (`&self` / `&mut self`) and branch accordingly:
+   - In `jsg_method`: generate different invocation code for instance vs static methods (instance methods unwrap `self` via `args.this()`, static methods call via `Self::method_name(...)`)
+   - In `generate_resource_impl`: emit different `Member::` enum variants for each case (the `jsg` crate already defines the necessary variant types)
+2. The V8 FFI layer (`jsg/ffi.h`, `jsg/ffi.c++`, `jsg/v8.rs`) must support extracting the constructor `Function` from a `FunctionTemplate` using V8's `GetFunction` API, so static methods can be exposed on it. This involves:
+   - Defining a `Function` struct type in `v8.rs` (analogous to the existing `Object` and `FunctionTemplate` structs)
+   - Declaring and implementing the FFI bridge function in `ffi.h` and `ffi.c++`
+   - Adding a `From<Local<'_, Function>>` to `Local<'_, Value>` conversion in `v8.rs`
+   - Adding a method on `Global<FunctionTemplate>` to retrieve the local `Function`
 
 After implementing the code changes, update the relevant documentation to reflect the new static method support. The project's `src/rust/AGENTS.md`, `src/rust/jsg-macros/README.md`, and `docs/reference/rust-review-checklist.md` should all be updated to document this new behavior.
 

@@ -2,57 +2,56 @@
   "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "pass",
-      "reason": "Instruction names the CSS rule '&:first-child', 'marginInlineEnd: token.marginSM', and the conditional title rendering, which covers the regex patterns tests check for."
+      "outcome": "fail",
+      "reason": "Tests assert on specific file paths (components/notification/style/index.ts, components/notification/PurePanel.tsx) and specific patterns like '&:first-child' CSS selector and 'token.' prefix for design tokens, but instruction.md names neither these files nor the '&:first-child' selector literal required by the regex in test_css_description_first_child_spacing."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "Instruction explicitly states the exact CSS rule ('&:first-child' selector applying 'marginInlineEnd: token.marginSM') which is verbatim what the test regex searches for, leaving no reasoning about what to change."
+      "outcome": "pass",
+      "reason": "Instruction describes the symptom and requirements (conditional rendering, inline-end spacing with logical properties and design tokens) without specifying exact lines or code."
     },
     "solution_uniqueness_guard": {
-      "outcome": "pass",
-      "reason": "Tests accept any regex match of the '&:first-child' pattern with marginInlineEnd and any 'title &&' conditional, allowing reasonable alternative implementations."
+      "outcome": "fail",
+      "reason": "test_css_description_first_child_spacing requires the literal '&:first-child' selector and a 'token.' reference; an equally valid fix using a different selector (e.g., `:not(:has(+ .title))` or class-based approach) or a constant value would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Beyond text regex checks, tests invoke npm test, jest suites, eslint, and biome to verify behavior and code quality."
+      "reason": "Tests include subprocess calls to npm test, jest, eslint, and biome in addition to text checks."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "F2P tests require specific code changes plus the full existing test suite to continue passing, which a stub cannot satisfy."
+      "reason": "The regex-based text tests require specific structural changes, and the jest/lint tests verify runtime behavior; stubs cannot satisfy them."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "Both requirements (conditional title, first-child marginInlineEnd) and 'existing tests still pass' are covered by the test functions."
+      "reason": "Both requirements (conditional title render, inline-end spacing on first-child description) are tested, plus existing tests via jest."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests have descriptive names, docstrings labeling FAIL-TO-PASS vs PASS-TO-PASS, and clear grouping."
+      "reason": "Tests are named descriptively (test_css_description_first_child_spacing, test_pure_content_conditional_title_rendering, etc.) and grouped by concern."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data output."
+      "reason": "No structured data output involved."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "Paths like components/notification/style/index.ts and PurePanel.tsx are consistent and correct."
+      "reason": "No typos observed in paths or identifiers."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "Instruction specifies the exact CSS selector '&:first-child' and exact property 'marginInlineEnd: token.marginSM', which is the literal fix rather than describing the bug symptom only."
+      "outcome": "pass",
+      "reason": "Instruction references the notification domain generically without naming specific files or lines."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code fix task, not an agentmd-edits config task."
+      "reason": "Code-only task, no agentmd config edits."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage"
+    "behavior_in_task_description",
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
+  "tier_c_fails": [],
   "pass_count": 7,
   "fail_count": 2
 }

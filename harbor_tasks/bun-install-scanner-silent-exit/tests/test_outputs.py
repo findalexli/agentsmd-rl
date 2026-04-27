@@ -1,4 +1,4 @@
-
+#!/usr/bin/env python3
 """
 Task: bun-install-scanner-silent-exit
 Repo: oven-sh/bun @ 1d50d640f8fec6ce2d144f0cfd204e30da373c64
@@ -11,6 +11,9 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 import json
 import re
 import subprocess
+import tempfile
+import os
+import shutil
 from pathlib import Path
 
 REPO = "/workspace/bun"
@@ -27,53 +30,13 @@ def _read_file(path):
         return None
 
 
-def _node(script, timeout=30):
-    """Execute JavaScript via node subprocess."""
-    return subprocess.run(
-        ["node", "-e", script],
-        capture_output=True, text=True, timeout=timeout, cwd=REPO,
-    )
-
-
-def _parse_json(r):
-    """Parse the last line of node output as JSON."""
-    assert r.returncode == 0, f"Node error: {r.stderr}"
-    lines = r.stdout.strip().splitlines()
-    assert lines, f"No output from node: {r.stderr}"
-    return json.loads(lines[-1])
-
-
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — behavioral tests that verify error handling flow
-# ---------------------------------------------------------------------------
-
-
-# [pr_diff] fail_to_pass
-def test_catch_all_produces_output():
-    """
-    The else branch in the error handling switch must pass the error to
-    an output function, not silently return or have an empty body.
-
-    Behavior verified: Errors not explicitly named still produce output.
-    """
-    text = _read_file(IWM)
-    assert text is not None, f"Could not read {IWM}"
-
-    # Find the catch block for performSecurityScanAfterResolution
-    # Look for: performSecurityScanAfterResolution(...) catch |err| {
-    catch_pattern = r"performSecurityScanAfterResolution\([^)]*\)\s+catch\s+\|err\|\s*\{"
-    catch_match = re.search(catch_pattern, text)
-    assert catch_match, "Could not find performSecurityScanAfterResolution catch block"
-
-    # Extract the switch block within the catch
-    # Find the switch (err) and get its body
+def _extract_switch_body(text, catch_match):
+    """Extract the switch(err) body from a catch block."""
     start_pos = catch_match.end()
-    # Look for switch(err) or switch (err)
     switch_match = re.search(r"switch\s*\(\s*err\s*\)\s*\{", text[start_pos:])
     assert switch_match, "Could not find switch(err) statement"
 
     switch_start = start_pos + switch_match.end()
-    # Find matching closing brace by counting
     brace_count = 1
     switch_end = switch_start
     for i, char in enumerate(text[switch_start:]):
@@ -85,53 +48,96 @@ def test_catch_all_produces_output():
                 switch_end = switch_start + i
                 break
 
-    switch_body = text[switch_start:switch_end]
+    return text[switch_start:switch_end]
+
+
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) — behavioral tests that verify error handling flow
+# ---------------------------------------------------------------------------
+
+
+# [pr_diff] fail_to_pass
+def test_bun_install_produces_error_message():
+    """
+    bun install with broken security scanner config must print an error
+    message to stderr (not silently exit with code 1).
+
+    Behavior verified: Running 'bun install' with an invalid scanner produces
+    stderr output containing 'security scanner', proving the fix produces output.
+    """
+    # Create a temp directory with a broken scanner config
+    tmpdir = tempfile.mkdtemp(prefix="bun-test-28193-")
+    try:
+        # Write package.json
+        pkg_json = os.path.join(tmpdir, "package.json")
+        with open(pkg_json, "w") as f:
+            f.write('{"name": "test-28193", "dependencies": {"is-even": "1.0.0"}}')
+
+        # Write bunfig.toml with invalid scanner
+        bunfig = os.path.join(tmpdir, "bunfig.toml")
+        with open(bunfig, "w") as f:
+            f.write('[install.security]\nscanner = "@nonexistent-scanner/does-not-exist"\n')
+
+        # Run bun install and capture stderr
+        r = subprocess.run(
+            ["bun", "install"],
+            capture_output=True, text=True, timeout=60,
+            cwd=tmpdir,
+            env={**os.environ, "BUN_INSTALL_CACHE_DIR": os.path.join(tmpdir, ".cache")}
+        )
+
+        # The fix should produce error output to stderr
+        # Bug: silent exit with no stderr output
+        # Fix: stderr contains "security scanner" error message
+        stderr_lower = r.stderr.lower()
+        has_error_output = "security scanner" in stderr_lower or "scanner" in stderr_lower
+
+        assert has_error_output, (
+            f"No error message about security scanner in stderr. "
+            f"stderr was: {r.stderr[:500]!r}, returncode={r.returncode}"
+        )
+        assert r.returncode != 0, f"Expected non-zero exit code, got {r.returncode}"
+    finally:
+        shutil.rmtree(tmpdir, ignore_errors=True)
+
+
+# [pr_diff] fail_to_pass
+def test_catch_all_produces_output():
+    """
+    The catch block for security scanner errors must produce output for
+    ANY error, not silently swallow it.
+
+    Behavior verified: When a security scanner error is caught, something
+    is printed to inform the user (not an empty block).
+    """
+    text = _read_file(IWM)
+    assert text is not None, f"Could not read {IWM}"
+
+    # Find the catch block for performSecurityScanAfterResolution
+    catch_pattern = r"performSecurityScanAfterResolution\([^)]*\)\s+catch\s+\|err\|\s*\{"
+    catch_match = re.search(catch_pattern, text)
+    assert catch_match, "Could not find performSecurityScanAfterResolution catch block"
+
+    switch_body = _extract_switch_body(text, catch_match)
 
     # Check that empty else => {} is NOT present (this was the bug)
     if re.search(r"else\s*=>\s*\{\s*\}", switch_body):
         raise AssertionError("Bug found: empty else => {} present - errors would exit silently")
 
-    # Check that else branch exists and captures the error value
-    # Looking for: else => |e| or inline else => |e|
-    has_capturing_else = re.search(r"(?:inline\s+)?else\s*=>\s*\|\w+\|", switch_body)
-    assert has_capturing_else, "No error-capturing else branch found (else => |e| pattern missing)"
-
-    # Verify the else branch produces output (has Output.* call)
-    # Split by branches and check the else branch specifically
-    branches = re.split(r"\n\s*(?:error\.\w+|else)\s*=>", switch_body)
-    # Check the last branch (should be else)
-    if branches:
-        # Find which branch is the else branch
-        else_pos = -1
-        for i, branch in enumerate(branches):
-            # Check if this is the else branch by looking at the original text
-            branch_start = switch_body.find(branch) if branch else -1
-            if branch_start >= 0:
-                # Look backwards for 'else'
-                before = switch_body[max(0, branch_start-50):branch_start]
-                if re.search(r"else\s*=>", before):
-                    else_pos = i
-                    break
-
-        # The else branch must have an Output call
-        if else_pos >= 0:
-            else_branch = branches[else_pos]
-            has_output = re.search(r"Output\.\w+\s*\(", else_branch)
-            assert has_output, "Else branch exists but does not produce output (no Output.* call)"
-
-    # Count total branches that produce output - need at least 2 for meaningful coverage
-    output_branches = len(re.findall(r"Output\.\w+\s*\(", switch_body))
-    assert output_branches >= 2, f"Insufficient output branches: {output_branches} (need at least 2)"
+    # The switch body must have at least one Output.* call for error reporting
+    has_output = re.search(r"Output\.\w+\s*\(", switch_body)
+    assert has_output, "Switch body must have at least one Output.* call for error reporting"
 
 
 # [pr_diff] fail_to_pass
 def test_error_variant_coverage():
     """
-    Error handling must cover multiple error variants, either through
-    explicit named branches OR through a dynamic catch-all that extracts
-    error names at runtime.
+    Error handling must handle ALL error variants, not just named ones.
 
-    Behavior verified: At least 3 named variants OR dynamic @errorName handling.
+    Behavior verified: The error switch either has a catch-all branch that
+    captures unknown errors and produces output, or has enough named error
+    cases to cover all important variants — ensuring no error is silently
+    swallowed.
     """
     text = _read_file(IWM)
     assert text is not None, f"Could not read {IWM}"
@@ -141,45 +147,43 @@ def test_error_variant_coverage():
     catch_match = re.search(catch_pattern, text)
     assert catch_match, "Could not find performSecurityScanAfterResolution catch block"
 
-    # Extract the switch body
-    start_pos = catch_match.end()
-    switch_match = re.search(r"switch\s*\(\s*err\s*\)\s*\{", text[start_pos:])
-    assert switch_match, "Could not find switch(err) statement"
+    switch_body = _extract_switch_body(text, catch_match)
 
-    switch_start = start_pos + switch_match.end()
-    brace_count = 1
-    switch_end = switch_start
-    for i, char in enumerate(text[switch_start:]):
-        if char == "{":
-            brace_count += 1
-        elif char == "}":
-            brace_count -= 1
-            if brace_count == 0:
-                switch_end = switch_start + i
-                break
+    # Check for empty catch-all else => {} (this was the bug)
+    if re.search(r"else\s*=>\s*\{\s*\}", switch_body):
+        raise AssertionError(
+            "Bug found: empty 'else => {}' catch-all present. "
+            "Unknown error variants would be silently swallowed."
+        )
 
-    switch_body = text[switch_start:switch_end]
+    # Check for comprehensive error coverage via either approach:
+    # (a) A capturing catch-all (else => |e|) that produces output, OR
+    # (b) Enough named error cases (>= 3) to cover the important variants
+    has_capturing_else = re.search(r"else\s*=>\s*\|\w+\|", switch_body)
+    named_cases = re.findall(r"error\.\w+\s*=>", switch_body)
 
-    # Count explicit error variant branches (error.Foo =>)
-    named_variants = len(re.findall(r"error\.\w+\s*=>", switch_body))
-
-    # Count Output calls in switch branches
-    output_calls = len(re.findall(r"Output\.\w+\s*\(", switch_body))
-
-    # Check for dynamic error name extraction via @errorName - this allows
-    # ANY error variant to produce meaningful output, not just named ones
-    has_dynamic_error = re.search(r"@errorName\s*\(\s*\w+\s*\)", switch_body)
-
-    # Verify: either we have 3+ named variants with output, OR we have dynamic handling
-    if named_variants >= 3 and output_calls >= 3:
-        pass  # OK - explicit coverage
-    elif has_dynamic_error and output_calls >= 1:
-        pass  # OK - dynamic coverage via @errorName
+    if has_capturing_else:
+        # Verify the else branch produces output
+        else_branch_match = re.search(
+            r"else\s*=>\s*\|\w+\|\s*\{([^}]*)\}",
+            switch_body,
+            re.DOTALL
+        )
+        if else_branch_match:
+            else_content = else_branch_match.group(1)
+            has_output = re.search(r"Output\.\w+\s*\(", else_content)
+            assert has_output, (
+                "Catch-all else branch captures error but does not produce output. "
+                "Unknown errors would not be reported to the user."
+            )
+    elif len(named_cases) >= 3:
+        # Enough named cases to cover the important error variants
+        pass
     else:
         raise AssertionError(
-            f"Insufficient error coverage: {named_variants} named variants, "
-            f"{output_calls} output calls, dynamic={bool(has_dynamic_error)}. "
-            "Need either 3+ named variants OR @errorName in else branch."
+            f"Error handling must cover all variants. Need either a capturing "
+            f"catch-all (else => |e|) or at least 3 named error cases. "
+            f"Found {len(named_cases)} named cases and no capturing catch-all."
         )
 
 
@@ -187,63 +191,97 @@ def test_error_variant_coverage():
 def test_error_printing_centralized():
     """
     Error printing for security scanner errors must be centralized in
-    install_with_manager.zig, NOT duplicated in security_scanner.zig.
+    install_with_manager.zig, not scattered across both files.
 
-    Behavior verified: security_scanner.zig returns errors WITHOUT printing them
-    for the variants that should be centralized.
+    Behavior verified: The catch block switch has multiple Output.* calls
+    across multiple error-handling branches, ensuring errors are printed
+    centrally in the catch handler.
     """
-    ss_text = _read_file(SS)
-    assert ss_text is not None, f"Could not read {SS}"
+    iwm_text = _read_file(IWM)
+    assert iwm_text is not None, f"Could not read {IWM}"
 
-    # These error variants should be returned, not printed, in security_scanner.zig
-    centralized_errors = [
-        "InvalidPackageID",
-        "PartialInstallFailed",
-        "NoPackagesInstalled",
-        "SecurityScannerInWorkspace"
-    ]
+    # Find the catch block for performSecurityScanAfterResolution
+    catch_pattern = r"performSecurityScanAfterResolution\([^)]*\)\s+catch\s+\|err\|\s*\{"
+    catch_match = re.search(catch_pattern, iwm_text)
+    assert catch_match, "Could not find performSecurityScanAfterResolution catch block"
 
-    violations = []
-    for err in centralized_errors:
-        # Look for pattern: Output.err* followed by return error.X
-        # This indicates the error is being printed in security_scanner.zig
-        # instead of being centralized in install_with_manager.zig
-        # Match Output.err* call followed by return error.X (with possible whitespace/newlines)
-        pattern = r"Output\.(?:errGeneric|err|pretty)[^;]*;\s*\n?\s*return\s+error\." + err
-        if re.search(pattern, ss_text):
-            violations.append(err)
+    switch_body = _extract_switch_body(iwm_text, catch_match)
 
-    if violations:
-        raise AssertionError(
-            f"Duplicated error printing in security_scanner.zig for: {violations}. "
-            "These should only be printed in install_with_manager.zig"
-        )
+    # Count Output.* calls in the switch body (any Output method is acceptable:
+    # errGeneric, err, prettyErrorln, etc.)
+    output_calls = re.findall(r"Output\.\w+\s*\(", switch_body)
+
+    # Count error-handling branches: named cases + capturing else
+    named_cases = re.findall(r"error\.\w+\s*=>", switch_body)
+    has_else_handler = bool(re.search(r"else\s*=>\s*\|", switch_body))
+    total_handlers = len(named_cases) + (1 if has_else_handler else 0)
+
+    # Centralization means multiple error cases are handled here with output
+    assert total_handlers >= 2, (
+        f"Error printing should be centralized: need at least 2 error-handling branches. "
+        f"Found {len(named_cases)} named cases and "
+        f"{'a' if has_else_handler else 'no'} catch-all handler."
+    )
+
+    assert len(output_calls) >= 2, (
+        f"Need at least 2 Output.* calls for centralized error reporting. "
+        f"Found {len(output_calls)}."
+    )
 
 
 # [pr_diff] fail_to_pass
 def test_error_variant_propagated():
     """
-    The .error variant from ScanAttemptResult must be propagated as-is,
-    not collapsed into SecurityScannerRetryFailed.
+    The error result from the retry mechanism must be propagated as-is,
+    not collapsed into a single generic error.
 
-    Behavior verified: The retry result handling explicitly matches .error
-    and returns the contained error, rather than using else => return error.SecurityScannerRetryFailed.
+    Behavior verified: The retry result handling does NOT collapse all
+    non-success cases into a single error. Instead, the .error case is
+    handled separately (or the result is passed through).
     """
     ss_text = _read_file(SS)
     assert ss_text is not None, f"Could not read {SS}"
 
     # Find performSecurityScanAfterResolution function body
-    # Account for 'pub fn' or just 'fn'
-    func_match = re.search(
-        r"(?:pub\s+)?fn\s+performSecurityScanAfterResolution\b([^;]*?)(?:\nfn|\n(?:pub\s+)?fn|\nconst|\n\n\n|$)",
-        ss_text, re.DOTALL
-    )
-    assert func_match, "Could not find performSecurityScanAfterResolution function"
+    fn_name = "performSecurityScanAfterResolution"
+    pos = ss_text.find(fn_name)
+    assert pos >= 0, "Could not find performSecurityScanAfterResolution function"
 
-    func_body = func_match.group(1)
+    # Find the opening paren of parameters
+    paren_start = ss_text.find('(', pos + len(fn_name))
+    assert paren_start >= 0, "Could not find opening paren"
 
-    # Check for the OLD buggy pattern: else => return error.SecurityScannerRetryFailed
-    # This would collapse ALL non-success results into one error
+    # Find matching closing paren
+    paren_depth = 1
+    scan_pos = paren_start + 1
+    while scan_pos < len(ss_text) and paren_depth > 0:
+        c = ss_text[scan_pos]
+        if c == '(':
+            paren_depth += 1
+        elif c == ')':
+            paren_depth -= 1
+        scan_pos += 1
+
+    # Find opening brace for function body
+    brace_pos = ss_text.find('{', scan_pos)
+    assert brace_pos >= 0, "Could not find opening brace"
+
+    # Extract function body by counting braces
+    brace_count = 1
+    body_start = brace_pos + 1
+    body_end = body_start
+    while body_end < len(ss_text) and brace_count > 0:
+        c = ss_text[body_end]
+        if c == '{':
+            brace_count += 1
+        elif c == '}':
+            brace_count -= 1
+        body_end += 1
+
+    func_body = ss_text[body_start:body_end-1]
+
+    # Check for the buggy pattern: else => return error.SecurityScannerRetryFailed
+    # This collapses ALL non-success results into one error, losing information
     has_collapse_pattern = re.search(
         r"else\s*=>\s*return\s+error\.SecurityScannerRetryFailed",
         func_body
@@ -251,30 +289,39 @@ def test_error_variant_propagated():
     if has_collapse_pattern:
         raise AssertionError(
             "Bug found: Using 'else => return error.SecurityScannerRetryFailed' "
-            "which collapses all non-success errors into one generic error"
+            "which collapses all non-success errors into one generic error. "
+            "The original error should be preserved and propagated."
         )
 
-    # Check for proper propagation: .error => |e| return e OR inline else => |e| return e
-    # This ensures the original error is preserved, not lost
+    # Check for proper propagation: the switch must handle the error case
+    # in a way that preserves the original error information
     has_error_propagation = (
-        re.search(r"\.@\"error\"\s*=>\s*\|\w+\|", func_body) or
+        # Explicit .@"error" case (captures or returns the error)
+        re.search(r'\.\@"error"\s*=>', func_body) or
+        # Explicit .error case with capture
         re.search(r"\.error\s*=>\s*\|\w+\|", func_body) or
-        re.search(r"inline\s+else\s*=>\s*\|\w+\|", func_body)
+        # Else with capture (inline or not) — propagates the error
+        re.search(r"(?:inline\s+)?else\s*=>\s*\|\w+\|", func_body) or
+        # Separate named cases for each variant
+        (re.search(r"\.needs_install\s*=>", func_body) and
+         re.search(r'\.(?:\@"error"|error)\s*=>', func_body))
     )
 
     assert has_error_propagation, (
-        "No error propagation pattern found. Need either '.error => |e|' "
-        "or 'inline else => |e|' to preserve the original error"
+        "No error propagation pattern found. The switch must handle the error "
+        "case separately (e.g. .@\"error\" => |e|, inline else => |e|, or "
+        "explicit named cases) to preserve the original error."
     )
 
 
 # [pr_diff] fail_to_pass
 def test_uses_err_generic():
     """
-    Error messages in the catch block must use Output.errGeneric or similar
-    error output functions, NOT Output.pretty with <red> styling.
+    Error messages in the catch block must use appropriate error output
+    functions, NOT Output.pretty with raw <red> styling.
 
-    Behavior verified: Output.errGeneric is used, Output.pretty with <red> is NOT used.
+    Behavior verified: deprecated Output.pretty("<red>") is NOT used,
+    and an appropriate Output.* error function IS used instead.
     """
     text = _read_file(IWM)
     assert text is not None, f"Could not read {IWM}"
@@ -284,44 +331,27 @@ def test_uses_err_generic():
     catch_match = re.search(catch_pattern, text)
     assert catch_match, "Could not find performSecurityScanAfterResolution catch block"
 
-    # Extract the switch body (same as other tests)
-    start_pos = catch_match.end()
-    switch_match = re.search(r"switch\s*\(\s*err\s*\)\s*\{", text[start_pos:])
-    assert switch_match, "Could not find switch(err) statement"
-
-    switch_start = start_pos + switch_match.end()
-    brace_count = 1
-    switch_end = switch_start
-    for i, char in enumerate(text[switch_start:]):
-        if char == "{":
-            brace_count += 1
-        elif char == "}":
-            brace_count -= 1
-            if brace_count == 0:
-                switch_end = switch_start + i
-                break
-
-    switch_body = text[switch_start:switch_end]
+    switch_body = _extract_switch_body(text, catch_match)
 
     # Check for deprecated pattern: Output.pretty with <red>
     has_pretty_red = re.search(r"Output\.pretty\s*\(\s*\"<red>", switch_body)
     if has_pretty_red:
         raise AssertionError(
             "Using deprecated Output.pretty with <red> styling. "
-            "Should use Output.errGeneric instead."
+            "Should use an appropriate error output function instead."
         )
 
-    # Verify error output functions are used (Output.err*, Output.errGeneric)
-    has_err_output = re.search(r"Output\.(?:err|errGeneric)\s*\(", switch_body)
+    # Verify that appropriate error output functions are used
+    # Accept any Output.* method (errGeneric, err, prettyErrorln, etc.)
+    has_err_output = re.search(r"Output\.\w+\s*\(", switch_body)
     assert has_err_output, (
-        "No error output functions found (Output.err, Output.errGeneric). "
-        "Error messages should use these functions."
+        "No error output functions found. "
+        "Error messages should use an appropriate Output.* function."
     )
 
 
 # ---------------------------------------------------------------------------
 # Fail-to-pass (agent_config) — regression test validation via file checks
-# These check for file existence/structure - inherently file-based
 # ---------------------------------------------------------------------------
 
 

@@ -1,15 +1,16 @@
 {
   "schema_version": 2,
-  "valid": true,
-  "verdict": "pass",
-  "nop_reward": 0.0,
-  "gold_reward": 1.0,
-  "validated_at": "2026-04-15T05:50:49.800331",
-  "total_time": 1477.6,
-  "sandbox_id": "ielnouo4nzh47f0xnwkma",
-  "backend": "fireworks",
+  "valid": false,
+  "verdict": "fail",
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-25T16:01:50.398177",
+  "total_time": 2982.09,
+  "sandbox_id": "igcek583a8jyq41sj08py",
+  "backend": "anthropic",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "oneshot_repair",
+  "error": "The sandbox was not found: This error is likely due to sandbox timeout. You can modify the sandbox timeout by passing 'timeout' when starting the sandbox or calling '.set_timeout' on the sandbox with the desired timeout.",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -34,9 +35,9 @@
     },
     "validate": {
       "status": "pass",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 134.63,
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 1256.1,
       "nop_reward": 0.0,
       "gold_reward": 1.0,
       "attempts": 1,
@@ -61,21 +62,25 @@
     },
     "quality_gate": {
       "status": "DELETE",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 0.67,
-      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:203: test `test_rust_imports_at_top` has 1 assert(s), all pass on a st', 'lint_tier_b:1']"
+      "model": "claude-opus-4-7",
+      "backend": "oauth",
+      "time": 0.24,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:203: test `test_rust_imports_at_top` has 1 assert(s), all pass on a st', 'lint_tier_b:2', 'B:[B] no_network_during_tests @ tests/test.sh:44: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 22.63,
-      "tier_a_fails": [
-        "behavior_in_task_description",
-        "anti_cheating_measures"
-      ],
+      "time": 12.1,
+      "tier_a_fails": [],
       "tier_b_fails": [],
-      "pass_count": 8,
-      "fail_count": 2
+      "pass_count": 9,
+      "fail_count": 0
+    },
+    "fix_quality": {
+      "status": "rate_limited",
+      "model": "claude-opus-4-7",
+      "backend": "oauth",
+      "time": 2.28,
+      "notes": ""
     }
   },
   "history": [
@@ -83,41 +88,41 @@
       "verdict": "fail",
       "nop": -1.0,
       "gold": -1.0,
-      "backend": "fireworks",
-      "time": 414.74,
-      "at": "2026-04-09T15:04:46.202134"
+      "backend": "ark-kimi-k2.6",
+      "time": 2168.19,
+      "at": "2026-04-25T11:02:36.329972"
     },
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 2222.62,
-      "at": "2026-04-10T15:36:12.999872"
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 2145.28,
+      "at": "2026-04-25T11:39:45.078942"
     },
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 2287.89,
-      "at": "2026-04-12T02:16:38.152106"
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "oauth",
+      "time": 1805.81,
+      "at": "2026-04-25T12:11:53.984557"
     },
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 2470.62,
-      "at": "2026-04-12T03:23:00.581587"
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "anthropic",
+      "time": 7736.78,
+      "at": "2026-04-25T14:26:34.023269"
     },
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 1477.6,
-      "at": "2026-04-15T05:50:49.800331"
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "anthropic",
+      "time": 2982.09,
+      "at": "2026-04-25T16:01:50.398177"
     }
   ]
 }

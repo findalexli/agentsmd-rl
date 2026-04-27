@@ -4,12 +4,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-16T01:25:52.747564",
-  "total_time": 2737.32,
-  "sandbox_id": "ipup03cd0llzlv2xe6gym",
-  "backend": "minimax",
+  "validated_at": "2026-04-25T14:24:36.257089",
+  "total_time": 7618.07,
+  "sandbox_id": "ig4q6q32z83kg785za234",
+  "backend": "anthropic",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "oneshot_repair",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -31,9 +31,9 @@
       "gold_reward": 1.0,
       "attempts": 1,
       "notes": "All checks passed",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 47.91
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 228.34
     },
     "rubric_quality_loop": {
       "status": "ok",
@@ -47,60 +47,67 @@
     },
     "quality_gate": {
       "status": "DELETE",
-      "model": "MiniMax-M2.7",
-      "backend": "minimax",
-      "time": 0.46,
-      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:2', 'A:[A] test_not_tautological @ tests/test_outputs.py:366: test `test_evaluate_env_empty_outputs` has 2 assert(s), all pass ', 'A:[A] test_not_tautological @ tests/test_outputs.py:515: test `test_no_bare_except` has 1 assert(s), all pass on a stub im', 'lint_tier_b:2', 'B:[B] pinned_dependencies @ environment/Dockerfile:8: unpinned pip deps: numpy, pandas, pyyaml', 'B:[B] pinned_dependencies @ environment/Dockerfile:20: unpinned pip deps: torch, https://download.pytorch.org/whl/cpu']"
+      "model": "claude-opus-4-6",
+      "backend": "anthropic",
+      "time": 0.47,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:2', 'A:[A] test_not_tautological @ tests/test_outputs.py:366: test `test_evaluate_env_empty_outputs` has 2 assert(s), all pass ', 'A:[A] test_not_tautological @ tests/test_outputs.py:515: test `test_no_bare_except` has 1 assert(s), all pass on a stub im', 'lint_tier_b:5', 'B:[B] pinned_dependencies @ environment/Dockerfile:8: unpinned pip deps: numpy, pandas, pyyaml', 'B:[B] pinned_dependencies @ environment/Dockerfile:20: unpinned pip deps: torch, https://download.pytorch.org/whl/cpu', 'B:[B] pinned_dependencies @ environment/Dockerfile:27: unpinned pip deps: ruff, 2>/dev/null']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 24.69,
+      "time": 11.18,
       "tier_a_fails": [],
       "tier_b_fails": [],
-      "pass_count": 8,
-      "fail_count": 1
+      "pass_count": 9,
+      "fail_count": 0
+    },
+    "fix_quality": {
+      "status": "ok",
+      "model": "claude-opus-4-6",
+      "backend": "anthropic",
+      "time": 573.78,
+      "notes": ""
     }
   },
   "history": [
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 1648.3,
-      "at": "2026-04-12T00:48:57.398725"
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "oauth",
+      "time": 5758.5,
+      "at": "2026-04-25T10:17:30.627076"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "oauth",
+      "time": 2308.83,
+      "at": "2026-04-25T10:56:48.989043"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "oauth",
+      "time": 2079.11,
+      "at": "2026-04-25T11:32:38.533770"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "oauth",
+      "time": 1688.94,
+      "at": "2026-04-25T12:03:10.313078"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
-      "backend": "fireworks",
-      "time": 1321.59,
-      "at": "2026-04-12T01:37:12.562422"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 1492.54,
-      "at": "2026-04-12T05:42:43.624169"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "glm",
-      "time": 939.11,
-      "at": "2026-04-15T05:16:54.393313"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "minimax",
-      "time": 2737.32,
-      "at": "2026-04-16T01:25:52.747564"
+      "backend": "anthropic",
+      "time": 7618.07,
+      "at": "2026-04-25T14:24:36.257089"
     }
   ]
 }

@@ -3,54 +3,52 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "Instruction names all required literals (install-browser, install-skills, network, route-list, unroute, playwright-cli route-list, playwright-cli unroute) and file areas (SKILL.md, request-mocking.md, ToolCapability type, route tools)."
+      "reason": "Instruction names the commands (install-browser, install-skills), capability types (network), file behaviors (.claude/skills/playwright/), and literal strings required in docs; tests check these same items."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "Instruction describes what needs to change conceptually (rename command, add capability, move tools) without specifying exact line edits or code snippets."
+      "reason": "Instruction describes what to change (rename command, add capability) without specifying line numbers or exact code."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "Tests check for command names, capability values, presence of function name 'installSkills', and literal doc strings \u2014 all reasonably required by any correct fix."
+      "reason": "Tests use regex to find command names and capabilities, allowing flexible implementations; installSkills check allows cp/cpSync variants."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Tests largely grep source files via regex/string matching (e.g., test_install_skills_implementation checks for '.claude' and 'cpSync' substrings); no test actually invokes install-skills to verify files are copied."
+      "outcome": "pass",
+      "reason": "Tests run npm build, tsc, and actually execute install-skills via spawn to verify file copying behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "Each f2p test requires specific code changes (renaming command, adding capability, implementing installSkills with copy logic) that a stub wouldn't satisfy."
+      "reason": "test_install_skills_executes actually runs the CLI and checks destination directory; stub wouldn't copy files."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All instruction-required behaviors (rename, new command, capability move, SKILL.md sections, request-mocking.md strings) have corresponding tests."
+      "reason": "All instruction-required behaviors (rename, install-skills, network capability, doc strings) are tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are grouped under commented sections (Gates, Fail-to-pass, Config/documentation) with descriptive names and docstrings."
+      "reason": "Tests are grouped with clear section comments (Gates, Fail-to-pass, Config/documentation) and tagged with [static]/[pr_diff]/[repo_tests]."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data output."
+      "reason": "Not a structured-data task."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos in instruction.md paths or command names."
+      "reason": "Paths and commands are consistent across instruction and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "Instruction names the relevant files/commands but does not point to exact lines; localization within files is still required."
+      "reason": "Instruction describes modules by purpose, doesn't specify exact file/line locations of bugs."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "Not an agentmd-edits task; primary changes are code."
+      "reason": "Code task, not agentmd-edits config task."
     }
   },
-  "tier_a_fails": [
-    "tests_verify_behavior_not_text"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 8,
-  "fail_count": 1
+  "pass_count": 9,
+  "fail_count": 0
 }

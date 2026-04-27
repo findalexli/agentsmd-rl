@@ -37,18 +37,22 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: The vulnerable fixed 1024-byte buffer pattern must be removed
-- id: test_stack_fallback_pattern_present
+- id: test_dynamic_allocation_pattern
   type: fail_to_pass
   origin: pr_diff
-  description: The safe stackFallback allocator pattern must be present
-- id: test_dynamic_allocation_with_dupeZ
-  type: fail_to_pass
-  origin: pr_diff
-  description: The fix must use dupeZ for dynamic allocation of the hostname
-- id: test_proper_cleanup_with_defer_free
+  description: The fix must use dynamic heap allocation (any form) instead of fixed stack buffer
+- id: test_memory_cleanup_with_defer
   type: fail_to_pass
   origin: pr_diff
   description: The fix must properly free the allocated memory with defer
+- id: test_allocation_and_cleanup_both_present
+  type: fail_to_pass
+  origin: pr_diff
+  description: Verify both allocation and cleanup patterns appear in actual code
+- id: test_zig_build_lib_check
+  type: fail_to_pass
+  origin: pr_diff
+  description: Verify the modified file can be parsed with zig ast-check
 rubric:
 - rule: Memory management - In Zig code, be careful with allocators and use defer
     for cleanup
@@ -56,39 +60,21 @@ rubric:
     path: CLAUDE.md
     lines: '40'
     commit: 686eda3cb4773bb1ffe77cbdef6d0507d8fc2314
-- rule: Always use bun.* APIs instead of std.*. The bun namespace provides cross-platform
-    wrappers that preserve OS error info and never use unreachable. Using std.fs,
-    std.posix, or std.os directly is wrong in this codebase.
+- rule: "Prefer bun.* APIs over std.* for cross-platform error handling, but std.heap.stackFallback is explicitly required for the DNS buffer overflow fix since no bun.heap.stackFallback exists in the codebase at this commit."
   source:
     path: src/CLAUDE.md
     lines: 10-29
     commit: 686eda3cb4773bb1ffe77cbdef6d0507d8fc2314
-- rule: Use std.heap.stackFallback with bun.default_allocator for dynamic allocation
-    instead of fixed buffers when handling variable-length inputs
+- rule: "Never use `@import()` inline inside of functions. Always put them at the bottom of the file or containing struct. Imports in Zig are free of side-effects."
   source:
-    path: .claude/skills/zig-system-calls/SKILL.md
-    lines: 30-40
-    commit: 686eda3cb4773bb1ffe77cbdef6d0507d8fc2314
-- rule: Never use `@import()` inline inside of functions.
-  source:
-    path: src/AGENTS.md
+    path: src/CLAUDE.md
     lines: 10-11
-  evidence: The gold solution uses `std.heap.stackFallback` without adding an inline
-    `@import("std")` inside the `lookup` function, adhering to the rule against inline
-    imports.
-  category: style
+    commit: 686eda3cb4773bb1ffe77cbdef6d0507d8fc2314
 distractors:
 - rule: Always use `bun.*` APIs instead of `std.*`.
-  collision_type: rule_conflict
-  why_distracting: The config explicitly states 'Always use `bun.*` APIs instead of
-    `std.*`'. An overzealous agent might try to modify the provided `std.heap.stackFallback`
-    snippet to use a non-existent `bun.heap.stackFallback` or `bun.stackFallback`
-    to comply with this strict repository rule.
+  why_distracting: The config explicitly states 'Always use `bun.*` APIs instead of `std.*`'. An overzealous agent might try to modify the provided `std.heap.stackFallback` snippet to use a non-existent `bun.heap.stackFallback` or `bun.stackFallback` to comply with this strict repository rule.
   severity: high
   source:
     path: src/AGENTS.md
     lines: 15-16
-hierarchy_analysis: The repository contains duplicated config files at the root (`AGENTS.md`,
-  `CLAUDE.md`) and in `src/` (`src/AGENTS.md`, `src/CLAUDE.md`). The agent must navigate
-  this moderate hierarchy and recognize that the specific PR instruction to use `std.heap.stackFallback`
-  overrides the general repository rule against `std.*` APIs.
+hierarchy_analysis: The repository contains duplicated config files at the root (`AGENTS.md`, `CLAUDE.md`) and in `src/` (`src/AGENTS.md`, `src/CLAUDE.md`). The agent must navigate this moderate hierarchy and recognize that the specific PR instruction to use `std.heap.stackFallback` overrides the general repository rule against `std.*` APIs.

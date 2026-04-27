@@ -1,9 +1,6 @@
 #!/bin/bash
 set -e
 
-# Install pytest if needed
-pip install pytest jmespath pyyaml --quiet 2>/dev/null || true
-
 # Run the tests
 cd /workspace/airflow
 pytest /tests/test_outputs.py -v --tb=short 2>&1 | tee /logs/verifier/pytest_output.log
@@ -32,11 +29,6 @@ if [ -f /tests/eval_manifest.yaml ] && [ -f /tests/standalone_judge.py ]; then
     if [ -n "$_repo_dir" ] && [ -d "$_repo_dir/.git" ]; then
         (cd "$_repo_dir" && git add -A 2>/dev/null && git diff --cached > /logs/verifier/agent.diff 2>/dev/null) || true
     fi
-
-    # Install PyYAML if needed (lightweight, <1s)
-    python3 -c "import yaml" 2>/dev/null || \
-        python3 -m pip install -q pyyaml 2>/dev/null || \
-        pip3 install -q --break-system-packages pyyaml 2>/dev/null || true
 
     # Run LLM judge (writes track3_rubric.json + track4_distractors.json)
     python3 /tests/standalone_judge.py /tests/eval_manifest.yaml /logs/verifier/agent.diff 2>&1 || true

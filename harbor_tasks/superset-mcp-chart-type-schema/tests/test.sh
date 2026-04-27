@@ -1,9 +1,6 @@
 #!/bin/bash
 # Standardized test runner for benchmark tasks
 
-# Ensure pytest and ruff are available
-pip install --quiet pytest pytest-timeout ruff 2>/dev/null || true
-
 # Run tests and capture exit code
 cd /workspace/superset
 python -m pytest /tests/test_outputs.py -v --tb=short --timeout=300
@@ -16,7 +13,6 @@ else
     echo "0" > /logs/verifier/reward.txt
 fi
 
-# exit $PYTEST_EXIT_CODE   # auto-disabled (prevented judge block from running)
 # --- LLM Judge (Track 3 + Track 4) ---
 if [ -f /tests/eval_manifest.yaml ] && [ -f /tests/standalone_judge.py ]; then
     # Capture agent diff

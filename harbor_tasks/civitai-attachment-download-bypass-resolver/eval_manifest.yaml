@@ -1,3 +1,5 @@
+version: "2.0"
+
 source:
   pr: civitai/civitai#2071
   base_commit: 47c3beedb50993e5f410e241e4940131bba9afb2
@@ -6,52 +8,52 @@ source:
 checks:
   - id: test_imports_getDownloadUrl
     type: fail_to_pass
-    origin: task
+    origin: pr_diff
     description: Attachment endpoint imports getDownloadUrl from delivery-worker
 
   - id: test_does_not_import_resolveDownloadUrl
     type: fail_to_pass
-    origin: task
+    origin: pr_diff
     description: Attachment endpoint does NOT import resolveDownloadUrl
 
   - id: test_download_call_uses_file_url_and_name
     type: fail_to_pass
-    origin: task
+    origin: pr_diff
     description: Download function called with (file.url, file.name), not (fileId, file.url, file.name)
 
   - id: test_fileId_not_in_download_call
     type: fail_to_pass
-    origin: task
+    origin: pr_diff
     description: fileId is not passed as argument to the download URL function
 
   - id: test_delivery_worker_module_integrity
     type: pass_to_pass
-    origin: task
+    origin: static
     description: delivery-worker.ts exports both getDownloadUrl and resolveDownloadUrl
 
   - id: test_delivery_worker_getDownloadUrl_signature
     type: pass_to_pass
-    origin: task
+    origin: static
     description: getDownloadUrl has correct 2-parameter signature
 
   - id: test_delivery_worker_resolveDownloadUrl_signature
     type: pass_to_pass
-    origin: task
+    origin: static
     description: resolveDownloadUrl has correct 3-parameter signature
 
   - id: test_attachment_endpoint_structure
     type: pass_to_pass
-    origin: task
+    origin: static
     description: Attachment endpoint has valid structure with expected exports
 
   - id: test_resolveDownloadUrl_has_fallback_to_getDownloadUrl
     type: pass_to_pass
-    origin: task
+    origin: static
     description: resolveDownloadUrl falls back to getDownloadUrl for non-ModelFile records
 
   - id: test_attachment_endpoint_file_valid_syntax
     type: pass_to_pass
-    origin: task
+    origin: static
     description: Attachment endpoint file has balanced braces and no obvious syntax errors
 
   - id: test_repo_eslint_modified_files

@@ -4,12 +4,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-16T09:05:19.396488",
-  "total_time": 900.26,
-  "sandbox_id": "i20i61dg04er70p28yeir",
-  "backend": "anthropic",
+  "validated_at": "2026-04-21T19:13:18.998259",
+  "total_time": 4113.71,
+  "sandbox_id": "ibwqeuajma3z5ek1dtg4u",
+  "backend": "minimax",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "fix_quality",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -31,9 +31,9 @@
       "gold_reward": 1.0,
       "attempts": 1,
       "notes": "All four checks pass: Docker build OK, NOP test reward=0 (7 f2p tests correctly fail on base), Gold test reward=1 (all 16 tests pass with solution). Rubric ICR=0.00 is expected - judge evaluates only config file diffs, not code file changes (minimist.ts license header, DEPS.list updates) which are verified by functional tests.",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 181.73
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 205.96
     },
     "rubric_judge": {
       "status": "pass",
@@ -54,31 +54,28 @@
     },
     "quality_gate": {
       "status": "passed",
-      "model": "claude-opus-4-6",
-      "backend": "anthropic",
-      "time": 0.82,
-      "notes": "flags=[]"
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.24,
+      "notes": "flags=['lint_tier_b:1', 'B:[B] no_network_during_tests @ tests/test.sh:44: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 28.25,
-      "tier_a_fails": [
-        "no_solution_leakage"
-      ],
+      "time": 13.54,
+      "tier_a_fails": [],
       "tier_b_fails": [],
-      "pass_count": 9,
-      "fail_count": 2
+      "pass_count": 10,
+      "fail_count": 0
+    },
+    "fix_quality": {
+      "status": "ok",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 373.89,
+      "notes": ""
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 3470.31,
-      "at": "2026-04-12T00:53:13.812551"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -110,6 +107,14 @@
       "backend": "anthropic",
       "time": 900.26,
       "at": "2026-04-16T09:05:19.396488"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 4113.71,
+      "at": "2026-04-21T19:13:18.998259"
     }
   ]
 }

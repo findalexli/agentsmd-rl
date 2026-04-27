@@ -228,18 +228,21 @@ def test_static_segments():
 
 # [pr_diff] pass_to_pass
 def test_malformed_encoding_no_crash():
-    """Malformed URL encoding does not crash."""
+    """Malformed URL encoding does not crash and segments remain static."""
     # Unclosed bracket encoding
     r1 = _parse_route("/test/%5Bparam")
-    assert isinstance(r1["names"], list)
+    assert r1["names"] == [], f"Expected no dynamic segments, got {r1['names']}"
+    assert r1["segmentCount"] == 2
 
     # Partial percent encoding
     r2 = _parse_route("/test/%5")
-    assert isinstance(r2["names"], list)
+    assert r2["names"] == [], f"Expected no dynamic segments, got {r2['names']}"
+    assert r2["segmentCount"] == 2
 
     # Random percent signs
     r3 = _parse_route("/test/100%25complete")
-    assert isinstance(r3["names"], list)
+    assert r3["names"] == [], f"Expected no dynamic segments, got {r3['names']}"
+    assert r3["segmentCount"] == 2
 
 
 # ---------------------------------------------------------------------------

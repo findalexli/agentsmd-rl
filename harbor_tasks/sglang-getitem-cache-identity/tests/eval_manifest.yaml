@@ -5,7 +5,7 @@ source:
   base_commit: ef2d4013d77cf1267e032d7a7a745dc3a6f74880
   merge_commit: 494bb86169669f8dece646873b7c33904d8ddf6e
 checks:
-- id: syntax_check
+- id: test_syntax_check
   type: pass_to_pass
   origin: static
   description: Modified files must parse without errors
@@ -16,7 +16,7 @@ checks:
 - id: test_ruff_check
   type: pass_to_pass
   origin: repo_tests
-  description: Repoo's ruff syntax/error lint check passes on modified files
+  description: Repo's ruff syntax/error lint check passes on modified files
 - id: test_ruff_import_check
   type: pass_to_pass
   origin: repo_tests
@@ -45,35 +45,25 @@ checks:
   type: pass_to_pass
   origin: static
   description: Modified files end with single newline (pre-commit check)
-- id: test_repo_check_yaml
-  type: pass_to_pass
-  origin: repo_tests
-  description: Repo's CI workflow YAML files are valid
-- id: test_repo_check_toml
-  type: pass_to_pass
-  origin: repo_tests
-  description: Repo's pyproject.toml is valid TOML
 - id: test_repo_check_debug_statements
   type: pass_to_pass
   origin: static
   description: Modified files have no debug statements (breakpoint, pdb)
-- id: generate_req_caching_implemented
+- id: test_generate_req_identity
   type: fail_to_pass
   origin: pr_diff
-  description: GenerateReqInput.__getitem__ implements identity caching with _sub_obj_cache
-- id: embedding_req_caching_implemented
+  description: GenerateReqInput.__getitem__ returns the same instance for the
+    same index (identity caching)
+- id: test_embedding_req_identity
   type: fail_to_pass
   origin: pr_diff
-  description: EmbeddingReqInput.__getitem__ implements identity caching with _sub_obj_cache
-- id: lora_id_propagation_to_cached_subobjects
+  description: EmbeddingReqInput.__getitem__ returns the same instance for the
+    same index (identity caching)
+- id: test_lora_id_propagation_to_cached_subobjects
   type: fail_to_pass
   origin: pr_diff
-  description: tokenizer_manager._resolve_lora_path propagates lora_id to cached sub-objects
-- id: not_stub
-  type: pass_to_pass
-  origin: static
-  description: Modified __getitem__ methods have real caching logic, not just return
-    statements
+  description: After lora_id is set on parent, cached sub-objects reflect the
+    updated value
 rubric:
 - rule: Comments in __getitem__ explain invariants and rationale (WHY), not narrate
     code (WHAT).

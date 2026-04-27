@@ -4,12 +4,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-16T10:55:39.745357",
-  "total_time": 86.29,
-  "sandbox_id": "i70k46lvqpqrxtgdss7kt",
-  "backend": "anthropic",
+  "validated_at": "2026-04-22T01:56:19.922924",
+  "total_time": 13587.62,
+  "sandbox_id": "i4x91yare164t7rlkmjhg",
+  "backend": "minimax",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "fix_quality",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -31,9 +31,9 @@
       "gold_reward": 1.0,
       "attempts": 1,
       "notes": "All 4 validation checks passed: Docker build SUCCESS, NOP test reward=0 (2 expected failures on fail-to-pass tests), Gold test reward=1 (18 passed), Rubric judge ICR=1.0 (4/4 rules pass)",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 157.77
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 689.21
     },
     "rubric_judge": {
       "status": "fail",
@@ -54,25 +54,30 @@
     },
     "quality_gate": {
       "status": "passed",
-      "model": "claude-opus-4-7",
-      "backend": "anthropic",
-      "time": 0.45,
-      "notes": "flags=[]"
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.44,
+      "notes": "flags=['lint_tier_b:1', 'B:[B] no_network_during_tests @ tests/test.sh:44: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 12.0,
-      "tier_a_fails": [
-        "solution_uniqueness_guard"
-      ],
+      "time": 14.02,
+      "tier_a_fails": [],
       "tier_b_fails": [],
-      "pass_count": 8,
-      "fail_count": 1
+      "pass_count": 9,
+      "fail_count": 0
     },
     "tests_rewrite": {
       "status": "error",
       "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":403,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 400 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"invalid_request_error\\\",\\\"message\\\":\\\"\\\\\\\"thinking.type.enabled\\\\\\\" is not supported for this model. Use \\\\\\\"thinking.type.adapt",
       "time": 4.49
+    },
+    "fix_quality": {
+      "status": "ok",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 142.11,
+      "notes": ""
     }
   },
   "history": [
@@ -80,41 +85,41 @@
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
-      "backend": "minimax",
-      "time": 799.81,
-      "at": "2026-04-15T03:37:45.329923"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "oauth",
-      "time": 292.49,
-      "at": "2026-04-15T12:40:37.353118"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "glm",
-      "time": 3469.48,
-      "at": "2026-04-15T20:58:12.251374"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "glm",
-      "time": 2452.53,
-      "at": "2026-04-15T22:18:25.079775"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
       "backend": "anthropic",
       "time": 86.29,
       "at": "2026-04-16T10:55:39.745357"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 11413.55,
+      "at": "2026-04-21T12:31:27.155511"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "chutes",
+      "time": 785.86,
+      "at": "2026-04-21T13:48:16.234959"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 6571.86,
+      "at": "2026-04-21T15:56:37.090361"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 13587.62,
+      "at": "2026-04-22T01:56:19.922924"
     }
   ]
 }

@@ -1,15 +1,16 @@
 {
   "schema_version": 2,
-  "valid": true,
-  "verdict": "pass",
-  "nop_reward": 0.0,
-  "gold_reward": 1.0,
-  "validated_at": "2026-04-15T05:53:58.478408",
-  "total_time": 1145.66,
-  "sandbox_id": "ig3c27w6uz2ryicodkx4g",
+  "valid": false,
+  "verdict": "fail",
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-22T07:49:01.062844",
+  "total_time": 16094.57,
+  "sandbox_id": "idcrnu6a6wkqvl0vhi5xm",
   "backend": "minimax",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "fix_quality",
+  "error": "rate limited during fix_quality: {\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":190534,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 429 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"rate_limit_error\\\",\\\"message\\\":\\\"usage limit exceeded (2056)\\\"},\\\"request_id\\\":\\\"063812dbe49de5bb18039f37b19f19ae\\\"}\",\"stop_reason\":\"stop_sequence\",\"session_id\":\"9bd72940-6b5f-430e-8ab0-0d9831054cc5\",\"total_cost_usd\":0,\"usage\":{\"input_tokens\":0,\"cache_creation_input_tokens\":0,\"cache_read_inp",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -70,8 +71,8 @@
       "status": "passed",
       "model": "MiniMax-M2.7",
       "backend": "minimax",
-      "time": 0.42,
-      "notes": "flags=['lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:22: unpinned pip deps: numpy, 2>/dev/null']"
+      "time": 0.22,
+      "notes": "flags=['lint_tier_b:2', 'B:[B] pinned_dependencies @ environment/Dockerfile:22: unpinned pip deps: numpy, 2>/dev/null', 'B:[B] no_network_during_tests @ tests/test.sh:44: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
@@ -83,17 +84,16 @@
       "tier_b_fails": [],
       "pass_count": 7,
       "fail_count": 3
+    },
+    "fix_quality": {
+      "status": "rate_limited",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 192.45,
+      "notes": ""
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 8046.63,
-      "at": "2026-04-10T00:13:14.702558"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -125,6 +125,14 @@
       "backend": "minimax",
       "time": 1145.66,
       "at": "2026-04-15T05:53:58.478408"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "minimax",
+      "time": 16094.57,
+      "at": "2026-04-22T07:49:01.062844"
     }
   ]
 }

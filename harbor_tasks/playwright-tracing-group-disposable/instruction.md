@@ -1,48 +1,49 @@
-# Task: Make Tracing.group() return a Disposable
+# Make `Tracing.group()` Disposable
 
-## Problem
+You are working in the Playwright monorepo at `/workspace/playwright`. The repo has been cloned at the appropriate base commit and dependencies are installed; the build artifacts under `packages/playwright-core/lib/` are also already produced for the unmodified source.
 
-The `Tracing.group()` method in Playwright currently returns `Promise<void>`. This prevents using the `await using` pattern for automatic cleanup:
+## Symptom
 
-```typescript
-await using group = await context.tracing.group('name');
+The `Tracing.group(name, options?)` API on the Playwright client currently resolves to `void`. There is no way to scope a group's lifetime: callers have to remember to call `tracing.groupEnd()` themselves, and they cannot use the modern explicit‑resource‑management pattern. In particular, this code does not compile and does not auto-close the group:
+
+```ts
+async function withGroup(tracing) {
+  await using g = await tracing.group('outer');   // type error: void is not Disposable
+  // ... do work; on scope exit, groupEnd() should run automatically ...
+}
 ```
 
-Currently this pattern doesn't work because `group()` doesn't return a disposable object. The group should automatically end when the scope exits by calling `groupEnd()` on disposal.
+The same pattern is already used elsewhere in the Playwright client (e.g. screencasts and other resources), and a `DisposableStub` helper already exists in `packages/playwright-core/src/client/disposable.ts`. `DisposableStub` takes a single `() => Promise<void>` callback that is run on `dispose()`/`Symbol.asyncDispose`, with built-in idempotency.
 
-## What You Need To Do
+## Required behavior after the fix
 
-### 1. Fix the Core Implementation
+1. `await tracing.group(name, options?)` resolves to an object that:
+   - has an async `dispose()` method, and
+   - is usable with `await using` (i.e. it implements `Symbol.asyncDispose`).
+2. Calling `dispose()` (whether directly or via `await using`) invokes the existing `groupEnd()` method **exactly once** even if `dispose()` is called multiple times.
+3. The publicly generated TypeScript declaration files for the client must reflect the new return type — specifically, the `Tracing.group(...)` method signature in **both** of these generated files must end with `Promise<Disposable>` (not `Promise<void>`):
+   - `packages/playwright-core/types/types.d.ts`
+   - `packages/playwright-client/types/types.d.ts`
+4. The pre-existing pre-condition behavior is unchanged: the underlying `tracingGroup` channel call must still happen (with the same `name` / `location` arguments), and `_additionalSources` must still be updated when `options.location` is provided. Only the return value changes.
+5. The DEPS check (`node utils/check_deps.js`) and ESLint must continue to pass on any file you touch.
 
-The `group()` method in the Tracing client implementation (located in the playwright-core package) returns `Promise<void>`. It needs to instead return a disposable object that calls the existing `groupEnd()` method when disposed.
+## Hints about the codebase (read these before editing)
 
-The Playwright codebase provides a `DisposableStub` class (imported from the `'./disposable'` module) that creates disposable objects by passing a callback to run on disposal. Use this to implement the disposable return value.
+- `packages/playwright-core/types/types.d.ts` and `packages/playwright-client/types/types.d.ts` are **generated** from the per-class API documentation under `docs/src/api/`. Hand-editing the generated `types.d.ts` files is not the right approach — they will be overwritten on the next build. Update the documentation source so the regenerated declarations are correct.
+- The doc syntax for declaring a method's return type lives in `docs/src/api/`; look at how other methods in the same file declare return types (search for `- returns:`).
+- The build pipeline that updates `lib/` and regenerates `types.d.ts` is `node utils/build/build.js --disable-install`. The grader runs this for you before tests, so you do not need to invoke it manually, but feel free to run it while iterating.
 
-### 2. Update Type Definitions
+## What is being graded
 
-The type definition files for the Tracing interface need to reflect the new return type. Update both type definition files (one in the playwright-client package and one in the playwright-core package):
+Grading runs the build and then exercises the runtime behavior of the compiled client. The grader will:
 
-The `group()` method signature should return `Promise<Disposable>` instead of `Promise<void>`.
-
-### 3. Update API Documentation
-
-In the Tracing class API documentation file (in the docs/src/api directory), add the return type annotation for the `group` method. The format follows the pattern used by other methods in the same file — look at nearby method signatures to see the correct syntax for documenting return types.
-
-### 4. Update CLAUDE.md
-
-The project's `CLAUDE.md` has a "Commit Convention" section. Add a line instructing contributors to run `npm run flint` and fix errors before committing.
-
-## Verification
-
-The solution should:
-
-1. Allow the `await using` pattern shown above
-2. Automatically call `groupEnd()` when the disposable is disposed
-3. Pass TypeScript compilation
-4. Pass lint checks
+- Construct a `Tracing` instance prototype with a mocked channel and call `group(...)` against it (no real browser needed).
+- Verify the returned value has a callable `dispose()` and a `Symbol.asyncDispose` member.
+- Verify that `dispose()` triggers exactly one `tracingGroupEnd` channel call, and that a second `dispose()` is a no-op.
+- Verify `await using` semantics work end-to-end against the returned value.
+- Inspect both generated `types.d.ts` files for the new return type.
+- Re-run the repo's dependency boundary check and ESLint.
 
 ## Code Style Requirements
 
-Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
-
-- `eslint (JS/TS linter)`
+When iterating, run the repo's linters before considering the change complete. The grader runs `node utils/check_deps.js` and `npx eslint packages/playwright-core/src/client/tracing.ts` as part of testing; both must pass. Refer to `CLAUDE.md` in the repo root for the project's lint conventions.

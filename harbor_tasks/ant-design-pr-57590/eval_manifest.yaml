@@ -6,30 +6,30 @@ source:
   title: "fix(Notification): reserve close button spacing for description-only notices"
 
 checks:
-  - id: test_title_conditional_rendering_pattern
+  - id: test_title_conditionally_rendered
     type: fail_to_pass
     origin: pr_diff
-    description: Title element is conditionally rendered only when title exists
+    description: Title div is conditionally rendered based on title prop presence
 
-  - id: test_no_unconditional_title_div
+  - id: test_description_spacing_css_rules_exist
     type: fail_to_pass
     origin: pr_diff
-    description: No unconditional title div rendering after iconNode
+    description: CSS provides spacing for description when it is the first child (no title)
 
-  - id: test_first_child_style_rule_exists
+  - id: test_description_has_margin_inline_end_when_no_title
     type: fail_to_pass
     origin: pr_diff
-    description: Description has &:first-child style rule for when title is absent
+    description: Description has marginInlineEnd or equivalent right-side spacing
 
-  - id: test_first_child_margin_inline_end
+  - id: test_notification_component_structure
     type: fail_to_pass
     origin: pr_diff
-    description: First-child rule includes marginInlineEnd for close button spacing
+    description: Notification component has proper structure for icon/title/description
 
-  - id: test_first_child_margin_top_zero
+  - id: test_purepanel_renders_without_errors
     type: fail_to_pass
     origin: pr_diff
-    description: First-child rule sets marginTop to 0
+    description: PurePanel component can be imported and rendered without errors
 
   - id: test_eslint_notification_component
     type: pass_to_pass
@@ -40,9 +40,6 @@ checks:
     type: pass_to_pass
     origin: agent_config
     description: Styles use design tokens, not hardcoded values
-    source:
-      file: .github/copilot-instructions.md
-      rule: "Use design tokens from the Ant Design token system. Never hardcode colors, sizes, or spacing values"
 
   - id: test_biome_lint_notification_component
     type: pass_to_pass
@@ -54,6 +51,4 @@ checks:
     origin: repo_tests
     description: Biome check passes on notification component files
 
-# Rubric rules not applicable: this is a pure code-fix task with no config-edit requirements.
-# Coding conventions (CSS logical properties, design tokens) are validated by pytest pass_to_pass tests.
 rubric: []

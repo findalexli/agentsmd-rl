@@ -1,15 +1,16 @@
 {
   "schema_version": 2,
-  "valid": true,
-  "verdict": "pass",
-  "nop_reward": 0.0,
-  "gold_reward": 1.0,
-  "validated_at": "2026-04-16T11:41:28.249451",
-  "total_time": 105.94,
-  "sandbox_id": "iffur4zrbhi4w06i39nv1",
-  "backend": "anthropic",
+  "valid": false,
+  "verdict": "fail",
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-22T07:49:01.443252",
+  "total_time": 16095.02,
+  "sandbox_id": "ive212y5yaz8xfwyrius7",
+  "backend": "minimax",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "fix_quality",
+  "error": "rate limited during fix_quality: {\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":189621,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 429 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"rate_limit_error\\\",\\\"message\\\":\\\"usage limit exceeded (2056)\\\"},\\\"request_id\\\":\\\"063812db2c54d4cb900aab776c20e882\\\"}\",\"stop_reason\":\"stop_sequence\",\"session_id\":\"e36c64fc-f9ff-44bc-b0cc-d1a93bb2b14a\",\"total_cost_usd\":0,\"usage\":{\"input_tokens\":0,\"cache_creation_input_tokens\":0,\"cache_read_inp",
   "nodes": {
     "p2p_enrich": {
       "status": "completed",
@@ -73,10 +74,10 @@
     },
     "quality_gate": {
       "status": "DELETE",
-      "model": "claude-opus-4-7",
-      "backend": "anthropic",
-      "time": 0.35,
-      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:40: test `test_modified_files_syntax` has 1 assert(s), all pass on a s', 'lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:21: unpinned pip deps: requests']"
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.3,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:40: test `test_modified_files_syntax` has 1 assert(s), all pass on a s', 'lint_tier_b:2', 'B:[B] pinned_dependencies @ environment/Dockerfile:21: unpinned pip deps: requests', 'B:[B] no_network_during_tests @ tests/test.sh:44: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
@@ -93,19 +94,16 @@
       "status": "error",
       "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":508,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 400 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"invalid_request_error\\\",\\\"message\\\":\\\"\\\\\\\"thinking.type.enabled\\\\\\\" is not supported for this model. Use \\\\\\\"thinking.type.adapt",
       "time": 2.08
+    },
+    "fix_quality": {
+      "status": "rate_limited",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 191.6,
+      "notes": ""
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "icr": 1.0,
-      "backend": "fireworks",
-      "time": 120.0,
-      "at": "2026-04-12T12:00:00",
-      "notes": "Removed 3 rubric rules judge couldn't evaluate"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -137,6 +135,14 @@
       "backend": "anthropic",
       "time": 105.94,
       "at": "2026-04-16T11:41:28.249451"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "minimax",
+      "time": 16095.02,
+      "at": "2026-04-22T07:49:01.443252"
     }
   ]
 }

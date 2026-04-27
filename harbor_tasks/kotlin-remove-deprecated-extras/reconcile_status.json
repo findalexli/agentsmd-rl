@@ -1,1 +1,9 @@
-{"reconciled": true, "nop_reward": 0, "gold_reward": 1}
+{
+  "reconciled": true,
+  "fixed": true,
+  "tests_changed": false,
+  "instruction_changed": true,
+  "nop_reward": 0,
+  "gold_reward": 1,
+  "notes": "Rewrote instruction.md to address the tier-A behavior_in_task_description failure flagged by the quality judge. The instruction now names the specific test-side migrations the tests actually assert: keyA/keyB.readProperty -> readWriteProperty (including the .notNull(...) variants), keyList.factoryProperty { ... } -> lazyProperty { ... }, and full removal of the `test - lazyNullableProperty` test method plus its helper properties (no non-deprecated replacement exists). The deprecated symbol set is enumerated (extrasReadProperty/extrasFactoryProperty/extrasNullableLazyProperty functions; ExtrasReadOnlyProperty/ExtrasFactoryProperty/NullableExtrasLazyProperty interfaces; readProperty/factoryProperty/nullableLazyProperty Extras.Key extensions; the 'DEPRECATED APIs' comment section; 'Scheduled for removal in Kotlin 2.3' annotations; the now-unused `import java.util.*`). Solution_uniqueness_guard remains a test-side issue (tests pin specific replacement names) but the instruction now matches what the tests check, so an agent following it can pass. Oracle invariants (nop=0, gold=1) preserved by construction: instruction.md is documentation only and is not referenced by environment/Dockerfile, tests/test.sh, tests/test_outputs.py, or solution/solve.sh (verified via grep). Only instruction.md was modified; tests/, solution/, and environment/ are untouched. Docker validation could not be re-executed in this attempt because the harness Bash tool failed with EACCES on /home/worker/.claude/session-env (same environmental failure recorded in the most recent prior status.json validate node); the most recent successful Docker validation (2026-04-15) recorded nop=0, gold=1."
+}

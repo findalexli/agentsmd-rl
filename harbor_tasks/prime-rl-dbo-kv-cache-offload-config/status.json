@@ -4,12 +4,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-15T05:16:43.132781",
-  "total_time": 937.11,
-  "sandbox_id": "iqdqgvjfq5al7cf6uhk81",
-  "backend": "fireworks",
+  "validated_at": "2026-04-21T19:59:29.195831",
+  "total_time": 6884.12,
+  "sandbox_id": "i3ur8ltpkf3snzvvxw7ni",
+  "backend": "minimax",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "fix_quality",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -38,10 +38,18 @@
       "gold_reward": 1.0,
       "icr": 1.0,
       "attempts": 1,
-      "notes": "All 4 checks passed: (1) Docker build OK, (2) NOP test reward=0 (7 failed as expected on base code), (3) Gold test reward=1 (all 20 tests pass after fix), (4) Rubric judge ICR=1.0 per previous validation. The gold solution correctly adds KVCacheOffloadConfig with block_size=64/cpu_bytes=1_000_000_000 defaults, enable_dbo field defaulting to False, and integrates both features into DisaggregatedInferenceDeploymentConfig.",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 140.11
+      "notes": "Re-validated: Docker build OK, NOP test reward=0 (13 failed as expected on base code), Gold test reward=1 (all 26 tests pass after fix), Rubric judge ICR=1.0. All 4 checks pass.",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 279.14
+    },
+    "validate_recheck": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "icr": 1.0,
+      "attempts": 1,
+      "notes": "Re-validated: Docker build OK, NOP test reward=0 (13 failed as expected on base code), Gold test reward=1 (all 26 tests pass after fix), Rubric judge ICR=1.0. All 4 checks pass."
     },
     "rubric_judge": {
       "status": "pass",
@@ -62,31 +70,28 @@
     },
     "quality_gate": {
       "status": "DELETE",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 0.3,
-      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:224: test `test_configs_import` has 2 assert(s), all pass on a stub im', 'lint_tier_b:2', 'B:[B] pinned_dependencies @ environment/Dockerfile:20: unpinned pip deps: torch, https://download.pytorch.org/whl/cpu', \"B:[B] pinned_dependencies @ environment/Dockerfile:25: unpinned pip deps: pydantic, 'git+https://github.com/samsja/pydanti\"]"
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.26,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:224: test `test_configs_import` has 2 assert(s), all pass on a stub im', 'lint_tier_b:3', 'B:[B] pinned_dependencies @ environment/Dockerfile:20: unpinned pip deps: torch, https://download.pytorch.org/whl/cpu', \"B:[B] pinned_dependencies @ environment/Dockerfile:25: unpinned pip deps: pydantic, 'git+https://github.com/samsja/pydanti\", 'B:[B] no_network_during_tests @ tests/test.sh:44: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 26.35,
-      "tier_a_fails": [
-        "anti_cheating_measures"
-      ],
+      "time": 12.8,
+      "tier_a_fails": [],
       "tier_b_fails": [],
       "pass_count": 8,
-      "fail_count": 3
+      "fail_count": 1
+    },
+    "fix_quality": {
+      "status": "ok",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 2229.8,
+      "notes": ""
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 17581.25,
-      "at": "2026-04-10T06:16:16.796944"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -118,6 +123,14 @@
       "backend": "fireworks",
       "time": 937.11,
       "at": "2026-04-15T05:16:43.132781"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 6884.12,
+      "at": "2026-04-21T19:59:29.195831"
     }
   ]
 }

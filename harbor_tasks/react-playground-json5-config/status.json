@@ -1,15 +1,16 @@
 {
   "schema_version": 2,
-  "valid": true,
-  "verdict": "pass",
-  "nop_reward": 0.0,
-  "gold_reward": 1.0,
-  "validated_at": "2026-04-16T11:51:48.816232",
-  "total_time": 350.47,
-  "sandbox_id": "icd4ucce80xn6jq5wx5sw",
-  "backend": "anthropic",
+  "valid": false,
+  "verdict": "fail",
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-21T21:21:45.262632",
+  "total_time": 11820.63,
+  "sandbox_id": "in5c5zqx6jobk0tqqkng5",
+  "backend": "minimax",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "fix_quality",
+  "error": "rate limited during fix_quality: {\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":408129,\"duration_api_ms\":231071,\"num_turns\":13,\"result\":\"API Error: 429 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"rate_limit_error\\\",\\\"message\\\":\\\"usage limit exceeded (2056)\\\"},\\\"request_id\\\":\\\"06377fd726d20ae205a5596a533cdfe2\\\"}\",\"stop_reason\":\"stop_sequence\",\"session_id\":\"650c956e-fc08-4cac-a878-d09085f2f212\",\"total_cost_usd\":0.367618,\"usage\":{\"input_tokens\":23666,\"cache_creation_input_tokens\":",
   "nodes": {
     "validate": {
       "status": "pass",
@@ -68,10 +69,10 @@
     },
     "quality_gate": {
       "status": "passed",
-      "model": "claude-opus-4-7",
-      "backend": "anthropic",
-      "time": 0.31,
-      "notes": "flags=[]"
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.44,
+      "notes": "flags=['lint_tier_b:1', 'B:[B] no_network_during_tests @ tests/test.sh:44: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
@@ -88,17 +89,16 @@
       "status": "error",
       "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":751,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 400 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"invalid_request_error\\\",\\\"message\\\":\\\"\\\\\\\"thinking.type.enabled\\\\\\\" is not supported for this model. Use \\\\\\\"thinking.type.adapt",
       "time": 1.97
+    },
+    "fix_quality": {
+      "status": "rate_limited",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 410.45,
+      "notes": ""
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 4074.38,
-      "at": "2026-04-12T07:41:55.690301"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -130,6 +130,14 @@
       "backend": "anthropic",
       "time": 350.47,
       "at": "2026-04-16T11:51:48.816232"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "minimax",
+      "time": 11820.63,
+      "at": "2026-04-21T21:21:45.262632"
     }
   ]
 }

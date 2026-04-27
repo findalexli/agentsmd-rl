@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "All file paths and the pass functions referenced by tests are described in instruction.md under 'Files to Look At' and 'Expected Behavior'."
+      "reason": "instruction.md names all four files tested (Pipeline.ts, BuildHIR.ts, and three Validation files) and describes the patterns (tryRecord wrapping, recordErrors batch, redundant ternary, merged enableValidations guards)."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "Instruction describes what's broken (inconsistent tryRecord wrapping, manual loop vs recordErrors, redundant ternary, adjacent guard blocks) without providing exact replacement code."
+      "reason": "Instruction describes WHAT is broken (inconsistent wrapping, manual for-loop, redundant ternary, adjacent guards) without giving exact line edits."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_merged_validation_guard_blocks asserts no 'if (env.enableValidations)' appears between validateLocalsNotReassignedAfterRender and assertValidMutableRanges, which constrains structural placement; also test_build_hir_simplified_conditional requires the exact string 'detail.category === ErrorCategory.Invariant' which an alternative equivalent simplification (e.g., using a different check or extracting to a variable) wouldn't match."
+      "reason": "test_tryrecord_wraps_early_and_hook_validations asserts exact literal call shapes like 'validateContextVariableLValues(hir)' and 'inferMutationAliasingRanges(hir' within 3 lines of 'tryRecord' \u2014 an agent that refactors to a helper like `wrap(() => validateContextVariableLValues(hir))` or changes formatting could fail; also test_merged_validation_guard_blocks requires the merged guard to appear between the two specific function calls."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "All f2p tests only do string/regex inspection of source files (e.g., _is_wrapped_in_tryrecord checks for 'tryRecord' substring near a call; checks for '.recordErrors(' substring); none execute the compiler to verify actual error-handling behavior."
+      "reason": "Nearly all assertions are textual string searches on source files (e.g. `_is_wrapped_in_tryrecord`, `.recordErrors(` in content, 'for (const detail of'). The 'smoke test' only reads files with fs and greps strings \u2014 no compiler execution."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "Tests check specific structural changes to multiple files; a stub cannot trivially satisfy them without performing the described edits."
+      "reason": "Each test checks for presence/absence of specific patterns that require the actual refactor; a stub wouldn't satisfy them."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "Each expected behavior (tryRecord wrapping, recordErrors batch, simplified ternary, merged guard blocks) has a corresponding test."
+      "reason": "Tests cover tryRecord wrapping, recordErrors normalization, redundant ternary removal, and merged guard blocks \u2014 matching the four items in Expected Behavior."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are grouped with section comment headers (fail-to-pass, pass-to-pass) and descriptively named."
+      "reason": "Tests are grouped by section headers (fail-to-pass tryRecord, recordErrors, BuildHIR, merged guards, behavioral) with descriptive names and docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task is code refactoring, not structured data production."
+      "reason": "Task is code refactoring, no structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths and function names appear consistent between instruction and tests."
+      "reason": "File paths and function names match the repo layout."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "Instruction names the files (which is needed since localization is not the task) but does not point to exact lines or patched code."
+      "reason": "Instruction names files as 'files to look at' which is acceptable scoping; it doesn't cite specific line numbers."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "Code-only task."
+      "reason": "Code-only task, no agentmd/config edits."
     }
   },
   "tier_a_fails": [

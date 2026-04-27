@@ -4,13 +4,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-16T08:50:18.088831",
-  "total_time": 2205.22,
-  "sandbox_id": "ik1bp07qcmcs1ymuiiweb",
-  "backend": "anthropic",
+  "validated_at": "2026-04-22T05:49:00.537942",
+  "total_time": 8893.36,
+  "sandbox_id": "ivp1m7k5f4vncnxoq160f",
+  "backend": "minimax",
   "pipeline": "pipeline",
-  "start_at": "judge",
-  "error": "The sandbox was not found: This error is likely due to sandbox timeout. You can modify the sandbox timeout by passing 'timeout' when starting the sandbox or calling '.set_timeout' on the sandbox with the desired timeout.",
+  "start_at": "fix_quality",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -39,9 +38,9 @@
       "gold_reward": 1.0,
       "attempts": 1,
       "notes": "Fixed solve.sh to include snapshot update for F50x.py test fixtures. All 16 tests pass on gold, and fail-to-pass tests correctly fail on NOP (base commit).",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 375.56
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 259.07
     },
     "rubric_judge": {
       "status": "pass",
@@ -64,31 +63,26 @@
       "status": "passed",
       "model": "MiniMax-M2.7",
       "backend": "minimax",
-      "time": 0.58,
-      "notes": "flags=['lint_tier_b:1']"
+      "time": 0.53,
+      "notes": "flags=['lint_tier_b:2', 'B:[B] no_network_during_tests @ tests/test.sh:44: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 24.11,
-      "tier_a_fails": [
-        "behavior_in_task_description",
-        "no_solution_leakage",
-        "anti_cheating_measures"
-      ],
+      "time": 15.62,
+      "tier_a_fails": [],
       "tier_b_fails": [],
-      "pass_count": 6,
-      "fail_count": 4
+      "pass_count": 9,
+      "fail_count": 0
+    },
+    "fix_quality": {
+      "status": "ok",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 808.32,
+      "notes": ""
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 4547.41,
-      "at": "2026-04-10T19:08:26.984815"
-    },
     {
       "verdict": "fail",
       "nop": -1.0,
@@ -120,6 +114,14 @@
       "backend": "anthropic",
       "time": 2205.22,
       "at": "2026-04-16T08:50:18.088831"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 8893.36,
+      "at": "2026-04-22T05:49:00.537942"
     }
   ]
 }

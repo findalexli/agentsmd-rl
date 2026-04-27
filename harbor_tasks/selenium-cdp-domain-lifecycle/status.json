@@ -4,12 +4,13 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-16T12:57:09.623677",
-  "total_time": 58.67,
-  "sandbox_id": "ic7ard2wtguwux86qogmg",
-  "backend": "anthropic",
+  "validated_at": "2026-04-22T07:29:58.756339",
+  "total_time": 14952.22,
+  "sandbox_id": "id9nihdo2ilqk0ctdtw51",
+  "backend": "minimax",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "fix_quality",
+  "error": "rate limited during validate: {\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":180098,\"duration_api_ms\":104288,\"num_turns\":1,\"result\":\"API Error: 429 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"rate_limit_error\\\",\\\"message\\\":\\\"usage limit exceeded (2056)\\\"},\\\"request_id\\\":\\\"06380e65504820156395c03d3b06dc53\\\"}\",\"stop_reason\":\"stop_sequence\",\"session_id\":\"e0babfd9-3b3b-49b9-a8d1-17cf87f32a76\",\"total_cost_usd\":1.486129,\"usage\":{\"input_tokens\":0,\"cache_creation_input_tokens\":0,\"cache",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -68,10 +69,10 @@
     },
     "quality_gate": {
       "status": "passed",
-      "model": "claude-opus-4-7",
-      "backend": "anthropic",
-      "time": 0.39,
-      "notes": "flags=['lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:12: unpinned pip deps: pytest']"
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.41,
+      "notes": "flags=['lint_tier_b:2', 'B:[B] pinned_dependencies @ environment/Dockerfile:12: unpinned pip deps: pytest', 'B:[B] no_network_during_tests @ tests/test.sh:39: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
@@ -89,17 +90,16 @@
       "status": "error",
       "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":611,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 400 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"invalid_request_error\\\",\\\"message\\\":\\\"\\\\\\\"thinking.type.enabled\\\\\\\" is not supported for this model. Use \\\\\\\"thinking.type.adapt",
       "time": 1.92
+    },
+    "fix_quality": {
+      "status": "ok",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 81.29,
+      "notes": ""
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 4302.34,
-      "at": "2026-04-12T03:55:19.885374"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -131,6 +131,14 @@
       "backend": "anthropic",
       "time": 58.67,
       "at": "2026-04-16T12:57:09.623677"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 14952.22,
+      "at": "2026-04-22T07:29:58.756339"
     }
   ]
 }

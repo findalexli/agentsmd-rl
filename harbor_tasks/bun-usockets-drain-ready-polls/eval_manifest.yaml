@@ -3,7 +3,7 @@ source:
   repo: oven-sh/bun
   pr: 28823
   base_commit: 3f41407f47eb009c654e45def5f3f67d6ce6c8ee
-  merge_commit: ea83a741b4fd78331a8163a377cceccb0129e15f
+  merge_commit: ea83a741b4fd78331a8163c377cceccb0129e15f
 checks:
 - id: test_c_file_readable
   type: pass_to_pass
@@ -16,11 +16,11 @@ checks:
 - id: test_drain_function_exists
   type: fail_to_pass
   origin: pr_diff
-  description: us_internal_drain_ready_polls function exists with proper signature
+  description: Drain mechanism exists after dispatch to handle buffer saturation
 - id: test_drain_logic_implemented
   type: fail_to_pass
   origin: pr_diff
-  description: Drain function has complete implementation with loop and dispatch
+  description: Drain logic has loop, dispatch calls, and re-poll calls
 - id: test_drain_uses_zero_timeout
   type: fail_to_pass
   origin: pr_diff
@@ -36,7 +36,7 @@ checks:
 - id: test_drain_called_after_dispatch_in_both_functions
   type: fail_to_pass
   origin: pr_diff
-  description: Both us_loop_run and us_loop_run_bun_tick call drain after dispatch
+  description: Both us_loop_run and us_loop_run_bun_tick drain saturated buffer after dispatch
 - id: test_drain_has_real_logic
   type: pass_to_pass
   origin: static
@@ -45,11 +45,11 @@ checks:
   type: pass_to_pass
   origin: static
   description: Drain checks for buffer saturation before re-polling
-- id: test_drain_behavior_via_code_execution
+- id: test_drain_behavioral_verification
   type: fail_to_pass
   origin: pr_diff
-  description: Drain behavior verified by executing Python code analysis
-- id: test_hardcoded_1024_behavioral
+  description: Drain behavior verified via code analysis subprocess
+- id: test_no_hardcoded_1024_in_poll_calls
   type: fail_to_pass
   origin: pr_diff
   description: No hardcoded 1024 verified via behavioral code analysis
@@ -80,18 +80,15 @@ checks:
 - id: test_modified_c_file_valid
   type: pass_to_pass
   origin: repo_tests
-  description: Modified C file exists and is valid (verified via git show and Python
-    brace check)
+  description: Modified C file exists and is valid (verified via git show and Python brace check)
 - id: test_c_code_grep_patterns
   type: pass_to_pass
   origin: repo_tests
-  description: C code has expected patterns verified via grep (key functions, epoll/kqueue
-    calls)
+  description: C code has expected patterns verified via grep (key functions, epoll/kqueue calls)
 - id: test_header_file_grep_patterns
   type: pass_to_pass
   origin: repo_tests
-  description: Header file has expected patterns verified via grep (LIBUS_MAX_READY_POLLS,
-    guards)
+  description: Header file has expected patterns verified via grep (LIBUS_MAX_READY_POLLS, guards)
 - id: test_repo_git_valid
   type: pass_to_pass
   origin: repo_tests
@@ -112,19 +109,6 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: C header file has valid structure with proper guards
-- id: test_c_file_clang_format
-  type: pass_to_pass
-  origin: repo_tests
-  description: Modified C file passes clang-format check (CI/CD from format.yml)
-- id: test_git_file_tracked
-  type: pass_to_pass
-  origin: repo_tests
-  description: Modified files are tracked in git (CI/CD git ls-files check)
-- id: test_git_status_clean
-  type: pass_to_pass
-  origin: repo_tests
-  description: Repository has no uncommitted changes at base commit (CI/CD git status
-    check)
 - id: test_repo_clang_format_c_file
   type: pass_to_pass
   origin: repo_tests
@@ -138,42 +122,29 @@ checks:
   origin: repo_tests
   description: Repository has valid git history (CI/CD sanity check)
 rubric:
-- rule: C code changes should use existing project conventions (LIBUS_MAX_READY_POLLS
-    constant instead of hardcoded 1024).
+- rule: C code changes should use existing project conventions (LIBUS_MAX_READY_POLLS constant instead of hardcoded 1024).
   source:
     path: packages/bun-usockets/src/eventing/epoll_kqueue.c
     lines: 295-325
     commit: 3f41407f47eb009c654e45def5f3f67d6ce6c8ee
-- rule: Comments in low-level C code should explain invariants and design decisions,
-    such as why saturation checks and iteration caps are necessary.
+- rule: Comments in low-level C code should explain invariants and design decisions, such as why saturation checks and iteration caps are necessary.
   source:
     path: packages/bun-usockets/src/eventing/epoll_kqueue.c
     lines: 288-295
-    commit: ea83a741b4fd78331a8163a377cceccb0129e15f
+    commit: ea83a741b4fd78331a8163c377cceccb0129e15f
 distractors:
-- rule: If a test is for a specific numbered GitHub Issue, it should be placed in
-    test/regression/issue/${issueNumber}.test.ts
+- rule: If a test is for a specific numbered GitHub Issue, it should be placed in test/regression/issue/${issueNumber}.test.ts
   collision_type: scope_ambiguity
-  why_distracting: The agent might attempt to write a regression test for >1024 simultaneous
-    ready file descriptors to satisfy the testing instructions, but simulating event
-    loop saturation reliably in a test environment is highly complex and omitted from
-    the gold solution.
+  why_distracting: The agent might attempt to write a regression test for >1024 simultaneous ready file descriptors to satisfy the testing instructions, but simulating event loop saturation reliably in a test environment is highly complex and omitted from the gold solution.
   severity: medium
   source:
     path: AGENTS.md
     lines: 48-50
-- rule: Guides using bun.sys for system calls and file I/O in Zig. Use when implementing
-    file operations instead of std.fs or std.posix.
+- rule: Guides using bun.sys for system calls and file I/O in Zig. Use when implementing file operations instead of std.fs or std.posix.
   collision_type: architecture_boundary
-  why_distracting: The agent might try to use `bun.sys` or bridge to Zig for system
-    calls, but the target file is a C file (`epoll_kqueue.c`) that must use standard
-    C system calls (`bun_epoll_pwait2`, `kevent64`).
+  why_distracting: The agent might try to use bun.sys or bridge to Zig for system calls, but the target file is a C file (epoll_kqueue.c) that must use standard C system calls (bun_epoll_pwait2, kevent64).
   severity: high
   source:
     path: .claude/skills/zig-system-calls
     lines: 1-2
-hierarchy_analysis: The config files provide general guidance for Bun development
-  (Zig/C++ and JS tests), but the target file is a C file in a vendored/forked library
-  (`bun-usockets`). The agent must recognize that Zig-specific system call rules and
-  standard JS testing requirements do not cleanly apply to this low-level C event
-  loop patch.
+hierarchy_analysis: The config files provide general guidance for Bun development (Zig/C++ and JS tests), but the target file is a C file in a vendored/forked library (bun-usockets). The agent must recognize that Zig-specific system call rules and standard JS testing requirements do not cleanly apply to this low-level C event loop patch.

@@ -1,27 +1,23 @@
-# Bug: `uv run` panics on remote script due to unsafe handling of downloaded file
+# Bug: `uv run` panics on remote script due to unsafe `.unwrap()` call
 
 ## Summary
 
-When executing a remote Python script via `uv run https://example.com/script.py`, the process can panic. The downloaded temporary file is passed through several function layers, and the code that consumes it does not have a safe fallback when the file is absent.
+When executing a remote Python script via `uv run https://example.com/script.py`, the process can panic at runtime. The downloaded temporary file is managed separately from the command that uses it, and the code assumes the file will always be present.
 
 ## Problem
 
-The `RunCommand` enum has a `PythonRemote` variant that stores a remote URL, but the corresponding downloaded script file is managed separately. The `as_command()` method calls `.unwrap()` on this optional value, which can panic.
+In the current code, when a remote script URL is provided:
 
-The command parsing and resolution lifecycle makes it possible to reach execution without the download being complete — the type system does not enforce that the file exists before it is used.
+1. The `PythonRemote` variant of the `RunCommand` enum is defined as `PythonRemote(DisplaySafeUrl, Vec<OsString>)` — it stores only the remote URL, not the downloaded file.
+2. The downloaded file is passed separately as `downloaded_script: Option<&tempfile::NamedTempFile>` and threaded through the call chain:
+   - `run_project()` in `crates/uv/src/lib.rs` accepts `downloaded_script` as a parameter
+   - `run()` in `crates/uv/src/commands/project/run.rs` accepts `downloaded_script` as a parameter
+   - `as_command()` on `RunCommand` accepts `downloaded_script: Option<&tempfile::NamedTempFile>` and calls `.unwrap()` on it in the `PythonRemote` match arm
+3. Since `downloaded_script` is an `Option`, the type system does not guarantee it is present when `.unwrap()` is called, causing a potential panic.
 
 ## Expected behavior
 
-The type system should enforce that by the time a command is executed, any remote script has already been downloaded. There should be no `.unwrap()` call on the downloaded script file. The command parsing and resolution lifecycle should make it impossible to reach execution without the download being complete.
-
-## Behavioral requirements (tested)
-
-The tests verify the following structural constraints:
-- The `run()` function in `crates/uv/src/commands/project/run.rs` must not have a `downloaded_script` parameter.
-- The `as_command()` method must not take `downloaded_script` as an `Option` parameter.
-- The `run_project()` function in `crates/uv/src/lib.rs` must not have a `downloaded_script` parameter.
-- The `PythonRemote` variant in the `RunCommand` enum must not hold only a URL — it must embed a file type.
-- The `as_command()` method must not call `.unwrap()` on a downloaded script.
+The code should be restructured so that by the time command execution occurs, the downloaded file is guaranteed to be available. The `.unwrap()` call on the downloaded script in `as_command()` must be eliminated, and the `downloaded_script` parameter should not need to be separately threaded through `run()` and `run_project()`. The `PythonRemote` variant should not store only a `DisplaySafeUrl`.
 
 ## Relevant files
 

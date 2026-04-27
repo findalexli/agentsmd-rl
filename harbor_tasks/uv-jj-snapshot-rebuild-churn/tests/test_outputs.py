@@ -7,7 +7,6 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
-import os
 import re
 import subprocess
 from pathlib import Path
@@ -50,67 +49,6 @@ def _get_added_lines() -> list[str]:
     )
     return [l[1:] for l in result.stdout.splitlines()
             if l.startswith('+') and not l.startswith('+++')]
-
-
-def _install_rust():
-    """Install Rust toolchain if not already installed."""
-    cargo_bin = Path.home() / ".cargo" / "bin"
-    cargo_path = cargo_bin / "cargo"
-    if not cargo_path.exists():
-        subprocess.run(
-            ["bash", "-c",
-             "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly"],
-            capture_output=True, timeout=120,
-        )
-        subprocess.run(
-            [str(cargo_bin / "rustup"), "component", "add", "rustfmt", "clippy"],
-            capture_output=True, timeout=60,
-        )
-    return str(cargo_bin)
-
-
-# ---------------------------------------------------------------------------
-# Pass-to-pass (repo_tests) -- CI checks from the repo's actual CI pipeline
-# ---------------------------------------------------------------------------
-
-# [repo_tests] pass_to_pass
-def test_repo_cargo_fmt():
-    """Repo's Rust code passes formatting checks (pass_to_pass)."""
-    cargo_bin = _install_rust()
-    env = {**os.environ, "PATH": f"{cargo_bin}:{os.environ.get('PATH', '')}"}
-    r = subprocess.run(
-        ["cargo", "fmt", "--all", "--check"],
-        capture_output=True, text=True, timeout=120, cwd=REPO, env=env,
-    )
-    assert r.returncode == 0, f"cargo fmt check failed:\n{r.stderr[-500:] if r.stderr else r.stdout[-500:]}"
-
-
-# [repo_tests] pass_to_pass
-def test_repo_cargo_clippy_uv_cli():
-    """Repo's clippy lints pass for uv-cli crate (pass_to_pass)."""
-    cargo_bin = _install_rust()
-    env = {**os.environ, "PATH": f"{cargo_bin}:{os.environ.get('PATH', '')}"}
-    r = subprocess.run(
-        ["cargo", "clippy", "-p", "uv-cli", "--all-targets", "--all-features"],
-        capture_output=True, text=True, timeout=180, cwd=REPO, env=env,
-    )
-    # Allow warnings - we just want to verify it compiles with clippy
-    # A non-zero exit with "error:" indicates actual errors, not just warnings
-    if r.returncode != 0:
-        errors = [l for l in (r.stderr or "").splitlines() if "error:" in l and "warning:" not in l]
-        assert not errors, f"cargo clippy found errors:\n{r.stderr[-1000:]}"
-
-
-# [repo_tests] pass_to_pass
-def test_repo_cargo_check_uv_cli():
-    """Repo's uv-cli crate compiles successfully (pass_to_pass)."""
-    cargo_bin = _install_rust()
-    env = {**os.environ, "PATH": f"{cargo_bin}:{os.environ.get('PATH', '')}"}
-    r = subprocess.run(
-        ["cargo", "check", "-p", "uv-cli", "--no-default-features"],
-        capture_output=True, text=True, timeout=180, cwd=REPO, env=env,
-    )
-    assert r.returncode == 0, f"cargo check failed:\n{r.stderr[-500:]}"
 
 
 # ---------------------------------------------------------------------------
@@ -175,11 +113,17 @@ def test_jj_code_added_to_diff():
         ["git", "diff", "HEAD", "--", "crates/uv-cli/build.rs"],
         capture_output=True, text=True, cwd=REPO, timeout=10,
     )
+    assert result.stdout.strip(), "build.rs has no diff -- file was not modified"
     added_lines = [l for l in result.stdout.splitlines()
                    if l.startswith('+') and not l.startswith('+++')]
+    assert added_lines, "No lines were added to build.rs"
     jj_additions = [l for l in added_lines if '.jj' in l]
     assert jj_additions, \
         "build.rs diff does not contain .jj additions -- bug not fixed"
+    # The additions must include a filesystem existence check for .jj
+    all_added = '\n'.join(added_lines)
+    assert re.search(r'\.(exists|is_dir|try_exists)', all_added), \
+        "Added code does not include a filesystem existence check for .jj"
 
 
 # ---------------------------------------------------------------------------

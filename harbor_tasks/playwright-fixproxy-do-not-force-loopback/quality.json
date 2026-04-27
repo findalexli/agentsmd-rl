@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "Instruction names chromium.ts path, env var PLAYWRIGHT_DISABLE_FORCED_CHROMIUM_PROXIED_LOOPBACK, the skill files .claude/skills/playwright-dev/github.md and SKILL.md, and behavioral requirements for localhost/127.0.0.1/::1."
+      "reason": "Instruction names the file (chromium.ts), the skill docs paths (.claude/skills/playwright-dev/github.md and SKILL.md), the CI commands (eslint, generate_channels.js, lint-packages), and the specific loopback values (localhost, 127.0.0.1, ::1) that tests check for."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "Instruction describes the broken behavior and required behavior without prescribing exact code (no mention of bypassesLoopback variable or specific implementation)."
+      "reason": "Instruction describes the broken behavior and required outcomes without prescribing the exact code change (e.g., doesn't mention 'bypassesLoopback' variable name or exact condition)."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_outputs.py's _eval_bypass_logic_v2 asserts `src.includes('const bypassesLoopback')` and specific string literals `rule === 'localhost'`, `rule === '127.0.0.1'`, `rule === '::1'` \u2014 a correct alternative fix using a different variable name (e.g., `hasLoopbackBypass`) or using `.includes()` / a Set would fail."
+      "reason": "test_outputs.py's _eval_bypass_logic_v2 asserts src.includes('proxyBypassRules.some(') and specific literal strings \"rule === 'localhost'\", \"rule === '127.0.0.1'\", \"rule === '::1'\"; an alternative fix using .includes() array checks or a Set or different comparison style would fail despite being correct."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests execute npm/node subprocesses (eslint, generate_channels, lint-packages, TS transpile) and run simulation code."
+      "reason": "Tests execute subprocesses (npm run eslint, node utils/generate_channels.js, ts.transpileModule) and run Node scripts; not purely text grep."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "Bypass logic tests check that <-loopback> is/isn't appended based on user bypass value, which requires implementing the fix."
+      "reason": "Tests check actual bypass logic behavior via extraction and simulation, so a stub wouldn't pass the loopback-handling assertions."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "Tests cover all three loopback variants, the non-loopback case, lint/transpile/channel-gen quality gates, and the skill document creation."
+      "reason": "Tests cover the three loopback values, the skill doc additions, eslint, transpile, generate_channels, and lint-packages as required."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are grouped with section comments (Gates, Pass-to-pass) and each function has a descriptive docstring."
+      "reason": "Tests are grouped via comment headers (Gates, Pass-to-pass) with descriptive function names and docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data output."
+      "reason": "Task produces source code changes, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "Paths and commands appear correct and consistent."
+      "reason": "Paths and commands appear correct and consistent between instruction and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "Instruction names the file (appropriate since localization is given) but doesn't identify the exact line or variable."
+      "reason": "Instruction points to the file but not a specific line number or exact replacement code; localization within the file remains the agent's task."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "Gold diff only adds a bypassesLoopback line and modifies the condition \u2014 localized change."
+      "reason": "Gold SKILL.md edit is a one-line addition to the table of contents; chromium.ts diff is a 2-line localized change."
     }
   },
   "tier_a_fails": [

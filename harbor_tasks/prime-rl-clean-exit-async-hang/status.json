@@ -4,12 +4,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-16T09:11:12.932654",
-  "total_time": 84.95,
-  "sandbox_id": "i9divpxjwxeyjay740005",
-  "backend": "fireworks",
+  "validated_at": "2026-04-25T14:22:55.148558",
+  "total_time": 7516.89,
+  "sandbox_id": "i63304nw4nzcf4d07wx85",
+  "backend": "anthropic",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "oneshot_repair",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -38,9 +38,9 @@
       "gold_reward": 1.0,
       "attempts": 1,
       "notes": "All four validation checks passed: Docker build OK, NOP test reward=0 (4 f2p tests correctly fail on buggy code), Gold test reward=1 (18/18 tests pass after fix). Rubric judge ICR=0.0 because task only has code changes (utils.py), no config/doc file changes for judge to evaluate - this is expected for this task type.",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 155.3
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 117.48
     },
     "rubric_judge": {
       "status": "pass",
@@ -68,62 +68,69 @@
     },
     "quality_gate": {
       "status": "DELETE",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 0.34,
-      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:2', 'A:[A] test_not_tautological @ tests/test_outputs.py:234: test `test_finally_cleanup` has 1 assert(s), all pass on a stub i', 'A:[A] test_not_tautological @ tests/test_outputs.py:305: test `test_error_never_silent` has 2 assert(s), all pass on a stu']"
+      "model": "claude-opus-4-6",
+      "backend": "anthropic",
+      "time": 0.25,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:2', 'A:[A] test_not_tautological @ tests/test_outputs.py:389: test `test_finally_cleanup` has 1 assert(s), all pass on a stub i', 'A:[A] test_not_tautological @ tests/test_outputs.py:460: test `test_error_never_silent` has 2 assert(s), all pass on a stu', 'lint_tier_b:1', 'B:[B] no_network_during_tests @ tests/test.sh:44: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 12.2,
+      "time": 15.4,
       "tier_a_fails": [
-        "no_solution_leakage"
+        "solution_uniqueness_guard"
       ],
       "tier_b_fails": [],
-      "pass_count": 7,
-      "fail_count": 2
+      "pass_count": 8,
+      "fail_count": 1
+    },
+    "fix_quality": {
+      "status": "ok",
+      "model": "claude-opus-4-6",
+      "backend": "anthropic",
+      "time": 598.56,
+      "notes": ""
     }
   },
   "history": [
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 1584.78,
-      "at": "2026-04-12T00:39:55.470585"
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "oauth",
+      "time": 5748.68,
+      "at": "2026-04-25T10:17:20.750829"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "oauth",
+      "time": 2304.09,
+      "at": "2026-04-25T10:56:42.980514"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "oauth",
+      "time": 2059.75,
+      "at": "2026-04-25T11:32:29.336125"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 1756.68,
+      "at": "2026-04-25T12:03:52.708484"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
-      "backend": "fireworks",
-      "time": 1278.96,
-      "at": "2026-04-12T01:33:52.939264"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 1423.29,
-      "at": "2026-04-12T05:33:53.070812"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 1609.21,
-      "at": "2026-04-15T05:27:54.360453"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 84.95,
-      "at": "2026-04-16T09:11:12.932654"
+      "backend": "anthropic",
+      "time": 7516.89,
+      "at": "2026-04-25T14:22:55.148558"
     }
   ]
 }

@@ -3,8 +3,10 @@ Task: bun-partialdeepstrictequal-array-crash
 Repo: oven-sh/bun @ e59a147d615a0b95d446c75ba836717cf0dbc513
 PR:   28525
 
-All checks must pass for reward = 1. Any failure = reward 0.
-Each test function maps 1:1 to a check in eval_manifest.yaml.
+Tests rewritten to verify BEHAVIOR, not text:
+- Tests execute JavaScript that simulates the bug scenario
+- Tests verify the fix pattern (prototype.$call) works on null-prototype Maps
+- Tests do NOT hard-code gold-specific variable names
 """
 
 import re
@@ -16,16 +18,13 @@ ASSERT_FILE = Path(REPO) / "src/js/node/assert.ts"
 
 
 def _read_source():
-    """Read assert.ts and return comment-stripped content."""
     src = ASSERT_FILE.read_text()
-    # Strip single-line and multi-line comments to prevent comment-injection gaming
     stripped = re.sub(r"//[^\n]*", "", src)
     stripped = re.sub(r"/\*[\s\S]*?\*/", "", stripped)
     return src, stripped
 
 
 def _extract_compare_branch(stripped):
-    """Extract the compareBranch function body from stripped source."""
     fn_start = stripped.find("function compareBranch")
     assert fn_start != -1, "compareBranch function not found in assert.ts"
     depth = 0
@@ -41,17 +40,212 @@ def _extract_compare_branch(stripped):
     return stripped[fn_start:], stripped[:fn_start]
 
 
-# ---------------------------------------------------------------------------
-# Gates (pass_to_pass, static)
-# ---------------------------------------------------------------------------
+# =============================================================================
+# BEHAVIORAL TESTS — these actually execute code
+# =============================================================================
 
-# [static] pass_to_pass
+def test_null_prototype_map_direct_set_throws():
+    """
+    BEHAVIORAL: Verify that calling .$set directly on a null-prototype Map throws.
+    This demonstrates the BUG: SafeMap has null prototype, so .$set/.delete fail.
+    """
+    r = subprocess.run(
+        ["node", "-e", """
+'use strict';
+const map = new Map();
+Object.setPrototypeOf(map, null);
+try {
+    map.$set('key', 1);
+    console.log('FAIL: Expected TypeError but call succeeded');
+    process.exit(1);
+} catch (e) {
+    if (e instanceof TypeError && (e.message.includes('$set') || e.message.includes('set'))) {
+        console.log('OK: Direct .$set on null-prototype Map throws TypeError as expected');
+        process.exit(0);
+    }
+    throw e;
+}
+"""],
+        capture_output=True,
+        text=True,
+        timeout=10,
+    )
+    assert r.returncode == 0, f"Null-prototype .$set throw test failed: {r.stderr}"
+
+
+def test_null_prototype_map_prototype_call_succeeds():
+    """
+    BEHAVIORAL: Verify that Map.prototype.set.call() works on a null-prototype Map.
+    This demonstrates the FIX: using uncurried prototype methods to bypass null prototype.
+    """
+    r = subprocess.run(
+        ["node", "-e", """
+'use strict';
+const sizeOf = Object.getOwnPropertyDescriptor(Map.prototype,'size').get;
+const map = new Map();
+Object.setPrototypeOf(map, null);
+Map.prototype.set.call(map, 'key', 1);
+const size = sizeOf.call(map);
+if (size !== 1) {
+    console.error('FAIL: expected size=1, got ' + size);
+    process.exit(1);
+}
+Map.prototype.delete.call(map, 'key');
+const sizeAfterDelete = sizeOf.call(map);
+if (sizeAfterDelete !== 0) {
+    console.error('FAIL: expected size=0 after delete, got ' + sizeAfterDelete);
+    process.exit(1);
+}
+console.log('OK: Prototype-based set/delete works on null-prototype Map');
+process.exit(0);
+"""],
+        capture_output=True,
+        text=True,
+        timeout=10,
+    )
+    assert r.returncode == 0, f"Prototype call test failed: {r.stderr}"
+
+
+def test_null_prototype_array_counting_algorithm():
+    """
+    BEHAVIORAL: Test the full array counting algorithm on null-prototype Map.
+    This is the same algorithm compareBranch uses for arrays.
+    """
+    r = subprocess.run(
+        ["node", "-e", """
+'use strict';
+const sizeOf = Object.getOwnPropertyDescriptor(Map.prototype,'size').get;
+
+function createSafeMap() {
+    const map = new Map();
+    Object.setPrototypeOf(map, null);
+    return map;
+}
+
+function compareArrays(actual, expected) {
+    const counts = createSafeMap();
+    for (const expectedItem of expected) {
+        let found = false;
+        for (const [key, count] of Map.prototype[Symbol.iterator].call(counts)) {
+            if (JSON.stringify(key) === JSON.stringify(expectedItem)) {
+                Map.prototype.set.call(counts, key, count + 1);
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            Map.prototype.set.call(counts, expectedItem, 1);
+        }
+    }
+    for (const actualItem of actual) {
+        for (const [key, count] of Map.prototype[Symbol.iterator].call(counts)) {
+            if (JSON.stringify(key) === JSON.stringify(actualItem)) {
+                if (count === 1) {
+                    Map.prototype.delete.call(counts, key);
+                } else {
+                    Map.prototype.set.call(counts, key, count - 1);
+                }
+                break;
+            }
+        }
+    }
+    return sizeOf.call(counts) === 0;
+}
+
+const cases = [
+    [['foo', 'bar'], ['bar', 'foo'], true],
+    [['a', 'b', 'c'], ['a', 'b'], true],
+    [['a', 'b'], ['a', 'b', 'c'], false],
+    [[1, 1, 2], [1, 1, 2], true],
+    [[], [[[]]], false],
+    [[[1, 2]], [[1, 2]], true],
+];
+
+for (const [actual, expected, want] of cases) {
+    const got = compareArrays(actual, expected);
+    if (got !== want) {
+        console.error('FAIL: compareArrays(' + JSON.stringify(actual) + ',' + JSON.stringify(expected) + ')=' + got + ', want ' + want);
+        process.exit(1);
+    }
+}
+console.log('OK: Null-prototype array counting algorithm works correctly');
+"""],
+        capture_output=True,
+        text=True,
+        timeout=10,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, f"Array counting algorithm test failed: {r.stderr}"
+
+
+# =============================================================================
+# SOURCE-STRUCTURE TESTS — verify the bug is fixed without coupling to gold names
+# =============================================================================
+
+def test_comparebranch_no_direct_instance_methods():
+    """
+    Verify compareBranch doesn't call .$set/.$delete directly on expectedCounts
+    without handling the null-prototype issue (e.g. by restoring the prototype first).
+    """
+    _, stripped = _read_source()
+    fn_body, _ = _extract_compare_branch(stripped)
+
+    has_direct_set = bool(re.search(r"expectedCounts\.\$set\s*\(", fn_body))
+    has_direct_delete = bool(re.search(r"expectedCounts\.\$delete\s*\(", fn_body))
+
+    if has_direct_set or has_direct_delete:
+        # If direct calls remain, the prototype must be restored first
+        has_prototype_restore = bool(re.search(r"setPrototypeOf\s*\(", fn_body))
+        assert has_prototype_restore, (
+            "Bug not fixed: compareBranch still calls expectedCounts.$set()/$delete() directly "
+            "without restoring the prototype. SafeMap has null prototype, causing TypeError."
+        )
+
+
+def test_comparebranch_has_valid_fix_strategy():
+    """
+    Verify compareBranch uses a valid strategy to handle the null-prototype SafeMap issue.
+    Accepts multiple valid approaches:
+    - Prototype-based calls (Map.prototype.set.$call or .call)
+    - Object.setPrototypeOf to restore the prototype
+    - Using a regular Map instead of SafeMap for expectedCounts
+    - Using Reflect.apply
+    """
+    _, stripped = _read_source()
+    fn_body, preamble = _extract_compare_branch(stripped)
+    full_context = preamble + fn_body
+
+    # Strategy 1: Prototype-based calls (any variable naming convention)
+    uses_prototype_call = (
+        bool(re.search(r"\.prototype\.(set|delete)", full_context))
+        and bool(re.search(r"\.\$?call\s*\(", fn_body))
+    )
+
+    # Strategy 2: Restore prototype on the map so direct calls work
+    uses_set_prototype = bool(re.search(r"setPrototypeOf\s*\(", fn_body))
+
+    # Strategy 3: Use a regular Map instead of SafeMap for expectedCounts
+    uses_regular_map = bool(re.search(r"expectedCounts\s*=\s*new\s+Map\s*\(", fn_body))
+
+    # Strategy 4: Reflect.apply
+    uses_reflect = bool(re.search(r"Reflect\s*\.\s*apply", fn_body))
+
+    assert uses_prototype_call or uses_set_prototype or uses_regular_map or uses_reflect, (
+        "compareBranch doesn't use any recognized fix for the null-prototype SafeMap issue. "
+        "Expected one of: prototype-based calls (e.g. Map.prototype.set.$call), "
+        "Object.setPrototypeOf, new Map(), or Reflect.apply."
+    )
+
+
+# =============================================================================
+# PASS_TO_PASS TESTS — these verify existing functionality is preserved
+# =============================================================================
+
 def test_syntax_check():
-    """assert.ts must exist and parse without fatal syntax errors."""
+    """assert.ts must exist, be parseable, and have sufficient lines."""
     assert ASSERT_FILE.exists(), f"{ASSERT_FILE} does not exist"
     line_count = len(ASSERT_FILE.read_text().splitlines())
     assert line_count >= 400, f"assert.ts only has {line_count} lines (likely stubbed)"
-    # Syntax check: strip bun hmtBcintrinsics, then parse with Node
     r = subprocess.run(
         [
             "node",
@@ -65,304 +259,6 @@ def test_syntax_check():
     assert r.returncode == 0, f"assert.ts has fatal syntax errors: {r.stderr.decode()}"
 
 
-# ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) - core fix verification
-# BEHAVIORAL TESTS: These run code to verify the fix works, not grep for text
-# ---------------------------------------------------------------------------
-
-# [pr_diff] fail_to_pass - BEHAVIORAL
-def test_null_proto_map_operations_work():
-    """Verify the fix pattern (prototype-based calls) works on null-prototype Maps.
-
-    The bug: SafeMap instances have null prototypes, so direct method calls fail.
-    The fix: Use prototype-based calls like Map.prototype.set.call(map, key, val).
-
-    This test runs actual code to verify the pattern works for all operations
-    (set with increment, set initial value, delete, set with decrement).
-    """
-    r = subprocess.run(
-        [
-            "node",
-            "-e",
-            """
-'use strict';
-const sizeOf = Object.getOwnPropertyDescriptor(Map.prototype, 'size').get;
-
-// Simulate SafeMap: a Map with null prototype
-function createSafeMap() {
-    const map = new Map();
-    Object.setPrototypeOf(map, null);
-    return map;
-}
-
-// Simulate the compareBranch counting algorithm using prototype-based calls
-function testArraySubset(actual, expected) {
-    const counts = createSafeMap();
-
-    // Phase 1: count expected items (same algorithm as compareBranch)
-    for (const expectedItem of expected) {
-        let found = false;
-        for (const { 0: key, 1: count } of Map.prototype[Symbol.iterator].call(counts)) {
-            if (JSON.stringify(key) === JSON.stringify(expectedItem)) {
-                // Increment count using prototype call (set + 1 pattern)
-                Map.prototype.set.call(counts, key, count + 1);
-                found = true;
-                break;
-            }
-        }
-        if (!found) {
-            // Set initial value using prototype call (set init pattern)
-            Map.prototype.set.call(counts, expectedItem, 1);
-        }
-    }
-
-    // Phase 2: match actual items, decrement counts (same algorithm as compareBranch)
-    for (const actualItem of actual) {
-        for (const { 0: key, 1: count } of Map.prototype[Symbol.iterator].call(counts)) {
-            if (JSON.stringify(key) === JSON.stringify(actualItem)) {
-                if (count === 1) {
-                    // Delete using prototype call (delete pattern)
-                    Map.prototype.delete.call(counts, key);
-                } else {
-                    // Decrement using prototype call (set - 1 pattern)
-                    Map.prototype.set.call(counts, key, count - 1);
-                }
-                break;
-            }
-        }
-    }
-
-    // Empty counts means all expected items were matched
-    return sizeOf.call(counts) === 0;
-}
-
-// Test cases covering the array comparison scenarios
-const cases = [
-    { actual: ['foo'], expected: ['foo'], want: true },
-    { actual: ['foo', 'bar', 'baz'], expected: ['foo', 'baz'], want: true },
-    { actual: ['foo', 'foo', 'bar'], expected: ['foo', 'foo'], want: true },
-    { actual: [1, 2, 3], expected: [2, 3], want: true },
-    { actual: ['a'], expected: ['b'], want: false },
-    { actual: ['x'], expected: ['x', 'x'], want: false },
-    { actual: [1, 2], expected: [1, 2, 3], want: false },
-    { actual: [], expected: [], want: true },
-    // Complex cases
-    { actual: [{a: 1}, {b: 2}], expected: [{a: 1}], want: true },
-    { actual: [[1, 2], [3, 4]], expected: [[1, 2]], want: true },
-];
-
-let passed = 0;
-for (const { actual, expected, want } of cases) {
-    const got = testArraySubset(actual, expected);
-    if (got !== want) {
-        console.error('FAIL: actual=' + JSON.stringify(actual) +
-            ' expected=' + JSON.stringify(expected) +
-            ' want=' + want + ' got=' + got);
-        process.exit(1);
-    }
-    passed++;
-}
-
-// Verify we tested all 4 required operation patterns
-// (set+1, set init, delete, set-1)
-console.log('OK: all ' + passed + ' cases passed');
-""",
-        ],
-        capture_output=True,
-        timeout=10,
-    )
-    assert r.returncode == 0, f"Null-prototype Map operations test failed: {r.stderr.decode()}"
-    assert b"OK" in r.stdout, f"Expected OK in output, got: {r.stdout.decode()}"
-
-
-# [pr_diff] fail_to_pass - BEHAVIORAL
-def test_direct_calls_fail_prototype_calls_succeed():
-    """Verify direct method calls fail on null-prototype Maps but prototype calls work.
-
-    This test demonstrates WHY the bug exists and HOW the fix resolves it:
-    - Direct map.set() fails on null-prototype Maps (the bug cause)
-    - Map.prototype.set.call(map, ...) succeeds (the fix)
-    """
-    r = subprocess.run(
-        [
-            "node",
-            "-e",
-            """
-'use strict';
-const sizeOf = Object.getOwnPropertyDescriptor(Map.prototype, 'size').get;
-
-// Create a SafeMap-like object (Map with null prototype)
-const map = new Map();
-Object.setPrototypeOf(map, null);
-
-// Test 1: Direct calls must FAIL (this is the bug)
-let directSetFailed = false;
-try {
-    map.set('a', 1);
-} catch(e) {
-    directSetFailed = true;
-}
-if (!directSetFailed) {
-    console.error('BUG: Direct .set() should fail on null-proto Map');
-    process.exit(1);
-}
-
-let directDeleteFailed = false;
-try {
-    map.delete('a');
-} catch(e) {
-    directDeleteFailed = true;
-}
-if (!directDeleteFailed) {
-    console.error('BUG: Direct .delete() should fail on null-proto Map');
-    process.exit(1);
-}
-
-// Test 2: Prototype-based calls must SUCCEED (this is the fix)
-try {
-    Map.prototype.set.call(map, 'a', 1);
-    Map.prototype.set.call(map, 'b', 2);
-    if (sizeOf.call(map) !== 2) {
-        console.error('FAIL: Expected size 2 after two sets');
-        process.exit(1);
-    }
-
-    // Test set with increment (count + 1 pattern)
-    Map.prototype.set.call(map, 'a', Map.prototype.get.call(map, 'a') + 1);
-    if (Map.prototype.get.call(map, 'a') !== 2) {
-        console.error('FAIL: Increment pattern failed');
-        process.exit(1);
-    }
-
-    // Test set with decrement (count - 1 pattern)
-    Map.prototype.set.call(map, 'a', Map.prototype.get.call(map, 'a') - 1);
-    if (Map.prototype.get.call(map, 'a') !== 1) {
-        console.error('FAIL: Decrement pattern failed');
-        process.exit(1);
-    }
-
-    // Test delete (count === 1 pattern)
-    Map.prototype.delete.call(map, 'a');
-    if (sizeOf.call(map) !== 1) {
-        console.error('FAIL: Delete pattern failed');
-        process.exit(1);
-    }
-
-    Map.prototype.delete.call(map, 'b');
-    if (sizeOf.call(map) !== 0) {
-        console.error('FAIL: Final delete failed');
-        process.exit(1);
-    }
-} catch(e) {
-    console.error('FAIL: Prototype calls should succeed:', e.message);
-    process.exit(1);
-}
-
-console.log('OK: Direct calls fail, prototype calls succeed');
-""",
-        ],
-        capture_output=True,
-        timeout=10,
-    )
-    assert r.returncode == 0, f"Direct vs prototype calls test failed: {r.stderr.decode()}"
-    assert b"OK" in r.stdout, f"Expected OK in output, got: {r.stdout.decode()}"
-
-
-# [pr_diff] fail_to_pass - BEHAVIORAL
-def test_comparebranch_array_comparison_behavior():
-    """Verify compareBranch array comparison works correctly via behavioral execution.
-
-    This test runs the actual array comparison algorithm and verifies correct results,
-    without checking for specific variable names or implementation patterns.
-    """
-    r = subprocess.run(
-        [
-            "node",
-            "-e",
-            """
-'use strict';
-// Verify the compareBranch algorithm works for arrays
-
-const sizeOf = Object.getOwnPropertyDescriptor(Map.prototype, 'size').get;
-
-function createSafeMap() {
-    const map = new Map();
-    Object.setPrototypeOf(map, null);
-    return map;
-}
-
-// Simulate the exact algorithm from compareBranch for arrays
-function compareArrays(actual, expected) {
-    const counts = createSafeMap();
-
-    // Phase 1: count expected items
-    for (const expectedItem of expected) {
-        let found = false;
-        for (const [key, count] of Map.prototype[Symbol.iterator].call(counts)) {
-            if (JSON.stringify(key) === JSON.stringify(expectedItem)) {
-                Map.prototype.set.call(counts, key, count + 1);
-                found = true;
-                break;
-            }
-        }
-        if (!found) {
-            Map.prototype.set.call(counts, expectedItem, 1);
-        }
-    }
-
-    // Phase 2: match actual items
-    for (const actualItem of actual) {
-        for (const [key, count] of Map.prototype[Symbol.iterator].call(counts)) {
-            if (JSON.stringify(key) === JSON.stringify(actualItem)) {
-                if (count === 1) {
-                    Map.prototype.delete.call(counts, key);
-                } else {
-                    Map.prototype.set.call(counts, key, count - 1);
-                }
-                break;
-            }
-        }
-    }
-
-    return sizeOf.call(counts) === 0;
-}
-
-// Run test cases
-const cases = [
-    // [actual, expected, expectedResult]
-    [['foo', 'bar'], ['bar', 'foo'], true],   // same items, different order
-    [['a', 'b', 'c'], ['a', 'b'], true],       // actual has extra
-    [['a', 'b'], ['a', 'b', 'c'], false],       // expected has extra
-    [[1, 1, 2], [1, 1, 2], true],               // exact with duplicates
-    [[1, 1, 2], [1, 2, 2], false],             // same count, different items
-    [[], [], true],                             // empty
-    [[[1, 2]], [[1, 2]], true],                 // nested arrays
-];
-
-for (const [actual, expected, want] of cases) {
-    const got = compareArrays(actual, expected);
-    if (got !== want) {
-        console.error('FAIL: compareArrays(' + JSON.stringify(actual) +
-            ', ' + JSON.stringify(expected) + ') = ' + got + ', want ' + want);
-        process.exit(1);
-    }
-}
-
-console.log('OK: Array comparison algorithm works correctly');
-""",
-        ],
-        capture_output=True,
-        timeout=10,
-    )
-    assert r.returncode == 0, f"Array branch functionality test failed: {r.stderr.decode()}"
-    assert b"OK" in r.stdout, f"Expected OK in output: {r.stdout.decode()}"
-
-
-# ---------------------------------------------------------------------------
-# Pass-to-pass - regression + anti-deletion (BEHAVIORAL)
-# ---------------------------------------------------------------------------
-
-# [pr_diff] pass_to_pass - BEHAVIORAL
 def test_existing_prototype_refs_intact():
     """SafeMapPrototypeHas, SafeMapPrototypeGet, and partialDeepStrictEqual must still exist."""
     _, stripped = _read_source()
@@ -375,78 +271,58 @@ def test_existing_prototype_refs_intact():
     assert "partialDeepStrictEqual" in stripped, "partialDeepStrictEqual not found"
 
 
-# ---------------------------------------------------------------------------
-# Config-derived (agent_config)
-# ---------------------------------------------------------------------------
+def test_array_branch_preserves_expected_counts_logic():
+    """The array comparison branch must still use expectedCounts for counting."""
+    _, stripped = _read_source()
+    fn_body, _ = _extract_compare_branch(stripped)
+    assert "expectedCounts" in fn_body, (
+        "expectedCounts variable missing from compareBranch - array logic broken"
+    )
+    assert re.search(r"for\s*\(\s*const\s+\w+\s+of\s+actual", fn_body), (
+        "Missing iteration over 'actual' array in compareBranch"
+    )
+    assert re.search(r"for\s*\(\s*const\s+\w+\s+of\s+expected", fn_body), (
+        "Missing iteration over 'expected' array in compareBranch"
+    )
 
-# [agent_config] pass_to_pass
+
 def test_require_string_literals_only():
-    """require() calls in src/js/ must use string literals, not dynamic expressions.
-
-    Rule: "String literal require() only" - src/js/CLAUDE.md:103
-    """
+    """require() calls in src/js/ must use string literals, not dynamic expressions."""
     src, _ = _read_source()
-    # Find require() calls that are NOT followed immediately by a string literal
-    # Allow: require("..."), require('...'), require()
-    # Disallow: require(someVar), require(getPath()), etc.
-    dynamic_requires = re.findall(r'\brequire\s*\(\s*(?!["\'])[\w$]', src)
+    dynamic_requires = re.findall(r'\brequire\s*\(\s*(?!["\'])\w+', src)
     assert len(dynamic_requires) == 0, (
         f"Found {len(dynamic_requires)} require() calls with non-literal arguments"
     )
 
 
-# [agent_config] pass_to_pass - EditorConfig compliance check
 def test_editorconfig_compliance():
-    """assert.ts must follow EditorConfig conventions (pass_to_pass).
-
-    Checks:
-    - utf-8 encoding
-    - lf line endings (no CRLF)
-    - final newline at end of file
-    - no trailing whitespace
-    """
     r = subprocess.run(
-        [
-            "python3",
-            "-c",
-            """
+        ["python3", "-c", """
 import sys
 path = sys.argv[1]
 with open(path, 'rb') as f:
     content = f.read()
-
-# Check UTF-8 encoding (no invalid sequences)
 try:
     content.decode('utf-8')
 except UnicodeDecodeError:
     print('FAIL: File is not valid UTF-8')
     sys.exit(1)
-
-# Check for CRLF line endings
 if b'\\r\\n' in content:
     print('FAIL: File contains CRLF line endings, use LF only')
     sys.exit(1)
-
-# Check for final newline
 if content and not content.endswith(b'\\n'):
     print('FAIL: File must end with a newline')
     sys.exit(1)
-
-# Check for trailing whitespace on lines
 text = content.decode('utf-8')
 lines = text.split('\\n')
 for i, line in enumerate(lines, 1):
-    # Skip the last empty line after final newline
     if i == len(lines) and not line:
         continue
     if line != line.rstrip():
         print(f'FAIL: Line {i} has trailing whitespace')
         sys.exit(1)
-
 print('OK: EditorConfig check passed')
-""",
-            str(ASSERT_FILE),
-        ],
+""", str(ASSERT_FILE)],
         capture_output=True,
         text=True,
         timeout=15,
@@ -455,27 +331,12 @@ print('OK: EditorConfig check passed')
     assert r.returncode == 0, f"EditorConfig check failed:\n{r.stderr or r.stdout}"
 
 
-# [repo_tests] pass_to_pass - Syntax validation
 def test_node_syntax_check():
-    """assert.ts must have valid JavaScript syntax (pass_to_pass).
-
-    Strips null bytes (Bun intrinsics) and validates with Node.js.
-    """
     r = subprocess.run(
         [
             "node",
             "-e",
-            """
-const fs=require('fs');
-const src=fs.readFileSync(process.argv[1],'utf8').replace(/\\0[a-zA-Z0-9_]*/g,'_bun_intrinsic');
-let brace=0,paren=0,bracket=0,inString=false,stringChar,escaped=false;
-for(let i=0;i<src.length;i++){const c=src[i];if(escaped){escaped=false;continue;}
-if(inString){if(escaped){escaped=false;continue;}if(c==='\\\\'){escaped=true;continue;}if(c===stringChar){inString=false;stringChar=null;}continue;}
-if(c==='{')brace++;else if(c==='}')brace--;else if(c==='(')paren++;else if(c===')')paren--;else if(c==='[')bracket++;else if(c===']')bracket--;
-if(brace<0||paren<0||bracket<0){console.error('Syntax error: unexpected closing at position',i);process.exit(1);}}
-if(brace!==0||paren!==0||bracket!==0){console.error('Syntax error: unbalanced at end');process.exit(1);}
-console.log('OK: Syntax check passed');
-""",
+            "const fs=require('fs');const src=fs.readFileSync(process.argv[1],'utf8').replace(/\\0[a-zA-Z0-9_]*/g,'_bun_intrinsic');let brace=0,paren=0,bracket=0,inString=false,stringChar,escaped=false;for(let i=0;i<src.length;i++){const c=src[i];if(escaped){escaped=false;continue;}if(inString){if(escaped){escaped=false;continue;}if(c==='\\\\'){escaped=true;continue;}if(c===stringChar){inString=false;stringChar=null;}continue;}if(c==='{')brace++;else if(c==='}')brace--;else if(c==='(')paren++;else if(c===')')paren--;else if(c==='[')bracket++;else if(c===']')bracket--;if(brace<0||paren<0||bracket<0){console.error('Syntax error: unexpected closing at position',i);process.exit(1);}}if(brace!==0||paren!==0||bracket!==0){console.error('Syntax error: unbalanced at end');process.exit(1);}console.log('OK: Syntax check passed');",
             str(ASSERT_FILE),
         ],
         capture_output=True,
@@ -484,94 +345,3 @@ console.log('OK: Syntax check passed');
         cwd=REPO,
     )
     assert r.returncode == 0, f"Node.js syntax check failed:\n{r.stderr}"
-
-
-# [pr_diff] pass_to_pass - Regression test for array branch
-def test_array_branch_functionality_preserved():
-    """Verify the array comparison logic still works correctly.
-
-    This test uses behavioral verification: it actually runs the array
-    comparison algorithm and verifies the results, rather than checking
-    for specific variable names or code patterns.
-    """
-    r = subprocess.run(
-        [
-            "node",
-            "-e",
-            """
-'use strict';
-// Verify the compareBranch algorithm works for arrays
-
-const sizeOf = Object.getOwnPropertyDescriptor(Map.prototype, 'size').get;
-
-function createSafeMap() {
-    const map = new Map();
-    Object.setPrototypeOf(map, null);
-    return map;
-}
-
-// Simulate the exact algorithm from compareBranch for arrays
-function compareArrays(actual, expected) {
-    const counts = createSafeMap();
-
-    // Phase 1: count expected items
-    for (const expectedItem of expected) {
-        let found = false;
-        for (const [key, count] of Map.prototype[Symbol.iterator].call(counts)) {
-            if (JSON.stringify(key) === JSON.stringify(expectedItem)) {
-                Map.prototype.set.call(counts, key, count + 1);
-                found = true;
-                break;
-            }
-        }
-        if (!found) {
-            Map.prototype.set.call(counts, expectedItem, 1);
-        }
-    }
-
-    // Phase 2: match actual items
-    for (const actualItem of actual) {
-        for (const [key, count] of Map.prototype[Symbol.iterator].call(counts)) {
-            if (JSON.stringify(key) === JSON.stringify(actualItem)) {
-                if (count === 1) {
-                    Map.prototype.delete.call(counts, key);
-                } else {
-                    Map.prototype.set.call(counts, key, count - 1);
-                }
-                break;
-            }
-        }
-    }
-
-    return sizeOf.call(counts) === 0;
-}
-
-// Run test cases
-const cases = [
-    // [actual, expected, expectedResult]
-    [['foo', 'bar'], ['bar', 'foo'], true],   // same items, different order
-    [['a', 'b', 'c'], ['a', 'b'], true],       // actual has extra
-    [['a', 'b'], ['a', 'b', 'c'], false],       // expected has extra
-    [[1, 1, 2], [1, 1, 2], true],               // exact with duplicates
-    [[1, 1, 2], [1, 2, 2], false],             // same count, different items
-    [[], [], true],                             // empty
-    [[[1, 2]], [[1, 2]], true],                 // nested arrays
-];
-
-for (const [actual, expected, want] of cases) {
-    const got = compareArrays(actual, expected);
-    if (got !== want) {
-        console.error('FAIL: compareArrays(' + JSON.stringify(actual) +
-            ', ' + JSON.stringify(expected) + ') = ' + got + ', want ' + want);
-        process.exit(1);
-    }
-}
-
-console.log('OK: Array comparison algorithm works correctly');
-""",
-        ],
-        capture_output=True,
-        timeout=10,
-    )
-    assert r.returncode == 0, f"Array branch functionality test failed: {r.stderr.decode()}"
-    assert b"OK" in r.stdout, f"Expected OK in output: {r.stdout.decode()}"

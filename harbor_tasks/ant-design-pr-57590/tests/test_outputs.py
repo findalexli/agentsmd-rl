@@ -4,7 +4,7 @@ Tests for ant-design notification close button spacing fix.
 This PR fixes a layout bug where the close button overlaps notification content
 when only a description is rendered without a title. The fix:
 1. Conditionally renders the title element only when title exists
-2. Adds spacing to description when it's the first content element
+2. Adds spacing to description when it is the first content element
 """
 
 import subprocess
@@ -15,241 +15,188 @@ import re
 REPO = "/workspace/antd"
 
 
+def _run_js(code: str, timeout: int = 60) -> subprocess.CompletedProcess:
+    """Run JavaScript code in the repo context."""
+    script = os.path.join(REPO, "__eval_test.cjs")
+    with open(script, "w") as f:
+        f.write(code)
+    try:
+        return subprocess.run(
+            ["node", script],
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            cwd=REPO,
+        )
+    finally:
+        try:
+            os.unlink(script)
+        except OSError:
+            pass
+
+
 class TestConditionalTitleRendering:
     """Tests that title div is conditionally rendered (fail_to_pass)."""
 
-    def _run_node_test(self, test_script: str) -> tuple[int, str, str]:
-        """Run a Node.js test script and return (exit_code, stdout, stderr)."""
-        script_file = os.path.join(REPO, "__temp_test_script.cjs")
-        with open(script_file, "w") as f:
-            f.write(test_script)
-        try:
-            result = subprocess.run(
-                ["node", script_file],
-                cwd=REPO,
-                capture_output=True,
-                text=True,
-                timeout=120
-            )
-            return result.returncode, result.stdout, result.stderr
-        finally:
-            if os.path.exists(script_file):
-                os.unlink(script_file)
-
-    def test_title_conditional_rendering(self):
+    def test_title_conditionally_rendered(self):
         """
-        Verify title rendering is conditional on title being truthy.
+        Verify title element is conditionally rendered based on title prop.
 
-        Before fix: title div rendered unconditionally
-        After fix: title div wrapped in conditional expression
+        The fix makes the title div not render when title is null/undefined.
+        This test verifies that the title rendering uses conditional logic
+        (either && or ternary ?: or if statement) so empty title doesn't
+        create an empty div element in the layout.
         """
-        test_script = r'''
+        test_code = """
 const fs = require('fs');
 const path = require('path');
 
-// Read the PurePanel source
-const purePanelPath = path.join(__dirname, 'components/notification/PurePanel.tsx');
+const purePanelPath = path.join(process.cwd(), 'components/notification/PurePanel.tsx');
 const source = fs.readFileSync(purePanelPath, 'utf8');
 
-// The bug: unconditional title div that always renders
-// Look for the pattern in the return section around iconNode
-// The title div should only appear when title is provided
+// Find the title div line and check if it's preceded by conditional
+// The fix prevents empty title div from affecting layout by making it conditional
 
-// Valid patterns after the fix:
-// 1. title && ( <div ...> )
-// 2. title ? ( <div ...> ) : null
-// 3. {title && <div ...>} or {title ?? <div ...>}
+const lines = source.split('\\n');
 
-// Check if title div is wrapped in conditional before it
-// The bug pattern is: after {iconNode} comes a <div className=...title...> without condition
-const iconNodeEnd = source.indexOf('{iconNode}');
-if (iconNodeEnd === -1) {
-  console.log('FAIL: Cannot find iconNode in source');
+// Find the line with the title div element
+let titleDivLineIdx = -1;
+for (let i = 0; i < lines.length; i++) {
+  // Looking for <div ...className...title...> pattern for the title div
+  if (lines[i].includes('<div') && 
+      (lines[i].includes('className') || lines[i].includes('class')) &&
+      lines[i].includes('title')) {
+    titleDivLineIdx = i;
+    break;
+  }
+}
+
+if (titleDivLineIdx === -1) {
+  console.log('FAIL: Cannot find title div element');
   process.exit(1);
 }
 
-// Look at text after iconNode
-const afterIconNode = source.substring(iconNodeEnd, iconNodeEnd + 500);
-const bugPatternMatch = afterIconNode.match(/\{iconNode\}\s*<div[^>]*className=[^>]*title/);
+// Look backwards for conditional patterns: && or ? or if(
+// These are the standard React patterns for conditional rendering
+let foundConditional = false;
+const conditionalPatterns = [/title\\s*&&/, /title\\s*\\?/, /if\\s*\\(\\s*title/];
 
-if (bugPatternMatch) {
-  console.log('FAIL: Title div renders unconditionally (bug present)');
-  process.exit(1);
+for (let j = titleDivLineIdx - 1; j >= Math.max(0, titleDivLineIdx - 5); j--) {
+  for (const pattern of conditionalPatterns) {
+    if (pattern.test(lines[j])) {
+      foundConditional = true;
+      break;
+    }
+  }
+  if (foundConditional) break;
 }
 
-// Now check if there's a conditional title rendering
-const hasConditionalTitle = /title\s*&&\s*\(/.test(source) || 
-                           /title\s*\?\s*\(/.test(source) ||
-                           /\{title\s*&&\s*<div/.test(source) ||
-                           /\{title\s*\?\s*<div/.test(source);
-
-if (hasConditionalTitle) {
-  console.log('PASS: Title rendering is conditional');
+if (foundConditional) {
+  console.log('PASS');
   process.exit(0);
 } else {
-  console.log('FAIL: Cannot verify title rendering pattern');
+  console.log('FAIL: Title div should be conditionally rendered to prevent empty div in layout');
   process.exit(1);
 }
-'''
-        returncode, stdout, stderr = self._run_node_test(test_script)
-        output = stdout.strip()
-        if returncode != 0:
-            assert False, f"Test failed: {output}\nSTDERR: {stderr[-500:]}"
-        assert 'PASS' in output, f"Test did not pass: {output}"
+"""
+        result = _run_js(test_code)
+        assert result.returncode == 0, (
+            "Title conditional rendering check failed: " + result.stdout
+        )
 
 
 class TestDescriptionSpacing:
     """Tests that description has proper spacing when title is absent (fail_to_pass)."""
 
-    def _run_node_test(self, test_script: str) -> tuple[int, str, str]:
-        """Run a Node.js test script and return (exit_code, stdout, stderr)."""
-        script_file = os.path.join(REPO, "__temp_test_script.cjs")
-        with open(script_file, "w") as f:
-            f.write(test_script)
-        try:
-            result = subprocess.run(
-                ["node", script_file],
-                cwd=REPO,
-                capture_output=True,
-                text=True,
-                timeout=120
-            )
-            return result.returncode, result.stdout, result.stderr
-        finally:
-            if os.path.exists(script_file):
-                os.unlink(script_file)
-
-    def test_description_spacing_without_title(self):
-        r"""
-        Verify description has proper CSS spacing when it's first element (no title).
-
-        The fix ensures description doesn't overlap close button by adding spacing.
+    def test_description_spacing_from_close_button(self):
         """
-        test_script = '''
+        Verify description has proper spacing from close button when it's first content.
+
+        When title is absent, description becomes the first content element and needs
+        proper spacing from the close button. The fix adds a first-child rule to CSS.
+        """
+        test_code = """
 const fs = require('fs');
 const path = require('path');
 
-// Read the style file
-const stylePath = path.join(__dirname, 'components/notification/style/index.ts');
-const styleSource = fs.readFileSync(stylePath, 'utf8');
+const stylePath = path.join(process.cwd(), 'components/notification/style/index.ts');
+const source = fs.readFileSync(stylePath, 'utf8');
 
-// The bug: description has no special spacing when title is absent
-// The fix: either &:first-child rule OR margin on description element
+// The fix adds &:first-child rule to description styles
+// Check for this pattern in the CSS
+const hasFirstChild = source.includes('&:first-child');
 
-// Check for &:first-child rule (one approach)
-const hasFirstChild = /['\"]&:first-child['\"]/.test(styleSource);
-const hasFirstChildSpacing = hasFirstChild && /&:first-child[^}]*margin/.test(styleSource);
-
-// Check for marginInlineEnd anywhere in the styles (valid approach)
-const hasMarginInlineEnd = /marginInlineEnd/.test(styleSource);
-
-// Check for any right-side margin on the notice or description
-const hasRightMargin = /marginRight/.test(styleSource);
-
-// The fix could use any of these patterns
-if (hasFirstChildSpacing || (hasMarginInlineEnd && hasRightMargin)) {
-  console.log('PASS: Proper spacing rules exist for description');
-  process.exit(0);
-} else if (!hasFirstChild) {
-  console.log('FAIL: No &:first-child rule found (bug present)');
-  process.exit(1);
-} else {
-  console.log('FAIL: Spacing rules incomplete');
+// Find description section and verify spacing around it
+const descIdx = source.indexOf('description');
+if (descIdx === -1) {
+  console.log('FAIL: description selector not found in CSS');
   process.exit(1);
 }
-'''
-        returncode, stdout, stderr = self._run_node_test(test_script)
-        output = stdout.strip()
-        if returncode != 0:
-            assert False, f"Test failed: {output}\nSTDERR: {stderr[-500:]}"
-        assert 'PASS' in output, f"Test did not pass: {output}"
+
+// Check the description section and surrounding context for spacing rules
+// The fix should add spacing specifically for when description is first child
+const sectionStart = Math.max(0, descIdx - 200);
+const sectionEnd = Math.min(source.length, descIdx + 500);
+const section = source.substring(sectionStart, sectionEnd);
+
+const hasEndSpacing = section.includes('marginInlineEnd') ||
+                     section.includes('marginRight') ||
+                     section.includes('paddingInlineEnd') ||
+                     section.includes('paddingRight');
+
+const hasFirstChildRule = section.includes('&:first-child') || source.includes('&:first-child');
+
+if (hasFirstChildRule && hasEndSpacing) {
+  console.log('PASS');
+  process.exit(0);
+} else {
+  console.log('FAIL: Description needs first-child spacing rule for close button clearance');
+  process.exit(1);
+}
+"""
+        result = _run_js(test_code)
+        assert result.returncode == 0, (
+            "Description spacing CSS not found. "
+            "Expected &:first-child rule with marginInlineEnd or similar."
+        )
 
 
 class TestLayoutBehavior:
     """Tests that verify the notification layout works correctly (fail_to_pass)."""
 
-    def _run_node_test(self, test_script: str) -> tuple[int, str, str]:
-        """Run a Node.js test script and return (exit_code, stdout, stderr)."""
-        script_file = os.path.join(REPO, "__temp_test_script.cjs")
-        with open(script_file, "w") as f:
-            f.write(test_script)
-        try:
-            result = subprocess.run(
-                ["node", script_file],
-                cwd=REPO,
-                capture_output=True,
-                text=True,
-                timeout=120
-            )
-            return result.returncode, result.stdout, result.stderr
-        finally:
-            if os.path.exists(script_file):
-                os.unlink(script_file)
+    def test_component_has_conditional_title_and_description(self):
+        """
+        Verify notification component properly handles title and description conditionally.
 
-    def test_notification_component_structure(self):
+        This test ensures both title and description use conditional rendering,
+        which is necessary for proper layout when either is absent.
         """
-        Verify notification component has proper structure for icon/title/description.
-        """
-        test_script = '''
+        test_code = """
 const fs = require('fs');
 const path = require('path');
 
-// Check PurePanel.tsx for basic structure
-const purePanelPath = path.join(__dirname, 'components/notification/PurePanel.tsx');
+const purePanelPath = path.join(process.cwd(), 'components/notification/PurePanel.tsx');
 const source = fs.readFileSync(purePanelPath, 'utf8');
 
-// Verify component has proper structure with icon, title, description
-const hasIconNode = /iconNode/.test(source);
-const hasDescription = /description/.test(source);
-const hasReturnStatement = /return\\s*\\(/.test(source);
-const hasCloseIcon = /closeIcon|CloseIcon/.test(source);
+// Both title and description should be conditionally rendered
+// This prevents empty elements from affecting layout
+const hasPureContent = source.includes('export const PureContent');
+const hasDescriptionCond = /description\\s*&&/.test(source);
+const hasTitleCond = /title\\s*&&|title\\s*\\?/.test(source);
 
-if (hasIconNode && hasDescription && hasReturnStatement && hasCloseIcon) {
-  console.log('PASS: Component structure is valid');
+if (hasPureContent && hasDescriptionCond && hasTitleCond) {
+  console.log('PASS');
   process.exit(0);
 } else {
-  console.log('FAIL: Component missing expected structure');
+  console.log('FAIL: Component should have conditional rendering for both title and description');
+  console.log('hasPureContent:', hasPureContent);
+  console.log('hasDescriptionCond:', hasDescriptionCond);
+  console.log('hasTitleCond:', hasTitleCond);
   process.exit(1);
 }
-'''
-        returncode, stdout, stderr = self._run_node_test(test_script)
-        output = stdout.strip()
-        if returncode != 0:
-            assert False, f"Test failed: {output}\nSTDERR: {stderr[-500:]}"
-        assert 'PASS' in output, f"Test did not pass: {output}"
-
-    def test_css_provides_close_button_spacing(self):
-        """
-        Verify CSS includes spacing rules to prevent close button overlap.
-        """
-        test_script = '''
-const fs = require('fs');
-const path = require('path');
-
-// Read the style file
-const stylePath = path.join(__dirname, 'components/notification/style/index.ts');
-const styleSource = fs.readFileSync(stylePath, 'utf8');
-
-// The fix must provide spacing to prevent close button overlap
-// This can be done via &:first-child, marginInlineEnd, marginRight, or similar
-const hasSpacingMechanism = 
-  /['\"]&:first-child['\"]/.test(styleSource) ||
-  /marginInlineEnd/.test(styleSource) ||
-  /marginRight/.test(styleSource);
-
-if (hasSpacingMechanism) {
-  console.log('PASS: CSS has close button spacing mechanism');
-  process.exit(0);
-} else {
-  console.log('FAIL: CSS missing spacing mechanism for close button');
-  process.exit(1);
-}
-'''
-        returncode, stdout, stderr = self._run_node_test(test_script)
-        output = stdout.strip()
-        if returncode != 0:
-            assert False, f"Test failed: {output}\nSTDERR: {stderr[-500:]}"
-        assert 'PASS' in output, f"Test did not pass: {output}"
+"""
+        result = _run_js(test_code)
+        assert result.returncode == 0, "Component structure test failed: " + result.stdout
 
 
 class TestRepoIntegration:
@@ -265,9 +212,8 @@ class TestRepoIntegration:
             text=True,
             timeout=120
         )
-        # ESLint should pass without errors
         assert result.returncode == 0, (
-            f"ESLint failed on notification component:\n{result.stdout[-2000:]}\n{result.stderr[-500:]}"
+            "ESLint failed on notification component:\n" + result.stdout[-2000:] + "\n" + result.stderr[-500:]
         )
 
     def test_uses_design_tokens_not_hardcoded(self):
@@ -276,14 +222,6 @@ class TestRepoIntegration:
         with open(style_path, "r") as f:
             content = f.read()
 
-        # Check that common hardcoded patterns are not present
-        # Hardcoded pixel values for margins/paddings should use tokens
-        import re
-
-        # Look for patterns like marginInlineEnd: 8 or marginTop: 16 (hardcoded)
-        hardcoded_margin = re.search(r'margin\w+:\s*\d+(?!px)', content)
-
-        # The file should use token.marginXS, token.marginSM, etc. not raw numbers
         assert "token.margin" in content, (
             "Expected design token usage (token.margin*) for spacing values"
         )
@@ -298,7 +236,7 @@ class TestRepoIntegration:
             timeout=120
         )
         assert result.returncode == 0, (
-            f"Biome lint failed on notification component:\n{result.stdout[-2000:]}\n{result.stderr[-500:]}"
+            "Biome lint failed on notification component:\n" + result.stdout[-2000:] + "\n" + result.stderr[-500:]
         )
 
     def test_biome_check_notification_component(self):
@@ -311,5 +249,5 @@ class TestRepoIntegration:
             timeout=120
         )
         assert result.returncode == 0, (
-            f"Biome check failed on notification component:\n{result.stdout[-2000:]}\n{result.stderr[-500:]}"
+            "Biome check failed on notification component:\n" + result.stdout[-2000:] + "\n" + result.stderr[-500:]
         )

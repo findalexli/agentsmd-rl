@@ -4,12 +4,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-16T12:06:15.406203",
-  "total_time": 54.0,
-  "sandbox_id": "i8yw73lkt0yhtsib2cjec",
+  "validated_at": "2026-04-25T13:23:13.703422",
+  "total_time": 3935.1,
+  "sandbox_id": "i1ojvfvrmna0yi1plidsh",
   "backend": "anthropic",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "oneshot_repair",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -33,14 +33,14 @@
       "notes": "tests look good"
     },
     "validate": {
-      "status": "pass",
-      "nop_reward": 0.0,
-      "gold_reward": 1.0,
-      "attempts": 4,
-      "notes": "Fixed: solve.sh adds run-integration-tests skill correctly, MAUI_PACKAGE_VERSION added to script, test patterns fixed. All 30 tests pass.",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 92.97
+      "status": "fail",
+      "nop_reward": -1.0,
+      "gold_reward": -1.0,
+      "attempts": 0,
+      "notes": "BLOCKED: Bash tool non-functional in this session \u2014 every command returns 'EACCES: permission denied, mkdir /home/worker/.claude/session-env' before any command runs. Cannot invoke docker build, docker run, pytest, or the judge. Files were not modified. Previous validate run (kimi-k2p5-turbo, 4 attempts) reported pass with nop=0.0/gold=1.0; current state of solve.sh, test_outputs.py, and Dockerfile was inspected via Read and looks consistent with that prior pass, but cannot be re-confirmed without bash. Re-run this node when the harness can create its session-env directory.",
+      "model": "claude-opus-4-7",
+      "backend": "oauth",
+      "time": 148.79
     },
     "rubric_enrichment": {
       "status": "ok",
@@ -92,10 +92,10 @@
     },
     "quality_gate": {
       "status": "passed",
-      "model": "claude-opus-4-7",
+      "model": "claude-opus-4-6",
       "backend": "anthropic",
-      "time": 0.21,
-      "notes": "flags=[]"
+      "time": 0.24,
+      "notes": "flags=['lint_tier_b:1', 'B:[B] no_network_during_tests @ tests/test.sh:44: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
@@ -111,6 +111,13 @@
       "status": "error",
       "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":514,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 400 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"invalid_request_error\\\",\\\"message\\\":\\\"\\\\\\\"thinking.type.enabled\\\\\\\" is not supported for this model. Use \\\\\\\"thinking.type.adapt",
       "time": 2.81
+    },
+    "fix_quality": {
+      "status": "ok",
+      "model": "claude-opus-4-6",
+      "backend": "anthropic",
+      "time": 959.89,
+      "notes": ""
     }
   },
   "history": [
@@ -118,41 +125,41 @@
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
-      "backend": "fireworks",
-      "time": 1736.75,
-      "at": "2026-04-15T04:51:55.435205"
+      "backend": "anthropic",
+      "time": 54.0,
+      "at": "2026-04-16T12:06:15.406203"
     },
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 6061.32,
+      "at": "2026-04-25T01:05:55.665176"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 14089.54,
+      "at": "2026-04-25T05:01:33.690639"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
       "backend": "oauth",
-      "time": 725.07,
-      "at": "2026-04-15T13:03:11.255236"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "oauth",
-      "time": 588.95,
-      "at": "2026-04-15T19:02:08.949754"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "glm",
-      "time": 3856.98,
-      "at": "2026-04-16T00:23:19.078494"
+      "time": 3823.49,
+      "at": "2026-04-25T09:45:14.888211"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "anthropic",
-      "time": 54.0,
-      "at": "2026-04-16T12:06:15.406203"
+      "time": 3935.1,
+      "at": "2026-04-25T13:23:13.703422"
     }
   ]
 }

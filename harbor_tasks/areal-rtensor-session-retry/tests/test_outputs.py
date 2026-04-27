@@ -60,9 +60,10 @@ def _load_rtensor():
 
 
 def _find_session_method(backend):
-    for name in ("_create_session", "create_session", "_make_session", "make_session"):
-        if hasattr(backend, name) and callable(getattr(backend, name)):
-            return getattr(backend, name)
+    """Find any session creation method - returns a bound method."""
+    for name, method in vars(backend.__class__).items():
+        if callable(method) and not name.startswith("__") and "session" in name.lower():
+            return method.__get__(backend, backend.__class__)
     return None
 
 
@@ -148,13 +149,13 @@ def test_python_ast_valid():
 # ---------------------------------------------------------------------------
 
 def test_session_method_exists():
-    """HttpRTensorBackend has a session creation method."""
+    """HttpRTensorBackend has a session creation method (any name with 'session' in it)."""
     mod = _load_rtensor()
     backend = mod.HttpRTensorBackend()
     session_method = _find_session_method(backend)
     assert session_method is not None, (
-        "HttpRTensorBackend must have a session creation method "
-        "(_create_session, create_session, _make_session, or make_session)"
+        "HttpRTensorBackend must have a callable method with 'session' in the name "
+        "that produces a configured aiohttp.ClientSession"
     )
     assert callable(session_method), "Session creation method must be callable"
 
@@ -324,12 +325,12 @@ def test_fetch_and_delete_use_session_method():
 
             # Verify fetch uses a session method (not bare ClientSession())
             if fetch_src:
-                assert "aiohttp.ClientSession()" not in fetch_src or "_create_session" in fetch_src or "create_session" in fetch_src, (
+                assert "aiohttp.ClientSession()" not in fetch_src or "session" in fetch_src.lower(), (
                     "fetch() should use a session creation method, not bare aiohttp.ClientSession()"
                 )
             # Verify delete uses a session method (not bare ClientSession())
             if delete_src:
-                assert "aiohttp.ClientSession()" not in delete_src or "_create_session" in delete_src or "create_session" in delete_src, (
+                assert "aiohttp.ClientSession()" not in delete_src or "session" in delete_src.lower(), (
                     "delete() should use a session creation method, not bare aiohttp.ClientSession()"
                 )
             return

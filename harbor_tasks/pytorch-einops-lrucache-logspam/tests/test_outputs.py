@@ -154,6 +154,10 @@ def test_version_check_does_not_skip_wrapping():
     assert len(called) > 0, (
         "allow_in_graph was never called — version check is still causing early return"
     )
+    valid_names = {"rearrange", "reduce", "repeat", "einsum", "pack", "unpack"}
+    assert all(name in valid_names for name in called), (
+        f"Unexpected function names in allow_in_graph calls: {set(called) - valid_names}"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -185,12 +189,6 @@ def test_repo_flake8_errors():
     Runs flake8 with only error-level checks (E9, F63, F7, F82) to catch
     syntax errors and undefined names without enforcing style rules.
     """
-    subprocess.run(
-        ["python3", "-m", "pip", "install", "flake8", "-q"],
-        capture_output=True, text=True, timeout=60, cwd=REPO,
-    )
-    # pip install result is optional; flake8 might already be installed
-
     r = subprocess.run(
         ["flake8", "--select=E9,F63,F7,F82", TARGET],
         capture_output=True, text=True, timeout=60, cwd=REPO,
@@ -242,15 +240,18 @@ def test_function_imports_einops():
     """_allow_in_graph_einops must exist and contain 'import einops'."""
     source = Path(TARGET).read_text()
     tree = ast.parse(source)
+    func_node = None
     for node in ast.walk(tree):
         if isinstance(node, ast.FunctionDef) and node.name == "_allow_in_graph_einops":
-            has_import = any(
-                isinstance(n, ast.Import) and any(a.name == "einops" for a in n.names)
-                for n in ast.walk(node)
-            )
-            assert has_import, "function does not contain 'import einops'"
-            return
-    raise AssertionError("_allow_in_graph_einops function not found")
+            func_node = node
+            break
+    assert func_node is not None, "_allow_in_graph_einops function not found"
+    has_import = any(
+        isinstance(n, ast.Import) and any(a.name == "einops" for a in n.names)
+        for n in ast.walk(func_node)
+    )
+    assert has_import, "function does not contain 'import einops'"
+    assert len(func_node.body) >= 2, "function body is too short to be a real implementation"
 
 
 def test_not_stub():
@@ -284,11 +285,6 @@ def test_repo_ruff_check():
     Runs ruff with only error-level checks (E9, F63, F7, F82) to catch
     syntax errors and undefined names without enforcing style rules.
     """
-    subprocess.run(
-        ["python3", "-m", "pip", "install", "ruff", "-q"],
-        capture_output=True, text=True, timeout=60, cwd=REPO,
-    )
-
     r = subprocess.run(
         ["ruff", "check", "--select=E9,F63,F7,F82", TARGET],
         capture_output=True, text=True, timeout=60, cwd=REPO,

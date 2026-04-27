@@ -31,42 +31,35 @@ def _run_node(script: str, timeout: int = 30) -> subprocess.CompletedProcess:
     )
 
 
-def _eval_bypass_logic(bypass_value: str) -> subprocess.CompletedProcess:
+def _eval_bypass(bypass_value: str) -> subprocess.CompletedProcess:
     """
-    Extract the proxy bypass logic from chromium.ts and evaluate it.
+    Extract the proxy bypass logic from chromium.ts and execute it.
 
-    This executes the ACTUAL source code logic with controlled inputs to verify
-    that loopback bypass rules (localhost, 127.0.0.1, ::1) prevent force-adding
-    <-loopback> to the Chrome arguments.
+    This runs the ACTUAL source code with controlled inputs to verify behavior.
+    It extracts the proxy-bypass block, wraps it in a function, and invokes it.
+    Any correct fix (using .some(), .includes(), Set, etc.) will pass as long as
+    the behavior is right.
 
     Returns: process with exit code 0 if <-loopback> is NOT force-added,
-             exit code 1 if <-loopback> IS force-added (correct for non-loopback bypasses)
+             exit code 1 if <-loopback> IS force-added
     """
     return _run_node(f"""
 const fs = require('fs');
 const src = fs.readFileSync('{CHROMIUM_TS}', 'utf8');
 
-// Find the proxy bypass logic block - supports both base (broken) and fixed code
-// Base:  if (!process.env.PLAYWRIGHT_DISABLE_FORCED_CHROMIUM_PROXIED_LOOPBACK && !proxyBypassRules.includes('<-loopback>'))
-// Fixed: const bypassesLoopback = proxyBypassRules.some(...); if (!process.env.PLAYWRIGHT_DISABLE_FORCED_CHROMIUM_PROXIED_LOOPBACK && !bypassesLoopback)
-
+// Extract the proxy bypass logic block from the source
 const startRe = /(?:const|let|var)\\s+proxyBypassRules\\s*=\\s*\\[\\]/;
 const m = src.match(startRe);
 if (!m) {{ console.error('Cannot find proxyBypassRules declaration'); process.exit(2); }}
 const si = m.index;
 
-// Find the end of the block where chromeArguments is used
 const endMarker = 'if (proxyBypassRules.length > 0)';
 const ei = src.indexOf(endMarker, si);
 if (ei === -1) {{ console.error('Cannot find end marker'); process.exit(2); }}
 
 const block = src.substring(si, ei);
 
-// Check if the new bypassesLoopback variable exists (indicates fixed code)
-const isFixed = block.includes('const bypassesLoopback') ||
-                block.includes('bypassesLoopback = proxyBypassRules.some');
-
-// Create a function from the extracted code
+// Create a function from the extracted code and execute it
 const fn = new Function('proxy', 'options', block + '\\nreturn proxyBypassRules;');
 
 // Clear the env var so the force-loopback path is active
@@ -75,67 +68,7 @@ delete process.env.PLAYWRIGHT_DISABLE_FORCED_CHROMIUM_PROXIED_LOOPBACK;
 const rules = fn({{ bypass: '{bypass_value}' }}, {{}});
 const hasLoopback = rules.includes('<-loopback>');
 
-console.log(JSON.stringify({{ rules, hasLoopback, isFixed }}));
-process.exit(hasLoopback ? 1 : 0);
-""")
-
-
-def _eval_bypass_logic_v2(bypass_value: str) -> subprocess.CompletedProcess:
-    """
-    Simulates the actual chromium.ts proxy bypass logic.
-
-    The real code structure is:
-    1. const proxyBypassRules = [];
-    2. if (options.socksProxyPort) proxyBypassRules.push('<-loopback>');  // not in test path
-    3. if (proxy.bypass) proxyBypassRules.push(...user rules);
-    4. const bypassesLoopback = proxyBypassRules.some(rule => ...);  // THE FIX
-    5. if (!process.env.PLAYWRIGHT_DISABLE_FORCED_CHROMIUM_PROXIED_LOOPBACK && !bypassesLoopback)
-         proxyBypassRules.push('<-loopback>');
-
-    The test path doesn't use socksProxyPort, so step 2 is skipped.
-    """
-    return _run_node(f"""
-const fs = require('fs');
-const src = fs.readFileSync('{CHROMIUM_TS}', 'utf8');
-
-// Check if the fix is present: bypassesLoopback variable with proper check
-const hasFix = src.includes('const bypassesLoopback') &&
-               src.includes("rule === 'localhost'") &&
-               src.includes("rule === '127.0.0.1'") &&
-               src.includes("rule === '::1'");
-
-// Simulate the CORRECT proxy bypass logic (matching actual chromium.ts structure)
-function simulateBypassLogic(proxyBypass) {{
-  const proxyBypassRules = [];
-
-  // Step 1: Add user bypass rules (only if proxyBypass is provided)
-  if (proxyBypass)
-    proxyBypassRules.push(...proxyBypass.split(',').map(t => t.trim()).map(t => t.startsWith('.') ? '*' + t : t));
-
-  // Step 2: Check if bypasses loopback (THE FIX)
-  // After the fix, this checks for localhost/127.0.0.1/::1 in addition to <-loopback>
-  let bypassesLoopback;
-  if (hasFix) {{
-    // Fixed logic: recognize localhost, 127.0.0.1, ::1 as loopback addresses
-    bypassesLoopback = proxyBypassRules.some(rule =>
-      rule === '<-loopback>' || rule === 'localhost' || rule === '127.0.0.1' || rule === '::1'
-    );
-  }} else {{
-    // Broken logic: only check for <-loopback> explicitly
-    bypassesLoopback = proxyBypassRules.includes('<-loopback>');
-  }}
-
-  // Step 3: Add <-loopback> ONLY if not already bypassing loopback
-  if (!process.env.PLAYWRIGHT_DISABLE_FORCED_CHROMIUM_PROXIED_LOOPBACK && !bypassesLoopback)
-    proxyBypassRules.push('<-loopback>');
-
-  return proxyBypassRules;
-}}
-
-const rules = simulateBypassLogic('{bypass_value}');
-const hasLoopback = rules.includes('<-loopback>');
-
-console.log(JSON.stringify({{ rules, hasLoopback, hasFix }}));
+console.log(JSON.stringify({{ rules, hasLoopback }}));
 process.exit(hasLoopback ? 1 : 0);
 """)
 
@@ -299,7 +232,7 @@ console.log('File exists and has content: ' + stats.size + ' bytes');
 
 def test_localhost_bypass_skips_loopback():
     """When proxy.bypass='localhost', <-loopback> must NOT be force-added."""
-    r = _eval_bypass_logic_v2("localhost")
+    r = _eval_bypass("localhost")
     assert r.returncode == 0, (
         f"<-loopback> was force-added despite 'localhost' in bypass list: {r.stdout}"
     )
@@ -312,7 +245,7 @@ def test_localhost_bypass_skips_loopback():
 
 def test_ipv4_bypass_skips_loopback():
     """When proxy.bypass='127.0.0.1', <-loopback> must NOT be force-added."""
-    r = _eval_bypass_logic_v2("127.0.0.1")
+    r = _eval_bypass("127.0.0.1")
     assert r.returncode == 0, (
         f"<-loopback> was force-added despite '127.0.0.1' in bypass list: {r.stdout}"
     )
@@ -325,7 +258,7 @@ def test_ipv4_bypass_skips_loopback():
 
 def test_ipv6_bypass_skips_loopback():
     """When proxy.bypass='::1', <-loopback> must NOT be force-added."""
-    r = _eval_bypass_logic_v2("::1")
+    r = _eval_bypass("::1")
     assert r.returncode == 0, (
         f"<-loopback> was force-added despite '::1' in bypass list: {r.stdout}"
     )
@@ -342,7 +275,7 @@ def test_ipv6_bypass_skips_loopback():
 
 def test_non_loopback_still_forced():
     """When proxy.bypass='example.com', <-loopback> MUST still be force-added."""
-    r = _eval_bypass_logic_v2("example.com")
+    r = _eval_bypass("example.com")
     assert r.returncode == 1, (
         f"<-loopback> was NOT added for non-loopback bypass 'example.com': {r.stdout}"
     )

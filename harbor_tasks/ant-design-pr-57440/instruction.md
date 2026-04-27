@@ -18,9 +18,9 @@ Action buttons always appear after the text content. There is no way to configur
 
 4. **Visual Distinction**: When placement is set to `'start'`, the component must apply a distinguishable CSS class to the actions container so that styles can target this state.
 
-5. **CSS Styling**: The styles must include appropriate styling for the start-positioned actions bar, using RTL-compatible margin properties (such as `marginInlineEnd` instead of `marginInlineStart`) to ensure proper spacing of action buttons when positioned at the start.
+5. **CSS Styling**: The styles must include appropriate styling for the start-positioned actions bar, using RTL-compatible logical margin properties to ensure proper spacing of action buttons when positioned at the start.
 
-6. **Ellipsis Compatibility**: When combined with ellipsis functionality, changing the action bar placement must trigger re-measurement of the text. The `Ellipsis` component must accept dependencies for recalculation that affect content layout, separate from other miscellaneous dependencies.
+6. **Ellipsis Compatibility**: When combined with ellipsis functionality, changing the action bar placement must trigger re-measurement of the text. The `Ellipsis` component must accept a dedicated dependency list for changes that affect content layout measurement (distinct from other miscellaneous dependencies that don't affect layout).
 
 ## Code Style Requirements
 

@@ -4,12 +4,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-16T09:25:52.210824",
-  "total_time": 851.45,
-  "sandbox_id": "i2sl45dnpi74ekdpx3ppz",
-  "backend": "anthropic",
+  "validated_at": "2026-04-22T01:32:47.127858",
+  "total_time": 10022.17,
+  "sandbox_id": "i2j85cucerne99i12cqn9",
+  "backend": "minimax",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "fix_quality",
   "nodes": {
     "p2p_enrich": {
       "status": "failed",
@@ -50,9 +50,9 @@
       "gold_reward": 1.0,
       "attempts": 2,
       "notes": "Fixed Dockerfile: changed FROM golang 1.23-slim to 1.23. Fixed tests: added GOTOOLCHAIN=auto to Go commands. All 4 checks pass.",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 535.52
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 868.25
     },
     "rubric_validate": {
       "status": "ok",
@@ -88,47 +88,28 @@
     },
     "quality_gate": {
       "status": "passed",
-      "model": "claude-opus-4-7",
-      "backend": "anthropic",
-      "time": 1.09,
-      "notes": "flags=[]"
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.27,
+      "notes": "flags=['lint_tier_b:1', 'B:[B] no_network_during_tests @ tests/test.sh:44: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 11.8,
-      "tier_a_fails": [
-        "behavior_in_task_description"
-      ],
+      "time": 11.89,
+      "tier_a_fails": [],
       "tier_b_fails": [],
-      "pass_count": 9,
-      "fail_count": 1
+      "pass_count": 10,
+      "fail_count": 0
+    },
+    "fix_quality": {
+      "status": "ok",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 334.06,
+      "notes": ""
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 1206.9,
-      "at": "2026-04-10T11:34:03.915452"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 1733.12,
-      "at": "2026-04-11T19:33:12.113112"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 1888.35,
-      "at": "2026-04-11T19:51:18.773105"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -144,6 +125,30 @@
       "backend": "anthropic",
       "time": 851.45,
       "at": "2026-04-16T09:25:52.210824"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 23209.79,
+      "at": "2026-04-20T20:23:25.498032"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 837.89,
+      "at": "2026-04-21T22:23:20.856351"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 10022.17,
+      "at": "2026-04-22T01:32:47.127858"
     }
   ]
 }

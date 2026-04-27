@@ -2,21 +2,15 @@ checks:
 - id: test_dagrun_info_includes_partition_fields
   type: fail_to_pass
   origin: pr_diff
-  description: DagRunInfo.includes must include partition_key and partition_date strings
-- id: test_partition_fields_in_dagrun_info_includes_list
+  description: DagRunInfo must include partition_key and partition_date in serialized output
+- id: test_partition_fields_serialized_with_correct_values
   type: fail_to_pass
   origin: pr_diff
-  description: partition_key and partition_date must be specifically in DagRunInfo.includes
-    list
-- id: test_partition_fields_have_version_comments
-  type: fail_to_pass
-  origin: pr_diff
-  description: partition fields must have Airflow 3.2+ version comments
+  description: partition fields must be serialized with correct values
 - id: test_partition_fields_ordering
   type: fail_to_pass
   origin: pr_diff
-  description: partition_key must come after logical_date and before partition_date
-    and run_after
+  description: partition_key must come after logical_date and before partition_date and run_after
 - id: test_partition_fields_only_in_dagrun_info
   type: fail_to_pass
   origin: pr_diff
@@ -24,7 +18,7 @@ checks:
 - id: test_no_duplicate_partition_fields
   type: fail_to_pass
   origin: pr_diff
-  description: partition fields should not be duplicated in the source file
+  description: partition fields should not be duplicated in the includes list
 - id: test_repo_openlineage_utils_syntax
   type: pass_to_pass
   origin: repo_tests
@@ -86,66 +80,45 @@ checks:
   origin: repo_tests
   description: OpenLineage facets module imports successfully
 rubric:
-- rule: Add partition_key and partition_date fields to DagRunInfo.includes list in
-    the correct location with Airflow 3.2+ version comments.
+- rule: Add partition_key and partition_date fields to DagRunInfo.includes list in the correct location.
   source:
     path: providers/openlineage/src/airflow/providers/openlineage/utils/utils.py
-  reference: "Added to DagRunInfo.includes after logical_date:\n    \"partition_key\"\
-    ,  # Airflow 3.2+\n    \"partition_date\",  # Airflow 3.2+\n"
-- rule: The partition fields must be placed between logical_date and run_after in
-    the includes list, maintaining the expected field ordering.
+  reference: "Added to DagRunInfo.includes after logical_date:\n    \"partition_key\",  # Airflow 3.2+\n    \"partition_date\",  # Airflow 3.2+\n"
+- rule: The partition fields must be placed between logical_date and run_after in the includes list, maintaining the expected field ordering.
   source:
     path: providers/openlineage/src/airflow/providers/openlineage/utils/utils.py
-  reference: 'Ordering in includes list: logical_date (Airflow 3), partition_key (Airflow
-    3.2+), partition_date (Airflow 3.2+), run_after (Airflow 3)
+  reference: 'Ordering in includes list: logical_date (Airflow 3), partition_key (Airflow 3.2+), partition_date (Airflow 3.2+), run_after (Airflow 3)
 
     '
-- rule: Update corresponding test file to include partition_key and partition_date
-    in DagRun test mocks and assertions.
+- rule: Update corresponding test file to include partition_key and partition_date in DagRun test mocks and assertions.
   source:
     path: providers/openlineage/tests/unit/openlineage/utils/test_utils.py
-  reference: 'Added partition_key and partition_date attributes to dagrun_mock and
-    optional_args in tests
+  reference: 'Added partition_key and partition_date attributes to dagrun_mock and optional_args in tests
 
     '
 distractors:
 - rule: Use `version_compat.py` patterns for cross-version compatibility.
   collision_type: scope_ambiguity
-  why_distracting: The agent might try to import `AIRFLOW_V_3_2_PLUS` from `version_compat.py`
-    to conditionally add `partition_key` and `partition_date` to the `attributes`
-    list in `utils.py`. However, the instruction specifies adding them with 'appropriate
-    version comments' and notes that the base class handles serialization logic, meaning
-    conditional logic in the class definition is unnecessary and incorrect.
+  why_distracting: The agent might try to import `AIRFLOW_V_3_2_PLUS` from `version_compat.py` to conditionally add `partition_key` and `partition_date` to the `attributes` list in `utils.py`. However, the instruction specifies adding them with 'appropriate version comments' and notes that the base class handles serialization logic, meaning conditional logic in the class definition is unnecessary and incorrect.
   severity: high
   source:
     path: providers/AGENTS.md
     lines: 9-10
-- rule: Never run pytest, python, or airflow commands directly on the host — always
-    use `breeze`.
+- rule: Never run pytest, python, or airflow commands directly on the host — always use `breeze`.
   collision_type: rule_conflict
-  why_distracting: The config strictly forbids running pytest directly on the host
-    and mandates `breeze`. However, the task instruction explicitly provides a `uv
-    run` command to execute the tests. The agent might waste time trying to set up
-    or use `breeze` instead of following the provided `uv run` command.
+  why_distracting: The config strictly forbids running pytest directly on the host and mandates `breeze`. However, the task instruction explicitly provides a `uv run` command to execute the tests. The agent might waste time trying to set up or use `breeze` instead of following the provided `uv run` command.
   severity: medium
   source:
     path: AGENTS.md
     lines: 8-9
-- rule: 'Determining the Task: Translation work falls into one of two categories depending
-    on whether the target locale already exists.'
+- rule: 'Determining the Task: Translation work falls into one of two categories depending on whether the target locale already exists.'
   source:
     path: .github/skills/airflow-translations/SKILL.md
     lines: 12-15
   collision_type: scope_ambiguity
-  why_distracting: The skill is completely irrelevant to this backend serialization
-    task, but an agent might get confused by the presence of this skill if it misinterprets
-    'OpenLineage events' or 'serialization' as requiring some form of translation
-    or mapping, wasting time looking for locale files.
+  why_distracting: The skill is completely irrelevant to this backend serialization task, but an agent might get confused by the presence of this skill if it misinterprets 'OpenLineage events' or 'serialization' as requiring some form of translation or mapping, wasting time looking for locale files.
   severity: low
-hierarchy_analysis: The hierarchy consists of root-level `AGENTS.md`/`CLAUDE.md` and
-  provider-level `providers/AGENTS.md`. The provider-level config introduces specific
-  rules about `version_compat.py` which conflict with the simpler approach requested
-  in the task instruction for this specific PR.
+hierarchy_analysis: The hierarchy consists of root-level `AGENTS.md`/`CLAUDE.md` and provider-level `providers/AGENTS.md`. The provider-level config introduces specific rules about `version_compat.py` which conflict with the simpler approach requested in the task instruction for this specific PR.
 version: '2.0'
 source:
   repo: apache/airflow

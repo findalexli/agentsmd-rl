@@ -4,12 +4,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-16T12:12:13.107881",
-  "total_time": 56.94,
-  "sandbox_id": "i2i44ueemy9nx6911g7ol",
+  "validated_at": "2026-04-25T12:37:14.333461",
+  "total_time": 1175.69,
+  "sandbox_id": "i906cooq9wz5muhi29pxo",
   "backend": "anthropic",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "oneshot_repair",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -26,14 +26,14 @@
       "notes": "tests look good"
     },
     "validate": {
-      "status": "pass",
-      "nop_reward": 0.0,
-      "gold_reward": 1.0,
-      "attempts": 1,
-      "notes": "All core validation checks pass: 1) Docker build successful, 2) NOP test reward=0 (8 fail-to-pass tests correctly fail on base code), 3) Gold test reward=1 (all 21 tests pass after fix). Updated rubric rules to reference actual code files instead of unrelated documentation files.",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 268.64
+      "status": "fail",
+      "nop_reward": -1.0,
+      "gold_reward": -1.0,
+      "attempts": 0,
+      "notes": "Cannot run validation: Bash tool is broken in this environment with EACCES error trying to mkdir /home/worker/.claude/session-env. Every Bash call fails before executing any command. Tried disabling sandbox and delegating to a subagent \u2014 same failure. Cannot run docker build, NOP test, gold test, or rubric judge without bash. The previous validate node (preserved in 'validate_prior') reported pass with nop=0/gold=1 after fix_quality completed. The fix_quality node (claude-opus-4-7) ran for 383.95s and likely modified files; without bash I cannot confirm those edits did not break validation. Environment-level fix needed: chown/create /home/worker/.claude/session-env so the harness can initialize the bash tool.",
+      "model": "claude-opus-4-7",
+      "backend": "oauth",
+      "time": 95.37
     },
     "rubric_judge": {
       "status": "fail",
@@ -54,16 +54,16 @@
     },
     "quality_gate": {
       "status": "DELETE",
-      "model": "claude-opus-4-7",
+      "model": "claude-opus-4-6",
       "backend": "anthropic",
-      "time": 0.27,
-      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:4', 'A:[A] test_not_tautological @ tests/test_outputs.py:128: test `test_error_variant_coverage` has 3 assert(s), all pass on a', 'A:[A] test_not_tautological @ tests/test_outputs.py:187: test `test_error_printing_centralized` has 1 assert(s), all pass ', 'A:[A] test_not_tautological @ tests/test_outputs.py:224: test `test_error_variant_propagated` has 3 assert(s), all pass on', 'A:[A] test_not_tautological @ tests/test_outputs.py:272: test `test_uses_err_generic` has 4 assert(s), all pass on a stub ', 'lint_tier_b:1']"
+      "time": 0.25,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:4', \"A:[A] test_deps_in_dockerfile @ environment/Dockerfile: tests call 1 binary not installed in Dockerfile: ['bunx']\", 'A:[A] test_not_tautological @ tests/test_outputs.py:84: test `test_catch_all_produces_output` has 4 assert(s), all pass on', 'A:[A] test_not_tautological @ tests/test_outputs.py:130: test `test_error_variant_coverage` has 4 assert(s), all pass on a', 'A:[A] test_not_tautological @ tests/test_outputs.py:331: test `test_uses_err_generic` has 4 assert(s), all pass on a stub ', 'lint_tier_b:2', 'B:[B] no_network_during_tests @ tests/test.sh:44: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 16.62,
+      "time": 14.56,
       "tier_a_fails": [
-        "tests_verify_behavior_not_text"
+        "solution_uniqueness_guard"
       ],
       "tier_b_fails": [],
       "pass_count": 8,
@@ -71,50 +71,67 @@
     },
     "tests_rewrite": {
       "status": "error",
-      "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":484,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 400 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"invalid_request_error\\\",\\\"message\\\":\\\"\\\\\\\"thinking.type.enabled\\\\\\\" is not supported for this model. Use \\\\\\\"thinking.type.adapt",
-      "time": 2.42
+      "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":679,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"There's an issue with the selected model (opus). It may not exist or you may not have access to it. Run --model to pick a different model.\",\"stop_reason\":\"stop_sequence\",\"session_id\":\"e",
+      "time": 1.98
+    },
+    "fix_quality": {
+      "status": "ok",
+      "model": "claude-opus-4-6",
+      "backend": "anthropic",
+      "time": 636.96,
+      "notes": ""
+    },
+    "validate_prior": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 2,
+      "notes": "Prior validate run (before fix_quality modified files). All four checks passed: 1) Docker build successful, 2) NOP test reward=0 (9 f2p tests correctly fail on base code), 3) Gold test reward=1 (all 22 tests pass after fix), 4) Rubric judge ICR=1.00 (2/2 rules passed). Rubric judge initially returned 0.0 because /workspace/repo had wrong HEAD (not at base commit); fixed by re-cloning repo at base commit 1d50d640f.",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 784.91
     }
   },
   "history": [
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 3145.17,
+      "at": "2026-04-25T00:17:20.019161"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 11638.96,
+      "at": "2026-04-25T03:32:01.542622"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 16806.38,
+      "at": "2026-04-25T08:13:18.795388"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
       "backend": "oauth",
-      "time": 423.11,
-      "at": "2026-04-15T12:42:48.284601"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 1214.14,
-      "at": "2026-04-15T19:00:05.071991"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 2662.79,
-      "at": "2026-04-15T21:01:12.635311"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "minimax",
-      "time": 4815.38,
-      "at": "2026-04-15T22:57:45.950583"
+      "time": 1210.12,
+      "at": "2026-04-25T09:01:41.712350"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "anthropic",
-      "time": 56.94,
-      "at": "2026-04-16T12:12:13.107881"
+      "time": 1175.69,
+      "at": "2026-04-25T12:37:14.333461"
     }
   ]
 }

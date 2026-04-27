@@ -31,21 +31,15 @@ if (urlMatches.length === 0) {
     process.exit(1);
 }
 
-// Extract helper functions referenced by any expression (regardless of name)
-var helpers = '';
-var funcPattern = /(?:export\s+)?function\s+(\w+)\s*\(([^)]*)\)\s*(?::\s*[^{]+?)?\s*\{/g;
-var fm;
-while ((fm = funcPattern.exec(src)) !== null) {
-    var funcName = fm[1];
-    var referenced = urlMatches.some(function(m) { return m[1].includes(funcName); });
-    if (!referenced) continue;
-    var braces = 0, started = false, end = fm.index;
-    for (var i = fm.index; i < src.length; i++) {
-        if (src[i] === '{') { braces++; started = true; }
-        if (src[i] === '}') braces--;
+// Extract ALL helper functions from the file (regardless of name)
+function extractFunction(source, startIdx) {
+    var braces = 0, started = false, end = startIdx;
+    for (var i = startIdx; i < source.length; i++) {
+        if (source[i] === '{') { braces++; started = true; }
+        if (source[i] === '}') braces--;
         if (started && braces === 0) { end = i + 1; break; }
     }
-    var fSrc = src.slice(fm.index, end);
+    var fSrc = source.slice(startIdx, end);
     fSrc = fSrc.replace(
         /^(?:export\s+)?function\s+(\w+)\s*\(([^)]*)\)(\s*:\s*[^{]+?)?\s*\{/,
         function(_, name, params) {
@@ -54,7 +48,39 @@ while ((fm = funcPattern.exec(src)) !== null) {
             }).join(', ');
             return 'function ' + name + '(' + cleaned + ') {';
         });
-    helpers += fSrc + '\n';
+    return fSrc;
+}
+
+// Collect functions referenced by any TRIGGER_API_URL expression
+var helpers = '';
+var funcPattern = /(?:export\s+)?function\s+(\w+)\s*\(([^)]*)\)\s*(?::\s*[^{]+?)?\s*\{/g;
+var fm;
+while ((fm = funcPattern.exec(src)) !== null) {
+    var funcName = fm[1];
+    var referenced = urlMatches.some(function(m) { return m[1].includes(funcName); });
+    if (!referenced) continue;
+    helpers += extractFunction(src, fm.index) + '\n';
+}
+
+// Also resolve simple variable references in TRIGGER_API_URL expressions.
+// If expression is just a variable name, find its assignment and any functions it uses.
+for (var k = 0; k < urlMatches.length; k++) {
+    var exprText = urlMatches[k][1].trim();
+    if (/^\w+$/.test(exprText) && exprText !== 'options') {
+        var varRe = new RegExp('(?:const|let|var)\\s+' + exprText + '[^=]*=\\s*(.+?)\\s*[;\\n]');
+        var varMatch = src.match(varRe);
+        if (varMatch) {
+            helpers += 'var ' + exprText + ' = ' + varMatch[1] + ';\n';
+            // Extract any functions referenced by the variable's value
+            var fp2 = /(?:export\s+)?function\s+(\w+)\s*\(([^)]*)\)\s*(?::\s*[^{]+?)?\s*\{/g;
+            var fm2;
+            while ((fm2 = fp2.exec(src)) !== null) {
+                if (varMatch[1].includes(fm2[1]) && !helpers.includes('function ' + fm2[1])) {
+                    helpers += extractFunction(src, fm2.index) + '\n';
+                }
+            }
+        }
+    }
 }
 
 // Identify which expression does normalization by probing on darwin
@@ -86,24 +112,71 @@ function evalUrl(apiUrl, platform) {
 
 # [pr_diff] fail_to_pass
 def test_api_origin_preferred_over_app_origin():
-    """Env endpoint must prefer API_ORIGIN over APP_ORIGIN for apiUrl."""
+    """Env endpoint must use API_ORIGIN when set, falling back to APP_ORIGIN."""
     node_code = r"""
 const fs = require('fs');
 const src = fs.readFileSync(
   'apps/webapp/app/routes/api.v1.projects.$projectRef.$env.ts', 'utf8'
 );
-const match = src.match(/apiUrl:\s*(.+?)\s*,/);
-if (!match) { console.error('apiUrl assignment not found'); process.exit(1); }
-let expr = match[1].trim();
-expr = expr.replace(/processEnv\./g, 'env.');
+
+// File must reference API_ORIGIN somewhere
+if (!src.includes('API_ORIGIN')) {
+    console.error('API_ORIGIN not referenced in route file');
+    process.exit(1);
+}
+
+// Find the apiUrl field in the response object
+var match = src.match(/apiUrl\s*:\s*(.+?)\s*,/);
+if (!match) { console.error('apiUrl field not found'); process.exit(1); }
+var rawExpr = match[1].trim();
+
+// Normalize env access patterns (processEnv.X, process.env.X) to env.X
+var norm = src.replace(/processEnv\./g, 'env.').replace(/process\.env\./g, 'env.');
+var normExpr = rawExpr.replace(/processEnv\./g, 'env.').replace(/process\.env\./g, 'env.');
+
+// Build evaluation context: resolve variable defs and helper functions
+var ctx = '';
+
+// If expr is a simple identifier, resolve its assignment
+if (/^\w+$/.test(normExpr) && normExpr !== 'undefined' && normExpr !== 'null') {
+    var re = new RegExp('(?:const|let|var)\\s+' + normExpr + '[^=]*=\\s*(.+?)\\s*[;\\n]');
+    var vm = norm.match(re);
+    if (vm) { ctx += 'var ' + normExpr + ' = ' + vm[1] + ';\n'; }
+}
+
+// Extract helper functions referenced by expression or resolved value
+var searchStr = ctx + ' ' + normExpr;
+var funcPattern = /(?:export\s+)?function\s+(\w+)\s*\(([^)]*)\)\s*(?::\s*[^{]+?)?\s*\{/g;
+var fm;
+while ((fm = funcPattern.exec(norm)) !== null) {
+    if (!searchStr.includes(fm[1])) continue;
+    var braces = 0, started = false, end = fm.index;
+    for (var i = fm.index; i < norm.length; i++) {
+        if (norm[i] === '{') { braces++; started = true; }
+        if (norm[i] === '}') braces--;
+        if (started && braces === 0) { end = i + 1; break; }
+    }
+    var fSrc = norm.slice(fm.index, end);
+    fSrc = fSrc.replace(
+        /^(?:export\s+)?function\s+(\w+)\s*\(([^)]*)\)(\s*:\s*[^{]+?)?\s*\{/,
+        function(_, name, params) {
+            var cleaned = params.split(',').map(function(p) {
+                return p.replace(/\s*[?]?\s*:\s*\S+/, '').trim();
+            }).join(', ');
+            return 'function ' + name + '(' + cleaned + ') {';
+        });
+    ctx += fSrc + '\n';
+}
+
+var code = ctx + '\nreturn ' + normExpr + ';';
 
 // Case 1: both API_ORIGIN and APP_ORIGIN set -- API_ORIGIN should win
-let env = { API_ORIGIN: 'https://api.test', APP_ORIGIN: 'https://app.test' };
-console.log(eval(expr));
+var env = { API_ORIGIN: 'https://api.test', APP_ORIGIN: 'https://app.test' };
+console.log(new Function('env', code)(env));
 
 // Case 2: only APP_ORIGIN set -- should fall back
 env = { APP_ORIGIN: 'https://app.test' };
-console.log(eval(expr));
+console.log(new Function('env', code)(env));
 """
     r = subprocess.run(
         ["node", "-e", node_code],
@@ -126,7 +199,7 @@ console.log(eval(expr));
 
 # [pr_diff] fail_to_pass
 def test_normalize_localhost_darwin():
-    """URL normalization must replace localhost with host.docker.internal on macOS."""
+    """TRIGGER_API_URL must have localhost replaced with host.docker.internal on macOS."""
     node_code = _NORMALIZE_HELPER + r"""
 console.log(evalUrl('http://localhost:3030', 'darwin'));
 console.log(evalUrl('http://localhost:8080', 'darwin'));
@@ -152,7 +225,7 @@ console.log(evalUrl('https://api.trigger.dev', 'darwin'));
 
 # [pr_diff] fail_to_pass
 def test_normalize_preserves_localhost_linux():
-    """URL normalization must be platform-aware and preserve localhost on Linux."""
+    """TRIGGER_API_URL normalization must be platform-aware; localhost preserved on Linux."""
     node_code = _NORMALIZE_HELPER + r"""
 // Verify darwin normalization exists (proves the code is platform-aware,
 // not just a raw pass-through that accidentally preserves localhost)
@@ -172,13 +245,6 @@ console.log(evalUrl('http://localhost:3030', 'linux'));
     assert r.stdout.strip() == "http://localhost:3030", (
         f"Should preserve localhost on Linux: {r.stdout.strip()}"
     )
-
-
-# ---------------------------------------------------------------------------
-# Fail-to-pass (config_edit) -- CONTRIBUTING.md build instructions
-# ---------------------------------------------------------------------------
-
-# [config_edit] fail_to_pass
 
 
 # ---------------------------------------------------------------------------

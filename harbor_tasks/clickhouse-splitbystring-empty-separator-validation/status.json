@@ -1,15 +1,16 @@
 {
   "schema_version": 2,
-  "valid": true,
-  "verdict": "pass",
-  "nop_reward": 0.0,
-  "gold_reward": 1.0,
-  "validated_at": "2026-04-16T10:02:31.861621",
-  "total_time": 51.5,
-  "sandbox_id": "i6qwiuj7b6cdtspwdvd1d",
-  "backend": "anthropic",
+  "valid": false,
+  "verdict": "fail",
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-20T18:59:50.348277",
+  "total_time": 18194.18,
+  "sandbox_id": "iiu347e58grvf5cvy7whn",
+  "backend": "fireworks",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "fix_quality",
+  "error": "rate limited during fix_quality: {\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":34702,\"duration_api_ms\":27509,\"num_turns\":11,\"result\":\"API Error: 400 {\\\"error\\\":{\\\"message\\\":\\\"litellm.BadRequestError: Fireworks_aiException - Error code: 429 - {'error': {'object': 'error', 'type': 'invalid_request_error', 'code': 'invalid_request_error', 'message': 'rate limit exceeded, please try again later'}}\\\",\\\"type\\\":null,\\\"param\\\":null,\\\"code\\\":\\\"400\\\"}}\",\"stop_reason\":\"stop_sequence\",\"",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -70,10 +71,10 @@
     },
     "quality_gate": {
       "status": "passed",
-      "model": "claude-opus-4-7",
-      "backend": "anthropic",
-      "time": 0.36,
-      "notes": "flags=['lint_tier_b:2', 'B:[B] pinned_dependencies @ environment/Dockerfile:15: unpinned pip deps: pytest, pyyaml', 'B:[B] no_network_during_tests @ tests/test.sh:6: network call at test time: `pip install`']"
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 0.54,
+      "notes": "flags=['lint_tier_b:3', 'B:[B] pinned_dependencies @ environment/Dockerfile:15: unpinned pip deps: pytest, pyyaml', 'B:[B] no_network_during_tests @ tests/test.sh:6: network call at test time: `pip install`', 'B:[B] no_network_during_tests @ tests/test.sh:41: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
@@ -90,17 +91,16 @@
       "status": "error",
       "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":414,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 400 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"invalid_request_error\\\",\\\"message\\\":\\\"\\\\\\\"thinking.type.enabled\\\\\\\" is not supported for this model. Use \\\\\\\"thinking.type.adapt",
       "time": 2.38
+    },
+    "fix_quality": {
+      "status": "rate_limited",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 36.86,
+      "notes": ""
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 2924.35,
-      "at": "2026-04-11T20:32:40.580450"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -132,6 +132,14 @@
       "backend": "anthropic",
       "time": 51.5,
       "at": "2026-04-16T10:02:31.861621"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 18194.18,
+      "at": "2026-04-20T18:59:50.348277"
     }
   ]
 }

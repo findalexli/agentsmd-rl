@@ -12,7 +12,7 @@ Additionally, both filenames need to be ignored by the alex lint tool to avoid l
 
 After the change:
 - `AGENTS.md` should exist as a regular file containing the full agent instructions
-- `CLAUDE.md` should still be readable and return the same content as `AGENTS.md`
+- `CLAUDE.md` should be a symbolic link pointing to `AGENTS.md` (so it returns the same content)
 - `.alexignore` should list both `AGENTS.md` and `CLAUDE.md`
 
 ## Verification

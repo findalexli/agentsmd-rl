@@ -269,14 +269,36 @@ print("PASS")
     assert "PASS" in r.stdout
 
 
-# [static] pass_to_pass
+# [repo_tests] pass_to_pass
 def test_not_stub():
-    """server_functions logic is not a stub."""
-    src = Path(f"{REPO}/gradio/components/html.py").read_text()
-    assert "if server_functions:" in src, "server_functions handling missing"
-    assert "for fn in server_functions:" in src, "server_functions loop missing"
-    assert "decorated = server(fn)" in src or "server(fn)" in src, \
-        "server decorator usage missing"
+    """server_functions logic is not a stub — multiple functions are all registered."""
+    r = subprocess.run(
+        ["python3", "-c", """
+import sys
+sys.path.insert(0, '/workspace/gradio')
+import gradio as gr
+
+def func_a(x):
+    return x + 1
+
+def func_b(x):
+    return x * 2
+
+html = gr.HTML(value="test", server_functions=[func_a, func_b])
+
+# Each function must be attached as an attribute by name
+assert hasattr(html, 'func_a'), "func_a not attached to instance"
+assert hasattr(html, 'func_b'), "func_b not attached to instance"
+
+# All decorated functions must be registered in server_fns
+assert len(html.server_fns) >= 2, f"Expected at least 2 server_fns, got {len(html.server_fns)}"
+
+print("PASS")
+"""],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------

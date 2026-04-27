@@ -4,12 +4,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-15T03:40:25.223005",
-  "total_time": 860.26,
-  "sandbox_id": "ifcyazrioyp2uo5nggut8",
-  "backend": "fireworks",
+  "validated_at": "2026-04-25T09:00:35.769353",
+  "total_time": 1143.49,
+  "sandbox_id": "isdf1btq0g7x8010gwz9c",
+  "backend": "oauth",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "fix_quality",
   "nodes": {
     "p2p_enrich": {
       "status": "completed",
@@ -39,9 +39,18 @@
       "rubric_icr": 1.0,
       "attempts": 1,
       "notes": "All 4 critical checks pass: Docker build OK, NOP reward=0 (tests fail on buggy base), Gold reward=1 (11 tests pass), Rubric ICR=1.0. Fixed rubric rules by: (1) removing Rule 2 that pointed to code file scripts/buildkite-failures.ts (judge cant extract code files), (2) removing overly strict reference from Rule 3 that had wrong indentation.",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 347.23
+      "model": "claude-opus-4-7",
+      "backend": "oauth",
+      "time": 125.84
+    },
+    "validate_revisit": {
+      "status": "blocked",
+      "nop_reward": -1.0,
+      "gold_reward": -1.0,
+      "attempts": 0,
+      "model": "claude-opus-4-7",
+      "backend": "oauth",
+      "notes": "Could not re-run docker validation: Bash tool fails with 'EACCES: permission denied, mkdir /home/worker/.claude/session-env' on every invocation (including via sub-agents and with sandbox disabled). This is a harness-level failure preventing any command execution; Read/Edit/Glob/Grep work normally. Prior validate node still shows pass (nop=0, gold=1, ICR=1.0); the previous pipeline failure was a 429 rate-limit in the downstream fix_quality node, not in validation. No task files were modified in this attempt."
     },
     "rubric_judge": {
       "status": "pass",
@@ -61,22 +70,26 @@
       "abandon_reason": ""
     },
     "quality_gate": {
-      "status": "passed",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 0.28,
-      "notes": "flags=['lint_tier_b:1']"
+      "status": "DELETE",
+      "model": "claude-opus-4-7",
+      "backend": "oauth",
+      "time": 0.3,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', \"A:[A] test_deps_in_dockerfile @ environment/Dockerfile: tests call 1 binary not installed in Dockerfile: ['bunx']\", 'lint_tier_b:2', 'B:[B] no_network_during_tests @ tests/test.sh:44: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 25.27,
-      "tier_a_fails": [
-        "behavior_in_task_description",
-        "anti_cheating_measures"
-      ],
+      "time": 14.18,
+      "tier_a_fails": [],
       "tier_b_fails": [],
-      "pass_count": 7,
-      "fail_count": 4
+      "pass_count": 8,
+      "fail_count": 2
+    },
+    "fix_quality": {
+      "status": "ok",
+      "model": "claude-opus-4-7",
+      "backend": "oauth",
+      "time": 320.09,
+      "notes": ""
     }
   },
   "history": [
@@ -85,40 +98,40 @@
       "nop": 0.0,
       "gold": 1.0,
       "backend": "fireworks",
-      "time": 338.19,
-      "at": "2026-04-10T14:49:39.990183"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 1148.81,
-      "at": "2026-04-11T18:44:21.529482"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 1303.64,
-      "at": "2026-04-11T18:53:58.754467"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 1168.12,
-      "at": "2026-04-11T19:15:53.815241"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
       "time": 860.26,
       "at": "2026-04-15T03:40:25.223005"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 2770.72,
+      "at": "2026-04-25T00:11:05.294441"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 11649.97,
+      "at": "2026-04-25T03:26:03.374055"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 16371.02,
+      "at": "2026-04-25T08:00:00.020042"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "oauth",
+      "time": 1143.49,
+      "at": "2026-04-25T09:00:35.769353"
     }
   ]
 }

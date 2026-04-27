@@ -4,13 +4,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-16T09:51:04.804616",
-  "total_time": 582.37,
-  "sandbox_id": "iiuy883aiepskadziihcp",
-  "backend": "fireworks",
+  "validated_at": "2026-04-25T04:32:50.684523",
+  "total_time": 13221.7,
+  "sandbox_id": "iy7a5hi1l9k2x54cnuh1f",
+  "backend": "ark-kimi-k2.6",
   "pipeline": "pipeline",
-  "start_at": "judge",
-  "error": "The sandbox was not found: This error is likely due to sandbox timeout. You can modify the sandbox timeout by passing 'timeout' when starting the sandbox or calling '.set_timeout' on the sandbox with the desired timeout.",
+  "start_at": "fix_quality",
   "nodes": {
     "scaffold": {
       "status": "ok",
@@ -38,47 +37,35 @@
       "nop_reward": 0.0,
       "gold_reward": 1.0,
       "attempts": 1,
-      "notes": "All core validation passed. Docker builds, NOP test reward=0 (tests correctly fail on buggy base), Gold test reward=1 (tests pass after fix). Rubric ICR=0 because this is a security code fix without config/documentation edits.",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 204.51
+      "notes": "Docker build passes. NOP test reward=0 (tests correctly fail on buggy base code). Gold test reward=1 (all tests pass after gold fix). Rubric judge ICR=1.00 (all 5 rubric rules pass).",
+      "model": "kimi-k2.6",
+      "backend": "ark-kimi-k2.6",
+      "time": 227.47
     },
     "quality_gate": {
       "status": "passed",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 0.29,
-      "notes": "flags=['lint_tier_b:3', 'B:[B] pinned_dependencies @ environment/Dockerfile:20: unpinned pip deps: httpx, orjson, pytest', 'B:[B] no_network_during_tests @ tests/test.sh:5: network call at test time: `pip install`']"
+      "model": "kimi-k2.6",
+      "backend": "ark-kimi-k2.6",
+      "time": 0.48,
+      "notes": "flags=['lint_tier_b:4', 'B:[B] pinned_dependencies @ environment/Dockerfile:20: unpinned pip deps: httpx, orjson, pytest', 'B:[B] no_network_during_tests @ tests/test.sh:5: network call at test time: `pip install`', 'B:[B] no_network_during_tests @ tests/test.sh:42: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 22.42,
-      "tier_a_fails": [
-        "no_solution_leakage",
-        "solution_uniqueness_guard"
-      ],
+      "time": 10.81,
+      "tier_a_fails": [],
       "tier_b_fails": [],
-      "pass_count": 6,
-      "fail_count": 3
+      "pass_count": 9,
+      "fail_count": 0
+    },
+    "fix_quality": {
+      "status": "ok",
+      "model": "kimi-k2.6",
+      "backend": "ark-kimi-k2.6",
+      "time": 1622.78,
+      "notes": ""
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 2970.03,
-      "at": "2026-04-14T06:16:24.398173"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "glm",
-      "time": 2326.85,
-      "at": "2026-04-15T04:53:20.803056"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -102,6 +89,22 @@
       "backend": "fireworks",
       "time": 582.37,
       "at": "2026-04-16T09:51:04.804616"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 5144.97,
+      "at": "2026-04-25T00:51:04.793847"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 13221.7,
+      "at": "2026-04-25T04:32:50.684523"
     }
   ]
 }

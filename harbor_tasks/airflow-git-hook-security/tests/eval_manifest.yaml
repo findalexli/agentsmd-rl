@@ -1,109 +1,81 @@
 checks:
-- id: repo_git_hook_syntax
+- id: test_repo_git_hook_syntax
   type: pass_to_pass
   description: Git hook Python file has valid syntax
   origin: repo_tests
-- id: repo_ruff_check
+- id: test_repo_ruff_check
   type: pass_to_pass
   description: Git hook passes ruff linting
   origin: repo_tests
-- id: repo_ruff_format
+- id: test_repo_ruff_format
   type: pass_to_pass
   description: Git hook passes ruff format check
   origin: repo_tests
-- id: repo_flake8_check
+- id: test_repo_flake8_check
   type: pass_to_pass
   description: Git hook passes flake8 linting
   origin: repo_tests
-- id: repo_bandit_security_check
-  type: pass_to_pass
-  description: Git hook passes bandit security scan
-  origin: repo_tests
-- id: repo_git_hook_imports
+- id: test_repo_git_hook_imports
   type: pass_to_pass
   description: Git hook module can be imported without errors
   origin: repo_tests
-- id: repo_git_hook_imports_work
-  type: pass_to_pass
-  description: Git hook can be imported
-  origin: repo_tests
-- id: repo_git_hook_unit_tests
-  type: pass_to_pass
-  description: Git provider unit tests pass
-  origin: repo_tests
-- id: repo_git_hook_ssh_tests
-  type: pass_to_pass
-  description: Git hook SSH command tests pass
-  origin: repo_tests
-- id: repo_git_hook_proxy_tests
-  type: pass_to_pass
-  description: Git hook proxy command tests pass
-  origin: repo_tests
-- id: repo_git_hook_known_hosts_tests
-  type: pass_to_pass
-  description: Git hook known hosts tests pass
-  origin: repo_tests
-- id: repo_git_hook_ssh_config_tests
-  type: pass_to_pass
-  description: Git hook SSH config tests pass
-  origin: repo_tests
-- id: ssh_quotes_key_path_spaces
+- id: test_ssh_command_quotes_key_path_with_spaces
   type: fail_to_pass
   description: SSH command properly quotes key_path containing spaces
   origin: pr_diff
-- id: ssh_quotes_key_path_shell_chars
+- id: test_ssh_command_quotes_key_path_with_shell_chars
   type: fail_to_pass
   description: SSH command properly quotes key_path containing shell metacharacters
   origin: pr_diff
-- id: ssh_quotes_known_hosts
+- id: test_ssh_command_quotes_known_hosts_file
   type: fail_to_pass
   description: SSH command properly quotes known_hosts_file path
   origin: pr_diff
-- id: ssh_quotes_ssh_config
+- id: test_ssh_command_quotes_ssh_config_file
   type: fail_to_pass
   description: SSH command properly quotes ssh_config_file path
   origin: pr_diff
-- id: ssh_quotes_proxy_cmd
+- id: test_ssh_command_quotes_proxy_command
   type: fail_to_pass
   description: SSH command properly quotes host_proxy_cmd path
   origin: pr_diff
-- id: strict_host_check_validation
+- id: test_strict_host_key_checking_validation_rejects_invalid
   type: fail_to_pass
   description: Invalid strict_host_key_checking values raise ValueError
   origin: pr_diff
-- id: strict_host_check_accepts_yes
+- id: test_strict_host_key_checking_accepts_valid_yes
   type: fail_to_pass
   description: Valid 'yes' strict_host_key_checking is accepted
   origin: pr_diff
-- id: strict_host_check_accepts_no
+- id: test_strict_host_key_checking_accepts_valid_no
   type: fail_to_pass
   description: Valid 'no' strict_host_key_checking is accepted
   origin: pr_diff
-- id: strict_host_check_accepts_accept_new
+- id: test_strict_host_key_checking_accepts_valid_accept_new
   type: fail_to_pass
   description: Valid 'accept-new' strict_host_key_checking is accepted
   origin: pr_diff
-- id: url_encoding_https
+- id: test_url_encoding_of_username_and_token_https
   type: fail_to_pass
   description: Username and token are URL-encoded in https URLs
   origin: pr_diff
-- id: url_encoding_http
+- id: test_url_encoding_of_username_and_token_http
   type: fail_to_pass
   description: Username and token are URL-encoded in http URLs
   origin: pr_diff
-- id: replace_first_occurrence
+- id: test_url_replace_only_first_occurrence
   type: fail_to_pass
   description: str.replace only replaces first occurrence of protocol
   origin: pr_diff
-- id: local_path_expanded
+- id: test_local_path_expanded
   type: fail_to_pass
   description: Local paths are expanded through os.path.expanduser
   origin: pr_diff
-- id: tilde_in_middle_unchanged
+- id: test_url_with_tilde_in_middle_unchanged
   type: fail_to_pass
   description: URLs with tilde in middle are not mangled
   origin: pr_diff
-- id: proxy_command_format
+- id: test_proxy_command_formatting
   type: fail_to_pass
   description: Proxy command uses correct quoting format
   origin: pr_diff

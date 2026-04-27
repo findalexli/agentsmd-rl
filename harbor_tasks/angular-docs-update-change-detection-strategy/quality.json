@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "All file paths and key strings (OnPush, Eager, default, optional) are listed in instruction.md; test checks map to described behaviors."
+      "reason": "All file paths in tests are listed in instruction.md, and literal checks (OnPush default, Eager optional, removing OnPush instructions) are all described in Expected Behavior."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "Instruction describes what's broken (OnPush described as manual, Eager as default) without prescribing exact replacement text."
+      "reason": "Instruction describes what's wrong and what properties the result should have, without specifying exact replacement text."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "Tests check for presence of keywords like 'default' near OnPush and 'optional' near Eager, and absence of instructions to set OnPush \u2014 allows multiple valid phrasings."
+      "reason": "Tests check for general conditions (OnPush near 'default', Eager near 'optional', removal of instructions) that allow multiple valid phrasings."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "All substantive checks are text grep/regex on markdown and JSDoc content (e.g., 'OnPush is enabled by default' substring checks); no code execution of behavior since this is a docs task."
+      "reason": "All substantive tests are file content reads checking for string patterns (e.g., 'enabled by default' in JSDoc, 'OnPush' with 'default'); no code execution or behavior testing since this is a doc-update task."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "Stub implementations cannot pass; tests require specific textual updates like 'NOTE: OnPush is enabled by default' and removal of OnPush instructions."
+      "reason": "Tests require specific content changes (e.g., 'OnPush is enabled by default' JSDoc text, removal of OnPush rules) that a stub cannot satisfy."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "Each of the 4 expected behaviors in instruction.md is covered by corresponding assertions in test_outputs.py."
+      "reason": "Each expected behavior item in instruction.md maps to corresponding test assertions on the listed files."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are grouped with comment headers (Gates, pass_to_pass) and have descriptive names."
+      "reason": "Tests are grouped with section comment '# Gates (pass_to_pass, static)' and have descriptive names and docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task produces documentation updates, not structured data."
+      "reason": "Task produces doc/code edits, not structured data."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths and identifiers appear correct and consistent between instruction and tests."
+      "reason": "File paths and names appear correct and consistent between instruction and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "Instruction names affected files but localization within each file is part of the task; doesn't give exact line/replacement."
+      "reason": "Instruction names the affected files, which is the task domain; it does not specify line numbers or exact replacement strings."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "Gold patch modifies agent config files (airules.md, guidelines.md, angular-20.mdc) with localized edits removing OnPush rules, not full rewrites."
+      "reason": "Gold patch is localized edits to specific JSDoc/doc sections, not full-file rewrites."
     }
   },
   "tier_a_fails": [

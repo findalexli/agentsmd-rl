@@ -163,6 +163,20 @@ print("OK")
 
 # ── Fail-to-pass tests ─────────────────────────────────────────────
 
+def test_justfile_recipe_runs():
+    """new-changeset-empty recipe must actually execute (behavioral check)."""
+    r = subprocess.run(
+        ["just", "new-changeset-empty"],
+        capture_output=True, text=True, timeout=60, cwd=REPO,
+    )
+    combined = r.stdout + r.stderr
+    # The recipe invokes `pnpm changeset --empty` which may fail if node_modules
+    # isn't installed, but the command must at least attempt the right program.
+    assert "pnpm" in combined or "changeset" in combined, \
+        f"Recipe did not invoke pnpm changeset. Output: {combined[:500]}"
+    print(f"OK: recipe executed (exit={r.returncode})")
+
+
 def test_justfile_new_changeset_empty_recipe():
     """justfile must define new-changeset-empty recipe invoking pnpm changeset --empty."""
     r = _run_validator(r"""

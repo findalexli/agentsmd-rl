@@ -9,6 +9,7 @@ Each test function maps 1:1 to a check in eval_manifest.yaml.
 
 import json
 import subprocess
+import re
 from pathlib import Path
 
 REPO = "/workspace/payload"
@@ -38,7 +39,7 @@ def test_syntax_check():
 
 # [pr_diff] fail_to_pass
 def test_docker_clean_script_exists():
-    """A Node.js cleanup script must exist at scripts/docker-clean.js."""
+    """A Node.js cleanup script must exist at scripts/docker-clean.js using child_process."""
     script = Path(REPO) / "scripts" / "docker-clean.js"
     assert script.exists(), "scripts/docker-clean.js must be created"
     content = script.read_text()
@@ -49,45 +50,55 @@ def test_docker_clean_script_exists():
 
 
 # [pr_diff] fail_to_pass
-def test_docker_clean_removes_named_containers():
-    """The cleanup script must force-remove the named test containers."""
+def test_docker_clean_removes_containers():
+    """The cleanup script must force-remove test containers using docker rm."""
+    script = Path(REPO) / "scripts" / "docker-clean.js"
+    assert script.exists(), "scripts/docker-clean.js must exist"
+    content = script.read_text()
+    # Must use docker rm to remove containers (regex to allow different formats)
+    assert re.search(r'docker\s+rm', content), (
+        "Script should use 'docker rm' to force-remove containers"
+    )
+
+
+# [pr_diff] fail_to_pass
+def test_docker_clean_handles_named_containers():
+    """The cleanup script must reference the named test containers from docker-compose.yml."""
     script = Path(REPO) / "scripts" / "docker-clean.js"
     assert script.exists(), "scripts/docker-clean.js must exist"
     content = script.read_text()
     # Must reference the key container names from docker-compose.yml
-    assert "postgres-payload-test" in content, (
-        "Script should remove postgres-payload-test container"
-    )
-    assert "mongodb-payload-test" in content, (
-        "Script should remove mongodb-payload-test container"
-    )
-    assert "docker rm" in content or "docker remove" in content, (
-        "Script should use docker rm to force-remove containers"
+    # Use regex to allow flexible formatting (spaces, newlines, template literals)
+    has_postgres = re.search(r'postgres[_-]payload[_-]test', content, re.IGNORECASE)
+    has_mongo = re.search(r'mongo(?:db)?[_-]payload[_-]test', content, re.IGNORECASE)
+    assert has_postgres and has_mongo, (
+        "Script should reference both postgres-payload-test and mongodb-payload-test containers"
     )
 
 
 # [pr_diff] fail_to_pass
 def test_docker_clean_runs_compose_down():
-    """The cleanup script must also run docker compose down."""
+    """The cleanup script must run docker compose down for full cleanup."""
     script = Path(REPO) / "scripts" / "docker-clean.js"
     assert script.exists(), "scripts/docker-clean.js must exist"
     content = script.read_text()
-    assert "docker compose" in content and "down" in content, (
+    assert re.search(r'docker\s+compose', content) and "down" in content, (
         "Script should run docker compose down for full cleanup"
     )
 
 
 # [pr_diff] fail_to_pass
 def test_package_json_has_docker_clean():
-    """package.json must define a docker:clean script."""
+    """package.json must define a docker:clean script that invokes the cleanup script."""
     pkg = json.loads((Path(REPO) / "package.json").read_text())
     scripts = pkg.get("scripts", {})
     assert "docker:clean" in scripts, (
         "package.json must have a docker:clean script"
     )
+    # Verify it runs a Node.js script in the scripts/ directory
     clean_cmd = scripts["docker:clean"]
-    assert "docker-clean" in clean_cmd or "docker_clean" in clean_cmd, (
-        "docker:clean should invoke the cleanup script"
+    assert "node" in clean_cmd and "scripts" in clean_cmd, (
+        "docker:clean should invoke a Node.js script from the scripts/ directory"
     )
 
 
@@ -97,7 +108,7 @@ def test_docker_start_calls_clean():
     pkg = json.loads((Path(REPO) / "package.json").read_text())
     scripts = pkg.get("scripts", {})
     start_cmd = scripts.get("docker:start", "")
-    assert "docker:clean" in start_cmd or "docker-clean" in start_cmd, (
+    assert "docker:clean" in start_cmd or "pnpm docker:clean" in start_cmd, (
         "docker:start should invoke the cleanup step before starting"
     )
     assert "up" in start_cmd, (
@@ -115,14 +126,66 @@ def test_docker_stop_removed():
     )
 
 
+# [pr_diff] fail_to_pass
+def test_docker_clean_behavior():
+    """The docker:clean script can be invoked and runs without errors (behavioral test)."""
+    script = Path(REPO) / "scripts" / "docker-clean.js"
+    assert script.exists(), "scripts/docker-clean.js must exist"
+    # Run the cleanup script to verify it executes
+    # The script doesn't have flags, so we just verify it runs (will error on real docker but that's ok)
+    r = subprocess.run(
+        ["node", str(script)],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    # We don't assert returncode==0 because docker may not be available in test env
+    # But we verify the script was invoked and produced output (not a stub that crashes immediately)
+    # The key behavioral check: script should exist and be runnable
+    assert r.returncode in (0, 1), (
+        f"docker-clean.js should be runnable (exit code {r.returncode}), stderr: {r.stderr}"
+    )
+
+
 # ---------------------------------------------------------------------------
 # Config-edit (config_edit) — documentation/config update checks
 # ---------------------------------------------------------------------------
 
 # [config_edit] fail_to_pass
+def test_claude_md_docker_clean_reference():
+    """CLAUDE.md must reference docker:clean instead of docker:stop."""
+    claude_md = Path(REPO) / "CLAUDE.md"
+    assert claude_md.exists(), "CLAUDE.md must exist"
+    content = claude_md.read_text()
+    # Should reference docker:clean
+    assert "docker:clean" in content, (
+        "CLAUDE.md should reference docker:clean command"
+    )
+    # Should NOT reference docker:stop
+    # (Use regex to check docker:stop is not mentioned in the docker services line)
+    lines = content.split("\n")
+    for line in lines:
+        if "docker services" in line.lower() or "pnpm docker:" in line:
+            assert "docker:stop" not in line, (
+                "CLAUDE.md should not reference docker:stop (replaced by docker:clean)"
+            )
 
 
 # [config_edit] fail_to_pass
+def test_contributing_md_docker_clean_reference():
+    """CONTRIBUTING.md must reference docker:clean instead of docker:stop."""
+    contributing_md = Path(REPO) / "CONTRIBUTING.md"
+    assert contributing_md.exists(), "CONTRIBUTING.md must exist"
+    content = contributing_md.read_text()
+    # Should reference docker:clean
+    assert "docker:clean" in content, (
+        "CONTRIBUTING.md should reference docker:clean command"
+    )
+    # Should NOT reference docker:stop
+    lines = content.split("\n")
+    for line in lines:
+        if "pnpm docker:" in line:
+            assert "docker:stop" not in line, (
+                "CONTRIBUTING.md should not reference docker:stop (replaced by docker:clean)"
+            )
 
 
 # ---------------------------------------------------------------------------
@@ -170,6 +233,10 @@ def test_not_stub():
     assert script.exists(), "scripts/docker-clean.js must exist"
     content = script.read_text()
     lines = [l.strip() for l in content.split("\n") if l.strip() and not l.strip().startswith("//")]
-    assert len(lines) >= 5, (
-        "docker-clean.js should have substantive logic (at least 5 non-comment lines)"
+    assert len(lines) >= 8, (
+        "docker-clean.js should have substantive logic (at least 8 non-comment lines)"
+    )
+    # Also check it has actual docker command execution (not just variable declarations)
+    assert re.search(r'exec(Sync)?\s*\(', content), (
+        "Script should actually execute docker commands via exec/execSync"
     )

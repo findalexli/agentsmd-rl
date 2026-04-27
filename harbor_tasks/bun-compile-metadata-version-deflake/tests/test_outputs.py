@@ -49,25 +49,25 @@ def _read_test_file() -> str:
 # [pr_diff] fail_to_pass
 def test_loop_removed():
     """The sequential for-loop over invalidVersions with Bun.spawn must be removed."""
-    r = _run_node("""\
+    r = _run_node(r"""
 import { readFileSync } from 'fs';
 
 const text = readFileSync('test/bundler/compile-windows-metadata.test.ts', 'utf8');
 
 // Check 1: No for...of loop iterating over invalidVersions
-if (/for\\s*\\(\\s*(?:const|let|var)\\s+\\w+\\s+of\\s+invalidVersions/.test(text)) {
+if (/for\s*\(\s*(?:const|let|var)\s+\w+\s+of\s+invalidVersions/.test(text)) {
   console.error('FAIL: for...of loop over invalidVersions still present');
   process.exit(1);
 }
 
 // Check 2: No invalidVersions array declaration
-if (/(?:const|let|var)\\s+invalidVersions\\s*=\\s*\\[/.test(text)) {
+if (/(?:const|let|var)\s+invalidVersions\s*=\s*\[/.test(text)) {
   console.error('FAIL: invalidVersions array variable still present');
   process.exit(1);
 }
 
 // Check 3: No for-loop body that calls Bun.spawn (the core flaky pattern)
-if (/for\\s*\\([^)]*\\)\\s*\\{[\\s\\S]*?Bun\\.spawn/.test(text)) {
+if (/for\s*\([^)]*\)\s*\{[\s\S]*?Bun\.spawn/.test(text)) {
   console.error('FAIL: for-loop containing Bun.spawn calls still present');
   process.exit(1);
 }
@@ -80,72 +80,87 @@ console.log('PASS');
 
 # [pr_diff] fail_to_pass
 def test_versions_parameterized():
-    """Each invalid version gets its own test case via test.each with correct versions."""
-    r = _run_node("""\
+    """Each invalid version gets its own independent test case with its own timeout budget."""
+    r = _run_node(r"""
 import { readFileSync } from 'fs';
 
 const text = readFileSync('test/bundler/compile-windows-metadata.test.ts', 'utf8');
 
-// Find test.each([...]) or it.each([...])
-const match = text.match(/(?:test|it)\\.each\\s*\\(\\s*(\\[[\\s\\S]*?\\])\\s*\\)/);
-if (!match) {
-  console.error('FAIL: No test.each() or it.each() found');
-  process.exit(1);
-}
-
-// Strip comments and evaluate the array as real JavaScript
-let arrayStr = match[1]
-  .replace(/\\/\\/.*$/gm, '')
-  .trim();
-
-let arr;
-try {
-  arr = eval(arrayStr);
-} catch (e) {
-  console.error('FAIL: test.each array is not valid JS: ' + e.message);
-  process.exit(1);
-}
-
-if (!Array.isArray(arr) || arr.length === 0) {
-  console.error('FAIL: test.each argument is not a non-empty array');
-  process.exit(1);
-}
-
-// Verify every entry has a 'version' string property
-const versions = arr.map(item => {
-  if (!item || typeof item.version !== 'string') {
-    console.error('FAIL: entry missing string "version" property: ' + JSON.stringify(item));
+// Find test.each([...]) or it.each([...]) or describe.each([...])
+const eachMatch = text.match(/(?:test|it|describe)\.each\s*\(\s*(\[[\s\S]*?\])\s*\)/);
+// If using test.each, verify the structure
+if (eachMatch) {
+  let arrayStr = eachMatch[1].replace(/\/\/.*$/gm, '').trim();
+  let arr;
+  try {
+    arr = eval(arrayStr);
+  } catch (e) {
+    console.error('FAIL: test.each array is not valid JS: ' + e.message);
     process.exit(1);
   }
-  return item.version;
-});
-
-const expected = ['not.a.version', '1.2.3.4.5', '1.-2.3.4', '65536.0.0.0', ''];
-
-for (const v of expected) {
-  if (!versions.includes(v)) {
-    console.error('FAIL: Missing version: ' + JSON.stringify(v) + '. Got: ' + JSON.stringify(versions));
+  if (!Array.isArray(arr) || arr.length === 0) {
+    console.error('FAIL: test.each argument is not a non-empty array');
     process.exit(1);
   }
+  const versions = arr.map(item => {
+    if (!item || typeof item.version !== 'string') {
+      console.error('FAIL: entry missing string "version" property: ' + JSON.stringify(item));
+      process.exit(1);
+    }
+    return item.version;
+  });
+  const expected = ['not.a.version', '1.2.3.4.5', '1.-2.3.4', '65536.0.0.0', ''];
+  for (const v of expected) {
+    if (!versions.includes(v)) {
+      console.error('FAIL: Missing version: ' + JSON.stringify(v) + '. Got: ' + JSON.stringify(versions));
+      process.exit(1);
+    }
+  }
+  if (versions.length !== expected.length) {
+    console.error('FAIL: Expected ' + expected.length + ' versions, got ' + versions.length);
+    process.exit(1);
+  }
+  // Verify test name references $version for proper reporting
+  const afterEach = text.slice(text.indexOf(eachMatch[0]) + eachMatch[0].length);
+  if (!afterEach.includes('$version')) {
+    console.error('FAIL: test.each test name does not reference $version');
+    process.exit(1);
+  }
+  console.log(JSON.stringify({ count: arr.length, versions }));
+  process.exit(0);
 }
 
-if (versions.length !== expected.length) {
-  console.error('FAIL: Expected ' + expected.length + ' versions, got ' + versions.length);
-  process.exit(1);
+// If no test.each found, check for 5 separate test/it calls (alternative valid fix)
+const testNames = [];
+const testPattern = /test\s*\(\s*['"]([^'"]*)['"]/g;
+let match;
+while ((match = testPattern.exec(text)) !== null) {
+  testNames.push(match[1]);
 }
 
-// Verify test name references $version for proper reporting
-const afterEach = text.slice(text.indexOf(match[0]) + match[0].length);
-if (!afterEach.includes('$version')) {
-  console.error('FAIL: test.each test name does not reference $version');
-  process.exit(1);
+// Also check describe.each style
+const describeEachPattern = /describe\s*\.\s*each\s*\(\s*\[/g;
+const hasDescribeEach = describeEachPattern.test(text);
+
+// Count test cases related to invalid version
+const invalidVersionTests = testNames.filter(n =>
+  n.includes('not.a.version') || n.includes('1.2.3.4.5') ||
+  n.includes('1.-2.3.4') || n.includes('65536') || n.includes('invalid')
+);
+
+if (invalidVersionTests.length >= 5 || hasDescribeEach) {
+  const totalTests = invalidVersionTests.length >= 5 ? invalidVersionTests.length : 5;
+  console.log(JSON.stringify({ count: totalTests, style: invalidVersionTests.length >= 5 ? 'separate_tests' : 'describe_each' }));
+  process.exit(0);
 }
 
-console.log(JSON.stringify({ count: arr.length, versions }));
+console.error('FAIL: Neither test.each with 5 version objects nor 5 separate test cases found');
+console.error('Found test cases:', JSON.stringify(testNames.slice(0, 10)));
+process.exit(1);
 """)
     assert r.returncode == 0, f"Parameterization check failed: {r.stderr}"
     data = json.loads(r.stdout.strip())
-    assert data["count"] == 5, f"Expected 5 versions, got {data['count']}"
+    assert data["count"] == 5, f"Expected 5 test cases, got {data['count']}"
 
 
 # ---------------------------------------------------------------------------

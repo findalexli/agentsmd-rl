@@ -4,12 +4,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-15T13:03:05.207461",
-  "total_time": 1639.63,
-  "sandbox_id": "in846t36n68oavlsdgnzl",
+  "validated_at": "2026-04-21T14:52:53.790643",
+  "total_time": 2750.26,
+  "sandbox_id": "idadhycdwzpg5xrmujcyg",
   "backend": "minimax",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "fix_quality",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -30,17 +30,17 @@
       "nop_reward": 0.0,
       "gold_reward": 1.0,
       "attempts": 1,
-      "notes": "All four checks passed: Docker build OK, NOP test reward=0 (3 fail-to-pass tests correctly failing), Gold test reward=1 (all 13 tests pass). Cleaned up duplicate rubric rules (removed redundant 'never print' rules).",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 150.22
+      "notes": "All four checks passed: Docker build OK, NOP test reward=0 (2 fail-to-pass tests correctly failing on buggy base), Gold test reward=1 (all 10 non-skipped tests pass), Rubric judge ICR=1.00 (all 3 rubric rules pass).",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 79.21
     },
     "rubric_judge": {
-      "status": "fail",
+      "status": "pass",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
       "time": 1.36,
-      "notes": "ICR=0.50"
+      "notes": "ICR=1.00"
     },
     "rubric_quality_loop": {
       "status": "ok",
@@ -53,65 +53,68 @@
       "abandon_reason": ""
     },
     "quality_gate": {
-      "status": "DELETE",
+      "status": "passed",
       "model": "MiniMax-M2.7",
       "backend": "minimax",
-      "time": 0.41,
-      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:306: test `test_repo_key_functions_exist` has 2 assert(s), all pass on']"
+      "time": 0.27,
+      "notes": "flags=['lint_tier_b:1', 'B:[B] no_network_during_tests @ tests/test.sh:44: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 26.59,
-      "tier_a_fails": [
-        "no_solution_leakage",
-        "solution_uniqueness_guard",
-        "anti_cheating_measures"
-      ],
+      "time": 11.51,
+      "tier_a_fails": [],
       "tier_b_fails": [],
-      "pass_count": 7,
-      "fail_count": 4
+      "pass_count": 10,
+      "fail_count": 0
+    },
+    "fix_quality": {
+      "status": "ok",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 199.51,
+      "notes": ""
     }
   },
   "history": [
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
       "backend": "fireworks",
-      "time": 1219.02,
-      "at": "2026-04-11T18:25:05.932209"
+      "time": 9909.23,
+      "at": "2026-04-20T16:41:46.558837"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "minimax",
+      "time": 374.73,
+      "at": "2026-04-21T08:47:12.177163"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "minimax",
-      "time": 930.2,
-      "at": "2026-04-15T03:29:01.896107"
+      "time": 60.0,
+      "at": "2026-04-21T09:15:00.000000"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "minimax",
-      "time": 3479.62,
-      "at": "2026-04-15T11:12:25.515133"
+      "time": 5174.06,
+      "at": "2026-04-21T10:47:26.282026"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "minimax",
-      "time": 2103.93,
-      "at": "2026-04-15T11:55:25.211852"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "minimax",
-      "time": 1639.63,
-      "at": "2026-04-15T13:03:05.207461"
+      "time": 2750.26,
+      "at": "2026-04-21T14:52:53.790643"
     }
   ]
 }

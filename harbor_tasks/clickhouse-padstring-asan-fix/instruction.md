@@ -1,42 +1,101 @@
-# Fix heap-buffer-overflow in leftPad/rightPad functions
+# Heap-buffer-overflow in ClickHouse pad string functions
 
-The `leftPad` and `rightPad` functions have a heap-buffer-overflow vulnerability that triggers Address Sanitizer (ASan) errors when processing certain inputs.
+ClickHouse's `leftPad`, `rightPad`, `leftPadUTF8`, and `rightPadUTF8` SQL
+functions trip an Address Sanitizer (ASan) heap-buffer-overflow when called
+with a short pad string. The relevant implementation lives in
+`src/Functions/padString.cpp`.
 
-## Problem Description
+## Reproducing the symptom
 
-When padding strings with short pad strings (especially those under 16 characters), the code reads beyond allocated memory boundaries. The issue occurs in the padding character pattern storage mechanism which uses `memcpySmallAllowReadWriteOverflow15` for fast copying. This function requires 15 bytes of readable memory beyond the buffer's actual content, which the current container does not provide.
+A query of the form
 
-## Affected Code
+```sql
+SELECT leftPad('xxx', 10, 'ab');
+```
 
-- **File**: `src/Functions/padString.cpp`
+triggers an ASan report: a read past the end of an allocated buffer inside
+`PaddingChars::appendTo`, where the pad bytes are passed to `writeSlice`.
+`writeSlice` ultimately calls `memcpySmallAllowReadWriteOverflow15`, which is
+documented to read up to 15 bytes past the source buffer's logical end. The
+container currently used for the pad bytes does not guarantee 15 bytes of
+trailing readable padding, so the optimised copy walks off the end of the
+allocation.
 
-## Requirements
+## What you need to deliver
 
-The fix must satisfy the following requirements:
+Eliminate the ASan heap-buffer-overflow for the case above (and similar
+small-pad-string cases) without regressing any existing behaviour, including
+UTF-8 padding.
 
-1. **Memory Safety**: The padding character storage must provide at least 15 bytes of readable memory padding beyond its size to safely work with `memcpySmallAllowReadWriteOverflow15`.
+This file is also gated by ClickHouse's CI on a number of code-quality and
+style checks. The list below describes everything the project's reviewers and
+CI will look for in your modified `src/Functions/padString.cpp`. Treat it as
+the acceptance contract for the change — the implementation shape is up to
+you, but each item is independently verified.
 
-2. **Container Selection**: Use `PaddedPODArray<UInt8>` from `<Common/PODArray.h>` for the internal padding character storage. This container provides the required memory safety guarantees.
+## Acceptance criteria for `src/Functions/padString.cpp`
 
-3. **String Expansion**: When expanding the padding pattern, use `insertFromItself()` method instead of string concatenation operators.
+### Memory-safety fix
 
-4. **Direct Access**: Access the container's data directly without `reinterpret_cast` - the container's `data()` method returns the appropriate pointer type.
+- The container that backs the pad string inside `class PaddingChars` must
+  expose at least 15 bytes of safe trailing read padding, as required by
+  `memcpySmallAllowReadWriteOverflow15`. In ClickHouse the canonical
+  container with that guarantee is `PaddedPODArray<UInt8>` (declared in
+  `<Common/PODArray.h>`). The `pad_string` member of `PaddingChars` is
+  expected to be of type `PaddedPODArray<UInt8>`.
+- The repeated-pad expansion loop (which doubles the pad sequence until it
+  reaches the SIMD-friendly threshold) must extend the buffer through the
+  container's own `insertFromItself` method rather than the previous
+  `pad_string += pad_string` `String` concatenation.
+- The container's `data()` already returns a `UInt8 *`, so the
+  `reinterpret_cast<const UInt8 *>(pad_string.data())` casts inside
+  `appendTo` must no longer appear; `pad_string.data()` is passed directly
+  to `writeSlice`.
+- The "empty pad string defaults to a single space" rule belongs in the
+  function's column-level entry point, `executeImpl`, not in the
+  `PaddingChars` initialisation. After your change, the literal check
+  `if (pad_string.empty())` must appear inside `executeImpl`.
 
-5. **Empty Pad Handling**: Empty pad string checks must be handled in the main execution entry point (`executeImpl`) rather than in initialization code.
+### Argument validation refactor
 
-6. **Style Requirements**:
-   - Use explicit comparison `num_chars == 0` instead of implicit boolean conversion
-   - Use C++14 digit separator `1'000'000` for the `MAX_NEW_LENGTH` constant
-   - Use `validateFunctionArguments()` helper for argument validation
-   - Define `FunctionArgumentDescriptors` for argument validation
+- The hand-rolled per-argument type/arity checks in `getReturnTypeImpl` are
+  replaced by a single call to the shared `validateFunctionArguments`
+  helper, driven by a `FunctionArgumentDescriptors` description of the
+  mandatory and optional arguments. Both `validateFunctionArguments` and
+  `FunctionArgumentDescriptors` must appear in the file.
+- Once that refactor lands, `ILLEGAL_TYPE_OF_ARGUMENT` and
+  `NUMBER_OF_ARGUMENTS_DOESNT_MATCH` are no longer thrown from this
+  translation unit. Their `extern const int …;` declarations must be
+  removed from the file's `namespace ErrorCodes { … }` block (they may
+  still exist elsewhere in the project — but not in this file's
+  `ErrorCodes` block).
 
-7. **Cleanup**: Remove unused error codes `ILLEGAL_TYPE_OF_ARGUMENT` and `NUMBER_OF_ARGUMENTS_DOESNT_MATCH` from the ErrorCodes namespace.
+### Style / readability items the CI checks
 
-8. **Preservation**: Maintain existing UTF-8 support through `utf8_offsets` and preserve all existing functionality for both ASCII and UTF-8 padding operations.
+- The early-return guard in `PaddingChars::appendTo` that handles "no
+  characters to pad" must use an explicit comparison, written exactly as
+  `if (num_chars == 0)`.
+- The `MAX_NEW_LENGTH` constant must be written with the C++14 digit
+  separator: `1'000'000`.
+- `#include <memory>` must be present at the top of the file.
+- The class/method names `FunctionPadString`, `PaddingChars`, `executePad`,
+  and `executeForSourceAndLength` must continue to exist (do not rename or
+  remove them).
+- UTF-8 support is preserved: the `utf8_offsets` member and the `is_utf8`
+  template parameter remain in place, and UTF-8 padding behaviour is
+  unchanged.
 
-## Constraints
+### Repo-wide hygiene
 
-- Follow ClickHouse C++ style: Allman braces (opening brace on new line)
-- Don't use sleep for race conditions
-- When writing comments about ASan findings, use "ASan" not "ASAN"
-- When describing logical errors, use "exception" not "crash"
+- The file passes `clang-format --dry-run --Werror` against the
+  repository's `.clang-format` (Allman braces — opening brace on its own
+  line — and ClickHouse's existing rules).
+- No tab characters anywhere in the file; spaces only.
+- No trailing whitespace on any line.
+- Braces, parentheses, and brackets remain balanced (the file still parses
+  as valid C++).
+
+## Out of scope
+
+Modify only `src/Functions/padString.cpp`. Do not change tests, other
+source files, the build system, or the `.clang-format` configuration.

@@ -141,11 +141,49 @@ The template test.sh is standardized boilerplate. It installs pytest, runs test_
 
 #### eval_manifest.yaml
 
-- Fill in source PR metadata
-- One `check` entry per `def test_*` function in test_outputs.py (keep ids in sync)
-- Add `source` refs for all `agent_config` checks
-- Add rubric rules (soft, LLM-judge-only) or leave empty `[]`
-- Repos with NO agent configs: remove the agent_config check and rubric section
+The schema is enforced by Pydantic in `taskforge/models.py`. Use **exactly** these field names and enum values — drift here is the #1 reason scaffolds get rejected by the validate gate:
+
+```yaml
+version: "2.0"
+source:                                       # toplevel, NOT under metadata.*
+  repo: "{{OWNER}}/{{REPO}}"
+  pr: {{PR_NUMBER}}
+  base_commit: "{{BASE_COMMIT}}"
+  merge_commit: "{{MERGE_COMMIT}}"
+task:
+  kind: code_fix                              # code_fix | code_with_config | markdown_authoring
+checks:
+  - id: <slug>
+    type: fail_to_pass                        # fail_to_pass | pass_to_pass
+    origin: pr_diff                           # pr_diff | repo_tests | agent_config | static — these 4 ONLY
+    description: "<one line>"
+    source:                                   # REQUIRED iff origin == agent_config
+      path: "AGENTS.md"                       # field is `path`, not `file`
+      lines: "30"                             # numeric line/range, not section name
+      commit: "{{BASE_COMMIT}}"
+config_edits:                                 # required for code_with_config & markdown_authoring
+  - path: "AGENTS.md"                         # `path`, not `file`
+    tier: 1
+    gold_added: "<text>"                      # `gold_added`, not `added`
+    gold_removed: "<text>"
+rubric:
+  - rule: "<verbatim text>"                   # `rule`, not `description`
+    source: { path: "...", lines: "...", commit: "..." }
+    evidence: "<how gold complies>"
+    category: naming
+    verification: llm_judge                   # programmatic | llm_judge | semantic_diff
+distractors:
+  - rule: "<verbatim text>"
+    source: { path: "...", lines: "...", commit: "..." }
+    collision_type: rule_conflict             # rule_conflict | scope_ambiguity | meta_confusion | architecture_boundary | would_cause_bug
+    why_distracting: "<one line>"
+    severity: medium                          # high | medium | low
+```
+
+Other rules:
+- One `check` entry per `def test_*` function (ids in sync).
+- Every soft/subjective rule from the applicable agent-config files MUST become a rubric entry with source ref. Empty `rubric: []` only when the repo has NO agent config files.
+- Repos with NO agent configs: omit the `agent_config` checks and the rubric section.
 
 #### instruction.md — WRITE THIS LAST
 

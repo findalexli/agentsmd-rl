@@ -52,24 +52,23 @@ checks:
 - id: config_category_in_type
   type: fail_to_pass
   origin: pr_diff
-  description: command.ts Category union type includes 'config'
+  description: CLI type system includes 'config' as a valid command category
 - id: config_command_declared
   type: fail_to_pass
   origin: pr_diff
-  description: commands.ts declares a config command with category 'config' in commandsArray
+  description: A config command is registered and accessible in the commands module
 - id: help_has_configuration_category
   type: fail_to_pass
   origin: pr_diff
-  description: helpGenerator.ts includes a Configuration category entry
+  description: CLI help output includes a Configuration section listing the config command
 - id: configure_method_logic
   type: fail_to_pass
   origin: pr_diff
-  description: program.ts has configure() method that stops existing session and reconnects
-    with new config
+  description: Session manager can stop existing session and reconnect with new config
 - id: config_command_routing
   type: fail_to_pass
   origin: pr_diff
-  description: program.ts routes 'config' command to handleSessionCommand
+  description: CLI routes 'config' command to the session management handler
 - id: skill_md_documents_config
   type: fail_to_pass
   origin: pr_diff
@@ -78,8 +77,7 @@ checks:
 - id: daemon_config_has_viewport
   type: fail_to_pass
   origin: pr_diff
-  description: browser/config.ts daemon config sets contextOptions with default viewport
-    1280x720
+  description: Daemon browser config sets default viewport 1280x720 for headless mode
 rubric:
 - rule: New command categories must be documented in SKILL.md with usage examples
     and session flag examples

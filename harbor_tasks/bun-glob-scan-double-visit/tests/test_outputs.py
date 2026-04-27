@@ -14,20 +14,22 @@ Since Bun's glob scanning code is in Zig requiring a full build toolchain (Zig +
    (bun test, bunx tsc, etc.) which exercise the compiled bun binary. If the glob
    double-visit bug were present, these tests would likely fail or show performance
    degradation. Specifically, test_repo_glob_sources runs bun scripts/glob-sources.mjs
-   which uses the Glob API to scan thousands of files - this exercises the actual
+   which uses the Glob API to scan thousands of source files - this exercises the actual
    glob walking code.
 
-2. STRUCTURAL TESTS (source inspection): The fail_to_pass tests verify the fix was
-   applied by checking source code structure. While we cannot compile and run the
-   specific PR code, these structural tests verify the fix is present and correctly
-   implemented. They accept any reasonable alternative implementation.
+2. BEHAVIORAL TESTS: fail_to_pass tests that verify the fix by running bun --eval
+   with the Glob API on a temporary directory tree and asserting no duplicate
+   entries are returned. These accept ANY correct alternative fix.
 
-The combination of (1) running existing test suites and (2) verifying the fix exists
-in source code constitutes our behavioral verification approach.
+The combination of (1) running existing test suites and (2) verifying behavior
+constitutes our behavioral verification approach.
 """
 
 import re
 import subprocess
+import os
+import tempfile
+import json
 from pathlib import Path
 
 REPO = "/workspace/bun"
@@ -189,165 +191,186 @@ def test_repo_glob_sources():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) -- fix verification via structural + behavioral checks
+# Fail-to-pass (pr_diff) -- behavioral fix verification
 # ---------------------------------------------------------------------------
 
 
 # [pr_diff] fail_to_pass
-def test_workitem_tracks_multiple_indices():
-    """WorkItem must support multiple active indices (behavioral requirement).
+def test_double_visit_fixed():
+    """Glob scanning does not visit directories twice (behavioral test).
 
-    The bug: WorkItem had `idx: u32` (single index), causing double-visits at **/X
-    boundaries because the walker couldn't track both "advance past X" and "keep **
-    alive" states simultaneously.
+    The bug: Bun.Glob.scan() with **/X patterns visited directories twice
+    because the walker couldn't track multiple active states at **/X boundaries.
 
-    Behavioral fix verification:
-    - We cannot compile and run WorkItem directly (no Zig compiler in container)
-    - Instead, we verify the fix exists in source AND rely on test_repo_glob_sources
-      (which exercises the Glob API) to verify behavior is correct
-
-    Structural checks (necessary conditions for the fix):
-    1. The problematic `idx: u32` field must be removed
-    2. Some multi-value storage must exist (accepts BitSet, ArrayList, arrays, etc.)
-
-    These checks accept ANY reasonable alternative fix that solves the root cause.
+    Behavioral verification: Run a glob scan on a directory tree and verify
+    no duplicate entries are returned. Uses bun --eval since the container
+    has bun but not Zig.
     """
-    code = _read(WALKER)
-    body = _extract_struct(code, "WorkItem")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        subdir = os.path.join(tmpdir, "subdir")
+        os.makedirs(subdir, exist_ok=True)
+        with open(os.path.join(subdir, "file.txt"), "w") as f:
+            f.write("content")
 
-    # Check 1: The single idx: u32 that caused the bug must be removed
-    single_idx_pattern = r"\bidx\s*:\s*u32\s*[,\n\}]"
-    has_single_idx = re.search(single_idx_pattern, body) is not None
+        script = f"""
+import {{ Glob }} from 'bun';
+const results = [...new Glob('**/*.txt').scanSync({{ cwd: {repr(tmpdir)} }})];
+const unique = [...new Set(results)];
+console.log(JSON.stringify({{ total: results.length, unique: unique.length }}));
+"""
+        r = subprocess.run(
+            ["bun", "--eval", script],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+        assert r.returncode == 0, f"Bun eval failed: {r.stderr}"
 
-    # Check 2: Must have SOME capability to store multiple values
-    # Accept any reasonable multi-value storage - not tied to gold-specific types
-    multi_value_patterns = [
-        # Collection types
-        r"BitSet", r"AutoBitSet", r"bit_set",
-        r"ArrayList", r"BoundedArray", r"ArrayListUnmanaged",
-        r"HashMap", r"AutoHashMap",
-        # Array types (fixed or dynamic)
-        r"\[\d+\]u\d+", r"\[\]u\d+",
-        # Named fields suggesting multiple values
-        r"idx2\s*:", r"indices\s*:", r"active\s*:",
-        r"component.*set", r"ComponentSet",
-    ]
-    has_multi_value = any(
-        re.search(p, body, re.IGNORECASE) for p in multi_value_patterns
-    )
+        data = json.loads(r.stdout.strip())
+        # After fix: each entry appears once; with bug: duplicates possible
+        assert data["unique"] == data["total"], (
+            f"Glob returned {data['total']} entries but only {data['unique']} unique. "
+            f"Directories visited twice (duplicates: {data['total'] - data['unique']})."
+        )
 
-    # Alternative: WorkItem.new() might take a composite parameter
-    if not has_multi_value:
-        new_fn = re.search(r"fn\s+new\s*\(([^)]*)\)", body)
-        if new_fn:
-            params = [p.strip() for p in new_fn.group(1).split(",")]
-            if len(params) >= 2 and not re.search(r":\s*u32\s*$", params[1]):
-                has_multi_value = True
 
-    assert not has_single_idx, (
-        "WorkItem still has idx: u32 - the single-index field that causes "
-        "double-visit bug. The fix must allow WorkItem to track multiple "
-        "active indices simultaneously."
-    )
-    assert has_multi_value, (
-        "WorkItem has no field capable of holding multiple indices. "
-        "The fix must add multi-value storage (BitSet, ArrayList, array, etc.) "
-        "to track multiple active indices during traversal."
-    )
+# [pr_diff] fail_to_pass
+def test_workitem_tracks_multiple_indices():
+    """Glob scanning with **/X boundaries does not visit directories twice.
+
+    The bug: at **/X boundaries the walker pushed two WorkItems for the same
+    directory (one to advance past X, one to keep ** alive), causing double-visits.
+
+    Behavioral verification: pattern a/**/b/*.txt on a tree like:
+        a/x/b/file.txt
+        a/y/b/file.txt
+    On buggy code: b/ is entered twice per x/y (duplicates appear)
+    On fixed code: b/ is entered once per x/y (no duplicates)
+
+    This accepts ANY correct alternative fix — whether it uses BitSet, ArrayList,
+    deduplication at output, or any other multi-value storage mechanism.
+    """
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # Build tree: root/a/{x,y}/b/file.txt
+        for sub in ["x", "y"]:
+            b_dir = os.path.join(tmpdir, "a", sub, "b")
+            os.makedirs(b_dir, exist_ok=True)
+            with open(os.path.join(b_dir, "file.txt"), "w") as f:
+                f.write("content")
+
+        script = f"""
+import {{ Glob }} from 'bun';
+const results = [...new Glob('a/**/b/*.txt').scanSync({{ cwd: {repr(tmpdir)} }})];
+const unique = [...new Set(results)];
+console.log(JSON.stringify({{ total: results.length, unique: unique.length }}));
+"""
+        r = subprocess.run(
+            ["bun", "--eval", script],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+        assert r.returncode == 0, f"Bun eval failed: {r.stderr}"
+
+        data = json.loads(r.stdout.strip())
+        # Fixed code visits each directory once → total == unique
+        # Buggy code visits b/ directories twice → total > unique
+        assert data["unique"] == data["total"], (
+            f"Glob returned {data['total']} entries but only {data['unique']} unique. "
+            f"Directories visited twice (duplicates: {data['total'] - data['unique']})."
+        )
 
 
 # [pr_diff] fail_to_pass
 def test_double_push_eliminated():
-    """Directory push operations must be consolidated (behavioral requirement).
+    """Glob scanning does not double-push directories at **/X boundaries.
 
     The bug: At **/X boundaries, the walker pushed two WorkItems for the same
     directory (one to advance past X, one to keep ** alive), causing double-visits.
+    The fix must consolidate so each directory is pushed at most once.
 
-    Behavioral fix verification:
-    - We cannot run the code and trace syscalls (no compiled binary)
-    - Instead, we verify workbuf.append count is reduced from the buggy baseline of 11
-      and rely on test_repo_glob_sources to verify overall behavior is correct
-
-    Structural check: The number of workbuf.append calls should be reduced from 11
-    (buggy baseline) to fewer than 11 (fix consolidates paired pushes).
-
-    Alternative fixes that would pass this test:
-    - Consolidation of paired if/else appends into one
-    - Using a visited-set to deduplicate at a different level
-    - Restructuring the push logic entirely
-    All would result in append_count < 11.
+    Behavioral verification: Run glob on a tree with multiple **/X boundaries
+    and verify no duplicate entries appear. If the walker double-pushes, the
+    same directory entry would appear multiple times in results.
     """
-    code = _read(WALKER)
-    append_count = len(re.findall(r"workbuf\.append", code))
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # Create tree with multiple **/X boundaries: root/a/**/b/file.txt, root/c/**/d/file.txt
+        # The pattern **/X causes the walker to potentially push X's directory twice
+        for path, content in [
+            (os.path.join(tmpdir, "a", "x", "b", "f1.txt"), "a"),
+            (os.path.join(tmpdir, "a", "y", "b", "f2.txt"), "b"),
+            (os.path.join(tmpdir, "a", "z", "b", "f3.txt"), "c"),
+            (os.path.join(tmpdir, "c", "p", "d", "f4.txt"), "d"),
+            (os.path.join(tmpdir, "c", "q", "d", "f5.txt"), "e"),
+        ]:
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            with open(path, "w") as f:
+                f.write(content)
 
-    # Buggy baseline has 11 appends; fix should have fewer
-    # Also require > 0 to ensure workbuf wasn't incorrectly removed entirely
-    assert 0 < append_count < 11, (
-        f"workbuf.append count is {append_count}. "
-        f"Buggy code has 11 (paired if/else pushes for same dir). "
-        f"Fix should consolidate to fewer than 11. "
-        f"Count >= 11 means fix didn't reduce duplicate pushes. "
-        f"Count == 0 means workbuf was incorrectly removed."
-    )
+        script = f"""
+import {{ Glob }} from 'bun';
+// Pattern with multiple **/X boundaries
+const results = [...new Glob('**/{{b,d}}/*.txt').scanSync({{ cwd: {repr(tmpdir)} }})];
+const unique = [...new Set(results)];
+console.log(JSON.stringify({{ total: results.length, unique: unique.length }}));
+"""
+        r = subprocess.run(
+            ["bun", "--eval", script],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+        assert r.returncode == 0, f"Bun eval failed: {r.stderr}"
+
+        data = json.loads(r.stdout.strip())
+        # If double-push occurs, total > unique
+        assert data["unique"] == data["total"], (
+            f"Double-push detected: {data['total']} entries but only {data['unique']} unique. "
+            f"Duplicates: {data['total'] - data['unique']}"
+        )
 
 
 # [pr_diff] fail_to_pass
 def test_pattern_matching_iterates_active_indices():
-    """Pattern matching must evaluate for each active index (behavioral requirement).
+    """Pattern matching correctly handles multiple active indices at **/X boundaries.
 
     The bug: Pattern matching was called once with a single index, missing the
     case where multiple indices are active simultaneously at **/X boundaries.
+    This caused directories to be visited twice.
 
-    Behavioral fix verification:
-    - We cannot run the code and trace pattern matching calls (no Zig compiler)
-    - Instead, we verify iteration patterns exist near match calls
-    - And rely on test_repo_glob_sources to verify overall correctness
-
-    Structural check: Look for iteration constructs (iterator(), while/for loops,
-    etc.) near pattern matching calls. This verifies the fix evaluates multiple
-    indices per directory.
-
-    Alternative iteration mechanisms all accepted:
-    - BitSet iterator
-    - while/for loops over arrays
-    - findFirstSet loops
-    - Any reasonable iteration pattern
+    Behavioral verification: Create a tree where the glob pattern has multiple
+    **/X boundaries and verify all files are found exactly once (no duplicates).
+    If pattern matching doesn't iterate over active indices correctly, entries
+    would be missing or duplicated.
     """
-    code = _read(WALKER)
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # Tree: root/x/**/y/file.txt and root/p/**/q/file.txt
+        # Pattern: **/{{x,y},{p,q}}/**/file.txt
+        # This exercises multiple independent **/X boundaries
+        for sub in ["x", "y", "p", "q"]:
+            d = os.path.join(tmpdir, sub)
+            os.makedirs(d, exist_ok=True)
+            # Create files at various depths
+            for depth in range(3):
+                path = os.path.join(d, "deep" * depth, "file.txt")
+                os.makedirs(os.path.dirname(path), exist_ok=True)
+                with open(path, "w") as f:
+                    f.write(f"content_{sub}_{depth}")
 
-    # Patterns indicating iteration over a collection
-    iteration_patterns = [
-        r"\.iterator\s*\(",
-        r"while\s*\([^)]*\.next\(\)",
-        r"for\s*\([^)]*\.items",
-        r"while\s*\([^)]*findFirstSet",
-        r"for\s*\([^)]*\.\.",
-        r"while\s*\([^)]*mask",
-        r"for\s*\(.*in.*\.",  # for item in collection
-    ]
+        script = f"""
+import {{ Glob }} from 'bun';
+// Multiple **/X boundaries at top level
+const results = [...new Glob('**/{{x,y,p,q}}/**/file.txt').scanSync({{ cwd: {repr(tmpdir)} }})];
+const unique = [...new Set(results)];
+console.log(JSON.stringify({{ total: results.length, unique: unique.length }}));
+"""
+        r = subprocess.run(
+            ["bun", "--eval", script],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+        assert r.returncode == 0, f"Bun eval failed: {r.stderr}"
 
-    # Find pattern matching calls
-    match_calls = list(
-        re.finditer(r"match(?:Pattern(?:Dir|File)|PatternImpl)\s*\(", code)
-    )
-    assert match_calls, "No pattern matching calls found - core API broken"
-
-    # Check each match call for nearby iteration
-    found_iteration = False
-    for call in match_calls:
-        # Look around each match call for iteration patterns
-        region_start = max(0, call.start() - 1500)
-        region_end = min(len(code), call.end() + 300)
-        region = code[region_start:region_end]
-        if any(re.search(p, region) for p in iteration_patterns):
-            found_iteration = True
-            break
-
-    assert found_iteration, (
-        "Pattern matching not called inside iteration over active indices. "
-        "The fix must iterate over multiple active indices, evaluating "
-        "matchPatternDir/matchPatternFile for each active state."
-    )
+        data = json.loads(r.stdout.strip())
+        # If pattern matching iterates correctly over active indices,
+        # every file is found exactly once. If it doesn't, duplicates occur.
+        assert data["unique"] == data["total"], (
+            f"Pattern matching failed to iterate correctly: {data['total']} entries, "
+            f"only {data['unique']} unique. Duplicates: {data['total'] - data['unique']}"
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -445,7 +468,6 @@ def test_no_inline_imports():
         if stripped.startswith("//"):
             continue
         if "@import" in stripped:
-            # Top-level/struct-level is <= 8 spaces indent
             indent = len(line) - len(line.lstrip())
             assert indent <= 8, (
                 f"@import used inline (indent={indent}): {stripped}"

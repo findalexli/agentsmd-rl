@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# Install pytest if needed
-pip3 install pytest -q 2>/dev/null || true
-
 # Run the test file - capture exit code
 pytest /tests/test_outputs.py -v --tb=short
 exit_code=$?
@@ -14,7 +11,6 @@ else
     echo "0" > /logs/verifier/reward.txt
 fi
 
-# exit $exit_code   # auto-disabled (prevented judge block from running)
 # --- LLM Judge (Track 3 + Track 4) ---
 if [ -f /tests/eval_manifest.yaml ] && [ -f /tests/standalone_judge.py ]; then
     # Capture agent diff

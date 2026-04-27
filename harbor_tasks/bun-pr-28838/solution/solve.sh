@@ -47,7 +47,7 @@ diff --git a/package.json b/package.json
 index 4044e478623..9d90dd9cc56 100644
 --- a/package.json
 +++ b/package.json
-@@ -33,6 +33,7 @@
+@@ -33,5 +33,6 @@
      "ci:errors": "bun scripts/find-build.ts --errors",
      "ci:logs": "bun scripts/find-build.ts --logs",
      "ci:watch": "bun scripts/find-build.ts --watch",

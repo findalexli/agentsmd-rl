@@ -16,7 +16,9 @@ Additionally, the CLI configuration file is looked up as `playwright-cli.json` i
 
 4. **Config path**: The default configuration file path should move from `playwright-cli.json` to `.playwright/cli.config.json`.
 
-5. **Documentation updates**: After making the code changes, update the relevant skill files and reference documentation to reflect the renamed commands and new workspace scoping.
+5. **Documentation updates**: After making the code changes, update the documentation files:
+   - In `SKILL.md`: Replace `kill-all` with `session-kill-all` in the Sessions section. In the Configuration section, list `close` and `delete-data` commands on separate lines with descriptive comments above each (instead of inline `#` comments on the same line).
+   - In `session-management.md`: Replace all references to `kill-all` with `session-kill-all`, and update any config file paths from `playwright-cli.json` to `.playwright/` paths.
 
 ## Files to Look At
 

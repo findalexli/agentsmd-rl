@@ -56,7 +56,7 @@ The implementation must pass all of the following checks:
    - SQL format: column list wrapped in parentheses and ends with ` VALUES`
    - Bulk insert where middle item has the only defined value → column included
 
-2. **All three adapters updated**: SQLite, MySQL, and PostgreSQL adapters all import and use the shared filtering logic via the exact import pattern `require("internal/sql/shared")` and destructured names `definedColumns` and `columnsSql`.
+2. **All three adapters updated**: SQLite, MySQL, and PostgreSQL adapters all import and use the shared filtering function from `require("internal/sql/shared")`, calling it with the column list, items, and the adapter's escape function.
 
 3. **Documentation update**: `test/CLAUDE.md` must include guidance recommending `.toEqual` for asserting on nested or complex object equality, with an example showing `toEqual(` usage.
 

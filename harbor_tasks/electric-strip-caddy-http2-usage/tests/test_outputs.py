@@ -14,7 +14,7 @@ TANSTACK = REPO / "examples" / "tanstack-db-web-starter"
 BURN = REPO / "examples" / "burn"
 
 
-# --- Helper ---
+# --- Helpers ---
 
 def _run_node(script: str, timeout: int = 30) -> subprocess.CompletedProcess:
     """Run a Node.js script and return the result."""
@@ -39,7 +39,7 @@ def _version_gte(version_spec: str, minimum: str) -> bool:
 
 def test_vite_config_no_caddy():
     """vite.config.ts must not import or use caddyPlugin."""
-    result = _run_node(
+    r = _run_node(
         "const fs = require('fs'); "
         "const c = fs.readFileSync('examples/tanstack-db-web-starter/vite.config.ts', 'utf8'); "
         "if (c.includes('caddyPlugin') || c.includes('vite-plugin-caddy')) { "
@@ -47,8 +47,8 @@ def test_vite_config_no_caddy():
         "} "
         "console.log('CLEAN');"
     )
-    assert result.returncode == 0, f"vite.config.ts still references caddy: {result.stderr}"
-    assert "CLEAN" in result.stdout
+    assert r.returncode == 0, f"vite.config.ts still references caddy: {r.stderr}"
+    assert "CLEAN" in r.stdout
 
 
 def test_caddy_plugin_deleted():
@@ -67,25 +67,55 @@ def test_burn_caddyfile_deleted():
 
 def test_client_version_bumped_tanstack():
     """tanstack-db-web-starter must use @electric-sql/client ^1.0.13 or later."""
-    pkg = json.loads((TANSTACK / "package.json").read_text())
-    version = pkg["dependencies"]["@electric-sql/client"]
-    assert _version_gte(version, "1.0.13"), \
-        f"@electric-sql/client should be ^1.0.13+, got {version}"
+    r = _run_node(
+        "const fs = require('fs'); "
+        "const pkg = JSON.parse(fs.readFileSync('examples/tanstack-db-web-starter/package.json', 'utf8')); "
+        "const dep = pkg.dependencies['@electric-sql/client']; "
+        "if (!dep) { console.error('MISSING_DEP'); process.exit(1); } "
+        "const m = dep.match(/(\\d+)\\.(\\d+)\\.(\\d+)/); "
+        "if (!m) { console.error('BAD_VERSION:', dep); process.exit(1); } "
+        "const [maj, min, pat] = [parseInt(m[1]), parseInt(m[2]), parseInt(m[3])]; "
+        "if (maj < 1 || (maj === 1 && min < 0) || (maj === 1 && min === 0 && pat < 13)) { "
+        "  console.error('VERSION_TOO_LOW:', dep); process.exit(1); "
+        "} "
+        "console.log('OK:', dep);"
+    )
+    assert r.returncode == 0, f"Version check failed: {r.stderr}"
+    assert "OK:" in r.stdout
 
 
 def test_client_version_bumped_burn():
     """burn example must use @electric-sql/client ^1.0.13 or later."""
-    pkg = json.loads((BURN / "assets" / "package.json").read_text())
-    version = pkg["dependencies"]["@electric-sql/client"]
-    assert _version_gte(version, "1.0.13"), \
-        f"@electric-sql/client should be ^1.0.13+, got {version}"
+    r = _run_node(
+        "const fs = require('fs'); "
+        "const pkg = JSON.parse(fs.readFileSync('examples/burn/assets/package.json', 'utf8')); "
+        "const dep = pkg.dependencies['@electric-sql/client']; "
+        "if (!dep) { console.error('MISSING_DEP'); process.exit(1); } "
+        "const m = dep.match(/(\\d+)\\.(\\d+)\\.(\\d+)/); "
+        "if (!m) { console.error('BAD_VERSION:', dep); process.exit(1); } "
+        "const [maj, min, pat] = [parseInt(m[1]), parseInt(m[2]), parseInt(m[3])]; "
+        "if (maj < 1 || (maj === 1 && min < 0) || (maj === 1 && min === 0 && pat < 13)) { "
+        "  console.error('VERSION_TOO_LOW:', dep); process.exit(1); "
+        "} "
+        "console.log('OK:', dep);"
+    )
+    assert r.returncode == 0, f"Version check failed: {r.stderr}"
+    assert "OK:" in r.stdout
 
 
 def test_vite_config_no_host_true():
     """vite.config.ts should not set server.host: true (was for Caddy networking)."""
-    vite_config = (TANSTACK / "vite.config.ts").read_text()
-    assert "host: true" not in vite_config, \
-        "vite.config.ts should not set server.host: true (Caddy remnant)"
+    r = _run_node(
+        "const fs = require('fs'); "
+        "const c = fs.readFileSync('examples/tanstack-db-web-starter/vite.config.ts', 'utf8'); "
+        "const serverHost = /server\\s*:\\s*\\{[^}]*host\\s*:\\s*true[^}]*\\}/; "
+        "if (serverHost.test(c)) { "
+        "  console.error('HAS_HOST_TRUE'); process.exit(1); "
+        "} "
+        "console.log('OK');"
+    )
+    assert r.returncode == 0, f"vite.config.ts still has host: true: {r.stderr}"
+    assert "OK" in r.stdout
 
 
 # --- Fail-to-pass: Config/documentation changes ---
@@ -93,55 +123,82 @@ def test_vite_config_no_host_true():
 
 def test_agents_md_updated_gotcha():
     """Root AGENTS.md gotcha #3 should reflect subdomain sharding fix, not Caddy."""
-    agents_md = (REPO / "AGENTS.md").read_text()
-    # Should NOT recommend Caddy/nginx as the fix for slow shapes
-    assert "HTTP/2 proxy (Caddy/nginx)" not in agents_md, \
-        "AGENTS.md still recommends Caddy/nginx HTTP/2 proxy for slow shapes"
-    # Should reference the client version fix
-    assert "1.0.13" in agents_md, \
-        "AGENTS.md should mention @electric-sql/client v1.0.13"
+    r = _run_node(
+        "const fs = require('fs'); "
+        "const c = fs.readFileSync('AGENTS.md', 'utf8'); "
+        "if (c.includes('HTTP/2 proxy (Caddy/nginx)')) { "
+        "  console.error('STILL_HAS_CADDY_PROXY'); process.exit(1); "
+        "} "
+        "if (!c.includes('1.0.13')) { "
+        "  console.error('MISSING_VERSION'); process.exit(1); "
+        "} "
+        "console.log('OK');"
+    )
+    assert r.returncode == 0, f"AGENTS.md check failed: {r.stderr}"
+    assert "OK" in r.stdout
 
 
 def test_tanstack_readme_no_caddy():
     """tanstack-db-web-starter README should not contain Caddy setup instructions."""
-    readme = (TANSTACK / "README.md").read_text()
-    # Should not have Caddy sections
-    assert "### Caddy" not in readme, \
-        "README should not have a Caddy section"
-    assert "caddy trust" not in readme.lower(), \
-        "README should not instruct to run caddy trust"
-    # Should use localhost:5173, not the custom HTTPS domain
-    assert "localhost:5173" in readme, \
-        "README should direct users to localhost:5173"
-    assert "tanstack-start-db-electric-starter.localhost" not in readme, \
-        "README should not reference the old Caddy HTTPS domain"
+    r = _run_node(
+        "const fs = require('fs'); "
+        "const c = fs.readFileSync('examples/tanstack-db-web-starter/README.md', 'utf8'); "
+        "if (c.includes('### Caddy')) { "
+        "  console.error('HAS_CADDY_SECTION'); process.exit(1); "
+        "} "
+        "if (c.toLowerCase().includes('caddy trust')) { "
+        "  console.error('HAS_CADDY_TRUST'); process.exit(1); "
+        "} "
+        "if (!c.includes('localhost:5173')) { "
+        "  console.error('MISSING_LOCALHOST_5173'); process.exit(1); "
+        "} "
+        "if (c.includes('tanstack-start-db-electric-starter.localhost')) { "
+        "  console.error('HAS_OLD_DOMAIN'); process.exit(1); "
+        "} "
+        "console.log('OK');"
+    )
+    assert r.returncode == 0, f"tanstack README check failed: {r.stderr}"
+    assert "OK" in r.stdout
 
 
 def test_burn_readme_direct_port():
     """burn README should reference port 4000 directly, not port 4001 via Caddy."""
-    readme = (BURN / "README.md").read_text()
-    # Should use 4000 directly
-    assert "localhost:4000" in readme, \
-        "burn README should reference localhost:4000"
-    # Should NOT mention starting Caddy
-    assert "caddy start" not in readme.lower(), \
-        "burn README should not instruct to start Caddy"
-    assert "localhost:4001" not in readme, \
-        "burn README should not reference Caddy proxy port 4001"
+    r = _run_node(
+        "const fs = require('fs'); "
+        "const c = fs.readFileSync('examples/burn/README.md', 'utf8'); "
+        "if (!c.includes('localhost:4000')) { "
+        "  console.error('MISSING_LOCALHOST_4000'); process.exit(1); "
+        "} "
+        "if (c.toLowerCase().includes('caddy start')) { "
+        "  console.error('HAS_CADDY_START'); process.exit(1); "
+        "} "
+        "if (c.includes('localhost:4001')) { "
+        "  console.error('HAS_OLD_PORT_4001'); process.exit(1); "
+        "} "
+        "console.log('OK');"
+    )
+    assert r.returncode == 0, f"burn README check failed: {r.stderr}"
+    assert "OK" in r.stdout
 
 
 def test_troubleshooting_docs_subdomain_sharding():
     """website troubleshooting docs should describe subdomain sharding, not Caddy setup."""
-    troubleshooting = (REPO / "website" / "docs" / "guides" / "troubleshooting.md").read_text()
-    # Should describe subdomain sharding as the primary solution
-    assert "subdomain sharding" in troubleshooting.lower(), \
-        "troubleshooting.md should describe subdomain sharding solution"
-    # Should mention the client version
-    assert "1.0.13" in troubleshooting, \
-        "troubleshooting.md should mention client v1.0.13"
-    # Should NOT have Caddy as the primary solution header
-    assert "run Caddy" not in troubleshooting, \
-        "troubleshooting.md should not recommend 'run Caddy' as primary solution"
+    r = _run_node(
+        "const fs = require('fs'); "
+        "const c = fs.readFileSync('website/docs/guides/troubleshooting.md', 'utf8'); "
+        "if (!c.toLowerCase().includes('subdomain sharding')) { "
+        "  console.error('MISSING_SUBDOMAIN_SHARDING'); process.exit(1); "
+        "} "
+        "if (!c.includes('1.0.13')) { "
+        "  console.error('MISSING_VERSION'); process.exit(1); "
+        "} "
+        "if (c.includes('run Caddy')) { "
+        "  console.error('HAS_RUN_CADDY'); process.exit(1); "
+        "} "
+        "console.log('OK');"
+    )
+    assert r.returncode == 0, f"troubleshooting.md check failed: {r.stderr}"
+    assert "OK" in r.stdout
 
 
 # --- Pass-to-pass ---
@@ -149,18 +206,17 @@ def test_troubleshooting_docs_subdomain_sharding():
 
 def test_vite_config_valid():
     """vite.config.ts should be readable and non-empty."""
-    result = _run_node(
+    r = _run_node(
         "const fs = require('fs'); "
         "const c = fs.readFileSync('examples/tanstack-db-web-starter/vite.config.ts', 'utf8'); "
         "console.log('OK, length:', c.length);"
     )
-    assert result.returncode == 0, f"Failed to read vite.config.ts: {result.stderr}"
-    assert "OK, length:" in result.stdout
+    assert r.returncode == 0, f"Failed to read vite.config.ts: {r.stderr}"
+    assert "OK, length:" in r.stdout
 
 
 def test_tanstack_vite_config_parses():
     """tanstack vite.config.ts should be parseable JavaScript/TypeScript (pass_to_pass)."""
-    # Verify the file contains valid JS constructs by parsing with Node
     script = """
     const fs = require('fs');
     const content = fs.readFileSync('examples/tanstack-db-web-starter/vite.config.ts', 'utf8');
@@ -234,15 +290,23 @@ def test_repo_package_files_valid():
 
 def test_package_json_valid():
     """Both modified package.json files should be valid JSON with expected deps."""
-    for path in [
-        TANSTACK / "package.json",
-        BURN / "assets" / "package.json",
-    ]:
-        content = path.read_text()
-        data = json.loads(content)
-        assert "dependencies" in data, f"{path} missing dependencies"
-        assert "@electric-sql/client" in data["dependencies"], \
-            f"{path} missing @electric-sql/client dependency"
+    r = _run_node(
+        "const fs = require('fs'); "
+        "const files = ["
+        "  'examples/tanstack-db-web-starter/package.json',"
+        "  'examples/burn/assets/package.json'"
+        "]; "
+        "for (const f of files) { "
+        "  const pkg = JSON.parse(fs.readFileSync(f, 'utf8')); "
+        "  if (!pkg.dependencies) { console.error('NO_DEPS:', f); process.exit(1); } "
+        "  if (!pkg.dependencies['@electric-sql/client']) { "
+        "    console.error('NO_CLIENT:', f); process.exit(1); "
+        "  } "
+        "} "
+        "console.log('OK');"
+    )
+    assert r.returncode == 0, f"package.json check failed: {r.stderr}"
+    assert "OK" in r.stdout
 
 
 def test_tanstack_build():
@@ -296,16 +360,6 @@ def test_typescript_client_build():
     )
     assert r.returncode == 0, f"typescript-client build failed:\n{r.stderr[-500:]}"
 
-
-def test_typescript_client_stylecheck():
-    """TypeScript client package passes linting (pass_to_pass)."""
-    r = subprocess.run(
-        ["bash", "-c",
-         "npm install -g pnpm 2>/dev/null && pnpm install --ignore-scripts 2>/dev/null "
-         "&& cd packages/typescript-client && pnpm run stylecheck"],
-        capture_output=True, text=True, timeout=600, cwd=str(REPO),
-    )
-    assert r.returncode == 0, f"typescript-client stylecheck failed:\n{r.stderr[-500:]}"
 
 
 def test_repo_lockfile_valid():

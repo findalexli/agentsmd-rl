@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "Instruction names padString.cpp, PaddedPODArray<UInt8>, insertFromItself, validateFunctionArguments, FunctionArgumentDescriptors, 1'000'000, num_chars == 0, ILLEGAL_TYPE_OF_ARGUMENT, NUMBER_OF_ARGUMENTS_DOESNT_MATCH, executeImpl \u2014 all checked literals are named."
+      "reason": "Instruction names padString.cpp, PaddingChars, PaddedPODArray<UInt8>, insertFromItself, validateFunctionArguments, FunctionArgumentDescriptors, ILLEGAL_TYPE_OF_ARGUMENT, NUMBER_OF_ARGUMENTS_DOESNT_MATCH, the exact 'if (num_chars == 0)' string, '1\\'000\\'000', and 'if (pad_string.empty())' \u2014 all assert literals appear."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "Instruction dictates exact identifiers: 'Use PaddedPODArray<UInt8>', 'use insertFromItself()', 'Use C++14 digit separator 1'000'000', 'Use validateFunctionArguments()', 'Define FunctionArgumentDescriptors', 'Remove unused error codes ILLEGAL_TYPE_OF_ARGUMENT and NUMBER_OF_ARGUMENTS_DOESNT_MATCH' \u2014 this is the fix specification."
+      "reason": "Instruction prescribes the exact fix details: 'pad_string member is expected to be of type PaddedPODArray<UInt8>', 'must extend the buffer through insertFromItself', 'literal check if (pad_string.empty()) must appear inside executeImpl', 'written exactly as if (num_chars == 0)', and '1\\'000\\'000' \u2014 leaving virtually no reasoning about WHAT to change."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on specific implementation strings like 'PaddedPODArray<UInt8> pad_string', 'insertFromItself', 'if (num_chars == 0)', 'validateFunctionArguments', 'FunctionArgumentDescriptors', '1'000'000' \u2014 alternative correct fixes (e.g., String with reserved trailing bytes, or explicit overflow buffer) would fail."
+      "reason": "Tests assert exact strings like 'PaddedPODArray<UInt8> pad_string', 'insertFromItself', 'if (num_chars == 0)', '1\\'000\\'000', 'FunctionArgumentDescriptors' \u2014 alternative correct fixes (e.g., using a different safe container or different validation helper) would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "All tests are regex/substring checks on padString.cpp source (e.g., assert 'PaddedPODArray<UInt8> pad_string' in padding_chars_class); the single clang invocation uses -fsyntax-only with missing includes and suppresses errors, not actually verifying behavior."
+      "reason": "Tests are predominantly substring checks on file content (e.g., assert 'PaddedPODArray<UInt8> pad_string' in padding_chars_class, assert '1\\'000\\'000' in content); the only execution is clang -fsyntax-only which filters out most errors and doesn't validate runtime behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "Each f2p test requires a specific source-code change to pass; a stub wouldn't satisfy the substring checks."
+      "reason": "Each f2p test asserts a specific code change presence; a stub couldn't satisfy them without making the actual textual modifications."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "Tests cover each enumerated requirement in instruction.md (PaddedPODArray, insertFromItself, no reinterpret_cast, empty pad in executeImpl, num_chars == 0, digit separator, validateFunctionArguments, error code cleanup)."
+      "reason": "Tests cover memory-safety container change, insertFromItself, no reinterpret_cast, empty-pad in executeImpl, num_chars==0, digit separator, validateFunctionArguments, and ErrorCodes cleanup \u2014 matching the instruction's acceptance criteria."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests have descriptive names, docstrings, and are grouped with FAIL-TO-PASS / PASS-TO-PASS section headers."
+      "reason": "Tests are individually named with descriptive function names and docstrings, and grouped by FAIL-TO-PASS / PASS-TO-PASS comments."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task is a C++ code fix, not structured data output."
+      "reason": "Task is a C++ code modification, no structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths and identifiers match between instruction and tests."
+      "reason": "Filenames (padString.cpp), function names, and commands all appear consistent and correctly spelled."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "Instruction names the exact file src/Functions/padString.cpp and prescribes exact replacement tokens (PaddedPODArray<UInt8>, insertFromItself, 1'000'000, validateFunctionArguments), removing localization and design decisions from the agent."
+      "reason": "Instruction explicitly identifies the buggy file (src/Functions/padString.cpp), the buggy line patterns ('pad_string += pad_string', 'reinterpret_cast<const UInt8 *>(pad_string.data())'), and dictates exact replacement text including the digit separator and comparison style."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "Code-only task."
+      "reason": "Code-only task, no config edits."
     }
   },
   "tier_a_fails": [

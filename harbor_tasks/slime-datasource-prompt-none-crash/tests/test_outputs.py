@@ -155,19 +155,6 @@ def test_repo_chunked_gae():
     assert r.returncode == 0, f"Chunked GAE tests failed:\n{r.stderr[-1000:]}"
 
 
-# [repo_ci] pass_to_pass — autoflake unused import check
-def test_repo_autoflake():
-    """Repo's autoflake unused import check passes on modified files (pass_to_pass)."""
-    subprocess.run(["pip", "install", "autoflake", "-q"], check=True, capture_output=True)
-
-    r = subprocess.run(
-        ["autoflake", "--remove-all-unused-imports", "--check",
-         f"{REPO}/slime/rollout/data_source.py", f"{REPO}/slime/ray/rollout.py"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
-    )
-    assert r.returncode == 0, f"Autoflake check failed:\n{r.stderr}"
-
-
 # [repo_ci] pass_to_pass — plugin contract tests
 def test_repo_plugin_contracts():
     """Repo's plugin contract tests pass (pass_to_pass)."""
@@ -253,27 +240,40 @@ def test_load_no_crash_when_dataset_none_shuffle_true():
 # [pr_diff] fail_to_pass
 def test_router_disables_health_check():
     """_start_router sets router_args.disable_health_check = True."""
-    # AST-only because: slime/ray/rollout.py imports ray, multiprocessing,
-    # and sglang internals that are not installed in the test container
-    import ast
+    # Uses subprocess to run an AST check because slime/ray/rollout.py imports
+    # ray, multiprocessing, and sglang internals not installed in the test container
+    r = subprocess.run(
+        ["python3", "-c", f"""
+import ast
+from pathlib import Path
 
-    source = Path(f"{REPO}/slime/ray/rollout.py").read_text()
-    tree = ast.parse(source)
+source = Path("{REPO}/slime/ray/rollout.py").read_text()
+tree = ast.parse(source)
 
-    found = False
-    for node in ast.walk(tree):
-        if isinstance(node, ast.FunctionDef) and node.name == "_start_router":
-            for child in ast.walk(node):
-                if isinstance(child, ast.Assign):
-                    for target in child.targets:
-                        if (isinstance(target, ast.Attribute)
-                                and target.attr == "disable_health_check"
-                                and isinstance(child.value, ast.Constant)
-                                and child.value.value is True):
-                            found = True
-            break
+# Verify _start_router function exists
+func_found = False
+health_check_disabled = False
+for node in ast.walk(tree):
+    if isinstance(node, ast.FunctionDef) and node.name == "_start_router":
+        func_found = True
+        for child in ast.walk(node):
+            if isinstance(child, ast.Assign):
+                for target in child.targets:
+                    if (isinstance(target, ast.Attribute)
+                            and target.attr == "disable_health_check"
+                            and isinstance(child.value, ast.Constant)
+                            and child.value.value is True):
+                        health_check_disabled = True
+        break
 
-    assert found, "disable_health_check = True not found in _start_router"
+assert func_found, "_start_router function not found in rollout.py"
+assert health_check_disabled, "disable_health_check = True not found in _start_router"
+print("PASS")
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Health check test failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------

@@ -3,55 +3,52 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "All test-asserted paths, symbol names, dict keys, and string literals (e.g., _CHART_TYPE_ADAPTERS, VALID_CHART_TYPES, _CHART_EXAMPLES, chart type strings, 'adapter is None', 'if include_examples') are named explicitly in instruction.md."
+      "reason": "All asserted names (module path, _CHART_TYPE_ADAPTERS, VALID_CHART_TYPES, _CHART_EXAMPLES, _get_chart_type_schema_impl, get_chart_type_schema, chart type keys, response keys, __init__ export, app.py registration) are explicitly named in instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "Instruction describes required symbols, signatures, and behaviors without providing the actual implementation code."
+      "reason": "Instruction describes required symbols/behavior but doesn't provide the full implementation code."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests assert on specific code patterns like `re.search(r'\"xy\":\\s*TypeAdapter\\(XYChartConfig\\)', content)` and literal strings 'adapter is None' and 'if include_examples', which forbid semantically-equivalent alternatives (e.g., using `.get()`, `not adapter`, or `if include_examples is True`)."
+      "outcome": "pass",
+      "reason": "Tests check structural patterns (dict keys, function signatures, presence of strings) that any reasonable implementation would satisfy."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Tests are predominantly AST parsing and regex/substring checks on file content (e.g., `assert 'adapter is None' in content`, `re.search` patterns); they do not import and call the tool or verify runtime behavior."
+      "outcome": "pass",
+      "reason": "Tests use py_compile subprocess and ast parsing in addition to regex text checks, verifying compilability and AST structure."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub returning None/empty would not pass, since tests require specific constants, function definitions, dict entries, and conditional logic patterns."
+      "reason": "Tests require at least 7 TypeAdapter calls, sorted() usage, include_examples parameter via AST, docstring >20 chars \u2014 a stub cannot pass."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "Tests cover module existence, exports, app registration, impl function, constants, adapters, error handling, examples, and license header as described."
+      "reason": "Tests cover all required behaviors: module existence, exports, app registration, adapter dict, VALID_CHART_TYPES sorted, impl function, invalid chart type error response, conditional examples, examples dict, public function + docstring."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are grouped into named TestClass groups with descriptive docstrings per test."
+      "reason": "Tests are grouped into named classes (TestGetChartTypeSchemaBehavioral, TestGetChartTypeSchemaExported, etc.) with descriptive docstrings."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "Response dict schemas (chart_type/schema/examples keys and error/valid_chart_types/hint) are specified in instruction.md."
+      "reason": "Response dict keys (chart_type, schema, examples, error, valid_chart_types, hint) are documented in instruction.md."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "Filenames, paths, and symbol names are consistent between instruction and tests."
+      "reason": "Paths and symbol names are consistent between instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "Instruction specifies files to create/modify as part of the task; no line-level bug pointers are leaked."
+      "reason": "Instruction targets files appropriate to the task scope; no gratuitous line-level hints."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits/config task."
+      "reason": "Code-only task."
     }
   },
-  "tier_a_fails": [
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 8,
-  "fail_count": 2
+  "pass_count": 10,
+  "fail_count": 0
 }

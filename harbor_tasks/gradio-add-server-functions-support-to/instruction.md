@@ -15,12 +15,10 @@ The `gr.HTML` component supports a `js_on_load` parameter for running JavaScript
 
 2. **New `server_functions` parameter**: Add a `server_functions` parameter to the HTML component's `__init__` method with type `list[Callable] | None` defaulting to `None`, placed between the `buttons` and `props` parameters.
 
-3. **Function registration implementation**: When `server_functions` is provided, implement the registration logic with these exact patterns:
-   - Check `if server_functions:` to handle the non-empty case
-   - Loop with `for fn in server_functions:` to iterate over functions
-   - Decorate each function with `decorated = server(fn)` (assignment to `decorated` variable)
-   - Attach the decorated function to the instance using `setattr(self, fn_name, decorated)` where `fn_name` is the function's `__name__`
-   - Append the decorated function to `self.server_fns`
+3. **Function registration implementation**: When `server_functions` is provided (non-empty), iterate over each function and:
+   - Wrap it with the `server` decorator (imported from `gradio.components.base`)
+   - Attach the decorated version as an attribute on the component instance, using the original function's `__name__` as the attribute name
+   - Register the decorated function in the component's `server_fns` list so it is discoverable by the frontend
 
 4. **`js_on_load` docstring update**: The docstring for `js_on_load` must be updated to document that a `server` object is available when `server_functions` is provided. The updated docstring must contain the word "server" and the term "server_functions".
 

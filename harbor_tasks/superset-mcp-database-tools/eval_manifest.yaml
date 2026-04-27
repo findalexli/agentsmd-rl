@@ -1,4 +1,4 @@
-version: "1.0"
+version: "2.0"
 task_id: "superset-mcp-database-tools"
 source_pr:
   owner: "apache"
@@ -12,104 +12,77 @@ checks:
   # Fail-to-pass tests: These should fail before the fix, pass after
   - id: test_database_filter_includes_created_by_fk
     type: fail_to_pass
-    origin: agent_config
-    source: "CLAUDE.md, AGENTS.md, superset/mcp_service/CLAUDE.md"
+    origin: pr_diff
     description: "DatabaseFilter.col should accept 'created_by_fk' for user-based filtering"
 
   - id: test_database_filter_includes_changed_by_fk
     type: fail_to_pass
-    origin: agent_config
-    source: "CLAUDE.md, AGENTS.md, superset/mcp_service/CLAUDE.md"
+    origin: pr_diff
     description: "DatabaseFilter.col should accept 'changed_by_fk' for user-based filtering"
 
   - id: test_database_filter_description_updated
     type: fail_to_pass
-    origin: agent_config
-    source: "CLAUDE.md, AGENTS.md, superset/mcp_service/CLAUDE.md"
+    origin: pr_diff
     description: "DatabaseFilter description should document created_by_fk usage pattern"
 
   - id: test_parse_filters_validator_exists
     type: fail_to_pass
-    origin: agent_config
-    source: "superset/mcp_service/CLAUDE.md"
-    description: "ListDatabasesRequest should have parse_filters field_validator for JSON string handling"
+    origin: pr_diff
+    description: "ListDatabasesRequest should parse JSON string filters into filter objects"
 
   - id: test_parse_columns_validator_exists
     type: fail_to_pass
-    origin: agent_config
-    source: "superset/mcp_service/CLAUDE.md"
-    description: "ListDatabasesRequest should have parse_columns field_validator for JSON string handling"
+    origin: pr_diff
+    description: "ListDatabasesRequest should parse JSON string column names into a list"
 
-  - id: test_field_validator_imported
+  - id: test_parse_filters_with_nested_json
     type: fail_to_pass
-    origin: agent_config
-    source: "superset/mcp_service/CLAUDE.md"
-    description: "field_validator should be imported from pydantic for input validation"
-
-  - id: test_schema_utils_imported
-    type: fail_to_pass
-    origin: agent_config
-    source: "superset/mcp_service/CLAUDE.md"
-    description: "parse_json_or_list and parse_json_or_model_list utilities should be imported from schema_utils"
+    origin: pr_diff
+    description: "ListDatabasesRequest should handle filters with various operator types via JSON"
 
   - id: test_no_local_default_database_columns_definition
     type: fail_to_pass
-    origin: agent_config
-    source: "CLAUDE.md, AGENTS.md"
-    description: "list_databases.py should not define duplicate DEFAULT_DATABASE_COLUMNS"
-
-  - id: test_imports_database_default_columns
-    type: fail_to_pass
-    origin: agent_config
-    source: "CLAUDE.md, AGENTS.md"
-    description: "list_databases.py should import DATABASE_DEFAULT_COLUMNS from schema_discovery"
+    origin: pr_diff
+    description: "list_databases.py should not define duplicate default columns locally"
 
   - id: test_uses_imported_database_default_columns
     type: fail_to_pass
-    origin: agent_config
-    source: "CLAUDE.md, AGENTS.md"
-    description: "list_databases.py should use imported DATABASE_DEFAULT_COLUMNS constant"
+    origin: pr_diff
+    description: "Shared database default columns from schema_discovery should be a valid column list"
 
   - id: test_database_error_uses_timezone_utc
     type: fail_to_pass
-    origin: agent_config
-    source: "superset/mcp_service/CLAUDE.md"
-    description: "DatabaseError.create should use datetime.now(timezone.utc) for proper timezone handling"
+    origin: pr_diff
+    description: "DatabaseError.create should produce UTC-aware timestamps"
 
   - id: test_humanize_timestamp_uses_tzinfo
     type: fail_to_pass
-    origin: agent_config
-    source: "superset/mcp_service/CLAUDE.md"
-    description: "_humanize_timestamp should handle timezone-aware datetimes using dt.tzinfo"
+    origin: pr_diff
+    description: "_humanize_timestamp should handle timezone-aware datetimes"
 
   - id: test_app_mentions_databases_in_find_own
     type: fail_to_pass
-    origin: agent_config
-    source: "CLAUDE.md, AGENTS.md"
+    origin: pr_diff
     description: "app.py instructions should mention databases alongside charts/dashboards"
 
   - id: test_app_has_database_filter_example
     type: fail_to_pass
-    origin: agent_config
-    source: "CLAUDE.md, AGENTS.md"
+    origin: pr_diff
     description: "app.py should have example for list_databases with created_by_fk filter"
 
   - id: test_app_has_my_databases_section
     type: fail_to_pass
-    origin: agent_config
-    source: "CLAUDE.md, AGENTS.md"
+    origin: pr_diff
     description: "app.py should have 'My databases' section in query examples"
 
   - id: test_create_mock_database_has_type_hints
     type: fail_to_pass
-    origin: agent_config
-    source: ".cursor/rules/dev-standard.mdc, CLAUDE.md"
-    description: "create_mock_database should have Python 3.10+ type annotations (e.g., database_id: int)"
+    origin: pr_diff
+    description: "create_mock_database should have Python type annotations for parameters and return type"
 
   - id: test_model_type_docstring_includes_database
     type: fail_to_pass
-    origin: agent_config
-    source: "CLAUDE.md, AGENTS.md"
+    origin: pr_diff
     description: "mcp_core.py docstring should include 'database' in model_type description"
 
   - id: test_imports_resolve
@@ -159,51 +132,42 @@ checks:
     description: "Database test file should be syntactically valid Python"
 
 rubric:
-  # Agent config rules relevant to this task
   - rule: "Use Python 3.10+ union syntax (T | None instead of Optional[T])"
     type: soft
-    origin: agent_config
-    source: "superset/mcp_service/CLAUDE.md, .cursor/rules/dev-standard.mdc"
+    origin: pr_diff
     weight: 1
 
-  - rule: "Use field_validator decorators from pydantic for flexible input parsing"
+  - rule: "Use pydantic field validators for flexible JSON string input parsing"
     type: soft
-    origin: agent_config
-    source: "superset/mcp_service/CLAUDE.md"
+    origin: pr_diff
     weight: 2
 
-  - rule: "Import and use utility functions from schema_utils for JSON parsing"
+  - rule: "Follow chart/dashboard patterns for JSON parsing utility functions"
     type: soft
-    origin: agent_config
-    source: "superset/mcp_service/CLAUDE.md"
+    origin: pr_diff
     weight: 2
 
   - rule: "Avoid duplicate constant definitions - import from canonical location"
     type: soft
-    origin: agent_config
-    source: "CLAUDE.md, AGENTS.md"
+    origin: pr_diff
     weight: 2
 
-  - rule: "Handle timezone properly using datetime.now(timezone.utc)"
+  - rule: "Handle timezone properly with UTC-aware timestamps"
     type: soft
-    origin: agent_config
-    source: "superset/mcp_service/CLAUDE.md"
+    origin: pr_diff
     weight: 1
 
   - rule: "Update documentation strings in app.py when adding new capabilities"
     type: soft
-    origin: agent_config
-    source: "CLAUDE.md, AGENTS.md"
+    origin: pr_diff
     weight: 1
 
   - rule: "Add type hints to all function parameters and return values"
     type: soft
-    origin: agent_config
-    source: ".cursor/rules/dev-standard.mdc, CLAUDE.md"
+    origin: pr_diff
     weight: 1
 
   - rule: "Keep docstrings accurate and up-to-date with functionality"
     type: soft
-    origin: agent_config
-    source: "CLAUDE.md, AGENTS.md"
+    origin: pr_diff
     weight: 1

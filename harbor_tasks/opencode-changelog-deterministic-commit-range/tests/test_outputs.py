@@ -217,7 +217,9 @@ def test_no_any_type():
     """Changed files must not use the `any` type (AGENTS.md line 13)."""
     for f in ("script/changelog.ts", "script/version.ts"):
         src = (Path(REPO) / f).read_text()
-        for i, line in enumerate(src.splitlines(), 1):
+        lines = src.splitlines()
+        assert len(lines) > 10, f"{f} is too short ({len(lines)} lines) — likely a stub"
+        for i, line in enumerate(lines, 1):
             stripped = line.strip()
             if stripped.startswith("//") or stripped.startswith("*"):
                 continue

@@ -1,3 +1,5 @@
+version: "2.0"
+
 source_pr:
   owner: electric-sql
   repo: electric
@@ -17,35 +19,30 @@ description: |
 
 checks:
   # Fail-to-pass tests (behavioral changes)
-  - id: test_no_next_suffix_in_client_code
+  - id: test_no_next_suffix_in_handle_construction
     type: fail_to_pass
-    origin: behavioral
+    origin: pr_diff
     description: Code must not use '-next' suffix hack on handles
 
-  - id: test_createCacheBuster_function_exists
+  - id: test_retry_url_has_cache_buster_after_409_without_handle
     type: fail_to_pass
-    origin: behavioral
-    description: Code must have createCacheBuster() helper function
+    origin: pr_diff
+    description: Retry URL after 409 without handle header must be unique
 
-  - id: test_refetchCacheBuster_private_field_exists
+  - id: test_warning_for_missing_handle_header_on_409
     type: fail_to_pass
-    origin: behavioral
-    description: ShapeStream must have #refetchCacheBuster private field
-
-  - id: test_cache_buster_query_param_usage
-    type: fail_to_pass
-    origin: behavioral
-    description: Code must set CACHE_BUSTER_QUERY_PARAM and clear it after use
-
-  - id: test_warning_on_missing_handle_header
-    type: fail_to_pass
-    origin: behavioral
+    origin: pr_diff
     description: Code must warn when 409 lacks handle header (proxy/CDN issue)
 
-  - id: test_markMustRefetch_handles_undefined
+  - id: test_cache_buster_is_one_shot
     type: fail_to_pass
-    origin: behavioral
-    description: Code must reset with undefined handle when 409 lacks header
+    origin: pr_diff
+    description: Cache buster must be consumed on retry and not persist
+
+  - id: test_behavioral_cache_buster_execution
+    type: fail_to_pass
+    origin: pr_diff
+    description: Vitest unit tests pass exercising the cache-busting mechanism
 
   # Pass-to-pass tests (repo's own tests)
   - id: test_vitest_unit_tests_pass

@@ -3,54 +3,52 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "Instruction names HistoryView.tsx, CLAUDE.md, the marginTop:-8 requirement, the 5+ VSCodeRadio count, the Miscellaneous section, the 'npm run compile' string, and the package.json mention."
+      "reason": "Instruction names HistoryView.tsx, CLAUDE.md, showCurrentWorkspaceOnly, showFavoritesOnly, VSCodeRadioGroup, VSCodeRadio, Miscellaneous section, package.json, npm run compile, flex container with marginTop/flex negative margin."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "Instruction describes required end-state properties (filters outside RadioGroup, marginTop -8 with flex) but doesn't dictate specific code edits."
+      "reason": "Instruction describes what's broken and structural requirements but doesn't give exact line-level code replacements."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "Tests check structural properties (filters after </VSCodeRadioGroup>, marginTop+flex line exists, sort options inside group) rather than exact variable names or line numbers, allowing alternative correct fixes."
+      "reason": "Tests check structural properties (filters outside RadioGroup, flex div with negative marginTop, \u22655 VSCodeRadio) that any valid fix would satisfy, not gold-specific margin value like -8."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The f2p tests (test_filters_outside_radio_group, test_independent_filter_container, test_claude_md_documents_package_json) are all string/line scans of file contents; no rendering/behavioral execution of the React component is performed."
+      "outcome": "pass",
+      "reason": "Tests execute node scripts, run biome lint/format, npm run compile-tests, npm run protos \u2014 not just grep."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests require meaningful structural change (filters relocated outside VSCodeRadioGroup, new container with marginTop/-8+flex, CLAUDE.md updated) \u2014 a stub cannot satisfy these."
+      "reason": "Each f2p test requires the actual structural change (filters after closing tag, flex container with negative margin, CLAUDE.md content)."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All instruction requirements (5+ radios, marginTop/-8 line, filters after radio group close, CLAUDE.md section with package.json and npm run compile) are tested."
+      "reason": "All instruction requirements (\u22655 VSCodeRadio, filters after </VSCodeRadioGroup>, flex+marginTop negative div, CLAUDE.md Miscellaneous section) are tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are grouped with section-comment headers (Gates, Fail-to-pass, Pass-to-pass) and descriptive function names."
+      "reason": "Tests are grouped with section comments (Gates, Fail-to-pass, Pass-to-pass, Regression)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "No structured data output produced."
+      "reason": "No structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "Paths and commands appear correct (webview-ui/src/components/history/HistoryView.tsx, CLAUDE.md, npm run compile)."
+      "reason": "Paths and commands look correct."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "Instruction names the file but does not pinpoint line numbers or buggy code; localization reasoning is still required."
+      "reason": "Instruction mentions HistoryView.tsx (which is the task domain) but not exact lines; localization required by agent."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code+docs task, not an agentmd config task."
+      "reason": "Code task, not agentmd-edits."
     }
   },
-  "tier_a_fails": [
-    "tests_verify_behavior_not_text"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 8,
-  "fail_count": 1
+  "pass_count": 9,
+  "fail_count": 0
 }

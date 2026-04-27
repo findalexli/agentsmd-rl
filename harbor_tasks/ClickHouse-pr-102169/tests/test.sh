@@ -7,8 +7,7 @@ set -e
 # Ensure logs directory exists
 mkdir -p /logs/verifier
 
-# Install pytest if not present
-pip install pytest --quiet 2>/dev/null || true
+# pytest is pre-installed in the Dockerfile
 
 # Run tests and capture output
 cd /tests

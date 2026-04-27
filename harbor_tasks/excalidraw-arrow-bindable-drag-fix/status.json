@@ -4,12 +4,13 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-16T12:47:50.244929",
-  "total_time": 58.38,
-  "sandbox_id": "iwao8mpfx7ztn5zcfkbhl",
-  "backend": "anthropic",
+  "validated_at": "2026-04-22T04:47:59.239660",
+  "total_time": 21735.94,
+  "sandbox_id": "iqew7rszajzhr9s2awr5t",
+  "backend": "minimax",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "fix_quality",
+  "error": "The sandbox was not found: This error is likely due to sandbox timeout. You can modify the sandbox timeout by passing 'timeout' when starting the sandbox or calling '.set_timeout' on the sandbox with the desired timeout.",
   "nodes": {
     "scaffold": {
       "status": "ok",
@@ -44,9 +45,9 @@
     },
     "quality_gate": {
       "status": "DELETE",
-      "model": "claude-opus-4-7",
-      "backend": "anthropic",
-      "time": 0.66,
+      "model": "minimax-m2.7",
+      "backend": "ark-minimax-m2.7",
+      "time": 0.23,
       "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:217: test `test_pointsEqual_function_imported` has 1 assert(s), all pa', 'lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:11: unpinned pip deps: pytest']"
     },
     "quality_judge": {
@@ -64,33 +65,16 @@
       "status": "error",
       "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":542,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 400 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"invalid_request_error\\\",\\\"message\\\":\\\"\\\\\\\"thinking.type.enabled\\\\\\\" is not supported for this model. Use \\\\\\\"thinking.type.adapt",
       "time": 1.75
+    },
+    "fix_quality": {
+      "status": "rate_limited",
+      "model": "minimax-m2.7",
+      "backend": "ark-minimax-m2.7",
+      "time": 201.88,
+      "notes": ""
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "minimax",
-      "time": 1022.82,
-      "at": "2026-04-15T04:03:21.088696"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "oauth",
-      "time": 418.14,
-      "at": "2026-04-15T12:48:56.630741"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "oauth",
-      "time": 578.57,
-      "at": "2026-04-15T18:49:27.480310"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -106,6 +90,30 @@
       "backend": "anthropic",
       "time": 58.38,
       "at": "2026-04-16T12:47:50.244929"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 24167.42,
+      "at": "2026-04-20T20:39:23.005964"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-minimax-m2.7",
+      "time": 1207.58,
+      "at": "2026-04-21T22:29:30.437340"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 21735.94,
+      "at": "2026-04-22T04:47:59.239660"
     }
   ]
 }

@@ -1,4 +1,0 @@
-{
-  "abandoned": true,
-  "reason": "The bug exists in internal code paths (TestingAPIs.shellLex, validateJSObjRefIdx bounds checking, Builtin.zig/Cmd.zig jsbuf handling) that are not accessible from the JavaScript API. The shell template (\$") does not expose lexer internals - JS interpolation evaluates strings before shell processing. Behavioral tests cannot trigger the bug: sentinel byte patterns are treated as literal strings, not lexer input. Tests pass on both base and fixed code (NOP=1), failing the judge's behavioral verification criteria. The original grep-based tests were a reasonable approximation for internal code verification, though they fail the judge's text-vs-behavior distinction."
-}

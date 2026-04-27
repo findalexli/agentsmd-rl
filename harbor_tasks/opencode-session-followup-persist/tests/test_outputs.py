@@ -277,12 +277,12 @@ def test_persistence_workspace_scoped():
 
     # Also check for sdk.directory or similar in the context of persistence
     if not has_workspace_scoping:
-        # Look for directory/workspace references in the code
+        # Look for directory/workspace references near persist-related code only
         for i, line in enumerate(lines):
-            if "persist" in line.lower() or "followup" in line.lower():
-                ctx = "\\n".join(lines[max(0, i - 5):min(len(lines), i + 5)])
+            if "persist" in line.lower():
+                ctx = "\n".join(lines[max(0, i - 5):min(len(lines), i + 5)])
                 # Check for workspace scoping patterns
-                if re.search(r"sdk\\.(directory|dir)|workspace|project.*key|scope", ctx, re.I):
+                if re.search(r"sdk\.(directory|dir)|workspace|project.*key", ctx, re.I):
                     has_workspace_scoping = True
                     break
 
@@ -363,16 +363,6 @@ function visit(node) {
     }
   }
 
-  // Look for type annotations in variable declarations
-  if (node.type === "TSTypeAnnotation" && node.typeAnnotation) {
-    visit(node.typeAnnotation);
-  }
-
-  // Look for type literals
-  if (node.type === "TSTypeLiteral") {
-    visit(node);
-  }
-
   // Recurse
   for (const key in node) {
     if (key === "loc") continue;
@@ -423,7 +413,7 @@ def test_file_not_stubbed():
 
     # Multiple function definitions
     func_count = len(re.findall(
-        r"(?:function\\s+\\w+|\\b\\w+\\s*=\\s*(?:async\\s+)?\\([^)]*\\)\\s*(?:=>|:))", code
+        r"(?:function\s+\w+|\b\w+\s*=\s*(?:async\s+)?\([^)]*\)\s*(?:=>|:))", code
     ))
     assert func_count >= 5, f"Only {func_count} functions — file appears stubbed"
 
@@ -433,7 +423,7 @@ def test_file_not_stubbed():
     assert found >= 3, f"Only {found} SolidJS primitives found — file appears stubbed"
 
     # Must contain JSX
-    assert re.search(r"<\\w+[\\s/>]", code), "No JSX found — not a valid component"
+    assert re.search(r"<\w+[\s/>]", code), "No JSX found — not a valid component"
 
 
 # [static] pass_to_pass
@@ -445,7 +435,7 @@ def test_no_stub_markers_near_persistence():
     for i, line in enumerate(lines):
         low = line.lower()
         if any(m in low for m in markers):
-            ctx = "\\n".join(lines[max(0, i - 10):i + 10]).lower()
+            ctx = "\n".join(lines[max(0, i - 10):i + 10]).lower()
             assert not ("followup" in ctx or "persist" in ctx), (
                 f"Stub marker found near persistence code at line {i + 1}: {line.strip()}"
             )

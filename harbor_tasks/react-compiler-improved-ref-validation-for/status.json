@@ -1,15 +1,16 @@
 {
   "schema_version": 2,
-  "valid": true,
-  "verdict": "pass",
-  "nop_reward": 0.0,
-  "gold_reward": 1.0,
-  "validated_at": "2026-04-16T12:01:44.753925",
-  "total_time": 924.43,
-  "sandbox_id": "izd1wboc1s3lfhtr2qsin",
+  "valid": false,
+  "verdict": "fail",
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-25T15:55:08.008269",
+  "total_time": 2579.67,
+  "sandbox_id": "io74fao55vn9ifyp5fmhs",
   "backend": "anthropic",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "oneshot_repair",
+  "error": "The sandbox was not found: This error is likely due to sandbox timeout. You can modify the sandbox timeout by passing 'timeout' when starting the sandbox or calling '.set_timeout' on the sandbox with the desired timeout.",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -38,9 +39,9 @@
       "gold_reward": 1.0,
       "attempts": 1,
       "notes": "Fixed test_outputs.py: 1) Changed eval() scope to use globalThis.PanResponder for ESM compatibility, 2) Expanded search window for ImmutableCapture test from 600 to 1200 chars, 3) Expanded search window for PanResponder type test from 1000 to 1200 chars. All 11 tests pass on gold image, 7 f2p tests correctly fail on NOP. Rubric judge ICR=1.0.",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 432.23
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 275.38
     },
     "rubric_judge": {
       "status": "pass",
@@ -62,68 +63,74 @@
     "quality_gate": {
       "status": "passed",
       "model": "claude-opus-4-7",
-      "backend": "anthropic",
-      "time": 0.28,
-      "notes": "flags=[]"
+      "backend": "oauth",
+      "time": 0.25,
+      "notes": "flags=['lint_tier_b:1', 'B:[B] no_network_during_tests @ tests/test.sh:44: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 15.96,
+      "time": 17.53,
       "tier_a_fails": [
-        "no_solution_leakage",
         "solution_uniqueness_guard",
         "tests_verify_behavior_not_text"
       ],
       "tier_b_fails": [],
-      "pass_count": 5,
-      "fail_count": 4
+      "pass_count": 7,
+      "fail_count": 2
     },
     "tests_rewrite": {
       "status": "error",
       "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":436,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 400 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"invalid_request_error\\\",\\\"message\\\":\\\"\\\\\\\"thinking.type.enabled\\\\\\\" is not supported for this model. Use \\\\\\\"thinking.type.adapt",
       "time": 1.61
+    },
+    "fix_quality": {
+      "status": "rate_limited",
+      "model": "claude-opus-4-7",
+      "backend": "oauth",
+      "time": 2.44,
+      "notes": ""
     }
   },
   "history": [
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 2009.46,
-      "at": "2026-04-12T06:40:00.552398"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "minimax",
-      "time": 1122.16,
-      "at": "2026-04-15T05:29:41.095314"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
       "backend": "oauth",
-      "time": 818.67,
-      "at": "2026-04-15T13:18:18.991121"
+      "time": 2178.98,
+      "at": "2026-04-25T10:56:43.824707"
     },
     {
       "verdict": "fail",
       "nop": -1.0,
       "gold": -1.0,
-      "backend": "minimax",
-      "time": 1278.43,
-      "at": "2026-04-16T01:34:14.788353"
+      "backend": "ark-kimi-k2.6",
+      "time": 2095.61,
+      "at": "2026-04-25T11:33:04.393465"
     },
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "oauth",
+      "time": 1812.06,
+      "at": "2026-04-25T12:05:27.389438"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
       "backend": "anthropic",
-      "time": 924.43,
-      "at": "2026-04-16T12:01:44.753925"
+      "time": 7738.71,
+      "at": "2026-04-25T14:26:35.951274"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "anthropic",
+      "time": 2579.67,
+      "at": "2026-04-25T15:55:08.008269"
     }
   ]
 }

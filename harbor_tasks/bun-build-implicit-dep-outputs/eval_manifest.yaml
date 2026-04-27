@@ -12,18 +12,18 @@ checks:
 - id: cc_implicit_dep_outputs
   type: fail_to_pass
   origin: pr_diff
-  description: compileC lambda passes depOutputs as implicitInputs to cc(), with codegenOrderOnly
-    as orderOnlyInputs
+  description: compileC lambda passes depOutputs as implicitInputs to cc(), with a
+    codegen-only variable as orderOnlyInputs
 - id: no_pch_cxx_implicit_dep_outputs
   type: fail_to_pass
   origin: pr_diff
   description: No-PCH cxx path uses implicitInputs with depOutputs and orderOnlyInputs
-    with codegenOrderOnly
+    with a separate codegen-only variable
 - id: codegen_order_only_separate
   type: fail_to_pass
   origin: pr_diff
-  description: codegenOrderOnly is just codegen.cppAll; old depOrderOnly variable
-    removed
+  description: A codegen-only variable (just codegen.cppAll) is used for orderOnlyInputs;
+    the old mixed variable is gone
 - id: claude_md_gotchas_implicit_deps
   type: fail_to_pass
   origin: pr_diff
@@ -88,6 +88,10 @@ checks:
   origin: repo_tests
   description: Modified files comply with EditorConfig rules (charset, trailing whitespace,
     final newline) via editorconfig-checker subprocess.run()
+- id: build_produces_valid_ninja_file
+  type: pass_to_pass
+  origin: static
+  description: bun.ts build scripts are syntactically accessible and readable
 rubric:
 - rule: When dep sub-builds rewrite forwarding headers as undeclared side effects,
     dep outputs (lib*.a) must use implicit dependencies (|), not order-only (||),

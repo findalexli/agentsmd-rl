@@ -4,12 +4,13 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-16T09:27:00.329669",
-  "total_time": 33.61,
-  "sandbox_id": "il2ah8t0iw6waj6uijon5",
-  "backend": "anthropic",
+  "validated_at": "2026-04-21T15:04:26.749603",
+  "total_time": 3444.58,
+  "sandbox_id": "i8eg1f7072x86bhv73biz",
+  "backend": "minimax",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "fix_quality",
+  "error": "The sandbox was not found: This error is likely due to sandbox timeout. You can modify the sandbox timeout by passing 'timeout' when starting the sandbox or calling '.set_timeout' on the sandbox with the desired timeout.",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -30,18 +31,18 @@
       "nop_reward": 0.0,
       "gold_reward": 1.0,
       "attempts": 1,
-      "notes": "All four main checks passed: Docker build OK, NOP test reward=0 (5 fail-to-pass tests correctly fail on buggy base), Gold test reward=1 (22 tests pass with fix).",
-      "validated_at": "2026-04-12T00:00:00",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 261.11
+      "notes": "All four main checks passed: Docker build OK, NOP test reward=0 (5 fail-to-pass tests correctly fail on buggy base), Gold test reward=1 (22 tests pass with fix), Rubric judge ICR=1.0 (7/7 rules pass).",
+      "validated_at": "2026-04-21T17:55:00.000000",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 387.98
     },
     "rubric_judge": {
-      "status": "fail",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 1.3,
-      "notes": "ICR=0.50"
+      "status": "pass",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 1.0,
+      "notes": "ICR=1.00 (7/7 rubric rules passed)"
     },
     "rubric_quality_loop": {
       "status": "ok",
@@ -55,25 +56,30 @@
     },
     "quality_gate": {
       "status": "DELETE",
-      "model": "claude-opus-4-7",
-      "backend": "anthropic",
-      "time": 0.27,
-      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:3', 'A:[A] test_not_tautological @ tests/test_outputs.py:339: test `test_no_bare_print` has 1 assert(s), all pass on a stub imp', 'A:[A] test_not_tautological @ tests/test_outputs.py:353: test `test_explicit_type_hints` has 2 assert(s), all pass on a st', 'A:[A] test_not_tautological @ tests/test_outputs.py:409: test `test_no_module_level_process_group` has 1 assert(s), all pa', 'lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:22: unpinned pip deps: numpy, torch, https://download.pytorch.org/whl/c']"
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.26,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:3', 'A:[A] test_not_tautological @ tests/test_outputs.py:339: test `test_no_bare_print` has 1 assert(s), all pass on a stub imp', 'A:[A] test_not_tautological @ tests/test_outputs.py:353: test `test_explicit_type_hints` has 2 assert(s), all pass on a st', 'A:[A] test_not_tautological @ tests/test_outputs.py:409: test `test_no_module_level_process_group` has 1 assert(s), all pa', 'lint_tier_b:2', 'B:[B] pinned_dependencies @ environment/Dockerfile:22: unpinned pip deps: numpy, torch, https://download.pytorch.org/whl/c', 'B:[B] no_network_during_tests @ tests/test.sh:44: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 11.03,
-      "tier_a_fails": [
-        "solution_uniqueness_guard"
-      ],
+      "time": 13.11,
+      "tier_a_fails": [],
       "tier_b_fails": [],
-      "pass_count": 8,
-      "fail_count": 1
+      "pass_count": 9,
+      "fail_count": 0
     },
     "tests_rewrite": {
       "status": "error",
       "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":386,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 400 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"invalid_request_error\\\",\\\"message\\\":\\\"\\\\\\\"thinking.type.enabled\\\\\\\" is not supported for this model. Use \\\\\\\"thinking.type.adapt",
       "time": 2.38
+    },
+    "fix_quality": {
+      "status": "ok",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 499.71,
+      "notes": ""
     }
   },
   "history": [
@@ -81,41 +87,41 @@
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
-      "backend": "fireworks",
-      "time": 1055.01,
-      "at": "2026-04-11T18:35:00.384481"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "minimax",
-      "time": 1049.29,
-      "at": "2026-04-15T03:31:00.510643"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "minimax",
-      "time": 3688.02,
-      "at": "2026-04-15T11:15:53.607146"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "minimax",
-      "time": 3766.5,
-      "at": "2026-04-15T12:23:07.219532"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
       "backend": "anthropic",
       "time": 33.61,
       "at": "2026-04-16T09:27:00.329669"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 10082.13,
+      "at": "2026-04-20T16:44:38.980342"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "minimax",
+      "time": 374.28,
+      "at": "2026-04-21T08:47:11.733458"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 5759.99,
+      "at": "2026-04-21T10:57:13.388705"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 3444.58,
+      "at": "2026-04-21T15:04:26.749603"
     }
   ]
 }

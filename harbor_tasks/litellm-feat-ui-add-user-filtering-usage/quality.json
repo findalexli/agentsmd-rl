@@ -3,54 +3,52 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "instruction.md names all relevant files (types.ts, UsageExportHeader.tsx, EntityUsage.tsx, UsageViewSelect.tsx, AGENTS.md, CLAUDE.md), the 'user' entity type, 'User Usage' label, userDailyActivityCall endpoint, and the documentation concepts tested."
+      "reason": "Instruction names all relevant files (types.ts, UsageExportHeader.tsx, EntityUsage.tsx, UsageViewSelect.tsx, AGENTS.md, CLAUDE.md), the 'user' entity type, userDailyActivityCall endpoint, and required documentation topics."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "Instruction describes what should work (add user option, support single/multi modes) without specifying prop names like 'filterMode' or exact implementation."
+      "reason": "Instruction describes what's broken and the desired behavior without specifying exact code changes, prop names, or line numbers."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "test_export_header_supports_single_select_mode asserts on specific prop name 'filterMode' with literal values 'multiple'/'single' and specific patterns like 'selectedFilters[0]' \u2014 an alternative correct implementation using e.g. 'mode' prop or different value extraction would fail."
+      "outcome": "pass",
+      "reason": "Tests accept multiple naming conventions (filterMode|selectMode|singleSelect|isSingle) and various value-adaptation patterns, allowing alternative correct implementations."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests use TypeScript compilation via tsc, run Vitest suites via npm, and parse/evaluate code, not just grep file contents."
+      "reason": "Tests run TypeScript compilation (tsc --noEmit) and execute npm test for EntityUsage.test.tsx, not just text matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "Tests require actual type union changes, runtime option values, conditional mode handling, and passing Vitest suites \u2014 a stub cannot satisfy them."
+      "reason": "Tests require actual TypeScript type acceptance, executing component tests, and specific structural patterns that a stub couldn't satisfy."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "Tests cover EntityType union, UsageViewSelect option, single-select support, EntityUsage user handling, and AGENTS.md/CLAUDE.md documentation updates as required."
+      "reason": "Tests cover EntityType union, view selector option, single/multi select mode, EntityUsage user handling, and AGENTS.md/CLAUDE.md updates as required."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are grouped under '# --- Code behavior tests ---', '# --- Config/documentation update tests ---', '# --- Pass-to-pass tests ---' comment sections with descriptive names."
+      "reason": "Tests are grouped with section comments (Code behavior tests, Config/documentation update tests, Pass-to-pass tests) and have descriptive names."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task is UI/documentation changes, not structured data output."
+      "reason": "No structured data output schema for this UI task."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths and names match between instruction and tests."
+      "reason": "Paths and identifiers in instruction.md are consistent and correct."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "Instruction identifies component files to look at without specifying exact lines or the exact buggy statements."
+      "reason": "Instruction lists files to look at but doesn't pinpoint specific buggy lines or exact replacements."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "Gold patch to AGENTS.md and CLAUDE.md adds small localized sections (2 new items, one new section) rather than rewriting the files."
+      "reason": "Gold diff for AGENTS.md and CLAUDE.md adds only a few targeted lines, not full-file rewrites."
     }
   },
-  "tier_a_fails": [
-    "solution_uniqueness_guard"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 9,
-  "fail_count": 1
+  "pass_count": 10,
+  "fail_count": 0
 }

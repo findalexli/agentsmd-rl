@@ -3,31 +3,31 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "instruction.md names the test file path test/regression/issue/25707.test.ts, the required harness functions (bunExe, bunEnv, tempDir), the error code ERR_UNKNOWN_BUILTIN_MODULE, and the files/functions to modify."
+      "reason": "instruction.md names the test path test/regression/issue/25707.test.ts, required imports (bunExe, bunEnv, tempDir, harness), Bun.spawn usage, the error code ERR_UNKNOWN_BUILTIN_MODULE, and files to change."
     },
     "no_solution_leakage": {
-      "outcome": "pass",
-      "reason": "The instruction describes what's broken (dynamic imports not deferred, arena memory unsafe, std.mem vs bun.strings) without specifying exact line changes or the .dynamic enum value."
+      "outcome": "fail",
+      "reason": "Issue 4 dictates the exact header separator string `| ------------------------------------------------------------ | ------------------------------------ |` and Issue 2 effectively tells the agent to copy line_text; these are near-verbatim fix instructions."
     },
     "solution_uniqueness_guard": {
-      "outcome": "pass",
-      "reason": "Tests are deliberately flexible: they check for whenModuleNotFound existence and import_record.kind handling rather than the specific .dynamic literal, and allow alternative bun.strings APIs."
+      "outcome": "fail",
+      "reason": "test_logger_ensures_line_text_safety asserts on the specific internal helper name 'addResolveErrorWithLevel' in the diff, and test_credentials_uses_bun_strings_api requires 'indexOfAny' specifically, excluding equivalent alternative implementations."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "pass",
-      "reason": "The regression test uses Bun.spawn to execute code in a subprocess, verifying actual runtime behavior rather than just text matching."
+      "outcome": "fail",
+      "reason": "All repo tests inspect file contents or git diff output (e.g., test_linker_defers_unknown_node_modules greps diff for '.dynamic'); none actually build/execute Bun to verify behavior, and the regression test file itself is only inspected textually, not run."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "test_linker_defers_unknown_node_modules only checks 'fn whenModuleNotFound' exists and 'import_record.kind' appears in linker.zig \u2014 both are true in the unfixed code. test_logger_ensures_line_text_safety just checks addResolveError exists and 'text' appears somewhere. These source-code checks would pass without any fix."
+      "outcome": "pass",
+      "reason": "Tests check multiple specific substrings and structural properties; a trivial stub cannot satisfy them without producing the required edits."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All four issues plus the regression test requirements are covered by test functions."
+      "reason": "Tests cover all four issues: linker diff, logger diff, credentials function, CLAUDE.md formatting, and regression test existence."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are named descriptively by concern (regression_test_file_created, linker_defers, logger_ensures_line_text_safety, etc.) with docstrings."
+      "reason": "Tests have descriptive names and docstrings grouped by concern (regression test, linker, logger, credentials, CLAUDE.md)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
@@ -35,22 +35,26 @@
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "Paths and function names appear consistent between instruction, tests, and solution."
+      "reason": "Paths and identifiers appear consistent between instruction and tests."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "pass",
-      "reason": "Instructions reference functions like addResolveError and containsNewlineOrCR which are appropriate domain-level references, not line-number leakage."
+      "outcome": "fail",
+      "reason": "Instruction explicitly names the linker deferral condition ('.require and .require_resolve'), the function addResolveError, the function containsNewlineOrCR, and the exact markdown table separator, leaving no localization work."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "CLAUDE.md diff is localized to table alignment and adding blank lines after specific headers, not a full rewrite."
+      "reason": "CLAUDE.md diff is localized to specific table rows and three section headers, not a full rewrite."
     }
   },
   "tier_a_fails": [
-    "test_not_tautological"
+    "no_solution_leakage",
+    "solution_uniqueness_guard",
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [],
-  "pass_count": 9,
-  "fail_count": 1
+  "tier_c_fails": [
+    "instruction_no_hint_leakage"
+  ],
+  "pass_count": 6,
+  "fail_count": 4
 }

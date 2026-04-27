@@ -115,8 +115,6 @@ def test_repo_workers_playground_build():
 
     This runs the full Vite build on the workers-playground package,
     which exercises vite.config.ts with the actual Vite 8 bundler.
-    The build would fail if the style-provider alias or assetsDir config
-    were misconfigured, causing rolldown to crash or assets to be misplaced.
     """
     r = subprocess.run(
         ["bash", "-c",
@@ -166,13 +164,12 @@ def test_repo_vite_plugin_build():
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
-def test_style_provider_cjs_alias(playground_dist):
+def test_createRenderer_in_bundle(playground_dist):
     """The built bundle must properly include createRenderer from @cloudflare/style-provider.
 
-    When rolldown mishandles the ESM/CJS hybrid package, createRenderer ends up
-    in an unreachable module initializer and does not appear in the output bundle.
-    Any correct fix (alias to CJS, Vite plugin, etc.) ensures createRenderer is
-    properly included in the bundled output.
+    When rolldown mishandles the @cloudflare/style-provider package, createRenderer
+    ends up undefined at runtime. Any correct fix ensures createRenderer is properly
+    included in the bundled output.
     """
     bundle_content = ""
     for js_file in Path(playground_dist).rglob("*.js"):
@@ -181,42 +178,39 @@ def test_style_provider_cjs_alias(playground_dist):
     assert "createRenderer" in bundle_content, (
         "createRenderer not found in the built bundle — "
         "@cloudflare/style-provider was not properly resolved for rolldown. "
-        "The ESM/CJS hybrid package must be configured so rolldown correctly "
+        "The package must be configured so rolldown correctly "
         "bundles the createRenderer export."
     )
 
 
 # [pr_diff] fail_to_pass
-def test_no_base_playground_option(playground_dist):
+def test_static_resources_no_playground_prefix(playground_dist):
     """Static resource paths in the built HTML must not carry a /playground/ prefix.
 
-    When Vite's base option is set to '/playground', ALL resource URLs
-    (including static assets like favicon) get the /playground/ prefix.
-    This causes a mismatch with Wrangler's asset serving because Wrangler
-    looks up files by their physical dist path. Removing the base option
-    (or using an alternative approach) ensures static resources are
-    referenced without the incorrect prefix.
+    When Vite's configuration incorrectly prefixes all resource URLs with /playground/,
+    static resources like favicon get paths such as /playground/favicon.ico. Wrangler
+    serves root-level static resources without that prefix, causing 404s. A correct
+    fix ensures static resources are referenced without the /playground/ prefix.
     """
     index_html = Path(playground_dist) / "index.html"
     assert index_html.exists(), "No index.html found in dist"
     content = index_html.read_text()
 
     assert "/playground/favicon" not in content, (
-        "index.html references /playground/favicon — the Vite base option "
-        "appears to be set to '/playground', which causes Wrangler asset path mismatch. "
+        "index.html references /playground/favicon — static resources have "
+        "an incorrect /playground/ prefix that causes 404s in production. "
         "Static resources must not have the /playground/ prefix."
     )
 
 
 # [pr_diff] fail_to_pass
-def test_assets_dir_playground(playground_dist):
+def test_js_css_assets_under_playground_dir(playground_dist):
     """Built JS/CSS assets must be physically located under dist/playground/ for Wrangler.
 
     Wrangler serves assets based on their physical location in the dist directory.
     For the Workers Playground (hosted at /playground), JS and CSS assets must be
     under dist/playground/ so Wrangler serves them at the correct URL paths.
-    Any correct approach (assetsDir, post-build move, plugin) must place the
-    compiled assets under this directory.
+    Any correct approach must place the compiled assets under this directory.
     """
     playground_dir = Path(playground_dist) / "playground"
     assert playground_dir.is_dir(), (

@@ -29,19 +29,26 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: A Node.js cleanup script exists at scripts/docker-clean.js using child_process
-- id: docker_clean_removes_named_containers
+- id: docker_clean_removes_containers
   type: fail_to_pass
   origin: pr_diff
-  description: Cleanup script force-removes named test containers (postgres-payload-test,
-    mongodb-payload-test)
+  description: Cleanup script uses docker rm to force-remove containers
+- id: docker_clean_handles_named_containers
+  type: fail_to_pass
+  origin: pr_diff
+  description: Cleanup script references postgres-payload-test and mongodb-payload-test containers
 - id: docker_clean_runs_compose_down
   type: fail_to_pass
   origin: pr_diff
   description: Cleanup script runs docker compose down for full cleanup
+- id: docker_clean_behavior
+  type: fail_to_pass
+  origin: pr_diff
+  description: Cleanup script is runnable and executes without crashing
 - id: package_json_has_docker_clean
   type: fail_to_pass
   origin: pr_diff
-  description: package.json defines a docker:clean script invoking the cleanup script
+  description: package.json defines a docker:clean script invoking a Node.js cleanup script
 - id: docker_start_calls_clean
   type: fail_to_pass
   origin: pr_diff
@@ -50,6 +57,14 @@ checks:
   type: fail_to_pass
   origin: pr_diff
   description: docker:stop script removed from package.json
+- id: claude_md_docker_clean_reference
+  type: config_edit
+  origin: pr_diff
+  description: CLAUDE.md references docker:clean instead of docker:stop
+- id: contributing_md_docker_clean_reference
+  type: config_edit
+  origin: pr_diff
+  description: CONTRIBUTING.md references docker:clean instead of docker:stop
 rubric:
 - rule: Config update descriptions are consistent with the style of existing documentation
   source:
@@ -61,114 +76,84 @@ rubric:
     path: CLAUDE.md
     lines: '85'
     commit: 2646018559ce984407587c2f059d1341c6e27a60
-  reference: '- Docker services: `pnpm docker:start` / `pnpm docker:clean` / `pnpm
-    docker:test`'
+  reference: '- Docker services: `pnpm docker:start` / `pnpm docker:clean` / `pnpm docker:test`'
 - rule: CONTRIBUTING.md references docker:clean instead of docker:stop
   source:
     path: CONTRIBUTING.md
     lines: 148-149
     commit: 2646018559ce984407587c2f059d1341c6e27a60
-  reference: 'pnpm docker:start  # Clean + start all services (PostgreSQL, MongoDB,
-    storage emulators) with fresh data
+  reference: 'pnpm docker:start  # Clean + start all services (PostgreSQL, MongoDB, storage emulators) with fresh data
 
     pnpm docker:clean  # Stop and remove all services'
 - rule: Keep comments for non-obvious "why" in execution flow.
   source:
     path: CLAUDE.md
     lines: 62-63
-  evidence: The catch block in scripts/docker-clean.js includes the comment `// Some
-    or all containers don't exist` to explain the non-obvious reason for swallowing
-    the error.
+  evidence: The catch block in scripts/docker-clean.js includes the comment `// Some or all containers don't exist` to explain the non-obvious reason for swallowing the error.
   category: documentation
 - rule: Monorepo uses pnpm workspaces.
   source:
     path: CLAUDE.md
     lines: '43'
-  evidence: The updated docker:start script in package.json and the documentation
-    in CONTRIBUTING.md use `pnpm docker:clean` rather than npm or yarn.
+  evidence: The updated docker:start script in package.json and the documentation in CONTRIBUTING.md use `pnpm docker:clean` rather than npm or yarn.
   category: tooling
 - rule: 'Commenting Guidelines: Keep comments for non-obvious ''why'' or complex logic.'
   source:
     path: CLAUDE.md
     lines: 70-73
-  evidence: The gold solution includes the comment `// Some or all containers don't
-    exist` inside the catch block of `scripts/docker-clean.js` to explain why the
-    error is swallowed, adhering to the guideline to k
+  evidence: The gold solution includes the comment `// Some or all containers don't exist` inside the catch block of `scripts/docker-clean.js` to explain why the error is swallowed, adhering to the guideline to k
   category: documentation
 - rule: Use `import type` for types, regular `import` for values
   source:
     path: CLAUDE.md
     lines: 60-60
-  evidence: The gold solution uses a regular `import { execSync } from 'child_process'`
-    for a value import in `scripts/docker-clean.js`.
+  evidence: The gold solution uses a regular `import { execSync } from 'child_process'` for a value import in `scripts/docker-clean.js`.
   category: style
-- rule: 'Execution flow: Skip comments when code is self-documenting. Keep for complex
-    logic, non-obvious ''why'''
+- rule: 'Execution flow: Skip comments when code is self-documenting. Keep for complex logic, non-obvious ''why'''
   source:
     path: CLAUDE.md
     lines: 63-64
-  evidence: The gold solution includes a comment `// Some or all containers don't
-    exist` in the catch block to explain the non-obvious reason for swallowing the
-    error.
+  evidence: The gold solution includes a comment `// Some or all containers don't exist` in the catch block to explain the non-obvious reason for swallowing the error.
   category: documentation
 - rule: 'Execution flow: Keep comments for non-obvious ''why'''
   source:
     path: CLAUDE.md
     lines: 50-50
-  evidence: The script includes a comment `// Some or all containers don't exist`
-    to explain the non-obvious 'why' of an empty catch block.
+  evidence: The script includes a comment `// Some or all containers don't exist` to explain the non-obvious 'why' of an empty catch block.
   category: documentation
 config_edits:
 - path: CLAUDE.md
   tier: 1
-  gold_added: '- Docker services: `pnpm docker:start` / `pnpm docker:clean` / `pnpm
-    docker:test`'
-  gold_removed: '- Docker services: `pnpm docker:start` / `pnpm docker:stop` / `pnpm
-    docker:test`'
+  gold_added: '- Docker services: `pnpm docker:start` / `pnpm docker:clean` / `pnpm docker:test`'
+  gold_removed: '- Docker services: `pnpm docker:start` / `pnpm docker:stop` / `pnpm docker:test`'
 - path: CONTRIBUTING.md
   tier: 2
-  gold_added: 'pnpm docker:start  # Clean + start all services (PostgreSQL, MongoDB,
-    storage emulators) with fresh data
+  gold_added: 'pnpm docker:start  # Clean + start all services (PostgreSQL, MongoDB, storage emulators) with fresh data
 
     pnpm docker:clean  # Stop and remove all services'
-  gold_removed: 'pnpm docker:start  # Start all services (PostgreSQL, MongoDB, storage
-    emulators) with fresh data
+  gold_removed: 'pnpm docker:start  # Start all services (PostgreSQL, MongoDB, storage emulators) with fresh data
 
     pnpm docker:stop   # Stop all services'
 distractors:
-- rule: Prefer pure functions; when mutation is unavoidable, return the mutated object
-    instead of void.
+- rule: Prefer pure functions; when mutation is unavoidable, return the mutated object instead of void.
   collision_type: scope_ambiguity
-  why_distracting: The cleanup script is inherently side-effectful (running shell
-    commands to delete containers). Trying to make it pure or return mutated objects
-    makes no sense for a standalone executable script.
+  why_distracting: The cleanup script is inherently side-effectful (running shell commands to delete containers). Trying to make it pure or return mutated objects makes no sense for a standalone executable script.
   severity: medium
   source:
     path: CLAUDE.md
     lines: 45-45
 - rule: 'Organize functions top-down: exports before helpers'
   collision_type: scope_ambiguity
-  why_distracting: The script is a standalone executable that runs imperatively on
-    load, not a module exporting functions. Attempting to organize it with exports
-    would break its functionality as a simple script.
+  why_distracting: The script is a standalone executable that runs imperatively on load, not a module exporting functions. Attempting to organize it with exports would break its functionality as a simple script.
   severity: low
   source:
     path: CLAUDE.md
     lines: 46-46
-- rule: Use when CI tests fail on main branch after PR merge, or when investigating
-    flaky test failures in CI environments
+- rule: Use when CI tests fail on main branch after PR merge, or when investigating flaky test failures in CI environments
   source:
     path: .claude/skills/triage-ci-flake/SKILL.md
     lines: 1-5
   collision_type: scope_ambiguity
-  why_distracting: The task mentions 'reliability' and 'orphan container conflicts'
-    which often manifest as flaky tests in CI. An agent might mistakenly activate
-    this skill and attempt to modify CI workflows or test retry logic instead of fixing
-    the underlying local docker compose lifecycle.
+  why_distracting: The task mentions 'reliability' and 'orphan container conflicts' which often manifest as flaky tests in CI. An agent might mistakenly activate this skill and attempt to modify CI workflows or test retry logic instead of fixing the underlying local docker compose lifecycle.
   severity: low
-hierarchy_analysis: The config hierarchy is flat, with `AGENTS.md` simply pointing
-  to `CLAUDE.md`. The primary challenge is scope ambiguity, as the rules in `CLAUDE.md`
-  are geared towards the core CMS logic (pure functions, exports, types) rather than
-  standalone imperative Node.js scripts. Additionally, the task is highly meta-referential,
-  requiring the agent to modify `CLAUDE.md` itself to update the documented Docker
-  commands.
+hierarchy_analysis: The config hierarchy is flat, with `AGENTS.md` simply pointing to `CLAUDE.md`. The primary challenge is scope ambiguity, as the rules in `CLAUDE.md` are geared towards the core CMS logic (pure functions, exports, types) rather than standalone imperative Node.js scripts. Additionally, the task is highly meta-referential, requiring the agent to modify `CLAUDE.md` itself to update the documented Docker commands.

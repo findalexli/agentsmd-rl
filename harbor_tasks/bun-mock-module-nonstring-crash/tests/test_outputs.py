@@ -190,7 +190,7 @@ REPO_DIR = "/workspace/bun"
 def test_repo_ts_typecheck():
     """Repo's TypeScript typecheck passes (pass_to_pass)."""
     r = subprocess.run(
-        ["bunx", "tsc", "--noEmit"],
+        ["bun", "x", "tsc", "--noEmit"],
         capture_output=True,
         text=True,
         timeout=120,
@@ -216,7 +216,7 @@ def test_repo_ban_words():
 def test_repo_js_lint():
     """Repo's JS lint (oxlint on src/js/bun) passes (pass_to_pass)."""
     r = subprocess.run(
-        ["bunx", "oxlint", "--format=github", "src/js/bun"],
+        ["bun", "x", "oxlint", "--format=github", "src/js/bun"],
         capture_output=True,
         text=True,
         timeout=120,
@@ -410,6 +410,17 @@ def test_agent_test_file_created():
     """Agent created a test file for mock.module non-string validation in test/."""
     found = _find_agent_test_files()
     assert len(found) > 0, "No test file for mock.module non-string validation found in test/"
+    # Verify the test file actually runs successfully
+    r = subprocess.run(
+        ["bun", "test", "--bail", str(found[0])],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO,
+    )
+    assert r.returncode == 0, (
+        f"Agent test file found but fails to run:\n{r.stderr[-500:]}"
+    )
 
 
 # [agent_config] fail_to_pass — CLAUDE.md:229 @ e94c3035

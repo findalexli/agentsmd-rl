@@ -5,6 +5,7 @@ This task tests:
 2. Config updates: browser_run_code added to agent definition files
 """
 
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -17,24 +18,41 @@ def test_run_code_ts_uses_function_format():
     run_code_path = REPO / "packages/playwright/src/mcp/browser/tools/runCode.ts"
     content = run_code_path.read_text()
 
-    # Should describe the function-based API
-    assert "async (page) =>" in content, "runCode.ts should describe function format"
-    assert "single argument, page" in content or "page, which you can use" in content, \
-        "runCode.ts should document the page argument"
+    # The code parameter description should document the function-based API
+    describe_match = re.search(r'\.describe\s*\(\s*`([^`]+)`', content)
+    assert describe_match, "code schema should have a describe() call with template literal"
+    description = describe_match.group(1)
+
+    # Description should mention it accepts a function (not "code snippet")
+    assert re.search(r'\bfunction\b', description, re.IGNORECASE), \
+        "Description should mention that the parameter accepts a function"
+    # Description should reference the page parameter
+    assert re.search(r'\bpage\b', description), \
+        "Description should mention the page parameter"
 
 
-def test_run_code_ts_wraps_function_call():
-    """[f2p_code] runCode.ts should wrap code as function call"""
+def test_run_code_invokes_as_function():
+    """[f2p_code] runCode.ts should invoke the code parameter as a callable with page"""
     run_code_path = REPO / "packages/playwright/src/mcp/browser/tools/runCode.ts"
     content = run_code_path.read_text()
 
-    # Should wrap as function call in response.addCode
-    assert "await (${params.code})(page)" in content, \
-        "runCode.ts should wrap code as function call in response"
+    # The handle function should invoke params.code as a function and pass page
+    handle_idx = content.find('handle:')
+    assert handle_idx != -1, "runCode.ts must have a handle function"
+    handle_section = content[handle_idx:]
 
-    # Should execute as function call
-    assert "await (${params.code})(page);" in content and content.count("(${params.code})(page)") >= 2, \
-        "runCode.ts should execute code as function call"
+    # params.code must be referenced in the handle logic
+    assert 'params.code' in handle_section, "handle should reference params.code"
+
+    # The vm execution snippet must pass page as a function argument.
+    # Old code used page from the vm context as a global; new code should
+    # explicitly pass page when invoking the user's function.
+    snippet_match = re.search(r'snippet\s*=\s*`([\s\S]*?)`', handle_section)
+    assert snippet_match, "handle must contain a vm execution snippet"
+    snippet_body = snippet_match.group(1)
+
+    assert re.search(r'\(page\)', snippet_body), \
+        "VM execution snippet must invoke user code with page as an argument"
 
 
 def test_run_code_ts_no_direct_injection():
@@ -42,14 +60,17 @@ def test_run_code_ts_no_direct_injection():
     run_code_path = REPO / "packages/playwright/src/mcp/browser/tools/runCode.ts"
     content = run_code_path.read_text()
 
-    # Old pattern was: ${params.code}; inside an async IIFE
-    # New pattern should NOT have bare ${params.code} followed by semicolon
+    # The old implementation injected ${params.code} as bare statements inside
+    # an async IIFE body. The new implementation should treat params.code as a
+    # value (function expression) that gets invoked or assigned, not as raw
+    # statements to execute.
     lines = content.split('\n')
     for i, line in enumerate(lines):
         if '${params.code}' in line:
-            # Should always be wrapped as function call
-            assert '(${params.code})(page)' in line, \
-                f"Line {i+1} should wrap params.code as function call, found: {line.strip()}"
+            stripped = line.strip()
+            # Should NOT be just ${params.code}; on its own (bare statement injection)
+            assert not re.match(r'^\$\{params\.code\}\s*;?\s*$', stripped), \
+                f"Line {i+1} directly injects params.code as raw statements: {stripped}"
 
 
 def test_claude_agents_has_browser_run_code():
@@ -81,7 +102,6 @@ def test_github_agents_has_browser_run_code():
 
     # Verify it's in the right position (alphabetically between press_key and select_option)
     lines = content.split('\n')
-    tool_lines = [i for i, line in enumerate(lines) if "playwright-test/browser_" in line]
     press_key_line = next(i for i, line in enumerate(lines) if "playwright-test/browser_press_key" in line)
     run_code_line = next(i for i, line in enumerate(lines) if "playwright-test/browser_run_code" in line)
     select_option_line = next(i for i, line in enumerate(lines) if "playwright-test/browser_select_option" in line)
@@ -112,13 +132,13 @@ def test_packages_agents_has_browser_run_code():
 def test_typescript_compiles():
     """[p2p] TypeScript should compile without errors"""
     result = subprocess.run(
-        ["npx", "tsc", "--noEmit", "-p", "packages/playwright/src/mcp/browser"],
+        ["npm", "run", "build"],
         cwd=REPO,
         capture_output=True,
         text=True,
-        timeout=120
+        timeout=300
     )
-    assert result.returncode == 0, f"TypeScript compilation failed:\n{result.stdout}\n{result.stderr}"
+    assert result.returncode == 0, f"Build failed:\n{result.stdout}\n{result.stderr}"
 
 
 def test_repo_run_code_tests():

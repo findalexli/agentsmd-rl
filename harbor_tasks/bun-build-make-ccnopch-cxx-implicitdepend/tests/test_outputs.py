@@ -15,185 +15,6 @@ from pathlib import Path
 REPO = "/workspace/bun"
 
 
-def _run_ts_test(ts_code: str, timeout: int = 60) -> dict:
-    """Execute TypeScript code and return parsed JSON output.
-    
-    Tries multiple TypeScript runners (bun, deno, node/tsx).
-    """
-    import tempfile
-    import os
-
-    # Wrap user code with result extraction
-    wrapped = ts_code + '\nconsole.log("RESULT:" + JSON.stringify(result));'
-
-    # Write to temp file in the repo so imports work
-    with tempfile.NamedTemporaryFile(
-        mode="w", suffix=".ts", delete=False, dir=f"{REPO}/scripts/build"
-    ) as f:
-        f.write(wrapped)
-        ts_path = f.name
-
-    try:
-        # Try bun first, then deno, then npx tsx
-        runners = [
-            ["bun", "run", ts_path],
-            ["deno", "run", "--allow-all", ts_path],
-            ["npx", "tsx", ts_path],
-        ]
-
-        for runner in runners:
-            try:
-                result = subprocess.run(
-                    runner,
-                    capture_output=True,
-                    text=True,
-                    timeout=timeout,
-                    cwd=REPO,
-                )
-                if result.returncode == 0:
-                    # Extract RESULT: line
-                    for line in result.stdout.strip().split("\n"):
-                        if line.startswith("RESULT:"):
-                            return json.loads(line[7:])
-                    # If no RESULT line, try parsing whole output
-                    try:
-                        return json.loads(result.stdout.strip())
-                    except:
-                        pass
-            except (subprocess.TimeoutExpired, FileNotFoundError):
-                continue
-
-        raise RuntimeError(f"No TypeScript runner available")
-
-    finally:
-        try:
-            os.unlink(ts_path)
-        except:
-            pass
-
-
-def _get_compile_c_behavior() -> dict:
-    """Execute compileC and return the build node configuration for cc calls."""
-    ts_code = '''
-import { Ninja } from "./ninja.ts";
-import { emitBun } from "./bun.ts";
-import { registerCompileRules } from "./compile.ts";
-
-class RecordingNinja extends Ninja {
-  buildNodes: any[] = [];
-  constructor(opts: any) {
-    super(opts);
-  }
-  build(node: any): void {
-    this.buildNodes.push({
-      rule: node.rule,
-      inputs: node.inputs ?? [],
-      implicitInputs: node.implicitInputs ?? [],
-      orderOnlyInputs: node.orderOnlyInputs ?? [],
-    });
-    super.build(node);
-  }
-}
-
-const cfg = {
-  cwd: "/workspace/bun",
-  buildDir: "/workspace/bun/build",
-  mode: "cpp-only",
-  os: "linux",
-  arch: "x64",
-  linux: true, darwin: false, windows: false,
-  webkit: "local", staticLibatomic: false,
-  cc: "clang", cxx: "clang++", ar: "llvm-ar",
-  jsRuntime: "node", libPrefix: "lib", libSuffix: ".a",
-};
-
-const n = new RecordingNinja({ buildDir: cfg.buildDir });
-registerCompileRules(n, cfg as any);
-
-const sources = { cpp: [], c: ["/workspace/bun/src/test.c"], zig: [] };
-emitBun(n, cfg as any, sources as any);
-
-const ccNodes = n.buildNodes.filter((n: any) => n.rule === "cc");
-const result = {
-  ccCount: ccNodes.length,
-  ccNodes: ccNodes.map((n: any) => ({
-    implicitInputs: n.implicitInputs,
-    orderOnlyInputs: n.orderOnlyInputs,
-  })),
-  hasImplicitDepOutputs: ccNodes.some((n: any) =>
-    n.implicitInputs.some((i: string) => i.includes(".a"))
-  ),
-  hasOrderOnlyCodegen: ccNodes.some((n: any) =>
-    n.orderOnlyInputs.some((i: string) => i.includes("codegen") || i.includes(".h"))
-  ),
-};
-'''
-    return _run_ts_test(ts_code)
-
-
-def _get_nopch_cxx_behavior() -> dict:
-    """Execute no-PCH cxx path and return build node configuration."""
-    ts_code = '''
-import { Ninja } from "./ninja.ts";
-import { emitBun } from "./bun.ts";
-import { registerCompileRules } from "./compile.ts";
-
-class RecordingNinja extends Ninja {
-  buildNodes: any[] = [];
-  constructor(opts: any) {
-    super(opts);
-  }
-  build(node: any): void {
-    this.buildNodes.push({
-      rule: node.rule,
-      inputs: node.inputs ?? [],
-      implicitInputs: node.implicitInputs ?? [],
-      orderOnlyInputs: node.orderOnlyInputs ?? [],
-      vars: node.vars ?? {},
-    });
-    super.build(node);
-  }
-}
-
-const cfg = {
-  cwd: "/workspace/bun",
-  buildDir: "/workspace/bun/build",
-  mode: "cpp-only",
-  os: "win",
-  arch: "x64",
-  linux: false, darwin: false, windows: true,
-  webkit: "local", staticLibatomic: false,
-  cc: "clang-cl", cxx: "clang-cl", ar: "llvm-lib",
-  jsRuntime: "node", libPrefix: "", libSuffix: ".lib",
-};
-
-const n = new RecordingNinja({ buildDir: cfg.buildDir });
-registerCompileRules(n, cfg as any);
-
-const sources = { cpp: ["/workspace/bun/src/test.cpp"], c: [], zig: [] };
-emitBun(n, cfg as any, sources as any);
-
-const cxxNodes = n.buildNodes.filter((n: any) =>
-  n.rule === "cxx" && !n.vars?.pch_file
-);
-
-const result = {
-  cxxCount: cxxNodes.length,
-  cxxNodes: cxxNodes.map((n: any) => ({
-    implicitInputs: n.implicitInputs,
-    orderOnlyInputs: n.orderOnlyInputs,
-  })),
-  hasImplicitDepOutputs: cxxNodes.some((n: any) =>
-    n.implicitInputs.some((i: string) => i.includes(".lib") || i.includes(".a"))
-  ),
-  hasOrderOnlyCodegen: cxxNodes.some((n: any) =>
-    n.orderOnlyInputs.some((i: string) => i.includes("codegen") || i.includes(".h"))
-  ),
-};
-'''
-    return _run_ts_test(ts_code)
-
-
 # -----------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — core behavioral tests
 # -----------------------------------------------------------------------------
@@ -201,61 +22,139 @@ const result = {
 def test_cc_implicit_dep_outputs():
     """cc() calls in compileC pass depOutputs as implicitInputs, not orderOnlyInputs.
 
-    This test executes the emitBun code path and verifies that C compilation
-    nodes have library outputs (.a files) in their implicitInputs, triggering
-    recompilation when dependencies are rebuilt.
+    Verifies that C compilation nodes have library outputs (depOutputs) as
+    implicit dependencies, triggering recompilation when dep libraries are rebuilt.
+    Uses subprocess to analyze the build script structure.
     """
-    result = _get_compile_c_behavior()
+    r = subprocess.run(
+        ["python3", "-c", """
+import re
+from pathlib import Path
 
-    assert result.get("ccCount", 0) > 0, "Must have at least one cc build node"
-    assert result.get("hasImplicitDepOutputs") is True, (
-        f"cc() calls must have library outputs (.a files) in implicitInputs. Result: {result}"
+src = Path("/workspace/bun/scripts/build/bun.ts").read_text()
+
+# Find the cc() call in the C compilation section (compileC function)
+# Look for cc(n, cfg, ...) call with its options
+cc_call_match = re.search(r'compileC.*?cc\\(n,\\s*cfg.*?\\}\\)?;', src, re.DOTALL)
+assert cc_call_match, "Could not find cc() call in compileC"
+cc_context = cc_call_match.group(0)
+
+# The cc() call must have implicitInputs that references dep outputs
+# (library files that serve as rebuild signals)
+has_implicit_deps = bool(re.search(r'implicitInputs.*?dep', cc_context, re.DOTALL | re.IGNORECASE))
+assert has_implicit_deps, (
+    f"cc() call must use implicitInputs for dep outputs to trigger "
+    f"recompilation when dependencies are rebuilt. Found: {cc_context}"
+)
+
+# Verify dep outputs are NOT in orderOnlyInputs for the cc call
+# (codegen/headers may be order-only, but dep library outputs must not be)
+order_only_match = re.search(r'orderOnlyInputs\\s*[:=]\\s*(\\S+)', cc_context)
+if order_only_match:
+    order_only_value = order_only_match.group(1)
+    # Should reference codegen, not dep outputs
+    assert 'depOutput' not in order_only_value and 'depOrderOnly' not in order_only_value, (
+        f"cc() orderOnlyInputs must not contain dep outputs: {order_only_value}"
     )
+
+print("PASS")
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 def test_nopch_cxx_implicit_dep_outputs():
     """No-PCH cxx path passes depOutputs as implicitInputs.
 
-    Verifies that when PCH is disabled (e.g., on Windows), cxx() calls
-    receive library outputs as implicitInputs, triggering recompilation
-    when dependencies are rebuilt.
+    Verifies that when PCH is disabled (e.g., on Windows), the cxx() compilation
+    path uses implicit dependencies for dep outputs, not just order-only.
     """
-    result = _get_nopch_cxx_behavior()
+    r = subprocess.run(
+        ["python3", "-c", """
+import re
+from pathlib import Path
 
-    if result.get("cxxCount", 0) == 0:
-        return  # No no-PCH nodes to test
+src = Path("/workspace/bun/scripts/build/bun.ts").read_text()
 
-    assert result.get("hasImplicitDepOutputs") is True, (
-        f"No-PCH cxx() calls must have library outputs in implicitInputs. Result: {result}"
+# Find the no-PCH else branch: the else block that sets up deps when PCH is disabled
+# This is the code path for Windows where PCH is not used
+else_match = re.search(
+    r'\\}\\s*else\\s*\\{([^}]*?(?:orderOnlyInputs|implicitInputs)[^}]*)\\}',
+    src
+)
+assert else_match, "Could not find no-PCH else branch in bun.ts"
+else_body = else_match.group(1)
+
+# The else branch must set implicitInputs for dep outputs
+has_implicit = bool(re.search(r'implicitInputs', else_body))
+assert has_implicit, (
+    f"No-PCH else branch must set implicitInputs for dep outputs "
+    f"to trigger recompilation. Found: {else_body}"
+)
+
+# implicitInputs must reference dep outputs (not just codegen)
+implicit_match = re.search(r'implicitInputs\\s*=\\s*(\\S+)', else_body)
+assert implicit_match, f"Could not find implicitInputs assignment in: {else_body}"
+implicit_value = implicit_match.group(1)
+assert 'dep' in implicit_value.lower() or 'Dep' in implicit_value or 'output' in implicit_value.lower(), (
+    f"implicitInputs must reference dep outputs, got: {implicit_value}"
+)
+
+print("PASS")
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
     )
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 def test_codegen_separated_from_dep_outputs():
     """depOutputs and codegen headers are in separate dependency lists.
 
     Verifies the build graph separates library outputs (implicit deps)
-    from codegen headers (order-only deps).
+    from codegen headers (order-only deps) — they must not be combined
+    into a single variable used for one dependency type.
     """
-    c_result = _get_compile_c_behavior()
+    r = subprocess.run(
+        ["python3", "-c", """
+import re
+from pathlib import Path
 
-    assert c_result.get("hasImplicitDepOutputs") is True, (
-        f"Must have library outputs as implicit deps. Result: {c_result}"
-    )
-    assert c_result.get("hasOrderOnlyCodegen") is True, (
-        f"Must have codegen headers as order-only deps. Result: {c_result}"
-    )
+src = Path("/workspace/bun/scripts/build/bun.ts").read_text()
 
-    try:
-        cxx_result = _get_nopch_cxx_behavior()
-        if cxx_result.get("cxxCount", 0) > 0:
-            assert cxx_result.get("hasImplicitDepOutputs") is True, (
-                f"No-PCH cxx must have library outputs as implicit deps. Result: {cxx_result}"
-            )
-            assert cxx_result.get("hasOrderOnlyCodegen") is True, (
-                f"No-PCH cxx must have codegen headers as order-only deps. Result: {cxx_result}"
-            )
-    except Exception:
-        pass
+# Check that depOutputs and codegen.cppAll are NOT combined into a single
+# array spread (e.g. [...depOutputs, ...codegen.cppAll] as one variable)
+combined_pattern = re.search(
+    r'\\[\\s*\\.\\.\\.depOutputs\\s*,\\s*\\.\\.\\.codegen\\.cppAll\\s*\\]',
+    src
+)
+assert not combined_pattern, (
+    "depOutputs and codegen.cppAll must NOT be combined into a single variable. "
+    "They serve different dependency purposes: dep outputs are implicit deps "
+    "(rebuild triggers) while codegen headers are order-only."
+)
+
+# Verify that codegen headers are used as order-only somewhere in compile section
+compile_section = src[src.find('Step 6'):] if 'Step 6' in src else src
+has_codegen_order_only = bool(re.search(r'orderOnlyInputs.*codegen', compile_section, re.DOTALL))
+assert has_codegen_order_only, (
+    "Codegen headers must be used as orderOnlyInputs in the compile section"
+)
+
+# Verify that dep outputs are used as implicit inputs somewhere in compile section
+has_dep_implicit = bool(re.search(r'implicitInputs.*dep', compile_section, re.DOTALL | re.IGNORECASE))
+assert has_dep_implicit, (
+    "Dep outputs must be used as implicitInputs in the compile section"
+)
+
+print("PASS")
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # -----------------------------------------------------------------------------
@@ -273,29 +172,30 @@ def test_claude_md_dep_strategy_updated():
 
     # Check that old incorrect guidance is gone
     has_old = bool(re.search(r"cxx needs order-only dep on.*depOutputs", src, re.IGNORECASE))
+    assert not has_old, (
+        "CLAUDE.md still contains the old incorrect guidance "
+        "'cxx needs order-only dep on depOutputs'"
+    )
 
-    # Check for unified implicit guidance
+    # Check for unified implicit guidance mentioning PCH, cc, and cxx
     has_implicit = bool(
         re.search(r"PCH.*cc.*cxx.*implicit", src, re.IGNORECASE) or
         re.search(r"PCH.*cc.*and.*no-PCH cxx.*implicit", src, re.IGNORECASE) or
         re.search(r"cc.*cxx.*need implicit dep", src, re.IGNORECASE)
     )
-
-    # Check Gotchas section has all three
-    gotchas_match = re.search(r"Gotchas([\s\S]*?)(?=^#{1,2} |\Z)", src, re.MULTILINE)
-    gotchas_section = gotchas_match.group(1) if gotchas_match else ""
-    has_unified = (
-        bool(re.search(r"PCH", gotchas_section)) and
-        bool(re.search(r"cc", gotchas_section)) and
-        bool(re.search(r"cxx", gotchas_section)) and
-        bool(re.search(r"implicit", gotchas_section))
+    assert has_implicit, (
+        "CLAUDE.md must contain unified guidance stating PCH, cc, and cxx "
+        "all need implicit deps on depOutputs"
     )
 
-    updated = not has_old and has_implicit and has_unified
-    assert updated, (
-        f"CLAUDE.md must document implicit dep strategy for PCH, cc, and no-PCH cxx. "
-        f"has_old={has_old}, has_implicit={has_implicit}, has_unified={has_unified}"
-    )
+    # Check Gotchas section specifically has all three mentioned with implicit
+    gotchas_match = re.search(r"## Gotchas([\s\S]*?)(?=^#{1,2} |\Z)", src, re.MULTILINE)
+    assert gotchas_match, "CLAUDE.md must have a ## Gotchas section"
+    gotchas_section = gotchas_match.group(1)
+    assert re.search(r"PCH", gotchas_section), "Gotchas must mention PCH"
+    assert re.search(r"cc", gotchas_section), "Gotchas must mention cc"
+    assert re.search(r"cxx", gotchas_section), "Gotchas must mention cxx"
+    assert re.search(r"implicit", gotchas_section), "Gotchas must mention implicit deps"
 
 
 # -----------------------------------------------------------------------------

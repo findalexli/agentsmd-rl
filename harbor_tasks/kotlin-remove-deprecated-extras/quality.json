@@ -1,58 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all deprecated APIs (extrasReadProperty, extrasFactoryProperty, extrasNullableLazyProperty, ExtrasReadOnlyProperty, ExtrasFactoryProperty, NullableExtrasLazyProperty, readProperty, factoryProperty, nullableLazyProperty), the specific files, the import to remove, and the @Suppress annotation. The test checks for these same specific strings and file paths, all discoverable from the instruction."
+      "reason": "Instruction names all relevant files, function/interface/extension names, the deprecation message string, the @Suppress annotation, and the test method to remove."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly says to replace 'readProperty' with 'readWriteProperty' (step 3 says 'migrate all usages of deprecated APIs to their non-deprecated equivalents') and the test test_test_file_uses_readwrite_property checks for 'readWriteProperty', and test_test_file_uses_lazy_property checks for 'lazyProperty'. While the instruction doesn't literally say 'replace X with Y', the test names and the combination of instruction step 3 ('Examine the remaining non-deprecated APIs') with specif"
+      "outcome": "pass",
+      "reason": "Instruction describes what to remove and what to migrate to, but doesn't show exact code replacements."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "The tests check for absence of deprecated patterns and presence of non-deprecated API usage patterns. The f2p tests mostly check that deprecated code is removed (not how it's removed). The migration tests check that deprecated extensions like 'keyA.readProperty' are not present, but don't assert exact replacement code structure. Alternative correct implementations would pass."
+      "reason": "Tests check for absence of deprecated identifiers and that tests still pass; alternative correct migrations would still satisfy these."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "While f2p tests are text-based checks for removal of deprecated code, the p2p tests actually compile the Kotlin sources (test_main_sources_compile, test_extras_property_test_compiles) and run JUnit tests (test_extras_property_tests_pass, test_extras_tests_pass, etc.), verifying actual behavior through execution."
+      "reason": "Tests compile sources via kotlinc and run JUnit test classes via subprocess, verifying behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check that specific deprecated patterns are absent from source files that initially contain them. A stub/no-op solution (not modifying files) would fail these tests since the deprecated code is present in the original files. The compilation tests also verify the migrated test code actually compiles and passes."
+      "reason": "F2P tests require actual removal of code AND p2p tests require successful compilation and test execution; a stub couldn't satisfy both."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All five instruction steps are tested: removal of deprecated section, removal of deprecated functions/interfaces/extensions, removal of java.util.* import, migration of test usages, removal of nullableLazyProperty tests, and removal of @Suppress annotation. Compilation and test execution are also verified."
+      "reason": "All required removals (APIs, imports, suppress annotation, test method) and migrations are tested, plus all named test classes are run."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are clearly grouped into 'Fail-to-pass tests' and 'Pass-to-pass tests' sections with descriptive names and docstrings explaining what each test verifies."
+      "reason": "Tests have docstrings and are grouped under fail-to-pass and pass-to-pass section comments."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves source code editing, not structured data production."
+      "reason": "Task is code refactoring, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, function names, and variable names in the instruction and tests are consistent and correct."
+      "reason": "Filenames and identifiers in instruction match those used in tests."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction names the exact file (ExtrasProperty.kt), the exact comment block ('DEPRECATED APIs'), specific function names, specific interface names, and the exact import line to remove. While some specificity is needed, telling the agent to look for 'DEPRECATED APIs' comment section and listing every single deprecated API by name goes beyond describing what's broken\u2014it precisely localizes every change needed."
+      "outcome": "pass",
+      "reason": "Instruction names files but localization is part of the task definition (removing specific deprecated APIs); no line numbers given."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "Code-only task, no config edits."
     }
   },
-  "tier_a_fails": [
-    "no_solution_leakage"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 7,
-  "fail_count": 2
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
 }

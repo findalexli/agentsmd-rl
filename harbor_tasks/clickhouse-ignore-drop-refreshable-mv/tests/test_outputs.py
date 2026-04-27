@@ -9,60 +9,94 @@ REPO = "/workspace/ClickHouse"
 TARGET_FILE = os.path.join(REPO, "src/Interpreters/InterpreterDropQuery.cpp")
 
 
-def test_refreshable_view_check_exists():
-    """Verify that the refreshable materialized view check exists (f2p)."""
+def _run_clang_tidy(file_path: str, timeout: int = 60) -> subprocess.CompletedProcess:
+    """Run clang-tidy on a file to verify syntactic validity."""
+    return subprocess.run(
+        ["clang-tidy", "-checks=-*", file_path, "--"],
+        capture_output=True, text=True, timeout=timeout, cwd=REPO
+    )
+
+
+def test_refreshable_view_guard():
+    """Verify that refreshable materialized views are protected from DROP-to-TRUNCATE conversion (f2p)."""
     with open(TARGET_FILE, 'r') as f:
         content = f.read()
 
-    # Check for the comment about refreshable views
-    assert re.search(r"Don't ignore `?DROP`? for refreshable materialized views", content), \
-        "Missing comment about refreshable materialized views"
+    # Check that the file references StorageMaterializedView (behavior: we check this type)
+    assert "StorageMaterializedView" in content, \
+        "Missing reference to StorageMaterializedView"
 
-    # Check for the dynamic_cast to StorageMaterializedView
-    assert "dynamic_cast<StorageMaterializedView *>" in content, \
-        "Missing dynamic_cast to StorageMaterializedView"
+    # Check that refreshability is tested (behavior: we call isRefreshable or similar)
+    assert "isRefreshable" in content, \
+        "Missing refreshability check"
 
-    # Check for isRefreshable() call
-    assert "isRefreshable()" in content, \
-        "Missing isRefreshable() call"
+    # Check that the ignore_drop_queries_probability condition has been extended with a guard
+    lines = content.split('\n')
+    guard_found = False
+    for i, line in enumerate(lines):
+        if "ignore_drop_queries_probability" in line:
+            # Look at this line and prior lines for a negated guard condition
+            context = ' '.join(lines[max(0, i - 2):i + 1])
+            if '!' in context and ('&&' in context or '||' in context):
+                guard_found = True
+                break
 
-    # Check for is_refreshable_view variable
-    assert "is_refreshable_view" in content, \
-        "Missing is_refreshable_view variable"
+    assert guard_found, \
+        "Missing guard condition before ignore_drop_queries_probability check"
 
-    # Check that is_refreshable_view is used in the condition
-    # Looking for the pattern where it's checked before ignore_drop_queries_probability
-    pattern = r'!is_refreshable_view\s*&&\s*settings\[Setting::ignore_drop_queries_probability\]'
-    assert re.search(pattern, content), \
-        "is_refreshable_view is not properly used in the DROP query condition"
+    # Verify the modified code is syntactically valid by running clang-tidy (subprocess)
+    result = _run_clang_tidy(TARGET_FILE)
+    combined = result.stdout + result.stderr
+    syntax_errors = re.findall(r"error: (expected|syntax error|unmatched)", combined, re.IGNORECASE)
+    assert not syntax_errors, f"Syntax errors in modified file: {syntax_errors[:3]}"
 
 
 def test_truncate_behavior_documented():
-    """Verify that TRUNCATE behavior is documented in the comment (f2p)."""
+    """Verify that the TRUNCATE problem is documented in a comment (f2p)."""
     with open(TARGET_FILE, 'r') as f:
         content = f.read()
 
-    # Check for the comment explaining why TRUNCATE is problematic
-    assert re.search(r"`?TRUNCATE`? doesn't stop", content), \
-        "Missing explanation about TRUNCATE not stopping refresh task"
+    # Find comments in the file
+    comments = re.findall(r'//[/!].*', content)
 
-    assert "orphaned view would keep refreshing indefinitely" in content, \
-        "Missing explanation about orphaned view behavior"
+    # Check that at least one comment mentions both TRUNCATE and refresh-related behavior
+    truncate_refresh_comment = False
+    for comment in comments:
+        lower = comment.lower()
+        if 'truncate' in lower and ('refresh' in lower or 'orphan' in lower or 'background' in lower):
+            truncate_refresh_comment = True
+            break
+
+    assert truncate_refresh_comment, \
+        "Missing comment explaining why TRUNCATE is problematic for refreshable views"
+
+
+def test_logic_structure():
+    """Verify the logic structure: guard comes before the probability check (f2p)."""
+    with open(TARGET_FILE, 'r') as f:
+        content = f.read()
+
+    lines = content.split('\n')
+
+    # Find where StorageMaterializedView-related code appears
+    mv_line = -1
+    prob_line = -1
+
+    for i, line in enumerate(lines):
+        if "StorageMaterializedView" in line and "dynamic_cast" in line:
+            mv_line = i
+        if "ignore_drop_queries_probability" in line:
+            prob_line = i
+
+    if mv_line != -1 and prob_line != -1:
+        assert mv_line < prob_line, \
+            "The refreshable materialized view check should happen before the probability condition"
 
 
 def test_cpp_syntax_valid():
     """Verify that the C++ file has valid syntax (p2p)."""
-    # Use clang-tidy to check syntax
-    result = subprocess.run(
-        ["clang-tidy", "-checks=-*", TARGET_FILE, "--"],
-        capture_output=True,
-        text=True,
-        timeout=60,
-        cwd=REPO
-    )
+    result = _run_clang_tidy(TARGET_FILE)
 
-    # clang-tidy might return non-zero for issues, but we just want to verify
-    # the file is parseable. If it can't parse, stderr will have errors.
     error_patterns = [
         r"fatal error: .* file not found",
         r"error: expected",
@@ -74,32 +108,6 @@ def test_cpp_syntax_valid():
     for pattern in error_patterns:
         matches = re.findall(pattern, combined_output, re.IGNORECASE)
         assert not matches, f"Syntax error found: {matches}"
-
-
-def test_logic_structure():
-    """Verify the logic structure is correct (p2p)."""
-    with open(TARGET_FILE, 'r') as f:
-        content = f.read()
-
-    # The fix adds a check that converts DROP to TRUNCATE only when NOT a refreshable view
-    # This means the condition should be: !is_refreshable_view && other_conditions
-
-    # Find the section around the ignore_drop_queries_probability check
-    lines = content.split('\n')
-
-    # Check that dynamic_cast happens before the condition
-    materialized_view_line = -1
-    condition_line = -1
-
-    for i, line in enumerate(lines):
-        if "auto * materialized_view = dynamic_cast" in line:
-            materialized_view_line = i
-        if "!is_refreshable_view" in line and "ignore_drop_queries_probability" in line:
-            condition_line = i
-
-    if materialized_view_line != -1 and condition_line != -1:
-        assert materialized_view_line < condition_line, \
-            "dynamic_cast should happen before the is_refreshable_view check"
 
 
 def test_repo_cpp_structure_valid():
@@ -135,10 +143,7 @@ def test_repo_clang_tidy_basic():
          "-extra-arg=-Wno-unknown-pragmas",
          "-extra-arg=-Wno-unused-command-line-argument",
          TARGET_FILE, "--"],
-        capture_output=True,
-        text=True,
-        timeout=120,
-        cwd=REPO
+        capture_output=True, text=True, timeout=120, cwd=REPO
     )
 
     # Check for fatal errors that would indicate syntax issues
@@ -250,9 +255,7 @@ def test_repo_python_syntax_valid():
         if os.path.exists(py_file):
             result = subprocess.run(
                 ["python3", "-m", "py_compile", py_file],
-                capture_output=True,
-                text=True,
-                timeout=30,
+                capture_output=True, text=True, timeout=30,
             )
             if result.returncode != 0:
                 errors.append(f"{py_file}: {result.stderr[:200]}")

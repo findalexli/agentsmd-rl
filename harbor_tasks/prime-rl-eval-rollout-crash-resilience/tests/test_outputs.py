@@ -367,11 +367,21 @@ def test_evaluate_env_empty_outputs():
     """evaluate_env() returns early with warning when all rollouts fail."""
     eval_utils, mock_evaluate, mock_logger = _import_eval_utils()
 
-    asyncio.run(eval_utils.evaluate_env(
-        env=MagicMock(), env_name="test_env", model_name="m",
-        sampling_args={}, num_examples=5, rollouts_per_example=2,
-        max_retries=0, ckpt_step=100, step=50, get_client=AsyncMock(),
-    ))
+    # evaluate_env must handle empty outputs gracefully (not crash)
+    crashed = False
+    crash_msg = ""
+    try:
+        asyncio.run(eval_utils.evaluate_env(
+            env=MagicMock(), env_name="test_env", model_name="m",
+            sampling_args={}, num_examples=5, rollouts_per_example=2,
+            max_retries=0, ckpt_step=100, step=50, get_client=AsyncMock(),
+        ))
+    except Exception as exc:
+        crashed = True
+        crash_msg = str(exc)
+
+    assert not crashed, \
+        f"evaluate_env() crashed on empty outputs instead of returning early: {crash_msg}"
 
     # Anti-stub: verify evaluate() was actually called
     assert mock_evaluate.called, "evaluate() was never called — evaluate_env is a stub"
@@ -511,17 +521,22 @@ def test_evaluate_calls_generate():
 # ---------------------------------------------------------------------------
 
 
-# [agent_config] pass_to_pass — AGENTS.md:5 @ 60f01a04681df563044cf3cb7c64ec480b608451
+# [pr_diff] fail_to_pass — AGENTS.md:5 @ 60f01a04681df563044cf3cb7c64ec480b608451
 def test_no_bare_except():
-    """No bare except blocks — must catch specific exception types."""
+    """Exception handlers must use specific types, and fault tolerance must be implemented."""
+    has_except_handler = False
     for name in ["eval_utils.py", "vf_utils.py"]:
         path = Path(f"{REPO}/src/prime_rl/orchestrator/{name}")
         tree = ast.parse(path.read_text())
         for node in ast.walk(tree):
             if isinstance(node, ast.Try):
                 for handler in node.handlers:
+                    has_except_handler = True
                     assert handler.type is not None, \
                         f"{name}: bare except at line {node.lineno} — AGENTS.md:5"
+    # Verify fault tolerance is implemented via exception handling
+    assert has_except_handler, \
+        "No except handlers found in modified files — fault tolerance not implemented"
 
 
 # [agent_config] pass_to_pass — AGENTS.md:7 @ 60f01a04681df563044cf3cb7c64ec480b608451

@@ -1,3 +1,5 @@
+version: "2.0"
+
 source:
   repo: ant-design/ant-design
   pr_number: 57440
@@ -6,30 +8,30 @@ source:
   title: "feat: support Typography actions placement"
 
 checks:
-  - id: test_actions_config_interface_exists
+  - id: test_actions_config_typescript_compilation
     type: fail_to_pass
-    origin: feature
-    description: ActionsConfig interface is exported from Typography Base with placement property
+    origin: pr_diff
+    description: ActionsConfig interface is exported with placement property
 
-  - id: test_actions_prop_in_block_props
+  - id: test_actions_prop_type_integration
     type: fail_to_pass
-    origin: feature
+    origin: pr_diff
     description: BlockProps interface includes actions prop of type ActionsConfig
 
-  - id: test_actions_start_class_in_styles
+  - id: test_actions_start_css_class_applied
     type: fail_to_pass
-    origin: feature
-    description: CSS styles for actions-start class exist with RTL-compatible margins
+    origin: pr_diff
+    description: Actions container gets a start-specific CSS class when placement is start
 
-  - id: test_placement_logic_in_render
+  - id: test_actions_placement_behavior
     type: fail_to_pass
-    origin: feature
-    description: Render logic conditionally renders operations based on placement value
+    origin: pr_diff
+    description: Actions render before text when placement is start, after when end
 
-  - id: test_measure_deps_in_ellipsis
+  - id: test_ellipsis_layout_deps_integration
     type: fail_to_pass
-    origin: feature
-    description: Ellipsis component tracks measureDeps for placement changes
+    origin: pr_diff
+    description: Ellipsis component accepts dependencies that trigger re-measurement for layout changes
 
   - id: test_repo_biome_lint
     type: pass_to_pass

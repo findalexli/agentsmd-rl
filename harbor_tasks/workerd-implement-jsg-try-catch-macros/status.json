@@ -4,12 +4,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-16T11:35:58.171564",
-  "total_time": 104.09,
-  "sandbox_id": "ihen9p4126tvh99n9j5sq",
+  "validated_at": "2026-04-25T16:09:14.871106",
+  "total_time": 3425.93,
+  "sandbox_id": "iha5ksbaxyynjen06nhwn",
   "backend": "anthropic",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "oneshot_repair",
   "nodes": {
     "p2p_enrich": {
       "status": "completed",
@@ -61,11 +61,11 @@
       "abandon_reason": ""
     },
     "quality_gate": {
-      "status": "passed",
-      "model": "claude-opus-4-7",
+      "status": "DELETE",
+      "model": "claude-opus-4-6",
       "backend": "anthropic",
-      "time": 0.2,
-      "notes": "flags=[]"
+      "time": 0.58,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', \"A:[A] test_deps_in_dockerfile @ environment/Dockerfile: tests call 1 binary not installed in Dockerfile: ['shellcheck']\", 'lint_tier_b:3', 'B:[B] pinned_dependencies @ environment/Dockerfile:24: unpinned pip deps: ruff, 2>/dev/null', 'B:[B] pinned_dependencies @ environment/Dockerfile:24: unpinned pip deps: ruff', 'B:[B] no_network_during_tests @ tests/test.sh:44: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
@@ -81,48 +81,55 @@
       "status": "error",
       "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":337,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 400 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"invalid_request_error\\\",\\\"message\\\":\\\"\\\\\\\"thinking.type.enabled\\\\\\\" is not supported for this model. Use \\\\\\\"thinking.type.adapt",
       "time": 2.03
+    },
+    "fix_quality": {
+      "status": "ok",
+      "model": "claude-opus-4-6",
+      "backend": "anthropic",
+      "time": 428.76,
+      "notes": ""
     }
   },
   "history": [
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 501.13,
-      "at": "2026-04-12T06:38:51.718722"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "minimax",
-      "time": 877.89,
-      "at": "2026-04-15T06:22:35.302012"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
       "backend": "oauth",
-      "time": 475.83,
-      "at": "2026-04-15T13:35:35.789900"
+      "time": 1821.28,
+      "at": "2026-04-25T11:07:51.663628"
     },
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 3146.73,
-      "at": "2026-04-16T03:19:54.208022"
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "oauth",
+      "time": 1915.04,
+      "at": "2026-04-25T11:40:55.108415"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "oauth",
+      "time": 1682.3,
+      "at": "2026-04-25T12:11:08.931572"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "anthropic",
+      "time": 9619.62,
+      "at": "2026-04-25T14:57:56.711689"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "anthropic",
-      "time": 104.09,
-      "at": "2026-04-16T11:35:58.171564"
+      "time": 3425.93,
+      "at": "2026-04-25T16:09:14.871106"
     }
   ]
 }

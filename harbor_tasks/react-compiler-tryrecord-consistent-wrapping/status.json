@@ -1,15 +1,16 @@
 {
   "schema_version": 2,
-  "valid": true,
-  "verdict": "pass",
-  "nop_reward": 0.0,
-  "gold_reward": 1.0,
-  "validated_at": "2026-04-16T10:21:02.737997",
-  "total_time": 898.22,
-  "sandbox_id": "iziilgb08cvf9nfddtoce",
-  "backend": "fireworks",
+  "valid": false,
+  "verdict": "fail",
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-25T16:00:43.796840",
+  "total_time": 2915.49,
+  "sandbox_id": "injr25bzyf9h2wxgwuea5",
+  "backend": "anthropic",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "oneshot_repair",
+  "error": "The sandbox was not found: This error is likely due to sandbox timeout. You can modify the sandbox timeout by passing 'timeout' when starting the sandbox or calling '.set_timeout' on the sandbox with the desired timeout.",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -37,10 +38,17 @@
       "nop_reward": 0.0,
       "gold_reward": 1.0,
       "attempts": 1,
-      "notes": "All validations pass. Docker builds, NOP reward=0 (5 f2p tests fail on buggy code), Gold reward=1 (10 tests pass on fixed code). Rubric judge previously passed with ICR=1.00.",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 385.77
+      "notes": "All validations pass. Docker builds, NOP reward=0 (6 f2p tests fail on buggy code), Gold reward=1 (12 tests pass on fixed code). Rubric judge could not run due to missing /workspace/repo/ \u2014 this is pre-existing.",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 306.3
+    },
+    "validate_MiniMax": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "attempts": 1,
+      "notes": "No-op: validation already passing. Ran checks and confirmed Docker build succeeds, NOP reward=0 (6 f2p tests fail on buggy code), Gold reward=1 (all 12 tests pass after fix). Rubric judge failed because /workspace/repo/ does not exist \u2014 this is pre-existing and not fixable from within task environment."
     },
     "rubric_judge": {
       "status": "pass",
@@ -61,14 +69,14 @@
     },
     "quality_gate": {
       "status": "passed",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 0.19,
-      "notes": "flags=[]"
+      "model": "kimi-k2.6",
+      "backend": "ark-kimi-k2.6",
+      "time": 0.24,
+      "notes": "flags=['lint_tier_b:2', 'B:[B] f2p_p2p_classification_correct @ eval_manifest.yaml: yaml parse error: mapping values are not allowed here\\n  in \"<un', 'B:[B] no_network_during_tests @ tests/test.sh:44: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 15.24,
+      "time": 16.68,
       "tier_a_fails": [
         "solution_uniqueness_guard",
         "tests_verify_behavior_not_text"
@@ -76,48 +84,55 @@
       "tier_b_fails": [],
       "pass_count": 7,
       "fail_count": 2
+    },
+    "fix_quality": {
+      "status": "rate_limited",
+      "model": "kimi-k2.6",
+      "backend": "ark-kimi-k2.6",
+      "time": 200.79,
+      "notes": ""
     }
   },
   "history": [
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 1173.55,
-      "at": "2026-04-12T06:34:03.880981"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "minimax",
-      "time": 639.31,
-      "at": "2026-04-15T05:22:56.748806"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
       "backend": "oauth",
-      "time": 823.34,
-      "at": "2026-04-15T13:18:31.569565"
+      "time": 2153.47,
+      "at": "2026-04-25T10:56:41.817141"
     },
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "minimax",
-      "time": 2686.24,
-      "at": "2026-04-16T01:59:30.935651"
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 2103.28,
+      "at": "2026-04-25T11:32:59.733027"
     },
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 898.22,
-      "at": "2026-04-16T10:21:02.737997"
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 1732.42,
+      "at": "2026-04-25T12:03:53.294874"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "anthropic",
+      "time": 7739.25,
+      "at": "2026-04-25T14:26:36.489098"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "anthropic",
+      "time": 2915.49,
+      "at": "2026-04-25T16:00:43.796840"
     }
   ]
 }

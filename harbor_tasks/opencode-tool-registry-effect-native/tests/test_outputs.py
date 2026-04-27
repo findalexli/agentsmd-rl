@@ -233,12 +233,15 @@ def test_service_class_preserved():
 def test_public_facades_exported():
     """Public facade functions (register, ids, tools) must remain exported."""
     code = _strip_comments(REGISTRY.read_text())
-    for name in ["register", "ids", "tools"]:
-        has_export = bool(
-            re.search(rf"\bexport\s+(async\s+)?function\s+{name}\b", code)
-            or re.search(rf"\bexport\s+(const|let)\s+{name}\b", code)
-        )
-        assert has_export, f"Public facade '{name}' is not exported"
+    assert re.search(r"\bexport\s+(async\s+)?function\s+register\b", code), \
+        "Public facade 'register' is not exported"
+    assert re.search(r"\bexport\s+(async\s+)?function\s+ids\b", code), \
+        "Public facade 'ids' is not exported"
+    assert re.search(r"\bexport\s+(async\s+)?function\s+tools\b", code), \
+        "Public facade 'tools' is not exported"
+    # Facades must delegate to the Effect runtime via runPromise
+    assert code.count("runPromise") >= 3, \
+        "Each facade (register, ids, tools) should call runPromise to delegate to the Effect service"
 
 
 # ---------------------------------------------------------------------------

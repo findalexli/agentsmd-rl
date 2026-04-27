@@ -4,23 +4,23 @@ set -e
 # Ensure log directory exists
 mkdir -p /logs/verifier
 
-# Run pytest tests
+# Run pytest and capture exit code
 cd /tests
+set +e
 python3 -m pytest test_outputs.py -v --tb=short 2>&1 | tee /logs/verifier/pytest_output.txt
+PYTEST_EXIT=${PIPESTATUS[0]}
+set -e
 
-# Determine reward
-if python3 -m pytest test_outputs.py -q 2>/dev/null | grep -q "passed"; then
+# Reward is purely based on pytest exit code
+if [ $PYTEST_EXIT -eq 0 ]; then
     echo "1" > /logs/verifier/reward.txt
-    echo "SUCCESS: All tests passed"
 else
     echo "0" > /logs/verifier/reward.txt
-    echo "FAILURE: Some tests failed"
 fi
 
 # --- LLM Judge (Track 3 + Track 4) ---
 if [ -f /tests/eval_manifest.yaml ] && [ -f /tests/standalone_judge.py ]; then
     # Capture agent diff
-    mkdir -p /logs/verifier
     _repo_dir=""
     for candidate in /workspace/*/ /repo /app /src; do
         if [ -d "${candidate}/.git" ]; then
@@ -35,11 +35,8 @@ if [ -f /tests/eval_manifest.yaml ] && [ -f /tests/standalone_judge.py ]; then
         (cd "$_repo_dir" && git add -A 2>/dev/null && git diff --cached > /logs/verifier/agent.diff 2>/dev/null) || true
     fi
 
-    # Install PyYAML if needed (lightweight, <1s)
-    python3 -c "import yaml" 2>/dev/null || \
-        python3 -m pip install -q pyyaml 2>/dev/null || \
-        pip3 install -q --break-system-packages pyyaml 2>/dev/null || true
-
-    # Run LLM judge (writes track3_rubric.json + track4_distractors.json)
-    python3 /tests/standalone_judge.py /tests/eval_manifest.yaml /logs/verifier/agent.diff 2>&1 || true
+    # Run LLM judge if pyyaml is available (installed in Dockerfile)
+    if python3 -c "import yaml" 2>/dev/null; then
+        python3 /tests/standalone_judge.py /tests/eval_manifest.yaml /logs/verifier/agent.diff 2>&1 || true
+    fi
 fi

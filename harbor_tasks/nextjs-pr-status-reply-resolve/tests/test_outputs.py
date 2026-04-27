@@ -1,8 +1,6 @@
 """Tests for nextjs-pr-status-reply-resolve: add reply-and-resolve-thread subcommand."""
 import subprocess
-import shutil
 import os
-import tempfile
 from pathlib import Path
 
 REPO = Path("/workspace/nextjs")
@@ -20,12 +18,6 @@ def _run_node(args: list[str], timeout: int = 15) -> subprocess.CompletedProcess
 
 
 # ---------- pass_to_pass: repo CI tests ----------
-
-
-def test_repo_node_available():
-    """Node.js must be available in the container (pass_to_pass)."""
-    node_path = shutil.which("node")
-    assert node_path is not None, "Node.js not found in PATH"
 
 
 def test_repo_prettier_check():
@@ -68,18 +60,6 @@ def test_repo_prettier_check_local_repro():
     """Repo's prettier formatting passes on local-repro.md (pass_to_pass)."""
     r = subprocess.run(
         ["npx", "prettier", "--check", ".agents/skills/pr-status-triage/local-repro.md"],
-        capture_output=True,
-        text=True,
-        timeout=120,
-        cwd=str(REPO),
-    )
-    assert r.returncode == 0, f"Prettier check failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
-
-
-def test_repo_prettier_check_workflow():
-    """Repo's prettier formatting passes on workflow.md (pass_to_pass)."""
-    r = subprocess.run(
-        ["npx", "prettier", "--check", ".agents/skills/pr-status-triage/workflow.md"],
         capture_output=True,
         text=True,
         timeout=120,

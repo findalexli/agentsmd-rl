@@ -3,54 +3,52 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "All file paths, import paths ('../cli-client/registry'), response fields (sessions, clientInfo), and 'Global' default are named in instruction.md."
+      "reason": "Instruction names all relevant files (grid.tsx, dashboardApp.ts, DEPS.list), the import path '../cli-client/registry', the endpoint '/api/sessions/list', response fields 'sessions' and 'clientInfo', 'Global' default, and localeCompare sorting."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "Instruction describes what behavior is needed without giving exact code changes."
+      "reason": "Instruction describes required behavior (current workspace first, default 'Global') but doesn't dictate variable names or exact code lines."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "test_grid_workspace_ordering requires exact regex match for 'currentWorkspace = clientInfo?.workspaceDir || \"Global\"' and literal 'key === currentWorkspace'; test_dashboard_api_sends_client_info requires exact sendJSON shape '{ sessions, clientInfo }' \u2014 alternative valid implementations (different variable names, inline expressions, different property ordering) would fail."
+      "outcome": "pass",
+      "reason": "Tests accept any variable name for fallback via regex capture, allow flexible property ordering in sendJSON, and only assert on the behaviorally-necessary patterns (localeCompare, 'Global' fallback)."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests run node scripts that simulate sort logic and also run npm build/lint/tsc, not just string checks."
+      "reason": "Tests execute node scripts that simulate sorting logic and also run npm build/lint/check-deps subprocesses."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "f2p tests require specific source patterns plus simulated sort behavior giving different outputs; a stub wouldn't satisfy."
+      "reason": "Tests require specific behavior (fallback to 'Global', variable used in both filters, createClientInfo import and call, clientInfo in response) which a stub can't satisfy."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "Tests cover API response, grid sorting, default Global behavior, and DEPS.list update."
+      "reason": "All three expected behaviors from instruction (API clientInfo, Grid ordering/fallback, DEPS.list entry) are covered by tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests grouped with section comments (fail_to_pass, pass_to_pass, repo_tests) with docstrings."
+      "reason": "Tests are grouped under comment section headers (fail_to_pass, pass_to_pass, agent_config, repo_tests) with descriptive docstrings."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "The response schema { sessions, clientInfo } is documented in instruction.md."
+      "reason": "Instruction specifies response must include 'sessions' and 'clientInfo' fields, matching test assertions."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "Paths and names are consistent."
+      "reason": "Paths and identifiers appear consistent between instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "Files to look at are listed but exact lines/code not given; localization is appropriate given scope."
+      "reason": "Instruction points to relevant files but doesn't specify exact lines; localization within those files is still required."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "DEPS.list edit is a single-line addition, bounded."
+      "reason": "DEPS.list edit is a single-line addition and aligned with instruction's stated CLAUDE.md rule."
     }
   },
-  "tier_a_fails": [
-    "solution_uniqueness_guard"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 10,
-  "fail_count": 1
+  "pass_count": 11,
+  "fail_count": 0
 }

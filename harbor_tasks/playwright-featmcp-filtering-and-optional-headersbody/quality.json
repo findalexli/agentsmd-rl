@@ -2,55 +2,53 @@
   "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests are hidden (empty in the prompt), but the instruction doesn't specify exact literal strings like 'Request headers:' formatting details, indentation, or the exact content of .github/copilot-instructions.md that tests might assert on."
+      "outcome": "pass",
+      "reason": "All file paths, schema keys (filter, requestHeaders, requestBody, static), CLI flags (--filter, --request-headers, --request-body), label strings ('Request headers:', 'Request body:'), and the copilot-instructions.md content are all explicitly stated in instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "Instruction describes what should change (add filter, requestHeaders, requestBody; rename includeStatic to static) without dictating implementation details."
+      "reason": "Instruction describes what params to add and output format but doesn't show the code diff; agent must figure out how to implement filter logic, plumb params through renderRequest, etc."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "Without seeing tests, the described behavior (param names, CLI flags, section labels) is the public contract; multiple implementations could satisfy it."
+      "reason": "Tests check for schema entries via regex, presence of CLI flag strings, and use self-contained JS that replicates the logic rather than importing gold helpers; multiple implementations would pass."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "not_applicable",
-      "reason": "Test file content is not shown in the prompt, cannot assess."
+      "outcome": "pass",
+      "reason": "test_render_request_headers_and_body and test_filter_regex_applied execute JS via tsx; test_syntax_check runs node --check."
     },
     "test_not_tautological": {
-      "outcome": "not_applicable",
-      "reason": "Test file content is not shown, cannot evaluate tautology."
+      "outcome": "pass",
+      "reason": "Tests check schema params exist, copilot-instructions content exists, and behavioral JS replicates logic \u2014 a stub returning defaults wouldn't pass schema regex checks or filename creation."
     },
     "behavior_in_tests": {
-      "outcome": "not_applicable",
-      "reason": "Test file content is hidden/empty."
+      "outcome": "pass",
+      "reason": "Filter, requestHeaders, requestBody, static rename, CLI flags, and copilot-instructions creation are all tested."
     },
     "informative_test_structure": {
-      "outcome": "not_applicable",
-      "reason": "Test file content is hidden/empty."
+      "outcome": "pass",
+      "reason": "Tests are named descriptively (test_schema_has_new_params, test_filter_regex_applied, etc.) with docstrings explaining purpose."
     },
     "structured_data_schema": {
-      "outcome": "not_applicable",
-      "reason": "Task produces text output, not structured data requiring a schema."
+      "outcome": "pass",
+      "reason": "Output format for headers/body labels and indentation is explicitly documented in instruction.md."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths and flag names in instruction.md appear correct and consistent with the gold patch."
+      "reason": "File paths and names match between instruction and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "Instruction points to files but doesn't give exact line numbers or code replacements; localization of the renderRequest function is appropriate guidance."
+      "reason": "Instruction points to files (network.ts, commands.ts) which are appropriately scoped; doesn't name exact line numbers."
     },
     "config_edit_scope_bounded": {
-      "outcome": "pass",
-      "reason": "The .github/copilot-instructions.md is a new localized file, and code edits are scoped to the named files without full rewrites."
+      "outcome": "not_applicable",
+      "reason": "Code-only task, not agentmd-edits."
     }
   },
-  "tier_a_fails": [
-    "behavior_in_task_description"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 5,
-  "fail_count": 1
+  "pass_count": 10,
+  "fail_count": 0
 }

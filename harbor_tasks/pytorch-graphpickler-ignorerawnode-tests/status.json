@@ -4,13 +4,13 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-16T05:01:32.645094",
-  "total_time": 1955.64,
-  "sandbox_id": "ioxg3g3nkrcp2zhtpdns7",
-  "backend": "anthropic",
+  "validated_at": "2026-04-21T21:21:21.774470",
+  "total_time": 11797.27,
+  "sandbox_id": "ie4xjy46pg2l40siv4fza",
+  "backend": "minimax",
   "pipeline": "pipeline",
-  "start_at": "judge",
-  "error": "The sandbox was not found: This error is likely due to sandbox timeout. You can modify the sandbox timeout by passing 'timeout' when starting the sandbox or calling '.set_timeout' on the sandbox with the desired timeout.",
+  "start_at": "fix_quality",
+  "error": "rate limited during validate: {\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":857219,\"duration_api_ms\":550748,\"num_turns\":99,\"result\":\"API Error: 429 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"rate_limit_error\\\",\\\"message\\\":\\\"usage limit exceeded (2056)\\\"},\\\"request_id\\\":\\\"06377fc0d280b1650acff71df00f5f0b\\\"}\",\"stop_reason\":\"stop_sequence\",\"session_id\":\"3969d13d-6830-4e37-87ea-024109e8672c\",\"total_cost_usd\":3.56322,\"usage\":{\"input_tokens\":67061,\"cache_creation_input_tokens\":0,\"c",
   "nodes": {
     "p2p_enrich": {
       "status": "completed",
@@ -66,8 +66,8 @@
       "status": "DELETE",
       "model": "MiniMax-M2.7",
       "backend": "minimax",
-      "time": 0.41,
-      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:6', 'A:[A] tests_verify_behavior_not_text @ tests/test_outputs.py:55: test `test_syntax_check` only reads file text; invoke the', 'A:[A] tests_verify_behavior_not_text @ tests/test_outputs.py:151: test `test_has_ignore_raw_node_tests` only reads file te', 'A:[A] tests_verify_behavior_not_text @ tests/test_outputs.py:177: test `test_default_raises_covered` only reads file text;', 'A:[A] tests_verify_behavior_not_text @ tests/test_outputs.py:216: test `test_raw_node_in_meta` only reads file text; invok', 'lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:22: unpinned pip deps: numpy, sympy, dill, 2>/dev/null']"
+      "time": 0.22,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:3', 'A:[A] tests_verify_behavior_not_text @ tests/test_outputs.py:41: test `test_syntax_check` only reads file text; invoke the', 'A:[A] test_not_tautological @ tests/test_outputs.py:301: test `test_uses_pytorch_test_class` has 3 assert(s), all pass on ', 'A:[A] test_not_tautological @ tests/test_outputs.py:343: test `test_has_run_tests` has 1 assert(s), all pass on a stub imp', 'lint_tier_b:2', 'B:[B] pinned_dependencies @ environment/Dockerfile:22: unpinned pip deps: numpy, sympy, dill, 2>/dev/null', 'B:[B] no_network_during_tests @ tests/test.sh:44: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
@@ -81,17 +81,16 @@
       "tier_b_fails": [],
       "pass_count": 5,
       "fail_count": 4
+    },
+    "fix_quality": {
+      "status": "ok",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 1998.7,
+      "notes": ""
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 1251.5,
-      "at": "2026-04-12T06:07:21.963631"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -123,6 +122,14 @@
       "backend": "anthropic",
       "time": 1955.64,
       "at": "2026-04-16T05:01:32.645094"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 11797.27,
+      "at": "2026-04-21T21:21:21.774470"
     }
   ]
 }

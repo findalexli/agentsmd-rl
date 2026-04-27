@@ -7,6 +7,7 @@ All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
 """
 
+import json
 import re
 import subprocess
 from pathlib import Path
@@ -467,6 +468,110 @@ def test_incremental_reveal():
 
     assert signals >= 2, \
         f"Insufficient incremental reveal signals ({signals}/4, need >=2)"
+
+
+# [pr_diff] fail_to_pass
+def test_pacing_algorithm_behavior():
+    """Pacing helper functions execute correctly, producing bounded incremental reveals."""
+    src = _read_file()
+    util = _util_section(src)
+
+    # Extract pure helper functions that use Math (pacing calculations)
+    # Skip functions that use SolidJS primitives (createSignal, etc.)
+    solid_kws = {"createSignal", "createEffect", "onCleanup", "createMemo",
+                 "createStore", "setValue"}
+
+    helpers = []
+    for m in re.finditer(r"function\s+(\w+)\s*\(", util):
+        name = m.group(1)
+        brace = util.find("{", m.end())
+        if brace == -1:
+            continue
+        depth, end = 0, brace
+        for i in range(brace, len(util)):
+            if util[i] == "{":
+                depth += 1
+            elif util[i] == "}":
+                depth -= 1
+            if depth == 0:
+                end = i
+                break
+        full = util[m.start():end + 1]
+        body = util[brace:end + 1]
+        if any(kw in body for kw in solid_kws):
+            continue
+        if not re.search(r"Math\.", body):
+            continue
+        helpers.append((name, full))
+
+    assert len(helpers) >= 1, \
+        "No Math-based pacing helper functions found in utility section"
+
+    # Extract relevant const declarations (regexes and numbers used by helpers)
+    consts = re.findall(
+        r"(const\s+\w+\s*=\s*(?:/[^\n]+?/[gimsuy]*|\d+)\s*;?)", util
+    )
+
+    # Strip TypeScript type annotations for plain Node.js execution
+    def _strip(code):
+        return re.sub(r":\s*(?:number|string|boolean|RegExp)\b", "", code)
+
+    # Classify helpers by parameter count
+    step_fns, advance_fns = [], []
+    for name, code in helpers:
+        pm = re.search(r"\(([^)]*)\)", code)
+        n = len([p for p in pm.group(1).split(",") if p.strip()]) if pm else 0
+        (step_fns if n <= 1 else advance_fns).append(name)
+
+    # Build Node.js test script
+    parts = [_strip(c) for c in consts] + [_strip(fn) for _, fn in helpers]
+    parts.append("const R = {};")
+
+    for name in step_fns:
+        parts.append(f'R["{name}"] = [1,5,20,50,100,500].map(n => {name}(n));')
+        parts.append(
+            f'R["{name}_ok"] = R["{name}"].every('
+            f"v => typeof v === 'number' && v > 0 && v <= 50);"
+        )
+
+    for name in advance_fns:
+        loop_body = "{ const np = %s(t, p); if (np <= p) break; p = np; ps.push(p); }" % name
+        parts.append(
+            "{\n"
+            '  const t = "Hello, world! This is a test of incremental text streaming.";\n'
+            "  let p = 0; const ps = [0]; let s = 0;\n"
+            "  while (p < t.length && s++ < 300) " + loop_body + "\n"
+            '  R["' + name + '_n"] = ps.length;\n'
+            '  R["' + name + '_end"] = ps[ps.length - 1] >= t.length;\n'
+            '  R["' + name + '_inc"] = ps.length >= 4;\n'
+            '  R["' + name + '_mono"] = ps.every((v, i) => i === 0 || v > ps[i - 1]);\n'
+            "}"
+        )
+
+    parts.append("console.log(JSON.stringify(R));")
+
+    script_path = Path(REPO) / "_eval_pacing_test.mjs"
+    script_path.write_text("\n".join(parts))
+    try:
+        r = subprocess.run(
+            ["node", str(script_path)],
+            capture_output=True, text=True, timeout=10, cwd=REPO,
+        )
+        assert r.returncode == 0, f"Pacing helpers failed to execute: {r.stderr[:500]}"
+        data = json.loads(r.stdout.strip())
+
+        for name in step_fns:
+            assert data.get(f"{name}_ok"), \
+                f"{name}() returned out-of-range step sizes: {data.get(name)}"
+        for name in advance_fns:
+            assert data.get(f"{name}_end"), \
+                f"{name}() didn't reach end of text"
+            assert data.get(f"{name}_inc"), \
+                f"{name}() not incremental enough ({data.get(f'{name}_n', '?')} steps)"
+            assert data.get(f"{name}_mono"), \
+                f"{name}() positions not monotonically increasing"
+    finally:
+        script_path.unlink(missing_ok=True)
 
 
 # ---------------------------------------------------------------------------

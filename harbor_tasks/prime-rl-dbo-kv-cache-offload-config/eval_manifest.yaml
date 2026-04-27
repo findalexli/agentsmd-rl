@@ -32,6 +32,30 @@ checks:
   origin: pr_diff
   description: KVCacheOffloadConfig accepts various valid block_size and cpu_bytes
     combinations
+- id: inference_entrypoint_passes_kv_offload_params
+  type: fail_to_pass
+  origin: pr_diff
+  description: Inference entrypoint write_slurm_script passes kv_offload params to template context
+- id: rl_entrypoint_passes_kv_offload_params
+  type: fail_to_pass
+  origin: pr_diff
+  description: RL entrypoint write_slurm_script passes kv_offload params to template context
+- id: inference_template_uses_separate_kv_cfgs
+  type: fail_to_pass
+  origin: pr_diff
+  description: Inference template uses PREFILL_KV_CFG and DECODE_KV_CFG variables
+- id: inference_template_multiconnector_when_offload
+  type: fail_to_pass
+  origin: pr_diff
+  description: Inference template uses MultiConnector when kv_offload is enabled
+- id: multi_node_rl_template_uses_separate_kv_cfgs
+  type: fail_to_pass
+  origin: pr_diff
+  description: Multi-node RL template uses PREFILL_KV_CFG and DECODE_KV_CFG variables
+- id: multi_node_rl_template_multiconnector_when_offload
+  type: fail_to_pass
+  origin: pr_diff
+  description: Multi-node RL template uses MultiConnector when kv_offload is enabled
 - id: kv_cache_offload_rejects_invalid_block_size
   type: fail_to_pass
   origin: agent_config

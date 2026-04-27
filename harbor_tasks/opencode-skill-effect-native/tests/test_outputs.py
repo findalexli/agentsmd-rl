@@ -92,7 +92,163 @@ def _read_stripped():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — core behavioral: Effect migration
+# Behavioral module loader — mocks all external deps and executes the module
+# ---------------------------------------------------------------------------
+
+_MOCK_LOADER_JS = r"""
+const EFFECT_SRC = `
+function makeIter(v) { return { [Symbol.iterator]: function*() { yield v; } }; }
+globalThis._effectTracker = { fnUntraced: 0, fn: 0, gen: 0 };
+export const Effect = {
+  fnUntraced: (fn) => { globalThis._effectTracker.fnUntraced++; return Object.assign((...a) => makeIter(undefined), { _tag: "fnUntraced" }); },
+  fn: (name) => (fn) => { globalThis._effectTracker.fn++; return Object.assign((...a) => makeIter(undefined), { _tag: "fn", _name: name }); },
+  gen: (fn) => { globalThis._effectTracker.gen++; return makeIter(undefined); },
+  tryPromise: () => ({ pipe: (...fns) => fns.reduce((v,f) => f ? f(v) : v, makeIter(undefined)) }),
+  promise: () => makeIter(undefined),
+  catch: (fn) => (v) => v != null ? v : makeIter(undefined),
+  forEach: () => makeIter(undefined),
+  die: () => makeIter(undefined),
+  succeed: (v) => makeIter(v),
+  all: (...a) => makeIter(a),
+  runPromise: () => Promise.resolve(undefined),
+};
+export const Layer = {
+  effect: (svc, eff) => {
+    const l = { _tag: "Layer", _provides: [] };
+    l.pipe = (...fns) => fns.reduce((v,f) => f(v), l);
+    return l;
+  },
+  provide: (dep) => (layer) => { if(layer && layer._provides) layer._provides.push(dep); return layer; },
+};
+export const ServiceMap = { Service: function() { return function(name) { return class { static of(impl) { return impl; } }; }; } };
+`;
+
+const GENERIC_SRC = `
+export const Bus = { Interface: {}, Service: { [Symbol.iterator]: function*() { yield { publish: () => ({ [Symbol.iterator]: function*() { yield; } }) }; } }, publish: () => {}, layer: { _tag: "BusLayer" } };
+export const Config = { Interface: {}, Service: { [Symbol.iterator]: function*() { yield { get: () => ({ [Symbol.iterator]: function*() { yield {}; } }), directories: () => ({ [Symbol.iterator]: function*() { yield []; } }) }; } }, get: async () => ({}), directories: async () => [], defaultLayer: { _tag: "ConfigLayer" } };
+export const Discovery = { Interface: {}, Service: { [Symbol.iterator]: function*() { yield { pull: () => ({ [Symbol.iterator]: function*() { yield []; } }) }; } }, defaultLayer: { _tag: "DiscoveryLayer" } };
+export const InstanceState = { make: (fn) => ({ [Symbol.iterator]: function*() { yield {}; } }), get: (s) => ({ [Symbol.iterator]: function*() { yield { skills: {}, dirs: new Set() }; } }) };
+export const makeRuntime = (svc, layer) => ({ runPromise: (fn) => Promise.resolve(fn({ get: async()=>undefined, all: async()=>[], dirs: async()=>[], available: async()=>[] })) });
+export const Flag = { OPENCODE_DISABLE_EXTERNAL_SKILLS: true };
+export const Global = { Path: { home: "/tmp" } };
+export const Permission = { evaluate: () => ({ action: "allow" }) };
+export const Filesystem = { isDir: async () => false, up: async function*() {} };
+export const ConfigMarkdown = { parse: async () => ({ data: { name: "test", description: "test" }, content: "" }), FrontmatterError: { isInstance: () => false } };
+export const Glob = { scan: async () => [] };
+export const Log = { create: () => ({ info: ()=>{}, warn: ()=>{}, error: ()=>{} }) };
+export const NamedError = { create: (name, schema) => class E { constructor(d) { this.d = d; } static isInstance() { return false; } }, Unknown: class { constructor(d) { this.d = d; } toObject() { return {}; } } };
+export default {};
+`;
+
+const ZOD_SRC = `
+const handler = { get: (t,p) => {
+  if (typeof p === "symbol") return Reflect.get(t,p);
+  return function(...a) { return new Proxy({ pick: () => ({ safeParse: () => ({ success: true, data: {} }) }), safeParse: () => ({ success: true, data: {} }) }, handler); };
+}};
+const z = new Proxy({}, handler);
+export default z;
+`;
+
+export async function resolve(specifier, context, next) {
+  if (specifier.startsWith("node:") || specifier === "os" || specifier === "path" || specifier === "url"
+      || specifier.startsWith("file:") || specifier.startsWith("/")) {
+    return next(specifier, context);
+  }
+  if (specifier === "effect") return { url: "mock://effect", shortCircuit: true };
+  if (specifier === "zod") return { url: "mock://zod", shortCircuit: true };
+  return { url: "mock://generic", shortCircuit: true };
+}
+
+export async function load(url, context, next) {
+  if (url === "mock://effect") return { format: "module", source: EFFECT_SRC, shortCircuit: true };
+  if (url === "mock://zod") return { format: "module", source: ZOD_SRC, shortCircuit: true };
+  if (url === "mock://generic") return { format: "module", source: GENERIC_SRC, shortCircuit: true };
+  return next(url, context);
+}
+"""
+
+_BEHAVIORAL_TEST_JS = r"""
+try {
+  const mod = await import("/workspace/opencode/packages/opencode/src/skill/index.ts");
+  const Skill = mod.Skill;
+  const tracker = globalThis._effectTracker || { fnUntraced: 0, fn: 0, gen: 0 };
+  const results = {
+    has_skill: !!Skill,
+    has_layer: !!Skill?.layer,
+    has_default_layer: !!Skill?.defaultLayer,
+    effect_fnUntraced_calls: tracker.fnUntraced,
+    effect_fn_calls: tracker.fn,
+    effect_gen_calls: tracker.gen,
+  };
+  if (Skill?.defaultLayer?._provides) {
+    const p = Skill.defaultLayer._provides;
+    results.provides_count = p.length;
+    results.has_discovery_layer = p.some(x => x?._tag === "DiscoveryLayer");
+    results.has_config_layer = p.some(x => x?._tag === "ConfigLayer");
+    results.has_bus_layer = p.some(x => x?._tag === "BusLayer");
+  } else {
+    results.provides_count = 0;
+    results.has_config_layer = false;
+    results.has_bus_layer = false;
+  }
+  process.stdout.write(JSON.stringify(results) + "\n");
+} catch(e) {
+  process.stderr.write("ERROR: " + e.message + "\n");
+  process.exit(1);
+}
+"""
+
+_cached_behavioral = None
+
+
+def _get_behavioral():
+    """Execute module with mocked deps via Node.js subprocess; cache the result."""
+    global _cached_behavioral
+    if _cached_behavioral is not None:
+        return _cached_behavioral
+    loader = Path(REPO) / "_eval_mock_loader.mjs"
+    test_script = Path(REPO) / "_eval_behavioral_test.mjs"
+    loader.write_text(_MOCK_LOADER_JS)
+    test_script.write_text(_BEHAVIORAL_TEST_JS)
+    try:
+        r = subprocess.run(
+            ["node", "--experimental-transform-types", "--no-warnings",
+             "--loader", str(loader), str(test_script)],
+            capture_output=True, text=True, timeout=30, cwd=REPO,
+        )
+        assert r.returncode == 0, f"Module execution failed: {r.stderr}"
+        _cached_behavioral = json.loads(r.stdout.strip())
+    finally:
+        loader.unlink(missing_ok=True)
+        test_script.unlink(missing_ok=True)
+    return _cached_behavioral
+
+
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) — behavioral: module execution with mocked deps
+# ---------------------------------------------------------------------------
+
+# [pr_diff] fail_to_pass
+def test_behavioral_helpers_are_effect_generators():
+    """Execute module: Effect.fnUntraced must be called for add/scan/loadSkills helpers."""
+    data = _get_behavioral()
+    assert data["has_skill"], "Skill namespace not found in module exports"
+    assert data["effect_fnUntraced_calls"] >= 3, \
+        f"Expected >= 3 Effect.fnUntraced calls (add, scan, loadSkills), got {data['effect_fnUntraced_calls']}"
+
+
+# [pr_diff] fail_to_pass
+def test_behavioral_default_layer_provides_config_and_bus():
+    """Execute module: defaultLayer must provide Config and Bus layers at runtime."""
+    data = _get_behavioral()
+    assert data["provides_count"] >= 3, \
+        f"Expected >= 3 layer provides (Discovery + Config + Bus), got {data['provides_count']}"
+    assert data["has_config_layer"], "defaultLayer does not provide Config layer at runtime"
+    assert data["has_bus_layer"], "defaultLayer does not provide Bus layer at runtime"
+
+
+# ---------------------------------------------------------------------------
+# Fail-to-pass (pr_diff) — structural: Effect migration patterns
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass

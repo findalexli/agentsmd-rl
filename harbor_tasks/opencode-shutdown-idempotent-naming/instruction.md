@@ -4,74 +4,59 @@
 
 The TUI thread shutdown logic has several issues that can lead to orphaned subprocesses:
 
-1. **No idempotent shutdown**: Multiple shutdown paths could race or hang because there's no way to prevent double-execution. The stop() function needs a guard to ensure cleanup logic runs exactly once.
+1. **No idempotent shutdown**: Multiple shutdown paths (e.g., the `onExit` callback and a `finally` block) can trigger cleanup more than once, causing double-execution, hangs, or errors. There is no guard to ensure cleanup runs exactly once.
 
-2. **Process listeners leak**: Event listeners for `uncaughtException`, `unhandledRejection`, and `SIGUSR2` are registered during startup but never cleaned up during shutdown.
+2. **Process listeners leak**: Event listeners for `uncaughtException`, `unhandledRejection`, and `SIGUSR2` are registered during startup but never removed during shutdown, preventing clean process exit.
 
-3. **Worker termination not guaranteed**: The worker's shutdown RPC call can hang indefinitely with no timeout or forced termination fallback.
+3. **Worker termination not guaranteed**: If the worker's shutdown RPC call hangs, there's no timeout or forced termination fallback. The codebase provides a `withTimeout` utility at `@/util/timeout` that can bound promises, and `worker.terminate()` should always be called after the shutdown attempt regardless of outcome.
 
-4. **Complex inline IIFEs**: Worker path resolution and input handling use inline IIFEs that are hard to read and maintain. These should be standalone helper functions.
+4. **Inline IIFEs reduce readability**: Worker path resolution and piped input handling use inline `iife()` calls that should be extracted to standalone named async helper functions.
 
-5. **Verbose variable names**: Some variable names are longer than the codebase convention. Specifically:
-   - `baseCwd` should be renamed to `root`
-   - `workerPath` should be renamed to `file`
-   - `networkOpts` should be renamed to `network`
-   - `shouldStartServer` should be renamed to `external`
+5. **Verbose variable names**: Several local variables use multi-word camelCase names (`baseCwd`, `workerPath`, `networkOpts`, `shouldStartServer`) that don't follow the project's single-word naming convention and should be shortened to single-word alternatives.
 
 ## Expected Changes
 
-### Code Changes (TUI thread)
+### Shutdown Fix (TUI Thread)
 
-Fix the shutdown logic in the main TUI thread file to ensure idempotent cleanup:
+- Make the shutdown function idempotent with a boolean guard that prevents re-entry
+- During shutdown, unregister all three process event listeners using `process.off()`
+- Bound the worker shutdown RPC with `withTimeout` from `@/util/timeout`
+- Always call `worker.terminate()` after the shutdown attempt to guarantee cleanup
+- Wrap the `tui()` call in `try/finally` so shutdown runs even on errors
+- Extract a reusable error handler function for `uncaughtException`/`unhandledRejection` (replace inline arrows)
 
-1. **Add idempotent stop() function** with these exact implementation details:
-   - Use a variable named `stopped` initialized to `false` as a guard flag
-   - At the start of stop(), check `if (stopped) return` to prevent double-execution
-   - Set `stopped = true` before proceeding with cleanup
-   - Unregister all three process event listeners using `process.off()` for `uncaughtException`, `unhandledRejection`, and `SIGUSR2`
-   - Call worker.shutdown() with a bounded timeout (5000ms)
-   - Always call `worker.terminate()` after shutdown attempt to force cleanup
+### Code Cleanup (TUI Thread)
 
-2. **Extract helper functions** from the inline IIFEs:
-   - Create an `async function target()` that resolves the worker path
-   - Create an `async function input()` that handles piped stdin + prompt
-   - Remove any `iife` imports since they are no longer needed
+- Extract the inline `iife()` calls to standalone named async functions
+- Remove the `iife` utility import since it's no longer needed
+- Replace the four verbose variable names with shorter single-word alternatives per the project's naming conventions
 
-3. **Simplify variable names** per the list above — replace `baseCwd`, `workerPath`, `networkOpts`, and `shouldStartServer` with their shorter equivalents.
+### Worker Simplification
 
-4. **Add timeout utility import** from `@/util/timeout` and use `withTimeout()` to wrap the shutdown call.
+- Remove the `Promise.race` with `setTimeout` timeout from the worker's `shutdown()` RPC handler — timeout handling is now the caller's responsibility
+- The handler should directly `await Instance.disposeAll()`
 
-5. **Wrap tui() call in try/finally** to ensure stop() is called even if tui() throws.
+### Agent Guidelines Update (AGENTS.md)
 
-6. **Extract a reusable error handler** as a named function (not inline arrow) and register it for both `uncaughtException` and `unhandledRejection`.
-
-### Code Changes (Worker)
-
-Simplify the worker shutdown() RPC handler — remove the Promise.race with timeout since the timeout logic is now the caller's responsibility. The worker should directly `await Instance.disposeAll()`.
-
-### Config Changes (Agent Guidelines)
-
-Add a new mandatory naming enforcement subsection under the existing Naming section in the agent coding guidelines file. The section must:
-- Be titled "### Naming Enforcement (Read This)"
-- Include the mandatory rule statement: "THIS RULE IS MANDATORY FOR AGENT WRITTEN CODE"
-- Include a bullet point stating: "Use single word names by default for new locals, params, and helper functions"
-- Include a bullet point stating: "Multi-word names are allowed only when a single word would be unclear or ambiguous"
-- Include a bullet point stating: "Do not introduce new camelCase compounds when a short single-word alternative is clear"
-- Include a bullet point stating: "Before finishing edits, review touched lines and shorten newly introduced identifiers where possible"
-- List good short names to prefer including: `pid`, `cfg`, `err`, `opts`, `dir`, `root`, `child`, `state`, `timeout`
-- List examples to avoid including: `inputPID`, `existingClient`, `connectTimeout`, `workerPath`
+Add a naming enforcement subsection to the existing style guide that:
+- Is clearly marked as mandatory for agent-written code
+- Establishes single-word names as the default for new locals, params, and helpers
+- Clarifies when multi-word names are acceptable
+- Discourages new camelCase compounds when a short alternative exists
+- Reminds to review and shorten identifiers before finishing edits
+- Provides examples of good short names and verbose names to avoid
 
 ## Files to Look At
 
-- The main TUI thread implementation file (contains worker lifecycle management)
-- The worker thread RPC handlers file
-- The agent coding guidelines file (contains naming conventions)
+- The TUI thread implementation that manages the worker lifecycle
+- The worker's RPC handler definitions
+- AGENTS.md (project-level coding guidelines)
 
 ## Notes
 
-- The Bun runtime provides withTimeout utility at @/util/timeout
-- The codebase prefers single-word variable names as documented in the agent coding guidelines
-- Always use .unref?.() on setTimeout calls that shouldn't block process exit
+- The codebase provides a `withTimeout` utility at `@/util/timeout` for bounding promises
+- The project prefers single-word variable names as documented in AGENTS.md
+- Use `.unref?.()` on `setTimeout` calls that shouldn't block process exit
 
 ## Code Style Requirements
 

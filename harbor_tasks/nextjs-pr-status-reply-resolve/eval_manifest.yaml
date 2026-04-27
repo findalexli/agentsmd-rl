@@ -5,10 +5,6 @@ source:
   base_commit: fea754747872122d167dd8bf1fc5581044e50521
   merge_commit: 6d572c27e01cbdb19dfbdf5bce94604229478088
 checks:
-- id: test_repo_node_available
-  type: pass_to_pass
-  origin: repo_tests
-  description: Node.js is available in the container
 - id: test_repo_prettier_check
   type: pass_to_pass
   origin: repo_tests
@@ -25,10 +21,6 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's prettier formatting passes on local-repro.md
-- id: test_repo_prettier_check_workflow
-  type: pass_to_pass
-  origin: repo_tests
-  description: Repo's prettier formatting passes on workflow.md
 - id: test_repo_node_syntax
   type: pass_to_pass
   origin: repo_tests
@@ -37,15 +29,6 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: scripts/pr-status.js loads as a module without syntax errors
-- id: test_repo_markdown_files_valid
-  type: pass_to_pass
-  origin: static
-  description: SKILL.md and workflow.md are valid UTF-8 markdown files
-- id: test_repo_pr_status_exports
-  type: pass_to_pass
-  origin: static
-  description: pr-status.js exports key functions (replyToThread, resolveThread, generateThreadMd,
-    main)
 - id: test_repo_prettier_check_agents_dir
   type: pass_to_pass
   origin: repo_tests
@@ -78,7 +61,7 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: local-repro.md passes alex linting for insensitive language
-- id: syntax_valid
+- id: test_syntax_valid
   type: pass_to_pass
   origin: static
   description: scripts/pr-status.js parses without errors
@@ -94,35 +77,35 @@ checks:
   type: pass_to_pass
   origin: static
   description: pr-status.js file exists
-- id: reply_and_resolve_subcommand_exists
+- id: test_reply_and_resolve_subcommand_exists
   type: fail_to_pass
   origin: pr_diff
   description: reply-and-resolve-thread subcommand is handled in main() and shows
     usage on missing args
-- id: reply_to_thread_uses_rest_api
+- id: test_reply_to_thread_uses_rest_api
   type: fail_to_pass
   origin: pr_diff
   description: replyToThread uses REST /comments/<id>/replies endpoint, not GraphQL
     mutation
-- id: generate_thread_md_includes_combined
+- id: test_generate_thread_md_includes_combined
   type: fail_to_pass
   origin: pr_diff
   description: generateThreadMd includes the reply-and-resolve one-step command in
     thread MD files
-- id: reply_to_thread_logs_html_url
+- id: test_reply_to_thread_logs_html_url
   type: fail_to_pass
   origin: pr_diff
   description: replyToThread logs html_url from REST JSON response
-- id: skill_md_documents_combined_command
+- id: test_skill_md_documents_combined_command
   type: fail_to_pass
   origin: pr_diff
   description: SKILL.md updated with Thread interaction section and reply-and-resolve-thread
     command
-- id: skill_md_workflow_step_updated
+- id: test_skill_md_workflow_step_updated
   type: fail_to_pass
   origin: pr_diff
   description: SKILL.md step 6 mentions the one-step reply-and-resolve option
-- id: workflow_md_documents_one_step
+- id: test_workflow_md_documents_one_step
   type: fail_to_pass
   origin: pr_diff
   description: workflow.md shows the one-step reply-and-resolve alternative

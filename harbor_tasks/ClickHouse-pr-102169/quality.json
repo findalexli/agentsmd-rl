@@ -3,58 +3,54 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "Instruction names the file path, function name (refreshObjects), variable name current_zookeeper, the call zookeeper_getter.getZooKeeper().first, retries_ctl.isRetry(), and the 'exception' vs 'crash' CLAUDE.md terminology rule."
+      "reason": "The instruction names the file path, describes the functions involved (isRetry, getZooKeeper, getObjectNamesAndSetWatch, tryLoadObject), and mentions CLAUDE.md style rules (exception vs crash, backtick format)."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "Instruction specifies exact variable name 'current_zookeeper', exact source expression 'zookeeper_getter.getZooKeeper().first', exact condition 'retries_ctl.isRetry()', and exact placement\u2014this is essentially dictating the fix rather than describing the bug."
+      "outcome": "pass",
+      "reason": "Instruction describes what's broken and behavioral requirements without giving the exact patch content or line numbers."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert on the gold-specific variable name 'current_zookeeper' and specific call pattern; an alternative correct fix using e.g. 'zk' or 'live_zookeeper' or calling getZooKeeper() unconditionally would fail the criteria."
+      "reason": "Tests likely assert specific AST patterns (e.g., isRetry() call and getZooKeeper() call inside retryLoop, plus 'same session variable' consistency). Also test_clang_format_check uses hardcoded line range 427-465, which constrains alternative valid fixes that may be formatted differently or placed at different lines."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Tests run clang syntax checks, codespell, style scripts, and AST parsing but do not execute the refreshObjects function; the behavioral checks are mostly static text/AST analysis of the patched file."
+      "outcome": "pass",
+      "reason": "Tests use libclang AST parsing, run subprocess-based style/codespell/clang checks, not purely textual grep assertions."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests check for specific code structure (current_zookeeper usage inside retry loop, isRetry() call, getObjectNamesAndSetWatch placement) which a stub cannot satisfy."
+      "reason": "AST-based behavioral checks require actual code changes (isRetry, getZooKeeper inside retryLoop) and cannot be satisfied by stubs."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "Tests cover all five verification criteria: variable declaration, session refresh on retry, watches inside loop, consistent session usage, and crash\u2192exception terminology."
+      "reason": "Tests check each of the four required behaviors from instruction.md (isRetry check, fresh session, getObjectNamesAndSetWatch inside retryLoop, consistent session variable)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are grouped with section comments (REPO_TESTS, STATIC) and descriptively named with docstrings."
+      "reason": "Tests are organized with section comments (REPO_TESTS, STATIC) and clear docstrings per test."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task is a code fix, not structured data output."
+      "reason": "Task is a code fix, no structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, function names, and variable names in instruction.md match the codebase."
+      "reason": "File paths and names appear correct and consistent throughout instruction.md and tests."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md explicitly names the exact file 'src/Functions/UserDefined/UserDefinedSQLObjectsZooKeeperStorage.cpp' and the exact function, line-level structure, and even the exact expression to assign\u2014localization is entirely given away."
+      "outcome": "pass",
+      "reason": "Instruction names the file (acceptable as localization is not the task) but doesn't give specific line numbers or exact replacement code."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "Code-only task, not an agentmd/config edit task."
+      "reason": "This is a code-only task, not agentmd-edits."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 5,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 1
 }

@@ -4,76 +4,97 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-16T12:55:34.535729",
-  "total_time": 57.51,
-  "sandbox_id": "i7doccp54sbvyf7e8j3sz",
-  "backend": "anthropic",
+  "validated_at": "2026-04-22T03:06:46.560819",
+  "total_time": 17816.79,
+  "sandbox_id": "ikvi23h7y34z3e9me7f7n",
+  "backend": "minimax",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "fix_quality",
   "nodes": {
     "quality_gate": {
       "status": "DELETE",
-      "model": "claude-opus-4-7",
-      "backend": "anthropic",
-      "time": 0.27,
-      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:4', 'A:[A] test_not_tautological @ tests/test_outputs.py:48: test `test_regression_test_exercises_dynamic_import` has 4 assert(', 'A:[A] test_not_tautological @ tests/test_outputs.py:78: test `test_regression_test_verifies_error_at_runtime` has 2 assert', 'A:[A] test_not_tautological @ tests/test_outputs.py:98: test `test_linker_defers_unknown_node_modules` has 2 assert(s), al', 'A:[A] test_not_tautological @ tests/test_outputs.py:129: test `test_logger_ensures_line_text_safety` has 2 assert(s), all ', 'lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:9: unpinned pip deps: pytest']"
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.45,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:4', 'A:[A] test_not_tautological @ tests/test_outputs.py:48: test `test_regression_test_exercises_dynamic_import` has 4 assert(', 'A:[A] test_not_tautological @ tests/test_outputs.py:78: test `test_regression_test_verifies_error_at_runtime` has 2 assert', 'A:[A] test_not_tautological @ tests/test_outputs.py:98: test `test_linker_defers_unknown_node_modules` has 2 assert(s), al', 'A:[A] test_not_tautological @ tests/test_outputs.py:129: test `test_logger_ensures_line_text_safety` has 2 assert(s), all ', 'lint_tier_b:2', 'B:[B] pinned_dependencies @ environment/Dockerfile:9: unpinned pip deps: pytest', 'B:[B] no_network_during_tests @ tests/test.sh:39: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 15.86,
+      "time": 15.98,
       "tier_a_fails": [
-        "test_not_tautological"
+        "no_solution_leakage",
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text"
       ],
       "tier_b_fails": [],
-      "pass_count": 9,
-      "fail_count": 1
+      "pass_count": 6,
+      "fail_count": 4
     },
     "tests_rewrite": {
       "status": "error",
       "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":384,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 400 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"invalid_request_error\\\",\\\"message\\\":\\\"\\\\\\\"thinking.type.enabled\\\\\\\" is not supported for this model. Use \\\\\\\"thinking.type.adapt",
       "time": 2.15
+    },
+    "fix_quality": {
+      "status": "ok",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 1154.97,
+      "notes": ""
+    },
+    "validate": {
+      "status": "pass",
+      "nop_reward": 0.0,
+      "gold_reward": 1.0,
+      "rubric_icr": 1.0,
+      "judge_combined": 0.5,
+      "attempts": 1,
+      "notes": "All 4 checks pass. NOP=0, Gold=1, Rubric ICR=7/7=1.0>=0.8. Judge combined=0.5 only because config_edits fails (no diff due to sparse checkout), but rubric ICR is 1.0. Gold solution correctly follows all 7 rubric rules.",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 1345.2
     }
   },
   "history": [
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "oauth",
-      "time": 301.03,
-      "at": "2026-04-15T12:40:45.179996"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
       "backend": "fireworks",
-      "time": 325.34,
-      "at": "2026-04-15T18:45:14.391852"
+      "time": 11682.56,
+      "at": "2026-04-20T17:11:19.179366"
     },
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "oauth",
-      "time": 2655.88,
-      "at": "2026-04-15T20:49:46.171845"
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "minimax",
+      "time": 12370.36,
+      "at": "2026-04-21T12:47:20.755902"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "chutes",
+      "time": 757.88,
+      "at": "2026-04-21T13:47:45.205832"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "minimax",
+      "time": 8882.7,
+      "at": "2026-04-21T16:35:04.500780"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "minimax",
-      "time": 1640.97,
-      "at": "2026-04-15T22:04:52.877806"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "anthropic",
-      "time": 57.51,
-      "at": "2026-04-16T12:55:34.535729"
+      "time": 17816.79,
+      "at": "2026-04-22T03:06:46.560819"
     }
   ]
 }

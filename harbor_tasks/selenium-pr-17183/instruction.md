@@ -20,13 +20,13 @@ The `execute(String commandName, Map<String, ?> parameters)` method needs a retu
 
 The interface must provide the following default methods (exact signatures and names matter):
 
-- A method that takes a command name, parameters, and a default value — returning the default when `execute` returns null. This method must use `Objects.requireNonNullElse` from the standard library.
-- A method that takes just a command name and parameters — returning a non-null value by casting the result and enforcing non-null via `Objects.requireNonNull`. This method replaces a method that should be removed from the interface.
-- A single-argument method that takes only a command name — calling the two-argument form with null parameters and casting the result.
+- `execute(String commandName, @Nullable Map<String, ?> parameters, T defaultValue)` — a default method that returns `defaultValue` when `execute` returns null. This method must use `Objects.requireNonNullElse` from the standard library.
+- `executeAs(String commandName, @Nullable Map<String, ?> parameters)` — a default method that casts the result to `T` and enforces non-null via `Objects.requireNonNull`. This method replaces the existing `executeRequired` method which should be removed from the interface.
+- `execute(String commandName)` — a single-argument default method that calls `execute(commandName, null)` and casts the result to `T`.
 
-### 3. Remove the old method
+### 3. Remove the old `executeRequired` method
 
-An existing method that enforces non-null return values must be removed entirely from the interface. Call sites currently using this method must be updated to use one of the new convenience methods.
+The existing `executeRequired` method that enforces non-null return values must be removed entirely from the interface. Call sites currently using `executeRequired` must be updated to use `executeAs` or one of the new convenience methods.
 
 ### 4. Add required import
 
@@ -42,10 +42,10 @@ New public methods must have Javadoc documentation. The interface should contain
 
 ### 7. Update call sites
 
-All call sites using the old method must be updated:
-- `java/src/org/openqa/selenium/chromium/AddHasCasting.java` — update to use the new default-value method
-- `java/src/org/openqa/selenium/chromium/AddHasCdp.java` — update to use the new non-null casting method
-- `java/src/org/openqa/selenium/firefox/AddHasExtensions.java` — update to use the new non-null casting method
+All call sites using `executeRequired` must be updated:
+- `java/src/org/openqa/selenium/chromium/AddHasCasting.java` — update to use the `execute(cmd, params, defaultValue)` overload for default-value cases and `execute(cmd)` for non-null cases
+- `java/src/org/openqa/selenium/chromium/AddHasCdp.java` — update to use `executeAs`
+- `java/src/org/openqa/selenium/firefox/AddHasExtensions.java` — update to use `executeAs`
 - Other files as needed
 
 ### 8. Maintain existing code quality

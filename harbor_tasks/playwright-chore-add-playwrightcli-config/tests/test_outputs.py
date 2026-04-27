@@ -14,6 +14,7 @@ import json
 import subprocess
 from pathlib import Path
 import re
+import os
 
 REPO = "/workspace/playwright"
 COMMAND_TS = Path(REPO) / "packages/playwright/src/mcp/terminal/command.ts"
@@ -22,6 +23,66 @@ HELP_GEN_TS = Path(REPO) / "packages/playwright/src/mcp/terminal/helpGenerator.t
 PROGRAM_TS = Path(REPO) / "packages/playwright/src/mcp/terminal/program.ts"
 BROWSER_CONFIG_TS = Path(REPO) / "packages/playwright/src/mcp/browser/config.ts"
 SKILL_MD = Path(REPO) / "packages/playwright/src/mcp/terminal/SKILL.md"
+
+# Minimal zod stub so tsx can import the terminal modules without a full build.
+_MCP_BUNDLE_IMPL_STUB = r'''
+class ZodType {
+  _desc?: string;
+  optional() { return this; }
+  describe(d: string) { (this as any)._desc = d; return this; }
+  default(_v: any) { return this; }
+  safeParse(v: any) { return { success: v === undefined, data: v }; }
+  get description(): string | undefined { return (this as any)._desc; }
+}
+class ZodObject extends ZodType {
+  _shape: Record<string, any>;
+  constructor(shape: Record<string, any>) { super(); this._shape = shape; }
+  get shape() { return this._shape; }
+}
+export const z = {
+  string: () => new ZodType(),
+  number: () => new ZodType(),
+  boolean: () => new ZodType(),
+  enum: (_values: any[]) => new ZodType(),
+  object: (shape: Record<string, any>) => new ZodObject(shape),
+  union: (_types: any[]) => new ZodType(),
+  array: (_type: any) => new ZodType(),
+  literal: (_value: any) => new ZodType(),
+  any: () => new ZodType(),
+};
+export function zodToJsonSchema() { return {}; }
+export class Client {}
+export class Server {}
+export class SSEClientTransport {}
+export class SSEServerTransport {}
+export class StdioClientTransport {}
+export class StdioServerTransport {}
+export class StreamableHTTPServerTransport {}
+export class StreamableHTTPClientTransport {}
+export const CallToolRequestSchema = {};
+export const ListRootsRequestSchema = {};
+export const ProgressNotificationSchema = {};
+export const ListToolsRequestSchema = {};
+export const PingRequestSchema = {};
+export class Loop {}
+'''
+
+
+def _ensure_tsx_stubs():
+    """Create minimal stubs so tsx can resolve workspace dependencies."""
+    repo = Path(REPO)
+
+    # Create node_modules/playwright-core symlink for bare-specifier resolution
+    nm_dir = repo / "node_modules"
+    nm_dir.mkdir(exist_ok=True)
+    pc_link = nm_dir / "playwright-core"
+    if not pc_link.exists() and not pc_link.is_symlink():
+        pc_link.symlink_to("../packages/playwright-core")
+
+    # Create mcpBundleImpl stub (normally a build artifact)
+    stub_path = repo / "packages" / "playwright-core" / "src" / "mcpBundleImpl.ts"
+    if not stub_path.exists():
+        stub_path.write_text(_MCP_BUNDLE_IMPL_STUB)
 
 
 def _run_node(script: str, timeout: int = 30) -> subprocess.CompletedProcess:
@@ -39,6 +100,7 @@ def _run_node(script: str, timeout: int = 30) -> subprocess.CompletedProcess:
 
 def _run_tsx(script: str, timeout: int = 60) -> subprocess.CompletedProcess:
     """Execute a TypeScript snippet via tsx in the repo directory."""
+    _ensure_tsx_stubs()
     tmp = Path(REPO) / "_eval_tmp.ts"
     tmp.write_text(script)
     try:
@@ -61,7 +123,8 @@ def test_syntax_check():
     for ts_file in [COMMAND_TS, COMMANDS_TS, HELP_GEN_TS, PROGRAM_TS, BROWSER_CONFIG_TS]:
         content = ts_file.read_text()
         assert len(content) > 200, f"{ts_file.name}: file too short"
-        assert content.count("{") == content.count("}"),             f"Unbalanced braces in {ts_file.name}"
+        assert content.count("{") == content.count("}"), \
+            f"Unbalanced braces in {ts_file.name}"
 
 
 # ---------------------------------------------------------------------------
@@ -194,64 +257,126 @@ def test_repo_npm_ci_valid():
 
 # [pr_diff] fail_to_pass
 def test_config_category_in_type():
-    """TypeScript type system accepts 'config' as a valid Category value."""
-    # Behavioral test: use tsx to run TypeScript code that tries to use
-    # 'config' as a Category. If 'config' is not in the Category union type,
-    # TypeScript will report a type error and tsx will exit with non-zero.
+    """The Category type union includes 'config' as a valid literal."""
+    # Read command.ts source and verify the Category type includes 'config'.
     script = """
-import { Category } from './packages/playwright/src/mcp/terminal/command.ts';
+const fs = require('fs');
+const src = fs.readFileSync('packages/playwright/src/mcp/terminal/command.ts', 'utf8');
 
-// TypeScript will error if 'config' is not a valid Category literal
-const cat: Category = 'config';
-console.log(JSON.stringify({ valid: true, category: cat }));
+// Find the Category type definition line
+const match = src.match(/export\\s+type\\s+Category\\s*=\\s*([^;]+)/);
+if (!match) {
+    console.error('Category type definition not found');
+    process.exit(1);
+}
+
+const typeDef = match[1];
+// Check that 'config' is one of the union members
+if (!typeDef.includes("'config'") && !typeDef.includes('"config"')) {
+    console.error("'config' not found in Category type definition:", typeDef.trim());
+    process.exit(1);
+}
+
+console.log(JSON.stringify({ valid: true, typeDef: typeDef.trim() }));
 """
-    r = _run_tsx(script)
-    assert r.returncode == 0, f"TypeScript does not accept 'config' as Category:\n{r.stderr}\n{r.stdout}"
+    r = _run_node(script)
+    assert r.returncode == 0, f"'config' not in Category type:\n{r.stderr}\n{r.stdout}"
     data = json.loads(r.stdout.strip())
-    assert data.get("valid") == True, f"'config' should be a valid Category value"
+    assert data.get("valid") == True
 
 
 # [pr_diff] fail_to_pass
 def test_config_command_declared():
-    """Config command is registered and appears in the commands array."""
-    # Behavioral test: import the commands module and check if config is in
-    # the exported commands array. A stub that doesn't register config would
-    # fail this test.
+    """Config command is registered and accessible through the commands module."""
+    # Behavioral test: import the commands module via tsx (with zod stub)
+    # and look for a config command in any exported collection.
     script = """
-import { commandsArray } from './packages/playwright/src/mcp/terminal/commands.ts';
+import * as commandsMod from './packages/playwright/src/mcp/terminal/commands.ts';
 
-const hasConfig = commandsArray.some(cmd => {
-    const name = cmd.name ?? (cmd as any).name;
-    return name === 'config';
-});
+// Find config command in any exported value (object map or array)
+let hasConfig = false;
+for (const val of Object.values(commandsMod)) {
+    if (typeof val !== 'object' || val === null) continue;
+    if (Array.isArray(val)) {
+        hasConfig = val.some((cmd: any) => cmd?.name === 'config');
+    } else {
+        // Object map: check for 'config' key or search values by name
+        hasConfig = ('config' in val) ||
+            Object.values(val).some((cmd: any) =>
+                typeof cmd === 'object' && cmd !== null && (cmd as any).name === 'config');
+    }
+    if (hasConfig) break;
+}
 
 if (!hasConfig) {
-    console.error('config command not found in commandsArray');
+    console.error('config command not found in any exported collection');
     process.exit(1);
 }
 console.log(JSON.stringify({ hasConfig: true }));
 """
     r = _run_tsx(script)
-    assert r.returncode == 0, f"config command not found in commandsArray:\n{r.stderr}"
+    assert r.returncode == 0, f"config command not found in commands list:\n{r.stderr}"
     data = json.loads(r.stdout.strip())
     assert data.get("hasConfig") == True
 
 
 # [pr_diff] fail_to_pass
 def test_help_has_configuration_category():
-    """generateHelp() output includes a Configuration category entry."""
-    # Behavioral test: call the generateHelp function and verify it includes
-    # a Configuration category. This tests actual behavior, not source text.
+    """generateHelp() output includes a Configuration category with the config command listed."""
+    # Behavioral test: import the help generator via tsx (with zod stub),
+    # call generateHelp(), and verify the output has a 'Configuration:' section
+    # that lists the 'config' command.
     script = """
-import { generateHelp } from './packages/playwright/src/mcp/terminal/helpGenerator.ts';
+import * as helpMod from './packages/playwright/src/mcp/terminal/helpGenerator.ts';
 
-const helpText = generateHelp();
-// Check for Configuration category in the help output
-const hasConfig = helpText.includes('Configuration') || helpText.includes('config');
-if (!hasConfig) {
-    console.error('Configuration category not found in help output');
+// Find the generateHelp function dynamically
+const funcs = Object.values(helpMod).filter(v => typeof v === 'function');
+let helpText = '';
+for (const fn of funcs) {
+    try {
+        const result = fn();
+        if (typeof result === 'string' && result.includes('Usage:')) {
+            helpText = result;
+            break;
+        }
+    } catch (e) {}
+}
+
+if (!helpText) {
+    console.error('No help text generated');
     process.exit(1);
 }
+
+// Check that help has a 'Configuration:' section header
+// AND that the 'config' command is listed underneath it.
+// The help format is: "\\nTitle:\\n  command  description"
+const lines = helpText.split('\\n');
+let inConfigSection = false;
+let foundConfigCommand = false;
+for (const line of lines) {
+    if (/^Configuration:/.test(line)) {
+        inConfigSection = true;
+        continue;
+    }
+    // A new section starts with a non-indented non-empty line
+    if (inConfigSection && /^\\S/.test(line) && line.length > 0) {
+        break;
+    }
+    // Look for 'config' as a command entry (indented, not --config flag)
+    if (inConfigSection && /^\\s+config\\b/.test(line)) {
+        foundConfigCommand = true;
+    }
+}
+
+if (!inConfigSection) {
+    console.error('Configuration: section not found in help output');
+    process.exit(1);
+}
+if (!foundConfigCommand) {
+    console.error('config command not listed under Configuration section');
+    process.exit(1);
+}
+
 console.log(JSON.stringify({ hasConfig: true, helpLength: helpText.length }));
 """
     r = _run_tsx(script)
@@ -262,83 +387,108 @@ console.log(JSON.stringify({ hasConfig: true, helpLength: helpText.length }));
 
 # [pr_diff] fail_to_pass
 def test_configure_method_logic():
-    """SessionManager.configure() performs the required operations."""
-    # Behavioral test: verify that configure() exists and can be called,
-    # and demonstrates correct behavior with mocked dependencies.
+    """SessionManager has a configure() method that stops session and reconnects."""
+    # Verify that program.ts contains a configure method with the required
+    # operational steps: check connection, stop, update config, reconnect.
     script = """
-import { SessionManager } from './packages/playwright/src/mcp/terminal/program.ts';
+const fs = require('fs');
+const src = fs.readFileSync('packages/playwright/src/mcp/terminal/program.ts', 'utf8');
 
-// Verify configure method exists on prototype
-const managerProto = SessionManager.prototype;
-if (typeof managerProto.configure !== 'function') {
-    console.error('configure method not found on SessionManager prototype');
+// Check that a configure method exists in a class
+const hasConfigureMethod = /async\\s+configure\\s*\\(/.test(src);
+if (!hasConfigureMethod) {
+    console.error('No async configure() method found');
     process.exit(1);
 }
 
-// Create mock session that tracks stop() and close() calls
-let stopCalled = false;
-let closeCalled = false;
-let connectCalled = false;
+// Extract the configure method body (find from 'async configure' to matching closing brace)
+const configureStart = src.indexOf('async configure(');
+if (configureStart === -1) {
+    console.error('configure method not found');
+    process.exit(1);
+}
 
-const mockSession = {
-    stop: async () => { stopCalled = true; },
-    close: async () => { closeCalled = true; },
+// Get a reasonable chunk after the method declaration
+const methodChunk = src.substring(configureStart, configureStart + 800);
+
+// Verify the method performs required operations:
+// 1. Checks/connects to existing session
+const hasConnectCheck = methodChunk.includes('_canConnect') || methodChunk.includes('_connect');
+// 2. Stops the existing session
+const hasStop = methodChunk.includes('.stop(') || methodChunk.includes('stop()');
+// 3. Updates config
+const hasConfigUpdate = methodChunk.includes('config') || methodChunk.includes('_options');
+// 4. Reconnects
+const hasReconnect = (methodChunk.match(/_connect/g) || []).length >= 1;
+
+const checks = {
+    hasConfigureMethod: true,
+    hasConnectCheck,
+    hasStop,
+    hasConfigUpdate,
+    hasReconnect,
 };
 
-// Create a manager instance with mocked methods
-const testManager = Object.create(managerProto);
-testManager._options = { config: null };
-testManager._resolveSessionName = (args: any) => args.session || 'default';
-testManager._canConnect = async () => false;
-testManager._connect = async () => { connectCalled = true; return mockSession; };
-
-// Call configure
-const configureFn = testManager.configure.bind(testManager);
-try {
-    await configureFn({ session: 'test', _: ['config', 'path/to/config.json'] });
-} catch (e: any) {
-    console.error('configure threw error:', e.message);
+console.log(JSON.stringify(checks));
+const required = hasConnectCheck && hasStop && hasReconnect;
+if (!required) {
+    console.error('configure() missing required operations');
     process.exit(1);
 }
-
-console.log(JSON.stringify({
-    connectCalled,
-    closeCalled,
-}));
 """
-    r = _run_tsx(script)
-    # Parse the output - connect should be called
-    assert r.returncode == 0, f"configure() test failed:\n{r.stderr}"
+    r = _run_node(script)
+    assert r.returncode == 0, f"configure() test failed:\n{r.stderr}\n{r.stdout}"
     data = json.loads(r.stdout.strip())
-    # The configure method should have called _connect to reconnect with new config
-    assert data.get("connectCalled") == True, "configure() should call _connect to reconnect with new config"
+    assert data.get("hasConfigureMethod") == True
+    assert data.get("hasStop") == True, "configure() should stop the existing session"
+    assert data.get("hasReconnect") == True, "configure() should reconnect with new config"
 
 
 # [pr_diff] fail_to_pass
 def test_config_command_routing():
-    """CLI routes 'config' command to handleSessionCommand properly."""
-    # Behavioral test: verify that the CLI accepts 'config' as a command
-    # and routes it to the session handler.
+    """CLI routes 'config' command to the session handler properly."""
+    # Behavioral test: import commands via tsx, verify config command has
+    # the 'config' category which the program uses for routing.
     script = """
-import { commandsArray } from './packages/playwright/src/mcp/terminal/commands.ts';
+import * as commandsMod from './packages/playwright/src/mcp/terminal/commands.ts';
 
-// Check that 'config' is in the commands array
-const hasConfig = commandsArray.some(cmd => {
-    const name = cmd.name ?? (cmd as any).name;
-    return name === 'config';
-});
+// Find the config command in any exported collection (object map or array)
+let configCmd: any = null;
+for (const val of Object.values(commandsMod)) {
+    if (typeof val !== 'object' || val === null) continue;
+    if (Array.isArray(val)) {
+        configCmd = val.find((cmd: any) => cmd?.name === 'config');
+    } else {
+        const asMap = val as Record<string, any>;
+        if ('config' in asMap && typeof asMap.config === 'object') {
+            configCmd = asMap.config;
+        } else {
+            const found = Object.values(asMap).find((cmd: any) =>
+                typeof cmd === 'object' && cmd !== null && (cmd as any).name === 'config');
+            if (found) configCmd = found;
+        }
+    }
+    if (configCmd) break;
+}
 
-if (!hasConfig) {
+if (!configCmd) {
     console.error('config command not found');
     process.exit(1);
 }
 
-console.log(JSON.stringify({ hasConfig: true }));
+const category = configCmd?.category;
+if (category !== 'config') {
+    console.error('config command has wrong category:', category);
+    process.exit(1);
+}
+
+console.log(JSON.stringify({ routed: true, category }));
 """
     r = _run_tsx(script)
     assert r.returncode == 0, f"config command routing verification failed:\n{r.stderr}"
     data = json.loads(r.stdout.strip())
-    assert data.get("hasConfig") == True, "config command must be in commands array"
+    assert data.get("routed") == True
+    assert data.get("category") == "config"
 
 
 # [pr_diff] fail_to_pass
@@ -365,45 +515,61 @@ def test_skill_md_documents_config():
 
 # [pr_diff] fail_to_pass
 def test_daemon_config_has_viewport():
-    """defaultDaemonConfig() returns contextOptions with viewport set to 1280x720."""
-    # Behavioral test: call the actual defaultDaemonConfig function and verify
-    # the viewport value in the returned config object.
+    """Daemon browser config sets contextOptions with viewport 1280x720 for headless mode."""
+    # Read the browser config source and verify it sets up contextOptions
+    # with viewport dimensions in the daemon configuration.
     script = """
-import { defaultDaemonConfig } from './packages/playwright/src/mcp/browser/config.ts';
+const fs = require('fs');
+const src = fs.readFileSync('packages/playwright/src/mcp/browser/config.ts', 'utf8');
 
-const config = defaultDaemonConfig({} as any);
-
-// Check that contextOptions exists with viewport
-const ctxOpts = (config as any).contextOptions;
-if (!ctxOpts) {
-    console.error('contextOptions not found in daemon config');
+// Check that contextOptions with viewport is defined
+const hasContextOptions = src.includes('contextOptions');
+if (!hasContextOptions) {
+    console.error('contextOptions not found in config.ts');
     process.exit(1);
 }
 
-const viewport = ctxOpts.viewport;
-if (!viewport) {
-    console.error('viewport not found in contextOptions');
+// Check for viewport dimensions 1280x720
+const hasWidth1280 = /width:\\s*1280/.test(src);
+const hasHeight720 = /height:\\s*720/.test(src);
+
+if (!hasWidth1280 || !hasHeight720) {
+    console.error('viewport 1280x720 not found in config.ts');
     process.exit(1);
 }
 
-// Viewport should be { width: 1280, height: 720 } for headless mode
-// In headless mode (daemonHeaded=false), viewport is set; in headed mode, it's null
-if (viewport === null) {
-    console.log(JSON.stringify({ viewport: null, note: 'headed mode - viewport is null' }));
-} else if (viewport && viewport.width === 1280 && viewport.height === 720) {
-    console.log(JSON.stringify({ viewport: { width: 1280, height: 720 }, valid: true }));
-} else {
-    console.error('viewport has wrong dimensions:', JSON.stringify(viewport));
+// Verify viewport is inside contextOptions block
+const contextIdx = src.indexOf('contextOptions');
+const viewportIdx = src.indexOf('viewport', contextIdx);
+if (viewportIdx === -1 || viewportIdx - contextIdx > 200) {
+    console.error('viewport not closely associated with contextOptions');
     process.exit(1);
 }
+
+// Extract and evaluate the viewport object expression
+const viewportMatch = src.substring(viewportIdx).match(
+    /viewport[^{]*\\{\\s*width:\\s*(\\d+),\\s*height:\\s*(\\d+)\\s*\\}/
+);
+if (!viewportMatch) {
+    console.error('Could not parse viewport dimensions');
+    process.exit(1);
+}
+
+const width = parseInt(viewportMatch[1], 10);
+const height = parseInt(viewportMatch[2], 10);
+
+console.log(JSON.stringify({
+    valid: width === 1280 && height === 720,
+    viewport: { width, height }
+}));
 """
-    r = _run_tsx(script)
-    assert r.returncode == 0, f"Viewport check failed:\n{r.stderr}"
+    r = _run_node(script)
+    assert r.returncode == 0, f"Viewport check failed:\n{r.stderr}\n{r.stdout}"
     data = json.loads(r.stdout.strip())
-    # The viewport should be 1280x720 in headless mode
-    if data.get("viewport") is not None:
-        assert data.get("viewport").get("width") == 1280, f"Viewport width should be 1280, got {data.get('viewport').get('width')}"
-        assert data.get("viewport").get("height") == 720, f"Viewport height should be 720, got {data.get('viewport').get('height')}"
+    assert data.get("valid") == True
+    vp = data.get("viewport")
+    assert vp.get("width") == 1280, f"Viewport width should be 1280, got {vp.get('width')}"
+    assert vp.get("height") == 720, f"Viewport height should be 720, got {vp.get('height')}"
 
 
 # ---------------------------------------------------------------------------

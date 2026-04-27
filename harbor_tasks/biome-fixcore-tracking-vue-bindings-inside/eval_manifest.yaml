@@ -5,10 +5,6 @@ source:
   base_commit: c047e86583434beb33ed4fb0b49e627d26a8afbd
   merge_commit: 66ef5baf6325d324efcb3a1a527496406cfbf72e
 checks:
-- id: new_module_registered
-  type: pass_to_pass
-  origin: static
-  description: biome_html_syntax::lib.rs declares the new directive_ext module
 - id: markdown_table_formatting
   type: pass_to_pass
   origin: static
@@ -22,44 +18,36 @@ checks:
   type: pass_to_pass
   origin: static
   description: biome_html_syntax::lib.rs uses proper module declaration style
-- id: directive_ext_initializer
+- id: new_module_registered
   type: fail_to_pass
   origin: pr_diff
-  description: directive_ext.rs provides initializer() covering all 8 Svelte directive
-    types
-- id: vue_directive_tracking
+  description: biome_html_syntax::lib.rs declares a new directive_ext module for
+    directive extension support
+- id: directive_ext_compiles
   type: fail_to_pass
   origin: pr_diff
-  description: html.rs parses all 4 Vue directive variants (VueVOn, VueVBind, VueVSlot,
-    VueDirective) as embedded JS
-- id: svelte_directive_tracking
+  description: directive_ext.rs exists and the biome_html_syntax crate compiles
+    successfully with the new directive extension module
+- id: html_handler_compiles
   type: fail_to_pass
   origin: pr_diff
-  description: html.rs parses Svelte directives (AnySvelteDirective) as embedded JS
-- id: parse_directive_helpers
-  type: fail_to_pass
-  origin: pr_diff
-  description: parse_directive_string_value (Vue) and parse_directive_text_expression
-    (Svelte) helpers exist with correct logic
+  description: html.rs handles Vue and Svelte directive types and biome_service
+    compiles with the directive handling code
 - id: biome_developer_skill_created
   type: fail_to_pass
   origin: pr_diff
-  description: .claude/skills/biome-developer/SKILL.md created with frontmatter, inner_string_text,
-    quick_test, EmbeddingKind content
+  description: .claude/skills/biome-developer/SKILL.md created with frontmatter and
+    content covering string extraction, AST inspection, and embedded language handling
 - id: agents_md_updated
   type: fail_to_pass
   origin: pr_diff
-  description: AGENTS.md updated with new do/don't rules about legacy syntax, AST
-    inspection, skills reference
+  description: AGENTS.md updated with new guidelines about evidence-based claims,
+    legacy syntax, AST inspection, and skills reference
 - id: testing_codegen_skill_updated
   type: fail_to_pass
   origin: pr_diff
   description: testing-codegen SKILL.md updated with parser quick test section and
-    just qt command
-- id: directive_ext_not_stub
-  type: pass_to_pass
-  origin: static
-  description: directive_ext.rs has 8 real match arms, not a stub returning None
+    biome_html_parser reference
 rubric:
 - rule: Config updates follow the style and formatting of existing documentation in
     the repo

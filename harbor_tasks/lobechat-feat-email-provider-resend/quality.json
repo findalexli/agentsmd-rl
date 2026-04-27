@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "Instruction names all key paths (src/server/services/email/impls/index.ts, src/envs/email.ts, AGENTS.md, README.md), the EmailImplType enum, literal values ('resend', 'nodemailer'), env var names (RESEND_API_KEY, RESEND_FROM, EMAIL_SERVICE_PROVIDER), class patterns, and documentation headings."
+      "reason": "Instruction names all key paths (src/server/services/email/impls/resend/, src/envs/email.ts, src/server/services/email/index.ts, README.md, AGENTS.md), env var names (RESEND_API_KEY, RESEND_FROM, EMAIL_SERVICE_PROVIDER), enum value 'resend', and required strings ('## Project Description', 'LobeHub', 'AI Agent Workspace')."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "Instruction describes what to add and references patterns rather than specifying exact code lines; agent must still design the implementation."
+      "reason": "Instruction describes what needs to exist and behavior, not exact code edits."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert specific naming like 'class ResendImpl', 'EmailImplType.Resend', 'new ResendImpl()', and 'Resend = \\'resend\\'' regex \u2014 alternative valid names (e.g., ResendProvider, EmailImplType.RESEND) would fail."
+      "reason": "Tests assert on specific identifiers like 'class ResendImpl', 'EmailImplType.Resend', 'new ResendImpl()', and regex /Resend\\s*=\\s*'resend'/ \u2014 alternative valid implementations using different class/enum names would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Most f2p tests are string-inclusion checks on source files (e.g., code.includes('class ResendImpl'), 'EMAIL_SERVICE_PROVIDER' in code); no test actually invokes sendMail or constructs EmailService to verify behavior."
+      "reason": "Most fail-to-pass tests (test_resend_impl_file_structure, test_enum_includes_resend, test_env_configures_resend_vars, test_email_service_resolves_provider, test_email_readme_documents_resend, test_agents_md_has_project_description) are pure substring/regex checks on source files; only the repo_tests gates execute code."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "Tests require specific structural elements (class, interface implementation, enum value, factory case) that a no-op stub without real changes couldn't satisfy."
+      "reason": "A stub returning defaults could not satisfy substring checks for class names, enum values, env var names, and the README/AGENTS.md content together."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "README documentation, AGENTS.md section, env vars, factory registration, and provider selection logic are all tested."
+      "reason": "All instruction requirements (impl class, factory enum, env vars, provider selection, README, AGENTS.md) have corresponding tests."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are grouped by clearly labeled section comments (Gates, Fail-to-pass, Config/documentation)."
+      "reason": "Tests are grouped by section comments (Gates pass_to_pass, repo_tests, fail_to_pass, config/documentation)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task produces TS code and markdown, not structured data output."
+      "reason": "Task does not produce structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "Filenames and identifiers appear consistent between instruction and tests."
+      "reason": "Paths and identifiers are consistent across instruction and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "Instruction references files naturally by their role; no line-level hints."
+      "reason": "Instruction names files because creating/editing them is the task itself, not a hidden bug localization."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "Gold patch to AGENTS.md and README.md adds localized sections rather than rewriting files."
+      "reason": "Gold patch makes localized additions to AGENTS.md, README, env file, and adds a new impl directory; no full-file rewrites."
     }
   },
   "tier_a_fails": [

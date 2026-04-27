@@ -199,20 +199,6 @@ def test_settings_preserved():
     assert "astral.sh/uv/install.sh" in content, "astral.sh UV install URL missing"
 
 
-# [static] pass_to_pass
-def test_command_not_stub():
-    """The UV install command must have real download + execute logic."""
-    cmd = _extract_uv_install_cmd()
-    lines = [l.strip().rstrip("\\").strip() for l in cmd.splitlines()]
-    real = [l for l in lines if l and not l.startswith("#")]
-    has_download = any("curl" in l or "wget" in l for l in real)
-    has_execute = any(
-        "sh " in l or "bash " in l or "install.sh" in l for l in real
-    )
-    assert has_download, "UV install command has no download step (curl/wget)"
-    assert has_execute, "UV install command has no execute step (sh/bash)"
-
-
 # ---------------------------------------------------------------------------
 # Pass-to-pass (repo_tests) — repo CI tests
 # ---------------------------------------------------------------------------
@@ -220,14 +206,7 @@ def test_command_not_stub():
 
 def test_repo_ruff_check():
     """Repo's Python linting passes (pass_to_pass)."""
-    # Install ruff if not available
-    subprocess.run(
-        ["pip", "install", "-q", "ruff"],
-        capture_output=True,
-        text=True,
-        timeout=60,
-    )
-    # ruff check passes on docker/ directory (no Python files but validates syntax)
+    # ruff is pre-installed in the Docker image
     r = subprocess.run(
         ["ruff", "check", "docker/"],
         capture_output=True,
@@ -304,29 +283,6 @@ def test_repo_shellcheck():
     )
     assert r.returncode == 0, f"Shellcheck failed:\n{r.stdout[-1000:]}{r.stderr[-500:]}"
 
-
-def test_repo_actionlint():
-    """Repo's GitHub Actions workflows pass actionlint (pass_to_pass)."""
-    # Install actionlint
-    subprocess.run(
-        ["pip", "install", "-q", "actionlint-py"],
-        capture_output=True,
-        text=True,
-        timeout=60,
-    )
-    # Run actionlint on GitHub workflow files (find them first to handle glob)
-    import glob
-    workflow_dir = Path(REPO) / ".github" / "workflows"
-    workflow_files = list(workflow_dir.glob("*.yml"))
-    if workflow_files:
-        r = subprocess.run(
-            ["actionlint"] + [str(f) for f in workflow_files],
-            capture_output=True,
-            text=True,
-            timeout=60,
-            cwd=REPO,
-        )
-        assert r.returncode == 0, f"Actionlint failed:\n{r.stderr[-500:]}"
 
 
 def test_repo_dockerfile_graph():

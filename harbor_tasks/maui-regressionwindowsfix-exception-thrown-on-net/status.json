@@ -1,15 +1,16 @@
 {
   "schema_version": 2,
-  "valid": true,
-  "verdict": "pass",
-  "nop_reward": 0.0,
-  "gold_reward": 1.0,
-  "validated_at": "2026-04-16T12:06:16.022274",
-  "total_time": 63.78,
-  "sandbox_id": "ie5e2ed80tyk0b5qjksve",
-  "backend": "anthropic",
+  "valid": false,
+  "verdict": "fail",
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-25T11:52:46.884940",
+  "total_time": 2007.64,
+  "sandbox_id": "ic5g24l7pu39iq63g3xiu",
+  "backend": "ark-kimi-k2.6",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "fix_quality",
+  "error": "rate limited during fix_quality: {\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":202265,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 429 {\\\"error\\\":{\\\"code\\\":\\\"AccountQuotaExceeded\\\",\\\"message\\\":\\\"You have exceeded the 5-hour usage quota. It will reset at 2026-04-26 05:07:00 +0800 CST. We recommend upgrading your plan for more quota, or waiting for the reset. Request id: 0217771431651468169098a6a466e6b6fa87183e14d19472df05e\\\",\\\"param\\\":\\\"\\\",\\\"type\\\":\\\"TooManyRequests",
   "nodes": {
     "p2p_enrich": {
       "status": "ok",
@@ -80,10 +81,10 @@
     },
     "quality_gate": {
       "status": "passed",
-      "model": "claude-opus-4-7",
-      "backend": "anthropic",
-      "time": 0.65,
-      "notes": "flags=[]"
+      "model": "kimi-k2.6",
+      "backend": "ark-kimi-k2.6",
+      "time": 0.22,
+      "notes": "flags=['lint_tier_b:1', 'B:[B] no_network_during_tests @ tests/test.sh:44: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
@@ -101,48 +102,55 @@
       "status": "error",
       "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":500,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 400 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"invalid_request_error\\\",\\\"message\\\":\\\"\\\\\\\"thinking.type.enabled\\\\\\\" is not supported for this model. Use \\\\\\\"thinking.type.adapt",
       "time": 1.83
+    },
+    "fix_quality": {
+      "status": "rate_limited",
+      "model": "kimi-k2.6",
+      "backend": "ark-kimi-k2.6",
+      "time": 203.78,
+      "notes": ""
     }
   },
   "history": [
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "minimax",
-      "time": 1205.94,
-      "at": "2026-04-15T04:43:50.244407"
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 16281.84,
+      "at": "2026-04-25T05:44:20.717626"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "oauth",
-      "time": 480.83,
-      "at": "2026-04-15T12:59:16.786089"
+      "time": 4056.93,
+      "at": "2026-04-25T09:49:08.984997"
     },
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 3325.34,
+      "at": "2026-04-25T10:45:27.866954"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
       "backend": "oauth",
-      "time": 553.05,
-      "at": "2026-04-15T19:02:07.064014"
+      "time": 1838.72,
+      "at": "2026-04-25T11:17:12.715306"
     },
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "glm",
-      "time": 3878.41,
-      "at": "2026-04-16T00:24:18.707630"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "anthropic",
-      "time": 63.78,
-      "at": "2026-04-16T12:06:16.022274"
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 2007.64,
+      "at": "2026-04-25T11:52:46.884940"
     }
   ]
 }

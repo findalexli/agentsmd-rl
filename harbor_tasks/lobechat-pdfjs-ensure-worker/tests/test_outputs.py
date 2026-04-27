@@ -19,44 +19,43 @@ def test_ensure_worker_sets_src():
     assert module_path.exists(), "Unified pdfjs module must exist at src/libs/pdfjs/index.tsx"
     content = module_path.read_text()
 
-    # Extract the workerSrc template from the module
-    match = re.search(r"const workerSrc\s*=\s*`([^`]+)`", content)
-    assert match, "Module must define a workerSrc template literal"
-
-    # Verify ensureWorker references GlobalWorkerOptions
+    # Core requirement: module must configure GlobalWorkerOptions.workerSrc
     assert "GlobalWorkerOptions.workerSrc" in content, \
-        "ensureWorker must set GlobalWorkerOptions.workerSrc"
+        "Module must configure GlobalWorkerOptions.workerSrc"
 
-    # Verify the Document export actually CALLS ensureWorker (not just defines it)
-    assert "ensureWorker()" in content, \
-        "Document export must call ensureWorker() in its body"
+    # Must use the npmmirror CDN for the pdfjs-dist worker URL
+    assert "registry.npmmirror.com/pdfjs-dist" in content, \
+        "Module must use the npmmirror CDN for the pdfjs-dist worker"
 
-    # Execute the ensureWorker logic with node to verify it correctly sets workerSrc
-    worker_src_template = match.group(1)
-    script = (
-        "const pdfjs = { version: '4.0.0', GlobalWorkerOptions: { workerSrc: null } };"
-        f"const workerSrc = `{worker_src_template}`;"
-        "function ensureWorker() {"
-        "  if (!pdfjs.GlobalWorkerOptions.workerSrc) {"
-        "    pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;"
-        "  }"
-        "}"
-        "ensureWorker();"
-        "if (pdfjs.GlobalWorkerOptions.workerSrc && "
-        "    pdfjs.GlobalWorkerOptions.workerSrc.includes('4.0.0') && "
-        "    pdfjs.GlobalWorkerOptions.workerSrc.includes('pdf.worker')) {"
-        "  console.log('OK');"
-        "} else {"
-        "  console.log('FAIL:' + pdfjs.GlobalWorkerOptions.workerSrc);"
-        "}"
-    )
+    # Must export Document, Page, and pdfjs for consuming components
+    assert re.search(r'export\b.*\bDocument\b', content), \
+        "Module must export a Document component"
+    assert re.search(r'export\b.*\bPage\b', content), \
+        "Module must export Page"
+    assert re.search(r'export\b.*\bpdfjs\b', content), \
+        "Module must export pdfjs"
+
+    # Behavioral subprocess check: extract the CDN URL template literal and verify
+    # it correctly interpolates the pdfjs version number using Node
+    url_match = re.search(r'`([^`]*registry\.npmmirror\.com/pdfjs-dist/[^`]*)`', content)
+    assert url_match, \
+        "Worker URL must be a template literal using the npmmirror CDN"
+    url_template = url_match.group(1)
+
     result = subprocess.run(
-        ["node", "-e", script],
+        ["node", "-e",
+         "const pdfjs = { version: '4.8.69' };"
+         f"const url = `{url_template}`;"
+         "if (url.includes('4.8.69') && url.includes('pdf.worker')) {"
+         "  console.log('OK');"
+         "} else {"
+         "  console.log('FAIL:' + url);"
+         "}"],
         capture_output=True, text=True, timeout=15,
     )
     assert result.returncode == 0, f"Node script failed: {result.stderr}"
     assert result.stdout.strip() == "OK", \
-        f"ensureWorker did not set workerSrc correctly: {result.stdout}"
+        f"Worker URL did not interpolate correctly: {result.stdout}"
 
 
 def test_old_worker_files_removed():

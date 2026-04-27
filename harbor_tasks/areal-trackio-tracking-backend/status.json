@@ -4,12 +4,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-15T21:49:07.228864",
-  "total_time": 694.17,
-  "sandbox_id": "iiuisgeeqbltbnlkna4v5",
-  "backend": "minimax",
+  "validated_at": "2026-04-25T12:33:32.840117",
+  "total_time": 954.09,
+  "sandbox_id": "ip5txberfl2tf607r026j",
+  "backend": "anthropic",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "oneshot_repair",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -26,16 +26,14 @@
       "notes": "tests look good"
     },
     "validate": {
-      "status": "pass",
-      "nop_reward": 0.0,
-      "gold_reward": 1.0,
-      "rubric_icr": 0.5,
-      "attempts": 1,
-      "notes": "All validation checks passed. Docker build successful. NOP test correctly fails (reward=0). Gold test passes (reward=1). Rubric judge ICR=0.5 due to top-level trackio import vs optional deps rule, but gold solution uses this pattern.",
-      "validated_at": "2026-04-12T00:00:00",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 89.3
+      "status": "fail",
+      "nop_reward": -1.0,
+      "gold_reward": -1.0,
+      "attempts": 0,
+      "notes": "Harness failure: Bash tool and Edit/Write tools all return EACCES due to inability to mkdir /home/worker/.claude/session-env. Cannot run docker build, NOP/gold tests, or rubric judge. Cannot apply Dockerfile pin fixes for pyyaml/ruff or relax tautological asserts. Manual intervention required to fix /home/worker/.claude/ permissions before re-running validation.",
+      "model": "claude-opus-4-7",
+      "backend": "oauth",
+      "time": 214.09
     },
     "p2p_enrich": {
       "status": "ok",
@@ -63,10 +61,10 @@
     },
     "quality_gate": {
       "status": "DELETE",
-      "model": "MiniMax-M2.7",
-      "backend": "minimax",
-      "time": 0.34,
-      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:2', 'A:[A] test_not_tautological @ tests/test_outputs.py:632: test `test_trackio_config_post_init_validation` has 3 assert(s), ', 'A:[A] test_not_tautological @ tests/test_outputs.py:657: test `test_trackio_config_has_docstring` has 2 assert(s), all pas', 'lint_tier_b:2', 'B:[B] pinned_dependencies @ environment/Dockerfile:22: unpinned pip deps: pyyaml', 'B:[B] no_network_during_tests @ tests/test.sh:17: network call at test time: `pip install`']"
+      "model": "claude-opus-4-6",
+      "backend": "anthropic",
+      "time": 0.29,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:2', 'A:[A] test_not_tautological @ tests/test_outputs.py:644: test `test_trackio_config_post_init_validation` has 3 assert(s), ', 'A:[A] test_not_tautological @ tests/test_outputs.py:669: test `test_trackio_config_has_docstring` has 2 assert(s), all pas', 'lint_tier_b:5', 'B:[B] pinned_dependencies @ environment/Dockerfile:22: unpinned pip deps: pyyaml', 'B:[B] pinned_dependencies @ environment/Dockerfile:31: unpinned pip deps: ruff, 2>/dev/null', 'B:[B] pinned_dependencies @ environment/Dockerfile:31: unpinned pip deps: ruff']"
     },
     "quality_judge": {
       "status": "ok",
@@ -77,48 +75,55 @@
       "tier_b_fails": [],
       "pass_count": 8,
       "fail_count": 1
+    },
+    "fix_quality": {
+      "status": "ok",
+      "model": "claude-opus-4-6",
+      "backend": "anthropic",
+      "time": 943.91,
+      "notes": ""
     }
   },
   "history": [
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "minimax",
-      "time": 3791.63,
-      "at": "2026-04-15T11:17:35.754714"
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 1484.17,
+      "at": "2026-04-24T23:49:39.148737"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 12564.93,
+      "at": "2026-04-25T03:19:59.492112"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 16284.46,
+      "at": "2026-04-25T07:52:47.937838"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "oauth",
+      "time": 680.09,
+      "at": "2026-04-25T08:52:51.721383"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
-      "backend": "fireworks",
-      "time": 649.11,
-      "at": "2026-04-15T12:46:33.934782"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "minimax",
-      "time": 1147.19,
-      "at": "2026-04-15T18:58:56.841927"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "minimax",
-      "time": 3038.34,
-      "at": "2026-04-15T20:50:37.252790"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "minimax",
-      "time": 694.17,
-      "at": "2026-04-15T21:49:07.228864"
+      "backend": "anthropic",
+      "time": 954.09,
+      "at": "2026-04-25T12:33:32.840117"
     }
   ]
 }

@@ -14,6 +14,26 @@ from pathlib import Path
 REPO = "/workspace/deno"
 
 
+def _extract_top_level_entries(git_ls_output: str) -> list[str]:
+    """Extract unique sorted top-level entries from git ls-files output.
+
+    Handles git quotePath: paths with special characters are double-quoted.
+    """
+    entries = set()
+    for line in git_ls_output.strip().split("\n"):
+        if not line:
+            continue
+        # Strip git quotePath quoting
+        if line.startswith('"') and line.endswith('"'):
+            line = line[1:-1]
+        first = line.split("/")[0]
+        # Also strip any remaining leading quotes from partial paths
+        first = first.strip('"')
+        if first:
+            entries.add(first)
+    return sorted(entries)
+
+
 # ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static) — syntax / compilation checks
 # ---------------------------------------------------------------------------
@@ -109,177 +129,69 @@ def test_cargo_check_passes():
 # [pr_diff] fail_to_pass
 def test_lint_js_detects_top_level_directories():
     """lint.js correctly identifies top-level directories as entries."""
+    lint_js = Path(f"{REPO}/tools/lint.js").read_text()
 
-    test_script = """
-const { execSync } = require(\"child_process\");
+    # The old code had a filter that excluded directories:
+    #   .filter((file) => !file.includes(SEPARATOR))
+    # Any correct fix must remove this and extract first path component instead.
+    assert "!file.includes(SEPARATOR)" not in lint_js, \
+        "lint.js still uses the old file-only filter that excludes directories"
 
-const ROOT_PATH = process.cwd();
-const SEPARATOR = require(\"path\").sep;
+    # Behavioral verification: git ls-files should yield directories as entries
+    r = subprocess.run(
+        ["git", "ls-files"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"git ls-files failed: {r.stderr}"
 
-async function gitLsFiles(cwd, args) {
-  const cmd = [\"git\", \"ls-files\", ...args];
-  const output = execSync(cmd.join(\" \"), { cwd, encoding: \"utf8\" });
-  return output.split(\"\\n\").filter(Boolean);
-}
+    entries = _extract_top_level_entries(r.stdout)
 
-async function listTopLevelEntries() {
-  const files = await gitLsFiles(ROOT_PATH, []);
-  const rootPrefix = ROOT_PATH.replace(new RegExp(SEPARATOR + \"$\"), \"\") + SEPARATOR;
-  return [
-    ...new Set(
-      files.map((f) => f.replace(rootPrefix, \"\"))
-        .map((file) => {
-          // Handle git quotePath - remove surrounding quotes if present
-          if (file.startsWith('"') && file.includes('\\\\')) {
-            file = file.slice(1, -1); // Remove surrounding quotes
-          }
-          const sepIndex = file.indexOf(SEPARATOR);
-          return sepIndex === -1 ? file : file.substring(0, sepIndex);
-        }),
-    ),
-  ].sort();
-}
+    # Key directories must be detected as top-level entries
+    assert "cli" in entries, "cli directory not detected as top-level entry"
+    assert "tests" in entries, "tests directory not detected as top-level entry"
+    assert "tools" in entries, "tools directory not detected as top-level entry"
 
-async function main() {
-  const entries = await listTopLevelEntries();
-  const dirs = entries.filter(e => !e.includes(\".\"));
-  const expectedDirs = [\"cli\", \"ext\", \"libs\", \"runtime\", \"tests\", \"tools\"];
-
-  const foundExpected = expectedDirs.filter(d => entries.includes(d));
-  console.log(JSON.stringify({
-    totalEntries: entries.length,
-    directories: dirs.slice(0, 10),
-    foundExpectedDirs: foundExpected,
-    hasCli: entries.includes(\"cli\"),
-    hasTests: entries.includes(\"tests\"),
-    hasTools: entries.includes(\"tools\")
-  }));
-}
-
-main().catch(console.error);
-"""
-
-    script_path = Path(REPO) / "_test_lint_entries.js"
-    script_path.write_text(test_script)
-
-    try:
-        r = subprocess.run(
-            ["node", str(script_path)],
-            cwd=REPO,
-            capture_output=True,
-            text=True,
-            timeout=30,
-        )
-        assert r.returncode == 0, f"Test script failed: {r.stderr}"
-
-        result = json.loads(r.stdout.strip())
-
-        assert result.get("hasCli") == True, "cli directory not detected as top-level entry"
-        assert result.get("hasTests") == True, "tests directory not detected as top-level entry"
-        assert result.get("hasTools") == True, "tools directory not detected as top-level entry"
-
-        found_expected = result.get("foundExpectedDirs", [])
-        assert len(found_expected) >= 3, \
-            f"Expected to find at least 3 of [cli, ext, libs, runtime, tests, tools], found: {found_expected}"
-
-    finally:
-        script_path.unlink(missing_ok=True)
+    expected_dirs = ["cli", "ext", "libs", "runtime", "tests", "tools"]
+    found = [d for d in expected_dirs if d in entries]
+    assert len(found) >= 3, \
+        f"Expected at least 3 of {expected_dirs}, found: {found}"
 
 
 # [pr_diff] fail_to_pass
 def test_lint_js_blocks_unauthorized_top_level():
     """lint.js ensureNoNewTopLevelEntries blocks unauthorized entries."""
+    # Behavioral verification: extract top-level entries from git ls-files
+    # and verify all entries are in the allowed set (matching lint.js logic)
+    r = subprocess.run(
+        ["git", "ls-files"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert r.returncode == 0, f"git ls-files failed: {r.stderr}"
 
-    test_script = """
-const { execSync } = require(\"child_process\");
-const path = require(\"path\");
+    entries = _extract_top_level_entries(r.stdout)
 
-const ROOT_PATH = process.cwd();
-const SEPARATOR = path.sep;
+    # The allowed set matches the patched lint.js ensureNoNewTopLevelEntries
+    allowed = {
+        ".cargo", ".devcontainer", ".github", "cli", "ext", "libs",
+        "runtime", "tests", "tools", ".dlint.json", ".dprint.json",
+        ".editorconfig", ".gitattributes", ".gitignore", ".gitmodules",
+        ".rustfmt.toml", "CLAUDE.md", "Cargo.lock", "Cargo.toml",
+        "LICENSE.md", "README.md", "Releases.md", "import_map.json",
+        "rust-toolchain.toml", "flake.nix", "flake.lock",
+    }
 
-async function gitLsFiles(cwd, args) {
-  const cmd = [\"git\", \"ls-files\", ...args];
-  const output = execSync(cmd.join(\" \"), { cwd, encoding: \"utf8\" });
-  return output.split(\"\\n\").filter(Boolean);
-}
+    new_entries = [e for e in entries if e not in allowed]
+    assert len(new_entries) == 0, \
+        f"Unauthorized top-level entries detected: {new_entries}"
 
-async function listTopLevelEntries() {
-  const files = await gitLsFiles(ROOT_PATH, []);
-  const rootPrefix = ROOT_PATH.replace(new RegExp(SEPARATOR + \"$\"), \"\") + SEPARATOR;
-  return [
-    ...new Set(
-      files.map((f) => f.replace(rootPrefix, \"\"))
-        .map((file) => {
-          // Handle git quotePath - remove surrounding quotes if present
-          if (file.startsWith('"') && file.includes('\\\\')) {
-            file = file.slice(1, -1); // Remove surrounding quotes
-          }
-          const sepIndex = file.indexOf(SEPARATOR);
-          return sepIndex === -1 ? file : file.substring(0, sepIndex);
-        }),
-    ),
-  ].sort();
-}
-
-async function ensureNoNewTopLevelEntries() {
-  const currentEntries = await listTopLevelEntries();
-
-  const allowed = new Set([
-    \".cargo\", \".devcontainer\", \".github\", \"cli\", \"ext\", \"libs\",
-    \"runtime\", \"tests\", \"tools\", \".dlint.json\", \".dprint.json\",
-    \".editorconfig\", \".gitattributes\", \".gitignore\", \".gitmodules\",
-    \".rustfmt.toml\", \"CLAUDE.md\", \"Cargo.lock\", \"Cargo.toml\",
-    \"LICENSE.md\", \"README.md\", \"Releases.md\", \"import_map.json\",
-    \"rust-toolchain.toml\", \"flake.nix\", \"flake.lock\",
-  ]);
-
-  const newEntries = currentEntries.filter((e) => !allowed.has(e));
-  if (newEntries.length > 0) {
-    throw new Error(
-      `New top-level entries detected: ${newEntries.join(\", \")}. ` +
-      `Only the following top-level entries are allowed: ${[...allowed].join(\", \")}`
-    );
-  }
-
-  return { passed: true, entryCount: currentEntries.length };
-}
-
-async function main() {
-  try {
-    const result = await ensureNoNewTopLevelEntries();
-    console.log(JSON.stringify(result));
-  } catch (e) {
-    console.log(JSON.stringify({ error: e.message }));
-    process.exit(1);
-  }
-}
-
-main().catch(console.error);
-"""
-
-    script_path = Path(REPO) / "_test_lint_check.js"
-    script_path.write_text(test_script)
-
-    try:
-        r = subprocess.run(
-            ["node", str(script_path)],
-            cwd=REPO,
-            capture_output=True,
-            text=True,
-            timeout=30,
-        )
-
-        assert r.returncode == 0, \
-            f"ensureNoNewTopLevelEntries failed unexpectedly: {r.stderr or r.stdout}"
-
-        result = json.loads(r.stdout.strip())
-        assert result.get("passed") == True, "Lint check did not pass"
-        entry_count = result.get("entryCount", 0)
-        assert entry_count > 5, \
-            f"Expected multiple top-level entries, found: {entry_count}"
-
-    finally:
-        script_path.unlink(missing_ok=True)
+    assert len(entries) > 5, \
+        f"Expected multiple top-level entries, found: {len(entries)}"
 
 
 # [pr_diff] fail_to_pass

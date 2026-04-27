@@ -35,6 +35,17 @@ checks:
       Before the fix: the user message block had no getCachePoint call.
       After the fix: there is an if (getCachePoint(message)) check at the end
       of the for loop inside the user case, pushing BEDROCK_CACHE_POINT when set.
+      Uses flexible pattern matching to accept any valid implementation that
+      correctly checks getCachePoint and pushes BEDROCK_CACHE_POINT to content.
+
+  - id: test_tool_case_block_has_cache_point_check
+    type: fail_to_pass
+    origin: agent_config
+    description: |
+      Tool message handling (in same case as user) has cache point check.
+      In the switch statement, both 'user' and 'tool' roles are handled in the
+      'case "user":' block. The fix adds cache point handling at the end of
+      the for loop inside this case, covering both user and tool messages.
 
   - id: test_assistant_message_has_cache_point_check
     type: pass_to_pass
@@ -49,6 +60,15 @@ checks:
     description: |
       TypeScript typecheck passes for amazon-bedrock package.
       Runs tsc --noEmit to verify the TypeScript code is valid and type-correct.
+
+  - id: test_cache_point_behavior
+    type: fail_to_pass
+    origin: pr_diff
+    description: |
+      Behavioral test that executes Node.js to verify the cache point feature
+      is correctly implemented in the source. Creates a test script that reads
+      the source file and verifies the user case block contains the required
+      getCachePoint call and content.push(BEDROCK_CACHE_POINT) pattern.
 
 rubric: []
 

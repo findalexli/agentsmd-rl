@@ -25,19 +25,6 @@ def _read_guide() -> str:
     return guide.read_text()
 
 
-def _extract_frontmatter_fields(content: str) -> dict:
-    """Parse simple YAML key: value frontmatter into a dict."""
-    match = re.match(r"^---\r?\n([\s\S]*?)\r?\n---", content)
-    if not match:
-        return {}
-    result = {}
-    for line in match.group(1).split("\n"):
-        m = re.match(r"^(\w[\w-]*):\s*(.+)$", line)
-        if m:
-            result[m.group(1)] = m.group(2).strip()
-    return result
-
-
 def _run_node(script: str, timeout: int = 30) -> subprocess.CompletedProcess:
     """Run a Node.js inline script in the repo directory."""
     return subprocess.run(
@@ -87,85 +74,126 @@ console.log('PASS id=' + obj.id + ' title=' + obj.title);
 
 def test_style_guide_covers_tone():
     """Style guide covers tone/voice guidelines (friendly, professional)."""
-    content = _read_guide()
+    r = _run_node("""
+const fs = require('fs');
+const content = fs.readFileSync('docs/contribute/doc-style-guide.md', 'utf8');
 
-    # Parse markdown to find the ## Tone section (structured, not grep)
-    sections = re.split(r"^## ", content, flags=re.MULTILINE)
-    tone_section = None
-    for s in sections:
-        if s.lower().startswith("tone"):
-            tone_section = s.lower()
-            break
-    assert tone_section is not None, "Style guide must have a ## Tone section"
+// Parse markdown into sections by splitting on ## headings
+const sections = content.split(/^## /m);
+let toneSection = null;
+for (const s of sections) {
+  if (s.toLowerCase().startsWith('tone')) {
+    toneSection = s.toLowerCase();
+    break;
+  }
+}
+if (!toneSection) {
+  console.error('Style guide must have a ## Tone section');
+  process.exit(1);
+}
 
-    # Tone section must cover both friendly AND professional aspects
-    has_friendly = any(
-        w in tone_section for w in ["friendly", "approachable", "welcoming"]
-    )
-    has_professional = any(
-        w in tone_section for w in ["professional", "precise"]
-    )
-    assert has_friendly, "Tone section should mention approachable/friendly writing"
-    assert has_professional, "Tone section should mention professional/precise writing"
+// Tone section must cover both friendly AND professional aspects
+const friendly = ['friendly', 'approachable', 'welcoming'].some(w => toneSection.includes(w));
+const professional = ['professional', 'precise'].some(w => toneSection.includes(w));
+if (!friendly) {
+  console.error('Tone section should mention approachable/friendly writing');
+  process.exit(1);
+}
+if (!professional) {
+  console.error('Tone section should mention professional/precise writing');
+  process.exit(1);
+}
+console.log('PASS tone_section_valid');
+""")
+    assert r.returncode == 0, f"Tone validation failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 def test_style_guide_covers_formatting():
     """Style guide covers formatting standards (bold, code style, backticks)."""
-    content = _read_guide().lower()
+    r = _run_node("""
+const fs = require('fs');
+const content = fs.readFileSync('docs/contribute/doc-style-guide.md', 'utf8').toLowerCase();
 
-    # Must cover code formatting guidance
-    has_code_fmt = any(
-        p in content
-        for p in ["code style", "backtick", "inline code", "use code style"]
-    )
-    assert has_code_fmt, (
-        "Style guide must cover code formatting (backticks for code/filenames)"
-    )
-    # Must cover bold for UI elements
-    assert "bold" in content, "Style guide must cover bold formatting"
+// Must cover code formatting guidance
+const hasCodeFmt = ['code style', 'backtick', 'inline code', 'use code style']
+  .some(p => content.includes(p));
+if (!hasCodeFmt) {
+  console.error('Style guide must cover code formatting (backticks for code/filenames)');
+  process.exit(1);
+}
+
+// Must cover bold for UI elements
+if (!content.includes('bold')) {
+  console.error('Style guide must cover bold formatting');
+  process.exit(1);
+}
+
+console.log('PASS formatting_valid');
+""")
+    assert r.returncode == 0, f"Formatting validation failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 def test_style_guide_covers_writing_practices():
     """Style guide covers active voice, present tense, addressing reader as you."""
-    content = _read_guide().lower()
+    r = _run_node("""
+const fs = require('fs');
+const content = fs.readFileSync('docs/contribute/doc-style-guide.md', 'utf8').toLowerCase();
 
-    assert "active voice" in content, "Style guide must cover active voice"
-    assert "present tense" in content, "Style guide must cover present tense"
+if (!content.includes('active voice')) {
+  console.error('Style guide must cover active voice');
+  process.exit(1);
+}
+if (!content.includes('present tense')) {
+  console.error('Style guide must cover present tense');
+  process.exit(1);
+}
 
-    # Must explicitly instruct addressing the reader as "you"
-    has_you = any(
-        p in content
-        for p in [
-            'address the reader',
-            '"you"',
-            "'you'",
-            "second person",
-            'reader as "you"',
-        ]
-    )
-    assert has_you, (
-        "Style guide must instruct writers to address the reader as 'you'"
-    )
+// Must explicitly instruct addressing the reader as "you"
+const hasYou = [
+  'address the reader',
+  '"you"',
+  "'you'",
+  'second person',
+  'reader as "you"'
+].some(p => content.includes(p));
+if (!hasYou) {
+  console.error('Style guide must instruct writers to address the reader as you');
+  process.exit(1);
+}
+
+console.log('PASS writing_practices_valid');
+""")
+    assert r.returncode == 0, f"Writing practices validation failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 def test_style_guide_has_word_list():
     """Style guide includes Backstage-specific word/terminology list."""
-    content = _read_guide().lower()
+    r = _run_node("""
+const fs = require('fs');
+const content = fs.readFileSync('docs/contribute/doc-style-guide.md', 'utf8').toLowerCase();
 
-    # Must have a word list or terminology section
-    has_section = any(
-        p in content for p in ["word list", "terminology", "glossary"]
-    )
-    assert has_section, (
-        "Style guide must include a word list or terminology section"
-    )
+// Must have a word list or terminology section
+const hasSection = ['word list', 'terminology', 'glossary'].some(p => content.includes(p));
+if (!hasSection) {
+  console.error('Style guide must include a word list or terminology section');
+  process.exit(1);
+}
 
-    # The word list should define key Backstage terms (at least 2)
-    terms = ["techdocs", "scaffolder", "software catalog", "software templates"]
-    found = sum(1 for t in terms if t in content)
-    assert found >= 2, (
-        f"Word list must define at least 2 Backstage terms, found {found}"
-    )
+// The word list should define key Backstage terms (at least 2)
+const terms = ['techdocs', 'scaffolder', 'software catalog', 'software templates'];
+const found = terms.filter(t => content.includes(t)).length;
+if (found < 2) {
+  console.error('Word list must define at least 2 Backstage terms, found ' + found);
+  process.exit(1);
+}
+
+console.log('PASS word_list_valid found=' + found);
+""")
+    assert r.returncode == 0, f"Word list validation failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------
@@ -194,7 +222,7 @@ for (let i = 0; i < lines.length; i++) {
   if (lines[i].includes('doc-style-guide')) {
     // Check surrounding lines for 'contribute' context
     const start = Math.max(0, i - 20);
-    end = Math.min(lines.length, i + 5);
+    const end = Math.min(lines.length, i + 5);
     const ctx = lines.slice(start, end).join('\\n');
     if (ctx.includes('contribute')) {
       found = true;

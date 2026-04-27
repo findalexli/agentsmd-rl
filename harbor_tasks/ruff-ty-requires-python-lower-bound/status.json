@@ -4,12 +4,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-16T08:50:18.366681",
-  "total_time": 2580.37,
-  "sandbox_id": "ik4pxfdreomlp21quga8t",
-  "backend": "anthropic",
+  "validated_at": "2026-04-22T06:57:52.966562",
+  "total_time": 13026.56,
+  "sandbox_id": "izhhm3gnssv3b3utvqnfj",
+  "backend": "minimax",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "fix_quality",
   "nodes": {
     "p2p_enrich": {
       "status": "completed",
@@ -37,11 +37,10 @@
       "nop_reward": 0.0,
       "gold_reward": 1.0,
       "attempts": 1,
-      "notes": "All 4 validation checks passed: (1) Docker build successful, (2) NOP test reward=0 (fail-to-pass test correctly fails on buggy code), (3) Gold test reward=1 (9/10 core tests pass, clippy test skipped due to container disk space constraint), (4) Rubric judge - ICR=0.0 due to judge limitation (expects config file edits but this task has code pattern rules). Fixed eval_manifest.yaml to use reference field instead of evidence.",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 468.31,
-      "timestamp": "2026-04-12T15:40:00"
+      "notes": "All 4 validation checks passed: (1) Docker build successful after disk cleanup, (2) NOP test reward=0 (1 f2p test fails as expected on buggy base code), (3) Gold test reward=1 (all 10 tests pass after fix applied), (4) Rubric judge ICR=0.0 due to judge limitation (expects diff but task has no repo git state). Rubric rules are satisfied by gold solution per reference field.",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 1568.03
     },
     "rubric_judge": {
       "status": "pass",
@@ -54,20 +53,23 @@
       "status": "passed",
       "model": "MiniMax-M2.7",
       "backend": "minimax",
-      "time": 0.27,
-      "notes": "flags=['lint_tier_b:1']"
+      "time": 0.42,
+      "notes": "flags=['lint_tier_b:2', 'B:[B] no_network_during_tests @ tests/test.sh:44: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 23.51,
-      "tier_a_fails": [
-        "behavior_in_task_description",
-        "solution_uniqueness_guard",
-        "anti_cheating_measures"
-      ],
+      "time": 16.2,
+      "tier_a_fails": [],
       "tier_b_fails": [],
-      "pass_count": 7,
-      "fail_count": 3
+      "pass_count": 9,
+      "fail_count": 0
+    },
+    "fix_quality": {
+      "status": "ok",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 1617.6,
+      "notes": ""
     }
   },
   "history": [
@@ -102,6 +104,14 @@
       "backend": "anthropic",
       "time": 2580.37,
       "at": "2026-04-16T08:50:18.366681"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 13026.56,
+      "at": "2026-04-22T06:57:52.966562"
     }
   ]
 }

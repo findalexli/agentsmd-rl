@@ -39,11 +39,8 @@ if [ -f /tests/eval_manifest.yaml ] && [ -f /tests/standalone_judge.py ]; then
         (cd "$_repo_dir" && git add -A 2>/dev/null && git diff --cached > /logs/verifier/agent.diff 2>/dev/null) || true
     fi
 
-    # Install PyYAML if needed (lightweight, <1s)
-    python3 -c "import yaml" 2>/dev/null || \
-        python3 -m pip install -q pyyaml 2>/dev/null || \
-        pip3 install -q --break-system-packages pyyaml 2>/dev/null || true
-
-    # Run LLM judge (writes track3_rubric.json + track4_distractors.json)
-    python3 /tests/standalone_judge.py /tests/eval_manifest.yaml /logs/verifier/agent.diff 2>&1 || true
+    # Run LLM judge if PyYAML is available (writes track3_rubric.json + track4_distractors.json)
+    if python3 -c "import yaml" 2>/dev/null; then
+        python3 /tests/standalone_judge.py /tests/eval_manifest.yaml /logs/verifier/agent.diff 2>&1 || true
+    fi
 fi

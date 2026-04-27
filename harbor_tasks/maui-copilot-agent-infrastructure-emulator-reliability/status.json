@@ -4,12 +4,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-16T12:06:09.426735",
-  "total_time": 55.54,
-  "sandbox_id": "ia4hovokoo88xx5kyy0yf",
-  "backend": "anthropic",
+  "validated_at": "2026-04-25T09:45:07.022190",
+  "total_time": 3814.96,
+  "sandbox_id": "iryzeecuon27221yi4ov2",
+  "backend": "oauth",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "fix_quality",
   "nodes": {
     "p2p_enrich": {
       "status": "completed",
@@ -37,10 +37,10 @@
       "nop_reward": 0.0,
       "gold_reward": 1.0,
       "attempts": 2,
-      "notes": "Fixed: 1) Skipped test_repo_baseline_test_suite which was reverting fix files during test run, breaking subsequent f2p tests. 2) All 4 validation checks now pass: Docker build OK, NOP reward=0 (9 f2p tests fail on base), Gold reward=1 (all 18 tests pass after fix), Rubric ICR=1.0",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 356.03
+      "notes": "Previous run: Fixed: 1) Skipped test_repo_baseline_test_suite which was reverting fix files during test run, breaking subsequent f2p tests. 2) All 4 validation checks pass: Docker build OK, NOP reward=0 (9 f2p tests fail on base), Gold reward=1 (all 18 tests pass after fix), Rubric ICR=1.0. Re-validation attempt 2026-04-25 by claude-opus-4-7 was blocked: Bash tool returns 'EACCES: permission denied, mkdir /home/worker/.claude/session-env' for every command, so Docker/pytest/judge could not be executed. Existing validate state preserved.",
+      "model": "claude-opus-4-7",
+      "backend": "oauth",
+      "time": 82.12
     },
     "rubric_enrichment": {
       "status": "ok",
@@ -85,51 +85,37 @@
       "abandon_reason": ""
     },
     "quality_gate": {
-      "status": "passed",
+      "status": "DELETE",
       "model": "claude-opus-4-7",
-      "backend": "anthropic",
-      "time": 0.21,
-      "notes": "flags=[]"
+      "backend": "oauth",
+      "time": 0.26,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', \"A:[A] test_deps_in_dockerfile @ environment/Dockerfile: tests call 1 binary not installed in Dockerfile: ['pwsh']\", 'lint_tier_b:1', 'B:[B] no_network_during_tests @ tests/test.sh:44: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 14.09,
-      "tier_a_fails": [],
+      "time": 32.02,
+      "tier_a_fails": [
+        "no_solution_leakage",
+        "solution_uniqueness_guard"
+      ],
       "tier_b_fails": [],
-      "pass_count": 10,
-      "fail_count": 0
+      "pass_count": 7,
+      "fail_count": 3
     },
     "tests_rewrite": {
       "status": "error",
       "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":120,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"Not logged in \u00b7 Please run /login\",\"stop_reason\":\"stop_sequence\",\"session_id\":\"ef337136-1927-4801-b23f-c5c8d3838895\",\"total_cost_usd\":0,\"usage\":{\"input_tokens\":0,\"cache_creation_input_t",
       "time": 1.34
+    },
+    "fix_quality": {
+      "status": "ok",
+      "model": "claude-opus-4-7",
+      "backend": "oauth",
+      "time": 42.35,
+      "notes": ""
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "minimax",
-      "time": 1036.24,
-      "at": "2026-04-15T04:40:51.996828"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "oauth",
-      "time": 423.32,
-      "at": "2026-04-15T12:58:15.070660"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "oauth",
-      "time": 567.62,
-      "at": "2026-04-15T19:02:12.055030"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -145,6 +131,30 @@
       "backend": "anthropic",
       "time": 55.54,
       "at": "2026-04-16T12:06:09.426735"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 6061.52,
+      "at": "2026-04-25T01:05:55.857824"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 17494.64,
+      "at": "2026-04-25T05:58:29.921916"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "oauth",
+      "time": 3814.96,
+      "at": "2026-04-25T09:45:07.022190"
     }
   ]
 }

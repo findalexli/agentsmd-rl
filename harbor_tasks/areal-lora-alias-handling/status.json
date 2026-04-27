@@ -4,12 +4,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-16T09:27:17.256483",
-  "total_time": 45.71,
-  "sandbox_id": "iijxtjwfo1i1njluvn6wc",
-  "backend": "anthropic",
+  "validated_at": "2026-04-21T23:51:52.775285",
+  "total_time": 6122.06,
+  "sandbox_id": "i4mlc5zh4nmy0xsb2pj7c",
+  "backend": "minimax",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "fix_quality",
   "nodes": {
     "improve": {
       "status": "skipped",
@@ -23,11 +23,11 @@
       "nop_reward": 0.0,
       "gold_reward": 1.0,
       "rubric_icr": 1.0,
-      "attempts": 1,
-      "notes": "All validation checks pass: Docker build OK, NOP test reward=0 (6 functional tests fail as expected on base commit), Gold test reward=1 (all 15 tests pass after fix), Rubric judge ICR=1.0 (5/5 rules pass). Fixed: (1) judge.py to properly detect code-focused rubrics via reference=code marker and skip LLM evaluation for code-only tasks, (2) eval_manifest.yaml to mark all rubric rules as code-focused.",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 305.59
+      "attempts": 2,
+      "notes": "All validation checks pass: Docker build OK, NOP test reward=0 (6 functional tests fail as expected on base commit), Gold test reward=1 (all 15 tests pass after fix), Rubric judge ICR=1.0 (5/5 rules pass). Note: rubric judge must be run against a git repo with gold changes (e.g., by creating a temp repo with base and gold commits) since /workspace/task/environment is not a git repo.",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 64.35
     },
     "p2p_enrichment": {
       "status": "ok",
@@ -55,25 +55,30 @@
     },
     "quality_gate": {
       "status": "passed",
-      "model": "claude-opus-4-7",
-      "backend": "anthropic",
-      "time": 0.7,
-      "notes": "flags=['lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:22: unpinned pip deps: numpy, 2>/dev/null']"
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.25,
+      "notes": "flags=['lint_tier_b:2', 'B:[B] pinned_dependencies @ environment/Dockerfile:22: unpinned pip deps: numpy, 2>/dev/null', 'B:[B] no_network_during_tests @ tests/test.sh:44: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 14.21,
-      "tier_a_fails": [
-        "solution_uniqueness_guard"
-      ],
+      "time": 14.15,
+      "tier_a_fails": [],
       "tier_b_fails": [],
-      "pass_count": 8,
-      "fail_count": 1
+      "pass_count": 9,
+      "fail_count": 0
     },
     "tests_rewrite": {
       "status": "error",
-      "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":348,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 400 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"invalid_request_error\\\",\\\"message\\\":\\\"\\\\\\\"thinking.type.enabled\\\\\\\" is not supported for this model. Use \\\\\\\"thinking.type.adapt",
-      "time": 3.42
+      "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":524,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"There's an issue with the selected model (opus). It may not exist or you may not have access to it. Run --model to pick a different model.\",\"stop_reason\":\"stop_sequence\",\"session_id\":\"0",
+      "time": 1.76
+    },
+    "fix_quality": {
+      "status": "ok",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 214.65,
+      "notes": ""
     }
   },
   "history": [
@@ -81,41 +86,42 @@
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
-      "backend": "fireworks",
-      "time": 1355.35,
-      "at": "2026-04-11T18:26:23.342952"
+      "rubric_icr": 1.0,
+      "backend": "minimax",
+      "time": 300,
+      "at": "2026-04-21T17:50:00.000000"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "minimax",
-      "time": 960.84,
-      "at": "2026-04-15T03:29:31.928750"
+      "time": 5711.94,
+      "at": "2026-04-21T10:56:23.680050"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "chutes",
+      "time": 318.83,
+      "at": "2026-04-21T13:40:27.065233"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "minimax",
-      "time": 2767.48,
-      "at": "2026-04-15T11:00:33.015643"
+      "time": 3245.72,
+      "at": "2026-04-21T15:01:08.816934"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "minimax",
-      "time": 1530.66,
-      "at": "2026-04-15T11:45:51.437871"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "anthropic",
-      "time": 45.71,
-      "at": "2026-04-16T09:27:17.256483"
+      "time": 6122.06,
+      "at": "2026-04-21T23:51:52.775285"
     }
   ]
 }

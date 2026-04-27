@@ -4,12 +4,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-15T03:25:54.835290",
-  "total_time": 743.97,
-  "sandbox_id": "ie01adqtyykzxgqv1i10e",
+  "validated_at": "2026-04-20T16:35:00.787808",
+  "total_time": 9504.07,
+  "sandbox_id": "iq0u5zk378yad23tj06tc",
   "backend": "fireworks",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "fix_quality",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -29,19 +29,20 @@
       "status": "pass",
       "nop_reward": 0.0,
       "gold_reward": 1.0,
-      "icr": 0.0,
-      "attempts": 2,
-      "notes": "All core validation checks passed: Docker build successful, NOP test reward=0 (4 f2p tests correctly fail), Gold test reward=1 (all 17 tests pass). Rubric ICR=0.0 due to mismatch: rules describe code behavior but judge only checks config files.",
+      "icr": 1.0,
+      "attempts": 1,
+      "notes": "All validation checks passed: Docker build successful, NOP test reward=0 (4 f2p tests correctly fail), Gold test reward=1 (all 17 tests pass), Rubric ICR=1.00 (6/6 rules pass).",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 228.67
+      "time": 156.31
     },
     "rubric_judge": {
-      "status": "fail",
+      "status": "pass",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
       "time": 1.47,
-      "notes": "ICR=0.50"
+      "notes": "ICR=1.00 - All 6 rubric rules pass",
+      "icr": 1.0
     },
     "rubric_quality_loop": {
       "status": "ok",
@@ -57,16 +58,23 @@
       "status": "DELETE",
       "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
       "backend": "fireworks",
-      "time": 0.54,
-      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:214: test `test_no_print_statements` has 1 assert(s), all pass on a st', 'lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:21: unpinned pip deps: pytest']"
+      "time": 0.27,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:214: test `test_no_print_statements` has 1 assert(s), all pass on a st', 'lint_tier_b:2', 'B:[B] pinned_dependencies @ environment/Dockerfile:21: unpinned pip deps: pytest', 'B:[B] no_network_during_tests @ tests/test.sh:44: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 25.47,
+      "time": 10.25,
       "tier_a_fails": [],
       "tier_b_fails": [],
       "pass_count": 9,
-      "fail_count": 1
+      "fail_count": 0
+    },
+    "fix_quality": {
+      "status": "ok",
+      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
+      "backend": "fireworks",
+      "time": 142.45,
+      "notes": ""
     }
   },
   "history": [
@@ -101,6 +109,14 @@
       "backend": "fireworks",
       "time": 743.97,
       "at": "2026-04-15T03:25:54.835290"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "fireworks",
+      "time": 9504.07,
+      "at": "2026-04-20T16:35:00.787808"
     }
   ]
 }

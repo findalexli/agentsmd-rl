@@ -1,1 +1,32 @@
-{"reconciled": true, "nop_reward": 0, "gold_reward": 1}
+{
+  "fixed": true,
+  "tests_changed": true,
+  "instruction_changed": true,
+  "nop_reward": 0,
+  "gold_reward": 1,
+  "notes": {
+    "instruction_changes": [
+      "Removed explicit mentions of 'JSCallbackDataWeak' (was prescriptive)",
+      "Changed 'visitJSFunction-like visitor' to just 'visitor method'",
+      "Changed 'memoryCost()' to 'memoryCost() method'",
+      "Changed 'specific storage structure separation' to 'typed container separate from type-erased lambda storage'",
+      "Changed 'weak callback type such as JSCallbackDataWeak' to 'a weak callback type'",
+      "Added 'NOT via the old type-erased addAlgorithm path' for Separate Storage Path",
+      "Overall: instruction now describes symptom/approach, not exact fix"
+    ],
+    "test_changes": [
+      "test_weak_ref_replaces_strong: removed specific JSCallbackDataWeak string check; now accepts any weak mechanism (WeakPtr, Weak<>, etc.)",
+      "test_thread_safety: expanded lock_member_patterns to accept any lock-like member (Lock, Mutex, shared_mutex, atomic, WTF_GUARDED_BY_LOCK)",
+      "test_memory_cost_includes_new_container: changed from checking 'm_abortAlgorithms' to checking for generic 'abort' mention + sizeInBytes pattern",
+      "Overall: tests now accept any valid correct fix, not just the gold patch's exact implementation"
+    ],
+    "eval_manifest_changes": [
+      "Added missing check for test_file_runs_without_error (pr_diff, fail_to_pass)"
+    ],
+    "rubric_fixes": [
+      "no_solution_leakage: instruction no longer prescribes exact types (JSCallbackDataWeak, specific visitor name, etc.)",
+      "instruction_no_hint_leakage: instruction now describes approach (weak callback, typed container, locking) without dictating exact names",
+      "solution_uniqueness_guard: tests now accept any valid weak mechanism, any lock-like member, any abort container naming"
+    ]
+  }
+}

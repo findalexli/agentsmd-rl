@@ -1,27 +1,20 @@
 #!/bin/bash
-set -e
-
-# Install pytest if not present
-pip install pytest -q 2>/dev/null || true
 
 # Create logs directory
 mkdir -p /logs/verifier
 
-# Run pytest and capture output
-pytest /tests/test_outputs.py -v --tb=short 2>&1 | tee /logs/verifier/pytest.log || true
+# Run pytest and capture exit code
+pytest /tests/test_outputs.py -v --tb=short > /logs/verifier/pytest.log 2>&1
+exit_code=$?
 
-# Count total tests collected by pytest (more reliable than grepping source)
-total_tests=$(grep -oP 'collected \K[0-9]+' /logs/verifier/pytest.log || echo "0")
-passed_tests=$(grep -c "PASSED" /logs/verifier/pytest.log || echo "0")
-
-# Calculate reward (binary: 1 if all tests pass, 0 otherwise)
-if [ "$passed_tests" -eq "$total_tests" ] && [ "$total_tests" -gt 0 ]; then
+# Calculate reward (binary: 1 if pytest passes, 0 otherwise)
+if [ "$exit_code" -eq 0 ]; then
     reward=1
 else
     reward=0
 fi
 
-echo "Tests: $passed_tests / $total_tests passed"
+echo "pytest exit code: $exit_code"
 echo "Reward: $reward"
 
 # Write reward to file
@@ -30,7 +23,6 @@ echo "$reward" > /logs/verifier/reward.txt
 # --- LLM Judge (Track 3 + Track 4) ---
 if [ -f /tests/eval_manifest.yaml ] && [ -f /tests/standalone_judge.py ]; then
     # Capture agent diff
-    mkdir -p /logs/verifier
     _repo_dir=""
     for candidate in /workspace/*/ /repo /app /src; do
         if [ -d "${candidate}/.git" ]; then
@@ -44,11 +36,6 @@ if [ -f /tests/eval_manifest.yaml ] && [ -f /tests/standalone_judge.py ]; then
     if [ -n "$_repo_dir" ] && [ -d "$_repo_dir/.git" ]; then
         (cd "$_repo_dir" && git add -A 2>/dev/null && git diff --cached > /logs/verifier/agent.diff 2>/dev/null) || true
     fi
-
-    # Install PyYAML if needed (lightweight, <1s)
-    python3 -c "import yaml" 2>/dev/null || \
-        python3 -m pip install -q pyyaml 2>/dev/null || \
-        pip3 install -q --break-system-packages pyyaml 2>/dev/null || true
 
     # Run LLM judge (writes track3_rubric.json + track4_distractors.json)
     python3 /tests/standalone_judge.py /tests/eval_manifest.yaml /logs/verifier/agent.diff 2>&1 || true

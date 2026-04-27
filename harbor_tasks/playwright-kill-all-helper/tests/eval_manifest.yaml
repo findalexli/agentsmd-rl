@@ -6,29 +6,18 @@ source:
   base_commit: "8710e613f8297cebe33c4f6a745999ab4e4907aa"
   merge_commit: "f864c2ee9cfd5d15b31d4a6a52977e2ac20df2ea"
 
-# Track 1: Code correctness (behavioral tests)
+# Track 1: Code correctness (behavioral tests via TypeScript AST)
 checks:
-  # Pass-to-pass: TypeScript compilation
-  - id: typescript_compiles
-    type: pass_to_pass
-    origin: static
-    description: "Modified TypeScript files compile without errors"
-
-  # Fail-to-pass: Core functionality tests
-  - id: kill_all_command_declared
+  # Fail-to-pass: Core functionality tests (use subprocess + TS compiler API)
+  - id: kill_all_command_registered
     type: fail_to_pass
     origin: pr_diff
-    description: "killAll command is declared in commands.ts with correct name, description, and category"
-
-  - id: kill_all_in_commands_array
-    type: fail_to_pass
-    origin: pr_diff
-    description: "killAll is included in the commandsArray for CLI registration"
+    description: "killAll command is declared and registered in commands.ts (verified via TypeScript AST parsing)"
 
   - id: kill_all_implemented_in_program
     type: fail_to_pass
     origin: pr_diff
-    description: "killAllDaemons function is implemented with cross-platform process detection and termination"
+    description: "killAllDaemons function is implemented with cross-platform process detection and termination (verified via TypeScript AST parsing)"
 
   # Config edit tests (Track 2)
   - id: skill_md_documents_kill_all

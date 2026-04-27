@@ -3,54 +3,52 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "Instruction names the file path, the 5 version strings, the parameter name 'version', and all structural constraints tested."
+      "reason": "Instruction names the file path, the 5 version strings, the parameter name 'version', the requirement that version appear in each test name, and preserves describe.concurrent, bunExe, bunEnv, tempDir."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "Instruction describes what to change (loop \u2192 independent test cases) without dictating test.each specifically or showing the patch."
+      "reason": "Instruction describes what's broken (flaky loop) and constraints, without specifying test.each or exact code changes."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "test_versions_parameterized requires test.each/it.each with array of {version: ...} objects and '$version' in name; alternative valid fixes like 5 separate test() calls or test.each with tuple arguments would fail."
+      "outcome": "pass",
+      "reason": "test_versions_parameterized accepts either test.each style or 5 separate test/it calls or describe.each, allowing multiple correct implementations."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests execute Node.js subprocess to parse and eval the test.each array, plus run oxlint/prettier/editorconfig CI commands."
+      "reason": "Tests run subprocesses (node, oxlint, prettier, editorconfig-checker) and parse/eval the test.each array structure, not just text matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "Tests require the loop to be removed AND test.each array to contain all 5 versions with $version in name; stubs cannot satisfy these."
+      "reason": "Tests verify the invalidVersions loop is removed AND 5 parameterized cases exist with correct version strings; a stub could not satisfy both."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All instruction requirements (5 versions, parameter named 'version', version in test name, loop removed, array removed, exit code assertion) are covered."
+      "reason": "Tests check loop removal, 5 version cases, $version in name, Bun.spawn/exited/expect bodies preserved \u2014 matching instruction requirements."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are grouped with section comments (fail_to_pass, pass_to_pass, Gates) and have descriptive names and docstrings."
+      "reason": "Tests are grouped with comment headers (fail_to_pass, pass_to_pass, Gates) and tagged with [pr_diff]/[repo_tests]/[static]."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task modifies a test file; no structured data output."
+      "reason": "Task modifies a test file, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "Paths and identifiers appear correct and consistent."
+      "reason": "Paths and names (compile-windows-metadata.test.ts, bunExe, bunEnv, tempDir) match across instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "File path is necessary context; no line numbers or buggy code cited."
+      "reason": "Instruction names the file since localization is inherent to fixing a specific flaky test; it doesn't specify exact line numbers or the fix mechanism."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "Not an agentmd-edits/config task."
+      "reason": "This is a code/test edit task, not an agentmd-edits/config task."
     }
   },
-  "tier_a_fails": [
-    "solution_uniqueness_guard"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 8,
-  "fail_count": 1
+  "pass_count": 9,
+  "fail_count": 0
 }

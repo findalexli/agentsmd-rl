@@ -1,15 +1,16 @@
 {
   "schema_version": 2,
-  "valid": true,
-  "verdict": "pass",
-  "nop_reward": 0.0,
-  "gold_reward": 1.0,
-  "validated_at": "2026-04-16T10:53:57.862427",
-  "total_time": 61.97,
-  "sandbox_id": "i8e6hy38kgv6clm8ytbf1",
-  "backend": "anthropic",
+  "valid": false,
+  "verdict": "fail",
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-21T21:28:54.934965",
+  "total_time": 26513.88,
+  "sandbox_id": "i14zbibd5h3kzhhmxer6t",
+  "backend": "minimax",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "fix_quality",
+  "error": "rate limited during fix_quality: {\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":186537,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 429 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"rate_limit_error\\\",\\\"message\\\":\\\"usage limit exceeded (2056)\\\"},\\\"request_id\\\":\\\"06378185028b009732a9287b62e51a68\\\"}\",\"stop_reason\":\"stop_sequence\",\"session_id\":\"39e04e6c-9072-45c5-859e-1949ed1aa8e7\",\"total_cost_usd\":0,\"usage\":{\"input_tokens\":0,\"cache_creation_input_tokens\":0,\"cache_read_inp",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -47,10 +48,10 @@
     },
     "quality_gate": {
       "status": "DELETE",
-      "model": "claude-opus-4-7",
-      "backend": "anthropic",
-      "time": 0.2,
-      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:2', 'A:[A] test_not_tautological @ tests/test_outputs.py:137: test `test_no_trailing_whitespace_in_target` has 1 assert(s), all', 'A:[A] test_not_tautological @ tests/test_outputs.py:153: test `test_no_tabs_in_target` has 1 assert(s), all pass on a stub', 'lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:21: unpinned pip deps: pytest']"
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.27,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:2', 'A:[A] test_not_tautological @ tests/test_outputs.py:137: test `test_no_trailing_whitespace_in_target` has 1 assert(s), all', 'A:[A] test_not_tautological @ tests/test_outputs.py:153: test `test_no_tabs_in_target` has 1 assert(s), all pass on a stub', 'lint_tier_b:2', 'B:[B] pinned_dependencies @ environment/Dockerfile:21: unpinned pip deps: pytest', 'B:[B] no_network_during_tests @ tests/test.sh:36: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
@@ -69,25 +70,16 @@
       "status": "error",
       "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":563,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 400 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"invalid_request_error\\\",\\\"message\\\":\\\"\\\\\\\"thinking.type.enabled\\\\\\\" is not supported for this model. Use \\\\\\\"thinking.type.adapt",
       "time": 1.87
+    },
+    "fix_quality": {
+      "status": "rate_limited",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 188.14,
+      "notes": ""
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "oauth",
-      "time": 238.09,
-      "at": "2026-04-15T18:43:46.996586"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "oauth",
-      "time": 232.74,
-      "at": "2026-04-15T19:11:46.089693"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -111,6 +103,22 @@
       "backend": "anthropic",
       "time": 61.97,
       "at": "2026-04-16T10:53:57.862427"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 17117.61,
+      "at": "2026-04-20T18:41:53.791366"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "minimax",
+      "time": 26513.88,
+      "at": "2026-04-21T21:28:54.934965"
     }
   ]
 }

@@ -342,22 +342,43 @@ def test_no_unwrap_in_new_service_code():
 
 # [agent_config] fail_to_pass -- CLAUDE.md:16 @ 685a79876028a83976acafffd94e8abe3295d72a
 def test_top_level_imports():
-    """VulnerabilityServiceFormat imported at top of files that use it."""
+    """VulnerabilityServiceFormat imported at top of files that use it, not locally within functions."""
     # CLAUDE.md line 16: "PREFER top-level imports over local imports"
-    files_to_check = [
-        (REPO / "crates/uv/src/commands/project/audit.rs", 50),
-        (REPO / "crates/uv/src/settings.rs", 30),
-    ]
-    for path, max_line in files_to_check:
-        lines = path.read_text().splitlines()[:max_line]
-        found = any(
-            "VulnerabilityServiceFormat" in line and "use " in line
-            for line in lines
-        )
-        assert found, (
-            f"VulnerabilityServiceFormat not imported in top {max_line} lines "
-            f"of {path.name}. CLAUDE.md requires top-level imports."
-        )
+
+    # --- audit.rs: import at top + used in function body ---
+    audit_code = (REPO / "crates/uv/src/commands/project/audit.rs").read_text()
+    audit_top = audit_code.splitlines()[:50]
+    assert any(
+        "VulnerabilityServiceFormat" in line and "use " in line
+        for line in audit_top
+    ), (
+        "VulnerabilityServiceFormat not imported in top 50 lines of audit.rs. "
+        "CLAUDE.md requires top-level imports."
+    )
+    # Must actually appear in the audit function (not just imported and unused)
+    fn_match = re.search(r"async\s+fn\s+audit\s*\(", audit_code)
+    assert fn_match, "audit() function not found in audit.rs"
+    fn_body = audit_code[fn_match.start():]
+    assert "VulnerabilityServiceFormat" in fn_body, (
+        "VulnerabilityServiceFormat is imported but not used in the audit function"
+    )
+
+    # --- settings.rs: import at top + used in AuditSettings struct ---
+    settings_code = (REPO / "crates/uv/src/settings.rs").read_text()
+    settings_top = settings_code.splitlines()[:30]
+    assert any(
+        "VulnerabilityServiceFormat" in line and "use " in line
+        for line in settings_top
+    ), (
+        "VulnerabilityServiceFormat not imported in top 30 lines of settings.rs. "
+        "CLAUDE.md requires top-level imports."
+    )
+    struct_match = re.search(r"struct\s+AuditSettings\s*\{", settings_code)
+    assert struct_match, "AuditSettings struct not found in settings.rs"
+    struct_region = settings_code[struct_match.end() : struct_match.end() + 2000]
+    assert "VulnerabilityServiceFormat" in struct_region, (
+        "VulnerabilityServiceFormat is imported but not used in AuditSettings struct"
+    )
 
 
 # [agent_config] pass_to_pass -- CLAUDE.md:7 @ 685a79876028a83976acafffd94e8abe3295d72a

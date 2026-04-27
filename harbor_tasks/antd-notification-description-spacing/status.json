@@ -4,12 +4,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-16T12:58:45.305438",
-  "total_time": 69.89,
-  "sandbox_id": "iq7r2vhskiicrvxr6msyb",
+  "validated_at": "2026-04-25T11:57:48.186633",
+  "total_time": 1352.52,
+  "sandbox_id": "ize8j14f88krdk2avccrx",
   "backend": "anthropic",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "oneshot_repair",
   "nodes": {
     "scaffold": {
       "status": "ok",
@@ -33,73 +33,90 @@
       "notes": "tests look good"
     },
     "validate": {
-      "status": "pass",
-      "nop_reward": 0.0,
-      "gold_reward": 1.0,
-      "attempts": 1,
-      "notes": "All 4 validation checks passed. Docker build succeeded. NOP test correctly returns 0 (2 f2p tests fail as expected on buggy base). Gold test correctly returns 1 (all 8 tests pass with fix applied). Rubric ICR=0.5 - below threshold but acceptable for this PR since it only changes component code (PurePanel.tsx, style/index.ts), not config/documentation files. The rubric rules are code-style guidelines from copilot-instructions.md rather than verifiable file edits.",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 293.27
+      "status": "blocked",
+      "nop_reward": -1.0,
+      "gold_reward": -1.0,
+      "attempts": 0,
+      "notes": "Could not execute Bash. Every Bash invocation in this session fails before the command runs with: EACCES: permission denied, mkdir '/home/worker/.claude/session-env'. This blocks docker build, docker run, pytest, and the rubric judge. Confirmed reproducible across general-purpose subagents (same error) and after attempting to pre-create the directory via Write (blocked as 'sensitive file'). No file changes were made to environment/, tests/, solution/, or eval_manifest.yaml. Previous validate run on 2026-04-21 (minimax) reported pass with nop=0, gold=1 - that result is the most recent successful validation on record. This run's blocker is environmental (harness session-env perms), not a task defect.",
+      "model": "claude-opus-4-7",
+      "backend": "oauth",
+      "previous_validate": {
+        "status": "pass",
+        "nop_reward": 0.0,
+        "gold_reward": 1.0,
+        "attempts": 1,
+        "model": "MiniMax-M2.7",
+        "backend": "minimax",
+        "time": 312.69,
+        "notes": "All 4 validation checks passed. Docker build succeeded. NOP test correctly returns 0 (2 f2p tests fail as expected on buggy base). Gold test correctly returns 1 (all 8 tests pass with fix applied). Rubric ICR=0.5 - below threshold but acceptable for this PR since it only changes component code (PurePanel.tsx, style/index.ts), not config/documentation files. The rubric rules are code-style guidelines from copilot-instructions.md rather than verifiable file edits."
+      },
+      "time": 142.92
     },
     "quality_gate": {
       "status": "DELETE",
-      "model": "claude-opus-4-7",
+      "model": "claude-opus-4-6",
       "backend": "anthropic",
-      "time": 0.35,
-      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:2', 'A:[A] test_not_tautological @ tests/test_outputs.py:18: test `test_css_description_first_child_spacing` has 1 assert(s), a', 'A:[A] test_not_tautological @ tests/test_outputs.py:37: test `test_pure_content_conditional_title_rendering` has 1 assert(', 'lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:11: unpinned pip deps: pytest']"
+      "time": 0.21,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:2', 'A:[A] test_not_tautological @ tests/test_outputs.py:24: test `test_css_description_first_child_spacing` has 1 assert(s), a', 'A:[A] test_not_tautological @ tests/test_outputs.py:36: test `test_pure_content_conditional_title_rendering` has 1 assert(', 'lint_tier_b:2', 'B:[B] pinned_dependencies @ environment/Dockerfile:11: unpinned pip deps: pytest', 'B:[B] no_network_during_tests @ tests/test.sh:40: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 12.27,
+      "time": 11.58,
       "tier_a_fails": [
-        "no_solution_leakage"
+        "solution_uniqueness_guard"
       ],
       "tier_b_fails": [],
-      "pass_count": 7,
-      "fail_count": 2
+      "pass_count": 8,
+      "fail_count": 1
+    },
+    "fix_quality": {
+      "status": "ok",
+      "model": "claude-opus-4-6",
+      "backend": "anthropic",
+      "time": 1299.61,
+      "notes": ""
     }
   },
   "history": [
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
       "backend": "oauth",
-      "time": 57.36,
-      "at": "2026-04-15T12:36:41.462936"
+      "time": 719.83,
+      "at": "2026-04-25T08:53:31.449211"
     },
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 1225.51,
-      "at": "2026-04-15T19:00:14.455956"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "oauth",
-      "time": 2038.09,
-      "at": "2026-04-15T20:10:47.784551"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 1199.19,
-      "at": "2026-04-15T21:57:31.084857"
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 252.42,
+      "at": "2026-04-25T11:21:47.276578"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "anthropic",
-      "time": 69.89,
-      "at": "2026-04-16T12:58:45.305438"
+      "time": 53.59,
+      "at": "2026-04-25T11:23:39.271705"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "anthropic",
+      "time": 55.61,
+      "at": "2026-04-25T11:29:38.324495"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "anthropic",
+      "time": 1352.52,
+      "at": "2026-04-25T11:57:48.186633"
     }
   ]
 }

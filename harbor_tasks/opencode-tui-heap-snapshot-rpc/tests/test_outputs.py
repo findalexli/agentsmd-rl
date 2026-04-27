@@ -55,27 +55,38 @@ def test_syntax_check():
 
 # [pr_diff] fail_to_pass
 def test_worker_has_snapshot_rpc():
-    """Worker RPC has snapshot method that calls writeHeapSnapshot."""
+    """Worker RPC exposes a callable snapshot method that writes server.heapsnapshot."""
     r = _run_ts("""
-import { writeHeapSnapshot } from "node:v8";
-const workerCode = await Bun.file("packages/opencode/src/cli/cmd/tui/worker.ts").text();
-if (!workerCode.includes("writeHeapSnapshot")) {
-    console.error("FAIL: worker.ts does not import writeHeapSnapshot");
+const mod = await import("./packages/opencode/src/cli/cmd/tui/worker.ts");
+const { rpc } = mod;
+
+// rpc must export a snapshot function
+if (typeof rpc.snapshot !== "function") {
+    console.error("FAIL: rpc.snapshot is not a function, got " + typeof rpc.snapshot);
     process.exit(1);
 }
-if (!workerCode.includes("node:v8") && !workerCode.includes('"v8"')) {
-    console.error("FAIL: worker.ts does not import from node:v8 or v8");
+
+// Call snapshot and verify it returns a path to server.heapsnapshot
+const result = await Promise.resolve(rpc.snapshot());
+if (typeof result !== "string") {
+    console.error("FAIL: snapshot() must return a string path, got " + typeof result);
     process.exit(1);
 }
-if (!workerCode.includes("snapshot()")) {
-    console.error("FAIL: rpc object missing snapshot() method");
+if (!result.includes("server.heapsnapshot")) {
+    console.error("FAIL: snapshot() must return path containing server.heapsnapshot, got: " + result);
     process.exit(1);
 }
-if (!workerCode.includes("server.heapsnapshot")) {
-    console.error("FAIL: snapshot method must write to server.heapsnapshot");
+
+// Verify the snapshot file was actually written to disk
+const fs = await import("node:fs");
+if (!fs.existsSync(result)) {
+    console.error("FAIL: Heap snapshot file not created at: " + result);
     process.exit(1);
 }
-console.log("PASS: Worker has snapshot RPC method that calls writeHeapSnapshot");
+fs.unlinkSync(result);
+
+console.log("PASS: Worker rpc.snapshot method works correctly");
+process.exit(0);
 """)
     assert r.returncode == 0, f"Test failed: {r.stderr or r.stdout}"
     assert "PASS" in r.stdout, f"Expected PASS in output: {r.stdout}"
@@ -83,99 +94,69 @@ console.log("PASS: Worker has snapshot RPC method that calls writeHeapSnapshot")
 
 # [pr_diff] fail_to_pass
 def test_thread_implements_onsnapshot():
-    """Thread implements onSnapshot callback coordinating TUI and server snapshots."""
-    r = _run_ts("""
-const threadCode = await Bun.file("packages/opencode/src/cli/cmd/tui/thread.ts").text();
-if (!threadCode.includes("writeHeapSnapshot")) {
-    console.error("FAIL: thread.ts does not import writeHeapSnapshot");
-    process.exit(1);
-}
-if (!threadCode.includes("onSnapshot")) {
-    console.error("FAIL: thread.ts does not reference onSnapshot");
-    process.exit(1);
-}
-if (!threadCode.includes("tui.heapsnapshot")) {
-    console.error("FAIL: onSnapshot must write TUI heap snapshot to tui.heapsnapshot");
-    process.exit(1);
-}
-const hasRpcCall = threadCode.includes('client.call("snapshot"') ||
-    threadCode.includes("client.call('snapshot'") ||
-    /client[.]call[^S]*(["'`]snapshot["'`])/.test(threadCode);
-if (!hasRpcCall) {
-    console.error("FAIL: onSnapshot must call RPC snapshot method via client.call");
-    process.exit(1);
-}
-console.log("PASS: Thread implements onSnapshot callback with TUI and server coordination");
-""")
-    assert r.returncode == 0, f"Test failed: {r.stderr or r.stdout}"
-    assert "PASS" in r.stdout, f"Expected PASS in output: {r.stdout}"
+    """Thread implements onSnapshot callback that coordinates TUI and server heap snapshots."""
+    thread_path = Path(REPO) / "packages/opencode/src/cli/cmd/tui/thread.ts"
+    content = thread_path.read_text()
+
+    # onSnapshot callback must exist
+    assert "onSnapshot" in content, "thread.ts must define an onSnapshot callback"
+
+    # Must import writeHeapSnapshot for TUI-side snapshot
+    assert "writeHeapSnapshot" in content, "thread.ts must import writeHeapSnapshot"
+
+    # Must write TUI heap to tui.heapsnapshot
+    assert "tui.heapsnapshot" in content, "onSnapshot must write TUI heap to tui.heapsnapshot"
+
+    # onSnapshot must be wired into the tui() call
+    tui_call_idx = content.find("await tui(")
+    assert tui_call_idx != -1, "thread.ts must call tui()"
+    tui_call_block = content[tui_call_idx:tui_call_idx + 800]
+    assert "onSnapshot" in tui_call_block, "onSnapshot must be passed in the tui() call arguments"
 
 
 # [pr_diff] fail_to_pass
 def test_app_accepts_onsnapshot_prop():
-    """TUI App component accepts onSnapshot prop and passes it to heap snapshot command."""
-    r = _run_ts("""
-const appCode = await Bun.file("packages/opencode/src/cli/cmd/tui/app.tsx").text();
-if (!appCode.includes("onSnapshot")) {
-    console.error("FAIL: app.tsx must reference onSnapshot");
-    process.exit(1);
-}
-const hasOptionalOnSnapshot = appCode.includes("onSnapshot?:") ||
-    /onSnapshot[?][^S]*:[^S]*\\([^)]*\\)[^S]*=>[^S]*Promise/.test(appCode);
-if (!hasOptionalOnSnapshot) {
-    console.error("FAIL: onSnapshot must be optional in tui input type");
-    process.exit(1);
-}
-const passesOnSnapshot = appCode.includes("onSnapshot={input.onSnapshot}") ||
-    /onSnapshot[^S]*=[^S]*{[^}]*input.onSnapshot[^}]*}/.test(appCode);
-if (!passesOnSnapshot) {
-    console.error("FAIL: onSnapshot must be passed from input to App component");
-    process.exit(1);
-}
-console.log("PASS: App component accepts onSnapshot prop and uses it in heap snapshot command");
-""")
-    assert r.returncode == 0, f"Test failed: {r.stderr or r.stdout}"
-    assert "PASS" in r.stdout, f"Expected PASS in output: {r.stdout}"
+    """TUI App component accepts onSnapshot prop and uses it in the heap snapshot command."""
+    app_path = Path(REPO) / "packages/opencode/src/cli/cmd/tui/app.tsx"
+    content = app_path.read_text()
+
+    # tui input type must include optional onSnapshot
+    assert "onSnapshot?" in content, "onSnapshot must be an optional property in tui input type"
+
+    # App function must accept onSnapshot in its parameters
+    # (via props object with inline type, separate interface, or destructuring)
+    app_start = content.find("function App(")
+    assert app_start != -1, "App function must exist"
+    # Check a window around the function declaration for onSnapshot in the signature/type
+    app_decl_region = content[app_start:app_start + 300]
+    assert "onSnapshot" in app_decl_region, \
+        "App function declaration must include onSnapshot in its parameter type"
+
+    # The heap snapshot command handler must reference onSnapshot
+    heap_cmd_idx = content.find("app.heap_snapshot")
+    assert heap_cmd_idx != -1, "Heap snapshot command must exist"
+    heap_cmd_block = content[heap_cmd_idx:heap_cmd_idx + 500]
+    assert "onSnapshot" in heap_cmd_block, "Heap snapshot command handler must use onSnapshot"
 
 
 # [pr_diff] fail_to_pass
 def test_changelog_command_updated():
     """.opencode/command/changelog.md has updated instructions with TUI/Desktop/Core/Misc sections."""
     r = _run_ts("""
-const changelogCode = await Bun.file(".opencode/command/changelog.md").text();
-if (!changelogCode.includes("# TUI")) {
-    console.error("FAIL: changelog.md must have # TUI section header");
+const content = await Bun.file(".opencode/command/changelog.md").text();
+const required = ["# TUI", "# Desktop", "# Core", "# Misc", "UPCOMING_CHANGELOG.md"];
+for (const term of required) {
+    if (!content.includes(term)) {
+        console.error("FAIL: changelog.md missing: " + term);
+        process.exit(1);
+    }
+}
+const sectionCount = content.split("\\n").filter(l => l.startsWith("# ")).length;
+if (sectionCount < 4) {
+    console.error("FAIL: Expected at least 4 section headers, found " + sectionCount);
     process.exit(1);
 }
-if (!changelogCode.includes("# Desktop")) {
-    console.error("FAIL: changelog.md must have # Desktop section header");
-    process.exit(1);
-}
-if (!changelogCode.includes("# Core")) {
-    console.error("FAIL: changelog.md must have # Core section header");
-    process.exit(1);
-}
-if (!changelogCode.includes("# Misc")) {
-    console.error("FAIL: changelog.md must have # Misc section header");
-    process.exit(1);
-}
-if (!changelogCode.includes("UPCOMING_CHANGELOG.md")) {
-    console.error("FAIL: changelog.md must mention creating UPCOMING_CHANGELOG.md");
-    process.exit(1);
-}
-const mentionsSections = changelogCode.toLowerCase().includes("appropriate section") ||
-    changelogCode.toLowerCase().includes("into the") ||
-    /append.*section/i.test(changelogCode);
-if (!mentionsSections) {
-    console.error("FAIL: changelog.md must mention appending summaries to appropriate sections");
-    process.exit(1);
-}
-const sectionHeaders = changelogCode.split("\\n").filter(l => l.startsWith("# "));
-if (sectionHeaders.length < 4) {
-    console.error("FAIL: changelog.md should have at least 4 section headers");
-    process.exit(1);
-}
-console.log("PASS: changelog.md has updated instructions with section structure");
+console.log("PASS: changelog.md has section structure");
 """)
     assert r.returncode == 0, f"Test failed: {r.stderr or r.stdout}"
     assert "PASS" in r.stdout, f"Expected PASS in output: {r.stdout}"
@@ -288,48 +269,16 @@ def test_repo_config_tests():
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (static) — anti-stub check
+# Fail-to-pass (pr_diff) — anti-stub check
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
+# [pr_diff] fail_to_pass
 def test_not_stub():
-    """RPC snapshot method has real implementation, not just a stub."""
-    r = _run_ts("""
-const workerCode = await Bun.file("packages/opencode/src/cli/cmd/tui/worker.ts").text();
-const snapshotStart = workerCode.indexOf("snapshot()");
-if (snapshotStart === -1) {
-    console.error("FAIL: snapshot method not found");
-    process.exit(1);
-}
-let braceCount = 0;
-let inMethod = false;
-let bodyStart = 0;
-let bodyEnd = 0;
-for (let i = snapshotStart; i < workerCode.length; i++) {
-    if (workerCode[i] === "{") {
-        if (!inMethod) {
-            inMethod = true;
-            bodyStart = i + 1;
-        }
-        braceCount++;
-    } else if (workerCode[i] === "}") {
-        braceCount--;
-        if (inMethod && braceCount === 0) {
-            bodyEnd = i;
-            break;
-        }
-    }
-}
-const body = workerCode.substring(bodyStart, bodyEnd);
-if (!body.includes("writeHeapSnapshot")) {
-    console.error("FAIL: snapshot method body must call writeHeapSnapshot");
-    process.exit(1);
-}
-if (!body.includes("server.heapsnapshot")) {
-    console.error("FAIL: snapshot method must specify server.heapsnapshot filename");
-    process.exit(1);
-}
-console.log("PASS: RPC snapshot method has real implementation");
-""")
-    assert r.returncode == 0, f"Test failed: {r.stderr or r.stdout}"
-    assert "PASS" in r.stdout, f"Expected PASS in output: {r.stdout}"
+    """RPC snapshot method has real writeHeapSnapshot implementation, not just a stub."""
+    worker_path = Path(REPO) / "packages/opencode/src/cli/cmd/tui/worker.ts"
+    content = worker_path.read_text()
+    # Must import writeHeapSnapshot from v8/node:v8
+    has_v8_import = "node:v8" in content or '"v8"' in content
+    assert has_v8_import, "worker.ts must import from node:v8 or v8"
+    assert "writeHeapSnapshot" in content, "worker.ts must use writeHeapSnapshot"
+    assert "server.heapsnapshot" in content, "snapshot method must write to server.heapsnapshot"

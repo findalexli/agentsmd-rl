@@ -1,56 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names the file (render-query.ts), the function (evaluateArg), the placeholder type ('DateTime'), and the behavior (string\u2192Date conversion). Tests use evaluateArg with prisma__value containing type 'DateTime' and name fields, all discoverable from the instruction's description of the placeholder branch and its typed DateTime handling."
+      "reason": "instruction.md names evaluateArg, the placeholder shape, the DateTime type gating, and the expected Date return \u2014 all test assertions align with these."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what's broken (DateTime string not converted to Date) and where to look (the placeholder branch of evaluateArg), but does not specify the exact code change (e.g., 'wrap in new Date(found)' or 'add an if check for type === DateTime'). A developer must still reason about how to implement the fix."
+      "reason": "Instruction describes the behavior (return a Date instance) without specifying the exact line or code change."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "Tests check behavioral properties: (1) result is instanceof Date for DateTime type, (2) the Date value preserves the original date string, (3) non-DateTime types are unaffected. Alternative implementations (e.g., using Date.parse(), a utility function, or different conditional structures) would all pass these tests as long as they produce the correct behavior."
+      "reason": "Tests only check instanceof Date, toISOString prefix, and that non-DateTime types pass through \u2014 any correct fix would satisfy these."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "The f2p tests write TypeScript test files that import evaluateArg and call it with specific arguments, then check the returned value with toBeInstanceOf(Date) and toISOString(). The pass_to_pass tests run vitest, tsc, prettier, and eslint as subprocesses. No test simply reads source code text."
+      "reason": "Tests execute vitest and run typecheck/lint subprocesses, calling evaluateArg directly."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests (test_datetime_string_converted_to_date, test_datetime_conversion_preserves_date_value) call evaluateArg with DateTime-typed placeholders and string scope values, then assert the result is a Date instance with the correct value. A stub/no-op evaluateArg that returns the string unchanged would fail toBeInstanceOf(Date)."
+      "reason": "Multiple date strings are tested, and non-DateTime types require pass-through \u2014 a stub couldn't satisfy both branches."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: (1) DateTime string values converted to Date objects, and (2) fix does not affect other placeholder types. Both behaviors are tested: test_datetime_string_converted_to_date and test_datetime_conversion_preserves_date_value cover (1), test_non_datetime_string_not_converted covers (2)."
+      "reason": "DateTime conversion, value preservation, and non-DateTime pass-through are all tested as described in instruction.md."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (e.g., test_datetime_string_converted_to_date, test_non_datetime_string_not_converted), have docstrings explaining what they test and why, and are logically grouped into fail_to_pass and pass_to_pass categories."
+      "reason": "Tests have descriptive names and docstrings explaining f2p vs p2p semantics."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves a code bug fix, not producing structured data output like JSON/CSV/API/DB schemas."
+      "reason": "Task is a code bug fix, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths (packages/client-engine-runtime/src/interpreter/render-query.ts), function names (evaluateArg, isPrismaValuePlaceholder, isPrismaValueGenerator), and type names (DateTime) are all correctly spelled and consistent across instruction and tests."
+      "reason": "Paths and package names are consistent and correct."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly names the exact file (render-query.ts), the exact function (evaluateArg), the exact branch (placeholder branch where isPrismaValuePlaceholder is true), and the exact fix pattern ('DateTime string values are converted to Date objects'). This goes beyond describing the bug and effectively localizes the fix to a specific code branch, reducing the task to mechanical insertion."
+      "outcome": "pass",
+      "reason": "Instruction names evaluateArg (the function behavior being specified) but doesn't cite file path or line numbers; localization still required."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "Code-only task, no config edits."
     }
   },
   "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 8,
-  "fail_count": 1
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
 }

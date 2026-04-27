@@ -10,52 +10,62 @@ source:
 # Track 1: Hard tests (binary pass/fail via test.sh)
 checks:
   # Config edit checks (f2p) - These test the documentation/script additions
-  - id: claude_md_documents_pr_comments
+  - id: test_claude_md_documents_pr_comments
     type: fail_to_pass
     origin: pr_diff
     description: "CLAUDE.md must document the pr:comments script in a Reading PR Feedback section"
 
-  - id: package_json_has_pr_comments_script
+  - id: test_package_json_has_pr_comments_script
     type: fail_to_pass
     origin: pr_diff
     description: "package.json must have the pr:comments script entry pointing to scripts/pr-comments.ts"
 
-  - id: pr_comments_script_exists
+  - id: test_pr_comments_script_is_executable
     type: fail_to_pass
     origin: pr_diff
-    description: "scripts/pr-comments.ts must exist with gh api, GraphQL, and thread state handling"
+    description: "scripts/pr-comments.ts must exist and be valid TypeScript that bun can build"
+
+  - id: test_pr_comments_script_has_bun_import
+    type: fail_to_pass
+    origin: pr_diff
+    description: "pr-comments.ts must import from 'bun' for shell execution"
 
   # Code fix checks (f2p) - These test the HTTP security fix
-  - id: httpparser_has_duplicate_content_length_fix
+  - id: test_httpparser_iterates_all_content_length_headers
     type: fail_to_pass
     origin: pr_diff
-    description: "HttpParser.h must implement RFC 9112 6.3 duplicate Content-Length validation"
+    description: "HttpParser.h must iterate over all headers to detect duplicate Content-Length values"
 
-  - id: request_smuggling_test_exists
+  - id: test_httpparser_rejects_conflicting_content_length
     type: fail_to_pass
     origin: pr_diff
-    description: "request-smuggling.test.ts must have tests for duplicate Content-Length headers"
+    description: "HttpParser.h must return HTTP 400 for conflicting Content-Length headers"
+
+  - id: test_request_smuggling_test_cases_are_present
+    type: fail_to_pass
+    origin: pr_diff
+    description: "request-smuggling.test.ts must have the three required test case names"
 
   # Pass-to-pass checks (structural validation)
-  - id: http_parser_syntax_valid
+  - id: test_http_parser_syntax_valid
     type: pass_to_pass
     origin: static
     description: "HttpParser.h should have valid C++ syntax (balanced braces, valid namespace)"
 
-  - id: claude_md_syntax_valid
+  - id: test_claude_md_syntax_valid
     type: pass_to_pass
     origin: static
     description: "CLAUDE.md should be valid markdown"
 
-  - id: package_json_valid
+  - id: test_package_json_valid
     type: pass_to_pass
     origin: static
     description: "package.json should be valid JSON with scripts section"
 
-  - id: pr_comments_script_typescript_valid
+  - id: test_request_smuggling_test_file_is_valid_typescript
     type: pass_to_pass
     origin: static
-    description: "pr-comments.ts should have valid TypeScript syntax"
+    description: "request-smuggling.test.ts should have valid TypeScript syntax"
 
 # Track 2: Config edits (extracted from solve.sh patch)
 config_edits:

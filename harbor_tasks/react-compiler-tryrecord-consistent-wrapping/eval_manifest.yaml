@@ -30,13 +30,20 @@ checks:
 - id: build_hir_simplified_conditional
   type: fail_to_pass
   origin: pr_diff
-  description: BuildHIR must use simplified detail.category check without redundant
-    instanceof CompilerDiagnostic ternary
+  description: BuildHIR must not have redundant instanceof CompilerDiagnostic ternary.
+    The pattern 'detail instanceof CompilerDiagnostic ? detail.category : detail.category'
+    evaluates to the same on both branches and should be simplified.
 - id: merged_validation_guard_blocks
   type: fail_to_pass
   origin: pr_diff
-  description: Two consecutive if(env.enableValidations) blocks around validateLocalsNotReassignedAfterRender
-    and assertValidMutableRanges must be merged
+  description: Two consecutive if(env.enableValidations) blocks between
+    validateLocalsNotReassignedAfterRender and assertValidMutableRanges should be
+    merged into a single guard block.
+- id: compiler_smoke_test
+  type: fail_to_pass
+  origin: pr_diff
+  description: Compiler smoke test verifying the refactored code parses correctly
+    and uses the expected patterns (tryRecord wrapping, recordErrors, etc.)
 - id: pipeline_has_required_functions
   type: pass_to_pass
   origin: static
@@ -65,8 +72,7 @@ rubric:
     path: compiler/CLAUDE.md
     lines: '7'
     commit: cebe42e24521ce02bf427fd482009d01e1466277
-  reference: "The gold solution adds documentation updates to fault-tolerance-overview.md\n\
-    \  describing the tryRecord() wrapping cleanup and recordErrors() normalization."
+  reference: "The gold solution adds documentation updates to fault-tolerance-overview.md\n  describing the tryRecord() wrapping cleanup and recordErrors() normalization."
 - rule: 'React Compiler: `/compiler/` directory'
   source:
     path: CLAUDE.md
@@ -75,8 +81,7 @@ rubric:
     directory, respecting the monorepo structure and boundary between React core and
     the React Compiler.
   category: architecture
-  reference: "All changes are within /compiler/: Pipeline.ts, BuildHIR.ts, ValidateNoDerivedComputationsInEffects.ts,\n\
-    \  ValidatePreservedManualMemoization.ts, ValidateSourceLocations.ts, and fault-tolerance-overview.md"
+  reference: "All changes are within /compiler/: Pipeline.ts, BuildHIR.ts, ValidateNoDerivedComputationsInEffects.ts,\n  ValidatePreservedManualMemoization.ts, ValidateSourceLocations.ts, and fault-tolerance-overview.md"
 - rule: 'React Compiler: `/compiler/` directory (has its own instructions)'
   source:
     path: CLAUDE.md

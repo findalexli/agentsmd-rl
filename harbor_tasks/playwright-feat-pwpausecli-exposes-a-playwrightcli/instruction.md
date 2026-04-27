@@ -9,29 +9,27 @@ When debugging a failing Playwright test, developers currently set `PWPAUSE=1` w
 ### 1. PWPAUSE=cli handling in program.ts
 
 In `packages/playwright/src/program.ts`, the PWPAUSE environment variable handling must distinguish between two modes:
-- When `process.env.PWPAUSE` equals `"cli"`, the test should run with infinite timeout (`timeout = 0`) and a 5-second action timeout (`actionTimeout = 5000`)
+- When `process.env.PWPAUSE` equals `"cli"`, the test should run with the test timeout disabled and a short action timeout to keep actions responsive during debugging
 - When `process.env.PWPAUSE` is set to any other truthy value (not `"cli"`), it should retain the existing pause behavior (pause mode, headless disabled)
 - The `"cli"` mode must not trigger the old pause behavior (no pause flag, no forced headless false)
 
 ### 2. Test finish callbacks in testInfo.ts
 
 In `packages/playwright/src/worker/testInfo.ts`, the mechanism for callbacks when a test function finishes must support multiple handlers:
-- The property storing these callbacks must be named `_onDidFinishTestFunctionCallbacks` (plural)
-- It must be initialized to support multiple callbacks (a Set)
-- Callbacks must be invoked by iterating over all registered handlers using a `for...of` loop
-- This supports multiple handlers so both the artifacts recorder and the new daemon launcher can be notified when a test function completes
+- Multiple callbacks should be able to register and all be invoked when the test function completes
+- This supports both the artifacts recorder and the new daemon launcher being notified when a test function completes
 
 ### 3. Daemon server in daemon.ts
 
 In `packages/playwright/src/cli/daemon/daemon.ts`:
-- The `startMcpDaemonServer` function must accept a `noShutdown` parameter
-- When `noShutdown` is true, the daemon must remain running and must not close the browser
+- `startMcpDaemonServer` must accept an additional parameter that prevents automatic shutdown
+- When this parameter indicates the daemon should stay alive, the daemon must remain running and must not close the browser when the browser context closes
 - The daemon must import and use `decorateServer` from `packages/playwright-core/src/server/utils/network.ts`
 
 ### 4. Browser backend in browserBackend.ts
 
 In `packages/playwright/src/mcp/test/browserBackend.ts`:
-- Export an async function named `runDaemonForContext`
+- Export an async function that launches the MCP daemon for a test context
 - This function must check `process.env.PWPAUSE` to determine if it should activate
 - It must call `startMcpDaemonServer` from `packages/playwright/src/cli/daemon/daemon.ts`
 

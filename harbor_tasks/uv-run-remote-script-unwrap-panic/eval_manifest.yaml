@@ -13,42 +13,42 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's Rust code is formatted correctly
-- id: no_unwrap_on_downloaded_script
-  type: fail_to_pass
-  origin: pr_diff
-  description: No .unwrap() call on downloaded_script in as_command; crate compiles
-- id: python_remote_not_url_only
-  type: fail_to_pass
-  origin: pr_diff
-  description: PythonRemote variant no longer holds just a bare URL
-- id: as_command_no_option_downloaded_script
-  type: fail_to_pass
-  origin: pr_diff
-  description: as_command no longer takes downloaded_script as an Option parameter
-- id: run_fn_no_downloaded_script_param
-  type: fail_to_pass
-  origin: pr_diff
-  description: run() function no longer takes downloaded_script as a parameter
-- id: lib_no_downloaded_script_threading
-  type: fail_to_pass
-  origin: pr_diff
-  description: run_project() in lib.rs no longer threads downloaded_script
-- id: as_command_not_stub
+- id: test_as_command_not_stub
   type: pass_to_pass
   origin: static
   description: as_command has a real implementation with meaningful logic
-- id: python_remote_variant_exists
+- id: test_python_remote_variant_exists
   type: pass_to_pass
   origin: static
   description: PythonRemote variant still exists in RunCommand enum
-- id: as_command_handles_all_variants
+- id: test_as_command_handles_all_variants
   type: pass_to_pass
   origin: static
   description: as_command still handles PythonRemote alongside other variants
-- id: no_panic_apis_in_remote_handling
+- id: test_run_fn_no_downloaded_script_param
+  type: fail_to_pass
+  origin: pr_diff
+  description: run() function no longer takes downloaded_script as a parameter
+- id: test_lib_no_downloaded_script_threading
+  type: fail_to_pass
+  origin: pr_diff
+  description: run_project() in lib.rs no longer threads downloaded_script
+- id: test_python_remote_not_url_only
+  type: fail_to_pass
+  origin: pr_diff
+  description: PythonRemote variant no longer holds just a DisplaySafeUrl
+- id: test_as_command_no_option_downloaded_script
+  type: fail_to_pass
+  origin: pr_diff
+  description: as_command no longer takes downloaded_script as a separate parameter
+- id: test_no_unwrap_in_python_remote_arm
+  type: fail_to_pass
+  origin: pr_diff
+  description: No .unwrap() call in the PythonRemote arm of as_command
+- id: test_no_panic_apis_in_remote_handling
   type: fail_to_pass
   origin: agent_config
-  description: No .unwrap() or panic!() in PythonRemote arm of as_command
+  description: No .unwrap(), panic!(), or unreachable!() in PythonRemote arm of as_command
   source:
     path: CLAUDE.md
     lines: '7'

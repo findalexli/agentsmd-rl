@@ -4,148 +4,128 @@ source:
   base_commit: 821b738db0a64c863e8371e7141564cef70d56b8
   merge_commit: ''
 checks:
-- id: check_permission_signature
+- id: test_permission_frame_propagation_behavioral
+  description: Verify permission frame propagation via subprocess analysis
+  type: fail_to_pass
+  origin: pr_diff
+  source:
+    lines: 95-96
+    path: CLAUDE.md
+- id: test_check_permission_signature_updated
   description: CheckPermission must accept requesting_frame as first parameter
   type: fail_to_pass
-  origin: agent_config
+  origin: pr_diff
   source:
     lines: 95-96
     path: CLAUDE.md
-- id: check_permission_uses_requesting_frame
+- id: test_check_permission_uses_render_frame_host_for_origin
   description: CheckPermission must use requesting_frame to get origin
   type: fail_to_pass
-  origin: agent_config
+  origin: pr_diff
   source:
     lines: 95-96
     path: CLAUDE.md
-- id: check_media_access_signature
+- id: test_check_media_access_signature_updated
   description: CheckMediaAccessPermission must accept requesting_frame parameter
   type: fail_to_pass
-  origin: agent_config
+  origin: pr_diff
   source:
     lines: 95-96
     path: CLAUDE.md
-- id: check_media_access_passes_frame
+- id: test_check_media_access_passes_frame
   description: CheckMediaAccessPermission must pass requesting_frame to CheckPermission
   type: fail_to_pass
-  origin: agent_config
+  origin: pr_diff
   source:
     lines: 95-96
     path: CLAUDE.md
-- id: web_contents_passes_render_frame_host
+- id: test_web_contents_passes_render_frame_host
   description: WebContents::CheckMediaAccessPermission must pass render_frame_host
   type: fail_to_pass
-  origin: agent_config
+  origin: pr_diff
   source:
     lines: 95-96
     path: CLAUDE.md
-- id: check_serial_access_signature
+- id: test_check_serial_access_signature_updated
   description: CheckSerialAccessPermission must accept requesting_frame instead of
     origin
   type: fail_to_pass
-  origin: agent_config
+  origin: pr_diff
   source:
     lines: 95-96
     path: CLAUDE.md
-- id: serial_delegate_passes_frame
+- id: test_serial_delegate_passes_frame_not_origin
   description: ElectronSerialDelegate must pass frame to CheckSerialAccessPermission
   type: fail_to_pass
-  origin: agent_config
+  origin: pr_diff
   source:
     lines: 95-96
     path: CLAUDE.md
-- id: check_serial_access_uses_requesting_frame
+- id: test_check_serial_access_uses_frame_for_origin
   description: CheckSerialAccessPermission must use requesting_frame for security
     origin
   type: fail_to_pass
-  origin: agent_config
+  origin: pr_diff
   source:
     lines: 95-96
     path: CLAUDE.md
-- id: header_guards_follow_convention
-  description: Header guards must follow Electron's ELECTRON_SHELL_BROWSER_*_H_ convention
-  type: fail_to_pass
-  origin: agent_config
-  source:
-    lines: 95-96
-    path: CLAUDE.md
-- id: no_web_contents_primary_main_frame
+- id: test_no_web_contents_primary_main_frame_in_check_permission
   description: CheckPermission must not use GetPrimaryMainFrame, should use requesting_frame
   type: fail_to_pass
-  origin: agent_config
+  origin: pr_diff
   source:
     lines: 95-96
     path: CLAUDE.md
-- id: clang_format
-  description: Modified C++ files must pass clang-format check (pass_to_pass)
-  type: pass_to_pass
-  origin: repo_tests
-- id: modified_headers_have_guards
-  description: Modified header files must have proper include guards (pass_to_pass)
+- id: test_header_guards_follow_convention
+  description: Header guards must follow Electron's ELECTRON_SHELL_BROWSER_*_H_ convention
   type: pass_to_pass
   origin: static
-- id: cpplint
-  description: Modified C++ files must pass cpplint style checks (pass_to_pass)
+- id: test_clang_format
+  description: Modified C++ files must pass clang-format check
   type: pass_to_pass
   origin: repo_tests
-- id: header_guards_follow_convention_p2p
-  description: Header guards must follow Electron's naming convention (pass_to_pass)
+- id: test_modified_headers_have_guards
+  description: Modified header files must have proper include guards
   type: pass_to_pass
   origin: static
-- id: modified_files_exist
-  description: All modified files must exist and be readable (pass_to_pass)
+- id: test_cpplint
+  description: Modified C++ files must pass cpplint style checks
+  type: pass_to_pass
+  origin: repo_tests
+- id: test_modified_files_exist
+  description: All modified files must exist and be readable
   type: pass_to_pass
   origin: static
-- id: serial_delegate_has_can_request_port_permission
-  description: ElectronSerialDelegate must have CanRequestPortPermission method (pass_to_pass)
+- id: test_serial_delegate_has_can_request_port_permission
+  description: ElectronSerialDelegate must have CanRequestPortPermission method
   type: pass_to_pass
   origin: static
-- id: web_contents_permission_helper_structure
-  description: WebContentsPermissionHelper must have expected class structure (pass_to_pass)
+- id: test_web_contents_permission_helper_structure
+  description: WebContentsPermissionHelper must have expected class structure
   type: pass_to_pass
   origin: static
-- id: shell_directory_clang_format
-  description: All shell/browser C++ files must pass clang-format (pass_to_pass)
+- id: test_git_repository_valid
+  description: Git repository must be at expected base commit
   type: pass_to_pass
   origin: repo_tests
-- id: git_repository_valid
-  description: Git repository must be at expected base commit (pass_to_pass)
-  type: pass_to_pass
-  origin: repo_tests
-- id: no_merge_conflict_markers
-  description: Modified files must not contain Git merge conflict markers (pass_to_pass)
+- id: test_no_merge_conflict_markers
+  description: Modified files must not contain Git merge conflict markers
   type: pass_to_pass
   origin: static
-- id: file_utf8_encoding
-  description: All modified files must be valid UTF-8 encoded (pass_to_pass)
+- id: test_file_utf8_encoding
+  description: All modified files must be valid UTF-8 encoded
   type: pass_to_pass
   origin: static
-- id: no_trailing_whitespace_in_modified
-  description: Modified files must not have trailing whitespace (pass_to_pass)
+- id: test_no_trailing_whitespace_in_modified
+  description: Modified files must not have trailing whitespace
   type: pass_to_pass
   origin: static
-- id: patches_config_valid
-  description: Patches config.json must be valid JSON with required structure (pass_to_pass)
+- id: test_patches_config_valid
+  description: Patches config.json must be valid JSON with required structure
   type: pass_to_pass
   origin: repo_tests
-- id: patches_directory_structure
-  description: Chromium patches directory must have valid .patches file (pass_to_pass)
-  type: pass_to_pass
-  origin: repo_tests
-- id: clang_format_shell_browser
-  description: shell/browser C++ files must pass clang-format with parallel jobs (pass_to_pass)
-  type: pass_to_pass
-  origin: repo_tests
-- id: cpplint_modified_files
-  description: Modified C++ files must pass cpplint with Electron's filters (pass_to_pass)
-  type: pass_to_pass
-  origin: repo_tests
-- id: shell_common_clang_format
-  description: shell/common C++ files must pass clang-format (pass_to_pass)
-  type: pass_to_pass
-  origin: repo_tests
-- id: git_no_uncommitted_changes
-  description: Git repository must have no uncommitted changes at base commit (pass_to_pass)
+- id: test_patches_directory_structure
+  description: Chromium patches directory must have valid .patches file
   type: pass_to_pass
   origin: repo_tests
 rubric:

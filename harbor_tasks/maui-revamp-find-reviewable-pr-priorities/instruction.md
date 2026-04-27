@@ -28,9 +28,11 @@ The `find-reviewable-pr` skill in the dotnet/maui repository needs updates to bo
 
 **Parameter defaults**: When invoked without arguments, the script must use `$Category = "default"` and `$Limit = 100`. The `-Category` parameter's ValidateSet must accept `"default"`, `"approved"`, `"ready-to-review"`, and `"agent-reviewed"` (among any existing values).
 
-**New functions needed**: The script must define a function named `Write-PREntry` for formatting and outputting individual PR entries, and a function named `Get-ReadyToReviewPRNumbers` for fetching PR numbers from the MAUI SDK Ongoing project board via GraphQL.
+**Output formatting**: The script should include a reusable helper function for formatting and outputting individual PR entries, reducing code duplication across category output blocks. Each PR entry must include an `Assignees` field.
 
-**Default category behavior**: The `"default"` category must combine P/0 and milestoned PRs while filtering out any PRs with `CHANGES_REQUESTED` review status. The category switch must include a `"default"` case, and the merged results must be held in a `$defaultPRs` variable.
+**Project board integration**: The script must include functionality to fetch PR numbers from the MAUI SDK Ongoing project board via a GraphQL `ProjectV2` query to support the "Ready To Review" category.
+
+**Default category behavior**: The `"default"` category must combine P/0 and milestoned PRs while filtering out any PRs with `CHANGES_REQUESTED` review status. The category switch must include a `"default"` case.
 
 **PR data fields**: Each PR output object must include an `Assignees` field. The script must reference the labels `s/agent-reviewed` and `s/agent-approved`.
 

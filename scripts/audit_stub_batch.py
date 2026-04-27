@@ -158,7 +158,8 @@ async def _gh_get(client: httpx.AsyncClient, url: str, *, diff: bool = False,
         try:
             r = await client.get(url, headers=_gh_headers(diff=diff),
                                   timeout=timeout)
-        except (httpx.ReadError, httpx.ConnectError, httpx.TimeoutException):
+        except (httpx.ReadError, httpx.ConnectError, httpx.TimeoutException,
+                httpx.RemoteProtocolError, httpx.WriteError):
             await asyncio.sleep(2 + attempt * 2)
             continue
         # Track rate-limit headers from successful responses too

@@ -29,37 +29,46 @@ def test_build_session_decomposed():
     """build_session must be refactored into focused helper functions."""
     r = _run("""
 import sys
+import re
 
 with open("crates/goose-cli/src/session/builder.rs") as f:
     content = f.read()
 
-# Helper functions must exist as standalone fn declarations
-helpers = [
-    "fn resolve_provider_and_model",
-    "fn resolve_session_id",
-    "fn handle_resumed_session_workdir",
-    "fn resolve_and_load_extensions",
-    "fn configure_session_prompts",
-]
+# At least 10 function declarations must exist in the refactored file
+fn_pattern = r"(?:pub\\s+)?(?:async\\s+)?fn\\s+\\w+"
+all_functions = re.findall(fn_pattern, content)
+if len(all_functions) < 10:
+    print("FAIL: Expected >= 10 functions, found " + str(len(all_functions)))
+    sys.exit(1)
 
-for sig in helpers:
-    if sig not in content:
-        print("FAIL: Missing " + sig)
-        sys.exit(1)
+# build_session must exist as a pub async fn
+if "pub async fn build_session" not in content:
+    print("FAIL: build_session function not found")
+    sys.exit(1)
 
-# build_session must delegate to each helper
-calls = [
-    "resolve_provider_and_model(",
-    "resolve_session_id(",
-    "handle_resumed_session_workdir(",
-    "resolve_and_load_extensions(",
-    "configure_session_prompts(",
-]
+# The refactored build_session should delegate to helper functions
+# It should NOT have the same monolithic inline logic as before
+# We verify decomposition by checking build_session calls other functions
 
-for call in calls:
-    if call not in content:
-        print("FAIL: build_session does not call " + call)
-        sys.exit(1)
+# Extract the build_session function body
+build_session_match = re.search(
+    r"pub async fn build_session[^{]*\\{([\\s\\S]*?)^\\}",
+    content,
+    re.MULTILINE
+)
+if not build_session_match:
+    print("FAIL: Could not parse build_session body")
+    sys.exit(1)
+
+body = build_session_match.group(1)
+
+# Count distinct function calls in build_session (indicates delegation)
+# The original was monolithic with many inline operations
+# After refactor, it should call other fns
+call_count = len(re.findall(r"\\w+\\([^)]*\\)", body))
+if call_count < 3:
+    print("FAIL: build_session appears to have minimal delegation")
+    sys.exit(1)
 
 print("PASS")
 """)

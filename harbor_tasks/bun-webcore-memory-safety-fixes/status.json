@@ -4,12 +4,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-16T10:54:12.301979",
-  "total_time": 60.28,
-  "sandbox_id": "i591sb8jukexwzgwpwas0",
+  "validated_at": "2026-04-25T12:46:49.960662",
+  "total_time": 1750.93,
+  "sandbox_id": "i52im5wkuf479js1ufdqg",
   "backend": "anthropic",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "oneshot_repair",
   "nodes": {
     "p2p_enrich": {
       "status": "ok",
@@ -29,11 +29,11 @@
       "status": "pass",
       "nop_reward": 0.0,
       "gold_reward": 1.0,
-      "attempts": 2,
-      "notes": "Fixed test_repo_git_clean to not fail on uncommitted changes in gold scenario. Updated solve.sh to include detailed CLAUDE.md note matching rubric. Removed Rule 2 from rubric (checking existing content, not agent changes). All 4 validations pass: Docker build, NOP test (7 f2p tests fail correctly), Gold test (29 pass), Rubric judge (ICR=1.0).",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 145.18
+      "attempts": 1,
+      "notes": "All 4 checks pass: Docker build (pass), NOP test (7 f2p tests fail correctly, reward=0), Gold test (36 pass, reward=1), Rubric judge (ICR=1.00). Gold repo at /tmp/gold_repo/bun was created by exporting task-env-gold Docker image.",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 318.24
     },
     "rubric_judge": {
       "status": "fail",
@@ -61,16 +61,16 @@
     },
     "quality_gate": {
       "status": "DELETE",
-      "model": "claude-opus-4-7",
+      "model": "claude-opus-4-6",
       "backend": "anthropic",
-      "time": 0.44,
-      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:3', 'A:[A] test_not_tautological @ tests/test_outputs.py:250: test `test_event_listener_map_thread_uid_member` has 2 assert(s),', 'A:[A] test_not_tautological @ tests/test_outputs.py:264: test `test_event_listener_map_gc_thread_exemption` has 2 assert(s', 'A:[A] test_not_tautological @ tests/test_outputs.py:415: test `test_repo_license_headers` has 1 assert(s), all pass on a s']"
+      "time": 0.26,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:4', \"A:[A] test_deps_in_dockerfile @ environment/Dockerfile: tests call 4 binaries not installed in Dockerfile: ['/tmp/concept_\", 'A:[A] test_not_tautological @ tests/test_outputs.py:284: test `test_event_listener_map_thread_uid_member` has 2 assert(s),', 'A:[A] test_not_tautological @ tests/test_outputs.py:297: test `test_event_listener_map_gc_thread_exemption` has 2 assert(s', 'A:[A] test_not_tautological @ tests/test_outputs.py:446: test `test_repo_license_headers` has 1 assert(s), all pass on a s', 'lint_tier_b:1', 'B:[B] no_network_during_tests @ tests/test.sh:44: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 16.26,
+      "time": 14.27,
       "tier_a_fails": [
-        "tests_verify_behavior_not_text"
+        "solution_uniqueness_guard"
       ],
       "tier_b_fails": [],
       "pass_count": 8,
@@ -78,50 +78,57 @@
     },
     "tests_rewrite": {
       "status": "error",
-      "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":413,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 400 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"invalid_request_error\\\",\\\"message\\\":\\\"\\\\\\\"thinking.type.enabled\\\\\\\" is not supported for this model. Use \\\\\\\"thinking.type.adapt",
-      "time": 4.19
+      "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":508,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"There's an issue with the selected model (opus). It may not exist or you may not have access to it. Run --model to pick a different model.\",\"stop_reason\":\"stop_sequence\",\"session_id\":\"9",
+      "time": 1.73
+    },
+    "fix_quality": {
+      "status": "ok",
+      "model": "claude-opus-4-6",
+      "backend": "anthropic",
+      "time": 563.36,
+      "notes": ""
     }
   },
   "history": [
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 1120.18,
+      "at": "2026-04-25T09:00:13.087482"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
       "backend": "oauth",
-      "time": 150.4,
-      "at": "2026-04-15T18:42:20.081410"
+      "time": 5918.62,
+      "at": "2026-04-25T10:39:49.088912"
     },
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 1978.83,
+      "at": "2026-04-25T11:14:06.096578"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
       "backend": "oauth",
-      "time": 133.13,
-      "at": "2026-04-15T19:10:07.249052"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "minimax",
-      "time": 1646.44,
-      "at": "2026-04-15T21:16:58.093347"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "minimax",
-      "time": 3969.41,
-      "at": "2026-04-15T22:43:42.331501"
+      "time": 1823.68,
+      "at": "2026-04-25T11:46:32.093210"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "anthropic",
-      "time": 60.28,
-      "at": "2026-04-16T10:54:12.301979"
+      "time": 1750.93,
+      "at": "2026-04-25T12:46:49.960662"
     }
   ]
 }

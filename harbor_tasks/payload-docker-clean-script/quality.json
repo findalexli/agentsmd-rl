@@ -1,61 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert specific container names 'postgres-payload-test', 'mongodb-payload-test' and the exact script path 'scripts/docker-clean.js'. The instruction never mentions these container names or the exact filename 'docker-clean.js'. The instruction says to look at 'test/docker-compose.yml' for container names but doesn't list them, and says 'scripts/' directory but doesn't specify the exact filename. Also, test_docker_stop_removed asserts 'docker:stop' not in scripts, but instruction only says '"
+      "outcome": "pass",
+      "reason": "Instruction names scripts/docker-clean.js, child_process, docker rm, docker compose down, container names postgres-payload-test and mongodb-payload-test, package.json scripts docker:start/docker:clean, and mentions CLAUDE.md/CONTRIBUTING.md as agent instructions and contributor guide."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what needs to happen (create a cleanup script, update package.json, update docs) but doesn't specify exact code changes, line numbers, or literal replacement strings. A developer still needs to figure out the implementation details."
+      "reason": "Instruction describes what to do (create script, remove old script) but not exact code or line-level replacements."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests assert exact string matches like 'docker-clean.js' as the script filename (test_docker_clean_script_exists), exact container names as literal strings in the file (test_docker_clean_removes_named_containers checks 'postgres-payload-test' and 'mongodb-payload-test' in content), and exact script name 'docker:clean' in package.json. An alternative correct fix using a different filename (e.g., 'cleanup-docker.js') or different approach (e.g., using docker ps --filter) would fail."
+      "outcome": "pass",
+      "reason": "Tests use regex and flexible checks for docker commands and container names, allowing varied implementations."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The core fail-to-pass tests (test_docker_clean_removes_named_containers, test_docker_clean_runs_compose_down, test_docker_clean_script_exists, test_package_json_has_docker_clean, test_docker_start_calls_clean, test_docker_stop_removed) are almost entirely text-matching: they read file contents and check for string presence like 'assert \"docker rm\" in content'. Only test_syntax_check actually executes the script (via node --check). The tests don't run the cleanup script or verify behavioral corre"
+      "outcome": "pass",
+      "reason": "Tests run node --check, execute docker-clean.js via subprocess, run pnpm test:unit, pnpm test:types, and docker compose config."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "test_not_stub only requires 5 non-comment lines. A script with 5 lines containing the right string literals ('docker rm', 'postgres-payload-test', 'mongodb-payload-test', 'docker compose', 'down', 'execSync') but performing no real logic would pass all fail-to-pass tests. The tests never execute the script against actual containers."
+      "outcome": "pass",
+      "reason": "Tests check for actual execSync/exec usage, container name references, docker compose down presence, and package.json script wiring \u2014 a stub would fail the not_stub test requiring 8+ lines and exec call."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "The instruction says 'update the relevant documentation to reflect any renamed commands' referencing CLAUDE.md and CONTRIBUTING.md. The test file has commented-out config_edit sections but no actual tests for documentation updates. The gold patch modifies both CLAUDE.md and CONTRIBUTING.md but these are untested."
+      "outcome": "pass",
+      "reason": "All required behaviors (script existence, child_process usage, docker rm, compose down, package.json changes, doc updates) are tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section headers (Gates, Fail-to-pass, Config-edit, Pass-to-pass), descriptive function names, and docstrings explaining each test's purpose."
+      "reason": "Tests are grouped with header comments (Gates, Fail-to-pass, Config-edit, Pass-to-pass) and descriptive names."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task produces a script file and package.json edits, not structured data like JSON/CSV/API/DB schemas."
+      "reason": "No structured data output required."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No apparent typos in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "Filenames and commands are consistent throughout."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes the problem and required behavior without naming specific buggy lines. It points to relevant files (package.json, scripts/, test/docker-compose.yml) which is reasonable for the task domain."
+      "reason": "Instruction names the file to create (which is the task) and references affected files appropriately without line-level hints."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The gold config diffs in CLAUDE.md, CONTRIBUTING.md, package.json, and docker-compose.yml are all localized single-line or small changes, not full-file rewrites, and don't contradict other files."
+      "reason": "Gold diff to CLAUDE.md and CONTRIBUTING.md is limited to replacing docker:stop with docker:clean on the relevant lines."
     }
   },
-  "tier_a_fails": [
-    "behavior_in_task_description",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "behavior_in_tests"
-  ],
-  "pass_count": 5,
-  "fail_count": 5
+  "tier_c_fails": [],
+  "pass_count": 10,
+  "fail_count": 0
 }

@@ -5,12 +5,6 @@ PR:   #970
 
 All checks must pass for reward = 1. Any failure = reward 0.
 Each test function maps 1:1 to a check in eval_manifest.yaml.
-
-Rewritten to fix solution_uniqueness_guard and anti_cheating_measures:
-- PPOActorConfig and BaseExperimentConfig tests use actual import + construction
-  rather than extracting __post_init__ standalone via AST
-- No gold-specific variable names or implementation strings in assertions
-- Structural tests (ruff, syntax, AST) remain unchanged
 """
 
 import ast
@@ -22,20 +16,98 @@ from pathlib import Path
 REPO = "/workspace/AReaL"
 
 
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
 def _stub_problematic_imports():
     """Stub heavy dependencies so cli_args can be imported."""
     import types
-    for mod in ['uvloop', 'aiohttp', 'y_py', 'hydra', 'hydra.conf', 'omegaconf',
-                'httpx', 'click']:
+
+    # Basic module stubs
+    for mod in ["uvloop", "aiohttp", "y_py", "httpx", "click", "colorlog"]:
         if mod not in sys.modules:
-            m = types.ModuleType(mod)
-            if mod == 'hydra':
-                m.compose = lambda *a, **k: types.SimpleNamespace()
-            sys.modules[mod] = m
+            sys.modules[mod] = types.ModuleType(mod)
+
+    # uvloop.install()
+    sys.modules["uvloop"].install = lambda: None
+
+    # colorlog
+    clog = sys.modules["colorlog"]
+    clog.Formatter = type("Formatter", (), {"__init__": lambda *a, **k: None})
+    clog.StreamHandler = type("StreamHandler", (), {"__init__": lambda *a, **k: None})
+    clog.getLogger = lambda name: types.SimpleNamespace(
+        setLevel=lambda l: None,
+        addHandler=lambda h: None,
+        debug=lambda *a, **k: None,
+        info=lambda *a, **k: None,
+        warning=lambda *a, **k: None,
+        error=lambda *a, **k: None,
+        critical=lambda *a, **k: None,
+    )
+
+    # yaml
+    if "yaml" not in sys.modules:
+        yaml = types.ModuleType("yaml")
+        yaml.safe_load = lambda x: {}
+        yaml.dump = lambda *a, **k: ""
+        sys.modules["yaml"] = yaml
+
+    # hydra
+    hydra = types.ModuleType("hydra")
+    hydra.compose = lambda *a, **k: types.SimpleNamespace()
+    hydra.initialize = lambda *a, **k: types.SimpleNamespace(
+        __enter__=lambda: None, __exit__=lambda *a: False
+    )
+    sys.modules["hydra"] = hydra
+    sys.modules["hydra.conf"] = types.ModuleType("hydra.conf")
+    sys.modules["hydra.core"] = types.ModuleType("hydra.core")
+    sys.modules["hydra.core.global_hydra"] = types.ModuleType("hydra.core.global_hydra")
+
+    class MockGlobalHydra:
+        @classmethod
+        def instance(cls):
+            return types.SimpleNamespace(is_initialized=lambda: False, clear=lambda: None)
+    sys.modules["hydra.core.global_hydra"].GlobalHydra = MockGlobalHydra
+
+    # omegaconf
+    omega = types.ModuleType("omegaconf")
+    omega.MISSING = "???"
+    omega.DictConfig = dict
+    class MockOmegaConf:
+        @staticmethod
+        def create(x): return x
+        @staticmethod
+        def to_container(x, **k): return x
+        @staticmethod
+        def merge(*a): return a[0] if a else {}
+    omega.OmegaConf = MockOmegaConf
+    sys.modules["omegaconf"] = omega
+
+    # areal stubs
+    for submod in ["areal", "areal.utils", "areal.utils.logging",
+                   "areal.utils.name_resolve", "areal.utils.pkg_version",
+                   "areal.utils.constants", "areal.infra", "areal.infra.utils",
+                   "areal.infra.utils.concurrent", "areal.infra.workflow_context"]:
+        if submod not in sys.modules:
+            sys.modules[submod] = types.ModuleType(submod)
+
+    # Make areal a package
+    sys.modules["areal"].__path__ = [f"{REPO}/areal"]
+
+    # areal.utils.logging
+    logger_ns = types.SimpleNamespace(
+        debug=lambda *a, **k: None,
+        info=lambda *a, **k: None,
+        warning=lambda *a, **k: None,
+        error=lambda *a, **k: None,
+        critical=lambda *a, **k: None,
+    )
+    sys.modules["areal.utils.logging"].getLogger = lambda name: logger_ns
+
+    # areal.utils.constants
+    const = sys.modules["areal.utils.constants"]
+    const.PROX_LOGP_METHOD_RECOMPUTE = "recompute"
+    const.PROX_LOGP_METHODS_ALL = ["recompute"]
+
+    # areal.utils.pkg_version - add is_version_less
+    sys.modules["areal.utils.pkg_version"].is_version_less = lambda a, b: False
 
 
 def _load_normconfig():
@@ -97,7 +169,7 @@ def test_repo_python_syntax():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — NormConfig validation
+# Fail-to-pass (pr_diff) - NormConfig validation
 # ---------------------------------------------------------------------------
 
 def test_normconfig_rejects_invalid_mean_level():
@@ -131,17 +203,18 @@ def test_normconfig_rejects_bad_group_size():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — PPOActorConfig SAPO validation
+# Fail-to-pass (pr_diff) - PPOActorConfig SAPO validation
 # ---------------------------------------------------------------------------
 
 def test_ppo_rejects_negative_sapo_temperature():
     """Test that PPOActorConfig raises ValueError when SAPO temps are <= 0."""
     _stub_problematic_imports()
+    sys.path.insert(0, REPO)
     from areal.api.cli_args import PPOActorConfig
 
     # Case 1: negative sapo_tau_pos
     try:
-        actor = PPOActorConfig(
+        PPOActorConfig(
             experiment_name='test', trial_name='test',
             use_sapo_loss=True, sapo_tau_pos=-1.0, sapo_tau_neg=0.5
         )
@@ -151,7 +224,7 @@ def test_ppo_rejects_negative_sapo_temperature():
 
     # Case 2: zero sapo_tau_pos
     try:
-        actor = PPOActorConfig(
+        PPOActorConfig(
             experiment_name='test', trial_name='test',
             use_sapo_loss=True, sapo_tau_pos=0.0, sapo_tau_neg=0.5
         )
@@ -161,7 +234,7 @@ def test_ppo_rejects_negative_sapo_temperature():
 
     # Case 3: negative sapo_tau_neg
     try:
-        actor = PPOActorConfig(
+        PPOActorConfig(
             experiment_name='test', trial_name='test',
             use_sapo_loss=True, sapo_tau_pos=1.0, sapo_tau_neg=-0.5
         )
@@ -171,7 +244,7 @@ def test_ppo_rejects_negative_sapo_temperature():
 
     # Case 4: zero sapo_tau_neg
     try:
-        actor = PPOActorConfig(
+        PPOActorConfig(
             experiment_name='test', trial_name='test',
             use_sapo_loss=True, sapo_tau_pos=1.0, sapo_tau_neg=0.0
         )
@@ -183,10 +256,11 @@ def test_ppo_rejects_negative_sapo_temperature():
 def test_ppo_rejects_sapo_with_decoupled_loss():
     """Test that PPOActorConfig raises ValueError when SAPO + decoupled_loss are both True."""
     _stub_problematic_imports()
+    sys.path.insert(0, REPO)
     from areal.api.cli_args import PPOActorConfig
 
     try:
-        actor = PPOActorConfig(
+        PPOActorConfig(
             experiment_name='test', trial_name='test',
             use_sapo_loss=True, use_decoupled_loss=True
         )
@@ -196,17 +270,18 @@ def test_ppo_rejects_sapo_with_decoupled_loss():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — BaseExperimentConfig validation
+# Fail-to-pass (pr_diff) - BaseExperimentConfig validation
 # ---------------------------------------------------------------------------
 
 def test_base_experiment_rejects_bad_epochs():
     """Test that BaseExperimentConfig raises ValueError when total_train_epochs <= 0."""
     _stub_problematic_imports()
+    sys.path.insert(0, REPO)
     from areal.api.cli_args import BaseExperimentConfig
 
     for val in [0, -1, -100]:
         try:
-            cfg = BaseExperimentConfig(
+            BaseExperimentConfig(
                 experiment_name='test', trial_name='test',
                 total_train_epochs=val
             )
@@ -216,20 +291,10 @@ def test_base_experiment_rejects_bad_epochs():
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — Normalization redundant validation removed
+# Fail-to-pass (pr_diff) - Normalization redundant validation removed
 # ---------------------------------------------------------------------------
 
 def test_normalization_init_no_redundant_validation():
-    # Behavioral test: Normalization.__init__ should not validate mean_level/std_level
-    # after the fix (validation moved to NormConfig).
-    #
-    # Strategy: Count raise statements inside Normalization.__init__.
-    # In NOP (broken) state: __init__ has 2+ raises about config validation → fail
-    # In FIXED state: __init__ has 0 raises (validation moved to NormConfig) → pass
-    #
-    # This tests behavior (validation removed) without using gold-specific strings.
-    # We just count raises - any non-zero count indicates validation code remains.
-
     src = Path(f"{REPO}/areal/utils/data.py").read_text()
     tree = ast.parse(src)
 
@@ -237,21 +302,20 @@ def test_normalization_init_no_redundant_validation():
         if isinstance(node, ast.ClassDef) and node.name == "Normalization":
             for item in node.body:
                 if isinstance(item, ast.FunctionDef) and item.name == "__init__":
-                    # Count raise statements in __init__
                     raise_count = sum(
                         1 for child in ast.walk(item)
                         if isinstance(child, ast.Raise)
                     )
                     assert raise_count == 0, (
                         "Normalization.__init__ still contains " + str(raise_count) +
-                        " raise statement(s) — validation appears to remain"
+                        " raise statement(s) - validation appears to remain"
                     )
                     return
     raise AssertionError("Could not find Normalization.__init__")
 
 
 # ---------------------------------------------------------------------------
-# Pass-to-pass (pr_diff) — regression
+# Pass-to-pass (pr_diff) - regression
 # ---------------------------------------------------------------------------
 
 def test_valid_normconfig_constructs():
@@ -305,7 +369,7 @@ def test_no_wildcard_imports():
 
 
 # ---------------------------------------------------------------------------
-# Structural — anti-stub + consistency (pr_diff)
+# Structural - anti-stub + consistency (pr_diff)
 # ---------------------------------------------------------------------------
 
 def test_normconfig_postinit_not_stub():

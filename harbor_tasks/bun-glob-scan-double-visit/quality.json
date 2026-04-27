@@ -1,63 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert on specific struct names (e.g., 'WorkItem' in test_workitem_tracks_multiple_indices), specific file paths (src/collections/bit_set.zig), specific functions like 'handleRecursivePattern', 'singleSet', and checks for 'bun.handleOom()' vs 'catch bun.outOfMemory()'. While instruction.md mentions some constraints (bun.handleOom, relevant files), it does not mention 'WorkItem' by name, 'singleSet', 'handleRecursivePattern', or the specific structural requirement that WorkItem must lose it"
+      "outcome": "pass",
+      "reason": "Instruction names GlobWalker.zig, bit_set.zig, AutoBitSet, the glob-sources.mjs script, required output strings 'Globbed' and 'sources', and the verification commands used in tests."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md states 'The walker must be able to track multiple active states when processing a directory, so that a single readdir call evaluates all pending pattern states instead of re-opening the directory for each state.' This directly describes the fix approach (multi-state tracking in a single readdir), not just the bug symptoms. It tells the agent WHAT to change rather than just describing what's broken."
+      "outcome": "pass",
+      "reason": "Instruction describes constraints (evaluate multiple pending pattern states simultaneously, handle 130+ components) without prescribing the ComponentSet/AutoBitSet specific implementation."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "test_workitem_tracks_multiple_indices asserts that WorkItem must NOT have 'idx: u32' and MUST have specific multi-value patterns from a fixed list (BitSet, ArrayList, etc.). test_recursive_pattern_no_double_visit checks for removal of 'handleRecursivePattern' function. test_single_set_helper checks for a function named 'singleSet'. These are gold-specific implementation details \u2014 an alternative fix using e.g. a linked list, or a differently-named helper, or keeping idx but adding a second field,"
+      "outcome": "pass",
+      "reason": "The f2p behavioral tests check for absence of duplicate entries and correct glob behavior, accepting any alternative fix per the docstring comment."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The fail_to_pass tests (test_workitem_tracks_multiple_indices, test_recursive_pattern_no_double_visit, test_single_set_helper, test_no_banned_patterns_in_new_code) are ALL source-text inspection tests using regex on file contents, not behavioral execution. The pass_to_pass tests do execute subprocesses (test_repo_glob_sources, etc.), but ALL fail_to_pass tests are purely 'assert pattern in open(path).read()' style checks."
+      "outcome": "pass",
+      "reason": "Tests execute subprocess calls to bun --eval and run actual test suites, inspecting runtime behavior."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "A stub that simply removes the 'idx: u32' line from WorkItem, adds a field named 'active: BitSet' (even non-functional), renames handleRecursivePattern to something else, and adds an empty 'singleSet' function would pass all fail_to_pass structural tests without actually fixing the double-visit bug. The tests check source text patterns, not runtime behavior."
+      "outcome": "pass",
+      "reason": "f2p tests build real directory trees, invoke the bun Glob API, and assert on unique vs total entry counts, which would fail under the buggy behavior."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "instruction.md requires 'Correctness must be preserved: all matches found by the original code must still be found' and 'should handle arbitrarily deep patterns (130+ components)'. No test verifies the 130+ component depth requirement, and no test actually verifies glob correctness with **/X patterns (the core bug scenario). The behavioral test (test_repo_glob_sources) runs a generic glob scan, not specifically the double-visit pattern."
+      "outcome": "pass",
+      "reason": "Constraints on duplicate elimination and multi-component depth are exercised in tests (e.g. test_double_visit_fixed, test_workitem_tracks_multiple_indices)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear separation between pass_to_pass (gates) and fail_to_pass (fix verification) sections, with descriptive docstrings explaining the purpose and behavioral reasoning for each test."
+      "reason": "Tests are grouped under comment headers ('Gates', 'Fail-to-pass') with labeled tags like [repo_tests] and [pr_diff]."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task does not produce structured data (JSON/CSV/API/DB); it's a bug fix in Zig source code."
+      "reason": "Task does not produce persistent structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, commands, and variable names in instruction.md appear correct and consistent with the repository structure."
+      "reason": "Filenames, paths, and commands appear correct and consistent."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md names the exact files to modify (src/glob/GlobWalker.zig, src/collections/bit_set.zig) and describes the specific fix approach ('track multiple active states'). While naming GlobWalker.zig is reasonable, also naming bit_set.zig as relevant leaks that the fix involves adding BitSet functionality, which is an implementation detail."
+      "outcome": "pass",
+      "reason": "Instruction names the relevant files but not specific lines or the exact fix mechanism."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
       "reason": "This is a code-only task, not an agentmd-edits/config task."
     }
   },
-  "tier_a_fails": [
-    "behavior_in_task_description",
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "behavior_in_tests",
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 2,
-  "fail_count": 7
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
 }

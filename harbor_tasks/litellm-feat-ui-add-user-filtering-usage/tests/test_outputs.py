@@ -49,6 +49,7 @@ def _ensure_npm_and_deps():
 
 def test_entity_type_includes_user():
     """EntityType type union must include 'user' - verify via TypeScript compilation."""
+    _ensure_npm_and_deps()
     script = '''
 const fs = require("fs");
 
@@ -80,7 +81,7 @@ try {
 
 
 def test_usage_view_select_has_user_option():
-    """UsageViewSelect must include 'user' as a selectable option - verify via runtime render."""
+    """UsageViewSelect must include 'user' as a selectable option - verify via source analysis."""
     script = '''
 const fs = require("fs");
 
@@ -89,25 +90,6 @@ const testContent = `
 // Mock React first
 global.React = { createElement: (tag, props, ...children) => ({ tag, props, children }) };
 
-// Mock antd icons
-const mockIcon = () => null;
-require.cache[require.resolve("@ant-design/icons")] = {
-    id: require.resolve("@ant-design/icons"),
-    filename: require.resolve("@ant-design/icons"),
-    loaded: true,
-    exports: {
-        GlobalOutlined: mockIcon,
-        TeamOutlined: mockIcon,
-        ShoppingCartOutlined: mockIcon,
-        TagsOutlined: mockIcon,
-        RobotOutlined: mockIcon,
-        UserOutlined: mockIcon,
-        LineChartOutlined: mockIcon,
-        BarChartOutlined: mockIcon,
-    }
-};
-
-// Now require the module
 const path = require("path");
 const modulePath = path.join(process.cwd(), "src/components/UsagePage/components/UsageViewSelect/UsageViewSelect.tsx");
 
@@ -157,53 +139,69 @@ try {
 
 
 def test_export_header_supports_single_select_mode():
-    """UsageExportHeader must support single-select mode - verify by checking the component accepts and handles mode prop."""
-    script = '''
+    """UsageExportHeader must support both single-select and multi-select filter modes."""
+    script = r'''
 const fs = require("fs");
-const content = fs.readFileSync("src/components/EntityUsageExport/UsageExportHeader.tsx", "utf-8");
+const headerPath = "src/components/EntityUsageExport/UsageExportHeader.tsx";
+const entityUsagePath = "src/components/UsagePage/components/EntityUsage/EntityUsage.tsx";
 
-// Check for filterMode prop in interface (any name that indicates mode)
-const hasModeProp = /filterMode\??\s*:\s*["']?(multiple|single)/.test(content);
+const header = fs.readFileSync(headerPath, "utf-8");
+
+// 1. Must no longer unconditionally hardcode mode="multiple"
+if (/mode\s*=\s*["']multiple["']/.test(header)) {
+    console.log("FAIL: Select mode is still unconditionally hardcoded to multiple");
+    process.exit(1);
+}
+
+// 2. Must have conditional mode assignment on the Select component
+const hasConditionalMode = /mode\s*=\s*\{/.test(header);
+if (!hasConditionalMode) {
+    console.log("FAIL: No conditional mode assignment on Select");
+    process.exit(1);
+}
+
+// 3. Must expose a prop to control the select mode (accept various naming conventions)
+const hasModeProp = /(filterMode|selectMode|singleSelect|isSingle)\s*\??\s*:/.test(header);
 if (!hasModeProp) {
-    console.log("FAIL: filterMode prop not found in interface");
+    console.log("FAIL: No prop found to control select mode");
     process.exit(1);
 }
 
-// Check for conditional mode prop passed to Select (mode=...)
-const hasModeAssignment = /mode\s*=\s*\{/.test(content);
-if (!hasModeAssignment) {
-    console.log("FAIL: mode prop not conditionally assigned to Select");
-    process.exit(1);
-}
-
-// Check for conditional value handling (array vs single value)
-// Look for pattern that transforms value based on mode
-const hasValueCondition = content.includes("filterMode") && (
-    content.includes("selectedFilters[0]") ||
-    content.includes("? selectedFilters[0]") ||
-    /filterMode.*\?.*\[.*\]:/.test(content) ||
-    /filterMode[^?]*===.*single/.test(content)
+// 4. Must conditionally adapt the value prop for single vs multiple mode
+const hasValueAdaptation = /value\s*=\s*\{/.test(header) && (
+    /selectedFilters\s*\[\s*0\s*\]/.test(header) ||
+    /selectedFilters\.at\s*\(\s*0\s*\)/.test(header) ||
+    /value\s*=\s*\{[^}]*\?[^}]*selectedFilters/.test(header)
 );
-
-if (!hasValueCondition) {
-    console.log("FAIL: No conditional value handling for single vs multiple mode");
+if (!hasValueAdaptation) {
+    console.log("FAIL: No conditional value adaptation for single vs multiple mode");
     process.exit(1);
 }
 
-// Check for conditional onChange handling
-const hasOnChangeCondition = content.includes("filterMode") && (
-    content.includes("onFiltersChange") &&
-    (content.includes("? [value]") ||
-     content.includes("[value]") ||
-     /value\s*\?\s*\[/.test(content))
+// 5. Must wrap single-select onChange value back into an array for the onFiltersChange callback
+const hasArrayWrapping = /onChange\s*=\s*\{/.test(header) && /onFiltersChange/.test(header) && (
+    /\[\s*\w+\s*\]/.test(header)
 );
-
-if (!hasOnChangeCondition) {
-    console.log("FAIL: No conditional onChange handling for single vs multiple mode");
+if (!hasArrayWrapping) {
+    console.log("FAIL: Single-select onChange value not wrapped into array");
     process.exit(1);
 }
 
-console.log("PASS: UsageExportHeader supports single/multiple select modes with proper value handling");
+// 6. EntityUsage must configure single-select for the user entity type
+const entityUsage = fs.readFileSync(entityUsagePath, "utf-8");
+const configuresUser = /entityType\s*===?\s*["']user["']/.test(entityUsage) && (
+    entityUsage.includes("filterMode") ||
+    entityUsage.includes("selectMode") ||
+    entityUsage.includes("singleSelect") ||
+    entityUsage.includes("isSingle") ||
+    (entityUsage.includes("mode") && entityUsage.includes("single"))
+);
+if (!configuresUser) {
+    console.log("FAIL: EntityUsage does not configure single-select for user entity type");
+    process.exit(1);
+}
+
+console.log("PASS: UsageExportHeader supports single/multiple select modes");
 '''
     result = _run_node(script)
     assert result.returncode == 0, f"UsageExportHeader missing single-select support: {result.stdout}{result.stderr}"

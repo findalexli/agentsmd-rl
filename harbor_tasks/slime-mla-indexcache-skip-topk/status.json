@@ -1,15 +1,16 @@
 {
   "schema_version": 2,
-  "valid": true,
-  "verdict": "pass",
-  "nop_reward": 0.0,
-  "gold_reward": 1.0,
-  "validated_at": "2026-04-16T08:23:46.909847",
-  "total_time": 1899.9,
-  "sandbox_id": "idmtia3he5f6s4hu8kv22",
-  "backend": "anthropic",
+  "valid": false,
+  "verdict": "fail",
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-22T07:55:27.956697",
+  "total_time": 16481.71,
+  "sandbox_id": "iefg6pbdlr66pqps3is8b",
+  "backend": "minimax",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "fix_quality",
+  "error": "rate limited during fix_quality: {\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":194043,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 429 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"rate_limit_error\\\",\\\"message\\\":\\\"usage limit exceeded (2056)\\\"},\\\"request_id\\\":\\\"0638145e5c4318dce1ae5de6e008c63c\\\"}\",\"stop_reason\":\"stop_sequence\",\"session_id\":\"b44fc66a-3090-4961-84fc-6e6e61d801f4\",\"total_cost_usd\":0,\"usage\":{\"input_tokens\":0,\"cache_creation_input_tokens\":0,\"cache_read_inp",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -71,10 +72,10 @@
     },
     "quality_gate": {
       "status": "DELETE",
-      "model": "claude-opus-4-6",
-      "backend": "anthropic",
-      "time": 2.14,
-      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:252: test `test_decoder_layer_threads_topk` has 2 assert(s), all pass ']"
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.46,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:301: test `test_decoder_layer_threads_topk` has 2 assert(s), all pass ', 'lint_tier_b:1', 'B:[B] no_network_during_tests @ tests/test.sh:44: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
@@ -87,17 +88,16 @@
       "tier_b_fails": [],
       "pass_count": 6,
       "fail_count": 3
+    },
+    "fix_quality": {
+      "status": "rate_limited",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 196.76,
+      "notes": ""
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 1007.21,
-      "at": "2026-04-12T04:10:47.581937"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -129,6 +129,14 @@
       "backend": "anthropic",
       "time": 1899.9,
       "at": "2026-04-16T08:23:46.909847"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "minimax",
+      "time": 16481.71,
+      "at": "2026-04-22T07:55:27.956697"
     }
   ]
 }

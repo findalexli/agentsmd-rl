@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 cd /tests
-python3 -m pytest test_outputs.py -v --tb=short 2>&1 | tail -50
-echo "\"---REWARD---""
-if python3 -m pytest test_outputs.py -q --tb=no 2>&1 | grep -q 'passed'; then
+python3 -m pytest test_outputs.py -v --tb=short 2>&1 | tail -50 || true
+echo "---REWARD---"
+if python3 -m pytest test_outputs.py -q --tb=no; then
     echo 1 > /logs/verifier/reward.txt
 else
     echo 0 > /logs/verifier/reward.txt
@@ -26,11 +26,6 @@ if [ -f /tests/eval_manifest.yaml ] && [ -f /tests/standalone_judge.py ]; then
     if [ -n "$_repo_dir" ] && [ -d "$_repo_dir/.git" ]; then
         (cd "$_repo_dir" && git add -A 2>/dev/null && git diff --cached > /logs/verifier/agent.diff 2>/dev/null) || true
     fi
-
-    # Install PyYAML if needed (lightweight, <1s)
-    python3 -c "import yaml" 2>/dev/null || \
-        python3 -m pip install -q pyyaml 2>/dev/null || \
-        pip3 install -q --break-system-packages pyyaml 2>/dev/null || true
 
     # Run LLM judge (writes track3_rubric.json + track4_distractors.json)
     python3 /tests/standalone_judge.py /tests/eval_manifest.yaml /logs/verifier/agent.diff 2>&1 || true

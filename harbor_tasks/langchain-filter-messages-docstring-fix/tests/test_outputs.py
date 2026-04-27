@@ -5,6 +5,7 @@ uses the correct parameter names that match the actual function signature.
 """
 
 import ast
+import textwrap
 import re
 import subprocess
 import sys
@@ -27,43 +28,56 @@ def get_filter_messages_docstring() -> str:
     return ""
 
 
-def test_docstring_example_uses_correct_params():
-    """The docstring example must use valid parameter names.
+def test_docstring_example_runs():
+    """The docstring example for filter_messages must execute without TypeError.
 
-    The example in the docstring should use parameter names that actually
-    exist in the function signature: include_names, include_types, exclude_ids.
+    This test extracts the example code from the filter_messages docstring
+    and runs it. If the example uses incorrect parameter names, it will
+    raise TypeError.
 
-    Fail-to-pass: Base commit has incorrect params (incl_names, incl_types, excl_ids).
-    Pass-to-pass: Fixed version has correct params.
+    Fail-to-pass: Base commit docstring has incorrect parameter names.
+    Pass-to-pass: Fixed docstring example runs successfully.
     """
     docstring = get_filter_messages_docstring()
 
-    # Check that the old incorrect parameter names are NOT present in docstring example
-    bad_patterns = [
-        r"incl_names\s*=",
-        r"incl_types\s*=",
-        r"excl_ids\s*=",
-    ]
+    # Find the first python code block containing a filter_messages call
+    blocks = re.findall(r"```python\s*\n(.*?)```", docstring, re.DOTALL)
+    example_code = None
+    for block in blocks:
+        if "filter_messages(" in block:
+            example_code = block
+            break
 
-    for pattern in bad_patterns:
-        match = re.search(pattern, docstring)
-        assert match is None, (
-            f"Docstring example uses incorrect parameter name: {pattern}. "
-            f"Use include_names, include_types, exclude_ids instead."
-        )
+    assert example_code is not None, (
+        "Could not find a code example calling filter_messages in the docstring"
+    )
 
-    # Verify the correct parameter names ARE present
-    good_patterns = [
-        r"include_names\s*=",
-        r"include_types\s*=",
-        r"exclude_ids\s*=",
-    ]
+    # Build a script that imports and runs the example
+    script = f'''
+import sys
+sys.path.insert(0, "{REPO / "libs" / "core"}")
 
-    for pattern in good_patterns:
-        match = re.search(pattern, docstring)
-        assert match is not None, (
-            f"Docstring example missing parameter: {pattern}"
-        )
+from langchain_core.messages import filter_messages, SystemMessage, HumanMessage, AIMessage
+
+{textwrap.dedent(example_code)}
+print("DOCSTRING_EXAMPLE_OK")
+'''
+
+    result = subprocess.run(
+        [sys.executable, "-c", script],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        cwd=str(REPO),
+    )
+
+    assert result.returncode == 0, (
+        f"Docstring example failed to run. This usually means the example uses "
+        f"parameter names that don't match the function signature.\n"
+        f"stdout: {result.stdout}\n"
+        f"stderr: {result.stderr}"
+    )
+    assert "DOCSTRING_EXAMPLE_OK" in result.stdout
 
 
 def test_docstring_example_with_correct_params_runs():

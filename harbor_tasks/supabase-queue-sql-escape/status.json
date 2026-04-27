@@ -4,12 +4,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-16T05:46:00.001586",
-  "total_time": 4413.11,
-  "sandbox_id": "ipespcfxdm2zrzgkfafdc",
-  "backend": "anthropic",
+  "validated_at": "2026-04-22T11:25:50.046834",
+  "total_time": 29104.44,
+  "sandbox_id": "iq45f7t5cf8o0d0ljgk3s",
+  "backend": "minimax",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "fix_quality",
   "nodes": {
     "p2p_enrich": {
       "status": "completed",
@@ -38,9 +38,9 @@
       "gold_reward": 1.0,
       "attempts": 1,
       "notes": "All 4 validation checks passed:\n1. Docker build - succeeded\n2. NOP test - reward=0 (5 fail_to_pass tests correctly fail on base commit: SQL injection vulnerabilities present, literal() not imported)\n3. Gold test - reward=1 (all 10 tests pass after solve.sh applied: SQL injection fixed with literal() escaping)\n4. Rubric judge - ICR=0.5, but this is due to missing ANTHROPIC_API_KEY (infrastructure limitation, not a code issue). The rubric rule (SQL injection prevention) is correctly satisfied by the gold solution as verified by tests.",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 975.75
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 528.18
     },
     "rubric_judge": {
       "status": "fail",
@@ -61,34 +61,28 @@
     },
     "quality_gate": {
       "status": "passed",
-      "model": "claude-opus-4-6",
-      "backend": "anthropic",
-      "time": 0.28,
-      "notes": "flags=[]"
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.33,
+      "notes": "flags=['lint_tier_b:1', 'B:[B] no_network_during_tests @ tests/test.sh:44: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 25.74,
-      "tier_a_fails": [
-        "behavior_in_task_description",
-        "no_solution_leakage",
-        "solution_uniqueness_guard",
-        "tests_verify_behavior_not_text"
-      ],
+      "time": 13.39,
+      "tier_a_fails": [],
       "tier_b_fails": [],
-      "pass_count": 4,
-      "fail_count": 5
+      "pass_count": 9,
+      "fail_count": 0
+    },
+    "fix_quality": {
+      "status": "ok",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 730.07,
+      "notes": ""
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 3286.06,
-      "at": "2026-04-12T05:32:38.854184"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -120,6 +114,14 @@
       "backend": "anthropic",
       "time": 4413.11,
       "at": "2026-04-16T05:46:00.001586"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 29104.44,
+      "at": "2026-04-22T11:25:50.046834"
     }
   ]
 }

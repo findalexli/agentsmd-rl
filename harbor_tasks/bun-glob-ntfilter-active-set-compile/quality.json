@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "Instruction names GlobWalker.zig, setNameFilter, computeNtFilter, active BitSet, component_idx, and describes the required conditional behavior."
+      "reason": "instruction.md names GlobWalker.zig, setNameFilter, computeNtFilter, and the active BitSet \u2014 all identifiers tests reference."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "Instruction describes required behavior without giving exact code; agent must figure out findFirstSet/@intCast/count() API calls."
+      "reason": "Instruction describes the problem (old variable still referenced) and constraints but does not give the exact replacement code."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests require literal strings 'active.count()', 'findFirstSet', '@intCast', and if/else \u2014 a correct fix using e.g. 'active.count() > 1' with inverted branches passes, but one using switch or a helper method, or iterating active.iterator().next(), would fail despite being correct."
+      "reason": "test_multi_active_branch_is_sane requires 'null' or '&[_]u16{}' (and the regex '&\\[\\]_u16\\{\\}' is actually malformed anyway), rejecting valid fixes that e.g. guard setNameFilter inside an if without an else-branch passing null."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "All tests in test_outputs.py only read the file and do substring checks (read_source_file, 'in context'); none compile or execute the code."
+      "reason": "Only test_globwalker_zig_compiles executes anything (and it skips if zig missing); the rest are regex/text inspections of the source."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub would fail because tests require specific strings in the setNameFilter context that don't exist in the buggy code."
+      "reason": "Tests check removal of buggy pattern and presence of active/conditional \u2014 a stub cannot satisfy them without actually fixing."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "Tests cover buggy removal, active BitSet usage, null for multi-active, conditional, preservation of setNameFilter/computeNtFilter."
+      "reason": "Tests cover compilation, removal of buggy call, use of active, and handling the multi-active case as described."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are grouped into named classes like TestBuggyPatternRemoved, TestFixUsesActiveBitSet, TestMultiActiveConditional."
+      "reason": "Tests are grouped into named TestCompilation, TestBuggyPatternRemoved, TestFixDerivesIndexFromActiveBitSet, TestMultiActiveCaseHandled, TestPassToPass classes."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task is code fix, no structured data output."
+      "reason": "Task is a code fix, not structured data output."
     },
     "no_typos": {
-      "outcome": "pass",
-      "reason": "Paths and identifiers appear correct."
+      "outcome": "fail",
+      "reason": "The regex '&\\[\\]_u16\\{\\}' in test_multi_active_branch_is_sane is a typo \u2014 the Zig syntax is '&[_]u16{}', so the underscore placement is wrong and the regex will never match a real empty slice."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "Instruction names the file and function but that is appropriate scope; does not give exact line or code."
+      "reason": "Instruction points at the file and function but not specific lines or the exact replacement; localization-level detail is appropriate."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "Code-only task."
+      "reason": "Not a config edit task."
     }
   },
   "tier_a_fails": [
@@ -51,7 +51,9 @@
     "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [],
-  "pass_count": 7,
-  "fail_count": 2
+  "tier_c_fails": [
+    "no_typos"
+  ],
+  "pass_count": 6,
+  "fail_count": 3
 }

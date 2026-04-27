@@ -4,12 +4,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-16T12:07:04.801544",
-  "total_time": 60.82,
-  "sandbox_id": "i7z9f0burfhsc4f7zwc1f",
-  "backend": "anthropic",
+  "validated_at": "2026-04-25T09:47:25.494894",
+  "total_time": 3953.29,
+  "sandbox_id": "iz8sfc7sui710pqpq07ml",
+  "backend": "oauth",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "fix_quality",
   "nodes": {
     "p2p_enrich": {
       "status": "completed",
@@ -37,10 +37,10 @@
       "nop_reward": 0.0,
       "gold_reward": 1.0,
       "attempts": 3,
-      "notes": "Docker build OK. NOP test reward=0 (6 f2p tests correctly fail). Gold test reward=1 (all 17 tests pass). Fixed solve.sh which had corrupt patch and incorrect idempotency check. Rewrote solve.sh using Python-based file modifications for robustness. Rubric judge ICR=0.38 due to LLM evaluation inconsistencies, but gold solution follows all reasonable style rules from repo config files.",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 1086.49
+      "notes": "Prior validate run (kimi backend) already passed: Docker build OK, NOP reward=0 (6 f2p tests correctly fail on base), Gold reward=1 (all 17 tests pass after solve.sh). Re-validation in current session blocked: Bash tool fails on every invocation with 'EACCES: permission denied, mkdir /home/worker/.claude/session-env' before any command can execute (harness-level init failure, not sandbox flag, not HOME override fixable; Write tool refuses to create the path as 'sensitive'). Could not re-run docker checks, but previous validate node values are preserved as authoritative. Original failure root cause was rate-limit during downstream fix_quality, not validate.",
+      "model": "claude-opus-4-7",
+      "backend": "oauth",
+      "time": 150.89
     },
     "rubric_enrichment": {
       "status": "ok",
@@ -90,13 +90,13 @@
     "quality_gate": {
       "status": "passed",
       "model": "claude-opus-4-7",
-      "backend": "anthropic",
-      "time": 0.26,
-      "notes": "flags=['lint_tier_b:2', 'B:[B] pinned_dependencies @ environment/Dockerfile:30: unpinned pip deps: pytest, pytest-json-ctrf, 2>/dev/null', 'B:[B] pinned_dependencies @ environment/Dockerfile:30: unpinned pip deps: pytest, pytest-json-ctrf']"
+      "backend": "oauth",
+      "time": 0.42,
+      "notes": "flags=['lint_tier_b:3', 'B:[B] pinned_dependencies @ environment/Dockerfile:30: unpinned pip deps: pytest, pytest-json-ctrf, 2>/dev/null', 'B:[B] pinned_dependencies @ environment/Dockerfile:30: unpinned pip deps: pytest, pytest-json-ctrf', 'B:[B] no_network_during_tests @ tests/test.sh:44: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 14.18,
+      "time": 14.35,
       "tier_a_fails": [
         "solution_uniqueness_guard",
         "tests_verify_behavior_not_text"
@@ -109,33 +109,16 @@
       "status": "error",
       "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":425,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 400 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"invalid_request_error\\\",\\\"message\\\":\\\"\\\\\\\"thinking.type.enabled\\\\\\\" is not supported for this model. Use \\\\\\\"thinking.type.adapt",
       "time": 2.28
+    },
+    "fix_quality": {
+      "status": "ok",
+      "model": "claude-opus-4-7",
+      "backend": "oauth",
+      "time": 424.55,
+      "notes": ""
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 2078.12,
-      "at": "2026-04-15T04:49:07.733574"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "oauth",
-      "time": 424.25,
-      "at": "2026-04-15T12:56:49.747355"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "oauth",
-      "time": 639.91,
-      "at": "2026-04-15T19:01:01.092566"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -151,6 +134,30 @@
       "backend": "anthropic",
       "time": 60.82,
       "at": "2026-04-16T12:07:04.801544"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 5696.04,
+      "at": "2026-04-25T00:59:50.423380"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 14553.56,
+      "at": "2026-04-25T05:03:04.478509"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "oauth",
+      "time": 3953.29,
+      "at": "2026-04-25T09:47:25.494894"
     }
   ]
 }

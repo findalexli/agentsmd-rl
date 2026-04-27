@@ -4,12 +4,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-15T05:50:52.457063",
-  "total_time": 1419.69,
-  "sandbox_id": "i0bfv263fyp7w407y07ux",
-  "backend": "glm",
+  "validated_at": "2026-04-25T14:43:24.814663",
+  "total_time": 8746.93,
+  "sandbox_id": "irdti275i3wpfk0142ije",
+  "backend": "anthropic",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "oneshot_repair",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -62,10 +62,10 @@
     },
     "quality_gate": {
       "status": "DELETE",
-      "model": "glm-5.1",
-      "backend": "glm",
-      "time": 0.43,
-      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:175: test `test_stub_syntax_valid` has 1 assert(s), all pass on a stub', 'lint_tier_b:3', 'B:[B] pinned_dependencies @ environment/Dockerfile:19: unpinned pip deps: pytest, mypy', 'B:[B] no_network_during_tests @ tests/test.sh:8: network call at test time: `pip install`']"
+      "model": "claude-opus-4-6",
+      "backend": "anthropic",
+      "time": 0.27,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:2', 'A:[A] reward_is_pure_pytest @ tests/test.sh:8: critical pytest/plugin install with `|| true` \u2014 silent dep failure makes re', 'A:[A] test_not_tautological @ tests/test_outputs.py:175: test `test_stub_syntax_valid` has 1 assert(s), all pass on a stub', 'lint_tier_b:6', 'B:[B] pinned_dependencies @ environment/Dockerfile:19: unpinned pip deps: pytest, mypy', 'B:[B] pinned_dependencies @ environment/Dockerfile:31: unpinned pip deps: ruff, validate-pyproject, 2>/dev/null', 'B:[B] pinned_dependencies @ environment/Dockerfile:31: unpinned pip deps: ruff, validate-pyproject']"
     },
     "quality_judge": {
       "status": "ok",
@@ -77,48 +77,55 @@
       "tier_b_fails": [],
       "pass_count": 8,
       "fail_count": 3
+    },
+    "fix_quality": {
+      "status": "ok",
+      "model": "claude-opus-4-6",
+      "backend": "anthropic",
+      "time": 1001.49,
+      "notes": ""
     }
   },
   "history": [
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 417.29,
-      "at": "2026-04-09T15:04:48.858374"
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "oauth",
+      "time": 6403.89,
+      "at": "2026-04-25T10:28:15.803085"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "oauth",
+      "time": 1825.51,
+      "at": "2026-04-25T10:59:21.430630"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "oauth",
+      "time": 2054.77,
+      "at": "2026-04-25T11:34:53.480813"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "oauth",
+      "time": 1685.35,
+      "at": "2026-04-25T12:05:25.129250"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
-      "backend": "fireworks",
-      "time": 417.58,
-      "at": "2026-04-09T15:04:49.034127"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 2360.99,
-      "at": "2026-04-12T02:23:26.250739"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 2746.69,
-      "at": "2026-04-12T03:30:20.171759"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "glm",
-      "time": 1419.69,
-      "at": "2026-04-15T05:50:52.457063"
+      "backend": "anthropic",
+      "time": 8746.93,
+      "at": "2026-04-25T14:43:24.814663"
     }
   ]
 }

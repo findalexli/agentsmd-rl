@@ -38,26 +38,24 @@ def test_agents_md_frontmatter_valid():
         subprocess.run(["pip", "install", "pyyaml", "-q"], check=True, capture_output=True)
         import yaml
 
-    import pytest
-
     agents_md = Path(REPO) / "AGENTS.md"
     content = agents_md.read_text()
 
-    # Check if there's frontmatter (starts with ---)
     if not content.startswith("---"):
-        return  # No frontmatter, that's fine
+        return
 
     lines = content.split("\n")
     if len(lines) < 2 or lines[0].strip() != "---":
-        return  # No valid frontmatter start
+        return
 
     try:
         end_idx = lines[1:].index("---") + 1
         yaml_content = "\n".join(lines[1:end_idx])
-        yaml.safe_load(yaml_content)  # Validate YAML syntax
+        yaml.safe_load(yaml_content)
     except ValueError:
-        pass  # No closing ---, not a valid frontmatter block
+        pass
     except yaml.YAMLError as e:
+        import pytest
         pytest.fail(f"Invalid YAML frontmatter in AGENTS.md: {e}")
 
 
@@ -67,7 +65,6 @@ def test_agents_md_frontmatter_valid():
 
 def test_repo_toml_valid():
     """Repo's TOML config files are valid (pass_to_pass)."""
-    # Ensure tomli is available
     try:
         import tomli
     except ImportError:
@@ -82,7 +79,7 @@ def test_repo_toml_valid():
 
     for toml_file in toml_files:
         with open(toml_file, "rb") as f:
-            tomli.load(f)  # Validate TOML syntax
+            tomli.load(f)
 
 
 def test_repo_ruff_check():
@@ -105,31 +102,29 @@ def test_repo_ruff_format():
 
 def test_repo_python_syntax_valid():
     """All Python source files have valid syntax (pass_to_pass)."""
-    import ast
-    import glob
-    import pytest
-
-    src_files = glob.glob(f"{REPO}/src/**/*.py", recursive=True)
-    assert len(src_files) > 0, "Must have at least one Python source file"
-
-    for py_file in src_files:
-        with open(py_file) as f:
-            source = f.read()
-        try:
-            ast.parse(source)
-        except SyntaxError as e:
-            pytest.fail(f"Syntax error in {py_file}: {e}")
+    r = subprocess.run(
+        ["python3", "-c", """
+import ast, glob, sys
+src_files = glob.glob(sys.argv[1] + "/src/**/*.py", recursive=True)
+assert len(src_files) > 0, "Must have at least one Python source file"
+for py_file in src_files:
+    with open(py_file) as f:
+        source = f.read()
+    try:
+        ast.parse(source)
+    except SyntaxError as e:
+        print(f"FAIL: Syntax error in {py_file}: {e}", file=sys.stderr)
+        sys.exit(1)
+print("PASS")
+""", REPO],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Syntax check failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 def test_repo_skill_md_frontmatter():
     """Any SKILL.md files have valid YAML frontmatter (pass_to_pass)."""
-    # Ensure pyyaml is available
-    try:
-        import yaml
-    except ImportError:
-        subprocess.run(["pip", "install", "pyyaml", "-q"], check=True, capture_output=True)
-        import yaml
-
     import pytest
 
     skills_dir = Path(REPO) / "skills"
@@ -140,26 +135,29 @@ def test_repo_skill_md_frontmatter():
     if not skill_md_files:
         pytest.skip("No SKILL.md files found yet (fail-to-pass tests cover this)")
 
-    for skill_file in skill_md_files:
-        content = skill_file.read_text()
-        # Check for frontmatter markers
-        if not content.startswith("---"):
-            continue  # No frontmatter, skip validation (fail-to-pass tests check existence)
-
-        # Extract and validate YAML frontmatter
-        lines = content.split("\n")
-        if len(lines) < 2 or lines[0].strip() != "---":
-            continue
-
-        try:
-            end_idx = lines[1:].index("---") + 1
-            yaml_content = "\n".join(lines[1:end_idx])
-            yaml.safe_load(yaml_content)  # Validate YAML syntax
-        except ValueError:
-            pass  # No closing ---, fail-to-pass tests will catch this
-        except yaml.YAMLError as e:
-            pytest.fail(f"Invalid YAML frontmatter in {skill_file}: {e}")
-
+    r = subprocess.run(
+        ["python3", "-c", """
+import yaml, sys, pathlib
+skills_dir = pathlib.Path(sys.argv[1]) / "skills"
+for skill_file in skills_dir.rglob("SKILL.md"):
+    content = skill_file.read_text()
+    if not content.startswith("---"):
+        continue
+    lines = content.split("\\n")
+    try:
+        end = lines[1:].index("---") + 1
+        fm = yaml.safe_load("\\n".join(lines[1:end]))
+        if fm is None:
+            print(f"WARN: empty frontmatter in {skill_file}", file=sys.stderr)
+    except (ValueError, yaml.YAMLError) as e:
+        print(f"FAIL: {skill_file}: {e}", file=sys.stderr)
+        sys.exit(1)
+print("PASS")
+""", REPO],
+        capture_output=True, text=True, timeout=30,
+    )
+    if r.returncode != 0:
+        pytest.fail(f"SKILL.md frontmatter validation failed: {r.stderr}")
 
 
 # ---------------------------------------------------------------------------
@@ -168,83 +166,113 @@ def test_repo_skill_md_frontmatter():
 
 def test_skills_directory_exists():
     """skills/ directory must exist with proper structure."""
-    skills_dir = Path(REPO) / "skills"
-    assert skills_dir.exists(), "skills/ directory must exist"
-    assert skills_dir.is_dir(), "skills/ must be a directory"
-
-
-def _parse_skill_frontmatter(skill_file):
-    """Parse YAML frontmatter from a SKILL.md file. Returns (frontmatter_dict, body_content)."""
-    try:
-        import yaml
-    except ImportError:
-        subprocess.run(["pip", "install", "pyyaml", "-q"], check=True, capture_output=True)
-        import yaml
-
-    content = skill_file.read_text()
-    if not content.startswith("---"):
-        return {}, content
-
-    lines = content.split("\n")
-    if len(lines) < 2 or lines[0].strip() != "---":
-        return {}, content
-
-    try:
-        end_idx = lines[1:].index("---") + 1
-        yaml_content = "\n".join(lines[1:end_idx])
-        frontmatter = yaml.safe_load(yaml_content) or {}
-        body = "\n".join(lines[end_idx + 1:])
-        return frontmatter, body
-    except (ValueError, yaml.YAMLError):
-        return {}, content
+    r = subprocess.run(
+        ["python3", "-c", """
+import pathlib, sys
+repo = sys.argv[1]
+skills = pathlib.Path(repo) / "skills"
+assert skills.exists(), "skills/ directory must exist"
+assert skills.is_dir(), "skills/ must be a directory"
+subdirs = [d.name for d in skills.iterdir() if d.is_dir()]
+assert len(subdirs) > 0, "skills/ must contain at least one subdirectory"
+print("PASS")
+""", REPO],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"skills/ directory check failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 def test_inference_server_skill_exists():
     """skills/inference-server/SKILL.md must exist with proper content."""
-    import pytest
-
     skill_file = Path(REPO) / "skills" / "inference-server" / "SKILL.md"
     assert skill_file.exists(), "skills/inference-server/SKILL.md must exist"
 
-    # BEHAVIORAL: Parse frontmatter using actual YAML parser
-    frontmatter, body = _parse_skill_frontmatter(skill_file)
+    r = subprocess.run(
+        ["python3", "-c", """
+import yaml, sys, pathlib, re
+repo = sys.argv[1]
+skill_file = pathlib.Path(repo) / "skills" / "inference-server" / "SKILL.md"
+content = skill_file.read_text()
 
-    # Verify required frontmatter fields per instruction
-    assert "name" in frontmatter, "SKILL.md must have name field in frontmatter"
-    assert "description" in frontmatter, "SKILL.md must have description field in frontmatter"
+# Parse YAML frontmatter
+assert content.startswith("---"), "Must have YAML frontmatter"
+lines = content.split("\\n")
+end = lines[1:].index("---") + 1
+fm = yaml.safe_load("\\n".join(lines[1:end]))
+assert fm and "name" in fm, "frontmatter must have 'name' field"
+assert "description" in fm, "frontmatter must have 'description' field"
 
-    # Body must have substantive content about running inference server
-    assert len(body.strip()) > 100, "SKILL.md body must have substantive content"
+body = "\\n".join(lines[end+1:])
+assert len(body.strip()) > 100, "body must have substantive content"
 
-    # BEHAVIORAL: Verify the inference entry point exists in pyproject.toml
-    pyproject = Path(REPO) / "pyproject.toml"
-    if pyproject.exists():
-        try:
-            import tomli
-        except ImportError:
-            subprocess.run(["pip", "install", "tomli", "-q"], check=True, capture_output=True)
-            import tomli
+# Must document the inference command
+assert "uv run" in body, "must document uv run commands"
 
-        with open(pyproject, "rb") as f:
-            config = tomli.load(f)
-        scripts = config.get("project", {}).get("scripts", {})
-        assert "inference" in scripts, "pyproject.toml must have 'inference' entry point"
+# Must document custom endpoints (API paths)
+endpoint_pattern = r'/v1/|/update_weights|/load_lora_adapter|/init_broadcaster'
+assert re.search(endpoint_pattern, body), "must document custom API endpoints"
 
-    # BEHAVIORAL: Check that referenced config files actually exist
-    # The skill should document configs/debug/infer.toml
-    configs_dir = Path(REPO) / "configs" / "debug"
-    if configs_dir.exists():
-        infer_configs = [f for f in configs_dir.iterdir() if "infer" in f.name.lower() and f.suffix == ".toml"]
-        assert len(infer_configs) > 0, "configs/debug/ must have an inference config file"
+print("PASS")
+""", REPO],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"SKILL.md validation failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
-    # BEHAVIORAL: Verify custom endpoints are properly formatted (look like API paths)
-    custom_endpoint_pattern = r'/[a-zA-Z0-9_/-]+'
-    found_endpoints = re.findall(custom_endpoint_pattern, body)
-    api_like_endpoints = [ep for ep in found_endpoints if ep.startswith('/v1/') or 'update' in ep or 'load' in ep or 'init' in ep]
-    assert len(api_like_endpoints) > 0, "SKILL.md must document API endpoints (paths starting with /)"
 
-    # Verify body documents command execution
-    assert "uv run" in body, "SKILL.md must document uv run commands"
+def test_inference_entry_point_exists():
+    """The inference entry point documented in SKILL.md must exist in the codebase."""
+    # This cross-reference test verifies the SKILL.md exists AND that the
+    # entry point it documents is real (defined in pyproject.toml with valid module)
+    r = subprocess.run(
+        ["python3", "-c", """
+import sys, pathlib, ast
+
+repo = sys.argv[1]
+
+# 1. SKILL.md must exist (fails on NOP, passes on gold)
+skill_file = pathlib.Path(repo) / "skills" / "inference-server" / "SKILL.md"
+assert skill_file.exists(), "skills/inference-server/SKILL.md must exist"
+body = skill_file.read_text()
+assert "uv run inference" in body, "SKILL.md must document the inference command"
+
+# 2. Verify the documented entry point actually exists in pyproject.toml
+try:
+    import tomli
+except ImportError:
+    import subprocess as sp
+    sp.run(["pip", "install", "tomli", "-q"], check=True, capture_output=True)
+    import tomli
+
+pyproject = pathlib.Path(repo) / "pyproject.toml"
+with open(pyproject, "rb") as f:
+    config = tomli.load(f)
+scripts = config.get("project", {}).get("scripts", {})
+assert "inference" in scripts, "pyproject.toml must have 'inference' script entry"
+entry = scripts["inference"]
+
+# 3. Resolve the module and verify the function exists via AST
+module_path, func_name = entry.rsplit(":", 1)
+parts = module_path.split(".")
+file_path = pathlib.Path(repo) / "src" / "/".join(parts)
+py_file = file_path.with_suffix(".py")
+init_file = file_path / "__init__.py"
+assert py_file.exists() or init_file.exists(), f"Module file must exist"
+
+target = py_file if py_file.exists() else init_file
+source = target.read_text()
+tree = ast.parse(source)
+func_names = [node.name for node in ast.walk(tree)
+              if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))]
+assert func_name in func_names, f"Function '{func_name}' must exist in {target}"
+
+print("PASS")
+""", REPO],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Entry point verification failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 def test_toml_config_skill_exists():
@@ -252,174 +280,190 @@ def test_toml_config_skill_exists():
     skill_file = Path(REPO) / "skills" / "toml-config" / "SKILL.md"
     assert skill_file.exists(), "skills/toml-config/SKILL.md must exist"
 
-    # BEHAVIORAL: Parse frontmatter using actual YAML parser
-    frontmatter, body = _parse_skill_frontmatter(skill_file)
+    r = subprocess.run(
+        ["python3", "-c", """
+import yaml, sys, pathlib, re
+repo = sys.argv[1]
+skill_file = pathlib.Path(repo) / "skills" / "toml-config" / "SKILL.md"
+content = skill_file.read_text()
 
-    # Verify required frontmatter fields per instruction
-    assert "name" in frontmatter, "SKILL.md must have name field in frontmatter"
-    assert "description" in frontmatter, "SKILL.md must have description field in frontmatter"
+# Parse YAML frontmatter
+assert content.startswith("---"), "Must have YAML frontmatter"
+lines = content.split("\\n")
+end = lines[1:].index("---") + 1
+fm = yaml.safe_load("\\n".join(lines[1:end]))
+assert fm and "name" in fm, "frontmatter must have 'name' field"
+assert "description" in fm, "frontmatter must have 'description' field"
 
-    # Body must have substantive content about TOML configs
-    assert len(body.strip()) > 100, "SKILL.md body must have substantive content"
+body = "\\n".join(lines[end+1:])
+assert len(body.strip()) > 100, "body must have substantive content"
 
-    # BEHAVIORAL: Verify @ syntax for config loading is documented with examples
-    # Look for patterns like "@ config.toml" or "@ path/to/config.toml"
-    at_config_pattern = r'@\s+\S+\.toml'
-    assert re.search(at_config_pattern, body), "SKILL.md must document @ config.toml syntax"
+# Must document @ config syntax
+at_pattern = r'@\\s+\\S+\\.toml'
+assert re.search(at_pattern, body), "must document @ config.toml syntax"
 
-    # BEHAVIORAL: Verify CLI override syntax is documented
-    # Look for patterns like --flag or --key value
-    cli_override_pattern = r'--[a-zA-Z][a-zA-Z0-9_.-]*'
-    assert re.search(cli_override_pattern, body), "SKILL.md must document CLI override syntax with --flags"
+# Must document CLI override syntax (--flags)
+cli_pattern = r'--[a-zA-Z][a-zA-Z0-9_.-]*'
+assert re.search(cli_pattern, body), "must document CLI override syntax with --flags"
 
-    # BEHAVIORAL: Check that the skill references actual config files in the repo
-    configs_dir = Path(REPO) / "configs"
-    if configs_dir.exists():
-        toml_files = list(configs_dir.rglob("*.toml"))
-        assert len(toml_files) > 0, "configs/ directory must contain TOML files"
+print("PASS")
+""", REPO],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"SKILL.md validation failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 def test_claude_skills_symlink_exists():
     """.claude/skills symlink must point to ../skills and be traversable."""
-    import pytest
+    r = subprocess.run(
+        ["python3", "-c", """
+import sys, pathlib, os
+repo = sys.argv[1]
+symlink = pathlib.Path(repo) / ".claude" / "skills"
 
-    claude_skills = Path(REPO) / ".claude" / "skills"
-    assert claude_skills.exists() or claude_skills.is_symlink(), \
-        ".claude/skills symlink must exist"
+# Verify it exists and is a symlink
+assert symlink.exists() or symlink.is_symlink(), ".claude/skills must exist"
+assert symlink.is_symlink(), ".claude/skills must be a symlink"
+target = os.readlink(symlink)
+assert "skills" in target, f"symlink must point to skills, got: {target}"
 
-    # BEHAVIORAL: Actually traverse the symlink and verify it works
-    try:
-        # Try to list directory entries through the symlink
-        entries = list(claude_skills.iterdir())
-        # Verify we can access the skills through the symlink
-        entry_names = [e.name for e in entries]
+# Verify traversal: list contents and read a file through the symlink
+entries = list(symlink.iterdir())
+assert len(entries) > 0, "symlink must be traversable and contain entries"
 
-        # Should be able to see the skill directories
-        if len(entries) > 0:
-            # Verify we can actually read a file through the symlink
-            for entry in entries:
-                if entry.is_dir():
-                    skill_md = entry / "SKILL.md"
-                    if skill_md.exists():
-                        # BEHAVIORAL: Read and parse the file through the symlink
-                        content = skill_md.read_text()
-                        assert len(content) > 0, f"Must be able to read {skill_md} through symlink"
-                        break
-    except (OSError, StopIteration) as e:
-        pytest.fail(f"Symlink must be traversable and allow file access: {e}")
-
-    # Check it's a symlink pointing to the right place
-    if claude_skills.is_symlink():
-        target = os.readlink(claude_skills)
-        assert "skills" in target, f".claude/skills must point to skills/, got: {target}"
+found_skill = False
+for entry in entries:
+    if entry.is_dir():
+        skill_md = entry / "SKILL.md"
+        if skill_md.exists():
+            content = skill_md.read_text()
+            assert len(content) > 0, f"must be able to read {skill_md} through symlink"
+            found_skill = True
+            break
+assert found_skill, "must find at least one SKILL.md through .claude/skills symlink"
+print("PASS")
+""", REPO],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Symlink verification failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — AGENTS.md documentation update tests
 # ---------------------------------------------------------------------------
 
-def _extract_section_content(content, section_name):
-    """Extract content of a markdown section until the next header."""
-    lines = content.split("\n")
-    section_lines = []
-    in_section = False
-
-    for line in lines:
-        stripped = line.strip()
-        # Check for section header
-        if stripped.startswith("#") and section_name.lower() in stripped.lower():
-            in_section = True
-            continue
-        # Check if we've hit another header (end of section)
-        if in_section and stripped.startswith("#"):
-            break
-        # Collect content lines
-        if in_section and stripped:
-            section_lines.append(stripped)
-
-    return section_lines
-
-
 def test_agents_md_documents_skills_section():
     """AGENTS.md must have a Skills section documenting the skills system."""
-    agents_md = Path(REPO) / "AGENTS.md"
-    content = agents_md.read_text()
+    r = subprocess.run(
+        ["python3", "-c", """
+import sys, pathlib
+repo = sys.argv[1]
+agents_md = pathlib.Path(repo) / "AGENTS.md"
+content = agents_md.read_text()
 
-    # BEHAVIORAL: Parse markdown structure and extract section
-    section_lines = _extract_section_content(content, "skills")
-    section_content = " ".join(section_lines)
+# Extract Skills section
+lines = content.split("\\n")
+section_lines = []
+in_section = False
+for line in lines:
+    stripped = line.strip()
+    if stripped.startswith("#") and "skills" in stripped.lower():
+        in_section = True
+        continue
+    if in_section and stripped.startswith("#"):
+        break
+    if in_section and stripped:
+        section_lines.append(stripped)
 
-    # Behavioral check: there must be a section about skills with substantive content
-    assert len(section_content) >= 50, \
-        "AGENTS.md must have a Skills section with substantive content"
+section_content = " ".join(section_lines)
+assert len(section_content) >= 50, "AGENTS.md must have a Skills section with substantive content"
 
-    # Behavioral check: must reference both skills/ directory and .claude/skills
-    assert "skills/" in content, "AGENTS.md must reference skills/ directory"
-    assert ".claude/skills" in content, "AGENTS.md must reference .claude/skills symlink"
+# Must reference skills/ and .claude/skills
+assert "skills/" in content, "must reference skills/ directory"
+assert ".claude/skills" in content, "must reference .claude/skills symlink"
 
-    # Behavioral check: must explain what skills are for (teaching workflows)
-    skills_keywords = ["teach", "workflow", "agent", "handle", "specific"]
-    has_explanation = any(kw in section_content.lower() for kw in skills_keywords)
-    assert has_explanation, "AGENTS.md must explain what skills are for"
+# Must explain what skills are for
+keywords = ["teach", "workflow", "agent", "handle", "specific"]
+assert any(kw in section_content.lower() for kw in keywords), "must explain what skills are for"
+
+print("PASS")
+""", REPO],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"AGENTS.md Skills section check failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 def test_agents_md_documents_skill_maintenance():
     """AGENTS.md must explain skill maintenance responsibilities."""
-    agents_md = Path(REPO) / "AGENTS.md"
-    content = agents_md.read_text()
+    r = subprocess.run(
+        ["python3", "-c", """
+import sys, pathlib, re
+repo = sys.argv[1]
+agents_md = pathlib.Path(repo) / "AGENTS.md"
+content = agents_md.read_text()
 
-    # BEHAVIORAL: Parse the document for imperative maintenance instructions
-    # Look for action-oriented statements about skill maintenance
-    maintenance_patterns = [
-        r'you are responsible for.{0,50}(skill|maintain|update)',
-        r'when.{0,30}(workflow|fail|change).{0,50}(update|fix|maintain)',
-        r'must.{0,30}(update|maintain|keep).{0,30}skill',
-        r'responsible for.{0,30}maintain',
-    ]
+# Look for actionable maintenance guidance
+patterns = [
+    r'you are responsible for.{0,50}(skill|maintain|update)',
+    r'when.{0,30}(workflow|fail|change).{0,50}(update|fix|maintain)',
+    r'must.{0,30}(update|maintain|keep).{0,30}skill',
+    r'responsible for.{0,30}maintain',
+]
+found = False
+for pattern in patterns:
+    if re.search(pattern, content, re.IGNORECASE):
+        found = True
+        break
+assert found, "must explain skill maintenance responsibilities"
 
-    found_imperative = False
-    for pattern in maintenance_patterns:
-        if re.search(pattern, content, re.IGNORECASE):
-            found_imperative = True
-            break
+# Must have substantive maintenance content
+keywords = ["responsible", "update", "keep", "maintain", "workflow fails"]
+lines_with_kw = [l for l in content.split("\\n") if any(kw in l.lower() for kw in keywords)]
+assert len(lines_with_kw) >= 1, "must have substantive maintenance content"
 
-    assert found_imperative, "AGENTS.md must explain skill maintenance responsibilities with actionable guidance"
-
-    # Behavioral check: must have substantive content about maintenance
-    maintenance_keywords = ["responsible", "update", "keep", "maintain", "workflow fails"]
-    maintenance_related_lines = [l for l in content.split("\n")
-                                  if any(kw in l.lower() for kw in maintenance_keywords)]
-    assert len(maintenance_related_lines) >= 1, \
-        "AGENTS.md must have substantive content about skill maintenance"
+print("PASS")
+""", REPO],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"Maintenance documentation check failed: {r.stderr}"
+    assert "PASS" in r.stdout
 
 
 def test_agents_md_references_toml_config_skill():
     """AGENTS.md must reference the toml-config skill for CLI usage."""
-    agents_md = Path(REPO) / "AGENTS.md"
-    content = agents_md.read_text()
+    r = subprocess.run(
+        ["python3", "-c", """
+import sys, pathlib
+repo = sys.argv[1]
+agents_md = pathlib.Path(repo) / "AGENTS.md"
+content = agents_md.read_text()
+lines = content.split("\\n")
 
-    # BEHAVIORAL: Parse markdown to find CLI-related sections and verify skill reference
-    lines = content.split("\n")
+# Find CLI section and check for skill reference
+cli_idx = None
+for i, line in enumerate(lines):
+    if line.strip().startswith("#") and "cli" in line.lower():
+        cli_idx = i
+        break
 
-    # Find CLI section index
-    cli_section_idx = None
-    for i, line in enumerate(lines):
-        if line.strip().startswith("#") and "cli" in line.lower():
-            cli_section_idx = i
+if cli_idx is not None:
+    end = cli_idx + 30
+    for i in range(cli_idx + 1, min(len(lines), end)):
+        if lines[i].strip().startswith("#"):
+            end = i
             break
+    cli_ctx = "\\n".join(lines[cli_idx:end]).lower()
+    assert "skill" in cli_ctx, "CLI section must reference skills for config details"
 
-    # Check CLI section and surrounding context for skill reference
-    if cli_section_idx is not None:
-        # Look at content after CLI header (up to next section or 30 lines)
-        context_end = cli_section_idx + 30
-        for i in range(cli_section_idx + 1, min(len(lines), context_end)):
-            if lines[i].strip().startswith("#"):
-                context_end = i
-                break
-        cli_context = "\n".join(lines[cli_section_idx:context_end]).lower()
+# Must reference skills/ directory
+assert "skills/" in content, "must reference skills/ directory"
 
-        # CLI section should reference skills
-        assert "skill" in cli_context, "AGENTS.md CLI section must reference skills for config details"
-
-    # Behavioral check: must point to skills directory for additional info
-    assert "skills/" in content, "AGENTS.md must reference skills/ directory for additional config details"
+print("PASS")
+""", REPO],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, f"CLI skill reference check failed: {r.stderr}"
+    assert "PASS" in r.stdout

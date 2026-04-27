@@ -1,15 +1,16 @@
 {
   "schema_version": 2,
-  "valid": true,
-  "verdict": "pass",
-  "nop_reward": 0,
-  "gold_reward": 1,
-  "validated_at": "2026-04-16T11:26:02.858323",
-  "total_time": 481.97,
-  "sandbox_id": "ijar9cv7rye8dipr7n1g2",
+  "valid": false,
+  "verdict": "fail",
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-25T15:55:16.169408",
+  "total_time": 2587.83,
+  "sandbox_id": "ix7r43pt7gnrip02xf79h",
   "backend": "anthropic",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "oneshot_repair",
+  "error": "The sandbox was not found: This error is likely due to sandbox timeout. You can modify the sandbox timeout by passing 'timeout' when starting the sandbox or calling '.set_timeout' on the sandbox with the desired timeout.",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -80,10 +81,10 @@
     },
     "quality_gate": {
       "status": "passed",
-      "model": "claude-opus-4-7",
-      "backend": "anthropic",
-      "time": 0.78,
-      "notes": "flags=[]"
+      "model": "kimi-k2.6",
+      "backend": "ark-kimi-k2.6",
+      "time": 0.54,
+      "notes": "flags=['lint_tier_b:1', 'B:[B] no_network_during_tests @ tests/test.sh:44: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
@@ -101,48 +102,55 @@
       "status": "error",
       "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":671,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 400 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"invalid_request_error\\\",\\\"message\\\":\\\"\\\\\\\"thinking.type.enabled\\\\\\\" is not supported for this model. Use \\\\\\\"thinking.type.adapt",
       "time": 1.94
+    },
+    "fix_quality": {
+      "status": "rate_limited",
+      "model": "kimi-k2.6",
+      "backend": "ark-kimi-k2.6",
+      "time": 249.0,
+      "notes": ""
     }
   },
   "history": [
     {
-      "verdict": "pass",
-      "nop": 0,
-      "gold": 1,
-      "backend": "minimax",
-      "time": 3676.86,
-      "at": "2026-04-15T04:44:50.170058"
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 11248.67,
+      "at": "2026-04-25T03:37:49.023788"
     },
     {
-      "verdict": "pass",
-      "nop": 0,
-      "gold": 1,
-      "backend": "oauth",
-      "time": 564.34,
-      "at": "2026-04-15T12:50:23.127753"
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 17772.53,
+      "at": "2026-04-25T08:35:10.682417"
     },
     {
-      "verdict": "pass",
-      "nop": 0,
-      "gold": 1,
-      "backend": "oauth",
-      "time": 515.12,
-      "at": "2026-04-15T18:48:24.040499"
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 5125.87,
+      "at": "2026-04-25T10:06:57.120159"
     },
     {
-      "verdict": "pass",
-      "nop": 0,
-      "gold": 1,
-      "backend": "glm",
-      "time": 4331.37,
-      "at": "2026-04-15T23:14:43.592262"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0,
-      "gold": 1,
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
       "backend": "anthropic",
-      "time": 481.97,
-      "at": "2026-04-16T11:26:02.858323"
+      "time": 3949.08,
+      "at": "2026-04-25T13:23:26.602091"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "anthropic",
+      "time": 2587.83,
+      "at": "2026-04-25T15:55:16.169408"
     }
   ]
 }

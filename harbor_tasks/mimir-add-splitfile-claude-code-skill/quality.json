@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "Instruction names tool path tools/split-file-verify/, SKILL.md path .claude/skills/split-file/SKILL.md, TSV format with sha256 first 16 chars, method format (Server).Start, sorting, usage-on-no-args behavior, and frontmatter fields name/description/argument-hint."
+      "reason": "Instruction names tools/split-file-verify path, .claude/skills/split-file/SKILL.md path, frontmatter fields (name, description, argument-hint), method format (Server).Start, TSV output, 16-hex SHA-256, sorted output, usage on no args, and skill content topics (git rename/rename, history, goimports, verify tool reference)."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "Instruction describes what to build (AST parser, skill sections) without giving code or exact line edits."
+      "reason": "Instruction describes requirements (parse AST, output sorted TSV, etc.) without giving code or specific implementation lines."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "Tests check behavior (declaration names, sorted output, method formatting, hash consistency) and content keywords in SKILL.md, allowing multiple valid implementations."
+      "reason": "Tests check observable behavior (names extracted, sorted, hash equality, usage on stderr) rather than gold-specific identifiers; multiple implementations would pass."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests compile the Go tool, execute the binary as subprocess, and assert on stdout/stderr/exit codes; SKILL.md tests do text checks but tool tests are behavioral."
+      "reason": "Tests build the Go binary and execute it via subprocess against test inputs, asserting on stdout/stderr behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub returning empty/default would fail tests like test_verify_tool_extracts_methods which requires '(Server).Start' in output and test_verify_tool_sorted_output requiring specific names."
+      "reason": "A stub returning empty would fail tests like test_verify_tool_extracts_func_decls (requires 'hello'/'world' in output) and test_verify_tool_produces_consistent_hashes."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "Tests cover all major requirements: AST parsing, method receiver format, sorting, hash consistency, multi-file, no-args usage, and SKILL.md frontmatter/content."
+      "reason": "Tests cover all instruction-stated behaviors: AST extraction, method receiver formatting, sorted output, multi-file, usage on no args, and SKILL.md frontmatter/content references."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are grouped with section comment headers (Gates, Fail-to-pass, Config file update) and have descriptive names and docstrings."
+      "reason": "Tests are sectioned with comment headers (Gates, Fail-to-pass, Config file update tests) and named descriptively."
     },
     "structured_data_schema": {
       "outcome": "pass",
-      "reason": "TSV format 'name<TAB>sha256_hash' with first 16 hex chars is specified in instruction.md."
+      "reason": "TSV schema (name<TAB>sha256_hash, 16 hex chars, sorted) is documented in instruction.md."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos observed in paths or commands."
+      "reason": "Paths and commands appear consistent across instruction and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "Instruction references directories/files appropriate to task scope without pinpointing specific lines."
+      "reason": "Instruction describes high-level requirements; doesn't reveal exact code lines."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "SKILL.md is a new file creation localized to .claude/skills/split-file/, not modifying unrelated config."
+      "reason": "SKILL.md is a new file with bounded scope; doesn't conflict with other config."
     }
   },
   "tier_a_fails": [],

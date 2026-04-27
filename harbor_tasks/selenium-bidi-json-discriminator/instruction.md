@@ -1,33 +1,27 @@
-# Fix JSON Discriminator Extraction Issues in Selenium .NET BiDi
+# Improve JSON Discriminator Extraction in Selenium .NET BiDi
 
-The `GetDiscriminator` extension method in `dotnet/src/webdriver/BiDi/Json/JsonExtensions.cs` has correctness and performance issues when extracting discriminator values from JSON objects.
+The `GetDiscriminator` extension method in `dotnet/src/webdriver/BiDi/Json/JsonExtensions.cs` needs a performance improvement in how it compares property names during JSON parsing.
 
 ## Problem Description
 
-When processing JSON objects with nested structures, the discriminator extraction logic incorrectly positions the reader when skipping non-matching properties. The current implementation calls `Skip()` before `Read()` when advancing past property values, which causes the reader to end up in the wrong position. This can cause the parser to miss properties or throw exceptions when dealing with nested objects and arrays.
+The `GetDiscriminator` method iterates over properties in a JSON object using `Utf8JsonReader` to find and return a discriminator value by name. Currently, the method extracts every property name as a managed `string` (via `GetString()`) and then compares it to the target name using string equality. This creates an unnecessary heap allocation on every loop iteration.
 
-Additionally, the current approach extracts property names as strings and compares them, which creates unnecessary string allocations.
+The `Utf8JsonReader` API provides a built-in method for comparing the current token's value directly against a string without allocating a managed string object. The method should use this allocation-free comparison approach instead.
 
 ## Requirements
 
-The `GetDiscriminator` method in `dotnet/src/webdriver/BiDi/Json/JsonExtensions.cs` must meet the following requirements:
+1. **Use allocation-free property name comparison**: Replace the pattern of extracting a property name string and comparing it with the reader's built-in method for checking whether the current property name matches the target name without allocating a string.
 
-1. **Property Name Comparison**: The method must use `Utf8JsonReader.ValueTextEquals()` for comparing property names against the `name` parameter, rather than extracting strings and doing string comparison. This avoids unnecessary string allocations.
+2. **Restructure reader advancement for clarity**: Reorganize the `Read()` and `Skip()` calls so that each code path (property match vs. non-match) clearly shows its own sequence of reader operations, rather than sharing an unconditional `Read()` call before the comparison.
 
-2. **Reader Advancement Logic**: When processing properties that don't match the target discriminator name, the method must correctly skip the property value by using the proper `Read()`/`Skip()`/`Read()` sequence. The `Read()` must be called to advance to the property value BEFORE calling `Skip()`, and `Read()` must be called again after `Skip()` to position past the skipped value.
+3. **Document reader state transitions**: Add inline comments on `Read()` and `Skip()` calls that explain *why* each reader movement is needed (what token the reader is advancing to), following the commenting conventions in `dotnet/AGENTS.md`.
 
-3. **Comments**: The code should include comments explaining the reader advancement operations, particularly why the `Read()` calls are needed around `Skip()`. Follow the commenting style in `dotnet/AGENTS.md`.
-
-4. **Prohibited Patterns**: The implementation must not use `propertyName == name` for comparison or create a `string? propertyName` variable via `GetString()`.
-
-5. **Code Style**: The code must follow the conventions in `dotnet/AGENTS.md`.
+4. **Preserve correctness**: The method must continue to correctly extract discriminator values from JSON objects, including those containing nested objects and arrays as non-target property values.
 
 ## Verification
 
 The project should build successfully after changes:
 
 ```bash
-bazel build //dotnet/src/webdriver:webdriver
+dotnet build dotnet/src/webdriver/Selenium.WebDriver.csproj
 ```
-
-Or using dotnet CLI from the `dotnet/` directory.

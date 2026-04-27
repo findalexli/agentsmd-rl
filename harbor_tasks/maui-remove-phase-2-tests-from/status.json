@@ -4,12 +4,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-16T10:22:13.240754",
-  "total_time": 628.84,
-  "sandbox_id": "i2co5bffiyly6ayedg05b",
+  "validated_at": "2026-04-25T13:21:27.603972",
+  "total_time": 3829.37,
+  "sandbox_id": "inwbukd2869t52xo1d3c7",
   "backend": "anthropic",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "oneshot_repair",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -33,14 +33,14 @@
       "notes": "tests look good"
     },
     "validate": {
-      "status": "pass",
-      "nop_reward": 0.0,
-      "gold_reward": 1.0,
-      "attempts": 1,
-      "notes": "Fixed bug in judge.py where _call_gemini used wrong schema for config edits. Simplified rubric rules to only check config files. All 4 checks pass.",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 369.87
+      "status": "blocked",
+      "nop_reward": -1.0,
+      "gold_reward": -1.0,
+      "attempts": 0,
+      "notes": "Could not run any bash commands - harness blocked with EACCES: permission denied, mkdir '/home/worker/.claude/session-env' on every Bash tool invocation. Unable to run docker build, NOP test, gold test, or rubric judge. Previous validate node (kimi-k2p5-turbo) reported pass with nop=0, gold=1; outer pipeline failure was due to fix_quality rate-limit, not validation. Recommend rerunning validation in an environment where Bash works.",
+      "model": "claude-opus-4-7",
+      "backend": "oauth",
+      "time": 51.05
     },
     "rubric_judge": {
       "status": "pass",
@@ -61,10 +61,10 @@
     },
     "quality_gate": {
       "status": "passed",
-      "model": "claude-opus-4-7",
+      "model": "claude-opus-4-6",
       "backend": "anthropic",
-      "time": 0.26,
-      "notes": "flags=[]"
+      "time": 0.24,
+      "notes": "flags=['lint_tier_b:1', 'B:[B] no_network_during_tests @ tests/test.sh:44: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
@@ -80,6 +80,13 @@
       "status": "error",
       "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":416,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 400 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"invalid_request_error\\\",\\\"message\\\":\\\"\\\\\\\"thinking.type.enabled\\\\\\\" is not supported for this model. Use \\\\\\\"thinking.type.adapt",
       "time": 2.16
+    },
+    "fix_quality": {
+      "status": "ok",
+      "model": "claude-opus-4-6",
+      "backend": "anthropic",
+      "time": 585.11,
+      "notes": ""
     }
   },
   "history": [
@@ -87,41 +94,41 @@
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
-      "backend": "minimax",
-      "time": 796.07,
-      "at": "2026-04-15T04:37:00.384991"
+      "backend": "anthropic",
+      "time": 628.84,
+      "at": "2026-04-16T10:22:13.240754"
     },
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 6064.13,
+      "at": "2026-04-25T01:05:58.460024"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 14099.81,
+      "at": "2026-04-25T05:01:55.291011"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
       "backend": "oauth",
-      "time": 386.48,
-      "at": "2026-04-15T12:57:51.299444"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "oauth",
-      "time": 517.79,
-      "at": "2026-04-15T19:01:41.961400"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "glm",
-      "time": 3888.17,
-      "at": "2026-04-16T00:24:31.931424"
+      "time": 4005.33,
+      "at": "2026-04-25T09:48:16.716207"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "anthropic",
-      "time": 628.84,
-      "at": "2026-04-16T10:22:13.240754"
+      "time": 3829.37,
+      "at": "2026-04-25T13:21:27.603972"
     }
   ]
 }

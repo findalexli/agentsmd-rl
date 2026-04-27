@@ -3,55 +3,52 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "Instruction names DagRunInfo class, includes list, partition_key/partition_date fields, and references the version-comment convention which the agent can discover by reading the file."
+      "reason": "instruction.md names the file path, class DagRunInfo, includes list, keys partition_key/partition_date, ISO 8601 format, and ordering constraints all tested."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "Instruction describes what's broken (missing fields) without giving exact line numbers or the literal '# Airflow 3.2+' string."
+      "reason": "Instruction describes what fields to add and ordering requirements but doesn't show the exact diff/line to modify."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "test_partition_fields_have_version_comments asserts the exact literal '\"partition_key\",  # Airflow 3.2+' with specific whitespace and wording, and test_partition_fields_ordering mandates partition_key before partition_date specifically, rejecting valid alternatives like '# Airflow 3.2', '# Added in 3.2', or reverse ordering."
+      "outcome": "pass",
+      "reason": "Tests check behavior (keys in dict, values, ordering relative to other fields, presence in includes list) which any valid fix would satisfy."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The f2p tests (test_dagrun_info_includes_partition_fields, test_partition_fields_in_dagrun_info_includes_list, test_partition_fields_have_version_comments, test_partition_fields_ordering, test_no_duplicate_partition_fields) all use _read_utils_file and string/regex matching; only the pass-to-pass tests execute code."
+      "outcome": "pass",
+      "reason": "Tests import DagRunInfo and call it via subprocess, inspecting the dict output."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The f2p tests require the specific strings to be present, which cannot be satisfied by a stub."
+      "reason": "Tests require actual serialization with correct values and ordering, not satisfiable by stubs."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "Instruction-required behaviors (fields present, version comments, correct position, no duplicates) are each tested."
+      "reason": "Presence, values, ordering, uniqueness, and includes-list requirement all tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests have descriptive names and docstrings indicating f2p vs p2p purpose."
+      "reason": "Tests have descriptive names and docstrings explaining each aspect tested."
     },
     "structured_data_schema": {
-      "outcome": "not_applicable",
-      "reason": "Task is a source code edit, not a structured data producer."
+      "outcome": "pass",
+      "reason": "Schema for partition_key (string) and partition_date (ISO 8601 with timezone) documented in instruction."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "Paths and names appear correct and consistent."
+      "reason": "Paths and field names are consistent between instruction and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "Instruction names the class and list but not the exact line or exact comment text."
+      "reason": "Instruction points to the file/class but doesn't specify buggy line; localization within file still required."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
       "reason": "Code-only task."
     }
   },
-  "tier_a_fails": [
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 7,
-  "fail_count": 2
+  "pass_count": 10,
+  "fail_count": 0
 }

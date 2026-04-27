@@ -4,7 +4,7 @@
 
 The `selenium.webdriver` package uses lazy imports in its `__init__.py` files to defer loading modules until they're accessed. This improves startup performance but breaks type checking—mypy and IDEs cannot see the available classes and submodules because they're not imported at package initialization time.
 
-The lazy import mechanism also affects how `DesiredCapabilities` is accessed by some internal webdriver modules that import it through the top-level `selenium.webdriver` package.
+The lazy import mechanism also affects how some internal webdriver modules resolve names that are only available through the lazy loading pattern.
 
 ## What You Need to Do
 
@@ -36,16 +36,15 @@ The main stub must make these names available for type checking:
 - Service classes: `ChromeService`, `FirefoxService`, `EdgeService`
 - Utility classes: `ActionChains`, `Keys`
 
-### 2. Update `py/pyproject.toml`
+### 2. Update build configuration
 
-Add `"*.pyi"` to the `[tool.setuptools.package-data]` section so stub files are included in the distribution.
+Ensure that `.pyi` stub files are included in the distributed package by updating the package data configuration in `py/pyproject.toml`.
 
 ### 3. Fix import issues caused by lazy imports
 
-The lazy import mechanism in `selenium.webdriver` can break modules that depend on `DesiredCapabilities` being importable through the top-level package. Identify any modules affected by this and fix them so that:
+Some internal webdriver modules import `DesiredCapabilities` through the top-level `selenium.webdriver` package, which relies on the lazy import mechanism. This can cause issues when the lazy loading hasn't resolved the name yet. Find any such modules and fix them to use direct imports from the appropriate submodule instead of relying on the lazy import mechanism.
 
-- `DesiredCapabilities` can be imported directly from `selenium.webdriver.common.desired_capabilities`
-- All existing unit tests continue to pass
+All existing unit tests should continue to pass after your fix.
 
 ## Verification
 
@@ -53,9 +52,12 @@ You can verify your changes by:
 
 1. Confirming all 8 `.pyi` stub files exist in the correct locations
 2. Running mypy on a test file that imports from `selenium.webdriver` (e.g., `Chrome`, `Firefox`, `ChromeOptions`, `Keys`) — there should be no "cannot find" errors related to webdriver
-3. Verifying that `from selenium.webdriver.common.desired_capabilities import DesiredCapabilities` works
-4. Checking that `"*.pyi"` is in pyproject.toml's package-data section
-5. Running the repo's existing test suite to ensure nothing is broken
+3. Checking that `"*.pyi"` is in pyproject.toml's package-data section
+4. Running the repo's existing test suite to ensure nothing is broken
+
+## Code Style Requirements
+
+This repository uses **ruff** for Python linting. All new `.pyi` files and any modified `.py` files must pass `ruff check` without errors.
 
 ## Context
 

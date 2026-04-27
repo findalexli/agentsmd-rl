@@ -4,12 +4,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-16T10:23:12.426207",
-  "total_time": 45.0,
-  "sandbox_id": "ik4z90cum4s85y69qubhm",
-  "backend": "anthropic",
+  "validated_at": "2026-04-22T08:46:33.946571",
+  "total_time": 36051.01,
+  "sandbox_id": "i3mvo5wt4f9g14mmsp7io",
+  "backend": "minimax",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "fix_quality",
   "nodes": {
     "docker_build": {
       "status": "completed",
@@ -64,9 +64,9 @@
       "gold_reward": 1.0,
       "attempts": 1,
       "notes": "All 4 checks pass: Docker build OK, NOP test reward=0 (4 f2p tests correctly fail), Gold test reward=1 (12/12 tests pass), Rubric adjusted for debug comment pattern",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 385.3
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 1654.38
     },
     "rubric_judge": {
       "status": "fail",
@@ -84,31 +84,31 @@
     },
     "quality_gate": {
       "status": "DELETE",
-      "model": "claude-opus-4-7",
-      "backend": "anthropic",
-      "time": 0.25,
-      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', \"A:[A] pass_to_pass_coverage @ eval_manifest.yaml: no p2p regression guards \u2014 agent can delete failing code path and 'win'\"]"
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.39,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', \"A:[A] pass_to_pass_coverage @ eval_manifest.yaml: no p2p regression guards \u2014 agent can delete failing code path and 'win'\", 'lint_tier_b:1', 'B:[B] no_network_during_tests @ tests/test.sh:43: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 12.67,
+      "time": 12.63,
       "tier_a_fails": [
-        "no_solution_leakage"
+        "behavior_in_task_description",
+        "solution_uniqueness_guard"
       ],
       "tier_b_fails": [],
       "pass_count": 7,
       "fail_count": 2
+    },
+    "fix_quality": {
+      "status": "ok",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 545.12,
+      "notes": ""
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 6005.03,
-      "at": "2026-04-09T23:39:13.133379"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -140,6 +140,14 @@
       "backend": "anthropic",
       "time": 45.0,
       "at": "2026-04-16T10:23:12.426207"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 36051.01,
+      "at": "2026-04-22T08:46:33.946571"
     }
   ]
 }

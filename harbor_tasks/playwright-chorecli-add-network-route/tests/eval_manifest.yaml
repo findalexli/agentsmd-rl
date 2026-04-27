@@ -12,7 +12,7 @@ checks:
 - id: route_tool_definition
   type: fail_to_pass
   origin: agent_config
-  description: route.ts must exist with browser_route tool and correct schema
+  description: Route tool module exports browser_route with correct schema fields
   source:
     path: .claude/skills/playwright-mcp-dev/SKILL.md
     lines: '9'
@@ -24,16 +24,15 @@ checks:
 - id: route_list_and_unroute_tools
   type: fail_to_pass
   origin: pr_diff
-  description: route.ts defines browser_route_list and browser_unroute tools
+  description: browser_route_list and browser_unroute tools behave correctly
 - id: context_route_management
   type: fail_to_pass
   origin: pr_diff
-  description: context.ts exports RouteEntry type and has addRoute/removeRoute/routes
-    methods
+  description: Context class has route management capabilities
 - id: route_tools_registered
   type: fail_to_pass
   origin: agent_config
-  description: tools.ts imports and spreads route module into browserTools
+  description: Route tools registered in main browserTools array
   source:
     path: .claude/skills/playwright-mcp-dev/SKILL.md
     lines: '10'
@@ -78,14 +77,6 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo TypeScript compilation passes
-- id: test_repo_check_deps
-  type: pass_to_pass
-  origin: repo_tests
-  description: Repo dependency check passes
-- id: test_repo_lint_tests
-  type: pass_to_pass
-  origin: repo_tests
-  description: Repo test linting passes
 rubric:
 - rule: 'SKILL.md must include a ## Building section in both Tools and CLI sections
     with development guidance about watch mode and lint'

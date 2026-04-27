@@ -918,10 +918,10 @@ def test_repo_tsc_syntax_validation():
 
     # Filter out errors that are just about missing imports/modules (expected without full build)
     # Keep only syntax/parse errors which indicate actual problems
+    syntax_errors = []
     if r.returncode != 0 and r.stdout:
         lines = r.stdout.split("\n")
-        # Look for TS syntax error codes (like TS1xxx, TS2xxx, TS5xxx)
-        # Filter out module resolution errors (TS2307, etc.)
+        # Look for TS syntax error codes (TS1xxx range)
         syntax_error_codes = ["TS1005", "TS1009", "TS1010", "TS1011", "TS1012", "TS1013",
                               "TS1014", "TS1015", "TS1016", "TS1017", "TS1018", "TS1019",
                               "TS1020", "TS1021", "TS1022", "TS1023", "TS1024", "TS1025",
@@ -934,11 +934,9 @@ def test_repo_tsc_syntax_validation():
                               "TS1062", "TS1063", "TS1064", "TS1065", "TS1066", "TS1067",
                               "TS1068", "TS1069", "TS1070", "TS1071", "TS1072", "TS1073"]
         syntax_errors = [l for l in lines if any(c in l for c in syntax_error_codes)]
-        if syntax_errors:
-            assert False, f"TypeScript syntax errors:\n{chr(10).join(syntax_errors[:5])}"
 
-    # If we get here, either tsc passed or only had non-syntax errors (like module resolution)
-    assert True
+    assert len(syntax_errors) == 0, \
+        f"TypeScript syntax errors:\n{chr(10).join(syntax_errors[:5])}"
 
 
 # [repo_tests] pass_to_pass — Validate modified file structure
@@ -965,10 +963,7 @@ def test_repo_worker_file_structure():
     }
 
     missing = [k for k, v in checks.items() if not v]
-    if missing:
-        assert False, f"worker.ts missing expected structures: {missing}"
-
-    assert True
+    assert len(missing) == 0, f"worker.ts missing expected structures: {missing}"
 
 
 # [repo_tests] pass_to_pass — Git log verification

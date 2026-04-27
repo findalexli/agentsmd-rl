@@ -4,19 +4,19 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-16T11:34:13.368605",
-  "total_time": 516.61,
-  "sandbox_id": "i8bql1ebiglglp47n7uft",
+  "validated_at": "2026-04-25T12:28:51.458761",
+  "total_time": 672.81,
+  "sandbox_id": "inbmhoma2qrdgvil7occe",
   "backend": "anthropic",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "oneshot_repair",
   "nodes": {
     "quality_gate": {
       "status": "DELETE",
-      "model": "claude-opus-4-7",
+      "model": "claude-opus-4-6",
       "backend": "anthropic",
-      "time": 0.35,
-      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:8', 'A:[A] test_not_tautological @ tests/test_outputs.py:216: test `test_nopch_cxx_implicit_dep_outputs` has 1 assert(s), all p', 'A:[A] test_not_tautological @ tests/test_outputs.py:233: test `test_codegen_separated_from_dep_outputs` has 4 assert(s), a', 'A:[A] test_not_tautological @ tests/test_outputs.py:265: test `test_claude_md_dep_strategy_updated` has 1 assert(s), all p', 'A:[A] test_not_tautological @ tests/test_outputs.py:325: test `test_repo_editorconfig_compliance` has 1 assert(s), all pas']"
+      "time": 0.24,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:8', 'A:[A] test_not_tautological @ tests/test_outputs.py:216: test `test_nopch_cxx_implicit_dep_outputs` has 1 assert(s), all p', 'A:[A] test_not_tautological @ tests/test_outputs.py:233: test `test_codegen_separated_from_dep_outputs` has 4 assert(s), a', 'A:[A] test_not_tautological @ tests/test_outputs.py:265: test `test_claude_md_dep_strategy_updated` has 1 assert(s), all p', 'A:[A] test_not_tautological @ tests/test_outputs.py:325: test `test_repo_editorconfig_compliance` has 1 assert(s), all pas', 'lint_tier_b:1', 'B:[B] no_network_during_tests @ tests/test.sh:44: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
@@ -30,48 +30,65 @@
       "status": "error",
       "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":103,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"Not logged in \u00b7 Please run /login\",\"stop_reason\":\"stop_sequence\",\"session_id\":\"6b8ac6b2-4aba-4047-9ba4-1c6a1ebcdb58\",\"total_cost_usd\":0,\"usage\":{\"input_tokens\":0,\"cache_creation_input_t",
       "time": 1.36
+    },
+    "fix_quality": {
+      "status": "ok",
+      "model": "claude-opus-4-6",
+      "backend": "anthropic",
+      "time": 578.9,
+      "notes": ""
+    },
+    "validate": {
+      "status": "fail",
+      "nop_reward": -1.0,
+      "gold_reward": -1.0,
+      "attempts": 0,
+      "notes": "Could not run validation: harness Bash tool is unusable in this session \u2014 every command (including `true`, `echo`, `ls`) fails with `EACCES: permission denied, mkdir '/home/worker/.claude/session-env'` before the command itself executes. Attempted creating that dir via Write/mkdir; harness blocks that path as 'sensitive'. Without bash, docker build / docker run cannot be invoked, so NOP and gold checks cannot be performed. No code changes were made. The underlying task artifacts (Dockerfile, tests, solve.sh) appear intact from prior runs (history shows two earlier passes on different backends); the failure is environmental, not a task defect. Recommend retrying validate on a session where bash works.",
+      "model": "claude-opus-4-7",
+      "backend": "oauth",
+      "time": 94.96
     }
   },
   "history": [
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 2407.95,
+      "at": "2026-04-25T00:05:02.593749"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 12370.24,
+      "at": "2026-04-25T03:31:48.539839"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 16438.87,
+      "at": "2026-04-25T08:07:02.354003"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
       "backend": "oauth",
-      "time": 40.22,
-      "at": "2026-04-15T18:40:30.140824"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "oauth",
-      "time": 37.54,
-      "at": "2026-04-15T19:08:30.910602"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "glm",
-      "time": 3143.28,
-      "at": "2026-04-15T20:52:38.341597"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 2011.89,
-      "at": "2026-04-15T22:11:03.871152"
+      "time": 734.61,
+      "at": "2026-04-25T08:53:46.233898"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "anthropic",
-      "time": 516.61,
-      "at": "2026-04-16T11:34:13.368605"
+      "time": 672.81,
+      "at": "2026-04-25T12:28:51.458761"
     }
   ]
 }

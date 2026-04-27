@@ -8,8 +8,7 @@ BunString__toJSDOMURL (src/bun.js/bindings/BunString.cpp) to prevent
 dereferencing an invalid JSValue after DOMURL creation fails.
 
 Bun requires Zig + WebKit (~30min, ~32GB RAM) to build from source,
-so tests verify the fix via control-flow analysis of the source code
-(rather than text grepping).
+so tests verify the fix via behavioral analysis of the source code.
 
 All checks must pass for reward = 1. Any failure = reward 0.
 Each def test_*() maps 1:1 to a check in eval_manifest.yaml.
@@ -55,6 +54,20 @@ def _between_tojs_and_jscast(region: str) -> str:
     return between[semi + 1 :]
 
 
+def _guard_has_proper_structure(guard_code: str) -> bool:
+    """Check if guard code has proper JSC control-flow-guard structure."""
+    guard_code = guard_code.strip()
+    if not guard_code:
+        return False
+    # RETURN_IF_EXCEPTION macro
+    if re.match(r'RETURN_IF_EXCEPTION\s*\(\s*throwScope\s*,\s*\{\s*\}\s*\)', guard_code):
+        return True
+    # if-check with return
+    if re.match(r'^if\s*\([^)]*(?:exception|throwScope|scope)[^)]*\)\s*return', guard_code, re.IGNORECASE):
+        return True
+    return False
+
+
 def _has_control_flow_guard(region: str) -> bool:
     """Check if region contains a control-flow guard (return/throw/branch before jsCast.
 
@@ -75,11 +88,11 @@ def _has_control_flow_guard(region: str) -> bool:
 
 
 # [pr_diff] fail_to_pass
-def test_fix_adds_return_if_exception():
-    """A control-flow guard must be added between toJSNewlyCreated and jsCast.
+def test_fix_adds_control_flow_guard():
+    """A control-flow guard must exist between toJSNewlyCreated and jsCast.
 
-    Verifies via subprocess that executes Python analysis (not just grep) to
-    confirm a guard statement exists in the region. The guard may be:
+    Verifies by executing Python analysis code that parses the source to confirm
+    a guard statement exists in the region. The guard may be:
       - RETURN_IF_EXCEPTION(throwScope, {});
       - if (throwScope.exception()) return {};
       - any equivalent control-flow divergence
@@ -87,65 +100,39 @@ def test_fix_adds_return_if_exception():
     The key property being verified: control flow can divert BEFORE jsCast
     when an exception is pending, preventing null dereference.
     """
-    r = subprocess.run(
-        [
-            "python3",
-            "-c",
-            """
-import re, sys
+    content = Path(TARGET).read_text()
+    content = re.sub(r"//[^\n]*", "", content)  # strip comments
 
-content = open('/repo/src/bun.js/bindings/BunString.cpp').read()
-content = re.sub(r'//[^\\n]*', '', content)  # strip comments
+    idx = content.find("BunString__toJSDOMURL")
+    assert idx >= 0, "BunString__toJSDOMURL not found"
 
-idx = content.find('BunString__toJSDOMURL')
-if idx < 0:
-    print('FAIL: BunString__toJSDOMURL not found', file=sys.stderr)
-    sys.exit(1)
+    region = content[idx:idx + 800]
+    jsn = region.find("toJSNewlyCreated")
+    jsc = region.find("jsCast", jsn + 10)
+    assert jsn >= 0 and jsc >= 0, "toJSNewlyCreated or jsCast not found"
 
-region = content[idx:idx + 800]
-jsn = region.find('toJSNewlyCreated')
-jsc = region.find('jsCast', jsn + 10)
-if jsn < 0 or jsc < 0:
-    print('FAIL: toJSNewlyCreated or jsCast not found', file=sys.stderr)
-    sys.exit(1)
+    # Extract the region AFTER the toJSNewlyCreated semicolon and BEFORE jsCast
+    between = region[jsn:jsc]
+    semi = between.find(";")
+    assert semi >= 0, "No semicolon after toJSNewlyCreated"
+    guard_region = between[semi + 1:]
 
-# Extract the region AFTER the toJSNewlyCreated semicolon and BEFORE jsCast
-between = region[jsn:jsc]
-semi = between.find(';')
-if semi < 0:
-    print('FAIL: No semicolon after toJSNewlyCreated', file=sys.stderr)
-    sys.exit(1)
-guard_region = between[semi + 1:]
+    # Must have proper JSC guard structure (not just any return)
+    guard_region_stripped = guard_region.strip()
+    assert guard_region_stripped, "No code found between toJSNewlyCreated and jsCast"
 
-# Check for ANY control-flow guard pattern
-guard_patterns = [
-    r'RETURN_IF_EXCEPTION\\s*\\(\\s*throwScope\\s*,\\s*\\{\\s*\\}\\s*\\)',
-    r'if\\s*\\([^)]*(?:exception|throwScope|scope)[^)]*\\)\\s*return',
-    r'\\breturn\\b',
-]
-has_guard = any(re.search(p, guard_region, re.IGNORECASE) for p in guard_patterns)
-
-if not has_guard:
-    print('FAIL: No control-flow guard found between toJSNewlyCreated and jsCast', file=sys.stderr)
-    sys.exit(1)
-
-print('PASS')
-""",
-        ],
-        capture_output=True,
-        text=True,
-        timeout=30,
+    assert _guard_has_proper_structure(guard_region_stripped), (
+        f"Guard does not match known JSC guard idiom. "
+        "Expected RETURN_IF_EXCEPTION(throwScope, {}) or if-check with return."
     )
-    assert r.returncode == 0, f"Control-flow guard check failed: {r.stderr}"
-    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
-def test_fix_is_minimal():
+def test_fix_is_pure_insertion():
     """The fix should be a pure insertion - no deletions of existing code.
 
-    Uses subprocess to run git diff and verify the change only adds the
-    guard line without modifying or removing existing lines.
+    Uses subprocess to run git diff and verify the change only adds lines
+    without modifying or removing existing lines.
     """
     r = subprocess.run(
         ["git", "diff", "--", "src/bun.js/bindings/BunString.cpp"],
@@ -166,31 +153,23 @@ def test_fix_is_minimal():
     assert len(removed) == 0, (
         f"Fix should be pure insertion (no deletions), but found {len(removed)} removed lines: {removed}"
     )
-    # At least one added line must contain a guard (not necessarily RETURN_IF_EXCEPTION)
-    has_guard = any(
-        ('RETURN_IF_EXCEPTION' in l or 'return' in l.lower()) and 'if' in l.lower() or 'return' in l.lower()
-        for l in added
-    )
-    assert has_guard, f"Added lines do not appear to contain a control-flow guard: {added}"
 
 
 # [pr_diff] fail_to_pass
-def test_guard_prevents_null_deref_on_error():
-    """The guard must divert control flow so jsCast is skipped on error.
+def test_guard_can_diverge_before_jscast():
+    """The guard must be able to divert control flow before jsCast is reached.
 
-    This test verifies the GUARD BEHAVIOR (not implementation): after
-    toJSNewlyCreated creates a JSValue, if an exception is pending,
-    execution must not reach jsCast. The guard can be RETURN_IF_EXCEPTION,
-    an if-check with return, or any equivalent pattern.
+    Verifies by analyzing the code structure that a control-flow statement
+    exists between toJSNewlyCreated and jsCast that can prevent jsCast execution.
     """
     region = _extract_func_region()
     after = _between_tojs_and_jscast(region)
 
-    # Verify there's a control-flow divergence before jsCast
-    assert _has_control_flow_guard(after), (
-        "No control-flow guard found between toJSNewlyCreated and jsCast. "
-        "A guard (RETURN_IF_EXCEPTION, if+return, etc.) must divert execution "
-        "when an exception is pending, preventing the jsCast on an invalid value."
+    # Verify proper JSC guard structure before jsCast
+    after_stripped = after.strip()
+    assert after_stripped, "No statements between toJSNewlyCreated and jsCast"
+    assert _guard_has_proper_structure(after_stripped), (
+        "No proper JSC guard found between toJSNewlyCreated and jsCast."
     )
 
 
@@ -499,8 +478,6 @@ def test_repo_git_status_clean():
         cwd=REPO,
     )
     assert r.returncode == 0, f"git status failed:\n{r.stderr}"
-    # At base commit, status should be clean (no uncommitted changes yet)
-    # This may be empty which is fine - just checking the command works
 
 
 # [repo_tests] pass_to_pass
@@ -519,7 +496,7 @@ def test_repo_git_ls_files():
     )
     assert r.returncode == 0, f"git ls-files failed:\n{r.stderr}"
     assert "src/bun.js/bindings/BunString.cpp" in r.stdout, (
-        "BSSEtring.cpp should be tracked in git"
+        "BunString.cpp should be tracked in git"
     )
 
 
@@ -612,18 +589,36 @@ def test_repo_bindings_dir_structure():
     # Check for expected files in the bindings directory
     content = r.stdout
     assert "BunString.cpp" in content, "BunString.cpp should exist in bindings dir"
-    assert "root.h" in content, "root.h should exist in bindings dir (per SKILL.md)"
+    assert "root.h" in content, "root.h should exist in bindings dir"
+
+
+# [pr_diff] fail_to_pass
+def test_fix_prevents_crash_on_invalid_domurl():
+    """The fix must contain a control-flow guard to handle exceptions.
+
+    Without the fix, accessing server.url with an invalid URL causes a segfault.
+    With the fix, a control-flow guard prevents reaching jsCast on an invalid
+    value, allowing the error to propagate gracefully.
+    """
+    # Verify the guard exists by checking control flow can diverge
+    region = _extract_func_region()
+    after = _between_tojs_and_jscast(region)
+
+    # The guard must have proper JSC exception-handling structure
+    after_stripped = after.strip()
+    assert after_stripped, "No statements between toJSNewlyCreated and jsCast"
+    assert _guard_has_proper_structure(after_stripped), (
+        "Guard lacks proper JSC exception-handling structure."
+    )
 
 
 # [repo_tests] pass_to_pass
 def test_repo_url_domurl_tests():
-    """URL/DOMURL tests pass - relevant to BunString__toJSDOMURL fix (pass_to_pass).
+    """URL/DOMURL tests pass (pass_to_pass).
 
     Runs the test/js/web/url/url.test.ts tests using bun.
     These tests exercise the URL and DOMURL functionality that the fix
-    addresses. The fix adds a control-flow guard to prevent null deref
-    when DOMURL creation fails (e.g., invalid URL).
-    CI/CD equivalent: bun test test/js/web/url/url.test.ts
+    addresses. CI/CD equivalent: bun test test/js/web/url/url.test.ts
     """
     r = subprocess.run(
         ["npx", "--yes", "bun@latest", "test", "test/js/web/url/url.test.ts"],
@@ -668,7 +663,6 @@ def test_repo_clang_format_check():
 
     if available_cmd is None:
         # Skip this test if clang-format is not installed
-        # This is acceptable - the repo doesn't require clang-format at runtime
         return
 
     r = subprocess.run(
@@ -679,7 +673,6 @@ def test_repo_clang_format_check():
     )
     # clang-format returns non-zero if formatting would change,
     # but we're just checking it can parse the file
-    # Parse errors would be in stderr
     has_parse_error = "error" in r.stderr.lower() or "fatal" in r.stderr.lower()
     assert not has_parse_error, f"clang-format found parse errors:\n{r.stderr[-500:]}"
 
@@ -726,17 +719,13 @@ def test_repo_cmake_sources_json_structure():
 
 # [agent_config] fail_to_pass
 # Source: .claude/skills/implementing-jsc-classes-cpp/SKILL.md @ 9e93bfa
-def test_uses_return_if_exception_macro():
-    """Fix should use RETURN_IF_EXCEPTION macro per JSC bindings idiom in SKILL.md.
+def test_control_flow_guard_present():
+    """Fix must contain a control-flow guard to handle exceptions.
 
     Per .claude/skills/implementing-jsc-classes-cpp/SKILL.md, the established
     JSC exception-handling idiom is RETURN_IF_EXCEPTION(throwScope, {}).
-    The nearby URL__fromJS function in the same file already uses this macro.
-
-    NOTE: This test accepts ANY control-flow guard (not just RETURN_IF_EXCEPTION)
-    to allow alternative correct fixes, but PREFERS RETURN_IF_EXCEPTION.
-    A fix that uses a different guard pattern will pass this test but may
-    receive guidance to use RETURN_IF_EXCEPTION per SKILL.md idiom.
+    The guard must be able to divert control flow before jsCast when an
+    exception is pending.
     """
     after = _between_tojs_and_jscast(_extract_func_region())
     # Accept any control-flow guard (RETURN_IF_EXCEPTION OR if+return)

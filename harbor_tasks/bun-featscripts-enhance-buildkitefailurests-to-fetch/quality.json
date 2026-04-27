@@ -1,49 +1,49 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction documents all key specifics tested: --help/-h flag, --wait flag with polling, --flaky flag, --warnings flag, /tmp/bun-build-{number}-{platform}-{step}.log path pattern, supported input formats (build number, branch, PR URL, #number), buildkite.com API reference, CLAUDE.md update, and the script path scripts/buildkite-failures.ts. The test assertions for literals like '--wait', '/tmp/bun-build', 'poll', 'branch', 'build', 'pr' are all discoverable from instruction.md."
+      "reason": "Instruction names all test specifics: --help/-h flag, --wait, --flaky, --warnings, /tmp/bun-build-{number}-{platform}-{step}.log path, buildkite.com, and CLAUDE.md update."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes desired behaviors (help text, wait mode, log fetching, CLAUDE.md updates) without specifying exact code changes, line numbers, or implementation details. A developer must reason about how to implement each feature."
+      "reason": "Instruction describes the missing behaviors but not specific code changes; agent must figure out implementation."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check for behavioral properties: exit code 0 on --help, presence of keywords like '--wait', 'poll'/'complete'/'wait', '/tmp/bun-build', 'build', 'pr'/'pull'/'#number', 'branch' in output. These are broad behavioral checks that any correct implementation would satisfy, not specific to variable names or internal structure."
+      "reason": "Tests check for substrings like '--wait', '/tmp/bun-build', 'branch', etc. that any reasonable implementation would include; no internal function names or variable specifics."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "The primary fail-to-pass tests execute the script via subprocess ('bun run scripts/buildkite-failures.ts --help') and check stdout/returncode. Pass-to-pass tests also execute subprocesses (bun test, bunx tsc, oxlint, prettier, bun build). test_existing_flags_preserved does read file content, but most tests verify execution behavior."
+      "reason": "Tests execute the script via subprocess (bun run ... --help) and verify exit code and stdout, plus run prettier/oxlint/tsc/bun build."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub implementation that does nothing would not exit 0 with >50 chars of stdout containing '--wait', '/tmp/bun-build', 'build', 'branch', and PR-related terms. The agent must actually implement --help handling with specific content. The pass-to-pass tests require the script to pass linting, type-checking, and building."
+      "reason": "A stub that does nothing on --help would exit non-zero or print nothing; tests require substantial output with specific tokens."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "Several behaviors required by instruction.md are not tested: --wait polling behavior, actual log fetching from BuildKite API, failure grouping by type (build/test/other), canceled/pending build handling, and the actual content of CLAUDE.md documentation updates (the test functions for CLAUDE.md appear to be empty/commented out in test_outputs.py)."
+      "reason": "Instruction explicitly requires CLAUDE.md updates with usage examples, but the config_edit f2p test bodies are empty (commented headers only); also wait polling, log fetching, failure grouping, and canceled-build handling are not tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-organized with clear section comments (fail_to_pass pr_diff, config_edit, pass_to_pass repo_tests), descriptive function names (test_help_flag_exits_zero, test_help_documents_wait_option), and docstrings explaining each test's purpose."
+      "reason": "Tests are grouped with section comment banners (fail-to-pass, config_edit, repo_tests) and named descriptively."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "The task produces CLI output and log files, not structured data like JSON/CSV/API/DB."
+      "reason": "Task produces text/log files, not structured data with a schema."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos found in filenames, paths, commands, or variable names across instruction.md and test files."
+      "reason": "Filenames and commands appear correct (scripts/buildkite-failures.ts, CLAUDE.md, /tmp/bun-build-*)."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The instruction names the two files to modify (scripts/buildkite-failures.ts and CLAUDE.md) which is appropriate since the task domain makes these obvious. No specific line numbers, function names, or implementation details are leaked."
+      "reason": "Instruction names the file to edit (scripts/buildkite-failures.ts) which is the natural task target, not a specific line."
     },
     "config_edit_scope_bounded": {
       "outcome": "fail",
-      "reason": "The CLAUDE.md config edit tests appear to be empty (the test function bodies for config_edit fail_to_pass are missing in test_outputs.py - just comments with no code). This means the CLAUDE.md requirement described in instruction.md is not actually verified, creating a mismatch."
+      "reason": "The config_edit f2p test placeholders are empty (just '# [config_edit] fail_to_pass' comments with no test body), so CLAUDE.md changes aren't actually verified despite being a stated requirement."
     }
   },
   "tier_a_fails": [],

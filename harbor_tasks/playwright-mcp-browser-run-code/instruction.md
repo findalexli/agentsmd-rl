@@ -10,17 +10,11 @@ Currently, the `browser_run_code` tool's `code` parameter accepts raw JavaScript
 
 **Parameter documentation changes:**
 
-The `code` parameter description must be updated to document that it accepts a JavaScript function expression. The description must include:
-- The example pattern `async (page) =>`
-- Text stating the function receives "a single argument, page" OR "page, which you can use"
-- An example showing how to use the `page` argument for browser interactions (e.g., `await page.getByRole('button').click()`)
+The `code` parameter's schema description should be updated to document the new function-based API. It should explain that the parameter accepts a JavaScript function expression that receives the Playwright `page` object for browser interactions, and include a usage example showing the expected format.
 
 **Execution logic changes:**
 
-The current implementation directly injects the raw code string. This should be changed to:
-- Invoke the provided code as a function call with the `page` object
-- The pattern `(${params.code})(page)` must appear at least twice in the file (in both the code display and the execution logic)
-- The file must NOT contain bare `${params.code}` followed by a semicolon (the old direct injection pattern)
+The current implementation directly injects the raw `code` string as statements inside an async IIFE wrapper. This should be changed so that the provided code is treated as a function expression and invoked with the `page` object as its argument. Both the code display (via `addCode`) and the actual `vm` execution should call the user's code as a function rather than injecting it as raw statements.
 
 ### 2. Add `browser_run_code` tool to agent definition files
 

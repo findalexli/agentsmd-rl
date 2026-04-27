@@ -42,37 +42,76 @@ def test_summary_script_no_tests_phase_status():
     """post-ai-summary-comment.ps1 phaseStatuses must not include Tests."""
     script_path = Path(REPO) / ".github/skills/ai-summary-comment/scripts/post-ai-summary-comment.ps1"
 
-    # First verify script parses correctly (behavioral check)
+    # First verify script parses correctly
     r = _parse_pwsh(str(script_path))
     assert r.returncode == 0, f"Script has syntax errors: {r.stderr}"
 
-    # Then check content for the specific fix
-    content = script_path.read_text()
-    # The old script had: "Tests" = "⏳ PENDING" in phaseStatuses
-    assert '"Tests" = ' not in content, \
+    # Behavioral: use PowerShell AST to verify no hashtable literal has a "Tests" key
+    # (catches any quoting style: "Tests", 'Tests', or bare Tests)
+    ps_check = (
+        "$errors = $null\n"
+        "$ast = [System.Management.Automation.Language.Parser]::ParseFile(\n"
+        "    '" + str(script_path) + "', [ref]$null, [ref]$errors)\n"
+        "$hashes = $ast.FindAll({\n"
+        "    $args[0] -is [System.Management.Automation.Language.HashtableAst]\n"
+        "}, $true)\n"
+        "$found = $false\n"
+        "foreach ($h in $hashes) {\n"
+        "    foreach ($kvp in $h.KeyValuePairs) {\n"
+        "        if ($kvp.Item1.Extent.Text -match 'Tests') { $found = $true }\n"
+        "    }\n"
+        "}\n"
+        "if ($found) { Write-Output 'FAIL'; exit 1 }\n"
+        "else { Write-Output 'OK'; exit 0 }\n"
+    )
+    r = subprocess.run(
+        ["pwsh", "-NoProfile", "-Command", ps_check],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, \
         "Script phaseStatuses should not include a Tests entry"
 
 
 # [pr_diff] fail_to_pass
 def test_summary_script_no_tests_section_extraction():
-    """post-ai-summary-comment.ps1 must not extract a Tests section."""
+    """post-ai-summary-comment.ps1 must not extract or build a Tests phase section."""
     script_path = Path(REPO) / ".github/skills/ai-summary-comment/scripts/post-ai-summary-comment.ps1"
 
-    # Verify script parses correctly (behavioral check)
+    # Verify script parses correctly
     r = _parse_pwsh(str(script_path))
     assert r.returncode == 0, f"Script has syntax errors: {r.stderr}"
 
-    content = script_path.read_text()
-    # The gold patch removes the extraction of Tests content:
-    # - The $testsContent = Get-SectionByPattern assignment is removed
-    # - The $testsSection = New-PhaseSection building is removed
-    # - The $testsSection output in phaseSections is removed
-    assert "$testsContent = Get-SectionByPattern" not in content, \
-        "Script should not have $testsContent extraction assignment"
-    assert "$testsSection = New-PhaseSection" not in content, \
-        "Script should not build $testsSection"
-    assert "$phaseSections += $testsSection" not in content, \
-        "Script should not add Tests section to output"
+    # Behavioral: use PowerShell AST to verify no New-PhaseSection or
+    # Extract-PhaseFromComment call references "Tests" as a phase
+    # (catches any variable naming or code structure)
+    ps_check = (
+        "$errors = $null\n"
+        "$ast = [System.Management.Automation.Language.Parser]::ParseFile(\n"
+        "    '" + str(script_path) + "', [ref]$null, [ref]$errors)\n"
+        "$commands = $ast.FindAll({\n"
+        "    $args[0] -is [System.Management.Automation.Language.CommandAst]\n"
+        "}, $true)\n"
+        "$found = $false\n"
+        "foreach ($cmd in $commands) {\n"
+        "    $cmdName = $cmd.GetCommandName()\n"
+        "    if ($cmdName -in @('New-PhaseSection', 'Extract-PhaseFromComment')) {\n"
+        "        if ($cmd.Extent.Text -match 'Tests') { $found = $true }\n"
+        "    }\n"
+        "}\n"
+        "if ($found) {\n"
+        "    Write-Output 'FAIL: Script still builds or extracts a Tests phase'\n"
+        "    exit 1\n"
+        "} else {\n"
+        "    Write-Output 'OK: No Tests phase handling found'\n"
+        "    exit 0\n"
+        "}\n"
+    )
+    r = subprocess.run(
+        ["pwsh", "-NoProfile", "-Command", ps_check],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert r.returncode == 0, \
+        f"Script should not extract or build a Tests phase section: {r.stdout}"
 
 
 # [pr_diff] fail_to_pass

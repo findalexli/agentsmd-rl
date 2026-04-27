@@ -1,15 +1,16 @@
 {
   "schema_version": 2,
-  "valid": true,
-  "verdict": "pass",
-  "nop_reward": 0.0,
-  "gold_reward": 1.0,
-  "validated_at": "2026-04-16T11:27:29.121473",
-  "total_time": 534.23,
-  "sandbox_id": "iz5gfym6d19vm17pa4uht",
-  "backend": "anthropic",
+  "valid": false,
+  "verdict": "fail",
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-21T21:34:53.785451",
+  "total_time": 26872.71,
+  "sandbox_id": "iwmj3wqeqwd1ovv9dnitb",
+  "backend": "minimax",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "fix_quality",
+  "error": "rate limited during fix_quality: {\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":189213,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 429 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"rate_limit_error\\\",\\\"message\\\":\\\"usage limit exceeded (2056)\\\"},\\\"request_id\\\":\\\"063782ec125f2aad6c195109cd6cecf6\\\"}\",\"stop_reason\":\"stop_sequence\",\"session_id\":\"88e89908-dd2b-4807-a94a-5954a38be8b2\",\"total_cost_usd\":0,\"usage\":{\"input_tokens\":0,\"cache_creation_input_tokens\":0,\"cache_read_inp",
   "nodes": {
     "scaffold": {
       "status": "ok",
@@ -45,10 +46,10 @@
     },
     "quality_gate": {
       "status": "DELETE",
-      "model": "claude-opus-4-7",
-      "backend": "anthropic",
-      "time": 0.25,
-      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:7', 'A:[A] test_not_tautological @ tests/test_outputs.py:38: test `test_version_in_nodes_to_remove` has 3 assert(s), all pass o', 'A:[A] test_not_tautological @ tests/test_outputs.py:97: test `test_zbadversion_handling` has 3 assert(s), all pass on a st', 'A:[A] test_not_tautological @ tests/test_outputs.py:125: test `test_removal_tracking` has 3 assert(s), all pass on a stub ', 'A:[A] test_not_tautological @ tests/test_outputs.py:154: test `test_node_and_version_extraction` has 3 assert(s), all pass', 'lint_tier_b:1', 'B:[B] no_network_during_tests @ tests/test.sh:5: network call at test time: `pip install`']"
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.23,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:7', 'A:[A] test_not_tautological @ tests/test_outputs.py:38: test `test_version_in_nodes_to_remove` has 3 assert(s), all pass o', 'A:[A] test_not_tautological @ tests/test_outputs.py:97: test `test_zbadversion_handling` has 3 assert(s), all pass on a st', 'A:[A] test_not_tautological @ tests/test_outputs.py:125: test `test_removal_tracking` has 3 assert(s), all pass on a stub ', 'A:[A] test_not_tautological @ tests/test_outputs.py:154: test `test_node_and_version_extraction` has 3 assert(s), all pass', 'lint_tier_b:2', 'B:[B] no_network_during_tests @ tests/test.sh:5: network call at test time: `pip install`', 'B:[B] no_network_during_tests @ tests/test.sh:40: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
@@ -65,25 +66,16 @@
       "status": "error",
       "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":433,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 400 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"invalid_request_error\\\",\\\"message\\\":\\\"\\\\\\\"thinking.type.enabled\\\\\\\" is not supported for this model. Use \\\\\\\"thinking.type.adapt",
       "time": 48.62
+    },
+    "fix_quality": {
+      "status": "rate_limited",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 190.72,
+      "notes": ""
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "oauth",
-      "time": 293.44,
-      "at": "2026-04-15T18:44:42.332359"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "oauth",
-      "time": 280.12,
-      "at": "2026-04-15T19:12:33.499804"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -107,6 +99,22 @@
       "backend": "anthropic",
       "time": 534.23,
       "at": "2026-04-16T11:27:29.121473"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 17746.2,
+      "at": "2026-04-20T18:52:22.430603"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "minimax",
+      "time": 26872.71,
+      "at": "2026-04-21T21:34:53.785451"
     }
   ]
 }

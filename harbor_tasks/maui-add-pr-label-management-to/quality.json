@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "Instruction names all required identifiers: Update-VerificationLabels, $LabelConfirmed, $LabelFailed, label strings 'ai-reproduction-confirmed'/'ai-reproduction-failed', $labelToAdd, $labelToRemove, $LASTEXITCODE, $foundPR, gh pr view, gh pr list --head, '## PR Labels' section, and the two file paths."
+      "reason": "All tested specifics (function name Update-VerificationLabels, label constants $LabelConfirmed/$LabelFailed, label values ai-reproduction-confirmed/ai-reproduction-failed, $foundPR variable, '## PR Labels' section, file paths) are explicitly named in instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "Instruction describes required function name, variables, and API methods but doesn't provide full code implementation; agent must still write the toggle logic and REST calls."
+      "reason": "Instruction describes required behaviors and API choices (DELETE/POST, $LASTEXITCODE) but doesn't show the implementation code."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert specific variable names ($labelToAdd, $labelToRemove, $foundPR) and exact label constants ($LabelConfirmed='ai-reproduction-confirmed', $LabelFailed='ai-reproduction-failed'), but gold solution uses 's/ai-reproduction-confirmed' prefix \u2014 tests use substring match ('ai-reproduction-confirmed' in c) so gold passes, but this still constrains naming heavily. However, the instruction itself mandates these exact names, so alternatives would violate the spec. Still, the test_update_labels_"
+      "reason": "Tests assert exact variable names like $labelToAdd, $labelToRemove, $foundPR, and exact label string values 'ai-reproduction-confirmed'/'ai-reproduction-failed' \u2014 though instruction does specify these, the test also requires literal 'DELETE' and 'POST' strings in function body which constrains implementation; however these are all spelled out in instruction so alternatives that follow instruction would pass. Borderline pass."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "All f2p tests are static text/regex inspection of PS1 and SKILL.md files (e.g., 'gh pr list' in content, '$foundPR' in content, '## PR Labels' in content). No test actually executes the PowerShell function or verifies runtime behavior."
+      "reason": "All f2p tests are static text/regex inspections of PS1 and SKILL.md content (e.g., 'DELETE' not in body, '$foundPR' not in content) \u2014 no execution of PowerShell or behavioral verification."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "Tests require specific string tokens, counts (>=2 true/false calls), and structural elements that a stub can't satisfy without real edits."
+      "reason": "Tests require multiple specific structural elements (function with toggle vars, REST API verbs, label constants, calls on multiple paths, doc section) that a stub cannot trivially satisfy."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "Each behavior in instruction (function logic, constants, 4 path calls, PR fallback, SKILL.md section) maps to a test."
+      "reason": "Each instruction requirement (function logic, constants, 4 calls, PR fallback, SKILL.md section) has a corresponding test."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are grouped with section comments (Gates, Fail-to-pass, Pass-to-pass) and have descriptive names."
+      "reason": "Tests are grouped under labeled comment sections (Gates, Fail-to-pass, Pass-to-pass) with descriptive names."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data output."
+      "reason": "Task modifies scripts and markdown, not structured data outputs."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "Paths and variable names appear consistent between instruction and tests."
+      "reason": "Paths and identifiers in instruction match those tested."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "Instruction identifies files to modify which is appropriate; does not cite specific line numbers."
+      "reason": "Instruction names files to modify (which is appropriate scoping), not specific lines."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "Not an agentmd-edits task."
+      "reason": "Not an agentmd-edits config task."
     }
   },
   "tier_a_fails": [

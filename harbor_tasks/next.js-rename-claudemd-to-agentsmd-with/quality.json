@@ -3,54 +3,52 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "Instruction names AGENTS.md, CLAUDE.md, .alexignore, the required headers/sections (Next.js Development Guide, Git Workflow, Build Commands, Testing, Linting and Types), and the 5000-char threshold."
+      "reason": "Instruction names AGENTS.md, CLAUDE.md, .alexignore, the required header '# Next.js Development Guide', sections (Git Workflow, Build Commands, Testing, Linting and Types), the >5000 char threshold, and the symlink target."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "Instruction describes desired end state (AGENTS.md as file, CLAUDE.md readable with same content, .alexignore contains both) without prescribing symlink commands or implementation steps."
+      "reason": "Instruction describes desired end state (AGENTS.md as regular file, CLAUDE.md as symlink, .alexignore lists both) without dictating exact commands."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "test_claude_md_is_symlink asserts CLAUDE.md must be a symlink pointing to 'AGENTS.md', but instruction.md only says CLAUDE.md 'should still be readable and return the same content' \u2014 a valid alternative fix (copying the file) would fail this test."
+      "outcome": "pass",
+      "reason": "Tests check for symlink target == 'AGENTS.md', file content matching, and presence of strings \u2014 any correct implementation satisfying these will pass."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests execute subprocess cat, use os.readlink, Path.is_symlink, and check file-system behavior, not just text matching."
+      "reason": "Tests use Path.is_symlink, os.readlink, and subprocess cat to verify actual filesystem behavior, not just text matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "f2p tests require actual file creation, symlink creation, and .alexignore edits; a stub cannot satisfy them."
+      "reason": "f2p tests require AGENTS.md to be a real file with >5000 chars, CLAUDE.md to be a symlink to AGENTS.md, and .alexignore to contain both names \u2014 a stub cannot pass."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All required behaviors (AGENTS.md content, CLAUDE.md readability, .alexignore contents) are covered by tests."
+      "reason": "All required behaviors (AGENTS.md content, CLAUDE.md symlink, .alexignore entries, section headers, size) are tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are grouped with section comments for pass_to_pass and fail_to_pass with descriptive names and docstrings."
+      "reason": "Tests are grouped with section comments (pass_to_pass vs fail_to_pass) and have descriptive names and docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task doesn't produce structured data."
+      "reason": "Task does not produce structured data."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos observed in filenames or paths."
+      "reason": "Filenames AGENTS.md, CLAUDE.md, .alexignore are consistent throughout instruction and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "Instruction names relevant files but this is inherent to the task domain; no buggy line/implementation is leaked."
+      "reason": "Instruction names the obvious files (CLAUDE.md, .alexignore) which are the task domain itself; no extraneous line-level hints."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The .alexignore edit is adding one line (AGENTS.md), a localized change, not a full-file rewrite."
+      "reason": "The .alexignore edit is a small additive change (adding AGENTS.md line); not a full-file rewrite."
     }
   },
-  "tier_a_fails": [
-    "solution_uniqueness_guard"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 9,
-  "fail_count": 1
+  "pass_count": 10,
+  "fail_count": 0
 }

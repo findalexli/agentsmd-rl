@@ -4,12 +4,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-15T22:41:00.354809",
-  "total_time": 3807.69,
-  "sandbox_id": "i9bthsymksat095pqmtqu",
-  "backend": "minimax",
+  "validated_at": "2026-04-25T12:40:29.913799",
+  "total_time": 1371.32,
+  "sandbox_id": "i491l1x88sijjktnjvyb2",
+  "backend": "anthropic",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "oneshot_repair",
   "nodes": {
     "validate": {
       "status": "pass",
@@ -17,9 +17,9 @@
       "gold_reward": 1.0,
       "attempts": 2,
       "notes": "All 4 checks passed: Docker build OK, NOP test reward=0, Gold test reward=1, Rubric judge=1.0. Removed rubric rules that couldn't be evaluated (judge only works with config file edits, this task only requires code changes to assert.ts).",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 112.38
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 115.72
     },
     "rubric_judge": {
       "status": "pass",
@@ -66,22 +66,34 @@
       "abandon_reason": ""
     },
     "quality_gate": {
-      "status": "passed",
-      "model": "MiniMax-M2.7",
-      "backend": "minimax",
-      "time": 0.28,
-      "notes": "flags=[]"
+      "status": "DELETE",
+      "model": "claude-opus-4-6",
+      "backend": "anthropic",
+      "time": 0.31,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:224: test `test_prototype_extraction_exists_and_used` has 3 assert(s),', 'lint_tier_b:1', 'B:[B] no_network_during_tests @ tests/test.sh:44: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 20.85,
+      "time": 15.4,
       "tier_a_fails": [
         "no_solution_leakage",
-        "solution_uniqueness_guard"
+        "tests_verify_behavior_not_text"
       ],
       "tier_b_fails": [],
       "pass_count": 6,
       "fail_count": 3
+    },
+    "fix_quality": {
+      "status": "ok",
+      "model": "claude-opus-4-6",
+      "backend": "anthropic",
+      "time": 575.12,
+      "notes": ""
+    },
+    "tests_rewrite": {
+      "status": "error",
+      "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":534,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"There's an issue with the selected model (opus). It may not exist or you may not have access to it. Run --model to pick a different model.\",\"stop_reason\":\"stop_sequence\",\"session_id\":\"8",
+      "time": 1.74
     }
   },
   "history": [
@@ -89,41 +101,41 @@
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
-      "backend": "fireworks",
-      "time": 1539.75,
-      "at": "2026-04-15T03:52:25.915371"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
       "backend": "minimax",
-      "time": 3054.16,
-      "at": "2026-04-15T11:17:28.112688"
+      "time": 22570.98,
+      "at": "2026-04-22T04:26:00.882892"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 2767.4,
+      "at": "2026-04-25T00:11:02.202437"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 11650.61,
+      "at": "2026-04-25T03:26:09.146513"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 16349.62,
+      "at": "2026-04-25T07:59:50.529846"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
-      "backend": "oauth",
-      "time": 456.78,
-      "at": "2026-04-15T12:43:21.705287"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 2714.72,
-      "at": "2026-04-15T21:16:37.206421"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "minimax",
-      "time": 3807.69,
-      "at": "2026-04-15T22:41:00.354809"
+      "backend": "anthropic",
+      "time": 1371.32,
+      "at": "2026-04-25T12:40:29.913799"
     }
   ]
 }

@@ -29,6 +29,8 @@ When handling 409 responses:
 
 4. **Unique cache busting**: Retried requests without a handle header must use a unique cache-busting strategy to ensure URL uniqueness (e.g., time-based + random value appended to the URL)
 
+5. **One-shot cache buster**: The cache-busting value must be consumed on the retry and must not persist on subsequent normal requests
+
 ## What to Look For
 
 The fix involves the `ShapeStream` class in `packages/typescript-client/src/client.ts`. The buggy handle-construction pattern appends `-next` to handles when the server 409 response lacks a header — this pattern must be removed and replaced with a cache-busting approach.

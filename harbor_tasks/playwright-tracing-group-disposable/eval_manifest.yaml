@@ -1,134 +1,111 @@
 version: "2.0"
 
 source:
-  repo: "microsoft/playwright"
-  pr: 39729
-  base_commit: "1ed53ac99ec225a5fc0aacb762a18e3195c61a6c"
-  merge_commit: "7a4bfa1ae6afb2c2b30fe0d4107256793dde8a3a"
+  owner: microsoft
+  repo: playwright
+  pr_number: 39729
+  base_commit: 1ed53ac99ec225a5fc0aacb762a18e3195c61a6c
+  merge_commit: 7a4bfa1ae6afb2c2b30fe0d4107256793dde8a3a
+  pr_title: "fix(api): make Tracing.group return Disposable"
 
 checks:
-  # Config edit checks (at least one required for agentmd-edit tasks)
-  - id: claude_md_has_flint_rule
+  - id: test_group_returns_disposable
     type: fail_to_pass
-    origin: pr_diff
-    description: "CLAUDE.md updated to include 'npm run flint' pre-commit rule"
+    origin: gold_patch
+    description: |
+      `tracing.group(name)` must resolve to an object with a callable
+      `dispose()` method (across multiple input names).
 
-  - id: api_docs_updated
+  - id: test_dispose_calls_group_end_exactly_once
     type: fail_to_pass
-    origin: pr_diff
-    description: "API documentation documents the Disposable return type"
+    origin: gold_patch
+    description: |
+      Calling `dispose()` on the returned object must trigger the
+      `tracingGroupEnd` channel call exactly once, with idempotency on a
+      second `dispose()`.
 
-  # Code behavior checks
-  - id: tracing_ts_imports_disposable
+  - id: test_returned_value_supports_async_dispose_protocol
     type: fail_to_pass
-    origin: pr_diff
-    description: "tracing.ts imports DisposableStub from disposable module"
+    origin: gold_patch
+    description: |
+      The returned value implements `Symbol.asyncDispose` (the runtime
+      protocol `await using` calls), and invoking it triggers
+      `tracingGroupEnd`.
 
-  - id: tracing_group_returns_disposable
+  - id: test_public_types_d_ts_returns_disposable
     type: fail_to_pass
-    origin: pr_diff
-    description: "Tracing.group() returns Disposable that calls groupEnd() on dispose"
+    origin: gold_patch
+    description: |
+      Generated `packages/playwright-core/types/types.d.ts` and
+      `packages/playwright-client/types/types.d.ts` declare
+      `Tracing.group(...)` as `Promise<Disposable>`.
 
-  - id: types_d_updated
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Type definitions show group() returns Promise<Disposable>"
-
-  # Pass-to-pass checks (CI/CD)
-  - id: typescript_compiles
+  - id: test_repo_check_deps
     type: pass_to_pass
-    origin: static
-    description: "Modified TypeScript files compile without errors"
+    origin: repo_tests
+    description: |
+      Repo's `node utils/check_deps.js` (DEPS.list import-boundary check)
+      passes.
 
-  - id: flint_linting
+  - id: test_repo_lint_packages
     type: pass_to_pass
-    origin: agent_config
-    description: "Code passes eslint as required by CLAUDE.md commit convention"
-    source:
-      path: "CLAUDE.md"
-      lines: "98-99"
-      commit: "1ed53ac99ec225a5fc0aacb762a18e3195c61a6c"
+    origin: repo_tests
+    description: |
+      Repo's `node utils/workspace.js --ensure-consistent` passes.
 
-# Config edits extracted from the gold patch
-config_edits:
-  - path: "CLAUDE.md"
-    tier: 1
-    gold_added: "Before committing, run `npm run flint` and fix errors."
-    gold_removed: ""
+  - id: test_repo_eslint_modified_file
+    type: pass_to_pass
+    origin: repo_tests
+    description: |
+      ESLint passes on
+      `packages/playwright-core/src/client/tracing.ts`.
 
-# Rubric rules from applicable agent configs (CLAUDE.md and SKILL.md)
 rubric:
-  # From CLAUDE.md
-  - rule: "Always run `npm run flint` before committing"
+  - id: agent_runs_flint_before_committing
+    description: |
+      CLAUDE.md instructs contributors to run `npm run flint` (or its
+      constituent commands: eslint, tsc, doc, check-deps,
+      generate_channels, lint-tests, test-types, lint-packages) before
+      considering work complete. Submission should pass these checks.
     source:
-      path: "CLAUDE.md"
-      lines: "98-99"
-      commit: "1ed53ac99ec225a5fc0aacb762a18e3195c61a6c"
-    evidence: "Gold patch adds this rule to CLAUDE.md; agent must follow it"
-    category: process
-    verification: programmatic
+      file: CLAUDE.md
+      ref: "1ed53ac99ec225a5fc0aacb762a18e3195c61a6c"
+      lines: "65-69"
+    severity: warn
 
-  - rule: "Semantic commit messages: label(scope): description with labels fix/feat/chore/docs/test/devops"
+  - id: deps_list_respected
+    description: |
+      Per CLAUDE.md "DEPS System": import boundaries declared in
+      DEPS.list must not be violated. Adding the new client-internal
+      import (DisposableStub from ./disposable) is allowed by
+      `packages/playwright-core/src/client/DEPS.list` (which permits any
+      intra-client import); any additional imports the agent introduces
+      must remain within the client subtree.
     source:
-      path: "CLAUDE.md"
-      lines: "102-104"
-      commit: "1ed53ac99ec225a5fc0aacb762a18e3195c61a6c"
-    evidence: "Gold PR uses 'fix(api): make Tracing.group return Disposable'"
-    category: process
-    verification: llm_judge
+      file: CLAUDE.md
+      ref: "1ed53ac99ec225a5fc0aacb762a18e3195c61a6c"
+      lines: "75-80"
+    severity: warn
 
-  - rule: "Client code NEVER imports server code; use protocol layer for communication"
+  - id: client_does_not_import_server
+    description: |
+      CLAUDE.md key rule: "Client code NEVER imports server code. Server
+      code NEVER imports client code." The fix must not introduce any
+      cross-boundary imports.
     source:
-      path: "CLAUDE.md"
-      lines: "83-86"
-      commit: "1ed53ac99ec225a5fc0aacb762a18e3195c61a6c"
-    evidence: "Gold imports DisposableStub from client module, not server"
-    category: architecture
-    verification: programmatic
+      file: CLAUDE.md
+      ref: "1ed53ac99ec225a5fc0aacb762a18e3195c61a6c"
+      lines: "78-79"
+    severity: fail
 
-  - rule: "When adding/modifying APIs, update docs/src/api/ documentation"
+  - id: docs_drive_generated_types
+    description: |
+      Per CLAUDE.md "Key Directories": `docs/src/api/` is the source of
+      truth for public TypeScript types. Updating only the generated
+      `types.d.ts` (without updating the corresponding `docs/src/api/`)
+      is incorrect because the next build will overwrite it.
     source:
-      path: "CLAUDE.md"
-      lines: "68-70"
-      commit: "1ed53ac99ec225a5fc0aacb762a18e3195c61a6c"
-    evidence: "Gold updates class-tracing.md with return type documentation"
-    category: documentation
-    verification: programmatic
-
-  - rule: "API changes require updating both packages/playwright-client and packages/playwright-core types"
-    source:
-      path: "CLAUDE.md"
-      lines: "60-64"
-      commit: "1ed53ac99ec225a5fc0aacb762a18e3195c61a6c"
-    evidence: "Gold updates types.d.ts in both client and core packages"
-    category: architecture
-    verification: programmatic
-
-# Distractor rules (irrelevant conventions that might cause collision)
-distractors:
-  - rule: "Use test.step instead of Tracing.group when available"
-    source:
-      path: "docs/src/api/class-tracing.md"
-      lines: "305-308"
-      commit: "1ed53ac99ec225a5fc0aacb762a18e3195c61a6c"
-    collision_type: scope_ambiguity
-    why_distracting: "The caution note in docs warns against using group(), but the task is to improve group() API - this creates confusion about whether to use group() or not"
-    severity: medium
-
-  - rule: "Branch naming for issue fixes: fix-<issue-number>"
-    source:
-      path: "CLAUDE.md"
-      lines: "115"
-      commit: "1ed53ac99ec225a5fc0aacb762a18e3195c61a6c"
-    collision_type: meta_confusion
-    why_distracting: "Branch naming convention is for creating PRs, not for fixing the bug itself - agent might waste time on this irrelevant process rule"
-    severity: low
-
-  - rule: "Never add Co-Authored-By agents in commit message"
-    source:
-      path: "CLAUDE.md"
-      lines: "114"
-      commit: "1ed53ac99ec225a5fc0aacb762a18e3195c61a6c"
-    collision_type: meta_confusion
-    why_distracting: "Commit message convention is for final submission, not for the code fix - irrelevant during development"
-    severity: low
+      file: CLAUDE.md
+      ref: "1ed53ac99ec225a5fc0aacb762a18e3195c61a6c"
+      lines: "31-37"
+    severity: warn

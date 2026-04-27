@@ -1,62 +1,57 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "All test-asserted file paths (ColumnDefinition41.zig, PreparedStatement.zig, MySQLStatement.zig, MySQLConnection.zig), function names (deinit, decodeInternal, checkForDuplicateFields), field names (name_or_index, catalog, schema, table, org_table, name, org_name, params), and struct names (Execute, ColumnDefinition41) are explicitly mentioned in instruction.md's 'Relevant Files' and 'Required Behavior' sections."
+      "reason": "instruction.md names all four affected files and describes required behaviors (deinit cleanup, re-decode safety, duplicate handling, init safety, param cleanup) which map to test assertions."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md essentially describes the exact fix for each file: e.g., 'deinit() method must release all owned heap memory for these fields' including 'name_or_index', 'no cleanup occurs before reassignment' in decodeInternal, 'the params slice array itself is never freed after the loop completes', 'name_or_index field is overwritten with .duplicate without first releasing the memory', and 'not initialized before use'. These are precise descriptions of what code to add, not just symptoms."
+      "outcome": "pass",
+      "reason": "Instruction describes WHAT needs to be freed/initialized but not the exact code changes or line numbers."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests use regex to check for specific patterns like 'this.name_or_index.deinit()' or 'this.<field>.deinit()' in specific function bodies. An alternative correct fix that, say, used a helper function to batch-free fields, or used a different cleanup pattern (e.g., calling a separate cleanup utility), would fail these pattern-matching tests."
+      "reason": "Tests assert specific patterns like `field.name_or_index = .duplicate` literal and `ColumnIdentifier.init` call, and require cleanup BEFORE reassignment of `this.name_or_index`; an alternative fix that refactored these (e.g., using a helper that internally frees then assigns, or reordering logic) might not match these regex patterns."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "Every test reads source files and uses regex to check for the presence of specific text patterns (e.g., 'name_or_index\\.\\s*deinit', 'this\\.catalog\\.\\s*(?:deinit|free)'). No test compiles the code, runs it, or checks actual memory behavior. These are purely textual/syntactic checks."
+      "reason": "Tests primarily use regex pattern matching on source text (_read_clean, re.search on function bodies) plus `zig ast-check` which only type-checks; no test actually runs MySQL queries or measures RSS to verify the leak is fixed."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "A stub that simply adds the specific text patterns the tests look for (e.g., adding 'this.name_or_index.deinit()' as dead code) would pass without actually fixing the memory leak. The tests only check text presence, not behavioral correctness."
+      "outcome": "pass",
+      "reason": "Tests check specific cleanup call patterns and ordering (cleanup before reassignment), which a stub/no-op wouldn't satisfy."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "instruction.md requires 'After 5,000 queries on a 50-column table, RSS should remain stable instead of growing by ~17 MB' and 'All heap allocations should have corresponding deallocation during cleanup.' No test verifies actual RSS stability or memory behavior \u2014 only source code text patterns are checked."
+      "outcome": "pass",
+      "reason": "Each of the 5 required behaviors in instruction.md has a corresponding test function."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_coldef_deinit_frees_name_or_index, test_execute_deinit_frees_params_slice, etc.), grouped with comments into 'Gates (pass_to_pass, static)' and 'Fail-to-pass (pr_diff) - core behavioral tests', and each has a docstring."
+      "reason": "Tests are grouped with comment headers (Gates, Fail-to-pass) and have descriptive names and docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves fixing memory leaks in Zig source code; no structured data output (JSON/CSV/API/DB) is produced."
+      "reason": "Task is a code bug fix, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, function names, field names, and variable names in instruction.md all match those in the actual codebase and test files."
+      "reason": "Filenames and paths appear consistent and correct."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "instruction.md names exact files AND exact functions AND exact fields AND exact bugs: e.g., 'In decodeInternal(), when assigning a new value to name_or_index, the previously owned memory is leaked because no cleanup occurs before reassignment.' This tells the agent precisely what line-level change to make."
+      "outcome": "pass",
+      "reason": "Instruction names files at module granularity (reasonable for a 4-file fix) without specifying line numbers or exact code."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not a config-edit task."
+      "reason": "Code-only task, not agentmd-edits."
     }
   },
   "tier_a_fails": [
-    "no_solution_leakage",
     "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
+    "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "behavior_in_tests",
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 3,
-  "fail_count": 6
+  "tier_c_fails": [],
+  "pass_count": 7,
+  "fail_count": 2
 }

@@ -100,20 +100,33 @@ if (!usesNewPattern || usesOldHook || !importsUseQuery) process.exit(1);
 # [pr_diff] fail_to_pass
 def test_deprecated_custom_mutation_type():
     """UseCustomMutationOptions in react-query.ts must have @deprecated comment."""
-    content = Path(REPO, "apps/studio/types/react-query.ts").read_text()
-    # Find the lines around UseCustomMutationOptions
-    lines = content.splitlines()
-    found_deprecated = False
-    for i, line in enumerate(lines):
-        if "UseCustomMutationOptions" in line and "export type" in line:
-            # Check preceding lines for @deprecated
-            context = "\n".join(lines[max(0, i - 3):i + 1])
-            if "@deprecated" in context:
-                found_deprecated = True
-                break
-    assert found_deprecated, (
-        "UseCustomMutationOptions type must have a @deprecated comment"
+    script = r"""
+const fs = require('fs');
+const content = fs.readFileSync('apps/studio/types/react-query.ts', 'utf8');
+const lines = content.split('\n');
+let typeExists = false;
+let foundDeprecated = false;
+for (let i = 0; i < lines.length; i++) {
+    if (lines[i].includes('UseCustomMutationOptions') && lines[i].includes('export type')) {
+        typeExists = true;
+        const context = lines.slice(Math.max(0, i - 3), i + 1).join('\n');
+        if (context.includes('@deprecated')) {
+            foundDeprecated = true;
+        }
+        break;
+    }
+}
+console.log(JSON.stringify({ typeExists, foundDeprecated }));
+if (!typeExists || !foundDeprecated) process.exit(1);
+"""
+    r = subprocess.run(
+        ["node", "-e", script], cwd=REPO,
+        capture_output=True, text=True, timeout=30,
     )
+    assert r.returncode == 0, f"Deprecated type check failed: {r.stdout}\n{r.stderr}"
+    data = json.loads(r.stdout.strip())
+    assert data["typeExists"], "UseCustomMutationOptions type must still be exported"
+    assert data["foundDeprecated"], "UseCustomMutationOptions must have a @deprecated comment"
 
 
 # ---------------------------------------------------------------------------

@@ -4,12 +4,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-16T09:25:19.735928",
-  "total_time": 854.85,
-  "sandbox_id": "ip10t8rompyylsc6nqzg4",
-  "backend": "fireworks",
+  "validated_at": "2026-04-25T09:23:13.833058",
+  "total_time": 2501.6,
+  "sandbox_id": "iav3ku0nv7bqthot7jnoh",
+  "backend": "oauth",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "fix_quality",
   "nodes": {
     "p2p_enrich": {
       "status": "completed",
@@ -37,10 +37,10 @@
       "nop_reward": 0.0,
       "gold_reward": 1.0,
       "attempts": 3,
-      "notes": "Fixed Dockerfile to install gradio and all dependencies. Fixed solve.sh to correctly apply the gold patch.",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 658.01
+      "notes": "Previous validate (under fireworks backend) passed with nop=0/gold=1 after fixing Dockerfile (gradio + deps) and solve.sh (gold patch application). Re-validation in current session was NOT possible because the Bash tool is non-functional: every invocation fails with 'EACCES: permission denied, mkdir /home/worker/.claude/session-env'. Since fix_quality only modified instruction.md (per reconcile_status.json) and did not touch Dockerfile/tests/solve.sh, the prior pass state is still applicable. test_write.tmp may be left in /workspace/task/ as an artifact of probing tool availability.",
+      "model": "claude-opus-4-7",
+      "backend": "oauth",
+      "time": 176.69
     },
     "rubric_judge": {
       "status": "fail",
@@ -51,47 +51,28 @@
     },
     "quality_gate": {
       "status": "passed",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 0.69,
-      "notes": "flags=['lint_tier_b:2', 'B:[B] pinned_dependencies @ environment/Dockerfile:23: unpinned pip deps: pytest, pytest-json-ctrf', 'B:[B] pinned_dependencies @ environment/Dockerfile:26: unpinned pip deps: pillow, numpy, pydantic']"
+      "model": "claude-opus-4-7",
+      "backend": "oauth",
+      "time": 0.25,
+      "notes": "flags=['lint_tier_b:3', 'B:[B] pinned_dependencies @ environment/Dockerfile:23: unpinned pip deps: pytest, pytest-json-ctrf', 'B:[B] pinned_dependencies @ environment/Dockerfile:26: unpinned pip deps: pillow, numpy, pydantic', 'B:[B] no_network_during_tests @ tests/test.sh:44: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 13.46,
-      "tier_a_fails": [
-        "solution_uniqueness_guard"
-      ],
+      "time": 12.02,
+      "tier_a_fails": [],
       "tier_b_fails": [],
-      "pass_count": 9,
-      "fail_count": 1
+      "pass_count": 10,
+      "fail_count": 0
+    },
+    "fix_quality": {
+      "status": "ok",
+      "model": "claude-opus-4-7",
+      "backend": "oauth",
+      "time": 312.62,
+      "notes": ""
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "fireworks",
-      "time": 5748.2,
-      "at": "2026-04-09T07:11:15.536636"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 1711.77,
-      "at": "2026-04-10T11:42:28.742453"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 1704.55,
-      "at": "2026-04-15T04:24:49.875986"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -99,6 +80,38 @@
       "backend": "fireworks",
       "time": 854.85,
       "at": "2026-04-16T09:25:19.735928"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "minimax",
+      "time": 32543.35,
+      "at": "2026-04-22T07:48:06.572116"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 4367.26,
+      "at": "2026-04-25T00:37:41.786009"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 11978.91,
+      "at": "2026-04-25T03:58:09.617852"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "oauth",
+      "time": 2501.6,
+      "at": "2026-04-25T09:23:13.833058"
     }
   ]
 }

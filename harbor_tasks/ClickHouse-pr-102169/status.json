@@ -4,12 +4,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-16T12:32:12.986091",
-  "total_time": 1165.73,
-  "sandbox_id": "irncjl3dqu67vo85ym7ct",
+  "validated_at": "2026-04-25T12:45:25.044919",
+  "total_time": 1666.72,
+  "sandbox_id": "i5fepo11fajti6n752ayi",
   "backend": "anthropic",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "oneshot_repair",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -26,14 +26,14 @@
       "notes": "tests look good"
     },
     "validate": {
-      "status": "pass",
-      "nop_reward": 0.0,
-      "gold_reward": 1.0,
-      "attempts": 3,
-      "notes": "All 4 validations passed: Docker build OK, NOP test reward=0, Gold test reward=1. Fixed Dockerfile - optimized git clone, added clang-format-18. Fixed test_outputs.py - added re import, fixed clang_syntax_only and clang_format_check tests. Rewrote solve.sh with Python to apply properly formatted fix. Rubric judge ICR=0.0 due to missing AGENTS.md source file.",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 2150.81
+      "status": "fail",
+      "nop_reward": -1.0,
+      "gold_reward": -1.0,
+      "attempts": 0,
+      "notes": "ENVIRONMENT BROKEN: Bash tool is completely unusable in this session - every command (including 'echo test') fails with 'EACCES: permission denied, mkdir /home/worker/.claude/session-env'. The harness cannot create its session-env directory, so no shell commands can execute. Cannot run docker build, NOP test, gold test, or rubric judge. File reads/edits work but validation requires Docker which requires bash. Previous validate run (from earlier session) reported pass with nop=0/gold=1, but subsequent fix_quality node modified files and was rate-limited mid-run, so current state is unverified. Recommend retry in a fresh sandbox.",
+      "model": "claude-opus-4-7",
+      "backend": "oauth",
+      "time": 109.61
     },
     "rubric_judge": {
       "status": "fail",
@@ -54,69 +54,74 @@
     },
     "quality_gate": {
       "status": "DELETE",
-      "model": "claude-opus-4-7",
+      "model": "claude-opus-4-6",
       "backend": "anthropic",
-      "time": 0.28,
-      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:16', 'A:[A] test_not_tautological @ tests/test_outputs.py:34: test `test_clang_syntax_only` has 1 assert(s), all pass on a stub ', 'A:[A] test_not_tautological @ tests/test_outputs.py:67: test `test_libclang_parses` has 1 assert(s), all pass on a stub im', 'A:[A] test_not_tautological @ tests/test_outputs.py:99: test `test_check_cpp_style` has 1 assert(s), all pass on a stub im', 'A:[A] test_not_tautological @ tests/test_outputs.py:130: test `test_codespell_typos` has 1 assert(s), all pass on a stub i', 'lint_tier_b:1', 'B:[B] no_network_during_tests @ tests/test.sh:11: network call at test time: `pip install`']"
+      "time": 0.6,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:19', 'A:[A] reward_is_pure_pytest @ tests/test.sh:11: critical pytest/plugin install with `|| true` \u2014 silent dep failure makes r', 'A:[A] test_not_tautological @ tests/test_outputs.py:34: test `test_clang_syntax_only` has 1 assert(s), all pass on a stub ', 'A:[A] test_not_tautological @ tests/test_outputs.py:67: test `test_libclang_parses` has 1 assert(s), all pass on a stub im', 'A:[A] test_not_tautological @ tests/test_outputs.py:99: test `test_check_cpp_style` has 1 assert(s), all pass on a stub im', 'lint_tier_b:4', 'B:[B] pinned_dependencies @ environment/Dockerfile:62: unpinned pip deps: codespell, 2>/dev/null', 'B:[B] pinned_dependencies @ environment/Dockerfile:62: unpinned pip deps: codespell', 'B:[B] no_network_during_tests @ tests/test.sh:11: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 17.9,
+      "time": 13.65,
       "tier_a_fails": [
-        "no_solution_leakage",
-        "solution_uniqueness_guard",
-        "tests_verify_behavior_not_text"
+        "solution_uniqueness_guard"
       ],
       "tier_b_fails": [],
-      "pass_count": 5,
-      "fail_count": 4
+      "pass_count": 8,
+      "fail_count": 1
     },
     "tests_rewrite": {
       "status": "error",
-      "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":407,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 400 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"invalid_request_error\\\",\\\"message\\\":\\\"\\\\\\\"thinking.type.enabled\\\\\\\" is not supported for this model. Use \\\\\\\"thinking.type.adapt",
-      "time": 1.63
+      "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":485,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"There's an issue with the selected model (opus). It may not exist or you may not have access to it. Run --model to pick a different model.\",\"stop_reason\":\"stop_sequence\",\"session_id\":\"1",
+      "time": 1.6
+    },
+    "fix_quality": {
+      "status": "ok",
+      "model": "claude-opus-4-6",
+      "backend": "anthropic",
+      "time": 1661.09,
+      "notes": ""
     }
   },
   "history": [
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "glm",
-      "time": 1852.93,
-      "at": "2026-04-15T11:51:13.182770"
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 685.72,
+      "at": "2026-04-24T23:36:20.387660"
     },
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "glm",
-      "time": 2200.11,
-      "at": "2026-04-15T13:12:24.217907"
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 11864.31,
+      "at": "2026-04-25T02:54:49.992638"
     },
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "glm",
-      "time": 1407.98,
-      "at": "2026-04-15T20:00:18.501067"
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 15640.65,
+      "at": "2026-04-25T07:16:50.038446"
     },
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "glm",
-      "time": 2786.27,
-      "at": "2026-04-15T22:23:58.011447"
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "oauth",
+      "time": 599.16,
+      "at": "2026-04-25T08:51:30.792664"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "anthropic",
-      "time": 1165.73,
-      "at": "2026-04-16T12:32:12.986091"
+      "time": 1666.72,
+      "at": "2026-04-25T12:45:25.044919"
     }
   ]
 }

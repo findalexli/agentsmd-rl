@@ -4,12 +4,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-16T12:46:01.296818",
-  "total_time": 230.38,
-  "sandbox_id": "i6lmfs16wki5sqv0btiu4",
+  "validated_at": "2026-04-25T14:17:15.294365",
+  "total_time": 7177.2,
+  "sandbox_id": "ibdk5roufeur3wv9u9690",
   "backend": "anthropic",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "oneshot_repair",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -38,9 +38,9 @@
       "gold_reward": 1.0,
       "attempts": 1,
       "notes": "Fixed Dockerfile: added 'node utils/generate_injected.js' step to generate missing playwright-ct-core/src/generated/indexSource.ts before dependency checks. All checks pass: Docker build, NOP test (reward=0), Gold test (reward=1), rubric judge (ICR=1.0).",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 612.85
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 886.23
     },
     "rubric_judge": {
       "status": "pass",
@@ -71,67 +71,75 @@
     },
     "quality_gate": {
       "status": "passed",
-      "model": "claude-opus-4-7",
+      "model": "claude-opus-4-6",
       "backend": "anthropic",
-      "time": 0.26,
-      "notes": "flags=[]"
+      "time": 0.24,
+      "notes": "flags=['lint_tier_b:1', 'B:[B] no_network_during_tests @ tests/test.sh:44: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 15.64,
+      "time": 19.29,
       "tier_a_fails": [
-        "solution_uniqueness_guard"
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text"
       ],
       "tier_b_fails": [],
       "pass_count": 9,
-      "fail_count": 1
+      "fail_count": 2
     },
     "tests_rewrite": {
       "status": "error",
       "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":417,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 400 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"invalid_request_error\\\",\\\"message\\\":\\\"\\\\\\\"thinking.type.enabled\\\\\\\" is not supported for this model. Use \\\\\\\"thinking.type.adapt",
       "time": 2.32
+    },
+    "fix_quality": {
+      "status": "ok",
+      "model": "claude-opus-4-6",
+      "backend": "anthropic",
+      "time": 1450.28,
+      "notes": ""
     }
   },
   "history": [
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 2916.59,
-      "at": "2026-04-12T04:59:39.588415"
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "oauth",
+      "time": 5454.25,
+      "at": "2026-04-25T10:12:26.205995"
     },
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "minimax",
-      "time": 1478.15,
-      "at": "2026-04-15T05:18:34.991794"
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "oauth",
+      "time": 2453.9,
+      "at": "2026-04-25T10:54:16.029911"
     },
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 2141.65,
-      "at": "2026-04-15T13:35:50.229400"
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "oauth",
+      "time": 2048.53,
+      "at": "2026-04-25T11:29:28.783374"
     },
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 4000.02,
-      "at": "2026-04-16T01:33:18.108537"
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "oauth",
+      "time": 1656.06,
+      "at": "2026-04-25T11:59:23.648401"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "anthropic",
-      "time": 230.38,
-      "at": "2026-04-16T12:46:01.296818"
+      "time": 7177.2,
+      "at": "2026-04-25T14:17:15.294365"
     }
   ]
 }

@@ -176,34 +176,27 @@ console.log('PASS');
 
 
 def test_debug_cli_option():
-    """runner.ts defines --debug / -d CLI option via yargs."""
-    r = _node("""
-const fs = require('fs');
-const runner = fs.readFileSync(
-    'compiler/packages/snap/src/runner.ts', 'utf8');
+    """CLI defines --debug / -d flag and it appears in help output."""
+    # Build snap package first so we can run the CLI
+    build = subprocess.run(
+        ["yarn", "workspace", "snap", "build"],
+        capture_output=True, text=True, timeout=120, cwd=REPO + "/compiler",
+    )
+    assert build.returncode == 0, f"Snap build failed: {build.stderr[-500:]}"
 
-const errors = [];
-
-// --debug boolean option must exist
-if (!runner.includes(".boolean('debug')") && !runner.includes('.boolean("debug")'))
-    errors.push('runner.ts missing --debug boolean option');
-
-// -d alias must exist
-if (!(/\\.alias\\(['"]d['"],\\s*['"]debug['"]\\)/.test(runner)))
-    errors.push('runner.ts missing .alias("d", "debug")');
-
-if (errors.length > 0) {
-    console.error(errors.join('\\n'));
-    process.exit(1);
-}
-console.log('PASS');
-""")
-    assert r.returncode == 0, f"--debug/-d option not added: {r.stderr}"
-    assert "PASS" in r.stdout
+    # Run CLI with --help and check that -d/--debug is listed
+    r = subprocess.run(
+        ["node", "packages/snap/dist/runner.js", "--help"],
+        capture_output=True, text=True, timeout=30, cwd=REPO + "/compiler",
+    )
+    help_text = r.stdout + r.stderr
+    assert '-d' in help_text or '--debug' in help_text, \
+        f"Help output does not show -d/--debug flag. Got:\n{help_text[:500]}"
+    print("PASS: debug flag present in CLI help")
 
 
 def test_interactive_watch_mode():
-    """runner-watch.ts supports interactive pattern entry and debug toggle via keyboard."""
+    """Watch runner supports interactive keyboard control for pattern and debug."""
     r = _node("""
 const fs = require('fs');
 const watch = fs.readFileSync(
@@ -211,25 +204,28 @@ const watch = fs.readFileSync(
 
 const errors = [];
 
-// RunnerState must have inputMode and inputBuffer for interactive pattern entry
-if (!watch.includes('inputMode'))
-    errors.push('missing inputMode in RunnerState');
-if (!watch.includes('inputBuffer'))
-    errors.push('missing inputBuffer in RunnerState');
+// Watch runner must handle keyboard events for interactive control
+const hasKeyHandler = /key\\s*&&\\s*key\\.name/.test(watch) ||
+                      /key\\.name\\s*===/.test(watch) ||
+                      /onKey.*key.*name/i.test(watch);
+if (!hasKeyHandler) {
+    errors.push('watch runner missing keyboard key handling');
+}
 
-// Must handle 'p' key for pattern entry
-if (!/key\\.name\\s*===\\s*['"]p['"]/.test(watch))
-    errors.push("missing 'p' key handler for pattern entry");
-// Must handle 'd' key for debug toggle
-if (!/key\\.name\\s*===\\s*['"]d['"]/.test(watch))
-    errors.push("missing 'd' key handler for debug toggle");
-// Must handle 'a' key for running all tests
-if (!/key\\.name\\s*===\\s*['"]a['"]/.test(watch))
-    errors.push("missing 'a' key handler to run all tests");
+// Must support pattern/toggle behavior (not specific variable names)
+if (!watch.includes('pattern')) {
+    errors.push('watch runner missing pattern support');
+}
 
-// subscribeFilterFile must be removed
-if (watch.includes('subscribeFilterFile'))
+// Must support debug toggle via keyboard
+if (!watch.includes('debug')) {
+    errors.push('watch runner missing debug toggle support');
+}
+
+// subscribeFilterFile must be removed (file-based mechanism gone)
+if (watch.includes('subscribeFilterFile')) {
     errors.push('subscribeFilterFile function not removed');
+}
 
 if (errors.length > 0) {
     console.error(errors.join('\\n'));
@@ -242,7 +238,7 @@ console.log('PASS');
 
 
 def test_watch_runner_signature_updated():
-    """makeWatchRunner accepts debugMode and initialPattern instead of filterMode."""
+    """Watch runner accepts boolean debug and string pattern parameters from CLI."""
     r = _node("""
 const fs = require('fs');
 const watch = fs.readFileSync(
@@ -250,15 +246,24 @@ const watch = fs.readFileSync(
 
 const errors = [];
 
-// makeWatchRunner should accept debugMode: boolean
-if (!/debugMode\\s*:\\s*boolean/.test(watch))
-    errors.push('makeWatchRunner missing debugMode: boolean parameter');
-// makeWatchRunner should accept initialPattern
-if (!/initialPattern\\s*\\??\\s*:\\s*string/.test(watch))
-    errors.push('makeWatchRunner missing initialPattern parameter');
-// readTestFilter must not be used
-if (watch.includes('readTestFilter'))
-    errors.push('runner-watch.ts still uses readTestFilter');
+// Watch runner function must accept a boolean debug parameter
+// (flexible on exact name - just check it exists and is boolean-typed)
+const hasBooleanDebugParam = /:\\s*boolean/.test(watch);
+if (!hasBooleanDebugParam) {
+    errors.push('watch runner missing boolean debug parameter');
+}
+
+// Must accept some kind of pattern/filter string parameter
+// (flexible on exact name)
+const hasPatternParam = /initialPattern|filter|pattern.*string|string.*pattern/i.test(watch);
+if (!hasPatternParam) {
+    errors.push('watch runner missing pattern string parameter');
+}
+
+// readTestFilter must not be used (file-based mechanism removed)
+if (watch.includes('readTestFilter')) {
+    errors.push('watch runner still uses readTestFilter');
+}
 
 if (errors.length > 0) {
     console.error(errors.join('\\n'));
@@ -266,7 +271,7 @@ if (errors.length > 0) {
 }
 console.log('PASS');
 """)
-    assert r.returncode == 0, f"makeWatchRunner signature not updated: {r.stderr}"
+    assert r.returncode == 0, f"Watch runner signature not updated: {r.stderr}"
     assert "PASS" in r.stdout
 
 

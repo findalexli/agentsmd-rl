@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "Instruction names all paths (shared.ts, sqlite.ts, mysql.ts, postgres.ts, test/CLAUDE.md), the exact function signature, required destructured names, exact error message, and the import pattern."
+      "reason": "instruction.md names all asserted paths (src/js/internal/sql/shared.ts, sqlite.ts, mysql.ts, postgres.ts, test/CLAUDE.md), the required import pattern 'require(\"internal/sql/shared\")', and the destructured names 'definedColumns' and 'columnsSql'."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "Instruction describes the bug and required API surface but not the internal implementation of the filter function."
+      "reason": "Instruction describes the bug and required behavior/API surface but does not dictate specific line edits or internal helper implementations."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert specific literal import pattern `require(\"internal/sql/shared\")`, destructured names `definedColumns`/`columnsSql`, and a function with generic `<T>` signature and specific return shape \u2014 though the instruction mandates these, so alternative valid fixes are constrained; additionally the behavioral extraction uses regex that requires specific TypeScript structure (`function <T>`) which a correct arrow-function implementation would fail."
+      "reason": "Tests require the exact destructured names 'definedColumns' and 'columnsSql' and import string 'internal/sql/shared', which are gold-specific naming choices; a semantically equivalent alternative using different names would fail."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests extract the function source and execute it via node subprocess with multiple behavioral cases."
+      "reason": "Tests extract the function body and execute it in a JS runner (_build_behavioral_test_script), and run oxlint/prettier subprocesses."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "Behavioral tests check 6 distinct input/output pairs including the data-loss fix; a stub returning empty/default would fail T1, T3, T5, T6."
+      "reason": "Behavioral tests 1-6 assert on actual filtering behavior (e.g., T3 requires column kept when only second item defined), which a stub returning empty/default would fail."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "Tests cover single/bulk inserts, undefined filtering, SQL format, all three adapters, and CLAUDE.md docs requirement."
+      "reason": "Tests cover single-object filtering, bulk insert data-loss fix, all-undefined exclusion, SQL format with parentheses/VALUES, and three-adapter wiring plus CLAUDE.md docs."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are grouped with section comments (Gates, Fail-to-pass) and descriptive function names."
+      "reason": "Tests are grouped with section comments (Gates, Fail-to-pass) and named descriptively (test_repo_oxlint, test_syntax_check, etc.)."
     },
     "structured_data_schema": {
-      "outcome": "pass",
-      "reason": "Return object schema `{definedColumns, columnsSql}` is explicitly documented in instruction.md."
+      "outcome": "not_applicable",
+      "reason": "No structured data output; task modifies TS source."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "Paths and names in instruction match those used in tests."
+      "reason": "Paths and identifiers match between instruction and tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "Instruction names the files to modify which is appropriate for this API-refactor task; no line numbers given."
+      "reason": "Instruction identifies the files to modify but does not name specific buggy lines; localization within files is left to the agent."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "Code task, not agentmd-edits."
+      "reason": "Not an agentmd-edits/config task."
     }
   },
   "tier_a_fails": [
@@ -51,6 +51,6 @@
   ],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 9,
+  "pass_count": 8,
   "fail_count": 1
 }

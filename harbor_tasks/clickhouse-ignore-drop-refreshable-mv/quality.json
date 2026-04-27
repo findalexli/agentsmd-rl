@@ -3,58 +3,57 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "Instruction names the file path, the variable name `is_refreshable_view`, the comment text, and condition pattern with `settings[Setting::ignore_drop_queries_probability]`."
+      "reason": "instruction.md names the file src/Interpreters/InterpreterDropQuery.cpp, mentions StorageMaterializedView, isRefreshable, ignore_drop_queries_probability, !is_refreshable_view, and TRUNCATE/refresh comment requirements all matching test assertions."
     },
     "no_solution_leakage": {
       "outcome": "fail",
-      "reason": "Instruction prescribes the exact variable name `is_refreshable_view`, the exact comment text including 'TRUNCATE doesn't stop...orphaned view would keep refreshing indefinitely...', and the exact condition pattern `!is_refreshable_view && settings[Setting::ignore_drop_queries_probability]`, leaving little reasoning to do."
+      "reason": "Instruction explicitly states 'Use dynamic_cast<StorageMaterializedView *> on the table and call isRefreshable()' and 'guarded with a negated check (e.g., !is_refreshable_view)' \u2014 this is the exact fix, not just a description of what's broken."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests assert exact strings like `dynamic_cast<StorageMaterializedView *>`, `isRefreshable()`, variable name `is_refreshable_view`, and exact regex `!is_refreshable_view\\s*&&\\s*settings[Setting::ignore_drop_queries_probability]`, rejecting equivalent fixes (e.g., using a helper, different cast, different ordering)."
+      "outcome": "pass",
+      "reason": "Tests check for presence of 'StorageMaterializedView', 'isRefreshable', a negated guard, and a comment \u2014 alternative correct fixes preserving these would pass."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "fail",
-      "reason": "All tests for the fix (test_refreshable_view_check_exists, test_truncate_behavior_documented, test_logic_structure) are pure regex/string searches on the source file; no execution of fixed behavior."
+      "reason": "Tests are mostly text-grep on the source file ('StorageMaterializedView' in content, 'isRefreshable' in content) plus clang-tidy syntax check; no test executes the actual DROP/refresh behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The text-match tests do require the actual code patterns (dynamic_cast, isRefreshable, comment) to be present, which a stub couldn't satisfy."
+      "reason": "f2p tests require specific code structure (StorageMaterializedView dynamic_cast before probability check, negated guard, comment) that a stub couldn't satisfy without implementing the fix."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "Tests cover all the requirements explicitly mentioned in instruction.md (comment, variable name, condition usage)."
+      "reason": "Tests cover the guard placement, the comment about TRUNCATE/refresh, and ordering \u2014 matching what instruction.md describes."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are split into multiple named functions with docstrings indicating f2p/p2p classification."
+      "reason": "Tests are individually named with docstrings indicating f2p vs p2p purpose."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task does not produce structured data."
+      "reason": "Task is a C++ code edit, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "Paths and identifiers in instruction.md match those in tests and code."
+      "reason": "Filenames, function names, and identifiers (InterpreterDropQuery.cpp, StorageMaterializedView, isRefreshable) are consistent and correct."
     },
     "instruction_no_hint_leakage": {
       "outcome": "fail",
-      "reason": "Instruction explicitly names the buggy file `src/Interpreters/InterpreterDropQuery.cpp` and prescribes exact variable name and condition structure, which is more leakage than necessary localization."
+      "reason": "instruction.md names the exact file (src/Interpreters/InterpreterDropQuery.cpp), the exact API to use (dynamic_cast<StorageMaterializedView *>, isRefreshable()), and even the exact variable name pattern (!is_refreshable_view), eliminating localization and design work."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only fix task, not an agentmd-edits config task."
+      "reason": "This is a code-only task, not an agentmd-edits config task."
     }
   },
   "tier_a_fails": [
     "no_solution_leakage",
-    "solution_uniqueness_guard",
     "tests_verify_behavior_not_text"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
     "instruction_no_hint_leakage"
   ],
-  "pass_count": 5,
-  "fail_count": 4
+  "pass_count": 6,
+  "fail_count": 3
 }

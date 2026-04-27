@@ -134,11 +134,19 @@ def test_syntax_check():
 
 # ---------------------------------------------------------------------------
 # Fail-to-pass (pr_diff) — subprocess behavioral tests
+#
+# These tests verify OBSERVABLE OUTCOMES, not implementation:
+#   1. The process actually terminates with exit code 1 (doesn't hang)
+#   2. Cleanup (destroy_process_group) is called in the finally block
+#   3. wandb.finish is called with exit_code=1
+#
+# We do NOT assert on the specific exception mechanism (SystemExit vs os._exit).
+# Any implementation that achieves termination + cleanup + wandb.finish passes.
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_async_exit():
-    """Async clean_exit must raise SystemExit (via sys.exit) instead of re-raising the original exception."""
+    """Async clean_exit must terminate the process (not hang) when an exception occurs."""
     r = _run_subprocess("""\
 @clean_exit
 async def failing_async():
@@ -147,18 +155,27 @@ async def failing_async():
 try:
     asyncio.run(failing_async())
     print("NO_EXCEPTION")
+    sys.exit(2)  # Should not reach here
 except SystemExit as e:
-    print(f"SYSTEM_EXIT:{e.code}")
-except ValueError:
-    print("VALUE_ERROR")
+    # Either sys.exit was used OR the script was killed — both mean process terminated
+    print(f"EXIT_CODE:{e.code}")
+    sys.exit(0)  # Signal test passed cleanly
+except Exception as e:
+    # Some other exception propagated — process didn't terminate properly
+    print(f"UNHANDLED_EXCEPTION:{type(e).__name__}")
+    sys.exit(3)
 """)
-    assert r.returncode == 0, f"Script failed: {r.stderr}"
-    assert "SYSTEM_EXIT:1" in r.stdout, f"Expected SystemExit(1), got: {r.stdout.strip()}"
+    # The script itself exits with 0 only if SystemExit was caught (clean termination)
+    # Check that stdout contains the termination signal
+    assert "EXIT_CODE:1" in r.stdout, (
+        f"Async exit did not terminate via exception with code 1. "
+        f"stdout: {r.stdout.strip()}, stderr: {r.stderr.strip()}, rc: {r.returncode}"
+    )
 
 
 # [pr_diff] fail_to_pass
 def test_sync_exit():
-    """Sync clean_exit must raise SystemExit (via sys.exit) instead of re-raising the original exception."""
+    """Sync clean_exit must terminate the process (not hang) when an exception occurs."""
     r = _run_subprocess("""\
 @clean_exit
 def failing_sync():
@@ -167,18 +184,23 @@ def failing_sync():
 try:
     failing_sync()
     print("NO_EXCEPTION")
+    sys.exit(2)  # Should not reach here
 except SystemExit as e:
-    print(f"SYSTEM_EXIT:{e.code}")
-except RuntimeError:
-    print("RUNTIME_ERROR")
+    print(f"EXIT_CODE:{e.code}")
+    sys.exit(0)
+except Exception as e:
+    print(f"UNHANDLED_EXCEPTION:{type(e).__name__}")
+    sys.exit(3)
 """)
-    assert r.returncode == 0, f"Script failed: {r.stderr}"
-    assert "SYSTEM_EXIT:1" in r.stdout, f"Expected SystemExit(1), got: {r.stdout.strip()}"
+    assert "EXIT_CODE:1" in r.stdout, (
+        f"Sync exit did not terminate via exception with code 1. "
+        f"stdout: {r.stdout.strip()}, stderr: {r.stderr.strip()}, rc: {r.returncode}"
+    )
 
 
 # [pr_diff] fail_to_pass
 def test_async_exit_different_exception():
-    """Async clean_exit terminates with SystemExit for various exception types, not just ValueError."""
+    """Async clean_exit terminates with exit code 1 for various exception types."""
     r = _run_subprocess("""\
 results = []
 for exc_type, msg in [(TypeError, "bad type"), (KeyError, "missing key"), (OSError, "io fail")]:
@@ -190,20 +212,25 @@ for exc_type, msg in [(TypeError, "bad type"), (KeyError, "missing key"), (OSErr
         asyncio.run(failing_async())
         results.append(f"NO_EXCEPTION:{exc_type.__name__}")
     except SystemExit as e:
-        results.append(f"SYSTEM_EXIT:{exc_type.__name__}:{e.code}")
+        results.append(f"EXIT:{exc_type.__name__}:{e.code}")
     except Exception as orig:
-        results.append(f"ORIGINAL:{exc_type.__name__}:{type(orig).__name__}")
+        results.append(f"UNHANDLED:{exc_type.__name__}:{type(orig).__name__}")
 
 print("\\n".join(results))
+sys.exit(0)  # normal termination of test script
 """)
     assert r.returncode == 0, f"Script failed: {r.stderr}"
     for line in r.stdout.strip().split("\n"):
-        assert line.startswith("SYSTEM_EXIT:"), f"Expected SystemExit, got: {line}"
+        if line.startswith("EXIT:"):
+            code = line.split(":")[-1]
+            assert code == "1", f"Expected exit code 1, got {code} in line: {line}"
+        else:
+            assert False, f"Expected EXIT with code 1, got: {line}"
 
 
 # [pr_diff] fail_to_pass
 def test_sync_exit_different_exception():
-    """Sync clean_exit terminates with SystemExit for various exception types."""
+    """Sync clean_exit terminates with exit code 1 for various exception types."""
     r = _run_subprocess("""\
 results = []
 for exc_type, msg in [(TypeError, "bad type"), (KeyError, "missing key"), (OSError, "io fail")]:
@@ -215,15 +242,143 @@ for exc_type, msg in [(TypeError, "bad type"), (KeyError, "missing key"), (OSErr
         failing_sync()
         results.append(f"NO_EXCEPTION:{exc_type.__name__}")
     except SystemExit as e:
-        results.append(f"SYSTEM_EXIT:{exc_type.__name__}:{e.code}")
+        results.append(f"EXIT:{exc_type.__name__}:{e.code}")
     except Exception as orig:
-        results.append(f"ORIGINAL:{exc_type.__name__}:{type(orig).__name__}")
+        results.append(f"UNHANDLED:{exc_type.__name__}:{type(orig).__name__}")
 
 print("\\n".join(results))
+sys.exit(0)
 """)
     assert r.returncode == 0, f"Script failed: {r.stderr}"
     for line in r.stdout.strip().split("\n"):
-        assert line.startswith("SYSTEM_EXIT:"), f"Expected SystemExit, got: {line}"
+        if line.startswith("EXIT:"):
+            code = line.split(":")[-1]
+            assert code == "1", f"Expected exit code 1, got {code} in line: {line}"
+        else:
+            assert False, f"Expected EXIT with code 1, got: {line}"
+
+
+# ---------------------------------------------------------------------------
+# Additional behavioral test: verify cleanup runs even on exception path
+# This is the key behavior that would break with os._exit (finally doesn't run)
+# ---------------------------------------------------------------------------
+
+# [pr_diff] fail_to_pass
+def test_async_cleanup_runs():
+    """Async clean_exit must call destroy_process_group in finally block on error."""
+    r = _run_subprocess("""\
+import sys, types, asyncio
+from pathlib import Path
+
+wandb_mock = types.ModuleType("wandb")
+wandb_mock.finish = lambda exit_code=None: None
+sys.modules["wandb"] = wandb_mock
+
+dist_mock = types.ModuleType("torch.distributed")
+cleanup_calls = []
+dist_mock.is_initialized = lambda: True
+dist_mock.destroy_process_group = lambda: cleanup_calls.append(True)
+sys.modules.setdefault("torch", types.ModuleType("torch"))
+sys.modules["torch.distributed"] = dist_mock
+
+src = Path("src/prime_rl/utils/utils.py").read_text()
+lines = src.split("\\n")
+start = end = None
+for i, line in enumerate(lines):
+    if line.startswith("def clean_exit("):
+        start = i
+    elif start is not None and i > start and line and not line[0].isspace() and line[0] != "#":
+        end = i
+        break
+if end is None:
+    end = len(lines)
+
+ns = {"asyncio": asyncio, "functools": functools, "wandb": wandb_mock, "dist": dist_mock,
+      "sys": sys, "Callable": Callable, "Any": Any,
+      "get_logger": lambda: types.SimpleNamespace(opt=lambda **kw: types.SimpleNamespace(error=lambda msg: None))}
+exec("\\n".join(lines[start:end]), ns)
+clean_exit = ns["clean_exit"]
+
+@clean_exit
+async def failing_async():
+    raise ValueError("boom")
+
+try:
+    asyncio.run(failing_async())
+except SystemExit:
+    pass
+except Exception:
+    pass
+
+if cleanup_calls:
+    print("CLEANUP_DONE")
+else:
+    print("CLEANUP_MISSING")
+    sys.exit(1)
+""")
+    assert "CLEANUP_DONE" in r.stdout, (
+        f"Async cleanup (destroy_process_group) was not called. "
+        f"stdout: {r.stdout.strip()}, stderr: {r.stderr.strip()}"
+    )
+
+
+# [pr_diff] fail_to_pass
+def test_sync_cleanup_runs():
+    """Sync clean_exit must call destroy_process_group in finally block on error."""
+    r = _run_subprocess("""\
+import sys, types
+from pathlib import Path
+
+wandb_mock = types.ModuleType("wandb")
+wandb_mock.finish = lambda exit_code=None: None
+sys.modules["wandb"] = wandb_mock
+
+dist_mock = types.ModuleType("torch.distributed")
+cleanup_calls = []
+dist_mock.is_initialized = lambda: True
+dist_mock.destroy_process_group = lambda: cleanup_calls.append(True)
+sys.modules.setdefault("torch", types.ModuleType("torch"))
+sys.modules["torch.distributed"] = dist_mock
+
+src = Path("src/prime_rl/utils/utils.py").read_text()
+lines = src.split("\\n")
+start = end = None
+for i, line in enumerate(lines):
+    if line.startswith("def clean_exit("):
+        start = i
+    elif start is not None and i > start and line and not line[0].isspace() and line[0] != "#":
+        end = i
+        break
+if end is None:
+    end = len(lines)
+
+ns = {"asyncio": asyncio, "functools": functools, "wandb": wandb_mock, "dist": dist_mock,
+      "sys": sys, "Callable": Callable, "Any": Any,
+      "get_logger": lambda: types.SimpleNamespace(opt=lambda **kw: types.SimpleNamespace(error=lambda msg: None))}
+exec("\\n".join(lines[start:end]), ns)
+clean_exit = ns["clean_exit"]
+
+@clean_exit
+def failing_sync():
+    raise RuntimeError("boom")
+
+try:
+    failing_sync()
+except SystemExit:
+    pass
+except Exception:
+    pass
+
+if cleanup_calls:
+    print("CLEANUP_DONE")
+else:
+    print("CLEANUP_MISSING")
+    sys.exit(1)
+""")
+    assert "CLEANUP_DONE" in r.stdout, (
+        f"Sync cleanup (destroy_process_group) was not called. "
+        f"stdout: {r.stdout.strip()}, stderr: {r.stderr.strip()}"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -234,9 +389,11 @@ print("\\n".join(results))
 def test_finally_cleanup():
     """The finally block must still execute, destroying the process group on error."""
     cleanup_called = []
+    finish_calls = []
     clean_exit, _, _ = _extract_clean_exit(
         dist_initialized=True,
         dist_destroy=lambda: cleanup_called.append(True),
+        wandb_finish=lambda exit_code=None: finish_calls.append(exit_code),
     )
 
     @clean_exit
@@ -249,6 +406,7 @@ def test_finally_cleanup():
         pass
 
     assert cleanup_called, "destroy_process_group was not called in the finally block"
+    assert 1 in finish_calls, "wandb.finish(exit_code=1) not called before cleanup"
 
 
 # [pr_diff] pass_to_pass
@@ -304,10 +462,14 @@ def test_success_path_sync():
 # [agent_config] pass_to_pass — AGENTS.md:23 @ 27c35b1
 def test_error_never_silent():
     """AGENTS.md line 23: 'Errors should never pass silently.'
-    The error path must terminate with a non-zero exit, not silently hang or return None."""
-    clean_exit, _, _ = _extract_clean_exit()
+    The error path must call wandb.finish(exit_code=1) and terminate, not silently hang."""
+    finish_calls = []
+    clean_exit, _, _ = _extract_clean_exit(
+        wandb_finish=lambda exit_code=None: finish_calls.append(exit_code),
+    )
 
     for wrapper_type, make_fn in [("async", True), ("sync", False)]:
+        finish_calls.clear()
         if make_fn:
             @clean_exit
             async def fn():
@@ -332,6 +494,10 @@ def test_error_never_silent():
             raised = True  # at least it didn't pass silently
 
         assert raised, f"{wrapper_type}: no exception raised — error passed silently"
+        assert 1 in finish_calls, (
+            f"{wrapper_type}: wandb.finish(exit_code=1) not called — "
+            "errors must be reported to wandb before termination (AGENTS.md:23)"
+        )
 
 
 # [static] pass_to_pass

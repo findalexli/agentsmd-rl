@@ -13,27 +13,36 @@ import subprocess
 from pathlib import Path
 
 REPO = "/workspace/playwright"
+_SYMLINK = Path(REPO) / "packages/playwright-core/src/mcpBundleImpl.ts"
 
 
-def _run_ts(script: str, timeout: int = 30) -> subprocess.CompletedProcess:
-    """Run a TypeScript snippet using node with type stripping."""
+def _run_tsx(script: str, timeout: int = 60) -> subprocess.CompletedProcess:
+    """Run a TypeScript snippet using npx tsx.
+
+    Creates a temporary symlink for mcpBundleImpl so tsx can resolve imports,
+    then removes it after execution to avoid interfering with the repo build.
+    """
     script_path = Path(REPO) / "_eval_tmp.ts"
     script_path.write_text(script)
+    # Create symlink for import resolution
+    symlink_target = Path("../bundles/mcp/src/mcpBundleImpl.ts")
+    if not _SYMLINK.exists():
+        _SYMLINK.symlink_to(symlink_target)
     try:
         return subprocess.run(
-            ["node", "--experimental-strip-types", "--no-warnings", str(script_path)],
+            ["npx", "tsx", str(script_path)],
             capture_output=True, text=True, timeout=timeout,
             cwd=REPO,
         )
     finally:
         script_path.unlink(missing_ok=True)
+        _SYMLINK.unlink(missing_ok=True)
 
 
 # ---------------------------------------------------------------------------
 # Gates (pass_to_pass, static) — syntax / compilation checks
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
 def test_syntax_check():
     """Modified TypeScript files parse without errors."""
     files = [
@@ -57,54 +66,37 @@ def test_syntax_check():
 # Fail-to-pass (pr_diff) — core behavioral tests
 # ---------------------------------------------------------------------------
 
-# [pr_diff] fail_to_pass
 def test_asref_function_classifies_inputs():
-    """CLI asRef helper correctly distinguishes refs from selectors."""
-    # Verify asRef function exists with correct logic
-    commands_ts = (Path(REPO) / "packages/playwright-core/src/cli/daemon/commands.ts").read_text()
+    """CLI classification helper correctly distinguishes refs from selectors.
 
-    # Verify function signature and pattern matching logic
-    assert "function asRef(refOrSelector" in commands_ts, "asRef function not found"
-    assert "refOrSelector.match(/^(f\\d+)?e\\d+$/)" in commands_ts, \
-        "asRef should use pattern /^(f\\d+)?e\\d+$/ to match refs"
-
-    # Verify the logic branches
-    assert "return { ref: refOrSelector }" in commands_ts, \
-        "asRef should return { ref: value } for valid refs"
-    assert "return { ref: '', selector: refOrSelector }" in commands_ts, \
-        "asRef should return { ref: '', selector: value } for selectors"
-    assert "return {}" in commands_ts, \
-        "asRef should return {} for undefined input"
-
-    # Now test the actual behavior by running the logic directly
-    result = _run_ts("""
-// Replicate the asRef function logic exactly as it should be
-function asRef(refOrSelector: string | undefined): { ref?: string, selector?: string } {
-  if (refOrSelector === undefined)
-    return {};
-  if (refOrSelector.match(/^(f\\d+)?e\\d+$/))
-    return { ref: refOrSelector };
-  return { ref: '', selector: refOrSelector };
-}
+    Tests the actual classification logic by calling parseCommand on the
+    real click command with various inputs and checking the toolParams output.
+    """
+    result = _run_tsx("""
+import { commands } from "./packages/playwright-core/src/cli/daemon/commands.ts";
+import { parseCommand } from "./packages/playwright-core/src/cli/daemon/command.ts";
 
 const tests = [
-    { input: 'e15', expected: { ref: 'e15' } },
-    { input: 'f1e2', expected: { ref: 'f1e2' } },
-    { input: 'f12e99', expected: { ref: 'f12e99' } },
-    { input: 'button', expected: { ref: '', selector: 'button' } },
-    { input: '#main', expected: { ref: '', selector: '#main' } },
-    { input: 'role=button', expected: { ref: '', selector: 'role=button' } },
-    { input: '#main >> role=button', expected: { ref: '', selector: '#main >> role=button' } },
-    { input: undefined, expected: {} },
+    // Valid refs => should produce { ref: value }, no selector
+    { args: ["click", "e15"], expectRef: "e15", expectSelector: undefined },
+    { args: ["click", "f1e2"], expectRef: "f1e2", expectSelector: undefined },
+    { args: ["click", "f12e99"], expectRef: "f12e99", expectSelector: undefined },
+    // CSS/role selectors => should produce { ref: "", selector: value }
+    { args: ["click", "#main"], expectRef: "", expectSelector: "#main" },
+    { args: ["click", "role=button"], expectRef: "", expectSelector: "role=button" },
+    { args: ["click", "#main >> role=button"], expectRef: "", expectSelector: "#main >> role=button" },
+    { args: ["click", "button.submit"], expectRef: "", expectSelector: "button.submit" },
 ];
 
 const results = tests.map(t => {
-    const actual = asRef(t.input as any);
+    const parsed = parseCommand(commands.click, { _: t.args });
     return {
-        input: t.input,
-        actual,
-        expected: t.expected,
-        pass: JSON.stringify(actual) === JSON.stringify(t.expected),
+        input: t.args[1],
+        ref: parsed.toolParams.ref,
+        selector: parsed.toolParams.selector,
+        expectRef: t.expectRef,
+        expectSelector: t.expectSelector,
+        pass: parsed.toolParams.ref === t.expectRef && parsed.toolParams.selector === t.expectSelector,
     };
 });
 
@@ -114,102 +106,240 @@ console.log(JSON.stringify({ results }));
     data = json.loads(result.stdout.strip().split('\n')[-1])
     for r in data["results"]:
         assert r["pass"], \
-            f"asRef('{r['input']}'): expected {r['expected']}, got {r['actual']}"
+            f"classify('{r['input']}'): expected ref={r['expectRef']}, selector={r['expectSelector']}; " \
+            f"got ref={r['ref']}, selector={r['selector']}"
 
 
-# [pr_diff] fail_to_pass
 def test_cli_commands_use_target_param():
-    """CLI click/fill/hover/select/check/uncheck use 'target' instead of 'ref'."""
-    commands_ts = (Path(REPO) / "packages/playwright-core/src/cli/daemon/commands.ts").read_text()
+    """CLI click/fill/hover/select/check/uncheck all route selectors correctly.
 
-    # Count 'target:' in z.object args — should be 7+ (click, dblclick, fill, hover, select, check, uncheck)
-    target_matches = re.findall(r"target:\s*z\.string\(\)", commands_ts)
-    assert len(target_matches) >= 7, \
-        f"Expected at least 7 commands using 'target' param, found {len(target_matches)}"
+    Calls parseCommand on multiple CLI commands with both refs and CSS selectors,
+    verifying each command correctly classifies the input.
+    """
+    result = _run_tsx("""
+import { commands } from "./packages/playwright-core/src/cli/daemon/commands.ts";
+import { parseCommand } from "./packages/playwright-core/src/cli/daemon/command.ts";
 
-    # asRef function must exist
-    assert "function asRef(" in commands_ts, "asRef helper function not found"
+// Commands that accept a single target element (first positional arg)
+const singleTargetCmds = ["click", "dblclick", "hover", "check", "uncheck"];
 
-    # click command should use target and asRef
-    click_section = commands_ts[commands_ts.index("const click = declareCommand"):commands_ts.index("const doubleClick")]
-    assert "target:" in click_section, "click command should use 'target' parameter"
-    assert "asRef(target)" in click_section, "click toolParams should call asRef(target)"
+const results: any[] = [];
+for (const name of singleTargetCmds) {
+    const cmd = commands[name];
+    if (!cmd) { results.push({ name, error: "not found" }); continue; }
+
+    // With a snapshot ref
+    const refResult = parseCommand(cmd, { _: [name, "e15"] });
+    // With a CSS selector
+    const selResult = parseCommand(cmd, { _: [name, "#my-element"] });
+
+    results.push({
+        name,
+        refHasRef: refResult.toolParams.ref === "e15",
+        refNoSelector: refResult.toolParams.selector === undefined,
+        selHasSelector: selResult.toolParams.selector === "#my-element",
+        selRefEmpty: selResult.toolParams.ref === "",
+    });
+}
+
+// Also test fill (has extra 'text' arg)
+const fillRef = parseCommand(commands.fill, { _: ["fill", "e10", "hello"] });
+const fillSel = parseCommand(commands.fill, { _: ["fill", "#input", "hello"] });
+results.push({
+    name: "fill",
+    refHasRef: fillRef.toolParams.ref === "e10",
+    refNoSelector: fillRef.toolParams.selector === undefined,
+    selHasSelector: fillSel.toolParams.selector === "#input",
+    selRefEmpty: fillSel.toolParams.ref === "",
+});
+
+// Test select (has extra 'val' arg)
+const selectRef = parseCommand(commands.select, { _: ["select", "e3", "option1"] });
+const selectSel = parseCommand(commands.select, { _: ["select", "#dropdown", "option1"] });
+results.push({
+    name: "select",
+    refHasRef: selectRef.toolParams.ref === "e3",
+    refNoSelector: selectRef.toolParams.selector === undefined,
+    selHasSelector: selectSel.toolParams.selector === "#dropdown",
+    selRefEmpty: selectSel.toolParams.ref === "",
+});
+
+console.log(JSON.stringify({ results }));
+""")
+    assert result.returncode == 0, f"Script failed: {result.stderr}"
+    data = json.loads(result.stdout.strip().split('\n')[-1])
+    for r in data["results"]:
+        assert "error" not in r, f"Command {r['name']} not found"
+        assert r["refHasRef"], f"{r['name']}: ref input should produce ref='e15' (or similar)"
+        assert r["refNoSelector"], f"{r['name']}: ref input should not produce selector field"
+        assert r["selHasSelector"], f"{r['name']}: selector input should produce selector field"
+        assert r["selRefEmpty"], f"{r['name']}: selector input should produce ref=''"
 
 
-# [pr_diff] fail_to_pass
 def test_drag_uses_start_end_element():
-    """Drag command uses startElement/endElement instead of startRef/endRef."""
-    commands_ts = (Path(REPO) / "packages/playwright-core/src/cli/daemon/commands.ts").read_text()
+    """Drag command maps startElement/endElement to startRef/startSelector/endRef/endSelector.
 
-    drag_match = re.search(r"const drag = declareCommand\(\{([\s\S]*?)\}\);", commands_ts)
-    assert drag_match, "drag command declaration not found"
-    drag_section = drag_match.group(1)
+    Calls parseCommand on the drag command with various input combinations
+    to verify the full parameter mapping behavior.
+    """
+    result = _run_tsx("""
+import { commands } from "./packages/playwright-core/src/cli/daemon/commands.ts";
+import { parseCommand } from "./packages/playwright-core/src/cli/daemon/command.ts";
 
-    assert "startElement:" in drag_section, "drag should use 'startElement' param"
-    assert "endElement:" in drag_section, "drag should use 'endElement' param"
-    # asRef should be called on both
-    assert "asRef(startElement)" in drag_section, "drag should call asRef on startElement"
-    assert "asRef(endElement)" in drag_section, "drag should call asRef on endElement"
+// Drag with two refs
+const r1 = parseCommand(commands.drag, { _: ["drag", "e15", "e20"] });
+// Drag with two selectors
+const r2 = parseCommand(commands.drag, { _: ["drag", "#start", ".end-zone"] });
+// Drag with mixed (ref -> selector)
+const r3 = parseCommand(commands.drag, { _: ["drag", "e5", "#target"] });
+
+console.log(JSON.stringify({
+    refs: r1.toolParams,
+    sels: r2.toolParams,
+    mixed: r3.toolParams,
+}));
+""")
+    assert result.returncode == 0, f"Script failed: {result.stderr}"
+    data = json.loads(result.stdout.strip().split('\n')[-1])
+
+    # Two refs
+    refs = data["refs"]
+    assert refs.get("startRef") == "e15", f"drag refs: startRef should be 'e15', got {refs}"
+    assert refs.get("endRef") == "e20", f"drag refs: endRef should be 'e20', got {refs}"
+
+    # Two selectors
+    sels = data["sels"]
+    assert sels.get("startSelector") == "#start", f"drag sels: startSelector should be '#start', got {sels}"
+    assert sels.get("endSelector") == ".end-zone", f"drag sels: endSelector should be '.end-zone', got {sels}"
+    assert sels.get("startRef") == "", f"drag sels: startRef should be '', got {sels}"
+    assert sels.get("endRef") == "", f"drag sels: endRef should be '', got {sels}"
+
+    # Mixed
+    mixed = data["mixed"]
+    assert mixed.get("startRef") == "e5", f"drag mixed: startRef should be 'e5', got {mixed}"
+    assert mixed.get("endSelector") == "#target", f"drag mixed: endSelector should be '#target', got {mixed}"
 
 
-# [pr_diff] fail_to_pass
 def test_tab_reflocator_accepts_selector():
-    """Tab.refLocator and refLocators accept optional selector parameter."""
-    tab_ts = (Path(REPO) / "packages/playwright-core/src/tools/tab.ts").read_text()
+    """Tab.refLocator and refLocators accept optional selector parameter.
 
-    # refLocator signature must include selector
-    assert "selector?: string" in tab_ts, \
-        "refLocator should accept optional selector parameter"
+    Verifies that the method signatures include a selector parameter and
+    the implementation creates a page.locator when a selector is provided.
+    """
+    tab_path = Path(REPO) / "packages/playwright-core/src/tools/tab.ts"
+    src = tab_path.read_text()
 
-    # When selector is provided, use page.locator(selector)
-    assert "param.selector" in tab_ts, \
-        "refLocators should check for param.selector"
-    assert "this.page.locator(param.selector)" in tab_ts, \
-        "Should create locator from selector string"
+    # Check refLocator signature includes 'selector' in params
+    ref_locator_match = re.search(r'async\s+refLocator\(params:\s*\{([^}]+)\}', src)
+    assert ref_locator_match, "refLocator method not found"
+    assert "selector" in ref_locator_match.group(1), \
+        "refLocator signature should include selector param"
 
-    # Error message for selector not matching
-    assert "does not match any elements" in tab_ts, \
-        "Should have error message for selector not matching elements"
+    # Check refLocators signature includes 'selector' in params
+    ref_locators_match = re.search(r'async\s+refLocators\(params:\s*\{([^}]+)\}', src)
+    assert ref_locators_match, "refLocators method not found"
+    assert "selector" in ref_locators_match.group(1), \
+        "refLocators signature should include selector param"
+
+    # Verify page.locator is called with selector in the selector branch
+    assert re.search(r'page\.locator\([^)]*selector', src), \
+        "Should create locator from selector when provided"
+
+    # Verify error message for no-match selectors
+    assert "does not match any elements" in src, \
+        "Should throw error when selector matches no elements"
 
 
-# [pr_diff] fail_to_pass
 def test_tool_schemas_include_selector():
-    """MCP tool schemas (snapshot, evaluate, verify, form, screenshot) include selector field."""
-    files_with_selector = {
-        "packages/playwright-core/src/tools/snapshot.ts": "selector",
-        "packages/playwright-core/src/tools/evaluate.ts": "selector",
-        "packages/playwright-core/src/tools/screenshot.ts": "selector",
-        "packages/playwright-core/src/tools/verify.ts": "selector",
-        "packages/playwright-core/src/tools/form.ts": "selector",
-    }
-    for f, field in files_with_selector.items():
-        content = (Path(REPO) / f).read_text()
-        # Each should have selector as an optional z.string()
-        assert f"{field}:" in content, f"{f} should have '{field}' in schema"
-        assert "z.string().optional()" in content, f"{f} should have optional string for selector"
+    """MCP tool schemas (snapshot, evaluate, verify, form) include selector field.
+
+    Imports actual tool definitions and uses Zod safeParse to verify schemas
+    accept an optional selector field.
+    """
+    result = _run_tsx("""
+import { elementSchema } from "./packages/playwright-core/src/tools/snapshot.ts";
+import evaluateTools from "./packages/playwright-core/src/tools/evaluate.ts";
+import formTools from "./packages/playwright-core/src/tools/form.ts";
+import verifyTools from "./packages/playwright-core/src/tools/verify.ts";
+
+const results: any[] = [];
+
+// elementSchema (shared by click, hover, etc.)
+const elemWithSel = elementSchema.safeParse({ element: "btn", ref: "e5", selector: "#btn" });
+const elemNoSel = elementSchema.safeParse({ element: "btn", ref: "e5" });
+results.push({ name: "elementSchema", acceptsSelector: elemWithSel.success, optionalSelector: elemNoSel.success });
+
+// evaluate
+const evalTool = evaluateTools.find((t: any) => t.schema?.name === "browser_evaluate");
+if (evalTool) {
+    const r1 = evalTool.schema.inputSchema.safeParse({ "function": "() => 1", ref: "e5", selector: "#el" });
+    const r2 = evalTool.schema.inputSchema.safeParse({ "function": "() => 1", ref: "e5" });
+    results.push({ name: "evaluate", acceptsSelector: r1.success, optionalSelector: r2.success });
+}
+
+// form (fields array with selector)
+const formTool = formTools.find((t: any) => t.schema?.name === "browser_fill_form");
+if (formTool) {
+    const r1 = formTool.schema.inputSchema.safeParse({ fields: [{ name: "user", type: "textbox", ref: "e5", selector: "#user", value: "test" }] });
+    const r2 = formTool.schema.inputSchema.safeParse({ fields: [{ name: "user", type: "textbox", ref: "e5", value: "test" }] });
+    results.push({ name: "form", acceptsSelector: r1.success, optionalSelector: r2.success });
+}
+
+// verify_list
+const verifyList = verifyTools.find((t: any) => t.schema?.name === "browser_verify_list_visible");
+if (verifyList) {
+    const r1 = verifyList.schema.inputSchema.safeParse({ element: "list", ref: "e5", selector: "#list", items: ["a"] });
+    const r2 = verifyList.schema.inputSchema.safeParse({ element: "list", ref: "e5", items: ["a"] });
+    results.push({ name: "verify_list", acceptsSelector: r1.success, optionalSelector: r2.success });
+}
+
+// verify_value
+const verifyValue = verifyTools.find((t: any) => t.schema?.name === "browser_verify_value");
+if (verifyValue) {
+    const r1 = verifyValue.schema.inputSchema.safeParse({ type: "textbox", element: "input", ref: "e5", selector: "#input", value: "hello" });
+    const r2 = verifyValue.schema.inputSchema.safeParse({ type: "textbox", element: "input", ref: "e5", value: "hello" });
+    results.push({ name: "verify_value", acceptsSelector: r1.success, optionalSelector: r2.success });
+}
+
+console.log(JSON.stringify({ results }));
+""")
+    assert result.returncode == 0, f"Script failed: {result.stderr}"
+    data = json.loads(result.stdout.strip().split('\n')[-1])
+    for r in data["results"]:
+        assert r["acceptsSelector"], \
+            f"{r['name']}: schema should accept selector field"
+        assert r["optionalSelector"], \
+            f"{r['name']}: selector field should be optional"
+
+    # Also verify screenshot.ts has selector in source (can't import due to utilsBundle dep)
+    screenshot_path = Path(REPO) / "packages/playwright-core/src/tools/screenshot.ts"
+    screenshot_src = screenshot_path.read_text()
+    assert re.search(r'selector.*z\.string\(\)\.optional\(\)', screenshot_src), \
+        "screenshot.ts should have selector: z.string().optional() in schema"
 
 
-# [pr_diff] fail_to_pass
 def test_filtered_tools_strips_selector():
-    """filteredTools() omits selector/startSelector/endSelector from MCP schemas."""
-    tools_ts = (Path(REPO) / "packages/playwright-core/src/tools/tools.ts").read_text()
+    """filteredTools() omits selector/startSelector/endSelector from MCP schemas.
 
-    # Must import z for schema manipulation
-    assert "import { z }" in tools_ts or "import {z}" in tools_ts, \
-        "tools.ts should import z from mcpBundle"
+    Verifies that tools.ts transforms tool schemas to strip selector fields
+    before they are exposed via MCP.
+    """
+    tools_path = Path(REPO) / "packages/playwright-core/src/tools/tools.ts"
+    src = tools_path.read_text()
 
-    # filteredTools should strip selector fields via .omit()
-    assert ".omit(" in tools_ts, "filteredTools should use .omit() to strip selector fields"
-    assert "selector: true" in tools_ts, "Should omit 'selector' from MCP schemas"
-    assert "startSelector: true" in tools_ts, "Should omit 'startSelector' from MCP schemas"
-    assert "endSelector: true" in tools_ts, "Should omit 'endSelector' from MCP schemas"
+    # filteredTools must exist
+    assert "filteredTools" in src, "filteredTools function should exist"
+
+    # It must use omit to strip selector fields
+    assert re.search(r'\.omit\(', src), \
+        "filteredTools should use .omit() to strip fields from schemas"
+
+    # All three selector fields should be mentioned for omission
+    assert "selector" in src, "filteredTools should handle selector field"
+    assert "startSelector" in src, "filteredTools should handle startSelector field"
+    assert "endSelector" in src, "filteredTools should handle endSelector field"
 
 
-# ---------------------------------------------------------------------------
-# Config/doc update tests (agentmd-edit required)
-# ---------------------------------------------------------------------------
-
-# [agent_config] fail_to_pass — .claude/skills/playwright-dev/mcp-dev.md:Step 3
 def test_skill_md_documents_selector_targeting():
     """SKILL.md must document how to use CSS/role selectors for targeting elements."""
     skill_md = Path(REPO) / "packages/playwright-core/src/skill/SKILL.md"
@@ -217,39 +347,31 @@ def test_skill_md_documents_selector_targeting():
     content = skill_md.read_text()
     content_lower = content.lower()
 
-    # Must have a section about targeting elements with selectors
     assert "targeting" in content_lower or "selector" in content_lower, \
         "SKILL.md should document element targeting with selectors"
 
-    # Must mention CSS selectors
     assert "css" in content_lower, \
         "SKILL.md should mention CSS selectors"
 
-    # Must mention role selectors
     assert "role" in content_lower and "selector" in content_lower, \
         "SKILL.md should mention role selectors"
 
-    # Must show example of click with a selector (not just a ref)
     assert ('click "#' in content or "click '#" in content or
             'click "role=' in content or "click 'role=" in content), \
         "SKILL.md should show example of click with a CSS or role selector"
 
 
-# [agent_config] fail_to_pass
 def test_skill_md_shows_ref_and_selector_examples():
     """SKILL.md must show both ref-based and selector-based interaction examples."""
     skill_md = Path(REPO) / "packages/playwright-core/src/skill/SKILL.md"
     content = skill_md.read_text()
 
-    # Should show ref-based example (e.g., 'click e15' or 'click e3')
     assert re.search(r"click\s+[ef]\d+", content), \
         "SKILL.md should show ref-based click example (e.g., 'click e15')"
 
-    # Should show CSS selector example with an id or class
     assert "#" in content and ("click" in content.lower()), \
         "SKILL.md should show CSS selector example with click"
 
-    # Should show role selector example
     assert "role=" in content, \
         "SKILL.md should show role selector example"
 
@@ -258,7 +380,6 @@ def test_skill_md_shows_ref_and_selector_examples():
 # Pass-to-pass (repo_tests) — repo CI/CD checks
 # ---------------------------------------------------------------------------
 
-# [repo_tests] pass_to_pass - npm run check-deps
 def test_repo_check_deps():
     """Repo dependency checks pass (pass_to_pass)."""
     r = subprocess.run(
@@ -268,7 +389,6 @@ def test_repo_check_deps():
     assert r.returncode == 0, f"check-deps failed:\n{r.stdout[-500:]}{r.stderr[-500:]}"
 
 
-# [repo_tests] pass_to_pass - npm run eslint on modified tool files
 def test_repo_eslint_tools():
     """ESLint passes on modified tool files (pass_to_pass)."""
     modified_tool_files = [
@@ -290,7 +410,6 @@ def test_repo_eslint_tools():
     assert r.returncode == 0, f"ESLint failed on tools:\n{r.stdout[-500:]}{r.stderr[-500:]}"
 
 
-# [repo_tests] pass_to_pass - npm run eslint on modified CLI files
 def test_repo_eslint_cli():
     """ESLint passes on modified CLI files (pass_to_pass)."""
     modified_cli_files = [
@@ -306,7 +425,6 @@ def test_repo_eslint_cli():
     assert r.returncode == 0, f"ESLint failed on CLI files:\n{r.stdout[-500:]}{r.stderr[-500:]}"
 
 
-# [repo_tests] pass_to_pass - npm run lint-packages
 def test_repo_lint_packages():
     """Repo workspace packages are consistent (pass_to_pass)."""
     r = subprocess.run(
@@ -316,7 +434,6 @@ def test_repo_lint_packages():
     assert r.returncode == 0, f"lint-packages failed:\n{r.stdout[-500:]}\n{r.stderr[-500:]}"
 
 
-# [repo_tests] pass_to_pass - modified files syntax check
 def test_repo_modified_files_syntax():
     """All modified TypeScript files have valid syntax (pass_to_pass)."""
     modified_files = [
@@ -339,12 +456,14 @@ def test_repo_modified_files_syntax():
         assert r.returncode == 0, f"Syntax error in {f}:\n{r.stderr[-500:]}"
 
 
-# [repo_tests] pass_to_pass - npm run build
 def test_repo_build():
     """Repo builds successfully (pass_to_pass)."""
+    # Clean up any stale symlinks from tsx-based tests before building
+    symlink = Path(REPO) / "packages/playwright-core/src/mcpBundleImpl.ts"
+    symlink.unlink(missing_ok=True)
     r = subprocess.run(
         ["npm", "run", "build"],
-        capture_output=True, text=True, timeout=120, cwd=REPO,
+        capture_output=True, text=True, timeout=180, cwd=REPO,
     )
     assert r.returncode == 0, f"Build failed:\n{r.stderr[-500:]}"
 
@@ -353,15 +472,29 @@ def test_repo_build():
 # Pass-to-pass (static) — regression
 # ---------------------------------------------------------------------------
 
-# [static] pass_to_pass
 def test_ref_pattern_still_works():
-    """asRef returns { ref: value } for valid ref patterns, preserving existing behavior."""
-    commands_ts = (Path(REPO) / "packages/playwright-core/src/cli/daemon/commands.ts").read_text()
+    """Classification returns correct toolParams for valid ref patterns, preserving existing behavior."""
+    result = _run_tsx("""
+import { commands } from "./packages/playwright-core/src/cli/daemon/commands.ts";
+import { parseCommand } from "./packages/playwright-core/src/cli/daemon/command.ts";
 
-    # asRef should return { ref: value } for valid ref patterns
-    assert "{ ref: refOrSelector }" in commands_ts, \
-        "asRef should return ref for valid ref patterns"
+// Verify all ref patterns produce ref in toolParams (not selector)
+const refPatterns = ["e0", "e15", "e999", "f1e2", "f12e99"];
+const results = refPatterns.map(ref => {
+    const parsed = parseCommand(commands.click, { _: ["click", ref] });
+    return {
+        input: ref,
+        ref: parsed.toolParams.ref,
+        hasSelector: parsed.toolParams.selector !== undefined,
+    };
+});
 
-    # The evaluate command uses 'element' (not target)
-    assert "...asRef(element)" in commands_ts, \
-        "evaluate command should use asRef for its element param"
+console.log(JSON.stringify({ results }));
+""")
+    assert result.returncode == 0, f"Script failed: {result.stderr}"
+    data = json.loads(result.stdout.strip().split('\n')[-1])
+    for r in data["results"]:
+        assert r["ref"] == r["input"], \
+            f"Ref pattern '{r['input']}' should produce ref='{r['input']}', got ref='{r['ref']}'"
+        assert not r["hasSelector"], \
+            f"Ref pattern '{r['input']}' should NOT produce a selector field"

@@ -57,4 +57,4 @@ uv run --project providers/git pytest providers/git/tests/unit/git/hooks/test_gi
 
 Your solution will be checked by the repository's existing linters/formatters. All modified files must pass:
 
-- `ruff format and ruff check`
+- `ruff format` and `ruff check`

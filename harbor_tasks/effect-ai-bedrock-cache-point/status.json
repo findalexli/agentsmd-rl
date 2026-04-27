@@ -4,12 +4,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-16T10:52:21.260678",
-  "total_time": 59.7,
-  "sandbox_id": "irsenq8ta6yb2dgalgxak",
-  "backend": "anthropic",
+  "validated_at": "2026-04-22T01:59:47.317930",
+  "total_time": 11642.58,
+  "sandbox_id": "itx7aczmiovbaoo0v5t2d",
+  "backend": "minimax",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "fix_quality",
   "nodes": {
     "scaffold": {
       "status": "ok",
@@ -40,57 +40,37 @@
       "notes": "All 4 checks pass: Docker build OK, NOP reward=0 (correct), Gold reward=1 (correct), rubric empty (trivially pass)",
       "model": "MiniMax-M2.7",
       "backend": "minimax",
-      "time": 95.29
+      "time": 172.38
     },
     "quality_gate": {
       "status": "passed",
-      "model": "claude-opus-4-7",
-      "backend": "anthropic",
-      "time": 0.44,
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.23,
       "notes": "flags=['lint_tier_b:3', 'B:[B] pinned_dependencies @ environment/Dockerfile:10: unpinned pip deps: pytest', 'B:[B] no_network_during_tests @ tests/test.sh:4: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 11.54,
-      "tier_a_fails": [
-        "solution_uniqueness_guard",
-        "tests_verify_behavior_not_text"
-      ],
+      "time": 12.16,
+      "tier_a_fails": [],
       "tier_b_fails": [],
-      "pass_count": 6,
-      "fail_count": 3
+      "pass_count": 9,
+      "fail_count": 0
     },
     "tests_rewrite": {
       "status": "error",
       "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":315,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 400 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"invalid_request_error\\\",\\\"message\\\":\\\"\\\\\\\"thinking.type.enabled\\\\\\\" is not supported for this model. Use \\\\\\\"thinking.type.adapt",
       "time": 3.21
+    },
+    "fix_quality": {
+      "status": "ok",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 1426.93,
+      "notes": ""
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "minimax",
-      "time": 1078.63,
-      "at": "2026-04-15T04:01:53.854434"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "oauth",
-      "time": 451.24,
-      "at": "2026-04-15T12:48:48.641652"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "oauth",
-      "time": 583.26,
-      "at": "2026-04-15T18:49:32.155730"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -106,6 +86,30 @@
       "backend": "anthropic",
       "time": 59.7,
       "at": "2026-04-16T10:52:21.260678"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 23479.52,
+      "at": "2026-04-20T20:27:55.110770"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-minimax-m2.7",
+      "time": 1181.72,
+      "at": "2026-04-21T22:29:04.577367"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 11642.58,
+      "at": "2026-04-22T01:59:47.317930"
     }
   ]
 }

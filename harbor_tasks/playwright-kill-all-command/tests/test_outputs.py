@@ -135,27 +135,22 @@ def test_skill_md_documents_kill_all():
     """SKILL.md documents the kill-all command in the Sessions section."""
     skill_md = Path(f"{REPO}/packages/playwright/src/skill/SKILL.md")
     content = skill_md.read_text()
+    lines = content.split("\n")
 
-    # Find kill-all in code blocks (documented as CLI command)
-    lines = content.split("\\n")
+    # Find lines mentioning kill-all
+    kill_all_indices = [i for i, line in enumerate(lines) if "kill-all" in line]
+    assert len(kill_all_indices) > 0, "SKILL.md should document the kill-all command"
 
-    # Find kill-all in the content
-    has_kill_all = False
+    # Check that at least one kill-all reference has relevant context within ±3 lines
     has_context = False
+    for idx in kill_all_indices:
+        context_start = max(0, idx - 3)
+        context_end = min(len(lines), idx + 4)
+        nearby = "\n".join(lines[context_start:context_end]).lower()
+        if any(w in nearby for w in ("daemon", "zombie", "stale", "force")):
+            has_context = True
+            break
 
-    for i, line in enumerate(lines):
-        if "kill-all" in line:
-            has_kill_all = True
-            # Check context: 3 lines before and after
-            context_start = max(0, i - 3)
-            context_end = min(len(lines), i + 4)
-            context = "\\n".join(lines[context_start:context_end]).lower()
-
-            if "daemon" in context or "zombie" in context or "force" in context or "stale" in context:
-                has_context = True
-                break
-
-    assert has_kill_all, "SKILL.md should document the kill-all command"
     assert has_context, "kill-all should be documented with context (daemon/zombie/force/stale)"
 
 

@@ -656,7 +656,7 @@ def test_solution_file_structure():
 
 # [pr_diff] fail_to_pass
 def test_msbuild_isolation_files():
-    """BaseBuildTest.cs creates valid Directory.Build.props and .targets to block MSBuild inheritance."""
+    """Simulate C# runtime: extract embedded XML from BaseBuildTest.cs, write to temp files, parse and validate as MSBuild sentinels."""
     script_content = '''
 import re
 import xml.etree.ElementTree as ET
@@ -666,58 +666,74 @@ import os
 
 src = open("src/TestUtils/src/Microsoft.Maui.IntegrationTests/BaseBuildTest.cs").read()
 
-# Verify File.WriteAllText calls for isolation files
-# Use more flexible patterns that check the code structure
-if "File.WriteAllText" not in src:
-    print("FAIL: No File.WriteAllText calls found")
+# The code must use File.WriteAllText to create isolation files for both props and targets
+write_calls = re.findall(r'File\\.WriteAllText\\(', src)
+if len(write_calls) < 2:
+    print(f"FAIL: Expected >=2 File.WriteAllText calls for isolation, found {len(write_calls)}")
     sys.exit(1)
 
 if "Directory.Build.props" not in src:
-    print("FAIL: No Directory.Build.props found in code")
+    print("FAIL: No Directory.Build.props reference in code")
     sys.exit(1)
-    
+
 if "Directory.Build.targets" not in src:
-    print("FAIL: No Directory.Build.targets found in code")
+    print("FAIL: No Directory.Build.targets reference in code")
     sys.exit(1)
 
-# Extract triple-quoted raw string literals containing <Project>
-matches = re.findall(r'"""(.*?)"""', src, re.DOTALL)
-project_xmls = [m.strip() for m in matches if "<Project>" in m]
+# Extract C# triple-quoted raw string literals containing <Project>
+xml_blocks = re.findall(r'"""(.*?)"""', src, re.DOTALL)
+project_xmls = [m.strip() for m in xml_blocks if "<Project>" in m]
 if len(project_xmls) < 2:
-    print(f"FAIL: Expected >=2 embedded XML project blocks, found {len(project_xmls)}")
+    print(f"FAIL: Expected >=2 embedded <Project> XML blocks, found {len(project_xmls)}")
     sys.exit(1)
 
-# Write each to a temp file and parse as XML (simulates runtime file creation)
+# Simulate runtime behavior: write each XML block to a temp file and parse it,
+# just as File.WriteAllText would at C# runtime. This validates the embedded
+# XML content actually produces well-formed MSBuild sentinel files.
 tmpdir = tempfile.mkdtemp()
-for i, xml_str in enumerate(project_xmls):
-    fpath = os.path.join(tmpdir, f"test_{i}.xml")
+filenames = ["Directory.Build.props", "Directory.Build.targets"]
+for i, (xml_str, fname) in enumerate(zip(project_xmls, filenames)):
+    fpath = os.path.join(tmpdir, fname)
     with open(fpath, "w") as f:
         f.write(xml_str)
-    root = ET.parse(fpath).getroot()
-    if root.tag != "Project":
-        print(f"FAIL: XML #{i+1} root is '{root.tag}', expected 'Project'")
-        sys.exit(1)
-    os.unlink(fpath)
-os.rmdir(tmpdir)
 
-print("PASS")
+    # Parse as XML -- validates the content is well-formed
+    tree = ET.parse(fpath)
+    root = tree.getroot()
+    if root.tag != "Project":
+        print(f"FAIL: {fname} root element is '{root.tag}', expected 'Project'")
+        sys.exit(1)
+
+    # MSBuild sentinel files must NOT import other targets or define build logic --
+    # they should be empty <Project> elements that stop directory traversal
+    disallowed = ["Import", "PropertyGroup", "ItemGroup", "Target", "UsingTask"]
+    for tag in disallowed:
+        if root.find(tag) is not None:
+            print(f"FAIL: {fname} contains <{tag}> -- sentinel files must be empty to block inheritance")
+            sys.exit(1)
+
+    os.unlink(fpath)
+
+os.rmdir(tmpdir)
+print("PASS: MSBuild isolation files are valid empty <Project> sentinels")
 '''
     script_path = "/tmp/msbuild_check.py"
     with open(script_path, "w") as f:
         f.write(script_content)
-    
+
     r = subprocess.run(
         ["python3", script_path],
         capture_output=True, text=True, timeout=30, cwd=REPO,
     )
-    assert r.returncode == 0, f"Failed: {r.stderr}\n{r.stdout}"
+    assert r.returncode == 0, f"MSBuild isolation validation failed:\n{r.stderr}\n{r.stdout}"
     assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_skill_md_valid():
-    """run-integration-tests SKILL.md exists with valid frontmatter and all test categories."""
+    """Parse SKILL.md YAML frontmatter and validate required fields and documented categories."""
     script_content = '''
+import re
 import sys
 
 path = ".github/skills/run-integration-tests/SKILL.md"
@@ -727,49 +743,67 @@ except FileNotFoundError:
     print("FAIL: SKILL.md not found at " + path)
     sys.exit(1)
 
+# --- Parse YAML frontmatter ---
 if not content.startswith("---"):
     print("FAIL: SKILL.md must start with YAML frontmatter (---)")
     sys.exit(1)
 
-end_idx = content.index("---", 3)
-frontmatter = content[3:end_idx]
-
-if "name: run-integration-tests" not in frontmatter:
-    print("FAIL: Frontmatter must contain name: run-integration-tests")
-    sys.exit(1)
-if "description:" not in frontmatter:
-    print("FAIL: Frontmatter must contain a description field")
+end_idx = content.find("---", 3)
+if end_idx == -1:
+    print("FAIL: No closing --- for YAML frontmatter")
     sys.exit(1)
 
-categories = ["Build", "WindowsTemplates", "macOSTemplates", "Blazor",
-              "MultiProject", "Samples", "AOT", "RunOnAndroid", "RunOniOS"]
-for cat in categories:
-    if cat not in content:
-        print(f"FAIL: SKILL.md must document the '{cat}' category")
-        sys.exit(1)
+frontmatter = content[3:end_idx].strip()
 
-if "Run-IntegrationTests.ps1" not in content:
+# Parse YAML key-value pairs from frontmatter
+yaml_data = {}
+for line in frontmatter.split("\\n"):
+    line = line.strip()
+    if ":" in line:
+        key, val = line.split(":", 1)
+        yaml_data[key.strip()] = val.strip()
+
+if yaml_data.get("name") != "run-integration-tests":
+    print(f"FAIL: Frontmatter 'name' must be 'run-integration-tests', got '{yaml_data.get('name')}'")
+    sys.exit(1)
+
+if not yaml_data.get("description"):
+    print("FAIL: Frontmatter must contain a non-empty 'description' field")
+    sys.exit(1)
+
+# --- Validate categories documented in the body ---
+body = content[end_idx + 3:]
+required_categories = {"Build", "WindowsTemplates", "macOSTemplates", "Blazor",
+                       "MultiProject", "Samples", "AOT", "RunOnAndroid", "RunOniOS"}
+missing = {cat for cat in required_categories if cat not in body}
+if missing:
+    print(f"FAIL: SKILL.md body missing categories: {missing}")
+    sys.exit(1)
+
+# --- Validate script reference ---
+if "Run-IntegrationTests.ps1" not in body:
     print("FAIL: SKILL.md must reference Run-IntegrationTests.ps1")
     sys.exit(1)
 
-print("PASS")
+print("PASS: SKILL.md has valid frontmatter and documents all categories")
 '''
     script_path = "/tmp/skill_check.py"
     with open(script_path, "w") as f:
         f.write(script_content)
-    
+
     r = subprocess.run(
         ["python3", script_path],
         capture_output=True, text=True, timeout=30, cwd=REPO,
     )
-    assert r.returncode == 0, f"Failed: {r.stderr}\n{r.stdout}"
+    assert r.returncode == 0, f"SKILL.md validation failed:\n{r.stderr}\n{r.stdout}"
     assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_run_script_valid():
-    """Run-IntegrationTests.ps1 exists with ValidateSet categories and workflow parameters."""
+    """Parse Run-IntegrationTests.ps1 structure: extract ValidateSet values, validate param block and parameters."""
     script_content = '''
+import re
 import sys
 
 path = ".github/skills/run-integration-tests/scripts/Run-IntegrationTests.ps1"
@@ -779,82 +813,193 @@ except FileNotFoundError:
     print("FAIL: Run-IntegrationTests.ps1 not found at " + path)
     sys.exit(1)
 
-if "ValidateSet" not in content:
-    print("FAIL: Script must have ValidateSet for Category parameter")
+# --- Must start with a comment block ---
+stripped = content.lstrip()
+if not (stripped.startswith("#") or stripped.startswith("<#")):
+    print("FAIL: Script must start with a comment block")
     sys.exit(1)
 
-for cat in ["Build", "WindowsTemplates", "macOSTemplates", "Blazor", "RunOniOS", "RunOnAndroid"]:
-    if cat not in content:
-        print(f"FAIL: ValidateSet must include '{cat}'")
-        sys.exit(1)
+# --- Extract and validate [CmdletBinding()] ---
+if not re.search(r'\\[CmdletBinding\\(\\)\\]', content):
+    print("FAIL: Script must have [CmdletBinding()] attribute")
+    sys.exit(1)
 
-for param in ["SkipBuild", "SkipInstall", "AutoProvision"]:
+# --- Extract and validate param() block ---
+if not re.search(r'param\\s*\\(', content):
+    print("FAIL: Script must have a param() block")
+    sys.exit(1)
+
+# --- Extract ValidateSet values and compare against required categories ---
+vs_match = re.search(r'\\[ValidateSet\\(([^)]+)\\)\\]', content)
+if not vs_match:
+    print("FAIL: Script must have [ValidateSet()] attribute")
+    sys.exit(1)
+
+raw_values = vs_match.group(1)
+extracted = set(v.strip().strip('"').strip("'") for v in raw_values.split(","))
+
+required_categories = {"Build", "WindowsTemplates", "macOSTemplates", "Blazor",
+                       "MultiProject", "Samples", "AOT", "RunOnAndroid", "RunOniOS"}
+missing = required_categories - extracted
+if missing:
+    print(f"FAIL: ValidateSet missing categories: {missing}")
+    sys.exit(1)
+
+# --- Validate required switch/string parameters exist in param block ---
+required_params = ["SkipBuild", "SkipInstall", "AutoProvision", "MAUI_PACKAGE_VERSION"]
+for param in required_params:
     if param not in content:
-        print(f"FAIL: Script must have ${param} parameter")
+        print(f"FAIL: Script must have {param} parameter")
         sys.exit(1)
 
-if "MAUI_PACKAGE_VERSION" not in content:
-    print("FAIL: Script must handle MAUI_PACKAGE_VERSION")
-    sys.exit(1)
-
-if "ErrorActionPreference" not in content:
+# --- Validate ErrorActionPreference is set to Stop ---
+ea_lines = [l for l in content.split("\\n") if "ErrorActionPreference" in l]
+if not ea_lines:
     print("FAIL: Script must set ErrorActionPreference")
     sys.exit(1)
+if not any("Stop" in l for l in ea_lines):
+    print("FAIL: ErrorActionPreference must be set to Stop")
+    sys.exit(1)
 
-print("PASS")
+print("PASS: PowerShell script has valid parameter block with all required categories")
 '''
     script_path = "/tmp/script_check.py"
     with open(script_path, "w") as f:
         f.write(script_content)
-    
+
     r = subprocess.run(
         ["python3", script_path],
         capture_output=True, text=True, timeout=30, cwd=REPO,
     )
-    assert r.returncode == 0, f"Failed: {r.stderr}\n{r.stdout}"
+    assert r.returncode == 0, f"PowerShell script validation failed:\n{r.stderr}\n{r.stdout}"
     assert "PASS" in r.stdout
 
 
 # ---------------------------------------------------------------------------
-# Fail-to-pass (pr_diff) — config/documentation update tests
+# Fail-to-pass (pr_diff) — documentation update tests via subprocess
 # ---------------------------------------------------------------------------
 
 # [pr_diff] fail_to_pass
 def test_copilot_instructions_lists_integration_skill():
-    """copilot-instructions.md must list the run-integration-tests skill."""
-    content = (Path(REPO) / ".github/copilot-instructions.md").read_text()
-    assert "run-integration-tests" in content, \
-        "copilot-instructions.md must mention run-integration-tests skill"
-    assert ".github/skills/run-integration-tests/SKILL.md" in content, \
-        "copilot-instructions.md must reference the SKILL.md path"
-    assert "ALWAYS use this skill" in content, \
-        "copilot-instructions.md should instruct to ALWAYS use this skill"
+    """Parse copilot-instructions.md: extract numbered skill list and validate run-integration-tests entry."""
+    script_content = '''
+import re
+import sys
+
+content = open(".github/copilot-instructions.md").read()
+
+# --- Parse numbered skill entries: N. **name** (path) ---
+entries = re.findall(r'(\\d+)\\.\\s+\\*\\*([^*]+)\\*\\*\\s*\\(([^)]+)\\)', content)
+skill_names = [name for _, name, _ in entries]
+
+if "run-integration-tests" not in skill_names:
+    print(f"FAIL: run-integration-tests not found in numbered skill list. Found: {skill_names}")
+    sys.exit(1)
+
+# Find the entry and validate its path
+rit_entries = [(num, name, path) for num, name, path in entries if name == "run-integration-tests"]
+_, _, rit_path = rit_entries[0]
+if ".github/skills/run-integration-tests/SKILL.md" not in rit_path:
+    print(f"FAIL: run-integration-tests path must reference SKILL.md, got: {rit_path}")
+    sys.exit(1)
+
+# Validate "ALWAYS use this skill" directive
+if "ALWAYS use this skill" not in content:
+    print("FAIL: Must include 'ALWAYS use this skill' directive")
+    sys.exit(1)
+
+print("PASS: copilot-instructions.md has valid run-integration-tests skill entry")
+'''
+    script_path = "/tmp/copilot_skill_check.py"
+    with open(script_path, "w") as f:
+        f.write(script_content)
+
+    r = subprocess.run(
+        ["python3", script_path],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"copilot-instructions skill validation failed:\n{r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_integration_instructions_references_skill():
-    """integration-tests.instructions.md must reference the run-integration-tests skill."""
-    content = (Path(REPO) / ".github/instructions/integration-tests.instructions.md").read_text()
-    assert "run-integration-tests" in content, \
-        "integration-tests.instructions.md must reference the skill"
-    assert "Run-IntegrationTests.ps1" in content, \
-        "integration-tests.instructions.md must reference the PowerShell script"
-    assert "ALWAYS" in content, \
-        "integration-tests.instructions.md must instruct to ALWAYS use the skill"
+    """Validate integration-tests.instructions.md references the run-integration-tests skill and script."""
+    script_content = '''
+import sys
+
+content = open(".github/instructions/integration-tests.instructions.md").read()
+
+if "run-integration-tests" not in content:
+    print("FAIL: Must reference run-integration-tests skill")
+    sys.exit(1)
+
+if "Run-IntegrationTests.ps1" not in content:
+    print("FAIL: Must reference Run-IntegrationTests.ps1")
+    sys.exit(1)
+
+if "ALWAYS" not in content:
+    print("FAIL: Must instruct to ALWAYS use the skill")
+    sys.exit(1)
+
+print("PASS: integration-tests.instructions.md references skill correctly")
+'''
+    script_path = "/tmp/integration_ref_check.py"
+    with open(script_path, "w") as f:
+        f.write(script_content)
+
+    r = subprocess.run(
+        ["python3", script_path],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"integration-tests.instructions validation failed:\n{r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout
 
 
 # [pr_diff] fail_to_pass
 def test_copilot_instructions_skill_numbering():
-    """Skill numbering is sequential after adding run-integration-tests."""
-    content = (Path(REPO) / ".github/copilot-instructions.md").read_text()
-    # Check that try-fix is renumbered (could be 9 or higher)
-    assert re.search(r"\d+\.\s+\*\*try-fix\*\*", content), \
-        "try-fix skill must be listed"
-    # Check that run-integration-tests is present and numbered
-    assert re.search(r"\d+\.\s+\*\*run-integration-tests\*\*", content), \
-        "run-integration-tests must be numbered"
-    # Ensure run-integration-tests comes before try-fix
-    run_integration_pos = content.find("run-integration-tests")
-    try_fix_pos = content.find("try-fix")
-    assert run_integration_pos < try_fix_pos, \
-        "run-integration-tests must appear before try-fix in the file"
+    """Parse skill numbering: run-integration-tests must be numbered and appear before try-fix."""
+    script_content = '''
+import re
+import sys
+
+content = open(".github/copilot-instructions.md").read()
+
+# Extract all numbered skill entries with their numbers
+entries = re.findall(r'(\\d+)\\.\\s+\\*\\*([^*]+)\\*\\*', content)
+skill_map = {name: int(num) for num, name in entries}
+
+if "run-integration-tests" not in skill_map:
+    print(f"FAIL: run-integration-tests not in numbered list. Found: {list(skill_map.keys())}")
+    sys.exit(1)
+
+if "try-fix" not in skill_map:
+    print(f"FAIL: try-fix not in numbered list. Found: {list(skill_map.keys())}")
+    sys.exit(1)
+
+rit_num = skill_map["run-integration-tests"]
+tf_num = skill_map["try-fix"]
+
+if rit_num >= tf_num:
+    print(f"FAIL: run-integration-tests (#{rit_num}) must be numbered before try-fix (#{tf_num})")
+    sys.exit(1)
+
+# Verify run-integration-tests appears before try-fix in file order
+rit_pos = content.find("run-integration-tests")
+tf_pos = content.find("try-fix")
+if rit_pos >= tf_pos:
+    print("FAIL: run-integration-tests must appear before try-fix in the file")
+    sys.exit(1)
+
+print(f"PASS: Skill numbering valid (run-integration-tests=#{rit_num}, try-fix=#{tf_num})")
+'''
+    script_path = "/tmp/skill_numbering_check.py"
+    with open(script_path, "w") as f:
+        f.write(script_content)
+
+    r = subprocess.run(
+        ["python3", script_path],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Skill numbering validation failed:\n{r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout

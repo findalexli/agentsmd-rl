@@ -3,56 +3,52 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "instruction.md names the adapter file, the copilot-instructions.md file, the Code Review Instructions section, dotnet format reference, RS0017, #nullable enable on line 1, and the bash tokens (git diff --name-only --diff-filter=U, head -1, LC_ALL=C sort)."
+      "reason": "Instruction names both files, mentions IsHeader/IsFooter guard, ArgumentOutOfRangeException, Code Review Instructions section, dotnet format, #nullable enable line 1, RS0017, and the specific bash patterns (git diff --name-only --diff-filter=U, head -1, LC_ALL=C sort)."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "Instruction describes the bug and required behavior but does not dictate the exact code (e.g., does not specify 'if (ItemsSource.IsHeader(position) || ItemsSource.IsFooter(position)) return;')."
+      "reason": "Instruction describes what is broken and what to include but does not specify exact code or line numbers."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "test_header_footer_guard_exists asserts the regex `ItemsSource\\.IsHeader\\(\\s*position\\s*\\)\\s*\\|\\|\\s*ItemsSource\\.IsFooter\\(\\s*position\\s*\\)` \u2014 an equivalent fix using separate if statements, De Morgan's (`!IsHeader && !IsFooter`), or different variable naming would fail."
+      "outcome": "pass",
+      "reason": "Tests accept two patterns (early return or inverted guard wrapping PositionIsSelected) and match string patterns rather than gold-specific variable names."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "The f2p tests (test_header_footer_guard_exists, test_guard_has_correct_comment) only regex-match file content; test_adapter_compiles_with_fix only checks for absence of CS errors which would pass without any fix. No test actually exercises CollectionView selection behavior."
+      "outcome": "pass",
+      "reason": "Tests run dotnet build, dotnet format, and execute subprocess scripts to structurally verify the guard."
     },
     "test_not_tautological": {
-      "outcome": "fail",
-      "reason": "test_adapter_compiles_with_fix passes on the base commit too (base already compiles). The other f2p tests are pure text searches, so a file containing just the literal guard-pattern text (even as a comment) would pass without implementing real behavior."
+      "outcome": "pass",
+      "reason": "The f2p test requires both IsHeader and IsFooter checks plus PositionIsSelected remaining, which a stub cannot satisfy."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "Tests cover the guard code, the comment, and the copilot-instructions.md additions as required by the instruction."
+      "reason": "Tests cover adapter guard, copilot-instructions Code Review section, dotnet format reference, and build validation."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are grouped with comment headers (Gates, Fail-to-pass, Pass-to-pass) and tagged with [static]/[pr_diff]/[repo_tests]."
+      "reason": "Tests are grouped with section comments (Gates, Fail-to-pass) and descriptive names."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "No structured data output."
+      "reason": "Task does not produce structured data."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "Paths and commands appear consistent between instruction, tests, and solution."
+      "reason": "Paths and commands look correct."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "The files to modify are specified (which is expected for this task type), but no exact line numbers or code snippets are given."
+      "reason": "Instruction names files (required for task clarity) but not specific lines; domain-appropriate localization."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "The copilot-instructions.md change is appended at the end, localized, and does not rewrite the full file."
+      "reason": "copilot-instructions.md edit is an appended section, localized and not a full rewrite."
     }
   },
-  "tier_a_fails": [
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text",
-    "test_not_tautological"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 7,
-  "fail_count": 3
+  "pass_count": 10,
+  "fail_count": 0
 }

@@ -3,57 +3,52 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "Instruction names the file path, function name, and the constants/helpers (BEDROCK_CACHE_POINT, getCachePoint) that tests check for."
+      "reason": "instruction.md names the file path, function name prepareMessages, BEDROCK_CACHE_POINT constant, getCachePoint helper, and the case \"user\": block that the tests check for."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "Instruction describes the broken behavior but does not show the exact code to add."
+      "reason": "Instruction describes the problem and where to add handling but doesn't give the exact code line; agent must write the if check and push."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests assert on tool messages per instruction ('including user and tool messages'), but test_user_message_has_cache_point_check only checks user case; more critically, tests require the exact pattern `if (getCachePoint(message)) { content.push(BEDROCK_CACHE_POINT) }`, rejecting alternatives like ternary, early variable assignment, or different ordering."
+      "outcome": "pass",
+      "reason": "Tests use flexible regex patterns accepting any pattern that calls getCachePoint(message) and pushes BEDROCK_CACHE_POINT to content, allowing ternary or if-block implementations."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Tests are mostly regex/substring checks on source file text (read_source + re.search); only test_typescript_check executes, and it only verifies compilation, not the cache-point behavior."
+      "outcome": "pass",
+      "reason": "Tests include tsc compile check and a Node.js behavioral script executed via subprocess, not just text greps."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub wouldn't satisfy the regex requiring getCachePoint and BEDROCK_CACHE_POINT.push in the user case block."
+      "reason": "A stub would not add getCachePoint(message) call with BEDROCK_CACHE_POINT push to the user case block, so the f2p tests require the actual fix."
     },
     "behavior_in_tests": {
-      "outcome": "fail",
-      "reason": "Instruction explicitly states the fix should work for 'user and tool messages', but there is no test verifying the tool message case contains the cache point check."
+      "outcome": "pass",
+      "reason": "Tests verify cache point handling for user/tool case, TypeScript compiles, and assistant case still works\u2014matching what instruction requires."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are separate named functions with docstrings and a labeled runner list."
+      "reason": "Tests are separate named functions with docstrings describing each test's purpose (f2p, p2p baseline, structure)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task modifies internal code, no structured data output schema."
+      "reason": "Task is a source-code fix, no structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths and identifiers match consistently."
+      "reason": "Paths and identifiers match across instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "Instruction names the file and function, which is appropriate scope and not line-level leakage."
+      "reason": "Instruction names the file and function, which is reasonable task context; it doesn't give exact line numbers or code."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "Code-only task."
+      "reason": "Code-only task, not an agentmd-edits/config task."
     }
   },
-  "tier_a_fails": [
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "behavior_in_tests"
-  ],
-  "pass_count": 6,
-  "fail_count": 3
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
 }

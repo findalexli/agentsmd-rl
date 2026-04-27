@@ -10,93 +10,88 @@ import os
 REPO = "/workspace/ant-design"
 
 
-def test_icon_classnames_applied():
+def test_icon_classnames_behavior():
     """
-    Fail-to-pass: Verify that classNames?.icon is applied to the icon span element.
-    The fix should apply clsx to combine the base class with classNames?.icon.
+    Fail-to-pass: Verify that classNames.icon is actually applied to the icon element.
+    Runs the semantic tests which check that the custom-icon class is rendered.
     """
-    pure_panel_path = os.path.join(REPO, "components/popconfirm/PurePanel.tsx")
+    env = {**os.environ, "NODE_OPTIONS": "--max-old-space-size=4096"}
+    # Generate version file first
+    subprocess.run(["npm", "run", "version"], capture_output=True, cwd=REPO, env=env)
 
-    with open(pure_panel_path, "r") as f:
-        content = f.read()
-
-    # Check that classNames?.icon is being used with clsx in the icon span
-    assert "classNames?.icon" in content, "classNames?.icon should be referenced in PurePanel.tsx"
-
-    # Check that clsx is used to combine the base class with classNames?.icon
-    pattern = r'className=\{clsx\(`\$\{prefixCls\}-message-icon`,\s*classNames\?\.icon\)\}'
-    assert re.search(pattern, content), "icon span should use clsx to apply classNames?.icon"
+    # Run only the semantic.test.tsx which tests that icon classNames work
+    r = subprocess.run(
+        ["npx", "jest", "--config", ".jest.js", "components/popconfirm/__tests__/semantic.test.tsx", "--no-cache"],
+        capture_output=True, text=True, timeout=300, cwd=REPO, env=env,
+    )
+    assert r.returncode == 0, f"Popconfirm semantic tests failed (classNames.icon not working):\n{r.stderr[-1000:]}"
 
 
-def test_icon_styles_applied():
+def test_icon_styles_behavior():
     """
-    Fail-to-pass: Verify that styles?.icon is applied to the icon span element.
+    Fail-to-pass: Verify that styles.icon is actually applied to the icon element.
+    Runs the semantic tests which check that the color style is rendered.
     """
-    pure_panel_path = os.path.join(REPO, "components/popconfirm/PurePanel.tsx")
+    env = {**os.environ, "NODE_OPTIONS": "--max-old-space-size=4096"}
+    # Generate version file first
+    subprocess.run(["npm", "run", "version"], capture_output=True, cwd=REPO, env=env)
 
-    with open(pure_panel_path, "r") as f:
-        content = f.read()
-
-    # Check that styles?.icon is being applied to the icon span
-    assert "styles?.icon" in content, "styles?.icon should be referenced in PurePanel.tsx"
-
-    # Check the icon span has style={styles?.icon}
-    pattern = r'style=\{styles\?\.icon\}'
-    assert re.search(pattern, content), "icon span should have style={styles?.icon}"
+    # Run only the semantic.test.tsx which tests that icon styles work
+    r = subprocess.run(
+        ["npx", "jest", "--config", ".jest.js", "components/popconfirm/__tests__/semantic.test.tsx", "--no-cache"],
+        capture_output=True, text=True, timeout=300, cwd=REPO, env=env,
+    )
+    assert r.returncode == 0, f"Popconfirm semantic tests failed (styles.icon not working):\n{r.stderr[-1000:]}"
 
 
-def test_type_definition_includes_icon():
+def test_type_definition_behavior():
     """
-    Fail-to-pass: Verify that PopconfirmSemanticType includes icon field in type definition.
+    Fail-to-pass: Verify that TypeScript accepts icon in classNames and styles.
+    Runs the type tests which validate the type definitions at compile time.
     """
-    index_path = os.path.join(REPO, "components/popconfirm/index.tsx")
+    env = {**os.environ, "NODE_OPTIONS": "--max-old-space-size=4096"}
+    # Generate version file first
+    subprocess.run(["npm", "run", "version"], capture_output=True, cwd=REPO, env=env)
 
-    with open(index_path, "r") as f:
-        content = f.read()
-
-    # Check for PopconfirmSemanticType definition with icon field in classNames
-    assert "PopconfirmSemanticType" in content, "PopconfirmSemanticType should be defined"
-
-    # Check that icon is defined in classNames
-    pattern = r'classNames\?.*icon\?:\s*string'
-    assert re.search(pattern, content, re.DOTALL), "classNames should include icon?: string"
-
-    # Check that icon is defined in styles
-    pattern = r'styles\?.*icon\?:\s*React\.CSSProperties'
-    assert re.search(pattern, content, re.DOTALL), "styles should include icon?: React.CSSProperties"
+    # Run the type test which validates icon is accepted in classNames/styles
+    r = subprocess.run(
+        ["npx", "jest", "--config", ".jest.js", "components/popconfirm/__tests__/type.test.tsx", "--no-cache"],
+        capture_output=True, text=True, timeout=300, cwd=REPO, env=env,
+    )
+    assert r.returncode == 0, f"Popconfirm type tests failed (icon type not defined):\n{r.stderr[-1000:]}"
 
 
-def test_overlay_props_use_correct_type():
+def test_demo_renders_icon():
     """
-    Fail-to-pass: Verify that OverlayProps uses PopconfirmSemanticAllType instead of PopoverSemanticAllType.
+    Fail-to-pass: Verify that the semantic demo renders with icon element.
+    The demo-semantic snapshot test validates the icon appears in the semantics list.
     """
-    pure_panel_path = os.path.join(REPO, "components/popconfirm/PurePanel.tsx")
+    env = {**os.environ, "NODE_OPTIONS": "--max-old-space-size=4096"}
+    # Generate version file first
+    subprocess.run(["npm", "run", "version"], capture_output=True, cwd=REPO, env=env)
 
-    with open(pure_panel_path, "r") as f:
-        content = f.read()
-
-    # Should use PopconfirmSemanticAllType, not PopoverSemanticAllType
-    assert "PopconfirmSemanticAllType" in content, "Should import PopconfirmSemanticAllType"
-
-    # OverlayProps classNames and styles should reference PopconfirmSemanticAllType
-    pattern = r'classNames\?:\s*PopconfirmSemanticAllType\[\'classNames\'\]'
-    assert re.search(pattern, content), "OverlayProps.classNames should use PopconfirmSemanticAllType['classNames']"
-
-    pattern = r'styles\?:\s*PopconfirmSemanticAllType\[\'styles\'\]'
-    assert re.search(pattern, content), "OverlayProps.styles should use PopconfirmSemanticAllType['styles']"
+    # Run the demo-semantic test which validates the demo renders icon correctly
+    r = subprocess.run(
+        ["npx", "jest", "--config", ".jest.js", "components/popconfirm/__tests__/demo-semantic.test.tsx", "--no-cache"],
+        capture_output=True, text=True, timeout=300, cwd=REPO, env=env,
+    )
+    assert r.returncode == 0, f"Popconfirm demo-semantic test failed (icon not in demo):\n{r.stderr[-1000:]}"
 
 
-def test_semantic_demo_updated():
+def test_icon_uses_popconfirm_semantic_type():
     """
-    Fail-to-pass: Verify that demo/_semantic.tsx includes icon in the semantics list.
+    Fail-to-pass: Verify that the icon classNames/styles use Popconfirm-specific types.
+    This is validated by TypeScript compilation - if PurePanel uses wrong types,
+    the TS check will fail.
     """
-    demo_path = os.path.join(REPO, "components/popconfirm/demo/_semantic.tsx")
+    env = {**os.environ, "NODE_OPTIONS": "--max-old-space-size=4096"}
 
-    with open(demo_path, "r") as f:
-        content = f.read()
-
-    # Check that icon is documented in the semantics array
-    assert '{ name: \'icon\'' in content, "demo/_semantic.tsx should include icon in semantics list"
+    # TypeScript will catch if PopconfirmSemanticAllType is not properly used
+    r = subprocess.run(
+        ["npx", "tsc", "--noEmit", "components/popconfirm/PurePanel.tsx"],
+        capture_output=True, text=True, timeout=120, cwd=REPO, env=env,
+    )
+    assert r.returncode == 0, f"TypeScript check failed for PurePanel.tsx (wrong semantic types):\n{r.stderr[-500:]}"
 
 
 def test_repo_lint_biome():
@@ -115,25 +110,6 @@ def test_repo_lint_eslint_popconfirm():
         capture_output=True, text=True, timeout=120, cwd=REPO,
     )
     assert r.returncode == 0, f"ESLint failed:\n{r.stderr[-500:]}"
-
-
-def test_semantic_test_file_updated():
-    """
-    Fail-to-pass: Verify that semantic.test.tsx includes icon in test assertions.
-    """
-    test_path = os.path.join(REPO, "components/popconfirm/__tests__/semantic.test.tsx")
-
-    with open(test_path, "r") as f:
-        content = f.read()
-
-    # Check that the test file includes icon in classNames tests
-    assert "icon: 'custom-icon'" in content, "semantic.test.tsx should test icon classNames"
-
-    # Check that icon style is tested
-    assert "icon: { color:" in content, "semantic.test.tsx should test icon styles"
-
-    # Check for dynamic icon testing in function-based test
-    assert "icon: 'dynamic-icon'" in content, "semantic.test.tsx should test dynamic icon classNames"
 
 
 def test_repo_tests_node():

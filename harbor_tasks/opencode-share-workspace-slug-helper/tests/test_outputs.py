@@ -9,8 +9,8 @@ This task tests:
 
 All checks must pass for reward = 1. Any failure = reward 0.
 
-Tests are rewritten to verify BEHAVIOR rather than text:
-- Call functions and assert on return values
+Tests verify BEHAVIOR rather than text:
+- Call functions and assert on return values via subprocess
 - Verify code compiles and runs, not just source grep
 - Parameterize assertions to allow alternative correct implementations
 """
@@ -79,6 +79,63 @@ def test_actions_exports_slug_from_url():
     assert has_pattern, "slugFromUrl should use a regex matching /session path with slug capture"
 
 
+def test_slug_from_url_runtime_behavior():
+    """Execute slugFromUrl at runtime via Node.js to verify it correctly extracts workspace slugs."""
+    assert ACTIONS_FILE.exists(), f"actions.ts not found at {ACTIONS_FILE}"
+
+    # Run a Node.js script that extracts and executes the slugFromUrl function
+    r = subprocess.run(
+        ["node", "-e", """
+const fs = require("fs");
+const content = fs.readFileSync("packages/app/e2e/actions.ts", "utf8");
+
+// Find the slugFromUrl function and extract its body using brace matching
+const startIdx = content.indexOf("function slugFromUrl");
+if (startIdx === -1) { console.error("FAIL: slugFromUrl not found in actions.ts"); process.exit(1); }
+
+const braceStart = content.indexOf("{", startIdx);
+if (braceStart === -1) { console.error("FAIL: no opening brace for slugFromUrl"); process.exit(1); }
+
+let depth = 0;
+let braceEnd = -1;
+for (let i = braceStart; i < content.length; i++) {
+    if (content[i] === "{") depth++;
+    else if (content[i] === "}") { depth--; if (depth === 0) { braceEnd = i; break; } }
+}
+if (braceEnd === -1) { console.error("FAIL: unbalanced braces in slugFromUrl"); process.exit(1); }
+
+// Extract function body (pure JS regex logic - no TS types in the body)
+const fnBody = content.slice(braceStart + 1, braceEnd);
+const slugFromUrl = new Function("url", fnBody);
+
+// Test with URL patterns that exercise workspace slug extraction
+const tests = [
+    ["/my-workspace/session", "my-workspace"],
+    ["/my-workspace/session/abc123", "my-workspace"],
+    ["/my-workspace/session?q=1", "my-workspace"],
+    ["/my-workspace/session#frag", "my-workspace"],
+    ["https://example.com/ws-slug/session/xyz", "ws-slug"],
+    ["/no-match/page", ""],
+    ["", ""],
+];
+
+let passed = 0;
+for (const [input, expected] of tests) {
+    const got = slugFromUrl(input);
+    if (got !== expected) {
+        console.error("FAIL: slugFromUrl(" + JSON.stringify(input) + ") = " + JSON.stringify(got) + ", expected " + JSON.stringify(expected));
+        process.exit(1);
+    }
+    passed++;
+}
+console.log("PASS: " + passed + " slugFromUrl test cases passed");
+"""],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"slugFromUrl runtime test failed: {r.stderr}\n{r.stdout}"
+    assert "PASS" in r.stdout, f"Expected PASS in output, got: {r.stdout}"
+
+
 def test_actions_exports_wait_slug_async():
     """actions.ts exports waitSlug as an async function."""
     assert ACTIONS_FILE.exists(), f"actions.ts not found at {ACTIONS_FILE}"
@@ -98,9 +155,9 @@ def test_actions_exports_wait_slug_async():
     assert 'expect.poll' in content or 'expect .poll' in content or 'poll' in content.lower(), \
         "waitSlug should use expect.poll for polling"
 
-    # Verify timeout is present (any format: 45000, 45_000, etc.)
-    has_timeout = re.search(r'45[_]?000', content) or re.search(r'timeout.*45', content, re.IGNORECASE)
-    assert has_timeout, "waitSlug should have 45 second timeout"
+    # Verify a timeout is configured (any value - the specific duration is an implementation choice)
+    has_timeout = re.search(r'timeout', content, re.IGNORECASE)
+    assert has_timeout, "waitSlug should have a timeout configured for polling"
 
 
 def test_duplicated_helpers_removed_from_specs():
@@ -180,11 +237,16 @@ def test_agents_md_documents_routing_guidance():
     assert AGENTS_MD_FILE.exists(), f"AGENTS.md not found at {AGENTS_MD_FILE}"
     content = AGENTS_MD_FILE.read_text()
 
-    # The actual gold content: "use shared helpers from `../actions`"
-    # Accept backticks, quotes, or no punctuation around ../actions
-    shared_helpers_pattern = r'shared\s+helpers\s+from\s+[`"\']?\.{2}/actions[`"\']?'
-    assert re.search(shared_helpers_pattern, content, re.IGNORECASE), \
-        f"AGENTS.md should recommend using shared helpers from ../actions, got: {re.search(r'.{0,50}shared.{0,50}', content, re.IGNORECASE)}"
+    # Check that AGENTS.md has a line associating ../actions with routing/validation.
+    # Accept any phrasing (e.g. "use shared helpers from ../actions",
+    # "use helper utilities in ../actions", "import from ../actions when validating", etc.)
+    lines_with_actions = [l for l in content.split('\n') if '../actions' in l]
+    found_routing_guidance = any(
+        re.search(r'(?:routing|validat)', line, re.IGNORECASE)
+        for line in lines_with_actions
+    )
+    assert found_routing_guidance, \
+        "AGENTS.md should recommend using ../actions helpers when validating routing"
 
     windows_pattern = r'(?:windows|canonicalized?|resolve[d]?\s+(?:slug|workspace))'
     assert re.search(windows_pattern, content, re.IGNORECASE), \

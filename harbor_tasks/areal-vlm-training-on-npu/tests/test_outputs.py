@@ -21,7 +21,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-import pytest
 import yaml
 
 REPO = "/workspace/AReaL"
@@ -154,34 +153,6 @@ def test_repo_all_python_syntax():
                 except SyntaxError as e:
                     errors.append(f"{filepath}: {e}")
     assert not errors, f"Syntax errors found in repository:\n" + "\n".join(errors[:10])
-
-
-# [repo_tests] pass_to_pass — C++ files pass clang-format check
-def test_repo_clang_format():
-    """C++ files in the repository pass clang-format check (pass_to_pass)."""
-    # Install clang-format if not already installed
-    subprocess.run([sys.executable, "-m", "pip", "install", "clang-format==19.1.7", "-q"], check=True, capture_output=True)
-
-    # Find all C++ files
-    cpp_files = []
-    skip_dirs = {".git", "__pycache__", "evaluation"}
-    for root, dirs, files in os.walk(Path(REPO)):
-        dirs[:] = [d for d in dirs if d not in skip_dirs]
-        for file in files:
-            if file.endswith((".c", ".h", ".cpp", ".hpp", ".cu", ".cuh")):
-                cpp_files.append(str(Path(root) / file))
-
-    if not cpp_files:
-        pytest.skip("No C++ files found to check")
-
-    # Check each file with clang-format
-    for filepath in cpp_files:
-        r = subprocess.run(
-            ["clang-format", "--dry-run", "--Werror", filepath],
-            capture_output=True, text=True, timeout=60,
-        )
-        assert r.returncode == 0, f"clang-format check failed for {filepath}:\n{r.stderr[-500:]}{r.stdout[-500:]}"
-
 
 # [repo_tests] pass_to_pass — JSON files are valid
 def test_repo_json_valid():

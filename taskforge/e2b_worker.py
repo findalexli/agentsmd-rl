@@ -1991,6 +1991,24 @@ async def run_task(
                         result.nop_reward = float(ss_data.get("nop_reward", -1))
                         result.gold_reward = float(ss_data.get("gold_reward", -1))
                         result.valid = (result.nop_reward == 0.0 and result.gold_reward == 1.0)
+                        # Schema gate: reject scaffolds whose eval_manifest.yaml
+                        # cannot be parsed by the canonical Pydantic model. Backends
+                        # otherwise drift (custom origin enums, file/path swaps,
+                        # description/rule swaps, etc.). 38% of historic corpus
+                        # fails this gate — we stop adding to that pile.
+                        if result.valid:
+                            try:
+                                manifest_raw = await sandbox.files.read(
+                                    "/workspace/task/eval_manifest.yaml", format="text")
+                                import yaml as _yaml
+                                from taskforge.models import EvalManifest
+                                EvalManifest.model_validate(_yaml.safe_load(manifest_raw))
+                            except Exception as schema_err:
+                                msg = str(schema_err)[:400]
+                                result.valid = False
+                                result.error = f"manifest schema invalid: {msg}"
+                                logger.warning("[%s] oneshot_scaffold REJECTED (schema): %s",
+                                               result.task_name, msg[:200])
                         logger.info("[%s] oneshot_scaffold SCAFFOLDED: nop=%.1f gold=%.1f valid=%s",
                                     result.task_name, result.nop_reward,
                                     result.gold_reward, result.valid)
@@ -3028,7 +3046,7 @@ def main():
     parser.add_argument("--mode", choices=["pipeline", "docker-only"], required=True,
                         help="pipeline: unified DAG (LLM + Docker). docker-only: no LLM, just Docker oracle")
     parser.add_argument("--start-at", type=str, default=None,
-                        choices=["scaffold", "qgate", "rubric", "enrich", "improve", "validate", "judge"],
+                        choices=["scaffold", "oneshot_scaffold", "qgate", "rubric", "enrich", "improve", "validate", "judge"],
                         help="DAG entry point (default: scaffold for --input, validate for existing tasks)")
     parser.add_argument("--task-dir", default="harbor_tasks")
     parser.add_argument("--tasks", type=str, default=None, help="Comma-sep task names")

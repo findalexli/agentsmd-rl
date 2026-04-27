@@ -1,79 +1,151 @@
-# Fix Installer — Appwrite #11689
+# Fix the Appwrite installer's upgrade-mode UX and refresh `AGENTS.md`
 
-## Background
+You're working in a clone of `appwrite/appwrite` checked out at the parent
+of merge commit `ec20fb5` (PR #11689). There are **two** related problems
+to fix.
 
-The Appwrite installer is used for both fresh installations and in-place upgrades of Appwrite. It includes a web-based wizard (`/install`) and a CLI entry point (`appwrite install`). Several bugs have been identified that cause failures in different scenarios.
+## Repo layout
 
-## Issues to Fix
+```
+/workspace/appwrite/
+├── AGENTS.md                                          # agent-instruction file
+├── app/views/install/installer/
+│   ├── css/styles.css                                 # installer styles
+│   └── templates/steps/
+│       ├── step-4.phtml                               # "Review" step
+│       └── step-5.phtml                               # "Installing"/"Updating" step
+└── src/Appwrite/Platform/...                          # PHP backend (out of scope)
+```
 
-### 1. Async operations fail silently in the installer server
-The installer server starts a Swoole HTTP server to handle concurrent installation steps. When a Swoole server runs without coroutine support enabled, any `Swoole\Coroutine` operations fail silently. This means async tasks within the installer cannot coordinate properly.
+## Problem 1 — Installer upgrade-mode UX
 
-**Symptom**: The `startSwooleServer` method in `src/Appwrite/Platform/Installer/Server.php` does not enable coroutines before performing async work. The server needs to enable Swoole's coroutine hooks before any coroutine-based operations are attempted.
+The web installer has both a fresh-install flow and an upgrade flow,
+controlled by a `$isUpgrade` boolean that the templates read. The current
+templates have leftover placeholder copy and an unconditional review row
+that should not appear when upgrading. Fix the following symptoms:
 
-**Files**: `src/Appwrite/Platform/Installer/Server.php`
+### 1a. Step 5 still says "your app", not "Appwrite"
 
-### 2. SSE response hangs when installation completes
-When installation finishes via Server-Sent Events (SSE), the frontend waits indefinitely for a `done` event. The tracking telemetry call (`trackSelfHostedInstall`) runs in the same worker thread and blocks it from sending the final SSE event, causing the UI to hang.
+`app/views/install/installer/templates/steps/step-5.phtml` is the screen
+shown while installation/upgrade is running. With `$isUpgrade = true` it
+renders `Updating your app…`; with `$isUpgrade = false` it renders
+`Installing your app…`. Marketing wants the product name in both copies:
 
-**Symptom**: In `src/Appwrite/Platform/Tasks/Install.php`, the `performInstallation` method returns only after the tracking telemetry call completes, even though the SSE response needs to be sent first. The tracking call blocks the worker thread. A mechanism is needed to signal completion to the SSE handler before the (potentially slow) telemetry call runs, so the SSE stream can finish cleanly.
+- When `$isUpgrade` is true the banner must read **`Updating Appwrite…`**
+  (with the Unicode horizontal-ellipsis `…`, U+2026, exactly as in the
+  existing template).
+- When `$isUpgrade` is false the banner must read **`Installing Appwrite…`**.
+- The legacy phrases `Updating your app…` and `Installing your app…` must
+  no longer appear in the rendered output.
 
-**Files**: `src/Appwrite/Platform/Tasks/Install.php`
+### 1b. Step 4 leaks a "Secret API key" row during upgrades
 
-### 3. Secret API key shown during upgrades
-The installer's step-4 review page displays the "Secret API key" badge even when performing an upgrade. This information is not relevant during upgrades since the key was already set during the initial installation.
+`step-4.phtml` is the review screen shown before installation begins. It
+lists rows like *Hostname*, *Database*, *HTTP port*, *Appwrite Assistant*,
+and *Secret API key*. The "Secret API key" row only makes sense for a
+fresh install — on an upgrade we are not generating a new key.
 
-**Symptom**: In `app/views/install/installer/templates/steps/step-4.phtml`, the API key badge row always renders, even when `$isUpgrade` is true. This badge should only appear for fresh installations (`$isUpgrade` is false).
+Fix the template so that:
 
-**Files**: `app/views/install/installer/templates/steps/step-4.phtml`
+- When `$isUpgrade` is true the rendered HTML contains **no** occurrence
+  of the literal string `Secret API key`.
+- When `$isUpgrade` is false the rendered HTML still contains the
+  `Secret API key` review row (regression guard).
 
-### 4. Wrong copy on the final step during upgrades
-During upgrades, the installer's final step says "Updating your app…" — this branding is incorrect for Appwrite.
+### 1c. Installer step has wrong min-height during upgrades
 
-**Symptom**: In `app/views/install/installer/templates/steps/step-5.phtml`, the text "Updating your app" appears instead of the proper Appwrite branding.
+`app/views/install/installer/css/styles.css` enforces a `min-height` on
+each `.installer-step` block. On upgrade pages this leaves a large empty
+gap below the (much shorter) upgrade-step content. The installer markup
+sets `data-upgrade="true"` on `.installer-page` when running an upgrade.
 
-**Files**: `app/views/install/installer/templates/steps/step-5.phtml`
+Add a CSS rule so that when `.installer-page` has `data-upgrade='true'`,
+its descendant `.installer-step` elements are scoped to `min-height: 0`.
+The selector must match the form `.installer-page[data-upgrade='true']
+.installer-step` and the body must set `min-height: 0`.
 
-### 5. Web installer launches when CLI flags are present
-When `--database` or `--http-port` flags are explicitly passed on the CLI, the installer still launches the interactive web installer instead of running non-interactively.
+## Problem 2 — Rewrite `AGENTS.md`
 
-**Symptom**: The `Install.php` task has no way to detect when explicit CLI parameters (arguments starting with `--`) are present. A method is needed to check for explicit CLI params (excluding `--interactive`). When such params are present, the web installer launch should be skipped in favor of non-interactive CLI operation.
+The repo's `AGENTS.md` (the agent-instruction file at the repo root) is
+out of date and badly organised. Rewrite it from scratch into the
+following structure, in this order:
 
-**Expected behavior after fix**: `Install.php` should be able to determine whether any explicit `--` arguments were passed (except `--interactive`). When explicit CLI params are detected, the interactive web installer should not be launched.
+1. **Top-line tagline** — describe Appwrite as a *self-hosted
+   Backend-as-a-Service platform* with a *hybrid monolithic-microservice
+   architecture* built with *PHP 8.3+ on Swoole*, delivered as Docker
+   containers.
+2. **`## Commands`** table — a markdown table mapping each project
+   command to its purpose (Docker compose up, e2e tests, unit tests,
+   `composer format`, `composer lint`, `composer analyze`, `composer
+   check`).
+3. **`## Stack`** bullet list — list PHP 8.3+ + Swoole 6.x, Utopia PHP,
+   the supported databases, Redis, Docker + Traefik, and the testing
+   stack `PHPUnit 12, Pint (PSR-12), PHPStan level 3`.
+4. **`## Project layout`** — bullet list mapping the major top-level
+   directories (`src/Appwrite/Platform/Modules/`,
+   `src/Appwrite/Platform/Workers/`, `src/Appwrite/Platform/Tasks/`,
+   `app/init.php`, `app/init/`, `bin/`, `tests/e2e/`, `tests/unit/`,
+   `public/`).
+5. **`## Module structure`** — explain the `Module.php` / `Services` /
+   `Http` / `Workers` / `Tasks` layout under
+   `src/Appwrite/Platform/Modules/{Name}/`. Include the rule that file
+   names in `Http` directories must only be `Get.php`, `Create.php`,
+   `Update.php`, `Delete.php`, or `XList.php`, and the property-update
+   pattern for non-CRUD operations (e.g. team-membership status update).
+6. **`## Action pattern (HTTP endpoints)`** — a runnable PHP code block
+   showing a sample `class Create extends Action` with `getName`,
+   `__construct` builder chain (`setHttpMethod`, `setHttpPath`, `desc`,
+   `groups`, `label`, `param`, `inject`, `callback`), and the typed
+   `action(...)` method.
+7. **`## Conventions`** — bullet list preserving the actionable rules
+   from the old `AGENTS.md`:
+     - PSR-12 enforced by Pint, PSR-4 autoloading.
+     - `resourceType` values are always **plural** (`'functions'`,
+       `'sites'`, `'deployments'`).
+     - When updating documents, pass only changed attributes as a sparse
+       `Document` (with the same correct/incorrect code-block pair as the
+       old file, and the same exception list — migrations,
+       `array_merge()` with `getArrayCopy()`, near-full-document updates,
+       complex nested relationships).
+     - Avoid introducing dependencies outside the `utopia-php` ecosystem.
+     - Never hardcode credentials — use environment variables.
+8. **`## Cross-repo context`** — note that Appwrite is the base server
+   for `appwrite/cloud` and that the `feat-dedicated-db` feature spans
+   cloud, edge, and console.
 
-**Files**: `src/Appwrite/Platform/Tasks/Install.php`
+The old top-level headings `## Project Overview`, `## Development
+Commands`, `## Code Style Guidelines`, `## Performance Patterns`, `##
+Security Considerations`, `## Pull Request Guidelines`, and `## Known
+Issues and Gotchas` should be **removed** — their content either moves
+into the new sections above or is dropped (PR/release-process bullets,
+"hot reload" gotcha).
 
-### 6. DNS resolution failure crashes telemetry
-When `gethostbyname()` fails (e.g., network is unavailable), it returns `false`. The telemetry code stores this unchanged value and the subsequent check does not catch `false` values, leading to bad data in the telemetry payload.
+## Code Style Requirements
 
-**Symptom**: In `src/Appwrite/Platform/Tasks/Install.php`, the telemetry collection does not handle `gethostbyname()` returning `false`. When DNS resolution fails, the telemetry key should be `null` rather than `false`, and the suppression operator should be used to prevent warnings.
+- All modified PHP files must conform to **PSR-12** formatting (this
+  repo's Pint config enforces it). Don't introduce trailing whitespace
+  or mismatched indentation.
+- Use **strict type declarations** (`: bool`, `?callable`, `: void`,
+  etc.) on any new methods or modified signatures, consistent with the
+  surrounding file.
 
-**Files**: `src/Appwrite/Platform/Tasks/Install.php`
+## Out of scope
 
-### 7. Upgrade page layout breaks
-The upgrade path of the installer page does not have proper CSS constraints for the step container, causing layout issues.
+The PHP installer-server / SSE-stream / Swoole-coroutine refactor in
+`src/Appwrite/Platform/Tasks/Install.php`,
+`src/Appwrite/Platform/Installer/Http/Installer/Install.php`, and
+`src/Appwrite/Platform/Installer/Server.php` is out of scope for this
+benchmark task — those changes require a running Swoole HTTP server and
+are evaluated in a separate task. You should leave those files
+untouched (or only modify them if needed to preserve PHP syntax).
 
-**Symptom**: In `app/views/install/installer/css/styles.css`, the upgrade page container lacks a CSS rule that clears the minimum height constraint. This causes the upgrade page to display incorrectly compared to the install page.
+## How you'll be evaluated
 
-**Files**: `app/views/install/installer/css/styles.css`
+- **Track 1** runs PHP behavioral tests: it renders `step-4.phtml` and
+  `step-5.phtml` with `$isUpgrade` ∈ {true, false} and asserts on the
+  output, parses `styles.css` for the new rule, and structurally checks
+  `AGENTS.md` for the new section headings and signal phrases.
+- **Track 2** is a semantic comparison of your `AGENTS.md` against the
+  intended rewrite, judged by an LLM.
 
-### 8. AGENTS.md documentation is outdated
-The `AGENTS.md` file contains outdated command references and poor formatting that makes it hard to use as a reference.
-
-**Symptom**: The `AGENTS.md` file does not use a table format for its commands section. A table-based format with columns like "Command" and "Purpose" would improve readability.
-
-**Files**: `AGENTS.md`
-
-## Verification Criteria
-
-After fixes are applied, the following should be true:
-1. All PHP files pass syntax check (`php -l`)
-2. `Install.php` defines a method to detect explicit CLI parameters (arguments starting with `--`, excluding `--interactive`)
-3. `Server.php` enables coroutine hooks via Swoole's Runtime before any async operations
-4. `performInstallation` accepts a nullable callable parameter that is called before the tracking telemetry runs
-5. `step-4.phtml` hides the API key badge when performing an upgrade
-6. `step-5.phtml` contains the correct Appwrite branding text (not "Updating your app")
-7. `styles.css` contains a CSS rule for the upgrade page that resets minimum height
-8. `AGENTS.md` contains a table-based commands section
-
-Run `composer format` and `composer analyze` to ensure code style compliance.
+You only need to edit files under `/workspace/appwrite/`.

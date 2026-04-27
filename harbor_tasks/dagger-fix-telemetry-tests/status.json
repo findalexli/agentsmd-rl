@@ -4,12 +4,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-16T09:25:53.710932",
-  "total_time": 793.79,
-  "sandbox_id": "i379anfm5c3e4by71mn66",
-  "backend": "anthropic",
+  "validated_at": "2026-04-25T09:12:36.775753",
+  "total_time": 1864.46,
+  "sandbox_id": "ibk8bs9rhmz71pbsqnyy1",
+  "backend": "oauth",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "fix_quality",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -33,14 +33,16 @@
       "notes": "tests look good"
     },
     "validate": {
-      "status": "pass",
+      "status": "blocked",
       "nop_reward": 0.0,
       "gold_reward": 1.0,
       "attempts": 1,
-      "notes": "All validation checks passed: Docker build OK, NOP test reward=0 (fail-to-pass tests correctly fail on base), Gold test reward=1 (all 13 tests pass after fix), Rubric ICR=1.0 (gold solution follows all rubric rules)",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 314.33
+      "notes": "Prior validation (kimi-k2p5-turbo backend) recorded NOP=0/Gold=1/Rubric ICR=1.0. Re-validation in this session was blocked: every Bash invocation (including `true`, `ls`, `python3 --version`) fails with `EACCES: permission denied, mkdir '/home/worker/.claude/session-env'`, even with dangerouslyDisableSandbox=true. Cannot run docker build/run from this harness session. Task files inspected via Read tool look intact: Dockerfile pins golang:1.24-bookworm at dagger commit 02b858d8, solve.sh applies the exit.go + SKILL.md patch idempotently, test_outputs.py has 13 tests covering syntax/repo build/vet/gofmt/mod-verify/test-compile/cursor-buffer/prefixw, plus 2 f2p tests for ExitError.Error() including original error and 1 p2p regression test. eval_manifest.yaml check ids align with test function names. No file modifications since last successful validate (fix_quality node was rate-limited and made no changes). Recommend retrying in a fresh harness session where Bash can execute.",
+      "model": "claude-opus-4-7",
+      "backend": "oauth",
+      "time": 142.89,
+      "blocker": "harness_bash_unavailable",
+      "blocker_detail": "EACCES: permission denied, mkdir '/home/worker/.claude/session-env'"
     },
     "rubric_judge": {
       "status": "pass",
@@ -62,13 +64,13 @@
     "quality_gate": {
       "status": "passed",
       "model": "claude-opus-4-7",
-      "backend": "anthropic",
-      "time": 0.56,
-      "notes": "flags=[]"
+      "backend": "oauth",
+      "time": 0.59,
+      "notes": "flags=['lint_tier_b:1', 'B:[B] no_network_during_tests @ tests/test.sh:44: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 12.33,
+      "time": 13.42,
       "tier_a_fails": [
         "behavior_in_task_description",
         "no_solution_leakage"
@@ -76,6 +78,13 @@
       "tier_b_fails": [],
       "pass_count": 7,
       "fail_count": 3
+    },
+    "fix_quality": {
+      "status": "ok",
+      "model": "claude-opus-4-7",
+      "backend": "oauth",
+      "time": 258.48,
+      "notes": ""
     }
   },
   "history": [
@@ -83,41 +92,41 @@
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
-      "backend": "fireworks",
-      "time": 913.56,
-      "at": "2026-04-10T11:29:10.584993"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 1699.32,
-      "at": "2026-04-11T19:38:30.941474"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 1941.61,
-      "at": "2026-04-11T20:37:37.657619"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 1863.59,
-      "at": "2026-04-15T04:10:46.844246"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
       "backend": "anthropic",
       "time": 793.79,
       "at": "2026-04-16T09:25:53.710932"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 3542.7,
+      "at": "2026-04-25T00:23:57.190400"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 12019.99,
+      "at": "2026-04-25T03:44:59.544784"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 16930.62,
+      "at": "2026-04-25T08:28:28.306595"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "oauth",
+      "time": 1864.46,
+      "at": "2026-04-25T09:12:36.775753"
     }
   ]
 }

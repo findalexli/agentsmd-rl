@@ -4,12 +4,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-16T12:12:14.445734",
-  "total_time": 64.57,
-  "sandbox_id": "i2uzyv2ptwyzsa3bjttbs",
-  "backend": "anthropic",
+  "validated_at": "2026-04-22T03:58:27.347764",
+  "total_time": 20917.32,
+  "sandbox_id": "iwe55lkdawsqri2c9fnmm",
+  "backend": "minimax",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "fix_quality",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -37,10 +37,10 @@
       "nop_reward": 0.0,
       "gold_reward": 1.0,
       "attempts": 1,
-      "notes": "Validation passed: Docker build OK, NOP reward=0 (3 f2p tests fail on buggy code), Gold reward=1 (14 tests pass after fix), Rubric judge ICR=1.0",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 98.88
+      "notes": "Validation passed: Docker build OK, NOP reward=0 (3 f2p tests fail on buggy code), Gold reward=1 (14/14 tests pass after fix), Rubric judge ICR=1.0 (6/6 rules pass). Used /tmp/bun-checkout (base commit) for rubric judge as /workspace/repo was not present.",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 309.38
     },
     "rubric_judge": {
       "status": "pass",
@@ -61,26 +61,32 @@
     },
     "quality_gate": {
       "status": "DELETE",
-      "model": "claude-opus-4-7",
-      "backend": "anthropic",
-      "time": 0.2,
-      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:209: test `test_hostname_unix_branches_preserved` has 2 assert(s), all', 'lint_tier_b:1']"
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.36,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:220: test `test_hostname_unix_branches_preserved` has 2 assert(s), all', 'lint_tier_b:2', 'B:[B] no_network_during_tests @ tests/test.sh:44: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 11.4,
+      "time": 12.77,
       "tier_a_fails": [
-        "behavior_in_task_description",
         "solution_uniqueness_guard"
       ],
       "tier_b_fails": [],
-      "pass_count": 7,
-      "fail_count": 2
+      "pass_count": 8,
+      "fail_count": 1
     },
     "tests_rewrite": {
       "status": "error",
-      "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":646,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 400 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"invalid_request_error\\\",\\\"message\\\":\\\"\\\\\\\"thinking.type.enabled\\\\\\\" is not supported for this model. Use \\\\\\\"thinking.type.adapt",
-      "time": 1.85
+      "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":506,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"There's an issue with the selected model (opus). It may not exist or you may not have access to it. Run --model to pick a different model.\",\"stop_reason\":\"stop_sequence\",\"session_id\":\"b",
+      "time": 1.76
+    },
+    "fix_quality": {
+      "status": "ok",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 257.78,
+      "notes": ""
     }
   },
   "history": [
@@ -89,40 +95,40 @@
       "nop": 0.0,
       "gold": 1.0,
       "backend": "fireworks",
-      "time": 946.96,
-      "at": "2026-04-11T19:21:31.155253"
+      "time": 13241.47,
+      "at": "2026-04-20T17:37:18.338269"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "minimax",
+      "time": 14101.98,
+      "at": "2026-04-21T13:16:12.203212"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
-      "backend": "fireworks",
-      "time": 1564.27,
-      "at": "2026-04-15T03:52:28.512376"
+      "backend": "chutes",
+      "time": 1161.74,
+      "at": "2026-04-21T13:54:30.116687"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "minimax",
-      "time": 3060.65,
-      "at": "2026-04-15T11:17:27.784922"
+      "time": 14834.99,
+      "at": "2026-04-21T18:14:17.496386"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "minimax",
-      "time": 2609.92,
-      "at": "2026-04-15T13:19:14.952071"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "anthropic",
-      "time": 64.57,
-      "at": "2026-04-16T12:12:14.445734"
+      "time": 20917.32,
+      "at": "2026-04-22T03:58:27.347764"
     }
   ]
 }

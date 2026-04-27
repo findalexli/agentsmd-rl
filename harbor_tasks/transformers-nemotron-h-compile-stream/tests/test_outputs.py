@@ -114,6 +114,8 @@ def test_mixer_stream_with_compile_guard():
 
     has_stream = False
     has_guard = False
+    calls_cuda_kernels = False
+    calls_torch_forward = False
 
     for node in ast.walk(tree):
         if isinstance(node, ast.ClassDef) and node.name == "NemotronHMamba2Mixer":
@@ -122,10 +124,45 @@ def test_mixer_stream_with_compile_guard():
                         and item.name in ("forward", "cuda_kernels_forward"):
                     has_stream = has_stream or _method_has_pattern(item, _is_stream_attr)
                     has_guard = has_guard or _method_has_pattern(item, _is_compile_guard_call)
+                    for child in ast.walk(item):
+                        if isinstance(child, ast.Call):
+                            dump = ast.dump(child)
+                            if "cuda_kernels_forward" in dump:
+                                calls_cuda_kernels = True
+                            if "torch_forward" in dump:
+                                calls_torch_forward = True
             break
 
     assert has_stream, "NemotronHMamba2Mixer missing CUDA stream management in forward/cuda_kernels_forward"
     assert has_guard, "NemotronHMamba2Mixer missing compile guard (is_torchdynamo_compiling)"
+    assert calls_cuda_kernels, "NemotronHMamba2Mixer.forward must dispatch to cuda_kernels_forward"
+    assert calls_torch_forward, "NemotronHMamba2Mixer.forward must dispatch to torch_forward"
+
+    # Verify compile guard and stream are co-located in the same if-block via subprocess
+    r = subprocess.run(
+        ["python3", "-c", "\n".join([
+            "import ast",
+            "from pathlib import Path",
+            f"tree = ast.parse(Path('{MODELING}').read_text())",
+            "found = False",
+            "for node in ast.walk(tree):",
+            "    if isinstance(node, ast.ClassDef) and node.name == 'NemotronHMamba2Mixer':",
+            "        for item in node.body:",
+            "            if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)) and item.name == 'forward':",
+            "                for child in ast.walk(item):",
+            "                    if isinstance(child, ast.If):",
+            "                        dump = ast.dump(child)",
+            "                        if 'torchdynamo_compiling' in dump and 'stream' in dump:",
+            "                            found = True",
+            "                            break",
+            "assert found, 'compile guard and stream not co-located in same if-block'",
+            "print('GUARD_AND_STREAM_COLOCATED')",
+        ])],
+        capture_output=True, text=True, timeout=30, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Subprocess analysis failed: {r.stderr}"
+    assert "GUARD_AND_STREAM_COLOCATED" in r.stdout, \
+        "Compile guard and CUDA stream must be co-located in the same if-block in forward"
 
 
 # [pr_diff] fail_to_pass
@@ -179,20 +216,31 @@ def test_modular_mixer_has_forward_override():
     # AST-only because: modular file imports torch + mamba CUDA kernels
     tree = ast.parse(Path(MODULAR).read_text())
 
+    has_forward = False
     has_stream = False
     has_guard = False
+    calls_dispatch = False
 
     for node in ast.walk(tree):
         if isinstance(node, ast.ClassDef) and node.name == "NemotronHMamba2Mixer":
             for item in node.body:
                 if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)) \
                         and item.name in ("forward", "cuda_kernels_forward"):
+                    if item.name == "forward":
+                        has_forward = True
                     has_stream = has_stream or _method_has_pattern(item, _is_stream_attr)
                     has_guard = has_guard or _method_has_pattern(item, _is_compile_guard_call)
+                    for child in ast.walk(item):
+                        if isinstance(child, ast.Call):
+                            dump = ast.dump(child)
+                            if "cuda_kernels_forward" in dump or "torch_forward" in dump:
+                                calls_dispatch = True
             break
 
+    assert has_forward, "Modular NemotronHMamba2Mixer must have a forward method override"
     assert has_stream, "Modular NemotronHMamba2Mixer missing CUDA stream in forward/cuda_kernels_forward"
     assert has_guard, "Modular NemotronHMamba2Mixer missing compile guard (is_torchdynamo_compiling)"
+    assert calls_dispatch, "Modular NemotronHMamba2Mixer.forward must dispatch to cuda_kernels_forward or torch_forward"
 
 
 # [pr_diff] fail_to_pass
@@ -215,6 +263,20 @@ def test_is_fast_path_available_sentinel():
                         if isinstance(node.value, ast.Constant) and node.value.value is False:
                             found = True
         assert found, f"{label} file missing module-level 'is_fast_path_available = False'"
+
+    # Verify the sentinel is actually referenced in NemotronHMamba2Mixer's methods
+    for path, label in [(MODELING, "modeling"), (MODULAR, "modular")]:
+        tree = ast.parse(Path(path).read_text())
+        used_in_mixer = False
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ClassDef) and node.name == "NemotronHMamba2Mixer":
+                for child in ast.walk(node):
+                    if isinstance(child, ast.Name) and child.id == "is_fast_path_available":
+                        used_in_mixer = True
+                        break
+                break
+        assert used_in_mixer, \
+            f"{label}: is_fast_path_available must be referenced in NemotronHMamba2Mixer"
 
 
 # ---------------------------------------------------------------------------

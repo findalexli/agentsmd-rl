@@ -1,15 +1,16 @@
 {
   "schema_version": 2,
-  "valid": true,
-  "verdict": "pass",
-  "nop_reward": 0.0,
-  "gold_reward": 1.0,
-  "validated_at": "2026-04-15T23:02:08.562710",
-  "total_time": 5076.39,
-  "sandbox_id": "irbvpkxvnw1jnu94ic2za",
+  "valid": false,
+  "verdict": "fail",
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-21T21:27:38.294716",
+  "total_time": 26437.17,
+  "sandbox_id": "ir488x6ijpc8w67c0v5lb",
   "backend": "minimax",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "fix_quality",
+  "error": "rate limited during fix_quality: {\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":186648,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 429 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"rate_limit_error\\\",\\\"message\\\":\\\"usage limit exceeded (2056)\\\"},\\\"request_id\\\":\\\"06378138b92428cd4b97b1c280a8e277\\\"}\",\"stop_reason\":\"stop_sequence\",\"session_id\":\"539a6b17-49a8-4760-bf6d-2381bba3965e\",\"total_cost_usd\":0,\"usage\":{\"input_tokens\":0,\"cache_creation_input_tokens\":0,\"cache_read_inp",
   "nodes": {
     "scaffold": {
       "status": "ok",
@@ -46,7 +47,7 @@
       "status": "DELETE",
       "model": "MiniMax-M2.7",
       "backend": "minimax",
-      "time": 0.3,
+      "time": 0.22,
       "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:127: test `test_main_priority_check_added` has 1 assert(s), all pass o', 'lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:23: unpinned pip deps: pytest']"
     },
     "quality_judge": {
@@ -66,25 +67,16 @@
       "status": "error",
       "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":116,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"Not logged in \u00b7 Please run /login\",\"stop_reason\":\"stop_sequence\",\"session_id\":\"cc7534a3-14c0-4dff-a2ab-4fb1492fdbe2\",\"total_cost_usd\":0,\"usage\":{\"input_tokens\":0,\"cache_creation_input_t",
       "time": 1.31
+    },
+    "fix_quality": {
+      "status": "rate_limited",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 188.32,
+      "notes": ""
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "oauth",
-      "time": 626.32,
-      "at": "2026-04-15T12:46:10.566355"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "oauth",
-      "time": 249.4,
-      "at": "2026-04-15T18:43:58.424034"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -108,6 +100,22 @@
       "backend": "minimax",
       "time": 5076.39,
       "at": "2026-04-15T23:02:08.562710"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 16517.45,
+      "at": "2026-04-20T18:31:53.736747"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "minimax",
+      "time": 26437.17,
+      "at": "2026-04-21T21:27:38.294716"
     }
   ]
 }

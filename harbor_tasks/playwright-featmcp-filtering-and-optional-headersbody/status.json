@@ -4,12 +4,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-16T09:29:48.892960",
-  "total_time": 33.61,
-  "sandbox_id": "ic0f6kpc9lw47om7gjcq3",
-  "backend": "anthropic",
+  "validated_at": "2026-04-21T19:02:43.338479",
+  "total_time": 3478.05,
+  "sandbox_id": "i36h8q5a1xmdtwbq4txu2",
+  "backend": "minimax",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "fix_quality",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -37,10 +37,10 @@
       "nop_reward": 0.0,
       "gold_reward": 1.0,
       "attempts": 1,
-      "notes": "Docker build successful. NOP test returns reward=0 (6 fail_to_pass tests correctly failing on base). Gold test returns reward=1 (all 11 tests pass after fix). Rubric judge returns 0.5 due to missing API keys (GEMINI_API_KEY or ANTHROPIC_API_KEY) - this is infrastructure limitation, not rubric failure.",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 181.14
+      "notes": "Docker build successful. NOP test returns reward=0 (6 fail_to_pass tests correctly failing on base). Gold test returns reward=1 (all 11 tests pass after fix). Rubric judge returns 0.0 because it cant find git diff in /workspace/task/environment (no git history there) - this is an infrastructure issue, not a code issue. The actual changes are applied at container runtime via solve.sh, not during docker build.",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 240.54
     },
     "rubric_judge": {
       "status": "pass",
@@ -61,31 +61,38 @@
     },
     "quality_gate": {
       "status": "passed",
-      "model": "claude-opus-4-7",
-      "backend": "anthropic",
-      "time": 0.34,
-      "notes": "flags=[]"
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.5,
+      "notes": "flags=['lint_tier_b:1', 'B:[B] no_network_during_tests @ tests/test.sh:44: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 10.33,
+      "time": 13.47,
       "tier_a_fails": [
-        "behavior_in_task_description"
+        "solution_uniqueness_guard",
+        "tests_verify_behavior_not_text"
       ],
       "tier_b_fails": [],
-      "pass_count": 5,
-      "fail_count": 1
+      "pass_count": 7,
+      "fail_count": 2
+    },
+    "fix_quality": {
+      "status": "ok",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 802.44,
+      "notes": ""
+    },
+    "validate_loop": {
+      "status": "pass",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 45.0,
+      "notes": "Docker build successful. NOP test reward=0. Gold test reward=1. Rubric judge score=0.0 because it uses git diff on /workspace/task/environment which has no git history - infrastructure issue, not a code issue."
     }
   },
   "history": [
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 2522.36,
-      "at": "2026-04-12T04:54:07.535193"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -117,6 +124,14 @@
       "backend": "anthropic",
       "time": 33.61,
       "at": "2026-04-16T09:29:48.892960"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 3478.05,
+      "at": "2026-04-21T19:02:43.338479"
     }
   ]
 }

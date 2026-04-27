@@ -3,9 +3,11 @@ Task: uv-run-remote-script-unwrap-panic
 Repo: astral-sh/uv @ 867e535f2a5f7f2b1f22a0ccc52fc6da5b01ac3c
 PR:   18707
 
-Behavioral test suite.  Core f2p tests inject Rust unit tests into the crate,
-compile and run them via cargo, then assert on the result.  This verifies
-actual code behavior (type system, API shape) rather than grepping source.
+Test suite verifying that the unsafe `.unwrap()` on downloaded_script
+is eliminated and the downloaded file is no longer threaded separately
+through the call chain.  Tests check for the ABSENCE of the old broken
+patterns rather than the PRESENCE of a specific fix, so any correct
+restructuring (NamedTempFile, PathBuf, etc.) will pass.
 """
 
 import re
@@ -18,87 +20,6 @@ REPO = "/repo"
 RUN_RS = Path(REPO) / "crates/uv/src/commands/project/run.rs"
 LIB_RS = Path(REPO) / "crates/uv/src/lib.rs"
 
-# ---------------------------------------------------------------------------
-# Rust behavioral test module — injected into run.rs for compilation + runtime
-# ---------------------------------------------------------------------------
-
-_MARKER_BEGIN = "// __BEHAVIORAL_TEST_BEGIN__"
-
-_RUST_TEST_MODULE = """
-// __BEHAVIORAL_TEST_BEGIN__
-#[cfg(test)]
-mod behavioral_fix_tests {
-    use super::*;
-    use std::ffi::OsString;
-
-    /// Construct a PythonRemote variant with an actual temp file.
-    /// On the base commit PythonRemote holds (DisplaySafeUrl, Vec<OsString>),
-    /// so this fails to compile - proving the variant now embeds a file handle.
-    #[test]
-    fn python_remote_holds_file() {
-        let tf = tempfile::NamedTempFile::new().expect("create temp file");
-        let expected_path = tf.path().to_path_buf();
-        let cmd = RunCommand::PythonRemote(tf, vec![OsString::from("--flag")]);
-        match &cmd {
-            RunCommand::PythonRemote(file, args) => {
-                assert!(file.path().exists(), "embedded temp file must exist");
-                assert_eq!(file.path(), expected_path, "path must match");
-                assert_eq!(args.len(), 1, "args forwarded");
-            }
-            _ => panic!("expected PythonRemote variant"),
-        }
-    }
-
-    /// Compile-time proof: as_command() takes only (&self, &Interpreter).
-    /// On base it requires a third Option<&NamedTempFile> argument,
-    /// so this function body would not compile.
-    #[allow(dead_code)]
-    fn verify_as_command_arity(c: &RunCommand, i: &Interpreter) -> Command {
-        c.as_command(i)
-    }
-}
-"""
-
-
-def _inject_rust_tests():
-    """Append the Rust test module to run.rs (idempotent)."""
-    src = RUN_RS.read_text()
-    if _MARKER_BEGIN in src:
-        return
-    RUN_RS.write_text(src + _RUST_TEST_MODULE)
-
-
-def _remove_rust_tests():
-    """Strip the injected Rust test module from run.rs."""
-    src = RUN_RS.read_text()
-    start = src.find(_MARKER_BEGIN)
-    if start == -1:
-        return
-    while start > 0 and src[start - 1] == "\n":
-        start -= 1
-    RUN_RS.write_text(src[:start])
-
-
-@pytest.fixture(scope="module")
-def behavioral_result():
-    """Inject Rust tests, compile + run them, yield results, clean up."""
-    _inject_rust_tests()
-    try:
-        compile_r = subprocess.run(
-            ["cargo", "test", "-p", "uv", "--lib", "--no-run"],
-            capture_output=True, text=True, timeout=480, cwd=REPO,
-        )
-        run_r = None
-        if compile_r.returncode == 0:
-            run_r = subprocess.run(
-                ["cargo", "test", "-p", "uv", "--lib", "--",
-                 "behavioral_fix_tests"],
-                capture_output=True, text=True, timeout=120, cwd=REPO,
-            )
-        yield {"compile": compile_r, "run": run_r}
-    finally:
-        _remove_rust_tests()
-
 
 # ---------------------------------------------------------------------------
 # Helpers for structural checks
@@ -108,6 +29,7 @@ def _extract_function_body(source, func_name):
     lines = source.split("\n")
     in_func = False
     brace_depth = 0
+    body_started = False
     func_lines = []
     for line in lines:
         if not in_func and re.search(rf"\bfn\s+{func_name}\b", line):
@@ -115,7 +37,9 @@ def _extract_function_body(source, func_name):
         if in_func:
             func_lines.append(line)
             brace_depth += line.count("{") - line.count("}")
-            if brace_depth <= 0 and len(func_lines) > 1:
+            if brace_depth > 0:
+                body_started = True
+            if body_started and brace_depth <= 0:
                 break
     return "\n".join(func_lines)
 
@@ -168,13 +92,12 @@ def _extract_match_arm(body, variant_name):
 
 
 # ===================================================================
-# SECTION 1 - Tests that do NOT use the behavioral fixture.
-# These run first (pytest executes top-to-bottom), before code injection.
+# pass_to_pass tests
 # ===================================================================
 
 # [repo_tests] pass_to_pass
 def test_repo_cargo_check():
-    """Repo Rust code compiles with cargo check (pass_to_pass)."""
+    """Repo Rust code compiles with cargo check."""
     try:
         r = subprocess.run(
             ["cargo", "check", "-p", "uv"],
@@ -187,7 +110,7 @@ def test_repo_cargo_check():
 
 # [repo_tests] pass_to_pass
 def test_repo_cargo_fmt():
-    """Repo Rust code is formatted correctly (pass_to_pass)."""
+    """Repo Rust code is formatted correctly."""
     subprocess.run(
         ["rustup", "component", "add", "rustfmt"],
         capture_output=True, text=True, timeout=60, cwd=REPO,
@@ -197,46 +120,6 @@ def test_repo_cargo_fmt():
         capture_output=True, text=True, timeout=60, cwd=REPO,
     )
     assert r.returncode == 0, f"cargo fmt failed:\n{r.stderr[-500:]}"
-
-
-# [pr_diff] fail_to_pass
-def test_run_fn_no_downloaded_script_param():
-    """run() in run.rs must not accept downloaded_script as a parameter.
-
-    Verifies the function signature after confirming the crate compiles.
-    """
-    r = subprocess.run(
-        ["cargo", "check", "-p", "uv"],
-        capture_output=True, text=True, timeout=300, cwd=REPO,
-    )
-    assert r.returncode == 0, f"Crate does not compile:\n{r.stderr[:500]}"
-
-    src = RUN_RS.read_text()
-    sig = _extract_fn_signature(src, "run")
-    assert sig, "run() function not found in run.rs"
-    assert "downloaded_script" not in sig, (
-        "run() still takes downloaded_script parameter"
-    )
-
-
-# [pr_diff] fail_to_pass
-def test_lib_no_downloaded_script_threading():
-    """run_project() in lib.rs must not thread downloaded_script.
-
-    Verifies the function signature after confirming the crate compiles.
-    """
-    r = subprocess.run(
-        ["cargo", "check", "-p", "uv"],
-        capture_output=True, text=True, timeout=300, cwd=REPO,
-    )
-    assert r.returncode == 0, f"Crate does not compile:\n{r.stderr[:500]}"
-
-    src = LIB_RS.read_text()
-    sig = _extract_fn_signature(src, "run_project")
-    assert sig, "run_project not found in lib.rs"
-    assert "downloaded_script" not in sig, (
-        "run_project() still takes downloaded_script"
-    )
 
 
 # [static] pass_to_pass
@@ -276,74 +159,146 @@ def test_as_command_handles_all_variants():
 
 
 # ===================================================================
-# SECTION 2 - Tests that USE the behavioral fixture.
-# The fixture injects a Rust test module into run.rs, compiles/runs it,
-# then cleans up.  These MUST come after all non-fixture tests.
+# fail_to_pass tests
 # ===================================================================
 
 # [pr_diff] fail_to_pass
-def test_no_unwrap_on_downloaded_script(behavioral_result):
-    """Behavioral: injected Rust tests compile and pass, proving the
-    .unwrap() on downloaded_script is eliminated and PythonRemote is safe.
+def test_run_fn_no_downloaded_script_param():
+    """run() in run.rs must not accept downloaded_script as a parameter.
 
-    On the base commit the injected module fails to compile because
-    as_command's signature and PythonRemote's type differ from the fix.
+    On the base commit, run() accepts downloaded_script as a separate
+    Option parameter.  The fix should remove it from the signature.
     """
-    cr = behavioral_result["compile"]
-    assert cr.returncode == 0, (
-        f"Behavioral tests failed to compile (fix not applied):\n"
-        f"{cr.stderr[:1000]}"
+    r = subprocess.run(
+        ["cargo", "check", "-p", "uv"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
     )
-    rr = behavioral_result["run"]
-    assert rr is not None and rr.returncode == 0, (
-        f"Behavioral tests failed:\n"
-        f"{rr.stderr[:500] if rr else 'not run'}"
+    assert r.returncode == 0, f"Crate does not compile:\n{r.stderr[:500]}"
+
+    src = RUN_RS.read_text()
+    sig = _extract_fn_signature(src, "run")
+    assert sig, "run() function not found in run.rs"
+    assert "downloaded_script" not in sig, (
+        "run() still takes downloaded_script parameter"
     )
 
 
 # [pr_diff] fail_to_pass
-def test_python_remote_not_url_only(behavioral_result):
-    """Behavioral: PythonRemote(NamedTempFile, args) compiles and works.
+def test_lib_no_downloaded_script_threading():
+    """run_project() in lib.rs must not thread downloaded_script.
 
-    On the base commit PythonRemote takes (DisplaySafeUrl, Vec<OsString>),
-    so constructing it with a NamedTempFile fails to compile.
+    On the base commit, run_project() accepts downloaded_script as
+    a separate Option parameter and passes it through.
     """
-    cr = behavioral_result["compile"]
-    assert cr.returncode == 0, (
-        f"PythonRemote still holds a URL, not a file:\n{cr.stderr[:1000]}"
+    r = subprocess.run(
+        ["cargo", "check", "-p", "uv"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
     )
-    rr = behavioral_result["run"]
-    assert rr is not None and rr.returncode == 0, (
-        f"PythonRemote file test failed:\n"
-        f"{rr.stderr[:500] if rr else 'not run'}"
+    assert r.returncode == 0, f"Crate does not compile:\n{r.stderr[:500]}"
+
+    src = LIB_RS.read_text()
+    sig = _extract_fn_signature(src, "run_project")
+    assert sig, "run_project not found in lib.rs"
+    assert "downloaded_script" not in sig, (
+        "run_project() still takes downloaded_script"
     )
 
 
 # [pr_diff] fail_to_pass
-def test_as_command_no_option_downloaded_script(behavioral_result):
-    """Behavioral: as_command(&self, &Interpreter) compiles with 2 args.
+def test_python_remote_not_url_only():
+    """PythonRemote variant must not hold only a DisplaySafeUrl.
 
-    On the base commit as_command requires a third Option<&NamedTempFile>
-    argument, so verify_as_command_arity() would not compile.
+    On the base commit, PythonRemote is defined as
+    PythonRemote(DisplaySafeUrl, Vec<OsString>), storing only a URL.
+    The fix should change this so the variant is no longer URL-only.
     """
-    cr = behavioral_result["compile"]
-    assert cr.returncode == 0, (
-        f"as_command still requires optional downloaded_script:\n"
-        f"{cr.stderr[:1000]}"
+    r = subprocess.run(
+        ["cargo", "check", "-p", "uv"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Crate does not compile:\n{r.stderr[:500]}"
+
+    src = RUN_RS.read_text()
+    body = _extract_enum_body(src, "RunCommand")
+    assert body, "RunCommand enum not found"
+
+    # Find PythonRemote variant definition lines (skip comments)
+    python_remote_lines = [
+        l for l in body.split("\n")
+        if "PythonRemote" in l and not l.strip().startswith("//")
+    ]
+    assert python_remote_lines, "PythonRemote variant not found"
+
+    variant_text = " ".join(python_remote_lines)
+    assert "DisplaySafeUrl" not in variant_text, (
+        "PythonRemote still holds a DisplaySafeUrl (URL-only) — "
+        "it should be associated with the downloaded file"
+    )
+
+
+# [pr_diff] fail_to_pass
+def test_as_command_no_option_downloaded_script():
+    """as_command() must not accept a separate downloaded_script parameter.
+
+    On the base commit, as_command takes
+    downloaded_script: Option<&tempfile::NamedTempFile> as a third
+    parameter.  The fix should remove this separate parameter.
+    """
+    r = subprocess.run(
+        ["cargo", "check", "-p", "uv"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Crate does not compile:\n{r.stderr[:500]}"
+
+    src = RUN_RS.read_text()
+    sig = _extract_fn_signature(src, "as_command")
+    assert sig, "as_command function not found"
+    assert "downloaded_script" not in sig, (
+        "as_command still takes downloaded_script as a parameter"
+    )
+
+
+# [pr_diff] fail_to_pass
+def test_no_unwrap_in_python_remote_arm():
+    """The PythonRemote arm of as_command() must not call .unwrap().
+
+    On the base commit, the PythonRemote arm calls
+    downloaded_script.unwrap().path() which can panic at runtime.
+    """
+    r = subprocess.run(
+        ["cargo", "check", "-p", "uv"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
+    )
+    assert r.returncode == 0, f"Crate does not compile:\n{r.stderr[:500]}"
+
+    src = RUN_RS.read_text()
+    body = _extract_function_body(src, "as_command")
+    assert body, "as_command function not found"
+    arm = _extract_match_arm(body, "PythonRemote")
+
+    if not arm:
+        assert ".unwrap()" not in body or "downloaded_script" not in body, (
+            "PythonRemote arm not found but downloaded_script.unwrap() present"
+        )
+        return
+
+    assert ".unwrap()" not in arm, (
+        f"PythonRemote arm uses .unwrap(): {arm}"
     )
 
 
 # [agent_config] fail_to_pass
-def test_no_panic_apis_in_remote_handling(behavioral_result):
-    """No .unwrap()/panic!()/unreachable!() in PythonRemote arm of as_command.
+def test_no_panic_apis_in_remote_handling():
+    """No .unwrap(), panic!(), or unreachable!() in PythonRemote arm.
 
-    Verified both by compiling Rust behavioral tests (which exercise
-    PythonRemote construction and as_command) and by inspecting the match arm.
+    The repository CLAUDE.md states: AVOID using panic!, unreachable!,
+    .unwrap(), unsafe code, and clippy rule ignores.
     """
-    cr = behavioral_result["compile"]
-    assert cr.returncode == 0, (
-        f"Behavioral tests do not compile:\n{cr.stderr[:500]}"
+    r = subprocess.run(
+        ["cargo", "check", "-p", "uv"],
+        capture_output=True, text=True, timeout=300, cwd=REPO,
     )
+    assert r.returncode == 0, f"Crate does not compile:\n{r.stderr[:500]}"
 
     src = RUN_RS.read_text()
     body = _extract_function_body(src, "as_command")

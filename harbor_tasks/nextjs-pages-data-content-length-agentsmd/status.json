@@ -1,15 +1,16 @@
 {
   "schema_version": 2,
-  "valid": true,
-  "verdict": "pass",
-  "nop_reward": 0.0,
-  "gold_reward": 1.0,
-  "validated_at": "2026-04-16T12:05:20.397449",
-  "total_time": 45.98,
-  "sandbox_id": "iznkasdk0k7mejlz7y44s",
+  "valid": false,
+  "verdict": "fail",
+  "nop_reward": -1.0,
+  "gold_reward": -1.0,
+  "validated_at": "2026-04-25T15:55:09.711982",
+  "total_time": 2581.37,
+  "sandbox_id": "igf2lu53i3764zqddu6yt",
   "backend": "anthropic",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "oneshot_repair",
+  "error": "The sandbox was not found: This error is likely due to sandbox timeout. You can modify the sandbox timeout by passing 'timeout' when starting the sandbox or calling '.set_timeout' on the sandbox with the desired timeout.",
   "nodes": {
     "p2p_enrich": {
       "status": "completed",
@@ -87,9 +88,9 @@
     "quality_gate": {
       "status": "DELETE",
       "model": "claude-opus-4-7",
-      "backend": "anthropic",
-      "time": 0.42,
-      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] test_not_tautological @ tests/test_outputs.py:254: test `test_repo_unit_tests` has 1 assert(s), all pass on a stub i']"
+      "backend": "oauth",
+      "time": 0.2,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:2', \"A:[A] test_deps_in_dockerfile @ environment/Dockerfile: tests call 1 binary not installed in Dockerfile: ['timeout']\", 'A:[A] test_not_tautological @ tests/test_outputs.py:254: test `test_repo_unit_tests` has 1 assert(s), all pass on a stub i', 'lint_tier_b:1', 'B:[B] no_network_during_tests @ tests/test.sh:44: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
@@ -103,48 +104,55 @@
       "status": "error",
       "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":106,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"Not logged in \u00b7 Please run /login\",\"stop_reason\":\"stop_sequence\",\"session_id\":\"c735d332-e581-4ec8-8b3b-2687a14c21e5\",\"total_cost_usd\":0,\"usage\":{\"input_tokens\":0,\"cache_creation_input_t",
       "time": 1.32
+    },
+    "fix_quality": {
+      "status": "rate_limited",
+      "model": "claude-opus-4-7",
+      "backend": "oauth",
+      "time": 2.26,
+      "notes": ""
     }
   },
   "history": [
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "minimax",
-      "time": 1498.05,
-      "at": "2026-04-15T04:51:05.505923"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
       "backend": "oauth",
-      "time": 424.59,
-      "at": "2026-04-15T12:59:47.922591"
+      "time": 2954.76,
+      "at": "2026-04-25T10:42:51.861706"
     },
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
       "backend": "oauth",
-      "time": 524.27,
-      "at": "2026-04-15T19:04:27.679147"
+      "time": 1782.06,
+      "at": "2026-04-25T11:13:39.251603"
     },
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "minimax",
-      "time": 6400.02,
-      "at": "2026-04-16T01:12:56.186468"
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "oauth",
+      "time": 1844.92,
+      "at": "2026-04-25T11:46:34.457489"
     },
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
       "backend": "anthropic",
-      "time": 45.98,
-      "at": "2026-04-16T12:05:20.397449"
+      "time": 3941.65,
+      "at": "2026-04-25T13:23:19.179785"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "anthropic",
+      "time": 2581.37,
+      "at": "2026-04-25T15:55:09.711982"
     }
   ]
 }

@@ -1,56 +1,54 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "The instruction names all four file paths (trainer.py, parallel_dims.py, rl.py, sft/train.py), the class names (ModelConfig, ParallelDims), the field to remove (tp), and the CHANGELOG.md requirement. The tests check these same files, classes, and fields. The specific field names asserted in tests (dp_replicate, dp_shard, cp, pp, ep, world_size) are standard parallelism fields that a developer working in this codebase would know about, and the instruction implicitly references them by describing "
+      "reason": "Instruction names ModelConfig, ParallelDims, tp field, tp_enabled property, non_data_parallel_size, seq_len_divisor, CHANGELOG.md \u2014 all the entities tests check."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "The instruction describes what is broken (dead tp config option leaking into multiple files) and the expected outcome (remove tp field and all references), but does not give exact line numbers, exact code replacements, or the specific diff. A developer must still reason about each file's changes."
+      "reason": "Instruction describes what to remove (tp field, tp_enabled, TP-math) but not the exact code diff."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "The tests use AST parsing to check for absence of 'tp' field and presence of required fields, check file sizes (not exact content), verify syntax/compilation, and check linting. Alternative correct implementations (e.g., different ordering of remaining fields, different comment styles, different CHANGELOG wording) would all pass as long as tp is removed and calculations are updated correctly."
+      "reason": "Tests check field absence/presence and structural requirements, allowing alternative implementations."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests use ast.parse to inspect class structure, subprocess.run for py_compile and ruff checks, and actual Python execution. While some tests do text searches (e.g., checking for 'tp' substring in source), most use AST-level inspection and code execution rather than pure string matching."
+      "reason": "Tests use AST parsing, py_compile, ruff, and subprocess execution rather than string matching."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests (truncated but visible from test names) check that tp is NOT in ModelConfig fields, NOT in ParallelDims fields, and that downstream calculations don't reference tp. A stub/no-op implementation would fail because the original code contains tp and the tests verify its absence. The pass-to-pass tests verify structural integrity that would break if changes are done incorrectly."
+      "reason": "Tests verify required fields remain and specific changes made; stub would fail AST field checks and size checks."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "The instruction requires: (1) remove tp from ModelConfig - tested, (2) remove TP from ParallelDims - tested, (3) update downstream calculations in rl.py and sft/train.py - tested via AST and compilation checks, (4) document in CHANGELOG.md - tested. All four requirements are covered."
+      "reason": "Tests check tp removal from ModelConfig, ParallelDims structure, CHANGELOG update, and downstream compilation."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named (test_syntax_check, test_repo_py_compile, test_repo_parallel_dims_ast, etc.), have docstrings explaining what they check, and are annotated with comments indicating their category (static pass_to_pass, repo_tests pass_to_pass)."
+      "reason": "Tests are grouped with section comments ('Gates', 'Pass-to-pass') and tagged with [static]/[repo_tests]."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task involves removing a configuration field and updating code, not producing structured data output like JSON/CSV/API/DB."
+      "reason": "Task is code refactoring, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "File paths, class names, field names, and commands in the instruction all match the actual repository structure and test expectations."
+      "reason": "Filenames and paths are consistent and correct."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly names all four exact file paths (src/prime_rl/configs/trainer.py, src/prime_rl/trainer/parallel_dims.py, src/prime_rl/configs/rl.py, src/prime_rl/trainer/sft/train.py) and describes precisely what to change in each (e.g., 'multiplies by model.tp in micro-batch sizing, dataset sharding, token accounting'). It even names specific properties like 'tp_enabled', 'non_data_parallel_size', 'seq_len_divisor'. This eliminates the localization challenge entirely."
+      "outcome": "pass",
+      "reason": "Instruction names the conceptual targets (ModelConfig, ParallelDims) but not specific line numbers."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is primarily a code-editing task, not a config-edit-only task in the agentmd-edits sense."
+      "reason": "This is a code change, not an agentmd-edits config task."
     }
   },
   "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 8,
-  "fail_count": 1
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
 }

@@ -4,12 +4,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-16T12:49:13.396268",
-  "total_time": 60.2,
-  "sandbox_id": "iopnurjpwca2legvthi1w",
-  "backend": "anthropic",
+  "validated_at": "2026-04-20T23:31:04.418650",
+  "total_time": 3228.54,
+  "sandbox_id": "i5afd9zzver5yz56hkti2",
+  "backend": "minimax",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "fix_quality",
   "nodes": {
     "p2p_enrichment": {
       "status": "ok",
@@ -31,10 +31,10 @@
       "gold_reward": 1.0,
       "icr": 1.0,
       "attempts": 1,
-      "notes": "All validation checks passed. Docker build successful, NOP test reward=0, Gold test reward=1, Rubric ICR=1.0. Fixed judge.py to add deterministic pattern matching for rubric rules with reference fields.",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 443.22
+      "notes": "All validation checks passed. Docker build successful, NOP test reward=0 (5 fail-to-pass tests correctly fail on base code), Gold test reward=1 (all 35 tests pass), Rubric ICR=1.00 (6/6 rules pass on gold solution).",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 760.05
     },
     "rubric_judge": {
       "status": "pass",
@@ -69,68 +69,74 @@
     },
     "quality_gate": {
       "status": "passed",
-      "model": "claude-opus-4-7",
-      "backend": "anthropic",
-      "time": 0.25,
-      "notes": "flags=['lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:28: unpinned pip deps: pytest']"
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.65,
+      "notes": "flags=['lint_tier_b:2', 'B:[B] pinned_dependencies @ environment/Dockerfile:28: unpinned pip deps: pytest', 'B:[B] no_network_during_tests @ tests/test.sh:36: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 13.84,
+      "time": 11.1,
       "tier_a_fails": [
-        "no_solution_leakage",
         "solution_uniqueness_guard"
       ],
       "tier_b_fails": [],
-      "pass_count": 6,
-      "fail_count": 3
+      "pass_count": 8,
+      "fail_count": 1
     },
     "tests_rewrite": {
       "status": "error",
-      "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":481,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 400 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"invalid_request_error\\\",\\\"message\\\":\\\"\\\\\\\"thinking.type.enabled\\\\\\\" is not supported for this model. Use \\\\\\\"thinking.type.adapt",
-      "time": 1.74
+      "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":505,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"There's an issue with the selected model (opus). It may not exist or you may not have access to it. Run --model to pick a different model.\",\"stop_reason\":\"stop_sequence\",\"session_id\":\"5",
+      "time": 1.68
+    },
+    "fix_quality": {
+      "status": "ok",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 1925.55,
+      "notes": ""
     }
   },
   "history": [
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "glm",
-      "time": 2575.61,
-      "at": "2026-04-15T12:03:16.132054"
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 106.03,
+      "at": "2026-04-20T21:04:33.361906"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 88.47,
+      "at": "2026-04-20T21:11:43.733754"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
-      "backend": "glm",
-      "time": 3608.44,
-      "at": "2026-04-15T13:35:51.577390"
+      "backend": "chutes",
+      "time": 52.32,
+      "at": "2026-04-20T22:33:21.427697"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "chutes",
+      "time": 22.02,
+      "at": "2026-04-20T22:35:05.154006"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
-      "backend": "glm",
-      "time": 1391.25,
-      "at": "2026-04-15T20:00:01.842166"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "glm",
-      "time": 3608.37,
-      "at": "2026-04-15T22:37:38.909044"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "anthropic",
-      "time": 60.2,
-      "at": "2026-04-16T12:49:13.396268"
+      "backend": "minimax",
+      "time": 3228.54,
+      "at": "2026-04-20T23:31:04.418650"
     }
   ]
 }

@@ -4,12 +4,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-16T10:32:09.434443",
-  "total_time": 81.13,
-  "sandbox_id": "ipequtf7o1pjvxq7uhncq",
+  "validated_at": "2026-04-25T14:20:08.366490",
+  "total_time": 7350.41,
+  "sandbox_id": "i18cqduv2977g1l8c4y5b",
   "backend": "anthropic",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "oneshot_repair",
   "nodes": {
     "p2p_enrich": {
       "status": "completed",
@@ -57,9 +57,9 @@
       "rubric_icr": 0.33,
       "attempts": 1,
       "notes": "All 4 validation checks passed. Updated rubric rules to remove code file references (judge only evaluates config/doc files). Docker build OK, NOP reward=0 (base fails as expected), Gold reward=1 (all 16 tests pass).",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 286.47
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 445.24
     },
     "rubric_judge": {
       "status": "pass",
@@ -80,69 +80,72 @@
     },
     "quality_gate": {
       "status": "DELETE",
-      "model": "claude-opus-4-7",
+      "model": "claude-opus-4-6",
       "backend": "anthropic",
-      "time": 0.8,
-      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:3', 'A:[A] test_not_tautological @ tests/test_outputs.py:429: test `test_repo_imports` has 1 assert(s), all pass on a stub impl', 'A:[A] test_not_tautological @ tests/test_outputs.py:450: test `test_repo_ast_valid` has 1 assert(s), all pass on a stub im', 'A:[A] test_not_tautological @ tests/test_outputs.py:530: test `test_repo_tach_check` has 1 assert(s), all pass on a stub i']"
+      "time": 0.46,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:4', \"A:[A] test_deps_in_dockerfile @ environment/Dockerfile: tests call 1 binary not installed in Dockerfile: ['tach']\", 'A:[A] test_not_tautological @ tests/test_outputs.py:545: test `test_repo_imports` has 1 assert(s), all pass on a stub impl', 'A:[A] test_not_tautological @ tests/test_outputs.py:566: test `test_repo_ast_valid` has 1 assert(s), all pass on a stub im', 'A:[A] test_not_tautological @ tests/test_outputs.py:646: test `test_repo_tach_check` has 1 assert(s), all pass on a stub i', 'lint_tier_b:3', 'B:[B] pinned_dependencies @ environment/Dockerfile:25: unpinned pip deps: ruff, 2>/dev/null', 'B:[B] pinned_dependencies @ environment/Dockerfile:25: unpinned pip deps: ruff', 'B:[B] no_network_during_tests @ tests/test.sh:44: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 17.71,
-      "tier_a_fails": [
-        "no_solution_leakage",
-        "solution_uniqueness_guard",
-        "tests_verify_behavior_not_text"
-      ],
+      "time": 10.75,
+      "tier_a_fails": [],
       "tier_b_fails": [],
-      "pass_count": 5,
-      "fail_count": 4
+      "pass_count": 10,
+      "fail_count": 0
     },
     "tests_rewrite": {
       "status": "error",
       "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":403,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 400 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"invalid_request_error\\\",\\\"message\\\":\\\"\\\\\\\"thinking.type.enabled\\\\\\\" is not supported for this model. Use \\\\\\\"thinking.type.adapt",
       "time": 1.59
+    },
+    "fix_quality": {
+      "status": "ok",
+      "model": "claude-opus-4-6",
+      "backend": "anthropic",
+      "time": 437.73,
+      "notes": ""
     }
   },
   "history": [
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 2241.1,
-      "at": "2026-04-12T05:29:40.757542"
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "oauth",
+      "time": 5755.42,
+      "at": "2026-04-25T10:17:27.318195"
     },
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 1721.03,
-      "at": "2026-04-15T05:27:46.831750"
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "oauth",
+      "time": 2164.17,
+      "at": "2026-04-25T10:54:16.151498"
     },
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 2066.97,
-      "at": "2026-04-15T13:35:59.276152"
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "oauth",
+      "time": 2052.95,
+      "at": "2026-04-25T11:29:30.705806"
     },
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 3533.79,
-      "at": "2026-04-16T01:32:53.070287"
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "oauth",
+      "time": 1879.94,
+      "at": "2026-04-25T12:03:11.411307"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "anthropic",
-      "time": 81.13,
-      "at": "2026-04-16T10:32:09.434443"
+      "time": 7350.41,
+      "at": "2026-04-25T14:20:08.366490"
     }
   ]
 }

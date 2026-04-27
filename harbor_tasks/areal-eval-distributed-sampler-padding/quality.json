@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "Instruction names EvalDistributedSampler class, file path areal/utils/dataloader.py, ValidDatasetConfig, create_dataloader, and the lint/format/bandit/py_compile requirements that tests check."
+      "reason": "Instruction names the file (areal/utils/dataloader.py), the class to create (EvalDistributedSampler), the config (ValidDatasetConfig), and the required tooling (ruff, bandit, py_compile), all checked in tests."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "Instruction describes the desired behavior (no padding, drop_last=False for validation) without prescribing specific line edits or the num_samples adjustment logic."
+      "reason": "Instruction describes WHAT (no padding, drop_last=False) but not HOW to compute the no-padding indices; agent must reason about the algorithm."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "Tests check behavioral properties (indices cover dataset exactly once, no duplicates, drop_last flag) and the required class name EvalDistributedSampler, which is explicitly mandated by instruction.md."
+      "reason": "Tests check behavioral properties (sorted indices == range(ds_size), no duplicates, drop_last attribute) that any correct implementation would satisfy."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests execute create_dataloader and iterate the sampler via subprocess, checking actual index distributions."
+      "reason": "Tests execute create_dataloader and EvalDistributedSampler via subprocess, iterating samplers and checking indices."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub sampler would fail test_eval_sampler_no_padding since it requires sorted indices to equal range(ds_size) across multiple (ds_size, nrep) combinations."
+      "reason": "Tests assert sorted union of indices across ranks equals range(ds_size); a stub returning empty collection or constants would fail."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "Tests cover no-padding, no-drop-last, training unchanged, lint/format/bandit/compile, no trailing whitespace, EOF newline, no wildcard imports, and type hints."
+      "reason": "Tests cover no padding, no dropping, dispatch on ValidDatasetConfig, training unchanged, ruff/bandit/compile, no wildcard imports, type annotations, no trailing whitespace, EOF newline."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are grouped with section comments like 'Gates', 'Fail-to-pass', 'Pass-to-pass', with descriptive names and tags like [pr_diff], [repo_tests]."
+      "reason": "Tests are grouped by section comments (Gates, Fail-to-pass, Pass-to-pass, repo_tests, Config-derived) with descriptive names."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task modifies Python code, no structured data output."
+      "reason": "Task is code behavior, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "Filenames, class names, and config names are consistent across instruction and tests."
+      "reason": "Paths and names are consistent across instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "Instruction names the file but this is expected scope; does not pinpoint specific lines or give implementation details."
+      "reason": "Instruction names the file but doesn't point to specific lines; localization within the file is left to the agent."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "Code-only task, no agent config edits."
+      "reason": "Code-only task, not an agentmd-edits task."
     }
   },
   "tier_a_fails": [],

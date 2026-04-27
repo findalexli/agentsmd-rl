@@ -2,55 +2,53 @@
   "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests check specific paths like pkg/compose/publish.go and pkg/e2e/compose_run_build_once_test.go, but instruction.md never names these files; agent must discover them. Also tests require >=3 fmt.Fprintf calls, which is a specific count not stated."
+      "outcome": "pass",
+      "reason": "instruction.md names all file paths (pkg/compose/publish.go, pkg/e2e/compose_run_build_once_test.go, CLAUDE.md), the strings 'make build', 'go test', 'golangci-lint', '.golangci.yml', 'fmt.Fprintf', '//nolint:errcheck', and specifies 3 occurrences."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "Instruction describes the anti-pattern and required documentation topics but doesn't point to specific lines or files for the fixes."
+      "reason": "Instruction describes the anti-pattern and what to use instead, but does not cite exact line numbers or provide replacement code verbatim."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "Tests check for absence of anti-pattern and presence of fmt.Fprintf/documentation keywords; multiple valid rewrites would satisfy these."
+      "reason": "Tests check for absence of 'WriteString(fmt.Sprintf(' and presence of >=3 'fmt.Fprintf(' calls plus content substrings in CLAUDE.md \u2014 any correct fix would satisfy these."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests run go vet, go build, and go test subprocesses in addition to grepping for the pattern."
+      "reason": "Tests run gofmt, go vet, go build, and go test subprocesses in addition to text checks."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "f2p tests verify concrete code changes (no WriteString(fmt.Sprintf anti-pattern, >=3 fmt.Fprintf, no nolint directive, CLAUDE.md contents)."
+      "reason": "The f2p tests require actual code changes (removing WriteString(fmt.Sprintf), adding fmt.Fprintf, removing nolint, creating CLAUDE.md with specific content)."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All three required behaviors (anti-pattern fix, nolint removal, CLAUDE.md creation with required content) are tested."
+      "reason": "All instruction requirements (3 Fprintf conversions, nolint removal, CLAUDE.md with build/test/lint/style content) are tested."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are grouped with section comments (Gates, Fail-to-pass core, Fail-to-pass config/docs) and descriptive names."
+      "reason": "Tests are organized with section comment headers (Gates, Fail-to-pass core, Fail-to-pass config/doc)."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "No structured data output required."
+      "reason": "No structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "Filenames and commands appear correct."
+      "reason": "Paths and commands are consistent and correct."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "Instruction describes the problem categories without naming specific files or line numbers; localization is part of the task."
+      "reason": "File names are necessary scope info; no exact line numbers given."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "Gold diff modifies only targeted lines in publish.go and the test file, plus adds a bounded CLAUDE.md."
+      "reason": "CLAUDE.md is new, patch to publish.go and test file is localized to specific lines."
     }
   },
-  "tier_a_fails": [
-    "behavior_in_task_description"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 9,
-  "fail_count": 1
+  "pass_count": 10,
+  "fail_count": 0
 }

@@ -6,19 +6,58 @@ This task verifies:
 3. Refactor: credentials.zig uses bun.strings instead of std.mem
 4. Config: CLAUDE.md updated with proper formatting
 5. Regression test: Test file created that verifies the runtime behavior
-
-The primary behavioral test is the regression test file, which uses Bun.spawn
-to actually execute code and verify the fix works. Source code checks verify
-the fix was applied but are not sufficient alone.
 """
 
 import subprocess
 import sys
 import re
 import os
+import tempfile
 from pathlib import Path
 
 REPO = "/workspace/bun"
+
+
+def _find_zig_function_body(content, fn_name):
+    """Find a Zig function body by exact function name.
+
+    Returns the function body content (between outermost { and }).
+    """
+    lines = content.split("\n")
+    for i, line in enumerate(lines):
+        stripped = line.strip()
+        # Remove leading 'pub ' if present
+        if stripped.startswith("pub "):
+            check_line = stripped[4:]
+        else:
+            check_line = stripped
+
+        # Match function name exactly
+        if check_line.startswith(f"fn {fn_name}") or check_line == f"fn {fn_name}":
+            # Collect lines until we find the matching closing brace
+            brace_count = 0
+            started = False
+            body_lines = []
+            for j in range(i, len(lines)):
+                l = lines[j]
+                if not started:
+                    body_lines.append(l)
+                    if '{' in l:
+                        brace_count += l.count('{')
+                        started = True
+                else:
+                    body_lines.append(l)
+                    brace_count += l.count('{')
+                    brace_count -= l.count('}')
+                    if brace_count <= 0:
+                        break
+            # body_lines contains everything from function signature to closing brace
+            # Extract content between first { and last }
+            full = "\n".join(body_lines)
+            first_brace = full.index('{')
+            last_brace = full.rindex('}')
+            return full[first_brace+1:last_brace]
+    return ""
 
 
 def test_regression_test_file_created():
@@ -32,8 +71,6 @@ def test_regression_test_file_created():
 
     content = test_path.read_text()
 
-    # The regression test must use Bun's test harness and spawn bun to execute code
-    # These are behavioral - they actually RUN the code being tested
     has_bun_exe = "bunExe()" in content
     has_bun_spawn = "Bun.spawn" in content
     has_temp_dir = "tempDir" in content
@@ -48,21 +85,16 @@ def test_regression_test_file_created():
 def test_regression_test_exercises_dynamic_import():
     """Regression test must exercise dynamic import() of unknown node: modules.
 
-    The test should verify that require() of CJS files containing import("node:sqlite")
+    The test verifies that require() of CJS files containing import("node:sqlite")
     does NOT fail at load time - this is the core behavioral fix.
     """
     test_path = Path(REPO) / "test" / "regression" / "issue" / "25707.test.ts"
 
     content = test_path.read_text()
 
-    # Check the test actually uses dynamic import of a node: module
     has_dynamic_import = 'import("node:sqlite")' in content
     has_require = "require(" in content
-
-    # The test must verify exit code is 0 (success) - proving load didn't fail
     has_exit_code_check = "exitCode" in content or ".exited" in content
-
-    # The test must verify correct output
     has_expectations = "expect(" in content
 
     assert has_dynamic_import, \
@@ -84,8 +116,6 @@ def test_regression_test_verifies_error_at_runtime():
 
     content = test_path.read_text()
 
-    # The test should verify that when the dynamic import executes,
-    # it fails with ERR_UNKNOWN_BUILTIN_MODULE (not at load time)
     has_error_code = "ERR_UNKNOWN_BUILTIN_MODULE" in content
     has_catch_block = "catch" in content
 
@@ -98,106 +128,96 @@ def test_regression_test_verifies_error_at_runtime():
 def test_linker_defers_unknown_node_modules():
     """Linker must defer dynamic import() of unknown node: modules to runtime.
 
-    The fix adds .dynamic to the condition that decides whether to defer
-    module resolution. We verify by checking that unknown node: modules
-    would NOT trigger the immediate-failure path.
-
-    Note: We don't check for the specific enum value .dynamic because
-    alternative implementations could use a different approach (e.g., a
-    set membership check, or checking kind.category). The REGRESSION TEST
-    is what actually verifies the behavior - this is a supplementary check.
+    The fix modifies the deferral condition to include .dynamic import kind
+    alongside .require and .require_resolve.
     """
     linker_path = Path(REPO) / "src" / "linker.zig"
     content = linker_path.read_text()
+    lines = content.split("\n")
 
-    # Find the whenModuleNotFound function - this is where the deferral decision is made
-    # The function signature is consistent across implementations
-    has_when_module_not_found = "fn whenModuleNotFound" in content
+    # Find the deferral condition that handles .require and .require_resolve
+    # The fix adds .dynamic to this same condition
+    deferral_context = []
+    for i, line in enumerate(lines):
+        if ".require" in line and ("or" in line or "==" in line):
+            # Capture surrounding context
+            start = max(0, i - 1)
+            end = min(len(lines), i + 4)
+            deferral_context = lines[start:end]
+            break
 
-    assert has_when_module_not_found, \
-        "linker.zig must have whenModuleNotFound function"
+    deferral_text = "\n".join(deferral_context)
 
-    # The function should have logic that handles import kinds
-    # We check that there is SOME handling of different import kinds,
-    # not the specific gold implementation
-    has_import_kind_handling = "import_record.kind" in content or "import_kind" in content
+    # The fix should add .dynamic to the same condition as .require and .require_resolve
+    has_require = ".require" in deferral_text
+    has_require_resolve = ".require_resolve" in deferral_text
+    has_dynamic_in_deferral = ".dynamic" in deferral_text
 
-    assert has_import_kind_handling, \
-        "linker.zig must handle import kind in module resolution"
+    assert has_require and has_require_resolve, (
+        "Deferral condition should handle .require and .require_resolve"
+    )
+    assert has_dynamic_in_deferral, (
+        "Deferral condition should include .dynamic (the fix). "
+        f"Found context: {deferral_text[:300]}"
+    )
 
 
 def test_logger_ensures_line_text_safety():
     """Logger must ensure line_text outlives arena-allocated source memory.
 
-    The fix changes how line_text is handled to prevent use-after-poison.
-    We verify by checking that the logger has logic to duplicate or safely
-    handle text from the source.
-
-    Note: The regression test for the main bug ensures overall behavior is
-    correct. This check verifies the logger fix is present.
+    The fix changes the text_dupe parameter from false to true in addResolveError.
+    We verify the fix by checking that the function now passes 'true' for text duplication.
     """
     logger_path = Path(REPO) / "src" / "logger.zig"
     content = logger_path.read_text()
 
-    # The addResolveError function should handle text duplication
-    has_add_resolve_error = "fn addResolveError" in content or "pub fn addResolveError" in content
+    # Find the addResolveError function body
+    function_body = _find_zig_function_body(content, "addResolveError")
 
-    assert has_add_resolve_error, \
-        "logger.zig must have addResolveError function"
+    assert function_body, "Could not find addResolveError function body"
 
-    # The logger should have a way to duplicate text - check for relevant patterns
-    # Not checking for specific 'true' literal since alternatives could pass
-    # a flag differently or use a different duplication strategy
-    has_text_handling = "line_text" in content or "text" in content.lower()
+    # Check for the key fix: the function body should call addResolveErrorWithLevel
+    # with 'true' for the text duplication parameter
+    # In the original: false is passed
+    # In the fix: true is passed
 
-    assert has_text_handling, \
-        "logger.zig must handle text/location data"
+    # Check for true being passed to addResolveErrorWithLevel
+    has_true_param = "addResolveErrorWithLevel" in function_body and ", true, .err" in function_body
+
+    # Also check for comment about text duplication
+    has_comment_about_dup = ("dupe" in function_body or "outlives" in function_body)
+
+    assert has_true_param or has_comment_about_dup, (
+        "addResolveError should pass 'true' for text_dupe parameter or have a comment about duplicating line_text. "
+        f"Function body:\n{function_body}"
+    )
 
 
 def test_credentials_uses_bun_strings_api():
-    """credentials.zig must use bun.strings API instead of std.mem for string operations.
+    """credentials.zig must use bun.strings API instead of std.mem.
 
-    The refactor changes containsNewlineOrCR to use bun.strings.indexOfAny.
-    We verify the function exists and uses appropriate string utilities.
-
-    Note: Not checking for specific function name 'indexOfAny' because alternative
-    implementations could use different but equivalent bun.strings functions.
+    The fix replaces std.mem.indexOfAny with strings.indexOfAny in containsNewlineOrCR.
+    We verify the bug is fixed by checking the function no longer uses std.mem.
     """
     credentials_path = Path(REPO) / "src" / "s3" / "credentials.zig"
     content = credentials_path.read_text()
 
-    # The function should exist
-    has_contains_newline = "fn containsNewlineOrCR" in content
+    function_body = _find_zig_function_body(content, "containsNewlineOrCR")
 
-    assert has_contains_newline, \
-        "credentials.zig must have containsNewlineOrCR function"
-
-    # Find the function body to check its implementation
-    lines = content.split("\n")
-    in_function = False
-    function_lines = []
-    for line in lines:
-        if "fn containsNewlineOrCR" in line:
-            in_function = True
-        elif in_function:
-            if line.strip() == "}" and len(function_lines) > 0:
-                break
-            function_lines.append(line)
-
-    function_body = "\n".join(function_lines)
-
-    # The function should use some form of indexOfAny or equivalent
-    uses_index_of_any = "indexOfAny" in function_body
-
-    assert uses_index_of_any, \
-        "containsNewlineOrCR must use indexOfAny for newline/CR checking"
-
-    # Check it uses bun.strings, not std.mem - but be flexible about exact API
-    uses_bun_strings = "strings." in function_body or "bun.strings" in content
     uses_std_mem = "std.mem.indexOfAny" in function_body
 
-    assert uses_bun_strings or not uses_std_mem, \
-        "containsNewlineOrCR should use bun.strings, not std.mem"
+    # After the fix, std.mem should NOT be used in this function
+    assert not uses_std_mem, (
+        "containsNewlineOrCR should NOT use std.mem.indexOfAny. "
+        "The fix replaces std.mem with bun.strings for string operations."
+    )
+
+    uses_bun_strings = "strings.indexOfAny" in function_body or "bun.strings" in function_body
+
+    assert uses_bun_strings, (
+        "containsNewlineOrCR should use strings.indexOfAny (from bun.strings). "
+        "Expected: strings.indexOfAny(value, \"\\r\\n\")."
+    )
 
 
 def test_claude_md_has_required_sections():
@@ -205,7 +225,6 @@ def test_claude_md_has_required_sections():
     claude_path = Path(REPO) / "src" / "CLAUDE.md"
     content = claude_path.read_text()
 
-    # Check for required section headers
     required_sections = [
         "Key functions (all take `bun.FileDescriptor`",
         "Key methods:",
@@ -225,8 +244,6 @@ def test_claude_md_table_formatting():
     claude_path = Path(REPO) / "src" / "CLAUDE.md"
     content = claude_path.read_text()
 
-    # The table should use proper markdown table syntax with | separators
-    # and have a header separator row (contains ---)
     lines = content.split("\n")
 
     table_rows = []
@@ -240,15 +257,13 @@ def test_claude_md_table_formatting():
             table_rows.append(line)
             if "---" in line:
                 found_separator = True
-            # Table ends when we see a non-| line after the separator
             if found_separator and not line.strip().startswith("|") and len(line.strip()) > 0:
                 break
 
     assert len(table_rows) >= 3, "CLAUDE.md must have table header, separator, and at least one row"
     assert found_separator, "CLAUDE.md table must have --- separator row"
 
-    # Verify rows have proper two-column format
-    for row in table_rows[2:]:  # Skip header and separator
+    for row in table_rows[2:]:
         if row.strip().startswith("|") and "---" not in row:
             parts = [p for p in row.split("|") if p.strip()]
             assert len(parts) >= 2, f"Table row must have at least 2 columns: {row}"

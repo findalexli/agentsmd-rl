@@ -4,12 +4,12 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-16T12:55:32.217820",
-  "total_time": 77.95,
-  "sandbox_id": "inhz1q7p6heqwxgcpjawd",
+  "validated_at": "2026-04-25T13:01:10.335880",
+  "total_time": 2611.85,
+  "sandbox_id": "igfc6mvd74uzqw2rk67py",
   "backend": "anthropic",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "oneshot_repair",
   "nodes": {
     "scaffold": {
       "status": "ok",
@@ -33,22 +33,21 @@
       "notes": "tests look good"
     },
     "validate": {
-      "status": "pass",
-      "nop_reward": 0.0,
-      "gold_reward": 1.0,
-      "rubric_icr": 1.0,
-      "attempts": 1,
-      "notes": "All validation checks passed. Docker build successful, NOP test reward=0 (14 failed, 2 passed as expected), Gold test reward=1 (21 passed), Rubric judge ICR=1.0. The task is properly configured with correct fail-to-pass and pass-to-pass tests.",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 97.35
+      "status": "fail",
+      "nop_reward": -1.0,
+      "gold_reward": -1.0,
+      "attempts": 0,
+      "notes": "Environment broken: every Bash tool call fails with 'EACCES: permission denied, mkdir /home/worker/.claude/session-env' before any command executes. Cannot run docker build, NOP test, gold test, or rubric judge. Read/Edit tools work, but no shell access means no validation possible. Prior validate node (kimi-k2p5-turbo) reported pass with nop=0/gold=1/icr=1.0; that result is preserved in history but cannot be re-verified here.",
+      "model": "claude-opus-4-7",
+      "backend": "oauth",
+      "time": 61.56
     },
     "quality_gate": {
-      "status": "passed",
-      "model": "claude-opus-4-7",
+      "status": "DELETE",
+      "model": "claude-opus-4-6",
       "backend": "anthropic",
-      "time": 0.31,
-      "notes": "flags=['lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:12: unpinned pip deps: pytest']"
+      "time": 0.4,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:1', 'A:[A] reward_is_pure_pytest @ tests/test.sh:4: critical pytest/plugin install with `|| true` \u2014 silent dep failure makes re', 'lint_tier_b:2', 'B:[B] pinned_dependencies @ environment/Dockerfile:12: unpinned pip deps: pytest', 'B:[B] no_network_during_tests @ tests/test.sh:33: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
@@ -66,48 +65,55 @@
       "status": "error",
       "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":541,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 400 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"invalid_request_error\\\",\\\"message\\\":\\\"\\\\\\\"thinking.type.enabled\\\\\\\" is not supported for this model. Use \\\\\\\"thinking.type.adapt",
       "time": 1.82
+    },
+    "fix_quality": {
+      "status": "ok",
+      "model": "claude-opus-4-6",
+      "backend": "anthropic",
+      "time": 1276.1,
+      "notes": ""
     }
   },
   "history": [
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 3193.36,
+      "at": "2026-04-25T00:18:07.912735"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 11998.99,
+      "at": "2026-04-25T03:39:00.835635"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 16893.02,
+      "at": "2026-04-25T08:21:46.354382"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
       "backend": "oauth",
-      "time": 286.45,
-      "at": "2026-04-15T18:44:35.360452"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "oauth",
-      "time": 269.48,
-      "at": "2026-04-15T19:12:22.834543"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "glm",
-      "time": 1800.21,
-      "at": "2026-04-15T21:30:30.527311"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "fireworks",
-      "time": 3517.65,
-      "at": "2026-04-15T22:36:09.495424"
+      "time": 1761.32,
+      "at": "2026-04-25T09:10:52.863215"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
       "backend": "anthropic",
-      "time": 77.95,
-      "at": "2026-04-16T12:55:32.217820"
+      "time": 2611.85,
+      "at": "2026-04-25T13:01:10.335880"
     }
   ]
 }

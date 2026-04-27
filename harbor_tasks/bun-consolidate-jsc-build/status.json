@@ -4,19 +4,19 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-15T21:45:36.747037",
-  "total_time": 484.74,
-  "sandbox_id": "irhj7gjgnfgcp186n4mdd",
-  "backend": "minimax",
+  "validated_at": "2026-04-25T12:30:55.210316",
+  "total_time": 796.74,
+  "sandbox_id": "im2615jawmt5ucyw5i294",
+  "backend": "anthropic",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "oneshot_repair",
   "nodes": {
     "quality_gate": {
       "status": "passed",
-      "model": "MiniMax-M2.7",
-      "backend": "minimax",
-      "time": 0.33,
-      "notes": "flags=['lint_tier_b:1', 'B:[B] pinned_dependencies @ environment/Dockerfile:32: unpinned pip deps: pytest']"
+      "model": "claude-opus-4-6",
+      "backend": "anthropic",
+      "time": 0.26,
+      "notes": "flags=['lint_tier_b:2', 'B:[B] pinned_dependencies @ environment/Dockerfile:32: unpinned pip deps: pytest', 'B:[B] no_network_during_tests @ tests/test.sh:38: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
@@ -30,48 +30,67 @@
       "tier_b_fails": [],
       "pass_count": 6,
       "fail_count": 5
+    },
+    "fix_quality": {
+      "status": "ok",
+      "model": "claude-opus-4-6",
+      "backend": "anthropic",
+      "time": 566.33,
+      "notes": ""
+    },
+    "validate": {
+      "model": "claude-opus-4-7",
+      "backend": "oauth",
+      "time": 147.18
+    },
+    "validate_2026_04_25_opus": {
+      "status": "fail",
+      "nop_reward": -1.0,
+      "gold_reward": -1.0,
+      "attempts": 0,
+      "notes": "Could not run validation: the Bash tool is broken in this session because it requires writing to /home/worker/.claude/session-env, which is treated as a sensitive path and permission cannot be granted. Every Bash invocation returns 'EACCES: permission denied, mkdir /home/worker/.claude/session-env'. Without Bash, Docker, pytest, git, and patch cannot be invoked, so the four validation checks cannot be performed. Identified static issues that the next agent should fix: (1) environment/Dockerfile pins BASE_COMMIT=a14a89ca953910e89697895dfdfb4cdf4c90a151 but eval_manifest.yaml says base_commit is d27d84f45ddb3f2bca3fdb3112e08729a8d2533b \u2014 these must match; (2) solution/solve.sh applies CMake patches (SetupWebKit.cmake, BuildBun.cmake, CONTRIBUTING.md, contributing.mdx) which do NOT correspond to the task described in instruction.md or the assertions in tests/test_outputs.py \u2014 the tests check for deletion of scripts/build-jsc.ts, package.json updates, scripts/build/clean.ts changes, scripts/build/deps/webkit.ts BUN_WEBKIT_PATH support, scripts/build/source.ts path/hint additions, and CLAUDE.md table reformatting. solve.sh must be replaced with a script that performs the actual TypeScript-side changes described in PR oven-sh/bun#28863."
     }
   },
   "history": [
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "glm",
-      "time": 3786.91,
-      "at": "2026-04-15T11:17:30.829604"
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 2422.54,
+      "at": "2026-04-25T00:05:17.192955"
     },
     {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 12362.26,
+      "at": "2026-04-25T03:32:11.246254"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "ark-kimi-k2.6",
+      "time": 17712.49,
+      "at": "2026-04-25T08:28:41.065588"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
       "backend": "oauth",
-      "time": 272.8,
-      "at": "2026-04-15T12:40:16.943347"
+      "time": 904.99,
+      "at": "2026-04-25T08:56:36.600682"
     },
     {
       "verdict": "pass",
       "nop": 0.0,
       "gold": 1.0,
-      "backend": "fireworks",
-      "time": 326.07,
-      "at": "2026-04-15T18:45:15.113505"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "oauth",
-      "time": 2946.13,
-      "at": "2026-04-15T20:49:29.173435"
-    },
-    {
-      "verdict": "pass",
-      "nop": 0.0,
-      "gold": 1.0,
-      "backend": "minimax",
-      "time": 484.74,
-      "at": "2026-04-15T21:45:36.747037"
+      "backend": "anthropic",
+      "time": 796.74,
+      "at": "2026-04-25T12:30:55.210316"
     }
   ]
 }

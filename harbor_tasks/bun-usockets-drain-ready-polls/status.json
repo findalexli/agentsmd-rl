@@ -4,23 +4,23 @@
   "verdict": "pass",
   "nop_reward": 0.0,
   "gold_reward": 1.0,
-  "validated_at": "2026-04-16T11:16:12.365324",
-  "total_time": 745.94,
-  "sandbox_id": "itk0rdfwy652mh6cr5ice",
-  "backend": "anthropic",
+  "validated_at": "2026-04-21T21:03:56.539483",
+  "total_time": 24380.68,
+  "sandbox_id": "izu2l3z3x1e9ogzz6rhj1",
+  "backend": "minimax",
   "pipeline": "pipeline",
-  "start_at": "judge",
+  "start_at": "fix_quality",
   "nodes": {
     "validate": {
       "status": "pass",
       "nop_reward": 0.0,
       "gold_reward": 1.0,
       "attempts": 1,
-      "notes": "All validation checks passed. Docker build successful. NOP test correctly fails (reward=0) with 11 fail_to_pass test failures on base commit. Gold test passes (reward=1) with all 26 tests passing after solution applied. Rubric judge requires LLM API keys (not available in environment), but manual verification confirms solution follows both rubric rules: code style matches existing patterns, comments explain invariants/design decisions.",
-      "validated_at": "2026-04-10T09:37:12.850502",
-      "model": "accounts/fireworks/routers/kimi-k2p5-turbo",
-      "backend": "fireworks",
-      "time": 243.86
+      "notes": "All 4 validation checks passed: (1) Docker build succeeds, (2) NOP test correctly fails with reward=0 (11 fail_to_pass tests fail on base commit), (3) Gold test passes with reward=1 (29 tests pass after solution applied), (4) Rubric judge ICR=1.0 (2/2 rules pass).",
+      "validated_at": "2026-04-22T03:30:00.000000",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 480.94
     },
     "rubric_judge": {
       "status": "fail",
@@ -62,46 +62,35 @@
     },
     "quality_gate": {
       "status": "DELETE",
-      "model": "claude-opus-4-7",
-      "backend": "anthropic",
-      "time": 0.29,
-      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:4', 'A:[A] test_not_tautological @ tests/test_outputs.py:116: test `test_drain_function_exists` has 1 assert(s), all pass on a ', 'A:[A] test_not_tautological @ tests/test_outputs.py:214: test `test_drain_checks_saturation` has 2 assert(s), all pass on ', 'A:[A] test_not_tautological @ tests/test_outputs.py:299: test `test_saturation_guard_present` has 1 assert(s), all pass on', 'A:[A] test_not_tautological @ tests/test_outputs.py:382: test `test_loop_structure_has_epoll_and_kqueue_paths` has 2 asser']"
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 0.33,
+      "notes": "flags=['lint_DELETE: tier-A rubric failure', 'lint_tier_a:4', 'A:[A] test_not_tautological @ tests/test_outputs.py:116: test `test_drain_function_exists` has 1 assert(s), all pass on a ', 'A:[A] test_not_tautological @ tests/test_outputs.py:214: test `test_drain_checks_saturation` has 2 assert(s), all pass on ', 'A:[A] test_not_tautological @ tests/test_outputs.py:299: test `test_saturation_guard_present` has 1 assert(s), all pass on', 'A:[A] test_not_tautological @ tests/test_outputs.py:382: test `test_loop_structure_has_epoll_and_kqueue_paths` has 2 asser', 'lint_tier_b:1', 'B:[B] no_network_during_tests @ tests/test.sh:44: network call at test time: `pip install`']"
     },
     "quality_judge": {
       "status": "ok",
-      "time": 13.27,
+      "time": 11.75,
       "tier_a_fails": [
-        "no_solution_leakage",
-        "solution_uniqueness_guard",
         "tests_verify_behavior_not_text"
       ],
       "tier_b_fails": [],
-      "pass_count": 5,
-      "fail_count": 4
+      "pass_count": 8,
+      "fail_count": 1
     },
     "tests_rewrite": {
       "status": "error",
       "error": "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":true,\"duration_ms\":3025,\"duration_api_ms\":0,\"num_turns\":1,\"result\":\"API Error: 400 {\\\"type\\\":\\\"error\\\",\\\"error\\\":{\\\"type\\\":\\\"invalid_request_error\\\",\\\"message\\\":\\\"\\\\\\\"thinking.type.enabled\\\\\\\" is not supported for this model. Use \\\\\\\"thinking.type.adap",
       "time": 50.95
+    },
+    "fix_quality": {
+      "status": "ok",
+      "model": "MiniMax-M2.7",
+      "backend": "minimax",
+      "time": 1146.07,
+      "notes": ""
     }
   },
   "history": [
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "oauth",
-      "time": 561.42,
-      "at": "2026-04-15T12:45:04.372142"
-    },
-    {
-      "verdict": "fail",
-      "nop": -1.0,
-      "gold": -1.0,
-      "backend": "oauth",
-      "time": 1293.37,
-      "at": "2026-04-15T19:01:21.063437"
-    },
     {
       "verdict": "pass",
       "nop": 0.0,
@@ -125,6 +114,22 @@
       "backend": "anthropic",
       "time": 745.94,
       "at": "2026-04-16T11:16:12.365324"
+    },
+    {
+      "verdict": "fail",
+      "nop": -1.0,
+      "gold": -1.0,
+      "backend": "fireworks",
+      "time": 15295.57,
+      "at": "2026-04-20T18:22:05.105662"
+    },
+    {
+      "verdict": "pass",
+      "nop": 0.0,
+      "gold": 1.0,
+      "backend": "minimax",
+      "time": 24380.68,
+      "at": "2026-04-21T21:03:56.539483"
     }
   ]
 }

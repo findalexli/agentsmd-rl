@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "instruction.md names the test functions (TestConcurrentAppendSameLabels, TestStripeSeries_SetUnlessAlreadySet, TestSetUnlessAlreadySetConcurrentSameLabels, TestSetUnlessAlreadySetConcurrentGC), the file paths (tsdb/agent/db.go, tsdb/agent/series.go), and the required method name (SetUnlessAlreadySet is implied via 'check-then-insert' but the exact name is referenced by tests)."
+      "reason": "instruction.md names the four required test functions explicitly (TestConcurrentAppendSameLabels, TestStripeSeries_SetUnlessAlreadySet, TestSetUnlessAlreadySetConcurrentSameLabels, TestSetUnlessAlreadySetConcurrentGC), the file path tsdb/agent/series.go, the stripeSeries type, and the getOrCreate method."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "Instruction describes what's broken and behavioral requirements without specifying exact line changes or the method name verbatim (describes behavior of the new method)."
+      "reason": "Instruction describes required properties (atomic check-then-insert, cleanup losers, no multi-stripe locking) but doesn't prescribe exact method names or code; agent still must design the implementation."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "test_setunlessalreadyset_method_exists greps for the literal string 'SetUnlessAlreadySet' in series.go, and multiple tests require specific test function names like TestStripeSeries_SetUnlessAlreadySet \u2014 alternative valid fixes using different naming would fail."
+      "reason": "instruction.md requires tests named TestStripeSeries_SetUnlessAlreadySet and TestSetUnlessAlreadySetConcurrentSameLabels/GC, which forces the agent to name the method SetUnlessAlreadySet specifically, even though test_outputs.py has more flexible regex patterns \u2014 the instruction itself locks in a gold-specific name."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests execute go test, go build, go vet, go mod verify as subprocesses to verify actual behavior."
+      "reason": "Tests execute go test, go build, go vet, go fmt, go mod verify subprocesses to verify real behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "Tests run actual Go tests that exercise concurrent append behavior; stubs would not pass race-condition tests."
+      "reason": "Tests require specific Go tests to run and pass (concurrent correctness, no deadlock), which cannot be satisfied by stubs."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "Tests cover the concurrent append behavior, the new method, GC deadlock safety, and signature change via build."
+      "reason": "Concurrent uniqueness, GC deadlock safety, atomic insert behavior, and compilation are all tested as required."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are named clearly with docstrings labeling fail-to-pass vs pass-to-pass."
+      "reason": "Tests are separate functions with docstrings labeling them fail-to-pass / pass-to-pass and describing intent."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "No structured data output."
+      "reason": "Task produces Go code, not structured data."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos in filenames or commands."
+      "reason": "Paths, commands, and test names appear consistent between instruction.md and the hidden tests."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "Instruction names the files to modify but this is part of the task scope, not buggy-line localization."
+      "reason": "Instruction mentions stripeSeries and getOrCreate, which are the natural units of change given the task domain, not a specific line number."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "Code-only task."
+      "reason": "This is a code-only task, not a config edit task."
     }
   },
   "tier_a_fails": [

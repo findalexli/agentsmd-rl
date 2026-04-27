@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "instruction.md names both files (client-fixture.mjs, bake-harness.ts), the function loadPage, the unhandledRejection handler requirement, exit code propagation to this.output.exitCode, and the content-type handling \u2014 all test assertions reference these."
+      "reason": "Instruction names client-fixture.mjs, bake-harness.ts, loadPage(), unhandledRejection handler, this.output.exitCode, and reloadFailed semantics \u2014 all paths/symbols referenced by tests are mentioned."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "Instruction describes problems (no retry, null header TypeError, missing handler) without prescribing exact code changes like 'replace line X with Y'."
+      "reason": "Instruction describes what is broken (no retry, null content-type, missing handler, etc.) without giving exact code to write."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "Tests check behavior (retry count >=3, no crash on null content-type, exit code 34, proc.exited assignment to this.output.exitCode) which the instruction explicitly requires, and allow multiple implementations."
+      "reason": "Tests check behaviors (>=3 retries, null content-type handled, exit code 34, this.output.exitCode assignment with proc.exited) which any correct fix would satisfy; no gold-specific variable names asserted."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests execute node subprocesses, extract and run loadPage against a live HTTP server, trigger unhandled rejections, and check exit codes."
+      "reason": "Tests extract loadPage and execute it against a real HTTP server, run node subprocesses to test unhandledRejection behavior."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub loadPage would fail the null-ct test (requires req>=1 and no crash) and retry test (requires req>=3 with success); unhandled rejection test requires actual exit code 34."
+      "reason": "Anti-stub checks (req>=1, req>=3, exit code 34) require actual fix behavior; stubs cannot satisfy them."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "All five instruction points (retry, null content-type, unhandledRejection, initial load try/catch implicitly, exit code propagation) are covered by tests."
+      "reason": "Each of the 5 issues in instruction.md maps to a test (null-ct, retry, unhandledRejection, initial wrap implicit via no-crash, exit code propagation)."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are grouped with comment headers (Gate, Fail-to-pass) and descriptive names with docstrings."
+      "reason": "Tests have docstrings and section comments separating gate/f2p tests."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task is code-fix, not structured data output."
+      "reason": "No structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "Paths and names (client-fixture.mjs, bake-harness.ts, exitCodeMap, reloadFailed) are consistent between instruction and tests."
+      "reason": "Paths and identifiers consistent across instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "Instruction references 'around line 817' which is a guidance hint but does not dictate the exact code; files are already named in the problem domain."
+      "reason": "Instruction names files and approximate line (around 817) which is reasonable scoping; doesn't dictate exact code."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "Code-only task, no config edits."
+      "reason": "Code-only task."
     }
   },
   "tier_a_fails": [],

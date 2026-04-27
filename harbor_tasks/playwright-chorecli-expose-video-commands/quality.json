@@ -3,58 +3,52 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "All asserted paths, tool names (browser_start_video, browser_stop_video), command names (video-start, video-stop), variable names (videoStart, videoStop), capability name 'devtools', and the .includes('tracing') pattern are explicitly named in instruction.md."
+      "reason": "All file paths, tool names (browser_start_video, browser_stop_video), command names (video-start, video-stop), capability name (devtools), and the --filename option are named in instruction.md."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "Instruction prescribes exact implementation details: 'must contain a check that looks for 'tracing' in the capabilities list (using `.includes('tracing')`)', exact variable names `videoStart`/`videoStop`, exact declareCommand pattern, and exact toolName strings \u2014 this dictates the fix rather than describing the problem."
+      "outcome": "pass",
+      "reason": "Instruction describes what to create/change at a high level (add tools, rename capability, add commands) without giving exact code or line numbers."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests assert on gold-specific internals: `toolName: 'browser_start_video'` literal string (test_video_commands_registered), variable names `videoStart`/`videoStop` in commandsArray, and `.includes('tracing')` \u2014 alternative valid implementations (e.g., using ===, a switch, or different variable names) would fail."
+      "outcome": "pass",
+      "reason": "Tests check for tool names, capability strings, command declarations via regex, and presence of key identifiers \u2014 multiple valid implementations would pass."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "F2p tests (test_video_tool_module_exists, test_video_commands_registered, test_devtools_capability_replaces_tracing, test_caps_cli_help_includes_devtools, test_tracing_to_devtools_backward_compat) are all regex/substring checks on source files; no test imports or executes the video tools or CLI commands."
+      "outcome": "pass",
+      "reason": "Tests run npm install, eslint, lint-packages, generate_channels.js subprocesses and node syntax checks, plus content checks."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "Each f2p requires the specific strings/patterns from the fix; a stub implementation returning defaults cannot satisfy them."
+      "reason": "F2p tests require actual files/modules/tool declarations with correct capability strings and command mappings \u2014 a stub wouldn't satisfy them."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "Each required behavior (video.ts module, tracing\u2192devtools rename, backward compat, CLI help, SKILL.md, terminal commands) has a corresponding test."
+      "reason": "Tests cover video.ts creation, tracing->devtools rename, CLI commands, --caps help, backward compat, and browser tools import."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are grouped with section comments (Gates, Fail-to-pass) and tagged with [pr_diff]/[repo_tests]/[static] markers."
+      "reason": "Tests are grouped with section comments (Gates, Fail-to-pass) and named with clear intent."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task modifies TypeScript source; no structured data output."
+      "reason": "No structured data output required."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "Paths and identifiers appear consistent between instruction and tests."
+      "reason": "Paths and names appear consistent between instruction and tests."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "Instruction names exact strings to include (e.g., `.includes('tracing')`, variable names `videoStart`/`videoStop`, exact declareCommand literal pattern), going beyond domain-obvious hints."
+      "outcome": "pass",
+      "reason": "Instruction names the files to modify as part of the task scope, which is appropriate for a multi-file refactor task."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "Code-only task, not an agentmd-edits task."
+      "reason": "Code-only task, not an agentmd config edit."
     }
   },
-  "tier_a_fails": [
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 5,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
 }

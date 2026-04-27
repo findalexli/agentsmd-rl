@@ -3,47 +3,47 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "Instruction names all files, the Write-Warn helper pattern (following Write-Success/Error/Info), the 2\u219210 minute timeout, the claude-opus-4.5\u21924.6 model change, the git checkout/clean commands, and the 5\u21926 models reference."
+      "reason": "All file paths, function names (Write-Warn, Write-Step, etc.), literal strings (claude-opus-4.6, 10 * 60, Stop on Environment Blockers, Missing Appium drivers, Device/emulator not available, git checkout HEAD -- ., git clean -fd, CustomAgentLogsTmp), and section requirements are explicitly named in instruction.md."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "Instruction describes problems and required commands/behaviors but doesn't give exact line-level edits; the agent must still implement Write-Warn, restructure Review-PR.ps1, etc."
+      "reason": "Instruction describes symptoms and required behavior (e.g., 'add a Write-Warn helper matching pattern') without giving the exact code/diff."
     },
     "solution_uniqueness_guard": {
       "outcome": "pass",
-      "reason": "Tests check for function existence/output, timeout >= 600, model string replacement, and command presence \u2014 alternative correct fixes would satisfy these."
+      "reason": "Tests check for behavior (function callable, output produced) and required literal strings/commands that the instruction explicitly mandates, allowing multiple valid implementations."
     },
     "tests_verify_behavior_not_text": {
       "outcome": "pass",
-      "reason": "Tests execute PowerShell (pwsh), call Write-Warn, check function exports, run git commands \u2014 not purely text grep."
+      "reason": "Tests execute pwsh subprocess to source shared-utils.ps1 and call Write-Warn, run git commands, and parse PowerShell scripts via AST, in addition to text checks."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "f2p tests require actual implementation (Write-Warn must produce 'hello check' output, functions must be exported, timeout must change)."
+      "reason": "f2p tests like test_write_warn_executes require an actual function definition that emits the message; stubs returning None would not satisfy this."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "Tests cover Write-Warn, host app warning usage, timeout, model updates, post-gate cleanup rules, and SKILL.md warnings."
+      "reason": "Tests cover Write-Warn, host app warning replacements, model rename, post-gate sections, cleanup commands, and android.cake timeout per instruction items 1-6."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are grouped with clear section comments (Pass-to-pass static, repo_tests, Fail-to-pass behavioral) and descriptive names."
+      "reason": "Tests are grouped with comment dividers (Pass-to-pass static, repo_tests, Fail-to-pass behavioral) and have descriptive names."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task doesn't produce structured data outputs."
+      "reason": "Task does not produce structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "Paths and filenames in instruction match those referenced in tests."
+      "reason": "Paths and command names appear consistent and correct."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "Instruction names files (appropriate since task is about updating specific infrastructure files) but not exact buggy lines; localization is part of the domain."
+      "reason": "Instruction names files but expects agent to localize edits; this is appropriate scope guidance not line-level hints."
     },
     "config_edit_scope_bounded": {
       "outcome": "pass",
-      "reason": "Gold diff shows localized edits to markdown/config files, not full-file rewrites, and changes are consistent across files."
+      "reason": "Gold patch shows localized edits to each agent/config file rather than full rewrites, consistent with instruction's 'edit only what's necessary'."
     }
   },
   "tier_a_fails": [],

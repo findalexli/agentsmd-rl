@@ -260,10 +260,12 @@ def test_no_fstring_without_vars():
     operator_py = Path(REPO) / "libs" / "agno_infra" / "agno" / "infra" / "operator.py"
     content = operator_py.read_text()
     tree = ast.parse(content)
+    print_calls_found = 0
     for node in ast.walk(tree):
         if isinstance(node, ast.Expr) and isinstance(node.value, ast.Call):
             call = node.value
             if isinstance(call.func, ast.Name) and call.func.id in ("print_info", "print_subheading"):
+                print_calls_found += 1
                 for arg in call.args:
                     if isinstance(arg, ast.JoinedStr) and not any(
                         isinstance(v, ast.FormattedValue) for v in arg.values
@@ -272,6 +274,9 @@ def test_no_fstring_without_vars():
                             f"Line {node.lineno}: f-string in {call.func.id}() "
                             "with no variables — use a plain string"
                         )
+    assert print_calls_found > 0, (
+        "No print_info/print_subheading calls found in operator.py — test is not checking anything"
+    )
 
 
 # ---------------------------------------------------------------------------

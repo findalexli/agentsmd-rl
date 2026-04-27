@@ -39,7 +39,11 @@ The `build_session` function in `crates/goose-cli/src/session/builder.rs` must b
 - Resolving which extensions to load and loading them onto the agent
 - Configuring system prompts for the session
 
-Each helper must exist as a standalone `fn` declaration in the file, and `build_session` must call each of them. After refactoring, `builder.rs` must have at least 10 function declarations with valid syntax and balanced braces.
+You may choose any names you like for these helper functions — only the decomposition itself is required, not specific names. Each helper must exist as a standalone `fn` declaration in the file, and `build_session` must call each of them. After refactoring:
+
+- `builder.rs` must contain at least 10 function declarations with valid syntax and balanced braces.
+- The body of `build_session` (between its outermost `{` and matching `}`) must be fewer than 200 lines.
+- `build_session` must contain at least 5 function-call expressions (i.e. it should delegate, not inline its logic).
 
 ## Files to Look At
 

@@ -5,140 +5,237 @@ import subprocess
 import sys
 import os
 import re
+import json
 
 # Path to the repository
 REPO = "/workspace/airflow"
 UTILS_PATH = f"{REPO}/providers/openlineage/src/airflow/providers/openlineage/utils/utils.py"
 
 
-def _read_utils_file():
-    """Read the utils.py file content."""
-    with open(UTILS_PATH, "r") as f:
-        return f.read()
-
-
 def test_dagrun_info_includes_partition_fields():
     """
-    Fail-to-pass: DagRunInfo must include partition_key and partition_date attributes.
+    Fail-to-pass: DagRunInfo must include partition_key and partition_date in serialization.
     This test fails on base commit and passes after the fix.
+    Tests behaviorally by verifying the fields appear in the serialized output.
     """
-    content = _read_utils_file()
+    r = subprocess.run(
+        [
+            "uv", "run", "--group", "dev", "python", "-c",
+            """
+from unittest.mock import MagicMock
+import datetime
+from airflow.providers.openlineage.utils.utils import DagRunInfo
 
-    # Check that partition_key and partition_date are in the includes list
-    assert '"partition_key"' in content, "partition_key not found in DagRunInfo.includes"
-    assert '"partition_date"' in content, "partition_date not found in DagRunInfo.includes"
+# Create a mock DagRun with partition fields
+dagrun = MagicMock()
+dagrun.clear_number = None
+dagrun.conf = {}
+dagrun.dag_id = "test_dag"
+dagrun.data_interval_end = None
+dagrun.data_interval_start = None
+dagrun.end_date = None
+dagrun.execution_date = None
+dagrun.external_trigger = False
+dagrun.logical_date = datetime.datetime(2024, 6, 1, 0, 0, 0, tzinfo=datetime.timezone.utc)
+dagrun.partition_key = "some_partition_key"
+dagrun.partition_date = datetime.datetime(2024, 6, 1, 0, 0, 0, tzinfo=datetime.timezone.utc)
+dagrun.run_after = datetime.datetime(2024, 6, 1, 1, 0, 0, tzinfo=datetime.timezone.utc)
+dagrun.run_id = "test_run_id"
+dagrun.run_type = "manual"
+dagrun.start_date = None
+dagrun.triggered_by = "user"
+dagrun.triggering_user_name = "user1"
+dagrun.note = None
+dagrun.deadlines = None
+
+result = DagRunInfo(dagrun)
+result_dict = dict(result)
+
+# Check partition fields are in the serialized output
+assert 'partition_key' in result_dict, f"partition_key missing from result: {list(result_dict.keys())}"
+assert 'partition_date' in result_dict, f"partition_date missing from result: {list(result_dict.keys())}"
+print('PASS')
+""",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=f"{REPO}/providers/openlineage",
+    )
+    assert r.returncode == 0, f"Behavioral test failed: {r.stderr}\nStdout: {r.stdout}"
+    assert "PASS" in r.stdout
 
 
-def test_partition_fields_in_dagrun_info_includes_list():
+def test_partition_fields_serialized_with_correct_values():
     """
-    Fail-to-pass: Verify partition_key and partition_date are specifically in DagRunInfo.includes.
-    Uses regex to find the exact class definition.
+    Fail-to-pass: Verify the partition fields appear in serialization with correct values.
+    Tests that the fields are serialized with appropriate values.
     """
-    content = _read_utils_file()
+    r = subprocess.run(
+        [
+            "uv", "run", "--group", "dev", "python", "-c",
+            """
+from unittest.mock import MagicMock
+import datetime
+from airflow.providers.openlineage.utils.utils import DagRunInfo
 
-    # Look for the DagRunInfo class and its includes list
-    # The pattern matches: class DagRunInfo(... followed by includes = [...])
-    pattern = r'class DagRunInfo\([^)]+\):.*?(?:""".*?""")?.*?includes\s*=\s*\[([^\]]+)\]'
-    match = re.search(pattern, content, re.DOTALL)
-    assert match, "Could not find DagRunInfo includes list"
+# Create a mock DagRun with partition fields
+dagrun = MagicMock()
+dagrun.clear_number = None
+dagrun.conf = {}
+dagrun.dag_id = "test_dag"
+dagrun.data_interval_end = None
+dagrun.data_interval_start = None
+dagrun.end_date = None
+dagrun.execution_date = None
+dagrun.external_trigger = False
+dagrun.logical_date = datetime.datetime(2024, 6, 1, 0, 0, 0, tzinfo=datetime.timezone.utc)
+dagrun.partition_key = "my_partition"
+dagrun.partition_date = datetime.datetime(2024, 6, 1, 0, 0, 0, tzinfo=datetime.timezone.utc)
+dagrun.run_after = datetime.datetime(2024, 6, 1, 1, 0, 0, tzinfo=datetime.timezone.utc)
+dagrun.run_id = "test_run_id"
+dagrun.run_type = "manual"
+dagrun.start_date = None
+dagrun.triggered_by = "user"
+dagrun.triggering_user_name = "user1"
+dagrun.note = None
+dagrun.deadlines = None
 
-    includes_content = match.group(1)
+result = DagRunInfo(dagrun)
+result_dict = dict(result)
 
-    # Both fields should be present in the includes list
-    assert '"partition_key"' in includes_content, "partition_key not in DagRunInfo.includes list"
-    assert '"partition_date"' in includes_content, "partition_date not in DagRunInfo.includes list"
-
-
-def test_partition_fields_have_version_comments():
-    """
-    Fail-to-pass: The partition fields should have Airflow 3.2+ version comments.
-    """
-    content = _read_utils_file()
-
-    # Check for the lines with version comments
-    assert '"partition_key",  # Airflow 3.2+' in content, "Missing version comment for partition_key"
-    assert '"partition_date",  # Airflow 3.2+' in content, "Missing version comment for partition_date"
+# Verify the values are correctly serialized
+assert result_dict.get('partition_key') == "my_partition", f"partition_key value wrong: {result_dict.get('partition_key')}"
+assert result_dict.get('partition_date') == "2024-06-01T00:00:00+00:00", f"partition_date value wrong: {result_dict.get('partition_date')}"
+print('PASS')
+""",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=f"{REPO}/providers/openlineage",
+    )
+    assert r.returncode == 0, f"Behavioral test failed: {r.stderr}\nStdout: {r.stdout}"
+    assert "PASS" in r.stdout
 
 
 def test_partition_fields_ordering():
     """
     Fail-to-pass: Verify the partition fields are placed correctly in the includes list.
-    They should appear after logical_date (Airflow 3) and before run_after.
+    They should appear after logical_date and before run_after based on the version ordering.
     """
-    content = _read_utils_file()
+    r = subprocess.run(
+        [
+            "uv", "run", "--group", "dev", "python", "-c",
+            """
+from unittest.mock import MagicMock
+import datetime
+from airflow.providers.openlineage.utils.utils import DagRunInfo
 
-    # Find lines with these markers
-    lines = content.split('\n')
+# Create a mock DagRun with partition fields
+dagrun = MagicMock()
+dagrun.clear_number = None
+dagrun.conf = {}
+dagrun.dag_id = "test_dag"
+dagrun.data_interval_end = None
+dagrun.data_interval_start = None
+dagrun.end_date = None
+dagrun.execution_date = None
+dagrun.external_trigger = False
+dagrun.logical_date = datetime.datetime(2024, 6, 1, 0, 0, 0, tzinfo=datetime.timezone.utc)
+dagrun.partition_key = "my_partition"
+dagrun.partition_date = datetime.datetime(2024, 6, 1, 0, 0, 0, tzinfo=datetime.timezone.utc)
+dagrun.run_after = datetime.datetime(2024, 6, 1, 1, 0, 0, tzinfo=datetime.timezone.utc)
+dagrun.run_id = "test_run_id"
+dagrun.run_type = "manual"
+dagrun.start_date = None
+dagrun.triggered_by = "user"
+dagrun.triggering_user_name = "user1"
+dagrun.note = None
+dagrun.deadlines = None
 
-    logical_date_line = None
-    partition_key_line = None
-    partition_date_line = None
-    run_after_line = None
+result = DagRunInfo(dagrun)
+result_dict = dict(result)
 
-    for i, line in enumerate(lines):
-        if '"logical_date",  # Airflow 3' in line and 'partition' not in line:
-            logical_date_line = i
-        if '"partition_key",  # Airflow 3.2+' in line:
-            partition_key_line = i
-        if '"partition_date",  # Airflow 3.2+' in line:
-            partition_date_line = i
-        if '"run_after",  # Airflow 3' in line:
-            run_after_line = i
+# The includes list controls serialization order - verify key order is correct
+# by checking the output dict maintains expected ordering relative to surrounding fields
+keys = list(result_dict.keys())
 
-    # All lines should be found
-    assert logical_date_line is not None, "Could not find logical_date line"
-    assert partition_key_line is not None, "Could not find partition_key line"
-    assert partition_date_line is not None, "Could not find partition_date line"
-    assert run_after_line is not None, "Could not find run_after line"
-
-    # partition_key and partition_date should come after logical_date
-    assert partition_key_line > logical_date_line, "partition_key should come after logical_date"
-    assert partition_date_line > logical_date_line, "partition_date should come after logical_date"
-
-    # partition_key should come before run_after
-    # After the fix, it should be: logical_date, partition_key, partition_date, run_after
-    assert partition_key_line < run_after_line, "partition_key should come before run_after"
-    assert partition_date_line < run_after_line, "partition_date should come before run_after"
-
-    # partition_key should come before partition_date
-    assert partition_key_line < partition_date_line, "partition_key should come before partition_date"
+# logical_date should come before partition_key
+assert keys.index('logical_date') < keys.index('partition_key'), \
+    f"logical_date should come before partition_key. Order: {keys}"
+# partition_key should come before partition_date
+assert keys.index('partition_key') < keys.index('partition_date'), \
+    f"partition_key should come before partition_date. Order: {keys}"
+# partition_date should come before run_after
+assert keys.index('partition_date') < keys.index('run_after'), \
+    f"partition_date should come before run_after. Order: {keys}"
+print('PASS')
+""",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=f"{REPO}/providers/openlineage",
+    )
+    assert r.returncode == 0, f"Behavioral test failed: {r.stderr}\nStdout: {r.stdout}"
+    assert "PASS" in r.stdout
 
 
 def test_partition_fields_only_in_dagrun_info():
     """
     Fail-to-pass: Verify partition fields are added to DagRunInfo, not other classes.
+    Tests that only DagRunInfo includes the partition fields.
     """
-    content = _read_utils_file()
+    r = subprocess.run(
+        [
+            "uv", "run", "--group", "dev", "python", "-c",
+            """
+from airflow.providers.openlineage.utils.utils import DagRunInfo
 
-    # Find all class definitions with includes lists
-    pattern = r'class (\w+)\([^)]+\):.*?includes\s*=\s*\['
-    matches = list(re.finditer(pattern, content, re.DOTALL))
+# Check that DagRunInfo has partition_key in its includes list
+assert hasattr(DagRunInfo, 'includes'), "DagRunInfo missing includes attribute"
+includes = DagRunInfo.includes
+assert 'partition_key' in includes, f"partition_key not in DagRunInfo.includes: {includes}"
+assert 'partition_date' in includes, f"partition_date not in DagRunInfo.includes: {includes}"
+print('PASS')
+""",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=f"{REPO}/providers/openlineage",
+    )
+    assert r.returncode == 0, f"Behavioral test failed: {r.stderr}\nStdout: {r.stdout}"
+    assert "PASS" in r.stdout
 
-    dagrun_info_match = None
-    for match in matches:
-        class_name = match.group(1)
-        if class_name == "DagRunInfo":
-            dagrun_info_match = match
-            break
 
-    assert dagrun_info_match is not None, "Could not find DagRunInfo class"
+def test_no_duplicate_partition_fields():
+    """
+    Fail-to-pass: Ensure partition fields appear exactly once in the includes list.
+    """
+    r = subprocess.run(
+        [
+            "uv", "run", "--group", "dev", "python", "-c",
+            """
+from airflow.providers.openlineage.utils.utils import DagRunInfo
 
-    # Get the includes content for DagRunInfo specifically
-    start_pos = dagrun_info_match.end()
-    # Find the closing bracket
-    bracket_count = 1
-    end_pos = start_pos
-    while bracket_count > 0 and end_pos < len(content):
-        if content[end_pos] == '[':
-            bracket_count += 1
-        elif content[end_pos] == ']':
-            bracket_count -= 1
-        end_pos += 1
+includes = DagRunInfo.includes
+partition_key_count = includes.count('partition_key')
+partition_date_count = includes.count('partition_date')
 
-    includes_content = content[start_pos:end_pos-1]
-
-    assert '"partition_key"' in includes_content, "partition_key not in DagRunInfo includes"
-    assert '"partition_date"' in includes_content, "partition_date not in DagRunInfo includes"
+assert partition_key_count == 1, f"partition_key appears {partition_key_count} times in includes"
+assert partition_date_count == 1, f"partition_date appears {partition_date_count} times in includes"
+print('PASS')
+""",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=f"{REPO}/providers/openlineage",
+    )
+    assert r.returncode == 0, f"Behavioral test failed: {r.stderr}\nStdout: {r.stdout}"
+    assert "PASS" in r.stdout
 
 
 def test_repo_openlineage_utils_syntax():
@@ -195,22 +292,6 @@ def test_repo_openlineage_unit_tests():
         cwd=f"{REPO}/providers/openlineage",
     )
     assert r.returncode == 0, f"Unit tests failed:\n{r.stdout[-1000:]}{r.stderr[-500:]}"
-
-
-def test_no_duplicate_partition_fields():
-    """
-    Fail-to-pass: Ensure partition fields are not duplicated in the file.
-    """
-    content = _read_utils_file()
-
-    # Count occurrences of partition fields
-    partition_key_count = content.count('"partition_key"')
-    partition_date_count = content.count('"partition_date"')
-
-    # Should appear exactly once each (in the includes list)
-    # Note: They might appear in tests too, but in the source file should be once
-    assert partition_key_count >= 1, "partition_key not found in file"
-    assert partition_date_count >= 1, "partition_date not found in file"
 
 
 def test_repo_openlineage_mypy():

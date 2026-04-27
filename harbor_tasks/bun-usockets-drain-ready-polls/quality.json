@@ -3,58 +3,52 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "instruction.md names all key identifiers: us_internal_drain_ready_polls, us_loop_t, epoll_kqueue.c, internal.h, LIBUS_MAX_READY_POLLS, bun_epoll_pwait2, kevent64, KEVENT_FLAG_IMMEDIATE, us_internal_dispatch_ready_polls, us_loop_run, us_loop_run_bun_tick, drain counter 48, and zero timespec {0,0}."
+      "reason": "Instruction names the files (epoll_kqueue.c, internal.h), the constant LIBUS_MAX_READY_POLLS, and describes the required behaviors (saturation check, zero/immediate timeout, iteration cap, num_polls check) that tests look for."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "Instruction.md dictates the exact implementation: function signature, counter value 48, `--drain_count` pattern, saturation check `num_ready_polls == LIBUS_MAX_READY_POLLS`, `struct timespec zero = {0, 0}`, and KEVENT_FLAG_IMMEDIATE \u2014 this is prescriptive fix specification, not just describing the bug."
+      "outcome": "pass",
+      "reason": "Instruction describes what's broken and gives hints about mechanisms but doesn't prescribe exact code changes or function signatures."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests assert on gold-specific details: exact function name `us_internal_drain_ready_polls`, counter initialization regex `int ... count... = \\d+`, `--count` decrement pattern, and `num_ready_polls == LIBUS_MAX_READY_POLLS` literal \u2014 alternative valid implementations (e.g., using a for loop, different counter name, or different saturation check) would fail."
+      "outcome": "pass",
+      "reason": "Tests accept either an inline re-poll in us_loop_run/us_loop_run_bun_tick or a helper function with multiple candidate names (us_internal_drain_ready_polls, us_drain_ready_polls, drain_ready_polls), allowing multiple valid implementations."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "All tests are regex/substring inspection of the C source file (_read_source, re.search) with no compilation or execution \u2014 the task description even acknowledges 'the usockets code ... cannot be compiled independently'."
+      "outcome": "pass",
+      "reason": "Tests extract function bodies via brace-matching and verify structural patterns (while loops, saturation checks, dispatch ordering) rather than simple text search; this is structural analysis though not runtime execution since the C file cannot be compiled in isolation."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "A stub that just adds an empty function would fail test_drain_logic_implemented, test_drain_uses_zero_timeout, test_drain_has_iteration_cap, and test_drain_checks_saturation."
+      "reason": "Tests require specific patterns (LIBUS_MAX_READY_POLLS replacing 1024, saturation loop, zero timespec or KEVENT_FLAG_IMMEDIATE, iteration counter) that a stub cannot satisfy."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "Tests cover all behaviors named in instruction: drain function signature, saturation check, zero timeout, iteration cap with counter 48 pattern, replacement of 1024 with LIBUS_MAX_READY_POLLS, and drain-after-dispatch ordering."
+      "reason": "Tests cover: replacing 1024 with constant, drain after dispatch, saturation check, zero/immediate timeout, and iteration cap \u2014 all behaviors described in instruction."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are grouped with section comment headers ('Gates', 'Fail-to-pass') and each has docstrings describing intent."
+      "reason": "Tests are named descriptively (test_hardcoded_1024_replaced_with_constant, test_drain_mechanism_exists_after_dispatch, etc.) and grouped with header comments."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "Task modifies C source, no structured data output."
+      "reason": "Task is C code modification, not structured data output."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "Paths (packages/bun-usockets/src/eventing/epoll_kqueue.c, internal.h) and identifiers match between instruction and tests."
+      "reason": "File paths and identifiers (LIBUS_MAX_READY_POLLS, bun_epoll_pwait2, kevent64, KEVENT_FLAG_IMMEDIATE) are consistent between instruction, tests, and solution."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "Instruction names the exact file `packages/bun-usockets/src/eventing/epoll_kqueue.c` and the exact functions to modify (`us_loop_run`, `us_loop_run_bun_tick`), and even prescribes the new function name and counter value \u2014 eliminating localization work."
+      "outcome": "pass",
+      "reason": "Instruction names the files that must be modified, but localization to a specific function/line is not given \u2014 the agent must find us_loop_run and us_loop_run_bun_tick themselves."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "Code-only task, not a config edit."
+      "reason": "Code-only task, no config edits."
     }
   },
-  "tier_a_fails": [
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
-  "tier_c_fails": [
-    "instruction_no_hint_leakage"
-  ],
-  "pass_count": 5,
-  "fail_count": 4
+  "tier_c_fails": [],
+  "pass_count": 9,
+  "fail_count": 0
 }

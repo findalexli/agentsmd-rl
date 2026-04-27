@@ -4,15 +4,18 @@ set -e
 # Ensure log directory exists
 mkdir -p /logs/verifier
 
-# Install pytest and CI tools if needed, along with test dependencies
-pip install -q pytest mypy ruff validate-pyproject rich certifi trio trio-websocket typing_extensions urllib3 websocket-client pytest-mock pysocks filetype 2>/dev/null || true
+# Install additional selenium runtime/test dependencies (pytest/mypy/ruff already in image)
+pip install -q rich certifi trio trio-websocket typing_extensions urllib3 websocket-client pytest-mock pysocks filetype
 
-# Run the test file
+# Run the test file; capture exit code without aborting on failure
 cd /workspace/selenium/py
+set +e
 python -m pytest /tests/test_outputs.py -v --tb=short 2>&1 | tee /logs/verifier/pytest_output.txt
+RESULT=${PIPESTATUS[0]}
+set -e
 
-# Convert to binary reward (1 if all tests pass, 0 otherwise)
-if grep -q "passed" /logs/verifier/pytest_output.txt && ! grep -q "FAILED" /logs/verifier/pytest_output.txt; then
+# Convert to binary reward using pytest exit code
+if [ "$RESULT" -eq 0 ]; then
     echo "1" > /logs/verifier/reward.txt
 else
     echo "0" > /logs/verifier/reward.txt

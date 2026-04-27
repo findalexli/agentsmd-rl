@@ -6,33 +6,28 @@ The `playwright-cli` terminal tool lets users manage browser sessions (open, clo
 
 ## Expected Behavior
 
-A new `config` command should allow restarting the current session with a different configuration file. The command should:
+A new `config` command should allow restarting the current session with a different configuration file:
 
 1. Accept an optional path to a JSON config file (defaults to `playwright-cli.json`)
-2. Stop the existing session if it's running, then reconnect with the new config
-3. Work with named sessions via the `--session` flag
-4. Be available as both `playwright-cli config <path>` and via `--config=<path>` with `open`
+2. If a session is already running, stop it and reconnect with the new configuration
+3. Support named sessions via the `--session` flag
 
-## Verification
+## Requirements
 
-The implementation is complete when:
+### Command Registration
+- The CLI's command type system should include `config` as a recognized command category
+- A `config` command should be registered under this category and included in the CLI's command list
+- The CLI help output should include a `Configuration` section heading that lists the `config` command
 
-- The `Category` type in `command.ts` includes a `'config'` member
-- A `config` command is declared in `commands.ts` with `name: 'config'` and `category: 'config'`
-- The commands array in `commands.ts` includes the config command (with a comment `// config` above it)
-- The categories array in `helpGenerator.ts` has an entry with `name: 'config'` and `title: 'Configuration'`
-- The program routes a `'config'` command through `handleSessionCommand`
-- The session manager has a `configure()` method that: resolves the session name, checks if it can connect, stops the existing session, updates the config, and reconnects
-- The daemon config in `browser/config.ts` has `contextOptions` with a `viewport` of `{ width: 1280, height: 720 }` for headless mode
-- `SKILL.md` has a `### Configuration` section documenting `playwright-cli config`, `--session=` usage, and `--config=` usage
+### Command Routing and Behavior
+- Running `playwright-cli config <path>` should route through the CLI's session management layer
+- The session manager should stop any existing session and reconnect with the updated configuration
 
-## Daemon Browser Configuration
+### Headless Viewport Defaults
+- The daemon browser configuration should set a default viewport of 1280 by 720 pixels when running in headless mode
 
-The daemon browser configuration must set default viewport dimensions for headless mode. The viewport must be set to 1280x720 pixels. This is configured in `browser/config.ts` using the `contextOptions` key with a `viewport` property.
-
-## SKILL.md Documentation
-
-The project's skill documentation must include a `### Configuration` section with:
-- Usage showing `playwright-cli config` with a config file argument
-- Usage with named sessions using `--session=` combined with `config`
-- The `--config=` flag usage with the `open` command
+### SKILL.md Documentation
+- `SKILL.md` should include a `### Configuration` section documenting:
+  - `playwright-cli config` usage with a config file argument
+  - Named session usage with `--session=`
+  - The `--config=` flag usage with the `open` command

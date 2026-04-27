@@ -2,7 +2,7 @@
 
 ## Problem
 
-When two direct URLs point to the exact same package archive but carry different hash fragments (e.g., one uses `#sha256=...` and the other uses `#sha512=...`), they are incorrectly treated as two distinct "versions" by the `VersionId` type in the distribution-types crate.
+When two direct URLs point to the exact same package archive but carry different hash fragments (e.g., one uses `#sha256=...` and the other uses `#sha512=...`), they are incorrectly treated as two distinct "versions" by the `VersionId` type in the `uv-distribution-types` crate.
 
 For example, these two URLs refer to the same artifact but produce different `VersionId` values:
 
@@ -15,19 +15,15 @@ The same class of issue affects Git URLs: irrelevant fragments like `egg=pkg` in
 
 ## Expected Behavior
 
-`VersionId` should use structured, kind-aware identity semantics:
+Two URLs that refer to the same source should always produce equal `VersionId` values regardless of which verification hash or irrelevant fragment is attached. Specifically:
 
-- **Archive URLs**: identity should be based on the URL location and optional `subdirectory` parameter only — hash algorithm/digest fragments should be ignored.
-- **Git URLs**: identity should be based on the repository URL, reference, and optional `subdirectory` — irrelevant fragments like `egg=` should be ignored.
-- **Local paths and directories**: identity should be based on the resolved file path and its kind (file vs. directory).
+- Archive URLs that differ only in their hash algorithm/digest fragment (e.g., `#sha256=...` vs. `#sha512=...`) should produce equal `VersionId` values. However, the `subdirectory` fragment parameter is semantically meaningful — two archive URLs with different `subdirectory` values should remain distinct.
+- Git URLs that differ only in irrelevant fragments (like `egg=`) should produce equal `VersionId` values when their repository, reference, and `subdirectory` all match.
 
-Two URLs that refer to the same source should always produce equal `VersionId` values regardless of which verification hash is attached.
+## Notes
 
-## Implementation Notes
-
-- The `VersionId` type is defined in `crates/uv-distribution-types/src/id.rs`.
 - `VersionId::from_url` accepts a `DisplaySafeUrl` argument (from the `uv_redacted` crate).
-- Code in `id.rs` should not use `.unwrap()` in production code; prefer `.expect()` with a descriptive message. See AGENTS.md line 7 for the project's convention on this.
+- Follow the project's coding conventions described in AGENTS.md — in particular, avoid using `.unwrap()` in production (non-test) code; prefer `.expect()` with a descriptive message.
 
 ## API Under Test
 

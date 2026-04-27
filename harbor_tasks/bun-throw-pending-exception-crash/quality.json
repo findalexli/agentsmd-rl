@@ -1,62 +1,58 @@
 {
-  "model": "claude-opus-4-6",
+  "model": "claude-opus-4-7",
   "rubric_verdicts": {
     "behavior_in_task_description": {
-      "outcome": "fail",
-      "reason": "Tests assert on the exact file path 'src/bun.js/bindings/JSGlobalObject.zig' (FILE variable in tests), specific function signatures like 'pub fn throwTODO(', 'pub fn createRangeError(', 'pub fn throwError(', 'pub fn throwValue(', 'pub fn throwTypeError(', 'pub fn throwDOMException(', and specific patterns like 'bun.assert(instance != .zero)'. The instruction.md never names the exact file path (it only says 'under src/'), and while it mentions the function names, it does not mention throwTypeErro"
+      "outcome": "pass",
+      "reason": "Instruction names the file src/bun.js/bindings/JSGlobalObject.zig and describes the assertion failure; tests check specific function names (throw, throwPretty, throwTODO, createRangeError, throwValue) which are discoverable by inspecting the named file."
     },
     "no_solution_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction.md explicitly states the exact fix: 'replace with if (instance == .zero) { bun.assert(this.hasException()); return error.JSError; }' for throw/throwPretty, 'add if (this.hasException()) return error.JSError; before vm().throwError' for throwValue, and 'must route through throwValue rather than calling vm().throwError directly' for throwError. This is essentially the complete solution specification."
+      "outcome": "pass",
+      "reason": "Instruction describes the bug (VM error path called without checking pending exception) but does not state the specific guard code or line changes."
     },
     "solution_uniqueness_guard": {
       "outcome": "fail",
-      "reason": "Tests assert very specific implementation patterns: e.g., test_throwvalue_guarded checks that 'hasException' appears before 'vm().throwError' in throwValue's body and that 'error.JSError' appears within 120 chars after 'hasException'. An alternative correct fix (e.g., using a different guard method name, or restructuring the function differently) would fail. test_crash_assert_removed checks for regex pattern 'if\\s*\\(.*==\\s*\\.zero\\)' which is gold-specific syntax."
+      "reason": "Tests like test_crash_assert_removed assert the literal string 'bun.assert(instance != .zero)' must not be present, and test_throw_and_throwpretty_handle_zero requires specific patterns like 'if (x == .zero)', 'orelse', 'catch', or 'error.JSError'; a valid alternative fix that kept the assert but guarded callers, or used different patterns, would fail."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Every test reads the source file as text and checks for string patterns (regex matches, substring presence, positional ordering of strings). No test compiles the code, runs the reproduction script, or executes any behavior. All tests are pure text/pattern matching on source code."
+      "outcome": "pass",
+      "reason": "Tests invoke zig build-obj via subprocess to compile the file, not purely text checks."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "The fail-to-pass tests check for specific patterns that do NOT exist in the original code (e.g., the original has 'bun.assert(instance != .zero)' which must be removed, and 'hasException' guard in throwValue which must be added). A stub or no-op would not pass these tests since they check for presence of new code patterns."
+      "reason": "Tests require removing a specific assert and adding error-handling patterns plus successful compilation; stub would fail the structural and removal checks."
     },
     "behavior_in_tests": {
       "outcome": "fail",
-      "reason": "The instruction specifies that the reproduction script should 'print OK and exit cleanly', but no test actually runs the JavaScript reproduction code or checks runtime behavior. The tests only verify source code text patterns."
+      "reason": "Instruction describes the crash behavior (reproduction with stack overflow + expect().toBeFalse() producing 'OK'), and there is a REPRODUCTION_SCRIPT defined, but no test actually runs bun to verify the scenario; tests only check compile + text patterns."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are well-named with descriptive function names and docstrings, and are annotated with comments like '[pr_diff] fail_to_pass', '[static] pass_to_pass', '[agent_config] pass_to_pass' indicating their category."
+      "reason": "Tests are named per function under audit with docstrings and tagged comments like [pr_diff] fail_to_pass."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "This task does not produce structured data like JSON/CSV/API/DB."
+      "reason": "Not a structured-data task."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "No typos detected in filenames, paths, commands, or variable names in the instruction or test files."
+      "reason": "Paths and names appear consistent."
     },
     "instruction_no_hint_leakage": {
-      "outcome": "fail",
-      "reason": "The instruction explicitly states 'replace with if (instance == .zero) { bun.assert(this.hasException()); return error.JSError; }' and names exact functions with exact replacement code. It also describes the file as defining 'pub const JSGlobalObject = opaque' which effectively identifies the exact file. This goes well beyond describing what's broken."
+      "outcome": "pass",
+      "reason": "Instruction points to a file as general guidance which is reasonable for a large repo; no specific line numbers given."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "This is a code-only task, not an agentmd-edits task."
+      "reason": "Code-only task."
     }
   },
   "tier_a_fails": [
-    "behavior_in_task_description",
-    "no_solution_leakage",
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
+    "solution_uniqueness_guard"
   ],
   "tier_b_fails": [],
   "tier_c_fails": [
-    "behavior_in_tests",
-    "instruction_no_hint_leakage"
+    "behavior_in_tests"
   ],
-  "pass_count": 3,
-  "fail_count": 6
+  "pass_count": 7,
+  "fail_count": 2
 }

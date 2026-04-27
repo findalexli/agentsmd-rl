@@ -1,3 +1,5 @@
+version: "2.0"
+
 # Evaluation manifest for superset-mcp-chart-type-schema task
 
 source:
@@ -10,12 +12,17 @@ checks:
   # Module existence and export checks
   - id: test_module_file_exists
     type: fail_to_pass
-    origin: pr_requirements
+    origin: pr_diff
     description: The get_chart_type_schema.py module file must exist
+
+  - id: test_module_file_executes_without_error
+    type: fail_to_pass
+    origin: pr_diff
+    description: The module can be compiled without syntax errors
 
   - id: test_function_in_init_exports
     type: fail_to_pass
-    origin: pr_requirements
+    origin: pr_diff
     description: get_chart_type_schema must be exported in chart/tool/__init__.py
 
   - id: test_imported_in_app
@@ -30,12 +37,12 @@ checks:
   # Function definition checks
   - id: test_impl_function_exists_in_ast
     type: fail_to_pass
-    origin: pr_requirements
+    origin: pr_diff
     description: _get_chart_type_schema_impl function must be defined
 
-  - id: test_public_function_exists
+  - id: test_public_function_exists_and_callable
     type: fail_to_pass
-    origin: pr_requirements
+    origin: pr_diff
     description: get_chart_type_schema public function must be defined
 
   - id: test_public_function_has_docstring
@@ -50,62 +57,67 @@ checks:
   # Chart type constant checks
   - id: test_valid_chart_types_defined
     type: fail_to_pass
-    origin: pr_requirements
+    origin: pr_diff
     description: VALID_CHART_TYPES constant must be defined
 
-  - id: test_seven_chart_types_in_adapters
+  - id: test_valid_chart_types_defined_as_sorted_list
     type: fail_to_pass
-    origin: pr_requirements
+    origin: pr_diff
+    description: VALID_CHART_TYPES is defined as a sorted list of chart types
+
+  - id: test_chart_type_adapters_dict_has_seven_entries
+    type: fail_to_pass
+    origin: pr_diff
     description: All 7 chart types must be defined in _CHART_TYPE_ADAPTERS
 
   # Type adapter checks
   - id: test_xy_type_adapter_uses_xychartconfig
     type: fail_to_pass
-    origin: pr_requirements
+    origin: pr_diff
     description: XY chart type adapter must use XYChartConfig
 
   - id: test_pie_type_adapter_uses_piechartconfig
     type: fail_to_pass
-    origin: pr_requirements
+    origin: pr_diff
     description: Pie chart type adapter must use PieChartConfig
 
   # Error handling checks
-  - id: test_impl_returns_error_for_invalid_type
+  - id: test_impl_function_handles_invalid_chart_type
     type: fail_to_pass
-    origin: pr_requirements
+    origin: pr_diff
     description: Implementation must return error with valid_chart_types for invalid types
 
   # Parameter handling checks
-  - id: test_include_examples_parameter_defined
+  - id: test_impl_function_has_include_examples_parameter
     type: fail_to_pass
-    origin: pr_requirements
+    origin: pr_diff
     description: include_examples parameter must be defined
 
-  - id: test_include_examples_controls_examples_in_response
+  - id: test_impl_includes_examples_when_flag_true
     type: fail_to_pass
-    origin: pr_requirements
+    origin: pr_diff
     description: include_examples must control whether examples are included
 
   # Examples checks
   - id: test_chart_examples_dict_defined
     type: fail_to_pass
-    origin: pr_requirements
+    origin: pr_diff
     description: _CHART_EXAMPLES dict must be defined
 
-  - id: test_examples_have_chart_type_field
+  - id: test_chart_examples_defined_for_all_types
     type: fail_to_pass
-    origin: pr_requirements
-    description: Examples must have chart_type field matching the type
+    origin: pr_diff
+    description: Examples must have chart_type field matching the type for all 7 types
 
   # Schema generation checks
   - id: test_json_schema_method_called
     type: fail_to_pass
-    origin: pr_requirements
+    origin: pr_diff
     description: Implementation must call json_schema() to generate schema
 
   - id: test_schema_included_in_result
     type: fail_to_pass
-    origin: pr_requirements
+    origin: pr_diff
     description: Result must include 'schema' key
 
   # Agent config compliance checks

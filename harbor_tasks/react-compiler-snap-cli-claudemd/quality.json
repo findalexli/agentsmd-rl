@@ -3,55 +3,52 @@
   "rubric_verdicts": {
     "behavior_in_task_description": {
       "outcome": "pass",
-      "reason": "Instruction names all relevant files (constants.ts, fixture-utils.ts, runner.ts, runner-watch.ts), the CLAUDE.md path, the required CLI flags (-p, -d, -u), keyboard keys (p, d, a), state names (inputMode/inputBuffer approximated via 'currently typing a pattern'/'accumulated pattern characters'), and parameters (debugMode, initialPattern)."
+      "reason": "Instruction names all files (constants.ts, fixture-utils.ts, runner.ts, runner-watch.ts), flags (--debug/-d, --pattern/-p, --update/-u), keyboard keys (p, d, a), CLAUDE.md path, and mentions FILTER_FILENAME/testfilter.txt/readTestFilter/subscribeFilterFile indirectly through descriptions."
     },
     "no_solution_leakage": {
       "outcome": "pass",
-      "reason": "Instruction describes what to remove/add at a behavior level without giving exact line edits."
+      "reason": "Instruction describes what to change (remove file-based filter, add CLI flags, interactive watch mode) without giving exact code or line-level fixes."
     },
     "solution_uniqueness_guard": {
-      "outcome": "fail",
-      "reason": "Tests assert specific identifiers like 'inputMode', 'inputBuffer', 'debugMode: boolean', and 'initialPattern' via regex \u2014 alternative correct naming (e.g., 'isTypingPattern', 'patternBuffer', 'debug') would fail despite being behaviorally equivalent."
+      "outcome": "pass",
+      "reason": "Tests use flexible regexes (e.g., /key\\.name/, /initialPattern|filter|pattern.*string/i) and check for absence of specific old APIs, allowing multiple valid implementations."
     },
     "tests_verify_behavior_not_text": {
-      "outcome": "fail",
-      "reason": "Most f2p tests are text/regex greps against source files (e.g., test_interactive_watch_mode, test_watch_runner_signature_updated, test_debug_cli_option) rather than executing the CLI; pass_to_pass tests do build/lint but behavior of the new flags is never run."
+      "outcome": "pass",
+      "reason": "Tests execute yarn install, tsc, build, jest, lint, and actually run the built CLI with --help; not purely grep-based."
     },
     "test_not_tautological": {
       "outcome": "pass",
-      "reason": "Stubs cannot satisfy checks requiring specific token presence like '.alias(\"d\", \"debug\")' and key handlers for p/d/a."
+      "reason": "f2p tests require actual removal of file-based mechanism and real CLI flag implementation (verified via --help of built binary), not satisfiable by stubs."
     },
     "behavior_in_tests": {
       "outcome": "pass",
-      "reason": "Tests cover CLI flags, watch keyboard handling, removal of filter mechanism, and CLAUDE.md creation as described."
+      "reason": "Tests cover CLI flags, watch mode keyboard handling, filter mechanism removal, CLAUDE.md creation, and build/lint gates \u2014 matching instruction requirements."
     },
     "informative_test_structure": {
       "outcome": "pass",
-      "reason": "Tests are grouped with section comments (Gates, Fail-to-pass code behavior, CLAUDE.md creation) and named descriptively."
+      "reason": "Tests are grouped with section headers (Gates, Fail-to-pass code behavior, CLAUDE.md tests) and descriptive docstrings."
     },
     "structured_data_schema": {
       "outcome": "not_applicable",
-      "reason": "No structured data output required."
+      "reason": "No structured data output; task is code refactor plus markdown doc."
     },
     "no_typos": {
       "outcome": "pass",
-      "reason": "Paths and commands appear consistent and correct."
+      "reason": "File paths and commands look correct (compiler/packages/snap/src/..., yarn snap, etc.)."
     },
     "instruction_no_hint_leakage": {
       "outcome": "pass",
-      "reason": "Instruction points to files to look at which is appropriate; no line-specific leakage."
+      "reason": "Instruction identifies relevant files (part of the task scope) but does not pinpoint exact lines or exact code changes."
     },
     "config_edit_scope_bounded": {
       "outcome": "not_applicable",
-      "reason": "Not an agentmd-config edits task."
+      "reason": "Not an agentmd-edits config task; code changes plus new CLAUDE.md doc."
     }
   },
-  "tier_a_fails": [
-    "solution_uniqueness_guard",
-    "tests_verify_behavior_not_text"
-  ],
+  "tier_a_fails": [],
   "tier_b_fails": [],
   "tier_c_fails": [],
-  "pass_count": 7,
-  "fail_count": 2
+  "pass_count": 9,
+  "fail_count": 0
 }
