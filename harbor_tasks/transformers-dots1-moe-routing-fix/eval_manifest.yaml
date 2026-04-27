@@ -1,0 +1,70 @@
+version: '2.0'
+task:
+  kind: code_fix
+  name: transformers-dots1-moe-routing-fix
+  title: Fix Dots1 MoE out-of-group expert routing
+source:
+  repo: huggingface/transformers
+  pr: 45572
+  base_commit: 628c54c23d73cf2bf04816e9168d41deb33b1a2f
+  merge_commit: 8ca32875a6f3239a77f326ed801b6cb539494362
+checks:
+- id: test_dots1_moe_picks_only_in_group_experts
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'With negative e_score_correction_bias, Dots1MoE.route_tokens_to_experts must still restrict topk selection to experts in the chosen groups. The buggy version masked out-of-group scores with 0.0; in-group scores can be negative, so out-of-group experts win the topk. Run across multiple seeds.
+
+    '
+- id: test_dots1_moe_matches_deepseek_v3_routing
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Dots1 routing must produce the same selected experts and weights as DeepseekV3 for identical inputs/configs. The implementations are mathematically equivalent once the masking sentinel is correct.
+
+    '
+- id: test_dots1_module_imports_cleanly
+  type: pass_to_pass
+  origin: repo_tests
+  description: The dots1 modeling module imports without ImportError.
+- id: test_modular_dots1_in_sync_with_modeling_dots1
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo''s own consistency CI: running utils/check_modular_conversion.py on modular_dots1.py reproduces the on-disk modeling_dots1.py byte-for-byte.
+
+    '
+rubric:
+- id: edits_modular_not_only_modeling
+  source:
+    quote: 'The newer method is to add a file named `modular_<name>.py` in the model
+
+      directory. `modular` files **can** inherit from other models. `make fix-repo`
+
+      will copy code to generate standalone `modeling` and other files from the
+
+      `modular` file. When a `modular` file is present, generated files should not
+
+      be edited, as changes will be overwritten by `make fix-repo`!
+
+      '
+    path: AGENTS.md
+    commit: 628c54c23d73cf2bf04816e9168d41deb33b1a2f
+  rule: 'The agent should edit modular_dots1.py (and let the converter regenerate modeling_dots1.py), or edit both consistently. Editing only modeling_dots1.py violates the repo''s modular convention.
+
+    '
+- id: scope_limited_to_dots1
+  source:
+    path: AGENTS.md
+    commit: 628c54c23d73cf2bf04816e9168d41deb33b1a2f
+  rule: 'Per AGENTS.md "No low-value busywork PRs" and the principle that mechanical cleanups should stay focused, the change should be limited to the dots1 model and not bundle unrelated edits.
+
+    '
+- id: ran_style_or_fix_repo
+  source:
+    quote: '`make style` or `make fix-repo` should be run as the final step before opening a PR.
+
+      '
+    path: AGENTS.md
+    commit: 628c54c23d73cf2bf04816e9168d41deb33b1a2f
+  rule: 'AGENTS.md states `make style` or `make fix-repo` should be run as the final step before opening a PR. The agent''s final state should be style-clean and modular- consistent.
+
+    '
+config_edits: []

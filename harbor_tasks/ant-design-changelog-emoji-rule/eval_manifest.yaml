@@ -1,0 +1,116 @@
+version: '2.0'
+source:
+  repo: ant-design/ant-design
+  pr: 57321
+  base_commit: f24ee27f7bd10d9f56f9293e129496e1c2188ef1
+  merge_commit: 769eb162ac90b0e72e7d2bf6160e8d584c8fe674
+task:
+  kind: markdown_authoring
+checks:
+- id: test_claude_md_has_single_emoji_rule
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLAUDE.md must contain the new rule that each changelog entry uses only one emoji (the exact Chinese sentence added by the PR).
+- id: test_claude_md_rule_in_changelog_section
+  type: fail_to_pass
+  origin: pr_diff
+  description: The new rule must be placed inside the '## Changelog 规范' section, between the Emoji table and the existing 'reference existing entries' guidance.
+- id: test_changelog_en_pr_57266_entry_has_single_emoji
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'The entry referencing PR #57266 in CHANGELOG.en-US.md must lose the stacked wheelchair emoji while keeping the keyboard emoji.'
+- id: test_changelog_zh_pr_57266_entry_has_single_emoji
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'The entry referencing PR #57266 in CHANGELOG.zh-CN.md must lose the stacked wheelchair emoji while keeping the keyboard emoji.'
+- id: test_changelog_en_pr_57266_text_unchanged
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'The body text (after the emoji) of the #57266 English entry must match the gold exactly.'
+- id: test_changelog_zh_pr_57266_text_unchanged
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'The body text (after the emoji) of the #57266 Chinese entry must match the gold exactly.'
+- id: test_only_unreleased_section_was_modified
+  type: fail_to_pass
+  origin: pr_diff
+  description: Older, already-released changelog entries that used stacked emojis must remain unchanged; the new rule applies only to the current unreleased section.
+- id: test_no_unintended_changelog_changes
+  type: fail_to_pass
+  origin: pr_diff
+  description: Each changelog file should have exactly +1 -1 line of change relative to the base commit.
+- id: test_repo_git_status_clean_of_unstaged_other_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Sanity check that git rev-parse HEAD returns a valid SHA after the agent's edits.
+config_edits:
+- path: CLAUDE.md
+  tier: 1
+  gold_added: 每条 Changelog 仅选择一个 Emoji，不要在同一条目中叠加多个 Emoji。
+  gold_removed: ''
+rubric:
+- rule: 'PR 标题始终使用英文，格式：`类型: 简短描述`'
+  source:
+    path: CLAUDE.md
+    lines: '67'
+    commit: f24ee27f7bd10d9f56f9293e129496e1c2188ef1
+  evidence: The gold solution does not involve PR title changes; this rule constrains unrelated agent behavior.
+  category: naming
+  verification: llm_judge
+- rule: 必须同时提供中英文两个版本
+  source:
+    path: CLAUDE.md
+    lines: '106'
+    commit: f24ee27f7bd10d9f56f9293e129496e1c2188ef1
+  evidence: Gold edits both CHANGELOG.en-US.md and CHANGELOG.zh-CN.md with identical emoji fixes.
+  category: architecture
+  verification: llm_judge
+- rule: '- **Emoji 置顶**：每条以 Emoji 开头
+
+    - **不加冒号**：组件名后不使用英文冒号
+
+    - **每条必含组件名**：正文必须出现对应组件名
+
+    - **组件名不用反引号**：Modal、Button 等；属性名/API 用反引号
+
+    - **中英空格**：中文与英文、数字、链接之间保留一个空格'
+  source:
+    path: CLAUDE.md
+    lines: 115-119
+    commit: f24ee27f7bd10d9f56f9293e129496e1c2188ef1
+  evidence: 'Gold preserves the existing entry format: emoji at start, no colon, component name without backticks, API names in backticks, and proper spacing.'
+  category: style
+  verification: llm_judge
+- rule: 描述"对开发者的影响"，而非"具体的实现细节"
+  source:
+    path: CLAUDE.md
+    lines: '108'
+    commit: f24ee27f7bd10d9f56f9293e129496e1c2188ef1
+  evidence: Gold preserves the original developer-facing description without rephrasing in implementation terms.
+  category: style
+  verification: llm_judge
+distractors:
+- rule: '| ⌨️ ♿  | 可访问性增强           |'
+  source:
+    path: CLAUDE.md
+    lines: '145'
+    commit: f24ee27f7bd10d9f56f9293e129496e1c2188ef1
+  collision_type: rule_conflict
+  why_distracting: The Emoji table still lists the stacked accessibility emoji; an agent seeing both the table and the new single-emoji rule may update the table instead of just fixing the entries.
+  severity: medium
+- rule: 编写 Changelog 时，请参考 `CHANGELOG.zh-CN.md` 和 `CHANGELOG.en-US.md` 中已有条目的格式。
+  source:
+    path: CLAUDE.md
+    lines: '150'
+    commit: f24ee27f7bd10d9f56f9293e129496e1c2188ef1
+  collision_type: scope_ambiguity
+  why_distracting: The instruction to reference existing entries could lead agents to mimic older stacked-emoji entries, contradicting the new single-emoji rule.
+  severity: medium
+- rule: '- 忽略用户无感知的改动（内部重构、纯测试更新、工具链优化等）'
+  source:
+    path: CLAUDE.md
+    lines: '107'
+    commit: f24ee27f7bd10d9f56f9293e129496e1c2188ef1
+  collision_type: meta_confusion
+  why_distracting: An agent might classify the emoji cleanup as a user-imperceptible change and skip the changelog edit entirely.
+  severity: low

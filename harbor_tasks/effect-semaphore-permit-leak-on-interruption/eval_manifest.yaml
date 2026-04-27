@@ -1,0 +1,108 @@
+version: '2.0'
+source:
+  type: github_pr
+  owner: Effect-TS
+  repo: effect
+  pr_number: 6081
+  base_commit: 4eb5c008dfc7d2a97b191ca608948d994a2cce4c
+  merge_commit: 2d2bb1364a906bd44800c6387b9575fddccdaf53
+  title: fix semaphore race condition where permits could be leaked
+  url: https://github.com/Effect-TS/effect/pull/6081
+  pr: 6081
+task:
+  name: effect-semaphore-permit-leak-on-interruption
+  difficulty: medium
+  tags:
+  - typescript
+  - concurrency
+  - semaphore
+  - bugfix
+  - effect
+checks:
+- id: test_interrupted_take_releases_permit_back
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Single waiter interrupted between being granted a permit and consuming it must release the permit back to the pool (deterministic via ControlledScheduler).
+
+    '
+- id: test_no_leak_under_multiple_interrupted_waiters
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Multiple waiters interrupted after a release must not collectively leak permits — guards against partial fixes that only handle the single waiter case.
+
+    '
+- id: test_circular_ts_take_uses_deferred_evaluation
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'The take method must defer the `taken += n` increment via core.suspend so an interrupted resume does not leak. Behavioural assertion gated by an additional structural check on the modified file.
+
+    '
+- id: test_existing_semaphore_works
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing 'semaphore works' test continues to pass.
+- id: test_existing_semaphore_releaseall
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing 'releaseAll' test continues to pass.
+- id: test_existing_semaphore_resize
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing 'resize' test continues to pass.
+- id: test_full_semaphore_test_file_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Whole semaphore.test.ts file passes (covers all existing tests).
+- id: test_changeset_present
+  type: fail_to_pass
+  origin: agent_config
+  source:
+    lines: 37-40
+    path: AGENTS.md
+    commit: 4eb5c008dfc7d2a97b191ca608948d994a2cce4c
+  description: 'AGENTS.md mandates a changeset in .changeset/ for every PR; one must be added describing the semaphore/permit fix.
+
+    '
+- id: test_no_extraneous_comments_added
+  type: pass_to_pass
+  origin: agent_config
+  source:
+    lines: 11-13
+    path: AGENTS.md
+    commit: 4eb5c008dfc7d2a97b191ca608948d994a2cce4c
+  description: 'AGENTS.md instructs to avoid // line comments in function bodies. The modified take method must not introduce explanatory // comments.
+
+    '
+rubric:
+- id: zero_tolerance_for_errors
+  source:
+    lines: 10-10
+    path: AGENTS.md
+    commit: 4eb5c008dfc7d2a97b191ca608948d994a2cce4c
+  rule: '"Zero Tolerance for Errors": the project insists every automated check must pass. The submitted fix must keep the typescript build, vitest suite, and all existing semaphore tests green.
+
+    '
+- id: clarity_over_cleverness
+  source:
+    lines: 11-12
+    path: AGENTS.md
+    commit: 4eb5c008dfc7d2a97b191ca608948d994a2cce4c
+  rule: '"Clarity over Cleverness": the fix should be the most direct, readable change that closes the leak — no obscure tricks, no speculative generality.
+
+    '
+- id: conciseness
+  source:
+    lines: 12-12
+    path: AGENTS.md
+    commit: 4eb5c008dfc7d2a97b191ca608948d994a2cce4c
+  rule: '"Conciseness: keep code and any wording concise and to the point." Diff should be minimal — only modify what''s needed in `Semaphore.take`.
+
+    '
+- id: existing_pattern_alignment
+  source:
+    lines: 29-30
+    path: AGENTS.md
+    commit: 4eb5c008dfc7d2a97b191ca608948d994a2cce4c
+  rule: 'AGENTS.md: "Always look at existing code in the repository to learn and follow established patterns before writing new code." The fix should use idioms already present in `circular.ts` / `core.ts` (`core.suspend`, `core.succeed`) rather than introducing new abstractions.
+
+    '

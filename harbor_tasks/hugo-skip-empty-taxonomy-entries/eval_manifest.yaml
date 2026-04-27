@@ -1,0 +1,67 @@
+version: '2.0'
+source:
+  repo: gohugoio/hugo
+  pr_number: 14551
+  pr_url: https://github.com/gohugoio/hugo/pull/14551
+  base_commit: cc338a9d4854c7e7273a5c3c8fee436c642f4dde
+  merge_commit: 65b4287c68cfa17d4cf0f5526b2a53b960516ac0
+  pr_title: 'config: Skip taxonomy entries with empty keys or values'
+  pr: 14551
+checks:
+- id: test_empty_taxonomy_entry_does_not_break_ancestors
+  type: fail_to_pass
+  origin: pr_diff
+  description: With a TOML config where disableKinds=[] is placed after [taxonomies], the empty-valued phantom entry must be dropped so that .Ancestors returns the real section/home chain instead of looping forever.
+- id: test_alldecoders_is_gofmt_clean
+  type: pass_to_pass
+  origin: agent_config
+  description: config/allconfig/alldecoders.go must remain gofmt-clean.
+  source:
+    excerpt: Use `./check.sh ./somepackage/...` when iterating.
+    path: AGENTS.md
+    commit: cc338a9d4854c7e7273a5c3c8fee436c642f4dde
+- id: test_config_allconfig_vet_clean
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`go vet ./config/allconfig/...` must pass.'
+- id: test_config_allconfig_compiles_and_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing `./config/allconfig/...` tests must keep passing after the fix.
+rubric:
+- id: brevity_in_code_and_comments
+  source:
+    excerpt: Brevity is good. This applies to code, comments and commit messages. Don't write a novel.
+    path: AGENTS.md
+    commit: cc338a9d4854c7e7273a5c3c8fee436c642f4dde
+  rule: Edits should be brief — both code and any added comments. Don't comment the obvious; assume the reader is a Go expert.
+- id: prefer_existing_helpers
+  source:
+    excerpt: look hard for helper functions before creating new ones.
+    path: AGENTS.md
+    commit: cc338a9d4854c7e7273a5c3c8fee436c642f4dde
+  rule: Hugo has a long history of helpers; before adding a new helper to filter a map, look for an existing one (e.g. in `common/maps` / `hmaps`, `helpers/`).  An ad-hoc inline filter is fine, but creating a brand-new exported helper that duplicates existing functionality is not.
+- id: no_unneeded_exports
+  source:
+    excerpt: Never export symbols that's not needed outside of the package.
+    path: AGENTS.md
+    commit: cc338a9d4854c7e7273a5c3c8fee436c642f4dde
+  rule: Don't export new symbols (capitalised identifiers) from the `config/allconfig` package unless something outside the package needs them.
+- id: no_global_state
+  source:
+    excerpt: Avoid global state at (almost) all cost.
+    path: AGENTS.md
+    commit: cc338a9d4854c7e7273a5c3c8fee436c642f4dde
+  rule: The fix must not introduce package-level mutable globals.
+- id: tests_use_qt_matchers
+  source:
+    excerpt: In tests, use `qt` matchers (e.g. `b.Assert(err, qt.ErrorMatches, ...)`) instead of raw `if`/`t.Fatal` checks.
+    path: AGENTS.md
+    commit: cc338a9d4854c7e7273a5c3c8fee436c642f4dde
+  rule: Any new Go test the agent adds must use `qt` matchers (e.g. `b.Assert(err, qt.ErrorMatches, ...)`) instead of raw `if` / `t.Fatal` checks.  This rule does not apply if the agent adds no test.
+- id: no_hdebug_left_behind
+  source:
+    excerpt: If you need to add temporary debug printing, use `hdebug.Printf`. CI build fail if you forget to remove the debug printing.
+    path: AGENTS.md
+    commit: cc338a9d4854c7e7273a5c3c8fee436c642f4dde
+  rule: If the agent used `hdebug.Printf` while debugging, all such calls must be removed before finishing — CI fails on leftover debug prints.

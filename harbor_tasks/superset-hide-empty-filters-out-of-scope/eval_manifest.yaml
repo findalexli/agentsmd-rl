@@ -1,0 +1,64 @@
+version: '2.0'
+task:
+  name: superset-hide-empty-filters-out-of-scope
+  title: Hide "Filters out of scope" section in dashboard filter bar when empty
+  kind: code_fix
+  language: typescript
+  framework: react
+source:
+  repo: apache/superset
+  pr_number: 39201
+  pr_url: https://github.com/apache/superset/pull/39201
+  base_commit: 7a243d329ef7457bbb131808a3132c2ea7bf5037
+  merge_commit: eea3557f612efc921bc15e90184669dd656c7e8e
+  pr: 39201
+checks:
+- id: test_oracle_filters_out_of_scope_visibility
+  type: fail_to_pass
+  origin: pr_diff
+  description: FiltersDropdownContent must hide the "Filters out of scope" section when filtersOutOfScope is empty, render it when at least one filter is out of scope, and hide it when showCollapsePanel is false.
+- id: test_repo_actionbuttons_regression
+  type: pass_to_pass
+  origin: repo_tests
+  description: ActionButtons.test.tsx (existing repo test in same FilterBar tree) must keep passing.
+- id: test_repo_filtercontrols_suite_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: FilterControls.test.tsx (existing regression suite for the parent component) must pass.
+rubric:
+- id: no_any_types_in_new_code
+  source:
+    quote: NO `any` types - Use proper TypeScript types
+    path: CLAUDE.md
+    commit: 7a243d329ef7457bbb131808a3132c2ea7bf5037
+  rule: New TypeScript code introduced by the fix must not use the `any` type annotation. Use proper interfaces / generics / `unknown` casts instead.
+- id: jest_test_uses_test_not_describe
+  source:
+    quote: Use `test()` instead of `describe()`
+    path: CLAUDE.md
+    commit: 7a243d329ef7457bbb131808a3132c2ea7bf5037
+  rule: New Jest tests must use top-level `test()` calls rather than nesting inside `describe()` blocks ("avoid nesting when testing" principle).
+- id: apache_license_header_on_new_files
+  source:
+    quote: New files require ASF license headers
+    path: CLAUDE.md
+    commit: 7a243d329ef7457bbb131808a3132c2ea7bf5037
+  rule: Any new TypeScript file created by the fix must start with the standard Apache Software Foundation license header (the same one used throughout the codebase).
+- id: no_time_specific_words_in_comments
+  source:
+    quote: Avoid time-specific language - Don't use words like "now", "currently", "today"
+    path: CLAUDE.md
+    commit: 7a243d329ef7457bbb131808a3132c2ea7bf5037
+  rule: Code comments must not include time-relative words like "now", "currently", "today" — comments should remain accurate over time.
+- id: react_testing_library_not_enzyme
+  source:
+    quote: Use Jest + React Testing Library for component testing
+    path: CLAUDE.md
+    commit: 7a243d329ef7457bbb131808a3132c2ea7bf5037
+  rule: Component tests must use Jest + React Testing Library (via `spec/helpers/testing-library`) — Enzyme is fully removed.
+- id: prefer_superset_ui_core_over_antd
+  source:
+    quote: Use @superset-ui/core - Don't import Ant Design directly
+    path: CLAUDE.md
+    commit: 7a243d329ef7457bbb131808a3132c2ea7bf5037
+  rule: UI components and theming must come from `@superset-ui/core` / `@superset-ui/core/components` rather than directly importing from Ant Design.

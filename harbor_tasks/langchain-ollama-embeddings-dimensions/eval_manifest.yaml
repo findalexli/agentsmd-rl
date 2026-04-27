@@ -1,175 +1,156 @@
+version: '2.0'
 source:
-  pr:
-    owner: langchain-ai
-    repo: langchain
-    number: 36543
-    title: "feat(ollama): add `dimensions` to `OllamaEmbeddings`"
-    merge_commit: e71e6564b18316fc7b946c9c9d71b0f910baa6b7
-    base_commit: 050b779d97d4c72dfea1c46bfc12b1049be3ab63
-
-  description: |
-    Add `dimensions` field to `OllamaEmbeddings` to allow users to specify
-    output embedding size for models that support variable dimensions.
-
-  target_files:
-    - libs/partners/ollama/langchain_ollama/embeddings.py
-
-  config_files:
-    - CLAUDE.md
-    - AGENTS.md
-
+  repo: langchain-ai/langchain
+  pr: 36543
+  base_commit: 050b779d97d4c72dfea1c46bfc12b1049be3ab63
+  merge_commit: e71e6564b18316fc7b946c9c9d71b0f910baa6b7
+task:
+  kind: code_fix
 checks:
-  # Fail-to-pass tests (behavioral - test the fix works)
-  - id: test_dimensions_field_exists
-    type: fail_to_pass
-    origin: behavior
-    description: OllamaEmbeddings has a `dimensions` field that accepts int or None
-
-  - id: test_dimensions_validation_positive
-    type: fail_to_pass
-    origin: behavior
-    description: Dimensions must be a positive integer - valid cases work
-
-  - id: test_dimensions_validation_zero
-    type: fail_to_pass
-    origin: behavior
-    description: Dimensions=0 should raise ValueError
-
-  - id: test_dimensions_validation_negative
-    type: fail_to_pass
-    origin: behavior
-    description: Dimensions negative values should raise ValueError
-
-  - id: test_embed_documents_passes_dimensions
-    type: fail_to_pass
-    origin: behavior
-    description: embed_documents passes dimensions to the Ollama client embed call
-
-  - id: test_embed_documents_dimensions_none_by_default
-    type: fail_to_pass
-    origin: behavior
-    description: When dimensions not specified, None is passed to the client
-
-  - id: test_aembed_documents_passes_dimensions
-    type: fail_to_pass
-    origin: behavior
-    description: aembed_documents passes dimensions to the async Ollama client embed call
-
-  - id: test_aembed_documents_dimensions_none_by_default
-    type: fail_to_pass
-    origin: behavior
-    description: When dimensions not specified, None is passed to async client
-
-  - id: test_dimensions_various_values
-    type: fail_to_pass
-    origin: behavior
-    description: Test that various valid dimension values work correctly
-
-  - id: test_embed_query_uses_dimensions
-    type: fail_to_pass
-    origin: behavior
-    description: embed_query should also use the dimensions parameter
-
-  # Structural checks (gate on behavioral tests)
-  - id: test_field_validator_exists
-    type: fail_to_pass
-    origin: agent_config
-    description: The _validate_dimensions field_validator should exist in the source
-    source:
-      file: CLAUDE.md
-      lines: "All Python code MUST include type hints and return types."
-
-  - id: test_dimensions_passed_in_source
-    type: fail_to_pass
-    origin: agent_config
-    description: Verify dimensions=self.dimensions is passed to embed() calls in source
-    source:
-      file: AGENTS.md
-      lines: "Testing requirements - Every new feature or bugfix MUST be covered by unit tests."
-
-  # Pass-to-pass tests (repo CI/CD)
-  - id: test_repo_unit_tests_pass
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo’s own unit tests pass
-
-  - id: test_repo_ruff_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo’s linter passes
-
-  - id: test_repo_ruff_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo’s code formatting passes
-
-  - id: test_repo_imports_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo has no disallowed imports
-
-  - id: test_repo_package_imports
-    type: pass_to_pass
-    origin: repo_tests
-    description: Package imports work correctly
-
-  - id: test_repo_embeddings_import
-    type: pass_to_pass
-    origin: repo_tests
-    description: Embeddings module imports work
-
-  - id: test_repo_py_compile
-    type: pass_to_pass
-    origin: repo_tests
-    description: Python files compile without errors
-
-  - id: test_repo_imports_test
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo’s own imports test passes
-
-  - id: test_repo_llms_unit_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo’s LLM unit tests pass
-
-  - id: test_repo_auth_unit_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo’s auth unit tests pass
-
+- id: test_dimensions_field_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: OllamaEmbeddings has a `dimensions` field that accepts int or None
+- id: test_dimensions_validation_positive
+  type: fail_to_pass
+  origin: pr_diff
+  description: Dimensions must be a positive integer - valid cases work
+- id: test_dimensions_validation_zero
+  type: fail_to_pass
+  origin: pr_diff
+  description: Dimensions=0 should raise ValueError
+- id: test_dimensions_validation_negative
+  type: fail_to_pass
+  origin: pr_diff
+  description: Dimensions negative values should raise ValueError
+- id: test_embed_documents_passes_dimensions
+  type: fail_to_pass
+  origin: pr_diff
+  description: embed_documents passes dimensions to the Ollama client embed call
+- id: test_embed_documents_dimensions_none_by_default
+  type: fail_to_pass
+  origin: pr_diff
+  description: When dimensions not specified, None is passed to the client
+- id: test_aembed_documents_passes_dimensions
+  type: fail_to_pass
+  origin: pr_diff
+  description: aembed_documents passes dimensions to the async Ollama client embed call
+- id: test_aembed_documents_dimensions_none_by_default
+  type: fail_to_pass
+  origin: pr_diff
+  description: When dimensions not specified, None is passed to async client
+- id: test_dimensions_various_values
+  type: fail_to_pass
+  origin: pr_diff
+  description: Test that various valid dimension values work correctly
+- id: test_embed_query_uses_dimensions
+  type: fail_to_pass
+  origin: pr_diff
+  description: embed_query should also use the dimensions parameter
+- id: test_repo_unit_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's own unit tests pass
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's linter passes
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's code formatting passes
+- id: test_repo_imports_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo has no disallowed imports
+- id: test_repo_package_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: Package imports work correctly
+- id: test_repo_embeddings_import
+  type: pass_to_pass
+  origin: repo_tests
+  description: Embeddings module imports work
+- id: test_repo_py_compile
+  type: pass_to_pass
+  origin: repo_tests
+  description: Python files compile without errors
+- id: test_repo_imports_test
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's own imports test passes
+- id: test_repo_llms_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's LLM unit tests pass
+- id: test_repo_auth_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's auth unit tests pass
+config_edits: []
 rubric:
-  - criterion: "Use keyword-only arguments for new parameters"
-    weight: 1
-    description: |
-      Per CLAUDE.md, new parameters should use keyword-only arguments `*, new_param: str = "default"`.
-      The `dimensions` parameter was added as a regular field; this is acceptable but could be improved.
-
-  - criterion: "Maintain stable public interfaces"
-    weight: 3
-    description: |
-      Per CLAUDE.md, preserve function signatures and don't make breaking changes.
-      The fix adds a new optional field without breaking existing code.
-
-  - criterion: "Use Google-style docstrings"
-    weight: 1
-    description: |
-      Per CLAUDE.md, use Google-style docstrings for all public functions.
-      The dimensions field has appropriate docstring documentation.
-
-  - criterion: "Proper exception handling with msg variable"
-    weight: 2
-    description: |
-      Per CLAUDE.md, use a `msg` variable for error messages.
-      The validator uses: `msg = "`dimensions` must be a positive integer."` ✓
-
-  - criterion: "American English spelling"
-    weight: 0.5
-    description: |
-      Per CLAUDE.md, ensure American English spelling (e.g., "behavior", not "behaviour").
-
-  - criterion: "Unit tests follow test file structure"
-    weight: 1
-    description: |
-      Per CLAUDE.md, the testing file structure should mirror the source code structure.
-      Tests are properly placed in tests/unit_tests/.
+- rule: '- Use keyword-only arguments for new parameters: `*, new_param: str = "default"`'
+  source:
+    path: CLAUDE.md
+    lines: '111'
+    commit: 050b779d97d4c72dfea1c46bfc12b1049be3ab63
+  evidence: The `dimensions` parameter was added as a regular Pydantic field rather than a keyword-only argument; this is acceptable for Pydantic model fields but could be improved.
+  category: style
+  verification: llm_judge
+- rule: 'CRITICAL: Always attempt to preserve function signatures, argument positions, and names for exported/public methods. Do not make breaking changes.'
+  source:
+    path: CLAUDE.md
+    lines: '104'
+    commit: 050b779d97d4c72dfea1c46bfc12b1049be3ab63
+  evidence: The fix adds a new optional field without breaking existing code — all signatures are preserved and dimensions defaults to None.
+  category: architecture
+  verification: llm_judge
+- rule: Use Google-style docstrings with Args section for all public functions.
+  source:
+    path: CLAUDE.md
+    lines: '167'
+    commit: 050b779d97d4c72dfea1c46bfc12b1049be3ab63
+  evidence: The `dimensions` field has appropriate inline docstring documentation describing its purpose.
+  category: style
+  verification: llm_judge
+- rule: '- Proper exception handling (no bare `except:`) and use a `msg` variable for error messages'
+  source:
+    path: CLAUDE.md
+    lines: '160'
+    commit: 050b779d97d4c72dfea1c46bfc12b1049be3ab63
+  evidence: The validator uses `msg = "`dimensions` must be a positive integer."` before raising ValueError.
+  category: style
+  verification: llm_judge
+- rule: '- Ensure American English spelling (e.g., "behavior", not "behaviour")'
+  source:
+    path: CLAUDE.md
+    lines: '194'
+    commit: 050b779d97d4c72dfea1c46bfc12b1049be3ab63
+  evidence: The code uses American English spelling throughout.
+  category: naming
+  verification: llm_judge
+- rule: '- The testing file structure should mirror the source code structure.'
+  source:
+    path: CLAUDE.md
+    lines: '146'
+    commit: 050b779d97d4c72dfea1c46bfc12b1049be3ab63
+  evidence: Tests are placed in tests/unit_tests/test_embeddings.py matching the source at langchain_ollama/embeddings.py.
+  category: testing
+  verification: llm_judge
+distractors:
+- rule: '- Use keyword-only arguments for new parameters: `*, new_param: str = "default"`'
+  source:
+    path: CLAUDE.md
+    lines: '111'
+    commit: 050b779d97d4c72dfea1c46bfc12b1049be3ab63
+  collision_type: rule_conflict
+  why_distracting: This rule applies to function parameters, but `dimensions` is a Pydantic model field — agents may incorrectly try to use keyword-only syntax in the class definition.
+  severity: medium
+- rule: 'CRITICAL: Always attempt to preserve function signatures, argument positions, and names for exported/public methods. Do not make breaking changes.'
+  source:
+    path: CLAUDE.md
+    lines: '104'
+    commit: 050b779d97d4c72dfea1c46bfc12b1049be3ab63
+  collision_type: scope_ambiguity
+  why_distracting: Adding a new optional field to a Pydantic model is not a breaking change, but an overly conservative agent might avoid adding it.
+  severity: low

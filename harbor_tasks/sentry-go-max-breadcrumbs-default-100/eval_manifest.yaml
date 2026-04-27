@@ -1,0 +1,75 @@
+version: '2.0'
+source:
+  repo: getsentry/sentry-go
+  pr: 1106
+  base_commit: c24b7484373c2a3afc81e7cffd33f24a6bcc8ece
+  merge_commit: 2dc3b97fd5d4776ee4aeeacf0701d9161160a786
+task:
+  kind: code_fix
+checks:
+- id: test_max_breadcrumbs_above_old_hard_limit
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'With ClientOptions{MaxBreadcrumbs: 500} and 600 AddBreadcrumb calls, the scope must retain 500 breadcrumbs (the historical 100 cap is gone).'
+- id: test_max_breadcrumbs_at_250
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'With ClientOptions{MaxBreadcrumbs: 250} and 400 AddBreadcrumb calls, the scope must retain 250 breadcrumbs.'
+- id: test_default_max_breadcrumbs_is_100
+  type: fail_to_pass
+  origin: pr_diff
+  description: With default ClientOptions{} and 150 AddBreadcrumb calls, the scope must retain 100 breadcrumbs (default raised from 30 to 100).
+- id: test_repo_unit_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing TestAddBreadcrumb* / TestScope*Inheritance / TestClearAndReconfigure tests still pass.
+- id: test_repo_go_vet
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`go vet .` passes on the root package.'
+- id: test_repo_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`go build ./...` succeeds for the whole module.'
+- id: test_changelog_pr_link_format
+  type: fail_to_pass
+  origin: agent_config
+  description: 'CHANGELOG.md must reference PR #1106 using the exact format ([#1106](https://github.com/getsentry/sentry-go/pull/1106)).'
+  source:
+    path: .cursor/rules/changelog.mdc
+    lines: 70-72
+    commit: c24b7484373c2a3afc81e7cffd33f24a6bcc8ece
+- id: test_changelog_breaking_changes_section
+  type: fail_to_pass
+  origin: agent_config
+  description: The new release block in CHANGELOG.md must contain a `### Breaking Changes` section that references MaxBreadcrumbs.
+  source:
+    path: .cursor/rules/changelog.mdc
+    lines: 58-66
+    commit: c24b7484373c2a3afc81e7cffd33f24a6bcc8ece
+rubric:
+- rule: Start with action verbs (Add, Fix, Remove, Update, etc.)
+  source:
+    path: .cursor/rules/changelog.mdc
+    lines: '80'
+    commit: c24b7484373c2a3afc81e7cffd33f24a6bcc8ece
+  evidence: 'The gold CHANGELOG entry describes the change in action terms: ''Removed the hard limit of 100 breadcrumbs ... changed the default limit from 30 to 100''.'
+  category: style
+  verification: llm_judge
+- rule: Be specific about what changed. Include component/module names when relevant.
+  source:
+    path: .cursor/rules/changelog.mdc
+    lines: 81-82
+    commit: c24b7484373c2a3afc81e7cffd33f24a6bcc8ece
+  evidence: The gold CHANGELOG entry specifically names `MaxBreadcrumbs` and describes both the removed hard limit and the new default value of 100.
+  category: style
+  verification: llm_judge
+- rule: 'Include sections in this exact order (only include sections that have content):'
+  source:
+    path: .cursor/rules/changelog.mdc
+    lines: '60'
+    commit: c24b7484373c2a3afc81e7cffd33f24a6bcc8ece
+  evidence: The gold CHANGELOG places `### Breaking Changes` as the first subsection under `## 0.36.0`, following the prescribed section ordering.
+  category: structure
+  verification: llm_judge
+distractors: []

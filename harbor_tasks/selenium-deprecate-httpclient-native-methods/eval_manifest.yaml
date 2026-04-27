@@ -1,0 +1,102 @@
+version: '2.0'
+task:
+  name: selenium-deprecate-httpclient-native-methods
+  kind: code_with_config
+  title: Deprecate the JDK-typed native methods on HttpClient and add a getter on JdkHttpClient
+  difficulty: easy
+  estimated_minutes: 10
+source:
+  repo: SeleniumHQ/selenium
+  pr_number: 17340
+  pr_url: https://github.com/SeleniumHQ/selenium/pull/17340
+  base_commit: 89a97b7a7c901ce0d9ef561c531678baaa547a37
+  merge_commit: 384a286ee4b7a71485bcc167edb1c9c13d5ccad1
+  pr_title: '[java] deprecate the ''native'' methods inside the HttpClient interface'
+  pr: 17340
+checks:
+- id: test_http_client_compiles
+  type: pass_to_pass
+  origin: static
+  description: HttpClient.java still compiles in isolation against the stubbed package surface.
+- id: test_send_async_native_method_exists
+  type: pass_to_pass
+  origin: static
+  description: sendAsyncNative must remain declared on the interface — agents must not delete it.
+- id: test_send_native_method_exists
+  type: pass_to_pass
+  origin: static
+  description: sendNative must remain declared on the interface — agents must not delete it.
+- id: test_http_client_source_well_formed
+  type: pass_to_pass
+  origin: static
+  description: HttpClient.java keeps its interface declaration and both Native methods named.
+- id: test_jdk_http_client_source_well_formed
+  type: pass_to_pass
+  origin: static
+  description: JdkHttpClient.java still references java.net.http.HttpClient and keeps its class declaration.
+- id: test_agents_md_preserves_existing_sections
+  type: pass_to_pass
+  origin: static
+  description: java/AGENTS.md keeps the pre-existing Logging/Deprecation/Documentation sub-sections intact.
+- id: test_send_async_native_marked_deprecated_for_removal
+  type: fail_to_pass
+  origin: pr_diff
+  description: javap shows @Deprecated(forRemoval=true) on sendAsyncNative.
+- id: test_send_native_marked_deprecated_for_removal
+  type: fail_to_pass
+  origin: pr_diff
+  description: javap shows @Deprecated(forRemoval=true) on sendNative.
+- id: test_jdk_http_client_exposes_native_client
+  type: fail_to_pass
+  origin: pr_diff
+  description: JdkHttpClient gains a public no-arg method returning java.net.http.HttpClient that returns the existing 'client' field.
+- id: test_agents_md_documents_interface_conventions
+  type: fail_to_pass
+  origin: agent_config
+  source:
+    commit: 384a286ee4b7a71485bcc167edb1c9c13d5ccad1
+    lines: 14-17
+    path: java/AGENTS.md
+  description: java/AGENTS.md gains an Interfaces sub-section that mentions both the default-implementation rule and the no-native-types rule.
+config_edits:
+- description: New '### Interfaces' sub-section under '## Code conventions'.
+  path: java/AGENTS.md
+  gold_added: '### Interfaces
+
+    - New methods added to existing interfaces must provide a default implementation, if possible.
+
+    - Interfaces must not expose the native classes of their implementations.
+
+    '
+  gold_removed: ''
+rubric:
+- id: deprecation_uses_for_removal
+  source:
+    commit: 89a97b7a7c901ce0d9ef561c531678baaa547a37
+    lines: 26-30
+    path: java/AGENTS.md
+  rule: Deprecation must use @Deprecated(forRemoval = true) — the standard form shown in java/AGENTS.md's Deprecation example block.
+- id: javadoc_for_public_apis
+  source:
+    commit: 89a97b7a7c901ce0d9ef561c531678baaa547a37
+    lines: 32-42
+    path: java/AGENTS.md
+  rule: Public API methods carry Javadoc — the @deprecated tag should accompany the @Deprecated annotation, naming the recommended replacement.
+- id: deprecate_before_remove
+  source:
+    commit: 89a97b7a7c901ce0d9ef561c531678baaa547a37
+    lines: 53-55
+    path: AGENTS.md
+  rule: Public functionality must be marked deprecated with a pointer to the alternative before any removal — the project does not follow semver.
+- id: small_reversible_diff
+  source:
+    commit: 89a97b7a7c901ce0d9ef561c531678baaa547a37
+    lines: 11-13
+    path: AGENTS.md
+  rule: Avoid repo-wide refactors/formatting; prefer small, reversible diffs. The PR should touch only the three named files and not bulk-reformat surrounding code.
+- id: comments_explain_why
+  source:
+    commit: 89a97b7a7c901ce0d9ef561c531678baaa547a37
+    lines: 59-60
+    path: AGENTS.md
+  rule: Comments should explain *why*, not *what* — the new accessor's Javadoc should justify the escape hatch, not narrate the field assignment.

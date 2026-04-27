@@ -1,0 +1,181 @@
+version: '2.0'
+source:
+  pr_url: https://github.com/dotnet/efcore/pull/37891
+  owner: dotnet
+  repo: efcore
+  pr_number: 37891
+  base_commit: 79c8ce77076dd5cb24e96971a6ef5dd587777104
+  merge_commit: 31144c5b106aa952cb8a9fd672c0442802a39841
+  pr: 37891
+task:
+  name: efcore-remove-provider-config-apis
+  title: Add APIs to remove a previously registered provider extension and DbContext
+  language: csharp
+checks:
+- id: test_remove_extension_removes_extension_from_builder
+  type: fail_to_pass
+  origin: repo_tests
+  description: IDbContextOptionsBuilderInfrastructure.RemoveExtension<T>() removes the named extension from a DbContextOptionsBuilder.
+  source:
+    path: https://github.com/dotnet/efcore/pull/37891/files
+    lines: ''
+    commit: ''
+- id: test_remove_extension_keeps_other_extensions
+  type: fail_to_pass
+  origin: repo_tests
+  description: RemoveExtension only removes the requested extension type and leaves other extensions intact.
+  source:
+    path: https://github.com/dotnet/efcore/pull/37891/files
+    lines: ''
+    commit: ''
+- id: test_remove_extension_no_op_when_extension_absent
+  type: fail_to_pass
+  origin: repo_tests
+  description: RemoveExtension is a no-op when the extension type was never registered on the builder.
+  source:
+    path: https://github.com/dotnet/efcore/pull/37891/files
+    lines: ''
+    commit: ''
+- id: test_without_extension_returns_same_instance_when_absent
+  type: fail_to_pass
+  origin: repo_tests
+  description: DbContextOptions.WithoutExtension<T>() returns `this` when the extension is not present.
+  source:
+    path: https://github.com/dotnet/efcore/pull/37891/files
+    lines: ''
+    commit: ''
+- id: test_without_extension_returns_new_instance_with_extension_removed
+  type: fail_to_pass
+  origin: repo_tests
+  description: WithoutExtension returns a new immutable DbContextOptions instance with the extension stripped.
+  source:
+    path: https://github.com/dotnet/efcore/pull/37891/files
+    lines: ''
+    commit: ''
+- id: test_without_extension_renormalizes_ordinals
+  type: fail_to_pass
+  origin: repo_tests
+  description: WithoutExtension preserves remaining extensions in their original order and renormalizes ordinals so adding a new extension keeps iteration order contiguous.
+  source:
+    path: https://github.com/dotnet/efcore/pull/37891/files
+    lines: ''
+    commit: ''
+- id: test_remove_dbcontext_removes_typed_options
+  type: fail_to_pass
+  origin: repo_tests
+  description: IServiceCollection.RemoveDbContext<TContext>() removes the DbContext, DbContextOptions<TContext>, and IDbContextOptionsConfiguration<TContext> registrations.
+  source:
+    path: https://github.com/dotnet/efcore/pull/37891/files
+    lines: ''
+    commit: ''
+- id: test_remove_dbcontext_does_not_remove_unrelated
+  type: fail_to_pass
+  origin: repo_tests
+  description: RemoveDbContext<TContext>() must not affect registrations belonging to a different DbContext type.
+  source:
+    path: https://github.com/dotnet/efcore/pull/37891/files
+    lines: ''
+    commit: ''
+- id: test_remove_dbcontext_with_remove_configuration_only
+  type: fail_to_pass
+  origin: repo_tests
+  description: 'RemoveDbContext<TContext>(removeConfigurationOnly: true) only strips IDbContextOptionsConfiguration registrations; the DbContext and DbContextOptions<TContext> remain.'
+  source:
+    path: https://github.com/dotnet/efcore/pull/37891/files
+    lines: ''
+    commit: ''
+- id: test_remove_dbcontext_then_re_register
+  type: fail_to_pass
+  origin: repo_tests
+  description: After RemoveDbContext<TContext>(), AddDbContext<TContext>(...) again with a new configuration produces a context that uses the new configuration.
+  source:
+    path: https://github.com/dotnet/efcore/pull/37891/files
+    lines: ''
+    commit: ''
+- id: test_remove_dbcontext_returns_collection_for_chaining
+  type: fail_to_pass
+  origin: repo_tests
+  description: RemoveDbContext returns the same IServiceCollection for fluent chaining.
+  source:
+    path: https://github.com/dotnet/efcore/pull/37891/files
+    lines: ''
+    commit: ''
+- id: test_p2p_efcore_src_builds
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's main src/EFCore project (`dotnet build src/EFCore/EFCore.csproj`) compiles cleanly. Catches regressions where the agent forgets to override a newly added abstract member or breaks an existing public API.
+rubric:
+- id: license_header_on_new_files
+  source:
+    path: .github/copilot-instructions.md @ 79c8ce77 — "Add license header to all files"
+    lines: ''
+    commit: ''
+  rule: 'Any new C# source file added under src/ must begin with the standard MIT license header:
+
+    // Licensed to the .NET Foundation under one or more agreements.
+
+    // The .NET Foundation licenses this file to you under the MIT license.
+
+    '
+- id: xml_docs_on_public_apis
+  source:
+    path: .github/copilot-instructions.md @ 79c8ce77 — "Include XML documentation for all public APIs" / "Use <see href="https://aka.ms/efcore-docs-*">"
+    lines: ''
+    commit: ''
+  rule: 'All newly introduced public APIs (RemoveDbContext, RemoveExtension, WithoutExtension) must
+
+    have XML <summary>/<param>/<typeparam>/<returns> documentation. Doc links should use the
+
+    <see href="https://aka.ms/efcore-docs-..."/> redirect form rather than hardcoded
+
+    learn.microsoft.com links.
+
+    '
+- id: nullability_and_null_checks
+  source:
+    path: .github/copilot-instructions.md @ 79c8ce77 — "Use Check.NotNull and Check.NotEmpty for preconditions in public APIs" / "Don't disable nullability with a preprocessor directive"
+    lines: ''
+    commit: ''
+  rule: 'Use Check.NotNull for non-null preconditions on public-API parameters in IServiceCollection
+
+    extension methods (the [CallerArgumentExpression] machinery captures the parameter name
+
+    automatically). Do not use #nullable disable.
+
+    '
+- id: avoid_breaking_public_apis
+  source:
+    path: .github/copilot-instructions.md @ 79c8ce77 — "Avoid breaking public APIs"
+    lines: ''
+    commit: ''
+  rule: 'Do not modify or delete existing public APIs. The new functionality must be added as
+
+    *new* methods (RemoveExtension on IDbContextOptionsBuilderInfrastructure, WithoutExtension
+
+    on DbContextOptions, RemoveDbContext on IServiceCollection) without altering the existing
+
+    AddOrUpdateExtension / WithExtension / AddDbContext signatures.
+
+    '
+- id: minimal_comments
+  source:
+    path: .github/copilot-instructions.md @ 79c8ce77 — "Prefer minimal comments"
+    lines: ''
+    commit: ''
+  rule: 'Code should be self-explanatory. Inline comments inside the new method bodies should be
+
+    sparing and only present when explaining non-obvious WHY (e.g., the ordinal-renormalization
+
+    step). Avoid commentary that simply restates what the code does.
+
+    '
+- id: file_scoped_namespace_and_var
+  source:
+    path: .github/copilot-instructions.md @ 79c8ce77 — "File scoped namespace declarations" / "Use var for local variables"
+    lines: ''
+    commit: ''
+  rule: 'Use file-scoped namespace declarations and `var` for local variable declarations in the
+
+    new code (matches the surrounding files'' conventions in src/EFCore/).
+
+    '

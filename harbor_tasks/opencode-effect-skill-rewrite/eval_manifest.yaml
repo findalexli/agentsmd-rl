@@ -1,0 +1,136 @@
+version: '2.0'
+source:
+  repo: anomalyco/opencode
+  pr: 24403
+  base_commit: 58c65874ba6aff2f16f5310dacddc3a89eb7b2cd
+  merge_commit: a14c22d4e9196eda3fc217213dcd7b01344087de
+task:
+  kind: markdown_authoring
+checks:
+- id: test_skill_file_exists
+  type: pass_to_pass
+  origin: static
+  description: SKILL.md still lives at .opencode/skills/effect/SKILL.md
+- id: test_skill_keeps_yaml_frontmatter_structure
+  type: pass_to_pass
+  origin: static
+  description: 'Frontmatter still has `name: effect` and a non-empty `description:`'
+- id: test_skill_description_updated
+  type: fail_to_pass
+  origin: pr_diff
+  description: Frontmatter `description:` is no longer the original placeholder
+- id: test_skill_mentions_effect_v4
+  type: fail_to_pass
+  origin: agent_config
+  description: SKILL.md explicitly mentions Effect v4 so agents don't fall back to v2/v3
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: '106'
+    commit: 58c65874ba6aff2f16f5310dacddc3a89eb7b2cd
+- id: test_skill_mentions_effect_smol_reference
+  type: fail_to_pass
+  origin: agent_config
+  description: SKILL.md points at the local effect-smol reference clone path
+  source:
+    path: .opencode/skills/effect/SKILL.md
+    lines: '12'
+    commit: 58c65874ba6aff2f16f5310dacddc3a89eb7b2cd
+- id: test_skill_requires_effect_fn_pattern
+  type: fail_to_pass
+  origin: agent_config
+  description: SKILL.md prescribes `Effect.fn` for traced/named effects
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: '78'
+    commit: 58c65874ba6aff2f16f5310dacddc3a89eb7b2cd
+- id: test_skill_requires_schema_taggederrorclass
+  type: fail_to_pass
+  origin: agent_config
+  description: SKILL.md prescribes `Schema.TaggedErrorClass` for typed domain errors
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: '91'
+    commit: 58c65874ba6aff2f16f5310dacddc3a89eb7b2cd
+- id: test_skill_forbids_any_and_non_null_assertions
+  type: fail_to_pass
+  origin: agent_config
+  description: SKILL.md explicitly forbids `any`, non-null assertions, unchecked casts
+  source:
+    path: AGENTS.md
+    lines: '13'
+    commit: 58c65874ba6aff2f16f5310dacddc3a89eb7b2cd
+- id: test_skill_substantively_expanded
+  type: fail_to_pass
+  origin: static
+  description: SKILL.md is substantively longer than the placeholder (>=25 lines)
+config_edits:
+- path: .opencode/skills/effect/SKILL.md
+  tier: 1
+  gold_added: 'description: Work with Effect v4 / effect-smol TypeScript code in this repo; Source Of Truth section directing agents to .opencode/references/effect-smol for API lookups; Guidelines with concrete Effect v4 API patterns (Effect.gen, Effect.fn, Effect.fnUntraced, Schema, Schema.TaggedErrorClass, branded IDs); HTTP handler patterns; Effect-aware platform abstractions; layer composition rules; testing guidance; bans on any, non-null assertions, unchecked casts, older Effect APIs'
+  gold_removed: 'description: Answer questions about the Effect framework; How to Answer Effect Questions section prescribing explore-agent-based workflow; Guidelines lacking concrete Effect API patterns'
+rubric:
+- rule: Avoid `else` statements. Prefer early returns.
+  source:
+    path: AGENTS.md
+    lines: '59'
+    commit: 58c65874ba6aff2f16f5310dacddc3a89eb7b2cd
+  evidence: The rewritten SKILL.md uses no code samples with else statements
+  category: style
+  verification: llm_judge
+- rule: Avoid using the `any` type
+  source:
+    path: AGENTS.md
+    lines: '13'
+    commit: 58c65874ba6aff2f16f5310dacddc3a89eb7b2cd
+  evidence: The rewritten SKILL.md explicitly bans `any` in its Guidelines section
+  category: style
+  verification: llm_judge
+- rule: Prefer `const` over `let`.
+  source:
+    path: AGENTS.md
+    lines: '45'
+    commit: 58c65874ba6aff2f16f5310dacddc3a89eb7b2cd
+  evidence: Any code samples in the rewritten SKILL.md use const
+  category: style
+  verification: llm_judge
+- rule: Use these rules when writing or migrating Effect code.
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: '71'
+    commit: 58c65874ba6aff2f16f5310dacddc3a89eb7b2cd
+  evidence: The rewritten SKILL.md aligns with all Effect patterns from packages/opencode/AGENTS.md including Effect.gen, Effect.fn, Schema.TaggedErrorClass, branded IDs, Effect-aware platform abstractions, and Instance.bind
+  category: architecture
+  verification: llm_judge
+- rule: Do not answer from memory - always verify against the source
+  source:
+    path: .opencode/skills/effect/SKILL.md
+    lines: '21'
+    commit: 58c65874ba6aff2f16f5310dacddc3a89eb7b2cd
+  evidence: The rewritten SKILL.md preserves this rule in both the Source Of Truth section and the Guidelines bans
+  category: style
+  verification: llm_judge
+distractors:
+- rule: Always use the explore agent with the cloned repository when answering Effect-related questions
+  source:
+    path: .opencode/skills/effect/SKILL.md
+    lines: '19'
+    commit: 58c65874ba6aff2f16f5310dacddc3a89eb7b2cd
+  collision_type: rule_conflict
+  why_distracting: The old skill prescribes using the explore agent for lookups, but the task requires replacing that workflow with direct file inspection of the cloned reference — agents might retain the old explore-agent pattern
+  severity: medium
+- rule: Avoid `else` statements. Prefer early returns.
+  source:
+    path: AGENTS.md
+    lines: '59'
+    commit: 58c65874ba6aff2f16f5310dacddc3a89eb7b2cd
+  collision_type: scope_ambiguity
+  why_distracting: Root AGENTS.md TypeScript style rules might lead agents to focus on code formatting instead of the markdown-authoring task
+  severity: low
+- rule: Use `Effect.gen(function* () { ... })` for composition.
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: '77'
+    commit: 58c65874ba6aff2f16f5310dacddc3a89eb7b2cd
+  collision_type: meta_confusion
+  why_distracting: The dense Effect API reference in packages/opencode/AGENTS.md might lead agents to write code implementations rather than authoring the skill document
+  severity: medium

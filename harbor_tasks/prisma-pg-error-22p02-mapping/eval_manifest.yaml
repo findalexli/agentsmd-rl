@@ -1,0 +1,95 @@
+version: '2.0'
+source:
+  owner: prisma
+  repo: prisma
+  pr_number: 28849
+  pr_url: https://github.com/prisma/prisma/pull/28849
+  base_commit: 857400baec117a7acd8be8799fa285d146329a33
+  merge_commit: 0c6db1591fd30fa9f6ed096bd8b24782c149b25b
+  pr: 28849
+task:
+  name: prisma-pg-error-22p02-mapping
+  title: Map PostgreSQL 22P02 to a typed user-facing error in pg/neon/ppg adapters
+  repo_path: /workspace/prisma
+checks:
+- id: test_pg_22p02_maps_to_invalid_input_value
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'adapter-pg''s convertDriverError must convert a PostgreSQL 22P02 error into
+
+    a MappedError with kind ''InvalidInputValue'' and a `message` field carrying
+
+    the original error text, while preserving originalCode/originalMessage.
+
+    '
+- id: test_neon_22p02_maps_to_invalid_input_value
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'adapter-neon''s convertDriverError must convert a PostgreSQL 22P02 error
+
+    into the same InvalidInputValue MappedError shape as adapter-pg.
+
+    '
+- id: test_ppg_22p02_maps_to_invalid_input_value
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'adapter-ppg''s convertDriverError must convert a PostgreSQL 22P02 error
+
+    into the same InvalidInputValue MappedError shape as adapter-pg.
+
+    '
+- id: test_existing_adapter_pg_unit_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'The repo''s existing adapter-pg vitest unit suite (errors.test.ts) must
+
+    still pass — no regressions in handling for other PostgreSQL error codes.
+
+    '
+- id: test_existing_adapter_neon_unit_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'The repo''s existing adapter-neon vitest unit suite (neon.test.ts) must
+
+    still pass.
+
+    '
+rubric:
+- id: kebab_case_filenames
+  source:
+    commit: 857400baec117a7acd8be8799fa285d146329a33
+    lines: Use **kebab-case** for new file names
+    path: AGENTS.md
+  rule: 'AGENTS.md mandates kebab-case for new file names. If the agent creates
+
+    new TypeScript files (none are required for this fix, but check for
+
+    regressions), they must use kebab-case (e.g. `my-helper.ts`, not
+
+    `MyHelper.ts` or `my_helper.ts`).
+
+    '
+- id: no_barrel_files
+  source:
+    commit: 857400baec117a7acd8be8799fa285d146329a33
+    lines: Avoid creating barrel files
+    path: AGENTS.md
+  rule: 'AGENTS.md says to avoid creating barrel files (index.ts that just
+
+    re-exports). Imports should target the source module directly. The
+
+    agent should not introduce a new index.ts/barrel as part of this fix.
+
+    '
+- id: ascii_only_changes
+  source:
+    commit: 857400baec117a7acd8be8799fa285d146329a33
+    lines: Keep changes ASCII unless a file already uses Unicode
+    path: AGENTS.md
+  rule: 'AGENTS.md says to keep changes ASCII unless the file already uses
+
+    Unicode. Source TypeScript files in adapter-{pg,neon,ppg} and
+
+    driver-adapter-utils are ASCII; modifications must remain ASCII.
+
+    '

@@ -1,0 +1,105 @@
+version: "2.0"
+
+task:
+  name: prisma-uint8array-nested-in-json
+  title: "Serialize nested Uint8Array values in Json fields as base64"
+  source:
+    repo: prisma/prisma
+    pr: 29268
+    pr_url: https://github.com/prisma/prisma/pull/29268
+    base_commit: 658697212823ac3aae4b84c206ec091106eda1ae
+    merge_commit: 455853d0ddae89da28ff9f9fa65c5ed0a803c908
+
+checks:
+  - id: test_uint8_in_object
+    type: fail_to_pass
+    origin: pr_diff
+    description: |
+      A Uint8Array nested inside an object stored in a Json field is serialized
+      as a base64 string ("SGVsbG8=") instead of a numeric-keyed object.
+
+  - id: test_uint8_in_array
+    type: fail_to_pass
+    origin: pr_diff
+    description: |
+      A Uint8Array nested inside an array stored in a Json field is serialized
+      as a base64 string ("SGVsbG8=") instead of a numeric-keyed object.
+
+  - id: test_uint8_deeply_nested
+    type: fail_to_pass
+    origin: pr_diff
+    description: |
+      A Uint8Array reachable only via two levels of property lookup inside a
+      Json field is serialized as a base64 string ("AQID").
+
+  - id: test_repo_parameterize_existing
+    type: pass_to_pass
+    origin: repo_tests
+    description: |
+      Existing unit tests in
+      packages/client/src/runtime/core/engines/client/parameterization/parameterize.test.ts
+      continue to pass (no behavior regression for non-Json or non-typed-array
+      values).
+
+  - id: test_repo_parameterize_tests_dir
+    type: pass_to_pass
+    origin: repo_tests
+    description: |
+      Existing unit tests in
+      packages/client/src/runtime/core/engines/client/parameterization/parameterize-tests/
+      continue to pass.
+
+  - id: test_repo_classify_existing
+    type: pass_to_pass
+    origin: repo_tests
+    description: |
+      Existing unit tests in
+      packages/client/src/runtime/core/engines/client/parameterization/classify.test.ts
+      continue to pass.
+
+rubric:
+  - id: kebab_case_new_files
+    source:
+      file: AGENTS.md
+      commit: 658697212823ac3aae4b84c206ec091106eda1ae
+    description: |
+      "Use kebab-case for new file names (e.g., query-utils.ts,
+      filter-operators.test.ts)." If the agent introduces any new file as part
+      of the fix, the file name must be kebab-case.
+
+  - id: no_barrel_files
+    source:
+      file: AGENTS.md
+      commit: 658697212823ac3aae4b84c206ec091106eda1ae
+    description: |
+      "Avoid creating barrel files (index.ts that re-export from other modules).
+      Import directly from the source file." Any new module added by the fix
+      must not be a barrel file, and existing imports should remain
+      source-direct.
+
+  - id: native_private_fields
+    source:
+      file: AGENTS.md
+      commit: 658697212823ac3aae4b84c206ec091106eda1ae
+    description: |
+      "Prefer native JavaScript private properties and methods (#field) over
+      the private keyword in TypeScript." If the fix touches class members,
+      keep using the existing #field convention.
+
+  - id: no_what_comments
+    source:
+      file: AGENTS.md
+      commit: 658697212823ac3aae4b84c206ec091106eda1ae
+    description: |
+      "Avoid adding useless code comments that do not add new information for
+      the reader." Inline comments that merely restate what the code does
+      should be omitted; only "why" comments belong inline.
+
+  - id: ascii_unless_already_unicode
+    source:
+      file: AGENTS.md
+      commit: 658697212823ac3aae4b84c206ec091106eda1ae
+    description: |
+      "Keep changes ASCII unless a file already uses Unicode." The fix should
+      not introduce Unicode characters into source files that are otherwise
+      ASCII-only.

@@ -1,0 +1,95 @@
+version: '2.0'
+source:
+  pr: 22388
+  owner: pulumi
+  repo: pulumi
+  pr_number: 22388
+  base_commit: 8a51e8bcf47a806b25a6c602fa6ae92f8296d97b
+  merge_commit: 7f5e196b66557aec776e331179482093e43efda6
+  title: Fix closure serialization for __importStar-wrapped modules
+task:
+  name: pulumi-closure-importstar-modules
+  primary_target: sdk/nodejs/runtime/closure/createClosure.ts
+  language: typescript
+checks:
+- id: test_importstar_crypto_collapses_to_require
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'A function that captures __importStar(require(''crypto'')) must serialise to source containing require("crypto") and no Object.defineProperty(__wrapped expansion.
+
+    '
+- id: test_importstar_path_collapses_to_require
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'A function that captures __importStar(require(''path'')) must serialise to source containing one of require("path"), require("path/posix") or require("path/win32") and no Object.defineProperty(__wrapped expansion.
+
+    '
+- id: test_importstar_os_collapses_to_require
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'A function that captures __importStar(require(''os'')) must serialise to source containing require("os") and no Object.defineProperty(__wrapped expansion.
+
+    '
+- id: test_importstar_matches_direct_require_output
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'The serialised form for __importStar(require(''crypto'')) must be within a small constant factor of the form for require(''crypto'') directly, demonstrating the wrapper has been collapsed to the same require() reference rather than expanded.
+
+    '
+- id: test_plain_default_object_not_treated_as_importstar
+  type: pass_to_pass
+  origin: pr_diff
+  description: 'A plain object { default: require(''crypto'') } with no other own properties must NOT be unwrapped — it must continue to serialise as an object literal containing {default: require("crypto")}.
+
+    '
+- id: test_direct_builtin_require_unchanged
+  type: pass_to_pass
+  origin: pr_diff
+  description: 'Capturing require(''crypto'') directly continues to serialise as a single const reference with no property-by-property expansion.
+
+    '
+- id: test_repo_tsc_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'yarn run tsc --noEmit from sdk/nodejs/ compiles the TypeScript sources cleanly.
+
+    '
+- id: test_closure_spec_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'The repo''s existing closure unit tests in sdk/nodejs/tests/runtime/closure.spec.ts continue to pass.
+
+    '
+rubric:
+- id: changelog_entry_present
+  rule: 'The change adds a new YAML file under changelog/pending/ with `type: fix`, `scope: sdk/nodejs`, and a one-line description of the fix. Per CLAUDE.md: "Changelog entries are required for most PRs."
+
+    '
+  source:
+    lines: Changelog entries are required for most PRs.
+    commit: 8a51e8bcf47a806b25a6c602fa6ae92f8296d97b
+    path: CLAUDE.md
+- id: copyright_header_current_year
+  rule: 'Any new source files added by the change carry a copyright header stamped with the current year. Per CLAUDE.md: "Copyright headers for new files should always be stamped with the current year."
+
+    '
+  source:
+    lines: Copyright headers for new files should always be stamped with the current year.
+    commit: 8a51e8bcf47a806b25a6c602fa6ae92f8296d97b
+    path: CLAUDE.md
+- id: no_unrelated_refactor
+  rule: 'The change is focused: it does not refactor unrelated code or add unnecessary abstractions outside of the __importStar fix. Per CLAUDE.md forbidden actions: "Do not make sweeping changes, refactor unrelated code, or add unnecessary abstractions."
+
+    '
+  source:
+    lines: Do not make sweeping changes, refactor unrelated code, or add unnecessary abstractions.
+    commit: 8a51e8bcf47a806b25a6c602fa6ae92f8296d97b
+    path: CLAUDE.md
+- id: no_hand_edited_generated_files
+  rule: 'The change does not hand-edit generated files (proto stubs, reversioned bin/ JavaScript, etc.). Per CLAUDE.md forbidden actions: "Do not edit generated proto files by hand …" and "Do not edit other generated files by hand."
+
+    '
+  source:
+    lines: Do not edit generated proto files by hand … Do not edit other generated files by hand.
+    commit: 8a51e8bcf47a806b25a6c602fa6ae92f8296d97b
+    path: CLAUDE.md

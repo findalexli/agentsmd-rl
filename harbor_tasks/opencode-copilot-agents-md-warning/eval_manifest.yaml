@@ -1,0 +1,106 @@
+version: '2.0'
+source:
+  repo: anomalyco/opencode
+  pr: 24057
+  base_commit: a771859362ab61983671ca9a82ec1ccfa34fc689
+  merge_commit: 87321942fee25786448f02284ebeaee1caf4e86c
+task:
+  kind: markdown_authoring
+checks:
+- id: test_agents_md_exists_in_copilot_dir
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md exists in the Copilot provider directory.
+- id: test_readme_warns_only_for_github_copilot
+  type: fail_to_pass
+  origin: pr_diff
+  description: README contains the strong "ONLY FOR GITHUB COPILOT" warning.
+- id: test_readme_warns_about_openai_compatible_providers
+  type: fail_to_pass
+  origin: pr_diff
+  description: README clarifies that the rules don't apply for openai-compatible providers.
+- id: test_readme_says_avoid_making_edits
+  type: fail_to_pass
+  origin: pr_diff
+  description: README contains the short "Avoid making edits to these files" directive.
+- id: test_agents_md_content_matches_readme
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md content matches README.md content (symlink, copy, or equivalent).
+- id: test_legacy_warning_replaced
+  type: fail_to_pass
+  origin: pr_diff
+  description: The old, weaker warning lines are gone from README.
+- id: test_repo_intro_line_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: The intro line describing the package purpose is preserved.
+- id: test_git_repo_intact
+  type: pass_to_pass
+  origin: repo_tests
+  description: Sanity p2p — repo is at the right commit and surrounding files exist.
+config_edits:
+- path: packages/opencode/src/provider/sdk/copilot/AGENTS.md
+  tier: 1
+  gold_added: README.md (symlink target; creates a file that resolves to the same content as README.md when read)
+  gold_removed: ''
+- path: packages/opencode/src/provider/sdk/copilot/README.md
+  tier: 1
+  gold_added: 'These DO NOT apply for openai-compatible providers or majority of providers supporting completions/responses apis. THIS IS ONLY FOR GITHUB COPILOT!!!
+
+
+    Avoid making edits to these files'
+  gold_removed: 'Avoid making changes to these files unless you only want to affect the Copilot provider.
+
+
+    Also, this should ONLY be used for the Copilot provider.'
+rubric:
+- rule: Avoid making changes to these files unless you only want to affect the Copilot provider.
+  source:
+    path: packages/opencode/src/provider/sdk/copilot/README.md
+    lines: 3-5
+    commit: a771859362ab61983671ca9a82ec1ccfa34fc689
+  evidence: Gold replaces this hedging language with 'THIS IS ONLY FOR GITHUB COPILOT!!!' and adds an explicit openai-compatible exclusion, removing all ambiguity about scope.
+  category: style
+  verification: llm_judge
+- rule: An AGENTS.md must be present in packages/opencode/src/provider/sdk/copilot/ so that an agent scanning sub-tree config files (without manually opening README.md) sees the warning. The AGENTS.md must convey the same content as the directory's README.md — a symlink to README.md is the canonical solution, but an equivalent inline copy is acceptable as long as `cat AGENTS.md` and `cat README.md` produce the same text.
+  source:
+    path: AGENTS.md
+    lines: 1-5
+    commit: a771859362ab61983671ca9a82ec1ccfa34fc689
+  evidence: Gold creates an AGENTS.md symlink to README.md in the copilot directory, so agents scanning for per-directory config files immediately encounter the same warning text.
+  category: architecture
+  verification: llm_judge
+- rule: Only the two files in the Copilot directory may change (packages/opencode/src/provider/sdk/copilot/AGENTS.md and packages/opencode/src/provider/sdk/copilot/README.md). No TypeScript/JavaScript files, build configs, or unrelated docs may be modified — this PR is purely an agent-instruction edit.
+  source:
+    path: AGENTS.md
+    lines: 1-5
+    commit: a771859362ab61983671ca9a82ec1ccfa34fc689
+  evidence: The gold patch only touches the two files in the Copilot directory; no source files, build configs, or unrelated docs are modified.
+  category: architecture
+  verification: llm_judge
+distractors:
+- rule: 'Prefer automation: execute requested actions without confirmation unless blocked by missing info or safety/irreversibility.'
+  source:
+    path: AGENTS.md
+    lines: '5'
+    commit: a771859362ab61983671ca9a82ec1ccfa34fc689
+  collision_type: rule_conflict
+  why_distracting: Encourages broad automated changes; an agent might apply edits beyond the two copilot doc files, violating the documentation-only scope constraint.
+  severity: medium
+- rule: Avoid making changes to these files unless you only want to affect the Copilot provider.
+  source:
+    path: packages/opencode/src/provider/sdk/copilot/README.md
+    lines: '3'
+    commit: a771859362ab61983671ca9a82ec1ccfa34fc689
+  collision_type: scope_ambiguity
+  why_distracting: 'The ''unless'' clause creates a loophole: an agent may persuade itself that its change ''only affects Copilot'' and skip strengthening the guardrail.'
+  severity: high
+- rule: ALWAYS USE PARALLEL TOOLS WHEN APPLICABLE.
+  source:
+    path: AGENTS.md
+    lines: '2'
+    commit: a771859362ab61983671ca9a82ec1ccfa34fc689
+  collision_type: meta_confusion
+  why_distracting: May lead an agent to batch repo-wide AGENTS.md updates alongside the copilot dir changes, over-applying the pattern beyond the task scope.
+  severity: medium

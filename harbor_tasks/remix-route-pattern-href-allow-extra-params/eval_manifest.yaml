@@ -1,0 +1,61 @@
+version: '2.0'
+task:
+  name: remix-route-pattern-href-allow-extra-params
+  kind: code_fix
+  title: Allow extra params in RoutePattern.href types
+  description: The HrefParams<source> type for @remix-run/route-pattern rejects object literals with keys not declared by the route pattern, even though those keys are simply ignored at runtime. Loosen the type so extra keys typecheck while keeping required params required.
+source:
+  repo: remix-run/remix
+  pr: 11017
+  pr_url: https://github.com/remix-run/remix/pull/11017
+  base_commit: 7a028b5a1cccb5b231f6b908da2aa06a95000a7f
+  merge_commit: d96a99e1fa649f2a542a455d4f687c04853a1bd4
+  primary_files:
+  - packages/route-pattern/src/lib/types/href.ts
+  - packages/route-pattern/src/lib/route-pattern.test.ts
+checks:
+- id: test_typecheck_baseline_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: The package's `pnpm typecheck` script (`tsgo --noEmit`) succeeds on the source as the agent leaves it (no fixture installed).
+- id: test_runtime_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: The package's `pnpm test` script (Node.js `node --test`) reports all tests passing. The fix is type-only and must not regress the runtime suite.
+- id: test_extra_params_typecheck
+  type: fail_to_pass
+  origin: pr_diff
+  description: A type-fixture exercising the four call shapes named in the instruction (`pattern.href({...required, ...extra})`) typechecks after the fix. Fails on the base commit due to TypeScript's excess-property check on `HrefParams<source>`.
+- id: test_required_params_still_required
+  type: fail_to_pass
+  origin: pr_diff
+  description: The fixture's `// @ts-expect-error` guards (on calls missing the required `:id` param) must continue to fire — i.e. they must NOT become unused suppressions (TS2578). This rejects an over-loose fix like `Record<string, ParamValue>` that would silently drop the required-param constraint.
+- id: test_href_ts_modified
+  type: fail_to_pass
+  origin: pr_diff
+  description: Sanity guard that `packages/route-pattern/src/lib/types/href.ts` no longer contains the verbatim pre-fix `HrefParams` definition.
+rubric:
+- id: descriptive_lowercase_generics
+  source:
+    excerpt: 'Generics: Use descriptive lowercase names for type parameters (e.g., `source`, `method`, `pattern`) instead of single uppercase letters like `T`, `P`, or `K`'
+    path: AGENTS.md
+    commit: 7a028b5a1cccb5b231f6b908da2aa06a95000a7f
+  rule: Generic type parameters introduced or kept in modified files use descriptive lowercase names (e.g. `source`) rather than single uppercase letters like `T`, per the AGENTS.md "Code Style" section.
+- id: type_only_imports
+  source:
+    excerpt: 'Imports: Always use `import type { X }` for types (separate from value imports); use `export type { X }` for type exports; include `.ts` extensions'
+    path: AGENTS.md
+    commit: 7a028b5a1cccb5b231f6b908da2aa06a95000a7f
+  rule: Any imports added or kept in `href.ts` (or other files the agent modifies) that reference only types use `import type { X }` and include the `.ts` extension on relative paths.
+- id: no_unnecessary_comments
+  source:
+    excerpt: 'Comments: Only add non-JSDoc comments when the code is doing something surprising or non-obvious'
+    path: AGENTS.md
+    commit: 7a028b5a1cccb5b231f6b908da2aa06a95000a7f
+  rule: The fix does not add JSDoc-style or running-commentary comments explaining what the code does. Per AGENTS.md, only non-JSDoc comments for genuinely surprising/non-obvious behavior.
+- id: prefers_let_for_locals
+  source:
+    excerpt: 'Variables: Prefer `let` for locals, `const` only at module scope; never use `var`'
+    path: AGENTS.md
+    commit: 7a028b5a1cccb5b231f6b908da2aa06a95000a7f
+  rule: Any local bindings the agent introduces (e.g. inside test additions) use `let`, not `const`. Module-scope bindings may use `const`.

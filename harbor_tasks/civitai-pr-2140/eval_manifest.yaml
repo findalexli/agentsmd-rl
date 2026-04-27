@@ -1,110 +1,97 @@
-version: 1
-
+version: '2.0'
 source:
-  owner: civitai
-  repo: civitai
-  pr_number: 2140
-  title: "fix: resolve follower notification timeout death spiral"
+  repo: civitai/civitai
+  pr: 2140
   base_commit: 1ef47bec41ce9f6f4b0f7ee89921a0ca263ac7df
   merge_commit: 99a99bd910cfa6f9f4f72d1036b9c78539934458
-
+task:
+  kind: code_fix
 checks:
-  - id: test_max_notification_window_constant_exists
-    description: MAX_NOTIFICATION_WINDOW_MS constant defined as 10 * 60 * 1000 (10 minutes in ms)
-    type: fail_to_pass
-    origin: agent_config
-    source: CLAUDE.md lines 1-50
-    details:
-      file: src/server/jobs/send-notifications.ts
-      pattern: MAX_NOTIFICATION_WINDOW_MS = 10 * 60 * 1000
-
-  - id: test_effective_now_field_in_notification_input_type
-    description: effectiveNow string field present in NotificationProcessorRunInput type
-    type: fail_to_pass
-    origin: agent_config
-    source: CLAUDE.md lines 1-50
-    details:
-      file: src/server/notifications/base.notifications.ts
-      pattern: "effectiveNow: string"
-
-  - id: test_effective_now_replaces_now_in_model_version_query
-    description: new-model-version SQL query uses effectiveNow instead of bare now()
-    type: fail_to_pass
-    origin: agent_config
-    source: CLAUDE.md lines 1-50
-    details:
-      file: src/server/notifications/model.notifications.ts
-      pattern: "'${effectiveNow}'"
-
-  - id: test_effective_now_replaces_now_in_following_query
-    description: new-model-from-following SQL query uses effectiveNow with 59s lookback
-    type: fail_to_pass
-    origin: agent_config
-    source: CLAUDE.md lines 1-50
-    details:
-      file: src/server/notifications/model.notifications.ts
-      pattern: "BETWEEN.*interval '59 second' AND '${effectiveNow}'"
-
-  - id: test_effective_now_replaces_now_in_early_access_query
-    description: early-access-complete SQL query uses effectiveNow instead of bare now()
-    type: fail_to_pass
-    origin: agent_config
-    source: CLAUDE.md lines 1-50
-    details:
-      file: src/server/notifications/model.notifications.ts
-      pattern: "ev.updated_published_at < '${effectiveNow}'"
-
-  - id: test_notification_migration_index_exists
-    description: Model(status, publishedAt) index migration file exists
-    type: fail_to_pass
-    origin: agent_config
-    source: postgres-query/SKILL.md lines 1-50
-    details:
-      file: prisma/migrations/*add_model_status_published_at_index*/migration.sql
-      pattern: CREATE INDEX.*Model.*status.*publishedAt
-
-  - id: test_eslint_passes
-    description: ESLint passes on modified files
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Run pnpm run lint - from CLAUDE.md code quality standards"
-
-  - id: test_prettier_passes
-    description: Prettier check passes on modified files
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Run pnpm prettier --check on modified files"
-
-  - id: test_eslint_modified_files
-    description: ESLint (direct) passes on modified files with no errors
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Run eslint directly on modified files"
-
+- id: test_max_notification_window_constant_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: MAX_NOTIFICATION_WINDOW_MS constant defined as 10 * 60 * 1000 (10 minutes in ms)
+- id: test_effective_now_field_in_notification_input_type
+  type: fail_to_pass
+  origin: pr_diff
+  description: effectiveNow string field present in NotificationProcessorRunInput type
+- id: test_effective_now_replaces_now_in_model_version_query
+  type: fail_to_pass
+  origin: pr_diff
+  description: new-model-version SQL query uses effectiveNow instead of bare now()
+- id: test_effective_now_replaces_now_in_following_query
+  type: fail_to_pass
+  origin: pr_diff
+  description: new-model-from-following SQL query uses effectiveNow with 59s lookback
+- id: test_effective_now_replaces_now_in_early_access_query
+  type: fail_to_pass
+  origin: pr_diff
+  description: early-access-complete SQL query uses effectiveNow instead of bare now()
+- id: test_notification_migration_index_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: Model(status, publishedAt) index migration file exists
+- id: test_eslint_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Run pnpm run lint - from CLAUDE.md code quality standards
+- id: test_prettier_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Run pnpm prettier --check on modified files
+- id: test_eslint_modified_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Run eslint directly on modified files
 rubric:
-  - source: CLAUDE.md
-    rule: |
-      Before committing: Run type checking (pnpm run typecheck), Run linting (pnpm run lint),
-      Format code (pnpm run prettier:write)
-    applies_to:
-      - src/server/**/*.ts
-    weight: 1
-    description: Code quality standards - typecheck and lint must pass
+- rule: '### Before Committing
 
-  - source: postgres-query/SKILL.md
-    rule: |
-      Verifying Index Usage: Run with --explain and look for Index Scan, Bitmap Index Scan,
-      Index Only Scan. Avoid Seq Scan on large tables (indicates missing or unused index).
-    applies_to:
-      - prisma/migrations/**/*.sql
-    weight: 1
-    description: Use EXPLAIN ANALYZE to verify index usage and query performance
+    1. Run type checking: `pnpm run typecheck`
 
-  - source: CLAUDE.md
-    rule: |
-      Use dynamic imports for heavy components. Implement virtual scrolling for large lists.
-      Optimize images with Next.js Image component.
-    applies_to:
-      - src/server/notifications/**/*.ts
-    weight: 1
-    description: Performance-conscious implementation with proper patterns for scalability
+    2. Run linting: `pnpm run lint`
+
+    3. Format code: `pnpm run prettier:write`
+
+    4. Test changes locally
+
+    '
+  source:
+    path: CLAUDE.md
+    lines: 175-179
+    commit: 1ef47bec41ce9f6f4b0f7ee89921a0ca263ac7df
+  evidence: Gold solution passes lint and prettier checks as verified by test_eslint_passes and test_prettier_passes
+  category: testing
+  verification: llm_judge
+- rule: '## Verifying Index Usage
+
+
+    Run with `--explain` and look for:
+
+    - **Good**: "Index Scan", "Bitmap Index Scan", "Index Only Scan"
+
+    - **Bad**: "Seq Scan" on large tables (indicates missing or unused index)
+
+    '
+  source:
+    path: .claude/skills/postgres-query/SKILL.md
+    lines: 79-83
+    commit: 1ef47bec41ce9f6f4b0f7ee89921a0ca263ac7df
+  evidence: Gold solution adds a Model(status, publishedAt) index migration to improve notification query performance
+  category: testing
+  verification: llm_judge
+- rule: '### Performance
+
+    - Use dynamic imports for heavy components
+
+    - Implement virtual scrolling for large lists
+
+    - Optimize images with Next.js Image component
+
+    '
+  source:
+    path: CLAUDE.md
+    lines: 164-167
+    commit: 1ef47bec41ce9f6f4b0f7ee89921a0ca263ac7df
+  evidence: Gold solution uses efficient parameterized SQL queries with proper indexing for notification processing
+  category: performance
+  verification: llm_judge

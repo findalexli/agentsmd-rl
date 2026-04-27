@@ -1,0 +1,152 @@
+version: '2.0'
+task:
+  name: effect-aierror-disable-validation
+  kind: code_fix
+  title: Preserve Headers prototype on @effect/ai HTTP error factories
+source:
+  repo: Effect-TS/effect
+  pr_number: 6101
+  pr_url: https://github.com/Effect-TS/effect/pull/6101
+  base_commit: f6b0960bf3184109920dfed16ee7dfd7d67bc0f2
+  merge_commit: cf749405214282edc916a783b3417c766d2bbfe3
+  primary_files:
+  - packages/ai/ai/src/AiError.ts
+  pr: 6101
+checks:
+- id: test_baseline_input_headers_is_headers
+  type: pass_to_pass
+  origin: static
+  description: 'Sanity check that the test fixture itself produces a real Headers
+
+    instance — passes at base and after the fix.
+
+    '
+- id: test_request_error_preserves_headers_prototype
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'AiError.HttpRequestError.fromRequestError(...) must return an error
+
+    whose request.headers still satisfies Headers.isHeaders(...). At base
+
+    commit the factory strips the prototype.
+
+    '
+- id: test_response_error_preserves_request_headers_prototype
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'AiError.HttpResponseError.fromResponseError(...) must return an error
+
+    whose request.headers still satisfies Headers.isHeaders(...).
+
+    '
+- id: test_response_error_preserves_response_headers_prototype
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'AiError.HttpResponseError.fromResponseError(...) must return an error
+
+    whose response.headers still satisfies Headers.isHeaders(...).
+
+    '
+- id: test_error_payload_fields_round_trip
+  type: pass_to_pass
+  origin: pr_diff
+  description: 'Scalar fields (module, method, reason, request.method/url,
+
+    response.status) must round-trip unchanged through the factory.
+
+    '
+- id: test_changeset_present
+  type: pass_to_pass
+  origin: agent_config
+  source:
+    lines: 39-42
+    commit: f6b0960bf3184109920dfed16ee7dfd7d67bc0f2
+    path: AGENTS.md
+  description: 'AGENTS.md mandates that every PR ship a changeset file under
+
+    `.changeset/` with frontmatter naming the affected package.
+
+    '
+- id: test_ai_package_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`pnpm exec tsc -b tsconfig.json` from packages/ai/ai must succeed.
+
+    AGENTS.md explicitly requires `pnpm check` to pass after edits.
+
+    '
+rubric:
+- id: reduce_comments
+  weight: 1
+  source:
+    lines: '15'
+    commit: f6b0960bf3184109920dfed16ee7dfd7d67bc0f2
+    path: AGENTS.md
+  rule: 'Solution avoids adding comments unless absolutely required. Inline
+
+    explanations of why `disableValidation: true` is needed are
+
+    discouraged — the surrounding factory already documents intent
+
+    through its JSDoc.
+
+    '
+- id: clarity_over_cleverness
+  weight: 1
+  source:
+    lines: '13'
+    commit: f6b0960bf3184109920dfed16ee7dfd7d67bc0f2
+    path: AGENTS.md
+  rule: 'Solution is the smallest, most direct change that resolves the bug.
+
+    No refactoring of unrelated code, no new helpers, no schema
+
+    restructuring.
+
+    '
+- id: conciseness
+  weight: 1
+  source:
+    lines: '14'
+    commit: f6b0960bf3184109920dfed16ee7dfd7d67bc0f2
+    path: AGENTS.md
+  rule: 'Code and any new wording (changeset body) are concise and to the
+
+    point. The changeset body is one-to-two short lines.
+
+    '
+- id: no_index_ts_edits
+  weight: 1
+  source:
+    lines: 34-37
+    commit: f6b0960bf3184109920dfed16ee7dfd7d67bc0f2
+    path: AGENTS.md
+  rule: 'Barrel `index.ts` files were not manually edited. AGENTS.md states
+
+    they are generated and must be regenerated via `pnpm codegen` if
+
+    structure changes — neither is required for this bug fix.
+
+    '
+- id: changeset_quality
+  weight: 1
+  source:
+    lines: 39-42
+    commit: f6b0960bf3184109920dfed16ee7dfd7d67bc0f2
+    path: AGENTS.md
+  rule: 'The changeset frontmatter declares `"@effect/ai": patch` (this is a
+
+    bug fix, not a feature) and the body succinctly describes the
+
+    observable behaviour change.
+
+    '
+- id: scaffold_unchanged
+  weight: 1
+  rule: 'Solution does not modify or delete the AGENTS.md file, the
+
+    `tsconfig*.json` files, or unrelated packages. The fix is scoped to
+
+    `packages/ai/ai/src/AiError.ts` (and a new file under `.changeset/`).
+
+    '

@@ -1,0 +1,182 @@
+version: '2.0'
+source:
+  owner: gohugoio
+  repo: hugo
+  pr_number: 14598
+  pr_url: https://github.com/gohugoio/hugo/pull/14598
+  base_commit: e3108225bf2f49bd3908614ac120bf1699fde241
+  merge_commit: 13a95b9c0167c832fe2babf961ac5cad22e3a1e4
+  title: 'tpl/strings: Add strings.ReplacePairs function'
+  pr: 14598
+task:
+  name: hugo-strings-replacepairs
+  primary_files:
+  - tpl/strings/strings.go
+  - tpl/strings/init.go
+checks:
+- id: test_inline_form_single_pair
+  type: fail_to_pass
+  origin: pr_diff
+  description: ReplacePairs("a","b","aab") returns "bbb" with no error.
+- id: test_inline_form_multiple_pairs
+  type: fail_to_pass
+  origin: pr_diff
+  description: Multiple inline pairs apply in a single pass.
+- id: test_slice_form
+  type: fail_to_pass
+  origin: pr_diff
+  description: With exactly two args, the first arg may be a slice of pairs.
+- id: test_single_pass_replacement
+  type: fail_to_pass
+  origin: pr_diff
+  description: Replacements are single-pass — output of one pair is not re-scanned.
+- id: test_template_html_source
+  type: fail_to_pass
+  origin: pr_diff
+  description: Source value of type template.HTML is accepted.
+- id: test_empty_source_returns_empty
+  type: fail_to_pass
+  origin: pr_diff
+  description: Empty source string returns empty without error.
+- id: test_empty_pairs_returns_source_unchanged
+  type: fail_to_pass
+  origin: pr_diff
+  description: Empty pairs slice returns source unchanged.
+- id: test_template_html_pair_value
+  type: fail_to_pass
+  origin: pr_diff
+  description: template.HTML values inside the pairs list are accepted.
+- id: test_int_source_cast_to_string
+  type: fail_to_pass
+  origin: pr_diff
+  description: Castable non-string source (int) is accepted via cast.ToStringE.
+- id: test_any_slice_with_int_pair_value
+  type: fail_to_pass
+  origin: pr_diff
+  description: A []any pairs slice with castable non-string elements is accepted.
+- id: test_repeated_calls_consistent
+  type: fail_to_pass
+  origin: pr_diff
+  description: Repeated calls with identical pairs return identical results.
+- id: test_error_too_few_args
+  type: fail_to_pass
+  origin: pr_diff
+  description: Fewer than 2 args returns an error matching "requires at least 2".
+- id: test_error_two_args_first_not_slice
+  type: fail_to_pass
+  origin: pr_diff
+  description: With 2 args, a non-slice first arg returns "first must be a slice" error.
+- id: test_error_uneven_pairs
+  type: fail_to_pass
+  origin: pr_diff
+  description: An odd number of pair elements returns "uneven number" error.
+- id: test_method_registered_in_init
+  type: fail_to_pass
+  origin: pr_diff
+  description: ReplacePairs is registered via ns.AddMethodMapping in init.go and the package builds.
+- id: test_existing_strings_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: All existing tpl/strings unit tests continue to pass.
+- id: test_go_vet_clean
+  type: pass_to_pass
+  origin: repo_tests
+  description: go vet on tpl/strings reports no issues.
+- id: test_gofmt_clean
+  type: pass_to_pass
+  origin: agent_config
+  description: Modified Go files conform to gofmt.
+  source:
+    commit: e3108225bf2f49bd3908614ac120bf1699fde241
+    path: AGENTS.md
+rubric:
+- id: brevity_in_comments
+  source:
+    lines: 1-4
+    commit: e3108225bf2f49bd3908614ac120bf1699fde241
+    path: AGENTS.md
+  rule: 'AGENTS.md: "Don''t use comments to explain the obvious." Code should
+
+    avoid trivial restatement-of-code comments. Doc comments on exported
+
+    identifiers are fine and required by Go convention; what''s flagged
+
+    is in-body comments that simply repeat what the next line does.
+
+    '
+- id: no_unneeded_exports
+  source:
+    lines: '8'
+    commit: e3108225bf2f49bd3908614ac120bf1699fde241
+    path: AGENTS.md
+  rule: 'AGENTS.md: "Never export symbols that''s not needed outside of the
+
+    package." Helper types/functions added by the change should be
+
+    unexported unless used by another package.
+
+    '
+- id: avoid_global_state
+  source:
+    lines: '9'
+    commit: e3108225bf2f49bd3908614ac120bf1699fde241
+    path: AGENTS.md
+  rule: 'AGENTS.md: "Avoid global state at (almost) all cost." Per-instance
+
+    state belongs on the Namespace receiver, not in package-level vars.
+
+    '
+- id: reuse_existing_helpers
+  source:
+    lines: '10'
+    commit: e3108225bf2f49bd3908614ac120bf1699fde241
+    path: AGENTS.md
+  rule: 'AGENTS.md: "assume that a similar problem has been solved before,
+
+    look hard for helper functions before creating new ones." Reuse
+
+    common helpers (e.g., common/hreflect for type checks, common/hmaps
+
+    for caching, spf13/cast for type conversion) instead of reimplementing.
+
+    '
+- id: no_debug_printf_left_behind
+  source:
+    lines: '5'
+    commit: e3108225bf2f49bd3908614ac120bf1699fde241
+    path: AGENTS.md
+  rule: 'AGENTS.md: temporary debug printing must use hdebug.Printf and not
+
+    be left in committed code (CI fails otherwise). Submitted code must
+
+    not contain stray hdebug.Printf, fmt.Println, or log.Println calls
+
+    added for debugging.
+
+    '
+- id: tests_use_qt_matchers
+  source:
+    lines: '11'
+    commit: e3108225bf2f49bd3908614ac120bf1699fde241
+    path: AGENTS.md
+  rule: 'AGENTS.md: "In tests, use `qt` matchers (e.g.
+
+    `b.Assert(err, qt.ErrorMatches, ...)`) instead of raw `if`/`t.Fatal`
+
+    checks." Any new test code in tpl/strings/ should use the
+
+    quicktest qt matchers, consistent with the rest of the file.
+
+    '
+- id: short_self_explanatory_names
+  source:
+    lines: 2-4
+    commit: e3108225bf2f49bd3908614ac120bf1699fde241
+    path: AGENTS.md
+  rule: 'AGENTS.md: "Use self-explanatory variable and function names. Use
+
+    short variable names when the context is clear." Identifier names
+
+    should follow idiomatic Go and the existing file''s style.
+
+    '

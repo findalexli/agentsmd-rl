@@ -1,0 +1,114 @@
+version: '2.0'
+source:
+  repo: BerriAI/litellm
+  pr: 25100
+  pr_url: https://github.com/BerriAI/litellm/pull/25100
+  base_commit: a292add9bd53a87e919a79aaeae8bbcb542cd033
+  merge_commit: 4c1ef4234d88cb8b9b01b0f1dd02d8eab3a81d64
+  pr_title: 'feat(ui): add guardrails support to project create/edit forms'
+task:
+  name: litellm-ui-project-guardrails
+  language: typescript
+  test_runner: vitest
+  primary_files:
+  - ui/litellm-dashboard/src/components/Projects/ProjectModals/projectFormUtils.ts
+  - ui/litellm-dashboard/src/components/Projects/ProjectModals/ProjectBaseForm.tsx
+  - ui/litellm-dashboard/src/components/Projects/ProjectModals/EditProjectModal.tsx
+  - ui/litellm-dashboard/src/app/(dashboard)/hooks/projects/useCreateProject.ts
+  - ui/litellm-dashboard/src/app/(dashboard)/hooks/projects/useUpdateProject.ts
+checks:
+- id: test_build_passes_guardrails_with_values
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'buildProjectApiParams must include guardrails as a top-level array when called with a non-empty guardrails field.
+
+    '
+- id: test_build_omits_empty_guardrails
+  type: pass_to_pass
+  origin: pr_diff
+  description: 'buildProjectApiParams must omit the guardrails property entirely when called with an empty guardrails array. (Passes at base vacuously since base never adds guardrails; guards against a buggy fix that always emits an empty `guardrails: []` key.)
+
+    '
+- id: test_build_omits_undefined_guardrails
+  type: pass_to_pass
+  origin: pr_diff
+  description: 'buildProjectApiParams must omit the guardrails property entirely when guardrails is not present on the input. Passes at base vacuously; guards against a buggy fix that always emits guardrails.
+
+    '
+- id: test_build_preserves_single_guardrail
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'buildProjectApiParams must work with a single-entry guardrails array.
+
+    '
+- id: test_build_keeps_guardrails_top_level_not_nested
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'guardrails must appear at the top level of the API params, not nested under metadata.
+
+    '
+- id: test_form_renders_guardrails_field
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'ProjectBaseForm must render a Guardrails label inside the Advanced Settings collapse panel.
+
+    '
+- id: test_p2p_repo_form_utils_existing_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Existing projectFormUtils.test.ts vitest suite still passes.
+
+    '
+- id: test_p2p_repo_baseform_existing_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Existing ProjectBaseForm.test.tsx vitest suite still passes.
+
+    '
+- id: test_p2p_repo_global_setup_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Running all tests under src/components/Projects/ProjectModals/ via vitest still passes — catches regressions to other ProjectModals tests sharing the same setup as the file we are changing.
+
+    '
+rubric:
+- id: ui_no_new_tremor_components
+  source:
+    commit: a292add9bd53a87e919a79aaeae8bbcb542cd033
+    lines: 60-62
+    path: AGENTS.md
+  rule: 'Per AGENTS.md, Tremor is deprecated. Do not introduce new Tremor components in this change; use the existing common components and Ant Design primitives the rest of the form uses.
+
+    '
+- id: ui_test_query_priority_order
+  source:
+    commit: a292add9bd53a87e919a79aaeae8bbcb542cd033
+    lines: 67-77
+    path: AGENTS.md
+  rule: 'Per AGENTS.md, any UI tests added/modified should use query methods in this order: getByRole, getByLabelText, getByPlaceholderText, getByText, getByTestId. Always use `screen` rather than destructuring from render(). Test names start with "should ...".
+
+    '
+- id: imports_at_module_top
+  source:
+    commit: a292add9bd53a87e919a79aaeae8bbcb542cd033
+    lines: 76-77
+    path: CLAUDE.md
+  rule: 'Per CLAUDE.md, place all imports at the top of the file (module-level). Avoid imports inside function bodies except when strictly required to break circular imports.
+
+    '
+- id: ui_backend_contract_match
+  source:
+    commit: a292add9bd53a87e919a79aaeae8bbcb542cd033
+    lines: 92-94
+    path: CLAUDE.md
+  rule: 'Per CLAUDE.md "UI / Backend Consistency" and AGENTS.md "Common Pitfalls": when wiring a UI control to an existing backend endpoint, match the API contract (single value vs. array, required vs. optional). Here the backend takes a top-level `guardrails: string[]`, so the UI must use a multi-select that produces a top-level array, not a nested metadata field.
+
+    '
+- id: existing_tests_must_remain_passing
+  source:
+    commit: a292add9bd53a87e919a79aaeae8bbcb542cd033
+    lines: 78-83
+    path: CLAUDE.md
+  rule: 'Per CLAUDE.md and AGENTS.md, when modifying UI components that have existing tests, those tests must continue to pass after the change.
+
+    '

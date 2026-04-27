@@ -1,0 +1,101 @@
+version: '2.0'
+source:
+  owner: astral-sh
+  repo: ruff
+  pr_number: 24661
+  base_commit: 61f9a0a5763fb068cd2f26c0ee9d63a277fb26c2
+  merge_commit: dccb03d010f4442ed60624f8d2ba932706abaabb
+  pr_url: https://github.com/astral-sh/ruff/pull/24661
+  pr: 24661
+task:
+  name: ruff-ty-callable-overload-no-panic
+  title: '[ty] Avoid panicking on overloaded `Callable` type context'
+  kind: code_fix
+  primary_target: crates/ty_python_semantic/src/types/infer/builder.rs
+checks:
+- id: test_dict_get_three_str_methods_lambda_default
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Canonical PR repro: dict with str.upper/lower/title values, .get() with a lambda default — must not panic.
+
+    '
+- id: test_dict_get_at_module_scope
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Variation at module scope with two str-method values — must not panic.
+
+    '
+- id: test_dict_setdefault_with_lambda
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'dict.setdefault with a lambda default also triggered the same panic path on the buggy build.
+
+    '
+- id: test_dict_get_single_str_method_value
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Even a dict with a single str-method value triggers the panic via dict.get''s own overloads.
+
+    '
+- id: test_ty_python_semantic_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'cargo check -p ty_python_semantic succeeds (sanity gate that the patch keeps the workspace compiling).
+
+    '
+- id: test_ty_binary_runs_smoke
+  type: pass_to_pass
+  origin: repo_tests
+  description: ty --version runs successfully (sanity smoke test).
+- id: test_ty_check_clean_python_file
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'ty check on a benign Python file does not panic — guards against a regression that would replace the targeted panic with a broader one.
+
+    '
+rubric:
+- id: agent_config_no_panic_unwrap_unreachable
+  source:
+    origin: agent_config
+    lines: '79'
+    commit: 61f9a0a5763fb068cd2f26c0ee9d63a277fb26c2
+    path: AGENTS.md
+  rule: 'AGENTS.md: "Try hard to avoid patterns that require `panic!`, `unreachable!`, or `.unwrap()`. Instead, try to encode those constraints in the type system." The fix MUST remove the existing `panic!`. The replacement MUST NOT introduce a new `panic!`, `unreachable!`, or `.unwrap()` on the same code path.
+
+    '
+- id: agent_config_let_chains_preferred
+  source:
+    origin: agent_config
+    lines: '80'
+    commit: 61f9a0a5763fb068cd2f26c0ee9d63a277fb26c2
+    path: AGENTS.md
+  rule: 'AGENTS.md: "Prefer let chains (`if let` combined with `&&`) over nested `if let` statements to reduce indentation and improve readability." The surrounding code in builder.rs already uses a let-chain — the fix must not break this pattern (e.g. by re-nesting the chain into separate `if let` statements).
+
+    '
+- id: agent_config_top_level_imports
+  source:
+    origin: agent_config
+    lines: '76'
+    commit: 61f9a0a5763fb068cd2f26c0ee9d63a277fb26c2
+    path: AGENTS.md
+  rule: 'AGENTS.md: "Rust imports should always go at the top of the file, never locally in functions." The fix must not add `use` statements inside the function body.
+
+    '
+- id: agent_config_purposeful_comments
+  source:
+    origin: agent_config
+    lines: '82'
+    commit: 61f9a0a5763fb068cd2f26c0ee9d63a277fb26c2
+    path: AGENTS.md
+  rule: 'AGENTS.md: "Use comments purposefully. Don''t use comments to narrate code, but do use them to explain invariants and why something unusual was done a particular way." Any new comment at the fall-through (e.g. a TODO about multi-overload inference) should explain *why* the case is deferred, not just what the code does.
+
+    '
+- id: agent_config_avoid_significant_new_code
+  source:
+    origin: agent_config
+    lines: '78'
+    commit: 61f9a0a5763fb068cd2f26c0ee9d63a277fb26c2
+    path: AGENTS.md
+  rule: 'AGENTS.md: "Avoid writing significant amounts of new code. This is often a sign that we''re missing an existing method or mechanism." The fix should be small and local — it must not introduce a new multi-inference machinery to handle the deferred case. The original PR fix is ~7 lines; a fix substantially larger than that should be flagged.
+
+    '

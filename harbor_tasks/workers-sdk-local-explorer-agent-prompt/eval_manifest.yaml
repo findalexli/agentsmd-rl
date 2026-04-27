@@ -1,0 +1,107 @@
+version: '2.0'
+source:
+  repo: cloudflare/workers-sdk
+  pr: 13407
+  base_commit: 525a46bca7c9a8a57972ac152ab9c400df0bf186
+  merge_commit: 496c5d5bab56b59d11fc02fa077c1a246681416c
+task:
+  kind: code_fix
+checks:
+- id: test_target_file_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: Agent created the agent-prompt.ts file at the expected path with at least one export.
+- id: test_endpoint_join_behavior
+  type: fail_to_pass
+  origin: pr_diff
+  description: getLocalExplorerApiEndpoint("http://localhost:8787","/cdn-cgi/explorer/api") returns the joined URL (vitest test from PR).
+- id: test_prompt_contains_required_phrases
+  type: fail_to_pass
+  origin: pr_diff
+  description: createLocalExplorerPrompt produces text containing "API endpoint:" and "Fetch the OpenAPI schema from" substrings (vitest test from PR).
+- id: test_clipboard_calls_writetext
+  type: fail_to_pass
+  origin: pr_diff
+  description: copyTextToClipboard delegates to clipboard.writeText with the supplied text (vitest test from PR).
+- id: test_full_vitest_suite_passes
+  type: fail_to_pass
+  origin: pr_diff
+  description: Complete upstream vitest suite (all three PR-added tests) passes against the agent's implementation.
+- id: test_endpoint_join_varied_inputs
+  type: fail_to_pass
+  origin: static
+  description: Endpoint join is correct across multiple distinct origin/path combinations — guards against agents hardcoding the example URL.
+- id: test_prompt_substitutes_endpoint_dynamically
+  type: fail_to_pass
+  origin: static
+  description: Prompt text reflects the apiEndpoint argument, with no leftover {{apiEndpoint}} placeholder.
+- id: test_typescript_strict_compiles
+  type: fail_to_pass
+  origin: agent_config
+  description: Agent's file compiles under TypeScript strict mode (AGENTS.md mandates strict TS).
+  source:
+    path: AGENTS.md
+    lines: '90'
+    commit: 525a46bca7c9a8a57972ac152ab9c400df0bf186
+- id: test_existing_utils_unmodified
+  type: pass_to_pass
+  origin: repo_tests
+  description: Agent did not modify pre-existing utility files (format.ts, sidebar-state.ts) in the same directory. Sha256 hashes pinned to base commit.
+rubric:
+- rule: No `any` type. The agent's `agent-prompt.ts` must not use the `any` keyword anywhere — properly type all parameters and return values.
+  source:
+    path: AGENTS.md
+    lines: '92'
+    commit: 525a46bca7c9a8a57972ac152ab9c400df0bf186
+  evidence: 'The solution types all parameters and return values explicitly (origin: string, apiPath: string, apiEndpoint: string, text: string, clipboard: Pick<Clipboard, ''writeText''>) without using any.'
+  category: style
+  verification: programmatic
+- rule: No non-null assertion operator (`!`). The agent's `agent-prompt.ts` must use type narrowing instead of forcing a non-null assertion.
+  source:
+    path: AGENTS.md
+    lines: '93'
+    commit: 525a46bca7c9a8a57972ac152ab9c400df0bf186
+  evidence: The solution uses optional parameter defaults (clipboard = navigator.clipboard) instead of non-null assertions.
+  category: style
+  verification: programmatic
+- rule: Use `import type { X }` for type-only imports. If the file references DOM types like `Clipboard`, it must be a type-only reference (not a runtime import).
+  source:
+    path: AGENTS.md
+    lines: '91'
+    commit: 525a46bca7c9a8a57972ac152ab9c400df0bf186
+  evidence: The solution does not import any DOM types at runtime; Clipboard is used only as a type reference in the Pick utility type parameter.
+  category: style
+  verification: programmatic
+- rule: No floating promises — every Promise must be `await`ed or explicitly `void`ed. The clipboard's `writeText` call must be awaited.
+  source:
+    path: AGENTS.md
+    lines: '94'
+    commit: 525a46bca7c9a8a57972ac152ab9c400df0bf186
+  evidence: The copyTextToClipboard function awaits clipboard.writeText(text) and returns Promise<void>.
+  category: style
+  verification: programmatic
+- rule: Always use curly braces for control flow.
+  source:
+    path: AGENTS.md
+    lines: '95'
+    commit: 525a46bca7c9a8a57972ac152ab9c400df0bf186
+  evidence: The solution has no control flow statements beyond function bodies, satisfying the rule trivially.
+  category: style
+  verification: programmatic
+- rule: Format with tabs (not spaces), double quotes, semicolons. The file should follow the repository's oxfmt style.
+  source:
+    path: AGENTS.md
+    lines: 102-106
+    commit: 525a46bca7c9a8a57972ac152ab9c400df0bf186
+  evidence: The solution uses tabs for indentation, double quotes for strings, and semicolons at statement ends, matching the oxfmt style.
+  category: style
+  verification: programmatic
+distractors:
+- rule: Prefix unused variables with `_`.
+  source:
+    path: AGENTS.md
+    lines: '97'
+    commit: 525a46bca7c9a8a57972ac152ab9c400df0bf186
+  collision_type: rule_conflict
+  why_distracting: AGENT_PROMPT_TEMPLATE is a module-private constant that IS used by createLocalExplorerPrompt, but an agent scanning the code-style section may incorrectly prefix it with '_' as 'unused' since it is not exported, breaking the template reference.
+  severity: medium

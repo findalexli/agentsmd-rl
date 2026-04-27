@@ -1,0 +1,100 @@
+version: '2.0'
+source:
+  repo: cloudflare/workers-sdk
+  pr: 13160
+  base_commit: 266c418138f4ab53ea662fa45d3e66d38fdf0d52
+  merge_commit: 05f4443aa581d3f9095e2b1479672557d27e0603
+task:
+  kind: code_fix
+checks:
+- id: test_403_with_code_1031_logs_authentication_error
+  type: fail_to_pass
+  origin: repo_tests
+  description: 'A 403 whose body contains errors[].code === 1031 must cause wrangler to call logger.error with the canonical "Authentication error (code 1031): ... wrangler login" message.'
+- id: test_403_with_code_1031_alongside_other_codes
+  type: fail_to_pass
+  origin: repo_tests
+  description: A 403 whose errors array includes 1031 alongside other error codes must still trigger the 1031-auth log line (use Array.find, not equality on errors[0]).
+- id: test_403_with_code_1031_preserves_response_body
+  type: pass_to_pass
+  origin: repo_tests
+  description: The diagnostic logging path must not consume the upstream response body — callers must still be able to read it (e.g., via clone()). Passes on base because base never reads the body; passes on gold because the fix reads only a clone.
+- id: test_existing_x_forwarded_header_still_sent
+  type: pass_to_pass
+  origin: repo_tests
+  description: Pre-existing fetcher behavior — X-Forwarded header is set from request URL.
+- id: test_existing_account_id_still_set
+  type: pass_to_pass
+  origin: repo_tests
+  description: Pre-existing fetcher behavior — proxy URL contains the account id.
+- id: test_403_without_code_1031_does_not_log
+  type: pass_to_pass
+  origin: repo_tests
+  description: A 403 without code 1031 must not produce the auth-error log line.
+- id: test_403_with_unparseable_body_does_not_throw
+  type: pass_to_pass
+  origin: repo_tests
+  description: A 403 with a body that fails JSON.parse must not throw — the fetcher must continue and return the original 403.
+- id: test_wrangler_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Wrangler's `tsc -p ./tsconfig.json --noEmit` must pass on the patched source. Catches `any`, non-null assertions, and floating-promise regressions in the new code path.
+config_edits: []
+rubric:
+- rule: '**`console.*` in wrangler** → use the `logger` singleton'
+  source:
+    path: AGENTS.md
+    lines: '199'
+    commit: 266c418138f4ab53ea662fa45d3e66d38fdf0d52
+  evidence: Inspect the diff of packages/wrangler/src/ai/fetcher.ts. Reject the fix if it logs via `console.*`. Accept if the log goes through `logger`.
+  category: style
+  verification: llm_judge
+- rule: No `any` (`@typescript-eslint/no-explicit-any`)
+  source:
+    path: AGENTS.md
+    lines: '92'
+    commit: 266c418138f4ab53ea662fa45d3e66d38fdf0d52
+  evidence: Inspect the new TypeScript in fetcher.ts. Reject if it uses `any`, `as any`, or untyped `JSON.parse` results.
+  category: style
+  verification: llm_judge
+- rule: No non-null assertions (`!`)
+  source:
+    path: AGENTS.md
+    lines: '93'
+    commit: 266c418138f4ab53ea662fa45d3e66d38fdf0d52
+  evidence: Grep the diff for `!.` or `!;` on identifiers; reject if present outside of `!=` / boolean negation.
+  category: style
+  verification: llm_judge
+- rule: No floating promises - must be awaited or explicitly voided (`@typescript-eslint/no-floating-promises`)
+  source:
+    path: AGENTS.md
+    lines: '94'
+    commit: 266c418138f4ab53ea662fa45d3e66d38fdf0d52
+  evidence: Reject if any promise in the new code is not awaited or voided.
+  category: style
+  verification: llm_judge
+- rule: All changes to published packages require a changeset (see below)
+  source:
+    path: AGENTS.md
+    lines: '103'
+    commit: 266c418138f4ab53ea662fa45d3e66d38fdf0d52
+  evidence: 'Confirm the agent created a `.changeset/*.md` file with `"wrangler": patch` frontmatter and prose body. Reject if missing or if it uses h1/h2/h3 headings in the body.'
+  category: architecture
+  verification: llm_judge
+- rule: Use `import type { X }` for type-only imports (`@typescript-eslint/consistent-type-imports`)
+  source:
+    path: AGENTS.md
+    lines: '91'
+    commit: 266c418138f4ab53ea662fa45d3e66d38fdf0d52
+  evidence: Inspect new imports in fetcher.ts. If a value-only import (e.g. `logger`) is used, that's fine; if a type alias is imported as a value, reject.
+  category: style
+  verification: llm_judge
+- rule: '**Trivial/obvious code comments** → don''t add comments that restate what the code does; comments should explain "why", not "what"'
+  source:
+    path: AGENTS.md
+    lines: '204'
+    commit: 266c418138f4ab53ea662fa45d3e66d38fdf0d52
+  evidence: Review any new comments. Reject if they repeat what the code says (e.g. "// log the error"); accept if they explain motivation.
+  category: style
+  verification: llm_judge
+distractors: []

@@ -1,0 +1,97 @@
+version: '2.0'
+task:
+  name: superset-bignumber-subtitle-fontsize
+  title: 'Big Number chart: fix default subtitle/subheader font size'
+  kind: code_fix
+source:
+  repo: apache/superset
+  pr_number: 39493
+  pr_url: https://github.com/apache/superset/pull/39493
+  base_commit: 9fe3f634ec611713e6eb50d5db72faac2dc3ddcf
+  merge_commit: bf7ec853fa54ea9d211fa7da21b389155faf2dc5
+  primary_files:
+  - superset-frontend/plugins/plugin-chart-echarts/src/BigNumber/BigNumberTotal/transformProps.ts
+  - superset-frontend/plugins/plugin-chart-echarts/src/BigNumber/BigNumberViz.tsx
+  - superset-frontend/plugins/plugin-chart-echarts/src/BigNumber/constants.tsx
+  pr: 39493
+checks:
+- id: test_default_font_size_when_unconfigured
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'With no subtitle, no subheader, and no font size configured, the resolved subtitleFontSize on the viz props must be 0.125 (the subheader proportion), not 1.
+
+    '
+- id: test_default_font_size_with_subtitle_only
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'When only the subtitle text is set (no font size), the resolved subtitleFontSize must still be 0.125, not 1.
+
+    '
+- id: test_default_font_size_with_subheader_only
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'When only the legacy subheader text is set (no font size), the resolved subtitleFontSize must still be 0.125, not 1.
+
+    '
+- id: test_fallback_chain_subheader_field_uses_subtitle_size
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'When only the legacy subheader text is populated and the caller supplies subtitleFontSize but not subheaderFontSize, the resolved size must come from subtitleFontSize (the new fallback chain).
+
+    '
+- id: test_explicit_subheader_font_size_respected
+  type: pass_to_pass
+  origin: pr_diff
+  description: 'An explicit subheaderFontSize must continue to be honoured when the subtitle text is empty.
+
+    '
+- id: test_explicit_subtitle_font_size_respected
+  type: pass_to_pass
+  origin: pr_diff
+  description: 'An explicit subtitleFontSize must continue to be honoured when the subtitle text is non-empty.
+
+    '
+- id: test_existing_bignumber_with_trendline_transformprops
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'The repo''s pre-existing transformProps test suite for BigNumberWithTrendline must continue to pass.
+
+    '
+rubric:
+- id: ts_no_any_types
+  source:
+    excerpt: NO `any` types - Use proper TypeScript types
+    path: CLAUDE.md
+    commit: 9fe3f634ec611713e6eb50d5db72faac2dc3ddcf
+  rule: 'New / modified TypeScript code must not introduce `any` types.
+
+    '
+- id: asf_license_header_on_new_files
+  source:
+    excerpt: 'New files require ASF license headers - When creating new code files, include the standard Apache Software Foundation license header.
+
+      '
+    path: CLAUDE.md
+    commit: 9fe3f634ec611713e6eb50d5db72faac2dc3ddcf
+  rule: 'Any newly-added .ts/.tsx file must carry the standard Apache Software Foundation license header.
+
+    '
+- id: timeless_comments
+  source:
+    excerpt: 'Avoid time-specific language - Don''t use words like "now", "currently", "today" in code comments as they become outdated.
+
+      '
+    path: CLAUDE.md
+    commit: 9fe3f634ec611713e6eb50d5db72faac2dc3ddcf
+  rule: 'Comments must not use time-specific words like "now", "currently", "today" — they must remain accurate regardless of when read.
+
+    '
+- id: no_duplicate_proportion_constants
+  source:
+    excerpt: 'The proportion constants used elsewhere in the Big Number viz must remain the single source of truth.
+
+      '
+    path: instruction.md
+  rule: 'The PROPORTION constants must be defined in a single shared module and imported wherever they are consumed; the fix must not leave two parallel copies inside the BigNumber subtree.
+
+    '

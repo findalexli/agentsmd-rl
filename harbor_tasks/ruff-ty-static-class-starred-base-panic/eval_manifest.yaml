@@ -1,0 +1,106 @@
+version: '2.0'
+task:
+  name: ruff-ty-static-class-starred-base-panic
+  kind: code_fix
+  difficulty: medium
+  tags:
+  - rust
+  - type-checker
+  - bugfix
+  - ty
+source:
+  owner: astral-sh
+  repo: ruff
+  pr: 24699
+  base_commit: 65d768e4e2a7133b7bcddc4de3027259b4578d8a
+  merge_commit: 742aa29c919198ac133610c5aee97774bcf6dfcb
+checks:
+- id: test_inherits_from_final_via_starred_tuple_no_panic
+  type: fail_to_pass
+  origin: pr_diff
+  description: '`class X(*(int, bool)): ...` must not panic and must emit subclass-of-final-class.
+
+    '
+- id: test_inherits_from_final_via_named_starred_tuple_no_panic
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Starred tuple via name binding (`final_bases = (int, bool); class X(*final_bases): ...`) must not panic and must emit subclass-of-final-class.
+
+    '
+- id: test_named_tuple_with_starred_bases_emits_invalid_named_tuple
+  type: fail_to_pass
+  origin: pr_diff
+  description: '`class N(NamedTuple, *(int, str)): ...` must emit invalid-named-tuple on each unpacked extra base.
+
+    '
+- id: test_protocol_with_starred_bases_emits_invalid_protocol
+  type: fail_to_pass
+  origin: pr_diff
+  description: '`class P(Protocol, *(int, str)): ...` must emit invalid-protocol on the unpacked non-protocol bases.
+
+    '
+- id: test_bare_generic_in_starred_tuple_emits_invalid_base
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Bare `Generic` reached through a starred tuple base must emit invalid-base.
+
+    '
+- id: test_ty_binary_present
+  type: pass_to_pass
+  origin: repo_tests
+  description: ty binary builds successfully against the agent's source.
+- id: test_plain_class_no_diagnostics
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Plain non-starred class definitions remain diagnostic-free. Guards against the fix over-firing.
+
+    '
+- id: test_subclass_of_final_class_without_starred_tuple
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'The non-starred subclass-of-final-class lint still fires after the heavy refactor of the per-base loop.
+
+    '
+rubric:
+- id: agent_config_no_panic_unwrap
+  source:
+    path: AGENTS.md
+    commit: 65d768e4e2a7133b7bcddc4de3027259b4578d8a
+  rule: 'ty source code must avoid `panic!`, `unreachable!`, and `.unwrap()` — encode constraints in the type system instead. The whole point of this PR is replacing an indexing operation that could panic with a structured iterator over already-paired entries; agent fixes that keep using `.unwrap()` or `.expect()` on `class_node.bases().get(i)` are accepted by the tests but violate this rule.
+
+    '
+- id: agent_config_let_chains
+  source:
+    path: AGENTS.md
+    commit: 65d768e4e2a7133b7bcddc4de3027259b4578d8a
+  rule: 'Prefer let chains (`if let` combined with `&&`) over nested `if let` statements. The PR diff itself flattens several nested `if let` blocks into let chains; the agent''s fix should follow that style where applicable.
+
+    '
+- id: agent_config_no_local_imports
+  source:
+    path: AGENTS.md
+    commit: 65d768e4e2a7133b7bcddc4de3027259b4578d8a
+  rule: 'Rust imports must always go at the top of the file, never locally inside functions.
+
+    '
+- id: agent_config_test_changes
+  source:
+    path: AGENTS.md
+    commit: 65d768e4e2a7133b7bcddc4de3027259b4578d8a
+  rule: 'All changes must be tested. The fix must add or update an mdtest case under `crates/ty_python_semantic/resources/mdtest/` that exercises the panic-triggering input.
+
+    '
+- id: agent_config_purposeful_comments
+  source:
+    path: AGENTS.md
+    commit: 65d768e4e2a7133b7bcddc4de3027259b4578d8a
+  rule: 'Comments should explain invariants or unusual decisions, not narrate what the code is doing.
+
+    '
+- id: agent_config_minimal_new_code
+  source:
+    path: AGENTS.md
+    commit: 65d768e4e2a7133b7bcddc4de3027259b4578d8a
+  rule: 'Avoid writing significant amounts of new code; prefer reusing existing utilities. The right fix here reuses the `expanded_class_base_entries` helper rather than introducing a parallel abstraction.
+
+    '

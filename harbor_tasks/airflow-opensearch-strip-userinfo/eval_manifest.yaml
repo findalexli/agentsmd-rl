@@ -1,0 +1,120 @@
+version: '2.0'
+source:
+  repo: apache/airflow
+  pr: 65509
+  base_commit: e9aa3aa3e57751b77c05d5a66d328e27eae07f7f
+  merge_commit: 6a6b6ff409fb48c28bd63482828632a3c5a5bb93
+task:
+  kind: code_with_config
+checks:
+- id: test_strip_userinfo_returns_redacted_url
+  type: fail_to_pass
+  origin: repo_tests
+  description: Module-level URL-redaction helper _strip_userinfo in os_task_handler correctly strips user:password@ from URLs across 9 parametrized inputs including bare hosts, scheme-less strings, and the empty string.
+- id: test_strip_userinfo_drops_password_without_username
+  type: fail_to_pass
+  origin: repo_tests
+  description: 'Edge case: a URL with only a password (no username, e.g. https://:secret@host) is also redacted.'
+- id: test_task_handler_group_logs_by_host_strips_credentials
+  type: fail_to_pass
+  origin: repo_tests
+  description: OpensearchTaskHandler._group_logs_by_host uses a credentials-stripped version of self.host as the fallback dictionary key when a hit has no host attribute, preventing user:password@ from leaking into task-log output.
+- id: test_remote_log_io_group_logs_by_host_strips_credentials
+  type: fail_to_pass
+  origin: repo_tests
+  description: OpensearchRemoteLogIO._group_logs_by_host has the same redaction requirement; both call sites must be patched.
+- id: test_clean_host_passes_through_unchanged
+  type: fail_to_pass
+  origin: repo_tests
+  description: Hosts that have no userinfo are passed through unchanged (no regression for the common case).
+- id: test_handler_module_imports_cleanly
+  type: pass_to_pass
+  origin: repo_tests
+  description: The patched os_task_handler module continues to import cleanly.
+- id: test_ruff_check_handler_file
+  type: pass_to_pass
+  origin: repo_tests
+  description: The repo's ruff check passes on the modified handler file.
+- id: test_ruff_format_handler_file
+  type: pass_to_pass
+  origin: repo_tests
+  description: The repo's ruff format check passes on the modified handler file.
+config_edits:
+- path: providers/opensearch/AGENTS.md
+  tier: 1
+  gold_added: New file documenting that OpenSearch was forked from Elasticsearch and the two providers share most task-log handler code. Maps mirrored file/class names (os_task_handler.py ↔ es_task_handler.py, OpensearchTaskHandler ↔ ElasticsearchTaskHandler, etc.). Instructs agents to cross-apply bug fixes to the sibling provider and lists legitimate reasons to diverge (upstream client API differences, provider-specific features, config-gated changes).
+  gold_removed: ''
+- path: providers/elasticsearch/AGENTS.md
+  tier: 1
+  gold_added: New file documenting the fork relationship from the Elasticsearch side. Mirrors providers/opensearch/AGENTS.md with swapped provider names and table direction. Instructs agents to cross-apply fixes to the sibling provider.
+  gold_removed: ''
+- path: providers/opensearch/docs/changelog.rst
+  tier: 2
+  gold_added: 'Added changelog note above the 1.9.0 version header: when the [opensearch] host config embeds credentials, the log-source label in task logs is now the host URL with the user:password@ portion stripped. Previously the full URL could appear as a dictionary key in task-log output. The OpenSearch client still connects using the full URL, so authentication is unaffected.'
+  gold_removed: ''
+rubric:
+- rule: Per root AGENTS.md "Apache License header on all new files (prek enforces this)." — every new Python file added by the agent must carry an Apache 2.0 license header.
+  source:
+    path: AGENTS.md
+    lines: '124'
+    commit: e9aa3aa3e57751b77c05d5a66d328e27eae07f7f
+  evidence: New AGENTS.md files in providers/opensearch/ and providers/elasticsearch/ each include an Apache 2.0 license header.
+  category: style
+  verification: llm_judge
+- rule: Per root AGENTS.md "Always format and check Python files with ruff immediately after writing or editing them." — modified Python files must pass ruff check and ruff format --check.
+  source:
+    path: AGENTS.md
+    lines: '117'
+    commit: e9aa3aa3e57751b77c05d5a66d328e27eae07f7f
+  evidence: The patched os_task_handler.py passes ruff check and ruff format --check as verified by the test suite.
+  category: style
+  verification: llm_judge
+- rule: Per root AGENTS.md "Imports at top of file." — any new imports added to support the fix (e.g. urlparse) must be at module top-level, not inline.
+  source:
+    path: AGENTS.md
+    lines: '121'
+    commit: e9aa3aa3e57751b77c05d5a66d328e27eae07f7f
+  evidence: The new `from urllib.parse import urlparse` import is placed at module top-level in os_task_handler.py, not inside _strip_userinfo.
+  category: style
+  verification: llm_judge
+- rule: Per root AGENTS.md "Use @pytest.mark.parametrize for multiple similar inputs." — if the agent adds tests for the redaction helper, multiple input/expected pairs must be covered with parametrize, not duplicated test functions.
+  source:
+    path: AGENTS.md
+    lines: '133'
+    commit: e9aa3aa3e57751b77c05d5a66d328e27eae07f7f
+  evidence: The test suite uses @pytest.mark.parametrize with 9 input/expected pairs covering URLs with userinfo, URLs without userinfo, non-URL strings, and the empty string.
+  category: testing
+  verification: llm_judge
+- rule: 'Per root AGENTS.md "Add tests for new behavior — cover success, failure, and edge cases." — tests for the redaction helper must cover at minimum: a URL with userinfo (success path), a URL without userinfo (no-op path), and at least one edge case (empty string, non-URL string, or username-only userinfo).'
+  source:
+    path: AGENTS.md
+    lines: '129'
+    commit: e9aa3aa3e57751b77c05d5a66d328e27eae07f7f
+  evidence: 'Tests cover: URL with user:password (success), URL without userinfo (no-op), empty string, non-URL string, username-only userinfo, and password-only userinfo edge cases.'
+  category: testing
+  verification: llm_judge
+- rule: Per root AGENTS.md "No assert in production code." — the redaction helper and call-sites must not use bare assert statements for validation.
+  source:
+    path: AGENTS.md
+    lines: '118'
+    commit: e9aa3aa3e57751b77c05d5a66d328e27eae07f7f
+  evidence: The _strip_userinfo helper uses try/except and conditional returns for validation; no bare assert statements in production code.
+  category: style
+  verification: llm_judge
+- rule: Per root AGENTS.md "Do not use caplog in tests, prefer checking logic and not log output." — added tests must not assert against log messages via caplog.
+  source:
+    path: AGENTS.md
+    lines: '137'
+    commit: e9aa3aa3e57751b77c05d5a66d328e27eae07f7f
+  evidence: Tests assert against return values, dict keys, and subprocess exit codes; no caplog usage.
+  category: testing
+  verification: llm_judge
+- rule: Per providers/AGENTS.md "Tests live alongside the provider — mirror source paths in test directories." — new tests for the OpenSearch handler belong under providers/opensearch/tests/, not anywhere else.
+  source:
+    path: providers/AGENTS.md
+    lines: '18'
+    commit: e9aa3aa3e57751b77c05d5a66d328e27eae07f7f
+  evidence: New tests are placed under providers/opensearch/tests/, mirroring the source path providers/opensearch/src/airflow/providers/opensearch/log/.
+  category: architecture
+  verification: llm_judge
+distractors: []

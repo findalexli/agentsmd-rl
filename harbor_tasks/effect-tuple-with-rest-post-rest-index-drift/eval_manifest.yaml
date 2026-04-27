@@ -1,0 +1,70 @@
+version: '2.0'
+source:
+  repo: Effect-TS/effect
+  pr: 6097
+  base_commit: 88a5260788d57bb0c31a645fa44b5a68f5c73c38
+  merge_commit: f6b0960bf3184109920dfed16ee7dfd7d67bc0f2
+task:
+  name: effect-tuple-with-rest-post-rest-index-drift
+  kind: code_fix
+  difficulty: medium
+  tags:
+  - typescript
+  - effect
+  - schema
+  - parser
+  - bug-fix
+checks:
+- id: test_post_rest_index_drift_fails_at_index_4
+  type: fail_to_pass
+  origin: pr_diff
+  description: Decoding ["a", true, "b", "1", "x"] against Tuple([String], Boolean, String, NumberFromString, NumberFromString) must report a ParseError localised to index [4] mentioning the offending value "x".
+- id: test_post_rest_index_drift_succeeds_with_full_arity
+  type: fail_to_pass
+  origin: pr_diff
+  description: Decoding ["a", true, "b", "1", "2"] against the same schema must yield every element of the post-rest tail (output ["a", true, "b", 1, 2]), not silently drop the last position.
+- id: test_post_rest_index_drift_long_tail_succeeds
+  type: fail_to_pass
+  origin: pr_diff
+  description: A different shape — Tuple([NumberFromString], String, NumberFromString, NumberFromString, NumberFromString) — must decode ["1", "a", "b", "2", "3", "4"] in full to [1, "a", "b", 2, 3, 4] regardless of how many elements occupy the rest section.
+- id: test_post_rest_index_drift_long_tail_fails_at_last_index
+  type: fail_to_pass
+  origin: pr_diff
+  description: The same shape with an invalid trailing element ("z" at index 5) must surface a ParseError localised to [5]; the offending position must not be skipped.
+- id: test_existing_tuple_vitest_suite_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: The repo's existing tuple decoding suite (packages/effect/test/Schema/Schema/Tuple/Tuple.test.ts) continues to pass.
+- id: test_effect_package_typecheck_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`tsc -b` for the `effect` package compiles cleanly after the fix (matches AGENTS.md "Run type checking: pnpm check").'
+rubric:
+- rule: Add a changeset file under `.changeset/` describing the bug fix at `patch` level for the `effect` package.
+  source:
+    path: AGENTS.md
+    lines: 44-46
+    commit: 88a5260788d57bb0c31a645fa44b5a68f5c73c38
+  category: process
+  verification: llm_judge
+- rule: Avoid adding new comments unless the logic is genuinely unusual or complex. The fix should be code, not commentary.
+  source:
+    path: AGENTS.md
+    lines: 16-16
+    commit: 88a5260788d57bb0c31a645fa44b5a68f5c73c38
+  category: style
+  verification: llm_judge
+- rule: Choose a clear, maintainable solution over a clever one — the fix should read straightforwardly (e.g. compute the post-rest index with `i + j` instead of mutating `i`).
+  source:
+    path: AGENTS.md
+    lines: 13-14
+    commit: 88a5260788d57bb0c31a645fa44b5a68f5c73c38
+  category: style
+  verification: llm_judge
+- rule: Look at existing tests in the codebase for similar functionality and follow the established patterns when adding a regression test (e.g. `Util.assertions.decoding.fail` / `.succeed` in `packages/effect/test/Schema/Schema/Tuple/Tuple.test.ts`).
+  source:
+    path: AGENTS.md
+    lines: 53-56
+    commit: 88a5260788d57bb0c31a645fa44b5a68f5c73c38
+  category: testing
+  verification: llm_judge

@@ -1,0 +1,125 @@
+version: '2.0'
+source:
+  repo: ant-design/ant-design
+  pr: 57121
+  base_commit: 15df8e60f14be71095dff1640933b92b770e9217
+  merge_commit: add7dcd15c3770f78d9e704a20cef99541132f13
+task:
+  kind: markdown_authoring
+checks:
+- id: test_added_pr_merged_unreleased_guidance
+  type: fail_to_pass
+  origin: pr_diff
+  description: The new bullet about PR merged but version not released must be present in the skill file.
+- id: test_added_simplified_polite_closing_line
+  type: fail_to_pass
+  origin: pr_diff
+  description: The simplified one-line polite-closing guidance must be present in the skill file.
+- id: test_subprocess_grep_signals_present
+  type: fail_to_pass
+  origin: pr_diff
+  description: Both gold-added signal lines are findable via grep against the on-disk skill file.
+- id: test_yaml_frontmatter_intact
+  type: pass_to_pass
+  origin: pr_diff
+  description: SKILL.md must retain a valid YAML frontmatter block with name and description fields.
+- id: test_skill_name_unchanged
+  type: pass_to_pass
+  origin: pr_diff
+  description: The skill name identifier must remain antd-issue-reply.
+- id: test_core_section_headers_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: All top-level section headers of the skill must be preserved.
+- id: test_repo_at_correct_base_commit
+  type: pass_to_pass
+  origin: pr_diff
+  description: Sanity check that the test runs against the documented base commit.
+config_edits:
+- path: .claude/skills/issue-reply/SKILL.md
+  tier: 1
+  gold_added: '- PR 已合并但新版本未发布 → 告知用户等待新版本发布
+
+
+    **关闭时保持礼貌，简要说明关闭原因即可。**
+
+    '
+  gold_removed: '**关闭时保持礼貌：**
+
+
+    问题已解决（英文示例）：
+
+
+    ```
+
+    Thanks for the feedback! This issue has been fixed in [version/PR#xxx].
+
+
+    I''m closing this issue. Feel free to continue the discussion if you have further questions.
+
+    ```
+
+
+    使用问题（中文示例）：
+
+
+    ```
+
+    感谢反馈！经过分析，这是一个使用问题而非 bug。
+
+
+    [解释解决方案]
+
+
+    我将关闭此 issue。如果您仍有问题，欢迎继续讨论或重新打开。
+
+    ```
+
+
+    用户长时间未回复（中文示例）：
+
+
+    ```
+
+    由于长时间未收到回复，我将关闭此 issue。
+
+
+    如果问题仍然存在，请提供更多信息后重新打开，或创建新的 issue。
+
+    ```
+
+    '
+rubric:
+- rule: 中英空格：中文与英文、数字、链接、@ 用户名之间必须保留 一个空格
+  source:
+    path: AGENTS.md
+    lines: '854'
+    commit: 15df8e60f14be71095dff1640933b92b770e9217
+  evidence: The new bullet and closing line both maintain proper ASCII spacing between Chinese characters and adjacent English, digits, arrows, and symbols.
+  category: style
+  verification: llm_judge
+- rule: 'name: antd-issue-reply'
+  source:
+    path: .claude/skills/issue-reply/SKILL.md
+    lines: '2'
+    commit: 15df8e60f14be71095dff1640933b92b770e9217
+  evidence: The YAML frontmatter name field is untouched by the patch; it remains 'antd-issue-reply' verbatim.
+  category: architecture
+  verification: programmatic
+- rule: 保持友善、耐心和专业
+  source:
+    path: .claude/skills/issue-reply/SKILL.md
+    lines: '271'
+    commit: 15df8e60f14be71095dff1640933b92b770e9217
+  evidence: The new text ('等待新版本发布', '关闭时保持礼貌，简要说明关闭原因即可') is neutral, patient, and professional, with no coercive or blaming phrasing.
+  category: style
+  verification: llm_judge
+distractors:
+- rule: 每次处理必须同时提供 中文版 和 英文版
+  source:
+    path: AGENTS.md
+    lines: '830'
+    commit: 15df8e60f14be71095dff1640933b92b770e9217
+  collision_type: rule_conflict
+  why_distracting: This AGENTS.md changelog rule mandates bilingual output for every change. An agent could misinterpret it as requiring English translations of the new Chinese skill text, contrary to the task instruction which specifies Chinese-only additions.
+  severity: medium

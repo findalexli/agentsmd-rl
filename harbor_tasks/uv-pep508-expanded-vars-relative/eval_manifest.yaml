@@ -1,0 +1,89 @@
+version: '2.0'
+source:
+  repo: astral-sh/uv
+  pr_number: 18680
+  pr_url: https://github.com/astral-sh/uv/pull/18680
+  base_commit: b0ad910b0289b134993390ece0edf847aa03476b
+  merge_commit: 8a712b0b1a4e8256e504a10306a39f33821a2b64
+  title: Treat paths originating as PEP 508 URLs which contain expanded variables as relative
+  pr: 18680
+task:
+  name: uv-pep508-expanded-vars-relative
+  primary_files:
+  - crates/uv-pep508/src/verbatim_url.rs
+checks:
+- id: test_pep508_file_url_with_expanded_var_is_not_absolute
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'A `file://${VAR}/foo` URL whose given form contained an expanded environment variable must NOT be reported as absolute by `VerbatimUrl::was_given_absolute()`.
+
+    '
+- id: test_pep508_three_slash_file_url_with_expanded_var_is_not_absolute
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'A `file:///${VAR}/foo` URL (the `${PROJECT_ROOT}` shape) whose given form contained an expanded variable must NOT be reported as absolute.
+
+    '
+- id: test_pep508_plain_file_url_remains_absolute
+  type: pass_to_pass
+  origin: pr_diff
+  description: 'A plain `file:///abs/path/foo` URL with no variable expansion must continue to be reported as absolute.
+
+    '
+- id: test_pep508_plain_relative_path_is_not_absolute
+  type: pass_to_pass
+  origin: pr_diff
+  description: 'A plain relative path like `./relative/path/foo` must continue to be reported as non-absolute.
+
+    '
+- id: test_pep508_dollar_literal_url_remains_absolute
+  type: pass_to_pass
+  origin: pr_diff
+  description: 'A `file:///abs/path/with$dollar/foo` URL containing a literal `$` that is NOT part of a `${NAME}` reference (and therefore did not trigger expansion) must remain reported as absolute.
+
+    '
+- id: test_uv_pep508_crate_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`cargo check -p uv-pep508 --tests` succeeds in both the default and `non-pep508-extensions` feature configurations.
+
+    '
+- id: test_uv_pep508_unit_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'The `uv-pep508` crate''s existing library unit tests (`cargo test -p uv-pep508 --lib`) continue to pass.
+
+    '
+rubric:
+- id: avoid_panic_unwrap_unsafe_in_changes
+  type: soft
+  source:
+    path: CLAUDE.md
+    commit: b0ad910b0289b134993390ece0edf847aa03476b
+  rule: 'Edits to `verbatim_url.rs` should avoid introducing new uses of `panic!`, `unreachable!`, `.unwrap()`, or unsafe code in production paths. The repo policy is in `CLAUDE.md`.
+
+    '
+- id: prefer_if_let_chains
+  type: soft
+  source:
+    path: CLAUDE.md
+    commit: b0ad910b0289b134993390ece0edf847aa03476b
+  rule: 'Prefer `if let` (and `if let` + `&&` let chains) over nested `if let` blocks in any new control flow added to `verbatim_url.rs`. From `CLAUDE.md`.
+
+    '
+- id: prefer_expect_over_allow
+  type: soft
+  source:
+    path: CLAUDE.md
+    commit: b0ad910b0289b134993390ece0edf847aa03476b
+  rule: 'If a clippy lint must be silenced in any new code, prefer `#[expect(...)]` over `#[allow(...)]`. From `CLAUDE.md`.
+
+    '
+- id: avoid_shortened_variable_names
+  type: soft
+  source:
+    path: CLAUDE.md
+    commit: b0ad910b0289b134993390ece0edf847aa03476b
+  rule: 'Use full variable names (e.g., `expanded`, `version`) rather than shortened ones (`exp`, `ver`) in any new code. From `CLAUDE.md`.
+
+    '

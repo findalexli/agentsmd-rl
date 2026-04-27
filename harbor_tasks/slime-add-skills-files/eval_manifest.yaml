@@ -1,0 +1,136 @@
+version: '2.0'
+source:
+  repo: THUDM/slime
+  pr: 1646
+  base_commit: 6a3bb90e3210171e27ab7d799c8c2888e7465a1f
+  merge_commit: 52fc971bfe4ad7a1e857ac158d626d4b6373474d
+task:
+  kind: markdown_authoring
+checks:
+- id: test_repo_present
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo is checked out at the expected base commit and HEAD is unchanged after the agent's edits.
+- id: test_repo_has_known_layout
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Sanity: repo layout the skills reference (slime/rollout, slime/utils) exists at the base commit.'
+- id: test_agents_skills_symlink
+  type: fail_to_pass
+  origin: pr_diff
+  description: '`.agents/skills` is a symlink with target `../.claude/skills`, so Codex-flavored agents see the same skill set as Claude.'
+- id: test_skill_add_dynamic_filter_present
+  type: fail_to_pass
+  origin: pr_diff
+  description: add-dynamic-filter SKILL.md exists with valid frontmatter, references all four filter-path CLI flags, and points at the three source files these hooks plug into.
+- id: test_skill_add_eval_dataset_config_present
+  type: fail_to_pass
+  origin: pr_diff
+  description: add-eval-dataset-config SKILL.md exists with valid frontmatter, mentions --eval-config / --eval-prompt-data / --eval-interval, and references slime/utils/eval_config.py and slime/utils/arguments.py.
+- id: test_skill_add_reward_function_present
+  type: fail_to_pass
+  origin: pr_diff
+  description: add-reward-function SKILL.md exists with valid frontmatter, mentions --custom-rm-path / --custom-reward-post-process-path / --group-rm, and references the rm_hub dispatcher and ray rollout post-process hook locations.
+- id: test_skill_add_rollout_function_present
+  type: fail_to_pass
+  origin: pr_diff
+  description: add-rollout-function SKILL.md exists with valid frontmatter, mentions --rollout-function-path and the RolloutFnTrainOutput / RolloutFnEvalOutput dataclasses, and references the default sglang rollout, sft rollout reference, and base_types.
+- id: test_skill_add_tests_and_ci_present
+  type: fail_to_pass
+  origin: pr_diff
+  description: add-tests-and-ci SKILL.md exists with valid frontmatter and references both the pr-test.yml.j2 template and the generate_github_workflows.py regeneration script.
+- id: test_all_skills_have_required_sections
+  type: fail_to_pass
+  origin: pr_diff
+  description: Every authored skill file has the standard '## When to Use' and '## Step-by-Step Guide' sections, and the frontmatter `name` matches the directory slug.
+config_edits:
+- path: .agents/skills
+  tier: 1
+  gold_added: Relative symlink from .agents/skills to ../.claude/skills so Codex-flavored agents resolve the same skill set as Claude.
+  gold_removed: ''
+- path: .claude/skills/add-dynamic-filter/SKILL.md
+  tier: 1
+  gold_added: Skill for adding rollout/buffer filtering hooks. Documents all four hook flags (--dynamic-sampling-filter-path, --buffer-filter-path, --rollout-sample-filter-path, --rollout-all-samples-process-path), function signatures, DynamicFilterOutput return type, group-structure invariant, and source-file pointers (slime/rollout/filter_hub/base_types.py, slime/rollout/sglang_rollout.py, slime/rollout/data_source.py).
+  gold_removed: ''
+- path: .claude/skills/add-eval-dataset-config/SKILL.md
+  tier: 1
+  gold_added: Skill for configuring eval datasets. Covers --eval-config vs --eval-prompt-data, the --eval-interval requirement, per-dataset override priority (dataset > defaults > CLI fallback), overridable field categories (runtime, sample keys, extra), and eval_config.py + arguments.py source locations.
+  gold_removed: ''
+- path: .claude/skills/add-reward-function/SKILL.md
+  tier: 1
+  gold_added: Skill for adding a custom reward model. Documents single-sample vs group-mode dichotomy gated by --group-rm, both async function signatures, optional --custom-reward-post-process-path hook, and rm_hub/__init__.py dispatcher + ray/rollout.py post-process consumer locations.
+  gold_removed: ''
+- path: .claude/skills/add-rollout-function/SKILL.md
+  tier: 1
+  gold_added: Skill for adding a custom rollout function. Documents --rollout-function-path wiring, RolloutFnTrainOutput / RolloutFnEvalOutput return contract, train/eval branch responsibility, required Sample fields (tokens, response_length, reward, status), and sglang_rollout.py / sft_rollout.py / base_types.py reference files.
+  gold_removed: ''
+- path: .claude/skills/add-tests-and-ci/SKILL.md
+  tier: 1
+  gold_added: Skill for adding tests and updating slime CI. Highlights tests/test_<feature>.py naming convention, NUM_GPUS constant requirement for CI-discoverable tests, and the pr-test.yml.j2 -> generate_github_workflows.py regeneration loop.
+  gold_removed: ''
+rubric:
+- rule: Each skill cites real CLI flags and real source-file paths (not placeholders). Generic prose like "implement the filter function" without naming --dynamic-sampling-filter-path is insufficient.
+  source:
+    path: instruction.md
+    lines: 45-48
+    commit: 6a3bb90e3210171e27ab7d799c8c2888e7465a1f
+  evidence: Gold skill files reference exact CLI flags (--dynamic-sampling-filter-path, --buffer-filter-path, etc.) and real source paths (slime/rollout/filter_hub/base_types.py, etc.) as verified by per-skill test assertions.
+  category: specificity
+  verification: programmatic
+- rule: Each skill has YAML frontmatter with `name` matching the directory slug and a non-trivial `description` that explains when to invoke the skill.
+  source:
+    path: instruction.md
+    lines: 21-25
+    commit: 6a3bb90e3210171e27ab7d799c8c2888e7465a1f
+  evidence: All five gold SKILL.md files have valid YAML frontmatter with name field matching directory slug and description > 20 chars, verified by test_all_skills_have_required_sections.
+  category: formatting
+  verification: programmatic
+- rule: Each skill has a '## When to Use' section enumerating the user intents that should trigger the skill, so an agent can match a user request to the right skill.
+  source:
+    path: instruction.md
+    lines: 27-31
+    commit: 6a3bb90e3210171e27ab7d799c8c2888e7465a1f
+  evidence: All five gold SKILL.md files contain '## When to Use' section with enumerated trigger intents, verified by test_all_skills_have_required_sections.
+  category: structure
+  verification: programmatic
+- rule: Each skill has a '## Step-by-Step Guide' breaking the customization into ordered steps (pick the hook → implement signature → wire flag → validate). Pure flag dumps without procedural guidance are weaker.
+  source:
+    path: instruction.md
+    lines: 27-31
+    commit: 6a3bb90e3210171e27ab7d799c8c2888e7465a1f
+  evidence: All five gold SKILL.md files contain '## Step-by-Step Guide' with numbered procedural steps, verified by test_all_skills_have_required_sections.
+  category: structure
+  verification: programmatic
+- rule: '`.agents/skills` is a relative symlink to `../.claude/skills`, not a duplicated copy of the directory and not an empty placeholder. This is the mechanism that keeps Codex and Claude skill sets in sync.'
+  source:
+    path: instruction.md
+    lines: 38-39
+    commit: 6a3bb90e3210171e27ab7d799c8c2888e7465a1f
+  evidence: Gold creates .agents/skills as a symlink with target ../.claude/skills, verified by test_agents_skills_symlink.
+  category: architecture
+  verification: programmatic
+- rule: Skills should not document features that don't exist in slime at the base commit. CLI flags, source paths, and function signatures must be discoverable in the repo (e.g., grep for the flag in slime/utils/arguments.py to confirm it is real before documenting).
+  source:
+    path: instruction.md
+    lines: 128-132
+    commit: 6a3bb90e3210171e27ab7d799c8c2888e7465a1f
+  evidence: Gold skill files only reference CLI flags and source files verifiable at the base commit; no speculative features are documented.
+  category: accuracy
+  verification: llm_judge
+distractors:
+- rule: The path `.agents/skills` MUST be a symlink (not a copy and not a directory) whose target is the relative path `../.claude/skills`.
+  source:
+    path: instruction.md
+    lines: 38-39
+    commit: 6a3bb90e3210171e27ab7d799c8c2888e7465a1f
+  collision_type: scope_ambiguity
+  why_distracting: An agent might interpret 'both ecosystems should resolve the same skill files' as permission to create a directory copy instead of a symlink, which would desync when skills are updated.
+  severity: high
+- rule: Each skill must reference the exact CLI flags and source files the agent will need to touch — this is what makes the skill load-bearing rather than decorative.
+  source:
+    path: instruction.md
+    lines: 45-48
+    commit: 6a3bb90e3210171e27ab7d799c8c2888e7465a1f
+  collision_type: meta_confusion
+  why_distracting: An agent might interpret 'reference material agents will read at task time' as permission to write tutorial-style prose instead of specific CLI flag and source-path documentation.
+  severity: medium

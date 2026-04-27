@@ -4,6 +4,8 @@ source:
   pr: 15924
   base_commit: 2a0be8316be7ae6ec78f5d221851fc1cc0cdddb2
   merge_commit: 3ebebe0a96de5ec4757de12a21cb9f933e0fbba0
+task:
+  kind: code_with_config
 checks:
 - id: test_repo_typecheck
   type: pass_to_pass
@@ -12,8 +14,7 @@ checks:
 - id: test_repo_unit_tests_relevant
   type: pass_to_pass
   origin: repo_tests
-  description: Repo unit tests for utilities pass (lightweight subset covering modified
-    code)
+  description: Repo unit tests for utilities pass (lightweight subset covering modified code)
 - id: test_repo_prettier
   type: pass_to_pass
   origin: repo_tests
@@ -33,13 +34,11 @@ checks:
 - id: test_thread_idempotent_stop
   type: fail_to_pass
   origin: pr_diff
-  description: thread.ts cleanup function is idempotent, unregisters process listeners,
-    terminates worker once, and uses timeout-bounded shutdown
+  description: thread.ts cleanup function is idempotent, unregisters process listeners, terminates worker once, and uses timeout-bounded shutdown
 - id: test_thread_helpers_extracted
   type: fail_to_pass
   origin: pr_diff
-  description: thread.ts extracts worker path resolution and input handling into standalone
-    top-level helpers
+  description: thread.ts extracts worker path resolution and input handling into standalone top-level helpers
 - id: test_worker_shutdown_simplified
   type: fail_to_pass
   origin: pr_diff
@@ -47,8 +46,7 @@ checks:
 - id: test_short_variable_names
   type: fail_to_pass
   origin: agent_config
-  description: thread.ts uses short single-word variable names per AGENTS.md naming
-    convention
+  description: thread.ts uses short single-word variable names per AGENTS.md naming convention
   source:
     path: AGENTS.md
     lines: '21'
@@ -56,53 +54,32 @@ checks:
 - id: test_agents_md_naming_enforcement
   type: fail_to_pass
   origin: pr_diff
-  description: AGENTS.md contains Naming Enforcement section with mandatory single-word
-    naming rule
+  description: AGENTS.md contains Naming Enforcement section with mandatory single-word naming rule
 rubric:
-- rule: AGENTS.md contains the complete Naming Enforcement section with mandatory
-    single-word naming rules, examples of preferred short names (pid, cfg, err, opts,
-    dir, root, child, state, timeout), and examples to avoid (inputPID, existingClient,
-    connectTimeout, workerPath).
+- rule: Use single word names by default for new locals, params, and helper functions.
   source:
     path: AGENTS.md
     lines: 23-42
     commit: 2a0be8316be7ae6ec78f5d221851fc1cc0cdddb2
-  reference: '### Naming Enforcement (Read This)
-
-
-    THIS RULE IS MANDATORY FOR AGENT WRITTEN CODE.
-
-
-    - Use single word names by default for new locals, params, and helper functions.
-
-    - Multi-word names are allowed only when a single word would be unclear or ambiguous.
-
-    - Do not introduce new camelCase compounds when a short single-word alternative
-    is clear.
-
-    - Before finishing edits, review touched lines and shorten newly introduced identifiers
-    where possible.
-
-    - Good short names to prefer: `pid`, `cfg`, `err`, `opts`, `dir`, `root`, `child`,
-    `state`, `timeout`.
-
-    - Examples to avoid unless truly required: `inputPID`, `existingClient`, `connectTimeout`,
-    `workerPath`.''
+  evidence: The gold solution adds the complete Naming Enforcement section to AGENTS.md immediately after the existing Naming section, with mandatory rules, preferred short name examples (pid, cfg, err, opts, dir, root, child, state, timeout), and multi-word examples to avoid (inputPID, existingClient, connectTimeout, workerPath).
+  category: naming
+  verification: llm_judge
 - rule: Prefer single word names for variables and functions.
   source:
     path: AGENTS.md
     lines: 21-22
-  evidence: The gold solution renames multi-word variables to single words (`baseCwd`
-    to `root`, `workerPath` to `file`) and names the newly extracted helper functions
-    with single words (`target` and `input`).
+    commit: 2a0be8316be7ae6ec78f5d221851fc1cc0cdddb2
+  evidence: The gold solution renames multi-word variables to single words (baseCwd to root, workerPath to file) and names the newly extracted helper functions with single words (target and input).
   category: naming
+  verification: llm_judge
 - rule: Avoid `else` statements. Prefer early returns.
   source:
     path: AGENTS.md
-    lines: 64-65
-  evidence: The newly extracted `input()` function uses multiple early returns (`if
-    (!value) return piped`, `if (!piped) return value`) instead of `else` blocks.
+    lines: 73-73
+    commit: 2a0be8316be7ae6ec78f5d221851fc1cc0cdddb2
+  evidence: The newly extracted input() function uses multiple early returns (if (!value) return piped, if (!piped) return value) instead of else blocks.
   category: style
+  verification: llm_judge
 config_edits:
 - path: AGENTS.md
   tier: 1
@@ -116,43 +93,28 @@ config_edits:
 
     - Multi-word names are allowed only when a single word would be unclear or ambiguous.
 
-    - Do not introduce new camelCase compounds when a short single-word alternative
-    is clear.
+    - Do not introduce new camelCase compounds when a short single-word alternative is clear.
 
-    - Before finishing edits, review touched lines and shorten newly introduced identifiers
-    where possible.
+    - Before finishing edits, review touched lines and shorten newly introduced identifiers where possible.
 
-    - Good short names to prefer: `pid`, `cfg`, `err`, `opts`, `dir`, `root`, `child`,
-    `state`, `timeout`.
+    - Good short names to prefer: `pid`, `cfg`, `err`, `opts`, `dir`, `root`, `child`, `state`, `timeout`.
 
-    - Examples to avoid unless truly required: `inputPID`, `existingClient`, `connectTimeout`,
-    `workerPath`.''
+    - Examples to avoid unless truly required: `inputPID`, `existingClient`, `connectTimeout`, `workerPath`.'
   gold_removed: ''
 distractors:
 - rule: Avoid `try`/`catch` where possible
   collision_type: rule_conflict
-  why_distracting: The PR instruction explicitly requires adding a `try/finally` block
-    around the TUI invocation to guarantee cleanup. An agent strictly following the
-    style guide might attempt to avoid `try/finally` or refactor existing `try/catch`
-    blocks, violating the explicit PR requirement.
+  why_distracting: The PR instruction explicitly requires adding a try/finally block around the TUI invocation to guarantee cleanup. An agent strictly following the style guide might attempt to avoid try/finally or refactor existing try/catch blocks, violating the explicit PR requirement.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 12-12
+    commit: 2a0be8316be7ae6ec78f5d221851fc1cc0cdddb2
+- rule: Keep things in one function unless composable or reusable / Reduce total variable count by inlining when a value is only used once.
+  collision_type: rule_conflict
+  why_distracting: The PR instruction explicitly asks to extract inline logic into standalone helper functions (target and input). The style guide tells the agent to keep things in one function and inline single-use values, which directly conflicts with the extraction requirement.
   severity: high
   source:
     path: AGENTS.md
     lines: 11-11
-- rule: Keep things in one function unless composable or reusable / Reduce total variable
-    count by inlining when a value is only used once.
-  collision_type: rule_conflict
-  why_distracting: The PR instruction explicitly asks to extract inline logic into
-    standalone helper functions (`target` and `input`). The style guide tells the
-    agent to keep things in one function and inline single-use values, which directly
-    conflicts with the extraction requirement.
-  severity: high
-  source:
-    path: AGENTS.md
-    lines: 10-10
-hierarchy_analysis: The agent must navigate a moderate hierarchy (root `AGENTS.md`
-  and package-level `AGENTS.md`). The task is highly meta-referential because the
-  agent is instructed to modify the root `AGENTS.md` to strengthen the very naming
-  rules it is supposed to follow. The agent must also recognize that specific PR instructions
-  (extracting helpers, using try/finally) override the general style guide rules (inlining,
-  avoiding try/catch).
+    commit: 2a0be8316be7ae6ec78f5d221851fc1cc0cdddb2

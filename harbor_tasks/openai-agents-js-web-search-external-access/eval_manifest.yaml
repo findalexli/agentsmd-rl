@@ -1,0 +1,90 @@
+version: '2.0'
+source:
+  owner: openai
+  repo: openai-agents-js
+  pr_number: 1140
+  pr_url: https://github.com/openai/openai-agents-js/pull/1140
+  base_commit: 4b99d53d256dfb50e9a220e5b53d2c933764bffc
+  merge_commit: 901429596af256996d9a08d3e8909e3653f66934
+  pr_title: 'fix(openai): forward external web access for web search tools'
+  pr: 1140
+checks:
+- id: test_websearch_tool_preserves_false_external_web_access
+  type: fail_to_pass
+  origin: pr_diff
+  description: Public web-search factory called with the option set to false produces internal provider data carrying the boolean false (explicit false must round-trip).
+- id: test_websearch_tool_preserves_true_external_web_access
+  type: fail_to_pass
+  origin: pr_diff
+  description: Public web-search factory called with the option set to true produces internal provider data carrying the boolean true.
+- id: test_convertool_forwards_external_web_access_false
+  type: fail_to_pass
+  origin: pr_diff
+  description: Hosted-tool to Responses-API converter forwards an explicit false external_web_access through to the converted web_search tool payload.
+- id: test_convertool_forwards_external_web_access_true
+  type: fail_to_pass
+  origin: pr_diff
+  description: Hosted-tool to Responses-API converter forwards an explicit true external_web_access through to the converted web_search tool payload.
+- id: test_websearch_tool_omits_external_web_access_when_unset
+  type: pass_to_pass
+  origin: pr_diff
+  description: Public web-search factory called without the option leaves provider data without the external_web_access key (no implicit false / undefined).
+- id: test_convertool_omits_external_web_access_when_absent
+  type: pass_to_pass
+  origin: pr_diff
+  description: Hosted-tool to Responses-API converter does not inject the external_web_access key when source provider data lacks it.
+- id: test_repo_existing_tools_test_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository's own packages/agents-openai/test/tools.test.ts continues to pass.
+- id: test_repo_existing_responses_helpers_test_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository's own packages/agents-openai/test/openaiResponsesModel.helpers.test.ts continues to pass.
+- id: test_repo_build_check_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`pnpm -F @openai/agents-openai run build-check` (tsc --noEmit on src + test) passes.'
+- id: test_repo_build_succeeds
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`pnpm -F @openai/agents-openai run build` compiles without errors.'
+- id: test_repo_lint_passes
+  type: pass_to_pass
+  origin: agent_config
+  description: '`pnpm lint` passes on the modified workspace (AGENTS.md mandates lint passes for runtime-code changes).'
+  source:
+    lines: 240-245
+    commit: 4b99d53d256dfb50e9a220e5b53d2c933764bffc
+    path: AGENTS.md
+rubric:
+- id: jsdoc_on_public_api
+  source:
+    lines: 286-292
+    commit: 4b99d53d256dfb50e9a220e5b53d2c933764bffc
+    path: AGENTS.md
+  rule: AGENTS.md says 'Public APIs have doc comments.' The new public option on the exported WebSearchTool type must carry a JSDoc comment describing what it does.
+- id: comments_end_with_period
+  source:
+    lines: '247'
+    commit: 4b99d53d256dfb50e9a220e5b53d2c933764bffc
+    path: AGENTS.md
+  rule: AGENTS.md says 'Comments must end with a period.' Any new doc / inline comments added by the agent should end with a period.
+- id: changeset_present
+  source:
+    lines: 32-33
+    commit: 4b99d53d256dfb50e9a220e5b53d2c933764bffc
+    path: AGENTS.md
+  rule: AGENTS.md mandates a Changeset for any change under packages/. Agent should add a .changeset/*.md entry summarizing the addition with a Conventional-Commit-styled summary covering @openai/agents-openai.
+- id: tests_added_for_change
+  source:
+    lines: '212'
+    commit: 4b99d53d256dfb50e9a220e5b53d2c933764bffc
+    path: AGENTS.md
+  rule: AGENTS.md says 'Add or update unit tests for any code change unless it is truly infeasible.' Agent should add at least one regression test case to packages/agents-openai/test/ exercising the new behavior.
+- id: api_naming_camelcase_external_to_snake_internal
+  source:
+    lines: 40-78
+    commit: 4b99d53d256dfb50e9a220e5b53d2c933764bffc
+    path: packages/agents-openai/src/tools.ts
+  rule: 'Existing convention in agents-openai: external (public) options use camelCase (e.g. userLocation, searchContextSize); internal providerData / Responses payload use snake_case (user_location, search_context_size). The new option follows the same camelCase-out / snake_case-in mapping.'

@@ -1,0 +1,204 @@
+version: '2.0'
+task:
+  name: prql-claudemd-tiered-testing
+  kind: markdown_authoring
+  description: 'Rewrite the "Development Workflow" section of the root CLAUDE.md so that
+
+    the testing guidance is split into three clearly-labeled tiers, with the
+
+    default ~30s validation step (`task prqlc:pull-request`) replacing the
+
+    existing ~2min `task test-all` default.
+
+    '
+source:
+  repo: PRQL/prql
+  pr_number: 5629
+  pr_url: https://github.com/PRQL/prql/pull/5629
+  base_commit: e125d11826e281f33e423519e403c7491a6fa24e
+  merge_commit: 947336b71ab18d36f2a2b187fb58acba2ad135a5
+  pr_title: 'docs: Use tiered testing approach in CLAUDE.md'
+  pr: 5629
+primary_targets:
+- CLAUDE.md
+checks:
+- id: test_claudemd_introduces_tiered_testing_phrase
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'CLAUDE.md describes the workflow as a "tiered testing approach" (the new framing the PR introduces).
+
+    '
+- id: test_claudemd_documents_prqlc_pull_request_command
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'CLAUDE.md mentions `task prqlc:pull-request` as the default pre-return validation command.
+
+    '
+- id: test_claudemd_has_cross_binding_tier
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'CLAUDE.md adds a "Cross-binding changes only" tier scoping `task test-all` to JS/Python/wasm binding work.
+
+    '
+- id: test_claudemd_inner_loop_retimed_to_5s
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'The inner-loop heading is reframed as the "during development" tier.
+
+    '
+- id: test_claudemd_keeps_task_test_all_reference
+  type: pass_to_pass
+  origin: pr_diff
+  description: '`task test-all` is still referenced (now scoped, not removed).
+
+    '
+- id: test_claudemd_keeps_tests_section
+  type: pass_to_pass
+  origin: pr_diff
+  description: The `## Tests` section is preserved.
+- id: test_claudemd_keeps_error_messages_section
+  type: pass_to_pass
+  origin: pr_diff
+  description: The `## Error Messages` section is preserved.
+- id: test_claudemd_keeps_linting_section
+  type: pass_to_pass
+  origin: pr_diff
+  description: The `## Linting` section is preserved.
+config_edits:
+- section: Development Workflow
+  gold_removed: 'Use a tight inner loop for fast feedback, comprehensive outer loop before
+
+    returning to user:
+
+
+    **Inner loop** (fast, focused, <5s):
+
+
+    ```sh
+
+    # Run fast tests on core packages (from project root)
+
+    task prqlc:test
+
+
+    # Unit tests filtered by test name
+
+    cargo insta test -p prqlc --lib -- resolver
+
+
+    # Integration tests filtered by test name
+
+    cargo insta test -p prqlc --test integration -- date
+
+    ```
+
+
+    **Outer loop** (comprehensive, ~1min, before returning to user):
+
+
+    ```sh
+
+    # Run everything - this is required before returning
+
+    task test-all
+
+    ```
+
+    '
+  gold_added: 'Use a tiered testing approach—iterate quickly, validate thoroughly:
+
+
+    **Inner loop** (during development, ~5s):
+
+
+    ```sh
+
+    # Fast tests on core packages
+
+    task prqlc:test
+
+
+    # Filtered by test name
+
+    cargo insta test -p prqlc --lib -- resolver
+
+    cargo insta test -p prqlc --test integration -- date
+
+    ```
+
+
+    **Before returning to user** (~30s):
+
+
+    ```sh
+
+    # Comprehensive prqlc tests - sufficient for most changes
+
+    task prqlc:pull-request
+
+    ```
+
+
+    **Cross-binding changes only** (~2min):
+
+
+    ```sh
+
+    # Only when changes affect JS/Python/wasm bindings
+
+    task test-all
+
+    ```
+
+    '
+  semantic_intent: "The two-tier inner/outer-loop framing is replaced by three explicit\ntiers, each with a timing estimate:\n  1. Inner loop (~5s) for during-development feedback — same `task\n     prqlc:test` and the existing filtered `cargo insta test` examples\n     (the unit/integration comment split is collapsed into one\n     \"Filtered by test name\" comment, but both example invocations\n     must remain).\n  2. Before returning to user (~30s) — runs `task prqlc:pull-request`,\n     the new default for most changes. This replaces the old \"outer\n     loop\" default.\n  3. Cross-binding changes only (~2min) — `task test-all`, scoped to\n     changes affecting JS/Python/wasm bindings rather than being the\n     default.\n"
+  path: CLAUDE.md
+rubric:
+- id: three_distinct_tiers_present
+  weight: 3
+  rule: 'The rewritten section presents three clearly separated tiers (not two, not four), each with a bold heading and a timing estimate.
+
+    '
+- id: default_tier_uses_pull_request_task
+  weight: 3
+  rule: 'The middle "before returning" tier uses `task prqlc:pull-request` as the comprehensive-but-fast default, with a ~30s timing estimate.
+
+    '
+- id: test_all_scoped_to_bindings
+  weight: 3
+  rule: '`task test-all` is presented as the cross-binding-only tier (JS, Python, or wasm bindings) rather than the default validation step.
+
+    '
+- id: inner_loop_examples_preserved
+  weight: 2
+  rule: 'The inner-loop tier still shows `task prqlc:test` and at least one `cargo insta test ... --lib -- resolver` and one `cargo insta test ... --test integration -- date` invocation.
+
+    '
+- id: surrounding_sections_untouched
+  weight: 3
+  source:
+    lines: 1-120
+    path: CLAUDE.md
+    commit: e125d11826e281f33e423519e403c7491a6fa24e
+  rule: 'Only the "Development Workflow" section is edited. The "Tests", "Running the CLI", "Linting", "Error Handling", "Error Messages", "Documentation", and "Releases & Environment" sections remain byte- identical to the base commit.
+
+    '
+- id: concise_and_token_efficient
+  weight: 2
+  source:
+    lines: 30-34
+    path: CLAUDE.md
+    commit: e125d11826e281f33e423519e403c7491a6fa24e
+  rule: 'The new section follows the project''s stated value of token-frugal docs (CLAUDE.md "Tests" section: "minimize token usage"). Each tier''s preamble is a short headline plus a one-line code-block comment; avoid prose padding or duplicated explanations.
+
+    '
+- id: markdown_style_matches_file
+  weight: 1
+  rule: 'Code fences use the existing `sh` language tag, bold tier headings use `**...**:` form to match the existing pattern, and the file retains its 80-ish-column hard-wrapped paragraph style.
+
+    '
+- id: no_unrelated_edits
+  weight: 1
+  rule: 'The agent does not refactor or "improve" sections outside Development Workflow, even if it spots issues. PRQL''s CLAUDE.md is intentionally minimal (see "Test suite is configured to minimize token usage").
+
+    '

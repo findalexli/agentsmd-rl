@@ -1,0 +1,259 @@
+version: "2.0"
+
+task:
+  name: openai-agents-js-rename-skill-add-mcp-knowledge
+  kind: markdown_authoring
+  source:
+    owner: openai
+    repo: openai-agents-js
+    pr_number: 836
+    base_commit: 41c1b89f650a9d18aeb76677f965dcfb06087c90
+    merge_commit: ece9cd964494339dbb5e76e0389cc527a81384aa
+    title: "Rename verify-changes and tweak its behavior, add MCP server skills"
+
+# Structural reward gate. Track 2 (Gemini diff-vs-gold over `config_edits`)
+# is the real evaluation signal for this markdown_authoring task.
+checks:
+  - id: test_renamed_skill_file_exists
+    type: fail_to_pass
+    origin: structural
+    description: New Codex skill bundle exists at the renamed location.
+
+  - id: test_renamed_skill_frontmatter_name
+    type: fail_to_pass
+    origin: structural
+    description: SKILL.md frontmatter declares name `code-change-verification`.
+    source:
+      file: .codex/skills/code-change-verification/SKILL.md
+      lines: "1-4"
+      commit: ece9cd964494339dbb5e76e0389cc527a81384aa
+
+  - id: test_openai_knowledge_skill_file_exists
+    type: fail_to_pass
+    origin: structural
+    description: New `openai-knowledge` Codex skill file exists.
+
+  - id: test_openai_knowledge_skill_frontmatter_name
+    type: fail_to_pass
+    origin: structural
+    description: openai-knowledge SKILL.md frontmatter declares name `openai-knowledge`.
+    source:
+      file: .codex/skills/openai-knowledge/SKILL.md
+      lines: "1-4"
+      commit: ece9cd964494339dbb5e76e0389cc527a81384aa
+
+  - id: test_agents_md_references_code_change_verification_skill
+    type: fail_to_pass
+    origin: structural
+    description: AGENTS.md mentions the renamed skill as `$code-change-verification`.
+    source:
+      file: AGENTS.md
+      lines: "27-44"
+      commit: ece9cd964494339dbb5e76e0389cc527a81384aa
+
+  - id: test_agents_md_references_openai_knowledge_skill
+    type: fail_to_pass
+    origin: structural
+    description: AGENTS.md mentions the new `$openai-knowledge` skill.
+    source:
+      file: AGENTS.md
+      lines: "41-44"
+      commit: ece9cd964494339dbb5e76e0389cc527a81384aa
+
+  - id: test_agents_md_conventional_commits_section_intact
+    type: pass_to_pass
+    origin: structural
+    description: AGENTS.md still documents Conventional Commits (regression guard).
+
+  - id: test_agents_md_top_header_intact
+    type: pass_to_pass
+    origin: structural
+    description: AGENTS.md keeps its top-level `# Contributor Guide` heading.
+
+# Track 2 — gold markdown edits. Gemini compares the agent's diff against
+# these reference chunks semantically; this is the dominant eval signal.
+config_edits:
+  - path: AGENTS.md
+    tier: 1
+    gold_removed: |
+      ## Mandatory Skill Usage
+
+      Always load and use the `$verify-changes` skill immediately after any code change and before you consider the work complete. It executes the mandatory verification stack from the repository root; rerun the stack after fixing failures.
+    gold_added: |
+      ## Mandatory Skill Usage
+
+      ### `$code-change-verification`
+
+      Run `$code-change-verification` before marking work complete when changes affect runtime code, tests, or build/test behavior.
+
+      Run it when you change:
+
+      - `packages/`, `examples/`, `helpers/`, `scripts/`, or `integration-tests/`
+      - Root build/test config such as `package.json`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`, `tsconfig*.json`, `eslint.config.*`, or `vitest*.ts`
+
+      You can skip `$code-change-verification` for docs-only or repo-meta changes (for example, `docs/`, `.codex/`, `README.md`, `AGENTS.md`, `.github/`), unless a user explicitly asks to run the full verification stack.
+
+      ### `$openai-knowledge`
+
+      When working on OpenAI API or OpenAI platform integrations in this repo (Responses API, tools, streaming, Realtime API, auth, models, rate limits, MCP, Agents SDK/ChatGPT Apps SDK), use `$openai-knowledge` to pull authoritative docs via the OpenAI Developer Docs MCP server (and guide setup if it is not configured).
+
+  - path: AGENTS.md
+    tier: 1
+    gold_removed: |
+      After any code modification, invoke the `$verify-changes` skill to run the required verification stack from the repository root. Rerun the full stack after fixes.
+    gold_added: |
+      When `$code-change-verification` applies (see Mandatory Skill Usage), invoke it to run the required verification stack from the repository root. Rerun the full stack after fixes.
+
+  - path: AGENTS.md
+    tier: 1
+    gold_removed: |
+      For every code change, run the full validation sequence locally via the `$verify-changes` skill; do not skip any step or change the order.
+    gold_added: |
+      When `$code-change-verification` applies (see Mandatory Skill Usage), run the full validation sequence locally via the `$code-change-verification` skill; do not skip any step or change the order.
+
+  - path: AGENTS.md
+    tier: 1
+    gold_removed: |
+      Run all checks using the `$verify-changes` skill to execute the full verification stack in order before considering the work complete.
+    gold_added: |
+      When `$code-change-verification` applies (see Mandatory Skill Usage), run it to execute the full verification stack in order before considering the work complete.
+
+  - path: .codex/skills/code-change-verification/SKILL.md
+    tier: 1
+    gold_removed: ""
+    gold_added: |
+      ---
+      name: code-change-verification
+      description: Run the mandatory verification stack when changes affect runtime code, tests, or build/test behavior in the OpenAI Agents JS monorepo.
+      ---
+
+      # Code Change Verification
+
+      ## Overview
+
+      Ensure work is only marked complete after installing dependencies, building, linting, type checking (including generated declarations), and tests pass. Use this skill when changes affect runtime code, tests, or build/test configuration.
+
+      ## Quick start
+
+      1. Keep this skill at `./.codex/skills/code-change-verification` so it loads automatically for the repository.
+      2. macOS/Linux: `bash .codex/skills/code-change-verification/scripts/run.sh`.
+      3. Windows: `powershell -ExecutionPolicy Bypass -File .codex/skills/code-change-verification/scripts/run.ps1`.
+      4. If any command fails, fix the issue, rerun the script, and report the failing output.
+      5. Confirm completion only when all commands succeed with no remaining issues.
+
+  - path: .codex/skills/openai-knowledge/SKILL.md
+    tier: 1
+    gold_removed: ""
+    gold_added: |
+      ---
+      name: openai-knowledge
+      description: Use when working with the OpenAI API (Responses API) or OpenAI platform features (tools, streaming, Realtime API, auth, models, rate limits, MCP) and you need authoritative, up-to-date documentation (schemas, examples, limits, edge cases). Prefer the OpenAI Developer Documentation MCP server tools when available; otherwise guide the user to enable `openaiDeveloperDocs`.
+      ---
+
+      # OpenAI Knowledge
+
+      ## Overview
+
+      Use the OpenAI Developer Documentation MCP server to search and fetch exact docs (markdown), then base your answer on that text instead of guessing.
+
+      ## Workflow
+
+      ### 1) Check whether the Docs MCP server is available
+
+      If the `mcp__openaiDeveloperDocs__*` tools are available, use them.
+
+      If you are unsure, run `codex mcp list` and check for `openaiDeveloperDocs`.
+
+      ### 2) Use MCP tools to pull exact docs
+
+      - Search first, then fetch the specific page(s).
+        - `mcp__openaiDeveloperDocs__search_openai_docs` → pick the best URL.
+        - `mcp__openaiDeveloperDocs__fetch_openai_doc` → retrieve the exact markdown (optionally with an `anchor`).
+      - When you need endpoint schemas or parameters, use:
+        - `mcp__openaiDeveloperDocs__get_openapi_spec`
+        - `mcp__openaiDeveloperDocs__list_api_endpoints`
+
+      Base your answer on the fetched text and quote or paraphrase it precisely. Do not invent flags, field names, defaults, or limits.
+
+      ### 3) If MCP is not configured, guide setup (do not change config unless asked)
+
+      Provide one of these setup options, then ask the user to restart the Codex session so the tools load:
+
+      - CLI:
+        - `codex mcp add openaiDeveloperDocs --url https://developers.openai.com/mcp`
+      - Config file (`~/.codex/config.toml`):
+        - Add:
+          ```toml
+          [mcp_servers.openaiDeveloperDocs]
+          url = "https://developers.openai.com/mcp"
+          ```
+
+      Also point to: https://developers.openai.com/resources/docs-mcp#quickstart
+
+# Soft / subjective rules — judged by an LLM rubric scorer.
+rubric:
+  - rule: |
+      The renamed Codex skill bundle (SKILL.md, scripts/run.sh, scripts/run.ps1)
+      should be internally consistent: no remaining references to the old name
+      `verify-changes` in the bundle, and the run scripts should print/log
+      messages using the new identifier `code-change-verification`.
+    source:
+      file: .codex/skills/code-change-verification/SKILL.md
+      commit: ece9cd964494339dbb5e76e0389cc527a81384aa
+    category: consistency
+
+  - rule: |
+      The skill description and AGENTS.md guidance should make the verification
+      stack CONDITIONAL — required when changes affect runtime code, tests, or
+      build/test behavior, and skippable for docs-only / repo-meta changes
+      (e.g. `docs/`, `.codex/`, `README.md`, `AGENTS.md`, `.github/`). It
+      should no longer be described as mandatory after every code change.
+    source:
+      file: AGENTS.md
+      lines: "27-44"
+      commit: ece9cd964494339dbb5e76e0389cc527a81384aa
+    category: behavioral_correctness
+
+  - rule: |
+      The new `openai-knowledge` skill should instruct the agent to use the
+      OpenAI Developer Documentation MCP server tools (the
+      `mcp__openaiDeveloperDocs__*` family — at minimum search/fetch helpers)
+      to pull authoritative docs rather than guessing API surface, and should
+      describe how to detect whether the MCP server is configured.
+    source:
+      file: .codex/skills/openai-knowledge/SKILL.md
+      commit: ece9cd964494339dbb5e76e0389cc527a81384aa
+    category: completeness
+
+  - rule: |
+      The `openai-knowledge` skill should provide setup guidance for users
+      who do not yet have the docs MCP server configured: at minimum, the
+      CLI command (`codex mcp add openaiDeveloperDocs --url
+      https://developers.openai.com/mcp`) and/or the equivalent
+      `~/.codex/config.toml` `[mcp_servers.openaiDeveloperDocs]` block, and
+      a reminder to restart the Codex session.
+    source:
+      file: .codex/skills/openai-knowledge/SKILL.md
+      commit: ece9cd964494339dbb5e76e0389cc527a81384aa
+    category: completeness
+
+  - rule: |
+      Every reference to the old `$verify-changes` skill anywhere in
+      AGENTS.md must be replaced with `$code-change-verification` (or
+      reworded to use the new conditional phrasing) — no stale `$verify-changes`
+      mentions should remain in AGENTS.md.
+    source:
+      file: AGENTS.md
+      commit: ece9cd964494339dbb5e76e0389cc527a81384aa
+    category: consistency
+
+  - rule: |
+      Sections of AGENTS.md unrelated to the skill rename — Overview, Repo
+      Structure, Conventional Commits guidelines, Prerequisites, Review
+      Process, etc. — should be left intact. Edits should be scoped to the
+      Mandatory Skill Usage section and the few downstream paragraphs that
+      reference the verification skill.
+    source:
+      file: AGENTS.md
+      commit: ece9cd964494339dbb5e76e0389cc527a81384aa
+    category: scope_discipline

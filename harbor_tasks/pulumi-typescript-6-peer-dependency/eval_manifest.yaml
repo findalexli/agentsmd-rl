@@ -1,0 +1,79 @@
+version: '2.0'
+source:
+  owner: pulumi
+  repo: pulumi
+  pr: 22340
+  base_commit: 002a84f99b15fdfc720b237c04a6509ced970827
+  merge_commit: ec254865c7662cfd4d68e81d9c8bc57a59e3174a
+  title: Allow TypeScript 6 as a peer dependency
+  url: https://github.com/pulumi/pulumi/pull/22340
+task:
+  name: pulumi-typescript-6-peer-dependency
+  difficulty: medium
+  tags:
+  - nodejs
+  - typescript
+  - dependency-management
+  - build-system
+checks:
+- id: test_peerdep_allows_typescript_6
+  type: fail_to_pass
+  origin: pr_diff
+  description: The peerDependencies.typescript range in sdk/nodejs/package.json must semantically include TypeScript 6.0.0.
+- id: test_makefile_sxs_tests_includes_ts6
+  type: fail_to_pass
+  origin: pr_diff
+  description: '`make -n sxs_tests` (in sdk/nodejs/) expands to a sxs_test_^6 target, meaning TSC_SUPPORTED_VERSIONS now covers TypeScript ^6.'
+- id: test_typescript_6_compiles_sxs_consumer
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'End-to-end behavioral check: the sxs_test consumer (a project that depends on @pulumi/pulumi) typechecks cleanly under TypeScript 6.x using the project''s tsconfig override.'
+- id: test_changelog_entry_added_for_sdk_nodejs
+  type: fail_to_pass
+  origin: agent_config
+  description: A pending changelog entry exists with scope `sdk/nodejs` and type `fix`, per CLAUDE.md / AGENTS.md.
+  source:
+    quote: Changelog entries are required for most PRs.
+    path: CLAUDE.md
+    commit: 002a84f99b15fdfc720b237c04a6509ced970827
+- id: test_p2p_sdk_nodejs_typechecks
+  type: pass_to_pass
+  origin: repo_tests
+  description: The SDK's TypeScript sources keep typechecking (`yarn run tsc --noEmit`) — the fix must not break the SDK's own build.
+- id: test_p2p_sdk_nodejs_package_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: sdk/nodejs/package.json remains valid JSON, keeps the @pulumi/pulumi name and the unchanged ts-node peer-dependency range.
+- id: test_p2p_makefile_keeps_existing_versions
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing TypeScript versions (~3.8.3, ^3, ^4) remain in TSC_SUPPORTED_VERSIONS — no regression of older support.
+- id: test_p2p_biome_files_section_valid_json
+  type: pass_to_pass
+  origin: repo_tests
+  description: sdk/nodejs/biome.json remains valid JSON and keeps the existing ignored paths (bin/, proto/, dist/, node_modules).
+rubric:
+- id: changelog_required
+  source:
+    quote: Changelog entries are required for most PRs.
+    path: CLAUDE.md
+    commit: 002a84f99b15fdfc720b237c04a6509ced970827
+  rule: Per CLAUDE.md / AGENTS.md, most PRs require a pending changelog entry under changelog/pending/. The PR adds an SDK Node.js change, so a changelog entry should be present.
+- id: do_not_skip_lint
+  source:
+    quote: Do not skip linting.
+    path: CLAUDE.md
+    commit: 002a84f99b15fdfc720b237c04a6509ced970827
+  rule: 'Per CLAUDE.md / AGENTS.md "Forbidden actions": "Do not skip linting." Any new tsconfig*.json files added to support TS 6 must not break biome lint — either configure biome to ignore them (e.g. via `tests/sxs_ts_test/tsconfig*.json` in sdk/nodejs/biome.json''s files.ignore list) or write them so they are biome-clean.'
+- id: do_not_make_sweeping_changes
+  source:
+    quote: Do not make sweeping changes, refactor unrelated code, or add unnecessary abstractions.
+    path: CLAUDE.md
+    commit: 002a84f99b15fdfc720b237c04a6509ced970827
+  rule: 'Per CLAUDE.md / AGENTS.md "Forbidden actions": "Do not make sweeping changes, refactor unrelated code, or add unnecessary abstractions." The fix should be the minimal set of edits — peer dep range, sxs test infra additions, Makefile target — without reformatting unrelated files or adding abstractions.'
+- id: do_not_narrow_other_peer_deps
+  source:
+    quote: A change touches the public SDK surface
+    path: AGENTS.md
+    commit: 002a84f99b15fdfc720b237c04a6509ced970827
+  rule: 'Per AGENTS.md "Escalate immediately if": "A change touches the public SDK surface (exported types/functions in sdk/go/, sdk/nodejs/, sdk/python/)." peerDependencies are part of the public install contract; the ts-node range must not be silently narrowed alongside the typescript-range change.'

@@ -1,0 +1,100 @@
+diff --git a/frontend/__tests__/routes/llm-settings.test.tsx b/frontend/__tests__/routes/llm-settings.test.tsx
+--- a/frontend/__tests__/routes/llm-settings.test.tsx
++++ b/frontend/__tests__/routes/llm-settings.test.tsx
+@@ -243,6 +243,46 @@
+     expect(screen.getByTestId("base-url-input")).toBeInTheDocument();
+   });
+ 
++  it("shows Advanced and All toggles in OSS mode for the default LLM route schema", async () => {
++    vi.spyOn(SettingsService, "getSettings").mockResolvedValue(buildSettings());
++
++    renderLlmSettingsScreen({ appMode: "oss" });
++
++    await screen.findByTestId("llm-settings-screen");
++    expect(
++      screen.getByTestId("sdk-section-advanced-toggle"),
++    ).toBeInTheDocument();
++    expect(screen.getByTestId("sdk-section-all-toggle")).toBeInTheDocument();
++  });
++
++  it("keeps Advanced visible but hides All in SaaS mode for the default LLM route schema", async () => {
++    vi.spyOn(SettingsService, "getSettings").mockResolvedValue(
++      buildSettings({
++        agent_settings: {
++          llm: {
++            model: "openai/gpt-4o",
++          },
++        },
++      }),
++    );
++
++    renderLlmSettingsScreen({ appMode: "saas" });
++
++    await screen.findByTestId("llm-settings-screen");
++    expect(
++      screen.getByTestId("sdk-section-advanced-toggle"),
++    ).toBeInTheDocument();
++    expect(
++      screen.queryByTestId("sdk-section-all-toggle"),
++    ).not.toBeInTheDocument();
++
++    await userEvent.click(screen.getByTestId("sdk-section-advanced-toggle"));
++
++    expect(screen.getByTestId("llm-settings-form-advanced")).toBeInTheDocument();
++    expect(screen.getByTestId("llm-custom-model-input")).toBeInTheDocument();
++    expect(screen.getByTestId("base-url-input")).toBeInTheDocument();
++  });
++
+   it("uses schema defaults for custom-rendered advanced fields", async () => {
+     const schema = structuredClone(
+       MOCK_DEFAULT_USER_SETTINGS.agent_settings_schema!,
+
+diff --git a/frontend/__tests__/components/features/settings/sdk-settings/sdk-section-page.test.tsx b/frontend/__tests__/components/features/settings/sdk-settings/sdk-section-page.test.tsx
+--- a/frontend/__tests__/components/features/settings/sdk-settings/sdk-section-page.test.tsx
++++ b/frontend/__tests__/components/features/settings/sdk-settings/sdk-section-page.test.tsx
+@@ -435,6 +435,20 @@
+ 
+ 
+ 
++
++  it("shows the advanced toggle when it is forced for a critical-only schema", async () => {
++    vi.spyOn(SettingsService, "getSettings").mockResolvedValue(buildSavableSettings());
++
++    renderSdkSectionPage({
++      sectionKeys: ["llm"],
++      forceShowAdvancedView: true,
++    });
++
++    await screen.findByTestId("sdk-section-basic-toggle");
++    expect(screen.getByTestId("sdk-section-advanced-toggle")).toBeInTheDocument();
++    expect(screen.queryByTestId("sdk-section-all-toggle")).not.toBeInTheDocument();
++  });
++
+   it("shows the all toggle instead of an empty advanced tier for minor-only schemas", async () => {
+     const schema: NonNullable<Settings["agent_settings_schema"]> = {
+       model_name: "AgentSettings",
+
+diff --git a/frontend/src/mocks/settings-handlers.ts b/frontend/src/mocks/settings-handlers.ts
+--- a/frontend/src/mocks/settings-handlers.ts
++++ b/frontend/src/mocks/settings-handlers.ts
+@@ -120,6 +120,20 @@
+           secret: false,
+           required: false,
+         },
++        {
++          key: "llm.temperature",
++          label: "Temperature",
++          description: "Adjust randomness for non-deterministic model outputs.",
++          section: "llm",
++          section_label: "LLM",
++          value_type: "number",
++          default: null,
++          choices: [],
++          depends_on: [],
++          prominence: "minor",
++          secret: false,
++          required: false,
++        },
+       ],
+     },
+     {

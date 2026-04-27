@@ -1,0 +1,145 @@
+version: '2.0'
+source:
+  owner: Effect-TS
+  repo: effect
+  pr_number: 6097
+  base_commit: 88a5260788d57bb0c31a645fa44b5a68f5c73c38
+  merge_commit: f6b0960bf3184109920dfed16ee7dfd7d67bc0f2
+  title: Fix TupleWithRest post-rest index drift validation bug
+  pr: 6097
+target_files:
+- packages/effect/src/ParseResult.ts
+checks:
+- id: test_caseA_invalid_at_index_4_reports_index_4
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Decoding `["a", true, "b", "1", "x"]` against
+
+    `Tuple([String], Boolean, String, NumberFromString, NumberFromString)`
+
+    must fail and reference index [4] (the trailing `"x"` that cannot be
+
+    converted to a number).
+
+    '
+- id: test_caseA_all_valid_succeeds
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'An all-valid input to the same schema must decode to
+
+    `["a", true, "b", 1, 2]` (the two NumberFromString positions are
+
+    transformed, not skipped).
+
+    '
+- id: test_caseA_invalid_at_index_3_reports_index_3
+  type: pass_to_pass
+  origin: pr_diff
+  description: 'Decoding `["a", true, "b", "y", "2"]` reports the failure at index
+
+    [3] (this case already worked correctly at base, but the fix must
+
+    not regress it).
+
+    '
+- id: test_caseA_invalid_at_index_2_reports_index_2
+  type: pass_to_pass
+  origin: pr_diff
+  description: 'Decoding `["a", true, 9, "1", "2"]` reports the failure at index
+
+    [2] (the first post-rest tail element). This case already worked
+
+    at base; the fix must not regress it.
+
+    '
+- id: test_caseB_four_tail_elements_invalid_at_6
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'With four post-rest tail elements, the final tail position must
+
+    still be validated. Decoding the input where the last element fails
+
+    conversion must report the failure (and not silently accept it).
+
+    '
+- id: test_caseB_all_valid_succeeds
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'The same four-tail schema decodes a fully-valid input correctly,
+
+    including the trailing NumberFromString position.
+
+    '
+- id: test_caseB_invalid_at_index_5
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'The third post-rest String position (index 5 in case B) must be
+
+    validated; supplying a number there must produce an error referencing [5].
+
+    '
+- id: test_p2p_existing_tuple_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo''s existing `packages/effect/test/Schema/Schema/Tuple/Tuple.test.ts`
+
+    vitest suite must continue to pass.
+
+    '
+- id: test_p2p_existing_parseresult_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo''s existing `packages/effect/test/Schema/ParseResult.test.ts`
+
+    vitest suite must continue to pass.
+
+    '
+rubric:
+- rule: 'Avoid adding new comments to the source code unless absolutely required
+
+    to explain unusual or complex logic. Inline comments inside the post-rest
+
+    validation loop should not increase as a side-effect of the fix.
+
+    '
+  source:
+    path: AGENTS.md
+    commit: 88a5260788d57bb0c31a645fa44b5a68f5c73c38
+  source_text: 'Reduce comments: Avoid comments unless absolutely required to explain
+
+    unusual or complex logic. Comments in jsdocs are acceptable.
+
+    '
+  category: code_style
+- rule: 'Prefer clear, conventional control flow over clever tricks. The fix
+
+    should be a straightforward change to how the per-iteration index is
+
+    computed; no obscure mutation patterns or non-obvious shortcuts.
+
+    '
+  source:
+    path: AGENTS.md
+    commit: 88a5260788d57bb0c31a645fa44b5a68f5c73c38
+  source_text: 'Clarity over Cleverness: Choose clear, maintainable solutions
+
+    '
+  category: code_style
+- rule: 'A changeset entry must be added under `.changeset/` describing the fix
+
+    (a short markdown file with the `effect: patch` frontmatter and a
+
+    one-sentence summary of the post-rest validation fix).
+
+    '
+  source:
+    path: AGENTS.md
+    commit: 88a5260788d57bb0c31a645fa44b5a68f5c73c38
+  source_text: 'All pull requests must include a changeset in the `.changeset/` directory.
+
+    This is important for maintaining a clear changelog and ensuring proper
+
+    versioning of packages.
+
+    '
+  category: process

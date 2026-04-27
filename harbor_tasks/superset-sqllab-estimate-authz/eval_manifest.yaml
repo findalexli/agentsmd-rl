@@ -1,0 +1,99 @@
+version: '2.0'
+task:
+  name: superset-sqllab-estimate-authz
+  title: SQL Lab cost estimation must enforce database authorization
+  kind: code_fix
+  language: python
+  difficulty: easy
+source:
+  repo: apache/superset
+  pr_number: 38648
+  pr_url: https://github.com/apache/superset/pull/38648
+  base_commit: ed3c5280a9340237277156858ea82719e8ba05a5
+  merge_commit: 962abf69047864354645f0754ab0471755246fb2
+  primary_files:
+  - superset/commands/sql_lab/estimate.py
+  pr: 38648
+checks:
+- id: test_validate_invokes_raise_for_access_for_authorised_user
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'QueryEstimationCommand.validate() must call security_manager.raise_for_access(database=...) on the resolved Database.
+
+    '
+- id: test_validate_propagates_security_exception
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'A SupersetSecurityException raised by raise_for_access must propagate out of validate() unchanged.
+
+    '
+- id: test_validate_skips_access_check_when_database_missing
+  type: pass_to_pass
+  origin: pr_diff
+  description: 'Ordering / no-leak invariant: when the database row is missing, the existing 404-style SupersetErrorException must still be raised AND raise_for_access must not run (which would either error on None or leak record-existence information). Holds at base AND after the fix.
+
+    '
+- id: test_run_blocks_unauthorized_user_before_engine_call
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'An unauthorized run() call must not reach Database.db_engine_spec.estimate_query_cost — no plan/cost can leak.
+
+    '
+- id: test_repo_streaming_export_unit_tests_still_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Existing SQL-Lab streaming-export unit tests (tests/unit_tests/commands/sql_lab/streaming_export_command_test.py) keep passing — sibling-module regression guard.
+
+    '
+- id: test_repo_dataframe_utils_unit_tests_still_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'tests/unit_tests/common/test_dataframe_utils.py keeps passing — independent module regression guard.
+
+    '
+rubric:
+- id: asf_license_header_on_new_py_files
+  origin: agent_config
+  source:
+    lines: 92-94
+    commit: ed3c5280a9340237277156858ea82719e8ba05a5
+    path: AGENTS.md
+  rule: 'Any newly created .py file (e.g. a new test module under tests/) must start with the Apache Software Foundation license header used elsewhere in the repo.
+
+    '
+- id: type_hints_on_new_python_code
+  origin: agent_config
+  source:
+    lines: 85-89
+    commit: ed3c5280a9340237277156858ea82719e8ba05a5
+    path: AGENTS.md
+  rule: 'All new or modified Python code must carry type hints (function signatures, attributes, return types). MyPy compliance is required.
+
+    '
+- id: no_time_specific_comments
+  origin: agent_config
+  source:
+    lines: 96-97
+    commit: ed3c5280a9340237277156858ea82719e8ba05a5
+    path: AGENTS.md
+  rule: 'Comments must avoid time-specific language ("now", "currently", "today") so they remain accurate over time.
+
+    '
+- id: prefer_unit_tests_with_magicmock
+  origin: agent_config
+  source:
+    lines: 39, 152-153
+    commit: ed3c5280a9340237277156858ea82719e8ba05a5
+    path: AGENTS.md
+  rule: 'Prefer unit tests over integration tests for new behaviour, and use MagicMock() (not AsyncMock) for synchronous code paths.
+
+    '
+- id: docstring_on_new_functions
+  origin: agent_config
+  source:
+    lines: '103'
+    commit: ed3c5280a9340237277156858ea82719e8ba05a5
+    path: AGENTS.md
+  rule: 'Docstrings are required for new functions/classes (relevant if the agent introduces helpers around the access check).
+
+    '

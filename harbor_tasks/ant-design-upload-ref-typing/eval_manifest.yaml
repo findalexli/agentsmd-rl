@@ -1,0 +1,90 @@
+version: '2.0'
+source:
+  repo: ant-design/ant-design
+  pr: 57027
+  base_commit: 1c5cf81d07981cfa7a826702a1703adc414a4921
+  merge_commit: 98cb6ce0729b2ed13421bbccd3f0ed2327ae5957
+task:
+  kind: code_fix
+  name: ant-design-upload-ref-typing
+  title: Replace `any` with `UploadRef` in Upload's compound component type
+  difficulty: medium
+checks:
+- id: test_uploadref_exported_from_index
+  type: fail_to_pass
+  origin: pr_diff
+  description: Fixture `_uploadref_export_check.tsx` imports `UploadRef` from `./components/upload`. Before the fix, tsc reports TS2614 because the index does not re-export `UploadRef`; after the fix, the fixture compiles cleanly.
+- id: test_compound_ref_narrowed_to_uploadref
+  type: fail_to_pass
+  origin: pr_diff
+  description: Fixture `_ref_narrow_check.tsx` passes a `RefObject<string | null>` to `<Upload<File> ref={...} />`. Before the fix the compound type uses `RefAttributes<any>` so the wrong ref is silently accepted; after the fix tsc must report TS2322 on the ref assignment.
+- id: test_no_new_tsc_errors_outside_known_baseline
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Project-wide `tsc --noEmit` must not regress: only the pre-existing unrelated error in `components/watermark/useWatermark.ts` is allowed. The agent''s edits must not introduce any new tsc errors elsewhere.'
+rubric:
+- rule: '- ✅ 避免使用 `any` 类型，尽可能精确地定义类型'
+  source:
+    path: AGENTS.md
+    lines: '243'
+    commit: 1c5cf81d07981cfa7a826702a1703adc414a4921
+  evidence: Patch replaces `RefAttributes<any>` with `RefAttributes<UploadRef<U>>` and `createRef<any>()` with `createRef<ReturnType<typeof func>>()`.
+  category: style
+  verification: semantic_diff
+- rule: '- ✅ 导出所有公共接口类型，方便用户使用'
+  source:
+    path: AGENTS.md
+    lines: '245'
+    commit: 1c5cf81d07981cfa7a826702a1703adc414a4921
+  evidence: Patch adds `export type { UploadRef } from './Upload'` to `components/upload/index.tsx`.
+  category: architecture
+  verification: semantic_diff
+- rule: '- ✅ 所有组件和函数必须提供准确的类型定义'
+  source:
+    path: AGENTS.md
+    lines: '242'
+    commit: 1c5cf81d07981cfa7a826702a1703adc414a4921
+  evidence: Patch narrows `CompoundedComponent` ref type from `RefAttributes<any>` to `RefAttributes<UploadRef<U>>` so the ref type accurately reflects the component's imperative handle.
+  category: style
+  verification: semantic_diff
+- rule: '- ✅ 严格遵循 TypeScript 类型设计原则，确保类型安全'
+  source:
+    path: AGENTS.md
+    lines: '246'
+    commit: 1c5cf81d07981cfa7a826702a1703adc414a4921
+  evidence: Patch tightens the compound component's ref attribute so wrong-typed refs are rejected at compile time with TS2322, enforcing type safety.
+  category: style
+  verification: llm_judge
+- rule: '- ✅ 保持向下兼容，避免 breaking change'
+  source:
+    path: AGENTS.md
+    lines: '129'
+    commit: 1c5cf81d07981cfa7a826702a1703adc414a4921
+  evidence: Patch is type-only; runtime behaviour of Upload, Upload.Dragger, Upload.LIST_IGNORE, and renderHook is unchanged.
+  category: architecture
+  verification: semantic_diff
+distractors:
+- rule: '- ✅ 使用接口（interface）而非类型别名（type）定义对象结构'
+  source:
+    path: AGENTS.md
+    lines: '244'
+    commit: 1c5cf81d07981cfa7a826702a1703adc414a4921
+  collision_type: rule_conflict
+  why_distracting: The fix uses `export type { UploadRef }` re-export syntax whose `type` keyword may mislead the agent into converting the existing `interface UploadRef` to a `type` alias.
+  severity: medium
+- rule: '- ✅ 所有组件和函数必须提供准确的类型定义'
+  source:
+    path: AGENTS.md
+    lines: '242'
+    commit: 1c5cf81d07981cfa7a826702a1703adc414a4921
+  collision_type: scope_ambiguity
+  why_distracting: This broad rule could be interpreted as requiring a full type audit of every export in `components/upload/`, when only two specific `any` usages in `index.tsx` and `tests/utils.tsx` need fixing.
+  severity: medium
+- rule: '- ✅ 导出所有公共接口类型，方便用户使用'
+  source:
+    path: AGENTS.md
+    lines: '245'
+    commit: 1c5cf81d07981cfa7a826702a1703adc414a4921
+  collision_type: scope_ambiguity
+  why_distracting: The agent might interpret this as requiring `UploadRef` to also be re-exported from the top-level `components/index.ts` barrel, not just from `components/upload/index.tsx`.
+  severity: low

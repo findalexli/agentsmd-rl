@@ -1,0 +1,103 @@
+version: '2.0'
+source:
+  repo: docker/compose
+  pr: 13629
+  base_commit: 9cab43945a5ad651190ce5ec9800f449f489b5f6
+  merge_commit: a97738de7dd9d14fcf98b4ef3528c417dabe77d3
+task:
+  kind: code_fix
+checks:
+- id: test_below_api_144_default_settings
+  type: fail_to_pass
+  origin: pr_diff
+  description: defaultNetworkSettings on API < 1.44 returns only the primary network in EndpointsConfig.
+- id: test_legacy_api_create_uses_network_connect
+  type: fail_to_pass
+  origin: pr_diff
+  description: createMobyContainer on API < 1.44 sends only the primary network in ContainerCreate and connects extras via NetworkConnect, with ContainerInspect ordered after.
+- id: test_legacy_api_network_connect_failure_cleans_up
+  type: fail_to_pass
+  origin: pr_diff
+  description: When the post-create NetworkConnect fails, the orphan container is removed via ContainerRemove(Force=true) and the error is propagated.
+- id: test_at_api_144_default_settings_unchanged
+  type: pass_to_pass
+  origin: pr_diff
+  description: defaultNetworkSettings on API >= 1.44 still includes every network in EndpointsConfig (no regression on the modern path).
+- id: test_existing_default_network_settings_subtests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Pre-existing TestDefaultNetworkSettings sub-tests still pass.
+- id: test_existing_create_moby_container
+  type: pass_to_pass
+  origin: repo_tests
+  description: Pre-existing TestCreateMobyContainer (API >= 1.44 path) still passes.
+- id: test_pkg_compose_full_suite_excluding_injected
+  type: pass_to_pass
+  origin: repo_tests
+  description: All pre-existing pkg/compose and pkg/compose/transform tests (excluding the injected legacy-API tests) still pass.
+- id: test_repo_builds
+  type: pass_to_pass
+  origin: repo_tests
+  description: The whole module compiles (`go build ./...`).
+- id: test_repo_govet
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`go vet ./pkg/...` reports no issues.'
+- id: test_gofmt_clean
+  type: pass_to_pass
+  origin: agent_config
+  description: gofmt -l reports no unformatted files in pkg/compose (formatting is enforced by golangci-lint per CLAUDE.md).
+  source:
+    path: CLAUDE.md
+    lines: '20'
+    commit: 9cab43945a5ad651190ce5ec9800f449f489b5f6
+rubric:
+- rule: 'Import order: stdlib, third-party, local module (enforced by gci)'
+  source:
+    path: CLAUDE.md
+    lines: '21'
+    commit: 9cab43945a5ad651190ce5ec9800f449f489b5f6
+  evidence: The gold patch places the new github.com/moby/moby/client/pkg/versions import in the correct third-party group.
+  category: style
+  verification: llm_judge
+- rule: 'Max line length: 200 chars'
+  source:
+    path: CLAUDE.md
+    lines: '22'
+    commit: 9cab43945a5ad651190ce5ec9800f449f489b5f6
+  evidence: No added line in the gold patch exceeds 200 characters.
+  category: style
+  verification: programmatic
+- rule: No `io/ioutil`, `github.com/pkg/errors`, `gopkg.in/yaml.v2`, `golang.org/x/exp/maps`, `golang.org/x/exp/slices`. Use `github.com/containerd/errdefs` instead of `github.com/docker/docker/errdefs`
+  source:
+    path: CLAUDE.md
+    lines: 24-25
+    commit: 9cab43945a5ad651190ce5ec9800f449f489b5f6
+  evidence: The gold patch does not introduce any banned imports.
+  category: style
+  verification: programmatic
+- rule: 'Max cyclomatic complexity: 16'
+  source:
+    path: CLAUDE.md
+    lines: '23'
+    commit: 9cab43945a5ad651190ce5ec9800f449f489b5f6
+  evidence: No modified function in the gold patch exceeds cyclomatic complexity of 16.
+  category: style
+  verification: llm_judge
+distractors:
+- rule: '**After modifying any Go code, ALWAYS run the linter and fix all reported issues before considering the task complete.**'
+  source:
+    path: CLAUDE.md
+    lines: '15'
+    commit: 9cab43945a5ad651190ce5ec9800f449f489b5f6
+  collision_type: scope_ambiguity
+  why_distracting: Could lead the agent to fix pre-existing lint warnings across the entire repo instead of implementing the API version gate.
+  severity: medium
+- rule: 'In tests: use `t.Context()` instead of `context.Background()` or `context.TODO()`'
+  source:
+    path: CLAUDE.md
+    lines: '26'
+    commit: 9cab43945a5ad651190ce5ec9800f449f489b5f6
+  collision_type: scope_ambiguity
+  why_distracting: Could lead the agent to rewrite unrelated test files' context usage instead of fixing the networking regression.
+  severity: low

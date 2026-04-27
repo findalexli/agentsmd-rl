@@ -1,0 +1,107 @@
+version: '2.0'
+source:
+  repo: Effect-TS/effect
+  pr: 6060
+  base_commit: 52cd53115fe14e2b9c36dd0d51eb490aead74ee6
+  merge_commit: c3e706ff4d01c70ae1754b13c9cbc1f001c09068
+task:
+  kind: code_fix
+checks:
+- id: test_no_duplicate_reasoning_when_both_present
+  type: fail_to_pass
+  origin: pr_diff
+  description: A delta with both `reasoning` and `reasoning_details` produces exactly one `reasoning-delta` part, not two. Reproduces the original bug.
+- id: test_uses_reasoning_details_when_both_present
+  type: fail_to_pass
+  origin: pr_diff
+  description: When both fields are present with different content, only the value from `reasoning_details` is emitted (the plain `reasoning` field is suppressed in that case).
+- id: test_dedup_across_multiple_chunks
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Dedup holds across a multi-chunk stream: N input chunks each carrying both fields produce exactly N reasoning-delta parts, not 2N.'
+- id: test_fallback_to_reasoning_when_details_absent
+  type: pass_to_pass
+  origin: pr_diff
+  description: When `reasoning_details` is absent, the plain `reasoning` field is still emitted as the sole reasoning-delta.
+- id: test_fallback_to_reasoning_when_details_empty
+  type: pass_to_pass
+  origin: pr_diff
+  description: When `reasoning_details` is an empty array, the plain `reasoning` field is still emitted as the sole reasoning-delta (empty array must be treated like absent).
+- id: test_no_reasoning_emitted_when_neither_present
+  type: pass_to_pass
+  origin: pr_diff
+  description: When neither `reasoning` nor `reasoning_details` is present, no reasoning parts are emitted for that delta.
+- id: test_repo_typecheck_openrouter
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`pnpm check` (i.e. `tsc -b tsconfig.json`) succeeds in `packages/ai/openrouter`.'
+- id: test_repo_lint_openrouter
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`pnpm lint packages/ai/openrouter` (ESLint + dprint) passes.'
+- id: test_changeset_added
+  type: fail_to_pass
+  origin: agent_config
+  description: A new file under `.changeset/` declares a patch bump for `@effect/ai-openrouter`. Required by AGENTS.md.
+  source:
+    path: AGENTS.md
+    lines: 39-42
+    commit: 52cd53115fe14e2b9c36dd0d51eb490aead74ee6
+rubric:
+- rule: 'Reduce comments: Avoid comments unless absolutely required to explain unusual or complex logic. Comments in jsdocs are acceptable.'
+  source:
+    path: AGENTS.md
+    lines: '15'
+    commit: 52cd53115fe14e2b9c36dd0d51eb490aead74ee6
+  evidence: The gold diff removes two lines and adds a three-line else-if block without introducing any new comments.
+  category: style
+  verification: llm_judge
+- rule: 'Conciseness: Keep code and any wording concise and to the point. Sacrifice grammar for the sake of concision.'
+  source:
+    path: AGENTS.md
+    lines: '14'
+    commit: 52cd53115fe14e2b9c36dd0d51eb490aead74ee6
+  evidence: The gold diff changes exactly the streaming decoder (one if-to-else-if) and adds a new changeset file. No imports, identifiers, or surrounding logic are touched.
+  category: style
+  verification: semantic_diff
+- rule: All pull requests must include a changeset in the `.changeset/` directory. This is important for maintaining a clear changelog and ensuring proper versioning of packages.
+  source:
+    path: AGENTS.md
+    lines: 41-42
+    commit: 52cd53115fe14e2b9c36dd0d51eb490aead74ee6
+  evidence: The gold changeset body describes the user-visible fix ('deduplicate reasoning parts when both reasoning and reasoning_details are present') rather than implementation details like 'changed if to else if'.
+  category: testing
+  verification: llm_judge
+- rule: Always look at existing code in the repository to learn and follow established patterns before writing new code.
+  source:
+    path: AGENTS.md
+    lines: 28-29
+    commit: 52cd53115fe14e2b9c36dd0d51eb490aead74ee6
+  evidence: The gold fix uses the same `Predicate.isNotNullable` and `length > 0` guard pattern already present in the adjacent `reasoning_details` emission block.
+  category: architecture
+  verification: semantic_diff
+distractors:
+- rule: 'Clarity over Cleverness: Choose clear, maintainable solutions'
+  source:
+    path: AGENTS.md
+    lines: '13'
+    commit: 52cd53115fe14e2b9c36dd0d51eb490aead74ee6
+  collision_type: rule_conflict
+  why_distracting: An agent may read 'Clarity' as a mandate to add explanatory comments about the dedup logic, which directly conflicts with 'Reduce comments' on line 15.
+  severity: medium
+- rule: Run `pnpm lint-fix` after editing files
+  source:
+    path: AGENTS.md
+    lines: '19'
+    commit: 52cd53115fe14e2b9c36dd0d51eb490aead74ee6
+  collision_type: meta_confusion
+  why_distracting: An agent may think running lint-fix is sufficient to address all code issues, when the actual fix requires a semantic change (if-to-else-if) that no formatter can produce.
+  severity: low
+- rule: The `index.ts` files are automatically generated. Do not manually edit them.
+  source:
+    path: AGENTS.md
+    lines: 36-37
+    commit: 52cd53115fe14e2b9c36dd0d51eb490aead74ee6
+  collision_type: scope_ambiguity
+  why_distracting: An agent might overgeneralize the barrel-file prohibition and hesitate to edit any file under packages/ai/openrouter/src/, avoiding the correct fix location.
+  severity: medium

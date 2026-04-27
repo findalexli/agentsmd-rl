@@ -1,0 +1,267 @@
+name: Beta release CLI
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        type: string
+        required: true
+        description: The version to release
+
+env:
+  INPUT_VERSION: ${{ inputs.version }}
+  CARGO_TERM_COLOR: always
+
+jobs:
+  version:
+    name: Generate version
+    runs-on: depot-ubuntu-24.04-arm-small
+    outputs:
+      version: ${{ env.version }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set beta version
+        run: |
+          echo "version=$(node packages/@biomejs/biome/scripts/update-beta-version.mjs)" >> $GITHUB_ENV
+
+  build:
+    needs: version
+    strategy:
+      matrix:
+        include:
+          - os: depot-windows-2022-16
+            target: x86_64-pc-windows-msvc
+            code-target: win32-x64
+          - os: depot-windows-2022-16
+            target: aarch64-pc-windows-msvc
+            code-target: win32-arm64
+          - os: depot-ubuntu-24.04-16
+            target: x86_64-unknown-linux-musl
+            code-target: linux-x64-musl
+          - os: depot-ubuntu-24.04-arm-16
+            target: aarch64-unknown-linux-musl
+            code-target: linux-arm64-musl
+          - os: depot-macos-14
+            target: x86_64-apple-darwin
+            code-target: darwin-x64
+          - os: depot-macos-14
+            target: aarch64-apple-darwin
+            code-target: darwin-arm64
+
+    name: Package ${{ matrix.code-target }}
+    runs-on: ${{ matrix.os }}
+
+    env:
+      version: ${{ needs.version.outputs.version }}
+    outputs:
+      version: ${{ env.version }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Install Rust toolchain
+        run: rustup target add ${{ matrix.target }}
+
+      - name: Install musl toolchain
+        if: matrix.code-target == 'linux-x64-musl' || matrix.code-target == 'linux-arm64-musl'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y musl-tools
+
+      - name: Install cargo-audit
+        uses: taiki-e/install-action@509565405a8a987e73cf742e26b26dcc72c4b01a # v2.67.26
+        if: matrix.code-target == 'linux-x64-musl'
+        with:
+          tool: cargo-audit
+
+      - name: Audit crates.io dependencies
+        if: matrix.code-target == 'linux-x64-musl'
+        run: cargo audit
+
+      # Build the CLI binary
+      - name: Build binaries
+        run: cargo build -p biome_cli --release --target ${{ matrix.target }}
+        env:
+          # Strip all debug symbols from the resulting binaries
+          RUSTFLAGS: "-C strip=symbols -C codegen-units=1"
+          # Inline the version of the npm package in the CLI binary
+          BIOME_VERSION: ${{ env.version }}
+
+      # Copy the CLI binary and rename it to include the name of the target platform
+      - name: Copy CLI binary
+        if: matrix.os == 'depot-windows-2022-16'
+        run: |
+          mkdir dist
+          cp target/${{ matrix.target }}/release/biome.exe ./dist/biome-${{ matrix.code-target }}.exe
+      - name: Copy CLI binary
+        if: matrix.os != 'depot-windows-2022-16'
+        run: |
+          mkdir dist
+          cp target/${{ matrix.target }}/release/biome ./dist/biome-${{ matrix.code-target }}
+
+      # Upload the CLI binary as a build artifact
+      - name: Upload CLI artifact
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: cli-${{ matrix.target }}
+          path: ./dist/biome-*
+          if-no-files-found: error
+
+  # Build GNU/Linux binaries in Docker, using Debian 11 (bullseye), to support older versions of glibc.
+  build-gnu:
+    needs: version
+    strategy:
+      matrix:
+        include:
+          - os: depot-ubuntu-24.04-16
+            target: x86_64-unknown-linux-gnu
+            code-target: linux-x64
+          - os: depot-ubuntu-24.04-arm-16
+            target: aarch64-unknown-linux-gnu
+            code-target: linux-arm64
+
+    name: Package ${{ matrix.code-target }}
+    runs-on: ${{ matrix.os }}
+    container:
+      image: rust:1.93.0-bullseye@sha256:3ebcc2d6d71fb93a2967e35723902c51dd87dbb36f66f795a58d7921553fbcd4
+
+    env:
+      version: ${{ needs.version.outputs.version }}
+    outputs:
+      version: ${{ env.version }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set jemalloc page size for linux-arm64
+        if: matrix.code-target == 'linux-arm64'
+        run: |
+          echo "JEMALLOC_SYS_WITH_LG_PAGE=16" >> $GITHUB_ENV
+
+      # Build the CLI binary
+      - name: Build binaries
+        run: cargo build -p biome_cli --release --target ${{ matrix.target }}
+        env:
+          # Strip all debug symbols from the resulting binaries
+          RUSTFLAGS: "-C strip=symbols -C codegen-units=1"
+          # Inline the version of the npm package in the CLI binary
+          BIOME_VERSION: ${{ env.version }}
+
+      # Copy the CLI binary and rename it to include the name of the target platform
+      - name: Copy CLI binary
+        run: |
+          mkdir dist
+          cp target/${{ matrix.target }}/release/biome ./dist/biome-${{ matrix.code-target }}
+
+      # Upload the CLI binary as a build artifact
+      - name: Upload CLI artifact
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: cli-${{ matrix.target }}
+          path: ./dist/biome-*
+          if-no-files-found: error
+
+  build-wasm:
+    needs: version
+    name: Build WASM
+    runs-on: depot-ubuntu-24.04-arm-16
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Install just
+        uses: extractions/setup-just@e33e0265a09d6d736e2ee1e0eb685ef1de4669ff # v3.0.0
+
+      - name: Install toolchain
+        uses: moonrepo/setup-rust@ede6de059f8046a5e236c94046823e2af11ca670 # v1.2.2
+        with:
+          bins: wasm-bindgen-cli@0.2.106, wasm-opt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build WASM module for bundlers
+        run: just build-wasm-bundler
+      - name: Build WASM module for node.js
+        run: just build-wasm-node
+      - name: Build WASM module for the web
+        run: just build-wasm-web
+
+      - name: Upload WASM artifact
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: wasm-${{ matrix.target }}
+          path: |
+            ./packages/@biomejs/wasm-bundler
+            ./packages/@biomejs/wasm-nodejs
+            ./packages/@biomejs/wasm-web
+          if-no-files-found: error
+
+  publish:
+    name: Publish
+    runs-on: ubuntu-24.04 # Must be a GitHub hosted runner for provenance
+    needs:
+      - build
+      - build-gnu
+      - build-wasm
+    environment: npm-publish
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Download CLI artifacts
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          pattern: cli-*
+          merge-multiple: true
+      - name: Download WASM artifacts
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          pattern: wasm-*
+          merge-multiple: true
+          path: packages/@biomejs
+
+      - name: Install Node.js
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+        with:
+          node-version: 24.13.0
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Pin Corepack 0.20
+        run: |
+          echo "Before: corepack => $(corepack --version || echo 'not installed')"
+          npm install -g corepack@0.20
+          echo "After : corepack => $(corepack --version)"
+          corepack enable
+          pnpm --version
+
+      - name: Set beta version
+        run: node packages/@biomejs/biome/scripts/update-beta-version.mjs
+
+      - name: Generate npm packages
+        run: node packages/@biomejs/biome/scripts/generate-packages.mjs
+
+      - name: Publish npm packages as beta
+        run: |
+          for package in packages/@biomejs/*; do
+            if [ $package != "packages/@biomejs/js-api" ] && [ $package != "packages/@biomejs/plugin-api" ]; then
+              npm publish $package --tag beta --access public
+            fi
+          done
+
+      - name: Create GitHub release and tag
+        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          name: CLI v${{ needs.build.outputs.version }}
+          tag_name: "@biomejs/biome@${{ needs.build.outputs.version }}"
+          draft: false
+          prerelease: true
+          files: |
+            biome-*
+          fail_on_unmatched_files: true
+          generate_release_notes: true

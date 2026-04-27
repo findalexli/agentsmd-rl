@@ -1,0 +1,107 @@
+version: '2.0'
+task:
+  name: infisical-est-reject-revoked-reenroll
+  title: Reject EST simple re-enroll with a revoked client certificate
+  kind: code_fix
+source:
+  repo: Infisical/infisical
+  pr: 6163
+  pr_url: https://github.com/Infisical/infisical/pull/6163
+  base_commit: d3b69683c96a7f67671af07e7cb02a131b04586b
+  merge_commit: 9cab65ffeeb6c9f7ff7020f33f483464a945ea4d
+checks:
+- id: test_revoked_reenroll_rejected
+  type: fail_to_pass
+  origin: repo_tests
+  description: 'simpleReenrollByProfile must throw UnauthorizedError when the client certificate''s
+
+    stored status is REVOKED. This is the new test added by PR #6163.
+
+    '
+  source:
+    commit: 9cab65ffeeb6c9f7ff7020f33f483464a945ea4d
+    lines: 430-443
+    path: backend/src/services/certificate-est-v3/certificate-est-v3-service.test.ts
+- id: test_existing_est_v3_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'The 15 pre-existing tests in certificate-est-v3-service.test.ts (covering simpleEnrollByProfile,
+
+    simpleReenrollByProfile non-revoked paths, and getCaCertsByProfile) must still pass. Catches
+
+    regressions from a fix that breaks sibling enroll/re-enroll flows.
+
+    '
+- id: test_full_backend_unit_suite_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'The complete backend unit test suite (`npm run test:unit`, 442 tests across 23 files) passes.
+
+    Guards against regressions in unrelated services from changes to the EST v3 factory''s exported
+
+    types or the routes/index.ts dependency graph.
+
+    '
+rubric:
+- id: service_factory_di_pattern
+  source:
+    commit: d3b69683c96a7f67671af07e7cb02a131b04586b
+    section: Architecture / Service Factory + Manual DI
+    path: backend/CLAUDE.md
+  rule: 'New dependency (certificateDAL) is added to the EST v3 service via the documented "Service Factory +
+
+    Manual DI" pattern: declared in TCertificateEstV3ServiceFactoryDep with a Pick<...> narrowing the
+
+    DAL surface to only the methods the service uses (findOne, transaction), destructured in the factory
+
+    args, and wired in backend/src/server/routes/index.ts.
+
+    '
+- id: replica_aware_revocation_read
+  source:
+    commit: d3b69683c96a7f67671af07e7cb02a131b04586b
+    section: DAL Layer / Read replica pattern
+    path: backend/CLAUDE.md
+  rule: 'The certificate-revocation lookup is performed inside certificateDAL.transaction(...) (with the tx
+
+    handle threaded into findOne) so the read hits the primary instead of a replica. A plain replica
+
+    read can return stale `active` status for a just-revoked certificate, defeating the check.
+
+    '
+- id: uses_existing_error_classes
+  source:
+    commit: d3b69683c96a7f67671af07e7cb02a131b04586b
+    section: Error Handling
+    path: backend/CLAUDE.md
+  rule: 'The revocation rejection uses the project''s existing UnauthorizedError class from @app/lib/errors,
+
+    consistent with the documented inventory of custom error classes — not a new error class, not a
+
+    bare Error, not a wrong-status alternative like BadRequestError or ForbiddenRequestError.
+
+    '
+- id: import_ordering
+  source:
+    commit: d3b69683c96a7f67671af07e7cb02a131b04586b
+    section: ESLint & Import Ordering
+    path: backend/CLAUDE.md
+  rule: 'Added imports follow the simple-import-sort group order documented in backend/CLAUDE.md:
+
+    side-effects → node: builtins → third-party → @app/ → @lib/ → @server/ → relative. New
+
+    @app/ imports live in the @app/ group, ordered alphabetically within the group.
+
+    '
+- id: minimal_pick_surface
+  source:
+    commit: d3b69683c96a7f67671af07e7cb02a131b04586b
+    section: Service Factory + Manual DI
+    path: backend/CLAUDE.md
+  rule: 'The new certificateDAL dependency is declared with a Pick<TCertificateDALFactory, ...> that exposes
+
+    only the methods the EST v3 service actually uses (findOne, transaction) — matching the minimal-DAL-
+
+    surface convention used by every other dependency in the same factory''s TCertificateEstV3ServiceFactoryDep.
+
+    '

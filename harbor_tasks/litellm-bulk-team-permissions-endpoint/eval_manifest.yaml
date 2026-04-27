@@ -1,0 +1,211 @@
+version: '2.0'
+source:
+  repo: BerriAI/litellm
+  pr_number: 25239
+  pr_url: https://github.com/BerriAI/litellm/pull/25239
+  pr_title: 'feat: add POST /team/permissions_bulk_update endpoint'
+  base_commit: d132b1bf51cb7c3e6932bae9984216d4f622f945
+  merge_commit: 3ac61a519b8ed80eb13003205972c6b63236e91e
+  pr: 25239
+task:
+  name: litellm-bulk-team-permissions-endpoint
+  primary_files:
+  - litellm/proxy/management_endpoints/team_endpoints.py
+  - litellm/types/proxy/management_endpoints/team_endpoints.py
+checks:
+- id: test_all_teams_appends_preserving_existing
+  type: fail_to_pass
+  origin: repo_tests
+  description: apply_to_all_teams merges new permissions with existing ones (no overwrite).
+- id: test_all_teams_skips_teams_that_already_have_permission
+  type: fail_to_pass
+  origin: repo_tests
+  description: Teams that already have all requested permissions are skipped (no DB write).
+- id: test_all_teams_pagination
+  type: fail_to_pass
+  origin: repo_tests
+  description: apply_to_all_teams uses cursor-based pagination with batch size 500; cursor is the last team_id.
+- id: test_team_ids_updates_only_specified_teams
+  type: fail_to_pass
+  origin: repo_tests
+  description: 'When team_ids is given, find_many is called with where={''team_id'': {''in'': team_ids}}.'
+- id: test_team_ids_skips_teams_that_already_have_permission
+  type: fail_to_pass
+  origin: repo_tests
+  description: 'team_ids path: teams already holding the permission are skipped.'
+- id: test_team_ids_returns_404_for_missing_teams
+  type: fail_to_pass
+  origin: repo_tests
+  description: If any provided team_id is not found, raise HTTPException 404 with the missing id in detail.
+- id: test_rejects_when_no_team_ids_and_no_apply_all
+  type: fail_to_pass
+  origin: repo_tests
+  description: Caller must provide team_ids or apply_to_all_teams=true; else HTTPException 400.
+- id: test_rejects_when_both_team_ids_and_apply_all
+  type: fail_to_pass
+  origin: repo_tests
+  description: Caller cannot set both team_ids and apply_to_all_teams=true; else HTTPException 400.
+- id: test_empty_permissions_list_is_noop
+  type: fail_to_pass
+  origin: repo_tests
+  description: Empty permissions list returns teams_updated=0 and never queries the DB.
+- id: test_non_admin_gets_403
+  type: fail_to_pass
+  origin: repo_tests
+  description: Non-admin callers receive HTTPException 403.
+- id: test_invalid_permission_rejected_by_pydantic
+  type: fail_to_pass
+  origin: repo_tests
+  description: Pydantic rejects permission strings that are not valid KeyManagementRoutes values.
+- id: test_p2p_existing_team_default_params_safe_overrides
+  type: pass_to_pass
+  origin: repo_tests
+  description: Pre-PR tests in tests/test_litellm/proxy/management_endpoints/test_team_default_params.py::TestSafeDbOverrides still pass.
+- id: test_p2p_module_imports_cleanly
+  type: pass_to_pass
+  origin: repo_tests
+  description: litellm.proxy.management_endpoints.team_endpoints and litellm.types.proxy.management_endpoints.team_endpoints import without error after edits.
+rubric:
+- id: imports_at_module_top
+  weight: medium
+  source:
+    section: Code Style
+    path: CLAUDE.md
+    commit: d132b1bf51cb7c3e6932bae9984216d4f622f945
+  rule: '"Avoid imports within methods - place all imports at the top of the file
+
+    (module-level). Inline imports inside functions/methods make dependencies
+
+    harder to trace and hurt readability. The only exception is avoiding
+
+    circular imports where absolutely necessary."
+
+    '
+- id: prisma_no_raw_sql
+  weight: high
+  source:
+    section: Proxy database access
+    path: CLAUDE.md
+    commit: d132b1bf51cb7c3e6932bae9984216d4f622f945
+  rule: '"Do not write raw SQL for proxy DB operations. Use Prisma model methods
+
+    instead of execute_raw / query_raw."
+
+    The bulk-update implementation must use prisma_client.db.litellm_teamtable
+
+    methods (find_many, batch_, update), NOT execute_raw / query_raw.
+
+    '
+- id: prisma_batch_writes
+  weight: high
+  source:
+    section: Proxy database access
+    path: CLAUDE.md
+    commit: d132b1bf51cb7c3e6932bae9984216d4f622f945
+  rule: '"Batch writes. Use create_many/update_many/delete_many instead of
+
+    individual calls. When multiple separate writes target the same table
+
+    (e.g. in batch_()), order by primary key to avoid deadlocks."
+
+    Per-team updates must be issued through prisma_client.db.batch_(), not
+
+    a Python loop of individual .update() calls each awaited separately.
+
+    '
+- id: prisma_bound_large_results
+  weight: high
+  source:
+    section: Proxy database access
+    path: CLAUDE.md
+    commit: d132b1bf51cb7c3e6932bae9984216d4f622f945
+  rule: '"Bound large result sets. Prisma materializes full results in memory.
+
+    For results over ~10 MB, paginate with take/skip or cursor/take, always
+
+    with an explicit order. Prefer cursor-based pagination (skip is O(n))."
+
+    The apply_to_all_teams branch reads every team in the table, which can
+
+    be arbitrarily large; it must page rather than load all teams at once.
+
+    '
+- id: prisma_no_n_plus_one
+  weight: medium
+  source:
+    section: Proxy database access
+    path: CLAUDE.md
+    commit: d132b1bf51cb7c3e6932bae9984216d4f622f945
+  rule: '"No N+1 queries. Never query the DB inside a loop. Batch-fetch with
+
+    {"in": ids} and distribute in-memory."
+
+    The team_ids branch must fetch all requested teams in a single
+
+    find_many call using {"team_id": {"in": team_ids}}.
+
+    '
+- id: type_hints_required
+  weight: medium
+  source:
+    section: Code Style
+    path: CLAUDE.md
+    commit: d132b1bf51cb7c3e6932bae9984216d4f622f945
+  rule: '"Type hints required for all public APIs."
+
+    The endpoint handler and helper functions should be typed; request and
+
+    response models must be Pydantic v2 BaseModels with explicit field types.
+
+    '
+- id: validate_proxy_inputs
+  weight: high
+  source:
+    section: Security Considerations
+    path: AGENTS.md
+    commit: d132b1bf51cb7c3e6932bae9984216d4f622f945
+  rule: '"Always validate all inputs, especially for proxy endpoints."
+
+    The endpoint must reject permission values outside KeyManagementRoutes,
+
+    reject conflicting flags (team_ids with apply_to_all_teams=True), and
+
+    authorize only proxy admins.
+
+    '
+- id: black_formatting
+  weight: low
+  source:
+    section: Code Quality
+    path: CLAUDE.md
+    commit: d132b1bf51cb7c3e6932bae9984216d4f622f945
+  rule: '"Before committing, always run `poetry run black .` to format your code.
+
+    Black formatting is enforced in CI."
+
+    New code added by the agent should be Black-formatted (24 line length 88).
+
+    Note: the existing files in the repo at base may have minor pre-existing
+
+    formatting drift; only the new additions are evaluated.
+
+    '
+- id: pr_test_coverage
+  weight: medium
+  source:
+    section: GitHub Issue & PR Templates
+    path: CLAUDE.md
+    commit: d132b1bf51cb7c3e6932bae9984216d4f622f945
+  rule: '"Pull Requests: Add at least 1 test in tests/litellm/. Ensure
+
+    `make test-unit` passes."
+
+    A new endpoint of this size should have unit tests covering: append
+
+    preserves existing, skip-when-already-has, empty input no-op, non-admin
+
+    403, invalid permission 400, and the team_ids vs. apply_to_all_teams
+
+    branches.
+
+    '

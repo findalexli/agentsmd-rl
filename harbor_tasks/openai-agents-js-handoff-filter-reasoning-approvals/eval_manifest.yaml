@@ -1,0 +1,75 @@
+version: '2.0'
+source:
+  repo: openai/openai-agents-js
+  pr_number: 1115
+  pr_url: https://github.com/openai/openai-agents-js/pull/1115
+  base_commit: ae6444ead1c6d68ee74185f6d822bc16691cd32d
+  merge_commit: 4f1824fa1c63c8f7d84dc1a614a77fbd85fbd298
+  pr_title: 'fix: strip reasoning and approval placeholders from handoff filters'
+  primary_files:
+  - packages/agents-core/src/extensions/handoffFilters.ts
+  pr: 1115
+task:
+  name: openai-agents-js-handoff-filter-reasoning-approvals
+  language: typescript
+  package_manager: pnpm
+checks:
+- id: test_removeAllTools_filters_reasoning_and_approval_items
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'removeAllTools() must drop RunReasoningItem, RunToolApprovalItem, and type:''reasoning'' input entries, while preserving plain message items.
+
+    '
+- id: test_repo_handoff_filters_unit_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Existing packages/agents-core/test/extensions/handoffFilters.test.ts vitest suite continues to pass.
+
+    '
+- id: test_repo_agents_core_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'pnpm -F @openai/agents-core build-check (tsc --noEmit) succeeds.
+
+    '
+rubric:
+- id: changes_confined_to_handoff_filters
+  type: agent_config
+  origin: agent_config
+  source:
+    lines: 65-72
+    commit: ae6444ead1c6d68ee74185f6d822bc16691cd32d
+    path: AGENTS.md
+  rule: 'AGENTS.md asks contributors to keep changes targeted and add unit tests where feasible. The fix should be confined to packages/agents-core/src/extensions/handoffFilters.ts and must not introduce unrelated edits to runtime modules.
+
+    '
+- id: comments_end_with_period
+  type: agent_config
+  origin: agent_config
+  source:
+    lines: 126-126
+    commit: ae6444ead1c6d68ee74185f6d822bc16691cd32d
+    path: AGENTS.md
+  rule: '"Comments must end with a period" — any new code comments added in handoffFilters.ts should end with a period.
+
+    '
+- id: prefer_extending_existing_filter_cases
+  type: agent_config
+  origin: agent_config
+  source:
+    lines: 67-72
+    commit: ae6444ead1c6d68ee74185f6d822bc16691cd32d
+    path: AGENTS.md
+  rule: '"Adding new tool/output/approval item types requires coordinated updates across model output processing, tool execution, turn resolution, streaming events, run item extraction, and RunState serialization." The fix should reuse existing run-item classes and the existing TOOL_TYPES set rather than introducing parallel filtering machinery.
+
+    '
+- id: changeset_for_packaged_change
+  type: agent_config
+  origin: agent_config
+  source:
+    lines: 20-22
+    commit: ae6444ead1c6d68ee74185f6d822bc16691cd32d
+    path: AGENTS.md
+  rule: 'AGENTS.md requires a changeset entry under .changeset/ for any change under packages/. A patch-level changeset for @openai/agents-core whose summary is a Conventional-Commit-style "fix: ..." line is expected.
+
+    '

@@ -1,0 +1,39 @@
+version: '2.0'
+source:
+  repo: electric-sql/electric
+  pr: 3961
+  base_commit: deb2a61614678fac029773a56b618382fe5b70f2
+  merge_commit: 0031e81777c0a93ab90161be5e6d0e9c999e00d2
+  title: 'fix(typescript-client): prevent handle -next suffix accumulation on repeated 409s'
+  url: https://github.com/electric-sql/electric/pull/3961
+checks:
+- id: test_handle_no_next_suffix_on_repeated_409s
+  type: fail_to_pass
+  origin: pr_diff
+  description: Repeated 409 responses without a shape-handle header must not produce retry URLs containing the literal string "-next" or "undefined", and every retry URL must be unique. After the first 409, retries must carry a `cache-buster` or `expired_handle` query param so the URL is unique.
+- id: test_repo_unit_suite_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: The repo's full unit-test suite (`pnpm exec vitest run --config vitest.unit.config.ts`) must continue to pass after the fix is applied.
+- id: test_typecheck_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`pnpm exec tsc -p tsconfig.json --noEmit` must succeed.'
+rubric:
+- id: spec_md_markmustrefetch_invariant
+  severity: warn
+  source:
+    lines: 165-175
+    commit: deb2a61614678fac029773a56b618382fe5b70f2
+    path: packages/typescript-client/SPEC.md
+  rule: 'The fix should respect SPEC.md invariant I10: `markMustRefetch(handle?)` produces an InitialState with `offset === ''-1''`, `schema === undefined`, `liveCacheBuster === ''''`, and `lastSyncedAt` preserved. Resetting the stream when the 409 lacks a handle header should drive the state machine via `markMustRefetch` (or an equivalent reset path) rather than mutating the existing handle in place.'
+- id: handles_are_identities_not_cache_busters
+  severity: warn
+  rule: Handles must be opaque server-issued identities, not synthesized cache-busters. The fix must not introduce a new code path that fabricates a handle value (e.g. concatenating `-next`, `-retry`, a counter, or `undefined`) onto an existing handle to force URL uniqueness. URL uniqueness should be achieved through query parameters (e.g. `cache-buster`, `expired_handle`) rather than mutated handles.
+- id: unit_tests_use_vi_fn_fetch_client
+  severity: warn
+  source:
+    lines: 220-228
+    commit: deb2a61614678fac029773a56b618382fe5b70f2
+    path: AGENTS.md
+  rule: Per AGENTS.md > Testing > Unit testing (mocked), unit tests for the typescript-client should mock `fetchClient` via `vi.fn()` rather than patching globals or hitting real network endpoints. Any new tests added alongside the fix should follow this convention.

@@ -1,0 +1,76 @@
+version: '2.0'
+source:
+  owner: openai
+  repo: openai-agents-js
+  pr_number: 1124
+  pr_url: https://github.com/openai/openai-agents-js/pull/1124
+  base_commit: 1227865cd903f875eab4908fbff8c41a033b9275
+  merge_commit: 6f492303fa411cdfa6adac6eb47f521b997bf038
+  title: 'fix(agents-core): hide streamed final output after guardrail failures'
+  pr: 1124
+task:
+  name: openai-agents-js-streamed-finaloutput-after-guardrail
+  primary_files:
+  - packages/agents-core/src/run.ts
+checks:
+- id: test_currentStep_cleared_after_streamed_output_guardrail
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'After a streamed output guardrail trips, the run state''s `_currentStep?.type` must not still be `''next_step_final_output''`.
+
+    '
+- id: test_finaloutput_undefined_after_streamed_output_guardrail
+  type: fail_to_pass
+  origin: pr_diff
+  description: '`StreamedRunResult.finalOutput` must be `undefined` after a streamed output guardrail trips, and reading it must log the standard `Accessed finalOutput before agent run is completed.` warning.
+
+    '
+- id: test_repo_typecheck_agents_core
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`pnpm -F @openai/agents-core run build-check` (tsc --noEmit on tsconfig.test.json) succeeds.
+
+    '
+- id: test_existing_input_guardrail_stream_test
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'The streaming input-guardrail test (''skips persisting streaming input when an input guardrail triggers'') still passes; the fix to the output-guardrail path must not regress input-guardrail handling.
+
+    '
+rubric:
+- id: align_streaming_and_non_streaming_loops
+  severity: warn
+  origin: agent_config
+  source:
+    path: AGENTS.md
+    commit: 1227865cd903f875eab4908fbff8c41a033b9275
+  rule: '"Keep streaming and non-streaming loops behaviorally aligned; changes to one loop should be mirrored in the other." The fix closes a streaming-only divergence — agents should not introduce a *new* divergence beyond doing so.
+
+    '
+- id: comments_end_with_period
+  severity: warn
+  origin: agent_config
+  source:
+    path: AGENTS.md
+    commit: 1227865cd903f875eab4908fbff8c41a033b9275
+  rule: '"Comments must end with a period." Any new comment the agent writes in src/run.ts (or elsewhere in agents-core) for this fix should end with a period.
+
+    '
+- id: keep_run_ts_focused
+  severity: warn
+  origin: agent_config
+  source:
+    path: AGENTS.md
+    commit: 1227865cd903f875eab4908fbff8c41a033b9275
+  rule: '"packages/agents-core/src/run.ts is the runtime entrypoint; keep it small and focused on orchestration. Add new runtime logic under packages/agents-core/src/runner/, organized by responsibility, then import into run.ts." A small inline catch is acceptable; large helper logic should be factored out under runner/.
+
+    '
+- id: add_or_update_unit_tests
+  severity: warn
+  origin: agent_config
+  source:
+    path: AGENTS.md
+    commit: 1227865cd903f875eab4908fbff8c41a033b9275
+  rule: '"Add or update unit tests for any code change unless it is truly infeasible." A regression test for this fix belongs in `packages/agents-core/test/run.stream.test.ts`.
+
+    '

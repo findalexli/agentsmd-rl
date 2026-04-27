@@ -1,0 +1,180 @@
+version: "2.0"
+
+task:
+  name: remix-disposed-root-error-forwarding
+  title: Stop forwarding DOM error events from disposed virtual roots
+
+source:
+  repo: remix-run/remix
+  pr_number: 11113
+  pr_url: https://github.com/remix-run/remix/pull/11113
+  base_commit: 5ce4b49540814294c08af920bd2b582881349f29
+  merge_commit: 88642924de0d4a130167202e719689a3ddda107d
+  primary_files:
+    - packages/component/src/lib/vdom.ts
+
+checks:
+  # ------- f2p (fail-to-pass) -------
+  - id: test_createroot_dispose_stops_forwarding
+    type: fail_to_pass
+    origin: pr_regression
+    description: After createRoot.dispose(), bubbling DOM error events must not be forwarded.
+
+  - id: test_createrangeroot_dispose_stops_forwarding
+    type: fail_to_pass
+    origin: pr_regression
+    description: After createRangeRoot.dispose(), bubbling DOM error events must not be forwarded.
+
+  - id: test_createroot_still_forwards_before_dispose
+    type: fail_to_pass
+    origin: behavioral_guard
+    description: Before dispose(), error events on the root container are still forwarded (guards against over-fixing).
+
+  - id: test_createrangeroot_still_forwards_before_dispose
+    type: fail_to_pass
+    origin: behavioral_guard
+    description: Before dispose(), error events on a range-root host are still forwarded.
+
+  - id: test_multiple_dispose_calls_safe
+    type: fail_to_pass
+    origin: behavioral_guard
+    description: Calling dispose() multiple times must be a safe no-op (idempotent).
+
+  # ------- p2p (pass-to-pass) — upstream regressions in the same files -------
+  - id: test_p2p_existing_error_forwarding
+    type: pass_to_pass
+    origin: repo_tests
+    description: Existing test for forwarding bubbling DOM error events still passes.
+
+  - id: test_p2p_dispose_no_op_before_render
+    type: pass_to_pass
+    origin: repo_tests
+    description: Existing test for dispose-before-first-render is still a no-op.
+
+  - id: test_p2p_setup_error_dispatches
+    type: pass_to_pass
+    origin: repo_tests
+    description: Setup-throw error dispatch still works.
+
+  - id: test_p2p_render_error_dispatches
+    type: pass_to_pass
+    origin: repo_tests
+    description: Render-throw error dispatch still works.
+
+  - id: test_p2p_queueTask_error_dispatches
+    type: pass_to_pass
+    origin: repo_tests
+    description: Sync queueTask-throw error dispatch still works.
+
+  - id: test_p2p_sync_event_handlers
+    type: pass_to_pass
+    origin: repo_tests
+    description: Sync event handlers attached via on() mixin still run.
+
+  - id: test_p2p_range_root_renders_content
+    type: pass_to_pass
+    origin: repo_tests
+    description: createRangeRoot still renders content between markers.
+
+  - id: test_p2p_range_root_forwards_error
+    type: pass_to_pass
+    origin: repo_tests
+    description: createRangeRoot still forwards bubbling DOM error events to listeners.
+
+  # ------- repo CI checks -------
+  - id: test_repo_typecheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: Repo's typecheck (tsc --noEmit) passes.
+
+# ------- rubric: subjective rules from agent config files -------
+# Source: AGENTS.md (root) and packages/component/AGENTS.md (subtree-relevant).
+rubric:
+  - id: rubric_no_semicolons_single_quotes
+    description: |
+      Code style: no semicolons, single quotes (Prettier with printWidth: 100, no
+      semicolons, single quotes). Modified TypeScript should follow this style.
+    source:
+      file: AGENTS.md
+      ref: 5ce4b49540814294c08af920bd2b582881349f29
+      lines: "37"
+      quote: "Formatting: Prettier (printWidth: 100, no semicolons, single quotes, spaces not tabs)"
+
+  - id: rubric_let_over_const_locals
+    description: |
+      Use `let` for locals and `const` only at module scope; never use `var`.
+    source:
+      file: AGENTS.md
+      ref: 5ce4b49540814294c08af920bd2b582881349f29
+      lines: "34"
+      quote: "Variables: Prefer `let` for locals, `const` only at module scope; never use `var`"
+
+  - id: rubric_function_style
+    description: |
+      Use regular function declarations/expressions by default; arrow functions only
+      for callback-based APIs (array methods, Promise callbacks, etc.).
+    source:
+      file: AGENTS.md
+      ref: 5ce4b49540814294c08af920bd2b582881349f29
+      lines: "35"
+      quote: "Functions: Use regular function declarations/expressions by default. For callback-based APIs (...), prefer arrow functions"
+
+  - id: rubric_typescript_strict
+    description: |
+      TypeScript strict mode, ESNext target, ES2022 modules, bundler resolution,
+      verbatimModuleSyntax. Type imports use `import type { X }`.
+    source:
+      file: AGENTS.md
+      ref: 5ce4b49540814294c08af920bd2b582881349f29
+      lines: "33,38"
+      quote: "Imports: Always use `import type { X }` for types ... TypeScript: Strict mode, ESNext target, ES2022 modules, bundler resolution, verbatimModuleSyntax"
+
+  - id: rubric_comments_only_for_non_obvious
+    description: |
+      Only add non-JSDoc comments when the code is doing something surprising or
+      non-obvious. Don't add narrative or explanatory comments.
+    source:
+      file: AGENTS.md
+      ref: 5ce4b49540814294c08af920bd2b582881349f29
+      lines: "40"
+      quote: "Comments: Only add non-JSDoc comments when the code is doing something surprising or non-obvious"
+
+  - id: rubric_lint_passes
+    description: |
+      Before finishing work, `pnpm run lint` must pass with zero errors.
+      Code must satisfy the repo's eslint config (--max-warnings=0).
+    source:
+      file: AGENTS.md
+      ref: 5ce4b49540814294c08af920bd2b582881349f29
+      lines: "10"
+      quote: "Before finishing work: Run `pnpm run lint` and resolve any lint errors before reporting completion."
+
+  - id: rubric_format_check_passes
+    description: |
+      Prettier format check (`pnpm run format:check`) must pass.
+    source:
+      file: AGENTS.md
+      ref: 5ce4b49540814294c08af920bd2b582881349f29
+      lines: "11"
+      quote: "Format: `pnpm run format` (auto-fix) or `pnpm run format:check` (check only)"
+
+  - id: rubric_no_test_loops_or_conditionals
+    description: |
+      Test suites must not use for-loops or conditionals (`if`, `switch`) inside
+      `describe()` blocks to generate cases — this breaks the Node.js test
+      runner's per-test IDE controls. (Applies if the agent adds tests.)
+    source:
+      file: AGENTS.md
+      ref: 5ce4b49540814294c08af920bd2b582881349f29
+      lines: "44"
+      quote: "No loops or conditionals in test suites: Do not use `for` loops or conditional statements (`if`, `switch`, etc.) to generate test cases within `describe()` blocks."
+
+  - id: rubric_lib_no_re_exports
+    description: |
+      Files in `src/lib` are implementation files. Do not add barrel-style
+      re-exports or thin pass-through wrappers between `src/lib` files.
+    source:
+      file: AGENTS.md
+      ref: 5ce4b49540814294c08af920bd2b582881349f29
+      lines: "21"
+      quote: "Lib module boundaries: Files in `src/lib` are implementation files. Do not add barrel-style re-exports or thin pass-through wrapper APIs between `src/lib` files."

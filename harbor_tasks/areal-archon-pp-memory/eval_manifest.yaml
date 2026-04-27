@@ -1,0 +1,120 @@
+version: '2.0'
+source:
+  repo: inclusionAI/AReaL
+  pr: 951
+  base_commit: 9e8b893eccbf92b7ac55942b40f008cc3c615007
+  merge_commit: a7f3735e37dce4d18749b23d4651fbe801ad74ec
+task:
+  kind: code_fix
+checks:
+- id: test_is_moe_model_config_exists_and_importable
+  type: fail_to_pass
+  origin: pr_diff
+  description: '``is_moe_model_config`` must be defined in ``areal/experimental/models/archon/utils.py`` and listed in ``__all__``.'
+- id: test_is_moe_model_config_true_for_moe_configs
+  type: fail_to_pass
+  origin: pr_diff
+  description: '``is_moe_model_config(cfg)`` returns ``True`` whenever ``cfg.num_experts > 1`` or ``cfg.num_local_experts > 1``.'
+- id: test_is_moe_model_config_false_for_dense_or_missing
+  type: fail_to_pass
+  origin: pr_diff
+  description: '``is_moe_model_config(cfg)`` returns ``False`` for configs missing the expert attrs, or where the value is ``None`` or ``<= 1``.'
+- id: test_null_output_chunks_class_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: A ``_NullOutputChunks`` class must exist in ``areal/experimental/engine/archon_runner.py``.
+- id: test_null_output_chunks_subclass_of_list
+  type: fail_to_pass
+  origin: pr_diff
+  description: '``_NullOutputChunks`` must subclass ``list`` so PyTorch''s pipelining stage code that types its ``output_chunks`` as a list keeps working.'
+- id: test_null_output_chunks_append_is_noop_and_stays_empty
+  type: fail_to_pass
+  origin: pr_diff
+  description: '``_NullOutputChunks.append(item)`` is a no-op (the container stays empty) so per-microbatch logits get freed instead of accumulating.'
+- id: test_null_output_chunks_other_list_ops_still_work
+  type: fail_to_pass
+  origin: pr_diff
+  description: Non-append list operations (len, iter, list()) on ``_NullOutputChunks`` continue to work as on a regular list.
+- id: test_reshard_policy_field_default_value
+  type: fail_to_pass
+  origin: pr_diff
+  description: '``ArchonEngineConfig`` exposes a ``reshard_after_forward_policy`` field defaulting to the string ``"default"``.'
+- id: test_reshard_policy_accepts_all_documented_values
+  type: fail_to_pass
+  origin: pr_diff
+  description: '``reshard_after_forward_policy`` accepts the three values ``"default"``, ``"always"``, ``"never"`` without raising.'
+- id: test_reshard_policy_rejects_invalid_value
+  type: fail_to_pass
+  origin: pr_diff
+  description: Constructing ``ArchonEngineConfig`` with an unsupported ``reshard_after_forward_policy`` value raises ``ValueError`` with a message that names the field and lists the valid choices.
+- id: test_reshard_policy_field_is_keyword_only_dataclass_field
+  type: fail_to_pass
+  origin: agent_config
+  description: The new field is added with a default and a non-empty ``help`` entry plus a ``choices`` list in metadata, per the project's api-config and CLI rules.
+  source:
+    path: .claude/rules/api-config.md
+    lines: 47-54
+    commit: 9e8b893eccbf92b7ac55942b40f008cc3c615007
+- id: test_ruff_lint_passes_on_pr_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's own linter (ruff 0.14.9, configured in ``pyproject.toml`` and run via pre-commit) passes on the files this PR modifies.
+- id: test_ruff_format_check_passes_on_pr_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's own formatter check (``ruff format --check``) passes on PR-modified files.
+config_edits:
+- path: AGENTS.md
+  tier: 1
+  gold_added: 'source .venv/bin/activate        # activate venv BEFORE pre-commit or git commit if venv exists'
+  gold_removed: ''
+rubric:
+- rule: '**Adding fields**: Add with default value (safe)'
+  source:
+    path: .claude/rules/api-config.md
+    lines: '47'
+    commit: 9e8b893eccbf92b7ac55942b40f008cc3c615007
+  evidence: Gold adds ``reshard_after_forward_policy`` field with ``default="default"`` to ``ArchonEngineConfig``.
+  category: architecture
+  verification: programmatic
+- rule: Use `__post_init__` for validation. Raise `ValueError` with clear message.
+  source:
+    path: .claude/rules/api-config.md
+    lines: 37-38
+    commit: 9e8b893eccbf92b7ac55942b40f008cc3c615007
+  evidence: Gold adds ``__post_init__`` validation that raises ``ValueError`` with the field name and all three valid choices in the message.
+  category: style
+  verification: programmatic
+- rule: Fields exposed to CLI must have clear `help` in metadata
+  source:
+    path: .claude/rules/api-config.md
+    lines: '54'
+    commit: 9e8b893eccbf92b7ac55942b40f008cc3c615007
+  evidence: Gold includes a ``help`` string describing all three modes and a ``choices`` list in the field metadata.
+  category: style
+  verification: programmatic
+- rule: Use `areal.utils.logging.getLogger(name)` with PascalCase descriptive name, NOT `print` or stdlib `logging`
+  source:
+    path: .claude/rules/code-style.md
+    lines: '16'
+    commit: 9e8b893eccbf92b7ac55942b40f008cc3c615007
+  evidence: Gold uses ``self.logger.info(...)`` (logger created via ``areal.utils.logging.getLogger``) rather than ``print`` or stdlib logging.
+  category: naming
+  verification: programmatic
+- rule: No wildcard imports (`from x import *`).
+  source:
+    path: AGENTS.md
+    lines: '24'
+    commit: 9e8b893eccbf92b7ac55942b40f008cc3c615007
+  evidence: Gold diff across all modified Python files contains no ``from x import *`` statements.
+  category: style
+  verification: programmatic
+- rule: Keep inheritance shallow (≤2 levels when possible)
+  source:
+    path: .claude/rules/code-style.md
+    lines: '11'
+    commit: 9e8b893eccbf92b7ac55942b40f008cc3c615007
+  evidence: Gold's ``_NullOutputChunks(list)`` has exactly one level of inheritance under ``list`` and only overrides ``append``.
+  category: architecture
+  verification: programmatic
+distractors: []

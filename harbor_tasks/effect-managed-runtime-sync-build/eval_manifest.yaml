@@ -1,0 +1,91 @@
+version: '2.0'
+source:
+  repo: Effect-TS/effect
+  pr: 6079
+  base_commit: dd4cf4b119592e670ad9347091bdec8a9c6c3422
+  merge_commit: 4eb5c008dfc7d2a97b191ca608948d994a2cce4c
+task:
+  kind: code_fix
+checks:
+- id: test_runtime_builds_synchronously_after_runfork
+  type: fail_to_pass
+  origin: pr_diff
+  description: runSync must succeed immediately after runFork on a ManagedRuntime whose layer is synchronously buildable (Layer.empty and Layer.succeed cases).
+- id: test_managed_runtime_existing_suite_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: The full existing ManagedRuntime test file (packages/effect/test/ManagedRuntime.test.ts) must keep passing.
+- id: test_changeset_added_for_effect_package
+  type: fail_to_pass
+  origin: agent_config
+  description: 'AGENTS.md requires every PR to ship a .changeset/<name>.md file with the standard ''"effect": patch|minor|major'' frontmatter.'
+  source:
+    path: AGENTS.md
+    lines: 41-42
+    commit: dd4cf4b119592e670ad9347091bdec8a9c6c3422
+rubric:
+- rule: 'Conciseness: Keep code and any wording concise and to the point. Sacrifice grammar for the sake of concision.'
+  source:
+    path: AGENTS.md
+    lines: '14'
+    commit: dd4cf4b119592e670ad9347091bdec8a9c6c3422
+  evidence: The gold patch adds only 3 lines of new logic in managedRuntime.ts (SyncScheduler + scheduler.flush()) and a 3-line short-circuit in fiberRuntime.ts, without verbose helpers or redundant variables.
+  category: style
+  verification: llm_judge
+- rule: 'Reduce comments: Avoid comments unless absolutely required to explain unusual or complex logic. Comments in jsdocs are acceptable.'
+  source:
+    path: AGENTS.md
+    lines: '15'
+    commit: dd4cf4b119592e670ad9347091bdec8a9c6c3422
+  evidence: The gold patch adds zero explanatory comments inside the patched functions.
+  category: style
+  verification: llm_judge
+- rule: '**Always** look at existing code in the repository to learn and follow established patterns before writing new code.'
+  source:
+    path: AGENTS.md
+    lines: 28-29
+    commit: dd4cf4b119592e670ad9347091bdec8a9c6c3422
+  evidence: The fix reuses existing Scheduler.SyncScheduler, internalRuntime.unsafeForkEffect, and core.suspend primitives rather than inventing new abstractions.
+  category: architecture
+  verification: llm_judge
+- rule: The `index.ts` files are automatically generated. Do not manually edit them.
+  source:
+    path: AGENTS.md
+    lines: 36-37
+    commit: dd4cf4b119592e670ad9347091bdec8a9c6c3422
+  evidence: The gold patch does not touch any index.ts or barrel files.
+  category: architecture
+  verification: llm_judge
+- rule: 'Conciseness: Keep code and any wording concise and to the point. Sacrifice grammar for the sake of concision.'
+  source:
+    path: AGENTS.md
+    lines: '14'
+    commit: dd4cf4b119592e670ad9347091bdec8a9c6c3422
+  evidence: 'The gold changeset body is one short line: ''build ManagedRuntime synchronously if possible''.'
+  category: style
+  verification: llm_judge
+distractors:
+- rule: 'Conciseness: Keep code and any wording concise and to the point. Sacrifice grammar for the sake of concision.'
+  source:
+    path: AGENTS.md
+    lines: '14'
+    commit: dd4cf4b119592e670ad9347091bdec8a9c6c3422
+  collision_type: would_cause_bug
+  why_distracting: Overzealous conciseness could lead to removing the existing async fallback path that genuinely async layers depend on, breaking non-sync-layer ManagedRuntime builds.
+  severity: high
+- rule: All pull requests must include a changeset in the `.changeset/` directory.
+  source:
+    path: AGENTS.md
+    lines: 41-42
+    commit: dd4cf4b119592e670ad9347091bdec8a9c6c3422
+  collision_type: scope_ambiguity
+  why_distracting: The changeset requirement says nothing about correctness of the changeset body — an agent could satisfy the rule with a generic or misleading description.
+  severity: low
+- rule: '**Always** look at existing code in the repository to learn and follow established patterns before writing new code.'
+  source:
+    path: AGENTS.md
+    lines: 28-29
+    commit: dd4cf4b119592e670ad9347091bdec8a9c6c3422
+  collision_type: rule_conflict
+  why_distracting: Following existing patterns too rigidly could discourage the lightweight SyncScheduler approach, since existing ManagedRuntime code defers builds asynchronously — yet the fix requires changing that pattern.
+  severity: medium

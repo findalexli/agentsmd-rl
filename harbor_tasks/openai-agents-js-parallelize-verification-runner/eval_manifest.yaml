@@ -1,0 +1,66 @@
+version: '2.0'
+source:
+  pr_url: https://github.com/openai/openai-agents-js/pull/1120
+  owner: openai
+  repo: openai-agents-js
+  pr_number: 1120
+  base_commit: 05dd513231c04ffb6013a25118605a7a72a9a063
+  merge_commit: 78df492ba6c02a382b740abdf396726ce3b0d9eb
+  title: 'chore(code-change-verification): parallelize fail-fast validation steps'
+  pr: 1120
+checks:
+- id: test_run_mjs_help_exits_zero
+  type: fail_to_pass
+  origin: pr_diff
+  description: '`node run.mjs --help` exits 0 and prints a usage banner mentioning `code-change-verification`.'
+- id: test_create_default_plan_structure
+  type: fail_to_pass
+  origin: pr_diff
+  description: '`createDefaultPlan()` returns sequential `[install, build]` and parallel `{build-check, dist-check, lint, test}` with the documented `commandText` values.'
+- id: test_sequential_failure_blocks_parallel
+  type: fail_to_pass
+  origin: pr_diff
+  description: When a sequential step fails, parallel steps are not started and the failed step's exit code propagates.
+- id: test_parallel_fail_fast_terminates_others
+  type: fail_to_pass
+  origin: pr_diff
+  description: When one parallel step fails, the runner terminates the still-running parallel steps quickly (fail-fast) and returns the failed step's exit code.
+- id: test_parallel_steps_run_concurrently
+  type: fail_to_pass
+  origin: pr_diff
+  description: Independent parallel steps execute concurrently — total wall-clock time is approximately max(step), not sum(step).
+- id: test_output_prefixed_with_label
+  type: fail_to_pass
+  origin: pr_diff
+  description: Every output line from a step is prefixed with `[<label>] ` so concurrent streams remain disambiguated.
+- id: test_run_sh_delegates_to_node_runner
+  type: fail_to_pass
+  origin: pr_diff
+  description: '`scripts/run.sh` forwards its arguments to the Node runner; `bash run.sh --help` exits 0 with the runner''s usage banner.'
+- id: test_run_sh_bash_syntax_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`run.sh` parses cleanly with `bash -n` (sanity check).'
+- id: test_repo_layout_intact
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository root files (`package.json`, `AGENTS.md`, `SKILL.md`, `run.sh`) are present (sanity check).
+rubric:
+- id: comments_end_with_period
+  source:
+    lines: '172'
+    commit: 05dd513231c04ffb6013a25118605a7a72a9a063
+    path: AGENTS.md
+  rule: Per AGENTS.md, comments in source files must end with a period.
+- id: docs_describe_phase_model
+  source:
+    lines: 20-31
+    commit: 05dd513231c04ffb6013a25118605a7a72a9a063
+    path: .agents/skills/code-change-verification/SKILL.md
+  rule: The SKILL.md and AGENTS.md prose accurately describes the new phase-based execution (sequential install+build barriers, then the validation commands run in parallel with fail-fast cancellation), so readers are not left believing the six commands still run strictly sequentially.
+- id: skill_validation_steps_unchanged
+  source:
+    lines: '22'
+    commit: 05dd513231c04ffb6013a25118605a7a72a9a063
+    path: .agents/skills/code-change-verification/SKILL.md
+  rule: The new runner still executes the same six pnpm commands documented in SKILL.md (`pnpm i`, `pnpm build`, `pnpm -r build-check`, `pnpm -r -F "@openai/*" dist:check`, `pnpm lint`, `pnpm test`); none are added, removed, renamed, or weakened.

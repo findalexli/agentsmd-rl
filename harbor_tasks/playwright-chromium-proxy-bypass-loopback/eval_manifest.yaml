@@ -1,0 +1,52 @@
+version: '2.0'
+source:
+  repo: microsoft/playwright
+  pr: 39566
+  base_commit: 23b12474a184466c5a83db49b7bcf4d45e970a26
+  merge_commit: 28c39dc7d810d31734452a5b40d5e8376e521499
+checks:
+- id: test_localhost_in_bypass_does_not_force_loopback
+  type: fail_to_pass
+  origin: pr_diff
+  description: When proxy.bypass='localhost', the chromium --proxy-bypass-list must not contain <-loopback>.
+- id: test_ipv4_loopback_in_bypass_does_not_force_loopback
+  type: fail_to_pass
+  origin: pr_diff
+  description: When proxy.bypass='127.0.0.1', <-loopback> must not be auto-added.
+- id: test_ipv6_loopback_in_bypass_does_not_force_loopback
+  type: fail_to_pass
+  origin: pr_diff
+  description: When proxy.bypass='::1', <-loopback> must not be auto-added.
+- id: test_mixed_bypass_with_localhost_does_not_force_loopback
+  type: fail_to_pass
+  origin: pr_diff
+  description: When proxy.bypass mixes 'localhost' with other hosts, <-loopback> must still be suppressed.
+- id: test_bypass_with_whitespace_around_localhost_still_recognized
+  type: fail_to_pass
+  origin: pr_diff
+  description: Trimmed bypass entries (whitespace handling) must be recognized as loopback indicators.
+- id: test_non_loopback_bypass_still_forces_loopback
+  type: pass_to_pass
+  origin: pr_diff
+  description: When bypass is purely non-loopback hosts, the default <-loopback> rule is still appended.
+- id: test_no_bypass_uses_default_loopback
+  type: pass_to_pass
+  origin: pr_diff
+  description: With no bypass and no env override, the default --proxy-bypass-list is exactly '<-loopback>'.
+- id: test_disable_env_var_skips_loopback
+  type: pass_to_pass
+  origin: pr_diff
+  description: PLAYWRIGHT_DISABLE_FORCED_CHROMIUM_PROXIED_LOOPBACK still suppresses <-loopback>.
+- id: test_proxy_server_argument_emitted
+  type: pass_to_pass
+  origin: pr_diff
+  description: The --proxy-server argument is emitted whenever proxy is configured.
+- id: test_explicit_loopback_token_in_bypass_not_duplicated
+  type: pass_to_pass
+  origin: pr_diff
+  description: An explicit '<-loopback>' user entry is not duplicated by the auto-add path.
+- id: test_chromium_source_parses_as_typescript
+  type: pass_to_pass
+  origin: static
+  description: The patched chromium.ts retains a brace-balanced _innerDefaultArgs whose body is V8-evaluable.
+rubric: []

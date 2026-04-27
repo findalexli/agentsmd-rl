@@ -1,0 +1,135 @@
+version: '2.0'
+source:
+  repo: huggingface/transformers
+  pr: 45122
+  base_commit: 09a0bbb21ac50eae76bec1c600ff711f135a4f91
+  merge_commit: 676559d5022b74aaa0cee1cee0842b7f27c5320e
+task:
+  kind: code_fix
+checks:
+- id: test_trf014_module_file_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: A new linter rule module utils/mlinter/trf014.py is added.
+- id: test_trf014_in_rules_toml
+  type: fail_to_pass
+  origin: pr_diff
+  description: rules.toml declares the [rules.TRF014] block with required spec fields.
+- id: test_trf014_default_enabled_true
+  type: fail_to_pass
+  origin: pr_diff
+  description: TRF014 must have default_enabled = true so the rule runs without opt-in.
+- id: test_trf014_detects_keyword_argument
+  type: fail_to_pass
+  origin: pr_diff
+  description: The TRF014 visitor flags foo(..., trust_remote_code=...) keyword usage.
+- id: test_trf014_detects_dict_kwargs
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'The TRF014 visitor flags foo(**{"trust_remote_code": ...}) splat usage.'
+- id: test_trf014_detects_dict_constructor_kwargs
+  type: fail_to_pass
+  origin: pr_diff
+  description: The TRF014 visitor flags foo(**dict(trust_remote_code=...)) splat usage.
+- id: test_trf014_clean_code_no_violation
+  type: fail_to_pass
+  origin: pr_diff
+  description: The TRF014 visitor produces no violations on code that does not mention trust_remote_code.
+- id: test_trf014_does_not_flag_pre_bound_kwargs
+  type: fail_to_pass
+  origin: pr_diff
+  description: Per the rule's docstring, pre-bound kwargs (kw = {...}; foo(**kw)) are out of scope; the visitor must not flag them.
+- id: test_lightglue_modeling_no_trust_remote_code_calls
+  type: fail_to_pass
+  origin: pr_diff
+  description: modeling_lightglue.py no longer passes trust_remote_code to any callable.
+- id: test_lightglue_modular_no_trust_remote_code_calls
+  type: fail_to_pass
+  origin: pr_diff
+  description: modular_lightglue.py no longer passes trust_remote_code to any callable.
+- id: test_lightglue_configuration_no_trust_remote_code_calls
+  type: fail_to_pass
+  origin: pr_diff
+  description: configuration_lightglue.py no longer passes trust_remote_code to any callable.
+- id: test_lightglue_config_no_trust_remote_code_field_in_modular
+  type: fail_to_pass
+  origin: pr_diff
+  description: LightGlueConfig (modular) no longer declares a trust_remote_code attribute.
+- id: test_lightglue_config_no_trust_remote_code_field_in_configuration
+  type: fail_to_pass
+  origin: pr_diff
+  description: LightGlueConfig (configuration) no longer declares a trust_remote_code attribute.
+- id: test_lightglue_docstring_does_not_document_trust_remote_code
+  type: fail_to_pass
+  origin: pr_diff
+  description: The LightGlueConfig docstring no longer documents trust_remote_code.
+- id: test_helpers_module_loadable
+  type: pass_to_pass
+  origin: repo_tests
+  description: utils.mlinter._helpers continues to expose the Violation dataclass.
+- id: test_existing_trf013_runs_against_modular_lightglue
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing rule TRF013 keeps functioning on modular_lightglue.py.
+- id: test_lightglue_modules_parse_as_python
+  type: pass_to_pass
+  origin: repo_tests
+  description: All three LightGlue modules remain syntactically valid Python.
+- id: test_rules_toml_parses_as_toml
+  type: pass_to_pass
+  origin: repo_tests
+  description: rules.toml remains valid TOML and retains the existing TRF001..TRF013 specs.
+- id: test_python_compiles_lightglue_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: python -m py_compile succeeds on all three LightGlue files.
+rubric:
+- rule: When a `modular` file is present, generated files should not be edited, as changes will be overwritten by `make fix-repo`! Instead, edit the `modular` file.
+  source:
+    path: .ai/AGENTS.md
+    lines: '67'
+    commit: 09a0bbb21ac50eae76bec1c600ff711f135a4f91
+  evidence: Gold patch edits modular_lightglue.py and propagates the same trust_remote_code removals into the generated configuration_lightglue.py and modeling_lightglue.py.
+  category: architecture
+  verification: llm_judge
+- rule: '`make style` or `make fix-repo` should be run as the final step before opening a PR.'
+  source:
+    path: .ai/AGENTS.md
+    lines: '8'
+    commit: 09a0bbb21ac50eae76bec1c600ff711f135a4f91
+  evidence: Gold patch is formatted consistently with the repo style and contains no stray whitespace or indentation drift.
+  category: style
+  verification: llm_judge
+- rule: PRs should be as brief as possible. Bugfix PRs in particular can often be only one or two lines long, and do not need large comments, docstrings or new functions in this case. Aim to minimize the size of the diff.
+  source:
+    path: .github/copilot-instructions.md
+    lines: '15'
+    commit: 09a0bbb21ac50eae76bec1c600ff711f135a4f91
+  evidence: Gold patch removes only the trust_remote_code plumbing and adds only the minimal TRF014 linter rule; no unrelated refactoring, symbol renames, or new abstractions.
+  category: style
+  verification: llm_judge
+distractors:
+- rule: Do not edit a `# Copied from` block, as it will be reverted by `make fix-repo`. Ideally you should edit the code it's copying from and propagate the change, but you can break the `# Copied from` link if needed.
+  source:
+    path: .ai/AGENTS.md
+    lines: '66'
+    commit: 09a0bbb21ac50eae76bec1c600ff711f135a4f91
+  collision_type: scope_ambiguity
+  why_distracting: Agent may conflate the Copied-from rule with the modular-file rule and hesitate to edit LightGlue files, not realizing the LightGlue model uses modular sharing (not Copied-from).
+  severity: medium
+- rule: Do not open one-off PRs for tiny edits (single typo, isolated lint cleanup, one mutable default argument, etc.).
+  source:
+    path: .ai/AGENTS.md
+    lines: '43'
+    commit: 09a0bbb21ac50eae76bec1c600ff711f135a4f91
+  collision_type: rule_conflict
+  why_distracting: This rule discourages small PRs, but copilot-instructions.md demands minimal diffs for security fixes; an agent may wrongly conclude the task is too small to be a valid contribution.
+  severity: medium
+- rule: After making changes, you should usually run `make fixup` to ensure any copies and modular files are updated, and then test all affected models.
+  source:
+    path: .github/copilot-instructions.md
+    lines: '35'
+    commit: 09a0bbb21ac50eae76bec1c600ff711f135a4f91
+  collision_type: architecture_boundary
+  why_distracting: Running the full affected-model test suite requires torch/accelerate and is out of scope for this lint-and-removal task; an agent may waste time installing heavy dependencies and running model tests that are not required.
+  severity: low

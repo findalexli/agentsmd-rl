@@ -1,0 +1,195 @@
+version: '2.0'
+task:
+  name: superset-custom-label-tokens
+  title: Add custom theme tokens for Published/Draft and Dataset type labels
+  kind: code_fix
+  difficulty: medium
+source:
+  repo: apache/superset
+  pr_number: 38679
+  base_commit: fdcb942f3c7c33cac49032ab748eb3a68eaa8bfa
+  merge_commit: 86a260e39b677bbd10d5cb73ad288cff80bc8444
+  pr_url: https://github.com/apache/superset/pull/38679
+  pr_title: 'feat(theming): Custom label tokens'
+  pr: 38679
+checks:
+- id: test_published_label_tokens
+  type: fail_to_pass
+  origin: repo_tests
+  description: 'PublishedLabel uses labelPublished*/labelDraft* tokens with proper
+
+    fallbacks to colorSuccessText/colorPrimaryText.
+
+    '
+- id: test_dataset_type_label_tokens
+  type: fail_to_pass
+  origin: repo_tests
+  description: 'DatasetTypeLabel uses labelDatasetPhysical*/labelDatasetVirtual*
+
+    tokens with proper fallbacks; data-test attribute is set; virtual
+
+    icon has no iconColor prop by default.
+
+    '
+- id: test_antd_token_names_recognize_label_tokens
+  type: fail_to_pass
+  origin: repo_tests
+  description: 'All 16 new label tokens are present in SUPERSET_CUSTOM_TOKENS so that
+
+    isValidTokenName() and isSupersetCustomToken() return true for them.
+
+    '
+- id: test_types_ts_declares_label_tokens
+  type: fail_to_pass
+  origin: repo_tests
+  description: 'SupersetSpecificTokens interface declares the 16 new label theme tokens.
+
+    '
+- id: test_repo_antd_token_names_existing
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Existing antdTokenNames.test.ts (11 tests, present at base) continues to
+
+    pass — the agent must not regress the existing token-validation API.
+
+    '
+rubric:
+- id: typescript_no_any
+  Why: 'Repo is actively migrating away from `any` (AGENTS.md / CLAUDE.md
+
+    "Frontend Modernization" section). New code must be properly typed.
+
+    '
+  How_to_apply: 'Inspect the agent''s diff for any `: any` or `as any`. Fail if present.
+
+    '
+  source:
+    lines: 30-33
+    commit: fdcb942f3c7c33cac49032ab748eb3a68eaa8bfa
+    path: AGENTS.md
+  rule: 'No `any` types are introduced in modified or new files.
+
+    '
+- id: prefer_superset_ui_core
+  Why: 'AGENTS.md "Use @superset-ui/core" rule and "Avoid custom css and
+
+    styles" rule.
+
+    '
+  How_to_apply: 'Verify the agent reads tokens from the `useTheme()` hook (from
+
+    `@apache-superset/core`) and does not introduce raw color literals
+
+    or inline `<style>` blocks.
+
+    '
+  source:
+    lines: 33-35
+    commit: fdcb942f3c7c33cac49032ab748eb3a68eaa8bfa
+    path: AGENTS.md
+  rule: 'Components and theming should use `@apache-superset/core` /
+
+    `@superset-ui/core` primitives, not direct Ant Design imports or
+
+    ad-hoc CSS.
+
+    '
+- id: license_headers_on_new_files
+  Why: 'AGENTS.md "Apache License Headers" rule explicitly requires the
+
+    header on new files.
+
+    '
+  How_to_apply: 'Inspect each new file''s first ~16 lines for the standard ASF
+
+    header. Test files inherit the same requirement.
+
+    '
+  source:
+    lines: 90-92
+    commit: fdcb942f3c7c33cac49032ab748eb3a68eaa8bfa
+    path: AGENTS.md
+  rule: 'Any new `.ts` / `.tsx` source files added by the agent include the
+
+    ASF license header.
+
+    '
+- id: no_time_specific_comments
+  Why: 'AGENTS.md "Code Comments" rule.
+
+    '
+  How_to_apply: 'Scan the agent''s added/modified comments for time-specific words.
+
+    '
+  source:
+    lines: 95-96
+    commit: fdcb942f3c7c33cac49032ab748eb3a68eaa8bfa
+    path: AGENTS.md
+  rule: 'Comments do not use words like "now", "currently", "today" — they
+
+    should remain accurate as the codebase evolves.
+
+    '
+- id: prefer_test_over_describe
+  Why: 'AGENTS.md "Use `test()` instead of `describe()`" rule, citing
+
+    kentcdodds.com avoid-nesting-when-testing.
+
+    '
+  How_to_apply: 'If the agent writes tests, verify they are flat `test(...)` calls
+
+    without unnecessary `describe(...)` wrappers.
+
+    '
+  source:
+    lines: 42-43
+    commit: fdcb942f3c7c33cac49032ab748eb3a68eaa8bfa
+    path: AGENTS.md
+  rule: 'New tests use top-level `test(...)` blocks rather than nested
+
+    `describe(...)` blocks. (Only relevant if the agent adds tests.)
+
+    '
+- id: prefer_antd_tokens_over_legacy
+  Why: 'AGENTS.md "Use antd theming tokens — Prefer antd tokens over legacy
+
+    theming tokens" rule.
+
+    '
+  How_to_apply: 'Check that all new tokens follow the established camelCase
+
+    `label<Variant><Property>` pattern and live alongside other
+
+    Superset-specific tokens, not in a parallel namespace.
+
+    '
+  source:
+    lines: 33-34
+    commit: fdcb942f3c7c33cac49032ab748eb3a68eaa8bfa
+    path: AGENTS.md
+  rule: 'Token additions use the antd-style theme-token naming convention
+
+    (camelCase, prefixed with `label`), consistent with existing
+
+    Superset custom tokens.
+
+    '
+- id: no_javascript_files
+  Why: 'AGENTS.md "NO JavaScript files - Convert to TypeScript" rule.
+
+    '
+  How_to_apply: 'Inspect the agent''s added file paths; reject any new `.js` /
+
+    `.jsx`.
+
+    '
+  source:
+    lines: 31-32
+    commit: fdcb942f3c7c33cac49032ab748eb3a68eaa8bfa
+    path: AGENTS.md
+  rule: 'No new `.js` or `.jsx` files are introduced — modifications stay
+
+    in TypeScript.
+
+    '
+config_edits: []

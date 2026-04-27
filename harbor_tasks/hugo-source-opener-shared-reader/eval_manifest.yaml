@@ -1,0 +1,99 @@
+version: '2.0'
+source:
+  repo: gohugoio/hugo
+  pr: 14685
+  base_commit: ea7eac65589a7c6e138a2dfba12615335b29bef3
+  merge_commit: df520e315087210e069050a873fb5e208659af91
+task:
+  kind: code_fix
+checks:
+- id: opener_returns_independent_readers
+  type: fail_to_pass
+  origin: pr_diff
+  description: Two readers opened concurrently must have independent positions
+- id: opener_repeated_full_reads_yield_full_value
+  type: fail_to_pass
+  origin: pr_diff
+  description: Calling opener many times must yield the full value each time with overlapping reader lifetimes
+- id: opener_with_non_string_value
+  type: fail_to_pass
+  origin: pr_diff
+  description: ValueAsOpenReadSeekCloser supports non-string Value types with independent readers
+- id: pagemeta_existing_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing pagemeta package tests must still pass
+- id: pagemeta_gofmt
+  type: pass_to_pass
+  origin: repo_tests
+  description: Changed files must be gofmt-clean
+- id: pagemeta_go_vet
+  type: pass_to_pass
+  origin: repo_tests
+  description: go vet on pagemeta must be clean
+- id: pagemeta_staticcheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: staticcheck on pagemeta must be clean
+- id: project_builds
+  type: pass_to_pass
+  origin: repo_tests
+  description: go build on the hugo binary must succeed
+- id: no_new_exported_symbols_in_changed_file
+  type: pass_to_pass
+  origin: agent_config
+  description: Fix does not introduce new top-level exported symbols in page_frontmatter.go
+  source:
+    path: AGENTS.md
+    lines: '7'
+    commit: ea7eac65589a7c6e138a2dfba12615335b29bef3
+rubric:
+- rule: Never export symbols that's not needed outside of the package.
+  source:
+    path: AGENTS.md
+    lines: '7'
+    commit: ea7eac65589a7c6e138a2dfba12615335b29bef3
+  evidence: Gold fix adds no new exported symbols; only changes the body of the existing ValueAsOpenReadSeekCloser method
+  category: architecture
+  verification: llm_judge
+- rule: This is a project with a long history; assume that a similiar problem has been solved before, look hard for helper functions before creating new ones.
+  source:
+    path: AGENTS.md
+    lines: '9'
+    commit: ea7eac65589a7c6e138a2dfba12615335b29bef3
+  evidence: Gold fix reuses hugio.NewReadSeekerNoOpCloserFromString rather than introducing a new reader wrapper type
+  category: architecture
+  verification: llm_judge
+- rule: Brevity is good.
+  source:
+    path: AGENTS.md
+    lines: '1'
+    commit: ea7eac65589a7c6e138a2dfba12615335b29bef3
+  evidence: Gold fix is a minimal 3-line change to ValueAsOpenReadSeekCloser with a compact accompanying test
+  category: style
+  verification: llm_judge
+- rule: In tests, use `qt` matchers (e.g. `b.Assert(err, qt.ErrorMatches, ...)`) instead of raw `if`/`t.Fatal` checks.
+  source:
+    path: AGENTS.md
+    lines: '10'
+    commit: ea7eac65589a7c6e138a2dfba12615335b29bef3
+  evidence: Gold test uses c.Assert with qt matchers throughout rather than raw t.Fatal
+  category: testing
+  verification: llm_judge
+distractors:
+- rule: If you need to add temporary debug printing, use `hdebug.Printf`.
+  source:
+    path: AGENTS.md
+    lines: '6'
+    commit: ea7eac65589a7c6e138a2dfba12615335b29bef3
+  collision_type: meta_confusion
+  why_distracting: Suggests a debug-printing workflow but the fix is a mechanical 3-line change needing no debugging output
+  severity: low
+- rule: Avoid global state at (almost) all cost.
+  source:
+    path: AGENTS.md
+    lines: '8'
+    commit: ea7eac65589a7c6e138a2dfba12615335b29bef3
+  collision_type: architecture_boundary
+  why_distracting: Could prompt over-engineering the Source struct to eliminate its Value field when a minimal closure-based fix suffices
+  severity: medium

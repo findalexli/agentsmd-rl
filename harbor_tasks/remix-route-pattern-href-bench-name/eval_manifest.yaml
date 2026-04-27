@@ -1,0 +1,100 @@
+version: '2.0'
+source:
+  repo: remix-run/remix
+  pr: 11019
+  base_commit: a2245eab8257758f5e323a5a4e3c89386568e3bb
+  merge_commit: 96c3f0c095dc8de98543af55df0b9400656f961b
+task:
+  kind: code_fix
+checks:
+- id: test_bench_file_loads
+  type: pass_to_pass
+  origin: static
+  description: The bench file remains a loadable ES module.
+- id: test_bench_name_uses_git_branch_and_short_commit
+  type: fail_to_pass
+  origin: static
+  description: Every name passed to `bench(...)` equals `<git rev-parse --abbrev-ref HEAD> (<git rev-parse --short HEAD>)`.
+- id: test_bench_name_is_not_literal_bench
+  type: fail_to_pass
+  origin: static
+  description: No bench name remains the hard-coded literal 'bench'.
+- id: test_bench_name_matches_branch_and_short_sha_pattern
+  type: fail_to_pass
+  origin: static
+  description: Bench names match the `<branch> (<short-sha>)` shape and contain the actual current branch and current short SHA.
+- id: test_bench_name_changes_with_new_commit
+  type: fail_to_pass
+  origin: static
+  description: The bench name is recomputed at module-load — adding a new commit changes the SHA segment of the name.
+- id: test_bench_name_falls_back_when_git_unavailable
+  type: pass_to_pass
+  origin: static
+  description: When `git rev-parse` fails (e.g. running outside a git repo), the bench name falls back to the literal 'bench'. This passes at base (where the name is always 'bench') and must continue to pass after the fix via the try/catch fallback.
+config_edits: []
+rubric:
+- rule: New imports of Node built-in modules use the `node:` prefix (e.g. `import { execSync } from 'node:child_process'`).
+  source:
+    path: AGENTS.md
+    lines: '18'
+    commit: a2245eab8257758f5e323a5a4e3c89386568e3bb
+  evidence: Gold patch imports `execSync` from `node:child_process` with the `node:` prefix.
+  category: style
+  verification: llm_judge
+- rule: Local variables in any added helper use `let`, not `const`. Only module-scope bindings may use `const`. Never `var`.
+  source:
+    path: AGENTS.md
+    lines: '24'
+    commit: a2245eab8257758f5e323a5a4e3c89386568e3bb
+  evidence: Gold patch uses `let` for local variables `branch` and `shortCommit` inside `getBenchName`.
+  category: style
+  verification: llm_judge
+- rule: Any new top-level helper (e.g. the `getBenchName` function) is defined as a regular function declaration, not an arrow function assigned to a variable.
+  source:
+    path: AGENTS.md
+    lines: '25'
+    commit: a2245eab8257758f5e323a5a4e3c89386568e3bb
+  evidence: 'Gold patch defines `getBenchName` as a regular `function getBenchName(): string { ... }` declaration.'
+  category: style
+  verification: llm_judge
+- rule: 'Prettier formatting: printWidth 100, no semicolons, single quotes, spaces (not tabs), 2-space indentation.'
+  source:
+    path: AGENTS.md
+    lines: '28'
+    commit: a2245eab8257758f5e323a5a4e3c89386568e3bb
+  evidence: Gold patch uses no semicolons, single quotes, and 2-space indentation consistent with Prettier defaults.
+  category: style
+  verification: llm_judge
+- rule: Only add non-JSDoc comments when the code is doing something surprising. A short JSDoc on the new helper is acceptable; large explanatory comment blocks are not.
+  source:
+    path: AGENTS.md
+    lines: '31'
+    commit: a2245eab8257758f5e323a5a4e3c89386568e3bb
+  evidence: Gold patch includes a brief JSDoc on `getBenchName` describing its return value, with no excessive comments.
+  category: style
+  verification: llm_judge
+- rule: The change does not modify the existing `describe(...)` blocks, `pattern.href(...)` calls, or other unrelated files in the benchmark directory.
+  source:
+    path: AGENTS.md
+    lines: ''
+    commit: a2245eab8257758f5e323a5a4e3c89386568e3bb
+  evidence: Gold patch only modifies the import, benchName assignment, and adds the `getBenchName` helper — existing describe blocks and href calls are untouched.
+  category: architecture
+  verification: semantic_diff
+distractors:
+- rule: Use Web Streams API, Uint8Array, Web Crypto API, Blob/File instead of Node.js APIs
+  source:
+    path: AGENTS.md
+    lines: '18'
+    commit: a2245eab8257758f5e323a5a4e3c89386568e3bb
+  collision_type: rule_conflict
+  why_distracting: The repo style guide discourages Node.js APIs, but this task requires `execSync` from `node:child_process` to invoke git.
+  severity: medium
+- rule: include `.ts` extensions on imports
+  source:
+    path: AGENTS.md
+    lines: '23'
+    commit: a2245eab8257758f5e323a5a4e3c89386568e3bb
+  collision_type: meta_confusion
+  why_distracting: The import convention mentions `.ts` extensions, but the `node:child_process` import is a bare specifier that does not use a file extension.
+  severity: low

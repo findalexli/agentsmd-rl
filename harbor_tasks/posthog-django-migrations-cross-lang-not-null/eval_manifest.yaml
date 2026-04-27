@@ -1,0 +1,136 @@
+version: '2.0'
+source:
+  repo: PostHog/posthog
+  pr: 55980
+  base_commit: ac0c547794d4f410c164ca7999ef38676d8fbe42
+  merge_commit: fa959ecf86abc8db3ee6707573b294f680e135dc
+task:
+  kind: markdown_authoring
+checks:
+- id: test_skill_has_cross_language_section_heading
+  type: fail_to_pass
+  origin: pr_diff
+  description: A new `##` (or `###`) markdown heading naming the cross-language NOT NULL hazard must be present in SKILL.md.
+- id: test_skill_explains_python_only_default
+  type: fail_to_pass
+  origin: pr_diff
+  description: Prose must mention `default=list` / `default=dict` / `default=<callable>`, state that Django applies the default in Python only, and that Postgres sees no column DEFAULT.
+- id: test_skill_recommends_runsql_default
+  type: fail_to_pass
+  origin: pr_diff
+  description: A `migrations.RunSQL(...)` snippet with an `ALTER TABLE ... ALTER COLUMN ... SET DEFAULT ...` statement must appear in the new section.
+- id: test_skill_mentions_non_django_writers
+  type: fail_to_pass
+  origin: pr_diff
+  description: The new section must call out at least two non-Django writers that may bypass the Python-side default (plugin-server nodejs/, rust/, Temporal workers, raw-SQL scripts).
+- id: test_classify_step_links_to_hazard
+  type: fail_to_pass
+  origin: pr_diff
+  description: Step 1 ("**Classify**") of the Workflow must include a cross-link to the new cross-language NOT NULL hazard section.
+- id: test_grep_signal_via_subprocess
+  type: fail_to_pass
+  origin: pr_diff
+  description: Subprocess `grep` of SKILL.md must match the cross-language NOT NULL hazard heading line.
+- id: test_skill_frontmatter_intact
+  type: pass_to_pass
+  origin: agent_config
+  description: 'Required YAML frontmatter (`name: django-migrations`, `description: ...`) must be preserved.'
+  source:
+    path: .agents/skills/writing-skills/SKILL.md
+    lines: '47'
+    commit: ac0c547794d4f410c164ca7999ef38676d8fbe42
+- id: test_skill_preserves_workflow_steps
+  type: pass_to_pass
+  origin: pr_diff
+  description: The four original Workflow steps (Classify, Generate, Apply safety rules, Validate) must remain in SKILL.md.
+- id: test_skill_clickhouse_pointer_intact
+  type: pass_to_pass
+  origin: pr_diff
+  description: The pre-existing pointer to the `clickhouse-migrations` skill must be preserved.
+config_edits:
+- path: .agents/skills/django-migrations/SKILL.md
+  tier: 1
+  gold_added: Added cross-link to step 1 of Workflow ("See also the [cross-language `NOT NULL` hazard](#cross-language-not-null-hazard) below.") and a new `## Cross-language NOT NULL hazard` section explaining Django Python-side defaults are invisible to Postgres, listing non-Django writers (plugin-server nodejs/, rust/, Temporal workers, ad-hoc scripts) and providing a `migrations.RunSQL(...)` ALTER TABLE ... ALTER COLUMN ... SET DEFAULT remediation snippet.
+  gold_removed: ''
+rubric:
+- rule: 'Markdown: prefer semantic line breaks; no hard wrapping'
+  source:
+    path: AGENTS.md
+    lines: '123'
+    commit: ac0c547794d4f410c164ca7999ef38676d8fbe42
+  evidence: The gold solution uses semantic line breaks (one sentence per line) in all new prose added to SKILL.md.
+  category: style
+  verification: llm_judge
+- rule: Use American English spelling
+  source:
+    path: AGENTS.md
+    lines: '124'
+    commit: ac0c547794d4f410c164ca7999ef38676d8fbe42
+  evidence: The gold solution uses American English spelling throughout (e.g. 'behavior' not 'behaviour', 'defense' not 'defence').
+  category: style
+  verification: llm_judge
+- rule: 'Structure: SKILL.md entry point + references/ for detailed content. Keep SKILL.md under 500 lines.'
+  source:
+    path: .agents/skills/writing-skills/SKILL.md
+    lines: '46'
+    commit: ac0c547794d4f410c164ca7999ef38676d8fbe42
+  evidence: The gold solution adds ~30 lines, keeping SKILL.md well under the 500-line limit.
+  category: architecture
+  verification: programmatic
+- rule: 'Tone: describe the workflow and reasoning, not a rigid script. Trust the agent to adapt.'
+  source:
+    path: .agents/skills/writing-skills/SKILL.md
+    lines: '48'
+    commit: ac0c547794d4f410c164ca7999ef38676d8fbe42
+  evidence: The gold solution describes the hazard and reasoning with flexible guidance rather than a rigid step-by-step script.
+  category: style
+  verification: llm_judge
+- rule: 'Conciseness: the agent is smart — only include context it doesn''t already have.'
+  source:
+    path: .agents/skills/writing-skills/SKILL.md
+    lines: '49'
+    commit: ac0c547794d4f410c164ca7999ef38676d8fbe42
+  evidence: The gold solution focuses on the cross-language hazard specifically without duplicating content from safe-django-migrations.md.
+  category: style
+  verification: llm_judge
+- rule: This repository is public and all commit messages, pull request titles, and pull request descriptions must be safe for public readers.
+  source:
+    path: AGENTS.md
+    lines: 69-76
+    commit: ac0c547794d4f410c164ca7999ef38676d8fbe42
+  evidence: The gold solution uses only generic OSS-appropriate language without referencing internal incidents, customers, or private operational details.
+  category: style
+  verification: llm_judge
+distractors:
+- rule: This repository is public and all commit messages, pull request titles, and pull request descriptions must be safe for public readers.
+  source:
+    path: AGENTS.md
+    lines: 69-76
+    commit: ac0c547794d4f410c164ca7999ef38676d8fbe42
+  collision_type: meta_confusion
+  why_distracting: The OSS guidance explicitly lists commit messages, PR titles, and PR descriptions but not skill files. An agent might conclude skill content is exempt and include internal incident references.
+  severity: high
+- rule: 'Tone: describe the workflow and reasoning, not a rigid script. Trust the agent to adapt.'
+  source:
+    path: .agents/skills/writing-skills/SKILL.md
+    lines: '48'
+    commit: ac0c547794d4f410c164ca7999ef38676d8fbe42
+  collision_type: rule_conflict
+  why_distracting: The task asks for a concrete copy-paste RunSQL snippet and grep command. An agent might overcorrect into an exhaustive rigid script enumerating every possible table/column, conflicting with the tone rule.
+  severity: medium
+- rule: 'Markdown: prefer semantic line breaks; no hard wrapping'
+  source:
+    path: AGENTS.md
+    lines: '123'
+    commit: ac0c547794d4f410c164ca7999ef38676d8fbe42
+  collision_type: architecture_boundary
+  why_distracting: An agent might apply hard-wrapping to code blocks and SQL snippets within the new section, breaking copy-paste fidelity of the RunSQL remediation snippet.
+  severity: medium
+- rule: 'Conciseness: the agent is smart — only include context it doesn''t already have.'
+  source:
+    path: .agents/skills/writing-skills/SKILL.md
+    lines: '49'
+    commit: ac0c547794d4f410c164ca7999ef38676d8fbe42
+  collision_type: scope_ambiguity
+  why_distracting: An agent might treat Django ORM internals as common knowledge and skip the explanation of why Python-side defaults are invisible to Postgres, making the section too terse to be useful.
+  severity: medium

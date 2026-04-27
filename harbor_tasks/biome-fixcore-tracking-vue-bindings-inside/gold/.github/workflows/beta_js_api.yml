@@ -1,0 +1,125 @@
+name: Beta release JavaScript API
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        type: string
+        required: true
+        description: The version to release
+
+env:
+  INPUT_VERSION: ${{ inputs.version }}
+
+jobs:
+  version:
+    name: Generate version
+    runs-on: depot-ubuntu-24.04-arm-16
+    outputs:
+      version: ${{ env.version }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set beta version
+        run: |
+          echo "version=$(node packages/@biomejs/js-api/scripts/update-beta-version.mjs)" >> $GITHUB_ENV
+
+  build:
+    needs: version
+    name: Package JavaScript APIs
+    runs-on: depot-ubuntu-24.04-arm-16
+
+    env:
+      version: ${{ needs.version.outputs.version }}
+    outputs:
+      version: ${{ env.version }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Install Node.js
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+        with:
+          node-version: 24.13.0
+
+      - name: Install just
+        uses: extractions/setup-just@e33e0265a09d6d736e2ee1e0eb685ef1de4669ff # v3.0.0
+
+      - name: Install wasm-bindgen-cli
+        run: cargo install wasm-bindgen-cli --version 0.2.106
+
+      - name: Install wasm-tools
+        run: cargo install wasm-tools
+
+      - name: Cache pnpm modules
+        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-
+      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4.2.0
+
+      - name: Set beta version
+        run: node packages/@biomejs/js-api/scripts/update-beta-version.mjs
+
+      - name: Compile backends
+        run: |
+          pnpm --filter @biomejs/js-api run build:wasm-bundler
+          pnpm --filter @biomejs/js-api run build:wasm-node
+          pnpm --filter @biomejs/js-api run build:wasm-web
+          pnpm --filter @biomejs/backend-jsonrpc i
+          pnpm --filter @biomejs/backend-jsonrpc run build
+
+      - name: Build package
+        run: |
+          pnpm --filter @biomejs/js-api i
+          pnpm --filter @biomejs/js-api run build
+
+      - name: Upload JS API artifact
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: js-api
+          path: |
+            ./packages/@biomejs/js-api/dist
+          if-no-files-found: error
+
+  publish:
+    name: Publish
+    runs-on: ubuntu-24.04
+    needs: build
+    environment: npm-publish
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Download package artifact
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          name: js-api
+          path: packages/@biomejs/js-api/dist
+
+      - name: Install Node.js
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+        with:
+          node-version: 24.13.0
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Set beta version
+        run: node packages/@biomejs/js-api/scripts/update-beta-version.mjs
+
+      - name: Publish npm package as beta
+        run: npm publish packages/@biomejs/js-api --tag beta --access public
+
+      - name: Create GitHub release and tag
+        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          name: JavaScript APIs v${{ needs.build.outputs.version }}
+          tag_name: "@biomejs/js-api@v${{ needs.build.outputs.version }}"
+          draft: false
+          prerelease: true
+          generate_release_notes: true

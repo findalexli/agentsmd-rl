@@ -1,0 +1,105 @@
+version: '2.0'
+task:
+  name: uv-preserve-eol-comments-on-remove
+  title: Preserve end-of-line comments when removing dependencies
+  kind: code_fix
+source:
+  owner: astral-sh
+  repo: uv
+  pr: 18557
+  base_commit: 46c9bac182d64359cef45d51fd796b81b3736f8b
+  merge_commit: 6d628da78a2b1689640f5dbf2b04f56f179601b0
+  primary_files:
+  - crates/uv-workspace/src/pyproject_mut.rs
+checks:
+- id: test_eol_comment_on_previous_item_is_preserved
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'End-of-line comment on the previous entry survives when the trailing entry is removed.
+
+    '
+- id: test_eol_comment_on_previous_item_preserved_in_middle_removal
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'End-of-line comment on the previous entry survives when a middle entry is removed.
+
+    '
+- id: test_own_line_comment_above_removed_item_is_preserved
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Own-line comment immediately above the removed item is retained in the output.
+
+    '
+- id: test_eol_comment_on_previous_item_preserved_when_removing_last_item
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Removing the LAST item in the dependency array preserves the inline comment that visually belonged to the previous line (the comment is stored in the removed item''s prefix and would otherwise be dropped).
+
+    '
+- id: test_comment_order_preserved_for_multiple_adjacent_matches
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'When multiple adjacent matches are removed, the original ordering of comments belonging to surrounding entries is preserved.
+
+    '
+- id: test_uv_workspace_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`cargo check -p uv-workspace --lib` succeeds after the change.
+
+    '
+- id: test_existing_unit_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Pre-existing pyproject_mut unit test `reformat_preserves_inline_comment_spacing` continues to pass.
+
+    '
+rubric:
+- id: no_panic_unwrap_unsafe
+  source:
+    lines: 7-9
+    commit: 46c9bac182d64359cef45d51fd796b81b3736f8b
+    path: CLAUDE.md
+  rule: 'Per repo CLAUDE.md: avoid `panic!`, `unreachable!`, `.unwrap()`, unsafe code, and clippy `#[allow(...)]` ignores in the modified code. Prefer `if let` patterns for fallibility.
+
+    '
+- id: prefer_let_chains
+  source:
+    lines: '10'
+    commit: 46c9bac182d64359cef45d51fd796b81b3736f8b
+    path: CLAUDE.md
+  rule: 'Per repo CLAUDE.md: prefer let-chains (`if let ... && ...`) over nested `if let` statements when the helper needs to inspect multiple `Option`-returning calls.
+
+    '
+- id: prefer_expect_over_allow
+  source:
+    lines: '9'
+    commit: 46c9bac182d64359cef45d51fd796b81b3736f8b
+    path: CLAUDE.md
+  rule: 'Per repo CLAUDE.md: prefer `#[expect(...)]` over `#[allow(...)]` if a clippy lint must be disabled. Avoid disabling lints unnecessarily.
+
+    '
+- id: avoid_short_variable_names
+  source:
+    lines: 16-17
+    commit: 46c9bac182d64359cef45d51fd796b81b3736f8b
+    path: CLAUDE.md
+  rule: 'Per repo CLAUDE.md: avoid shortening variable names; use full names like `prefix` and `requirement` instead of `pfx` or `req`.
+
+    '
+- id: prefer_top_level_imports
+  source:
+    lines: '15'
+    commit: 46c9bac182d64359cef45d51fd796b81b3736f8b
+    path: CLAUDE.md
+  rule: 'Per repo CLAUDE.md: prefer top-level imports over local imports or fully-qualified paths inside the modified function.
+
+    '
+- id: change_scope_minimal
+  source:
+    lines: 1-17
+    commit: 46c9bac182d64359cef45d51fd796b81b3736f8b
+    path: CLAUDE.md
+  rule: 'The fix should be localized to the `remove_dependency` helper in `crates/uv-workspace/src/pyproject_mut.rs`. It must not introduce drive-by refactors elsewhere in the crate.
+
+    '

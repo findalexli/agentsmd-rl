@@ -1,0 +1,76 @@
+version: '2.0'
+source:
+  owner: Effect-TS
+  repo: effect
+  pr_number: 6094
+  pr_url: https://github.com/Effect-TS/effect/pull/6094
+  pr_title: remove defensive check from tool call json schema generation
+  base_commit: 82996bce8debffcb44feb98bb862cf2662bd56b7
+  merge_commit: 88a5260788d57bb0c31a645fa44b5a68f5c73c38
+  pr: 6094
+task:
+  kind: code_fix
+  language: typescript
+  primary_files:
+  - packages/ai/ai/src/Tool.ts
+  workspace_path: /workspace/effect
+checks:
+- id: test_number_ast_returns_number_schema
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Tool.getJsonSchemaFromSchemaAst forwards Schema.Number.ast through JsonSchema.fromAST and produces a {type: "number"} schema instead of the placeholder empty-object schema.'
+- id: test_string_ast_returns_string_schema
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Tool.getJsonSchemaFromSchemaAst returns a {type: "string"} schema for Schema.String.ast.'
+- id: test_boolean_ast_returns_boolean_schema
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Tool.getJsonSchemaFromSchemaAst returns a {type: "boolean"} schema for Schema.Boolean.ast.'
+- id: test_struct_with_default_still_works
+  type: pass_to_pass
+  origin: pr_diff
+  description: 'Schema.Struct({name, count: Schema.optionalWith(Schema.Number, { default })}) still produces an object schema where ''name'' is required and ''count'' is optional.'
+- id: test_plain_struct_still_works
+  type: pass_to_pass
+  origin: pr_diff
+  description: A plain Schema.Struct continues to produce an object schema with all fields present and required.
+- id: test_changeset_added_for_change
+  type: fail_to_pass
+  origin: agent_config
+  description: AGENTS.md requires every PR to include a changeset *.md file under .changeset/ that names the affected package.
+  source:
+    lines: 44-47
+    commit: 82996bce8debffcb44feb98bb862cf2662bd56b7
+    path: AGENTS.md
+- id: test_repo_tool_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: The @effect/ai Tool test suite (packages/ai/ai/test/Tool.test.ts) must pass after the fix.
+rubric:
+- id: comments_are_minimal
+  source:
+    lines: '12'
+    commit: 82996bce8debffcb44feb98bb862cf2662bd56b7
+    path: AGENTS.md
+  rule: 'AGENTS.md: "Reduce comments: Avoid comments unless absolutely required to explain unusual or complex logic." The agent''s diff to Tool.ts must not introduce new line comments inside the function body unless they explain genuinely non-obvious behavior.'
+- id: code_is_concise
+  source:
+    lines: '11'
+    commit: 82996bce8debffcb44feb98bb862cf2662bd56b7
+    path: AGENTS.md
+  rule: 'AGENTS.md: "Conciseness: Keep code and any wording concise and to the point." The fix should be minimal — no extra abstractions, no helper functions, no defensive wrappers around JsonSchema.fromAST.'
+- id: follows_existing_patterns
+  source:
+    lines: 26-27
+    commit: 82996bce8debffcb44feb98bb862cf2662bd56b7
+    path: AGENTS.md
+  rule: 'AGENTS.md: "Always look at existing code in the repository to learn and follow established patterns before writing new code." The fix should match how the rest of Tool.ts and JsonSchema.fromAST callers handle ASTs — no out-of-place style.'
+- id: no_unrelated_changes
+  rule: The agent must not modify packages outside the affected one. In particular, no edits to packages/effect/ (upstream Schema AST is correct as-is) or to unrelated files.
+- id: changeset_describes_change
+  source:
+    lines: 44-47
+    commit: 82996bce8debffcb44feb98bb862cf2662bd56b7
+    path: AGENTS.md
+  rule: 'AGENTS.md: "All pull requests must include a changeset in the .changeset/ directory. This is important for maintaining a clear changelog." The new changeset entry should describe the @effect/ai change in plain language (e.g. mentioning that the defensive check was removed or that primitive AST inputs are now forwarded correctly).'

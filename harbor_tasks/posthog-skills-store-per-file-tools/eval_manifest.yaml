@@ -1,0 +1,218 @@
+version: '2.0'
+source:
+  repo: PostHog/posthog
+  pr: 55897
+  base_commit: 05e8c588d25b28716a4b64823d5e2b81fde9b6f2
+  merge_commit: 6cff0b4e7f422742827bb64ac1304f8449f38b45
+task:
+  kind: markdown_authoring
+checks:
+- id: test_skill_file_present
+  type: pass_to_pass
+  origin: static
+  description: SKILL.md exists at the expected path.
+- id: test_tools_table_lists_per_file_create
+  type: fail_to_pass
+  origin: pr_diff
+  description: Available-tools table lists `posthog:skill-file-create`.
+- id: test_tools_table_lists_per_file_delete
+  type: fail_to_pass
+  origin: pr_diff
+  description: Available-tools table lists `posthog:skill-file-delete`.
+- id: test_tools_table_lists_per_file_rename
+  type: fail_to_pass
+  origin: pr_diff
+  description: Available-tools table lists `posthog:skill-file-rename`.
+- id: test_bridge_allowed_tools_includes_skill_file_create
+  type: fail_to_pass
+  origin: pr_diff
+  description: Local /phs bridge `allowed-tools` includes `mcp__posthog__skill-file-create`.
+- id: test_bridge_allowed_tools_includes_skill_file_delete
+  type: fail_to_pass
+  origin: pr_diff
+  description: Local /phs bridge `allowed-tools` includes `mcp__posthog__skill-file-delete`.
+- id: test_bridge_allowed_tools_includes_skill_file_rename
+  type: fail_to_pass
+  origin: pr_diff
+  description: Local /phs bridge `allowed-tools` includes `mcp__posthog__skill-file-rename`.
+- id: test_per_file_edits_payload_documented
+  type: fail_to_pass
+  origin: pr_diff
+  description: Doc teaches the `file_edits` per-file patch payload by name.
+- id: test_frontmatter_skill_name_unchanged
+  type: pass_to_pass
+  origin: static
+  description: The skill's top-level `name:` frontmatter remains `skills-store`.
+- id: test_skill_under_500_lines
+  type: pass_to_pass
+  origin: agent_config
+  description: SKILL.md stays under 500 lines (writing-skills convention).
+  source:
+    path: .agents/skills/writing-skills/SKILL.md
+    lines: '46'
+    commit: 05e8c588d25b28716a4b64823d5e2b81fde9b6f2
+- id: test_no_files_array_replace_all_promoted_as_default
+  type: fail_to_pass
+  origin: pr_diff
+  description: Bulk-replace `files` shape is no longer promoted as the default update path; per-file primitives are now the recommended path.
+config_edits:
+- path: products/llm_analytics/skills/skills-store/SKILL.md
+  tier: 2
+  gold_added: 'Available tools table: three new rows for `posthog:skill-file-create`, `posthog:skill-file-delete`, `posthog:skill-file-rename`; `posthog:skill-update` purpose updated to "body, `edits`, or `file_edits`".
+
+    Updating a skill section rewritten into four subsections:
+
+    - Editing the body: full replacement (`body`) and incremental find/replace (`edits`) with worked JSON examples, mutual exclusivity note.
+
+    - Editing one bundled file: `file_edits` payload with worked JSON example, constraint that it cannot add/remove/rename files.
+
+    - Adding, removing, or renaming a file: atomic per-file CRUD tools with three worked JSON examples and version-chaining note.
+
+    - Replacing the whole bundle (rare): `files` replace-all reframed as opt-in for intentional bundle wipes.
+
+    Bridge skill `allowed-tools` line updated to include `mcp__posthog__skill-file-create`, `mcp__posthog__skill-file-delete`, `mcp__posthog__skill-file-rename`. New "Edit one part of an existing skill" section appended to bridge body with surgical-primitive routing hints.
+
+    '
+  gold_removed: 'Original `posthog:skill-update` purpose blurb ("Publish a new version (with `base_version` for concurrency)").
+
+    Original "Updating a skill" section: "Each `skill-update` publishes a new immutable version..." changed to "Each write publishes a new immutable version...". Legacy paragraph "Publish a new version. Fields you don''t provide are carried forward... If you pass `files`, they replace the previous version''s file set; if you omit `files`, they''re carried forward" replaced with surgical-primitive framing.
+
+    Old bridge `allowed-tools` line without the three new MCP tools.
+
+    '
+rubric:
+- rule: SKILL.md must remain under 500 lines.
+  source:
+    path: .agents/skills/writing-skills/SKILL.md
+    lines: '46'
+    commit: 05e8c588d25b28716a4b64823d5e2b81fde9b6f2
+  evidence: Gold diff adds new sections (tools table rows, editing subsections, bridge hints) but the file stays under 500 lines.
+  category: architecture
+  verification: programmatic
+- rule: 'Tone of the SKILL.md edits should describe the workflow and reasoning
+
+    (when to reach for `edits` vs `file_edits` vs the per-file CRUD tools)
+
+    rather than dictating a rigid step-by-step script. Trust the agent to
+
+    adapt.
+
+    '
+  source:
+    path: .agents/skills/writing-skills/SKILL.md
+    lines: '48'
+    commit: 05e8c588d25b28716a4b64823d5e2b81fde9b6f2
+  evidence: Gold diff uses "Pick the most surgical primitive for what you're changing" and describes reasoning, not a numbered script.
+  category: style
+  verification: llm_judge
+- rule: 'Conciseness — only document context the agent doesn''t already have.
+
+    Don''t re-explain general MCP / JSON / "fetch then update with
+
+    base_version" plumbing more than once if the surrounding skill
+
+    already covers it.
+
+    '
+  source:
+    path: .agents/skills/writing-skills/SKILL.md
+    lines: '49'
+    commit: 05e8c588d25b28716a4b64823d5e2b81fde9b6f2
+  evidence: Gold diff doesn't re-explain general MCP/JSON plumbing beyond what's needed; version-chaining note is concise.
+  category: style
+  verification: llm_judge
+- rule: 'Match the repo-wide markdown convention: prefer semantic line breaks,
+
+    no hard wrapping mid-sentence. The existing skill''s prose follows
+
+    this — new prose should too.
+
+    '
+  source:
+    path: AGENTS.md
+    lines: '122'
+    commit: 05e8c588d25b28716a4b64823d5e2b81fde9b6f2
+  evidence: Gold diff prose follows semantic line breaks matching the existing file's paragraphs.
+  category: style
+  verification: llm_judge
+- rule: 'Use American English spelling throughout the new prose
+
+    (e.g. "behavior", "favor", "color"), per the repo''s AGENTS.md.
+
+    '
+  source:
+    path: AGENTS.md
+    lines: '123'
+    commit: 05e8c588d25b28716a4b64823d5e2b81fde9b6f2
+  evidence: Gold diff uses American English spelling ("behavior", not "behaviour").
+  category: style
+  verification: llm_judge
+- rule: 'Any PostHog product mentioned in the prose should use Sentence casing
+
+    (e.g. "LLM analytics", not "LLM Analytics"). Tool / API identifiers
+
+    such as `posthog:skill-update` keep their literal casing — this rule
+
+    is about prose mentions of product names.
+
+    '
+  source:
+    path: AGENTS.md
+    lines: '124'
+    commit: 05e8c588d25b28716a4b64823d5e2b81fde9b6f2
+  evidence: Gold diff uses Sentence casing for product mentions.
+  category: naming
+  verification: llm_judge
+- rule: 'The doc''s recommended-default path for updates must be the most-
+
+    surgical primitive (body `edits`, per-file `file_edits`, or per-file
+
+    CRUD tools). The bulk-replace `files` shape must be reframed as a
+
+    rare opt-in for intentional bundle wipes — not the default
+
+    carry-forward shape.
+
+    '
+  source:
+    path: products/llm_analytics/skills/skills-store/SKILL.md
+    lines: ''
+    commit: 6cff0b4e7f422742827bb64ac1304f8449f38b45
+  evidence: Gold diff adds "Pick the most surgical primitive for what you're changing" and frames `files` as "Replacing the whole bundle (rare)".
+  category: architecture
+  verification: semantic_diff
+- rule: 'Each new primitive (`edits`, `file_edits`, `skill-file-create`,
+
+    `skill-file-delete`, `skill-file-rename`) should be illustrated with
+
+    a worked JSON example showing realistic field shapes (`skill_name`,
+
+    `base_version`, payload-specific keys). Bare prose without an
+
+    example is materially less useful for an agent reader.
+
+    '
+  source:
+    path: products/llm_analytics/skills/skills-store/SKILL.md
+    lines: ''
+    commit: 6cff0b4e7f422742827bb64ac1304f8449f38b45
+  evidence: Gold diff includes worked JSON examples for `edits`, `file_edits`, `skill-file-create`, `skill-file-delete`, and `skill-file-rename`.
+  category: style
+  verification: semantic_diff
+- rule: 'The local /phs bridge block in the same file is "intentionally
+
+    minimal — it just routes to the MCP tools". New bridge content
+
+    should match that — bullet-list routing hints, not a re-run of the
+
+    full Updating-a-skill section.
+
+    '
+  source:
+    path: products/llm_analytics/skills/skills-store/SKILL.md
+    lines: ''
+    commit: 05e8c588d25b28716a4b64823d5e2b81fde9b6f2
+  evidence: Gold diff adds a short bullet-list bridge section ("Edit one part of an existing skill") without re-running the full Updating-a-skill prose.
+  category: architecture
+  verification: llm_judge
+distractors: []

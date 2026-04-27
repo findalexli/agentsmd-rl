@@ -1,0 +1,119 @@
+version: '2.0'
+source:
+  owner: All-Hands-AI
+  repo: OpenHands
+  pr_number: 14049
+  base_commit: f7dce9c6c0929a2e74e15499f723d376e1e98238
+  merge_commit: 06d0320e5cedc69fab054bc821a4da024411935c
+  title: 'fix(frontend): restore notification sound and browser tab flash on agent completion'
+  pr: 14049
+checks:
+- id: test_browser_tab_flashes_title
+  type: fail_to_pass
+  origin: repo_tests
+  description: startNotification toggles document.title between baseline and message every 1000ms
+- id: test_browser_tab_stop_restores_title
+  type: fail_to_pass
+  origin: repo_tests
+  description: stopNotification clears the interval and restores baseline title
+- id: test_browser_tab_updates_baseline_on_external_rename
+  type: fail_to_pass
+  origin: repo_tests
+  description: Flasher updates its baseline if document.title changes externally during flashing
+- id: test_hook_starts_notification_on_finished_unfocused
+  type: fail_to_pass
+  origin: repo_tests
+  description: Hook flashes tab on FINISHED state transition when document is not focused
+- id: test_hook_plays_sound_on_finished_when_enabled
+  type: fail_to_pass
+  origin: repo_tests
+  description: Hook plays audio on FINISHED when enable_sound_notifications is true
+- id: test_hook_starts_on_awaiting_user_input
+  type: fail_to_pass
+  origin: repo_tests
+  description: Hook flashes tab on AWAITING_USER_INPUT state transition
+- id: test_hook_starts_on_awaiting_user_confirmation
+  type: fail_to_pass
+  origin: repo_tests
+  description: Hook flashes tab on AWAITING_USER_CONFIRMATION state transition
+- id: test_hook_stops_notification_on_window_focus
+  type: fail_to_pass
+  origin: repo_tests
+  description: Window focus event handler calls browserTab.stopNotification
+- id: test_hook_no_tab_flash_when_focused_but_sound_plays
+  type: fail_to_pass
+  origin: repo_tests
+  description: When document.hasFocus() is true, no tab flash but audio still plays
+- id: test_hook_no_sound_when_disabled
+  type: fail_to_pass
+  origin: repo_tests
+  description: When enable_sound_notifications is false, audio.play is not called
+- id: test_hook_ignores_non_notification_states
+  type: fail_to_pass
+  origin: repo_tests
+  description: Hook does not fire for non-notification states (RUNNING, LOADING)
+- id: test_repo_existing_format_time_delta_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Pre-existing format-time-delta vitest tests still pass
+rubric:
+- id: i18n_keys_not_dynamically_constructed
+  source:
+    lines: 139-146
+    commit: f7dce9c6c0929a2e74e15499f723d376e1e98238
+    path: AGENTS.md
+  rule: 'Translation keys must come from the I18nKey enum
+
+    (frontend/src/i18n/declaration.ts) or canonical maps such as
+
+    AGENT_STATUS_MAP (frontend/src/utils/status.ts). Dynamically
+
+    constructed keys (template literals / string concat) silently fall
+
+    back to the raw key at runtime.
+
+    '
+- id: ui_uses_tanstack_query_for_data_access
+  source:
+    lines: 140-146
+    commit: f7dce9c6c0929a2e74e15499f723d376e1e98238
+    path: AGENTS.md
+  rule: 'UI components must NEVER call API client methods (frontend/src/api)
+
+    directly. Data access must flow through TanStack Query hooks under
+
+    frontend/src/hooks/query/ or frontend/src/hooks/mutation/.
+
+    Architecture rule: UI components → TanStack Query hooks → Data
+
+    Access Layer (frontend/src/api) → API endpoints.
+
+    '
+- id: query_hook_naming_convention
+  source:
+    lines: 143-145
+    commit: f7dce9c6c0929a2e74e15499f723d376e1e98238
+    path: AGENTS.md
+  rule: 'Custom data hooks must follow naming conventions: query hooks use
+
+    "use[Resource]" (e.g., useConversationSkills); mutation hooks use
+
+    "use[Action]" (e.g., useDeleteConversation). New hooks placed under
+
+    frontend/src/hooks/ must follow consistent kebab-case file naming
+
+    (e.g., use-agent-notification.ts).
+
+    '
+- id: vitest_is_test_framework
+  source:
+    lines: 129-132
+    commit: f7dce9c6c0929a2e74e15499f723d376e1e98238
+    path: AGENTS.md
+  rule: 'The frontend test framework is Vitest. New tests must be written
+
+    with vitest (describe/it/expect, vi.* mocks, vi.useFakeTimers, etc.)
+
+    and placed under frontend/__tests__/ mirroring the source layout.
+
+    '

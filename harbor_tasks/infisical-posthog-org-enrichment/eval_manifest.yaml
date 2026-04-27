@@ -1,0 +1,58 @@
+version: '2.0'
+source:
+  repo: Infisical/infisical
+  pr_number: 5653
+  base_commit: eb98c0780a16851e642c1a2f47a01c8548b5689a
+  merge_commit: 3fdd984be742019cfc7e893b9ce94f89dd55425b
+  title: 'feat: enrich PostHog org groupIdentify with plan, is_cloud, seat_count, created_at'
+  pr: 5653
+checks:
+- id: test_groupidentify_includes_full_properties_in_aggregated_path
+  type: fail_to_pass
+  origin: pr_diff
+  description: processBucketEvents must call PostHog groupIdentify with all five enriched properties (name, is_cloud, plan, seat_count, created_at) on cloud instances.
+- id: test_self_hosted_emits_is_cloud_false_and_plan_free
+  type: fail_to_pass
+  origin: pr_diff
+  description: On a self-hosted instance whose license plan returns a null slug, groupIdentify must emit is_cloud=false and plan="free".
+- id: test_per_org_caching_within_bucket
+  type: fail_to_pass
+  origin: pr_diff
+  description: Within a single bucket flush, the org lookup (findOrgById) and plan lookup (getPlan) must each fire at most once per orgId, even when multiple users share the same org.
+- id: test_send_posthog_events_fire_and_forget_enriches_groupidentify
+  type: fail_to_pass
+  origin: pr_diff
+  description: The direct (non-aggregated) sendPostHogEvents path must asynchronously enrich groupIdentify with the same five properties without blocking the await.
+- id: test_groupidentify_resilient_to_org_dal_failure
+  type: fail_to_pass
+  origin: pr_diff
+  description: A failure in the org DAL lookup must not prevent groupIdentify from being emitted with is_cloud, plan, seat_count, and any already-known name.
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: The backend tsc --noEmit must still succeed after the change. The command is `npm run type:check` in the backend/ directory, mirroring `make reviewable-api`.
+rubric:
+- id: import_order_simple_import_sort
+  source:
+    lines: 42-50
+    commit: eb98c0780a16851e642c1a2f47a01c8548b5689a
+    path: backend/CLAUDE.md
+  rule: 'New imports respect the ESLint `simple-import-sort/imports` group order: side-effect → node: builtins → third-party packages → @app/* → @lib/* → @server/* → relative imports. The newly added `@app/services/org/org-dal` import must sit alongside other `@app/*` imports, not in the relative-import group.'
+- id: service_factory_minimal_pick_contract
+  source:
+    lines: 53-65
+    commit: eb98c0780a16851e642c1a2f47a01c8548b5689a
+    path: backend/CLAUDE.md
+  rule: Newly required dependency methods are narrowed via TypeScript `Pick` on the factory's typed dep object (the existing pattern), so the contract surfaces only `findOrgById` from the org DAL and only the additional `getPlan` from the license service. Do not widen dependencies to the full DAL/service type.
+- id: di_wired_in_routes_index
+  source:
+    lines: 53-65
+    commit: eb98c0780a16851e642c1a2f47a01c8548b5689a
+    path: backend/CLAUDE.md
+  rule: The new `orgDAL` dependency is wired into `telemetryServiceFactory` where it is constructed in `backend/src/server/routes/index.ts`, using the same manual-DI pattern as every other backend service.
+- id: reviewable_api_passes
+  source:
+    lines: 5-7
+    commit: eb98c0780a16851e642c1a2f47a01c8548b5689a
+    path: CLAUDE.md
+  rule: '`make reviewable-api` (which runs `npm run lint:fix` then `npm run type:check` from the backend/) must succeed on the patched tree, per the repo''s pre-PR convention.'

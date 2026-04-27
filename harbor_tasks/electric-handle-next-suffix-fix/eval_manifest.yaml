@@ -1,104 +1,83 @@
-version: "2.0"
-
-source_pr:
-  owner: electric-sql
-  repo: electric
-  number: 3961
-  merge_commit: 0031e81777c0a93ab90161be5e6d0e9c999e00d2
+version: '2.0'
+source:
+  repo: electric-sql/electric
+  pr: 3961
   base_commit: deb2a61614678fac029773a56b618382fe5b70f2
-  title: "fix(typescript-client): prevent handle -next suffix accumulation on repeated 409s"
-
-description: |
-  Fix unbounded URL growth on 409 retries when a proxy strips the handle header.
-  Previously, the client appended '-next' to the handle when a 409 response lacked
-  the electric-handle header, causing handle-next-next-next... accumulation and
-  414 URI Too Long errors.
-
-  The fix introduces a random cache-buster query param instead of mutating the
-  handle, ensuring unique retry URLs without unbounded growth.
-
+  merge_commit: 0031e81777c0a93ab90161be5e6d0e9c999e00d2
+task:
+  kind: code_fix
 checks:
-  # Fail-to-pass tests (behavioral changes)
-  - id: test_no_next_suffix_in_handle_construction
-    type: fail_to_pass
-    origin: pr_diff
-    description: Code must not use '-next' suffix hack on handles
-
-  - id: test_retry_url_has_cache_buster_after_409_without_handle
-    type: fail_to_pass
-    origin: pr_diff
-    description: Retry URL after 409 without handle header must be unique
-
-  - id: test_warning_for_missing_handle_header_on_409
-    type: fail_to_pass
-    origin: pr_diff
-    description: Code must warn when 409 lacks handle header (proxy/CDN issue)
-
-  - id: test_cache_buster_is_one_shot
-    type: fail_to_pass
-    origin: pr_diff
-    description: Cache buster must be consumed on retry and not persist
-
-  - id: test_behavioral_cache_buster_execution
-    type: fail_to_pass
-    origin: pr_diff
-    description: Vitest unit tests pass exercising the cache-busting mechanism
-
-  # Pass-to-pass tests (repo's own tests)
-  - id: test_vitest_unit_tests_pass
-    type: pass_to_pass
-    origin: repo_tests
-    description: All vitest unit tests pass (packages/typescript-client)
-
-  - id: test_shape_stream_state_tests_pass
-    type: pass_to_pass
-    origin: repo_tests
-    description: Shape stream state machine tests pass
-
-  - id: test_expired_shapes_cache_tests_pass
-    type: pass_to_pass
-    origin: repo_tests
-    description: Expired shapes cache regression tests pass
-
-  - id: test_typescript_typecheck_passes
-    type: pass_to_pass
-    origin: repo_tests
-    description: TypeScript type checking passes (pnpm run typecheck)
-
-  - id: test_eslint_stylecheck_passes
-    type: pass_to_pass
-    origin: repo_tests
-    description: ESLint style checking passes (pnpm run stylecheck)
-
+- id: test_no_next_suffix_in_handle_construction
+  type: fail_to_pass
+  origin: pr_diff
+  description: Code must not use '-next' suffix hack on handles
+- id: test_retry_url_has_cache_buster_after_409_without_handle
+  type: fail_to_pass
+  origin: pr_diff
+  description: Retry URL after 409 without handle header must be unique
+- id: test_warning_for_missing_handle_header_on_409
+  type: fail_to_pass
+  origin: pr_diff
+  description: Code must warn when 409 lacks handle header (proxy/CDN issue)
+- id: test_cache_buster_is_one_shot
+  type: fail_to_pass
+  origin: pr_diff
+  description: Cache buster must be consumed on retry and not persist
+- id: test_behavioral_cache_buster_execution
+  type: fail_to_pass
+  origin: pr_diff
+  description: Vitest unit tests pass exercising the cache-busting mechanism
+- id: test_vitest_unit_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: All vitest unit tests pass (packages/typescript-client)
+- id: test_shape_stream_state_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Shape stream state machine tests pass
+- id: test_expired_shapes_cache_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Expired shapes cache regression tests pass
+- id: test_typescript_typecheck_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript type checking passes (pnpm run typecheck)
+- id: test_eslint_stylecheck_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint style checking passes (pnpm run stylecheck)
 rubric:
-  - rule: "Before making changes to packages/typescript-client, read packages/typescript-client/SPEC.md first"
-    weight: 2
-    source: "AGENTS.md @ deb2a61614678fac029773a56b618382fe5b70f2"
-
-  - rule: "State machine contract must be preserved: markMustRefetch(handle?) produces InitialState per SPEC.md I10"
-    weight: 3
-    source: "packages/typescript-client/SPEC.md I10 @ deb2a61614678fac029773a56b618382fe5b70f2"
-
-  - rule: "Handles are identities, not cache busters - never fabricate handles with suffixes"
-    weight: 3
-    source: "PR description behavioral invariant"
-
-  - rule: "Every retry URL must be unique (use random cache-buster param)"
-    weight: 3
-    source: "PR description behavioral invariant"
-
-  - rule: "Transitions must never mutate existing state objects (immutability per SPEC.md I2)"
-    weight: 1
-    source: "packages/typescript-client/SPEC.md I2 @ deb2a61614678fac029773a56b618382fe5b70f2"
-
-  - rule: "Use pnpm for package management in this monorepo"
-    weight: 1
-    source: "AGENTS.md @ deb2a61614678fac029773a56b618382fe5b70f2"
-
-  - rule: "Run unit tests with: pnpm exec vitest run --config vitest.unit.config.ts"
-    weight: 1
-    source: "AGENTS.md @ deb2a61614678fac029773a56b618382fe5b70f2"
-
-  - rule: "Console warnings should be informative and indicate likely proxy/CDN issues"
-    weight: 1
-    source: "Agent code review"
+- rule: 'For any state, `state.markMustRefetch(handle)` produces an InitialState with: `offset === ''-1''`, `handle === handle` (the argument), `lastSyncedAt` preserved from previous state, `schema === undefined`, `liveCacheBuster === ''''`'
+  source:
+    path: packages/typescript-client/SPEC.md
+    lines: '166'
+    commit: deb2a61614678fac029773a56b618382fe5b70f2
+  evidence: 'Fix passes undefined (missing header value) to #reset(), preserving the markMustRefetch contract instead of fabricating a ''-next'' handle'
+  category: architecture
+  verification: llm_judge
+- rule: Transitions always create new state objects; they never mutate existing ones.
+  source:
+    path: packages/typescript-client/SPEC.md
+    lines: '90'
+    commit: deb2a61614678fac029773a56b618382fe5b70f2
+  evidence: 'Fix uses standalone createCacheBuster() function and proper #reset() transition rather than mutating existing state'
+  category: architecture
+  verification: llm_judge
+distractors:
+- rule: 'Integration tests in `packages/typescript-client` (and other TS packages) run against a real Electric server. Three services are required: **PostgreSQL**, **Electric**, and **Nginx**.'
+  source:
+    path: AGENTS.md
+    lines: '232'
+    commit: deb2a61614678fac029773a56b618382fe5b70f2
+  collision_type: scope_ambiguity
+  why_distracting: May cause model to attempt Docker service setup for integration tests instead of focusing on the client code fix
+  severity: medium
+- rule: '**Proxy must forward headers/params** - Preserve Electric query params'
+  source:
+    path: AGENTS.md
+    lines: '297'
+    commit: deb2a61614678fac029773a56b618382fe5b70f2
+  collision_type: scope_ambiguity
+  why_distracting: May cause model to attempt proxy configuration changes instead of handling missing headers gracefully in the client
+  severity: medium

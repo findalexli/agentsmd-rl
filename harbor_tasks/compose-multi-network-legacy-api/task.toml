@@ -1,0 +1,16 @@
+name = "compose-multi-network-legacy-api"
+title = "Restore multi-network post-connect fallback for Docker API < 1.44"
+description = "Compose v2 regressed multi-network deployments on Docker daemons older than API 1.44 (Docker 20.10/Synology DSM): the ContainerCreate call now sends every endpoint at once, which the old daemon rejects. Restore the post-create NetworkConnect fallback gated on the negotiated API version."
+
+[source]
+repo = "docker/compose"
+pr_number = 13629
+pr_url = "https://github.com/docker/compose/pull/13629"
+base_commit = "9cab43945a5ad651190ce5ec9800f449f489b5f6"
+merge_commit = "a97738de7dd9d14fcf98b4ef3528c417dabe77d3"
+
+[meta]
+language = "go"
+difficulty = "medium"
+tags = ["golang", "docker", "compose", "bug-fix", "api-versioning", "networking"]
+estimated_time_minutes = 25

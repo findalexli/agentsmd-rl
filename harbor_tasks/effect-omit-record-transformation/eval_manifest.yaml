@@ -1,0 +1,99 @@
+version: '2.0'
+source:
+  type: github_pr
+  owner: Effect-TS
+  repo: effect
+  pr_number: 6088
+  base_commit: 4d97a61a15b9dd6a0eece65b8f0c035e16d42ada
+  merge_commit: 82996bce8debffcb44feb98bb862cf2662bd56b7
+  url: https://github.com/Effect-TS/effect/pull/6088
+  pr: 6088
+task:
+  name: effect-omit-record-transformation
+  title: Schema.omit drops index signatures on Struct with optionalWith default + Record
+  files_modified:
+  - packages/effect/src/SchemaAST.ts
+  files_modified_in_tests:
+  - packages/effect/test/Schema/Schema/Struct/omit.test.ts
+checks:
+- id: test_omit_optionalwith_default_yields_typeliteral
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'omit on a Struct combining optionalWith({ default }) with Record must return a TypeLiteral AST exposing index signatures, not a Transformation with bare property signatures.
+
+    '
+- id: test_omit_optionalwith_default_matches_plain
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'omit AST on the optionalWith-default struct must equal the AST produced by omit on the structurally-equivalent plain-Number struct.
+
+    '
+- id: test_omit_optionalwith_option_yields_typeliteral
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'omit must also yield a TypeLiteral on Struct(optionalWith({ as: "Option" }) + Record), confirming the fix generalises beyond the {default} variant.
+
+    '
+- id: test_p2p_existing_omit_test
+  type: pass_to_pass
+  origin: repo_tests
+  description: Pre-existing omit.test.ts must keep passing.
+- id: test_p2p_pick_test
+  type: pass_to_pass
+  origin: repo_tests
+  description: Sibling pick.test.ts (related code path) must keep passing.
+- id: test_p2p_typecheck_schemaast
+  type: pass_to_pass
+  origin: pr_diff
+  description: tsc -p packages/effect/tsconfig.src.json must still typecheck cleanly.
+rubric:
+- id: prefer_existing_pattern
+  type: agent_config
+  source:
+    lines: 20-22
+    commit: 4d97a61a15b9dd6a0eece65b8f0c035e16d42ada
+    excerpt: '**Always** look at existing code in the repository to learn and follow
+
+      established patterns before writing new code.
+
+      '
+    path: AGENTS.md
+  rule: 'Match the repository''s existing AST-traversal pattern. Other helpers in SchemaAST.ts (e.g. getPropertyKeys, getPropertyKeyIndexedAccess) already handle Transformation by recursing into ast.to; the fix should use the same pattern rather than introducing a different one.
+
+    '
+- id: zero_tolerance_for_errors
+  type: agent_config
+  source:
+    lines: 11-14
+    commit: 4d97a61a15b9dd6a0eece65b8f0c035e16d42ada
+    excerpt: 'Zero Tolerance for Errors: All automated checks must pass.
+
+      '
+    path: AGENTS.md
+  rule: 'All automated checks must pass. tsc, vitest on the changed area, and sibling tests must remain green.
+
+    '
+- id: clarity_and_minimalism
+  type: agent_config
+  source:
+    lines: 13-16
+    commit: 4d97a61a15b9dd6a0eece65b8f0c035e16d42ada
+    excerpt: 'Clarity over Cleverness; Conciseness; Reduce comments.
+
+      '
+    path: AGENTS.md
+  rule: 'Keep the change clear and minimal — avoid clever rewrites or refactors. The PR''s intended scope is a small, surgical fix.
+
+    '
+- id: no_unnecessary_comments
+  type: agent_config
+  source:
+    lines: 16-16
+    commit: 4d97a61a15b9dd6a0eece65b8f0c035e16d42ada
+    excerpt: 'Reduce comments: Avoid comments unless absolutely required.
+
+      '
+    path: AGENTS.md
+  rule: 'The fix should not add explanatory comments unless absolutely required to explain unusual logic. JSDoc on documented public APIs is acceptable.
+
+    '

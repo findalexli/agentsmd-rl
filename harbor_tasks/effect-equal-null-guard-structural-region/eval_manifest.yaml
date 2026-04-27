@@ -1,0 +1,138 @@
+version: '2.0'
+source:
+  owner: Effect-TS
+  repo: effect
+  pr: 6133
+  base_commit: 5c80e578bd95e0cf6fceffc72fa0b130ca11ec8e
+  merge_commit: add06f4521403cbf4b9a692f9b59fb9d3d48293c
+  title: 'fix(Equal): guard against null in structuralRegion comparison'
+checks:
+- id: test_null_vs_object_in_structural_region
+  type: fail_to_pass
+  origin: pr_diff
+  description: Equal.equals(null, {a:1}) inside Utils.structuralRegion returns false instead of throwing.
+- id: test_object_vs_null_in_structural_region
+  type: fail_to_pass
+  origin: pr_diff
+  description: Equal.equals({a:1}, null) inside Utils.structuralRegion returns false instead of throwing.
+- id: test_null_vs_array_in_structural_region
+  type: fail_to_pass
+  origin: pr_diff
+  description: Equal.equals(null, [1,2,3]) inside Utils.structuralRegion returns false instead of throwing.
+- id: test_array_vs_null_in_structural_region
+  type: pass_to_pass
+  origin: pr_diff
+  description: Equal.equals([1,2,3], null) inside Utils.structuralRegion returns false (already correct symmetric case).
+- id: test_object_with_null_field_vs_object_with_object_field
+  type: fail_to_pass
+  origin: pr_diff
+  description: Recursive structural compare with null leaf vs nested object on the other side returns false instead of throwing.
+- id: test_no_exception_on_null_object_combinations
+  type: fail_to_pass
+  origin: pr_diff
+  description: Equal.equals never throws TypeError on any (null, object) / (object, null) / (null, array) / (array, null) combination inside Utils.structuralRegion.
+- id: test_null_vs_null_in_structural_region
+  type: pass_to_pass
+  origin: pr_diff
+  description: Equal.equals(null, null) inside Utils.structuralRegion remains true.
+- id: test_null_vs_string_in_structural_region
+  type: pass_to_pass
+  origin: pr_diff
+  description: Equal.equals(null, 'hello') inside Utils.structuralRegion remains false.
+- id: test_null_vs_undefined_in_structural_region
+  type: pass_to_pass
+  origin: pr_diff
+  description: Equal.equals(null, undefined) inside Utils.structuralRegion remains false.
+- id: test_nested_null_equality
+  type: pass_to_pass
+  origin: pr_diff
+  description: Two structurally identical nested objects with null leaf values are equal.
+- id: test_nested_null_vs_nonnull
+  type: pass_to_pass
+  origin: pr_diff
+  description: Nested objects differing in a null vs non-null leaf are not equal.
+- id: test_repo_existing_equal_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository's existing vitest suite for Equal.test.ts continues to pass.
+- id: test_repo_eslint_clean_on_equal
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository's ESLint configuration passes on packages/effect/src/Equal.ts.
+- id: test_changeset_present_for_fix
+  type: fail_to_pass
+  origin: agent_config
+  description: A changeset bumping the `effect` package is added in the .changeset/ directory, as required by AGENTS.md.
+  source:
+    lines: 39-43
+    commit: 5c80e578bd95e0cf6fceffc72fa0b130ca11ec8e
+    path: AGENTS.md
+- id: test_index_barrel_files_unchanged
+  type: pass_to_pass
+  origin: agent_config
+  description: packages/effect/src/index.ts (auto-generated barrel file) is not manually edited, as required by AGENTS.md.
+  source:
+    lines: 34-37
+    commit: 5c80e578bd95e0cf6fceffc72fa0b130ca11ec8e
+    path: AGENTS.md
+- id: test_no_scratchpad_files_left_behind
+  type: pass_to_pass
+  origin: agent_config
+  description: The scratchpad/ directory contains no leftover debugging files, as required by AGENTS.md.
+  source:
+    lines: 44-50
+    commit: 5c80e578bd95e0cf6fceffc72fa0b130ca11ec8e
+    path: AGENTS.md
+rubric:
+- id: clarity_over_cleverness
+  source:
+    lines: '13'
+    commit: 5c80e578bd95e0cf6fceffc72fa0b130ca11ec8e
+    path: AGENTS.md
+  rule: 'AGENTS.md (lines 13): "Clarity over Cleverness: Choose clear, maintainable solutions."
+
+    The fix should be a clear, straightforward null guard — not a clever rewrite of compareBoth''s
+
+    control flow. A small, localized check that any reader can immediately understand.
+
+    '
+- id: conciseness
+  source:
+    lines: '14'
+    commit: 5c80e578bd95e0cf6fceffc72fa0b130ca11ec8e
+    path: AGENTS.md
+  rule: 'AGENTS.md (line 14): "Conciseness: Keep code and any wording concise and to the point."
+
+    The diff to packages/effect/src/Equal.ts should be small. A multi-line refactor or rewrite of
+
+    compareBoth is over-scope; the minimal change is a couple of lines guarding against null
+
+    before the prototype-based path.
+
+    '
+- id: reduce_comments
+  source:
+    lines: '15'
+    commit: 5c80e578bd95e0cf6fceffc72fa0b130ca11ec8e
+    path: AGENTS.md
+  rule: 'AGENTS.md (line 15): "Avoid comments unless absolutely required to explain unusual or complex
+
+    logic." The added null guard is self-explanatory and should not be accompanied by an
+
+    inline explanatory comment in Equal.ts.
+
+    '
+- id: follow_existing_patterns
+  source:
+    lines: 28-29
+    commit: 5c80e578bd95e0cf6fceffc72fa0b130ca11ec8e
+    path: AGENTS.md
+  rule: 'AGENTS.md (lines 28-29): "Always look at existing code in the repository to learn and follow
+
+    established patterns before writing new code." The fix should match the style of nearby code
+
+    in compareBoth — early returns, no braces-on-newline reformatting, no introduction of
+
+    unrelated helper functions.
+
+    '

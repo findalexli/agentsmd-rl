@@ -1,0 +1,188 @@
+version: '2.0'
+source:
+  repo: SeleniumHQ/selenium
+  pr: 17257
+  base_commit: 36fc8f9b7bdedeba3884fadc232aec76fcd044c1
+  merge_commit: 5d23d81b3f04954eca5a6319ba2ac5a15cc05a33
+  url: https://github.com/SeleniumHQ/selenium/pull/17257
+  title: '[java] fix loading isDisplayed.js and other resources in OSGI environment'
+task:
+  name: selenium-osgi-resource-loader-overload
+  language: java
+checks:
+- id: test_to_byte_array_basic
+  type: pass_to_pass
+  origin: pr_diff
+  description: Read.toByteArray returns input bytes unchanged.
+- id: test_to_string_basic
+  type: pass_to_pass
+  origin: pr_diff
+  description: Read.toString round-trips a UTF-8 byte stream.
+- id: test_one_arg_resource_as_string_still_works
+  type: pass_to_pass
+  origin: pr_diff
+  description: 'Backward-compat: the original 1-arg Read.resourceAsString(String)
+
+    method still loads a resource via Read''s own classloader.
+
+    '
+- id: test_upstream_read_test_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'The upstream JUnit test java/test/.../io/ReadTest.java passes
+
+    against a planted isDisplayed.js fixture resource.
+
+    '
+- id: test_two_arg_overload_compiles
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'A caller using Read.resourceAsString(Class, String) compiles only
+
+    after the new overload has been added.
+
+    '
+- id: test_two_arg_returns_resource_content
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'The new 2-arg overload returns the resource''s byte content
+
+    decoded as UTF-8.
+
+    '
+- id: test_two_arg_uses_provided_class_classloader
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'The new overload resolves resources via the *provided* class''s
+
+    ClassLoader (URLClassLoader simulating the OSGI bundle scenario)
+
+    — a stub that delegates to Read.class.getResourceAsStream fails
+
+    this test.
+
+    '
+- id: test_two_arg_null_class_throws_npe
+  type: fail_to_pass
+  origin: agent_config
+  source:
+    commit: 36fc8f9b7bdedeba3884fadc232aec76fcd044c1
+    note: 'AGENTS.md ("Maintain API/ABI compatibility") and Java conventions
+
+      require defensive validation of public API parameters; a null
+
+      `resourceOwner` must surface a clear NullPointerException naming
+
+      the parameter.
+
+      '
+    path: java/AGENTS.md
+  description: 'Calling the new 2-arg overload with a null class argument throws
+
+    NullPointerException whose message names the parameter
+
+    ("Class owning the resource").
+
+    '
+- id: test_one_arg_method_marked_deprecated
+  type: fail_to_pass
+  origin: agent_config
+  source:
+    lines: Code conventions → Deprecation
+    commit: 36fc8f9b7bdedeba3884fadc232aec76fcd044c1
+    note: 'java/AGENTS.md "Deprecation" + AGENTS.md "Maintain API/ABI
+
+      compatibility" + AGENTS.md "Deprecation policy" → public
+
+      functionality replaced by a new variant must be deprecated
+
+      (not removed) and annotated to surface a warning.
+
+      '
+    path: java/AGENTS.md
+  description: 'The original 1-arg Read.resourceAsString(String) method is
+
+    retained but annotated @Deprecated, with javadoc pointing at the
+
+    new overload.
+
+    '
+rubric:
+- id: rubric_api_abi_compat
+  weight: 1
+  source:
+    commit: 36fc8f9b7bdedeba3884fadc232aec76fcd044c1
+    note: 'AGENTS.md "Invariants": "Maintain API/ABI compatibility - users
+
+      upgrade by changing only version number".
+
+      '
+    path: AGENTS.md
+  rule: 'The original `Read.resourceAsString(String)` method must remain
+
+    callable (not removed) so that downstream users upgrading to this
+
+    version do not have to change call sites.
+
+    '
+- id: rubric_small_diff
+  weight: 1
+  source:
+    commit: 36fc8f9b7bdedeba3884fadc232aec76fcd044c1
+    note: 'AGENTS.md "Invariants": "Avoid repo-wide refactors/formatting;
+
+      prefer small, reversible diffs".
+
+      '
+    path: AGENTS.md
+  rule: 'The fix is a localised, additive change (one new overload +
+
+    caller updates). No unrelated refactors, formatting churn, or
+
+    package-wide rewrites.
+
+    '
+- id: rubric_callsite_consistency
+  weight: 1
+  source:
+    commit: 36fc8f9b7bdedeba3884fadc232aec76fcd044c1
+    note: 'AGENTS.md cross-binding consistency / behaviour-preserving fixes
+
+      → all internal callers of the deprecated 1-arg form should be
+
+      migrated to the new 2-arg form so production callers get the
+
+      OSGI-correct behaviour.
+
+      '
+    path: AGENTS.md
+  rule: 'All in-repo callers of the deprecated 1-arg `Read.resourceAsString`
+
+    that load Selenium-shipped resources from a non-`Read` package
+
+    (CdpEventTypes, RemoteScript, W3CHttpCommandCodec) are migrated
+
+    to the 2-arg overload, passing their own class.
+
+    '
+- id: rubric_javadoc_deprecation
+  weight: 1
+  source:
+    commit: 36fc8f9b7bdedeba3884fadc232aec76fcd044c1
+    note: 'java/AGENTS.md "Code conventions → Documentation" requires
+
+      Javadoc on public APIs, and "Deprecation" requires deprecated
+
+      APIs to point at the replacement.
+
+      '
+    path: java/AGENTS.md
+  rule: 'The deprecated 1-arg `resourceAsString(String)` method has a
+
+    javadoc comment that explicitly directs users to the new
+
+    `resourceAsString(Class, String)` overload as the OSGI-safe
+
+    replacement.
+
+    '

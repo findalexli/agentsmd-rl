@@ -1,0 +1,78 @@
+version: '2.0'
+source:
+  owner: biomejs
+  repo: biome
+  pr_number: 8833
+  pr_url: https://github.com/biomejs/biome/pull/8833
+  base_commit: 883ea1d7748466dac8cec5bec7683b15ecfd37a1
+  merge_commit: 375792e7c94db6c676222b0b3ecdb7ad89d4ece6
+  title: 'fix(format/html): break if >2 children, and at least one is not whitespace sensitive'
+  pr: 8833
+task:
+  name: biome-html-force-break-block-like-sibling
+  language: rust
+  primary_files:
+  - crates/biome_html_formatter/src/html/lists/element_list.rs
+  - crates/biome_html_formatter/src/utils/css_display.rs
+checks:
+- id: test_force_break_block_like_sibling_with_text
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Visible block-like child adjacent to text forces parent multiline: `<div>a<div>b</div> c</div>` must reformat to four lines.
+
+    '
+- id: test_no_break_around_display_none_element
+  type: pass_to_pass
+  origin: pr_diff
+  description: '`display: none` siblings (e.g. `<meta>`) must NOT introduce whitespace around the element; `<div>123<meta attr />456</div>` stays on one line.
+
+    '
+- id: test_existing_whitespace_preserve_newline
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing whitespace/preserve-newline-after-element snapshot.
+- id: test_existing_whitespace_preserve_space
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing whitespace/preserve-space-after-element snapshot.
+- id: test_no_other_spec_test_regressions
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'No regressions in any spec_tests outside the two new whitespace cases.
+
+    '
+- id: test_repo_cargo_fmt_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Workspace passes `cargo fmt --check`.
+- id: test_repo_cargo_clippy_html_formatter
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`cargo clippy -p biome_html_formatter --all-targets -- --deny warnings` passes.
+
+    '
+rubric:
+- id: changeset_for_user_facing_change
+  source:
+    lines: 411-473
+    path: CLAUDE.md
+    commit: 883ea1d7748466dac8cec5bec7683b15ecfd37a1
+  rule: 'User-facing formatter behavior changes should be accompanied by a changeset in `.changeset/`, per the repository''s contributing guide.
+
+    '
+- id: lint_clean_before_commit
+  source:
+    lines: 302-313
+    path: CLAUDE.md
+    commit: 883ea1d7748466dac8cec5bec7683b15ecfd37a1
+  rule: 'Before considering the change ready, the linter (`cargo clippy --deny warnings`) and formatter (`cargo fmt`) should both run clean. (Already enforced as a pass_to_pass check.)
+
+    '
+- id: prefer_targeted_change_no_unrelated_refactor
+  source:
+    lines: 62-80
+    path: crates/biome_html_formatter/src/utils/css_display.rs
+    commit: 375792e7c94db6c676222b0b3ecdb7ad89d4ece6
+  rule: 'The fix should be confined to HTML formatter joining logic; do not refactor unrelated formatter helpers or change `is_block_like()`''s matched variants — the `FIXME` comment in css_display.rs explicitly keeps `CssDisplay::None` in the match arm.
+
+    '

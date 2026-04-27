@@ -1,0 +1,96 @@
+version: '2.0'
+source:
+  repo: tuist/tuist
+  pr: 10086
+  base_commit: 098406e621dd30872f0db68889983ccc25cd523e
+  merge_commit: 86da2457e87dd1091c08ca39ccd1a807e26bbd32
+task:
+  kind: code_with_config
+checks:
+- id: repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: tsc --noEmit succeeds on the worker source
+- id: existing_origins_still_present
+  type: pass_to_pass
+  origin: pr_diff
+  description: The 6 pre-existing origins remain in the routing table
+- id: routing_picks_known_continental_origins
+  type: pass_to_pass
+  origin: pr_diff
+  description: Routing for known points still resolves to the correct continent
+- id: au_east_origin_added
+  type: fail_to_pass
+  origin: pr_diff
+  description: cache-au-east.tuist.dev origin registered with eastern-AU coordinates
+- id: us_east_2_origin_added
+  type: fail_to_pass
+  origin: pr_diff
+  description: cache-us-east-2.tuist.dev origin registered in Ashburn
+- id: us_east_3_origin_added
+  type: fail_to_pass
+  origin: pr_diff
+  description: cache-us-east-3.tuist.dev origin registered in Ashburn
+- id: sydney_routes_to_au_east
+  type: fail_to_pass
+  origin: pr_diff
+  description: Sydney request resolves to cache-au-east as nearest origin
+- id: australian_cities_route_to_au_east
+  type: fail_to_pass
+  origin: pr_diff
+  description: Melbourne and Brisbane also prefer cache-au-east
+- id: ashburn_routes_to_us_east_family
+  type: fail_to_pass
+  origin: pr_diff
+  description: Ashburn request top-3 origins are the three us-east variants
+- id: infra_agents_md_lists_new_origins
+  type: fail_to_pass
+  origin: agent_config
+  description: infra/AGENTS.md documents the three new origins
+  source:
+    path: AGENTS.md
+    lines: 22-23
+    commit: 098406e621dd30872f0db68889983ccc25cd523e
+config_edits:
+- path: infra/AGENTS.md
+  tier: 1
+  gold_added: '- `cache-us-east-2.tuist.dev`
+
+    - `cache-us-east-3.tuist.dev`
+
+    - `cache-au-east.tuist.dev`'
+  gold_removed: ''
+rubric:
+- rule: When making changes in a directory with an `AGENTS.md`, keep that node up to date.
+  source:
+    path: AGENTS.md
+    lines: '23'
+    commit: 098406e621dd30872f0db68889983ccc25cd523e
+  evidence: infra/AGENTS.md updated to add bullets for all three new cache origins
+  category: architecture
+  verification: programmatic
+- rule: Do not modify `CHANGELOG.md` (auto-generated).
+  source:
+    path: AGENTS.md
+    lines: '18'
+    commit: 098406e621dd30872f0db68889983ccc25cd523e
+  evidence: Only infra/AGENTS.md and infra/registry-router/src/index.ts are touched
+  category: architecture
+  verification: programmatic
+- rule: Do not modify content in languages other than English.
+  source:
+    path: AGENTS.md
+    lines: '20'
+    commit: 098406e621dd30872f0db68889983ccc25cd523e
+  evidence: Only English content is modified
+  category: style
+  verification: llm_judge
+distractors:
+- rule: '**Adding/Removing Regions:** Update the `ROUTES` table in `src/index.ts` and deploy with `wrangler deploy`.'
+  source:
+    path: infra/AGENTS.md
+    lines: '37'
+    commit: 098406e621dd30872f0db68889983ccc25cd523e
+  collision_type: rule_conflict
+  why_distracting: References non-existent ROUTES table; the actual constant is named ORIGINS
+  severity: medium

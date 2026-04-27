@@ -1,0 +1,95 @@
+version: '2.0'
+task:
+  name: superset-datasource-access-validation
+  kind: code_fix
+  title: Align legacy /datasource access checks in superset/views/datasource/views.py
+source:
+  owner: apache
+  repo: superset
+  pr_number: 38647
+  base_commit: 12aca720746d70a13e0f76c24380ef4bdb69118f
+  merge_commit: a93e3197161c0eff0a92b6a55c8226b53739aacc
+  url: https://github.com/apache/superset/pull/38647
+  pr: 38647
+checks:
+- id: test_get_denies_unauthorised_user
+  type: fail_to_pass
+  origin: pr_diff
+  description: Datasource.get must propagate SupersetSecurityException from raise_for_access.
+- id: test_get_invokes_raise_for_access_for_authorised_user
+  type: fail_to_pass
+  origin: pr_diff
+  description: Datasource.get must always invoke security_manager.raise_for_access(datasource=...).
+- id: test_external_metadata_denies_unauthorised_user
+  type: fail_to_pass
+  origin: pr_diff
+  description: external_metadata must propagate SupersetSecurityException from raise_for_access.
+- id: test_external_metadata_invokes_raise_for_access
+  type: fail_to_pass
+  origin: pr_diff
+  description: external_metadata must invoke raise_for_access(datasource=...) on each call.
+- id: test_external_metadata_by_name_known_datasource_denied
+  type: fail_to_pass
+  origin: pr_diff
+  description: external_metadata_by_name must enforce raise_for_access on the resolved datasource.
+- id: test_external_metadata_by_name_unknown_datasource_denied
+  type: fail_to_pass
+  origin: pr_diff
+  description: external_metadata_by_name must enforce raise_for_access(database=, table=) when no datasource is resolved.
+- id: test_save_checks_ownership_when_owners_omitted
+  type: fail_to_pass
+  origin: pr_diff
+  description: Datasource.save must run raise_for_ownership even when the request body omits the "owners" field.
+- id: test_save_checks_ownership_when_owners_supplied
+  type: fail_to_pass
+  origin: pr_diff
+  description: Datasource.save must reject non-owners regardless of whether they supplied an "owners" list.
+- id: test_new_test_file_has_apache_license_header
+  type: pass_to_pass
+  origin: agent_config
+  description: Newly created Python files require an ASF license header.
+  source:
+    lines: Apache License Headers section
+    commit: 12aca720746d70a13e0f76c24380ef4bdb69118f
+    path: AGENTS.md
+- id: test_new_test_file_uses_type_hints
+  type: pass_to_pass
+  origin: agent_config
+  description: New Python code must include type hints on public functions.
+  source:
+    lines: Backend Type Safety / Python Backend
+    commit: 12aca720746d70a13e0f76c24380ef4bdb69118f
+    path: AGENTS.md
+- id: test_views_module_imports_cleanly
+  type: pass_to_pass
+  origin: repo_tests
+  description: The patched views module must import without syntax/runtime errors.
+- id: test_repo_unit_test_collection_succeeds
+  type: pass_to_pass
+  origin: repo_tests
+  description: pytest --collect-only must succeed for tests/unit_tests/views/datasource.
+rubric:
+- id: pre_commit_runnable
+  source:
+    lines: ALWAYS Run Pre-commit Before Pushing
+    commit: 12aca720746d70a13e0f76c24380ef4bdb69118f
+    path: AGENTS.md
+  rule: Code changes should be free of obvious style issues that pre-commit (ruff, black, mypy) would flag — AGENTS.md mandates pre-commit cleanliness before pushing.
+- id: type_hints_completeness
+  source:
+    lines: Python Backend / Backend Type Safety
+    commit: 12aca720746d70a13e0f76c24380ef4bdb69118f
+    path: AGENTS.md
+  rule: Any newly added Python helper functions or test fixtures should carry parameter and return-type annotations, in line with the "Type hints required for all new code" rule.
+- id: prefer_unit_tests
+  source:
+    lines: Testing Strategy Migration
+    commit: 12aca720746d70a13e0f76c24380ef4bdb69118f
+    path: AGENTS.md
+  rule: Coverage for the access-control changes should be added as unit tests (mocked, in tests/unit_tests/) rather than as full integration tests, per the "Prefer unit tests over integration tests" guidance.
+- id: avoid_time_specific_comments
+  source:
+    lines: Code Comments
+    commit: 12aca720746d70a13e0f76c24380ef4bdb69118f
+    path: AGENTS.md
+  rule: Comments added or kept around the patched lines should not use time-specific words like "now", "currently", or "today" — these become outdated.

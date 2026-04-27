@@ -1,0 +1,111 @@
+version: '2.0'
+source:
+  pr_url: https://github.com/Effect-TS/effect/pull/6031
+  owner: Effect-TS
+  repo: effect
+  pr_number: 6031
+  base_commit: 33712058e2655dd50f9b2b511ab8d38c2bd5268a
+  merge_commit: 17812444c6c0d8f19f9fbc85d82f911dff5523ab
+  pr: 6031
+task:
+  name: effect-cluster-message-storage-empty-guards
+  title: Tighten Effect cluster MessageStorage.makeEncoded to guard empty id lists
+  primary_files:
+  - packages/cluster/src/MessageStorage.ts
+  - packages/cluster/src/SqlMessageStorage.ts
+checks:
+- id: test_repliesForUnfiltered_empty_skips_delegation
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Calling storage.repliesForUnfiltered([]) on a makeEncoded-wrapped storage must
+
+    return [] without invoking the underlying encoded.repliesForUnfiltered (verified
+
+    by an Effect.die trap on the encoded layer).
+
+    '
+- id: test_resetShards_empty_skips_delegation
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Calling storage.resetShards([]) must succeed without invoking the underlying
+
+    encoded.resetShards (verified by an Effect.die trap).
+
+    '
+- id: test_repliesForUnfiltered_nonempty_still_delegates
+  type: pass_to_pass
+  origin: pr_diff
+  description: 'Non-empty input to repliesForUnfiltered must still be forwarded to the encoded
+
+    layer with the string-coerced ids; guards a trivial fix that always returns [].
+
+    '
+- id: test_resetShards_nonempty_still_delegates
+  type: pass_to_pass
+  origin: pr_diff
+  description: 'Non-empty input to resetShards must still be forwarded to the encoded layer with
+
+    the string-coerced ids; guards a trivial fix that always returns void.
+
+    '
+- id: test_repo_messagestorage_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing packages/cluster/test/MessageStorage.test.ts vitest suite passes.
+- id: test_repo_typecheck_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: pnpm check (tsc -b) passes for @effect/cluster.
+- id: test_repo_lint_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: pnpm lint passes for the cluster package (ESLint).
+rubric:
+- id: rubric_zero_tolerance_errors
+  origin: agent_config
+  source:
+    lines: 10-10
+    commit: 33712058e2655dd50f9b2b511ab8d38c2bd5268a
+    path: AGENTS.md
+  rule: All automated checks (lint, tsc, tests) must pass with zero errors.
+- id: rubric_clarity_over_cleverness
+  origin: agent_config
+  source:
+    lines: 11-11
+    commit: 33712058e2655dd50f9b2b511ab8d38c2bd5268a
+    path: AGENTS.md
+  rule: Solution favors clear, maintainable code over clever shortcuts.
+- id: rubric_conciseness
+  origin: agent_config
+  source:
+    lines: 12-12
+    commit: 33712058e2655dd50f9b2b511ab8d38c2bd5268a
+    path: AGENTS.md
+  rule: Code stays concise and to the point; no unnecessary abstractions or wrapping.
+- id: rubric_minimal_comments
+  origin: agent_config
+  source:
+    lines: 13-13
+    commit: 33712058e2655dd50f9b2b511ab8d38c2bd5268a
+    path: AGENTS.md
+  rule: No new comments unless explaining unusual logic; JSDoc on exports is fine.
+- id: rubric_follow_existing_patterns
+  origin: agent_config
+  source:
+    lines: 29-30
+    commit: 33712058e2655dd50f9b2b511ab8d38c2bd5268a
+    path: AGENTS.md
+  rule: 'Follows existing code patterns in the file (in particular the established use of
+
+    the Arr non-empty helper that surrounding guards use) rather than introducing a
+
+    new style of check.
+
+    '
+- id: rubric_no_manual_index_edits
+  origin: agent_config
+  source:
+    lines: 37-39
+    commit: 33712058e2655dd50f9b2b511ab8d38c2bd5268a
+    path: AGENTS.md
+  rule: Does not manually edit auto-generated barrel files (index.ts).

@@ -1,0 +1,274 @@
+diff --git a/.changeset/versions-deploy-skip-deployable-fetch.md b/.changeset/versions-deploy-skip-deployable-fetch.md
+new file mode 100644
+index 0000000000..ad3787480e
+--- /dev/null
++++ b/.changeset/versions-deploy-skip-deployable-fetch.md
+@@ -0,0 +1,7 @@
++---
++"wrangler": patch
++---
++
++Skip unnecessary `GET /versions?deployable=true` API call in `wrangler versions deploy` when all version IDs are explicitly provided and `--yes` is passed
++
++When deploying a specific version non-interactively (e.g. `wrangler versions deploy <id> --yes`), Wrangler previously always fetched the full list of deployable versions to populate the interactive selection prompt — even though the prompt is skipped entirely when `--yes` is used and all versions are already specified. The deployable-versions list is now only fetched when actually needed (i.e. when no version IDs are provided, or when running interactively).
+diff --git a/packages/wrangler/src/__tests__/versions/versions.deploy.test.ts b/packages/wrangler/src/__tests__/versions/versions.deploy.test.ts
+index 56a460836a..a95d4fc43d 100644
+--- a/packages/wrangler/src/__tests__/versions/versions.deploy.test.ts
++++ b/packages/wrangler/src/__tests__/versions/versions.deploy.test.ts
+@@ -1,4 +1,5 @@
+ import { writeWranglerConfig } from "@cloudflare/workers-utils/test-helpers";
++import { HttpResponse, http } from "msw";
+ import { beforeEach, describe, it, test } from "vitest";
+ import { normalizeOutput } from "../../../e2e/helpers/normalize";
+ import {
+@@ -17,6 +18,7 @@ import {
+ 	mockSubDomainRequest,
+ } from "../helpers/mock-workers-subdomain";
+ import {
++	createFetchResult,
+ 	msw,
+ 	mswGetVersion,
+ 	mswListNewDeployments,
+@@ -30,6 +32,47 @@ import { runInTempDir } from "../helpers/run-in-tmp";
+ import { runWrangler } from "../helpers/run-wrangler";
+ import { writeWorkerSource } from "../helpers/write-worker-source";
+ 
++// MSW handler that returns the full annotations for version 30000000-... when
++// fetched individually (GET /versions/:id). The generic mswGetVersion() mock
++// returns no annotations, but the real API returns the same data as the list
++// endpoint. Used in tests that skip fetchDeployableVersions (--yes + explicit IDs).
++const mswGetVersion30000000 = http.get(
++	"*/accounts/:accountId/workers/scripts/:workerName/versions/30000000-0000-0000-0000-000000000000",
++	() =>
++		HttpResponse.json(
++			createFetchResult({
++				id: "30000000-0000-0000-0000-000000000000",
++				number: "NCC-74656",
++				annotations: {
++					"workers/triggered_by": "rollback",
++					"workers/rollback_from": "MOCK-DEPLOYMENT-ID-1111",
++					"workers/message": "Rolled back for this version",
++				},
++				metadata: {
++					author_id: "Kathryn-Jane-Gamma-6-0-7-3",
++					author_email: "Kathryn-Janeway@federation.org",
++					source: "wrangler",
++					created_on: "2021-02-02T00:00:00.000000Z",
++					modified_on: "2021-02-02T00:00:00.000000Z",
++				},
++				resources: {
++					bindings: [],
++					script: {
++						etag: "aaabbbccc",
++						handlers: ["fetch"],
++						last_deployed_from: "api",
++					},
++					script_runtime: {
++						compatibility_date: "2020-01-01",
++						compatibility_flags: [],
++						usage_model: "standard",
++						limits: { cpu_ms: 50 },
++					},
++				},
++			})
++		)
++);
++
+ describe("versions deploy", () => {
+ 	mockAccountId();
+ 	mockApiToken();
+@@ -115,7 +158,7 @@ describe("versions deploy", () => {
+ 				│           Tag:  -
+ 				│       Message:  -
+ 				│
+-				├ Fetching deployable versions
++				├ Fetching versions
+ 				│
+ 				├ Which version(s) do you want to deploy?
+ 				├ 1 Worker Version(s) selected
+@@ -180,7 +223,7 @@ describe("versions deploy", () => {
+ 				│           Tag:  -
+ 				│       Message:  -
+ 				│
+-				├ Fetching deployable versions
++				├ Fetching versions
+ 				│
+ 				├ Which version(s) do you want to deploy?
+ 				├ 0 Worker Version(s) selected
+@@ -212,7 +255,7 @@ describe("versions deploy", () => {
+ 				│           Tag:  -
+ 				│       Message:  -
+ 				│
+-				├ Fetching deployable versions
++				├ Fetching versions
+ 				│
+ 				├ Which version(s) do you want to deploy?
+ 				├ 1 Worker Version(s) selected
+@@ -259,7 +302,7 @@ describe("versions deploy", () => {
+ 				│           Tag:  -
+ 				│       Message:  -
+ 				│
+-				├ Fetching deployable versions
++				├ Fetching versions
+ 				│
+ 				├ Which version(s) do you want to deploy?
+ 				├ 1 Worker Version(s) selected
+@@ -306,7 +349,7 @@ describe("versions deploy", () => {
+ 				│           Tag:  -
+ 				│       Message:  -
+ 				│
+-				├ Fetching deployable versions
++				├ Fetching versions
+ 				│
+ 				├ Which version(s) do you want to deploy?
+ 				├ 2 Worker Version(s) selected
+@@ -361,7 +404,7 @@ describe("versions deploy", () => {
+ 				│           Tag:  -
+ 				│       Message:  -
+ 				│
+-				├ Fetching deployable versions
++				├ Fetching versions
+ 				│
+ 				├ Which version(s) do you want to deploy?
+ 				├ 1 Worker Version(s) selected
+@@ -408,7 +451,7 @@ describe("versions deploy", () => {
+ 				│           Tag:  -
+ 				│       Message:  -
+ 				│
+-				├ Fetching deployable versions
++				├ Fetching versions
+ 				│
+ 				├ Which version(s) do you want to deploy?
+ 				├ 2 Worker Version(s) selected
+@@ -463,7 +506,7 @@ describe("versions deploy", () => {
+ 				│           Tag:  -
+ 				│       Message:  -
+ 				│
+-				├ Fetching deployable versions
++				├ Fetching versions
+ 				│
+ 				├ Which version(s) do you want to deploy?
+ 				├ 2 Worker Version(s) selected
+@@ -496,6 +539,7 @@ describe("versions deploy", () => {
+ 
+ 		describe("max versions restrictions (temp)", () => {
+ 			test("2+ versions fails", async ({ expect }) => {
++				msw.use(mswGetVersion30000000);
+ 				const result = runWrangler(
+ 					"versions deploy 10000000-0000-0000-0000-000000000000 20000000-0000-0000-0000-000000000000 30000000-0000-0000-0000-000000000000 --yes"
+ 				);
+@@ -521,7 +565,7 @@ describe("versions deploy", () => {
+ 					│           Tag:  -
+ 					│       Message:  -
+ 					│
+-					├ Fetching deployable versions
++					├ Fetching versions
+ 					│
+ 					├ Which version(s) do you want to deploy?
+ 					├ 3 Worker Version(s) selected
+@@ -545,6 +589,7 @@ describe("versions deploy", () => {
+ 			});
+ 
+ 			test("--max-versions allows > 2 versions", async ({ expect }) => {
++				msw.use(mswGetVersion30000000);
+ 				const result = runWrangler(
+ 					"versions deploy 10000000-0000-0000-0000-000000000000 20000000-0000-0000-0000-000000000000 30000000-0000-0000-0000-000000000000 --max-versions=3 --yes"
+ 				);
+@@ -568,7 +613,7 @@ describe("versions deploy", () => {
+ 					│           Tag:  -
+ 					│       Message:  -
+ 					│
+-					├ Fetching deployable versions
++					├ Fetching versions
+ 					│
+ 					├ Which version(s) do you want to deploy?
+ 					├ 3 Worker Version(s) selected
+@@ -634,7 +679,7 @@ describe("versions deploy", () => {
+ 				│           Tag:  -
+ 				│       Message:  -
+ 				│
+-				├ Fetching deployable versions
++				├ Fetching versions
+ 				│
+ 				├ Which version(s) do you want to deploy?
+ 				├ 1 Worker Version(s) selected
+@@ -686,7 +731,7 @@ describe("versions deploy", () => {
+ 				│           Tag:  -
+ 				│       Message:  -
+ 				│
+-				├ Fetching deployable versions
++				├ Fetching versions
+ 				│
+ 				├ Which version(s) do you want to deploy?
+ 				├ 1 Worker Version(s) selected
+@@ -745,7 +790,7 @@ describe("versions deploy", () => {
+ 				│           Tag:  -
+ 				│       Message:  -
+ 				│
+-				├ Fetching deployable versions
++				├ Fetching versions
+ 				│
+ 				├ Which version(s) do you want to deploy?
+ 				├ 1 Worker Version(s) selected
+@@ -813,7 +858,7 @@ describe("versions deploy", () => {
+ 				│           Tag:  -
+ 				│       Message:  -
+ 				│
+-				├ Fetching deployable versions
++				├ Fetching versions
+ 				│
+ 				├ Which version(s) do you want to deploy?
+ 				├ 1 Worker Version(s) selected
+@@ -884,7 +929,7 @@ describe("versions deploy", () => {
+ 				│           Tag:  -
+ 				│       Message:  -
+ 				│
+-				├ Fetching deployable versions
++				├ Fetching versions
+ 				│
+ 				├ Which version(s) do you want to deploy?
+ 				├ 1 Worker Version(s) selected
+@@ -943,7 +988,7 @@ describe("versions deploy", () => {
+ 				│           Tag:  -
+ 				│       Message:  -
+ 				│
+-				├ Fetching deployable versions
++				├ Fetching versions
+ 				│"
+ 			`);
+ 		});
+diff --git a/packages/wrangler/src/versions/deploy.ts b/packages/wrangler/src/versions/deploy.ts
+index 397cdff7f2..c7d4e73c47 100644
+--- a/packages/wrangler/src/versions/deploy.ts
++++ b/packages/wrangler/src/versions/deploy.ts
+@@ -362,15 +362,23 @@ async function promptVersionsToDeploy(
+ 	versionCache: VersionCache,
+ 	yesFlag: boolean
+ ): Promise<VersionId[]> {
++	// If the user has already specified all versions they want to deploy and
++	// has passed --yes (so there's no interactive prompt), skip fetching the
++	// full deployable-versions list and only fetch the specific versions needed.
++	const skipDeployableVersionsFetch =
++		yesFlag && defaultSelectedVersionIds.length > 0;
++
+ 	await spinnerWhile({
+-		startMessage: "Fetching deployable versions",
++		startMessage: "Fetching versions",
+ 		async promise() {
+-			await fetchDeployableVersions(
+-				complianceConfig,
+-				accountId,
+-				workerName,
+-				versionCache
+-			);
++			if (!skipDeployableVersionsFetch) {
++				await fetchDeployableVersions(
++					complianceConfig,
++					accountId,
++					workerName,
++					versionCache
++				);
++			}
+ 			await fetchVersions(
+ 				complianceConfig,
+ 				accountId,

@@ -1,0 +1,90 @@
+version: "2.0"
+
+source:
+  owner: tuist
+  repo: tuist
+  pr_number: 10086
+  base_commit: 098406e621dd30872f0db68889983ccc25cd523e
+  merge_commit: 86da2457e87dd1091c08ca39ccd1a807e26bbd32
+  title: "feat(infra): add newer nodes to registry router"
+
+checks:
+  - id: test_repo_typecheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: "tsc --noEmit succeeds on the registry-router package (the package's CI command)."
+
+  - id: test_existing_origins_still_present
+    type: pass_to_pass
+    origin: repo_tests
+    description: "The 6 pre-existing origins remain registered in the routing table."
+
+  - id: test_routing_picks_known_continental_origins
+    type: pass_to_pass
+    origin: repo_tests
+    description: "Routing for known points (Frankfurt, Portland, Singapore, Santiago) still resolves to the correct continent."
+
+  - id: test_au_east_origin_added
+    type: fail_to_pass
+    origin: pr_behavior
+    description: "An Australian east-coast origin (cache-au-east.tuist.dev) is registered with sensible eastern-AU coordinates."
+
+  - id: test_us_east_2_origin_added
+    type: fail_to_pass
+    origin: pr_behavior
+    description: "A second us-east origin (cache-us-east-2.tuist.dev) is registered in Ashburn."
+
+  - id: test_us_east_3_origin_added
+    type: fail_to_pass
+    origin: pr_behavior
+    description: "A third us-east origin (cache-us-east-3.tuist.dev) is registered in Ashburn."
+
+  - id: test_sydney_routes_to_au_east
+    type: fail_to_pass
+    origin: pr_behavior
+    description: "A request from Sydney resolves to cache-au-east as the nearest origin (formerly Singapore)."
+
+  - id: test_australian_cities_route_to_au_east
+    type: fail_to_pass
+    origin: pr_behavior
+    description: "Melbourne and Brisbane also route to cache-au-east — guards against bad au-east coordinates."
+
+  - id: test_ashburn_routes_to_us_east_family
+    type: fail_to_pass
+    origin: pr_behavior
+    description: "A request near Ashburn resolves to the cluster of three us-east* origins."
+
+  - id: test_infra_agents_md_lists_new_origins
+    type: fail_to_pass
+    origin: agent_config
+    description: "infra/AGENTS.md is kept in sync with ORIGINS — the new hosts appear in the Origins bullet list."
+    source:
+      file: AGENTS.md
+      lines: "23-24"
+      commit: 098406e621dd30872f0db68889983ccc25cd523e
+      rule: "Intent Layer Maintenance: When making changes in a directory with an AGENTS.md, keep that node up to date."
+
+rubric:
+  - id: agents_md_intent_layer_consistency
+    description: "The infra/AGENTS.md 'Origins:' bullet list must enumerate every host present in src/index.ts ORIGINS, per the root AGENTS.md 'Intent Layer Maintenance' rule."
+    source:
+      file: AGENTS.md
+      lines: "23-24"
+      commit: 098406e621dd30872f0db68889983ccc25cd523e
+      rule: "When making changes in a directory with an AGENTS.md, keep that node up to date."
+
+  - id: no_changelog_modified
+    description: "Do not modify CHANGELOG.md — it is auto-generated, per the root AGENTS.md 'Global Guardrails'."
+    source:
+      file: AGENTS.md
+      lines: "19"
+      commit: 098406e621dd30872f0db68889983ccc25cd523e
+      rule: "Do not modify CHANGELOG.md (auto-generated)."
+
+  - id: english_only_content
+    description: "Documentation edits must be in English only (the source language), per the root AGENTS.md 'Global Guardrails'."
+    source:
+      file: AGENTS.md
+      lines: "21"
+      commit: 098406e621dd30872f0db68889983ccc25cd523e
+      rule: "Do not modify content in languages other than English (source language)."

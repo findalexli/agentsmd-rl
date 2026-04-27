@@ -1,0 +1,86 @@
+version: '2.0'
+task:
+  kind: code_fix
+  name: opencode-format-effect-schema-migration
+  title: Migrate MessageV2.Format from Zod to Effect Schema
+source:
+  owner: anomalyco
+  repo: opencode
+  pr_number: 23744
+  pr_url: https://github.com/anomalyco/opencode/pull/23744
+  base_commit: caaddf096424193ef3cba4bf2a8f9ae6876915bc
+  merge_commit: 2ae64f426b7d210f64151124a3b7d729f28af7ca
+  files_changed:
+  - packages/opencode/src/session/message-v2.ts
+  - packages/opencode/src/session/prompt.ts
+  - packages/opencode/test/session/structured-output.test.ts
+  - packages/opencode/specs/effect/schema.md
+  pr: 23744
+checks:
+- id: test_effect_schema_migration_probe
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'OutputFormatText / OutputFormatJsonSchema are Schema.Class instances, Format is a Schema.Union, and all three expose a .zod accessor whose safeParse mirrors the original Zod behaviour. Also verifies that SessionPrompt.PromptInput continues to accept the format field after callers are updated to go through .zod.optional().
+
+    '
+- id: test_structured_output_test
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Upstream test/session/structured-output.test.ts (22 tests) — tests are updated by the agent to use Format.zod.safeParse and must still pass.
+
+    '
+- id: test_message_v2_test
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Upstream test/session/message-v2.test.ts (24 tests) — must remain green across the migration.
+
+    '
+rubric:
+- id: schema_class_pattern
+  source:
+    lines: 88-94
+    path: packages/opencode/AGENTS.md
+    commit: caaddf096424193ef3cba4bf2a8f9ae6876915bc
+  rule: 'OutputFormatText and OutputFormatJsonSchema use Schema.Class with a static readonly zod = zod(this) accessor, matching the established convention in src/session/schema.ts.
+
+    '
+- id: branded_or_class_for_data
+  source:
+    lines: 88-94
+    path: packages/opencode/AGENTS.md
+    commit: caaddf096424193ef3cba4bf2a8f9ae6876915bc
+  rule: 'Multi-field session-domain shapes are defined with Schema.Class, not as anonymous Schema.Struct or as ad-hoc Zod objects retained alongside.
+
+    '
+- id: avoid_any
+  source:
+    lines: '13'
+    path: AGENTS.md
+    commit: caaddf096424193ef3cba4bf2a8f9ae6876915bc
+  rule: 'Implementation files do not introduce new `any` types beyond what was present before the migration. Cast points should be limited to the Object.assign expression that attaches `.zod` to the union schema.
+
+    '
+- id: prefer_const_no_else
+  source:
+    lines: 44-73
+    path: AGENTS.md
+    commit: caaddf096424193ef3cba4bf2a8f9ae6876915bc
+  rule: 'Diff uses `const` declarations and avoids `let` / `else` reassignment patterns where possible (root AGENTS.md style guide).
+
+    '
+- id: avoid_unnecessary_destructuring
+  source:
+    lines: 30-41
+    path: AGENTS.md
+    commit: caaddf096424193ef3cba4bf2a8f9ae6876915bc
+  rule: 'Touched code does not introduce new destructuring of single-use values (root AGENTS.md "Destructuring" section).
+
+    '
+- id: zod_bridge_accessor
+  source:
+    lines: 1-200
+    path: packages/opencode/specs/effect/schema.md
+    commit: caaddf096424193ef3cba4bf2a8f9ae6876915bc
+  rule: 'Each migrated schema exposes a `.zod` accessor produced via the project-local `zod()` helper (`src/util/effect-zod.ts`). The exported `Format` value is wrapped so that `Format.zod` is the derived Zod schema.
+
+    '

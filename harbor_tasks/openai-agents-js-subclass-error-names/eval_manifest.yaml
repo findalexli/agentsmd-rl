@@ -1,0 +1,152 @@
+version: '2.0'
+task:
+  name: openai-agents-js-subclass-error-names
+  title: 'agents-core: set subclass .name on AgentsError subclasses'
+  kind: code_fix
+  repo: openai/openai-agents-js
+  pr_number: 862
+  base_commit: 4a53e998a2cd27eb004c4c25d6d178bfe371b72e
+  merge_commit: f0ad7065c8ec8c532bf702d1912b7d42ee17b141
+  primary_files:
+  - packages/agents-core/src/errors.ts
+checks:
+- id: test_error_name_max_turns_exceeded
+  type: fail_to_pass
+  origin: pr_diff
+  description: MaxTurnsExceededError instance .name equals 'MaxTurnsExceededError'
+- id: test_error_name_model_behavior
+  type: fail_to_pass
+  origin: pr_diff
+  description: ModelBehaviorError instance .name equals 'ModelBehaviorError'
+- id: test_error_name_user_error
+  type: fail_to_pass
+  origin: pr_diff
+  description: UserError instance .name equals 'UserError'
+- id: test_error_name_system_error
+  type: fail_to_pass
+  origin: pr_diff
+  description: SystemError instance .name equals 'SystemError'
+- id: test_error_name_guardrail_execution
+  type: fail_to_pass
+  origin: pr_diff
+  description: GuardrailExecutionError instance .name equals 'GuardrailExecutionError'
+- id: test_error_name_tool_call
+  type: fail_to_pass
+  origin: pr_diff
+  description: ToolCallError instance .name equals 'ToolCallError'
+- id: test_error_name_input_guardrail_tripwire
+  type: fail_to_pass
+  origin: pr_diff
+  description: InputGuardrailTripwireTriggered instance .name equals subclass name
+- id: test_error_name_output_guardrail_tripwire
+  type: fail_to_pass
+  origin: pr_diff
+  description: OutputGuardrailTripwireTriggered instance .name equals subclass name
+- id: test_error_name_tool_input_guardrail_tripwire
+  type: fail_to_pass
+  origin: pr_diff
+  description: ToolInputGuardrailTripwireTriggered instance .name equals subclass name
+- id: test_error_name_tool_output_guardrail_tripwire
+  type: fail_to_pass
+  origin: pr_diff
+  description: ToolOutputGuardrailTripwireTriggered instance .name equals subclass name
+- id: test_error_string_includes_subclass_name
+  type: fail_to_pass
+  origin: pr_diff
+  description: String(err) for UserError and ToolCallError starts with the subclass name, not 'Error'
+- id: test_invalid_tool_input_error_inherits_subclass_name
+  type: fail_to_pass
+  origin: pr_diff
+  description: Transitively-derived InvalidToolInputError also picks up its subclass name
+- id: test_pnpm_lint_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo-wide ESLint must pass (pnpm lint)
+- id: test_agents_core_build_check_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: agents-core build-check (tsc --noEmit) must pass
+- id: test_upstream_errors_vitest_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Upstream agents-core errors.test.ts vitest passes
+rubric:
+- id: changeset_present
+  source:
+    lines: '37'
+    commit: 4a53e998a2cd27eb004c4c25d6d178bfe371b72e
+    path: AGENTS.md
+  weight: 1.0
+  rule: 'A changeset file must exist under .changeset/ that includes
+
+    ''@openai/agents-core'' with a non-empty bump (patch/minor/major) and a
+
+    summary line describing the fix. The repo''s AGENTS.md mandates that any
+
+    change under packages/ is accompanied by an appropriate changeset, and
+
+    the .codex/skills/changeset-validation skill is to be run before handoff.
+
+    '
+- id: minimal_change_in_base_class
+  source:
+    lines: '237'
+    commit: 4a53e998a2cd27eb004c4c25d6d178bfe371b72e
+    path: AGENTS.md
+  weight: 0.8
+  rule: 'The fix is implemented in the abstract AgentsError base class (a single
+
+    line in its constructor) rather than duplicated across every subclass.
+
+    Subclasses must not be modified to assign their own .name. AGENTS.md
+
+    review criteria emphasize ''Code is readable and maintainable''.
+
+    '
+- id: regression_test_added
+  source:
+    lines: '84'
+    commit: 4a53e998a2cd27eb004c4c25d6d178bfe371b72e
+    path: AGENTS.md
+  weight: 0.8
+  rule: 'A regression test that asserts on subclass .name values must be added
+
+    under packages/agents-core/test/. AGENTS.md requires unit tests for any
+
+    code change unless truly infeasible.
+
+    '
+- id: existing_test_expectation_updated
+  source:
+    lines: '236'
+    commit: 4a53e998a2cd27eb004c4c25d6d178bfe371b72e
+    path: AGENTS.md
+  weight: 0.6
+  rule: 'Tests that asserted on the buggy ''Error: Error:'' doubling
+
+    (e.g. agent.test.ts) must be updated to reflect the corrected
+
+    ''Error: <Subclass>:'' format. Reviewers expect tests to cover new
+
+    behavior and edge cases, and existing assertions should not silently
+
+    pass on stale expectations.
+
+    '
+- id: comments_end_with_period
+  source:
+    lines: '127'
+    commit: 4a53e998a2cd27eb004c4c25d6d178bfe371b72e
+    path: AGENTS.md
+  weight: 0.3
+  rule: 'Any new code comment introduced by the fix must end with a period, per
+
+    the project''s lint/style conventions.
+
+    '
+config_edits: []
+source:
+  repo: openai/openai-agents-js
+  pr: 862
+  base_commit: 4a53e998a2cd27eb004c4c25d6d178bfe371b72e
+  merge_commit: f0ad7065c8ec8c532bf702d1912b7d42ee17b141

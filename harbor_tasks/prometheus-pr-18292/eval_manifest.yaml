@@ -1,128 +1,119 @@
-task:
-  name: prometheus-tsdb-agent-getorcreate-race
-  source_pr: prometheus/prometheus#18292
+version: '2.0'
+source:
+  repo: prometheus/prometheus
+  pr: 18292
   base_commit: f99f3bb65d779dbaafe8b617c398b4f79b02e6d9
   merge_commit: 37d85980a3028cbcdfffa17761e0a1bd2bb534a2
-  description: |
-    Fixes a race condition in the Prometheus agent's getOrCreate where concurrent
-    appends for the same label set could produce duplicate in-memory series and
-    duplicate WAL records. The fix replaces GetOrSet with SetUnlessAlreadySet,
-    which uses a "first insertion wins" approach and cleans up losing refs.
-
-difficulty: medium
-time_estimate: 30m
-
-files:
-  primary:
-    - tsdb/agent/series.go
-    - tsdb/agent/db.go
-    - tsdb/agent/db_append_v2.go
-
-tags:
+task:
+  name: prometheus-tsdb-agent-getorcreate-race
+  kind: code_fix
+  difficulty: medium
+  tags:
   - go
   - race-condition
   - concurrency
   - tsdb
   - prometheus
-
 checks:
-  # Fail-to-pass tests - these must fail before fix and pass after
-  - id: test_concurrent_append_same_labels
-    type: fail_to_pass
-    origin: repo_tests
-    description: |
-      Concurrent appends for same label set produce exactly one series in memory
-      and one series record in the WAL (not duplicates).
-    test_file: test_outputs.py
-
-  - id: test_set_unless_already_set_concurrent
-    type: fail_to_pass
-    origin: repo_tests
-    description: |
-      Concurrent SetUnlessAlreadySet calls for same label set produce exactly
-      one canonical series with proper cleanup of losing refs.
-    test_file: test_outputs.py
-
-  - id: test_concurrent_gc_safety
-    type: fail_to_pass
-    origin: repo_tests
-    description: |
-      Concurrent SetUnlessAlreadySet and GC do not deadlock, survivors remain
-      reachable, and GC-eligible series are removed.
-    test_file: test_outputs.py
-
-  - id: test_setunlessalreadyset_method_exists
-    type: fail_to_pass
-    origin: programmatic
-    description: |
-      SetUnlessAlreadySet method must be added to stripeSeries.
-    test_file: test_outputs.py
-
-  # Pass-to-pass tests - these must pass both before and after
-  - id: test_set_unless_already_set_basic
-    type: pass_to_pass
-    origin: repo_tests
-    description: |
-      Basic SetUnlessAlreadySet functionality works correctly.
-    test_file: test_outputs.py
-
-  - id: test_method_signature_updated
-    type: pass_to_pass
-    origin: programmatic
-    description: |
-      getOrCreate signature updated to accept ref parameter.
-    test_file: test_outputs.py
-
-  - id: test_agent_package_compiles
-    type: pass_to_pass
-    origin: repo_tests
-    description: |
-      Agent package compiles without errors.
-    test_file: test_outputs.py
-
-  - id: test_existing_agent_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: |
-      All agent package tests pass.
-    test_file: test_outputs.py
-
-  - id: test_go_vet_passes
-    type: pass_to_pass
-    origin: repo_tests
-    description: |
-      go vet passes on agent package.
-    test_file: test_outputs.py
-
-  - id: test_go_mod_verify
-    type: pass_to_pass
-    origin: repo_tests
-    description: |
-      go mod verify passes - module dependencies are consistent.
-    test_file: test_outputs.py
-
-  - id: test_stripe_series_get
-    type: pass_to_pass
-    origin: repo_tests
-    description: |
-      TestStripeSeries_Get test passes - verifies stripeSeries GetByHash with hash collisions.
-    test_file: test_outputs.py
-
-  - id: test_no_deadlock
-    type: pass_to_pass
-    origin: repo_tests
-    description: |
-      TestNoDeadlock test passes - verifies no deadlock between GC and Set operations.
-    test_file: test_outputs.py
-
-  - id: test_agent_go_fmt
-    type: pass_to_pass
-    origin: repo_tests
-    description: |
-      go fmt passes on agent package - code formatting is correct.
-    test_file: test_outputs.py
-
-# Note: Rubric rules removed because the judge evaluates config/documentation
-# file edits, but this PR only modifies code files (tsdb/agent/*.go). The
-# AGENTS.md conventions (tests, code style, commits, scope) are enforced by
-# the test suite and code review, not via config file changes.
+- id: test_concurrent_append_same_labels
+  type: fail_to_pass
+  origin: repo_tests
+  description: Concurrent appends for same label set produce exactly one series in memory and one series record in the WAL.
+- id: test_concurrent_atomic_insert
+  type: fail_to_pass
+  origin: repo_tests
+  description: Concurrent atomic insert calls for the same label set all return the same canonical series without duplicates.
+- id: test_gc_concurrent_safety
+  type: fail_to_pass
+  origin: repo_tests
+  description: Concurrent atomic insert and GC do not deadlock, survivors remain reachable, and GC-eligible series are removed.
+- id: test_stripe_series_atomic_operation
+  type: fail_to_pass
+  origin: repo_tests
+  description: StripeSeries atomic check-then-insert creates series on first call and returns existing series on second call.
+- id: test_method_signature_updated
+  type: pass_to_pass
+  origin: pr_diff
+  description: getOrCreate signature updated to accept ref parameter so callers with an existing ref can skip redundant lookups.
+- id: test_agent_package_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: Agent package compiles without errors.
+- id: test_existing_agent_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: All existing agent package tests pass.
+- id: test_go_vet_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: go vet passes on agent package.
+- id: test_atomic_method_exists
+  type: pass_to_pass
+  origin: pr_diff
+  description: stripeSeries provides an atomic insert method required by the race condition fix.
+- id: test_go_mod_verify
+  type: pass_to_pass
+  origin: repo_tests
+  description: go mod verify passes - module dependencies are consistent.
+- id: test_stripe_series_get
+  type: pass_to_pass
+  origin: repo_tests
+  description: TestStripeSeries_Get passes - verifies GetByHash with hash collisions.
+- id: test_no_deadlock
+  type: pass_to_pass
+  origin: repo_tests
+  description: TestNoDeadlock passes - verifies no deadlock between GC and Set operations.
+- id: test_agent_go_fmt
+  type: pass_to_pass
+  origin: repo_tests
+  description: go fmt passes on agent package - code formatting is correct.
+rubric:
+- rule: Bug fixes require a test that reproduces the bug.
+  source:
+    path: AGENTS.md
+    lines: '73'
+    commit: f99f3bb65d779dbaafe8b617c398b4f79b02e6d9
+  evidence: Gold patch adds TestConcurrentAppendSameLabels, TestSetUnlessAlreadySetConcurrentSameLabels, and TestSetUnlessAlreadySetConcurrentGC tests that reproduce the race condition.
+  category: testing
+  verification: llm_judge
+- rule: All exposed objects must have a doc comment.
+  source:
+    path: AGENTS.md
+    lines: '104'
+    commit: f99f3bb65d779dbaafe8b617c398b4f79b02e6d9
+  evidence: SetUnlessAlreadySet method has a complete Go doc comment documenting insertion behavior, return values, and the no-deadlock invariant.
+  category: style
+  verification: llm_judge
+- rule: All comments must start with a capital letter and end with a full stop.
+  source:
+    path: AGENTS.md
+    lines: '105'
+    commit: f99f3bb65d779dbaafe8b617c398b4f79b02e6d9
+  evidence: All comments in the gold patch follow capitalization and full-stop conventions, including the SetUnlessAlreadySet doc comment and inline comments.
+  category: style
+  verification: llm_judge
+- rule: Tests should attempt to mirror realistic data and/or behaviour.
+  source:
+    path: AGENTS.md
+    lines: '76'
+    commit: f99f3bb65d779dbaafe8b617c398b4f79b02e6d9
+  evidence: TestConcurrentAppendSameLabels spawns 100 concurrent goroutines appending the same label set, mirroring realistic high-concurrency agent scenarios.
+  category: testing
+  verification: llm_judge
+distractors:
+- rule: Performance improvements require a benchmark that demonstrates the improvement.
+  source:
+    path: AGENTS.md
+    lines: '85'
+    commit: f99f3bb65d779dbaafe8b617c398b4f79b02e6d9
+  collision_type: architecture_boundary
+  why_distracting: This is a correctness fix for a race condition, not a performance change. Adding benchstat benchmarks adds unnecessary scope.
+  severity: low
+- rule: State your assumptions.
+  source:
+    path: AGENTS.md
+    lines: '101'
+    commit: f99f3bb65d779dbaafe8b617c398b4f79b02e6d9
+  collision_type: would_cause_bug
+  why_distracting: In concurrent programming, stating 'assumptions' about lock ordering or goroutine scheduling is dangerous because correctness requires invariant guarantees, not semantic assumptions.
+  severity: medium

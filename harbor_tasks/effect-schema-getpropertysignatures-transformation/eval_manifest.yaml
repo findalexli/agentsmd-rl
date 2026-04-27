@@ -1,0 +1,116 @@
+version: '2.0'
+source:
+  repo: Effect-TS/effect
+  pr: 6086
+  base_commit: ab3b64c20a039eb4d573fe757c41278925b22687
+  merge_commit: 4d97a61a15b9dd6a0eece65b8f0c035e16d42ada
+task:
+  kind: code_fix
+checks:
+- id: test_probe_test_file_present
+  type: pass_to_pass
+  origin: static
+  description: Ensures the probe behavior test was copied into the repo by test.sh.
+- id: test_behavior_optionalwith_default
+  type: fail_to_pass
+  origin: pr_diff
+  description: AST.getPropertySignatures must not throw Unsupported schema (Transformation) on Struct with optionalWith({ default }).
+- id: test_behavior_optionalwith_as_option
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'AST.getPropertySignatures must not throw on Struct with optionalWith({ as: Option }).'
+- id: test_behavior_optionalwith_nullable
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'AST.getPropertySignatures must not throw on Struct with optionalWith({ nullable: true, default }).'
+- id: test_behavior_single_key_struct
+  type: fail_to_pass
+  origin: pr_diff
+  description: Single-key Transformation Struct must also resolve through getPropertySignatures.
+- id: test_behavior_no_regression_plain_struct
+  type: pass_to_pass
+  origin: pr_diff
+  description: Plain non-Transformation Struct still resolves through getPropertySignatures with no regression.
+- id: test_existing_getpropertysignatures_suite_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: The pre-existing getPropertySignatures.test.ts suite must continue to pass.
+- id: test_typecheck_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: pnpm check (tsc -b tsconfig.json) within packages/effect must succeed.
+- id: test_changeset_present
+  type: pass_to_pass
+  origin: agent_config
+  description: AGENTS.md requires every PR to ship a changeset in .changeset/ describing the change.
+  source:
+    path: AGENTS.md
+    lines: 44-45
+    commit: ab3b64c20a039eb4d573fe757c41278925b22687
+config_edits: []
+rubric:
+- rule: Run `pnpm lint-fix` after editing files
+  source:
+    path: AGENTS.md
+    lines: '17'
+    commit: ab3b64c20a039eb4d573fe757c41278925b22687
+  evidence: Gold patch adds a case arm and test; the diff contains no lint violations.
+  category: testing
+  verification: llm_judge
+- rule: Avoid comments unless absolutely required to explain unusual or complex logic.
+  source:
+    path: AGENTS.md
+    lines: 11-12
+    commit: ab3b64c20a039eb4d573fe757c41278925b22687
+  evidence: The new case Transformation arm is a single-line delegation with no comment, matching the neighboring Suspend and Refinement arms.
+  category: style
+  verification: llm_judge
+- rule: Always look at existing code in the repository to learn and follow established patterns before writing new code.
+  source:
+    path: AGENTS.md
+    lines: 27-28
+    commit: ab3b64c20a039eb4d573fe757c41278925b22687
+  evidence: The fix mirrors the structural shape of neighboring case Suspend and case Refinement arms — a single-line return delegation.
+  category: architecture
+  verification: llm_judge
+- rule: 'Conciseness: Keep code and any wording concise and to the point. Sacrifice grammar for the sake of concision.'
+  source:
+    path: AGENTS.md
+    lines: 12-13
+    commit: ab3b64c20a039eb4d573fe757c41278925b22687
+  evidence: The gold diff is minimal — 3 lines of code in SchemaAST.ts plus tests and a changeset; no unrelated refactors, formatting churn, or modifications to other files.
+  category: architecture
+  verification: llm_judge
+- rule: Before writing tests, look at existing tests in the codebase for similar functionality to follow established patterns.
+  source:
+    path: AGENTS.md
+    lines: 55-65
+    commit: ab3b64c20a039eb4d573fe757c41278925b22687
+  evidence: Gold tests use describe/it + deepStrictEqual from @effect/vitest, matching the pre-existing getPropertySignatures.test.ts conventions.
+  category: testing
+  verification: llm_judge
+distractors:
+- rule: getIndexSignatures has a separate (silent) symptom on the same AST node — the same case Transformation arm is also missing there.
+  source:
+    path: instruction.md
+    lines: ''
+    commit: ''
+  collision_type: scope_ambiguity
+  why_distracting: Instruction.md explicitly says do not fix getIndexSignatures as part of this task, but an agent seeing identical bug shapes in the same file may broaden scope.
+  severity: high
+- rule: All automated checks must pass — fix the Transformation unwrapping at the Schema layer instead of the AST layer.
+  source:
+    path: AGENTS.md
+    lines: 10-11
+    commit: ab3b64c20a039eb4d573fe757c41278925b22687
+  collision_type: architecture_boundary
+  why_distracting: An agent might try to unwrap the Transformation at the Struct level instead of adding a case arm in SchemaAST.ts, which is the wrong layer and would miss other callers of getPropertyKeyIndexedAccess.
+  severity: medium
+- rule: Use it.effect for all Effect-based tests, not Effect.runSync with regular it.
+  source:
+    path: AGENTS.md
+    lines: 62-67
+    commit: ab3b64c20a039eb4d573fe757c41278925b22687
+  collision_type: meta_confusion
+  why_distracting: AGENTS.md mandates it.effect but the existing getPropertySignatures.test.ts uses plain it (no Effect). An agent might try to migrate tests to it.effect, which is unnecessary work and potentially wrong for non-Effect test subjects.
+  severity: low

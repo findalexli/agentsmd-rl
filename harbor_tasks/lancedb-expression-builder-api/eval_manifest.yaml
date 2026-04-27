@@ -1,0 +1,137 @@
+version: '2.0'
+source:
+  repo: lancedb/lancedb
+  pr: 3032
+  base_commit: d5948576b92744c39302f6e9130da0456792fe56
+  merge_commit: 613b9c1099d8c5d71093096e1026c0862b1d2d69
+task:
+  name: lancedb-expression-builder-api
+  title: Add expression-builder API for type-safe query filters
+checks:
+- id: test_expr_builder_api
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'The new `lancedb::expr` module exposes `col`, `lit`, `lower`,
+
+    `upper`, `contains`, `func`, and `expr_to_sql_string` as public
+
+    items; the builder composes correctly via `gt`/`eq`/`and`/`or`;
+
+    the `func` registry resolves known string functions and rejects
+
+    unknown names; round-tripping through `expr_to_sql_string` produces
+
+    a SQL string that contains the column names, literals, operators,
+
+    and keywords (`AND`, `OR`, `LOWER`, `UPPER`, `CONTAINS`).
+
+    '
+- id: test_only_if_expr_trait_method_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: '`lancedb::query::QueryBase::only_if_expr(self, datafusion_expr::Expr)
+
+    -> Self` is added as a trait method. A generic helper that calls
+
+    `only_if_expr` on any `Q: QueryBase` must compile against the
+
+    crate; if the method is missing the test binary fails to link and
+
+    `cargo test` exits non-zero.
+
+    '
+- id: test_lancedb_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`cargo check -p lancedb` continues to succeed against the lancedb
+
+    crate after the change is applied — no regression in library
+
+    compilation.
+
+    '
+- id: test_existing_only_if_unit_test_still_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Pre-existing `query::tests::test_execute_no_vector` (which exercises
+
+    `only_if(<sql>)` on the local NativeTable) still passes — confirms
+
+    no regression in the SQL-string filter path.
+
+    '
+rubric:
+- id: rust_api_uses_into_or_asref
+  source:
+    lines: 86-92
+    commit: d5948576b92744c39302f6e9130da0456792fe56
+    path: AGENTS.md
+  weight: 1.0
+  rule: 'Per repo AGENTS.md: public APIs that take strings or path-like inputs
+
+    should use `Into<T>` or `AsRef<T>` traits to allow more flexible
+
+    callers (e.g. `name: impl Into<String>` rather than `name: String`).
+
+    The new `func(name, args)` API in `rust/lancedb/src/expr.rs` should
+
+    accept `impl AsRef<str>` (or `Into<String>`) for the function name
+
+    so callers don''t have to allocate a `String` for a `&str` literal.
+
+    '
+- id: new_public_api_has_documentation
+  source:
+    lines: 94-101
+    commit: d5948576b92744c39302f6e9130da0456792fe56
+    path: AGENTS.md
+  weight: 1.0
+  rule: 'Per repo AGENTS.md "Documentation" and "Testing" sections: new public
+
+    APIs must include rustdoc comments and at least one example, and
+
+    should link to relevant structs/methods. The new `expr` module,
+
+    `expr_to_sql_string`, the `lower`/`upper`/`contains`/`expr_cast`/
+
+    `func` helpers, and the `only_if_expr` trait method all need rustdoc
+
+    comments with a usable example.
+
+    '
+- id: doctests_use_function_pattern_for_table_examples
+  source:
+    lines: 26-43
+    commit: d5948576b92744c39302f6e9130da0456792fe56
+    path: AGENTS.md
+  weight: 1.0
+  rule: 'Per repo AGENTS.md "Coding tips": rustdoc examples that need a
+
+    `Table` reference must be written as a function (e.g.
+
+    `# async fn query(table: &Table) -> Result<...>`) so type-checking
+
+    runs without requiring a real test environment. The doctest on
+
+    `only_if_expr` in `rust/lancedb/src/query.rs` should follow that
+
+    pattern rather than constructing a Table inline.
+
+    '
+- id: code_formatted_with_cargo_fmt
+  source:
+    lines: 20-22
+    commit: d5948576b92744c39302f6e9130da0456792fe56
+    path: AGENTS.md
+  weight: 1.0
+  rule: 'Per repo AGENTS.md: `cargo fmt --all` is the project''s required
+
+    formatter. New code added in `rust/lancedb/src/expr.rs`,
+
+    `rust/lancedb/src/expr/sql.rs`, the `query.rs` trait additions, and
+
+    the `remote/table.rs` and `table/query.rs` filter changes must be
+
+    formatted consistently with the existing crate style.
+
+    '

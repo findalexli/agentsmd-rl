@@ -1,0 +1,112 @@
+version: '2.0'
+source:
+  repo: ant-design/ant-design
+  pr: 57223
+  base_commit: 2129ad4461103ec0bbe025cfd8bd26bf4e8b780b
+  merge_commit: afc6de6b6dad3e3ab2006f882e8b349a20015c61
+task:
+  kind: markdown_authoring
+checks:
+- id: test_claude_md_exists_at_repo_root
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLAUDE.md is created at the repo root and is visible to git.
+- id: test_references_agents_md
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLAUDE.md references AGENTS.md so readers can find the full spec.
+- id: test_lists_core_npm_commands
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLAUDE.md lists npm start/build/test/lint/format.
+- id: test_lists_pr_template_paths
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLAUDE.md lists both the English and Chinese PR template paths.
+- id: test_lists_changelog_files
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLAUDE.md references both CHANGELOG.en-US.md and CHANGELOG.zh-CN.md.
+- id: test_states_open_not_visible_convention
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLAUDE.md states the open (not visible) panel-state convention.
+- id: test_repo_agents_md_unchanged
+  type: pass_to_pass
+  origin: pr_diff
+  description: AGENTS.md is not modified by this task.
+- id: test_repo_clone_intact
+  type: pass_to_pass
+  origin: pr_diff
+  description: Working tree HEAD is at the expected base commit.
+config_edits:
+- path: CLAUDE.md
+  tier: 1
+  gold_added: Created CLAUDE.md at repo root — a concise project-context summary in Chinese for Claude Code that defers to AGENTS.md for the full spec, covering project info, common npm commands, core coding conventions, PR rules, and changelog rules.
+  gold_removed: ''
+rubric:
+- rule: 为 AI 编程助手提供项目上下文和开发规范
+  source:
+    path: AGENTS.md
+    lines: '3'
+    commit: 2129ad4461103ec0bbe025cfd8bd26bf4e8b780b
+  evidence: Gold CLAUDE.md states '本文件为 Claude Code 提供项目上下文' at line 1 and references AGENTS.md at lines 3 and 159.
+  category: architecture
+  verification: llm_judge
+- rule: '面板开启: 使用 `open`，避免使用 `visible`'
+  source:
+    path: AGENTS.md
+    lines: '148'
+    commit: 2129ad4461103ec0bbe025cfd8bd26bf4e8b780b
+  evidence: Gold CLAUDE.md contains '面板开启状态使用 `open`，避免使用 `visible`' at line 47.
+  category: naming
+  verification: llm_judge
+- rule: 组件名使用大驼峰（PascalCase），如 Button、DatePicker。属性名使用小驼峰（camelCase），如 onClick、defaultValue。
+  source:
+    path: AGENTS.md
+    lines: 130-131
+    commit: 2129ad4461103ec0bbe025cfd8bd26bf4e8b780b
+  evidence: Gold CLAUDE.md includes '组件名使用大驼峰（PascalCase）' and '属性名使用小驼峰（camelCase）' at lines 45-46.
+  category: naming
+  verification: llm_judge
+- rule: 在 CHANGELOG.en-US.md 和 CHANGELOG.zh-CN.md 书写每个版本的变更。每次处理必须同时提供中文版和英文版。
+  source:
+    path: AGENTS.md
+    lines: 817-830
+    commit: 2129ad4461103ec0bbe025cfd8bd26bf4e8b780b
+  evidence: Gold CLAUDE.md lists both CHANGELOG.en-US.md and CHANGELOG.zh-CN.md and states changelog entries must be provided in both languages.
+  category: style
+  verification: llm_judge
+- rule: PR 标题始终使用英文
+  source:
+    path: AGENTS.md
+    lines: '946'
+    commit: 2129ad4461103ec0bbe025cfd8bd26bf4e8b780b
+  evidence: 'Gold CLAUDE.md states ''PR 标题始终使用英文，格式：类型: 简短描述'' at line 56.'
+  category: style
+  verification: llm_judge
+- rule: 避免引入新依赖，严控打包体积。保持向下兼容，避免 breaking change。
+  source:
+    path: AGENTS.md
+    lines: 126-129
+    commit: 2129ad4461103ec0bbe025cfd8bd26bf4e8b780b
+  evidence: Gold CLAUDE.md is ~160 lines vs AGENTS.md at 1177 lines — a concise summary that does not duplicate the full spec.
+  category: architecture
+  verification: llm_judge
+distractors:
+- rule: 演示代码应直接在组件内编写，无需额外引入 React 或 antd 依赖
+  source:
+    path: AGENTS.md
+    lines: '572'
+    commit: 2129ad4461103ec0bbe025cfd8bd26bf4e8b780b
+  collision_type: scope_ambiguity
+  why_distracting: Demo code conventions in AGENTS.md apply to the docs site, not to CLAUDE.md; AI might incorrectly scope demo rules into the project-level summary.
+  severity: low
+- rule: 中文标题（H1-H6）必须手动指定一个简洁、有意义的英文锚点
+  source:
+    path: AGENTS.md
+    lines: '800'
+    commit: 2129ad4461103ec0bbe025cfd8bd26bf4e8b780b
+  collision_type: scope_ambiguity
+  why_distracting: Documentation anchor rule applies to docs site markdown files, not to CLAUDE.md; AI might incorrectly add English anchors to CLAUDE.md headers.
+  severity: low

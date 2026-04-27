@@ -1,0 +1,79 @@
+version: '2.0'
+source:
+  owner: effect-ts
+  repo: effect
+  pr_number: 6086
+  base_commit: ab3b64c20a039eb4d573fe757c41278925b22687
+  merge_commit: 4d97a61a15b9dd6a0eece65b8f0c035e16d42ada
+  title: 'Schema: fix getPropertySignatures crash on Struct with optionalWith({ default })'
+  url: https://github.com/effect-ts/effect/pull/6086
+  pr: 6086
+task:
+  name: effect-schemaast-transformation-getpropertysignatures
+  difficulty: easy
+  language: typescript
+  package_manager: pnpm
+checks:
+- id: test_f2p_optionalwith_default_does_not_throw
+  type: fail_to_pass
+  origin: pr_diff
+  description: getPropertySignatures must not throw on a Struct whose field uses Schema.optionalWith(..., { default }). The regression vitest file asserts the call returns two PropertySignatures.
+- id: test_f2p_optionalwith_as_option_does_not_throw
+  type: fail_to_pass
+  origin: pr_diff
+  description: Same regression file must also pass when re-run; the pre-fix error message "Unsupported schema" must not appear.
+- id: test_f2p_no_unsupported_transformation_error
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Negative assertion: the literal pre-fix error message "Unsupported schema (Transformation)" must not appear in the vitest output for the Transformation regression file.'
+- id: test_p2p_existing_getPropertySignatures_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: The 5 pre-existing test cases in packages/effect/test/Schema/SchemaAST/getPropertySignatures.test.ts must continue to pass.
+- id: test_p2p_sibling_schemaast_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: All sibling SchemaAST test files (IndexSignature, Refinement, Tuple, TypeLiteral, TypeLiteralTransformation, Union, annotations, encodedAST, encodedBoundAST, equals, guards, mutable, partial, record, suspend, typeAST, unify) must continue to pass.
+rubric:
+- id: rubric_zero_check_errors
+  source:
+    lines: 12-22
+    path: AGENTS.md
+    commit: ab3b64c20a039eb4d573fe757c41278925b22687
+  rule: '"Zero Tolerance for Errors": the project''s automated checks (pnpm check, pnpm lint) must pass on the agent''s diff. Stated by AGENTS.md "Mandatory Validation Steps".'
+- id: rubric_minimise_comments
+  source:
+    lines: '16'
+    path: AGENTS.md
+    commit: ab3b64c20a039eb4d573fe757c41278925b22687
+  rule: 'AGENTS.md "Reduce comments": the diff should not introduce unnecessary comments. Comments are only acceptable for genuinely non-obvious logic, or in jsdoc.'
+- id: rubric_clarity_over_cleverness
+  source:
+    lines: '13'
+    path: AGENTS.md
+    commit: ab3b64c20a039eb4d573fe757c41278925b22687
+  rule: 'AGENTS.md "Clarity over Cleverness": the fix should be a clear, maintainable change that follows the symmetric pattern already established by `getPropertyKeys` for Transformation, not a clever workaround.'
+- id: rubric_conciseness
+  source:
+    lines: '14'
+    path: AGENTS.md
+    commit: ab3b64c20a039eb4d573fe757c41278925b22687
+  rule: 'AGENTS.md "Conciseness": keep code (and any new wording) concise and to the point. The fix should not balloon beyond what the bug requires.'
+- id: rubric_no_manual_index_edits
+  source:
+    lines: 33-37
+    path: AGENTS.md
+    commit: ab3b64c20a039eb4d573fe757c41278925b22687
+  rule: '"Barrel files": `index.ts` files are auto-generated; the agent must not hand-edit them. If the diff modifies a `src/index.ts` barrel, that''s a violation.'
+- id: rubric_changeset_present
+  source:
+    lines: 39-42
+    path: AGENTS.md
+    commit: ab3b64c20a039eb4d573fe757c41278925b22687
+  rule: '"Changesets": all PRs must include a changeset under `.changeset/` describing the fix and the affected package.'
+- id: rubric_test_uses_effect_vitest
+  source:
+    lines: 60-66
+    path: AGENTS.md
+    commit: ab3b64c20a039eb4d573fe757c41278925b22687
+  rule: 'If the agent adds tests, they should follow the repo pattern: import `{ describe, it }` from `@effect/vitest`, use `assert` methods (not vitest''s `expect`), and locate the file under `packages/effect/test/Schema/SchemaAST/`.'

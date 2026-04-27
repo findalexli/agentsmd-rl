@@ -1,0 +1,84 @@
+version: '2.0'
+source:
+  repo: apache/superset
+  pr: 39136
+  base_commit: 5138aa2c114fd74a13cfce6f713470b25b542a27
+  merge_commit: c2a35e2eeae04384ebfb70d663268f14c299da75
+task:
+  kind: code_fix
+checks:
+- id: test_dropdown_width_matches_collapsed_input_width
+  type: fail_to_pass
+  origin: repo_tests
+  description: In oneLine multi-select mode, after tags collapse to "+ N ...", the dropdown popup's inline style.width must equal the layout-measured width of the select element.
+- id: test_select_existing_suite_still_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Full pre-existing Select.test.tsx suite (78 tests) still passes after the fix.
+config_edits: []
+rubric:
+- rule: '**NO `any` types** - Use proper TypeScript types'
+  source:
+    path: AGENTS.md
+    lines: '31'
+    commit: 5138aa2c114fd74a13cfce6f713470b25b542a27
+  evidence: Gold patch uses `number | true` union type for dropdownWidth state rather than `any`
+  category: style
+  verification: llm_judge
+- rule: '**Functional components** with hooks'
+  source:
+    path: AGENTS.md
+    lines: '79'
+    commit: 5138aa2c114fd74a13cfce6f713470b25b542a27
+  evidence: Gold patch preserves forwardRef + hooks pattern, adds useRef and useState
+  category: architecture
+  verification: llm_judge
+- rule: '**Use @superset-ui/core** - Don''t import Ant Design directly, prefer Ant Design component wrappers from @superset-ui/core/components'
+  source:
+    path: AGENTS.md
+    lines: '33'
+    commit: 5138aa2c114fd74a13cfce6f713470b25b542a27
+  evidence: Gold patch adds no new imports; stays within existing @superset-ui/core pattern
+  category: style
+  verification: llm_judge
+- rule: '**Avoid time-specific language** - Don''t use words like "now", "currently", "today" in code comments as they become outdated'
+  source:
+    path: AGENTS.md
+    lines: '95'
+    commit: 5138aa2c114fd74a13cfce6f713470b25b542a27
+  evidence: Gold patch comment 'Measure collapsed width and update dropdown width' uses timeless language
+  category: style
+  verification: llm_judge
+- rule: '**Avoid custom css and styles** - Follow antd best practices and avoid styling and custom CSS whenever possible'
+  source:
+    path: AGENTS.md
+    lines: '35'
+    commit: 5138aa2c114fd74a13cfce6f713470b25b542a27
+  evidence: Gold patch solves width matching via JS measurement and prop plumbing, not custom CSS
+  category: architecture
+  verification: llm_judge
+- rule: '**Use `test()` instead of `describe()`** - Follow [avoid nesting when testing](https://kentcdodds.com/blog/avoid-nesting-when-youre-testing) principles'
+  source:
+    path: AGENTS.md
+    lines: '43'
+    commit: 5138aa2c114fd74a13cfce6f713470b25b542a27
+  evidence: Benchmark test file uses flat test() calls without describe() nesting
+  category: testing
+  verification: llm_judge
+distractors:
+- rule: '**Avoid custom css and styles** - Follow antd best practices and avoid styling and custom CSS whenever possible'
+  source:
+    path: AGENTS.md
+    lines: '35'
+    commit: 5138aa2c114fd74a13cfce6f713470b25b542a27
+  collision_type: rule_conflict
+  why_distracting: Width mismatch looks like a CSS problem; this rule may steer agents away from inline style.width which is actually needed here
+  severity: medium
+- rule: '**Use Jest + React Testing Library** for component testing'
+  source:
+    path: AGENTS.md
+    lines: '42'
+    commit: 5138aa2c114fd74a13cfce6f713470b25b542a27
+  collision_type: scope_ambiguity
+  why_distracting: Agent may focus on writing RTL tests for the width behavior instead of fixing the component's runtime measurement
+  severity: low

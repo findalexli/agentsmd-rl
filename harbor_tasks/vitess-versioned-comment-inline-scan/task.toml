@@ -1,0 +1,19 @@
+name = "vitess-versioned-comment-inline-scan"
+title = "vitess sqlparser: replace nested tokenizer with inline versioned-comment scanning"
+description = """
+The vitess SQL parser uses a nested `Tokenizer` to scan MySQL versioned
+comments (`/*!NNNNN ... */`). Replace this with inline scanning so token
+positions are reported relative to the original query, and bring the lexer's
+behavior in line with MySQL 8.4 (nested-comment handling, EOF-error on
+unclosed comments, content-vs-version digit disambiguation).
+"""
+language = "go"
+difficulty = "hard"
+tags = ["go", "lexer", "parser", "sql", "mysql"]
+estimated_time_minutes = 90
+
+[source]
+repo = "vitessio/vitess"
+pr_number = 19725
+base_commit = "9a3646f7f16d38cec2efabc13cef5da800a72280"
+merge_commit = "9e5141afd5c3488cb4a0aea8168b48bf198790db"

@@ -1,0 +1,356 @@
+version: '2.0'
+source:
+  repo: JetBrains/kotlin
+  pr: 5848
+  base_commit: 05427c4231216b07bd7607b77095ec011d21fbfa
+  merge_commit: 5068e1a5eaeb548392be6a77e3871961e9e244f5
+task:
+  name: kotlin-bta-agents-md
+  kind: markdown_authoring
+  difficulty: medium
+  tags:
+  - markdown_authoring
+  - agent_instructions
+  - kotlin
+  - documentation
+checks:
+- id: test_agents_md_authored
+  type: fail_to_pass
+  origin: pr_diff
+  description: compiler/build-tools/AGENTS.md exists and has substantive content
+- id: test_claude_md_redirects_to_agents_md
+  type: fail_to_pass
+  origin: agent_config
+  description: compiler/build-tools/CLAUDE.md must contain only `@AGENTS.md`
+  source:
+    path: .ai/guidelines.md
+    lines: '55'
+    commit: 05427c4231216b07bd7607b77095ec011d21fbfa
+- id: test_guidelines_table_has_build_tools_api_row
+  type: fail_to_pass
+  origin: pr_diff
+  description: .ai/guidelines.md Areas table includes a Build Tools API row linking to the new AGENTS.md
+- id: test_guidelines_row_position_under_areas_section
+  type: fail_to_pass
+  origin: pr_diff
+  description: The new row lives inside the Areas section, not a different table
+- id: test_agents_md_describes_bta_modules
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md mentions kotlin-build-tools-api and kotlin-build-tools-impl
+- id: test_agents_md_links_or_codes_module_names
+  type: fail_to_pass
+  origin: pr_diff
+  description: Module names appear as Markdown code or links, not bare prose
+- id: test_no_unrelated_files_modified
+  type: pass_to_pass
+  origin: static
+  description: Only the three markdown files in the gold patch are touched (no extra files modified at base or after fix)
+- id: test_guidelines_unrelated_rows_intact
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing area rows in .ai/guidelines.md remain intact (true at base, must remain true after edit)
+config_edits:
+- path: compiler/build-tools/AGENTS.md
+  tier: 1
+  gold_added: '# Kotlin Build Tools API (BTA)
+
+
+    An experimental interface for build systems (Gradle plugin, Maven plugin, etc.) to invoke Kotlin compilation without a direct compiler
+
+    dependency. Build systems should use the API from `kotlin-build-tools-api`, load the implementation in an isolated ClassLoader, and avoid
+
+    accessing compiler internals directly.
+
+
+    ## Modules
+
+
+    | Module                                                                                                     | Purpose                                                                                        |
+
+    |------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------|
+
+    | [`kotlin-build-tools-api`](kotlin-build-tools-api)                                                         | Public interfaces only; no implementation; `explicitApi()`; API dump checked in                |
+
+    | [`kotlin-build-tools-impl`](kotlin-build-tools-impl)                                                       | Default implementation; version-coupled to the compiler; must run in isolated ClassLoader      |
+
+    | [`kotlin-build-tools-compat`](kotlin-build-tools-compat)                                                   | Adapter for compilers < 2.3.0 (wraps deprecated `CompilationService`)                          |
+
+    | [`kotlin-build-tools-cri-impl`](kotlin-build-tools-cri-impl)                                               | Protobuf serialization for Compiler Reference Index; shipped as shadow JAR                     |
+
+    | [`kotlin-build-tools-jdk-utils`](kotlin-build-tools-jdk-utils)                                             | Internal utility for Java 9+ platform ClassLoader detection; do not use outside BTA modules    |
+
+    | [`kotlin-build-tools-options-generator`](kotlin-build-tools-options-generator)                             | KotlinPoet-based code generator producing compiler argument classes from `:compiler:arguments` |
+
+    | [`kotlin-build-statistics`](kotlin-build-statistics)                                                       | Shared library for build metric collection (times, performance, GC, attributes); used by impl and KGP |
+
+    | [`util-kotlinpoet`](util-kotlinpoet)                                                                       | KotlinPoet utility helpers shared by code generators in the BTA area                           |
+
+    | [`kotlin-build-tools-api-tests`](kotlin-build-tools-api-tests)                                             | Main integration test suite (JUnit 5, multiple named test suites)                              |
+
+    | [`kotlin-build-tools-api-forward-compatibility-tests`](kotlin-build-tools-api-forward-compatibility-tests) | Tests the forward compatibility guarantee (X+1)                                                |
+
+
+    ## Architecture: ClassLoader Isolation
+
+
+    The impl JAR must be loaded in an isolated ClassLoader to prevent classpath conflicts with the consumer:
+
+
+    ```kotlin
+
+    val toolchains = KotlinToolchains.loadImplementation(implClasspath)  // implClasspath: List<Path>
+
+    ```
+
+
+    - `loadImplementation(List<Path>)` — preferred API; wraps the classpath in a `URLClassLoader` backed by `SharedApiClassesClassLoader` automatically
+
+    - `loadImplementation(ClassLoader)` — lower-level overload for custom ClassLoader setups; the ClassLoader''s parent should be `SharedApiClassesClassLoader`
+
+    - The impl JAR version must match the compiler version (`kotlin-build-tools-impl` is version-coupled to the compiler)
+
+    - For compilers < 2.3.0, include `kotlin-build-tools-compat` in the impl classpath → see [`kotlin-build-tools-compat/README.md`](kotlin-build-tools-compat/README.md)
+
+
+    ## Key Abstractions
+
+
+    All in `kotlin-build-tools-api/src/main/kotlin/org/jetbrains/kotlin/buildtools/api/`:
+
+
+    - `KotlinToolchains` — factory entry point; creates `BuildSession` instances (`KotlinToolchains.kt`)
+
+    - `BuildSession` (`AutoCloseable`) — manages caches, thread pools, and daemon connections
+
+    - `Toolchain` (sealed interface) — `JvmPlatformToolchain`, `CriToolchain`, `AbiValidationToolchain`
+
+    - `BuildOperation<R>` / `BuildOperation.Builder` — type-safe operation configuration (`BuildOperation.kt`)
+
+    - `ExecutionPolicy` — `InProcess` vs `WithDaemon` (`ExecutionPolicy.kt`)
+
+    - `KotlinLogger` — pluggable logging interface (`KotlinLogger.kt`)
+
+
+    ## Generated Files
+
+
+    Do not edit generated files manually — regenerate them with the tasks below.
+
+
+    Two kinds — both must be regenerated after relevant changes:
+
+
+    ```bash
+
+    # Regenerate compiler argument classes (after changing compiler arguments in :compiler:arguments)
+
+    ./gradlew :compiler:build-tools:kotlin-build-tools-api:generateBtaArguments
+
+    ./gradlew :compiler:build-tools:kotlin-build-tools-impl:generateBtaArguments
+
+    ./gradlew :compiler:build-tools:kotlin-build-tools-compat:generateBtaArguments
+
+
+    # Regenerate API binary compatibility dump (after any public API change)
+
+    ./gradlew :compiler:build-tools:kotlin-build-tools-api:apiDump
+
+    ```
+
+
+    ## Compatibility Model
+
+
+    ```
+
+    BTA version X is guaranteed to work with implementation versions [X-3, X+1]
+
+    ```
+
+
+    - **Backward compat (X-3):** tested in `kotlin-build-tools-api-tests` compatibility suites (one suite per listed version)
+
+    - **Forward compat (X+1):** tested in `kotlin-build-tools-api-forward-compatibility-tests`
+
+    - When adding an API change that may break compatibility, add tests to both modules and run locally to verify
+
+
+    ## Running Tests
+
+
+    ```bash
+
+    # Run all tests (testExample is excluded from check — run it explicitly if needed)
+
+    ./gradlew :compiler:build-tools:kotlin-build-tools-api-tests:check
+
+
+    # Run against a specific BTA impl version (pattern: testCompatibility<version>)
+
+    ./gradlew :compiler:build-tools:kotlin-build-tools-api-tests:testCompatibility2.3.20
+
+
+    # Run against current snapshot impl
+
+    ./gradlew :compiler:build-tools:kotlin-build-tools-api-tests:testCompatibilitySnapshot
+
+
+    # Classpath/module-path escaping edge cases
+
+    ./gradlew :compiler:build-tools:kotlin-build-tools-api-tests:testEscapableCharacters
+
+
+    # Verify restricted arguments are rejected correctly
+
+    ./gradlew :compiler:build-tools:kotlin-build-tools-api-tests:testRestrictedArguments
+
+
+    # Individual named test suites follow the pattern :test<SuiteName>
+
+    # The full list is in `businessLogicTestSuits` in kotlin-build-tools-api-tests/build.gradle.kts
+
+
+    # Forward compatibility tests
+
+    ./gradlew :compiler:build-tools:kotlin-build-tools-api-forward-compatibility-tests:check
+
+    ```
+
+
+    ## Writing Tests
+
+
+    See [`kotlin-build-tools-api-tests/README.md`](kotlin-build-tools-api-tests/README.md) for full conventions. Key rules:
+
+
+    - All tests extend `BaseTest` (`src/main/kotlin/BaseTest.kt`)
+
+    - All compilation tests extend `BaseCompilationTest` (`src/main/kotlin/compilation/BaseCompilationTest.kt`)
+
+    - Add `@DisplayName` to both test class and methods
+
+    - Add `@TestMetadata` pointing to the relevant test data directory for IDE navigation
+
+    - Keep test classes small — tests run in parallel
+
+    - Use the scenario DSL for incremental compilation tests; see `src/testExample/kotlin/ExampleIncrementalScenarioTest.kt`
+
+    - Annotate strategy-agnostic tests with `@DefaultStrategyAgnosticCompilationTest`
+
+    - Add a new test suite by appending its name to `businessLogicTestSuits` in `build.gradle.kts`
+
+    - Compatibility suites (`testCompatibility*`): add tests sparingly — they run once per listed version
+
+
+    ## Key Conventions and Pitfalls
+
+
+    - Every public API addition in `kotlin-build-tools-api` must include KDoc documentation
+
+    - Do not add implementation dependencies to `kotlin-build-tools-api` — it must stay implementation-free
+
+    - Do not use `kotlin-build-tools-jdk-utils` outside BTA modules (requires `@KotlinBuildToolsInternalJdkUtils` opt-in)
+
+    - After changing compiler arguments, always regenerate both `generateBtaArguments` and `apiDump`
+
+    '
+  gold_removed: ''
+- path: compiler/build-tools/CLAUDE.md
+  tier: 1
+  gold_added: '@AGENTS.md
+
+    '
+  gold_removed: ''
+- path: .ai/guidelines.md
+  tier: 1
+  gold_added: '| Build Tools API          |                        | compiler/build-tools/                                     | [AGENTS.md](../compiler/build-tools/AGENTS.md)                                   |
+
+    '
+  gold_removed: ''
+rubric:
+- rule: 'When adding documentation for a new area, create both AGENTS.md (with
+
+    content) and CLAUDE.md (containing only `@AGENTS.md`).
+
+    '
+  source:
+    path: .ai/guidelines.md
+    lines: '55'
+    commit: 05427c4231216b07bd7607b77095ec011d21fbfa
+  evidence: 'Gold patch creates compiler/build-tools/AGENTS.md (116 lines) AND
+
+    compiler/build-tools/CLAUDE.md whose only content is `@AGENTS.md`.
+
+    '
+  category: convention
+  verification: programmatic
+  check_cmd: test "$(cat /workspace/kotlin/compiler/build-tools/CLAUDE.md | tr -d '[:space:]')" = '@AGENTS.md'
+- rule: 'A new area must be registered in the `## Areas` table of
+
+    `.ai/guidelines.md` with columns Area | Prefixes | Location | Docs,
+
+    where the Docs link is relative to the `.ai/` directory.
+
+    '
+  source:
+    path: .ai/guidelines.md
+    lines: 26-50
+    commit: 05427c4231216b07bd7607b77095ec011d21fbfa
+  evidence: 'Gold patch inserts a row keyed `Build Tools API` whose Docs column is
+
+    `[AGENTS.md](../compiler/build-tools/AGENTS.md)` — relative to .ai/.
+
+    '
+  category: structure
+  verification: programmatic
+  check_cmd: grep -F 'Build Tools API' /workspace/kotlin/.ai/guidelines.md | grep -F '../compiler/build-tools/AGENTS.md'
+- rule: 'Area AGENTS.md should follow the same shape as siblings: open with a
+
+    one-line summary of the area, then enumerate modules / sub-areas in a
+
+    table, then describe architecture, conventions, and how to run tests.
+
+    '
+  source:
+    path: compiler/AGENTS.md
+    lines: 1-40
+    commit: 05427c4231216b07bd7607b77095ec011d21fbfa
+  evidence: 'The gold AGENTS.md opens with a one-paragraph summary of BTA, then a
+
+    `## Modules` table, then `## Architecture: ClassLoader Isolation`,
+
+    `## Key Abstractions`, `## Running Tests`, `## Writing Tests`, and
+
+    `## Key Conventions and Pitfalls` — mirroring the structure of
+
+    compiler/AGENTS.md, analysis/AGENTS.md, etc.
+
+    '
+  category: style
+  verification: llm_judge
+- rule: 'Documentation must reference real artifacts in the codebase — module
+
+    names, class names, file paths, and Gradle tasks must all exist.
+
+    Wrong information in an AGENTS.md is worse than no AGENTS.md, since
+
+    future agents will trust it.
+
+    '
+  source:
+    path: .ai/guidelines.md
+    lines: 1-3
+    commit: 05427c4231216b07bd7607b77095ec011d21fbfa
+  evidence: 'Every module name in the gold AGENTS.md table corresponds to an
+
+    existing directory under compiler/build-tools/. Every class name
+
+    (KotlinToolchains, BuildSession, BuildOperation, ExecutionPolicy)
+
+    exists in kotlin-build-tools-api/src/main/kotlin/.
+
+    '
+  category: accuracy
+  verification: llm_judge
+distractors: []

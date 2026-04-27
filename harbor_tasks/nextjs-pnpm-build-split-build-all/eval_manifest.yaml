@@ -1,0 +1,118 @@
+version: '2.0'
+source:
+  repo: vercel/next.js
+  pr: 90543
+  base_commit: 46761a321042e8ac1863f4cfc8d73d527956e181
+  merge_commit: ef970c06fb7ef8337db50ef962bb13f3f2d3204f
+task:
+  kind: code_with_config
+checks:
+- id: pnpm_build_does_not_invoke_native_build
+  type: fail_to_pass
+  origin: pr_diff
+  description: pnpm build must not trigger @next/swc native build path
+- id: pnpm_build_all_invokes_native_build_helper
+  type: fail_to_pass
+  origin: pr_diff
+  description: pnpm build-all must include @next/swc native build helper
+- id: swc_native_auto_task_is_named_build_native_auto
+  type: fail_to_pass
+  origin: pr_diff
+  description: '@next/swc native auto task must be named build-native-auto'
+- id: root_build_all_script_runs_both_tasks
+  type: fail_to_pass
+  origin: pr_diff
+  description: Root build-all script must run both build and build-native-auto tasks
+- id: swc_package_json_no_longer_has_build_script
+  type: fail_to_pass
+  origin: pr_diff
+  description: '@next/swc package.json must not have a build script'
+- id: agents_md_documents_build_all
+  type: fail_to_pass
+  origin: agent_config
+  description: AGENTS.md must document pnpm build-all command
+  source:
+    path: AGENTS.md
+    lines: '94'
+    commit: 46761a321042e8ac1863f4cfc8d73d527956e181
+- id: turbo_planner_works
+  type: pass_to_pass
+  origin: repo_tests
+  description: Turbo planner produces non-empty plan with @next/swc in workspace
+- id: repo_at_expected_base_or_descendant
+  type: pass_to_pass
+  origin: static
+  description: Repo is at expected base commit with correct root package name
+config_edits:
+- path: AGENTS.md
+  tier: 1
+  gold_added: '# Build all JS and Rust code
+
+    pnpm build-all'
+  gold_removed: ''
+- path: AGENTS.md
+  tier: 1
+  gold_added: '# Build all JS code'
+  gold_removed: '# Build everything'
+- path: AGENTS.md
+  tier: 1
+  gold_added: Use full `pnpm build-all` for branch switches/bootstrap, before CI push, or when changes span multiple packages.
+  gold_removed: Use full `pnpm build` for branch switches/bootstrap, before CI push, or when changes span multiple packages.
+- path: AGENTS.md
+  tier: 1
+  gold_added: 'pnpm build-all   # Sets up outputs for dependent packages (Turborepo dedupes if unchanged)'
+  gold_removed: 'pnpm build   # Sets up outputs for dependent packages (Turborepo dedupes if unchanged)'
+- path: AGENTS.md
+  tier: 1
+  gold_added: '- **First run after branch switch/bootstrap (or if unsure)?** → `pnpm build-all`'
+  gold_removed: '- **First run after branch switch/bootstrap (or if unsure)?** → `pnpm build`'
+rubric:
+- rule: 'After the workspace is bootstrapped, prefer `pnpm --filter=next build` when edits are limited to core Next.js files. Use full `pnpm build` for branch switches/bootstrap, before CI push, or when changes span multiple packages.
+
+    '
+  source:
+    path: AGENTS.md
+    lines: '94'
+    commit: 46761a321042e8ac1863f4cfc8d73d527956e181
+  evidence: Gold updates this guidance from pnpm build to pnpm build-all, preserving the intent while pointing at the correct full-build command
+  category: architecture
+  verification: llm_judge
+- rule: '# Build everything
+
+    pnpm build
+
+    '
+  source:
+    path: AGENTS.md
+    lines: 61-62
+    commit: 46761a321042e8ac1863f4cfc8d73d527956e181
+  evidence: Gold adds pnpm build-all alongside pnpm build and renames the comment to clarify pnpm build is JS-only
+  category: naming
+  verification: llm_judge
+- rule: '- **First run after branch switch/bootstrap (or if unsure)?** → `pnpm build`'
+  source:
+    path: AGENTS.md
+    lines: '368'
+    commit: 46761a321042e8ac1863f4cfc8d73d527956e181
+  evidence: Gold updates the rebuild-before-tests checklist items from pnpm build to pnpm build-all
+  category: testing
+  verification: llm_judge
+distractors:
+- rule: pnpm build
+  source:
+    path: AGENTS.md
+    lines: '62'
+    commit: 46761a321042e8ac1863f4cfc8d73d527956e181
+  collision_type: rule_conflict
+  why_distracting: After the fix pnpm build still exists but means JS-only; an agent reading old context could assume it still builds everything
+  severity: medium
+- rule: 'Capture to file once, then analyze: `pnpm build 2>&1 | tee /tmp/build.log`
+
+    '
+  source:
+    path: AGENTS.md
+    lines: '329'
+    commit: 46761a321042e8ac1863f4cfc8d73d527956e181
+  collision_type: scope_ambiguity
+  why_distracting: References pnpm build (not build-all) for output capture, which could lead agents to use JS-only build when debugging full-stack issues
+  severity: low

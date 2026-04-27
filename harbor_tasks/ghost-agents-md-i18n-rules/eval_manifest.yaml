@@ -1,0 +1,136 @@
+version: '2.0'
+source:
+  repo: TryGhost/Ghost
+  pr: 27177
+  base_commit: 1dc488a0e5846ea537aa6c5cceee10ac629a1080
+  merge_commit: 04df2dd8ec4b3bd2957e0170cfd0d68e56c00ce9
+task:
+  kind: markdown_authoring
+checks:
+- id: test_existing_i18n_section_preserved
+  type: pass_to_pass
+  origin: static
+  description: The pre-existing `### i18n Architecture` section and its bullets remain.
+- id: test_existing_build_dependencies_section_preserved
+  type: pass_to_pass
+  origin: static
+  description: The `### Build Dependencies (Nx)` section that follows i18n still exists.
+- id: test_agents_md_grows_not_shrinks
+  type: fail_to_pass
+  origin: static
+  description: AGENTS.md is purely additive — its line count strictly grew.
+- id: test_split_sentence_rule_documented
+  type: fail_to_pass
+  origin: agent_config
+  description: Documents the rule against splitting sentences across multiple t() calls.
+  source:
+    path: AGENTS.md
+    lines: 150-156
+    commit: 1dc488a0e5846ea537aa6c5cceee10ac629a1080
+- id: test_react_interpolate_library_documented
+  type: fail_to_pass
+  origin: agent_config
+  description: Mentions `@doist/react-interpolate` as the way to embed inline elements.
+  source:
+    path: AGENTS.md
+    lines: 150-156
+    commit: 1dc488a0e5846ea537aa6c5cceee10ac629a1080
+- id: test_context_json_requirement_documented
+  type: fail_to_pass
+  origin: agent_config
+  description: Documents the `context.json` non-empty-description requirement.
+  source:
+    path: AGENTS.md
+    lines: 150-156
+    commit: 1dc488a0e5846ea537aa6c5cceee10ac629a1080
+- id: test_translate_workflow_command_documented
+  type: fail_to_pass
+  origin: agent_config
+  description: Documents the `yarn workspace @tryghost/i18n translate` command.
+  source:
+    path: AGENTS.md
+    lines: 150-156
+    commit: 1dc488a0e5846ea537aa6c5cceee10ac629a1080
+- id: test_interpolation_variable_syntax_documented
+  type: fail_to_pass
+  origin: agent_config
+  description: 'Documents `{variable}` interpolation with the {name: firstname} example.'
+  source:
+    path: AGENTS.md
+    lines: 150-156
+    commit: 1dc488a0e5846ea537aa6c5cceee10ac629a1080
+- id: test_correct_and_incorrect_examples_documented
+  type: fail_to_pass
+  origin: agent_config
+  description: Both the correct (Interpolate) and incorrect (split-sentence) patterns are shown.
+  source:
+    path: AGENTS.md
+    lines: 150-156
+    commit: 1dc488a0e5846ea537aa6c5cceee10ac629a1080
+- id: test_canonical_example_referenced
+  type: fail_to_pass
+  origin: agent_config
+  description: References `apps/portal/src/components/pages/email-receiving-faq.js` as the canonical example.
+  source:
+    path: AGENTS.md
+    lines: 150-156
+    commit: 1dc488a0e5846ea537aa6c5cceee10ac629a1080
+- id: test_new_content_inside_i18n_architecture_section
+  type: fail_to_pass
+  origin: static
+  description: The new rules are nested inside the `### i18n Architecture` section.
+config_edits:
+- path: AGENTS.md
+  tier: 1
+  gold_removed: ''
+  gold_added: "- Context descriptions: `ghost/i18n/locales/context.json` — every key must have a non-empty description\n\n**Translation Workflow:**\n```bash\nyarn workspace @tryghost/i18n translate   # Extract keys from source, update all locale files + context.json\nyarn workspace @tryghost/i18n lint:translations  # Validate interpolation variables across locales\n```\n\n`yarn translate` is run as part of `yarn workspace @tryghost/i18n test`. In CI, it fails if translation keys or `context.json` are out of date (`failOnUpdate: process.env.CI`). Always run `yarn translate` after adding or changing `t()` calls.\n\n**Rules for Translation Keys:**\n1. **Never split sentences across multiple `t()` calls.** Translators cannot reorder words across separate keys. Instead, use `@doist/react-interpolate` to embed React elements (links, bold, etc.) within a single translatable string.\n2. **Always provide context descriptions.** When adding a new key, add a description in `context.json` explaining where the string appears and what it does. CI will reject empty descriptions.\n3. **Use interpolation for dynamic values.** Ghost uses `{variable}` syntax: `t('Welcome back, {name}!', {name: firstname})`\n4. **Use `<tag>` syntax for inline elements.** Combined with `@doist/react-interpolate`: `t('Click <a>here</a> to retry')` with `mapping={{ a: <a href=\"...\" /> }}`\n\n**Correct pattern (using Interpolate):**\n```jsx\nimport Interpolate from '@doist/react-interpolate';\n\n<Interpolate\n    mapping={{ a: <a href={link} /> }}\n    string={t('Could not sign in. <a>Click here to retry</a>')}\n/>\n```\n\n**Incorrect pattern (split sentences):**\n```jsx\n// BAD: translators cannot reorder \"Click here to retry\" relative to the first sentence\n{t('Could not sign in.')} <a href={link}>{t('Click here to retry')}</a>\n```\n\nSee `apps/portal/src/components/pages/email-receiving-faq.js` for a canonical example of correct `Interpolate` usage.\n"
+rubric:
+- rule: '### i18n Architecture'
+  source:
+    path: AGENTS.md
+    lines: '150'
+    commit: 1dc488a0e5846ea537aa6c5cceee10ac629a1080
+  evidence: Gold preserves the existing heading and all original bullets (Centralized Translations, locale paths, 60+ supported locales) unchanged, only appending new content within the same section.
+  category: architecture
+  verification: llm_judge
+- rule: '- Single source: `ghost/i18n/locales/{locale}/{namespace}.json`'
+  source:
+    path: AGENTS.md
+    lines: '153'
+    commit: 1dc488a0e5846ea537aa6c5cceee10ac629a1080
+  evidence: Gold adds new bold sub-headings, backtick-quoted filenames and commands, bullet lists, and fenced code blocks tagged with the appropriate language — matching the existing AGENTS.md style.
+  category: style
+  verification: llm_judge
+- rule: '**Never split sentences across multiple `t()` calls.** Translators cannot reorder words across separate keys. Instead, use `@doist/react-interpolate` to embed React elements (links, bold, etc.) within a single translatable string.'
+  source:
+    path: AGENTS.md
+    lines: 150-156
+    commit: 04df2dd8ec4b3bd2957e0170cfd0d68e56c00ce9
+  evidence: Gold explains why split-sentence keys break localization (translators cannot reorder words) and directs readers to the @doist/react-interpolate solution.
+  category: style
+  verification: llm_judge
+- rule: See `apps/portal/src/components/pages/email-receiving-faq.js` for a canonical example of correct `Interpolate` usage.
+  source:
+    path: AGENTS.md
+    lines: 150-156
+    commit: 04df2dd8ec4b3bd2957e0170cfd0d68e56c00ce9
+  evidence: Gold ends the new section with a pointer to a real in-repo file so readers can verify the correct pattern themselves.
+  category: testing
+  verification: llm_judge
+distractors:
+- rule: '**Translations:** Add to `ghost/i18n/locales/en/ghost.json`'
+  source:
+    path: AGENTS.md
+    lines: '233'
+    commit: 1dc488a0e5846ea537aa6c5cceee10ac629a1080
+  collision_type: architecture_boundary
+  why_distracting: The Code Guidelines section already mentions where to add translations, which could lead the agent to add i18n rules under Code Guidelines instead of inside the i18n Architecture section.
+  severity: medium
+- rule: '### Build Dependencies (Nx)'
+  source:
+    path: AGENTS.md
+    lines: '157'
+    commit: 1dc488a0e5846ea537aa6c5cceee10ac629a1080
+  collision_type: scope_ambiguity
+  why_distracting: 'The adjacent section heading may tempt the agent to create a new top-level ### section for the translation rules instead of expanding the existing i18n Architecture section.'
+  severity: low

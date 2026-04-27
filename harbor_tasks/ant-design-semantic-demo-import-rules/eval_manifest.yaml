@@ -1,0 +1,126 @@
+version: '2.0'
+source:
+  repo: ant-design/ant-design
+  pr: 57736
+  base_commit: 11370a274afc12156f25d83f7f2e9af468feba1a
+  merge_commit: 930285962203a24f93a0d95bf639c9b648de88ec
+task:
+  name: ant-design-semantic-demo-import-rules
+  kind: markdown_authoring
+  difficulty: easy
+  tags:
+  - markdown_authoring
+  - agent_instructions
+  - documentation
+checks:
+- id: test_claude_md_present
+  type: pass_to_pass
+  origin: static
+  description: CLAUDE.md exists at repo root.
+- id: test_demo_import_section_present
+  type: pass_to_pass
+  origin: static
+  description: '## Demo 导入规范 heading is preserved.'
+- id: test_semantic_exception_rule_added
+  type: fail_to_pass
+  origin: pr_diff
+  description: Adds a rule naming `_semantic*.tsx` as a 语义文档专用 demo exception.
+- id: test_dumi_helper_paths_added
+  type: fail_to_pass
+  origin: pr_diff
+  description: Mentions `.dumi/hooks/useLocale` as an allowed relative-import target for the semantic-demo exception.
+- id: test_dumi_not_alias_clarification_added
+  type: fail_to_pass
+  origin: pr_diff
+  description: Clarifies that `.dumi/*` is not a generic TS path alias.
+- id: test_test_import_section_intact
+  type: pass_to_pass
+  origin: static
+  description: 'Adjacent ## Test 导入规范 heading remains unmodified.'
+- id: test_pr_section_intact
+  type: pass_to_pass
+  origin: static
+  description: 'Downstream ## PR 规范 section is preserved.'
+- id: test_demo_import_uses_bullet_list
+  type: pass_to_pass
+  origin: static
+  description: Section continues to be formatted as a markdown bullet list.
+config_edits:
+- path: CLAUDE.md
+  tier: 1
+  gold_added: '- 常规 `components/**/demo/` 文件在引入 Ant Design 组件、组件内部模块、工具方法、变量、类型定义时，一律使用绝对路径导入，不使用相对路径导入。
+
+    - `components/**/demo/_semantic*.tsx` 属于语义文档专用 demo，是例外场景：允许通过相对路径引用 `.dumi/hooks/useLocale`、`.dumi/theme/common/*` 等站点侧辅助模块。
+
+    - `.dumi/` 目录内部的站点实现文件可按现有目录结构使用相对路径引用本目录模块；当引用仓库内 Ant Design 组件入口时，优先使用项目公开入口或已配置别名。
+
+    - 允许的导入形式应优先使用项目公开入口或已配置别名，例如：`antd`、`antd/es/*`、`antd/lib/*`、`antd/locale/*`、`@@/*`。
+
+    - `.dumi/*` 不是仓库通用的 TS 路径别名；如需引用 `.dumi` 内部模块，请按文件位置使用相对路径。
+
+    - 常规 demo 文件中，禁止使用 `..`、`../xxx`、`../../xxx`、`./xxx` 这类相对路径去引用组件实现、内部模块、方法、变量、类型，包含跨 demo、跨目录复用的场景。
+
+    - 常规 demo 与 `.dumi` 文件之间不要互相相对引用（`_semantic*.tsx` 等站点语义 demo 复用 `.dumi` 辅助模块除外）。如果需要复用少量逻辑，优先内联，或提取到可通过绝对路径访问的公共位置。
+
+    '
+  gold_removed: '- 本规范同时适用于 `components/**/demo/` 和 `.dumi/` 下的示例、站点、主题相关文件。（`semantic.test.tsx` 文件除外）
+
+    - 在这些目录下引入 Ant Design 组件、组件内部模块、工具方法、变量、类型定义时，一律使用绝对路径导入，不使用相对路径导入。
+
+    - 允许的导入形式应优先使用项目公开入口或已配置别名，例如：`antd`、`antd/es/*`、`antd/lib/*`、`antd/locale/*`、`.dumi/*`、`@@/*`。
+
+    - 禁止使用 `..`、`../xxx`、`../../xxx`、`./xxx` 这类相对路径去引用组件实现、内部模块、方法、变量、类型，包含跨 demo、跨目录复用的场景。
+
+    - demo 与 `.dumi` 文件之间不要互相相对引用；如果需要复用少量逻辑，优先内联，或提取到可通过绝对路径访问的公共位置。
+
+    '
+rubric:
+- rule: 在这些目录下引入 Ant Design 组件、组件内部模块、工具方法、变量、类型定义时，一律使用绝对路径导入，不使用相对路径导入。
+  source:
+    path: CLAUDE.md
+    lines: '39'
+    commit: 11370a274afc12156f25d83f7f2e9af468feba1a
+  evidence: Gold patch adds a dedicated bullet establishing `_semantic*.tsx` as a semantic-documentation exception, clearly separate from the blanket absolute-path rule.
+  category: naming
+  verification: llm_judge
+- rule: 允许的导入形式应优先使用项目公开入口或已配置别名，例如：`antd`、`antd/es/*`、`antd/lib/*`、`antd/locale/*`、`.dumi/*`、`@@/*`。
+  source:
+    path: CLAUDE.md
+    lines: '40'
+    commit: 11370a274afc12156f25d83f7f2e9af468feba1a
+  evidence: Gold patch removes `.dumi/*` from the allowed-aliases list and adds a separate bullet clarifying it is not a TS path alias.
+  category: style
+  verification: llm_judge
+- rule: demo 与 `.dumi` 文件之间不要互相相对引用；如果需要复用少量逻辑，优先内联，或提取到可通过绝对路径访问的公共位置。
+  source:
+    path: CLAUDE.md
+    lines: '42'
+    commit: 11370a274afc12156f25d83f7f2e9af468feba1a
+  evidence: Gold patch updates the cross-tree rule bullet to acknowledge that `_semantic*.tsx` reuse of `.dumi` helpers is the exception, removing the silent contradiction.
+  category: architecture
+  verification: llm_judge
+- rule: 本文件为 AI 编程助手提供项目上下文和开发规范。
+  source:
+    path: CLAUDE.md
+    lines: '3'
+    commit: 11370a274afc12156f25d83f7f2e9af468feba1a
+  evidence: Gold patch continues in 简体中文 with backtick-wrapped code paths, matching the terminology and tone of surrounding bullets.
+  category: style
+  verification: llm_judge
+- rule: '# Ant Design 项目开发指南'
+  source:
+    path: CLAUDE.md
+    lines: '1'
+    commit: 11370a274afc12156f25d83f7f2e9af468feba1a
+  evidence: Gold patch only modifies CLAUDE.md; no other files are created, renamed, or moved — a docs-only change scoped to the agent-instruction file.
+  category: architecture
+  verification: programmatic
+distractors:
+- rule: '`semantic.test.tsx` 文件除外'
+  source:
+    path: CLAUDE.md
+    lines: '38'
+    commit: 11370a274afc12156f25d83f7f2e9af468feba1a
+  collision_type: meta_confusion
+  why_distracting: The original `semantic.test.tsx` exception on line 38 could be misread as already covering `_semantic*.tsx` files, causing the agent to skip adding the required distinct exception for semantic-documentation demos.
+  severity: medium

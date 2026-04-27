@@ -1,0 +1,91 @@
+version: '2.0'
+task:
+  name: antd-claude-md-pr-body-language
+  kind: markdown_authoring
+  title: Clarify PR body language guidance in ant-design CLAUDE.md
+  difficulty: easy
+  estimated_minutes: 5
+source:
+  repo: ant-design/ant-design
+  pr_number: 57425
+  base_commit: 07f63a6df00dcf32f855a00ca6fe818053dca0c3
+  merge_commit: af60513f82c51264d892e2a0e266970f16fdea32
+  primary_files:
+  - CLAUDE.md
+  pr: 57425
+checks:
+- id: test_pr_body_language_flexibility_rule_added
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'The verbatim clarification phrase must be present somewhere in CLAUDE.md.
+
+    '
+- id: test_pr_body_rule_in_pr_section
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'The new clarification must live inside the existing ''## PR 规范'' section.
+
+    '
+- id: test_existing_pr_title_rule_preserved
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Pre-existing PR-title rule and example must still be present.
+
+    '
+- id: test_claude_md_well_formed_markdown
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'CLAUDE.md must remain well-formed (top-level title, balanced fences).
+
+    '
+- id: test_git_repo_intact
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Git working tree remains usable after edits.
+
+    '
+config_edits:
+- base_commit: 07f63a6df00dcf32f855a00ca6fe818053dca0c3
+  rationale: 'Clarify that while the PR title is always English, the PR body defaults to English but may be authored in Chinese or English depending on the user''s language preference. Also reformats three Markdown tables for column alignment (cosmetic).
+
+    '
+  cosmetic_changes:
+  - Re-aligned column widths in '### API 表格格式' table (no semantic change)
+  - Re-aligned column widths in '#### 句式' table separator row
+  - Re-aligned column widths in '### Emoji 规范' table separator row
+  path: CLAUDE.md
+  gold_added: '{''location'': ''## PR 规范 > ### 标题与内容'', ''text'': ''- PR 内容默认使用英文，可根据用户语言习惯决定使用中文或英文''}'
+  gold_removed: '{''location'': ''## PR 规范 > ### 标题与内容'', ''text'': ''- PR 内容默认使用英文''}'
+rubric:
+- id: do_not_alter_unrelated_rules
+  source:
+    commit: 07f63a6df00dcf32f855a00ca6fe818053dca0c3
+    lines: 36-160
+    path: CLAUDE.md
+  rule: 'Do not modify or remove rules unrelated to the PR-body language clarification (e.g., API table format, anchor-id rules, branch strategy, Emoji conventions).
+
+    '
+- id: keep_zh_cn_voice
+  source:
+    commit: 07f63a6df00dcf32f855a00ca6fe818053dca0c3
+    lines: 1-3
+    path: CLAUDE.md
+  rule: 'The repo''s instruction file is authored in Simplified Chinese; any added rule should be written in 简体中文 to match surrounding rules.
+
+    '
+- id: keep_pr_title_english_rule_intact
+  source:
+    commit: 07f63a6df00dcf32f855a00ca6fe818053dca0c3
+    lines: 67-69
+    path: CLAUDE.md
+  rule: 'The existing rule that PR titles are always in English must remain unchanged; only the PR-body rule is being clarified.
+
+    '
+- id: section_placement
+  source:
+    commit: 07f63a6df00dcf32f855a00ca6fe818053dca0c3
+    lines: 63-69
+    path: CLAUDE.md
+  rule: 'The added clarification belongs in the existing ''## PR 规范 > ### 标题与内容'' subsection, adjacent to the PR-title rule, not in a new section.
+
+    '

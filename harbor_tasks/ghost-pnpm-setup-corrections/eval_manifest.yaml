@@ -1,0 +1,159 @@
+version: '2.0'
+source:
+  repo: TryGhost/Ghost
+  pr: 27346
+  base_commit: dc2ae810f4d630fb0367d996f2e782f81db88034
+  merge_commit: 370f405f11cb2b4f624646d2781dc799faf99c11
+task:
+  name: ghost-pnpm-setup-corrections
+  kind: code_with_config
+  difficulty: easy
+  tags:
+  - docs
+  - agent-instructions
+  - tooling
+  - pnpm
+checks:
+- id: test_codex_environment_uses_pnpm_run_setup
+  type: fail_to_pass
+  origin: pr_diff
+  description: '`.codex/environments/environment.toml` `[setup].script` runs `pnpm run setup`, not bare `pnpm setup`.
+
+    '
+- id: test_enforce_package_manager_message_uses_pnpm_run_setup
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'The `enforce-package-manager.js` guard script''s stderr table maps `yarn setup` to `pnpm run setup` (executed via `node`).
+
+    '
+- id: test_agents_md_dev_block_corepack_and_run_setup
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Root `AGENTS.md` `### Development` block tells agents to run `corepack enable pnpm` and `pnpm run setup`.
+
+    '
+- id: test_docs_readme_install_block_uses_corepack_and_run_setup
+  type: fail_to_pass
+  origin: pr_diff
+  description: '`docs/README.md` install/setup section teaches `corepack enable pnpm` before `pnpm run setup`.
+
+    '
+- id: test_e2e_readme_prereqs_mentions_corepack
+  type: fail_to_pass
+  origin: pr_diff
+  description: '`e2e/README.md` Prerequisites section explains that pnpm is provided via corepack rather than listed as a separate install requirement.
+
+    '
+- id: test_enforce_package_manager_exits_zero_for_pnpm_ua
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Pre-existing behavior: under a pnpm `npm_config_user_agent`, the guard script exits 0 silently.
+
+    '
+- id: test_codex_environment_toml_parses
+  type: pass_to_pass
+  origin: static
+  description: 'The Codex environment file remains valid TOML with the expected top-level structure.
+
+    '
+config_edits:
+- path: AGENTS.md
+  tier: 1
+  gold_added: 'corepack enable pnpm           # Enable corepack to use the correct pnpm version
+
+    pnpm run setup                 # First-time setup (installs deps + submodules)
+
+    '
+  gold_removed: 'pnpm                           # Install dependencies
+
+    pnpm setup                     # First-time setup (installs deps + submodules)
+
+    '
+  diff_hunk: "@@ -42,8 +42,8 @@ Two categories of apps:\n\n ### Development\n ```bash\n-pnpm                           # Install dependencies\n-pnpm setup                     # First-time setup (installs deps + submodules)\n+corepack enable pnpm           # Enable corepack to use the correct pnpm version\n+pnpm run setup                 # First-time setup (installs deps + submodules)\n pnpm dev                       # Start development (Docker backend + host frontend dev servers)\n ```\n"
+- path: docs/README.md
+  tier: 2
+  gold_added: 'corepack enable pnpm
+
+    pnpm run setup
+
+    '
+  gold_removed: 'pnpm setup
+
+    '
+  diff_hunk: "@@ -30,7 +30,8 @@ git remote add origin git@github.com:<YourUsername>/Ghost.git\n\n ```bash\n # Install dependencies and initialize submodules\n-pnpm setup\n+corepack enable pnpm\n+pnpm run setup\n ```\n\n #### 3. Start Ghost\n"
+- path: e2e/README.md
+  tier: 2
+  gold_added: '- Node.js installed (pnpm is managed via corepack — run `corepack enable pnpm` first)
+
+    '
+  gold_removed: '- Node.js and pnpm installed
+
+    '
+  diff_hunk: "@@ -6,7 +6,7 @@ This test suite runs automated browser tests against a running Ghost instance to\n\n ### Prerequisites\n - Docker and Docker Compose installed\n-- Node.js and pnpm installed\n+- Node.js installed (pnpm is managed via corepack — run `corepack enable pnpm` first)\n\n ### Running Tests\n To run the test, within this `e2e` folder run:\n"
+- path: .codex/environments/environment.toml
+  tier: 2
+  gold_added: 'pnpm run setup
+
+    '
+  gold_removed: 'pnpm setup
+
+    '
+  diff_hunk: "@@ -4,5 +4,5 @@ name = \"Ghost\"\n\n [setup]\n script = '''\n-pnpm setup\n+pnpm run setup\n '''\n"
+- path: .github/scripts/enforce-package-manager.js
+  tier: 2
+  gold_added: 'yarn setup   -> pnpm run setup
+
+    '
+  gold_removed: 'yarn setup   -> pnpm setup
+
+    '
+  diff_hunk: "@@ -16,7 +16,7 @@ Use one of these instead:\n   pnpm install\n\n Common command replacements:\n-  yarn setup   -> pnpm setup\n+  yarn setup   -> pnpm run setup\n   yarn dev     -> pnpm dev\n   yarn test    -> pnpm test\n   yarn lint    -> pnpm lint\n"
+rubric:
+- rule: 'Always recommend `pnpm` as the package manager — never npm or yarn — since this repository uses pnpm workspaces.
+
+    '
+  source:
+    path: AGENTS.md
+    lines: 5-7
+    commit: dc2ae810f4d630fb0367d996f2e782f81db88034
+  evidence: 'The gold patch keeps every command in the pnpm namespace and updates the `enforce-package-manager` script''s replacement table to point yarn-coming-from users at `pnpm run setup`, never npm/yarn.
+
+    '
+  category: tooling
+  verification: llm_judge
+- rule: 'Setup commands shown to contributors and agents must invoke Ghost''s `setup` script via `pnpm run setup`, not the reserved built-in `pnpm setup` subcommand.
+
+    '
+  source:
+    path: AGENTS.md
+    lines: 43-47
+    commit: dc2ae810f4d630fb0367d996f2e782f81db88034
+  evidence: 'AGENTS.md''s `### Development` block, docs/README.md''s contributor quick-start, and the Codex environment definition all change `pnpm setup` → `pnpm run setup`.
+
+    '
+  category: tooling
+  verification: semantic_diff
+- rule: 'Documentation that lists Ghost''s first-time setup steps must instruct the user to enable corepack (`corepack enable pnpm`) before invoking pnpm, so the pinned pnpm version is used.
+
+    '
+  source:
+    path: AGENTS.md
+    lines: 43-47
+    commit: dc2ae810f4d630fb0367d996f2e782f81db88034
+  evidence: 'AGENTS.md''s Development block adds `corepack enable pnpm` and docs/README.md''s install block adds the same line above `pnpm run setup`. e2e/README.md''s prerequisites note that pnpm is managed via corepack.
+
+    '
+  category: tooling
+  verification: semantic_diff
+- rule: 'Keep the AGENTS.md / docs prose terse and command-focused — short bullets / fenced bash blocks, no marketing language. Match the existing style of the surrounding sections.
+
+    '
+  source:
+    path: AGENTS.md
+    lines: 1-50
+    commit: dc2ae810f4d630fb0367d996f2e782f81db88034
+  evidence: 'The gold patch only swaps existing lines and keeps the same column alignment (`# comment` aligned to col 32) in AGENTS.md.
+
+    '
+  category: style
+  verification: llm_judge

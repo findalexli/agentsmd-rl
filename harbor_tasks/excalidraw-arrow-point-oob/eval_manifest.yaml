@@ -1,0 +1,86 @@
+version: '2.0'
+source:
+  repo: excalidraw/excalidraw
+  pr_number: 10922
+  pr_url: https://github.com/excalidraw/excalidraw/pull/10922
+  base_commit: 81ab857a6fc66254239947524faccf45d5925f69
+  merge_commit: 987173b52f8a889984c3ff98450f24b9e65c70fa
+  title: 'fix: Arrow point index Out-of-Bounds'
+  files:
+  - packages/element/src/linearElementEditor.ts
+  - packages/excalidraw/components/App.tsx
+  - packages/excalidraw/data/restore.ts
+  pr: 10922
+task:
+  name: excalidraw-arrow-point-oob
+  difficulty: medium
+  tags:
+  - bugfix
+  - react
+  - typescript
+  - frontend
+  - robustness
+checks:
+- id: test_handle_point_dragging_oob_index
+  type: fail_to_pass
+  origin: pr_diff
+  description: LinearElementEditor.handlePointDragging must not throw when lastClickedPoint is greater than the largest valid points index; instead it must log the validation message via console.error and continue with a fallback last-point value.
+- id: test_handle_point_dragging_negative_index
+  type: fail_to_pass
+  origin: pr_diff
+  description: LinearElementEditor.handlePointDragging must not throw when lastClickedPoint is negative; the same console.error fallback must be taken.
+- id: test_repair_binding_diagnostic_format
+  type: fail_to_pass
+  origin: pr_diff
+  description: restoreElements must log the new diagnostic format including the candidate elements-map size when a binding cannot be repaired (matches /out of \(\d+\) elements/).
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: yarn test:typecheck (tsc) must succeed on the gold patch.
+- id: test_repo_existing_linear_element_editor_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: The repo's existing packages/element/tests/linearElementEditor.test.tsx vitest suite must keep passing on the gold patch (the patch touches the same source file these tests exercise).
+rubric:
+- id: typescript_throughout
+  source:
+    lines: '9'
+    commit: 81ab857a6fc66254239947524faccf45d5925f69
+    path: .github/copilot-instructions.md
+  severity: high
+  rule: All edits must be TypeScript. CLAUDE.md mandates "TypeScript throughout with strict configuration" and copilot-instructions.md says "Use TypeScript for all new code". Asserted programmatically via test_repo_typecheck.
+- id: prefer_immutable_data
+  source:
+    lines: '12'
+    commit: 81ab857a6fc66254239947524faccf45d5925f69
+    path: .github/copilot-instructions.md
+  severity: medium
+  rule: Prefer `const` and `readonly`; do not introduce reassignable globals or mutable shared state in the patched code paths.
+- id: use_optional_chaining_and_nullish
+  source:
+    lines: '13'
+    commit: 81ab857a6fc66254239947524faccf45d5925f69
+    path: .github/copilot-instructions.md
+  severity: medium
+  rule: Use optional chaining (`?.`) and nullish coalescing (`??`) when accessing potentially undefined fields. The new repairBinding diagnostic log uses `boundElement?.id` and `elementsMap?.size`; keep that style.
+- id: error_handling_with_context
+  source:
+    lines: '26'
+    commit: 81ab857a6fc66254239947524faccf45d5925f69
+    path: .github/copilot-instructions.md
+  severity: medium
+  rule: Always log errors with contextual information. The new `Could not repair binding for element` log demonstrates this — keep the contextual element id and elements-map size in the message.
+- id: react_hooks_rules
+  source:
+    lines: '16'
+    commit: 81ab857a6fc66254239947524faccf45d5925f69
+    path: .github/copilot-instructions.md
+  severity: low
+  rule: The App.tsx change must remain inside the existing class-component handler (`handleCanvasPointerMove`); do not introduce conditional hooks or restructure into an out-of-place hook.
+- id: yarn_test_typecheck_must_pass
+  source:
+    lines: '12'
+    commit: 81ab857a6fc66254239947524faccf45d5925f69
+    path: CLAUDE.md
+  severity: high
+  rule: CLAUDE.md mandates "Use yarn test:typecheck to verify TypeScript"; the patch must keep `tsc` clean (asserted programmatically as well).

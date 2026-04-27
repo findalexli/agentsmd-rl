@@ -1,0 +1,167 @@
+diff --git a/superset-frontend/packages/superset-core/src/theme/types.ts b/superset-frontend/packages/superset-core/src/theme/types.ts
+index 697cb8cb7274..fccbfd41d367 100644
+--- a/superset-frontend/packages/superset-core/src/theme/types.ts
++++ b/superset-frontend/packages/superset-core/src/theme/types.ts
+@@ -110,6 +110,26 @@ export interface ColorVariants {
+ }
+ 
+ export interface SupersetSpecificTokens {
++  // Label variant tokens — Published/Draft (dashboard status)
++  labelPublishedColor?: string;
++  labelPublishedBg?: string;
++  labelPublishedBorderColor?: string;
++  labelPublishedIconColor?: string;
++  labelDraftColor?: string;
++  labelDraftBg?: string;
++  labelDraftBorderColor?: string;
++  labelDraftIconColor?: string;
++
++  // Label variant tokens — Dataset type (Physical/Virtual)
++  labelDatasetPhysicalColor?: string;
++  labelDatasetPhysicalBg?: string;
++  labelDatasetPhysicalBorderColor?: string;
++  labelDatasetPhysicalIconColor?: string;
++  labelDatasetVirtualColor?: string;
++  labelDatasetVirtualBg?: string;
++  labelDatasetVirtualBorderColor?: string;
++  labelDatasetVirtualIconColor?: string;
++
+   // Font-related
+   fontSizeXS: string;
+   fontSizeXXL: string;
+diff --git a/superset-frontend/packages/superset-ui-core/src/components/Label/reusable/DatasetTypeLabel.tsx b/superset-frontend/packages/superset-ui-core/src/components/Label/reusable/DatasetTypeLabel.tsx
+index 48784d937a38..cab54c35e8a6 100644
+--- a/superset-frontend/packages/superset-ui-core/src/components/Label/reusable/DatasetTypeLabel.tsx
++++ b/superset-frontend/packages/superset-ui-core/src/components/Label/reusable/DatasetTypeLabel.tsx
+@@ -32,28 +32,41 @@ export const DatasetTypeLabel: React.FC<DatasetTypeLabelProps> = ({
+   datasetType,
+ }) => {
+   const theme = useTheme();
+-  const label: string =
+-    datasetType === 'physical' ? t('Physical') : t('Virtual');
+-  const icon =
+-    datasetType === 'physical' ? (
+-      <Icons.InsertRowAboveOutlined
+-        iconSize={SIZE}
+-        iconColor={theme.colorPrimary}
+-      />
+-    ) : (
+-      <Icons.ConsoleSqlOutlined iconSize={SIZE} />
+-    );
+-  const labelType = datasetType === 'physical' ? 'primary' : 'default';
++  const isPhysical = datasetType === 'physical';
++  const label: string = isPhysical ? t('Physical') : t('Virtual');
++  const labelType = isPhysical ? 'primary' : 'default';
++
++  const color = isPhysical
++    ? (theme.labelDatasetPhysicalColor ?? theme.colorPrimaryText)
++    : (theme.labelDatasetVirtualColor ?? theme.colorPrimary);
++  const bg = isPhysical
++    ? theme.labelDatasetPhysicalBg
++    : theme.labelDatasetVirtualBg;
++  const borderColor = isPhysical
++    ? theme.labelDatasetPhysicalBorderColor
++    : theme.labelDatasetVirtualBorderColor;
++  const iconColor = isPhysical
++    ? (theme.labelDatasetPhysicalIconColor ?? theme.colorPrimary)
++    : theme.labelDatasetVirtualIconColor;
++
++  const icon = isPhysical ? (
++    <Icons.InsertRowAboveOutlined iconSize={SIZE} iconColor={iconColor} />
++  ) : (
++    <Icons.ConsoleSqlOutlined
++      iconSize={SIZE}
++      {...(iconColor && { iconColor })}
++    />
++  );
+ 
+   return (
+     <Label
+       icon={icon}
+       type={labelType}
++      data-test="dataset-type-label"
+       style={{
+-        color:
+-          datasetType === 'physical'
+-            ? theme.colorPrimaryText
+-            : theme.colorPrimary,
++        color,
++        ...(bg && { backgroundColor: bg }),
++        ...(borderColor && { borderColor }),
+       }}
+     >
+       {label}
+diff --git a/superset-frontend/packages/superset-ui-core/src/components/Label/reusable/PublishedLabel.tsx b/superset-frontend/packages/superset-ui-core/src/components/Label/reusable/PublishedLabel.tsx
+index 91fe9facde25..b6de74267301 100644
+--- a/superset-frontend/packages/superset-ui-core/src/components/Label/reusable/PublishedLabel.tsx
++++ b/superset-frontend/packages/superset-ui-core/src/components/Label/reusable/PublishedLabel.tsx
+@@ -33,12 +33,24 @@ export const PublishedLabel: React.FC<PublishedLabelProps> = ({
+ }) => {
+   const theme = useTheme();
+   const label = isPublished ? t('Published') : t('Draft');
++  const labelType = isPublished ? 'success' : 'primary';
++
++  const color = isPublished
++    ? (theme.labelPublishedColor ?? theme.colorSuccessText)
++    : (theme.labelDraftColor ?? theme.colorPrimaryText);
++  const bg = isPublished ? theme.labelPublishedBg : theme.labelDraftBg;
++  const borderColor = isPublished
++    ? theme.labelPublishedBorderColor
++    : theme.labelDraftBorderColor;
++  const iconColor = isPublished
++    ? (theme.labelPublishedIconColor ?? theme.colorSuccess)
++    : (theme.labelDraftIconColor ?? theme.colorPrimary);
++
+   const icon = isPublished ? (
+-    <Icons.CheckCircleOutlined iconSize="s" iconColor={theme.colorSuccess} />
++    <Icons.CheckCircleOutlined iconSize="s" iconColor={iconColor} />
+   ) : (
+-    <Icons.MinusCircleOutlined iconSize="s" iconColor={theme.colorPrimary} />
++    <Icons.MinusCircleOutlined iconSize="s" iconColor={iconColor} />
+   );
+-  const labelType = isPublished ? 'success' : 'primary';
+ 
+   return (
+     <Label
+@@ -46,7 +58,9 @@ export const PublishedLabel: React.FC<PublishedLabelProps> = ({
+       icon={icon}
+       onClick={onClick}
+       style={{
+-        color: isPublished ? theme.colorSuccessText : theme.colorPrimaryText,
++        color,
++        ...(bg && { backgroundColor: bg }),
++        ...(borderColor && { borderColor }),
+       }}
+     >
+       {label}
+diff --git a/superset-frontend/src/theme/utils/antdTokenNames.ts b/superset-frontend/src/theme/utils/antdTokenNames.ts
+index 0d09ddb66b0d..0349d682c4e5 100644
+--- a/superset-frontend/src/theme/utils/antdTokenNames.ts
++++ b/superset-frontend/src/theme/utils/antdTokenNames.ts
+@@ -48,6 +48,26 @@ const SUPERSET_CUSTOM_TOKENS: Set<string> = new Set([
+   // Font loading
+   'fontUrls',
+ 
++  // Label variant tokens — Published/Draft (dashboard status)
++  'labelPublishedColor',
++  'labelPublishedBg',
++  'labelPublishedBorderColor',
++  'labelPublishedIconColor',
++  'labelDraftColor',
++  'labelDraftBg',
++  'labelDraftBorderColor',
++  'labelDraftIconColor',
++
++  // Label variant tokens — Dataset type (Physical/Virtual)
++  'labelDatasetPhysicalColor',
++  'labelDatasetPhysicalBg',
++  'labelDatasetPhysicalBorderColor',
++  'labelDatasetPhysicalIconColor',
++  'labelDatasetVirtualColor',
++  'labelDatasetVirtualBg',
++  'labelDatasetVirtualBorderColor',
++  'labelDatasetVirtualIconColor',
++
+   // Editor tokens
+   'colorEditorSelection',
+ 

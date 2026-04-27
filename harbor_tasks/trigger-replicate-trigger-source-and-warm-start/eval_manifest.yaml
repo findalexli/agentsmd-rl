@@ -1,0 +1,123 @@
+version: '2.0'
+source:
+  repo: triggerdotdev/trigger.dev
+  pr: 3274
+  base_commit: efcafdf388344487681ea388ed6fcfd4e953aa98
+  merge_commit: 38559480c91910043ba983f0d3747f4b9c8ed9e2
+task:
+  kind: code_fix
+checks:
+- id: test_module_exports_schema_and_columns
+  type: pass_to_pass
+  origin: pr_diff
+  description: TaskRunV2 zod schema and TASK_RUN_COLUMNS array remain exported.
+- id: test_existing_columns_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: Pre-existing columns in TASK_RUN_COLUMNS remain present.
+- id: test_zod_schema_validates_existing_required_fields
+  type: pass_to_pass
+  origin: pr_diff
+  description: TaskRunV2.parse still accepts a minimally valid input on the existing fields.
+- id: test_prisma_schema_validates
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`prisma validate` succeeds — same command the repo''s `db:migrate` flow runs in CI to confirm the Prisma schema is well-formed.'
+- id: test_task_run_columns_includes_trigger_source
+  type: fail_to_pass
+  origin: pr_diff
+  description: TASK_RUN_COLUMNS must include "trigger_source".
+- id: test_task_run_columns_includes_root_trigger_source
+  type: fail_to_pass
+  origin: pr_diff
+  description: TASK_RUN_COLUMNS must include "root_trigger_source".
+- id: test_task_run_columns_includes_is_warm_start
+  type: fail_to_pass
+  origin: pr_diff
+  description: TASK_RUN_COLUMNS must include "is_warm_start".
+- id: test_zod_schema_accepts_trigger_source
+  type: fail_to_pass
+  origin: pr_diff
+  description: TaskRunV2 zod schema must accept and retain trigger_source.
+- id: test_zod_schema_accepts_root_trigger_source
+  type: fail_to_pass
+  origin: pr_diff
+  description: TaskRunV2 zod schema must accept and retain root_trigger_source.
+- id: test_zod_schema_accepts_is_warm_start
+  type: fail_to_pass
+  origin: pr_diff
+  description: TaskRunV2 zod schema must accept and retain is_warm_start (boolean).
+- id: test_clickhouse_migration_alters_task_runs_v2
+  type: fail_to_pass
+  origin: pr_diff
+  description: A Goose migration must ADD COLUMN for each of the three new columns on trigger_dev.task_runs_v2.
+- id: test_clickhouse_migration_column_types
+  type: fail_to_pass
+  origin: pr_diff
+  description: trigger_source/root_trigger_source must be LowCardinality(String); is_warm_start must be Nullable(UInt8).
+- id: test_postgres_migration_adds_is_warm_start_column
+  type: fail_to_pass
+  origin: pr_diff
+  description: A Prisma migration must ALTER public.TaskRun ADD COLUMN "isWarmStart" BOOLEAN.
+- id: test_prisma_schema_has_is_warm_start_field
+  type: fail_to_pass
+  origin: pr_diff
+  description: model TaskRun in schema.prisma must declare `isWarmStart Boolean?`.
+rubric:
+- rule: ClickHouse migrations MUST use Goose format with explicit `-- +goose Up` and `-- +goose Down` sections, per the ClickHouse package's CLAUDE.md guidance. Both directions must be provided so the migration can be rolled back.
+  source:
+    path: internal-packages/clickhouse/CLAUDE.md
+    lines: ''
+    commit: efcafdf388344487681ea388ed6fcfd4e953aa98
+  evidence: Gold patch creates migration 028_*.sql with both -- +goose Up and -- +goose Down sections.
+  category: style
+  verification: semantic_diff
+- rule: New Goose-format ClickHouse migrations live under `internal-packages/clickhouse/schema/` and follow the existing `NNN_description.sql` naming convention (e.g. `028_*`).
+  source:
+    path: internal-packages/clickhouse/CLAUDE.md
+    lines: ''
+    commit: efcafdf388344487681ea388ed6fcfd4e953aa98
+  evidence: Gold patch names the migration 028_add_trigger_source_and_warm_start_to_task_runs_v2.sql.
+  category: naming
+  verification: semantic_diff
+- rule: Schema changes to Postgres MUST come with a corresponding Prisma migration (a directory under `internal-packages/database/prisma/migrations/` containing `migration.sql`). Editing only `schema.prisma` is not sufficient.
+  source:
+    path: internal-packages/database/CLAUDE.md
+    lines: ''
+    commit: efcafdf388344487681ea388ed6fcfd4e953aa98
+  evidence: Gold patch includes a Prisma migration directory with migration.sql.
+  category: style
+  verification: semantic_diff
+- rule: '"No default exports, use function declarations." New TypeScript code in this repo must not introduce `export default` and should prefer named exports / function declarations.'
+  source:
+    path: .github/copilot-instructions.md
+    lines: ''
+    commit: efcafdf388344487681ea388ed6fcfd4e953aa98
+  evidence: New code in the patch uses named exports and function declarations, not export default.
+  category: style
+  verification: semantic_diff
+- rule: Validation should use Zod schemas (which are heavily used in `packages/core` and the webapp). Parsing untyped input from Postgres `Json?` fields like `annotations` should go through a Zod schema rather than ad-hoc property access.
+  source:
+    path: .cursor/rules/webapp.mdc
+    lines: ''
+    commit: efcafdf388344487681ea388ed6fcfd4e953aa98
+  evidence: Gold patch uses RunAnnotations.safeParse() via Zod to parse annotations JSON.
+  category: style
+  verification: semantic_diff
+- rule: '"When importing from `@trigger.dev/core` in the webapp, we never import the root `@trigger.dev/core` path, instead we favor one of the subpath exports". New imports must continue to use a subpath (e.g. `@trigger.dev/core/v3`).'
+  source:
+    path: .cursor/rules/webapp.mdc
+    lines: ''
+    commit: efcafdf388344487681ea388ed6fcfd4e953aa98
+  evidence: Gold patch imports RunAnnotations from @trigger.dev/core/v3 subpath.
+  category: naming
+  verification: semantic_diff
+- rule: The `TASK_RUN_COLUMNS` array, the `TaskRunV2` Zod schema, the `TaskRunFieldTypes` mapping, and the `TaskRunInsertArray` positional tuple type must all be kept in lockstep — additions to one require additions to the others, in the same order. The file's own comment ("Column order for compact format - must match ClickHouse table schema") makes this explicit.
+  source:
+    path: internal-packages/clickhouse/src/taskRuns.ts
+    lines: ''
+    commit: efcafdf388344487681ea388ed6fcfd4e953aa98
+  evidence: Gold patch extends all four structures with three new fields in matching order.
+  category: architecture
+  verification: semantic_diff
+distractors: []

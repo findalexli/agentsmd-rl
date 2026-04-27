@@ -1,0 +1,170 @@
+version: '2.0'
+source:
+  repo: ant-design/ant-design
+  pr: 57426
+  base_commit: 3980243572875b822d8df0b308980ad57afee284
+  merge_commit: e56b100e0b54610b2d6e75d027ed5904c0ab171c
+task:
+  kind: markdown_authoring
+  difficulty: easy
+  tags:
+  - markdown
+  - documentation
+  - agent-instruction
+  - ant-design
+  - react
+checks:
+- id: test_claude_md_has_column_explanation_heading
+  type: fail_to_pass
+  origin: agent_config
+  description: CLAUDE.md introduces the column-explanation list with `列说明：`.
+  source:
+    path: CLAUDE.md
+    lines: 73-74
+    commit: 3980243572875b822d8df0b308980ad57afee284
+- id: test_claude_md_param_ordering_rule_updated
+  type: fail_to_pass
+  origin: agent_config
+  description: First column-explanation bullet expands the parameter-ordering rule.
+  source:
+    path: CLAUDE.md
+    lines: '74'
+    commit: 3980243572875b822d8df0b308980ad57afee284
+- id: test_affix_en_table_has_version_and_global_config_columns
+  type: fail_to_pass
+  origin: pr_diff
+  description: Affix EN doc adopts the 6-column header (Version + Global Config).
+- id: test_affix_zh_table_has_version_and_global_config_columns
+  type: fail_to_pass
+  origin: pr_diff
+  description: Affix ZH doc adopts the 6-column header (版本 + 全局配置).
+- id: test_cp_en_affix_uses_see_reference
+  type: fail_to_pass
+  origin: pr_diff
+  description: ConfigProvider EN affix row references Affix component page.
+- id: test_cp_zh_affix_uses_see_reference
+  type: fail_to_pass
+  origin: pr_diff
+  description: ConfigProvider ZH affix row references Affix component page.
+- id: test_p2p_claude_md_api_table_section_present
+  type: pass_to_pass
+  origin: static
+  description: CLAUDE.md `### API 表格格式` heading remains intact.
+- id: test_p2p_cp_en_unchanged_neighbours_intact
+  type: pass_to_pass
+  origin: static
+  description: ConfigProvider EN neighbouring rows (alert, avatar) are not modified.
+config_edits:
+- path: CLAUDE.md
+  tier: 1
+  gold_added: '列说明：
+
+
+    - 参数：按字母顺序排列，忽略 className, style, onClick, onKeyDown 等通用属性, onChange, onClick 等事件回调放在最后'
+  gold_removed: '- 参数：按字母顺序排列'
+- path: components/affix/index.en-US.md
+  tier: 2
+  gold_added: '| Property | Description | Type | Default | Version | [Global Config](/components/config-provider#component-config) |
+
+    | --- | --- | --- | --- | --- | --- |
+
+    | offsetBottom | Offset from the bottom of the viewport (in pixels) | number | - |  | × |
+
+    | offsetTop | Offset from the top of the viewport (in pixels) | number | 0 |  | × |
+
+    | target | Specifies the scrollable area DOM node | () => Window \| HTMLElement \| null | () => window |  | × |
+
+    | onChange | Callback for when Affix state is changed | (affixed?: boolean) => void | - |  | × |'
+  gold_removed: '| Property | Description | Type | Default |
+
+    | --- | --- | --- | --- |
+
+    | offsetBottom | Offset from the bottom of the viewport (in pixels) | number | - |
+
+    | offsetTop | Offset from the top of the viewport (in pixels) | number | 0 |
+
+    | target | Specifies the scrollable area DOM node | () => HTMLElement | () => window |
+
+    | onChange | Callback for when Affix state is changed | (affixed?: boolean) => void | - |'
+- path: components/affix/index.zh-CN.md
+  tier: 2
+  gold_added: '| 参数 | 说明 | 类型 | 默认值 | 版本 | [全局配置](/components/config-provider-cn#component-config) |
+
+    | --- | --- | --- | --- | --- | --- |
+
+    | offsetBottom | 距离窗口底部达到指定偏移量后触发 | number | - |  | × |
+
+    | offsetTop | 距离窗口顶部达到指定偏移量后触发 | number | 0 |  | × |
+
+    | target | 设置 `Affix` 需要监听其滚动事件的元素，值为一个返回对应 DOM 元素的函数 | () => Window \| HTMLElement \| null | () => window |  | × |
+
+    | onChange | 固定状态改变时触发的回调函数 | (affixed?: boolean) => void | - |  | × |'
+  gold_removed: '| 参数 | 说明 | 类型 | 默认值 |
+
+    | --- | --- | --- | --- |
+
+    | offsetBottom | 距离窗口底部达到指定偏移量后触发 | number | - |
+
+    | offsetTop | 距离窗口顶部达到指定偏移量后触发 | number | 0 |
+
+    | target | 设置 `Affix` 需要监听其滚动事件的元素，值为一个返回对应 DOM 元素的函数 | () => HTMLElement | () => window |
+
+    | onChange | 固定状态改变时触发的回调函数 | (affixed?: boolean) => void | - |'
+- path: components/config-provider/index.en-US.md
+  tier: 2
+  gold_added: '| affix | Set Affix common props | See [Affix](/components/affix#api) | - | 6.0.0 |'
+  gold_removed: '| affix | Set Affix common props | { className?: string, style?: React.CSSProperties } | - | 6.0.0 |'
+- path: components/config-provider/index.zh-CN.md
+  tier: 2
+  gold_added: '| affix | 设置 Affix 组件的通用属性 | 参见 [Affix](/components/affix-cn#api) | - | 6.0.0 |'
+  gold_removed: '| affix | 设置 Affix 组件的通用属性 | { className?: string, style?: React.CSSProperties } | - | 6.0.0 |'
+rubric:
+- rule: '### API 表格格式'
+  source:
+    path: CLAUDE.md
+    lines: '56'
+    commit: 3980243572875b822d8df0b308980ad57afee284
+  evidence: Affix EN/ZH docs upgraded from 4-column to 6-column format matching the CLAUDE.md template; header now includes Version and Global Config columns.
+  category: style
+  verification: llm_judge
+- rule: Provide both English and Chinese documentation
+  source:
+    path: .github/copilot-instructions.md
+    lines: '90'
+    commit: 3980243572875b822d8df0b308980ad57afee284
+  evidence: Every edit to index.en-US.md is mirrored in index.zh-CN.md with appropriate localisation (config-provider-cn link, Chinese labels).
+  category: architecture
+  verification: llm_judge
+- rule: '- 参数：按字母顺序排列'
+  source:
+    path: CLAUDE.md
+    lines: '74'
+    commit: 3980243572875b822d8df0b308980ad57afee284
+  evidence: Gold patch updates CLAUDE.md bullet to document the full parameter ordering rule including exclusions for common attrs and event callbacks placed last.
+  category: style
+  verification: llm_judge
+- rule: '[Global Config](/components/config-provider#component-config)'
+  source:
+    path: CLAUDE.md
+    lines: '60'
+    commit: 3980243572875b822d8df0b308980ad57afee284
+  evidence: ConfigProvider EN/ZH affix rows switched from inlined type to a See/参见 link reference matching the pattern used by alert, anchor, breadcrumb, and button rows.
+  category: style
+  verification: llm_judge
+distractors:
+- rule: '- 默认值：字符串用反引号，布尔/数字直接写，无默认值用 `-`'
+  source:
+    path: CLAUDE.md
+    lines: '77'
+    commit: 3980243572875b822d8df0b308980ad57afee284
+  collision_type: scope_ambiguity
+  why_distracting: This default-value rule sits inside the same API 表格格式 section but governs cell formatting, not column structure — an agent may waste effort reformatting default values instead of adding the missing Version and Global Config columns.
+  severity: medium
+- rule: 添加或修改本地化配置时，需同时修改所有语言文件
+  source:
+    path: CLAUDE.md
+    lines: '91'
+    commit: 3980243572875b822d8df0b308980ad57afee284
+  collision_type: scope_ambiguity
+  why_distracting: This i18n rule targets components/locale/ locale files, not markdown docs — an agent could incorrectly expand scope to edit locale TS files unrelated to this documentation-only PR.
+  severity: low

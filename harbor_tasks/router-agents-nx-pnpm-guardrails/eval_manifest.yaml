@@ -1,0 +1,108 @@
+version: '2.0'
+source:
+  repo: TanStack/router
+  pr: 6671
+  base_commit: 027dc0581750bc7db48600f438240ccb8b2bb1e8
+  merge_commit: bab64df13be7bc06c578ad2108c639fcd68313cc
+task:
+  kind: markdown_authoring
+checks:
+- id: test_repo_checked_out
+  type: pass_to_pass
+  origin: repo_tests
+  description: TanStack/router repo is present at /workspace/router with a valid HEAD.
+- id: test_agents_md_present_and_nonempty
+  type: pass_to_pass
+  origin: repo_tests
+  description: AGENTS.md still exists, starts with "# AGENTS.md", and has substantive content.
+- id: test_agent_execution_guardrails_subsection_added
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md must add the bolded 'Agent execution guardrails (important):' bullet under the Dev environment tips section.
+- id: test_sandbox_command_documented
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md must document the sandbox Nx invocation `CI=1 NX_DAEMON=false pnpm nx run <project>:<target> --outputStyle=stream --skipRemoteCache` verbatim.
+- id: test_one_command_at_a_time_rule
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md must contain the "Run only one Nx command at a time." rule.
+- id: test_nx_reset_recovery_rule
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md must mention `pnpm nx reset` and the ~20-second no-output threshold for the hang-recovery rule.
+- id: test_no_loop_retries_rule
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md must include the "Do not loop retries indefinitely." escalation rule.
+- id: test_pnpm_nx_show_projects_replacement
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md must use `pnpm nx show projects` (replacing `npx nx show projects`).
+- id: test_no_npx_nx_show_projects_left
+  type: fail_to_pass
+  origin: pr_diff
+  description: The legacy `npx nx show projects` command must no longer appear in AGENTS.md.
+- id: test_no_npx_nx_run_left
+  type: fail_to_pass
+  origin: pr_diff
+  description: All `npx nx run ...` invocations must be replaced with `pnpm nx run ...`.
+- id: test_no_npx_nx_affected_left
+  type: fail_to_pass
+  origin: pr_diff
+  description: All `npx nx affected ...` invocations must be replaced with `pnpm nx affected ...`.
+- id: test_no_npx_vitest_run_left
+  type: fail_to_pass
+  origin: pr_diff
+  description: Direct `npx vitest run ...` invocations must be removed; filter args go through `pnpm nx run ...:test:unit -- ...`.
+config_edits:
+- path: AGENTS.md
+  tier: 1
+  gold_added: 'Dev environment tips section: replaced npx nx commands with pnpm nx equivalents (npx nx show projects -> pnpm nx show projects, npx nx run -> pnpm nx run, npx nx run-many -> pnpm nx run-many, npx nx affected -> pnpm nx affected). Granular unit testing through Nx (recommended) subsection: replaced old "Granular Vitest testing within packages" subsection with pnpm nx run @tanstack/react-router:test:unit -- based commands, dropping cd packages/react-router steps. Testing strategy line: updated from "Package level (nx) -> File level (vitest) -> Test level (-t flag) -> Pattern level (exclude)" to "Package level (nx) -> File-level args via nx -> Test-level args (-t) via nx -> Pattern-level args (--exclude) via nx". Agent execution guardrails (NEW) subsection: added new bullet at end of Dev environment tips with six sub-bullets - prefer pnpm nx over npx nx, prefer Nx targets over direct test runners, sandbox Nx invocation with CI=1 NX_DAEMON=false, run only one Nx command at a time, hang recovery with pnpm nx reset and ~20s threshold, do not loop retries indefinitely. Testing instructions section: updated Efficient targeted testing workflow, Pro tips, and Example workflow to use pnpm nx run instead of npx vitest run.
+
+    '
+  gold_removed: 'Dev environment tips section: old npx nx commands (npx nx show projects, npx nx run, npx nx run-many, npx nx affected). Granular Vitest testing within packages subsection: old vitest-based testing instructions with cd packages/react-router and npx vitest run commands. Testing strategy line (OLD): "Package level (nx) -> File level (vitest) -> Test level (-t flag) -> Pattern level (exclude)". Testing instructions section (npx workflow): old Efficient targeted testing workflow, Pro tips, and Example workflow using npx vitest run and cd commands.
+
+    '
+rubric:
+- rule: The agent must edit only the root `AGENTS.md`. Editing or creating any other file in the repository violates the task's scope.
+  source:
+    path: instruction.md
+    lines: ''
+    commit: 027dc0581750bc7db48600f438240ccb8b2bb1e8
+  evidence: The gold diff modifies only AGENTS.md; solution solve.sh applies a single git patch to that file and no other paths.
+  category: scope
+  verification: llm_judge
+- rule: All sections of AGENTS.md unrelated to the change (Project overview, Setup commands, Code style, PR instructions, Package structure, Common development tasks, Framework-specific notes, Environment requirements, Key architecture patterns, Development workflow, References) must remain intact and unreordered.
+  source:
+    path: AGENTS.md
+    lines: 1-172
+    commit: 027dc0581750bc7db48600f438240ccb8b2bb1e8
+  evidence: The gold diff preserves all sections outside of Dev environment tips and Testing instructions; unrelated headings, bullets, and structure are unchanged in the gold AGENTS.md.
+  category: completeness
+  verification: llm_judge
+- rule: Replacement test commands must invoke `pnpm nx run <project>:test:unit -- ...` (not direct `pnpm vitest run ...`), so Nx's task graph re-runs required builds. The whole point of the PR is preserving task dependencies.
+  source:
+    path: AGENTS.md
+    lines: 26-62
+    commit: 027dc0581750bc7db48600f438240ccb8b2bb1e8
+  evidence: The gold replacement uses `pnpm nx run ...:test:unit --` for all test commands instead of direct `npx vitest run`, keeping Nx task dependencies including required builds in the graph.
+  category: architecture
+  verification: programmatic
+- rule: The new 'Agent execution guardrails (important):' bullet is placed at the end of the 'Dev environment tips' list (immediately before the '## Testing instructions' heading), not in a freshly invented section.
+  source:
+    path: AGENTS.md
+    lines: 40-46
+    commit: 027dc0581750bc7db48600f438240ccb8b2bb1e8
+  evidence: In the gold AGENTS.md, the guardrail bullet is the last item in the Dev environment tips section, positioned directly before the `## Testing instructions` heading.
+  category: structure
+  verification: llm_judge
+- rule: No `npx nx ...` or `npx vitest run ...` invocation should remain in AGENTS.md after the edit. Stale `npx` examples adjacent to the new `pnpm` examples create inconsistent guidance for agents.
+  source:
+    path: AGENTS.md
+    lines: 26-62
+    commit: 027dc0581750bc7db48600f438240ccb8b2bb1e8
+  evidence: The gold diff removes every `npx nx` and `npx vitest run` occurrence; grep for these patterns in the gold AGENTS.md returns no matches.
+  category: completeness
+  verification: programmatic
+distractors: []

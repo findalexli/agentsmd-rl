@@ -1,0 +1,97 @@
+version: '2.0'
+source:
+  owner: docker
+  repo: compose
+  pr_number: 13690
+  base_commit: 3d2d03cd39145a8cb29ac3c5440172d994834111
+  merge_commit: 9cab43945a5ad651190ce5ec9800f449f489b5f6
+  pr_title: 'pkg/compose: use negotiated API version for network setup'
+  pr: 13690
+checks:
+- id: test_runtime_api_version_uses_negotiation
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'RuntimeAPIVersion(ctx) must trigger Ping(ctx, PingOptions{NegotiateAPIVersion: true})
+
+    and return the client''s negotiated ClientVersion (NOT the server''s raw APIVersion).
+
+    '
+- id: test_runtime_api_version_caches_success
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'After one successful negotiation, subsequent RuntimeAPIVersion calls must
+
+    return the cached value without re-Pinging the daemon.
+
+    '
+- id: test_runtime_api_version_does_not_cache_error
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Errors from Ping must NOT be cached (no sync.Once-style permanent caching).
+
+    A subsequent call after a transient failure must retry and succeed.
+
+    '
+- id: test_runtime_api_version_per_instance_cache
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'The cache must live on each composeService instance (not in a
+
+    package-level variable). Two instances must negotiate independently.
+
+    '
+- id: test_pkg_compose_vet_clean
+  type: pass_to_pass
+  origin: repo_tests
+  description: go vet ./pkg/compose/... must pass on the agent's tree.
+- id: test_existing_unit_tests_unrelated_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Pre-existing unit tests (TestContainerName, TestServiceLinks) must still
+
+    pass on the agent''s tree. They predate this PR and have nothing to do
+
+    with API version — they catch broad compilation regressions.
+
+    '
+rubric:
+- id: lint_clean_after_changes
+  source:
+    lines: 11-15
+    commit: 3d2d03cd39145a8cb29ac3c5440172d994834111
+    path: CLAUDE.md
+  rule: 'Per CLAUDE.md: after modifying any Go code, golangci-lint v2 (configured
+
+    in .golangci.yml) should pass. Importantly, methods on composeService
+
+    that hold a sync.Mutex field MUST use pointer receivers; methods that
+
+    keep value receivers will trigger `copylocks` / vet warnings.
+
+    '
+- id: imports_use_allowed_packages
+  source:
+    lines: 23-25
+    commit: 3d2d03cd39145a8cb29ac3c5440172d994834111
+    path: CLAUDE.md
+  rule: 'Per CLAUDE.md: do not use io/ioutil, github.com/pkg/errors,
+
+    gopkg.in/yaml.v2, golang.org/x/exp/maps, golang.org/x/exp/slices.
+
+    Use github.com/containerd/errdefs in place of github.com/docker/docker/errdefs.
+
+    Any newly introduced imports in pkg/compose/ must respect this list.
+
+    '
+- id: tests_use_t_context
+  source:
+    lines: '26'
+    commit: 3d2d03cd39145a8cb29ac3c5440172d994834111
+    path: CLAUDE.md
+  rule: 'Per CLAUDE.md: in tests use t.Context() instead of context.Background()
+
+    or context.TODO(). Any new tests added under pkg/compose/ should use
+
+    t.Context() consistent with the surrounding file.
+
+    '

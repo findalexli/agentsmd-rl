@@ -1,0 +1,104 @@
+version: '2.0'
+source:
+  repo: openai/openai-agents-js
+  pr: 836
+  base_commit: 41c1b89f650a9d18aeb76677f965dcfb06087c90
+  merge_commit: ece9cd964494339dbb5e76e0389cc527a81384aa
+task:
+  kind: markdown_authoring
+checks:
+- id: renamed_skill_file_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: Renamed Codex skill file exists at .codex/skills/code-change-verification/SKILL.md
+- id: renamed_skill_frontmatter_name
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Renamed SKILL.md frontmatter declares name: code-change-verification'
+- id: openai_knowledge_skill_file_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: New Codex skill file exists at .codex/skills/openai-knowledge/SKILL.md
+- id: openai_knowledge_skill_frontmatter_name
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'openai-knowledge SKILL.md frontmatter declares name: openai-knowledge'
+- id: agents_md_references_code_change_verification_skill
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md references the renamed skill as $code-change-verification
+- id: agents_md_references_openai_knowledge_skill
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md references the new $openai-knowledge skill
+- id: agents_md_conventional_commits_section_intact
+  type: pass_to_pass
+  origin: repo_tests
+  description: AGENTS.md retains the Conventional Commits guidelines
+- id: agents_md_top_header_intact
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'AGENTS.md keeps its # Contributor Guide top-level heading'
+config_edits:
+- path: AGENTS.md
+  tier: 1
+  gold_added: '### $code-change-verification and ### $openai-knowledge subsections with conditional triggers and file-specific scope'
+  gold_removed: Always load and use the $verify-changes skill immediately after any code change and before you consider the work complete.
+- path: .codex/skills/code-change-verification/SKILL.md
+  tier: 1
+  gold_added: 'name: code-change-verification'
+  gold_removed: 'name: verify-changes'
+- path: .codex/skills/openai-knowledge/SKILL.md
+  tier: 1
+  gold_added: 'name: openai-knowledge'
+  gold_removed: ''
+rubric:
+- rule: Run `$code-change-verification` before marking work complete when changes affect runtime code, tests, or build/test behavior.
+  source:
+    path: AGENTS.md
+    lines: '26'
+    commit: 41c1b89f650a9d18aeb76677f965dcfb06087c90
+  evidence: Gold replaces unconditional $verify-changes with conditional $code-change-verification in the Mandatory Skill Usage section of AGENTS.md
+  category: architecture
+  verification: llm_judge
+- rule: Use **Conventional Commits**
+  source:
+    path: AGENTS.md
+    lines: '184'
+    commit: 41c1b89f650a9d18aeb76677f965dcfb06087c90
+  evidence: Gold preserves the Conventional Commits section including commit type list and message format unchanged
+  category: style
+  verification: llm_judge
+- rule: When working on OpenAI API or OpenAI platform integrations in this repo (Responses API, tools, streaming, Realtime API, auth, models, rate limits, MCP, Agents SDK/ChatGPT Apps SDK), use $openai-knowledge to pull authoritative docs via the OpenAI Developer Docs MCP server (and guide setup if it is not configured).
+  source:
+    path: AGENTS.md
+    lines: '26'
+    commit: 41c1b89f650a9d18aeb76677f965dcfb06087c90
+  evidence: Gold creates the openai-knowledge skill file with MCP setup guidance and wires it into AGENTS.md Mandatory Skill Usage
+  category: architecture
+  verification: llm_judge
+distractors:
+- rule: Always load and use the `$verify-changes` skill immediately after any code change and before you consider the work complete. It executes the mandatory verification stack from the repository root; rerun the stack after fixing failures.
+  source:
+    path: AGENTS.md
+    lines: '28'
+    commit: 41c1b89f650a9d18aeb76677f965dcfb06087c90
+  collision_type: rule_conflict
+  why_distracting: References $verify-changes which no longer exists after the rename to $code-change-verification — following this rule would invoke a missing skill
+  severity: high
+- rule: After any code modification, invoke the `$verify-changes` skill to run the required verification stack from the repository root. Rerun the full stack after fixes.
+  source:
+    path: AGENTS.md
+    lines: '64'
+    commit: 41c1b89f650a9d18aeb76677f965dcfb06087c90
+  collision_type: scope_ambiguity
+  why_distracting: Unconditional 'any code modification' conflicts with the new conditional trigger list that exempts docs-only and repo-meta changes
+  severity: medium
+- rule: For every code change, run the full validation sequence locally via the `$verify-changes` skill; do not skip any step or change the order.
+  source:
+    path: AGENTS.md
+    lines: '121'
+    commit: 41c1b89f650a9d18aeb76677f965dcfb06087c90
+  collision_type: scope_ambiguity
+  why_distracting: Mandatory 'for every code change' conflicts with the new skip categories (docs/, .codex/, README.md, AGENTS.md, .github/) introduced in gold
+  severity: medium

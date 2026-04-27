@@ -1,0 +1,175 @@
+version: '2.0'
+source:
+  owner: anomalyco
+  repo: opencode
+  pr_number: 23227
+  base_commit: 1dd257b76a98a159f763ec009bf061e6bd4ae718
+  merge_commit: fc5b353144b6d370df21e2da3a8c1fad7e63123a
+  files:
+  - packages/opencode/src/config/keybinds.ts
+  pr: 23227
+task:
+  name: opencode-keybinds-effect-schema-migration
+  title: Migrate config/keybinds.ts to Effect Schema
+  kind: code_fix
+  difficulty: medium
+  tags:
+  - typescript
+  - effect
+  - schema
+  - refactor
+  - opencode
+checks:
+- id: test_keybinds_module_loads
+  type: pass_to_pass
+  origin: pr_diff
+  description: 'Migrated keybinds.ts loads via bun and exposes Keybinds with a .shape
+
+    property — required because tui-schema.ts iterates Object.keys(Keybinds.shape).
+
+    '
+- id: test_keybinds_shape_has_97_fields
+  type: pass_to_pass
+  origin: pr_diff
+  description: 'All 97 keybind fields are present on Keybinds.shape; preserves the
+
+    consumer surface tui-schema.ts:7 depends on.
+
+    '
+- id: test_keybinds_parse_resolves_defaults
+  type: pass_to_pass
+  origin: pr_diff
+  description: 'Keybinds.parse({}) resolves the documented defaults
+
+    (leader=ctrl+x, editor_open=<leader>e, terminal_suspend=ctrl+z on Linux).
+
+    '
+- id: test_per_field_parse_input_undo
+  type: pass_to_pass
+  origin: pr_diff
+  description: 'Keybinds.shape.input_undo.parse(undefined) returns the Linux default
+
+    "ctrl+-,super+z" — tui.ts:139 calls this exact expression.
+
+    '
+- id: test_repo_effect_zod_walker_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'The existing packages/opencode/test/util/effect-zod.test.ts (the walker
+
+    the migration depends on) keeps passing — guards against regressions
+
+    in the walker contract that the migrated keybinds.ts now relies on.
+
+    '
+- id: test_unknown_keybind_keys_do_not_throw
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Unknown keys must not raise at this layer; the redundant top-level
+
+    .strict() is dropped because KeybindOverride is already strict upstream.
+
+    '
+rubric:
+- id: avoid_try_catch
+  weight: 1
+  source:
+    lines: '13'
+    commit: 1dd257b76a98a159f763ec009bf061e6bd4ae718
+    path: AGENTS.md
+  rule: 'Per AGENTS.md, the migrated keybinds.ts must not introduce a try/catch.
+
+    Schema declarations and defaults can be expressed without one.
+
+    '
+- id: avoid_any_type
+  weight: 1
+  source:
+    lines: '14'
+    commit: 1dd257b76a98a159f763ec009bf061e6bd4ae718
+    path: AGENTS.md
+  rule: 'Per AGENTS.md, avoid `any`. Type-only zod imports plus
+
+    `as unknown as z.ZodObject<...>` is acceptable; gratuitous `any` casts
+
+    on the Schema or zod adapter result are not.
+
+    '
+- id: prefer_const_no_reassignment
+  weight: 1
+  source:
+    lines: 44-56
+    commit: 1dd257b76a98a159f763ec009bf061e6bd4ae718
+    path: AGENTS.md
+  rule: 'Per AGENTS.md "Variables" section, prefer `const`. Ternaries over let
+
+    reassignment. The platform-conditional default on input_undo should be
+
+    a `const` ternary.
+
+    '
+- id: avoid_else_after_return
+  weight: 1
+  source:
+    lines: 58-74
+    commit: 1dd257b76a98a159f763ec009bf061e6bd4ae718
+    path: AGENTS.md
+  rule: 'Per AGENTS.md "Control Flow", no `else` after return.
+
+    '
+- id: keep_self_reexport_pattern
+  weight: 1
+  source:
+    lines: '18'
+    commit: 1dd257b76a98a159f763ec009bf061e6bd4ae718
+    path: AGENTS.md
+  rule: 'Per AGENTS.md, `src/config` modules use the self-export pattern
+
+    (`export * as ConfigKeybinds from "./keybinds"`). The migrated file
+
+    must keep that line.
+
+    '
+- id: effect_schema_idioms
+  weight: 1
+  source:
+    lines: 176-200
+    commit: 1dd257b76a98a159f763ec009bf061e6bd4ae718
+    path: packages/opencode/AGENTS.md
+  rule: 'Per the opencode Effect rules, schemas should use Effect Schema
+
+    primitives (Schema.String, Schema.Struct, Schema.optional,
+
+    Schema.withDecodingDefault) and annotate with `identifier`. The
+
+    migrated file should use these idioms rather than ad-hoc workarounds.
+
+    '
+- id: dont_introduce_namespace_export
+  weight: 1
+  source:
+    lines: 119-134
+    commit: 1dd257b76a98a159f763ec009bf061e6bd4ae718
+    path: packages/opencode/AGENTS.md
+  rule: 'Per packages/opencode/AGENTS.md, do not use `export namespace Foo {...}`
+
+    for module organization. Stick to flat top-level exports plus the
+
+    self-reexport line at the top of the file.
+
+    '
+- id: inline_single_use_values
+  weight: 1
+  source:
+    lines: 20-29
+    commit: 1dd257b76a98a159f763ec009bf061e6bd4ae718
+    path: AGENTS.md
+  rule: 'Per AGENTS.md, reduce variable count by inlining single-use values.
+
+    The `keybind(default, description)` helper is the natural way to keep
+
+    each field a single inlined declaration; per-field intermediate
+
+    `const` bindings should be avoided unless a value is reused.
+
+    '

@@ -1,0 +1,91 @@
+version: '2.0'
+source:
+  repo: prisma/prisma
+  pr: 29268
+  base_commit: 658697212823ac3aae4b84c206ec091106eda1ae
+  merge_commit: 455853d0ddae89da28ff9f9fa65c5ed0a803c908
+task:
+  kind: code_fix
+checks:
+- id: uint8_in_object
+  type: fail_to_pass
+  origin: pr_diff
+  description: Uint8Array nested in an object inside a Json field is serialized as base64
+- id: uint8_in_array
+  type: fail_to_pass
+  origin: pr_diff
+  description: Uint8Array nested in an array inside a Json field is serialized as base64
+- id: uint8_deeply_nested
+  type: fail_to_pass
+  origin: pr_diff
+  description: Deeply nested Uint8Array inside a Json field is serialized as base64
+- id: repo_parameterize_existing
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing parameterize.test.ts unit tests still pass
+- id: repo_parameterize_tests_dir
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing parameterize-tests/ unit tests still pass
+- id: repo_classify_existing
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing classify.test.ts unit tests still pass
+rubric:
+- rule: '**Avoid creating barrel files** (`index.ts` that re-export from other modules). Import directly from the source file (e.g., `import { foo } from ''./utils/query-utils''` not `import { foo } from ''./utils''`), unless `./utils/index.ts` file already exists (in which case use it for consistency with surrounding code).'
+  source:
+    path: AGENTS.md
+    lines: '111'
+    commit: 658697212823ac3aae4b84c206ec091106eda1ae
+  evidence: Gold imports safeJsonStringify directly from @prisma/client-engine-runtime rather than through an intermediate barrel module.
+  category: architecture
+  verification: llm_judge
+- rule: '**Avoid adding useless code comments that do not add new information for the reader**.'
+  source:
+    path: AGENTS.md
+    lines: '112'
+    commit: 658697212823ac3aae4b84c206ec091106eda1ae
+  evidence: Gold diff adds no inline comments; only the minimal code change to swap JSON.stringify for safeJsonStringify.
+  category: style
+  verification: llm_judge
+- rule: Prefer native JavaScript private properties and methods (`#field`) over the `private` keyword in TypeScript.
+  source:
+    path: AGENTS.md
+    lines: '119'
+    commit: 658697212823ac3aae4b84c206ec091106eda1ae
+  evidence: 'Gold patch preserves the existing #handleArray and #handleObject native private methods without converting them to TypeScript private.'
+  category: style
+  verification: llm_judge
+- rule: Keep changes ASCII unless a file already uses Unicode (docs sometimes include emojis).
+  source:
+    path: AGENTS.md
+    lines: '123'
+    commit: 658697212823ac3aae4b84c206ec091106eda1ae
+  evidence: Gold diff contains only ASCII characters; the import addition and two-line code substitution use no Unicode.
+  category: style
+  verification: llm_judge
+- rule: Use **kebab-case** for new file names (e.g., `query-utils.ts`, `filter-operators.test.ts`).
+  source:
+    path: AGENTS.md
+    lines: '110'
+    commit: 658697212823ac3aae4b84c206ec091106eda1ae
+  evidence: Gold solution does not introduce any new files, so no kebab-case violation occurs.
+  category: naming
+  verification: llm_judge
+distractors:
+- rule: 'Respect existing structure: modifications often require updating both command implementation and tests/fixtures.'
+  source:
+    path: AGENTS.md
+    lines: '122'
+    commit: 658697212823ac3aae4b84c206ec091106eda1ae
+  collision_type: rule_conflict
+  why_distracting: This task provides the tests pre-written; the solver only needs to fix the source, not author or update test files. Following this rule literally could waste time on unnecessary test modifications.
+  severity: medium
+- rule: When adding features that span multiple packages, build from root (`pnpm build`) to ensure correct dependency order.
+  source:
+    path: AGENTS.md
+    lines: '125'
+    commit: 658697212823ac3aae4b84c206ec091106eda1ae
+  collision_type: scope_ambiguity
+  why_distracting: The fix is confined to a single package (client-engine-runtime dependency already exists); a full monorepo build is unnecessary and slow for this two-line change.
+  severity: medium

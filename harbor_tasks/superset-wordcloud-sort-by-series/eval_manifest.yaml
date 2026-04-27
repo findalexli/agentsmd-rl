@@ -1,0 +1,79 @@
+version: '2.0'
+task:
+  name: superset-wordcloud-sort-by-series
+  kind: code_fix
+  title: Word cloud secondary sort prevents Druid TopN optimization
+  difficulty: medium
+  tags:
+  - typescript
+  - frontend
+  - bugfix
+  - performance
+source:
+  repo: apache/superset
+  pr: 39073
+  base_commit: 06818008c22162cc291ca30152354a0aa6dffd7c
+  merge_commit: 78fb09695b89b682fe9004c758142a47ce6903fb
+  url: https://github.com/apache/superset/pull/39073
+checks:
+- id: test_no_sort_omits_orderby
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'buildQuery omits the orderby clause when both sort_by_metric and sort_by_series are false. Base bug: a series sort is always appended whenever ''series'' is set, forcing a multi-column ORDER BY.'
+- id: test_metric_only_orderby
+  type: fail_to_pass
+  origin: pr_diff
+  description: With sort_by_metric=true and sort_by_series=false, orderby contains only the metric DESC entry — no implicit secondary series tiebreaker.
+- id: test_metric_only_orderby_high_cardinality
+  type: fail_to_pass
+  origin: pr_diff
+  description: Same contract under varied metric/series/row_limit values, guarding against fixes that hardcode the literal 'count' or 'foo' constants.
+- id: test_series_only_orderby
+  type: pass_to_pass
+  origin: pr_diff
+  description: With sort_by_series=true, orderby includes the series ASC entry. The bug means this case looks identical at base and gold; the test guards against regressions in the series-only path.
+- id: test_both_sorts_orderby
+  type: pass_to_pass
+  origin: pr_diff
+  description: With both sort flags enabled, orderby contains metric DESC then series ASC, in that order. Backward-compat behavior preserved.
+- id: test_existing_columns_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Mirrors the pre-existing buildQuery jest test (`should build columns from series in form data`). columns must come from formData.series.
+rubric:
+- id: rubric_no_any_types
+  source:
+    lines: 44-46
+    commit: 06818008c22162cc291ca30152354a0aa6dffd7c
+    path: CLAUDE.md
+  rule: The fix introduces no `any` TypeScript types. CLAUDE.md and AGENTS.md both call this out as a critical refactor (frontend modernization); the cursor rules repeat the rule under "Code Standards".
+- id: rubric_no_javascript_files
+  source:
+    lines: '45'
+    commit: 06818008c22162cc291ca30152354a0aa6dffd7c
+    path: CLAUDE.md
+  rule: 'No new JavaScript (.js/.jsx) files are introduced; new frontend code is TypeScript (.ts/.tsx). CLAUDE.md: "NO JavaScript files - Convert to TypeScript".'
+- id: rubric_uses_superset_ui_core
+  source:
+    lines: 46-49
+    commit: 06818008c22162cc291ca30152354a0aa6dffd7c
+    path: CLAUDE.md
+  rule: Frontend changes use @superset-ui/core (and its component wrappers) rather than importing antd directly. CLAUDE.md flags direct antd imports as deprecated.
+- id: rubric_avoid_time_specific_comments
+  source:
+    lines: 98-100
+    commit: 06818008c22162cc291ca30152354a0aa6dffd7c
+    path: CLAUDE.md
+  rule: New code comments avoid time-specific language ("now", "currently", "today"). Comments should remain accurate regardless of when they are read.
+- id: rubric_new_files_have_asf_header
+  source:
+    lines: 92-94
+    commit: 06818008c22162cc291ca30152354a0aa6dffd7c
+    path: CLAUDE.md
+  rule: Any newly introduced source file (e.g., a backfill DB migration) includes the standard Apache Software Foundation license header.
+- id: rubric_python_type_hints
+  source:
+    lines: 82-86
+    commit: 06818008c22162cc291ca30152354a0aa6dffd7c
+    path: CLAUDE.md
+  rule: 'Any newly added Python code (e.g., a backfill DB migration) uses type hints. CLAUDE.md: "Type hints required for all new code".'

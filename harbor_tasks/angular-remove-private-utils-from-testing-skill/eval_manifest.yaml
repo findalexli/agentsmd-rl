@@ -1,0 +1,214 @@
+version: '2.0'
+task:
+  name: angular-remove-private-utils-from-testing-skill
+  kind: markdown_authoring
+  title: Remove private testing utilities from Angular Developer skill reference
+source:
+  owner: angular
+  repo: angular
+  pr_number: 67880
+  base_commit: b82901f8f99469a8ff4a0ec54ef78d94c7543f5a
+  merge_commit: 9bb1e78969cc913ff560bf52b28e9fa9696189fc
+  url: https://github.com/angular/angular/pull/67880
+  title: 'docs: remove private utils from testing skills'
+  pr: 67880
+target_files:
+- skills/dev-skills/angular-developer/references/testing-fundamentals.md
+checks:
+- id: test_custom_utilities_heading_absent
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'The `## Custom Utilities` heading must no longer appear in the
+
+    testing-fundamentals reference. This heading exists at the base
+
+    commit and is removed by the gold patch.
+
+    '
+- id: test_private_testing_utils_path_absent
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'The reference must not cite `packages/private/testing/src/utils.ts`
+
+    anywhere. That path appears twice at the base commit (in the
+
+    private-utilities block) and is removed by the gold patch.
+
+    '
+- id: test_use_auto_tick_promotion_absent
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'The closing recommendation `Always prefer \`useAutoTick()\` to keep
+
+    tests efficient` must be gone. This is the unique trailing line of
+
+    the removed block.
+
+    '
+- id: test_use_auto_tick_symbol_absent
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'The `useAutoTick` symbol was only mentioned inside the removed
+
+    block; after the cleanup it must not appear anywhere in the file.
+
+    '
+- id: test_timeout_helper_mention_absent
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'The `await timeout(ms)` helper documentation line must no longer be
+
+    present in the file.
+
+    '
+- id: test_target_file_exists_and_nonempty
+  type: pass_to_pass
+  origin: static
+  description: 'The target reference file must still exist with substantial content
+
+    (>200 bytes) — only the private-utilities block should be removed,
+
+    not the entire file.
+
+    '
+- id: test_top_heading_preserved
+  type: pass_to_pass
+  origin: static
+  description: 'The top-level `# Testing Fundamentals` heading must remain the
+
+    first heading in the file.
+
+    '
+- id: test_unrelated_sections_preserved
+  type: pass_to_pass
+  origin: static
+  description: 'Sections untouched by the gold patch (Core Philosophy, Basic Test
+
+    Structure Example, TestBed and ComponentFixture) must still be
+
+    present.
+
+    '
+- id: test_testbed_section_is_final_section
+  type: pass_to_pass
+  origin: static
+  description: 'The `## TestBed and ComponentFixture` section must be the final
+
+    `##`-level section in the file after the cleanup.
+
+    '
+- id: test_act_wait_assert_guidance_preserved
+  type: pass_to_pass
+  origin: static
+  description: 'The "Act, Wait, Assert" testing guidance from the Core Philosophy
+
+    section is unrelated to the cleanup and must be preserved.
+
+    '
+- id: test_basic_test_structure_example_preserved
+  type: pass_to_pass
+  origin: static
+  description: 'The runnable example referencing `fixture.whenStable()` must remain
+
+    in the file.
+
+    '
+- id: test_working_tree_only_target_modified
+  type: pass_to_pass
+  origin: static
+  description: 'A correct fix modifies exactly the testing-fundamentals reference;
+
+    no other files in the working tree should be changed or added.
+
+    '
+config_edits:
+- rationale: 'The skill reference is a public-facing instruction surface for the
+
+    Angular-developer agent skill. The removed block promoted symbols
+
+    from `packages/private/testing/src/utils.ts`, a private framework
+
+    package that downstream Angular consumers cannot import. Skill
+
+    docs must not steer agents toward private internals.
+
+    '
+  path: skills/dev-skills/angular-developer/references/testing-fundamentals.md
+  gold_added: ''
+  gold_removed: '## Custom Utilities
+
+
+    To keep tests fast and avoid long waits, this project provides custom utilities:
+
+
+    - **`useAutoTick()`**: (from `packages/private/testing/src/utils.ts`) Fast-forwards time via a mock clock to avoid real waits.
+
+    - **`await timeout(ms)`**: (from `packages/private/testing/src/utils.ts`) Use for cases where a specific real-time delay is unavoidable.
+
+
+    Always prefer `useAutoTick()` to keep tests efficient.
+
+    '
+rubric:
+- id: act_wait_assert_pattern_for_test_examples
+  source:
+    lines: 18-25
+    path: AGENTS.md
+    commit: b82901f8f99469a8ff4a0ec54ef78d94c7543f5a
+  rule: 'Any test code shown in skill references must use the "Act, Wait,
+
+    Assert" pattern (state change → `await fixture.whenStable()` →
+
+    assertion) and must NOT use `fixture.detectChanges()` to manually
+
+    trigger updates. This rule applies because the file being edited
+
+    teaches testing patterns to agents.
+
+    '
+- id: do_not_promote_private_package_internals
+  source:
+    lines: 1-10
+    path: skills/dev-skills/angular-developer/SKILL.md
+    commit: b82901f8f99469a8ff4a0ec54ef78d94c7543f5a
+  rule: 'Public-facing skill instructions under `skills/dev-skills/` must
+
+    not direct agents toward symbols, helpers, or paths from
+
+    `packages/private/...`. The angular-developer skill is loaded by
+
+    downstream consumers who cannot access private framework
+
+    internals.
+
+    '
+- id: skill_reference_focused_scope
+  source:
+    lines: 60-70
+    path: skills/dev-skills/angular-developer/SKILL.md
+    commit: b82901f8f99469a8ff4a0ec54ef78d94c7543f5a
+  rule: 'Each reference under `skills/dev-skills/angular-developer/references/`
+
+    is loaded on-demand for a specific task domain. Edits to a
+
+    reference should stay within that file''s documented domain
+
+    (testing-fundamentals = unit testing patterns) and should not
+
+    drift into unrelated guidance, rewrites, or new sections.
+
+    '
+- id: commit_message_follows_angular_guidelines
+  source:
+    lines: 11-14
+    path: AGENTS.md
+    commit: b82901f8f99469a8ff4a0ec54ef78d94c7543f5a
+  rule: 'Per `AGENTS.md` → "Commit Guidelines", commits and PR titles must
+
+    follow the Angular commit-message format. For a docs change to
+
+    skills, a `docs:` prefix is appropriate (matches the original PR
+
+    title `docs: remove private utils from testing skills`).
+
+    '

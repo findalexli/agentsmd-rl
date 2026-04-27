@@ -1,0 +1,116 @@
+version: '2.0'
+source:
+  repo: openai/openai-agents-js
+  pr: 1117
+  base_commit: 4f1824fa1c63c8f7d84dc1a614a77fbd85fbd298
+  merge_commit: e2e434ab33d859ded14ed2705007388490152ba6
+  title: 'fix: recover segmented assistant output in agent tools and finalization'
+checks:
+- id: test_segmented_get_output_text_concatenates
+  type: fail_to_pass
+  origin: pr_diff
+  description: getOutputText concatenates multi-segment plain text in order.
+- id: test_segmented_get_output_text_concatenates_structured_json
+  type: fail_to_pass
+  origin: pr_diff
+  description: getOutputText concatenates a structured-JSON output split across segments.
+- id: test_segmented_skips_non_output_text
+  type: fail_to_pass
+  origin: pr_diff
+  description: getOutputText skips non-output_text segments while still concatenating later output_text segments.
+- id: test_get_last_text_still_returns_last_segment
+  type: pass_to_pass
+  origin: pr_diff
+  description: getLastTextFromOutputMessage continues to return only the last output_text segment (no regression in tail-only callers).
+- id: test_agent_as_tool_returns_full_segmented_output
+  type: fail_to_pass
+  origin: pr_diff
+  description: Agent.asTool returns the full concatenated assistant text, not just the last segment.
+- id: test_repo_existing_messages_unit_tests_still_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Pre-existing utils/messages.test.ts continues to pass.
+- id: test_agents_core_typecheck_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: agents-core build-check (tsc --noEmit on the test tsconfig) passes.
+rubric:
+- id: changeset_added
+  weight: 1
+  source:
+    ref: '## Policies & Mandatory Rules > $changeset-validation'
+    commit: 4f1824fa1c63c8f7d84dc1a614a77fbd85fbd298
+    path: AGENTS.md
+  rule: 'A patch-level changeset entry for @openai/agents-core has been
+
+    added under .changeset/ describing the fix in Conventional
+
+    Commit style (e.g. "fix: ..."). AGENTS.md and the
+
+    changeset-validation skill require a changeset for any change
+
+    to packages/.
+
+    '
+- id: comments_end_with_period
+  weight: 1
+  source:
+    ref: '## Operation Guide > Linting & Formatting ("Comments must end with a period.")'
+    commit: 4f1824fa1c63c8f7d84dc1a614a77fbd85fbd298
+    path: AGENTS.md
+  rule: 'Any new or modified comments in the agent''s diff must end with
+
+    a period, per the AGENTS.md "Linting & Formatting" rule.
+
+    '
+- id: public_api_doc_comments
+  weight: 1
+  source:
+    ref: '## Operation Guide > Review Process & What Reviewers Look For ("Public APIs have doc comments.")'
+    commit: 4f1824fa1c63c8f7d84dc1a614a77fbd85fbd298
+    path: AGENTS.md
+  rule: 'Any newly exported function in
+
+    packages/agents-core/src/utils/messages.ts has a JSDoc-style
+
+    doc comment, matching the existing style of
+
+    getLastTextFromOutputMessage / getOutputText. Per AGENTS.md
+
+    "Public APIs have doc comments."
+
+    '
+- id: tests_added_for_change
+  weight: 1
+  source:
+    ref: '## Operation Guide > Testing & Automated Checks'
+    commit: 4f1824fa1c63c8f7d84dc1a614a77fbd85fbd298
+    path: AGENTS.md
+  rule: 'The diff adds or updates unit tests under
+
+    packages/agents-core/test/ that exercise the multi-segment
+
+    assistant output path, per AGENTS.md "Add or update unit
+
+    tests for any code change unless it is truly infeasible."
+
+    '
+- id: streaming_nonstreaming_alignment
+  weight: 1
+  source:
+    ref: '## Project Structure Guide > Agents Core Runtime Guidelines'
+    commit: 4f1824fa1c63c8f7d84dc1a614a77fbd85fbd298
+    path: AGENTS.md
+  rule: 'The fix keeps streaming and non-streaming loops behaviorally
+
+    aligned (per AGENTS.md "Agents Core Runtime Guidelines"):
+
+    both the turn-resolution path and any other consumer of the
+
+    shared text-extraction helper now use the concatenating
+
+    behavior, so a segmented final message is returned whole in
+
+    both modes.
+
+    '

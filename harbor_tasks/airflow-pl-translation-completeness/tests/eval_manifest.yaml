@@ -1,0 +1,208 @@
+version: "2.0"
+
+task:
+  name: airflow-pl-translation-completeness
+  kind: code_with_config
+  source:
+    repo: apache/airflow
+    pr: 65272
+    base_commit: 01c404679384d3ca654e44e7243266f508921aac
+    merge_commit: dba43f3bf4531bdb01106d7f2318ea6ed79f95fb
+
+description: >
+  Backports the Polish translation completeness work from main to v3-2-test:
+  fills 17 missing PL translation keys, removes 3 unused dagWarnings plural
+  entries, applies the new "grupowy"/"Deaktywowany" terminology to existing
+  toaster strings, and adds a Terminology Glossary section to the locale
+  guideline (.github/skills/airflow-translations/locales/pl.md).
+
+checks:
+  - id: test_admin_slotsHelperText_present
+    type: fail_to_pass
+    origin: pr_behavior
+    description: pl/admin.json gains pools.form.slotsHelperText
+  - id: test_common_errors_forbidden_present
+    type: fail_to_pass
+    origin: pr_behavior
+    description: pl/common.json gains errors.forbidden.{title, description}
+  - id: test_common_generateToken_present
+    type: fail_to_pass
+    origin: pr_behavior
+    description: pl/common.json gains generateToken
+  - id: test_common_asset_materialization_present
+    type: fail_to_pass
+    origin: pr_behavior
+    description: pl/common.json gains runTypes.asset_materialization
+  - id: test_common_tokenGeneration_subtree_present
+    type: fail_to_pass
+    origin: pr_behavior
+    description: pl/common.json gains the full tokenGeneration subtree (10 keys)
+  - id: test_common_tokenGeneration_preserves_placeholder
+    type: fail_to_pass
+    origin: pr_behavior
+    description: tokenExpiresIn preserves the {{duration}} placeholder
+  - id: test_dag_runTypeLegend_present
+    type: fail_to_pass
+    origin: pr_behavior
+    description: pl/dag.json gains grid.runTypeLegend
+  - id: test_dag_header_status_deactivated_present
+    type: fail_to_pass
+    origin: pr_behavior
+    description: pl/dag.json gains header.status.deactivated
+  - id: test_components_dagWarnings_unused_keys_removed
+    type: fail_to_pass
+    origin: pr_behavior
+    description: pl/components.json removes dagWarnings.error_few/many/other
+  - id: test_bulkDelete_uses_grupowy_terminology
+    type: fail_to_pass
+    origin: agent_config
+    description: bulkDelete toaster strings use 'grupowego' per glossary, not 'masowego'
+    source:
+      file: .github/skills/airflow-translations/locales/pl.md
+      commit: dba43f3bf4531bdb01106d7f2318ea6ed79f95fb
+      anchor: "Bulk clear / delete / update"
+  - id: test_dag_deactivated_uses_deaktywowany
+    type: fail_to_pass
+    origin: agent_config
+    description: deactivated status uses 'Deaktywowany' (not 'Dezaktywowany')
+    source:
+      file: .github/skills/airflow-translations/locales/pl.md
+      commit: dba43f3bf4531bdb01106d7f2318ea6ed79f95fb
+      anchor: "Deactivated (Dag header status)"
+  - id: test_pl_md_has_terminology_glossary_heading
+    type: fail_to_pass
+    origin: pr_behavior
+    description: pl.md gains '## Terminology Glossary' section
+  - id: test_pl_md_glossary_lists_required_terms
+    type: fail_to_pass
+    origin: pr_behavior
+    description: pl.md glossary mentions Zabierający, grupowy, and Deaktywowany (and their avoided counterparts)
+  - id: test_all_pl_locale_files_valid_json
+    type: pass_to_pass
+    origin: repo_invariant
+    description: All 4 PL locale files remain valid JSON
+  - id: test_existing_translations_preserved
+    type: pass_to_pass
+    origin: repo_invariant
+    description: Pre-existing PL translations unchanged after the fix
+  - id: test_polish_plural_suffixes_preserved
+    type: pass_to_pass
+    origin: repo_invariant
+    description: Polish-required _few / _many plural suffixes preserved on warning_*
+  - id: test_python_can_parse_all_pl_files
+    type: pass_to_pass
+    origin: repo_invariant
+    description: python json.load succeeds on each PL locale file (subprocess)
+  - id: test_git_diff_touches_expected_files
+    type: fail_to_pass
+    origin: pr_behavior
+    description: git diff (subprocess) shows all 5 expected files modified
+
+config_edits:
+  - file: .github/skills/airflow-translations/locales/pl.md
+    description: >
+      Adds a "## Terminology Glossary" section with three preferred-term
+      entries and notes about declension/gender agreement. The agent's
+      diff will be compared semantically to the gold diff.
+    gold_diff: |
+      +## Terminology Glossary
+      +
+      +Preferred wording for specific UI terms. Apply these to new translations and
+      +prefer them when reviewing existing ones.
+      +
+      +| English / context | Preferred Polish | Avoid |
+      +|---|---|---|
+      +| Consuming Asset (asset consumed by a Dag run) | **Zabierający zasób** | ~~Konsumujący zasób~~ |
+      +| Bulk clear / delete / update (toaster and button labels) | **grupowy / grupowego / grupowej / grupowe …** | ~~masowy / masowego / masowej / masowe~~ |
+      +| Deactivated (Dag header status) | **Deaktywowany** / Deaktywowana / Deaktywowane | ~~Dezaktywowany~~ |
+      +
+      +Notes:
+      +
+      +- For "bulk <verb>" always use "grupowy" with the grammatical form that
+      +  matches the noun — e.g. "żądanie grupowego wyczyszczenia", "żądanie
+      +  grupowej aktualizacji". Never use "masowy".
+      +- "Deactivated" / "Deaktywowany" must agree in gender with the noun it
+      +  describes (e.g. neuter "zadanie" → "Deaktywowane").
+
+rubric:
+  - id: glossary_consuming_asset
+    description: >
+      The new pl.md glossary specifies that "Consuming Asset" should be
+      translated as "Zabierający zasób", NOT "Konsumujący zasób".
+      Any place in the agent's PL translations that translates "consuming"
+      in this context must follow this rule.
+    weight: 1
+    source:
+      file: .github/skills/airflow-translations/locales/pl.md
+      commit: dba43f3bf4531bdb01106d7f2318ea6ed79f95fb
+      anchor: "Consuming Asset"
+
+  - id: glossary_bulk_grupowy
+    description: >
+      The new pl.md glossary mandates "grupowy" (with appropriate
+      grammatical form: grupowego/grupowej/grupowe…) for "bulk
+      clear/delete/update" toaster and button labels — never "masowy".
+      All bulk-action PL strings must follow this.
+    weight: 2
+    source:
+      file: .github/skills/airflow-translations/locales/pl.md
+      commit: dba43f3bf4531bdb01106d7f2318ea6ed79f95fb
+      anchor: "Bulk clear / delete / update"
+
+  - id: glossary_deactivated_deaktywowany
+    description: >
+      The new pl.md glossary mandates "Deaktywowany / Deaktywowana /
+      Deaktywowane" (with gender agreement) for "Deactivated" — never
+      "Dezaktywowany".
+    weight: 1
+    source:
+      file: .github/skills/airflow-translations/locales/pl.md
+      commit: dba43f3bf4531bdb01106d7f2318ea6ed79f95fb
+      anchor: "Deactivated (Dag header status)"
+
+  - id: skill_consistency_with_existing_terminology
+    description: >
+      Per .github/skills/airflow-translations/SKILL.md "Updating an Existing
+      Translation": when translating, the agent must reuse established
+      Polish terminology found in existing locale files. New translations
+      should be consistent with words like "zasób" (asset), "wykonanie"
+      (run), "Dag" (kept in English), etc., already present in pl/.
+    weight: 1
+    source:
+      file: .github/skills/airflow-translations/SKILL.md
+      commit: dba43f3bf4531bdb01106d7f2318ea6ed79f95fb
+      anchor: "Updating an Existing Translation"
+
+  - id: pl_md_diacritics_preserved
+    description: >
+      pl.md emphasizes that Polish diacritics (ą, ć, ę, ł, ń, ó, ś, ź, ż)
+      must be preserved. Any new translations the agent adds must use
+      proper diacritics (not ASCII transliterations).
+    weight: 1
+    source:
+      file: .github/skills/airflow-translations/locales/pl.md
+      commit: dba43f3bf4531bdb01106d7f2318ea6ed79f95fb
+      anchor: "Diacritics"
+
+  - id: pl_md_placeholders_preserved
+    description: >
+      Per pl.md "Variables and Placeholders" section, all `{{variable}}`
+      placeholders must be preserved verbatim — variable names must not be
+      translated. New translations with placeholders (e.g.
+      tokenGeneration.tokenExpiresIn with {{duration}}) must keep them.
+    weight: 1
+    source:
+      file: .github/skills/airflow-translations/locales/pl.md
+      commit: dba43f3bf4531bdb01106d7f2318ea6ed79f95fb
+      anchor: "Variable and Placeholder Examples"
+
+  - id: skill_keep_alphabetical_ordering
+    description: >
+      Per SKILL.md, configuration files should keep existing alphabetical
+      ordering. New keys added to JSON locale files should be placed in
+      alphabetical positions consistent with the existing structure.
+    weight: 1
+    source:
+      file: .github/skills/airflow-translations/SKILL.md
+      commit: dba43f3bf4531bdb01106d7f2318ea6ed79f95fb
+      anchor: "Setting up the locale"

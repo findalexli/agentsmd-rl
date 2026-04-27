@@ -1,0 +1,17 @@
+name = "hugo-source-opener-shared-reader"
+title = "Fix shared reader in Source.ValueAsOpenReadSeekCloser"
+
+description = """\
+Hugo's `pagemeta.Source.ValueAsOpenReadSeekCloser` currently returns an opener
+that hands out the same `ReadSeekCloser` on every call (seeked back to 0).
+When two readers from the same opener are held concurrently, reading from one
+disturbs the position of the other, breaking callers that hold a reader open
+across operations. Fix the opener so each call returns an independent reader.
+"""
+
+difficulty = "easy"
+tags = ["go", "hugo", "io", "bugfix"]
+
+[time]
+estimated_minutes = 30
+timeout_minutes = 60

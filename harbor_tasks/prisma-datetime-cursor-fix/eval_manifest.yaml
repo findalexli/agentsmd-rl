@@ -1,120 +1,63 @@
-pr:
-  number: 29327
+version: '2.0'
+source:
   repo: prisma/prisma
-  owner: prisma
+  pr: 29327
   base_commit: f8e742a8de6878a206d8493b61d911dac97e11df
   merge_commit: ea93809a44f89847699a3f72d7b289339f7a0bdc
-  title: "fix: fix DATE cursor comparison"
-
 task:
-  name: prisma-datetime-cursor-fix
-  target_file: packages/client-engine-runtime/src/interpreter/render-query.ts
-
+  kind: code_fix
 checks:
-  - id: test_datetime_string_converted_to_date
-    type: fail_to_pass
-    origin: test_outputs
-    description: >
-      evaluateArg() converts a DateTime-typed string scope variable to a Date
-      object instead of leaving it as a string. Tests three different date
-      string values to prevent hardcoded constants from passing.
-
-  - id: test_datetime_conversion_preserves_date_value
-    type: fail_to_pass
-    origin: test_outputs
-    description: >
-      The Date object produced by evaluateArg() for a DateTime string
-      placeholder represents the correct date — its ISO string contains
-      the original date prefix. Verifies the conversion is semantically
-      correct, not just type-correct.
-
-  - id: test_non_datetime_string_not_converted
-    type: pass_to_pass
-    origin: test_outputs
-    description: >
-      String scope values whose placeholder type is NOT 'DateTime' (String,
-      Int, Float, Boolean, Json) are returned unchanged. The fix must be
-      gated on type === 'DateTime'.
-
-  - id: test_existing_render_query_vitest_suite
-    type: pass_to_pass
-    origin: repo_tests
-    description: >
-      All existing tests in render-query.test.ts (chunking, generators, IN
-      templates, raw SQL, etc.) continue to pass. Guards against regressions
-      in the broader evaluateArg / renderQuery logic.
-
-  - id: test_client_engine_runtime_vitest_suite
-    type: pass_to_pass
-    origin: repo_tests
-    description: >
-      All vitest tests in @prisma/client-engine-runtime pass — including
-      sql-commenter, json-protocol, interpreter/serialize-sql,
-      interpreter/generators, interpreter/render-query, and transaction-manager.
-      This is the actual CI test suite for the modified package.
-
-  - id: test_client_engine_runtime_typecheck
-    type: pass_to_pass
-    origin: repo_tests
-    description: >
-      TypeScript `tsc --noEmit` type checking passes for the
-      client-engine-runtime package. Part of the CI lint/typecheck gate.
-
-  - id: test_client_engine_runtime_prettier
-    type: pass_to_pass
-    origin: repo_tests
-    description: >
-      `prettier --check` passes for all TypeScript files in
-      client-engine-runtime. Part of the CI format-check gate.
-
-  - id: test_client_engine_runtime_eslint
-    type: pass_to_pass
-    origin: repo_tests
-    description: >
-      ESLint passes for client-engine-runtime TypeScript files. Part of the
-      CI lint gate — only warnings (not errors) are allowed.
-
-  - id: test_check_engines_override
-    type: pass_to_pass
-    origin: repo_tests
-    description: >
-      The `check-engines-override` script passes. This CI check verifies
-      that no package accidentally pins an engine override.
-
+- id: test_datetime_string_converted_to_date
+  type: fail_to_pass
+  origin: pr_diff
+  description: evaluateArg() converts a DateTime-typed string scope variable to a Date object instead of leaving it as a string. Tests three different date string values to prevent hardcoded constants from passing.
+- id: test_datetime_conversion_preserves_date_value
+  type: fail_to_pass
+  origin: pr_diff
+  description: The Date object produced by evaluateArg() for a DateTime string placeholder represents the correct date — its ISO string contains the original date prefix. Verifies the conversion is semantically correct, not just type-correct.
+- id: test_non_datetime_string_not_converted
+  type: pass_to_pass
+  origin: pr_diff
+  description: String scope values whose placeholder type is NOT 'DateTime' (String, Int, Float, Boolean, Json) are returned unchanged. The fix must be gated on type === 'DateTime'.
+- id: test_existing_render_query_vitest_suite
+  type: pass_to_pass
+  origin: repo_tests
+  description: All existing tests in render-query.test.ts (chunking, generators, IN templates, raw SQL, etc.) continue to pass. Guards against regressions in the broader evaluateArg / renderQuery logic.
+- id: test_client_engine_runtime_vitest_suite
+  type: pass_to_pass
+  origin: repo_tests
+  description: All vitest tests in @prisma/client-engine-runtime pass — including sql-commenter, json-protocol, interpreter/serialize-sql, interpreter/generators, interpreter/render-query, and transaction-manager. This is the actual CI test suite for the modified package.
+- id: test_client_engine_runtime_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript tsc --noEmit type checking passes for the client-engine-runtime package. Part of the CI lint/typecheck gate.
+- id: test_client_engine_runtime_prettier
+  type: pass_to_pass
+  origin: repo_tests
+  description: prettier --check passes for all TypeScript files in client-engine-runtime. Part of the CI format-check gate.
+- id: test_client_engine_runtime_eslint
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint passes for client-engine-runtime TypeScript files. Part of the CI lint gate — only warnings (not errors) are allowed.
+- id: test_check_engines_override
+  type: pass_to_pass
+  origin: repo_tests
+  description: The check-engines-override script passes. This CI check verifies that no package accidentally pins an engine override.
 rubric:
-  - id: why_comment_not_what
-    rule: >
-      Any inline comment added alongside the fix explains WHY the conversion
-      is needed (the cursor pagination comparison problem, the DATE column
-      type mismatch), NOT what the code mechanically does. "What" comments
-      that merely restate the code are forbidden by repo conventions.
-    source:
-      type: agent_config
-      file: AGENTS.md
-      commit: f8e742a8de6878a206d8493b61d911dac97e11df
-      lines: "Coding conventions → Avoid adding useless code comments"
-    evidence: >
-      The gold fix includes a comment block that explains WHY: "This is done to prevent issues that
-      arise when query input values end up being directly compared to values retrieved from
-      the database. One example of this is a query containing a DateTime cursor value being
-      used against a DATE MySQL column. The pagination logic doesn't have parameter type
-      information, therefore it ends up comparing the two datetimes as strings and would yield
-      false even if the two date datetime strings represent the same Date."
-
-  - id: no_superfluous_comments
-    rule: >
-      The fix does not introduce purely "what does this code do" style
-      comments that merely restate the code without adding context (e.g.
-      "// convert to Date", "// check if string"). Comments that briefly
-      restate the action but then provide substantive WHY explanation
-      (context, background, reasons behind decisions) are allowed per
-      the repo convention that inline comments should explain WHY.
-    source:
-      type: agent_config
-      file: AGENTS.md
-      commit: f8e742a8de6878a206d8493b61d911dac97e11df
-      lines: "Coding conventions → Avoid adding useless code comments"
-    evidence: >
-      The gold fix's comment starts with a brief "Convert input datetime strings to Date objects"
-      (brief restatement) but then provides substantive WHY context about the database comparison
-      problem and DATE MySQL column issue. This is explicitly allowed per the repo convention.
+- rule: _Why was this code written (in this particular way or at all)?_ — this is what inline comments are for. Only use them to include relevant context, background, GitHub issues, reasons behind decisions etc.
+  source:
+    path: AGENTS.md
+    lines: '115'
+    commit: f8e742a8de6878a206d8493b61d911dac97e11df
+  evidence: 'The gold fix includes a comment block that explains WHY: ''This is done to prevent issues that arise when query input values end up being directly compared to values retrieved from the database. One example of this is a query containing a DateTime cursor value being used against a DATE MySQL column. The pagination logic doesn''t have parameter type information, therefore it ends up comparing the two datetimes as strings and would yield false even if the two date datetime strings represent the same Date.'''
+  category: style
+  verification: llm_judge
+- rule: _What does this code do?_ — never write these because they do not and cannot convey any new information that's not obvious from the code. Not only they don't add value, they are actively harmful (getting out of sync with code, distracting human readers, wasting LLM tokens etc).
+  source:
+    path: AGENTS.md
+    lines: '114'
+    commit: f8e742a8de6878a206d8493b61d911dac97e11df
+  evidence: The gold fix's comment starts with a brief 'Convert input datetime strings to Date objects' (brief restatement) but then provides substantive WHY context about the database comparison problem and DATE MySQL column issue. This is explicitly allowed per the repo convention that inline comments should explain WHY rather than merely restating WHAT.
+  category: style
+  verification: llm_judge
+distractors: []

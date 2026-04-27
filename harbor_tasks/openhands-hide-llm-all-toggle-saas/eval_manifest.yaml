@@ -1,0 +1,83 @@
+version: '2.0'
+source:
+  repo: OpenHands/OpenHands
+  pr_number: 14013
+  pr_url: https://github.com/OpenHands/OpenHands/pull/14013
+  base_commit: b357c0c3bb6d0e55c87ecea2262db7efe7c9d896
+  merge_commit: d64d0d6bf622ea7069c90a636f2a79786b1a039f
+  title: Hide All toggle on SaaS LLM settings
+  pr: 14013
+task:
+  name: openhands-hide-llm-all-toggle-saas
+  difficulty: medium
+  language: typescript
+checks:
+- id: test_f2p_force_advanced_toggle_for_critical_only_schema
+  type: fail_to_pass
+  origin: repo_tests
+  description: 'SdkSectionPage must accept a prop that forces the Advanced toggle to render even when the (filtered) settings schema contains only critical-prominence fields. The All toggle must remain hidden in that case.
+
+    '
+- id: test_f2p_oss_shows_advanced_and_all_toggles
+  type: fail_to_pass
+  origin: repo_tests
+  description: 'In OSS (`app_mode === "oss"`) the LLM settings route must expose both the Advanced and the All toggles whenever the agent_settings_schema contains both major and minor fields.
+
+    '
+- id: test_f2p_saas_keeps_advanced_hides_all
+  type: fail_to_pass
+  origin: repo_tests
+  description: 'In SaaS (`app_mode === "saas"`) the LLM settings route must keep the Advanced toggle visible (it must not collapse to Basic-only) but must hide the All toggle. Clicking Advanced must still surface the llm-settings-form-advanced container, llm-custom-model-input and base-url-input.
+
+    '
+- id: test_p2p_full_llm_settings_test_file
+  type: fail_to_pass
+  origin: repo_tests
+  description: 'The whole `frontend/__tests__/routes/llm-settings.test.tsx` file passes after the fix. At base, the new behavioural tests in this file fail and the rest pass; the agent''s fix must drive the whole file to green without regressing any of the existing pre-PR tests in the file.
+
+    '
+- id: test_p2p_full_sdk_section_page_test_file
+  type: fail_to_pass
+  origin: repo_tests
+  description: 'The whole `frontend/__tests__/components/features/settings/sdk-settings/sdk-section-page.test.tsx` file passes after the fix. At base, the new `forceShowAdvancedView` test fails and the rest pass; the agent''s fix must drive the whole file to green without regressing any of the existing pre-PR tests in the file.
+
+    '
+- id: test_p2p_build
+  type: pass_to_pass
+  origin: agent_config
+  description: '`npm run build` (react-router build) succeeds — required by AGENTS.md "If you''ve made changes to the frontend, you should run `cd frontend && npm run lint:fix && npm run build ; cd ..`".
+
+    '
+  source:
+    lines: '26'
+    commit: b357c0c3bb6d0e55c87ecea2262db7efe7c9d896
+    quote: If you've made changes to the frontend, you should run `cd frontend && npm run lint:fix && npm run build ; cd ..`
+    path: AGENTS.md
+rubric:
+- id: data_access_layer_not_called_directly_from_ui
+  type: soft
+  source:
+    lines: 147-153
+    commit: b357c0c3bb6d0e55c87ecea2262db7efe7c9d896
+    path: AGENTS.md
+  rule: 'UI components must not import API client methods from `frontend/src/api` directly — they must go through TanStack Query hooks. Per AGENTS.md "Architecture rule: UI components → TanStack Query hooks → Data Access Layer (`frontend/src/api`) → API endpoints".
+
+    '
+- id: respects_form_based_settings_pattern
+  type: soft
+  source:
+    lines: 238-260
+    commit: b357c0c3bb6d0e55c87ecea2262db7efe7c9d896
+    path: AGENTS.md
+  rule: 'LLM settings is a Pattern 2 (Manual Save) form-based settings screen. The fix must not introduce immediate-save behaviour (no per-field mutation hooks); the existing `useSaveSettings` flow and `isDirty` tracking must be preserved.
+
+    '
+- id: no_changes_to_pre_commit_hooks_or_tooling
+  type: soft
+  source:
+    lines: 21-32
+    commit: b357c0c3bb6d0e55c87ecea2262db7efe7c9d896
+    path: AGENTS.md
+  rule: 'The change is a frontend behaviour fix; the agent must not modify `.pre-commit-config.yaml`, root `Makefile` install targets, or unrelated build tooling to make tests pass.
+
+    '

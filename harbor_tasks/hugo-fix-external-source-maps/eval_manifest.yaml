@@ -1,0 +1,120 @@
+version: '2.0'
+source:
+  type: github_pr
+  owner: gohugoio
+  repo: hugo
+  pr_number: 14622
+  pr_title: 'tpl/css: Fix external source maps'
+  merge_commit: e431f90bc6fff33742c468f25b77689852930284
+  base_commit: a7cbcf15f0c5ef04b45350390e00e584e4d635b9
+  primary_files:
+  - internal/js/esbuild/build.go
+  - internal/js/esbuild/sourcemap.go
+  pr: 14622
+task:
+  name: hugo-fix-external-source-maps
+  language: go
+  go_version: 1.25.0
+checks:
+- id: test_fix_sourcemap_alignment_unit
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Unit test asserts fixSourceMap keeps Sources and SourcesContent index-aligned after a resolver drops some entries. Pre-fix the SourcesContent slice was untouched and stayed at the original length.
+
+    '
+- id: test_fix_sourcemap_no_sourcescontent_unit
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Unit test asserts fixSourceMap still filters Sources correctly when the input has no SourcesContent (null/empty), without crashing or synthesising entries.
+
+    '
+- id: test_css_build_sourcemaps_integration
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'End-to-end integration test (Hugo''s own TestCSSBuildSourceMaps, extended in PR #14622) builds a CSS bundle with sourceMap=linked, sourcesContent=true, and asserts the resulting source map has 4 sources for both minify=true and minify=false. Pre-fix the minify=false case dropped almost all sources via the build.go closure returning "" for absolute-filename inputs.
+
+    '
+- id: test_repo_existing_esbuild_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Pre-existing unit tests in internal/js/esbuild keep passing after the fix (regression guard for refactoring fixSourceMap).
+
+    '
+- id: test_gofmt_clean
+  type: pass_to_pass
+  origin: pr_diff
+  description: '`gofmt -l` reports no formatting issues on the modified files. Mirrors the repo''s check.sh gofmt step.
+
+    '
+- id: test_go_vet_passes
+  type: pass_to_pass
+  origin: pr_diff
+  description: '`go vet ./internal/js/esbuild` reports no problems on the modified package.
+
+    '
+- id: test_no_debug_print_left_behind
+  type: pass_to_pass
+  origin: agent_config
+  description: 'No stray `fmt.Println`/`fmt.Printf` debug statements were left behind in the modified files. AGENTS.md mandates `hdebug.Printf` as the only sanctioned debug-print helper and notes that CI fails on leftover hdebug.Printf calls.
+
+    '
+  source:
+    lines: '5'
+    commit: a7cbcf15f0c5ef04b45350390e00e584e4d635b9
+    path: AGENTS.md
+- id: test_no_unused_helper_left_behind
+  type: pass_to_pass
+  origin: agent_config
+  description: 'AGENTS.md asks that nothing be exported that isn''t needed outside the package and that there be no dead code. If the agent leaves the old fixSourceMapSources helper in place but never calls it, this regression-flags it.
+
+    '
+  source:
+    lines: 5,7
+    commit: a7cbcf15f0c5ef04b45350390e00e584e4d635b9
+    path: AGENTS.md
+rubric:
+- id: rubric_brevity
+  severity: warn
+  source:
+    lines: 1, 11
+    commit: a7cbcf15f0c5ef04b45350390e00e584e4d635b9
+    path: AGENTS.md
+  rule: 'AGENTS.md: "Brevity is good. This applies to code, comments and commit messages." The fix should be small and focused. Reject patches that add tangential refactors, tutorial-length comments, or restructure unrelated code paths in build.go / sourcemap.go.
+
+    '
+- id: rubric_no_obvious_comments
+  severity: warn
+  source:
+    lines: '3'
+    commit: a7cbcf15f0c5ef04b45350390e00e584e4d635b9
+    path: AGENTS.md
+  rule: 'AGENTS.md: "Don''t use comments to explain the obvious." The "absolute filename set by the Hugo resolve plugin" line in the gold patch documents a non-obvious invariant; that is acceptable. Reject narrative comments like `// loop over sources` or `// build a new slice`.
+
+    '
+- id: rubric_self_explanatory_names
+  severity: warn
+  source:
+    lines: 4-5
+    commit: a7cbcf15f0c5ef04b45350390e00e584e4d635b9
+    path: AGENTS.md
+  rule: 'AGENTS.md: "Use self-explanatory variable and function names. Use short variable names when the context is clear." Loop-locals and throwaway intermediates may be terse (`s`, `b`, `u`); newly introduced longer-lived state should still read naturally.
+
+    '
+- id: rubric_no_unnecessary_exports
+  severity: warn
+  source:
+    lines: '6'
+    commit: a7cbcf15f0c5ef04b45350390e00e584e4d635b9
+    path: AGENTS.md
+  rule: 'AGENTS.md: "Never export symbols that''s not needed outside of the package." Any helpers introduced by the fix must stay unexported. `SourcesFromSourceMap` is already exported in the file because it is used by tests outside the package; that one is fine.
+
+    '
+- id: rubric_look_for_existing_helpers
+  severity: warn
+  source:
+    lines: '8'
+    commit: a7cbcf15f0c5ef04b45350390e00e584e4d635b9
+    path: AGENTS.md
+  rule: 'AGENTS.md: "this is a project with a long history; assume that a similar problem has been solved before, look hard for helper functions before creating new ones." `paths.UrlFromFilename` already converts an absolute path into a `file://` URL — the fix must keep using it rather than reinventing URL conversion.
+
+    '

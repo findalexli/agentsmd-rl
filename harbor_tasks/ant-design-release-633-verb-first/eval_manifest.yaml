@@ -1,0 +1,270 @@
+version: '2.0'
+source:
+  owner: ant-design
+  repo: ant-design
+  pr: 57317
+  base_commit: a01bfdf519249a97759a9f13462afc2e3fa0c491
+  merge_commit: 1a82e704bba90e218960e0bba0363acc34808bd6
+  url: https://github.com/ant-design/ant-design/pull/57317
+task:
+  name: ant-design-release-633-verb-first
+  kind: markdown_authoring
+  title: Release antd 6.3.3 and switch changelog rules to verb-first + always-author-link
+  difficulty: medium
+  tags:
+  - markdown
+  - changelog
+  - release
+  - agent-instructions
+  - documentation
+  estimated_minutes: 25
+config_edits:
+- path: CLAUDE.md
+  description: 'The Chinese row of the *句式* table in the *Changelog 规范 → 格式规范 → 句式*
+
+    section is rewritten to be verb-first (matching the English row).
+
+    The *核心原则* bullet about PR/contributor links is rewritten to drop the
+
+    "community PRs only" carve-out — every entry now gets a contributor link.
+
+    '
+  gold_added: '- 尽量给出 PR 链接，并统一添加贡献者链接
+
+    | 中文 | `Emoji 动词 组件名 描述`（动词在前） | `🐞 修复 Button 在暗色主题下 \`color\` 的问题。` |
+
+    '
+  gold_removed: '- 尽量给出 PR 链接，社区 PR 加贡献者链接
+
+    | 中文 | `Emoji 组件名 动词/描述` | `🐞 Button 修复暗色主题下 \`color\` 的问题。` |
+
+    '
+- path: .claude/skills/changelog-collect/SKILL.md
+  description: 'A new sub-section `#### 描述与署名补充规则` is inserted between phases 2
+
+    and 3, with three bullets: (1) descriptions must lead with an action verb
+
+    in both Chinese (修复/优化/新增/重构) and English (Fix/Improve/Add/Refactor);
+
+    (2) the body must still contain the component name (e.g. `修复 Select ...`,
+
+    `Fix Select ...`); (3) every entry adds a PR author link, no team/community
+
+    distinction.
+
+
+    The footer "注意事项" bullet that forbade `修复 Select...` (component-first
+
+    mandate) is replaced by two bullets that re-affirm verb-first wording AND
+
+    the always-author-link rule.
+
+    '
+  gold_added: '#### 描述与署名补充规则
+
+
+    - 描述必须以动作开头：中文优先使用 `修复`、`优化`、`新增`、`重构` 等动词开头；英文优先使用 `Fix`、`Improve`、`Add`、`Refactor` 开头。
+
+    - 在"动作开头"的前提下，正文仍需包含组件名（例如：`修复 Select ...`、`Fix Select ...`）。
+
+    - 每条 changelog 统一补充 PR 作者链接（如 `[@username](https://github.com/username)`），不再校验是否为团队成员。
+
+
+    - 描述以动作开头，并保证正文包含组件名（如 `修复 Select ...`、`Fix Select ...`）
+
+    - 统一添加 PR 作者链接（不区分是否团队成员）
+
+    '
+  gold_removed: '- 组件名在正文中要出现（如 `Select 修复...`，不是 `修复 Select...`）
+
+    '
+checks:
+- id: test_package_json_version_is_633
+  type: fail_to_pass
+  origin: pr_diff
+  description: package.json version is bumped to 6.3.3.
+- id: test_en_changelog_has_633_heading_and_date
+  type: fail_to_pass
+  origin: pr_diff
+  description: CHANGELOG.en-US.md gains a `## 6.3.3` heading with the release date 2026-03-16.
+- id: test_en_changelog_lists_all_six_prs_with_authors
+  type: fail_to_pass
+  origin: pr_diff
+  description: All six PR links and matching `@author` links appear in the English 6.3.3 section.
+- id: test_en_changelog_has_image_group_and_verb_first
+  type: fail_to_pass
+  origin: pr_diff
+  description: English 6.3.3 section has the `- Image` group and contains the per-PR descriptions.
+- id: test_zh_changelog_has_633_heading_and_date
+  type: fail_to_pass
+  origin: pr_diff
+  description: CHANGELOG.zh-CN.md gains a `## 6.3.3` heading with the release date 2026-03-16.
+- id: test_zh_changelog_lists_all_six_prs_with_authors
+  type: fail_to_pass
+  origin: pr_diff
+  description: All six PR links and matching `@author` links appear in the Chinese 6.3.3 section.
+- id: test_zh_changelog_uses_verb_first_chinese_format
+  type: fail_to_pass
+  origin: pr_diff
+  description: Chinese 6.3.3 entries are written in the new verb-first format (`修复 X ...`, `优化 X ...`).
+- id: test_zh_changelog_has_image_group
+  type: fail_to_pass
+  origin: pr_diff
+  description: Chinese 6.3.3 section groups the two Image PRs under an `- Image` line.
+- id: test_claude_md_chinese_format_row_updated_to_verb_first
+  type: fail_to_pass
+  origin: agent_config
+  source:
+    lines: 122-125
+    commit: a01bfdf519249a97759a9f13462afc2e3fa0c491
+    path: CLAUDE.md
+  description: 'CLAUDE.md *句式* table Chinese row switches from `Emoji 组件名 动词/描述`
+
+    to `Emoji 动词 组件名 描述`（动词在前） with a verb-first example.
+
+    '
+- id: test_claude_md_contributor_link_rule_updated
+  type: fail_to_pass
+  origin: agent_config
+  source:
+    lines: '109'
+    commit: a01bfdf519249a97759a9f13462afc2e3fa0c491
+    path: CLAUDE.md
+  description: 'CLAUDE.md 核心原则 bullet drops "社区 PR 加贡献者链接" in favor of
+
+    "并统一添加贡献者链接" (always add the contributor link).
+
+    '
+- id: test_skill_md_has_new_section_with_action_and_signature_rules
+  type: fail_to_pass
+  origin: agent_config
+  source:
+    lines: 270-285
+    commit: a01bfdf519249a97759a9f13462afc2e3fa0c491
+    path: .claude/skills/changelog-collect/SKILL.md
+  description: 'SKILL.md gains a `#### 描述与署名补充规则` section (between phases 2 and 3)
+
+    stating the action-first rule (with `修复`/`Fix` examples) and the
+
+    always-add-author-link rule.
+
+    '
+- id: test_skill_md_bottom_note_no_longer_forbids_verb_first
+  type: fail_to_pass
+  origin: agent_config
+  source:
+    lines: 365-372
+    commit: a01bfdf519249a97759a9f13462afc2e3fa0c491
+    path: .claude/skills/changelog-collect/SKILL.md
+  description: 'SKILL.md footer "注意事项" no longer forbids the verb-first pattern
+
+    `修复 Select...`; replacement bullets affirm action-first wording and the
+
+    always-author-link rule.
+
+    '
+- id: test_no_extra_files_modified
+  type: pass_to_pass
+  origin: static
+  description: All five target files exist (sanity layout check).
+- id: test_repo_layout_intact
+  type: pass_to_pass
+  origin: static
+  description: Repository top-level layout is undamaged (subprocess `ls` sanity check).
+rubric:
+- id: changelog_required_metadata
+  source:
+    lines: '109'
+    commit: a01bfdf519249a97759a9f13462afc2e3fa0c491
+    path: CLAUDE.md
+  rule: 'Every changelog entry should give the PR link and a contributor link.
+
+    Per CLAUDE.md *Changelog 规范 → 核心原则*: "尽量给出 PR 链接，并统一添加
+
+    贡献者链接". (Note: the gold edit also updates this very rule, so the
+
+    new wording is what is being introduced.)
+
+    '
+- id: changelog_emoji_lead
+  source:
+    lines: 133-148
+    commit: a01bfdf519249a97759a9f13462afc2e3fa0c491
+    path: CLAUDE.md
+  rule: 'Each changelog bullet must start with the appropriate emoji per CLAUDE.md
+
+    / AGENTS.md *Changelog 规范 → Emoji 规范* (e.g., 🐞 for bug fix, 💄 for
+
+    style/token change, ⌨️ ♿ for accessibility, 🆕 for new features).
+
+    '
+- id: changelog_no_colon_after_component
+  source:
+    lines: '116'
+    commit: a01bfdf519249a97759a9f13462afc2e3fa0c491
+    path: CLAUDE.md
+  rule: 'No English colon after the component name (CLAUDE.md *条目格式*: "不加冒号").
+
+    '
+- id: changelog_describes_developer_impact
+  source:
+    lines: '108'
+    commit: a01bfdf519249a97759a9f13462afc2e3fa0c491
+    path: CLAUDE.md
+  rule: 'Descriptions should focus on user-visible / developer-visible impact, not
+
+    internal implementation details (CLAUDE.md *核心原则*: "描述对开发者的影响").
+
+    '
+- id: changelog_zh_en_in_sync
+  source:
+    lines: '106'
+    commit: a01bfdf519249a97759a9f13462afc2e3fa0c491
+    path: CLAUDE.md
+  rule: 'Both `CHANGELOG.zh-CN.md` and `CHANGELOG.en-US.md` must be updated
+
+    together (CLAUDE.md *核心原则*: "必须同时提供中英文两个版本";
+
+    "保持中英文同步更新").
+
+    '
+- id: skill_section_placement
+  source:
+    lines: 274-280
+    commit: a01bfdf519249a97759a9f13462afc2e3fa0c491
+    path: .claude/skills/changelog-collect/SKILL.md
+  rule: 'The new `#### 描述与署名补充规则` sub-section in
+
+    `.claude/skills/changelog-collect/SKILL.md` should be placed at the end
+
+    of *阶段二：处理临时文件*, immediately before *阶段三：写入文件*.
+
+    '
+- id: skill_action_examples_consistent
+  source:
+    lines: 274-285
+    commit: a01bfdf519249a97759a9f13462afc2e3fa0c491
+    path: .claude/skills/changelog-collect/SKILL.md
+  rule: 'Action-verb examples in SKILL.md should match the verbs the entries
+
+    actually use (`修复`、`优化`、`新增`、`重构` for ZH; `Fix`、`Improve`、
+
+    `Add`、`Refactor` for EN), and the example sentences should follow the
+
+    verb-first pattern (`修复 Select ...`, `Fix Select ...`).
+
+    '
+- id: claude_md_table_format_consistent
+  source:
+    lines: 121-126
+    commit: a01bfdf519249a97759a9f13462afc2e3fa0c491
+    path: CLAUDE.md
+  rule: 'The *句式* table in `CLAUDE.md` should keep the Chinese and English rows
+
+    structurally aligned (both verb-first), with consistent example wording
+
+    so the table is readable as a single rule rather than two contradictory
+
+    rows.
+
+    '

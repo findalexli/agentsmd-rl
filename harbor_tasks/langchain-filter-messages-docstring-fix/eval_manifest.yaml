@@ -1,61 +1,66 @@
+version: '2.0'
 source:
   repo: langchain-ai/langchain
-  pr_number: 36462
+  pr: 36462
   base_commit: e89afedfecad9b49bae977130f28995b064dd0a2
   merge_commit: d1529dd0bcd3a95bbfcd784eb8f11b3afb70f922
-  target_file: libs/core/langchain_core/messages/utils.py
-  task_name: langchain-filter-messages-docstring-fix
-
+task:
+  kind: code_fix
 checks:
-  - id: test_docstring_example_uses_correct_params
-    type: fail_to_pass
-    origin: task_tests
-    description: Docstring example uses correct parameter names (include_names, include_types, exclude_ids)
-
-  - id: test_docstring_example_with_correct_params_runs
-    type: pass_to_pass
-    origin: task_tests
-    description: Docstring example code with correct params executes without TypeError
-
-  - id: test_old_params_cause_typeerror
-    type: fail_to_pass
-    origin: task_tests
-    description: Old parameter names cause TypeError (verifies bug exists)
-
-  - id: test_ruff_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: Ruff linter passes on modified file
-
-  - id: test_syntax_valid
-    type: pass_to_pass
-    origin: task_tests
-    description: Modified file has valid Python syntax
-
-  - id: test_repo_filter_messages_unit
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo unit tests for filter_messages function pass
-
-  - id: test_repo_messages_utils_unit
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo unit tests for messages utils module pass
-
-  - id: test_repo_messages_imports
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo unit tests for messages imports pass
-
+- id: test_docstring_example_runs
+  type: fail_to_pass
+  origin: pr_diff
+  description: Docstring example uses correct parameter names (include_names, include_types, exclude_ids)
+- id: test_docstring_example_with_correct_params_runs
+  type: pass_to_pass
+  origin: pr_diff
+  description: Docstring example code with correct params executes without TypeError
+- id: test_old_params_cause_typeerror
+  type: fail_to_pass
+  origin: pr_diff
+  description: Old parameter names cause TypeError (verifies bug exists)
+- id: test_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff linter passes on modified file
+- id: test_syntax_valid
+  type: pass_to_pass
+  origin: static
+  description: Modified file has valid Python syntax
+- id: test_repo_filter_messages_unit
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo unit tests for filter_messages function pass
+- id: test_repo_messages_utils_unit
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo unit tests for messages utils module pass
+- id: test_repo_messages_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo unit tests for messages imports pass
 rubric:
-  - id: docstring_single_backticks
-    description: Docstrings use single backticks for inline code references
-    source: CLAUDE.md#Documentation standards
-
-  - id: google_style_docstrings
-    description: Use Google-style docstrings with Args section for public functions
-    source: CLAUDE.md#Documentation standards
-
-  - id: test_coverage
-    description: Bugfix should have test coverage (the fix should be verifiable)
-    source: CLAUDE.md#Testing requirements
+- rule: '- Do NOT use Sphinx-style double backtick formatting (` ``code`` `). Use single backticks (`` `code` ``) for inline code references in docstrings and comments.'
+  source:
+    path: AGENTS.md
+    lines: '195'
+    commit: e89afedfecad9b49bae977130f28995b064dd0a2
+  evidence: Gold fix uses single backticks for inline code references in the docstring
+  category: style
+  verification: llm_judge
+- rule: Use Google-style docstrings with Args section for all public functions.
+  source:
+    path: AGENTS.md
+    lines: '167'
+    commit: e89afedfecad9b49bae977130f28995b064dd0a2
+  evidence: Gold fix preserves Google-style docstring format with Args section
+  category: style
+  verification: llm_judge
+- rule: Every new feature or bugfix MUST be covered by unit tests.
+  source:
+    path: AGENTS.md
+    lines: '141'
+    commit: e89afedfecad9b49bae977130f28995b064dd0a2
+  evidence: Gold fix passes all test checks confirming the fix is verifiable
+  category: testing
+  verification: programmatic

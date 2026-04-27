@@ -12,8 +12,7 @@ checks:
 - id: enum_values_renamed
   type: fail_to_pass
   origin: pr_diff
-  description: InfraStarterTemplate enum values use short names without -template
-    suffix
+  description: InfraStarterTemplate enum values use short names without -template suffix
 - id: template_name_map_updated
   type: fail_to_pass
   origin: pr_diff
@@ -37,8 +36,7 @@ checks:
 - id: claude_md_graphql_workaround
   type: fail_to_pass
   origin: pr_diff
-  description: CLAUDE.md documents the GraphQL / classic projects workaround with
-    API path format
+  description: CLAUDE.md documents the GraphQL / classic projects workaround with API path format
 - id: template_repo_map_keys_match_enum
   type: pass_to_pass
   origin: static
@@ -80,8 +78,7 @@ checks:
   origin: repo_tests
   description: Repo agno_infra package imports correctly from installed location
 rubric:
-- rule: GitHub Operations section is placed logically within the CLAUDE.md structure
-    and follows the document's existing formatting style
+- rule: GitHub Operations section is placed logically within the CLAUDE.md structure and follows the document's existing formatting style
   source:
     path: CLAUDE.md
     lines: 1-10
@@ -89,19 +86,15 @@ rubric:
 - rule: Don't use f-strings for print lines where there are no variables to format.
   source:
     path: libs/agno_infra/agno/infra/operator.py
-    lines: 71
+    lines: '71'
     commit: 156d4e43e6281d0ff65a2351379df732348ffadc
-  evidence: The gold solution updates the print_info string "Select starter template
-    or press Enter for default (agentos-docker)" as a standard string literal without
-    converting it to an f-string
+  evidence: The gold solution updates the print_info string "Select starter template or press Enter for default (agentos-docker)" as a standard string literal without converting it to an f-string
   category: style
 - rule: Use `---` horizontal rules to separate major sections in the documentation.
   source:
     path: CLAUDE.md
     lines: 5-15
-  evidence: The gold solution inserts the new `## GitHub Operations` section and correctly
-    surrounds it with `---` horizontal rules, matching the established markdown sectioning
-    style of the file.
+  evidence: The gold solution inserts the new `## GitHub Operations` section and correctly surrounds it with `---` horizontal rules, matching the established markdown sectioning style of the file.
   category: documentation
 config_edits:
 - path: CLAUDE.md
@@ -112,8 +105,7 @@ config_edits:
     **Updating PR descriptions:**
 
 
-    The `gh pr edit` command may fail with GraphQL errors related to classic projects.
-    Use the API directly instead:
+    The `gh pr edit` command may fail with GraphQL errors related to classic projects. Use the API directly instead:
 
 
     ```bash
@@ -138,25 +130,16 @@ distractors:
 
     Instructions for Claude Code when working on this codebase.'
   collision_type: meta_confusion
-  why_distracting: This file acts as the agent's own system prompt/instructions. The
-    agent might interpret the task to 'update CLAUDE.md' as a meta-instruction to
-    change its current runtime behavior (e.g., attempting to use the GitHub API to
-    update a PR right now) rather than literally editing the markdown file on disk.
+  why_distracting: This file acts as the agent's own system prompt/instructions. The agent might interpret the task to 'update CLAUDE.md' as a meta-instruction to change its current runtime behavior (e.g., attempting to use the GitHub API to update a PR right now) rather than literally editing the markdown file on disk.
   severity: high
   source:
     path: CLAUDE.md
     lines: 1-3
-- rule: When testing a cookbook folder, first check for the CLAUDE.md file... Use
-    cookbook/15_learning/CLAUDE.md as a reference.
+- rule: When testing a cookbook folder, first check for the CLAUDE.md file... Use cookbook/15_learning/CLAUDE.md as a reference.
   collision_type: scope_ambiguity
-  why_distracting: The instructions mention `cookbook/15_learning/CLAUDE.md` as a
-    reference and discuss cookbook-specific `CLAUDE.md` files. The agent might mistakenly
-    add the GitHub operations documentation to a cookbook's `CLAUDE.md` instead of
-    the root `CLAUDE.md` specified in the task.
+  why_distracting: The instructions mention `cookbook/15_learning/CLAUDE.md` as a reference and discuss cookbook-specific `CLAUDE.md` files. The agent might mistakenly add the GitHub operations documentation to a cookbook's `CLAUDE.md` instead of the root `CLAUDE.md` specified in the task.
   severity: medium
   source:
     path: CLAUDE.md
     lines: 32-36
-hierarchy_analysis: The config hierarchy consists of `.cursorrules` and `CLAUDE.md`
-  at the root level. The primary challenge is that `CLAUDE.md` is both a source of
-  instructions and a target for modification, creating a self-referential loop.
+hierarchy_analysis: The config hierarchy consists of `.cursorrules` and `CLAUDE.md` at the root level. The primary challenge is that `CLAUDE.md` is both a source of instructions and a target for modification, creating a self-referential loop.

@@ -1,0 +1,204 @@
+version: '2.0'
+task:
+  kind: code_fix
+  name: remix-trie-pathname-only-patterns
+  title: 'TrieMatcher: support pathname-only patterns and return null on miss'
+  difficulty: medium
+  tags:
+  - typescript
+  - routing
+  - trie
+  - data-structures
+source:
+  repo: remix-run/remix
+  pr: 10992
+  base_commit: 3aa3d939d558aac03bfb0f3796bb7d6d4aacfa70
+  merge_commit: d662c33fb9d6ddec885c71bf1e1fa8c523b44c8e
+  primary_files:
+  - packages/route-pattern/src/lib/matchers/trie.ts
+checks:
+- id: test_pathname_only_static_matches
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'A pathname-only static pattern (no hostname/protocol prefix) matches a
+
+    URL with that pathname under any hostname.
+
+    '
+- id: test_pathname_only_nested_static_matches
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'A pathname-only pattern with multiple segments (e.g. ''api/v1/users'')
+
+    matches URLs whose pathname is /api/v1/users under any hostname.
+
+    '
+- id: test_pathname_only_variable_matches
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'A pathname-only pattern with a variable segment (e.g. ''users/:id'')
+
+    matches and captures the variable into params.
+
+    '
+- id: test_pathname_only_wildcard_matches
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'A pathname-only pattern with a wildcard segment (e.g. ''files/*path'')
+
+    matches and captures the remaining segments into the wildcard param.
+
+    '
+- id: test_pathname_only_matches_across_hostnames
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'The same pathname-only pattern matches the same path under multiple
+
+    different hostnames (example.com, other.com, localhost).
+
+    '
+- id: test_match_returns_null_when_no_match
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'TrieMatcher.match() returns null (not undefined) when no pattern
+
+    matches, agreeing with its declared return type.
+
+    '
+- id: test_explicit_hostname_does_not_match_different_host
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'A pattern with an explicit hostname (e.g. ''://example.com/users'') is
+
+    still scoped to that hostname and does not match other hostnames after
+
+    pathname-only support is added.
+
+    '
+- id: test_existing_trie_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'The existing TrieMatcher test file (packages/route-pattern/src/lib/matchers/trie.test.ts)
+
+    continues to pass.
+
+    '
+- id: test_existing_array_matcher_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Sibling ArrayMatcher tests continue to pass (regression guard for the
+
+    matchers module).
+
+    '
+- id: test_no_var_declarations_in_trie
+  type: pass_to_pass
+  origin: agent_config
+  description: 'AGENTS.md rule: ''never use var''. trie.ts must not contain var
+
+    declarations.
+
+    '
+  source:
+    lines: '16'
+    commit: 3aa3d939d558aac03bfb0f3796bb7d6d4aacfa70
+    path: AGENTS.md
+- id: test_no_typescript_accessibility_modifiers_in_trie
+  type: pass_to_pass
+  origin: agent_config
+  description: 'AGENTS.md rule: ''Classes: Use native fields (omit public), #private for
+
+    private members (no TypeScript accessibility modifiers)''. trie.ts must
+
+    not use public/private/protected modifiers on class members.
+
+    '
+  source:
+    lines: '19'
+    commit: 3aa3d939d558aac03bfb0f3796bb7d6d4aacfa70
+    path: AGENTS.md
+rubric:
+- id: prettier_no_semicolons
+  source:
+    lines: '20'
+    commit: 3aa3d939d558aac03bfb0f3796bb7d6d4aacfa70
+    path: AGENTS.md
+  rule: 'Prettier convention used throughout this repo: no trailing semicolons
+
+    on statements. New code introduced into trie.ts should follow this
+
+    style.
+
+    '
+- id: prettier_single_quotes
+  source:
+    lines: '20'
+    commit: 3aa3d939d558aac03bfb0f3796bb7d6d4aacfa70
+    path: AGENTS.md
+  rule: 'Prettier convention used throughout this repo: single quotes for
+
+    string literals (not double quotes), printWidth 100, 2-space
+
+    indentation.
+
+    '
+- id: import_type_for_type_only_imports
+  source:
+    lines: '15'
+    commit: 3aa3d939d558aac03bfb0f3796bb7d6d4aacfa70
+    path: AGENTS.md
+  rule: 'Type-only imports must use ''import type { X }'' syntax (separate from
+
+    value imports). Same rule applies to type-only re-exports
+
+    (''export type { X }'').
+
+    '
+- id: prefer_let_for_locals
+  source:
+    lines: '16'
+    commit: 3aa3d939d558aac03bfb0f3796bb7d6d4aacfa70
+    path: AGENTS.md
+  rule: 'Use ''let'' for local variables; ''const'' only at module scope. Never
+
+    ''var''. (Inside this file, virtually all locals are introduced with
+
+    let — new code should match.)
+
+    '
+- id: object_method_shorthand
+  source:
+    lines: '18'
+    commit: 3aa3d939d558aac03bfb0f3796bb7d6d4aacfa70
+    path: AGENTS.md
+  rule: 'Use shorthand method syntax in object literals (''{ method() {} }'')
+
+    instead of arrow-function-valued properties (''{ method: () => {} }'').
+
+    '
+- id: minimal_non_jsdoc_comments
+  source:
+    lines: '22'
+    commit: 3aa3d939d558aac03bfb0f3796bb7d6d4aacfa70
+    path: AGENTS.md
+  rule: 'Only add non-JSDoc comments when the code is doing something
+
+    surprising or non-obvious. Avoid restating what the code already
+
+    makes clear.
+
+    '
+- id: descriptive_lowercase_generics
+  source:
+    lines: '21'
+    commit: 3aa3d939d558aac03bfb0f3796bb7d6d4aacfa70
+    path: AGENTS.md
+  rule: 'Use descriptive lowercase names for generic type parameters (e.g.,
+
+    ''data'', ''pattern'') instead of single uppercase letters like ''T'' or
+
+    ''K''. The existing ''class TrieMatcher<data = unknown>'' pattern in
+
+    this file demonstrates this convention.
+
+    '

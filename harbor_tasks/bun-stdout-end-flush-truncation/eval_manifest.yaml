@@ -117,70 +117,53 @@ rubric:
 - rule: String literal `require()` only
   source:
     path: src/js/builtins/ProcessObjectInternals.ts
-    lines: 83
-  evidence: The gold solution uses `require("internal/fs/streams")` with a string
-    literal to import `kWriteStreamFastPath`.
+    lines: '83'
+  evidence: The gold solution uses `require("internal/fs/streams")` with a string literal to import `kWriteStreamFastPath`.
   category: style
 - rule: $ prefix for private APIs and JSC intrinsics
   source:
     path: src/js/builtins/ProcessObjectInternals.ts
-    lines: 90
-  evidence: The gold solution uses the `$isPromise(result)` intrinsic to check if
-    the flush result is a promise, following the convention of using `$` prefixed
-    private APIs.
+    lines: '90'
+  evidence: The gold solution uses the `$isPromise(result)` intrinsic to check if the flush result is a promise, following the convention of using `$` prefixed private APIs.
   category: style
 - rule: Use JSC intrinsics for performance
   source:
     path: src/js/builtins/ProcessObjectInternals.ts
-    lines: 90
-  evidence: The gold solution uses the `$isPromise(result)` intrinsic to check the
-    flush result, following the rule to use JSC intrinsics for performance.
+    lines: '90'
+  evidence: The gold solution uses the `$isPromise(result)` intrinsic to check the flush result, following the rule to use JSC intrinsics for performance.
   category: architecture
 - rule: Use JSC intrinsics for performance and $ prefix for private APIs
   source:
     path: src/js/builtins/ProcessObjectInternals.ts
-    lines: 90
-  evidence: The gold solution uses the `$isPromise` intrinsic to check if the result
-    of `sink.flush()` is a promise, following the rule to use JSC intrinsics.
+    lines: '90'
+  evidence: The gold solution uses the `$isPromise` intrinsic to check if the result of `sink.flush()` is a promise, following the rule to use JSC intrinsics.
   category: architecture
 - rule: Use JSC intrinsics for performance / $ prefix for private APIs
   source:
     path: src/js/AGENTS.md
     lines: 53-53
-  evidence: The gold solution uses the `$isPromise(result)` intrinsic to check if
-    the flush result is a promise, rather than standard JS checks.
+  evidence: The gold solution uses the `$isPromise(result)` intrinsic to check if the flush result is a promise, rather than standard JS checks.
   category: architecture
 distractors:
 - rule: Export via `export default {}`
   collision_type: scope_ambiguity
-  why_distracting: The 'Key Rules' section states 'Export via `export default {}`'.
-    An agent might try to refactor the existing `export function getStdioWriteStream`
-    to use `export default`, but this file contains builtin functions, not a module,
-    so named exports are correct.
+  why_distracting: The 'Key Rules' section states 'Export via `export default {}`'. An agent might try to refactor the existing `export function getStdioWriteStream` to use `export default`, but this file contains builtin functions, not a module, so named exports are correct.
   severity: medium
   source:
     path: src/js/AGENTS.md
     lines: 78-78
 - rule: Use `.$call`/`.$apply` not `.call`/`.apply`
   collision_type: scope_ambiguity
-  why_distracting: The rule says 'Use `.$call`/`.$apply` not `.call`/`.apply`'. An
-    agent might over-apply this to direct function calls like `cb(null)` or method
-    calls like `result.then(...)`, changing them to `cb.$call(...)` or `result.then.$call(...)`
-    which is unnecessary and reduces readability.
+  why_distracting: The rule says 'Use `.$call`/`.$apply` not `.call`/`.apply`'. An agent might over-apply this to direct function calls like `cb(null)` or method calls like `result.then(...)`, changing them to `cb.$call(...)` or `result.then.$call(...)` which is unnecessary and reduces readability.
   severity: low
   source:
     path: src/js/AGENTS.md
     lines: 41-49
 - rule: Always use `bun.*` APIs instead of `std.*`
   collision_type: architecture_boundary
-  why_distracting: The rule mandates using `bun.*` APIs instead of `std.*`. An agent
-    might get confused by the cross-language repository and try to use Bun's Zig APIs
-    or JS `Bun.*` APIs instead of the required Node.js internal stream mechanisms.
+  why_distracting: The rule mandates using `bun.*` APIs instead of `std.*`. An agent might get confused by the cross-language repository and try to use Bun's Zig APIs or JS `Bun.*` APIs instead of the required Node.js internal stream mechanisms.
   severity: medium
   source:
     path: src/AGENTS.md
     lines: 16-28
-hierarchy_analysis: The config hierarchy is deep (Level 0, 1, 2). The agent must ignore
-  the Zig-specific rules in `src/AGENTS.md` and focus on the JS builtin rules in `src/js/AGENTS.md`.
-  Within `src/js/AGENTS.md`, the agent must distinguish between rules for 'Modules'
-  and 'Builtin Functions'.
+hierarchy_analysis: The config hierarchy is deep (Level 0, 1, 2). The agent must ignore the Zig-specific rules in `src/AGENTS.md` and focus on the JS builtin rules in `src/js/AGENTS.md`. Within `src/js/AGENTS.md`, the agent must distinguish between rules for 'Modules' and 'Builtin Functions'.

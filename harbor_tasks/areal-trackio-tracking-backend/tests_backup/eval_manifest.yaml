@@ -1,0 +1,207 @@
+version: '2.0'
+source:
+  repo: inclusionAI/AReaL
+  pr: 1113
+  base_commit: 92c467e56bf17d730bd26855de33d5e4e13ba435
+  merge_commit: c4ccc3947855e3f96e66081bd8f0a92ac75d3618
+checks:
+- id: syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Modified files must parse without errors
+- id: trackio_config_exists_with_fields
+  type: fail_to_pass
+  origin: pr_diff
+  description: TrackioConfig class exists with mode, project, name, space_id fields
+- id: trackio_config_rejects_invalid_modes
+  type: fail_to_pass
+  origin: pr_diff
+  description: TrackioConfig rejects invalid mode values with ValueError
+- id: trackio_config_accepts_valid_modes
+  type: fail_to_pass
+  origin: pr_diff
+  description: TrackioConfig accepts disabled, online, local modes
+- id: trackio_config_defaults
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'TrackioConfig defaults: mode=disabled, project/name/space_id=None'
+- id: stats_logger_config_trackio_field
+  type: fail_to_pass
+  origin: pr_diff
+  description: StatsLoggerConfig has a trackio field
+- id: stats_logger_trackio_init
+  type: fail_to_pass
+  origin: pr_diff
+  description: StatsLogger.init() calls trackio.init() with project and name
+- id: stats_logger_trackio_commit
+  type: fail_to_pass
+  origin: pr_diff
+  description: StatsLogger.commit() calls trackio.log() when enabled
+- id: stats_logger_trackio_close
+  type: fail_to_pass
+  origin: pr_diff
+  description: StatsLogger.close() calls trackio.finish() when enabled
+- id: logging_helper_trackio
+  type: fail_to_pass
+  origin: pr_diff
+  description: Logging helper includes trackio.log with graceful import fallback
+- id: trackio_config_not_stub
+  type: pass_to_pass
+  origin: static
+  description: TrackioConfig.__post_init__ has real validation logic
+- id: trackio_config_post_init_validation
+  type: fail_to_pass
+  origin: agent_config
+  description: TrackioConfig uses __post_init__ with ValueError for validation
+  source:
+    path: .claude/rules/api-config.md
+    lines: 37-38
+    commit: 92c467e56bf17d730bd26855de33d5e4e13ba435
+- id: trackio_config_has_docstring
+  type: fail_to_pass
+  origin: agent_config
+  description: TrackioConfig class has a docstring
+  source:
+    path: .claude/rules/api-config.md
+    lines: '60'
+    commit: 92c467e56bf17d730bd26855de33d5e4e13ba435
+- id: trackio_config_field_help_metadata
+  type: fail_to_pass
+  origin: agent_config
+  description: StatsLoggerConfig.trackio field has help metadata
+  source:
+    path: .claude/rules/api-config.md
+    lines: '54'
+    commit: 92c467e56bf17d730bd26855de33d5e4e13ba435
+- id: no_wildcard_imports
+  type: pass_to_pass
+  origin: agent_config
+  description: No wildcard imports in modified files
+  source:
+    path: CLAUDE.md
+    lines: '93'
+    commit: 92c467e56bf17d730bd26855de33d5e4e13ba435
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files are formatted according to ruff format
+- id: test_repo_ruff_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified files pass ruff linter checks
+- id: test_repo_python_syntax
+  type: pass_to_pass
+  origin: static
+  description: Modified files have valid Python syntax (static check)
+- id: test_repo_yaml_valid
+  type: pass_to_pass
+  origin: static
+  description: Repo YAML configuration files are syntactically valid (static check)
+- id: test_repo_json_valid
+  type: pass_to_pass
+  origin: static
+  description: Repo JSON files are syntactically valid (static check)
+- id: test_repo_no_trailing_whitespace
+  type: pass_to_pass
+  origin: static
+  description: Modified files have no trailing whitespace (static check)
+- id: test_repo_newline_at_eof
+  type: pass_to_pass
+  origin: static
+  description: Modified files end with a newline (static check)
+- id: test_repo_py_compile
+  type: pass_to_pass
+  origin: repo_tests
+  description: Modified Python files compile without errors
+- id: test_repo_toml_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: pyproject.toml is syntactically valid
+- id: test_repo_docs_cli_syntax
+  type: pass_to_pass
+  origin: repo_tests
+  description: docs/generate_cli_docs.py has valid Python syntax
+- id: test_repo_ast_parse_cli_args
+  type: pass_to_pass
+  origin: repo_tests
+  description: areal/api/cli_args.py has valid AST structure
+- id: test_repo_ast_parse_stats_logger
+  type: pass_to_pass
+  origin: repo_tests
+  description: areal/utils/stats_logger.py has valid AST structure
+- id: test_repo_ast_parse_logging
+  type: pass_to_pass
+  origin: repo_tests
+  description: areal/utils/logging.py has valid AST structure
+rubric:
+- rule: Follow existing code patterns in the same module (match the style of WandBConfig,
+    SwanlabConfig, TensorBoardConfig)
+  source:
+    path: CLAUDE.md
+    lines: '76'
+    commit: 92c467e56bf17d730bd26855de33d5e4e13ba435
+- rule: Prefer composition over inheritance; keep class hierarchies shallow
+  source:
+    path: .claude/rules/code-style.md
+    lines: 7-11
+    commit: 92c467e56bf17d730bd26855de33d5e4e13ba435
+- rule: Heavy optional deps inside functions (trackio import should use graceful fallback)
+  source:
+    path: AGENTS.md
+    lines: '101'
+    commit: 92c467e56bf17d730bd26855de33d5e4e13ba435
+- rule: Config dataclass | `XxxConfig`
+  source:
+    path: AGENTS.md
+    lines: 48-49
+  evidence: The gold solution names the new configuration dataclass `TrackioConfig`,
+    matching the required pattern.
+  category: naming
+- rule: Composition over inheritance -- keep hierarchies <= 2 levels; prefer delegation.
+  source:
+    path: AGENTS.md
+    lines: 46-46
+  evidence: 'The gold solution adds `trackio: TrackioConfig = field(...)` to `StatsLoggerConfig`
+    rather than using inheritance to extend the configuration.'
+  category: architecture
+- rule: Follow existing code patterns in the same module.
+  source:
+    path: AGENTS.md
+    lines: 29-30
+  evidence: The `TrackioConfig` implements a `__post_init__` method for validation
+    and uses the `@dataclass` decorator, matching the pattern of existing configs
+    like `TensorBoardConfig`.
+  category: style
+distractors:
+- rule: 'Ask first before: Modifying config structures in `areal/api/cli_args.py`.'
+  collision_type: rule_conflict
+  why_distracting: The instruction explicitly commands the agent to add `TrackioConfig`
+    to the configuration system (which lives in `areal/api/cli_args.py`). If the agent
+    strictly follows the 'Ask first' rule, it will halt the autonomous task unnecessarily.
+  severity: high
+  source:
+    path: AGENTS.md
+    lines: 40-41
+- rule: 'Logging: `areal.utils.logging.getLogger(name)` with PascalCase names -- never
+    `print` or `logging.__name__`.'
+  collision_type: scope_ambiguity
+  why_distracting: The task requires updating the experiment tracking logging (metrics
+    logging via `trackio.log`), not standard application stdout logging. Applying
+    the `getLogger` rule here would result in incorrect implementation of the metrics
+    logger.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 74-75
+- rule: 'Ask first before: Adding new dependencies.'
+  collision_type: rule_conflict
+  why_distracting: The instruction specifies a 'graceful fallback when the package
+    is not installed', meaning Trackio should be handled via `try...except ImportError`
+    rather than halting to ask about adding a hard dependency.
+  severity: medium
+  source:
+    path: AGENTS.md
+    lines: 41-42
+hierarchy_analysis: The rules are defined in both `AGENTS.md` and `CLAUDE.md` (Level
+  0). The agent must prioritize the explicit task instructions over the general 'Ask
+  first' constraints in the agent guidelines to successfully complete the PR autonomously.

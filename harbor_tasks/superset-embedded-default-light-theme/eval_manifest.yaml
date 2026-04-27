@@ -1,0 +1,151 @@
+version: '2.0'
+task:
+  name: superset-embedded-default-light-theme
+  kind: code_fix
+  title: Embedded Superset dashboards must default to light theme
+  description: 'Adds an `initialMode` constructor option to `ThemeController` and has the embedded provider pass `ThemeMode.DEFAULT` so embedded dashboards start in light mode regardless of the host OS preference.
+
+    '
+source:
+  repo: apache/superset
+  pr_number: 38644
+  pr_url: https://github.com/apache/superset/pull/38644
+  base_commit: dcb414aa0640498e55735716ecb0d94e25bcc5c4
+  merge_commit: aa5adb0fce1a8bfe5834331f18b902685a03d485
+  pr_title: 'fix(embedded): default to light theme instead of system preference'
+  pr: 38644
+target_files:
+- superset-frontend/packages/superset-core/src/theme/types.ts
+- superset-frontend/src/theme/ThemeController.ts
+- superset-frontend/src/embedded/EmbeddedContextProviders.tsx
+checks:
+- id: test_initialMode_used_when_no_saved_mode
+  type: fail_to_pass
+  origin: repo_tests
+  description: 'ThemeController constructed with `initialMode: ThemeMode.DEFAULT` and no saved mode reports `ThemeMode.DEFAULT` from getCurrentMode().
+
+    '
+  source:
+    pr: 38644
+    path: superset-frontend/src/theme/tests/ThemeController.test.ts
+- id: test_initialMode_default_overrides_system_dark_preference
+  type: fail_to_pass
+  origin: repo_tests
+  description: 'With matchMedia simulating prefers-color-scheme: dark, a controller built with `initialMode: ThemeMode.DEFAULT` still starts in default (light) mode and applies the default theme tokens.
+
+    '
+  source:
+    pr: 38644
+    path: superset-frontend/src/theme/tests/ThemeController.test.ts
+- id: test_setThemeMode_works_after_init_with_initialMode
+  type: fail_to_pass
+  origin: repo_tests
+  description: 'After init with `initialMode: ThemeMode.DEFAULT`, calling setThemeMode(DARK) and setThemeMode(SYSTEM) must still work, proving initialMode is only a starting state.
+
+    '
+  source:
+    pr: 38644
+    path: superset-frontend/src/theme/tests/ThemeController.test.ts
+- id: test_no_initialMode_defaults_to_system
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Without `initialMode`, the controller still defaults to ThemeMode.SYSTEM (preserves main app behaviour).
+
+    '
+  source:
+    pr: 38644
+    path: superset-frontend/src/theme/tests/ThemeController.test.ts
+- id: test_saved_mode_takes_precedence_over_initialMode
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'A previously saved mode in localStorage takes precedence over `initialMode`.
+
+    '
+  source:
+    pr: 38644
+    path: superset-frontend/src/theme/tests/ThemeController.test.ts
+- id: test_initialMode_ignored_when_no_dark_theme
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'When no dark theme is configured, `initialMode` is irrelevant and the controller forces ThemeMode.DEFAULT.
+
+    '
+  source:
+    pr: 38644
+    path: superset-frontend/src/theme/tests/ThemeController.test.ts
+- id: test_invalid_initialMode_falls_back_to_system
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'An invalid `initialMode` value is rejected by isValidThemeMode and the controller falls back to ThemeMode.SYSTEM.
+
+    '
+  source:
+    pr: 38644
+    path: superset-frontend/src/theme/tests/ThemeController.test.ts
+- id: test_themeControllerOptions_declares_initialMode_field
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'The public `ThemeControllerOptions` interface in the superset-core package declares an optional `initialMode?: ThemeMode` field.
+
+    '
+  source:
+    pr: 38644
+    path: superset-frontend/packages/superset-core/src/theme/types.ts
+- id: test_embedded_provider_constructs_controller_with_default_initialMode
+  type: fail_to_pass
+  origin: pr_diff
+  description: '`EmbeddedContextProviders.tsx` imports the `ThemeMode` value from `@apache-superset/core/theme` and constructs its singleton `ThemeController` with `initialMode: ThemeMode.DEFAULT`.
+
+    '
+  source:
+    pr: 38644
+    path: superset-frontend/src/embedded/EmbeddedContextProviders.tsx
+- id: test_p2p_existing_themecontroller_suite_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'The pre-existing ThemeController.test.ts suite (66+ tests) must keep passing — the fix may not regress any existing assertions.
+
+    '
+rubric:
+- id: no_any_types
+  source:
+    path: AGENTS.md
+    commit: dcb414aa0640498e55735716ecb0d94e25bcc5c4
+  rule: 'The fix uses proper TypeScript — no `any` types in functional code. `ThemeMode` is the existing enum and is reused for the new field.
+
+    '
+- id: prefer_unit_tests_no_enzyme
+  source:
+    path: AGENTS.md
+    commit: dcb414aa0640498e55735716ecb0d94e25bcc5c4
+  rule: 'Any new tests use Jest (no Enzyme, no Cypress). React Testing Library is acceptable but not required for these unit tests.
+
+    '
+- id: tests_use_test_not_describe
+  source:
+    path: AGENTS.md
+    commit: dcb414aa0640498e55735716ecb0d94e25bcc5c4
+  rule: 'New tests follow the repo convention of using `test()` rather than nested `describe()` blocks (per "avoid nesting when testing").
+
+    '
+- id: timeless_code_comments
+  source:
+    path: AGENTS.md
+    commit: dcb414aa0640498e55735716ecb0d94e25bcc5c4
+  rule: 'Code comments avoid time-specific language ("now", "currently", "today"). The added comment in determineInitialMode should be timeless.
+
+    '
+- id: apache_license_headers_preserved
+  source:
+    path: AGENTS.md
+    commit: dcb414aa0640498e55735716ecb0d94e25bcc5c4
+  rule: 'Existing files retain their ASF license headers. The fix does not remove or break the license header on any modified file.
+
+    '
+- id: reuse_existing_isValidThemeMode_helper
+  source:
+    path: superset-frontend/src/theme/ThemeController.ts
+    commit: dcb414aa0640498e55735716ecb0d94e25bcc5c4
+  rule: 'Validation of `initialMode` reuses the existing private `isValidThemeMode()` helper rather than introducing a new validator. This matches how saved-mode validation already works.
+
+    '

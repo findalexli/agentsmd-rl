@@ -1,0 +1,99 @@
+version: '2.0'
+source:
+  repo: astral-sh/uv
+  pr: 18707
+  base_commit: 867e535f2a5f7f2b1f22a0ccc52fc6da5b01ac3c
+  merge_commit: 262a50bb4c952cf2461d4073ae21081ed516f21c
+checks:
+- id: test_repo_cargo_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Rust code compiles with cargo check
+- id: test_repo_cargo_fmt
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's Rust code is formatted correctly
+- id: no_unwrap_on_downloaded_script
+  type: fail_to_pass
+  origin: pr_diff
+  description: No .unwrap() call on downloaded_script in as_command; crate compiles
+- id: python_remote_not_url_only
+  type: fail_to_pass
+  origin: pr_diff
+  description: PythonRemote variant no longer holds just a bare URL
+- id: as_command_no_option_downloaded_script
+  type: fail_to_pass
+  origin: pr_diff
+  description: as_command no longer takes downloaded_script as an Option parameter
+- id: run_fn_no_downloaded_script_param
+  type: fail_to_pass
+  origin: pr_diff
+  description: run() function no longer takes downloaded_script as a parameter
+- id: lib_no_downloaded_script_threading
+  type: fail_to_pass
+  origin: pr_diff
+  description: run_project() in lib.rs no longer threads downloaded_script
+- id: as_command_not_stub
+  type: pass_to_pass
+  origin: static
+  description: as_command has a real implementation with meaningful logic
+- id: python_remote_variant_exists
+  type: pass_to_pass
+  origin: static
+  description: PythonRemote variant still exists in RunCommand enum
+- id: as_command_handles_all_variants
+  type: pass_to_pass
+  origin: static
+  description: as_command still handles PythonRemote alongside other variants
+- id: no_panic_apis_in_remote_handling
+  type: fail_to_pass
+  origin: agent_config
+  description: No .unwrap() or panic!() in PythonRemote arm of as_command
+  source:
+    path: CLAUDE.md
+    lines: '7'
+    commit: 867e535f2a5f7f2b1f22a0ccc52fc6da5b01ac3c
+distractors:
+- rule: PREFER patterns like `if let` to handle fallibility
+  collision_type: rule_conflict
+  why_distracting: The agent might try to replace the `.unwrap()` with an `if let
+    Some(script) = downloaded_script` that returns an error if `None`. This violates
+    the explicit PR instruction that 'The type system should enforce... no `.unwrap()`'
+    by making the state machine implicit rather than fixing the underlying enum variants.
+  severity: high
+  source:
+    path: CLAUDE.md
+    lines: 8-9
+- rule: ALWAYS attempt to add a test case for changed behavior
+  collision_type: scope_ambiguity
+  why_distracting: The agent might attempt to write an integration test for `uv run
+    https://...`, which would require setting up a mock HTTP server or making flaky
+    network requests in the test suite, expanding the scope significantly beyond the
+    type-system refactor requested.
+  severity: medium
+  source:
+    path: CLAUDE.md
+    lines: 2-3
+hierarchy_analysis: The configuration is a flat, single-file `CLAUDE.md` at the root.
+  No complex hierarchy traversal is required, but the agent must weigh the general
+  guidelines against the specific architectural constraints provided in the PR description.
+rubric:
+- rule: AVOID using `panic!`, `unreachable!`, `.unwrap()`, unsafe code, and clippy
+    rule ignores
+  source:
+    path: CLAUDE.md
+    lines: 8-8
+  evidence: The gold solution removes the `.unwrap()` by refactoring `RunCommand::PythonRemote`
+    to hold the `NamedTempFile` directly, ensuring the file is always present when
+    `as_command` is called.
+  category: architecture
+  verification: llm_judge
+- rule: PREFER top-level imports over local imports or fully qualified names
+  source:
+    path: CLAUDE.md
+    lines: 16-16
+  evidence: The gold solution adds new imports like `Pep723Error` and `EnvironmentOptions`
+    to the top-level `use` statements rather than using local imports or fully qualified
+    names where they are used.
+  category: style
+  verification: llm_judge

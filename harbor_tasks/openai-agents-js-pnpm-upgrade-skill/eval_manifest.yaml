@@ -1,0 +1,160 @@
+version: '2.0'
+source:
+  repo: openai/openai-agents-js
+  pr: 865
+  base_commit: 94b4b7c55a6ada0fb0450c95ad6c47e3d6d449f9
+  merge_commit: ccceebebfe82f1c6fe82a1490e957fee3990d67d
+task:
+  kind: markdown_authoring
+checks:
+- id: test_skill_file_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md is created at .codex/skills/pnpm-upgrade/SKILL.md.
+- id: test_skill_frontmatter_name
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md frontmatter declares name pnpm-upgrade and a non-trivial description.
+- id: test_skill_describes_pnpm_self_update
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL instructs running pnpm self-update with corepack prepare pnpm@latest fallback.
+- id: test_skill_aligns_package_manager
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL covers aligning the packageManager field in package.json.
+- id: test_skill_pnpm_action_setup_step
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL instructs querying the pnpm/action-setup releases API rather than hard-coding a tag.
+- id: test_skill_no_blanket_regex
+  type: fail_to_pass
+  origin: agent_config
+  description: SKILL warns against blanket regex / sed-style replacements across workflows.
+  source:
+    path: .codex/skills/pnpm-upgrade/SKILL.md
+    lines: '24'
+    commit: ccceebebfe82f1c6fe82a1490e957fee3990d67d
+- id: test_prompt_file_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: The Codex prompt file at .github/codex/prompts/pnpm-upgrade.md exists and references pnpm-upgrade and PNPM_VERSION.
+- id: test_workflow_file_exists_and_parses
+  type: fail_to_pass
+  origin: pr_diff
+  description: The new pnpm-upgrade.yml workflow exists, parses, and triggers on schedule + workflow_dispatch.
+- id: test_workflow_uses_codex_action
+  type: fail_to_pass
+  origin: pr_diff
+  description: The workflow calls openai/codex-action with the pnpm-upgrade skill and prompt file.
+- id: test_workflow_creates_pull_request
+  type: fail_to_pass
+  origin: pr_diff
+  description: The workflow opens a PR via peter-evans/create-pull-request with the conventional chore commit message.
+- id: test_existing_workflows_pin_action_setup
+  type: fail_to_pass
+  origin: pr_diff
+  description: Existing workflows pin pnpm/action-setup to vX.Y.Z (or a full commit SHA) rather than the floating @v4 tag.
+- id: test_repo_clone_is_intact
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo entry-point files (AGENTS.md, package.json, .codex/skills) exist.
+- id: test_yaml_workflows_all_parse
+  type: pass_to_pass
+  origin: repo_tests
+  description: All YAML workflow files parse cleanly.
+- id: test_git_status_clean_or_only_expected_paths
+  type: pass_to_pass
+  origin: repo_tests
+  description: git status returns successfully (the working tree is in a sane state).
+config_edits:
+- path: .codex/skills/pnpm-upgrade/SKILL.md
+  tier: 1
+  gold_added: 'New SKILL.md with YAML frontmatter (name: pnpm-upgrade, description naming self-update/corepack, packageManager, and pnpm/action-setup) and a 6-step procedure: update pnpm locally via self-update or corepack prepare, align packageManager in package.json, fetch latest pnpm/action-setup tag from GitHub releases API, manually edit each workflow (no broad regex), verify with pnpm -v and git diff, and follow up with conventional commit.'
+  gold_removed: ''
+- path: .github/codex/prompts/pnpm-upgrade.md
+  tier: 1
+  gold_added: 'New Codex prompt for scheduled CI: instructs agent to follow $pnpm-upgrade skill, capture PNPM_VERSION, update package.json, fetch latest pnpm/action-setup tag via GitHub API, manually edit workflows (no blanket regex), and leave changes unstaged.'
+  gold_removed: ''
+rubric:
+- rule: 'SKILL.md begins with YAML frontmatter (--- ... ---) declaring name: pnpm-upgrade and a description that names self-update/corepack, packageManager, and pnpm/action-setup.'
+  source:
+    path: .codex/skills/pnpm-upgrade/SKILL.md
+    lines: 1-4
+    commit: ccceebebfe82f1c6fe82a1490e957fee3990d67d
+  evidence: 'Gold SKILL.md frontmatter declares name: pnpm-upgrade and a multi-clause description covering self-update, packageManager, and pnpm/action-setup.'
+  category: structure
+  verification: programmatic
+- rule: SKILL body lays out concrete, ordered steps the agent can execute (capture PNPM_VERSION, align package.json, fetch latest action tag via curl + jq, edit workflows, verify with pnpm -v + git diff). Steps must be specific enough to act on, not vague exhortations.
+  source:
+    path: .codex/skills/pnpm-upgrade/SKILL.md
+    lines: 10-37
+    commit: ccceebebfe82f1c6fe82a1490e957fee3990d67d
+  evidence: Gold SKILL.md provides 5 numbered steps with exact shell commands and API URLs, each with concrete actions and verification.
+  category: completeness
+  verification: llm_judge
+- rule: pnpm-upgrade.yml grants only the permissions the job needs (contents:write, pull-requests:write) and uses a concurrency group to avoid overlapping runs.
+  source:
+    path: .github/workflows/pnpm-upgrade.yml
+    lines: 8-14
+    commit: ccceebebfe82f1c6fe82a1490e957fee3990d67d
+  evidence: Gold workflow has permissions block scoped to contents:write and pull-requests:write, plus a concurrency group named pnpm-upgrade.
+  category: security
+  verification: programmatic
+- rule: 'Per AGENTS.md (Pull Request & Commit Guidelines), commit messages must use Conventional Commits. The workflow PR commit/title is "chore: upgrade pnpm toolchain".'
+  source:
+    path: AGENTS.md
+    lines: 203-225
+    commit: 94b4b7c55a6ada0fb0450c95ad6c47e3d6d449f9
+  evidence: 'Gold workflow commit-message and PR title are both the literal "chore: upgrade pnpm toolchain", following the chore type from AGENTS.md.'
+  category: style
+  verification: programmatic
+- rule: 'Per AGENTS.md Tips for Navigating the Repo: when editing GitHub Actions workflows, use the latest stable major versions of official actions. The pnpm-upgrade workflow pins actions/checkout@v6 and actions/setup-node@v6.'
+  source:
+    path: AGENTS.md
+    lines: '249'
+    commit: 94b4b7c55a6ada0fb0450c95ad6c47e3d6d449f9
+  evidence: Gold workflow uses actions/checkout@v6 and actions/setup-node@v6, matching the latest stable majors the rest of the repo uses.
+  category: configuration
+  verification: programmatic
+- rule: 'Existing workflows are touched ONLY at the pnpm/action-setup line (and the adjacent with: version: key where applicable). No unrelated steps reordered/renamed/deleted.'
+  source:
+    path: .codex/skills/pnpm-upgrade/SKILL.md
+    lines: 24-29
+    commit: ccceebebfe82f1c6fe82a1490e957fee3990d67d
+  evidence: 'Gold diff for each existing workflow changes only the uses: pnpm/action-setup line and optionally adds with: version; all adjacent steps are untouched.'
+  category: architecture
+  verification: programmatic
+- rule: SKILL.md follows the tone and structure of peer skills under .codex/skills/* -- frontmatter with name+description, a "# pnpm Upgrade" header, ordered steps, a "## Notes" trailer. Sentence comments end with a period (per AGENTS.md style).
+  source:
+    path: .codex/skills/code-change-verification/SKILL.md
+    lines: 1-4
+    commit: 94b4b7c55a6ada0fb0450c95ad6c47e3d6d449f9
+  evidence: Gold SKILL.md mirrors peer skills with YAML frontmatter, markdown header, ordered steps, and Notes section; sentences end with periods.
+  category: style
+  verification: llm_judge
+distractors:
+- rule: When editing GitHub Actions workflows, always web-search for the latest stable major versions of official actions (e.g., actions/checkout, actions/setup-node) before updating version pins.
+  source:
+    path: AGENTS.md
+    lines: '249'
+    commit: 94b4b7c55a6ada0fb0450c95ad6c47e3d6d449f9
+  collision_type: rule_conflict
+  why_distracting: AGENTS.md tells agents to use latest stable major versions (@v4), but the task requires pinning pnpm/action-setup to a specific SemVer tag (v4.2.0). An agent following AGENTS.md literally would keep the floating @v4 tag, which is exactly what the task forbids.
+  severity: high
+- rule: You can skip $code-change-verification for docs-only or repo-meta changes (for example, docs/, .codex/, README.md, AGENTS.md, .github/), unless a user explicitly asks to run the full verification stack.
+  source:
+    path: AGENTS.md
+    lines: '33'
+    commit: 94b4b7c55a6ada0fb0450c95ad6c47e3d6d449f9
+  collision_type: scope_ambiguity
+  why_distracting: AGENTS.md says to skip $code-change-verification for .github/ changes, but modifying workflow YAML inside .github/workflows/ could tempt an agent to run the full verification stack unnecessarily, wasting time.
+  severity: medium
+- rule: 'Use Conventional Commits: ci: CI configuration, chore: build, CI, or tooling changes.'
+  source:
+    path: AGENTS.md
+    lines: 205-215
+    commit: 94b4b7c55a6ada0fb0450c95ad6c47e3d6d449f9
+  collision_type: meta_confusion
+  why_distracting: 'Both ci: and chore: are valid Conventional Commit types for CI workflow changes. The task specifies chore:, but an agent could reasonably choose ci: since the change is a new CI workflow configuration.'
+  severity: low

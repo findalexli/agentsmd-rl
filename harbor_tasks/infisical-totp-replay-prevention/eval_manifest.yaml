@@ -1,0 +1,86 @@
+version: '2.0'
+source:
+  repo: Infisical/infisical
+  pr_number: 6112
+  pr_title: 'fix(eng-4868): disallow reusing TOTP tokens'
+  base_commit: d85308913a5fa4bf81d946dd2c69d9298242d90f
+  merge_commit: 2820f097bb55cec59f537f73f002464407e4a2e0
+  pr: 6112
+task:
+  name: infisical-totp-replay-prevention
+  title: 'Infisical: disallow reusing TOTP tokens'
+  difficulty: medium
+checks:
+- id: test_replay_blocked
+  type: fail_to_pass
+  origin: pr_diff
+  description: Submitting the same valid TOTP twice in succession is rejected on the second call with ForbiddenRequestError.
+- id: test_keystore_claim_uses_documented_prefix_and_ttl
+  type: fail_to_pass
+  origin: pr_diff
+  description: The replay-prevention claim is written under ``used-totp-code:<userId>:<code>`` with TTL of 120 seconds.
+- id: test_replay_protection_is_per_user
+  type: fail_to_pass
+  origin: pr_diff
+  description: Two distinct users submitting the same code value do not collide; the claim key includes the userId.
+- id: test_used_totp_code_prefix_factory_shape
+  type: fail_to_pass
+  origin: pr_diff
+  description: KeyStorePrefixes.UsedTotpCode produces ``used-totp-code:<userId>:<code>``.
+- id: test_used_totp_code_ttl_in_window
+  type: fail_to_pass
+  origin: pr_diff
+  description: KeyStoreTtls.UsedTotpCodeInSeconds is between 90 and 300 seconds (covers the full ±30s acceptance window with margin).
+- id: test_p2p_no_config_throws_not_found
+  type: pass_to_pass
+  origin: pr_diff
+  description: verifyUserTotp still throws NotFoundError when the user has no TOTP config (preserved error contract).
+- id: test_p2p_unverified_config_throws_bad_request
+  type: pass_to_pass
+  origin: pr_diff
+  description: verifyUserTotp still throws BadRequestError when the user's TOTP config is unverified (preserved error contract).
+- id: test_p2p_invalid_totp_throws_forbidden_without_claim
+  type: pass_to_pass
+  origin: pr_diff
+  description: An invalid TOTP still throws ForbiddenRequestError and does not consume a claim slot in the keystore.
+- id: test_p2p_repo_validate_string_unit_test
+  type: pass_to_pass
+  origin: repo_tests
+  description: The repo's pre-existing validate-string Vitest unit tests pass on both the base and the patched commit, confirming the toolchain.
+rubric:
+- id: factory_di_pattern
+  source:
+    lines: 56-58
+    commit: d85308913a5fa4bf81d946dd2c69d9298242d90f
+    path: CLAUDE.md
+  rule: The new keyStore dependency must be added to TTotpServiceFactoryDep and destructured in the factory signature, matching the project's manual DI pattern.
+- id: backend_factory_di_pick_narrowing
+  source:
+    lines: 54-64
+    commit: d85308913a5fa4bf81d946dd2c69d9298242d90f
+    path: backend/CLAUDE.md
+  rule: Service factories receive explicit dependencies as a typed object with TypeScript ``Pick`` narrowing to a minimal contract. The keyStore dep should be typed ``Pick<TKeyStoreFactory, "setItemWithExpiryNX">`` rather than the full keystore interface.
+- id: error_handling_uses_custom_classes
+  source:
+    lines: 181-194
+    commit: d85308913a5fa4bf81d946dd2c69d9298242d90f
+    path: backend/CLAUDE.md
+  rule: Replay rejection must use the project's ``ForbiddenRequestError`` from ``@app/lib/errors`` rather than a plain Error or other class.
+- id: import_ordering
+  source:
+    lines: 41-50
+    commit: d85308913a5fa4bf81d946dd2c69d9298242d90f
+    path: backend/CLAUDE.md
+  rule: Imports added to totp-service.ts must respect the simple-import-sort group order (side-effect → node builtins → third-party → ``@app/`` → ``@lib/`` → ``@server/`` → relatives) and use the ``@app/`` alias rather than relative paths to cross-package modules.
+- id: no_new_supplychain_risk
+  source:
+    lines: 44-48
+    commit: d85308913a5fa4bf81d946dd2c69d9298242d90f
+    path: CLAUDE.md
+  rule: No new third-party dependencies should be added — the keystore is already in the dependency graph and the backend has a deliberate supply-chain policy (`min-release-age` in `.npmrc`).
+- id: keystore_wiring_in_routes_index
+  source:
+    lines: 58-62
+    commit: d85308913a5fa4bf81d946dd2c69d9298242d90f
+    path: backend/CLAUDE.md
+  rule: The dependency graph is manually wired in ``src/server/routes/index.ts``; the ``totpServiceFactory`` call site there must pass the existing ``keyStore`` instance, not a newly-constructed one.

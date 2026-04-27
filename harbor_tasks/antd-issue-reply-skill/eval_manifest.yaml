@@ -1,0 +1,212 @@
+version: '2.0'
+task:
+  name: antd-issue-reply-skill
+  title: Add issue-reply skill for ant-design
+  kind: markdown_authoring
+source:
+  owner: ant-design
+  repo: ant-design
+  pr_number: 57097
+  base_commit: b94b29f44b6658fd76cdd70ac49b01c62b6680b2
+  merge_commit: 25a2da4bd82268497339fbe65256c9dc8c62af8d
+  url: https://github.com/ant-design/ant-design/pull/57097
+  pr: 57097
+checks:
+- id: test_skill_file_exists
+  type: fail_to_pass
+  origin: agent_config
+  description: SKILL.md is created at .claude/skills/issue-reply/SKILL.md
+  source:
+    commit: 25a2da4bd82268497339fbe65256c9dc8c62af8d
+    lines: 1-1
+    path: .claude/skills/issue-reply/SKILL.md
+- id: test_skill_has_yaml_frontmatter
+  type: fail_to_pass
+  origin: agent_config
+  description: SKILL.md begins with a YAML frontmatter block with name and description
+  source:
+    commit: 25a2da4bd82268497339fbe65256c9dc8c62af8d
+    lines: 1-3
+    path: .claude/skills/issue-reply/SKILL.md
+- id: test_skill_description_long_enough
+  type: fail_to_pass
+  origin: agent_config
+  description: Frontmatter description is substantial (≥80 chars) so Claude can route to it
+  source:
+    commit: 25a2da4bd82268497339fbe65256c9dc8c62af8d
+    lines: 3-3
+    path: .claude/skills/issue-reply/SKILL.md
+- id: test_skill_covers_required_topics
+  type: fail_to_pass
+  origin: agent_config
+  description: Body covers language policy, dosubot, duplicate marker, 7-day rule, bug-vs-feature
+  source:
+    commit: 25a2da4bd82268497339fbe65256c9dc8c62af8d
+    lines: 1-259
+    path: .claude/skills/issue-reply/SKILL.md
+- id: test_references_doc_exists
+  type: fail_to_pass
+  origin: agent_config
+  description: references/labels-and-resources.md companion file exists
+  source:
+    commit: 25a2da4bd82268497339fbe65256c9dc8c62af8d
+    lines: 1-1
+    path: .claude/skills/issue-reply/references/labels-and-resources.md
+- id: test_references_link_from_skill
+  type: fail_to_pass
+  origin: agent_config
+  description: SKILL.md links to references/labels-and-resources.md
+  source:
+    commit: 25a2da4bd82268497339fbe65256c9dc8c62af8d
+    lines: 259-259
+    path: .claude/skills/issue-reply/SKILL.md
+- id: test_gitignore_unignores_skills_dir
+  type: fail_to_pass
+  origin: agent_config
+  description: .gitignore has a `!` negation pattern allowing .claude/skills/ to be tracked
+  source:
+    commit: 25a2da4bd82268497339fbe65256c9dc8c62af8d
+    lines: 78-83
+    path: .gitignore
+- id: test_skill_file_not_gitignored
+  type: fail_to_pass
+  origin: agent_config
+  description: git check-ignore reports the SKILL.md path as not ignored
+  source:
+    commit: 25a2da4bd82268497339fbe65256c9dc8c62af8d
+    lines: 78-83
+    path: .gitignore
+- id: test_package_json_intact
+  type: pass_to_pass
+  origin: repo_tests
+  description: package.json remains a valid JSON manifest with name "antd"
+- id: test_agents_md_intact
+  type: pass_to_pass
+  origin: repo_tests
+  description: AGENTS.md is preserved (regression guard)
+config_edits:
+- path: .claude/skills/issue-reply/SKILL.md
+  tier: 1
+  gold_added: "---\nname: antd-issue-reply\ndescription: Help maintainers reply to Ant Design GitHub issues following official guidelines. Use this skill when the user asks to handle issues, reply to issues, process issues, check issues, or manage issues for ant-design/ant-design repository. Also use when the user mentions \"issue\" in the context of antd, Ant Design, or GitHub issue management. This skill provides guidelines for classifying issues (Bug vs Feature Request), handling dosubot replies, using proper labels, writing polite responses, and knowing when to close issues.\n---\n\n# Ant Design Issue 回复规范\n\nTopics covered in the body of the gold SKILL.md:\n\n- 目标 / Goals: keep the community active and reduce stale or duplicate\n  issues; maintainers and users collaborate, the issue tracker is not a\n  customer-support queue.\n- First-reply rules: only reply to open issues with no MEMBER /\n  OWNER / CONTRIBUTOR human reply yet.\n- Checking already-replied issues: close after 7+ days of user silence,\n  close when resolved, close when usage question with answer provided.\n- Strict language policy: read only the original issue body\n  (\"What is expected?\" / \"What is actually happening?\") and reply in\n  that language; ignore the language of subsequent comments, the\n  issue-helper template, and dosubot replies.\n- Issue type triage: Bug Report → check version/changelog and\n  reproduction link, label `\U0001F41B Bug` or `\U0001F914 Need Reproduce`. Feature\n  Request → label `\U0001F4A1 Feature Request`. Usage question → answer or\n  redirect to FAQ / StackOverflow / SegmentFault, optionally invoke\n  `@docu` / `@Copilot`.\n- Handling `@dosu` (note the bot is mentioned as `@dosu`, not\n  `@dosubot`): review accuracy, endorse if correct, correct if wrong.\n- Bug vs Feature Request decision table with examples (Cascader\n  onFocus = Bug; DatePicker keyboard navigation = Feature Request);\n  when in doubt classify as Bug.\n- Duplicate handling: post `Duplicate of #xxxx` and close.\n- Closing policy: cautious, polite templates in EN and ZH for\n  resolved / usage-question / user-inactive scenarios; always\n  re-check language before closing.\n- \"Don't promise\": no release dates, no \"we will add this\".\n- When NOT to reply: dosu's answer is already complete; uncertain;\n  active discussion in progress.\n- Decision flow chart for re-checking previously-replied issues.\n- Tone: friendly, patient, professional; provide code examples and\n  documentation links.\n- Pointer to references/labels-and-resources.md for labels and links.\n"
+  gold_removed: ''
+- path: .claude/skills/issue-reply/references/labels-and-resources.md
+  tier: 1
+  gold_added: "# 标签和资源参考\n\nReference document accompanying the issue-reply skill. Lists:\n\n- Common labels in a Markdown table:\n    `\U0001F41B Bug`, `\U0001F914 Need Reproduce`, `\U0001F4A1 Feature Request`, `❓FAQ`,\n    `help wanted`, `good first issue`, `unconfirmed`, `improvement`,\n    `Inactive` — each with a one-line purpose description.\n- FAQ resource links: official FAQ-labelled issue search,\n  ant.design/docs/react/faq-cn/, ant.design/changelog-cn,\n  component-specific FAQ pages (Form, Table virtual list, i18n,\n  theme customisation).\n- Community resources: StackOverflow `antd` tag, SegmentFault\n  `antd` tag.\n- Reproduction templates: CodeSandbox and StackBlitz starter URLs.\n- Issue-creation conventions: issues should be filed via\n  new-issue.ant.design; bug reports require a reproduction link;\n  feature requests should describe the use case and proposed API.\n  If a user did not follow the formal channel but the content is\n  substantive, do not force-close — handle normally.\n"
+  gold_removed: ''
+- path: .gitignore
+  tier: 2
+  gold_added: '.claude/*
+
+    !.claude/skills/
+
+    !.claude/skills/*
+
+    '
+  gold_removed: '.claude/
+
+    '
+rubric:
+- rule: 'The SKILL.md must follow Claude Code''s skill format: YAML frontmatter
+
+    delimited by `---`, with at least the keys `name` and `description`,
+
+    followed by Markdown body content. The `description` must enumerate
+
+    trigger conditions so Claude can route to the skill correctly.
+
+    '
+  source:
+    commit: 25a2da4bd82268497339fbe65256c9dc8c62af8d
+    lines: 1-3
+    path: .claude/skills/issue-reply/SKILL.md
+  category: skill_format
+  verification: llm_judge
+- rule: 'Documentation must provide both Chinese (zh-CN) and English content
+
+    where appropriate. AGENTS.md states: "提供中英文两个版本". The skill
+
+    content is naturally bilingual — Chinese narrative for maintainers
+
+    with English templates and English issue-handling phrases — and the
+
+    author should not strip one language in favour of the other.
+
+    '
+  source:
+    commit: b94b29f44b6658fd76cdd70ac49b01c62b6680b2
+    section: 文档和 Changelog 规范 → 基本要求
+    path: AGENTS.md
+  category: documentation_bilingual
+  verification: llm_judge
+- rule: 'Per AGENTS.md "中英空格" rule: when Chinese is mixed with English,
+
+    digits, links, or `@` user mentions, retain a single space between
+
+    the Chinese character and the non-Chinese token. The new SKILL.md
+
+    and references file should follow this convention throughout
+
+    (e.g. `MEMBER/CONTRIBUTOR 回复`, `7 天`, `@dosu 的分析`).
+
+    '
+  source:
+    commit: b94b29f44b6658fd76cdd70ac49b01c62b6680b2
+    section: Changelog 规范 → 文本细节
+    path: AGENTS.md
+  category: typography
+  verification: llm_judge
+- rule: 'Code-style requirement from AGENTS.md: "代码包裹 — 所有属性名、方法名、
+
+    API、`role`/`aria` 属性必须使用反引号 `` ` `` 包裹（组件名除外）". In
+
+    this skill''s context that means GitHub label names, mentions, and
+
+    filenames should be backtick-wrapped (e.g. `` `🐛 Bug` ``,
+
+    `` `@dosu` ``, `` `references/labels-and-resources.md` ``); the
+
+    table cells in references/labels-and-resources.md should also use
+
+    backticks for label strings.
+
+    '
+  source:
+    commit: b94b29f44b6658fd76cdd70ac49b01c62b6680b2
+    section: Changelog 规范 → 文本细节 → 代码包裹
+    path: AGENTS.md
+  category: typography
+  verification: llm_judge
+- rule: 'The skill''s reply templates and guidance should not promise release
+
+    dates or commit to feature delivery on the project''s behalf — match
+
+    the spirit of the AGENTS.md "向下兼容" / project-stewardship culture
+
+    and the maintainers'' own "禁止承诺" guidance. The skill must
+
+    explicitly tell the responder NOT to commit to dates or guaranteed
+
+    future features.
+
+    '
+  source:
+    commit: b94b29f44b6658fd76cdd70ac49b01c62b6680b2
+    section: 代码规范 → 基本编码规范 (向下兼容)
+    path: AGENTS.md
+  category: project_stewardship
+  verification: llm_judge
+- rule: 'The skill must respect the issue tracker''s stated purpose: it tracks
+
+    Bug Reports and Feature Requests. Usage / how-to questions should be
+
+    redirected to the official FAQ, StackOverflow, or SegmentFault — not
+
+    treated as bugs. The references file must surface those URLs.
+
+    '
+  source:
+    commit: b94b29f44b6658fd76cdd70ac49b01c62b6680b2
+    section: Project Context
+    path: .github/copilot-instructions.md
+  category: triage_policy
+  verification: llm_judge

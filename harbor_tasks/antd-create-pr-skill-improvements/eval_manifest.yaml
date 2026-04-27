@@ -1,0 +1,150 @@
+version: '2.0'
+source:
+  repo: ant-design/ant-design
+  pr: 57261
+  base_commit: 3e0031bae868475ce0746651bf70a5a2f705db63
+  merge_commit: a852fb7dcedcdf7ff53d12c6a7d0ad771f2653b5
+task:
+  kind: markdown_authoring
+checks:
+- id: test_skill_md_mentions_reflog_for_base_branch
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md must reference `git reflog show` for base-branch inference.
+- id: test_skill_md_lists_perf_as_pr_type
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md type list must include `perf`.
+- id: test_skill_md_has_pre_create_confirmation_rule
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md must require base/title/body confirmation before `gh pr create`.
+- id: test_template_notes_has_baseline_inference_section
+  type: fail_to_pass
+  origin: pr_diff
+  description: references/template-notes-and-examples.md must include a base-branch inference section using `git reflog show`.
+- id: test_template_notes_has_no_changelog_placeholder
+  type: fail_to_pass
+  origin: pr_diff
+  description: references/template-notes-and-examples.md must include a `No changelog required` placeholder.
+- id: test_template_notes_lists_perf_as_pr_title_type
+  type: fail_to_pass
+  origin: pr_diff
+  description: references/template-notes-and-examples.md PR-title type list must include `perf`.
+- id: test_skill_md_frontmatter_intact
+  type: pass_to_pass
+  origin: static
+  description: 'SKILL.md keeps its YAML frontmatter (name: antd-create-pr plus a description: field).'
+- id: test_repo_skill_files_present
+  type: pass_to_pass
+  origin: static
+  description: Both create-pr skill files remain tracked in git.
+config_edits:
+- path: .claude/skills/create-pr/SKILL.md
+  tier: 1
+  gold_added: "四、真正执行 `gh pr create` 之前，必须先把 `base`、`title`、`body` 给用户确认，确认后才能创建 PR。\n\n### 四、先给草稿，后创建 PR\n\n无论用户是否说\"直接帮我创建 PR\"，都要先完成以下步骤：\n\n1. 生成 `base`、`title`、`body` 草稿\n2. 明确告诉用户：这是准备提交的 PR 内容\n3. 让用户确认是否继续创建，或先修改\n4. 只有用户明确确认后，才能真正执行 `gh pr create`\n\n若用户中途要求修改标题、类型、changelog、目标分支等，应先更新草稿，再次确认。\n\n不要默认就用 `master`。按以下顺序判断：\n\n1. 用户明确指定了 `base branch` -> 直接使用\n2. 若当前分支存在可用的\"来源线索\"，优先根据真实 Git 信息推断：\n   - `git branch -vv` 查看 tracking / upstream\n   - `git reflog show <current-branch>` 查看是否能看出\"从哪条分支 checkout 出来\"\n   - 必要时结合 `git merge-base HEAD <candidate-branch>` 比较分叉点\n3. 若能较可靠判断\"当前分支是从某条分支切出来的\"，优先使用该分支作为 `base`\n4. 若无法可靠推断，再退回远端默认分支或仓库默认分支\n\n#### 新功能分支的额外提醒\n\n如果改动性质判断为 `feat` / 新功能，且当前基线不是明显的功能分支（如 `feature/*`），应额外提醒用户：\n\n- 这个改动看起来像新功能\n- 请确认是否应该提交到对应的 `feature` 分支，而不是默认开发主分支\n\n此提醒只用于确认工作流，不要擅自改 base。\n\n### 5. 判断 PR 类型\n\n必须根据\"主目的\"判断，不要仅因为改动里包含逻辑变更就默认写成 `fix`。\n\n优先判断顺序：\n\n1. 是否主要是站点、文档、示例、演示、说明文本、主题页、官网交互等改动\n   - 是：优先考虑 `site` / `docs` / `demo`\n2. 是否主要是 CI、workflow、脚本、发布流程、校验流程等改动\n   - 是：优先考虑 `ci` / `chore`\n3. 是否主要是组件缺陷修复、行为异常修复、样式问题修复\n   - 是：考虑 `fix`\n4. 是否主要是公开能力新增\n   - 是：考虑 `feat`\n5. 是否主要是重构、测试、类型、性能等专项改动\n   - 是：使用 `refactor` / `test` / `type` / `perf`\n\n### 7. 处理 Change Log\n\n对于以下场景，通常无需写实质 changelog：\n\n- `site`\n- `docs`\n- `demo`\n- `ci`\n- 纯测试\n- 仅内部维护、无用户可感知变化的调整\n\n这类场景：\n\n- 不要硬编 changelog 文案\n- 保留模板 section\n- 使用简洁占位即可，例如：\n  - `N/A`\n  - `No changelog required`\n  - `无需更新日志`\n\n只有当改动确实会影响组件使用者、公开 API、交互行为、视觉表现或发布内容时，才写实质 changelog。\n\n- `perf`：性能优化\n\n### 10. 先给用户确认\n\n输出时至少包含：\n\n- `Base branch`\n- `PR title`\n- `PR body`\n- 需要用户补充或确认的点\n\n明确询问用户是否：\n\n- 直接创建 PR\n- 先修改后再创建\n\n没有明确确认前，不得执行 `gh pr create`。\n"
+  gold_removed: '- 基线分支（默认优先 `master`，若仓库实际工作流不同，再按当前仓库状态判断）
+
+
+    1. 用户明确指定了 base branch -> 直接使用
+
+    2. 远端默认分支是 `master` -> 使用 `master`
+
+    3. 否则使用仓库默认分支
+
+
+    - 写对开发者或用户的影响
+
+    - 不要把实现细节原样搬进 changelog
+
+    - 中英文两行内容应语义一致，不要只填其中一种
+
+    '
+- path: .claude/skills/create-pr/references/template-notes-and-examples.md
+  tier: 2
+  gold_added: "- CI / workflow / action：通常归到 `⏩ Workflow`、`❓ Other`，或标题使用 `ci:`\n\n## 类型判断补充说明\n\n不要因为 diff 里包含逻辑代码就直接判成 `fix`。先看\"最终在修什么\"。\n\n优先判断：\n\n1. **site / docs / demo / ci 优先于 fix**\n   - 若主要改的是官网、文档、演示、脚本、workflow，即使涉及一些逻辑代码，也通常不该写成组件 `fix`\n2. **fix 只用于真实缺陷修复**\n   - 组件行为异常、渲染错误、交互不符合预期、样式 bug，才优先用 `fix`\n3. **feat 只用于对外新增能力**\n   - 不是\"内部代码变多了\"就算 feat，而是用户真的获得了新能力\n\n### 1) 需要写实质 changelog 的场景\n\n### 2) 无需 changelog 的场景\n\n常见包括：\n\n- `site`\n- `docs`\n- `demo`\n- `ci`\n- 纯测试\n- 内部维护或重构，且无外部可感知变化\n\n这类场景不要硬写影响描述，可直接使用占位\n\n| \U0001F1FA\U0001F1F8 English | No changelog required |\n| \U0001F1E8\U0001F1F3 Chinese | 无需更新日志          |\n\n## 基线分支判断建议\n\n目标是尽量推断\"当前分支实际从哪里切出来\"，而不是拍脑袋默认 `master`。\n\n建议顺序：\n\n1. 用户明确指定了 `base branch` -> 直接使用\n2. 查看当前分支是否能从 `reflog` 看出 checkout 来源\n3. 查看 `git branch -vv` 的 tracking / upstream 作为辅助线索\n4. 必要时结合 `merge-base` 比较候选分支\n5. 若仍无法确定，再退回远端默认分支或仓库默认分支\n\n## 创建 PR 前确认话术建议\n\n在真正执行 `gh pr create` 之前，应该先给用户一个确认版草稿，例如：\n\n- `perf`\n\n- `ci: adjust pull request label workflow`\n\n- `site: refine AI theme page empty state copy`\n"
+  gold_removed: ''
+rubric:
+- rule: 'PR 标题始终使用英文，格式：`类型: 简短描述`'
+  source:
+    path: AGENTS.md
+    lines: '65'
+    commit: 3e0031bae868475ce0746651bf70a5a2f705db63
+  evidence: The gold patch keeps the PR-title-in-English requirement intact and does not introduce wording that allows Chinese PR titles.
+  category: naming
+  verification: llm_judge
+- rule: 使用 `gh pr create` 创建 PR 时，必须手动填充模板内容
+  source:
+    path: AGENTS.md
+    lines: '73'
+    commit: 3e0031bae868475ce0746651bf70a5a2f705db63
+  evidence: The gold patch preserves the requirement to use the official templates and does not weaken or contradict the template-fill rule.
+  category: architecture
+  verification: llm_judge
+- rule: 新特性开发需基于 `feature` 分支，PR 目标分支也需为 `feature`
+  source:
+    path: AGENTS.md
+    lines: '77'
+    commit: 3e0031bae868475ce0746651bf70a5a2f705db63
+  evidence: The new base-inference section includes a 新功能分支提醒 that points users at a feature branch rather than overriding the existing strategy.
+  category: architecture
+  verification: llm_judge
+- rule: '- 🆕 新特性提交
+
+    - 🐞 Bug 修复
+
+    - 📝 文档改进
+
+    - 📽️ 演示代码改进
+
+    - 💄 样式/交互改进
+
+    - 🤖 TypeScript 更新
+
+    - 📦 包体积优化
+
+    - ⚡️ 性能优化
+
+    - 🌐 国际化改进
+
+    '
+  source:
+    path: AGENTS.md
+    lines: 87-95
+    commit: 3e0031bae868475ce0746651bf70a5a2f705db63
+  evidence: The gold patch adds `perf` to the type lists in both SKILL.md and references without dropping any existing types.
+  category: naming
+  verification: llm_judge
+- rule: 一、基于当前分支相对基线分支的全部改动生成 PR，不只看最后一个 commit。二、严格使用 `ant-design` 仓库自带模板，不自行发明 PR 结构。三、根据用户语言习惯选择中文或英文模板，但 PR 标题始终使用英文，并遵循本文档约定的命名格式。
+  source:
+    path: .claude/skills/create-pr/SKILL.md
+    lines: 10-14
+    commit: 3e0031bae868475ce0746651bf70a5a2f705db63
+  evidence: The gold patch keeps all new prose in Simplified Chinese with English code/keyword tokens preserved.
+  category: style
+  verification: llm_judge
+distractors:
+- rule: 基线分支（默认优先 `master`，若仓库实际工作流不同，再按当前仓库状态判断）
+  source:
+    path: .claude/skills/create-pr/SKILL.md
+    lines: '58'
+    commit: 3e0031bae868475ce0746651bf70a5a2f705db63
+  collision_type: rule_conflict
+  why_distracting: The old master-default rule directly contradicts the new reflog-based inference, and an agent might keep both rules instead of replacing the old one.
+  severity: high
+- rule: 若用户要求直接创建 PR，则先向用户说明缺失项。
+  source:
+    path: .claude/skills/create-pr/SKILL.md
+    lines: '80'
+    commit: 3e0031bae868475ce0746651bf70a5a2f705db63
+  collision_type: rule_conflict
+  why_distracting: This old rule allows creating PRs after only noting missing items, conflicting with the new requirement for explicit user confirmation of base/title/body before gh pr create.
+  severity: high
+- rule: 忽略用户无感知的改动（内部重构、纯测试更新、工具链优化等）
+  source:
+    path: AGENTS.md
+    lines: '107'
+    commit: 3e0031bae868475ce0746651bf70a5a2f705db63
+  collision_type: scope_ambiguity
+  why_distracting: This changelog rule omits site/docs/demo/ci as explicit no-changelog categories, which could cause an agent to fabricate changelogs for those types instead of using a placeholder.
+  severity: medium

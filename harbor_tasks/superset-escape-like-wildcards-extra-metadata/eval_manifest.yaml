@@ -1,0 +1,55 @@
+version: '2.0'
+source:
+  repo: apache/superset
+  pr: 38738
+  base_commit: 5263abdc60ef790c649d799f4485c1f9f028e86b
+  merge_commit: 6649f35a0d6e5887efe8461ac3eec3167daa1a83
+task:
+  kind: code_fix
+checks:
+- id: test_percent_in_slug_must_be_literal
+  type: fail_to_pass
+  origin: pr_diff
+  description: Slug containing '%' must match only the literal-percent row, not another row where '%' could act as a wildcard.
+- id: test_underscore_in_slug_must_be_literal
+  type: fail_to_pass
+  origin: pr_diff
+  description: Slug containing '_' must match only the literal-underscore row, not another row where '_' could match a single arbitrary character.
+- id: test_trailing_percent_no_wildcard
+  type: fail_to_pass
+  origin: pr_diff
+  description: Slug 'foo%' must match a row containing literal 'foo%' and not a row containing 'foobar'.
+- id: test_basic_substring_match_still_works
+  type: pass_to_pass
+  origin: pr_diff
+  description: Plain slug with no special characters still matches its row as a normal substring lookup.
+- id: test_no_match_returns_empty_list
+  type: pass_to_pass
+  origin: pr_diff
+  description: Slug not present in any extra_json returns an empty list.
+rubric:
+- rule: Type hints required for all new code
+  source:
+    path: CLAUDE.md
+    lines: '85'
+    commit: 5263abdc60ef790c649d799f4485c1f9f028e86b
+  evidence: 'The gold patch preserves the `(slug: str) -> list[ReportSchedule]` type signature on `find_by_extra_metadata` and the new test file includes proper type annotations.'
+  category: style
+  verification: llm_judge
+- rule: Avoid time-specific language - Don't use words like "now", "currently", "today" in code comments as they become outdated
+  source:
+    path: CLAUDE.md
+    lines: '95'
+    commit: 5263abdc60ef790c649d799f4485c1f9f028e86b
+  evidence: The gold patch uses no time-specific language in any docstrings or comments it introduces.
+  category: style
+  verification: llm_judge
+- rule: 'Use negation operator: ~Model.field instead of == False to avoid ruff E712 errors'
+  source:
+    path: CLAUDE.md
+    lines: '198'
+    commit: 5263abdc60ef790c649d799f4485c1f9f028e86b
+  evidence: The gold patch's filter expression uses SQLAlchemy method chaining rather than boolean equality operators, staying ruff-clean.
+  category: style
+  verification: llm_judge
+distractors: []

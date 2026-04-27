@@ -1,0 +1,80 @@
+version: '2.0'
+source:
+  owner: vitessio
+  repo: vitess
+  pr_number: 19805
+  base_commit: ef3aa669e2acef95e4751f097115b0d230aa8015
+  merge_commit: 4256f2a32f2418e27445458641f9d4cbeeea4fd3
+  title: Restart IO threads on replicas after ERS failure
+  pr: 19805
+checks:
+- id: test_ers_restarts_on_stop_replication_failure
+  type: fail_to_pass
+  origin: repo_tests
+  description: ERS restarts replication on replicas whose IO threads were stopped before stopReplicationAndBuildStatusMaps returned an error (also indirectly verifies the partial-snapshot return when revoke fails)
+- id: test_ers_restarts_on_relay_log_timeout
+  type: fail_to_pass
+  origin: repo_tests
+  description: ERS restarts replication on replicas whose IO threads were stopped before the relay-log apply step timed out
+- id: test_repo_vet
+  type: pass_to_pass
+  origin: repo_tests
+  description: go vet on the reparentutil package keeps passing
+- id: test_repo_replication_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Pre-existing TestReplicaWasRunning still passes after the change
+- id: test_repo_existing_emergency_reparenter_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Pre-existing TestEmergencyReparenter_promotionOfNewPrimary still passes
+rubric:
+- id: use_vterrors_not_fmt_errorf
+  source:
+    section: Error Handling Excellence — Go Error Patterns
+    path: CLAUDE.md
+    commit: ef3aa669e2acef95e4751f097115b0d230aa8015
+  severity: medium
+  rule: New error returns should use vterrors (Errorf/Wrapf with vtrpc codes) rather than the standard library `fmt.Errorf` / `errors` package, except when wrapping with %w to preserve an original error chain across cleanup boundaries.
+- id: tablet_alias_string_in_logs
+  source:
+    section: TabletAlias Formatting
+    path: CLAUDE.md
+    commit: ef3aa669e2acef95e4751f097115b0d230aa8015
+  severity: medium
+  rule: Format `*topodatapb.TabletAlias` using `topoproto.TabletAliasString(alias)` in log messages and error strings.
+- id: bounded_context_in_deferred_cleanup
+  source:
+    section: Failure-Path Safety
+    path: CLAUDE.md
+    commit: ef3aa669e2acef95e4751f097115b0d230aa8015
+  severity: high
+  rule: Deferred cleanup must use bounded contexts — never `context.Background()` for operations that could hang indefinitely. Wrap with `context.WithTimeout` and a sensible duration (e.g. `topo.RemoteOperationTimeout`).
+- id: never_silently_swallow_errors
+  source:
+    section: Error Handling Principles
+    path: CLAUDE.md
+    commit: ef3aa669e2acef95e4751f097115b0d230aa8015
+  severity: high
+  rule: Cleanup paths must surface their errors — log them with context (workflow, tablet alias) and either return them or wrap them into the outer error so operators can trace what happened.
+- id: ers_minimize_brittleness
+  source:
+    section: EmergencyReparentShard (ERS)
+    path: CLAUDE.md
+    commit: ef3aa669e2acef95e4751f097115b0d230aa8015
+  severity: high
+  rule: ERS must prioritize certainty and avoid additions that meaningfully delay or make ERS more brittle. New cleanup work should be scoped to genuinely-needed cases, not run unconditionally.
+- id: preallocate_slices_when_size_known
+  source:
+    section: Performance with Clarity
+    path: CLAUDE.md
+    commit: ef3aa669e2acef95e4751f097115b0d230aa8015
+  severity: low
+  rule: Preallocate slices and maps when the size is known (e.g. `make([]T, 0, len(source))`). Applies to building per-replica result slices.
+- id: gofumpt_and_goimports
+  source:
+    section: Go-Specific Best Practices
+    path: CLAUDE.md
+    commit: ef3aa669e2acef95e4751f097115b0d230aa8015
+  severity: medium
+  rule: Changed Go files must pass `gofumpt -l` and `goimports -local 'vitess.io/vitess' -l` with no diffs.

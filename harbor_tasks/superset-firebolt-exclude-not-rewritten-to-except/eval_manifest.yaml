@@ -1,0 +1,84 @@
+version: '2.0'
+source:
+  repo: apache/superset
+  pr: 38742
+  base_commit: 01aa4d32816bdd9beffd0b22c53861145fcc42bb
+  merge_commit: 6465450b64ab5b8f0074d8a7831ba79c6f4d6fd4
+task:
+  kind: code_fix
+checks:
+- id: test_firebolt_exclude_single_column_with_alias
+  type: fail_to_pass
+  origin: pr_diff
+  description: '`SELECT g.* EXCLUDE (col) FROM t g` round-trips with EXCLUDE preserved and EXCEPT absent.'
+- id: test_firebolt_exclude_multiple_columns
+  type: fail_to_pass
+  origin: pr_diff
+  description: EXCLUDE with multiple comma-separated columns is preserved.
+- id: test_firebolt_exclude_two_columns
+  type: fail_to_pass
+  origin: pr_diff
+  description: EXCLUDE with two columns and a table alias is preserved.
+- id: test_firebolt_not_in_parenthesized
+  type: pass_to_pass
+  origin: pr_diff
+  description: 'Pre-existing Firebolt behavior: `WHERE x NOT IN (...)` is parenthesized.'
+- id: test_firebolt_basic_select_parses
+  type: pass_to_pass
+  origin: pr_diff
+  description: 'Pre-existing: a basic SELECT formats without errors.'
+- id: test_firebolt_module_loads_cleanly
+  type: pass_to_pass
+  origin: pr_diff
+  description: The dialect module exposes Firebolt and FireboltOld classes.
+- id: test_firebolt_dialect_is_registered_with_sqlglot
+  type: pass_to_pass
+  origin: pr_diff
+  description: Loading the dialect module registers firebolt as a sqlglot dialect.
+- id: test_firebolt_python_module_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: The dialect file is syntactically valid Python (proxy for compile-step/lint-stage).
+config_edits: []
+rubric:
+- rule: New files require ASF license headers - When creating new code files, include the standard Apache Software Foundation license header
+  source:
+    path: AGENTS.md
+    lines: '91'
+    commit: 01aa4d32816bdd9beffd0b22c53861145fcc42bb
+  evidence: The gold patch modifies an existing file (firebolt.py) rather than creating new files; no new license header is needed.
+  category: style
+  verification: programmatic
+- rule: Type hints required for all new code
+  source:
+    path: AGENTS.md
+    lines: '85'
+    commit: 01aa4d32816bdd9beffd0b22c53861145fcc42bb
+  evidence: The gold patch adds a class-level string constant (not a function/method), so it does not introduce untyped code.
+  category: style
+  verification: programmatic
+- rule: Avoid time-specific language - Don't use words like "now", "currently", "today" in code comments as they become outdated
+  source:
+    path: AGENTS.md
+    lines: '95'
+    commit: 01aa4d32816bdd9beffd0b22c53861145fcc42bb
+  evidence: The gold patch adds no comments at all, so no time-specific language is introduced.
+  category: style
+  verification: llm_judge
+- rule: These migrations are actively happening - avoid deprecated patterns
+  source:
+    path: AGENTS.md
+    lines: '28'
+    commit: 01aa4d32816bdd9beffd0b22c53861145fcc42bb
+  evidence: The gold patch changes exactly one line in one file (firebolt.py) with no incidental refactors or changes to unrelated dialects.
+  category: architecture
+  verification: semantic_diff
+- rule: pytest for testing
+  source:
+    path: AGENTS.md
+    lines: '88'
+    commit: 01aa4d32816bdd9beffd0b22c53861145fcc42bb
+  evidence: The gold patch is a source fix only; it does not create test files.
+  category: testing
+  verification: programmatic
+distractors: []

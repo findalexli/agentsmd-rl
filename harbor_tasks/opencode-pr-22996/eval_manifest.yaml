@@ -1,0 +1,118 @@
+version: '2.0'
+task:
+  name: opencode-config-parse-split
+  title: Split ConfigParse.load into explicit jsonc + schema steps
+  kind: code_fix
+  difficulty: medium
+  estimated_minutes: 25
+  tags:
+  - typescript
+  - bun
+  - refactor
+  - api-design
+  - opencode
+source:
+  repo: anomalyco/opencode
+  pr_number: 22996
+  base_commit: f592c3846b285a53d9f657d1eb57f124d5b9b18b
+  merge_commit: 01bb54a94dba8e797dbe45d083027ff9002a5575
+  pr_title: 'refactor: split config parsing steps'
+  pr: 22996
+checks:
+- id: test_jsonc_parses_jsonc_text
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'ConfigParse.jsonc(text, filepath) parses standard JSON, JSONC with trailing commas, and JSONC with comments; throws JsonError on syntax errors; performs no schema validation. Verified by importing ConfigParse from "@/config/parse" and asserting return values.
+
+    '
+- id: test_schema_validates_with_zod
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'ConfigParse.schema(schema, data, source) accepts pre-parsed data (no JSONC parsing), runs zod safeParse, returns parsed value on success and throws on schema mismatch.
+
+    '
+- id: test_substitute_takes_options_object
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'ConfigVariable.substitute now takes a single SubstituteInput options object that includes text/type/path-or-source-dir/missing. Verified by calling substitute({...}) with {env:VAR} and {file:relative-path} tokens and asserting the returned string.
+
+    '
+- id: test_old_combined_apis_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'ConfigParse.parse and ConfigParse.load are no longer exported from parse.ts. ConfigParse.jsonc and ConfigParse.schema are exported as functions.
+
+    '
+- id: test_repo_config_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'The repo''s own config test suite (packages/opencode/test/config/config.test.ts) still passes after the refactor. Catches both backwards-incompatible behavior changes and incomplete caller updates: tests in this file that use the new ConfigParse.schema/jsonc API must be migrated as part of the refactor.
+
+    '
+  command: cd packages/opencode && bun test test/config/config.test.ts --timeout 30000
+rubric:
+- id: prefer_const_over_let
+  severity: warn
+  source:
+    path: AGENTS.md
+    commit: f592c3846b285a53d9f657d1eb57f124d5b9b18b
+  rule: 'Prefer `const` over `let`. Use ternaries or early returns instead of reassignment. The new `ConfigVariable.substitute` body should not reintroduce a `let text = ...` pattern that could be expressed as `const`; if reassignment is unavoidable for streaming-style mutation, narrow it to the smallest possible scope.
+
+    '
+- id: avoid_else_after_return
+  severity: warn
+  source:
+    path: AGENTS.md
+    commit: f592c3846b285a53d9f657d1eb57f124d5b9b18b
+  rule: 'Avoid `else` after `return`. Prefer early returns. The split `jsonc`/`schema` functions should each have at most one early `throw` followed by the success-path `return`, with no `else`.
+
+    '
+- id: avoid_try_catch
+  severity: warn
+  source:
+    path: AGENTS.md
+    commit: f592c3846b285a53d9f657d1eb57f124d5b9b18b
+  rule: 'Avoid `try`/`catch` where possible. The new functions should let JsonError / InvalidError propagate naturally; do not wrap schema.safeParse or the JSONC parse in try/catch.
+
+    '
+- id: avoid_any
+  severity: warn
+  source:
+    path: AGENTS.md
+    commit: f592c3846b285a53d9f657d1eb57f124d5b9b18b
+  rule: 'Avoid the `any` type. The new `jsonc` should return `unknown`, and `schema` should be parameterized by the zod schema''s inferred type.
+
+    '
+- id: rely_on_type_inference
+  severity: warn
+  source:
+    path: AGENTS.md
+    commit: f592c3846b285a53d9f657d1eb57f124d5b9b18b
+  rule: 'Rely on type inference where possible; avoid explicit type annotations or interfaces unless necessary for exports or clarity. Only the exported function signatures and the new `SubstituteInput` type need explicit annotations.
+
+    '
+- id: keep_self_export_pattern
+  severity: error
+  source:
+    path: AGENTS.md
+    commit: f592c3846b285a53d9f657d1eb57f124d5b9b18b
+  rule: 'In `src/config`, follow the existing self-export pattern at the top of the file (for example `export * as ConfigParse from "./parse"`). Do not remove the leading `export * as ConfigParse from "./parse"` or `export * as ConfigVariable from "./variable"` line.
+
+    '
+- id: prefer_dot_notation
+  severity: warn
+  source:
+    path: AGENTS.md
+    commit: f592c3846b285a53d9f657d1eb57f124d5b9b18b
+  rule: 'Avoid unnecessary destructuring. Use dot notation to preserve context. Do not destructure `input` into local consts when `input.text` / `input.missing` reads cleanly inline.
+
+    '
+- id: tests_no_mocks
+  severity: warn
+  source:
+    path: AGENTS.md
+    commit: f592c3846b285a53d9f657d1eb57f124d5b9b18b
+  rule: 'Avoid mocks as much as possible; test actual implementation. When updating in-repo tests for the new API, do not introduce mocks of ConfigParse or ConfigVariable.
+
+    '
+config_edits: []

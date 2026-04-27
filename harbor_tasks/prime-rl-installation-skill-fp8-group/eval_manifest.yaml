@@ -1,0 +1,217 @@
+version: '2.0'
+source:
+  repo: PrimeIntellect-ai/prime-rl
+  pr: 1884
+  base_commit: 7036a1511904cc908b64207ebbd8303053aacf18
+  merge_commit: 7d8da4cbcc8973c965eb72a424b6bdfc9a3edc72
+task:
+  kind: code_with_config
+checks:
+- id: test_skill_md_exists_with_frontmatter_name
+  type: fail_to_pass
+  origin: agent_config
+  description: 'New SKILL.md exists with `name: installation` frontmatter'
+  source:
+    path: skills/installation/SKILL.md
+    lines: 1-4
+    commit: 7d8da4cbcc8973c965eb72a424b6bdfc9a3edc72
+- id: test_skill_md_frontmatter_has_description
+  type: fail_to_pass
+  origin: agent_config
+  description: SKILL.md frontmatter has a non-empty description
+  source:
+    path: skills/installation/SKILL.md
+    lines: '3'
+    commit: 7d8da4cbcc8973c965eb72a424b6bdfc9a3edc72
+- id: test_skill_md_documents_uv_sync_basic
+  type: fail_to_pass
+  origin: agent_config
+  description: SKILL.md documents the bare `uv sync` command in a fenced bash block
+  source:
+    path: skills/installation/SKILL.md
+    lines: 10-12
+    commit: 7d8da4cbcc8973c965eb72a424b6bdfc9a3edc72
+- id: test_skill_md_documents_uv_sync_all_extras
+  type: fail_to_pass
+  origin: agent_config
+  description: SKILL.md documents `uv sync --all-extras`
+  source:
+    path: skills/installation/SKILL.md
+    lines: '21'
+    commit: 7d8da4cbcc8973c965eb72a424b6bdfc9a3edc72
+- id: test_skill_md_documents_fp8_inference_group
+  type: fail_to_pass
+  origin: agent_config
+  description: SKILL.md documents `uv sync --group fp8-inference`
+  source:
+    path: skills/installation/SKILL.md
+    lines: '31'
+    commit: 7d8da4cbcc8973c965eb72a424b6bdfc9a3edc72
+- id: test_skill_md_mentions_deep_gemm
+  type: fail_to_pass
+  origin: agent_config
+  description: SKILL.md mentions `deep-gemm` as the fp8-inference content
+  source:
+    path: skills/installation/SKILL.md
+    lines: '28'
+    commit: 7d8da4cbcc8973c965eb72a424b6bdfc9a3edc72
+- id: test_pyproject_has_fp8_inference_dependency_group
+  type: fail_to_pass
+  origin: pr_diff
+  description: pyproject.toml has an `fp8-inference` dependency group with deep-gemm
+- id: test_pyproject_fp8_group_uses_prebuilt_wheel_url
+  type: fail_to_pass
+  origin: pr_diff
+  description: fp8-inference dep references the exact prebuilt wheel URL
+- id: test_pyproject_still_parses_as_valid_toml
+  type: pass_to_pass
+  origin: repo_tests
+  description: pyproject.toml stays a valid TOML file
+- id: test_existing_skills_still_present
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing skills inference-server and toml-config remain
+config_edits:
+- path: skills/installation/SKILL.md
+  tier: 1
+  gold_added: '---
+
+    name: installation
+
+    description: How to install prime-rl and its optional dependencies. Use when setting up the project, installing extras like deep-gemm for FP8 models, or troubleshooting dependency issues.
+
+    ---
+
+
+    # Installation
+
+
+    ## Basic install
+
+
+    ```bash
+
+    uv sync
+
+    ```
+
+
+    This installs all core dependencies defined in `pyproject.toml`.
+
+
+    ## All extras at once
+
+
+    The recommended way to install for most users:
+
+
+    ```bash
+
+    uv sync --all-extras
+
+    ```
+
+
+    This installs all optional extras (flash-attn, flash-attn-cute, etc.) in one go.
+
+
+    ## FP8 inference with deep-gemm
+
+
+    For certain models like GLM-5-FP8, you need `deep-gemm`. Install it via the `fp8-inference` dependency group:
+
+
+    ```bash
+
+    uv sync --group fp8-inference
+
+    ```
+
+
+    This installs the pre-built `deep-gemm` wheel. No CUDA build step is needed.
+
+
+    ## Dev dependencies
+
+
+    ```bash
+
+    uv sync --group dev
+
+    ```
+
+
+    Installs pytest, ruff, pre-commit, and other development tools.
+
+
+    ## Key files
+
+
+    - `pyproject.toml` — all dependencies, extras, and dependency groups
+
+    - `uv.lock` — pinned lockfile (update with `uv sync --all-extras`)
+
+    '
+  gold_removed: ''
+- path: pyproject.toml
+  tier: 2
+  gold_added: "fp8-inference = [\n    \"deep-gemm @ https://github.com/hallerite/DeepGEMM/releases/download/v2.3.0/deep_gemm-2.3.0+35c4bc8-cp312-cp312-linux_x86_64.whl\",\n]\n"
+  gold_removed: ''
+rubric:
+- rule: When you make changes to the codebase, check if any skills need to be updated to stay accurate.
+  source:
+    path: AGENTS.md
+    lines: '48'
+    commit: 7036a1511904cc908b64207ebbd8303053aacf18
+  evidence: Gold patch creates a new SKILL.md documenting install commands, keeping skill docs in sync with the added fp8-inference dependency group.
+  category: architecture
+  verification: llm_judge
+- rule: All dependencies should already be installed and pin in the lock file. If not, add it to pyproject.toml and run `uv sync --all-extras` to install it.
+  source:
+    path: AGENTS.md
+    lines: '38'
+    commit: 7036a1511904cc908b64207ebbd8303053aacf18
+  evidence: Gold patch adds deep-gemm to pyproject.toml fp8-inference group and updates uv.lock with the pinned wheel.
+  category: architecture
+  verification: llm_judge
+- rule: Do not add unnecessary comments. Especially do not try to explain code change that reflect your work process, do not refer to old code.
+  source:
+    path: AGENTS.md
+    lines: '7'
+    commit: 7036a1511904cc908b64207ebbd8303053aacf18
+  evidence: New SKILL.md contains only clean instructional documentation without meta-commentary about the change being made.
+  category: style
+  verification: llm_judge
+- rule: '---
+
+    name: toml-config
+
+    description: How to write and use TOML configs in prime-rl. Use when creating config files, running commands with configs, or overriding config values via CLI.
+
+    ---
+
+    '
+  source:
+    path: skills/toml-config/SKILL.md
+    lines: 1-4
+    commit: 7036a1511904cc908b64207ebbd8303053aacf18
+  evidence: 'New SKILL.md follows the same YAML frontmatter structure (name, description), top-level heading, ## sections with fenced bash examples, and Key files section as existing skills.'
+  category: style
+  verification: llm_judge
+distractors:
+- rule: All dependencies should already be installed and pin in the lock file. If not, add it to pyproject.toml and run `uv sync --all-extras` to install it.
+  source:
+    path: AGENTS.md
+    lines: '38'
+    commit: 7036a1511904cc908b64207ebbd8303053aacf18
+  collision_type: rule_conflict
+  why_distracting: An agent might interpret this as only needing to update uv.lock (not pyproject.toml), missing that the dependency group must be declared in pyproject.toml first.
+  severity: medium
+- rule: When you make changes to the codebase, check if any skills need to be updated to stay accurate.
+  source:
+    path: AGENTS.md
+    lines: '48'
+    commit: 7036a1511904cc908b64207ebbd8303053aacf18
+  collision_type: scope_ambiguity
+  why_distracting: An agent might interpret this as updating an existing skill rather than creating a new skills/installation/SKILL.md from scratch.
+  severity: low

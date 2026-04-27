@@ -1,0 +1,172 @@
+version: '2.0'
+source:
+  repo: PostHog/posthog
+  pr: 56122
+  base_commit: 66dd528f2d3b4db785cd4f37e5a319713b8df56c
+  merge_commit: 74a5d94a49ec956a7b310945f24d6c1e83727908
+task:
+  kind: markdown_authoring
+checks:
+- id: test_pr_template_agent_context_heading_uncommented
+  type: fail_to_pass
+  origin: pr_diff
+  description: PR template must contain a real `## 🤖 Agent context` heading (not HTML-commented).
+- id: test_pr_template_drops_llm_context_phrase
+  type: fail_to_pass
+  origin: pr_diff
+  description: All `LLM context` references must be removed from the PR template.
+- id: test_pr_template_no_uncomment_instruction
+  type: fail_to_pass
+  origin: pr_diff
+  description: Stale `uncomment this section` guidance must be removed — the section is live by default now.
+- id: test_agents_md_references_agent_context_section
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md PR-description rule must reference `🤖 Agent context` (the new section name).
+- id: test_agents_md_drops_llm_context_section_reference
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md must no longer reference the old `## LLM context` section by name (incidental 'LLM context' mentions elsewhere are fine).
+- id: test_ai_policy_uses_agent_context_section
+  type: fail_to_pass
+  origin: pr_diff
+  description: AI_POLICY.md must describe the PR template as including an `Agent context section`.
+- id: test_ai_policy_drops_llm_disclosure_phrasing
+  type: fail_to_pass
+  origin: pr_diff
+  description: AI_POLICY.md disclosure paragraph must be reworded around 'agent', not 'LLM'.
+- id: test_pr_template_preserves_problem_section
+  type: pass_to_pass
+  origin: static
+  description: PR template still has its `## Problem` section.
+- id: test_pr_template_preserves_changes_section
+  type: pass_to_pass
+  origin: static
+  description: PR template still has its `## Changes` section.
+- id: test_agents_md_preserves_pr_descriptions_subsection
+  type: pass_to_pass
+  origin: static
+  description: AGENTS.md still has its `### PR descriptions` subsection.
+- id: test_ai_policy_preserves_disclose_ai_usage_section
+  type: pass_to_pass
+  origin: static
+  description: AI_POLICY.md still has its `**Disclose AI usage.**` paragraph.
+- id: test_files_track_in_git_repo
+  type: pass_to_pass
+  origin: static
+  description: All three target files are tracked in the cloned PostHog working tree.
+config_edits:
+- path: .github/pull_request_template.md
+  tier: 2
+  gold_added: "<!-- Describe steps to reproduce and verify the changes, and what the expected behavior is. -->\n\n<!-- Agents: do NOT claim manual testing you haven't done. State that you're an agent and list only the automated tests you actually ran. -->\n\n## \U0001F916 Agent context\n\n<!-- Fill this section if an agent co-authored or authored this PR. Remove it for fully human-authored PRs. -->\n\n<!-- Include: tools/agent used, link to session, key decisions made, and anything that helps reviewers. -->\n\n<!-- Rules for agent-authored PRs:\n     - All PRs must be attributable to a human author, even if agent-assisted.\n     - Do not add a human Co-authored-by just for the sake of attribution — if no human was involved in the changes, own it as agent-authored.\n     - Agent-authored PRs always require human review — do not self-merge or auto-approve.\n     - Do NOT claim manual testing you haven't done.\n-->\n"
+  gold_removed: '<!-- Briefly describe the steps you took, and what steps reviewers must take to get to where changes are, and what is the expected behavior. -->
+
+
+    <!-- If you are an agent writing this, do NOT include manual tasks you have NOT completed. You can clearly outline you''re simply an agent and you haven''t tested this manually except for code-based unit/integration tests -->
+
+
+    <!-- ## 🤖 LLM context -->
+
+
+    <!-- If an LLM agent co-authored or authored this PR, uncomment this section and leave any relevant context about the session, tools used, link to the session, or anything else that may help reviewers. -->
+
+    '
+- path: AGENTS.md
+  tier: 1
+  gold_added: Always fill the `## 🤖 Agent context` section when creating PRs.
+  gold_removed: Always uncomment and fill the `## LLM context` section for agent-authored PRs.
+- path: AI_POLICY.md
+  tier: 2
+  gold_added: 'Our [PR template](.github/pull_request_template.md) includes an Agent context section — please use it (most agents will pick it up automatically).
+
+    If an agent co-authored or authored your PR, say so and leave context about the tools and session.'
+  gold_removed: 'Our [PR template](.github/pull_request_template.md) includes an LLM context section — please use it (most agents will pick it up automatically).
+
+    If an LLM co-authored or authored your PR, say so and leave context about the tools and session.'
+rubric:
+- rule: 'Any commits/PR title written by the agent must follow PostHog''s conventional commits
+
+    style: `<type>(<scope>): <description>` where description is lowercase and does not
+
+    end with a period. For instruction edits, `chore(devex): ...` is the canonical type
+
+    since this is a non-production change to agent-facing docs.
+
+    '
+  source:
+    path: AGENTS.md
+    lines: 31-67
+    commit: 66dd528f2d3b4db785cd4f37e5a319713b8df56c
+  evidence: Gold solve.sh uses conventional commits with `chore(devex):` prefix and lowercase description.
+  category: naming
+  verification: llm_judge
+- rule: 'This repository is public and all commit messages, pull request titles, and pull request descriptions must be safe for public readers.
+
+
+    Never mention internal-only systems, private incidents, customer data, private Slack threads, unreleased roadmap details, or security-sensitive implementation details.
+
+    '
+  source:
+    path: AGENTS.md
+    lines: 69-76
+    commit: 66dd528f2d3b4db785cd4f37e5a319713b8df56c
+  evidence: All gold edits avoid internal-only systems, customer data, and unreleased roadmap details.
+  category: style
+  verification: llm_judge
+- rule: Use American English spelling
+  source:
+    path: AGENTS.md
+    lines: '124'
+    commit: 66dd528f2d3b4db785cd4f37e5a319713b8df56c
+  evidence: Gold prose uses American spelling (e.g. 'behavior' not 'behaviour').
+  category: style
+  verification: llm_judge
+- rule: 'Comments: explain _why_, not _what_ — if the reason isn''t important, skip the comment'
+  source:
+    path: AGENTS.md
+    lines: '116'
+    commit: 66dd528f2d3b4db785cd4f37e5a319713b8df56c
+  evidence: Template comments explain WHY sections exist and HOW to fill them, not just restate what they are.
+  category: style
+  verification: llm_judge
+- rule: '**Required:** Before creating any PR, read `.github/pull_request_template.md` and use its exact section structure.
+
+    Do not invent a different format.
+
+    '
+  source:
+    path: AGENTS.md
+    lines: 58-59
+    commit: 66dd528f2d3b4db785cd4f37e5a319713b8df56c
+  evidence: All original PR template sections (Problem, Changes, How did you test this code?, Publish to changelog?, Docs update) remain intact.
+  category: architecture
+  verification: programmatic
+distractors:
+- rule: Always uncomment and fill the `## LLM context` section for agent-authored PRs.
+  source:
+    path: AGENTS.md
+    lines: '60'
+    commit: 66dd528f2d3b4db785cd4f37e5a319713b8df56c
+  collision_type: rule_conflict
+  why_distracting: Base-commit AGENTS.md still instructs agents to fill the old `## LLM context` section — directly contradicts the rename task.
+  severity: high
+- rule: '**Required:** Before creating any PR, read `.github/pull_request_template.md` and use its exact section structure.
+
+    Do not invent a different format.
+
+    '
+  source:
+    path: AGENTS.md
+    lines: 58-59
+    commit: 66dd528f2d3b4db785cd4f37e5a319713b8df56c
+  collision_type: scope_ambiguity
+  why_distracting: May make agent afraid to uncomment or rename sections in the template, interpreting any change as 'inventing a different format'.
+  severity: medium
+- rule: See consolidated agents instructions in @AGENTS.md
+  source:
+    path: CLAUDE.md
+    lines: '3'
+    commit: 66dd528f2d3b4db785cd4f37e5a319713b8df56c
+  collision_type: meta_confusion
+  why_distracting: CLAUDE.md redirects to AGENTS.md without its own rules — agent may waste time hunting for per-file constraints in the wrong file.
+  severity: low

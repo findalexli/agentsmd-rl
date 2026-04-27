@@ -1,0 +1,230 @@
+version: '2.0'
+source:
+  repo: PostHog/posthog
+  pr: 55950
+  base_commit: f8208b0d7194bdfdccb95cc8d0060978734bb981
+  merge_commit: c7df642f2e8a56a478e2cd1528767fa3866ec6a8
+task:
+  name: posthog-suggesting-data-imports-skill
+  kind: markdown_authoring
+  difficulty: easy
+  tags:
+  - markdown
+  - agent-skill
+  - documentation
+  - posthog
+  - data-warehouse
+checks:
+- id: test_repo_checked_out
+  type: pass_to_pass
+  origin: repo_tests
+  description: Base commit is checked out at /workspace/posthog.
+- id: test_writing_skills_meta_skill_parses
+  type: pass_to_pass
+  origin: repo_tests
+  description: The meta-skill .agents/skills/writing-skills/SKILL.md exists and parses with valid frontmatter — sanity that we're using the same authoring rules the agent must follow.
+- id: test_existing_setup_skill_parses
+  type: pass_to_pass
+  origin: repo_tests
+  description: The sibling skill setting-up-a-data-warehouse-source already exists and parses — proves the layout / hand-off target the new skill links to is real.
+- id: test_skill_file_exists_at_conventional_path
+  type: fail_to_pass
+  origin: pr_diff
+  description: A new SKILL.md exists at the directory the PR creates, products/data_warehouse/skills/suggesting-data-imports/SKILL.md.
+- id: test_skill_frontmatter_has_required_fields
+  type: fail_to_pass
+  origin: agent_config
+  description: Frontmatter declares the required `name` and `description` fields.
+  source:
+    path: .agents/skills/writing-skills/SKILL.md
+    lines: '47'
+    commit: f8208b0d7194bdfdccb95cc8d0060978734bb981
+- id: test_skill_name_matches_directory_and_format
+  type: fail_to_pass
+  origin: agent_config
+  description: '`name` is lowercase kebab-case, matches the directory slug, and is not prefixed with `posthog-`.'
+  source:
+    path: .agents/skills/writing-skills/SKILL.md
+    lines: '44'
+    commit: f8208b0d7194bdfdccb95cc8d0060978734bb981
+- id: test_skill_description_length_and_specificity
+  type: fail_to_pass
+  origin: agent_config
+  description: Description is third-person, specific, includes trigger terms, and stays under the 1024-char limit.
+  source:
+    path: .agents/skills/writing-skills/SKILL.md
+    lines: '45'
+    commit: f8208b0d7194bdfdccb95cc8d0060978734bb981
+- id: test_skill_body_under_500_lines
+  type: fail_to_pass
+  origin: agent_config
+  description: SKILL.md (the entry point) stays under 500 lines.
+  source:
+    path: .agents/skills/writing-skills/SKILL.md
+    lines: '46'
+    commit: f8208b0d7194bdfdccb95cc8d0060978734bb981
+- id: test_skill_references_data_warehouse_mcp_tools
+  type: fail_to_pass
+  origin: pr_diff
+  description: Body references the `posthog:` prefixed MCP tools the workflow uses (external-data-sources-list, external-data-schemas-list, read-data-warehouse-schema).
+- id: test_skill_hands_off_to_setup_skill
+  type: fail_to_pass
+  origin: pr_diff
+  description: Body hands off to the existing `setting-up-a-data-warehouse-source` skill rather than duplicating its workflow.
+- id: test_skill_includes_source_type_lookup_table
+  type: fail_to_pass
+  origin: pr_diff
+  description: Body includes a markdown table mapping user need → source type → key tables, covering at least Stripe, Hubspot, Zendesk, Postgres.
+- id: test_skill_describes_when_to_use
+  type: fail_to_pass
+  origin: pr_diff
+  description: Body has a "When to use this skill" section so the agent can route to it.
+- id: test_skill_yaml_parses_clean
+  type: fail_to_pass
+  origin: pr_diff
+  description: Frontmatter parses as valid YAML (mapping with `name` and `description`) under a fresh subprocess invocation.
+config_edits:
+- path: products/data_warehouse/skills/suggesting-data-imports/SKILL.md
+  tier: 1
+  gold_added: '---
+
+    name: suggesting-data-imports
+
+    description: ''Use when the user asks about revenue, payments, subscriptions, billing, CRM deals, support tickets, production database tables, or other data that PostHog does not collect natively...''
+
+    ---
+
+
+    # Suggesting data imports
+
+
+    Body sections: What PostHog collects natively vs what must be imported,
+
+    When to use this skill (trigger signals: HogQL table-not-found errors,
+
+    user mentions Stripe/Hubspot/prod DB), Workflow in six steps (identify
+
+    missing data → check existing sources via posthog:external-data-sources-list
+
+    / posthog:external-data-schemas-list / posthog:read-data-warehouse-schema →
+
+    identify source type via posthog:external-data-sources-wizard → suggest the
+
+    import with example → hand off to setting-up-a-data-warehouse-source → show
+
+    join examples using posthog:execute-sql), Source type lookup table (Stripe,
+
+    Hubspot, Zendesk, Postgres, plus marketing/email/project-management/error-tracking
+
+    rows), Important notes (don''t guess table names, check prefixes, OAuth sources
+
+    need UI, unsupported systems → Postgres bridge), Related tools bullet list,
+
+    Related skills link to setting-up-a-data-warehouse-source.
+
+    '
+  gold_removed: ''
+rubric:
+- rule: 'Tone matches the writing-skills rule: describes the workflow and
+
+    reasoning, not a rigid step-by-step script. Trusts the agent to
+
+    adapt.'
+  source:
+    path: .agents/skills/writing-skills/SKILL.md
+    lines: '48'
+    commit: f8208b0d7194bdfdccb95cc8d0060978734bb981
+  evidence: Gold uses imperative/infinitive guidance (Check..., Call..., Present...) rather than numbered step-by-step commands.
+  category: style
+  verification: llm_judge
+- rule: 'Skill includes only context the consuming agent doesn''t already
+
+    have. No restating-the-obvious blocks, no pasted MCP tool schemas
+
+    that duplicate the server.'
+  source:
+    path: .agents/skills/writing-skills/SKILL.md
+    lines: '49'
+    commit: f8208b0d7194bdfdccb95cc8d0060978734bb981
+  evidence: Gold omits MCP tool JSON schemas, PostHog onboarding basics, and tool-usage fundamentals the agent already knows.
+  category: style
+  verification: llm_judge
+- rule: 'Per the meta-skill: "A skill is not about what tools exist (that''s
+
+    the MCP server) — it''s about how an experienced person would
+
+    approach a job using those tools." The new skill must read like
+
+    job-to-be-done guidance, not a tool catalogue.'
+  source:
+    path: .agents/skills/writing-skills/SKILL.md
+    lines: 33-39
+    commit: f8208b0d7194bdfdccb95cc8d0060978734bb981
+  evidence: Gold structures the body around 'When to use' and workflow reasoning with MCP tools as implementation detail, not a flat list of tool names.
+  category: architecture
+  verification: llm_judge
+- rule: 'The setup workflow (wizard → db-schema → create) already lives in
+
+    `setting-up-a-data-warehouse-source`. The new skill must hand off
+
+    there rather than restating those steps. Per the meta-skill''s
+
+    bad-example caveat, umbrella skills that swallow sibling skills
+
+    are anti-pattern.'
+  source:
+    path: .agents/skills/writing-skills/SKILL.md
+    lines: 87-91
+    commit: f8208b0d7194bdfdccb95cc8d0060978734bb981
+  evidence: Gold has a concise hand-off paragraph pointing to setting-up-a-data-warehouse-source without repeating its wizard/db-schema/create steps.
+  category: architecture
+  verification: semantic_diff
+- rule: 'Per root AGENTS.md "Markdown: prefer semantic line breaks; no hard
+
+    wrapping". Long paragraphs should not be hard-wrapped at a fixed
+
+    column.'
+  source:
+    path: AGENTS.md
+    lines: '123'
+    commit: f8208b0d7194bdfdccb95cc8d0060978734bb981
+  evidence: Gold keeps each sentence or clause on its own line with semantic breaks; no hard-wrapped paragraphs at a fixed column width.
+  category: style
+  verification: llm_judge
+- rule: 'Per root AGENTS.md: American English spelling, and PostHog product
+
+    names use Sentence casing (e.g. "Product analytics", not "Product
+
+    Analytics").'
+  source:
+    path: AGENTS.md
+    lines: 124-125
+    commit: f8208b0d7194bdfdccb95cc8d0060978734bb981
+  evidence: Gold uses "Product analytics" not "Product Analytics", American spellings throughout the body and frontmatter.
+  category: style
+  verification: llm_judge
+distractors:
+- rule: Write as if mypy `--strict` is enabled — annotate all function signatures (arguments + return types), avoid `Any`, use `TYPE_CHECKING` imports for type-only references.
+  source:
+    path: AGENTS.md
+    lines: '109'
+    commit: f8208b0d7194bdfdccb95cc8d0060978734bb981
+  collision_type: scope_ambiguity
+  why_distracting: Python type-annotation rule that could be misread as requiring type annotations or code blocks in a markdown-only file, wasting effort on irrelevant formatting.
+  severity: medium
+- rule: '`SKILL.md` entry point + `references/` for detailed content. Keep `SKILL.md` under 500 lines.'
+  source:
+    path: .agents/skills/writing-skills/SKILL.md
+    lines: '46'
+    commit: f8208b0d7194bdfdccb95cc8d0060978734bb981
+  collision_type: architecture_boundary
+  why_distracting: Suggests creating a references/ subdirectory with supplemental markdown files for detailed content, when the task expects a single self-contained SKILL.md without additional reference files.
+  severity: medium
+- rule: Before creating any PR, read `.github/pull_request_template.md` and use its exact section structure. Do not invent a different format.
+  source:
+    path: AGENTS.md
+    lines: '58'
+    commit: f8208b0d7194bdfdccb95cc8d0060978734bb981
+  collision_type: meta_confusion
+  why_distracting: Directs the agent to follow PR template rules for GitHub pull requests when the task is authoring a single SKILL.md file — may waste effort on PR formatting instead of content quality.
+  severity: low

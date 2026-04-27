@@ -1,0 +1,159 @@
+version: '2.0'
+source:
+  repo: apache/superset
+  pr: 38533
+  base_commit: 61fbfda501ef00d24e5dfeeabaf6b8220b73c4c7
+  merge_commit: 8e3e57c1c827331d2a048182eaca9ac8d4732998
+task:
+  kind: code_fix
+checks:
+- id: test_swizzle_file_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: Swizzle file exists at the path Docusaurus expects.
+- id: test_ssr_does_not_crash_without_redux_provider
+  type: fail_to_pass
+  origin: pr_diff
+  description: Component SSR-renders without a Redux Provider (the SSG bug fix).
+- id: test_path_variable_substitution_id
+  type: fail_to_pass
+  origin: pr_diff
+  description: Path variables in braces are converted to colon-prefixed form.
+- id: test_path_variable_substitution_multiple
+  type: fail_to_pass
+  origin: pr_diff
+  description: Multiple path variables are all substituted.
+- id: test_method_uppercased_in_badge_get
+  type: fail_to_pass
+  origin: pr_diff
+  description: GET method renders as uppercase GET in the badge text.
+- id: test_method_uppercased_post
+  type: fail_to_pass
+  origin: pr_diff
+  description: POST method renders as uppercase POST.
+- id: test_method_event_renders_as_webhook
+  type: fail_to_pass
+  origin: pr_diff
+  description: The event method renders as Webhook.
+- id: test_method_color_class_get_primary
+  type: fail_to_pass
+  origin: pr_diff
+  description: GET method gets badge--primary class.
+- id: test_method_color_class_post_success
+  type: fail_to_pass
+  origin: pr_diff
+  description: POST method gets badge--success class.
+- id: test_method_color_class_delete_danger
+  type: fail_to_pass
+  origin: pr_diff
+  description: DELETE method gets badge--danger class.
+- id: test_method_color_class_put_info
+  type: fail_to_pass
+  origin: pr_diff
+  description: PUT method gets badge--info class.
+- id: test_method_color_class_patch_warning
+  type: fail_to_pass
+  origin: pr_diff
+  description: PATCH method gets badge--warning class.
+- id: test_event_method_omits_path
+  type: fail_to_pass
+  origin: pr_diff
+  description: event method does not render the path heading.
+- id: test_endpoint_renders_path_heading
+  type: fail_to_pass
+  origin: pr_diff
+  description: Non-event methods render a path heading element.
+- id: test_pre_wrapper_class_present
+  type: fail_to_pass
+  origin: pr_diff
+  description: Output is wrapped in pre element with openapi__method-endpoint class.
+- id: test_divider_rendered
+  type: fail_to_pass
+  origin: pr_diff
+  description: A div with class openapi__divider is rendered.
+- id: test_redux_useselector_not_invoked_at_top_level
+  type: fail_to_pass
+  origin: pr_diff
+  description: useSelector is not called at the top level of MethodEndpoint during SSR.
+- id: test_callback_context_omits_server_url
+  type: fail_to_pass
+  origin: pr_diff
+  description: When context is callback, server URL is not rendered.
+- id: test_agent_config_asf_license_header
+  type: fail_to_pass
+  origin: agent_config
+  description: New code files include the ASF license header.
+  source:
+    path: CLAUDE.md
+    commit: 61fbfda501ef00d24e5dfeeabaf6b8220b73c4c7
+    lines: 92-94
+- id: test_agent_config_no_any_type
+  type: fail_to_pass
+  origin: agent_config
+  description: TypeScript code must not use any types.
+  source:
+    path: CLAUDE.md
+    commit: 61fbfda501ef00d24e5dfeeabaf6b8220b73c4c7
+    lines: '32'
+- id: test_p2p_docs_package_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: docs/package.json is valid JSON and declares the upstream theme dep.
+- id: test_p2p_existing_theme_file_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: An unrelated existing theme file compiles with esbuild (mirrors yarn typecheck).
+- id: test_p2p_node_runtime_works
+  type: pass_to_pass
+  origin: repo_tests
+  description: Node and react-dom/server are installed and importable.
+rubric:
+- rule: '- **NO JavaScript files** - Convert to TypeScript (.ts/.tsx)'
+  source:
+    path: CLAUDE.md
+    lines: '33'
+    commit: 61fbfda501ef00d24e5dfeeabaf6b8220b73c4c7
+  evidence: The swizzled file is created as index.tsx (TypeScript) rather than index.js (JavaScript).
+  category: style
+  verification: llm_judge
+- rule: '- **Functional components** with hooks'
+  source:
+    path: CLAUDE.md
+    lines: '80'
+    commit: 61fbfda501ef00d24e5dfeeabaf6b8220b73c4c7
+  evidence: MethodEndpoint is exported as a functional component that uses the useSelector hook (not a class component).
+  category: architecture
+  verification: llm_judge
+- rule: '- **Avoid time-specific language** - Don''t use words like "now", "currently", "today" in code comments as they become outdated'
+  source:
+    path: CLAUDE.md
+    lines: 96-97
+    commit: 61fbfda501ef00d24e5dfeeabaf6b8220b73c4c7
+  evidence: The swizzled file comment describes the bug and fix in timeless terms without words like now, currently, or today.
+  category: style
+  verification: llm_judge
+- rule: '- **Avoid custom css and styles** - Follow antd best practices and avoid styling and custom CSS whenever possible'
+  source:
+    path: CLAUDE.md
+    lines: '36'
+    commit: 61fbfda501ef00d24e5dfeeabaf6b8220b73c4c7
+  evidence: The gold component reuses the upstream CSS classes (openapi__method-endpoint, badge, openapi__method-endpoint-path, openapi__divider) without adding any custom styles or CSS.
+  category: style
+  verification: llm_judge
+distractors:
+- rule: '- **Avoid custom css and styles** - Follow antd best practices and avoid styling and custom CSS whenever possible'
+  source:
+    path: CLAUDE.md
+    lines: '36'
+    commit: 61fbfda501ef00d24e5dfeeabaf6b8220b73c4c7
+  collision_type: scope_ambiguity
+  why_distracting: The rule text ties avoid custom CSS to antd best practices, which may lead an agent to believe the constraint only applies to antd components and not to Docusaurus theme overrides in the docs/ subtree.
+  severity: medium
+- rule: '- **Use @superset-ui/core** - Don''t import Ant Design directly, prefer Ant Design component wrappers from @superset-ui/core/components'
+  source:
+    path: CLAUDE.md
+    lines: '33'
+    commit: 61fbfda501ef00d24e5dfeeabaf6b8220b73c4c7
+  collision_type: architecture_boundary
+  why_distracting: The rule mandates @superset-ui/core for UI components, but the Docusaurus docs/ subtree uses @docusaurus primitives instead; following this rule would add an unnecessary dependency to the swizzled component.
+  severity: low

@@ -1,0 +1,167 @@
+version: '2.0'
+source:
+  repo: apache/superset
+  pr: 39455
+  base_commit: 5cff6578121d1e813bb454b970fea05b720aeb6f
+  merge_commit: e5f9a6bf4bc342e6973f5ff41c6a1d6e8a4bbd5e
+task:
+  name: superset-chart-composition-class-to-fc
+  kind: code_fix
+  difficulty: medium
+  tags:
+  - frontend
+  - react
+  - typescript
+  - refactor
+  - superset
+checks:
+- id: test_component_default_export_is_memo_wrapped[ChartFrame]
+  type: fail_to_pass
+  origin: pr_diff
+  description: ChartFrame default export is React.memo()-wrapped
+- id: test_component_default_export_is_memo_wrapped[WithLegend]
+  type: fail_to_pass
+  origin: pr_diff
+  description: WithLegend default export is React.memo()-wrapped
+- id: test_component_default_export_is_memo_wrapped[TooltipFrame]
+  type: fail_to_pass
+  origin: pr_diff
+  description: TooltipFrame default export is React.memo()-wrapped
+- id: test_component_inner_is_function_not_class[ChartFrame]
+  type: fail_to_pass
+  origin: pr_diff
+  description: ChartFrame inner component is a function, not a class
+- id: test_component_inner_is_function_not_class[WithLegend]
+  type: fail_to_pass
+  origin: pr_diff
+  description: WithLegend inner component is a function, not a class
+- id: test_component_inner_is_function_not_class[TooltipFrame]
+  type: fail_to_pass
+  origin: pr_diff
+  description: TooltipFrame inner component is a function, not a class
+- id: test_component_source_no_purecomponent[ChartFrame]
+  type: fail_to_pass
+  origin: pr_diff
+  description: ChartFrame source no longer references PureComponent or class keyword
+- id: test_component_source_no_purecomponent[WithLegend]
+  type: fail_to_pass
+  origin: pr_diff
+  description: WithLegend source no longer references PureComponent or class keyword
+- id: test_component_source_no_purecomponent[TooltipFrame]
+  type: fail_to_pass
+  origin: pr_diff
+  description: TooltipFrame source no longer references PureComponent or class keyword
+- id: test_chartframe_renders_default_without_throwing
+  type: fail_to_pass
+  origin: pr_diff
+  description: ChartFrame renders with no renderContent prop
+- id: test_chartframe_renders_content_when_fits
+  type: pass_to_pass
+  origin: pr_diff
+  description: ChartFrame still renders content inline when content fits in frame
+- id: test_chartframe_overflow_wraps_in_scroll_div
+  type: pass_to_pass
+  origin: pr_diff
+  description: ChartFrame still wraps in overflow div when content exceeds frame width
+- id: test_tooltipframe_renders_children
+  type: pass_to_pass
+  origin: pr_diff
+  description: TooltipFrame still renders its children inside a div
+- id: test_tooltipframe_applies_classname
+  type: pass_to_pass
+  origin: pr_diff
+  description: TooltipFrame still applies className to outer div
+- id: test_withlegend_renders_smoke
+  type: pass_to_pass
+  origin: pr_diff
+  description: WithLegend still renders without throwing
+- id: test_withlegend_renders_legend_section
+  type: pass_to_pass
+  origin: pr_diff
+  description: WithLegend still renders legend container with correct direction
+- id: test_target_files_have_apache_license_header
+  type: pass_to_pass
+  origin: agent_config
+  description: ASF license headers preserved in target files
+  source:
+    path: AGENTS.md
+    lines: 90-92
+    commit: 5cff6578121d1e813bb454b970fea05b720aeb6f
+- id: test_target_files_no_any_type
+  type: pass_to_pass
+  origin: agent_config
+  description: No `any` type annotations introduced
+  source:
+    path: CLAUDE.md
+    lines: '31'
+    commit: 5cff6578121d1e813bb454b970fea05b720aeb6f
+- id: test_target_files_have_no_time_specific_comments
+  type: pass_to_pass
+  origin: agent_config
+  description: No time-specific words in code comments
+  source:
+    path: AGENTS.md
+    lines: 94-96
+    commit: 5cff6578121d1e813bb454b970fea05b720aeb6f
+- id: test_target_files_compile_without_typeerror
+  type: pass_to_pass
+  origin: repo_tests
+  description: Target files parse cleanly via TypeScript/TSX loader
+rubric:
+- rule: '**Functional components** with hooks'
+  source:
+    path: AGENTS.md
+    lines: '79'
+    commit: 5cff6578121d1e813bb454b970fea05b720aeb6f
+  evidence: Gold diff replaces class declarations with function components for all three target files
+  category: architecture
+  verification: llm_judge
+- rule: '**NO `any` types** - Use proper TypeScript types'
+  source:
+    path: CLAUDE.md
+    lines: '31'
+    commit: 5cff6578121d1e813bb454b970fea05b720aeb6f
+  evidence: Gold diff introduces no `any` type annotations in any of the three target files
+  category: style
+  verification: programmatic
+- rule: '**Avoid time-specific language** - Don''t use words like ''now'', ''currently'', ''today'' in code comments as they become outdated'
+  source:
+    path: AGENTS.md
+    lines: 94-96
+    commit: 5cff6578121d1e813bb454b970fea05b720aeb6f
+  evidence: Gold diff contains no new comments with time-specific words like 'now', 'currently', or 'today'
+  category: style
+  verification: programmatic
+- rule: '**New files require ASF license headers** - When creating new code files, include the standard Apache Software Foundation license header'
+  source:
+    path: AGENTS.md
+    lines: 90-92
+    commit: 5cff6578121d1e813bb454b970fea05b720aeb6f
+  evidence: Gold diff preserves the existing ASF license header in all three modified files
+  category: style
+  verification: programmatic
+distractors:
+- rule: '**Avoid custom css and styles** - Follow antd best practices and avoid styling and custom CSS whenever possible'
+  source:
+    path: AGENTS.md
+    lines: '35'
+    commit: 5cff6578121d1e813bb454b970fea05b720aeb6f
+  collision_type: scope_ambiguity
+  why_distracting: The target components use inline style objects; an agent might incorrectly try to remove or extract them during refactoring
+  severity: medium
+- rule: '**Functional components** with hooks'
+  source:
+    path: AGENTS.md
+    lines: '79'
+    commit: 5cff6578121d1e813bb454b970fea05b720aeb6f
+  collision_type: would_cause_bug
+  why_distracting: The phrase 'with hooks' may lead an agent to introduce unnecessary useState/useEffect when useMemo is the correct pattern for PureComponent conversion
+  severity: medium
+- rule: '**Prefer UUIDs over auto-incrementing IDs** - New models should use UUID primary keys'
+  source:
+    path: AGENTS.md
+    lines: '51'
+    commit: 5cff6578121d1e813bb454b970fea05b720aeb6f
+  collision_type: meta_confusion
+  why_distracting: An unrelated backend UUID migration rule that could distract an agent from the frontend TypeScript refactoring task
+  severity: low

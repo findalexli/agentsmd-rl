@@ -1,0 +1,131 @@
+version: '2.0'
+source:
+  repo: PrimeIntellect-ai/prime-rl
+  pr: 1903
+  base_commit: f655f71c33e75dc9d78adefc13f0809d2002485c
+  merge_commit: 1ea7a8d3b545342ef234aa559ebef8e2771e8fed
+task:
+  kind: code_fix
+checks:
+- id: test_exact_hit_returns_interval_step
+  type: fail_to_pass
+  origin: pr_diff
+  description: ckpt_step==25, prev=24, interval=25 -> returns 25 (exact hit).
+- id: test_jump_over_interval_returns_skipped_interval_step
+  type: fail_to_pass
+  origin: pr_diff
+  description: ckpt_step jumps 24->26 with interval=25 must return 25 (the production bug).
+- id: test_no_interval_crossed_returns_none
+  type: fail_to_pass
+  origin: pr_diff
+  description: ckpt_step=23, prev=22, interval=25 -> None (no boundary crossed).
+- id: test_base_model_eval_at_step_0_when_enabled
+  type: fail_to_pass
+  origin: pr_diff
+  description: At ckpt_step=0 with eval_base_model=True -> returns 0.
+- id: test_base_model_eval_at_step_0_when_disabled
+  type: fail_to_pass
+  origin: pr_diff
+  description: At ckpt_step=0 with eval_base_model=False -> None.
+- id: test_no_double_eval_at_same_interval
+  type: fail_to_pass
+  origin: pr_diff
+  description: last_eval_step==25 already -> must not re-trigger at 25.
+- id: test_no_change_in_ckpt_step_returns_none
+  type: fail_to_pass
+  origin: pr_diff
+  description: ckpt_step==prev_ckpt_step -> None (no forward progress).
+- id: test_multiple_intervals_crossed_returns_highest
+  type: fail_to_pass
+  origin: pr_diff
+  description: 24->76 with interval=25 -> 75 (highest interval-aligned step in range).
+- id: test_second_interval_exact_hit
+  type: fail_to_pass
+  origin: pr_diff
+  description: 49->50 with last_eval_step=25 -> 50.
+- id: test_jump_across_second_interval
+  type: fail_to_pass
+  origin: pr_diff
+  description: 48->51 with last_eval_step=25 -> 50.
+- id: test_full_run_simulation_fires_at_every_interval
+  type: fail_to_pass
+  origin: pr_diff
+  description: Trajectory simulation must fire evals at exactly [0, 25, 50, 75].
+- id: test_interval_one_fires_every_step
+  type: fail_to_pass
+  origin: pr_diff
+  description: interval=1 -> fires at every advance of ckpt_step.
+- id: test_large_interval_no_fire_below_threshold
+  type: fail_to_pass
+  origin: pr_diff
+  description: interval=100 -> no fire under 100, exactly at 100.
+- id: test_returns_int_or_none_only
+  type: fail_to_pass
+  origin: pr_diff
+  description: Return type contract is int|None (not bool/float/str).
+- id: test_eval_utils_file_compiles_with_python
+  type: pass_to_pass
+  origin: repo_tests
+  description: src/prime_rl/orchestrator/eval_utils.py parses cleanly with the standard ast module at every state.
+- id: test_orchestrator_file_compiles_with_python
+  type: pass_to_pass
+  origin: repo_tests
+  description: src/prime_rl/orchestrator/orchestrator.py parses cleanly with the standard ast module at every state.
+rubric:
+- rule: Avoid try/except blocks unless it's really necessary.  It's fine that a program fails if something goes wrong as this helps us to catch non-obvious bugs and unforeseen side-effects earlier. You can add try catch on code that explicitly aims to be fault tolerant like adding retry mechanisms or explicit and intentional robustness.
+  source:
+    path: AGENTS.md
+    lines: '5'
+    commit: f655f71c33e75dc9d78adefc13f0809d2002485c
+  evidence: The gold patch implements compute_eval_ckpt_step with straight-line arithmetic and no try/except blocks.
+  category: style
+  verification: semantic_diff
+- rule: Do not add unnecessary comments. Especially do not try to explain code change that reflect your work process, do not refer to old code. "The code used to do that but now we are doing this" is not a pattern we want. Instead prefer to use targeted comments sparingly to explain ambiguous code.
+  source:
+    path: AGENTS.md
+    lines: '7'
+    commit: f655f71c33e75dc9d78adefc13f0809d2002485c
+  evidence: The gold patch contains only a targeted docstring and one short comment; no change-narration or old-code references.
+  category: style
+  verification: semantic_diff
+- rule: Write tests as plain functions with pytest fixtures. Don't use class-based tests.
+  source:
+    path: AGENTS.md
+    lines: '54'
+    commit: f655f71c33e75dc9d78adefc13f0809d2002485c
+  evidence: The test file test_outputs.py uses plain pytest functions, not unittest.TestCase or pytest class-based tests.
+  category: testing
+  verification: programmatic
+- rule: Explicit is better than implicit. Simple is better than complex. Readability counts.
+  source:
+    path: AGENTS.md
+    lines: 12-31
+    commit: f655f71c33e75dc9d78adefc13f0809d2002485c
+  evidence: The gold implementation of compute_eval_ckpt_step uses clear branching logic (if/elif) rather than a compact one-line expression that hides intent.
+  category: architecture
+  verification: llm_judge
+distractors:
+- rule: You can add try catch on code that explicitly aims to be fault tolerant like adding retry mechanisms or explicit and intentional robustness.
+  source:
+    path: AGENTS.md
+    lines: '5'
+    commit: f655f71c33e75dc9d78adefc13f0809d2002485c
+  collision_type: rule_conflict
+  why_distracting: The fault-tolerance exception could lead an agent to wrap the eval scheduling logic in try/except for defensive robustness, when the correct fix is pure integer arithmetic with no failure modes requiring handling.
+  severity: medium
+- rule: Do not add unnecessary comments.
+  source:
+    path: AGENTS.md
+    lines: '7'
+    commit: f655f71c33e75dc9d78adefc13f0809d2002485c
+  collision_type: scope_ambiguity
+  why_distracting: An agent may omit the docstring on compute_eval_ckpt_step as unnecessary, but the docstring is needed to document the non-obvious jump-handling contract of the function.
+  severity: low
+- rule: Flat is better than nested.
+  source:
+    path: AGENTS.md
+    lines: '18'
+    commit: f655f71c33e75dc9d78adefc13f0809d2002485c
+  collision_type: architecture_boundary
+  why_distracting: An agent may try to flatten the eval logic with early returns or guard clauses instead of the nested if structure, risking incorrect semantics in the base-model eval special case.
+  severity: medium

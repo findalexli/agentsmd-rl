@@ -1,0 +1,133 @@
+version: "2.0"
+
+task:
+  name: effect-schema-getpropertysignatures-transformation
+  kind: code_fix
+  source:
+    repo: Effect-TS/effect
+    pr_number: 6086
+    base_commit: ab3b64c20a039eb4d573fe757c41278925b22687
+    merge_commit: 4d97a61a15b9dd6a0eece65b8f0c035e16d42ada
+    title: "Schema: fix getPropertySignatures crash on Struct with optionalWith({ default })"
+    url: https://github.com/Effect-TS/effect/pull/6086
+
+checks:
+  - id: test_probe_test_file_present
+    type: pass_to_pass
+    origin: scaffold
+    description: "Ensures the probe behavior test was copied into the repo by test.sh."
+
+  - id: test_behavior_optionalwith_default
+    type: fail_to_pass
+    origin: behavior
+    description: |
+      `AST.getPropertySignatures` must not throw "Unsupported schema (Transformation)"
+      when called on a `Schema.Struct` containing `Schema.optionalWith(..., { default: ... })`.
+      It must return one property signature per declared key.
+
+  - id: test_behavior_optionalwith_as_option
+    type: fail_to_pass
+    origin: behavior
+    description: |
+      Same as above but for `Schema.optionalWith(..., { as: "Option" })`.
+
+  - id: test_behavior_optionalwith_nullable
+    type: fail_to_pass
+    origin: behavior
+    description: |
+      Same as above but for `Schema.optionalWith(..., { nullable: true, default: ... })`.
+
+  - id: test_behavior_single_key_struct
+    type: fail_to_pass
+    origin: behavior
+    description: |
+      Single-key Struct whose only field is a Transformation must also be handled.
+
+  - id: test_behavior_no_regression_plain_struct
+    type: pass_to_pass
+    origin: behavior
+    description: |
+      Plain (non-Transformation) Struct still resolves through getPropertySignatures.
+
+  - id: test_existing_getpropertysignatures_suite_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: |
+      The pre-existing `packages/effect/test/Schema/SchemaAST/getPropertySignatures.test.ts`
+      suite must continue to pass.
+
+  - id: test_typecheck_passes
+    type: pass_to_pass
+    origin: repo_tests
+    description: |
+      `pnpm check` (i.e. `tsc -b tsconfig.json`) within `packages/effect` must succeed.
+      AGENTS.md mandates type checking; this is the repo's own gate.
+
+  - id: test_changeset_present
+    type: agent_config
+    origin: agent_config
+    description: |
+      AGENTS.md requires every PR to ship a changeset in `.changeset/` describing the change.
+    source:
+      file: AGENTS.md
+      commit: ab3b64c20a039eb4d573fe757c41278925b22687
+      lines: "44-45"
+
+rubric:
+  - id: rubric_pnpm_lint_clean
+    description: |
+      AGENTS.md says: "Run `pnpm lint-fix` after editing files." The agent's
+      changes should leave the repo in a lint-clean state — no new ESLint
+      errors or warnings on the files it touched.
+    source:
+      file: AGENTS.md
+      commit: ab3b64c20a039eb4d573fe757c41278925b22687
+      lines: "17"
+
+  - id: rubric_minimal_comments
+    description: |
+      AGENTS.md says: "Avoid comments unless absolutely required to explain
+      unusual or complex logic." The fix to `SchemaAST.ts` should not add
+      explanatory comments to the new `case "Transformation"` arm — the
+      existing arms (`Suspend`, `Refinement`) carry no comments, and the
+      new one mirrors them.
+    source:
+      file: AGENTS.md
+      commit: ab3b64c20a039eb4d573fe757c41278925b22687
+      lines: "11-12"
+
+  - id: rubric_follows_existing_patterns
+    description: |
+      AGENTS.md says: "Always look at existing code in the repository to
+      learn and follow established patterns before writing new code." The
+      fix should match the structural shape of neighboring `case "Suspend"`
+      and `case "Refinement"` arms (single-line `return` delegation), not
+      introduce a new helper or unrelated refactor.
+    source:
+      file: AGENTS.md
+      commit: ab3b64c20a039eb4d573fe757c41278925b22687
+      lines: "27-28"
+
+  - id: rubric_no_unrelated_changes
+    description: |
+      The PR is a one-arm bug fix to `getPropertyKeyIndexedAccess` plus a
+      changeset and tests. The agent's diff should not include unrelated
+      refactors, formatting churn, or modifications to other files in
+      `packages/effect/src/`. Scope discipline is implied by AGENTS.md's
+      "Conciseness" and "Clarity over Cleverness" principles.
+    source:
+      file: AGENTS.md
+      commit: ab3b64c20a039eb4d573fe757c41278925b22687
+      lines: "9-11"
+
+  - id: rubric_test_uses_repo_pattern
+    description: |
+      AGENTS.md says: "Before writing tests, look at existing tests in the
+      codebase for similar functionality to follow established patterns."
+      If the agent adds tests, they should live alongside the existing
+      `getPropertySignatures.test.ts` file (or a sibling) and use the same
+      `describe`/`it` + `deepStrictEqual` style — not `expect`/`toBe`.
+    source:
+      file: AGENTS.md
+      commit: ab3b64c20a039eb4d573fe757c41278925b22687
+      lines: "55-65"

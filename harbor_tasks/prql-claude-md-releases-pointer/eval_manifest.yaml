@@ -1,0 +1,77 @@
+version: '2.0'
+source:
+  repo: PRQL/prql
+  pr: 5553
+  base_commit: 72f7a13d7125156b40f662bdf2f046baea23d9a8
+  merge_commit: 989d570183744c3d26fa4df0f340aa610f5b27a8
+task:
+  kind: markdown_authoring
+checks:
+- id: test_releases_environment_section_added
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLAUDE.md must contain a new top-level section header named '## Releases & Environment'.
+- id: test_section_points_to_development_md
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLAUDE.md must reference the path 'web/book/src/project/contributing/development.md' so that future agents know where to look for release / environment details.
+- id: test_section_describes_releases_or_environment_topic
+  type: fail_to_pass
+  origin: pr_diff
+  description: The body of the new section must describe the topic — either using the explicit phrase 'releases or environment' or by mentioning both 'release' and 'environment' as topic words. Guards against an empty or stub section header.
+- id: test_referenced_file_actually_exists_in_repo
+  type: fail_to_pass
+  origin: pr_diff
+  description: The path the new section points to must really exist in the repo.
+- id: test_claude_md_top_heading_preserved
+  type: pass_to_pass
+  origin: repo_tests
+  description: CLAUDE.md still begins with the '# Claude' top-level heading.
+- id: test_existing_sections_preserved
+  type: pass_to_pass
+  origin: repo_tests
+  description: All pre-existing second-level sections (Development Workflow, Tests, Running the CLI, Linting, Documentation) remain in CLAUDE.md.
+- id: test_claude_md_still_tracked_by_git
+  type: pass_to_pass
+  origin: repo_tests
+  description: CLAUDE.md remains a tracked file in the repo's git index.
+config_edits:
+- path: CLAUDE.md
+  tier: 1
+  gold_added: '## Releases & Environment
+
+
+    For releases or environment issues, see
+
+    `web/book/src/project/contributing/development.md`.
+
+    '
+  gold_removed: ''
+rubric:
+- rule: 'Prefer inline snapshots for almost all tests:'
+  source:
+    path: CLAUDE.md
+    lines: '36'
+    commit: 72f7a13d7125156b40f662bdf2f046baea23d9a8
+  evidence: The gold patch only appends a new section at the end of CLAUDE.md without modifying any test code or inline snapshot patterns.
+  category: testing
+  verification: llm_judge
+- rule: 'Use a tight inner loop for fast feedback, comprehensive outer loop before
+
+    returning to user:'
+  source:
+    path: CLAUDE.md
+    lines: 5-6
+    commit: 72f7a13d7125156b40f662bdf2f046baea23d9a8
+  evidence: The gold patch appends a new section at the end of the file, leaving the inner/outer loop commands and workflow documentation untouched.
+  category: architecture
+  verification: llm_judge
+- rule: '## Development Workflow'
+  source:
+    path: CLAUDE.md
+    lines: '3'
+    commit: 72f7a13d7125156b40f662bdf2f046baea23d9a8
+  evidence: The gold patch adds '## Releases & Environment' which follows the identical '## Title' section header convention.
+  category: style
+  verification: semantic_diff
+distractors: []

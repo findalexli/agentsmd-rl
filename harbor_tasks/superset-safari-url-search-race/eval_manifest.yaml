@@ -1,0 +1,88 @@
+version: '2.0'
+source:
+  repo: apache/superset
+  pr: 38851
+  base_commit: 8559786cc2994d731300e5e53c58e2246adfac72
+  merge_commit: 1e2d0faa55dfca1b4e81bded56fadcf2a937471a
+task:
+  kind: code_fix
+checks:
+- id: test_injected_race_condition_jest_suite
+  type: fail_to_pass
+  origin: pr_diff
+  description: A jest suite injected by the harness exercises the new override-search contract on getUrlParam (Safari race condition). Fails at base because the second argument is silently ignored.
+- id: test_get_url_param_signature_accepts_search
+  type: fail_to_pass
+  origin: pr_diff
+  description: The implementation signature of getUrlParam must accept a second string parameter and consume it via URLSearchParams.
+- id: test_chart_index_threads_search_into_dashboard_context_form_data
+  type: fail_to_pass
+  origin: pr_diff
+  description: ExplorePage's getDashboardContextFormData helper must accept and propagate a search string parameter, and its caller must pass an argument derived from React Router's location.
+- id: test_existing_url_utils_tests_still_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Pre-existing urlUtils.test.ts continues to pass.
+- id: test_repo_lint_urlutils_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: oxlint passes on the touched files.
+config_edits: []
+rubric:
+- rule: '**NO `any` types** - Use proper TypeScript types'
+  source:
+    path: AGENTS.md
+    lines: '31'
+    commit: 8559786cc2994d731300e5e53c58e2246adfac72
+  evidence: Gold patch uses `string` and `unknown` types; no `any` is introduced in new signatures.
+  category: types
+  verification: llm_judge
+- rule: '**NO JavaScript files** - Convert to TypeScript (.ts/.tsx)'
+  source:
+    path: AGENTS.md
+    lines: '32'
+    commit: 8559786cc2994d731300e5e53c58e2246adfac72
+  evidence: Gold patch edits existing .ts/.tsx files only; no new .js or .jsx files created.
+  category: file_organization
+  verification: llm_judge
+- rule: '**Use `test()` instead of `describe()`** - Follow [avoid nesting when testing](https://kentcdodds.com/blog/avoid-nesting-when-youre-testing) principles'
+  source:
+    path: AGENTS.md
+    lines: '43'
+    commit: 8559786cc2994d731300e5e53c58e2246adfac72
+  evidence: Gold patch does not add new test files; existing test conventions are preserved.
+  category: testing
+  verification: llm_judge
+- rule: '**NO Enzyme** - Use React Testing Library/Jest (Enzyme fully removed)'
+  source:
+    path: .cursor/rules/dev-standard.mdc
+    lines: '18'
+    commit: 8559786cc2994d731300e5e53c58e2246adfac72
+  evidence: Gold patch makes pure logic changes and does not reintroduce Enzyme imports.
+  category: testing
+  verification: llm_judge
+- rule: '**Avoid time-specific language** - Don''t use words like "now", "currently", "today" in code comments as they become outdated'
+  source:
+    path: AGENTS.md
+    lines: '95'
+    commit: 8559786cc2994d731300e5e53c58e2246adfac72
+  evidence: Gold patch contains no new comments with time-specific language.
+  category: style
+  verification: llm_judge
+- rule: '**New files require ASF license headers** - When creating new code files, include the standard Apache Software Foundation license header'
+  source:
+    path: AGENTS.md
+    lines: '91'
+    commit: 8559786cc2994d731300e5e53c58e2246adfac72
+  evidence: Gold patch does not create any new files, so license headers are not needed.
+  category: licensing
+  verification: llm_judge
+- rule: '**Use @superset-ui/core** - Don''t import Ant Design directly, prefer Ant Design component wrappers from @superset-ui/core/components'
+  source:
+    path: AGENTS.md
+    lines: '33'
+    commit: 8559786cc2994d731300e5e53c58e2246adfac72
+  evidence: Gold patch only modifies url-utility and chart-page logic; no new UI component imports added.
+  category: architecture
+  verification: llm_judge
+distractors: []

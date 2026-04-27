@@ -1,0 +1,127 @@
+version: '2.0'
+source:
+  repo: apache/superset
+  pr: 38612
+  base_commit: 95f61bd223ee7f72893197c77ec73a06d225443b
+  merge_commit: d4f1f8db00151209524898976450b77877e3f4f6
+task:
+  kind: code_fix
+checks:
+- id: test_chart_serializer_extracts_role_names_from_role_objects
+  type: fail_to_pass
+  origin: pr_diff
+  description: The chart response serializer must convert SQLAlchemy-style Role objects in chart.owners[*].roles into string role names before producing UserInfo. On the base commit, this raises a Pydantic ValidationError.
+- id: test_dashboard_serializer_extracts_role_names_from_role_objects
+  type: fail_to_pass
+  origin: pr_diff
+  description: Same role-extraction requirement for dashboards.
+- id: test_dataset_serializer_extracts_role_names_from_role_objects
+  type: fail_to_pass
+  origin: pr_diff
+  description: Same role-extraction requirement for datasets.
+- id: test_chart_serializer_with_single_role
+  type: fail_to_pass
+  origin: pr_diff
+  description: Single-role variant of the role-extraction behavior.
+- id: test_chart_serializer_handles_none_roles
+  type: fail_to_pass
+  origin: pr_diff
+  description: Owner with roles=None must yield UserInfo.roles=[] without raising. Pydantic's List[str] would otherwise reject None.
+- id: test_dashboard_serializer_handles_none_roles
+  type: fail_to_pass
+  origin: pr_diff
+  description: Same None-handling for dashboards.
+- id: test_dataset_serializer_handles_non_iterable_roles
+  type: fail_to_pass
+  origin: pr_diff
+  description: Owner with a non-iterable roles value (e.g., an int) must yield UserInfo.roles=[] without raising.
+- id: test_chart_serializer_multiple_owners_preserves_per_user_roles
+  type: fail_to_pass
+  origin: pr_diff
+  description: Per-owner role extraction must be independent across owners.
+- id: test_chart_owners_serialize_basic_user_fields_alongside_roles
+  type: fail_to_pass
+  origin: pr_diff
+  description: The role fix must not regress the other UserInfo fields (id, username, first_name, last_name, email, active).
+- id: test_userinfo_default_roles_is_empty_list
+  type: pass_to_pass
+  origin: pr_diff
+  description: UserInfo() must default roles to an empty list.
+- id: test_userinfo_accepts_list_of_string_roles
+  type: pass_to_pass
+  origin: pr_diff
+  description: UserInfo(roles=[...]) accepts a list of strings unchanged.
+- id: test_userinfo_schema_has_roles_field_typed_as_list_of_strings
+  type: pass_to_pass
+  origin: pr_diff
+  description: 'UserInfo''s JSON Schema declares roles as an array of strings (added in PR #38407, present on both base and gold).'
+- id: test_modified_schema_files_compile_cleanly
+  type: pass_to_pass
+  origin: repo_tests
+  description: All four touched schema files (system, chart, dashboard, dataset) must compile under py_compile — guards against syntax breakage in agent edits.
+rubric:
+- rule: 'EVERY Python file in the MCP service MUST have the Apache Software Foundation license header. This includes: All .py files (tool files, schemas, __init__.py files, etc.). NEVER remove existing license headers during refactoring or edits. ALWAYS add license headers when creating new files. ALWAYS verify license headers are present after editing files. If you see a file without a license header, ADD IT IMMEDIATELY. If you accidentally remove one during editing, ADD IT BACK.'
+  source:
+    path: superset/mcp_service/CLAUDE.md
+    lines: 5-15
+    commit: 95f61bd223ee7f72893197c77ec73a06d225443b
+  evidence: The gold patch preserves existing Apache license headers in all four modified files and adds no new files requiring headers.
+  category: style
+  verification: llm_judge
+- rule: Always use modern Python 3.10+ union syntax for type hints. Use T | None instead of Optional[T]. Do NOT import Optional, List, Dict from typing, prefer | None, list[] etc. All new code must follow this pattern.
+  source:
+    path: superset/mcp_service/CLAUDE.md
+    lines: 258-296
+    commit: 95f61bd223ee7f72893197c77ec73a06d225443b
+  evidence: The new serialize_user_object function uses T | None return type and list[str] for local variables, consistent with Python 3.10+ style.
+  category: style
+  verification: llm_judge
+- rule: All new Python code needs proper typing.
+  source:
+    path: AGENTS.md
+    lines: '46'
+    commit: 95f61bd223ee7f72893197c77ec73a06d225443b
+  evidence: 'The new serialize_user_object function has a complete type annotation: (user: Any) -> UserInfo | None.'
+  category: style
+  verification: llm_judge
+- rule: Avoid time-specific language. Don't use words like "now", "currently", "today" in code comments as they become outdated.
+  source:
+    path: AGENTS.md
+    lines: '95'
+    commit: 95f61bd223ee7f72893197c77ec73a06d225443b
+  evidence: The new docstring 'Serialize a user ORM object to UserInfo, extracting role names as strings.' uses no time-specific words.
+  category: style
+  verification: llm_judge
+- rule: 'The fix applies in all three owner-serialization sites: the Chart response builder (superset/mcp_service/chart/schemas.py), the Dashboard response builder (superset/mcp_service/dashboard/schemas.py), and the Dataset response builder (superset/mcp_service/dataset/schemas.py).'
+  source:
+    path: instruction.md
+    lines: ''
+    commit: 95f61bd223ee7f72893197c77ec73a06d225443b
+  evidence: 'The gold patch touches all three serializers: chart/schemas.py, dashboard/schemas.py, and dataset/schemas.py, each importing serialize_user_object from system/schemas.py.'
+  category: architecture
+  verification: llm_judge
+distractors:
+- rule: The dashboard/schemas.py already defines a local serialize_user_object helper that constructs UserInfo but does not include roles.
+  source:
+    path: superset/mcp_service/dashboard/schemas.py
+    lines: ''
+    commit: 95f61bd223ee7f72893197c77ec73a06d225443b
+  collision_type: scope_ambiguity
+  why_distracting: An agent finding the existing serialize_user_object in dashboard/schemas.py may patch it locally to add role handling instead of moving it to system/schemas.py as the shared helper used by all three serializers.
+  severity: high
+- rule: Do NOT import Optional, List, Dict from typing, prefer | None, list[] etc.
+  source:
+    path: superset/mcp_service/CLAUDE.md
+    lines: 294-296
+    commit: 95f61bd223ee7f72893197c77ec73a06d225443b
+  collision_type: rule_conflict
+  why_distracting: The existing files already import List and Dict from typing. An agent following this rule may remove pre-existing imports, risking accidental breakage or unnecessary diff noise.
+  severity: medium
+- rule: All new Python code needs proper typing.
+  source:
+    path: AGENTS.md
+    lines: '46'
+    commit: 95f61bd223ee7f72893197c77ec73a06d225443b
+  collision_type: meta_confusion
+  why_distracting: This rule is broad and could distract an agent into adding type annotations throughout unrelated parts of the file rather than focusing on the role-serialization fix.
+  severity: low

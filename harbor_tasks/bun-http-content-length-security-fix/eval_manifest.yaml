@@ -1,0 +1,154 @@
+version: '2.0'
+source:
+  repo: oven-sh/bun
+  pr: 28838
+  base_commit: 5b3ca83b84f90ccc9c71005db0ab9bd87850bc70
+  merge_commit: 196ed8a1bd4d5c9915e71816ce64a6a281eee23e
+task:
+  kind: code_with_config
+checks:
+- id: test_pr_comments_script_is_executable
+  type: fail_to_pass
+  origin: pr_diff
+  description: pr-comments.ts must be valid TypeScript that bun can parse and build
+- id: test_pr_comments_script_has_bun_import
+  type: fail_to_pass
+  origin: pr_diff
+  description: pr-comments.ts must import from 'bun' for shell execution and gh API calls
+- id: test_httpparser_iterates_all_content_length_headers
+  type: fail_to_pass
+  origin: pr_diff
+  description: HttpParser.h must iterate over ALL headers to detect duplicate Content-Length values
+- id: test_httpparser_rejects_conflicting_content_length
+  type: fail_to_pass
+  origin: pr_diff
+  description: HttpParser.h must reject conflicting duplicate Content-Length headers with HTTP 400
+- id: test_request_smuggling_test_cases_are_present
+  type: fail_to_pass
+  origin: pr_diff
+  description: request-smuggling.test.ts must have the three required smuggling test cases
+- id: test_request_smuggling_test_file_is_valid_typescript
+  type: fail_to_pass
+  origin: pr_diff
+  description: request-smuggling.test.ts must be valid TypeScript that bun can parse
+- id: test_claude_md_documents_pr_comments
+  type: fail_to_pass
+  origin: agent_config
+  description: CLAUDE.md must document the pr:comments script with usage examples and footgun warning
+  source:
+    path: CLAUDE.md
+    lines: ''
+    commit: 5b3ca83b84f90ccc9c71005db0ab9bd87850bc70
+- id: test_package_json_has_pr_comments_script
+  type: fail_to_pass
+  origin: pr_diff
+  description: package.json must have the pr:comments script entry pointing to scripts/pr-comments.ts
+- id: test_http_parser_syntax_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: HttpParser.h must remain syntactically valid C++ with balanced braces
+- id: test_claude_md_syntax_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: CLAUDE.md must remain valid markdown with balanced code fences
+- id: test_package_json_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: package.json must remain valid JSON with scripts section
+config_edits:
+- path: CLAUDE.md
+  tier: 2
+  gold_added: '## Reading PR Feedback
+
+
+    `gh pr view --comments` is fine for a quick look at the Conversation tab, but it has a footgun worth knowing about: it only returns issue-stream comments and silently omits review summaries and line-level review comments. If a reviewer leaves an inline comment on a specific file line, it will not show up — no error, no hint that anything is missing.
+
+
+    When you want the complete picture — especially when responding to a review or checking whether anyone requested changes — use `bun run pr:comments`. It fetches all three GitHub endpoints (`/issues/N/comments`, `/pulls/N/reviews`, `/pulls/N/comments`) and prints them in one chronological listing, each labelled with its actual type (issue comment, review verdict, line comment, reply, suggestion block).
+
+
+    ```bash
+
+    bun run pr:comments                    # current branch''s PR
+
+    bun run pr:comments 28838              # by PR number
+
+    bun run pr:comments ''#28838''           # also works
+
+    bun run pr:comments https://github.com/oven-sh/bun/pull/28838
+
+
+    # Machine-readable output for jq pipelines — one object per entry with
+
+    # { when, user, kind, location?, body, url?, resolved?, outdated? }.
+
+    # resolved/outdated come from GraphQL reviewThreads and are present only
+
+    # on line comments / replies whose thread state was successfully fetched
+
+    # (omitted on issue comments, review verdicts, and on GraphQL fetch
+
+    # failure), so `resolved == false` unambiguously means "confirmed open
+
+    # thread". No header, no truncation. The PR is optional here too
+
+    # (defaults to the current branch''s PR).
+
+    bun run pr:comments --json | jq ''.[] | select(.user == "Jarred-Sumner")''
+
+    bun run pr:comments --json | jq ''[.[] | select(.resolved == false)]''   # still open
+
+    ```
+
+    '
+  gold_removed: ''
+rubric:
+- rule: All changes must be tested - if you're not testing your changes, you're not done.
+  source:
+    path: CLAUDE.md
+    lines: '243'
+    commit: 5b3ca83b84f90ccc9c71005db0ab9bd87850bc70
+  evidence: Gold adds request-smuggling.test.ts with three test cases covering conflicting, identical, and empty-valued Content-Length headers
+  category: testing
+  verification: llm_judge
+- rule: Create tests in the right folder in test/ and the test must end in .test.ts or .test.tsx
+  source:
+    path: CLAUDE.md
+    lines: '246'
+    commit: 5b3ca83b84f90ccc9c71005db0ab9bd87850bc70
+  evidence: Gold places request-smuggling.test.ts in test/js/bun/http/ following the HTTP test convention rather than regression/issue/
+  category: testing
+  verification: llm_judge
+- rule: Be humble & honest - NEVER overstate what you got done or what actually works in commits, PRs or in messages to the user.
+  source:
+    path: CLAUDE.md
+    lines: '252'
+    commit: 5b3ca83b84f90ccc9c71005db0ab9bd87850bc70
+  evidence: Gold CLAUDE.md addition honestly documents the gh pr view --comments footgun — that it silently omits line-level review comments
+  category: style
+  verification: llm_judge
+distractors:
+- rule: If a test is for a specific numbered GitHub Issue, it should be placed in test/regression/issue/${issueNumber}.test.ts.
+  source:
+    path: CLAUDE.md
+    lines: '45'
+    commit: 5b3ca83b84f90ccc9c71005db0ab9bd87850bc70
+  collision_type: rule_conflict
+  why_distracting: This rule suggests placing the smuggling test in regression/issue/28838.test.ts, but the correct location is test/js/bun/http/request-smuggling.test.ts
+  severity: medium
+- rule: '## Debugging CI Failures'
+  source:
+    path: CLAUDE.md
+    lines: '257'
+    commit: 5b3ca83b84f90ccc9c71005db0ab9bd87850bc70
+  collision_type: scope_ambiguity
+  why_distracting: Agent may document pr:comments alongside ci:errors/ci:status/ci:logs scripts in the CI debugging section instead of as a standalone Reading PR Feedback section
+  severity: medium
+- rule: Branch names must start with claude/ - This is a requirement for the CI to work.
+  source:
+    path: CLAUDE.md
+    lines: '253'
+    commit: 5b3ca83b84f90ccc9c71005db0ab9bd87850bc70
+  collision_type: meta_confusion
+  why_distracting: Irrelevant branch-naming requirement adjacent to the honesty rule could distract from the actual task of documenting the pr:comments script
+  severity: low

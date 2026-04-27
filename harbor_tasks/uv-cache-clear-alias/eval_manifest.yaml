@@ -1,0 +1,92 @@
+version: '2.0'
+source:
+  repo: astral-sh/uv
+  pr: 18420
+  base_commit: 5d52a358301d9065923647a00de6a135a508ba1e
+  merge_commit: 3b544adc2550b893559e1d5cb9376969196ab46b
+task:
+  kind: code_fix
+checks:
+- id: test_uv_binary_exists
+  type: pass_to_pass
+  origin: static
+  description: Sanity check that the uv binary was rebuilt at target/debug/uv.
+- id: test_cache_clear_help_succeeds
+  type: fail_to_pass
+  origin: pr_diff
+  description: '`uv cache clear --help` must exit 0 once the alias is registered. At base, clap rejects `clear` and exits non-zero.'
+- id: test_cache_clear_runs_on_empty_cache
+  type: fail_to_pass
+  origin: pr_diff
+  description: '`uv cache clear --cache-dir <dir>` must complete successfully on an empty cache directory.'
+- id: test_cache_clear_actually_clears
+  type: fail_to_pass
+  origin: pr_diff
+  description: '`uv cache clear` must actually clear the cache (real alias of `clean`, not a silent no-op).'
+- id: test_cache_clear_matches_clean_help
+  type: fail_to_pass
+  origin: pr_diff
+  description: The help text printed by `cache clear --help` must match `cache clean --help` modulo the `Usage:` line — verifying it is a true clap alias of the same subcommand.
+- id: test_uv_help_runs
+  type: pass_to_pass
+  origin: static
+  description: Top-level `uv --help` must continue to work (regression guard).
+- id: test_uv_cache_clean_still_works
+  type: pass_to_pass
+  origin: static
+  description: '`uv cache clean` must continue to work — the alias addition must not break the original subcommand name.'
+- id: test_cargo_check_uv_cli
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`cargo check -p uv-cli` must succeed (compilation regression guard).'
+config_edits: []
+rubric:
+- rule: AVOID using `panic!`, `unreachable!`, `.unwrap()`, unsafe code, and clippy rule ignores.
+  source:
+    path: CLAUDE.md
+    lines: '7'
+    commit: 5d52a358301d9065923647a00de6a135a508ba1e
+  evidence: The gold patch adds only a clap alias attribute annotation; it introduces no panic, unwrap, unsafe, or clippy ignore.
+  category: style
+  verification: llm_judge
+- rule: PREFER patterns like `if let` to handle fallibility.
+  source:
+    path: CLAUDE.md
+    lines: '8'
+    commit: 5d52a358301d9065923647a00de6a135a508ba1e
+  evidence: The gold patch does not introduce any new fallible code paths, remaining consistent with the `if let` preference.
+  category: style
+  verification: llm_judge
+- rule: PREFER `#[expect()]` over `[allow()]` if clippy must be disabled.
+  source:
+    path: CLAUDE.md
+    lines: '10'
+    commit: 5d52a358301d9065923647a00de6a135a508ba1e
+  evidence: The gold patch does not require any clippy suppression annotations.
+  category: style
+  verification: llm_judge
+- rule: PREFER top-level imports over local imports or fully qualified names.
+  source:
+    path: CLAUDE.md
+    lines: '16'
+    commit: 5d52a358301d9065923647a00de6a135a508ba1e
+  evidence: The gold patch introduces no new imports, consistent with the top-level import preference.
+  category: style
+  verification: llm_judge
+- rule: AVOID shortening variable names, e.g., use `version` instead of `ver`, and `requires_python` instead of `rp`.
+  source:
+    path: CLAUDE.md
+    lines: 17-18
+    commit: 5d52a358301d9065923647a00de6a135a508ba1e
+  evidence: The gold patch introduces no new variable names, consistent with the anti-abbreviation rule.
+  category: naming
+  verification: llm_judge
+- rule: Register `clear` as a clap alias of the existing `Clean` subcommand (e.g. `#[command(alias = ...)]` on the enum variant). Do NOT introduce a new `Clear` variant or a separate handler — both names must dispatch to the same code path.
+  source:
+    path: instruction.md
+    lines: 46-48
+    commit: 5d52a358301d9065923647a00de6a135a508ba1e
+  evidence: The gold patch adds `#[command(alias = "clear")]` on the existing `Clean` variant without introducing a new enum variant or handler.
+  category: architecture
+  verification: llm_judge
+distractors: []

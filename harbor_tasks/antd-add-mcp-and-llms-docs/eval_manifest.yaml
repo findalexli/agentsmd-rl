@@ -1,0 +1,160 @@
+version: '2.0'
+source:
+  repo: ant-design/ant-design
+  pr: 57226
+  base_commit: 9a3dccf2d4be0f2a271c5a047b7056cf2e429af1
+  merge_commit: 28e95c97dbf2434b899dc511133666bd491d7161
+task:
+  kind: markdown_authoring
+checks:
+- id: test_repo_present
+  type: pass_to_pass
+  origin: static
+  description: Sanity gate — the cloned ant-design repo is at the expected base commit before the agent runs.
+- id: test_claude_md_newline_rule
+  type: fail_to_pass
+  origin: agent_config
+  description: CLAUDE.md must add a bullet declaring that every file ends with a newline character (avoiding the `final-newline` lint warning).
+  source:
+    path: CLAUDE.md
+    lines: '37'
+    commit: 28e95c97dbf2434b899dc511133666bd491d7161
+- id: test_claude_md_file_ends_with_newline
+  type: fail_to_pass
+  origin: agent_config
+  description: CLAUDE.md itself must obey its own newly-added final-newline rule.
+  source:
+    path: CLAUDE.md
+    lines: '37'
+    commit: 28e95c97dbf2434b899dc511133666bd491d7161
+- id: test_mcp_en_doc_created
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'docs/react/mcp.en-US.md must be created with the `title: MCP Server` frontmatter, a `## What is MCP?` section, references to the `@jzone-mcp/antd-components-mcp` community server, and a link to modelcontextprotocol.io.'
+- id: test_mcp_zh_doc_created
+  type: fail_to_pass
+  origin: pr_diff
+  description: docs/react/mcp.zh-CN.md must mirror the English MCP doc with parallel Chinese sections (什么是 MCP, etc.) and reference the community MCP server.
+- id: test_llms_en_aggregated_files_table
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'docs/react/llms.en-US.md must list the new aggregated documentation files: `llms-full-cn.txt`, `llms-semantic.md`, and `llms-semantic-cn.md`.'
+- id: test_llms_en_tools_table_includes_new_entries
+  type: fail_to_pass
+  origin: pr_diff
+  description: docs/react/llms.en-US.md must include `Codex` and `Neovate Code` in the Usage with AI Tools listing.
+- id: test_llms_zh_aggregated_files_table
+  type: fail_to_pass
+  origin: pr_diff
+  description: docs/react/llms.zh-CN.md must list the new aggregated documentation files in Chinese.
+- id: test_llms_zh_tools_table_includes_new_entries
+  type: fail_to_pass
+  origin: pr_diff
+  description: docs/react/llms.zh-CN.md must include Codex and Neovate Code in the tools listing.
+- id: test_all_changed_files_end_with_newline
+  type: fail_to_pass
+  origin: agent_config
+  description: Every markdown file the agent touches must end with a newline, enforcing the rule added to CLAUDE.md.
+  source:
+    path: CLAUDE.md
+    lines: '37'
+    commit: 28e95c97dbf2434b899dc511133666bd491d7161
+config_edits:
+- path: CLAUDE.md
+  tier: 1
+  gold_added: '- **所有文件必须以换行符结尾**，避免 `final-newline` lint 警告
+
+    '
+  gold_removed: ''
+- path: docs/react/mcp.en-US.md
+  tier: 2
+  gold_added: "---\ngroup:\n  title: AI\n  order: 0.9\norder: 2\ntitle: MCP Server\ntag: New\n---\n\nThis guide explains how to use Ant Design with AI tools through Model Context Protocol (MCP).\n\n## What is MCP?\n\n[Model Context Protocol (MCP)](https://modelcontextprotocol.io/) is an open protocol that enables AI models to interact with external tools and data sources. Through MCP, AI assistants can access real-time documentation, code examples, and API references.\n\n## Community MCP Server\n\nAnt Design recommends the community-maintained MCP server: [`@jzone-mcp/antd-components-mcp`](https://www.npmjs.com/package/@jzone-mcp/antd-components-mcp)\n\nThis MCP server provides the following capabilities:\n\n- **list-components** - List all available Ant Design components\n- **get-component-docs** - Get detailed documentation for a specific component\n- **list-component-examples** - Get code examples for a component\n- **get-component-changelog** - Get the changelog for a component\n\n## Usage with AI Tools\n\n| Tool | Description | Prompt |\n| --- | --- | --- |\n| **Cursor** through **Neovate Code** | Each row includes a fenced mcpServers config snippet registering `npx -y @jzone-mcp/antd-components-mcp` under key `antd-components`. |\n\n## Alternative: Using LLMs.txt\n\n## Learn More\n"
+  gold_removed: ''
+- path: docs/react/mcp.zh-CN.md
+  tier: 2
+  gold_added: "---\ngroup:\n  title: AI\n  order: 0.9\norder: 2\ntitle: MCP Server\ntag: New\n---\n\n本指南介绍如何通过 Model Context Protocol (MCP) 在 AI 工具中使用 Ant Design。\n\n## 什么是 MCP？\n\n[Model Context Protocol (MCP)](https://modelcontextprotocol.io/) 是一个开放协议，使 AI 模型能够与外部工具和数据源进行交互。\n\n## 社区 MCP Server\n\nAnt Design 推荐使用社区维护的 MCP server：[`@jzone-mcp/antd-components-mcp`](https://www.npmjs.com/package/@jzone-mcp/antd-components-mcp)\n\n该 MCP server 提供以下功能：\n\n- **list-components** - 列出所有可用的 Ant Design 组件\n- **get-component-docs** - 获取指定组件的详细文档\n- **list-component-examples** - 获取组件的代码示例\n- **get-component-changelog** - 获取组件的更新日志\n\n## 在 AI 工具中的使用\n\n| 工具 | 说明 | 提示词 |\n| --- | --- | --- |\n| **Cursor** 到 **Neovate Code** | 每行包含 mcpServers 配置片段，注册 `npx -y @jzone-mcp/antd-components-mcp`。 |\n\n## 备选方案：使用 LLMs.txt\n\n## 了解更多\n"
+  gold_removed: ''
+- path: docs/react/llms.en-US.md
+  tier: 2
+  gold_added: '## Available Resources (renamed from Available Routes)
+
+    ### LLMs.txt Aggregated Files — new 5-row table adding llms-full-cn.txt, llms-semantic.md, llms-semantic-cn.md
+
+    ### Single Component Documentation — new subsection
+
+    ### Semantic Documentation — new subsection
+
+    ## Usage with AI Tools — replaced per-tool ### subsections with unified 3-column table (Tool | Description | Prompt), 8 rows including new Codex and Neovate Code entries
+
+    Opening sentence generic-ified: dropped "Cursor, Windsurf, and Claude" name-drop
+
+    '
+  gold_removed: '## Available Routes heading
+
+    Two-item bullet list (llms.txt, llms-full.txt only)
+
+    Per-tool ### subsections: ### Cursor, ### Windsurf, ### Claude Code, ### Gemini CLI, ### Trae, ### Qoder, ### Other AI Tools
+
+    Closing paragraph: "Any AI tool that supports LLMs.txt can use these routes to better understand Ant Design."
+
+    Opening sentence named Cursor, Windsurf, and Claude
+
+    '
+- path: docs/react/llms.zh-CN.md
+  tier: 2
+  gold_added: '### LLMs.txt 聚合文件 — new 5-row table adding llms-full-cn.txt, llms-semantic.md, llms-semantic-cn.md
+
+    ### 单个组件文档 — new subsection
+
+    ### 语义文档 — new subsection
+
+    ## 在 AI 工具中的使用 — replaced per-tool ### subsections with unified 3-column table (工具 | 说明 | 提示词), 8 rows including new Codex and Neovate Code entries
+
+    Opening sentence generic-ified: dropped "Cursor、Windsurf 和 Claude" name-drop
+
+    '
+  gold_removed: 'Two-item bullet list (llms.txt, llms-full.txt only)
+
+    Per-tool ### subsections: ### Cursor, ### Windsurf, ### Claude Code, ### Gemini CLI, ### Trae, ### Qoder, ### 其他 AI 工具
+
+    Closing paragraph about "任何支持 LLMs.txt 的 AI 工具"
+
+    Opening sentence named Cursor、Windsurf 和 Claude
+
+    '
+rubric:
+- rule: 提供中英文两个版本
+  source:
+    path: AGENTS.md
+    lines: '793'
+    commit: 9a3dccf2d4be0f2a271c5a047b7056cf2e429af1
+  evidence: Gold creates parallel mcp.en-US.md / mcp.zh-CN.md and refactors both llms.en-US.md / llms.zh-CN.md with identical structure across languages.
+  category: architecture
+  verification: semantic_diff
+distractors:
+- rule: 'PR 标题始终使用英文，格式：`类型: 简短描述`'
+  source:
+    path: CLAUDE.md
+    lines: '44'
+    commit: 9a3dccf2d4be0f2a271c5a047b7056cf2e429af1
+  collision_type: rule_conflict
+  why_distracting: Mandates English-only PR titles, which may discourage the agent from authoring the required Chinese-language documentation files.
+  severity: medium
+- rule: '| Property | Description | Type | Default | Version |
+
+    '
+  source:
+    path: AGENTS.md
+    lines: '215'
+    commit: 9a3dccf2d4be0f2a271c5a047b7056cf2e429af1
+  collision_type: rule_conflict
+  why_distracting: The 5-column API table format may lead the agent to use wrong column headers (Property/Type/Default/Version) instead of the 3-column Tool/Description/Prompt format required for the MCP and LLMs usage tables.
+  severity: medium
+- rule: '**双语输出**：每次处理必须同时提供 **中文版** 和 **英文版**'
+  source:
+    path: AGENTS.md
+    lines: '831'
+    commit: 9a3dccf2d4be0f2a271c5a047b7056cf2e429af1
+  collision_type: scope_ambiguity
+  why_distracting: This is a changelog-specific rule, but its placement under '文档和 Changelog 规范' may lead the agent to over-apply it and create changelog entries instead of docs/react/ pages.
+  severity: low

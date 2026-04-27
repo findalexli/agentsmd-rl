@@ -1,54 +1,43 @@
+version: '2.0'
 source:
   repo: ant-design/ant-design
-  pr_number: 57590
+  pr: 57590
   base_commit: 501436e5f45e533679f797ee0ee58e2a391e566d
   merge_commit: 1d36dfec5be5174376fe54f34a7abd1a7a128e38
-  title: "fix(Notification): reserve close button spacing for description-only notices"
-
+task:
+  kind: code_fix
 checks:
-  - id: test_title_conditionally_rendered
-    type: fail_to_pass
-    origin: pr_diff
-    description: Title div is conditionally rendered based on title prop presence
-
-  - id: test_description_spacing_css_rules_exist
-    type: fail_to_pass
-    origin: pr_diff
-    description: CSS provides spacing for description when it is the first child (no title)
-
-  - id: test_description_has_margin_inline_end_when_no_title
-    type: fail_to_pass
-    origin: pr_diff
-    description: Description has marginInlineEnd or equivalent right-side spacing
-
-  - id: test_notification_component_structure
-    type: fail_to_pass
-    origin: pr_diff
-    description: Notification component has proper structure for icon/title/description
-
-  - id: test_purepanel_renders_without_errors
-    type: fail_to_pass
-    origin: pr_diff
-    description: PurePanel component can be imported and rendered without errors
-
-  - id: test_eslint_notification_component
-    type: pass_to_pass
-    origin: repo_tests
-    description: ESLint passes on notification component files
-
-  - id: test_uses_design_tokens_not_hardcoded
-    type: pass_to_pass
-    origin: agent_config
-    description: Styles use design tokens, not hardcoded values
-
-  - id: test_biome_lint_notification_component
-    type: pass_to_pass
-    origin: repo_tests
-    description: Biome lint passes on notification component files
-
-  - id: test_biome_check_notification_component
-    type: pass_to_pass
-    origin: repo_tests
-    description: Biome check passes on notification component files
-
+- id: test_title_conditionally_rendered
+  type: fail_to_pass
+  origin: pr_diff
+  description: Title div is conditionally rendered based on title prop presence
+- id: test_description_spacing_from_close_button
+  type: fail_to_pass
+  origin: pr_diff
+  description: CSS provides spacing for description when it is the first child (no title)
+- id: test_component_has_conditional_title_and_description
+  type: fail_to_pass
+  origin: pr_diff
+  description: Notification component has proper structure for icon/title/description
+- id: test_eslint_notification_component
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint passes on notification component files
+- id: test_uses_design_tokens_not_hardcoded
+  type: pass_to_pass
+  origin: agent_config
+  description: Styles use design tokens, not hardcoded values
+  source:
+    path: .github/copilot-instructions.md
+    lines: 65-66
+    commit: 501436e5f45e533679f797ee0ee58e2a391e566d
+- id: test_biome_lint_notification_component
+  type: pass_to_pass
+  origin: repo_tests
+  description: Biome lint passes on notification component files
+- id: test_biome_check_notification_component
+  type: pass_to_pass
+  origin: repo_tests
+  description: Biome check passes on notification component files
 rubric: []
+distractors: []

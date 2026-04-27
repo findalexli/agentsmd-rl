@@ -1,0 +1,122 @@
+version: '2.0'
+source:
+  repo: PrimeIntellect-ai/prime-rl
+  pr: 2191
+  base_commit: 839dacce4ec961a183d3a63b6fbd5f27bad1c5b4
+  merge_commit: ecf1ae22746d1a956e666d2c5675a9ac1882490f
+task:
+  name: prime-rl-bugbot-changelog-breaking-only
+  kind: markdown_authoring
+  difficulty: easy
+  tags:
+  - markdown
+  - cursor
+  - agent-instructions
+  - prime-rl
+checks:
+- id: test_bugbot_scope_is_breaking_only
+  type: fail_to_pass
+  origin: pr_diff
+  description: BUGBOT.md narrows the rule to **breaking** config changes.
+- id: test_bugbot_lists_three_breaking_categories
+  type: fail_to_pass
+  origin: pr_diff
+  description: BUGBOT.md enumerates **Renamed**, **Removed**, **Moved** as the three breaking-change categories.
+- id: test_bugbot_excludes_additive_and_default_changes
+  type: fail_to_pass
+  origin: pr_diff
+  description: BUGBOT.md states that additive changes and default value changes do not require a changelog entry.
+- id: test_bugbot_references_current_config_path
+  type: fail_to_pass
+  origin: pr_diff
+  description: BUGBOT.md cites the current config path src/prime_rl/configs/.
+- id: test_changelog_header_describes_breaking_scope
+  type: fail_to_pass
+  origin: pr_diff
+  description: CHANGELOG.md header description announces the breaking-only scope.
+- id: test_changelog_entries_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: Existing historical CHANGELOG entries are untouched.
+- id: test_bugbot_file_is_valid_utf8_markdown
+  type: pass_to_pass
+  origin: static
+  description: BUGBOT.md keeps its top-level heading and Changelog Enforcement subsection.
+- id: test_repo_git_state_clean_or_modified_only
+  type: pass_to_pass
+  origin: static
+  description: No files outside .cursor/BUGBOT.md and CHANGELOG.md are modified.
+config_edits:
+- path: .cursor/BUGBOT.md
+  tier: 1
+  gold_removed: 'Any PR that modifies configuration structures or usage patterns must update `CHANGELOG.md`. This includes changes to config fields (added, removed, renamed, moved, or default value changes) in:
+
+
+    - `src/prime_rl/*/config.py`
+
+    - `src/prime_rl/rl.py`
+
+    - `src/prime_rl/utils/config.py`
+
+
+    If such changes are detected without a corresponding `CHANGELOG.md` update, request that the author add an entry.
+
+    '
+  gold_added: 'Any PR that introduces **breaking** configuration changes must update `CHANGELOG.md`. Breaking changes are those that require users to update existing configs:
+
+
+    - **Renamed** config fields (old name no longer accepted)
+
+    - **Removed** config fields (field deleted or moved to a different path)
+
+    - **Moved** config fields (field relocated in the config hierarchy)
+
+
+    Additive changes (new fields with defaults, new optional features) and default value changes do **not** require a changelog entry.
+
+
+    Config files live in:
+
+
+    - `src/prime_rl/configs/`
+
+
+    If breaking changes are detected without a corresponding `CHANGELOG.md` update, request that the author add an entry.
+
+    '
+  diff_hunk: "@@ -2,10 +2,16 @@\n\n ## Changelog Enforcement\n\n-Any PR that modifies configuration structures or usage patterns must update `CHANGELOG.md`. This includes changes to config fields (added, removed, renamed, moved, or default value changes) in:\n+Any PR that introduces **breaking** configuration changes must update `CHANGELOG.md`. Breaking changes are those that require users to update existing configs:\n\n-- `src/prime_rl/*/config.py`\n-- `src/prime_rl/rl.py`\n-- `src/prime_rl/utils/config.py`\n+- **Renamed** config fields (old name no longer accepted)\n+- **Removed** config fields (field deleted or moved to a different path)\n+- **Moved** config fields (field relocated in the config hierarchy)\n\n-If such changes are detected without a corresponding `CHANGELOG.md` update, request that the author add an entry.\n+Additive changes (new fields with defaults, new optional features) and default value changes do **not** require a changelog entry.\n+\n+Config files live in:\n+\n+- `src/prime_rl/configs/`\n+\n+If breaking changes are detected without a corresponding `CHANGELOG.md` update, request that the author add an entry.\n"
+- path: CHANGELOG.md
+  tier: 2
+  gold_removed: 'Documenting changes which affect configuration usage patterns (added/moved/removed/renamed fields, notable logic changes).
+
+    '
+  gold_added: 'Documenting **breaking** configuration changes — renamed, removed, or moved fields that require users to update existing configs.
+
+    '
+  diff_hunk: "@@ -1,6 +1,6 @@\n # Changelog\n\n-Documenting changes which affect configuration usage patterns (added/moved/removed/renamed fields, notable logic changes).\n+Documenting **breaking** configuration changes — renamed, removed, or moved fields that require users to update existing configs.\n"
+rubric:
+- rule: Skill / agent-instruction files must stay accurate when behavior they describe changes. When the changelog policy itself changes, the BUGBOT rule that enforces it must be kept in sync.
+  source:
+    path: AGENTS.md
+    lines: 41-45
+    commit: 839dacce4ec961a183d3a63b6fbd5f27bad1c5b4
+  evidence: Gold updates `.cursor/BUGBOT.md` together with `CHANGELOG.md` so the BugBot rule continues to describe the policy accurately.
+  category: documentation
+  verification: semantic_diff
+- rule: When updating a markdown rule file, prefer explicit, narrowly-scoped policy language over vague catch-alls. Replacing 'changes which affect configuration usage patterns' with an enumerated list of breaking-change categories is preferable to a broad catch-all.
+  source:
+    path: AGENTS.md
+    lines: 8-11
+    commit: 839dacce4ec961a183d3a63b6fbd5f27bad1c5b4
+  evidence: Gold replaces a vague rule with three explicit bullets (Renamed/Removed/Moved) and a clear exclusion clause.
+  category: style
+  verification: llm_judge
+- rule: Agent-instruction file paths and locations must point to the current source layout. Stale `src/prime_rl/*/config.py` references should be replaced with the live `src/prime_rl/configs/` package path.
+  source:
+    path: AGENTS.md
+    lines: 41-45
+    commit: 839dacce4ec961a183d3a63b6fbd5f27bad1c5b4
+  evidence: Gold replaces the stale per-file paths with the current `src/prime_rl/configs/` package path.
+  category: documentation
+  verification: semantic_diff
+distractors: []

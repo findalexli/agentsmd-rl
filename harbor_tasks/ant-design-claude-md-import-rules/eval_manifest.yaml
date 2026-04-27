@@ -1,0 +1,128 @@
+version: '2.0'
+task:
+  name: ant-design-claude-md-import-rules
+  kind: markdown_authoring
+  title: Document Demo absolute-import and Test relative-import rules in ant-design CLAUDE.md
+  difficulty: easy
+  description: 'Add two new ## sections to the ant-design CLAUDE.md describing the project''s import-path conventions: demo / .dumi files must use absolute imports, while components/**/__tests__/ files must use relative imports.'
+source:
+  repo: ant-design/ant-design
+  pr: 57480
+  pr_url: https://github.com/ant-design/ant-design/pull/57480
+  base_commit: 1f41cc73e855b332d81fc52cd84f1dddad6676a6
+  merge_commit: 70f659be984b48425453bf226b9eea4f17de55c0
+  primary_files:
+  - CLAUDE.md
+checks:
+- id: test_demo_section_heading_present
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLAUDE.md must contain a `## Demo 导入规范` heading after the patch.
+- id: test_test_section_heading_present
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLAUDE.md must contain a `## Test 导入规范` heading after the patch.
+- id: test_demo_section_scope_documented
+  type: fail_to_pass
+  origin: pr_diff
+  description: Demo section must scope to `components/**/demo/` and `.dumi/`.
+- id: test_demo_section_lists_absolute_import_patterns
+  type: fail_to_pass
+  origin: pr_diff
+  description: Demo section must list the allowed absolute / alias forms (antd/es/*, antd/lib/*, antd/locale/*, .dumi/*, @@/*).
+- id: test_test_section_scope_documented
+  type: fail_to_pass
+  origin: pr_diff
+  description: Test section must scope to `components/**/__tests__/`.
+- id: test_test_section_forbids_absolute_aliases
+  type: fail_to_pass
+  origin: pr_diff
+  description: Test section must list the forbidden absolute / alias forms inside `__tests__/`.
+- id: test_demo_and_test_sections_are_chinese_prose
+  type: fail_to_pass
+  origin: pr_diff
+  description: Both new sections must be written in Chinese to match the existing file style.
+- id: test_demo_section_appears_before_test_section
+  type: fail_to_pass
+  origin: pr_diff
+  description: Demo section must appear before Test section.
+- id: test_existing_doc_section_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: The pre-existing `## 文档规范` section must remain in CLAUDE.md.
+- id: test_existing_pr_section_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: The pre-existing `## PR 规范` section must remain in CLAUDE.md.
+- id: test_existing_changelog_section_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: The pre-existing `## Changelog 规范` section must remain in CLAUDE.md.
+- id: test_repo_git_clean_other_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Only CLAUDE.md should be modified; no other tracked files in the repo should change.
+config_edits:
+- path: CLAUDE.md
+  gold_added: '## Demo 导入规范
+
+
+    - 本规范同时适用于 `components/**/demo/` 和 `.dumi/` 下的示例、站点、主题相关文件。（`semantic.test.tsx` 文件除外）
+
+    - 在这些目录下引入 Ant Design 组件、组件内部模块、工具方法、变量、类型定义时，一律使用绝对路径导入，不使用相对路径导入。
+
+    - 允许的导入形式应优先使用项目公开入口或已配置别名，例如：`antd`、`antd/es/*`、`antd/lib/*`、`antd/locale/*`、`.dumi/*`、`@@/*`。
+
+    - 禁止使用 `..`、`../xxx`、`../../xxx`、`./xxx` 这类相对路径去引用组件实现、内部模块、方法、变量、类型，包含跨 demo、跨目录复用的场景。
+
+    - demo 与 `.dumi` 文件之间不要互相相对引用；如果需要复用少量逻辑，优先内联，或提取到可通过绝对路径访问的公共位置。
+
+
+    ## Test 导入规范
+
+
+    - 本规范适用于 `components/**/__tests__/` 下的测试文件。
+
+    - 在这些目录下引入 Ant Design 组件，或引入组件内部模块、工具方法、变量、类型定义时，一律使用相对路径导入，不使用绝对路径导入。
+
+    - 测试文件应优先从当前组件目录、相邻内部模块或共享测试工具目录通过相对路径引用，例如：`..`、`../index`、`../xxx`、`../../_util/*`、`../../../tests/shared/*`。
+
+    - 禁止在 `__tests__` 目录下使用 `antd`、`antd/es/*`、`antd/lib/*`、`antd/locale/*`、`.dumi/*`、`@@/*` 这类绝对路径或别名路径去引用仓库内代码。
+
+    - 如需引用仓库外第三方依赖，仍按依赖包名正常导入，例如 `react`、`@testing-library/react`、`dayjs`。
+
+    '
+  gold_removed: ''
+rubric:
+- id: chinese_prose_style_match
+  source:
+    note: The entire CLAUDE.md file is in Chinese; the new sections must follow suit.
+    path: CLAUDE.md
+    commit: 1f41cc73e855b332d81fc52cd84f1dddad6676a6
+  rule: The two new sections are written in Chinese, matching the language used throughout the rest of CLAUDE.md.
+- id: bullet_list_style_match
+  source:
+    lines: 47-51
+    path: CLAUDE.md
+    commit: 1f41cc73e855b332d81fc52cd84f1dddad6676a6
+  rule: The two new sections use the same `-`-prefixed bullet-list style already used by the surrounding sections of CLAUDE.md (e.g. the `## 文档规范` and `### 国际化规范` sub-sections).
+- id: inline_code_for_paths
+  source:
+    path: CLAUDE.md
+    commit: 1f41cc73e855b332d81fc52cd84f1dddad6676a6
+  rule: Path globs, file names, package specifiers, and import-path examples are wrapped in single backticks (e.g. `components/**/demo/`, `antd/es/*`, `react`), matching the inline-code convention used throughout CLAUDE.md.
+- id: heading_level_matches_siblings
+  source:
+    path: CLAUDE.md
+    commit: 1f41cc73e855b332d81fc52cd84f1dddad6676a6
+  rule: The new sections use `##` (two `#`) heading level, matching the other top-level conventions sections of CLAUDE.md (e.g. `## 文档规范`, `## PR 规范`, `## Changelog 规范`).
+- id: section_placement_above_doc_rules
+  source:
+    path: CLAUDE.md
+    commit: 1f41cc73e855b332d81fc52cd84f1dddad6676a6
+  rule: The new Demo + Test pair is placed between the project-info / structure block at the top of the file and the `## 文档规范` section that follows, separated from `## 文档规范` by a horizontal rule (`---`) matching the rule-separator style already used in the file.
+- id: no_unrelated_edits
+  source:
+    path: CLAUDE.md
+    commit: 1f41cc73e855b332d81fc52cd84f1dddad6676a6
+  rule: Only the two new sections are added; the rest of CLAUDE.md and all other files in the repo are left untouched.

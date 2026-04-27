@@ -1,111 +1,133 @@
-version: "2.0"
-
+version: '2.0'
 source:
   owner: microsoft
   repo: playwright
   pr_number: 39729
   base_commit: 1ed53ac99ec225a5fc0aacb762a18e3195c61a6c
   merge_commit: 7a4bfa1ae6afb2c2b30fe0d4107256793dde8a3a
-  pr_title: "fix(api): make Tracing.group return Disposable"
-
+  pr_title: 'fix(api): make Tracing.group return Disposable'
+  pr: 39729
 checks:
-  - id: test_group_returns_disposable
-    type: fail_to_pass
-    origin: gold_patch
-    description: |
-      `tracing.group(name)` must resolve to an object with a callable
-      `dispose()` method (across multiple input names).
+- id: test_group_returns_disposable
+  type: fail_to_pass
+  origin: pr_diff
+  description: '`tracing.group(name)` must resolve to an object with a callable
 
-  - id: test_dispose_calls_group_end_exactly_once
-    type: fail_to_pass
-    origin: gold_patch
-    description: |
-      Calling `dispose()` on the returned object must trigger the
-      `tracingGroupEnd` channel call exactly once, with idempotency on a
-      second `dispose()`.
+    `dispose()` method (across multiple input names).
 
-  - id: test_returned_value_supports_async_dispose_protocol
-    type: fail_to_pass
-    origin: gold_patch
-    description: |
-      The returned value implements `Symbol.asyncDispose` (the runtime
-      protocol `await using` calls), and invoking it triggers
-      `tracingGroupEnd`.
+    '
+- id: test_dispose_calls_group_end_exactly_once
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Calling `dispose()` on the returned object must trigger the
 
-  - id: test_public_types_d_ts_returns_disposable
-    type: fail_to_pass
-    origin: gold_patch
-    description: |
-      Generated `packages/playwright-core/types/types.d.ts` and
-      `packages/playwright-client/types/types.d.ts` declare
-      `Tracing.group(...)` as `Promise<Disposable>`.
+    `tracingGroupEnd` channel call exactly once, with idempotency on a
 
-  - id: test_repo_check_deps
-    type: pass_to_pass
-    origin: repo_tests
-    description: |
-      Repo's `node utils/check_deps.js` (DEPS.list import-boundary check)
-      passes.
+    second `dispose()`.
 
-  - id: test_repo_lint_packages
-    type: pass_to_pass
-    origin: repo_tests
-    description: |
-      Repo's `node utils/workspace.js --ensure-consistent` passes.
+    '
+- id: test_returned_value_supports_async_dispose_protocol
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'The returned value implements `Symbol.asyncDispose` (the runtime
 
-  - id: test_repo_eslint_modified_file
-    type: pass_to_pass
-    origin: repo_tests
-    description: |
-      ESLint passes on
-      `packages/playwright-core/src/client/tracing.ts`.
+    protocol `await using` calls), and invoking it triggers
 
+    `tracingGroupEnd`.
+
+    '
+- id: test_public_types_d_ts_returns_disposable
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Generated `packages/playwright-core/types/types.d.ts` and
+
+    `packages/playwright-client/types/types.d.ts` declare
+
+    `Tracing.group(...)` as `Promise<Disposable>`.
+
+    '
+- id: test_repo_check_deps
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo''s `node utils/check_deps.js` (DEPS.list import-boundary check)
+
+    passes.
+
+    '
+- id: test_repo_lint_packages
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Repo''s `node utils/workspace.js --ensure-consistent` passes.
+
+    '
+- id: test_repo_eslint_modified_file
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'ESLint passes on
+
+    `packages/playwright-core/src/client/tracing.ts`.
+
+    '
 rubric:
-  - id: agent_runs_flint_before_committing
-    description: |
-      CLAUDE.md instructs contributors to run `npm run flint` (or its
-      constituent commands: eslint, tsc, doc, check-deps,
-      generate_channels, lint-tests, test-types, lint-packages) before
-      considering work complete. Submission should pass these checks.
-    source:
-      file: CLAUDE.md
-      ref: "1ed53ac99ec225a5fc0aacb762a18e3195c61a6c"
-      lines: "65-69"
-    severity: warn
+- id: agent_runs_flint_before_committing
+  source:
+    lines: 65-69
+    path: CLAUDE.md
+    commit: 1ed53ac99ec225a5fc0aacb762a18e3195c61a6c
+  severity: warn
+  rule: 'CLAUDE.md instructs contributors to run `npm run flint` (or its
 
-  - id: deps_list_respected
-    description: |
-      Per CLAUDE.md "DEPS System": import boundaries declared in
-      DEPS.list must not be violated. Adding the new client-internal
-      import (DisposableStub from ./disposable) is allowed by
-      `packages/playwright-core/src/client/DEPS.list` (which permits any
-      intra-client import); any additional imports the agent introduces
-      must remain within the client subtree.
-    source:
-      file: CLAUDE.md
-      ref: "1ed53ac99ec225a5fc0aacb762a18e3195c61a6c"
-      lines: "75-80"
-    severity: warn
+    constituent commands: eslint, tsc, doc, check-deps,
 
-  - id: client_does_not_import_server
-    description: |
-      CLAUDE.md key rule: "Client code NEVER imports server code. Server
-      code NEVER imports client code." The fix must not introduce any
-      cross-boundary imports.
-    source:
-      file: CLAUDE.md
-      ref: "1ed53ac99ec225a5fc0aacb762a18e3195c61a6c"
-      lines: "78-79"
-    severity: fail
+    generate_channels, lint-tests, test-types, lint-packages) before
 
-  - id: docs_drive_generated_types
-    description: |
-      Per CLAUDE.md "Key Directories": `docs/src/api/` is the source of
-      truth for public TypeScript types. Updating only the generated
-      `types.d.ts` (without updating the corresponding `docs/src/api/`)
-      is incorrect because the next build will overwrite it.
-    source:
-      file: CLAUDE.md
-      ref: "1ed53ac99ec225a5fc0aacb762a18e3195c61a6c"
-      lines: "31-37"
-    severity: warn
+    considering work complete. Submission should pass these checks.
+
+    '
+- id: deps_list_respected
+  source:
+    lines: 75-80
+    path: CLAUDE.md
+    commit: 1ed53ac99ec225a5fc0aacb762a18e3195c61a6c
+  severity: warn
+  rule: 'Per CLAUDE.md "DEPS System": import boundaries declared in
+
+    DEPS.list must not be violated. Adding the new client-internal
+
+    import (DisposableStub from ./disposable) is allowed by
+
+    `packages/playwright-core/src/client/DEPS.list` (which permits any
+
+    intra-client import); any additional imports the agent introduces
+
+    must remain within the client subtree.
+
+    '
+- id: client_does_not_import_server
+  source:
+    lines: 78-79
+    path: CLAUDE.md
+    commit: 1ed53ac99ec225a5fc0aacb762a18e3195c61a6c
+  severity: fail
+  rule: 'CLAUDE.md key rule: "Client code NEVER imports server code. Server
+
+    code NEVER imports client code." The fix must not introduce any
+
+    cross-boundary imports.
+
+    '
+- id: docs_drive_generated_types
+  source:
+    lines: 31-37
+    path: CLAUDE.md
+    commit: 1ed53ac99ec225a5fc0aacb762a18e3195c61a6c
+  severity: warn
+  rule: 'Per CLAUDE.md "Key Directories": `docs/src/api/` is the source of
+
+    truth for public TypeScript types. Updating only the generated
+
+    `types.d.ts` (without updating the corresponding `docs/src/api/`)
+
+    is incorrect because the next build will overwrite it.
+
+    '

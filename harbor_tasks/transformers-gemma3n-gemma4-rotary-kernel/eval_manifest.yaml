@@ -1,0 +1,72 @@
+version: '2.0'
+source:
+  repo: huggingface/transformers
+  pr: 45564
+  base_commit: 74a2a4d0c790788a3b65b975510577f8dc6e81d5
+  merge_commit: bc4b330451d0e3e33f4ac63593ed9f245227712e
+task:
+  kind: code_fix
+checks:
+- id: test_gemma3n_attention_does_not_register_rotary_kernel
+  type: fail_to_pass
+  origin: pr_diff
+  description: Gemma3nTextAttention instance must not register apply_rotary_pos_emb in `_hidden_kernels` after instantiation. The decorator `@use_kernelized_func(apply_rotary_pos_emb)` is what populates that dict; removing the decorator removes the registration.
+- id: test_gemma4_attention_does_not_register_rotary_kernel
+  type: fail_to_pass
+  origin: pr_diff
+  description: Same property for Gemma4TextAttention.
+- id: test_gemma3n_attention_init_not_wrapped_by_kernel_decorator
+  type: fail_to_pass
+  origin: pr_diff
+  description: Gemma3nTextAttention.__init__ must be the unwrapped class method, not the `new_init` defined inside `use_kernelized_func.<locals>.decorator`.
+- id: test_gemma4_attention_init_not_wrapped_by_kernel_decorator
+  type: fail_to_pass
+  origin: pr_diff
+  description: Same property for Gemma4TextAttention.
+- id: test_attention_classes_run_forward_without_kernel_marker
+  type: fail_to_pass
+  origin: pr_diff
+  description: Gemma3nTextAttention.forward must produce the expected shape on CPU and the resulting module must not carry an apply_rotary_pos_emb registration in `_hidden_kernels`.
+- id: test_modular_conversion_consistent
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`python utils/check_modular_conversion.py` must pass — every modeling_*.py file must be byte-identical to what would be regenerated from its modular_*.py source.'
+- id: test_ruff_check_on_touched_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`ruff check` must pass on the four touched files. Removing the decorator without removing the now-unused `use_kernelized_func` import would trigger F401.'
+config_edits: []
+rubric:
+- rule: PRs should be as brief as possible. Bugfix PRs in particular can often be only one or two lines long, and do not need large comments, docstrings or new functions in this case. Aim to minimize the size of the diff.
+  source:
+    path: .github/copilot-instructions.md
+    lines: '15'
+    commit: 74a2a4d0c790788a3b65b975510577f8dc6e81d5
+  evidence: Gold patch removes only two decorators and the corresponding unused imports across four files — no reformatting, comments, or helpers added.
+  category: style
+  verification: semantic_diff
+- rule: The newer method is to add a file named `modular_<name>.py` in the model directory. `modular` files **can** inherit from other models. `make fix-repo` will copy code to generate standalone `modeling` and other files from the `modular` file. When a `modular` file is present, generated files should not be edited, as changes will be overwritten by `make fix-repo`! Instead, edit the `modular` file.
+  source:
+    path: .ai/AGENTS.md
+    lines: '67'
+    commit: 74a2a4d0c790788a3b65b975510577f8dc6e81d5
+  evidence: Gold patch applies identical changes to both modular_*.py and modeling_*.py for each affected model, keeping them in sync.
+  category: architecture
+  verification: programmatic
+- rule: '''Modular'' files. These files briefly define models by composing them using inheritance from other models. They are not meant to be used directly. Instead, the style tools automatically generate a complete modeling file, like `modeling_bert.py`, from the modular file like `modular_bert.py`. If a model has a modular file, the modeling file should never be edited directly! Instead, changes should be made in the modular file, and then you should run `make fixup` to update the modeling file automatically.'
+  source:
+    path: .github/copilot-instructions.md
+    lines: 27-29
+    commit: 74a2a4d0c790788a3b65b975510577f8dc6e81d5
+  evidence: Gold patch edits both modular and modeling files together and the modular-conversion test stays green.
+  category: architecture
+  verification: programmatic
+- rule: Code style is enforced in the CI. You can install the style tools with `pip install -e .[quality]`. You can then run `make fixup` to apply style and consistency fixes to your code.
+  source:
+    path: .github/copilot-instructions.md
+    lines: '17'
+    commit: 74a2a4d0c790788a3b65b975510577f8dc6e81d5
+  evidence: Gold patch also removes the unused `use_kernelized_func` import, keeping files ruff-clean (no F401).
+  category: style
+  verification: programmatic
+distractors: []

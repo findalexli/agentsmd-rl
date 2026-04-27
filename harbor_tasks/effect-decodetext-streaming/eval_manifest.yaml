@@ -1,0 +1,90 @@
+version: '2.0'
+source:
+  owner: Effect-TS
+  repo: effect
+  pr_number: 6040
+  pr_url: https://github.com/Effect-TS/effect/pull/6040
+  base_commit: 904e055143ad74b1e4cd25429f44e7a3e86db5dc
+  merge_commit: a8c436f7004cc2a8ce2daec589ea7256b91c324f
+  title: Fix Stream.decodeText to correctly handle multi-byte UTF-8 characters split across chunk boundaries
+  pr: 6040
+task:
+  name: effect-decodetext-streaming
+  difficulty: easy
+  language: typescript
+checks:
+- id: test_decodeText_split_4byte_emoji
+  type: fail_to_pass
+  origin: repo_tests
+  description: A 4-byte UTF-8 character (e.g. 🌍) split across two chunks must round-trip through Stream.decodeText().
+  source:
+    path: https://github.com/Effect-TS/effect/pull/6040/files
+    lines: ''
+    commit: ''
+- id: test_decodeText_split_3byte_euro
+  type: fail_to_pass
+  origin: repo_tests
+  description: A 3-byte UTF-8 character (e.g. €) split across two chunks must round-trip through Stream.decodeText().
+- id: test_decodeText_split_2byte_ntilde
+  type: fail_to_pass
+  origin: repo_tests
+  description: A 2-byte UTF-8 character (e.g. ñ) split across two chunks must round-trip through Stream.decodeText().
+- id: test_decodeText_split_ascii_prefix_emoji
+  type: fail_to_pass
+  origin: repo_tests
+  description: ASCII prefix followed by a multi-byte char split mid-byte must round-trip through Stream.decodeText().
+- id: test_existing_encoding_round_trip
+  type: pass_to_pass
+  origin: repo_tests
+  description: The pre-existing Stream.decodeText/encodeText round-trip test must still pass.
+- id: test_effect_package_typechecks
+  type: pass_to_pass
+  origin: repo_tests
+  description: The effect package's TypeScript build (`pnpm check`) must succeed with zero errors.
+- id: test_eslint_clean_on_changed_sources
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint must report no errors on the modified source and test files.
+rubric:
+- id: rule_no_manual_index_edit
+  source:
+    commit: 904e055143ad74b1e4cd25429f44e7a3e86db5dc
+    ref: Code Style Guidelines › Barrel files
+    path: AGENTS.md
+  rule: Barrel `index.ts` files are auto-generated; the agent must not manually edit them. Use `pnpm codegen` to regenerate after structural changes.
+- id: rule_changeset_present
+  source:
+    commit: 904e055143ad74b1e4cd25429f44e7a3e86db5dc
+    ref: Changesets
+    path: AGENTS.md
+  rule: The PR includes a changeset under `.changeset/` describing the fix (effect-team requires this for all PRs touching package source).
+- id: rule_reduce_comments
+  source:
+    commit: 904e055143ad74b1e4cd25429f44e7a3e86db5dc
+    ref: Core Principles › Reduce comments
+    path: AGENTS.md
+  rule: New comments should be avoided unless they explain unusual or complex logic. Prefer self-describing code; trivial inline comments are unwanted.
+- id: rule_clarity_over_cleverness
+  source:
+    commit: 904e055143ad74b1e4cd25429f44e7a3e86db5dc
+    ref: Core Principles › Clarity over Cleverness
+    path: AGENTS.md
+  rule: Choose clear, maintainable solutions over clever or terse ones; the fix should be straightforward to read and review.
+- id: rule_use_it_effect_for_tests
+  source:
+    commit: 904e055143ad74b1e4cd25429f44e7a3e86db5dc
+    ref: Testing › it.effect Testing Pattern
+    path: AGENTS.md
+  rule: Effect-based tests must use `it.effect` from `@effect/vitest`, not `Effect.runSync` with vitest's own `it`. Imports must come from `@effect/vitest`, and `assert` (from `@effect/vitest/utils`) is used instead of `expect`.
+- id: rule_match_existing_patterns
+  source:
+    commit: 904e055143ad74b1e4cd25429f44e7a3e86db5dc
+    ref: Code Style Guidelines / Testing
+    path: AGENTS.md
+  rule: Before adding new code (or new tests), look at existing code in the repository and follow established patterns. Tests live in `packages/*/test/` for their respective package.
+- id: rule_no_scratchpad_left_behind
+  source:
+    commit: 904e055143ad74b1e4cd25429f44e7a3e86db5dc
+    ref: Running test code
+    path: AGENTS.md
+  rule: Throw-away exploration files belong under `scratchpad/` and must be deleted before submission; they should not be committed alongside the fix.

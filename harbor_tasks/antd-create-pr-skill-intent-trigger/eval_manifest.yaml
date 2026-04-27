@@ -1,0 +1,175 @@
+version: '2.0'
+task:
+  name: antd-create-pr-skill-intent-trigger
+  kind: markdown_authoring
+  title: Refine create-pr skill to trigger by intent, not by fixed phrase list
+source:
+  repo: ant-design/ant-design
+  pr_number: 57559
+  pr_url: https://github.com/ant-design/ant-design/pull/57559
+  base_commit: 2d82b0ce914c1628109073fa9fca666b168969ad
+  merge_commit: 0a0bc50f57f95c326ab180c721c66357105496ec
+  primary_files:
+  - .agents/skills/create-pr/SKILL.md
+  pr: 57559
+checks:
+- id: test_description_uses_intent_phrasing
+  type: fail_to_pass
+  origin: pr_diff
+  description: Frontmatter description contains the literal English phrase "Judge by intent rather than fixed phrases".
+- id: test_old_description_phrasing_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: Old enumerated trigger-situation wording is removed from the frontmatter description.
+- id: test_trigger_section_heading_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: The "## 触发场景" section heading no longer exists.
+- id: test_old_trigger_phrase_list_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: The hard-coded list of Chinese/English trigger phrases (and the "这类短句默认表示…" paragraph) is removed.
+- id: test_intent_section_added
+  type: fail_to_pass
+  origin: pr_diff
+  description: A new "### 一、按意图触发，不按短语触发" subsection is added at the top of "## 基本规则".
+- id: test_intent_section_explains_intent
+  type: fail_to_pass
+  origin: pr_diff
+  description: The new intent subsection explains intent-based triggering and instructs not to limit triggering to fixed phrases.
+- id: test_rules_renumbered_to_two_through_seven
+  type: fail_to_pass
+  origin: pr_diff
+  description: The six existing rule subsections are renumbered from 一-六 to 二-七, with bodies otherwise unchanged.
+- id: test_old_rule_numbering_replaced
+  type: fail_to_pass
+  origin: pr_diff
+  description: The pre-PR rule headings (numbered 一-六 over the original six rules) no longer appear.
+- id: test_skill_md_yaml_frontmatter_valid
+  type: pass_to_pass
+  origin: static
+  description: The file still parses as YAML frontmatter + markdown; the `name` key is still `antd-create-pr` and `description` is a non-trivial string.
+- id: test_skill_md_basic_structure_preserved
+  type: pass_to_pass
+  origin: static
+  description: Top-level H1 and major H2 sections (目标 / 基本规则 / 执行步骤 / 写法要求) are still present.
+config_edits:
+- region: frontmatter.description
+  path: .agents/skills/create-pr/SKILL.md
+  gold_added: 'Use this skill when the user asks to create/open a PR, draft PR
+
+    title/body, summarize branch changes for a PR, or otherwise prepare
+
+    PR content. Judge by intent rather than fixed phrases; short colloquial
+
+    requests still count if they are about creating a PR rather than
+
+    discussing PR concepts.
+
+    '
+  gold_removed: 'Use when the user asks to create a PR, open a pull request, write PR
+
+    title/body, summarize branch changes for a PR, or prepare an ant-design
+
+    PR in Chinese or English.
+
+    '
+- region: section "## 触发场景"
+  path: .agents/skills/create-pr/SKILL.md
+  gold_added: ''
+  gold_removed: '## 触发场景
+
+
+    当用户提及以下任一情况时使用本 skill：
+
+
+    - 创建 PR、发起 pull request
+
+    - 写 PR 标题或 PR 描述
+
+    - 总结当前分支改动用于提 PR
+
+    - 用 `gh pr create` 为 `ant-design` 开 PR
+
+
+    如果用户只输入很短的口语化指令，也应直接触发本 skill，不要因为信息太少而跳过。例如：
+
+    - 中文：`创建pr`、`创建 PR`、`开pr`、`开个pr`、`提pr`、`提个pr`、`帮我提个pr`、`发pr`、`写pr`、`准备pr`。
+
+    - 英文：`create pr`、`create a pr`、`open pr`、`open a pr`、`submit pr`、`send pr`、`draft pr`、`prepare pr`、`help me create a pr`、`open a pull request`。
+
+
+    这类短句默认表示：先分析当前分支改动并整理待确认的 `base`、`title`、`body` 草稿，等用户确认后再真正创建 PR。
+
+    '
+- region: section "## 基本规则" — new first subsection
+  path: .agents/skills/create-pr/SKILL.md
+  gold_added: '### 一、按意图触发，不按短语触发
+
+
+    只要能判断用户是在请求创建 PR，或为创建 PR 做准备，就应使用本 skill。
+
+
+    不要把触发限制成固定说法。即使用户表达很短、很口语，或要求不完整，只要不是在单纯讨论 PR 概念，也应进入本 skill 的工作流。
+
+    '
+  gold_removed: ''
+- region: section "## 基本规则" — rule renumbering
+  path: .agents/skills/create-pr/SKILL.md
+  gold_added: '### 二、必须以仓库模板为准
+
+    ### 三、模板语言由用户习惯决定，但标题固定英文
+
+    ### 四、先分析分支，再写 PR
+
+    ### 五、先给草稿，后创建 PR
+
+    ### 六、标题和正文要分工明确
+
+    ### 七、信息不足时不要硬写
+
+    '
+  gold_removed: '### 一、必须以仓库模板为准
+
+    ### 二、模板语言由用户习惯决定，但标题固定英文
+
+    ### 三、先分析分支，再写 PR
+
+    ### 四、先给草稿，后创建 PR
+
+    ### 五、标题和正文要分工明确
+
+    ### 六、信息不足时不要硬写
+
+    '
+rubric:
+- id: preserves_template_authority_rule
+  source:
+    lines: 35-40
+    path: .agents/skills/create-pr/SKILL.md
+    commit: 2d82b0ce914c1628109073fa9fca666b168969ad
+  rule: The file's "must use the repo's official PR templates" rule is still present and references both `.github/PULL_REQUEST_TEMPLATE_CN.md` and `.github/PULL_REQUEST_TEMPLATE.md`. The PR is a refactor of the trigger guidance only — template authority must remain a stated rule.
+- id: preserves_chinese_writing_style
+  source:
+    lines: 33-100
+    path: .agents/skills/create-pr/SKILL.md
+    commit: 2d82b0ce914c1628109073fa9fca666b168969ad
+  rule: The new intent-triggering subsection is written in Simplified Chinese and matches the surrounding tone (concise imperative bullet/paragraph style, no emojis, no English mixed-in body sentences). The surrounding file is fully Chinese in the rules sections.
+- id: preserves_intent_distinction_from_concept_discussion
+  source:
+    lines: 27-31
+    path: .agents/skills/create-pr/SKILL.md
+    commit: 2d82b0ce914c1628109073fa9fca666b168969ad
+  rule: The new triggering rule still draws the line between "user asks to create a PR" (skill activates) and "user is discussing PR concepts" (skill does not activate). This nuance is the whole motivation of the PR; an edit that removes the phrase list but also drops this distinction loses the rule's intent.
+- id: preserves_objective_section_unchanged
+  source:
+    lines: 8-16
+    path: .agents/skills/create-pr/SKILL.md
+    commit: 2d82b0ce914c1628109073fa9fca666b168969ad
+  rule: The "## 目标" section (lines 8-16 at base) is not modified. The PR scope is strictly the trigger-guidance refactor; the four objectives bullet list must be left exactly as-is.
+- id: rule_bodies_unchanged_only_numerals_shift
+  source:
+    lines: 33-100
+    path: .agents/skills/create-pr/SKILL.md
+    commit: 2d82b0ce914c1628109073fa9fca666b168969ad
+  rule: Under each renumbered rule, the body content (paragraphs, bullets, examples) is unchanged from the base file. Only the leading Chinese numeral in each `### ...` heading shifts (一→二, 二→三, …, 六→七).

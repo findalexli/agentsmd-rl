@@ -1,0 +1,87 @@
+version: '2.0'
+source:
+  owner: BerriAI
+  repo: litellm
+  pr_number: 25107
+  base_commit: 50a52f62e3ad8c903068fdd580b98eb7adc30918
+  merge_commit: 0575c3f96c68f48b9005c663094e8346ccceded2
+  pr_url: https://github.com/BerriAI/litellm/pull/25107
+  pr_title: 'fix(ui): add paginated team search to usage page filter'
+  pr: 25107
+task:
+  name: litellm-team-multi-select-usage-filter
+  primary_files:
+  - ui/litellm-dashboard/src/components/UsagePage/components/EntityUsage/EntityUsage.tsx
+  - ui/litellm-dashboard/src/components/common_components/team_multi_select.tsx
+  language: typescript
+  framework: nextjs
+checks:
+- id: test_team_multi_select_renders_multi_select
+  type: fail_to_pass
+  origin: pr_diff
+  description: TeamMultiSelect renders an antd Select in mode='multiple' (DOM has .ant-select-multiple).
+- id: test_team_multi_select_has_search_input
+  type: fail_to_pass
+  origin: pr_diff
+  description: TeamMultiSelect renders a real <input> inside the multi-select (showSearch is on).
+- id: test_team_multi_select_calls_use_infinite_teams
+  type: fail_to_pass
+  origin: pr_diff
+  description: TeamMultiSelect calls useInfiniteTeams with the page size as the first positional argument.
+- id: test_team_multi_select_renders_placeholder
+  type: fail_to_pass
+  origin: pr_diff
+  description: Default placeholder 'Search teams by alias...' is rendered.
+- id: test_team_multi_select_renders_team_options
+  type: fail_to_pass
+  origin: pr_diff
+  description: Team aliases supplied via the useInfiniteTeams hook are visible in the popup options.
+- id: test_team_multi_select_does_not_import_tremor
+  type: fail_to_pass
+  origin: agent_config
+  description: The new common component does not import any @tremor/... module (Tremor is deprecated for new UI).
+  source:
+    commit: 50a52f62e3ad8c903068fdd580b98eb7adc30918
+    excerpt: Tremor is DEPRECATED, do not use Tremor components in new features/changes
+    path: AGENTS.md
+- id: test_entity_usage_team_renders_filter_by_team
+  type: fail_to_pass
+  origin: pr_diff
+  description: EntityUsage with entityType='team' renders the 'Filter by team' label, embeds an antd multi-select, and disables the legacy UsageExportHeader filter.
+- id: test_entity_usage_non_team_no_filter_by_team
+  type: fail_to_pass
+  origin: pr_diff
+  description: EntityUsage with non-team entityType (e.g. 'tag') does NOT render the 'Filter by team' label.
+- id: test_p2p_spend_by_provider_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Sibling SpendByProvider.test.tsx (same directory as EntityUsage) still passes after the change.
+- id: test_p2p_team_dropdown_unchanged
+  type: pass_to_pass
+  origin: repo_tests
+  description: The single-select team_dropdown.tsx component does not gain mode='multiple'.
+rubric:
+- id: new_ui_in_common_components
+  source:
+    commit: 50a52f62e3ad8c903068fdd580b98eb7adc30918
+    excerpt: Use Common Components as much as possible — usually defined in the common_components directory
+    path: AGENTS.md
+  rule: New shared UI components are placed under src/components/common_components/ per AGENTS.md.
+- id: no_tremor_in_new_ui
+  source:
+    commit: 50a52f62e3ad8c903068fdd580b98eb7adc30918
+    excerpt: Tremor is DEPRECATED, do not use Tremor components in new features/changes
+    path: AGENTS.md
+  rule: Any new component file must not import from @tremor/.
+- id: ui_backend_contract_match
+  source:
+    commit: 50a52f62e3ad8c903068fdd580b98eb7adc30918
+    excerpt: When wiring a new UI entity type to an existing backend endpoint, verify the backend API contract (single value vs. array, required vs. optional params) and ensure the UI controls match
+    path: CLAUDE.md
+  rule: Multi-select control matches the backend contract that accepts an array of team IDs (selectedTags is string[]).
+- id: prefer_paginated_v2_endpoint
+  source:
+    commit: 50a52f62e3ad8c903068fdd580b98eb7adc30918
+    excerpt: Use Common Components as much as possible — usually defined in the common_components directory
+    path: AGENTS.md
+  rule: Server-side search/pagination uses the existing useInfiniteTeams hook (paginated v2 list) rather than a new ad-hoc fetch.

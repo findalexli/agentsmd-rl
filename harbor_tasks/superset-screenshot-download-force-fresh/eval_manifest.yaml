@@ -1,0 +1,68 @@
+version: '2.0'
+task:
+  name: superset-screenshot-download-force-fresh
+  title: Dashboard screenshot downloads always generate fresh images
+  kind: code_fix
+  difficulty: easy
+  estimated_minutes: 25
+  tags:
+  - typescript
+  - react
+  - frontend
+  - bug-fix
+source:
+  owner: apache
+  repo: superset
+  pr_number: 38880
+  pr_url: https://github.com/apache/superset/pull/38880
+  base_commit: da371217ef689b07bce5a056a8aea0dffe5c3f5a
+  merge_commit: 1462ac92823bfb53d48b67604d8ba813f69738e0
+  pr: 38880
+target_files:
+- superset-frontend/src/dashboard/hooks/useDownloadScreenshot.ts
+checks:
+- id: test_post_endpoint_requests_fresh_screenshot
+  type: fail_to_pass
+  origin: pr_diff
+  description: Downloading a dashboard screenshot must request a fresh image (force=true / force:!t in some encoding) in the cache endpoint URL.
+- id: test_post_endpoint_targets_cache_dashboard_screenshot
+  type: pass_to_pass
+  origin: pr_diff
+  description: Hook keeps posting to the cache_dashboard_screenshot endpoint.
+- id: test_post_endpoint_includes_dashboard_id
+  type: pass_to_pass
+  origin: pr_diff
+  description: Hook keeps interpolating the dashboard id into the URL path.
+- id: test_hook_has_apache_license_header
+  type: pass_to_pass
+  origin: agent_config
+  description: AGENTS.md requires Apache 2.0 license headers on source files.
+  source:
+    lines: 90-92
+    commit: da371217ef689b07bce5a056a8aea0dffe5c3f5a
+    path: AGENTS.md
+rubric:
+- id: no_any_types_introduced
+  source:
+    lines: 32, 78
+    commit: da371217ef689b07bce5a056a8aea0dffe5c3f5a
+    path: AGENTS.md
+  rule: AGENTS.md and .cursor/rules/dev-standard.mdc both require avoiding TypeScript ``any``. The fix must not add ``any`` casts on the URL construction line.
+- id: keep_functional_hook_style
+  source:
+    lines: '79'
+    commit: da371217ef689b07bce5a056a8aea0dffe5c3f5a
+    path: AGENTS.md
+  rule: 'AGENTS.md: ''Functional components with hooks''. The fix should remain inside the existing hook (no class component, no global mutation) and keep the existing useCallback/useEffect/useRef pattern.'
+- id: superset_ui_core_for_http
+  source:
+    lines: 33, 80
+    commit: da371217ef689b07bce5a056a8aea0dffe5c3f5a
+    path: AGENTS.md
+  rule: 'AGENTS.md: ''Use @superset-ui/core''. The HTTP call must continue to go through SupersetClient (from @superset-ui/core), not raw fetch or axios.'
+- id: timeless_code_comments
+  source:
+    lines: 94-96
+    commit: da371217ef689b07bce5a056a8aea0dffe5c3f5a
+    path: AGENTS.md
+  rule: 'AGENTS.md: avoid time-specific language (''now'', ''currently'', ''today'') in any new comments added by the fix.'

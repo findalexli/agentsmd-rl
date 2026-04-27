@@ -1,0 +1,143 @@
+version: '2.0'
+source:
+  repo: anomalyco/opencode
+  pr: 23162
+  base_commit: dc16013b4f0aa5e4d3eb433046965e1274da3990
+  merge_commit: b1307d5c2a41c12d6696b31fe46bea7882993753
+task:
+  kind: code_fix
+checks:
+- id: test_console_state_zod_parse_valid
+  type: fail_to_pass
+  origin: pr_diff
+  description: ConsoleState.zod accepts a well-formed payload.
+- id: test_console_state_zod_rejects_invalid
+  type: fail_to_pass
+  origin: pr_diff
+  description: ConsoleState.zod rejects payloads that violate the shape.
+- id: test_console_state_make_constructs_instance
+  type: fail_to_pass
+  origin: pr_diff
+  description: ConsoleState.make({...}) builds an instance — Schema.Class semantics.
+- id: test_skills_zod_parse_valid
+  type: fail_to_pass
+  origin: pr_diff
+  description: ConfigSkills.Info.zod parses well-formed skill config.
+- id: test_skills_zod_rejects_invalid
+  type: fail_to_pass
+  origin: pr_diff
+  description: ConfigSkills.Info.zod rejects malformed input.
+- id: test_formatter_zod_parse_boolean
+  type: fail_to_pass
+  origin: pr_diff
+  description: ConfigFormatter.Info.zod accepts a boolean (union member).
+- id: test_formatter_zod_parse_record_of_entries
+  type: fail_to_pass
+  origin: pr_diff
+  description: ConfigFormatter.Info.zod accepts a record-of-Entry.
+- id: test_formatter_entry_zod_validates
+  type: fail_to_pass
+  origin: pr_diff
+  description: ConfigFormatter.Entry exposes a working .zod accessor.
+- id: test_config_consumers_use_zod_accessor
+  type: fail_to_pass
+  origin: pr_diff
+  description: config.ts consumers call .zod.optional() on the migrated schemas.
+- id: test_experimental_route_uses_zod_accessor
+  type: fail_to_pass
+  origin: pr_diff
+  description: experimental route passes ConsoleState.zod to resolver().
+- id: test_repo_effect_zod_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's own test/util/effect-zod.test.ts continues to pass.
+rubric:
+- rule: Use `Schema.Class` for multi-field data.
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: '89'
+    commit: dc16013b4f0aa5e4d3eb433046965e1274da3990
+  evidence: ConsoleState (endpoint-response DTO) is implemented with Schema.Class producing a named $ref for OpenAPI / SDK export.
+  category: architecture
+  verification: llm_judge
+- rule: Use `Schema.Class` for structured data.
+  source:
+    path: packages/opencode/specs/effect/schema.md
+    lines: '15'
+    commit: dc16013b4f0aa5e4d3eb433046965e1274da3990
+  evidence: Skills.Info and Formatter.Info/Entry use Schema.Struct(...).pipe(withStatics(...)) — anonymous schemas for nested-only types that should not generate SDK refs.
+  category: architecture
+  verification: llm_judge
+- rule: Use `@/util/effect-zod` for all Schema -> Zod conversion. Prefer one canonical schema definition.
+  source:
+    path: packages/opencode/specs/effect/schema.md
+    lines: 97-98
+    commit: dc16013b4f0aa5e4d3eb433046965e1274da3990
+  evidence: Every migrated schema derives .zod from zod() in @/util/effect-zod — no hand-written parallel Zod definitions.
+  category: architecture
+  verification: llm_judge
+- rule: Do not use `export namespace Foo { ... }` for module organization. It is not standard ESM, it prevents tree-shaking, and it breaks Node's native TypeScript runner. Use flat top-level exports combined with a self-reexport at the bottom of the file
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: 14-17
+    commit: dc16013b4f0aa5e4d3eb433046965e1274da3990
+  evidence: Migrated files keep flat top-level exports plus self-reexport; no export namespace introduced.
+  category: naming
+  verification: llm_judge
+- rule: Prefer `const` over `let`. Use ternaries or early returns instead of reassignment.
+  source:
+    path: AGENTS.md
+    lines: '45'
+    commit: dc16013b4f0aa5e4d3eb433046965e1274da3990
+  evidence: Migrated code uses const, no else-after-return, dot notation; no unnecessary destructuring.
+  category: style
+  verification: llm_judge
+- rule: Avoid using the `any` type
+  source:
+    path: AGENTS.md
+    lines: '13'
+    commit: dc16013b4f0aa5e4d3eb433046965e1274da3990
+  evidence: No any introduced in migrated code; Effect Schema inferred types flow through to consumers.
+  category: style
+  verification: llm_judge
+- rule: Effect Schema owns the type. `.zod` exists only as a compatibility surface.
+  source:
+    path: packages/opencode/specs/effect/schema.md
+    lines: 60-61
+    commit: dc16013b4f0aa5e4d3eb433046965e1274da3990
+  evidence: config.ts and experimental.ts consume .zod at Zod boundaries only; no parallel Zod schemas created.
+  category: architecture
+  verification: llm_judge
+distractors:
+- rule: Use `Schema.Class` for structured data.
+  source:
+    path: packages/opencode/specs/effect/schema.md
+    lines: '15'
+    commit: dc16013b4f0aa5e4d3eb433046965e1274da3990
+  collision_type: scope_ambiguity
+  why_distracting: Suggests Schema.Class for all structured data, but nested-only schemas (Skills.Info, Formatter.Info) must use Schema.Struct to avoid bloating SDK types.
+  severity: high
+- rule: Exported `Info` / `Input` / `Output` types use `Schema.Class` where appropriate
+  source:
+    path: packages/opencode/specs/effect/schema.md
+    lines: '89'
+    commit: dc16013b4f0aa5e4d3eb433046965e1274da3990
+  collision_type: rule_conflict
+  why_distracting: Checklist pushes Schema.Class for Info types, but Skills.Info and Formatter.Info are nested-only and should use Schema.Struct.
+  severity: high
+- rule: Do not use `export namespace Foo { ... }` for module organization. It is not standard ESM, it prevents tree-shaking, and it breaks Node's native TypeScript runner. Use flat top-level exports combined with a self-reexport at the bottom of the file
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: 14-17
+    commit: dc16013b4f0aa5e4d3eb433046965e1274da3990
+  collision_type: rule_conflict
+  why_distracting: Says self-reexport at bottom, but src/config convention (AGENTS.md:85) places it at top — model may move existing exports.
+  severity: medium
+- rule: Use `Schema.TaggedErrorClass` for typed errors.
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: '91'
+    commit: dc16013b4f0aa5e4d3eb433046965e1274da3990
+  collision_type: meta_confusion
+  why_distracting: Adjacent Effect rule that is irrelevant to this schema migration — model may try to introduce error classes unnecessarily.
+  severity: low

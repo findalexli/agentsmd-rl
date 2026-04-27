@@ -1,0 +1,131 @@
+version: '2.0'
+task:
+  name: prime-rl-max-total-completion-tokens
+  title: Add max_total_completion_tokens to EnvConfig and rename sampling max_tokens
+  kind: code_fix
+source:
+  repo: PrimeIntellect-ai/prime-rl
+  pr_number: 2206
+  pr_url: https://github.com/PrimeIntellect-ai/prime-rl/pull/2206
+  base_commit: ecf1ae22746d1a956e666d2c5675a9ac1882490f
+  merge_commit: 4b0fc356d9b277e9723a3736fee2cd605696151d
+  primary_files:
+  - src/prime_rl/configs/orchestrator.py
+  - src/prime_rl/orchestrator/eval_utils.py
+  pr: 2206
+checks:
+- id: test_envconfig_has_max_total_completion_tokens_field
+  type: fail_to_pass
+  origin: pr_diff
+  description: EnvConfig exposes a new max_total_completion_tokens field with default -1.
+- id: test_envconfig_auto_populates_extra_env_kwargs
+  type: fail_to_pass
+  origin: pr_diff
+  description: After validation, EnvConfig.extra_env_kwargs[max_total_completion_tokens] equals the field value across multiple inputs.
+- id: test_envconfig_propagates_through_evalenvconfig
+  type: fail_to_pass
+  origin: pr_diff
+  description: EvalEnvConfig (subclass of EnvConfig) inherits the auto-population behavior.
+- id: test_sampling_config_has_max_completion_tokens
+  type: fail_to_pass
+  origin: pr_diff
+  description: SamplingConfig has the renamed field max_completion_tokens and no longer defines max_tokens directly.
+- id: test_sampling_config_max_tokens_alias_for_backwards_compat
+  type: fail_to_pass
+  origin: pr_diff
+  description: SamplingConfig still accepts the legacy max_tokens keyword via a Pydantic validation alias.
+- id: test_eval_sampling_config_has_max_completion_tokens
+  type: fail_to_pass
+  origin: pr_diff
+  description: EvalSamplingConfig has the renamed field max_completion_tokens.
+- id: test_eval_sampling_config_max_tokens_alias
+  type: fail_to_pass
+  origin: pr_diff
+  description: EvalSamplingConfig still accepts the legacy max_tokens keyword.
+- id: test_max_tokens_emits_deprecation_warning
+  type: fail_to_pass
+  origin: agent_config
+  description: Using the legacy max_tokens keyword emits a deprecation warning that mentions both the old name and the new max_completion_tokens.
+  source:
+    lines: 73-73
+    commit: ecf1ae22746d1a956e666d2c5675a9ac1882490f
+    path: skills/config/SKILL.md
+- id: test_eval_sampling_args_uses_new_key
+  type: fail_to_pass
+  origin: pr_diff
+  description: get_eval_sampling_args emits 'max_completion_tokens' (not 'max_tokens') in its output dict.
+- id: test_envconfig_user_can_override_extra_env_kwargs_max_total
+  type: fail_to_pass
+  origin: pr_diff
+  description: When a user supplies stale extra_env_kwargs, the field-level value still overrides it (single source of truth).
+- id: test_envconfig_validate_env_name_still_works
+  type: pass_to_pass
+  origin: repo_tests
+  description: Pre-existing validate_env_name validator continues to reject reserved name "all".
+- id: test_envconfig_default_id_still_works
+  type: pass_to_pass
+  origin: repo_tests
+  description: EnvConfig with all defaults still constructs successfully.
+- id: test_pyproject_verifiers_rev_is_short_hash
+  type: pass_to_pass
+  origin: agent_config
+  description: pyproject.toml verifiers git rev is a 7-character commit hash per AGENTS.md rule on git dependency pins. Agents must keep this constraint when bumping the rev.
+  source:
+    lines: 34-34
+    commit: ecf1ae22746d1a956e666d2c5675a9ac1882490f
+    path: AGENTS.md
+rubric:
+- id: deprecation_message_quality
+  source:
+    lines: 73-73
+    commit: ecf1ae22746d1a956e666d2c5675a9ac1882490f
+    path: skills/config/SKILL.md
+  rule: 'Per skills/config/SKILL.md "Deprecation": when renaming or removing config fields, the deprecation warning must
+
+    provide a clear migration path. The warning emitted on legacy `max_tokens` use should explicitly name the new
+
+    field `max_completion_tokens` so users can update without guessing.
+
+    '
+- id: minimal_try_except
+  source:
+    lines: 5-5
+    commit: ecf1ae22746d1a956e666d2c5675a9ac1882490f
+    path: AGENTS.md
+  rule: 'Per AGENTS.md "Minimal try/except": let errors propagate. The implementation should not wrap the alias /
+
+    deprecation logic in a broad try/except that hides genuine validation errors.
+
+    '
+- id: targeted_comments
+  source:
+    lines: 6-6
+    commit: ecf1ae22746d1a956e666d2c5675a9ac1882490f
+    path: AGENTS.md
+  rule: 'Per AGENTS.md "Targeted comments": comments should be sparse and clarify ambiguous logic only. The diff should
+
+    not include narrative comments describing what the change is doing or referring to the legacy field.
+
+    '
+- id: changelog_entry_present
+  source:
+    lines: 1-3
+    commit: ecf1ae22746d1a956e666d2c5675a9ac1882490f
+    path: CHANGELOG.md
+  rule: 'Per the CHANGELOG.md convention at the top of that file, user-facing config schema changes (added/renamed
+
+    fields, deprecations) should be documented as a bullet entry. Both the new field and the rename should be
+
+    noted.
+
+    '
+- id: tests_use_plain_functions
+  source:
+    lines: 44-44
+    commit: ecf1ae22746d1a956e666d2c5675a9ac1882490f
+    path: AGENTS.md
+  rule: 'Per AGENTS.md "Testing": if the agent adds tests, they must be plain functions with pytest fixtures (no
+
+    class-based tests). This is a soft preference — flag class-based tests as a violation.
+
+    '

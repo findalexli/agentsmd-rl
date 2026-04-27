@@ -1,0 +1,390 @@
+diff --git a/Cargo.lock b/Cargo.lock
+index 85e8c53484..75066a78bb 100644
+--- a/Cargo.lock
++++ b/Cargo.lock
+@@ -4975,8 +4975,10 @@ dependencies = [
+  "datafusion-common",
+  "datafusion-execution",
+  "datafusion-expr",
++ "datafusion-functions",
+  "datafusion-physical-expr",
+  "datafusion-physical-plan",
++ "datafusion-sql",
+  "futures",
+  "half",
+  "hf-hub",
+diff --git a/rust/lancedb/Cargo.toml b/rust/lancedb/Cargo.toml
+index e21ba17bb8..8045f7809b 100644
+--- a/rust/lancedb/Cargo.toml
++++ b/rust/lancedb/Cargo.toml
+@@ -25,7 +25,9 @@ datafusion-catalog.workspace = true
+ datafusion-common.workspace = true
+ datafusion-execution.workspace = true
+ datafusion-expr.workspace = true
++datafusion-functions = "51.0"
+ datafusion-physical-expr.workspace = true
++datafusion-sql = "51.0"
+ datafusion-physical-plan.workspace = true
+ datafusion.workspace = true
+ object_store = { workspace = true }
+diff --git a/rust/lancedb/src/expr.rs b/rust/lancedb/src/expr.rs
+new file mode 100644
+index 0000000000..eafcdd14f1
+--- /dev/null
++++ b/rust/lancedb/src/expr.rs
+@@ -0,0 +1,131 @@
++// SPDX-License-Identifier: Apache-2.0
++// SPDX-FileCopyrightText: Copyright The LanceDB Authors
++
++//! Expression builder API for type-safe query construction
++//!
++//! This module provides a fluent API for building expressions that can be used
++//! in filters and projections. It wraps DataFusion's expression system.
++//!
++//! # Examples
++//!
++//! ```rust
++//! use std::ops::Mul;
++//! use lancedb::expr::{col, lit};
++//!
++//! let expr = col("age").gt(lit(18));
++//! let expr = col("age").gt(lit(18)).and(col("status").eq(lit("active")));
++//! let expr = col("price") * lit(1.1);
++//! ```
++
++mod sql;
++
++pub use sql::expr_to_sql_string;
++
++use std::sync::Arc;
++
++use arrow_schema::DataType;
++use datafusion_expr::{expr_fn::cast, Expr, ScalarUDF};
++use datafusion_functions::string::expr_fn as string_expr_fn;
++
++pub use datafusion_expr::{col, lit};
++
++pub use datafusion_expr::Expr as DfExpr;
++
++pub fn lower(expr: Expr) -> Expr {
++    string_expr_fn::lower(expr)
++}
++
++pub fn upper(expr: Expr) -> Expr {
++    string_expr_fn::upper(expr)
++}
++
++pub fn contains(expr: Expr, search: Expr) -> Expr {
++    string_expr_fn::contains(expr, search)
++}
++
++pub fn expr_cast(expr: Expr, data_type: DataType) -> Expr {
++    cast(expr, data_type)
++}
++
++lazy_static::lazy_static! {
++    static ref FUNC_REGISTRY: std::sync::RwLock<std::collections::HashMap<String, Arc<ScalarUDF>>> = {
++        let mut m = std::collections::HashMap::new();
++        m.insert("lower".to_string(), datafusion_functions::string::lower());
++        m.insert("upper".to_string(), datafusion_functions::string::upper());
++        m.insert("contains".to_string(), datafusion_functions::string::contains());
++        m.insert("btrim".to_string(), datafusion_functions::string::btrim());
++        m.insert("ltrim".to_string(), datafusion_functions::string::ltrim());
++        m.insert("rtrim".to_string(), datafusion_functions::string::rtrim());
++        m.insert("concat".to_string(), datafusion_functions::string::concat());
++        m.insert("octet_length".to_string(), datafusion_functions::string::octet_length());
++        std::sync::RwLock::new(m)
++    };
++}
++
++pub fn func(name: impl AsRef<str>, args: Vec<Expr>) -> crate::Result<Expr> {
++    let name = name.as_ref();
++    let registry = FUNC_REGISTRY
++        .read()
++        .map_err(|e| crate::Error::InvalidInput {
++            message: format!("lock poisoned: {}", e),
++        })?;
++    let udf = registry
++        .get(name)
++        .ok_or_else(|| crate::Error::InvalidInput {
++            message: format!("unknown function: {}", name),
++        })?;
++    Ok(Expr::ScalarFunction(
++        datafusion_expr::expr::ScalarFunction::new_udf(udf.clone(), args),
++    ))
++}
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++
++    #[test]
++    fn test_col_lit_comparisons() {
++        let expr = col("age").gt(lit(18));
++        let sql = expr_to_sql_string(&expr).unwrap();
++        assert!(sql.contains("age") && sql.contains("18"));
++
++        let expr = col("name").eq(lit("Alice"));
++        let sql = expr_to_sql_string(&expr).unwrap();
++        assert!(sql.contains("name") && sql.contains("Alice"));
++    }
++
++    #[test]
++    fn test_compound_expression() {
++        let expr = col("age").gt(lit(18)).and(col("status").eq(lit("active")));
++        let sql = expr_to_sql_string(&expr).unwrap();
++        assert!(sql.contains("age") && sql.contains("status"));
++    }
++
++    #[test]
++    fn test_string_functions() {
++        let expr = lower(col("name"));
++        let sql = expr_to_sql_string(&expr).unwrap();
++        assert!(sql.to_lowercase().contains("lower"));
++
++        let expr = contains(col("text"), lit("search"));
++        let sql = expr_to_sql_string(&expr).unwrap();
++        assert!(sql.to_lowercase().contains("contains"));
++    }
++
++    #[test]
++    fn test_func() {
++        let expr = func("lower", vec![col("x")]).unwrap();
++        let sql = expr_to_sql_string(&expr).unwrap();
++        assert!(sql.to_lowercase().contains("lower"));
++
++        let result = func("unknown_func", vec![col("x")]);
++        assert!(result.is_err());
++    }
++
++    #[test]
++    fn test_arithmetic() {
++        let expr = col("price") * lit(1.1);
++        let sql = expr_to_sql_string(&expr).unwrap();
++        assert!(sql.contains("price"));
++    }
++}
+diff --git a/rust/lancedb/src/expr/sql.rs b/rust/lancedb/src/expr/sql.rs
+new file mode 100644
+index 0000000000..21cd3ab41c
+--- /dev/null
++++ b/rust/lancedb/src/expr/sql.rs
+@@ -0,0 +1,12 @@
++// SPDX-License-Identifier: Apache-2.0
++// SPDX-FileCopyrightText: Copyright The LanceDB Authors
++
++use datafusion_expr::Expr;
++use datafusion_sql::unparser;
++
++pub fn expr_to_sql_string(expr: &Expr) -> crate::Result<String> {
++    let ast = unparser::expr_to_sql(expr).map_err(|e| crate::Error::InvalidInput {
++        message: format!("failed to serialize expression to SQL: {}", e),
++    })?;
++    Ok(ast.to_string())
++}
+diff --git a/rust/lancedb/src/lib.rs b/rust/lancedb/src/lib.rs
+index 81f234fb5d..1ae7c48e21 100644
+--- a/rust/lancedb/src/lib.rs
++++ b/rust/lancedb/src/lib.rs
+@@ -169,6 +169,7 @@ pub mod database;
+ pub mod dataloader;
+ pub mod embeddings;
+ pub mod error;
++pub mod expr;
+ pub mod index;
+ pub mod io;
+ pub mod ipc;
+diff --git a/rust/lancedb/src/query.rs b/rust/lancedb/src/query.rs
+index b1691c8ace..3014769350 100644
+--- a/rust/lancedb/src/query.rs
++++ b/rust/lancedb/src/query.rs
+@@ -359,6 +359,28 @@ pub trait QueryBase {
+     /// on the filter column(s).
+     fn only_if(self, filter: impl AsRef<str>) -> Self;
+ 
++    /// Only return rows which match the filter, using an expression builder.
++    ///
++    /// Use [`crate::expr`] for building type-safe expressions:
++    ///
++    /// ```
++    /// use lancedb::expr::{col, lit};
++    /// use lancedb::query::{QueryBase, ExecutableQuery};
++    ///
++    /// # use lancedb::Table;
++    /// # async fn query(table: &Table) -> Result<(), Box<dyn std::error::Error>> {
++    /// let results = table.query()
++    ///     .only_if_expr(col("age").gt(lit(18)).and(col("status").eq(lit("active"))))
++    ///     .execute()
++    ///     .await?;
++    /// # Ok(())
++    /// # }
++    /// ```
++    ///
++    /// Note: Expression filters are not supported for remote/server-side queries.
++    /// Use [`QueryBase::only_if`] with SQL strings for remote tables.
++    fn only_if_expr(self, filter: datafusion_expr::Expr) -> Self;
++
+     /// Perform a full text search on the table.
+     ///
+     /// The results will be returned in order of BM25 scores.
+@@ -468,6 +490,11 @@ impl<T: HasQuery> QueryBase for T {
+         self
+     }
+ 
++    fn only_if_expr(mut self, filter: datafusion_expr::Expr) -> Self {
++        self.mut_query().filter = Some(QueryFilter::Datafusion(filter));
++        self
++    }
++
+     fn full_text_search(mut self, query: FullTextSearchQuery) -> Self {
+         if self.mut_query().limit.is_none() {
+             self.mut_query().limit = Some(DEFAULT_TOP_K);
+diff --git a/rust/lancedb/src/remote/table.rs b/rust/lancedb/src/remote/table.rs
+index e2096f856f..b33f92f4d3 100644
+--- a/rust/lancedb/src/remote/table.rs
++++ b/rust/lancedb/src/remote/table.rs
+@@ -4,6 +4,7 @@
+ pub mod insert;
+ 
+ use self::insert::RemoteInsertExec;
++use crate::expr::expr_to_sql_string;
+ 
+ use super::client::RequestResultExt;
+ use super::client::{HttpSend, RestfulLanceDbClient, Sender};
+@@ -447,13 +448,17 @@ impl<S: HttpSend> RemoteTable<S> {
+         body["k"] = serde_json::Value::Number(serde_json::Number::from(limit));
+ 
+         if let Some(filter) = &params.filter {
+-            if let QueryFilter::Sql(filter) = filter {
+-                body["filter"] = serde_json::Value::String(filter.clone());
+-            } else {
+-                return Err(Error::NotSupported {
+-                    message: "querying a remote table with a non-sql filter".to_string(),
+-                });
+-            }
++            let filter_sql = match filter {
++                QueryFilter::Sql(sql) => sql.clone(),
++                QueryFilter::Datafusion(expr) => expr_to_sql_string(expr)?,
++                QueryFilter::Substrait(_) => {
++                    return Err(Error::NotSupported {
++                        message: "Substrait filters are not supported for remote queries"
++                            .to_string(),
++                    });
++                }
++            };
++            body["filter"] = serde_json::Value::String(filter_sql);
+         }
+ 
+         match &params.select {
+@@ -941,12 +946,12 @@ impl<S: HttpSend> BaseTable for RemoteTable<S> {
+         let version = self.current_version().await;
+ 
+         if let Some(filter) = filter {
+-            let Filter::Sql(filter) = filter else {
+-                return Err(Error::NotSupported {
+-                    message: "querying a remote table with a datafusion filter".to_string(),
+-                });
++            let filter_sql = match filter {
++                Filter::Sql(sql) => sql.clone(),
++                Filter::Datafusion(expr) => expr_to_sql_string(&expr)?,
+             };
+-            request = request.json(&serde_json::json!({ "predicate": filter, "version": version }));
++            request =
++                request.json(&serde_json::json!({ "predicate": filter_sql, "version": version }));
+         } else {
+             let body = serde_json::json!({ "version": version });
+             request = request.json(&body);
+@@ -4635,4 +4640,60 @@ mod tests {
+         assert_eq!(result.version, 3);
+         assert_eq!(attempt.load(Ordering::SeqCst), 3);
+     }
++
++    #[tokio::test]
++    async fn test_query_with_datafusion_filter() {
++        use datafusion_expr::{col, lit};
++
++        let expected_data = RecordBatch::try_new(
++            Arc::new(Schema::new(vec![Field::new("a", DataType::Int32, false)])),
++            vec![Arc::new(Int32Array::from(vec![1, 2, 3]))],
++        )
++        .unwrap();
++        let expected_data_ref = expected_data.clone();
++
++        let table = Table::new_with_handler("my_table", move |request| {
++            assert_eq!(request.method(), "POST");
++            assert_eq!(request.url().path(), "/v1/table/my_table/query/");
++
++            let body = request.body().unwrap().as_bytes().unwrap();
++            let body: serde_json::Value = serde_json::from_slice(body).unwrap();
++
++            // The Datafusion expression should be serialized to SQL
++            let filter = body.get("filter").expect("filter should be present");
++            let filter_str = filter.as_str().expect("filter should be a string");
++            // col("x") > lit(10) AND col("status") = lit("active")
++            assert!(
++                filter_str.contains("x") && filter_str.contains("10"),
++                "Filter should contain 'x' and '10', got: {}",
++                filter_str
++            );
++            assert!(
++                filter_str.contains("status") && filter_str.contains("active"),
++                "Filter should contain 'status' and 'active', got: {}",
++                filter_str
++            );
++
++            let response_body = write_ipc_file(&expected_data_ref);
++            http::Response::builder()
++                .status(200)
++                .header(CONTENT_TYPE, ARROW_FILE_CONTENT_TYPE)
++                .body(response_body)
++                .unwrap()
++        });
++
++        // Use only_if_expr with a Datafusion expression
++        let expr = col("x").gt(lit(10)).and(col("status").eq(lit("active")));
++        let data = table
++            .query()
++            .only_if_expr(expr)
++            .execute()
++            .await
++            .unwrap()
++            .collect::<Vec<_>>()
++            .await;
++
++        assert_eq!(data.len(), 1);
++        assert_eq!(data[0].as_ref().unwrap(), &expected_data);
++    }
+ }
+diff --git a/rust/lancedb/src/table/query.rs b/rust/lancedb/src/table/query.rs
+index c63d2c79e2..203525180d 100644
+--- a/rust/lancedb/src/table/query.rs
++++ b/rust/lancedb/src/table/query.rs
+@@ -5,6 +5,7 @@ use std::sync::Arc;
+ 
+ use super::NativeTable;
+ use crate::error::{Error, Result};
++use crate::expr::expr_to_sql_string;
+ use crate::query::{
+     QueryExecutionOptions, QueryFilter, QueryRequest, Select, VectorQueryRequest, DEFAULT_TOP_K,
+ };
+@@ -452,14 +453,12 @@ fn convert_to_namespace_query(query: &AnyQuery) -> Result<NsQueryTableRequest> {
+ 
+ fn filter_to_sql(filter: &QueryFilter) -> Result<String> {
+     match filter {
+-            QueryFilter::Sql(sql) => Ok(sql.clone()),
+-            QueryFilter::Substrait(_) => Err(Error::NotSupported {
+-                message: "Substrait filters are not supported for server-side queries".to_string(),
+-            }),
+-            QueryFilter::Datafusion(_) => Err(Error::NotSupported {
+-                message: "Datafusion expression filters are not supported for server-side queries. Use SQL filter instead.".to_string(),
+-            }),
+-        }
++        QueryFilter::Sql(sql) => Ok(sql.clone()),
++        QueryFilter::Substrait(_) => Err(Error::NotSupported {
++            message: "Substrait filters are not supported for server-side queries".to_string(),
++        }),
++        QueryFilter::Datafusion(expr) => expr_to_sql_string(expr),
++    }
+ }
+ 
+ /// Extract query vector(s) from Arrow arrays into the namespace format.

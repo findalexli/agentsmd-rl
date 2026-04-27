@@ -1,0 +1,171 @@
+version: '2.0'
+source:
+  owner: remix-run
+  repo: remix
+  pr_number: 11121
+  base_commit: 1a2974fa4d1787844cfa6881bb10659f18850675
+  merge_commit: 3a245b65c3eee1d02ee81ab0d88adf2949323f8a
+  title: 'fix(component): normalize SVG className to class'
+  url: https://github.com/remix-run/remix/pull/11121
+  pr: 11121
+task:
+  name: remix-component-svg-classname-to-class
+  difficulty: easy
+  tags:
+  - bug-fix
+  - svg
+  - ssr
+  - vdom
+  - typescript
+  estimated_time_minutes: 15
+checks:
+- id: test_ssr_svg_classname_renders_as_class
+  type: fail_to_pass
+  origin: pr_diff
+  description: '`<svg className="icon">` rendered via renderToStream must produce
+
+    class="icon" (and never class-name="icon" or classname="icon").
+
+    '
+- id: test_ssr_svg_classname_full_expected_output
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'End-to-end SSR output for the canonical SVG icon snippet matches the
+
+    exact expected HTML string from the upstream regression test.
+
+    '
+- id: test_ssr_html_classname_still_renders_as_class
+  type: pass_to_pass
+  origin: pr_diff
+  description: 'Non-SVG elements (HTML) continue to map className -> class. Guards
+
+    against the agent breaking the existing HTML mapping while fixing
+
+    the SVG one (e.g., by simply deleting the rule from inside the
+
+    `!isSvg` block without re-adding it above).
+
+    '
+- id: test_vdom_svg_classname_sets_class_attribute
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'In the VDOM diff path, rendering an SVG element with `className`
+
+    must call setAttribute(''class'', value) on the SVGElement, not
+
+    ''class-name'' (camelToKebab fallback).
+
+    '
+- id: test_component_package_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'The component package''s TypeScript typecheck (`pnpm --filter
+
+    @remix-run/component run typecheck`) continues to pass after the
+
+    change.
+
+    '
+- id: test_changes_validate
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'The repo''s `pnpm run changes:validate` script accepts the new
+
+    `packages/component/.changes/patch.fix-svg-classname-mapping.md`
+
+    change file (also passes on the unchanged base).
+
+    '
+rubric:
+- id: imports_use_type_keyword
+  source:
+    commit: 1a2974fa4d1787844cfa6881bb10659f18850675
+    path: AGENTS.md
+  rule: 'Type-only imports must use `import type { X }` syntax (separate from
+
+    value imports). Type-only exports must use `export type { X }`.
+
+    Source ref: AGENTS.md "Code Style > Imports".
+
+    '
+- id: prefer_let_for_locals
+  source:
+    commit: 1a2974fa4d1787844cfa6881bb10659f18850675
+    path: AGENTS.md
+  rule: 'Use `let` for local variables. `const` only at module scope. Never
+
+    `var`.
+
+    Source ref: AGENTS.md "Code Style > Variables".
+
+    '
+- id: no_loops_in_test_describe_blocks
+  source:
+    commit: 1a2974fa4d1787844cfa6881bb10659f18850675
+    path: AGENTS.md
+  rule: 'Tests must not generate cases via `for` loops or `if/switch` inside
+
+    `describe()` blocks. This breaks IDE per-test running.
+
+    Source ref: AGENTS.md "Test Structure".
+
+    '
+- id: comments_only_when_non_obvious
+  source:
+    commit: 1a2974fa4d1787844cfa6881bb10659f18850675
+    path: AGENTS.md
+  rule: 'Only add non-JSDoc comments when the code is doing something
+
+    surprising or non-obvious. Trivial restating of code as a comment
+
+    should be avoided.
+
+    Source ref: AGENTS.md "Code Style > Comments".
+
+    '
+- id: change_file_present_for_user_facing_fix
+  source:
+    commit: 1a2974fa4d1787844cfa6881bb10659f18850675
+    path: AGENTS.md
+  rule: 'A user-facing bug fix in a published package must include a change
+
+    file at `packages/<pkg>/.changes/patch.<short-description>.md`
+
+    describing the fix. The component package is at v0.x but bug fixes
+
+    in v0.x packages should still use a `patch.*.md` change file.
+
+    Source refs: AGENTS.md "Changes and Releases > Adding changes" and
+
+    "Versioning > For v0.x packages".
+
+    '
+- id: do_not_edit_published_changelog
+  source:
+    commit: 1a2974fa4d1787844cfa6881bb10659f18850675
+    path: AGENTS.md
+  rule: 'Do not modify existing entries in `packages/component/CHANGELOG.md`
+
+    (those are for already-released versions). New work goes through a
+
+    change file only.
+
+    Source ref: AGENTS.md "Changes and Releases > Do not edit past
+
+    changelogs".
+
+    '
+- id: prettier_formatting
+  source:
+    commit: 1a2974fa4d1787844cfa6881bb10659f18850675
+    path: AGENTS.md
+  rule: 'Code must match the repo''s Prettier configuration (printWidth: 100,
+
+    no semicolons, single quotes, 2-space indent). New/changed lines
+
+    should produce no diff under `pnpm run format:check`.
+
+    Source ref: AGENTS.md "Code Style > Formatting".
+
+    '

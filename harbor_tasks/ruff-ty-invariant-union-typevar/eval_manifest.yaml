@@ -1,0 +1,137 @@
+version: '2.0'
+task:
+  name: ruff-ty-invariant-union-typevar
+  kind: code_fix
+  title: 'ty: invariant matching of formal union vs inferable typevar'
+source:
+  repo: astral-sh/ruff
+  pr_number: 24698
+  url: https://github.com/astral-sh/ruff/pull/24698
+  base_commit: ae613c5a55b35f9a96ce7d6f4e49b8aafc244d58
+  merge_commit: 9b03f2b2df600c3c854419d6957e4afd20bd4f95
+  pr: 24698
+checks:
+- id: test_constructor_mdtest_passes
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'The `crates/ty_python_semantic/resources/mdtest/call/constructor.md`
+
+    mdtest fixture passes. The PR adds a section "Generic constructor
+
+    inference from overloaded `__init__` self types" whose `reveal_type`
+
+    assertions and overload-resolution diagnostics fail at the base
+
+    commit because invariant matching of a formal union against a bare
+
+    inferable typevar leaves the typevar unsolved.
+
+    '
+- id: test_overloaded_self_section_passes_with_filter
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Same expectations as above but isolated via `MDTEST_TEST_FILTER` to
+
+    the new section header, so this test is robust against unrelated
+
+    regressions in other constructor.md tests.
+
+    '
+- id: test_generics_legacy_mdtests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Existing `crates/ty_python_semantic/resources/mdtest/generics/legacy/*`
+
+    mdtests still pass — guard against fixes that overcorrect and break
+
+    unrelated generic-typevar-inference paths.
+
+    '
+- id: test_ty_python_semantic_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`cargo check -p ty_python_semantic --tests` succeeds. Any code change
+
+    must compile.
+
+    '
+rubric:
+- id: agents_md_let_chains
+  source:
+    lines: '80'
+    commit: ae613c5a55b35f9a96ce7d6f4e49b8aafc244d58
+    path: AGENTS.md
+  weight: 1.0
+  rule: 'AGENTS.md (root): "Prefer let chains (`if let` combined with `&&`) over
+
+    nested `if let` statements to reduce indentation and improve readability."
+
+    The new control flow added to `generics.rs` should use a let chain
+
+    rather than nested `if let` blocks.
+
+    '
+- id: agents_md_avoid_panics
+  source:
+    lines: '79'
+    commit: ae613c5a55b35f9a96ce7d6f4e49b8aafc244d58
+    path: AGENTS.md
+  weight: 1.0
+  rule: 'AGENTS.md (root): "Try hard to avoid patterns that require `panic!`,
+
+    `unreachable!`, or `.unwrap()`." The fix should not introduce any of
+
+    those constructs and should encode constraints in the type system or
+
+    via `match` instead.
+
+    '
+- id: agents_md_purposeful_comments
+  source:
+    lines: '82'
+    commit: ae613c5a55b35f9a96ce7d6f4e49b8aafc244d58
+    path: AGENTS.md
+  weight: 0.7
+  rule: 'AGENTS.md (root): "Use comments purposefully. Don''t use comments to
+
+    narrate code, but do use them to explain invariants and why something
+
+    unusual was done a particular way." The added control flow is subtle
+
+    (a special-case for invariant union vs inferable typevar) and should
+
+    have a comment that explains *why* this branch is needed (the
+
+    spurious-partial-mapping hazard), not what it does.
+
+    '
+- id: agents_md_imports_at_top
+  source:
+    lines: '76'
+    commit: ae613c5a55b35f9a96ce7d6f4e49b8aafc244d58
+    path: AGENTS.md
+  weight: 0.5
+  rule: 'AGENTS.md (root): "Rust imports should always go at the top of the
+
+    file, never locally in functions." Any new `use` introduced by the
+
+    fix must live at the file''s import block, not inside the matched
+
+    arm.
+
+    '
+- id: agents_md_existing_style
+  source:
+    lines: '75'
+    commit: ae613c5a55b35f9a96ce7d6f4e49b8aafc244d58
+    path: AGENTS.md
+  weight: 0.5
+  rule: 'AGENTS.md (root): "Follow existing code style. Check neighboring files
+
+    for patterns." The new branch should match the surrounding match-arm
+
+    style in `SpecializationBuilder` (inline closure-arg passthrough,
+
+    `add_type_mapping` helper usage, `return Ok(())` shape).
+
+    '

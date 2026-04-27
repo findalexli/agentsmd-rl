@@ -1,0 +1,127 @@
+version: '2.0'
+source:
+  repo: openai/openai-agents-js
+  pr_number: 1075
+  pr_url: https://github.com/openai/openai-agents-js/pull/1075
+  base_commit: 4e6b3fbd3355709831a1bb64472b3c947b694690
+  merge_commit: 94c18cd9b7d45e9b61c9e11e86d81c5471612463
+  title: 'fix(agents-core): fold unreleased RunState schema changes into 1.8'
+  pr: 1075
+task:
+  name: agents-js-fold-runstate-1-8
+  primary_files:
+  - packages/agents-core/src/runState.ts
+checks:
+- id: test_current_schema_version_is_one_eight
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'The exported CURRENT_SCHEMA_VERSION constant in agents-core must equal ''1.8''
+
+    after the fix (it is ''1.9'' on the base commit).
+
+    '
+- id: test_serialized_state_uses_one_eight
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Newly serialised RunState payloads must stamp $schemaVersion = ''1.8''.
+
+    '
+- id: test_deserialize_rejects_one_nine
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'RunState.fromString must reject payloads stamped $schemaVersion ''1.9'' with a
+
+    "schema version 1.9 is not supported" error. On the base commit ''1.9'' is
+
+    accepted.
+
+    '
+- id: test_one_eight_payloads_still_round_trip
+  type: pass_to_pass
+  origin: pr_diff
+  description: 'tool_search_call / tool_search_output payloads stamped ''1.8'' continue to
+
+    deserialize correctly. ''1.8'' was already accepted on the base commit and
+
+    must remain accepted after the fix; this guards against the agent over-
+
+    collapsing the schema set and breaking 1.8 in the process.
+
+    '
+- id: test_repo_runstate_vitest_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'The repository''s own packages/agents-core/test/runState.test.ts vitest
+
+    suite passes after the fix.
+
+    '
+- id: test_agents_core_build_check_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Type-checking the agents-core package (`pnpm -F @openai/agents-core
+
+    build-check`, i.e. tsc --noEmit -p tsconfig.test.json) passes — the
+
+    change must not introduce TypeScript regressions in source or tests.
+
+    '
+rubric:
+- id: changeset_added
+  source:
+    lines: '23'
+    commit: 4e6b3fbd3355709831a1bb64472b3c947b694690
+    path: AGENTS.md
+  rule: 'A changeset file (e.g. under .changeset/*.md) covering @openai/agents-core
+
+    must be added because runtime code under packages/agents-core/ changed.
+
+    Per AGENTS.md ($changeset-validation), code changes under packages/ require
+
+    a changeset before handoff. The changeset summary should follow Conventional
+
+    Commit style (e.g. "fix: ...").
+
+    '
+- id: rewrite_unreleased_schema_directly
+  source:
+    lines: 21-29
+    commit: 4e6b3fbd3355709831a1bb64472b3c947b694690
+    path: .agents/skills/implementation-strategy/SKILL.md
+  rule: 'Per .agents/skills/implementation-strategy/SKILL.md, interface changes
+
+    present on `main` but added after the latest release tag are not a semver
+
+    breaking change and may be rewritten directly. The fix should drop the
+
+    unreleased ''1.9'' schema rather than introducing a compatibility shim or
+
+    migration path for it.
+
+    '
+- id: schema_history_comment_updated
+  source:
+    lines: 62-81
+    commit: 4e6b3fbd3355709831a1bb64472b3c947b694690
+    path: packages/agents-core/src/runState.ts
+  rule: 'The Version history JSDoc comment in packages/agents-core/src/runState.ts
+
+    must remain coherent with the actual SUPPORTED_SCHEMA_VERSIONS array. If
+
+    ''1.9'' is removed from the supported set, the corresponding "1.9: Adds
+
+    batched computer actions and GA computer tool aliasing" history entry must
+
+    not be left dangling — its content should fold into the 1.8 entry.
+
+    '
+- id: comment_terminator_period
+  source:
+    lines: '146'
+    commit: 4e6b3fbd3355709831a1bb64472b3c947b694690
+    path: AGENTS.md
+  rule: 'Comments in this repo end with a period (per AGENTS.md "Linting & Formatting"
+
+    conventions). Any comment edits in runState.ts must keep that style.
+
+    '

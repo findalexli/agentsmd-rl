@@ -1,108 +1,84 @@
-version: "1.0"
-
+version: '2.0'
 source:
   type: github_pr
   repo: SeleniumHQ/selenium
   pr_number: 17222
   base_commit: fbe388118cff80484638b724aaec3ee86c6eb0cd
   merge_commit: 1303596bccafc9f39708d8ac61b52424c7d00394
-  title: "[grid] Dynamic Grid Docker configure container stop-grace-period"
-
+  title: '[grid] Dynamic Grid Docker configure container stop-grace-period'
+  pr: 17222
 checks:
-  # Fail-to-pass tests
-  - id: test_docker_options_has_stop_grace_period_constant
-    type: fail_to_pass
-    origin: pr_feature
-    description: DockerOptions defines DEFAULT_STOP_GRACE_PERIOD constant
-
-  - id: test_docker_options_has_get_stop_grace_period_method
-    type: fail_to_pass
-    origin: pr_feature
-    description: DockerOptions has getStopGracePeriod() method with validation
-
-  - id: test_docker_flags_has_stop_grace_period_parameter
-    type: fail_to_pass
-    origin: pr_feature
-    description: DockerFlags defines --docker-stop-grace-period CLI parameter
-
-  - id: test_docker_session_has_timeout_fields
-    type: fail_to_pass
-    origin: pr_feature
-    description: DockerSession has containerStopTimeout and videoContainerStopTimeout fields
-
-  - id: test_docker_session_constructor_accepts_timeouts
-    type: fail_to_pass
-    origin: pr_feature
-    description: DockerSession constructor accepts timeout Duration parameters
-
-  - id: test_docker_session_stop_uses_try_finally
-    type: fail_to_pass
-    origin: pr_feature
-    description: DockerSession.stop() uses try-finally for exception safety
-
-  - id: test_docker_session_stop_uses_configurable_timeout
-    type: fail_to_pass
-    origin: pr_feature
-    description: DockerSession.stop() uses configured timeout instead of hardcoded value
-
-  - id: test_docker_session_factory_has_stop_grace_period
-    type: fail_to_pass
-    origin: pr_feature
-    description: DockerSessionFactory has stopGracePeriod field and passes it to session
-
-  - id: test_docker_session_uses_read_fully_not_skip_bytes
-    type: fail_to_pass
-    origin: pr_feature
-    description: DockerSession.parseMultiplexedStream uses readFully instead of skipBytes
-
-  # Pass-to-pass tests (static file checks)
-  - id: test_java_source_compiles_syntax_check
-    type: pass_to_pass
-    origin: static
-    description: Java source files have valid syntax
-
-  - id: test_docker_session_preserves_existing_fields
-    type: pass_to_pass
-    origin: static
-    description: DockerSession preserves existing container and assetsPath fields
-
-  - id: test_docker_session_calls_super_stop
-    type: pass_to_pass
-    origin: static
-    description: DockerSession.stop() calls super.stop()
-
-  - id: test_docker_options_imports_duration
-    type: pass_to_pass
-    origin: static
-    description: DockerOptions imports java.time.Duration
-
-  - id: test_docker_session_imports_duration
-    type: pass_to_pass
-    origin: static
-    description: DockerSession imports java.time.Duration
-
-  # Pass-to-pass tests (actual repo CI commands)
-  - id: test_repo_bazel_build_docker_module
-    type: pass_to_pass
-    origin: repo_tests
-    description: Bazel build of docker module succeeds
-
-  - id: test_repo_docker_options_unit_test
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo's DockerOptionsTest unit tests pass
-
+- id: test_docker_options_has_stop_grace_period_constant
+  type: fail_to_pass
+  origin: pr_diff
+  description: DockerOptions defines DEFAULT_STOP_GRACE_PERIOD constant
+- id: test_docker_options_has_get_stop_grace_period_method
+  type: fail_to_pass
+  origin: pr_diff
+  description: DockerOptions has getStopGracePeriod() method with validation
+- id: test_docker_flags_has_stop_grace_period_parameter
+  type: fail_to_pass
+  origin: pr_diff
+  description: DockerFlags defines --docker-stop-grace-period CLI parameter
+- id: test_docker_session_has_timeout_fields
+  type: fail_to_pass
+  origin: pr_diff
+  description: DockerSession has containerStopTimeout and videoContainerStopTimeout fields
+- id: test_docker_session_constructor_accepts_timeouts
+  type: fail_to_pass
+  origin: pr_diff
+  description: DockerSession constructor accepts timeout Duration parameters
+- id: test_docker_session_stop_uses_try_finally
+  type: fail_to_pass
+  origin: pr_diff
+  description: DockerSession.stop() uses try-finally for exception safety
+- id: test_docker_session_stop_uses_configurable_timeout
+  type: fail_to_pass
+  origin: pr_diff
+  description: DockerSession.stop() uses configured timeout instead of hardcoded value
+- id: test_docker_session_factory_has_stop_grace_period
+  type: fail_to_pass
+  origin: pr_diff
+  description: DockerSessionFactory has stopGracePeriod field and passes it to session
+- id: test_docker_session_uses_read_fully_not_skip_bytes
+  type: fail_to_pass
+  origin: pr_diff
+  description: DockerSession.parseMultiplexedStream uses readFully instead of skipBytes
+- id: test_java_source_compiles_syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Java source files have valid syntax
+- id: test_docker_session_preserves_existing_fields
+  type: pass_to_pass
+  origin: static
+  description: DockerSession preserves existing container and assetsPath fields
+- id: test_docker_session_calls_super_stop
+  type: pass_to_pass
+  origin: static
+  description: DockerSession.stop() calls super.stop()
+- id: test_docker_options_imports_duration
+  type: pass_to_pass
+  origin: static
+  description: DockerOptions imports java.time.Duration
+- id: test_docker_session_imports_duration
+  type: pass_to_pass
+  origin: static
+  description: DockerSession imports java.time.Duration
+- id: test_repo_bazel_build_docker_module
+  type: pass_to_pass
+  origin: repo_tests
+  description: Bazel build of docker module succeeds
+- id: test_repo_docker_options_unit_test
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's DockerOptionsTest unit tests pass
 rubric:
-  # Note: This is a code-only task (Java fix). Rubric rules check code conventions.
-  # The judge expects config file edits which this task doesn't have - rules may not fully pass.
-  - id: logging_convention
-    rule: "Use java.util.logging.Logger with LOG field naming (the gold solution follows this in DockerOptions.java)"
-    weight: 1
-
-  - id: small_focused_diff
-    rule: "Changes should be small and focused - the gold solution modifies only the necessary Java files"
-    weight: 1
-
-  - id: null_checks
-    rule: "Use Require.nonNull for parameter validation - the gold solution validates Duration parameters this way"
-    weight: 1
+- id: logging_convention
+  rule: Use java.util.logging.Logger with LOG field naming (the gold solution follows this in DockerOptions.java)
+  weight: 1
+- id: small_focused_diff
+  rule: Changes should be small and focused - the gold solution modifies only the necessary Java files
+  weight: 1
+- id: null_checks
+  rule: Use Require.nonNull for parameter validation - the gold solution validates Duration parameters this way
+  weight: 1

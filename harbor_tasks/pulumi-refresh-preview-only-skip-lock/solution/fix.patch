@@ -1,0 +1,40 @@
+diff --git a/changelog/pending/20260328--backend-diy--remove-state-lock-for-refresh-preview-only-for-diy-backend.yaml b/changelog/pending/20260328--backend-diy--remove-state-lock-for-refresh-preview-only-for-diy-backend.yaml
+new file mode 100644
+index 000000000000..056365f65424
+--- /dev/null
++++ b/changelog/pending/20260328--backend-diy--remove-state-lock-for-refresh-preview-only-for-diy-backend.yaml
+@@ -0,0 +1,4 @@
++changes:
++- type: fix
++  scope: backend/diy
++  description: Remove state lock for refresh --preview-only for diy backend
+diff --git a/pkg/backend/diy/backend.go b/pkg/backend/diy/backend.go
+index aedfc63a9a06..78fb46d90335 100644
+--- a/pkg/backend/diy/backend.go
++++ b/pkg/backend/diy/backend.go
+@@ -1119,12 +1119,6 @@ func (b *diyBackend) Import(ctx context.Context, stack backend.Stack,
+ func (b *diyBackend) Refresh(ctx context.Context, stack backend.Stack,
+ 	op backend.UpdateOperation,
+ ) (sdkDisplay.ResourceChanges, error) {
+-	err := b.Lock(ctx, stack.Ref())
+-	if err != nil {
+-		return nil, err
+-	}
+-	defer b.Unlock(ctx, stack.Ref())
+-
+ 	if op.Opts.PreviewOnly {
+ 		// We can skip PreviewThenPromptThenExecute, and just go straight to Execute.
+ 		opts := backend.ApplierOptions{
+@@ -1138,6 +1132,12 @@ func (b *diyBackend) Refresh(ctx context.Context, stack backend.Stack,
+ 		return changes, err
+ 	}
+ 
++	err := b.Lock(ctx, stack.Ref())
++	if err != nil {
++		return nil, err
++	}
++	defer b.Unlock(ctx, stack.Ref())
++
+ 	return backend.PreviewThenPromptThenExecute(ctx, apitype.RefreshUpdate, stack, op, b.apply, nil, nil)
+ }
+ 

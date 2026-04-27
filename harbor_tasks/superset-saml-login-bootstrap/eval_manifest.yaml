@@ -1,0 +1,179 @@
+version: '2.0'
+task:
+  kind: code_fix
+  name: superset-saml-login-bootstrap
+  title: Add SAML login support to Superset bootstrap data
+source:
+  owner: apache
+  repo: superset
+  pr_number: 38606
+  pr_url: https://github.com/apache/superset/pull/38606
+  base_commit: fc156d0014b032bbd10548e8167426d5b32e5f8e
+  merge_commit: 56d6bb19136742d84b6382f479ed68885355469c
+  pr: 38606
+checks:
+- id: test_bootstrap_saml_providers_populated
+  type: fail_to_pass
+  origin: repo_tests
+  description: SAML providers from config land in AUTH_PROVIDERS
+  source:
+    kind: pr_diff
+    function: test_bootstrap_saml_providers
+    path: tests/unit_tests/views/test_bootstrap_auth.py
+- id: test_bootstrap_saml_default_icon_applied
+  type: fail_to_pass
+  origin: repo_tests
+  description: SAML providers without icon get fa-sign-in default
+  source:
+    kind: pr_diff
+    function: test_bootstrap_saml_provider_default_icon
+    path: tests/unit_tests/views/test_bootstrap_auth.py
+- id: test_recaptcha_excluded_for_federated_auth[AUTH_OAUTH]
+  type: pass_to_pass
+  origin: repo_tests
+  description: Recaptcha excluded for federated OAuth (regression guard)
+  source:
+    kind: pr_diff
+    function: test_recaptcha_not_shown_for_federated_auth
+    path: tests/unit_tests/views/test_bootstrap_auth.py
+- id: test_recaptcha_excluded_for_federated_auth[AUTH_SAML]
+  type: fail_to_pass
+  origin: repo_tests
+  description: Recaptcha excluded for federated SAML (the new behavior)
+  source:
+    kind: pr_diff
+    function: test_recaptcha_not_shown_for_federated_auth
+    path: tests/unit_tests/views/test_bootstrap_auth.py
+- id: test_csrf_exempt_includes_saml_acs
+  type: fail_to_pass
+  origin: pr_diff
+  description: SAML ACS endpoint is in WTF_CSRF_EXEMPT_LIST
+  source:
+    kind: pr_diff
+    path: superset/config.py
+- id: test_frontend_login_handles_saml_auth_type
+  type: fail_to_pass
+  origin: pr_diff
+  description: Login React component has SAML enum entry and renders SAML providers
+  source:
+    kind: pr_diff
+    path: superset-frontend/src/pages/Login/index.tsx
+- id: test_oauth_branch_unchanged
+  type: pass_to_pass
+  origin: repo_tests
+  description: OAuth provider bootstrap behavior is preserved
+  source:
+    kind: pr_diff
+    function: test_bootstrap_oauth_providers
+    path: tests/unit_tests/views/test_bootstrap_auth.py
+- id: test_recaptcha_shown_for_non_federated[AUTH_DB]
+  type: pass_to_pass
+  origin: repo_tests
+  description: Recaptcha still shown for AUTH_DB (regression guard)
+  source:
+    kind: pr_diff
+    function: test_recaptcha_shown_for_non_federated_auth
+    path: tests/unit_tests/views/test_bootstrap_auth.py
+- id: test_recaptcha_shown_for_non_federated[AUTH_LDAP]
+  type: pass_to_pass
+  origin: repo_tests
+  description: Recaptcha still shown for AUTH_LDAP (regression guard)
+  source:
+    kind: pr_diff
+    function: test_recaptcha_shown_for_non_federated_auth
+    path: tests/unit_tests/views/test_bootstrap_auth.py
+rubric:
+- id: type_hints_on_new_python
+  source:
+    kind: agent_config
+    anchor: Backend Type Safety
+    path: AGENTS.md
+  rule: 'All new Python code should have type hints. AGENTS.md states "Type
+
+    hints required for all new code" and "MyPy compliant - run
+
+    `pre-commit run mypy`". The added saml_providers loop in
+
+    cached_common_bootstrap_data should follow the existing typing.
+
+    '
+- id: no_typescript_any
+  source:
+    kind: agent_config
+    anchor: Frontend Modernization
+    path: AGENTS.md
+  rule: 'The Login component changes must not introduce `any` types. The repo
+
+    is actively migrating away from `any`. AGENTS.md and
+
+    .cursor/rules/dev-standard.mdc both list this as a critical rule.
+
+    '
+- id: timeless_comments
+  source:
+    kind: agent_config
+    anchor: Code Comments
+    path: AGENTS.md
+  rule: 'Code comments must avoid time-specific language like "now",
+
+    "currently", "today", per AGENTS.md "Code Comments" section.
+
+    '
+- id: jest_no_enzyme
+  source:
+    kind: agent_config
+    anchor: Testing Strategy Migration
+    path: AGENTS.md
+  rule: 'Frontend test changes must use Jest + React Testing Library, NOT
+
+    Enzyme (fully removed). Per AGENTS.md "Testing Strategy Migration"
+
+    and .cursor/rules/dev-standard.mdc.
+
+    '
+- id: prefer_unit_tests
+  source:
+    kind: agent_config
+    anchor: Testing Strategy Migration
+    path: AGENTS.md
+  rule: 'Test additions should prefer unit tests over integration tests, per
+
+    AGENTS.md "Testing Strategy Migration".
+
+    '
+- id: superset_ui_core_imports
+  source:
+    kind: agent_config
+    anchor: Frontend Modernization
+    path: AGENTS.md
+  rule: 'Frontend changes should import from @superset-ui/core for UI
+
+    components rather than directly from antd, per AGENTS.md "Frontend
+
+    Modernization" and .cursor/rules/dev-standard.mdc.
+
+    '
+- id: asf_license_header_on_new_files
+  source:
+    kind: agent_config
+    anchor: Apache License Headers
+    path: AGENTS.md
+  rule: 'Any new Python or TypeScript file added by the agent must include
+
+    the Apache Software Foundation license header (existing files
+
+    don''t need re-stamping). Per AGENTS.md "Apache License Headers".
+
+    '
+- id: use_test_not_describe
+  source:
+    kind: agent_config
+    anchor: Testing Strategy Migration
+    path: AGENTS.md
+  rule: 'New Jest tests should use top-level `test()` rather than
+
+    `describe()` blocks, following the "avoid nesting when testing"
+
+    principle per AGENTS.md.
+
+    '

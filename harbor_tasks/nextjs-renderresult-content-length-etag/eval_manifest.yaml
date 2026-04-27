@@ -82,47 +82,35 @@ checks:
   origin: pr_diff
   description: AGENTS.md should NOT show incorrect bare '--args' without separator
 rubric:
-- rule: When using pnpm new-test in non-interactive mode, use --args with the --
-    separator to forward arguments correctly.
+- rule: When using pnpm new-test in non-interactive mode, use --args with the -- separator to forward arguments correctly.
   source:
     path: AGENTS.md
     lines: 152-157
-  reference: "The correct syntax is pnpm new-test -- --args <appDir> <name> <type> with
-    the -- separator forwarding arguments to the script."
-- rule: The AGENTS.md file should document correct pnpm new-test non-interactive usage
-    with the -- separator syntax.
+  reference: The correct syntax is pnpm new-test -- --args <appDir> <name> <type> with the -- separator forwarding arguments to the script.
+- rule: The AGENTS.md file should document correct pnpm new-test non-interactive usage with the -- separator syntax.
   source:
     path: AGENTS.md
-    lines: 403
-  reference: "Documentation shows the correct command: pnpm new-test -- --args true <name> e2e"
+    lines: '403'
+  reference: 'Documentation shows the correct command: pnpm new-test -- --args true <name> e2e'
   category: documentation
 config_edits:
 - path: AGENTS.md
   tier: 1
-  gold_added: "--args"
-  gold_removed: "--args true"
+  gold_added: --args
+  gold_removed: --args true
 distractors:
-- rule: 'Default agent rule: If you are changing Next.js source or integration tests,
-    start  in a separate terminal session before making edits'
+- rule: 'Default agent rule: If you are changing Next.js source or integration tests, start  in a separate terminal session before making edits'
   collision_type: meta_confusion
-  why_distracting: The rule instructs the agent to start a background dev server (pnpm
-    --filter=next dev) before making edits. In an automated evaluation environment,
-    starting a long-running background process might hang the evaluation or consume
-    unnecessary resources, especially since the code fix is a simple string replacement.
+  why_distracting: The rule instructs the agent to start a background dev server (pnpm --filter=next dev) before making edits. In an automated evaluation environment, starting a long-running background process might hang the evaluation or consume unnecessary resources, especially since the code fix is a simple string replacement.
   severity: medium
   source:
     path: AGENTS.md
     lines: 58-62
-- rule: 'CLAUDE.md is a symlink to AGENTS.md. They are the same file.'
+- rule: CLAUDE.md is a symlink to AGENTS.md. They are the same file.
   collision_type: scope_ambiguity
-  why_distracting: The file states that CLAUDE.md is a symlink to AGENTS.md. Since
-    the task explicitly asks to update AGENTS.md, the agent might get confused and
-    try to edit CLAUDE.md directly (breaking the symlink) or attempt to edit both
-    files redundantly.
+  why_distracting: The file states that CLAUDE.md is a symlink to AGENTS.md. Since the task explicitly asks to update AGENTS.md, the agent might get confused and try to edit CLAUDE.md directly (breaking the symlink) or attempt to edit both files redundantly.
   severity: low
   source:
     path: AGENTS.md
     lines: 3-5
-hierarchy_analysis: The config hierarchy is flat, consisting primarily of AGENTS.md
-  (and its symlink CLAUDE.md). The complexity arises not from depth, but from the fact
-  that the agent is instructed to modify this very file.
+hierarchy_analysis: The config hierarchy is flat, consisting primarily of AGENTS.md (and its symlink CLAUDE.md). The complexity arises not from depth, but from the fact that the agent is instructed to modify this very file.

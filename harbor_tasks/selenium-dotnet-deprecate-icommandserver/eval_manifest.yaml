@@ -1,0 +1,102 @@
+version: '2.0'
+task:
+  name: selenium-dotnet-deprecate-icommandserver
+  kind: code_fix
+  title: Deprecate ICommandServer and detach it from DriverService
+source:
+  repo: SeleniumHQ/selenium
+  pr: 17103
+  pr_url: https://github.com/SeleniumHQ/selenium/pull/17103
+  base_commit: 77f325f198b2d660b8bba483623fe9770a08f77a
+  merge_commit: f770e3a7ed14c099ccb05a613f2b8242a1f0d0ae
+  title: '[dotnet] Remove unnecessary ICommandServer interface (breaking change)'
+target_files:
+- dotnet/src/webdriver/DriverService.cs
+- dotnet/src/webdriver/Remote/ICommandServer.cs
+checks:
+- id: test_source_files_present
+  type: pass_to_pass
+  origin: pr_diff
+  description: The two source files the PR touches exist at expected paths.
+- id: test_source_files_parse_cleanly
+  type: pass_to_pass
+  origin: pr_diff
+  description: Both source files parse as valid C# (Roslyn parser, no errors).
+- id: test_dotnet_sdk_available
+  type: pass_to_pass
+  origin: repo_tests
+  description: .NET 8 SDK is installed (deprecation pattern is .NET-specific).
+- id: test_dotnet_sln_present
+  type: pass_to_pass
+  origin: repo_tests
+  description: The solution file dotnet/Selenium.slnx exists.
+- id: test_driver_service_no_longer_implements_icommandserver
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'DriverService''s base list must no longer name ICommandServer; it should directly inherit/implement IDisposable.
+
+    '
+- id: test_icommandserver_is_obsolete_via_compilation
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Compile ICommandServer.cs in isolation with Roslyn and reflect on the resulting type to verify [Obsolete] is applied with a non-empty message.
+
+    '
+- id: test_icommandserver_obsolete_message_mentions_removal
+  type: fail_to_pass
+  origin: agent_config
+  description: 'The [Obsolete] message must signal future removal (per the deprecation policy in AGENTS.md: "before removing public functionality, mark it as deprecated with a message pointing to the alternative").
+
+    '
+  source:
+    lines: 61-62
+    commit: 77f325f198b2d660b8bba483623fe9770a08f77a
+    path: AGENTS.md
+- id: test_icommandserver_obsolete_attribute_in_source
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Cross-check: the [Obsolete] attribute is present syntactically on the ICommandServer interface declaration (not somewhere else).
+
+    '
+rubric:
+- id: deprecation_message_points_to_alternative
+  source:
+    lines: 61-62
+    commit: 77f325f198b2d660b8bba483623fe9770a08f77a
+    path: AGENTS.md
+  rule: 'Per AGENTS.md (root), before removing public functionality, mark it as deprecated with a message pointing to the alternative. The deprecation message on ICommandServer should explain what users should do instead (or at minimum, signal that removal is planned).
+
+    '
+- id: small_reversible_diff
+  source:
+    lines: '13'
+    commit: 77f325f198b2d660b8bba483623fe9770a08f77a
+    path: AGENTS.md
+  rule: 'Per AGENTS.md (root): "Avoid repo-wide refactors/formatting; prefer small, reversible diffs." The change should be confined to the two target files; whitespace-only or stylistic edits to unrelated files should not appear in the diff.
+
+    '
+- id: dotnet_obsolete_pattern
+  source:
+    lines: 20-23
+    commit: 77f325f198b2d660b8bba483623fe9770a08f77a
+    path: dotnet/AGENTS.md
+  rule: 'Per dotnet/AGENTS.md, the canonical deprecation pattern in this codebase is `[Obsolete("Use NewMethod instead")] public void OldMethod() { }`. The change should use the [Obsolete] attribute applied directly to the interface declaration.
+
+    '
+- id: no_user_visible_behavior_change_unannounced
+  source:
+    lines: '12'
+    commit: 77f325f198b2d660b8bba483623fe9770a08f77a
+    path: AGENTS.md
+  rule: 'Per AGENTS.md (root): "Maintain API/ABI compatibility - users upgrade by changing only version number." Removing the ICommandServer interface from DriverService''s base list IS a breaking change for code that assigns DriverService instances to ICommandServer references — the author has accepted this trade-off explicitly in the PR body ("Breaks Appium, not a big deal"). The diff should not introduce additional user-visible breaks beyond this one.
+
+    '
+- id: comments_explain_why_not_what
+  source:
+    lines: '57'
+    commit: 77f325f198b2d660b8bba483623fe9770a08f77a
+    path: AGENTS.md
+  rule: 'Per AGENTS.md (root): "Comments should explain *why*, not *what* - prefer well-named methods over comments." Any new comments added to DriverService.cs or ICommandServer.cs should justify decisions, not restate code.
+
+    '
+config_edits: []

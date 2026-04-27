@@ -1,0 +1,132 @@
+version: '2.0'
+source:
+  owner: SeleniumHQ
+  repo: selenium
+  pr_number: 17147
+  base_commit: 99a25472c4da3b39a9f049e1ac07086e3bf508f5
+  merge_commit: cc10867083d36c7f4861f0dafe6239aefbaec31e
+  pr: 17147
+task:
+  name: selenium-keys-pua-dedup
+  kind: code_fix
+  language: java
+  difficulty: easy
+checks:
+- id: test_option_charat_equals_alt
+  type: fail_to_pass
+  origin: pr_diff
+  description: OPTION.charAt(0) must equal ALT.charAt(0) (alias semantics)
+- id: test_option_unicode_e00a
+  type: fail_to_pass
+  origin: pr_diff
+  description: OPTION.charAt(0) must be 0xE00A (the ALT code point), not the previous 0xE052
+- id: test_option_codepoint_equals_alt
+  type: fail_to_pass
+  origin: pr_diff
+  description: OPTION.getCodePoint() must equal ALT.getCodePoint()
+- id: test_option_tostring_equals_alt
+  type: fail_to_pass
+  origin: pr_diff
+  description: OPTION.toString() must equal ALT.toString()
+- id: test_fn_is_deprecated
+  type: fail_to_pass
+  origin: pr_diff
+  description: Keys.FN field must be annotated with @Deprecated (reflectively visible)
+- id: test_keys_file_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: Keys.java must compile cleanly
+- id: test_right_alt_unicode
+  type: pass_to_pass
+  origin: repo_tests
+  description: RIGHT_ALT remains mapped to 0xE052
+- id: test_right_control_unicode
+  type: pass_to_pass
+  origin: repo_tests
+  description: RIGHT_CONTROL remains mapped to 0xE051
+- id: test_alt_unicode
+  type: pass_to_pass
+  origin: repo_tests
+  description: ALT remains mapped to 0xE00A
+- id: test_fn_charat_equals_right_control
+  type: pass_to_pass
+  origin: repo_tests
+  description: FN.charAt(0) equals RIGHT_CONTROL.charAt(0) (= 0xE051) — preserved by alias
+- id: test_option_field_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: Keys.OPTION public enum constant retained (API compat)
+- id: test_fn_field_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: Keys.FN public enum constant retained (API compat)
+- id: test_right_alt_returned_for_e052
+  type: pass_to_pass
+  origin: repo_tests
+  description: getKeyFromUnicode(0xE052) resolves to RIGHT_ALT
+rubric:
+- id: api_compat_preserved
+  source:
+    excerpt: Maintain API/ABI compatibility - users upgrade by changing only version number
+    path: AGENTS.md
+    commit: 99a25472c4da3b39a9f049e1ac07086e3bf508f5
+  rule: 'Public enum constants OPTION and FN are not removed; only their backing
+
+    Unicode value (or annotation) changes. The Selenium project explicitly
+
+    requires API/ABI compatibility — users upgrade by changing only version
+
+    number.
+
+    '
+- id: deprecation_with_javadoc
+  source:
+    excerpt: before removing public functionality, mark it as deprecated with a message pointing to the alternative
+    path: AGENTS.md
+    commit: 99a25472c4da3b39a9f049e1ac07086e3bf508f5
+  rule: 'Keys.FN should be marked with @Deprecated and accompanied by a Javadoc
+
+    block (using the @deprecated tag) explaining why the constant is
+
+    deprecated and what its behavior is. Selenium''s deprecation policy
+
+    requires a message pointing to the alternative before removal.
+
+    '
+- id: small_reversible_diff
+  source:
+    excerpt: Avoid repo-wide refactors/formatting; prefer small, reversible diffs
+    path: AGENTS.md
+    commit: 99a25472c4da3b39a9f049e1ac07086e3bf508f5
+  rule: 'The change should be confined to Keys.java and the values/annotations
+
+    that the PR targets — no repo-wide refactors, no unrelated formatting
+
+    sweeps in other files.
+
+    '
+- id: comments_explain_why
+  source:
+    excerpt: Comments should explain *why*, not *what* - prefer well-named methods over comments
+    path: AGENTS.md
+    commit: 99a25472c4da3b39a9f049e1ac07086e3bf508f5
+  rule: 'Any comment added near OPTION/FN should explain *why* the alias is
+
+    chosen (e.g., to avoid duplicate Unicode codes) rather than restating
+
+    what the line does.
+
+    '
+- id: javadoc_for_public_api
+  source:
+    excerpt: Use Javadoc for public APIs
+    path: java/AGENTS.md
+    commit: 99a25472c4da3b39a9f049e1ac07086e3bf508f5
+  rule: 'The Javadoc on a deprecated public enum constant should follow the
+
+    Java AGENTS.md convention (brief description, @deprecated tag with
+
+    explanation).
+
+    '
+config_edits: []

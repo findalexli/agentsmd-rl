@@ -1,0 +1,117 @@
+version: '2.0'
+source:
+  repo: Effect-TS/effect
+  pr: 6123
+  base_commit: a03b6a29ed0b983b0440b8ef4be47f47c57d73d7
+  merge_commit: 041dd22de07235de08b75f0bc29e206e3c27942b
+task:
+  name: effect-sql-kysely-proxy-get-invariant
+  kind: code_fix
+  difficulty: medium
+  tags:
+  - typescript
+  - javascript
+  - proxy
+  - ecmascript
+  - kysely
+  - bug-fix
+  - effect
+checks:
+- id: test_hash_twice_does_not_throw
+  type: fail_to_pass
+  origin: pr_diff
+  description: Hash.hash(builder) called twice on a kysely query builder must not throw the proxy `get` invariant TypeError.
+- id: test_hash_returns_stable_value
+  type: fail_to_pass
+  origin: pr_diff
+  description: Repeated Hash.hash calls return the same numeric hash, confirming the cached value is read directly through the proxy.
+- id: test_hash_works_for_multiple_builder_shapes
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Hash.hash twice succeeds for every kysely builder shape: selectFrom, insertInto, updateTable, deleteFrom, and builders with where/set chained.'
+- id: test_proxy_returns_frozen_property_actual_value
+  type: fail_to_pass
+  origin: pr_diff
+  description: A non-configurable, non-writable data property defined on a wrapped kysely target must be returned by the proxy with object identity preserved (ECMAScript proxy `get` invariant).
+- id: test_kysely_query_compiles
+  type: pass_to_pass
+  origin: pr_diff
+  description: selectFrom('users').selectAll() compiles to standard SQL; the proxy must not break .compile().
+- id: test_repo_kysely_vitest
+  type: pass_to_pass
+  origin: repo_tests
+  description: Upstream packages/sql-kysely/test/Kysely.test.ts must still pass.
+- id: test_repo_sqlite_vitest
+  type: pass_to_pass
+  origin: repo_tests
+  description: Upstream packages/sql-kysely/test/Sqlite.test.ts must still pass.
+- id: test_package_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`tsc -b tsconfig.json` for @effect/sql-kysely must succeed.'
+rubric:
+- rule: Run `pnpm lint-fix` after editing files
+  source:
+    path: AGENTS.md
+    lines: '17'
+    commit: a03b6a29ed0b983b0440b8ef4be47f47c57d73d7
+  evidence: The gold patch modifies source and adds a changeset file; lint-fix keeps code compliant.
+  category: process
+  verification: llm_judge
+- rule: 'Run type checking: `pnpm check`'
+  source:
+    path: AGENTS.md
+    lines: '21'
+    commit: a03b6a29ed0b983b0440b8ef4be47f47c57d73d7
+  evidence: The gold's test suite includes a tsc -b typecheck pass-to-pass check.
+  category: testing
+  verification: llm_judge
+- rule: All pull requests must include a changeset in the `.changeset/` directory.
+  source:
+    path: AGENTS.md
+    lines: 41-42
+    commit: a03b6a29ed0b983b0440b8ef4be47f47c57d73d7
+  evidence: The gold patch creates .changeset/flat-wombats-smile.md with a patch-level entry for @effect/sql-kysely.
+  category: process
+  verification: llm_judge
+- rule: 'Reduce comments: Avoid comments unless absolutely required to explain unusual or complex logic.'
+  source:
+    path: AGENTS.md
+    lines: '15'
+    commit: a03b6a29ed0b983b0440b8ef4be47f47c57d73d7
+  evidence: The gold patch adds only a brief comment explaining the non-obvious ECMAScript proxy invariant.
+  category: style
+  verification: llm_judge
+- rule: 'Clarity over Cleverness: Choose clear, maintainable solutions'
+  source:
+    path: AGENTS.md
+    lines: '13'
+    commit: a03b6a29ed0b983b0440b8ef4be47f47c57d73d7
+  evidence: The gold fix is a small, additive descriptor check rather than a broader refactor of the proxy helper.
+  category: architecture
+  verification: llm_judge
+distractors:
+- rule: 'Conciseness: Keep code and any wording concise and to the point. Sacrifice grammar for the sake of concision.'
+  source:
+    path: AGENTS.md
+    lines: '14'
+    commit: a03b6a29ed0b983b0440b8ef4be47f47c57d73d7
+  collision_type: rule_conflict
+  why_distracting: Conciseness may lead agent to omit the proxy invariant comment, but the fix needs a brief explanation of the non-obvious ECMAScript rule.
+  severity: medium
+- rule: 'Reduce comments: Avoid comments unless absolutely required to explain unusual or complex logic.'
+  source:
+    path: AGENTS.md
+    lines: '15'
+    commit: a03b6a29ed0b983b0440b8ef4be47f47c57d73d7
+  collision_type: scope_ambiguity
+  why_distracting: Agent may misjudge whether the ECMAScript proxy invariant qualifies as 'absolutely required' and skip the comment.
+  severity: medium
+- rule: Always look at existing code in the repository to learn and follow established patterns before writing new code.
+  source:
+    path: AGENTS.md
+    lines: 28-29
+    commit: a03b6a29ed0b983b0440b8ef4be47f47c57d73d7
+  collision_type: architecture_boundary
+  why_distracting: Following existing proxy patterns may lead agent to over-engineer the fix instead of adding the minimal descriptor check.
+  severity: low

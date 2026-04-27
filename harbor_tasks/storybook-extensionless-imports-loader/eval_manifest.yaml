@@ -1,0 +1,139 @@
+version: '2.0'
+task:
+  name: storybook-extensionless-imports-loader
+  description: 'Storybook PR #32641 — add `resolveWithExtension` and
+
+    `addExtensionsToRelativeImports` to the TS-to-ESM Node loader so
+
+    extensionless relative imports in user `.storybook/main.ts` (and similar)
+
+    resolve under Node ESM, while emitting a deprecation warning.
+
+    '
+source:
+  repo: storybookjs/storybook
+  pr: 32641
+  base_commit: e9a2317cea0c3b0fb25de5b63ddd6531e547abfb
+  merge_commit: 5a3dbff150cff1e87baed5ec180947034ca2b889
+checks:
+- id: test_resolve_with_extension_suite
+  type: fail_to_pass
+  origin: repo_tests
+  description: 'The `resolveWithExtension` describe block from the gold loader.test.ts
+
+    passes under vitest. Verifies extension probing, deprecation message,
+
+    already-extension fast path, and missing-file fallback.
+
+    '
+  source:
+    path: code/core/src/bin/loader.test.ts@5a3dbff
+    lines: ''
+    commit: ''
+- id: test_add_extensions_to_relative_imports_suite
+  type: fail_to_pass
+  origin: repo_tests
+  description: 'The `addExtensionsToRelativeImports` describe block from the gold
+
+    loader.test.ts passes under vitest. Covers static imports, exports,
+
+    dynamic imports with single/double quotes and backticks, side-effect
+
+    imports, multi-line forms, and template-interpolation guard.
+
+    '
+  source:
+    path: code/core/src/bin/loader.test.ts@5a3dbff
+    lines: ''
+    commit: ''
+- id: test_full_loader_vitest_suite
+  type: fail_to_pass
+  origin: repo_tests
+  description: 'Full vitest run of loader.test.ts passes (umbrella check; covers any
+
+    test the per-suite filters might miss).
+
+    '
+  source:
+    path: code/core/src/bin/loader.test.ts@5a3dbff
+    lines: ''
+    commit: ''
+- id: test_resolve_with_extension_real_module
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'End-to-end: import the real (unmocked) loader and verify
+
+    `resolveWithExtension(''./test.js'', ...)` returns its input unchanged
+
+    and `resolveWithExtension(''../utils.tsx'', ...)` is also unchanged.
+
+    Complements the mocked vitest suite by exercising the real code path.
+
+    '
+- id: test_add_extensions_real_module
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'End-to-end: import the real loader and call
+
+    `addExtensionsToRelativeImports`. Confirms (a) static and dynamic
+
+    relative imports get extensions appended, (b) bare specifiers
+
+    (`react`) are untouched, (c) template-interpolated dynamic imports
+
+    (`./${foo}/bar`) are untouched (cannot be statically resolved).
+
+    '
+- id: test_loader_typescript_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`tsc --noEmit --strict` on loader.ts succeeds. Reflects the repo''s
+
+    TypeScript-strict-mode policy (.github/copilot-instructions.md).
+
+    '
+  source:
+    path: .github/copilot-instructions.md@e9a2317#L309-L311
+    lines: ''
+    commit: ''
+- id: test_loader_esbuild_parses
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'esbuild''s TS loader parses loader.ts cleanly. Mirrors the runtime
+
+    transformation the loader performs and serves as a syntax sanity
+
+    gate.
+
+    '
+rubric:
+- id: typescript_strict_mode
+  source:
+    path: .github/copilot-instructions.md@e9a2317#L308-L311
+    lines: ''
+    commit: ''
+  weight: 1
+  rule: 'The base copilot-instructions document states "TypeScript strict mode
+
+    is enabled" and "Follow existing patterns in the codebase". Programmatic
+
+    assertion via `tsc --strict` (see `test_loader_typescript_compiles`).
+
+    '
+- id: follow_existing_patterns
+  source:
+    path: .github/copilot-instructions.md@e9a2317#L311
+    lines: ''
+    commit: ''
+  weight: 1
+  rule: 'Per `.github/copilot-instructions.md`, code should follow existing
+
+    patterns in the codebase. Subjective: the new helpers should be
+
+    idiomatic TypeScript matching the surrounding loader.ts style
+
+    (named exports, single-purpose functions, consistent quoting and
+
+    import grouping).
+
+    '

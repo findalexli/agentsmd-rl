@@ -1,0 +1,156 @@
+version: '2.0'
+source:
+  repo: SeleniumHQ/selenium
+  pr: 17038
+  base_commit: 079453e88d36562132f1052cf921eba913c77b1b
+  merge_commit: e9c83b79d6066e2471c6123f8949ca279c970fdf
+task:
+  kind: code_fix
+checks:
+- id: test_json_package_compiles
+  type: pass_to_pass
+  origin: static
+  description: The agent's modified java/src/org/openqa/selenium/json package compiles against the published selenium-api 4.41.0 + jspecify 1.0.0 jars.
+- id: test_can_read_boolean
+  type: pass_to_pass
+  origin: static
+  description: Json.toType("true", Boolean.class) and ("false", Boolean.class) still return the right Booleans.
+- id: test_can_read_integer_and_double
+  type: pass_to_pass
+  origin: static
+  description: Json.toType("42", Integer.class) == 42 and toType("4.2e+1", Double.class) == 42.0 still hold.
+- id: test_can_read_iso_instant_string
+  type: pass_to_pass
+  origin: static
+  description: ISO-8601 Instant strings (e.g. 2024-06-15T10:23:45.123456789Z) still round-trip through Json.toType(..., Instant.class).
+- id: test_can_round_trip_map
+  type: pass_to_pass
+  origin: static
+  description: Map round-trip through Json.toJson + Json.toType(..., Json.MAP_TYPE) preserves keys and values.
+- id: test_parse_very_negative_exponential_not_clamped_to_long
+  type: fail_to_pass
+  origin: pr_diff
+  description: Coercing -1e20 to Number must return a floating-point value close to -1e20 instead of clamping to Long.MIN_VALUE.
+- id: test_parse_negative_string_as_instant
+  type: fail_to_pass
+  origin: pr_diff
+  description: Json.toType("\"-1234\"", Instant.class) must yield Instant.ofEpochMilli(-1234) instead of throwing JsonException.
+- id: test_jsoninput_has_next_end_method
+  type: fail_to_pass
+  origin: pr_diff
+  description: org.openqa.selenium.json.JsonInput must expose a public void nextEnd() method that asserts END-of-input.
+- id: test_next_end_rejects_remaining_tokens
+  type: fail_to_pass
+  origin: pr_diff
+  description: JsonInput.nextEnd() must throw when called while more tokens are still available in the stream (e.g. mid-array).
+- id: test_next_end_accepts_fully_consumed_input
+  type: fail_to_pass
+  origin: pr_diff
+  description: JsonInput.nextEnd() must succeed without throwing when the stream has been fully consumed.
+- id: test_nextinstant_is_deprecated_for_removal
+  type: fail_to_pass
+  origin: pr_diff
+  description: org.openqa.selenium.json.JsonInput.nextInstant() must carry the annotation @Deprecated(forRemoval = true).
+config_edits: []
+rubric:
+- rule: Maintain API/ABI compatibility - users upgrade by changing only version number
+  source:
+    path: AGENTS.md
+    lines: '12'
+    commit: 079453e88d36562132f1052cf921eba913c77b1b
+  evidence: Gold diff adds new methods/constructors (nextEnd, InstantCoercer(JsonTypeCoercer), NumberCoercer(JsonTypeCoercer,...)), marks nextInstant @Deprecated instead of removing it, and changes internal implementation without breaking public signatures.
+  category: architecture
+  verification: semantic_diff
+- rule: Avoid repo-wide refactors/formatting; prefer small, reversible diffs
+  source:
+    path: AGENTS.md
+    lines: '13'
+    commit: 079453e88d36562132f1052cf921eba913c77b1b
+  evidence: Gold diff touches only Java files within java/src/org/openqa/selenium/json/ — no BUILD.bazel, no cross-package refactors, no formatting changes.
+  category: style
+  verification: semantic_diff
+- rule: '@Deprecated(forRemoval = true)
+
+    public void legacyMethod() { }'
+  source:
+    path: java/AGENTS.md
+    lines: 27-29
+    commit: 079453e88d36562132f1052cf921eba913c77b1b
+  evidence: Gold diff adds @Deprecated(forRemoval = true) on nextInstant() with a @deprecated Javadoc tag pointing to InstantCoercer as the replacement.
+  category: naming
+  verification: semantic_diff
+- rule: Comments should explain *why*, not *what* - prefer well-named methods over comments
+  source:
+    path: AGENTS.md
+    lines: '70'
+    commit: 079453e88d36562132f1052cf921eba913c77b1b
+  evidence: Gold diff adds a comment explaining why the Long fast-path is acceptable ('The JSON Schema does state the decimal point should not be used to distinguish between integers and floating point values') rather than narrating what the code does.
+  category: style
+  verification: llm_judge
+- rule: Prefer small (unit) tests over browser tests for speed/reliability.
+  source:
+    path: AGENTS.md
+    lines: '52'
+    commit: 079453e88d36562132f1052cf921eba913c77b1b
+  evidence: Gold diff does not add or modify test files; the rule is vacuously satisfied since no new tests are introduced.
+  category: testing
+  verification: semantic_diff
+- rule: Avoid mocks—they can misrepresent API contracts.
+  source:
+    path: AGENTS.md
+    lines: '53'
+    commit: 079453e88d36562132f1052cf921eba913c77b1b
+  evidence: Gold diff does not introduce any mocks; all coerced types use real JsonInput and JsonTypeCoercer instances.
+  category: testing
+  verification: semantic_diff
+- rule: 'Shared/high-risk areas:
+
+    - `common/` (build/test wiring; affects multiple areas)
+
+    - `javascript/atoms/` (shared JS atoms; high blast radius)'
+  source:
+    path: AGENTS.md
+    lines: 31-33
+    commit: 079453e88d36562132f1052cf921eba913c77b1b
+  evidence: Gold diff is confined to java/src/org/openqa/selenium/json/; does not touch common/, javascript/atoms/, or any other high-risk directory.
+  category: architecture
+  verification: semantic_diff
+- rule: '- Everything referenced above as high risk
+
+    - WebDriver/BiDi semantics, capability parsing, wire-level behavior
+
+    - Dependency updates / `MODULE.bazel` / repin flows
+
+    - Grid routing/distributor/queue logic'
+  source:
+    path: AGENTS.md
+    lines: 77-80
+    commit: 079453e88d36562132f1052cf921eba913c77b1b
+  evidence: Gold diff stays within the json package; no changes to MODULE.bazel, Grid logic, or wire-level behavior.
+  category: architecture
+  verification: semantic_diff
+distractors:
+- rule: When implementing solutions prefer writing a test for it first
+  source:
+    path: AGENTS.md
+    lines: '51'
+    commit: 079453e88d36562132f1052cf921eba913c77b1b
+  collision_type: rule_conflict
+  why_distracting: Conflicts with the invariant 'Avoid repo-wide refactors; prefer small, reversible diffs' — writing new tests would touch java/test/ outside the json package scope.
+  severity: medium
+- rule: If behavior is shared/low-level (protocol, serialization, "remote"/transport), suggest follow-up parity work or to file an issue
+  source:
+    path: AGENTS.md
+    lines: '48'
+    commit: 079453e88d36562132f1052cf921eba913c77b1b
+  collision_type: scope_ambiguity
+  why_distracting: JSON number parsing is serialization behavior; an agent might interpret this as requiring cross-binding parity checks before committing to the Java-only fix.
+  severity: low
+- rule: before removing public functionality, mark it as deprecated with a message pointing to the alternative
+  source:
+    path: AGENTS.md
+    lines: '66'
+    commit: 079453e88d36562132f1052cf921eba913c77b1b
+  collision_type: meta_confusion
+  why_distracting: The root AGENTS.md deprecation policy does not mention @Deprecated(forRemoval = true); only java/AGENTS.md specifies that. An agent reading only the root policy would use plain @Deprecated and fail test_nextinstant_is_deprecated_for_removal.
+  severity: high

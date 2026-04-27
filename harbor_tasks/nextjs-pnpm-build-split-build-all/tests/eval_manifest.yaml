@@ -1,0 +1,104 @@
+version: "2.0"
+
+source:
+  repo: vercel/next.js
+  pr: 90543
+  base_commit: 46761a321042e8ac1863f4cfc8d73d527956e181
+  merge_commit: ef970c06fb7ef8337db50ef962bb13f3f2d3204f
+  title: "Turbopack: Move turbopack out of `pnpm build` and into a `pnpm build-all` command"
+
+checks:
+  - id: test_pnpm_build_does_not_invoke_native_build
+    type: fail_to_pass
+    origin: pr_behavior
+    description: |
+      `pnpm build` (turbo run build) must not trigger the @next/swc native
+      build path. Verified by inspecting `turbo run build --dry-run=json`
+      task graph.
+
+  - id: test_pnpm_build_all_invokes_native_build_helper
+    type: fail_to_pass
+    origin: pr_behavior
+    description: |
+      `pnpm build-all` (turbo run build build-native-auto) must produce
+      a @next/swc task whose command runs `node maybe-build-native.mjs`.
+
+  - id: test_swc_native_auto_task_is_named_build_native_auto
+    type: fail_to_pass
+    origin: pr_behavior
+    description: |
+      The @next/swc task that drives the native build helper must be
+      named `build-native-auto` (so it is not picked up by the default
+      `build` graph).
+
+  - id: test_root_build_all_script_runs_both_tasks
+    type: fail_to_pass
+    origin: pr_behavior
+    description: |
+      The root `build-all` pnpm script must drive turbo to run both the
+      `build` and `build-native-auto` tasks. Verified by parsing the
+      script and re-planning turbo with the extracted task list.
+
+  - id: test_swc_package_json_no_longer_has_build_script
+    type: fail_to_pass
+    origin: pr_behavior
+    description: |
+      `packages/next-swc/package.json` must not have a `build` script
+      (it has been renamed); it must define `build-native-auto` running
+      `node maybe-build-native.mjs`.
+
+  - id: test_agents_md_documents_build_all
+    type: fail_to_pass
+    origin: agent_config
+    source:
+      file: AGENTS.md
+      commit: 46761a321042e8ac1863f4cfc8d73d527956e181
+      lines: "55-66, 94-101, 366-371"
+    description: |
+      AGENTS.md teaches agents which pnpm command to run after a branch
+      switch / bootstrap. When introducing `pnpm build-all`, AGENTS.md
+      must be updated so agents pick it up.
+
+  - id: test_turbo_planner_works
+    type: pass_to_pass
+    origin: repo_tests
+    description: Sanity that the turbo planner runs at all on this workspace.
+
+  - id: test_repo_at_expected_base_or_descendant
+    type: pass_to_pass
+    origin: repo_tests
+    description: Sanity that we are operating on the next.js workspace.
+
+rubric:
+  - id: agents_md_kept_in_sync
+    description: |
+      Top-level pnpm script changes (additions / renames affecting
+      bootstrap or post-branch-switch flow) must be reflected in
+      AGENTS.md, since that is where agents look for the canonical
+      build command.
+    source:
+      file: AGENTS.md
+      commit: 46761a321042e8ac1863f4cfc8d73d527956e181
+      lines: "55-66, 94-101, 366-371"
+
+  - id: no_co_author_footer
+    description: |
+      Per AGENTS.md "Commit and PR Style", commits must NOT contain
+      "Generated with Claude Code" or co-author footers. (Soft check;
+      the scaffold does not gate on commit messages, but reviewers
+      should flag any such footer in the agent's solution diff.)
+    source:
+      file: AGENTS.md
+      commit: 46761a321042e8ac1863f4cfc8d73d527956e181
+      lines: "344-347"
+
+  - id: incremental_verification
+    description: |
+      Per AGENTS.md "Task Decomposition and Verification", changes
+      should be split into individually verifiable steps. Reviewer
+      should check that the agent's approach was incremental rather
+      than a single large rewrite.
+    source:
+      file: AGENTS.md
+      commit: 46761a321042e8ac1863f4cfc8d73d527956e181
+      lines: "349-362"

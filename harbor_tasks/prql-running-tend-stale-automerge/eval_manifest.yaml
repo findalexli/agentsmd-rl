@@ -1,0 +1,71 @@
+version: '2.0'
+source:
+  repo: PRQL/prql
+  pr: 5825
+  base_commit: ab89a8b6b4afbe26ddf8d2ebb040470fea5a7a47
+  merge_commit: a857e86ffc37093b0ea8c1cfa49c1abff540adf1
+task:
+  name: prql-running-tend-stale-automerge
+  kind: markdown_authoring
+  difficulty: easy
+  tags:
+  - markdown_authoring
+  - skill_update
+  - documentation
+  - claude_skill
+checks:
+- id: test_skill_file_present
+  type: pass_to_pass
+  origin: static
+  description: Running-tend SKILL.md exists at .claude/skills/running-tend/SKILL.md
+- id: test_ci_structure_section_preserved
+  type: pass_to_pass
+  origin: static
+  description: The '## CI structure' heading is preserved in the rewrite
+- id: test_pr_conventions_section_preserved
+  type: pass_to_pass
+  origin: static
+  description: The '## PR conventions' heading is preserved in the rewrite
+- id: test_workflow_actually_has_no_automerge
+  type: pass_to_pass
+  origin: static
+  description: 'Sanity check: the workflow at base has no automerge text'
+- id: test_stale_automerge_claim_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: The stale 'auto-merges single-commit' phrase is removed
+- id: test_automerge_status_clarified
+  type: fail_to_pass
+  origin: pr_diff
+  description: Skill clarifies the new merge status (manual / removed / not configured / etc.)
+config_edits:
+- path: .claude/skills/running-tend/SKILL.md
+  tier: 1
+  gold_added: "- Automerge: not configured — `pull-request-target.yaml` only validates PR\n  titles and handles `pr-backport-web` backports. The automerge job was removed\n  in #5753, so bot PRs must be merged manually by a maintainer (or via repo\n  branch-protection auto-merge if a maintainer enables it on the PR).\n"
+  gold_removed: "- Automerge: `pull-request-target.yaml` auto-merges single-commit `prql-bot` PRs\n  once CI passes\n"
+  diff_hunk: "@@ -14,8 +14,10 @@ error conventions, etc. are in `CLAUDE.md` — don't duplicate them here.\n\n - Main CI workflow: `tests` (watched by tend-ci-fix)\n - Dependency management: Dependabot (tend-weekly is disabled)\n-- Automerge: `pull-request-target.yaml` auto-merges single-commit `prql-bot` PRs\n-  once CI passes\n+- Automerge: not configured — `pull-request-target.yaml` only validates PR\n+  titles and handles `pr-backport-web` backports. The automerge job was removed\n+  in #5753, so bot PRs must be merged manually by a maintainer (or via repo\n+  branch-protection auto-merge if a maintainer enables it on the PR).\n\n ## Issue management\n"
+rubric:
+- rule: The running-tend SKILL.md must not duplicate guidance that already lives in CLAUDE.md (build commands, test strategy, error conventions, etc.). Keep this skill scoped to tend-specific PR/CI/issue policies.
+  source:
+    path: .claude/skills/running-tend/SKILL.md
+    lines: 1-5
+    commit: ab89a8b6b4afbe26ddf8d2ebb040470fea5a7a47
+  category: scope
+  verification: llm_judge
+  evidence: The gold edit only modifies the existing `## CI structure` bullet about automerge — it does not pull in CLAUDE.md material such as build commands or test-runner specifics.
+- rule: Statements in the skill describing repo workflow behavior must reflect the workflow's actual current state. Stale claims (e.g. about automerge jobs that have been removed) must be corrected so future tend runs don't act on outdated assumptions.
+  source:
+    path: .claude/skills/running-tend/SKILL.md
+    lines: 13-18
+    commit: ab89a8b6b4afbe26ddf8d2ebb040470fea5a7a47
+  category: accuracy
+  verification: semantic_diff
+  evidence: The gold replaces the stale 'auto-merges single-commit ... PRs once CI passes' bullet with a description that matches the actual jobs in `.github/workflows/pull-request-target.yaml` at this commit (PR-title validation and `pr-backport-web` backports), and notes that bot PRs must now be merged manually.
+- rule: 'When updating the skill, preserve the section structure (## PR conventions, ## CI structure, ## Issue management). Don''t reorganize unrelated sections — make a focused edit limited to the stale claim.'
+  source:
+    path: .claude/skills/running-tend/SKILL.md
+    lines: 7-25
+    commit: ab89a8b6b4afbe26ddf8d2ebb040470fea5a7a47
+  category: scope
+  verification: llm_judge
+  evidence: The gold patch is a single hunk inside the `## CI structure` section; the other section headings are untouched.

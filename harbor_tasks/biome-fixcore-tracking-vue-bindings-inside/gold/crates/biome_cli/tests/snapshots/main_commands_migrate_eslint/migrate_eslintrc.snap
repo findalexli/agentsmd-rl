@@ -1,0 +1,101 @@
+---
+source: crates/biome_cli/tests/snap_test.rs
+expression: redactor(content)
+---
+## `biome.json`
+
+```json
+{ "linter": { "enabled": true } }
+```
+
+## `.eslintrc`
+
+```eslintrc
+{
+        "ignorePatterns": [
+            "**/*.test.js", // trailing comma amd comment
+        ],
+        "globals": {
+            "var1": "writable",
+            "var2": "readonly"
+        },
+        "rules": {
+            "dot-notation": 0,
+            "default-param-last": "off",
+            "eqeqeq": "warn",
+            "getter-return": [2,
+                // support unknown options
+                { "allowImplicit": true }
+            ],
+            "no-eval": 1,
+            "no-extra-label": ["error"]
+        },
+        "overrides": [{
+            "files": ["bin/*.js", "lib/*.js"],
+            "excludedFiles": "*.test.js",
+            "rules": {
+                "eqeqeq": ["off"]
+            }
+        }],
+        "unknownField": "ignored"
+    }
+```
+
+# Emitted Messages
+
+```block
+biome.json migrate ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  i Configuration file can be updated.
+  
+    1    │ - {·"linter":·{·"enabled":·true·}·}
+       1 │ + {
+       2 │ + → "linter":·{
+       3 │ + → → "enabled":·true,
+       4 │ + → → "rules":·{
+       5 │ + → → → "recommended":·false,
+       6 │ + → → → "complexity":·{·"noUselessLabel":·"error",·"useLiteralKeys":·"off"·},
+       7 │ + → → → "security":·{·"noGlobalEval":·"warn"·},
+       8 │ + → → → "style":·{·"useDefaultParameterLast":·"off"·},
+       9 │ + → → → "suspicious":·{·"noDoubleEquals":·"warn",·"useGetterReturn":·"error"·}
+      10 │ + → → },
+      11 │ + → → "includes":·["**",·"**/*.test.js"]
+      12 │ + → },
+      13 │ + → "javascript":·{·"globals":·["var1",·"var2"]·},
+      14 │ + → "overrides":·[
+      15 │ + → → {
+      16 │ + → → → "includes":·["bin/*.js",·"lib/*.js",·"!*.test.js"],
+      17 │ + → → → "linter":·{·"rules":·{·"suspicious":·{·"noDoubleEquals":·"off"·}·}·}
+      18 │ + → → }
+      19 │ + → ]
+      20 │ + }
+      21 │ + 
+  
+
+```
+
+```block
+migrate ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  i 6 ESLint rules found
+    - 6 can be migrated to Biome's rules (run with --write to migrate)
+    - 100% (6) of your ESLint rules are fully covered by Biome
+      - 100% (6) via direct migration to Biome rules
+  
+  
+
+```
+
+```block
+configuration ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  i Migration results:
+  
+  - biome.json: configuration needs migration.
+  
+  i Use --write to apply the changes.
+  
+  $ biome migrate --write
+  
+
+```

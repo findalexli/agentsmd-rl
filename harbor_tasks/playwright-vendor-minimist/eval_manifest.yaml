@@ -1,0 +1,155 @@
+version: '2.0'
+source:
+  repo: microsoft/playwright
+  pr: 39734
+  base_commit: 4df350b1c81b61ea471ff12767efd8e05f773377
+  merge_commit: 61afb37f4e6af73ae536c7d05ee1a926328b6d80
+task:
+  kind: code_fix
+checks:
+- id: test_minimist_file_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: vendored minimist.ts file is created at the expected path
+- id: test_minimist_compiles_to_js
+  type: fail_to_pass
+  origin: pr_diff
+  description: minimist.ts compiles to JS with strict TypeScript settings
+- id: test_minimist_exports_function
+  type: fail_to_pass
+  origin: pr_diff
+  description: module exports a `minimist` function
+- id: test_minimist_parses_long_eq
+  type: fail_to_pass
+  origin: pr_diff
+  description: parses --foo=bar
+- id: test_minimist_parses_long_space
+  type: fail_to_pass
+  origin: pr_diff
+  description: parses --foo bar
+- id: test_minimist_long_no_value_is_true
+  type: fail_to_pass
+  origin: pr_diff
+  description: bare --foo (no value, not declared) becomes true
+- id: test_minimist_no_prefix_negates_to_false
+  type: fail_to_pass
+  origin: pr_diff
+  description: --no-foo sets foo to false
+- id: test_minimist_boolean_default_unset
+  type: fail_to_pass
+  origin: pr_diff
+  description: boolean opts not passed are absent (no false default)
+- id: test_minimist_boolean_eq_value_throws
+  type: fail_to_pass
+  origin: pr_diff
+  description: passing --bool=value for a declared boolean option throws
+- id: test_minimist_no_prefix_works_for_boolean_opt
+  type: fail_to_pass
+  origin: pr_diff
+  description: --no-<bool> still works for declared boolean options
+- id: test_minimist_double_dash_separator
+  type: fail_to_pass
+  origin: pr_diff
+  description: tokens after `--` go to the positional `_` array
+- id: test_minimist_positional_args
+  type: fail_to_pass
+  origin: pr_diff
+  description: non-flag tokens collected into `_`
+- id: test_minimist_short_flag_no_value
+  type: fail_to_pass
+  origin: pr_diff
+  description: single -x flag with no value becomes true
+- id: test_minimist_long_with_true_string_for_boolean_opt_coerces
+  type: fail_to_pass
+  origin: pr_diff
+  description: boolean opt followed by 'true'/'false' coerces to boolean
+- id: test_minimist_repeated_long_collects_array
+  type: fail_to_pass
+  origin: pr_diff
+  description: repeated long flag collects values into an array
+- id: test_minimist_string_opt_no_value_is_empty_string
+  type: fail_to_pass
+  origin: pr_diff
+  description: string opt with no value gets ''
+- id: test_minimist_mixed_positional_and_flag
+  type: fail_to_pass
+  origin: pr_diff
+  description: mixes of positional + flag interleaved are parsed correctly
+- id: test_program_no_require_minimist
+  type: fail_to_pass
+  origin: pr_diff
+  description: program.ts no longer calls require('minimist')
+- id: test_program_imports_vendored_minimist
+  type: fail_to_pass
+  origin: pr_diff
+  description: program.ts imports `minimist` from the local module
+- id: test_session_imports_minimistargs_type
+  type: fail_to_pass
+  origin: pr_diff
+  description: session.ts imports MinimistArgs type from the local module
+- id: test_session_no_local_minimistargs_decl
+  type: fail_to_pass
+  origin: pr_diff
+  description: session.ts no longer declares its own MinimistArgs type
+- id: test_program_no_local_minimistargs_decl
+  type: fail_to_pass
+  origin: pr_diff
+  description: program.ts no longer declares its own MinimistArgs type
+- id: test_deps_list_minimist_section
+  type: fail_to_pass
+  origin: pr_diff
+  description: DEPS.list has [minimist.ts] section
+- id: test_deps_list_program_includes_minimist
+  type: fail_to_pass
+  origin: pr_diff
+  description: DEPS.list [program.ts] section permits importing ./minimist.ts
+- id: test_deps_list_session_includes_minimist
+  type: fail_to_pass
+  origin: pr_diff
+  description: DEPS.list [session.ts] section permits importing ./minimist.ts
+- id: test_package_json_no_types_minimist
+  type: fail_to_pass
+  origin: pr_diff
+  description: '''@types/minimist devDependency removed from package.json'''
+- id: test_other_cli_client_files_intact
+  type: pass_to_pass
+  origin: repo_tests
+  description: cli.ts and registry.ts are not deleted
+- id: test_deps_list_other_sections_intact
+  type: pass_to_pass
+  origin: repo_tests
+  description: DEPS.list retains existing [program.ts]/[session.ts]/[registry.ts] sections
+- id: test_package_json_node_engine_intact
+  type: pass_to_pass
+  origin: repo_tests
+  description: package.json engines.node constraint unchanged
+config_edits: []
+rubric:
+- rule: Never add Co-Authored-By agents in commit message.
+  source:
+    path: CLAUDE.md
+    lines: '127'
+    commit: 4df350b1c81b61ea471ff12767efd8e05f773377
+  evidence: Gold patch does not add a Co-Authored-By trailer in any commit message.
+  category: style
+  verification: llm_judge
+- rule: 'Semantic commit messages: `label(scope): description`
+
+
+    Labels: `fix`, `feat`, `chore`, `docs`, `test`, `devops`'
+  source:
+    path: CLAUDE.md
+    lines: 101-103
+    commit: 4df350b1c81b61ea471ff12767efd8e05f773377
+  evidence: Gold patch PR title uses `chore(cli-client):` semantic format.
+  category: naming
+  verification: llm_judge
+- rule: When creating or moving files, update the relevant `DEPS.list` to declare allowed imports. Files marked `"strict"` can only import what is explicitly listed.
+  source:
+    path: CLAUDE.md
+    lines: 94-95
+    commit: 4df350b1c81b61ea471ff12767efd8e05f773377
+  evidence: Gold patch updates DEPS.list to add [minimist.ts] section and permit ./minimist.ts imports in program.ts and session.ts.
+  category: architecture
+  verification: llm_judge
+distractors: []

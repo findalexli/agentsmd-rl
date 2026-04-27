@@ -1,0 +1,76 @@
+version: '2.0'
+source:
+  repo: PRQL/prql
+  pr: 5812
+  base_commit: 4fd57b29a00b4643abdb07607de7e249d375b51a
+  merge_commit: 1ff28313c4be176fb164985f14b74d0c2b6ed224
+task:
+  kind: markdown_authoring
+checks:
+- id: test_skill_file_exists
+  type: pass_to_pass
+  origin: static
+  description: SKILL.md still exists after the edit.
+- id: test_issue_management_section_added
+  type: fail_to_pass
+  origin: pr_diff
+  description: A new '## Issue management' section is present in the running-tend SKILL.md.
+- id: test_section_addresses_bot_opened_issues
+  type: fail_to_pass
+  origin: pr_diff
+  description: The new section addresses bot-opened issues being closed by the bot.
+- id: test_pre_existing_sections_preserved
+  type: pass_to_pass
+  origin: static
+  description: Existing 'PR conventions' and 'CI structure' sections are preserved.
+- id: test_skill_markdown_is_well_formed
+  type: pass_to_pass
+  origin: static
+  description: SKILL.md remains readable text and ends with a trailing newline.
+config_edits:
+- path: .claude/skills/running-tend/SKILL.md
+  tier: 1
+  gold_added: "\n## Issue management\n\n- Close bot-opened issues once the underlying cause is resolved — don't leave\n  them open for a maintainer. If you (prql-bot) filed an issue (e.g., a nightly\n  \"tests failed\" issue, a code-quality issue, an infra/upstream bug report) and\n  the fix has merged or the upstream problem has been addressed, close the issue\n  with a short comment citing the resolution (e.g., \"Resolved by #NNNN —\n  closing\"). Applies to any issue where `author.login == prql-bot`.\n"
+  gold_removed: ''
+rubric:
+- rule: 'The new guidance is added to `.claude/skills/running-tend/SKILL.md` — the running-tend skill — not to the parent `nightly`/`triage` skills, and not to the repo-root `CLAUDE.md`. The PR rationale: the authorization to close bot-opened issues is adopter-repo-specific, so the rule belongs in the running-tend overlay.
+
+    '
+  source:
+    path: .claude/skills/running-tend/SKILL.md
+    lines: 1-19
+    commit: 4fd57b29a00b4643abdb07607de7e249d375b51a
+  evidence: The gold patch appends a new '## Issue management' section to .claude/skills/running-tend/SKILL.md and does not modify CLAUDE.md or other skill files.
+  category: architecture
+  verification: semantic_diff
+- rule: 'The running-tend SKILL.md explicitly says project build commands, test strategy, and error conventions live in `CLAUDE.md` and must not be duplicated. The new section should not restate generic project-level conventions, only the running-tend-specific issue-closing rule.
+
+    '
+  source:
+    path: .claude/skills/running-tend/SKILL.md
+    lines: 3-4
+    commit: 4fd57b29a00b4643abdb07607de7e249d375b51a
+  evidence: The gold patch adds only issue-closing guidance and does not duplicate build commands, test strategies, or error conventions that already live in CLAUDE.md.
+  category: architecture
+  verification: semantic_diff
+- rule: 'Existing sections in the file use a top-level `##` heading, bullet-list bodies, and 80-ish-column wrapping (see ''PR conventions'' and ''CI structure''). The new ''Issue management'' section should match that style — `##` heading, bulleted body, similar wrapping — not introduce a different heading level or formatting style.
+
+    '
+  source:
+    path: .claude/skills/running-tend/SKILL.md
+    lines: 6-18
+    commit: 4fd57b29a00b4643abdb07607de7e249d375b51a
+  evidence: The gold patch uses a '##' heading, bulleted body, and 80-column wrapping that matches the existing 'PR conventions' and 'CI structure' sections.
+  category: style
+  verification: semantic_diff
+- rule: 'The guidance must be specific enough for the bot to act on: it should name *which* issues to close (bot-authored), *when* (after the underlying cause is resolved), and *how* (by leaving a short comment citing the resolution). Vague rules like "close issues when appropriate" do not satisfy this.
+
+    '
+  source:
+    path: CLAUDE.md
+    lines: 1-150
+    commit: 4fd57b29a00b4643abdb07607de7e249d375b51a
+  evidence: The gold patch names which issues to close (bot-authored, author.login == prql-bot), when (after underlying cause is resolved), and how (comment citing resolution with 'Resolved by
+  category: architecture
+  verification: llm_judge
+distractors: []

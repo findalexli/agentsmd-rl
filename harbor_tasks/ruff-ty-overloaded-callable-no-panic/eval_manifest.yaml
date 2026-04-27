@@ -1,0 +1,120 @@
+version: '2.0'
+task:
+  kind: code_fix
+  name: ruff-ty-overloaded-callable-no-panic
+  title: Avoid panic on overloaded Callable type context in ty
+source:
+  repo: astral-sh/ruff
+  pr_number: 24661
+  pr_url: https://github.com/astral-sh/ruff/pull/24661
+  base_commit: 61f9a0a5763fb068cd2f26c0ee9d63a277fb26c2
+  merge_commit: dccb03d010f4442ed60624f8d2ba932706abaabb
+  primary_files:
+  - crates/ty_python_semantic/src/types/infer/builder.rs
+  pr: 24661
+checks:
+- id: test_overloaded_callable_does_not_panic
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Type-checking a Python snippet that calls dict.get (an overloaded
+
+    Callable) with a lambda default must not crash the type checker.
+
+    Drives a fresh mdtest fixture against the regression input.
+
+    '
+- id: test_bidirectional_mdtest_pass_to_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Pre-existing crates/ty_python_semantic/resources/mdtest/bidirectional.md
+
+    mdtest still passes after the change.
+
+    '
+- id: test_ty_python_semantic_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'ty_python_semantic crate (with --tests) compiles cleanly via
+
+    `cargo check --tests -p ty_python_semantic`.
+
+    '
+rubric:
+- id: no_new_panic
+  source:
+    quote: Try hard to avoid patterns that require `panic!`, `unreachable!`, or `.unwrap()`. Instead, try to encode those constraints in the type system.
+    path: AGENTS.md
+    commit: 61f9a0a5763fb068cd2f26c0ee9d63a277fb26c2
+  rule: 'The fix must not introduce another `panic!`, `unreachable!`,
+
+    `unwrap()`, or `expect()` call in place of the removed panic. ty
+
+    explicitly prefers encoding constraints in the type system over
+
+    panicking. (AGENTS.md: "Try hard to avoid patterns that require
+
+    panic!, unreachable!, or .unwrap()...")
+
+    '
+- id: imports_at_file_top
+  source:
+    quote: Rust imports should always go at the top of the file, never locally in functions.
+    path: AGENTS.md
+    commit: 61f9a0a5763fb068cd2f26c0ee9d63a277fb26c2
+  rule: 'Any new imports introduced by the fix go at the top of the source
+
+    file, not locally inside the function. (AGENTS.md: "Rust imports
+
+    should always go at the top of the file, never locally in
+
+    functions.")
+
+    '
+- id: prefer_let_chain
+  source:
+    quote: Prefer let chains (`if let` combined with `&&`) over nested `if let` statements to reduce indentation and improve readability.
+    path: AGENTS.md
+    commit: 61f9a0a5763fb068cd2f26c0ee9d63a277fb26c2
+  rule: 'The fixed code preserves the existing let-chain (`if let ... &&
+
+    let ... { }`) style over nested `if let` blocks. (AGENTS.md:
+
+    "Prefer let chains (`if let` combined with `&&`) over nested
+
+    `if let` statements...")
+
+    '
+- id: comments_purposeful
+  source:
+    quote: Use comments purposefully. Don't use comments to narrate code, but do use them to explain invariants and why something unusual was done a particular way.
+    path: AGENTS.md
+    commit: 61f9a0a5763fb068cd2f26c0ee9d63a277fb26c2
+  rule: 'Any new comment introduced by the fix is purposeful — explains a
+
+    non-obvious invariant, a TODO, or a deliberate design choice —
+
+    rather than narrating code. (AGENTS.md: "Use comments
+
+    purposefully. Don''t use comments to narrate code, but do use them
+
+    to explain invariants and why something unusual was done a
+
+    particular way.")
+
+    '
+- id: minimal_diff
+  source:
+    quote: Avoid writing significant amounts of new code. This is often a sign that we're missing an existing method or mechanism that could help solve the problem.
+    path: AGENTS.md
+    commit: 61f9a0a5763fb068cd2f26c0ee9d63a277fb26c2
+  rule: 'The change is small and localised inside ty_python_semantic. The
+
+    AGENTS.md guidance ("Avoid writing significant amounts of new
+
+    code... look for existing utilities first") suggests the fix
+
+    should be a tight edit to the panicking branch, not a large
+
+    refactor or new module.
+
+    '

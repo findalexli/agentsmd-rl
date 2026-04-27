@@ -1,0 +1,129 @@
+version: '2.0'
+source:
+  repo: ClickHouse/ClickHouse
+  pr: 102080
+  base_commit: cf5fb461472203d56bb0c169a61d194dd97fc2f2
+  merge_commit: d037e27f19e1ac3bc99d027a328d646853bc6b8e
+  url: https://github.com/ClickHouse/ClickHouse/pull/102080
+task:
+  name: clickhouse-large-file-style-check
+  title: Add style check for files >5 MB committed to git
+  difficulty: medium
+  tags:
+  - shell
+  - ci
+  - style-check
+  - clickhouse
+checks:
+- id: test_oversized_file_is_flagged
+  type: fail_to_pass
+  origin: pr_diff
+  description: A 6 MB tracked file outside the whitelist must trigger the size warning.
+- id: test_undersized_file_is_not_flagged
+  type: pass_to_pass
+  origin: pr_diff
+  description: A 4 MB tracked file (under the 5 MB threshold) must not trigger the warning. Catches over-broad threshold (e.g. 1 MB or 2 MB).
+- id: test_remediation_advice_present
+  type: fail_to_pass
+  origin: pr_diff
+  description: The warning includes the remediation phrase about not committing large files.
+- id: test_whitelisted_file_is_not_flagged
+  type: pass_to_pass
+  origin: pr_diff
+  description: An oversized file whose name matches a whitelist entry is not flagged. Catches missing whitelist.
+- id: test_whitelist_includes_libcatboostmodel
+  type: pass_to_pass
+  origin: pr_diff
+  description: libcatboostmodel.so_x86_64 / _aarch64 are whitelisted. Catches incomplete whitelist.
+- id: test_multiple_oversized_files_all_reported
+  type: fail_to_pass
+  origin: pr_diff
+  description: Multiple non-whitelisted oversized files each produce their own warning line.
+- id: test_threshold_is_5mb_not_smaller
+  type: pass_to_pass
+  origin: pr_diff
+  description: Files in the 1–4 MB range are not flagged. Catches a wrong (lower) threshold.
+- id: test_check_runs_against_base_repo_and_finds_unused_parquet
+  type: fail_to_pass
+  origin: pr_diff
+  description: Within the actual workspace repo, the unused 14 MB zookeeper_log.parquet is either flagged or removed.
+- id: test_warning_phrase_exact
+  type: fail_to_pass
+  origin: pr_diff
+  description: The full warning sentence from the spec appears verbatim for an oversized file.
+- id: test_script_bash_syntax_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: The modified script still parses as bash (`bash -n` succeeds).
+- id: test_existing_clickhouse_url_check_preserved
+  type: pass_to_pass
+  origin: repo_tests
+  description: The pre-existing CLICKHOUSE_URL check is not removed by the edit.
+- id: test_existing_query_log_check_preserved
+  type: pass_to_pass
+  origin: repo_tests
+  description: The pre-existing system.query_log check is not removed by the edit.
+- id: test_script_executable
+  type: pass_to_pass
+  origin: repo_tests
+  description: The script remains runnable and produces no fatal interpreter errors.
+rubric:
+- id: comments_use_inline_code_blocks
+  weight: 0.3
+  source:
+    commit: cf5fb461472203d56bb0c169a61d194dd97fc2f2
+    excerpt: 'When writing text such as documentation, comments, or commit messages,
+
+      wrap literal names from ClickHouse SQL language, classes and functions,
+
+      or literal excerpts from log messages inside inline code blocks, such
+
+      as: `MergeTree`.
+
+      '
+    path: .claude/CLAUDE.md
+  rule: 'Comments and documentation that name literal classes, functions, file
+
+    extensions, or log-message excerpts should wrap them in inline code
+
+    blocks (e.g. `MergeTree`, `.so`).
+
+    '
+- id: function_names_without_parens
+  weight: 0.2
+  source:
+    commit: cf5fb461472203d56bb0c169a61d194dd97fc2f2
+    excerpt: 'When writing text such as documentation, comments, or commit messages,
+
+      write names of functions and methods as `f` instead of `f()` - we
+
+      prefer it for mathematical purity when it refers a function itself
+
+      rather than its application.
+
+      '
+    path: .claude/CLAUDE.md
+  rule: 'In comments and prose, write the names of functions/methods as `f`
+
+    rather than `f()` when referring to the function itself rather than a
+
+    call.
+
+    '
+- id: tmp_subdirectory_for_temp_files
+  weight: 0.2
+  source:
+    commit: cf5fb461472203d56bb0c169a61d194dd97fc2f2
+    excerpt: 'Use `tmp` subdirectory in the current directory for temporary files
+
+      (logs, downloads, scripts, etc.), do not use `/tmp`. Create the
+
+      directory if needed.
+
+      '
+    path: .claude/CLAUDE.md
+  rule: 'If the implementation creates temporary files, use a `tmp` subdirectory
+
+    under the current working directory rather than `/tmp`.
+
+    '

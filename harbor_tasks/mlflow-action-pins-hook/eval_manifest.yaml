@@ -1,0 +1,127 @@
+version: '2.0'
+source:
+  repo: mlflow/mlflow
+  pr: 22328
+  base_commit: f79675735e964e14a190186efeb20176b2fe9216
+  merge_commit: 96babfd34d4b5bceec1830391acb579ed9cc9129
+task:
+  kind: code_fix
+checks:
+- id: test_script_present_and_executable_with_python
+  type: fail_to_pass
+  origin: pr_diff
+  description: dev/check_action_pins.py exists and parses as valid Python.
+- id: test_script_uses_only_stdlib
+  type: fail_to_pass
+  origin: pr_diff
+  description: Script imports only stdlib modules — the PR description states it must be stdlib-only so the hook can run inside the lint uv group without pulling extra deps.
+- id: test_clean_workflow_with_no_uses_lines_passes
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'A workflow without any uses: line yields exit 0.'
+- id: test_local_action_uses_is_skipped
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Local uses: ./... action references are skipped (not pinned).'
+- id: test_tag_ref_without_sha_is_rejected
+  type: fail_to_pass
+  origin: pr_diff
+  description: A tag-only ref (e.g. @v4) is rejected with exit 1.
+- id: test_short_sha_ref_is_rejected
+  type: fail_to_pass
+  origin: pr_diff
+  description: A 7-char SHA prefix is not accepted; only full 40-char SHAs.
+- id: test_full_sha_without_version_comment_is_rejected
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'SHA-pinned ref without a # vX.Y.Z comment is rejected.'
+- id: test_full_sha_with_short_version_comment_is_rejected
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Single-component version comments like # v4 are ambiguous moving tags and rejected.'
+- id: test_full_sha_with_partial_version_comment_is_rejected
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Two-component version comments like # v4.2 are rejected.'
+- id: test_full_pin_with_cached_match_passes
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Full SHA + # vX.Y.Z + cache hit (true) returns exit 0 — verifies the .cache/action-pins.json short-circuit path.'
+- id: test_full_pin_with_cached_mismatch_fails
+  type: fail_to_pass
+  origin: pr_diff
+  description: Cache says SHA does not match tag → exit 1.
+- id: test_multiple_files_first_clean_second_bad
+  type: fail_to_pass
+  origin: pr_diff
+  description: Multiple file args; if any has a violation, exit 1.
+- id: test_subpath_action_pinning_enforced
+  type: fail_to_pass
+  origin: pr_diff
+  description: Subpath references like actions/cache/restore@<ref> are remote actions and must also be SHA-pinned.
+- id: test_default_glob_discovers_workflows_under_dot_github
+  type: fail_to_pass
+  origin: pr_diff
+  description: Without explicit args, the script discovers .github/workflows/*.yml and .github/actions/**/*.yml from the current working directory.
+- id: test_precommit_config_registers_action_pins_hook
+  type: fail_to_pass
+  origin: pr_diff
+  description: .pre-commit-config.yaml declares an action-pins hook whose entry runs dev/check_action_pins.py.
+- id: test_precommit_hook_targets_workflow_and_action_yamls
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'The action-pins hook restricts its files: regex to .github/workflows and .github/actions YAML files only.'
+- id: test_lint_workflow_caches_action_pins_json
+  type: fail_to_pass
+  origin: pr_diff
+  description: .github/workflows/lint.yml caches .cache/action-pins.json so the GitHub API is hit at most once per pin per CI run.
+- id: test_existing_dev_normalize_chars_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: Pre-existing dev/normalize_chars.py is unaffected and compiles.
+- id: test_repo_python_version_constraint_unchanged
+  type: pass_to_pass
+  origin: repo_tests
+  description: pyproject.toml still declares requires-python >=3.10.
+rubric:
+- rule: Use top-level imports (only use lazy imports when necessary)
+  source:
+    path: CLAUDE.md
+    lines: '11'
+    commit: f79675735e964e14a190186efeb20176b2fe9216
+  evidence: The gold script dev/check_action_pins.py uses only top-level imports (import glob, json, re, subprocess, sys, etc.) with no lazy/in-function imports.
+  category: style
+  verification: llm_judge
+- rule: Only add docstrings in tests when they provide additional context
+  source:
+    path: CLAUDE.md
+    lines: '12'
+    commit: f79675735e964e14a190186efeb20176b2fe9216
+  evidence: The gold patch does not add any test files, so the rule is trivially satisfied.
+  category: testing
+  verification: llm_judge
+- rule: Only add comments that explain non-obvious logic or provide additional context
+  source:
+    path: CLAUDE.md
+    lines: '13'
+    commit: f79675735e964e14a190186efeb20176b2fe9216
+  evidence: The gold script uses comments sparingly — a module docstring and regex pattern comments that explain what each regex matches, with no restating-the-code comments.
+  category: style
+  verification: llm_judge
+distractors:
+- rule: When touching the SQLAlchemy tracking store, keep all workspace-aware paths and validations intact; never drop workspace plumbing even if the change focuses on single-tenant behavior
+  source:
+    path: CLAUDE.md
+    lines: '14'
+    commit: f79675735e964e14a190186efeb20176b2fe9216
+  collision_type: scope_ambiguity
+  why_distracting: This rule about SQLAlchemy tracking store workspace plumbing is unrelated to the GitHub Actions SHA-pinning task and may cause scope confusion.
+  severity: low
+- rule: Prefer ubuntu-slim over ubuntu-latest for simple jobs (e.g., labeling, commenting, notifications).
+  source:
+    path: .claude/rules/github-actions.md
+    lines: '9'
+    commit: f79675735e964e14a190186efeb20176b2fe9216
+  collision_type: scope_ambiguity
+  why_distracting: This rule about runner selection is tangentially related to GitHub Actions but pulls attention away from the core task of SHA-pinning actions.
+  severity: low

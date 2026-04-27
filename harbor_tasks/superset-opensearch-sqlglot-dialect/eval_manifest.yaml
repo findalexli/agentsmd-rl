@@ -1,0 +1,127 @@
+version: '2.0'
+source:
+  repo: apache/superset
+  pr: 39538
+  base_commit: 18d89f25ce4db6258a01d409dd516003b1df7f0c
+  merge_commit: 5af17c7976ec28d09b467aac14f49155cb33e9a9
+task:
+  kind: code_fix
+checks:
+- id: test_opensearch_module_importable
+  type: fail_to_pass
+  origin: pr_diff
+  description: superset.sql.dialects.opensearch defines an OpenSearch class subclassing sqlglot's MySQL dialect.
+- id: test_double_quoted_identifier_roundtrip
+  type: fail_to_pass
+  origin: pr_diff
+  description: Double-quoted identifiers round-trip as identifiers (not string literals) under the OpenSearch dialect.
+- id: test_single_quotes_still_strings
+  type: fail_to_pass
+  origin: pr_diff
+  description: Single-quoted strings remain string literals after parsing and re-emission.
+- id: test_backtick_identifier_supported
+  type: fail_to_pass
+  origin: pr_diff
+  description: Backtick-quoted identifiers parse and round-trip as identifiers (MySQL-style).
+- id: test_mixed_quote_styles_roundtrip
+  type: fail_to_pass
+  origin: pr_diff
+  description: A query that mixes double-quote and backtick identifiers round-trips to a single consistent quote style.
+- id: test_in_clause_preserves_string_literals
+  type: fail_to_pass
+  origin: pr_diff
+  description: IN-clause string members stay string literals while quoted identifiers stay identifiers.
+- id: test_aggregate_with_quoted_identifiers
+  type: fail_to_pass
+  origin: pr_diff
+  description: SUM/COUNT with quoted column args composes correctly with GROUP BY.
+- id: test_subquery_with_quoted_identifiers
+  type: fail_to_pass
+  origin: pr_diff
+  description: Quoted identifiers nested inside subqueries remain identifiers.
+- id: test_dialect_exported_from_package
+  type: fail_to_pass
+  origin: pr_diff
+  description: superset.sql.dialects re-exports the OpenSearch class.
+- id: test_odelasticsearch_registered_in_parse_py
+  type: fail_to_pass
+  origin: pr_diff
+  description: superset.sql.parse.SQLGLOT_DIALECTS maps "odelasticsearch" to OpenSearch.
+- id: test_existing_db2_dialect_still_exported
+  type: pass_to_pass
+  origin: pr_diff
+  description: Existing dialect exports (DB2, Dremio, Firebolt, FireboltOld, Pinot) remain available.
+- id: test_existing_parse_py_mappings_intact
+  type: pass_to_pass
+  origin: pr_diff
+  description: Pre-existing SQLGLOT_DIALECTS entries for other databases (oceanbase, oracle, netezza, pinot) are unchanged.
+- id: test_new_dialect_file_has_asf_header
+  type: pass_to_pass
+  origin: agent_config
+  description: The new OpenSearch source file carries the standard Apache Software Foundation licence header.
+  source:
+    path: AGENTS.md
+    lines: '91'
+    commit: 18d89f25ce4db6258a01d409dd516003b1df7f0c
+- id: test_repo_dialect_file_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: The new dialect file is syntactically valid Python (py_compile passes).
+rubric:
+- rule: Add type hints - All new Python code needs proper typing
+  source:
+    path: AGENTS.md
+    lines: '46'
+    commit: 18d89f25ce4db6258a01d409dd516003b1df7f0c
+  evidence: Gold adds `from __future__ import annotations` and the `class OpenSearch(MySQL):` declaration with proper subtyping.
+  category: style
+  verification: llm_judge
+- rule: Avoid time-specific language - Don't use words like 'now', 'currently', 'today' in code comments as they become outdated
+  source:
+    path: AGENTS.md
+    lines: '95'
+    commit: 18d89f25ce4db6258a01d409dd516003b1df7f0c
+  evidence: Gold docstring uses timeless present-tense description ('OpenSearch SQL is syntactically close to MySQL') with no time-anchored words.
+  category: style
+  verification: llm_judge
+- rule: Docstrings - Required for new functions/classes
+  source:
+    path: AGENTS.md
+    lines: '102'
+    commit: 18d89f25ce4db6258a01d409dd516003b1df7f0c
+  evidence: Gold adds a brief module-level docstring explaining the dialect's purpose and behaviour.
+  category: documentation
+  verification: llm_judge
+- rule: Follow existing patterns - Mimic code style, use existing libraries and utilities
+  source:
+    path: .cursor/rules/dev-standard.mdc
+    lines: '119'
+    commit: 18d89f25ce4db6258a01d409dd516003b1df7f0c
+  evidence: 'Gold module mirrors sibling dialects'' structure: ASF header, module docstring, `from __future__ import annotations`, single class subclassing an sqlglot base.'
+  category: style
+  verification: llm_judge
+distractors:
+- rule: ALWAYS run `pre-commit run --all-files` before pushing commits.
+  source:
+    path: AGENTS.md
+    lines: '7'
+    commit: 18d89f25ce4db6258a01d409dd516003b1df7f0c
+  collision_type: meta_confusion
+  why_distracting: This mandates running pre-commit across the entire repo, which requires a full Superset dev environment and triggers unrelated lint failures — the agent may waste time on tooling instead of making the targeted dialect change.
+  severity: medium
+- rule: MyPy compliance - Run `pre-commit run mypy` to validate
+  source:
+    path: AGENTS.md
+    lines: '47'
+    commit: 18d89f25ce4db6258a01d409dd516003b1df7f0c
+  collision_type: scope_ambiguity
+  why_distracting: The emphasis on MyPy compliance may lead the agent to add extensive type annotations to the OpenSearch class beyond what the gold solution provides, wasting effort on a minimal module.
+  severity: medium
+- rule: Follow existing patterns - Mimic code style, use existing libraries and utilities
+  source:
+    path: .cursor/rules/dev-standard.mdc
+    lines: '119'
+    commit: 18d89f25ce4db6258a01d409dd516003b1df7f0c
+  collision_type: scope_ambiguity
+  why_distracting: Sibling dialects (db2.py, dremio.py) import additional modules and have more elaborate structures — an agent may copy unnecessary boilerplate rather than keeping the OpenSearch dialect minimal.
+  severity: low

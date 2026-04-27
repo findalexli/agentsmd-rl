@@ -1,0 +1,81 @@
+version: '2.0'
+source:
+  repo: BerriAI/litellm
+  pr_number: 22926
+  pr_url: https://github.com/BerriAI/litellm/pull/22926
+  base_commit: a8cf646850b777ae1ce81c024e8acd27601e74e0
+  merge_commit: 97947c254252c6b254147ae7d5f9b265e3f73eb5
+  title: 'fix: don''t close HTTP/SDK clients on LLMClientCache eviction'
+  pr: 22926
+task:
+  name: litellm-no-close-on-cache-eviction
+  language: python
+  category: bugfix
+checks:
+- id: test_remove_key_does_not_close_async_client
+  type: fail_to_pass
+  origin: pr_diff
+  description: Evicting an async client (with `aclose`) must not close it.
+- id: test_remove_key_does_not_close_async_client_with_close_method
+  type: fail_to_pass
+  origin: pr_diff
+  description: Same guarantee when the close coroutine is named `close` (the OpenAI SDK style).
+- id: test_remove_key_does_not_close_sync_client
+  type: fail_to_pass
+  origin: pr_diff
+  description: Evicting a sync client must not close it.
+- id: test_full_cache_eviction_does_not_close_clients
+  type: fail_to_pass
+  origin: pr_diff
+  description: Capacity-based eviction (set_cache beyond max_size) must not close the evicted client and must not produce 'coroutine was never awaited' warnings.
+- id: test_evicted_httpx_client_remains_open
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'End-to-end: an httpx client obtained through get_async_httpx_client must remain open after capacity-based eviction (sleep is required to let any background close task run).'
+- id: test_ttl_expired_client_remains_open
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'End-to-end: an httpx client must remain open after its cache entry expires via TTL and is evicted by evict_cache().'
+- id: test_evicted_openai_sdk_client_stays_usable
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'End-to-end: an openai.AsyncOpenAI client (the production scenario) must remain usable after its cache entry is evicted.'
+- id: test_remove_key_still_evicts_entry
+  type: pass_to_pass
+  origin: pr_diff
+  description: _remove_key must still actually remove the key from cache_dict and ttl_dict (the base behavior must be preserved).
+- id: test_remove_key_no_event_loop
+  type: pass_to_pass
+  origin: pr_diff
+  description: _remove_key must not raise when there is no running event loop.
+- id: test_dual_cache_module_p2p
+  type: pass_to_pass
+  origin: repo_tests
+  description: Run an unrelated upstream caching test file (tests/test_litellm/caching/test_dual_cache.py) to guard against collateral regressions in the caching package.
+- id: test_caching_module_ruff
+  type: pass_to_pass
+  origin: agent_config
+  description: ruff check on the modified file must pass — agent configs in this repo require code to pass ruff.
+  source:
+    lines: '256'
+    commit: a8cf646850b777ae1ce81c024e8acd27601e74e0
+    path: AGENTS.md
+rubric:
+- id: imports_at_module_level
+  source:
+    lines: '93'
+    commit: a8cf646850b777ae1ce81c024e8acd27601e74e0
+    path: CLAUDE.md
+  rule: All imports introduced or kept by the agent's solution must be at module level inside `litellm/caching/llm_caching_handler.py` (no inline imports inside methods or functions).
+- id: code_style_passes_repo_linters
+  source:
+    lines: '89'
+    commit: a8cf646850b777ae1ce81c024e8acd27601e74e0
+    path: CLAUDE.md
+  rule: 'The agent''s changes follow the repo''s documented code-style conventions: Black formatting, Ruff linting, MyPy type checking. Trivial deviations (e.g. line-length, missing trailing newline) should be flagged.'
+- id: change_is_isolated_and_minimal
+  source:
+    lines: 138-141
+    commit: a8cf646850b777ae1ce81c024e8acd27601e74e0
+    path: AGENTS.md
+  rule: The PR's pre-submission checklist requires PR scope to be 'as isolated as possible'. The agent's edits should be confined to the cache class and its tests; touching unrelated files is a smell.

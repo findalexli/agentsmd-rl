@@ -1,0 +1,158 @@
+version: '2.0'
+source:
+  repo: Effect-TS/effect
+  pr: 6131
+  base_commit: aa473938a53d07837e84935329f4891a7d591c3b
+  merge_commit: 5c80e578bd95e0cf6fceffc72fa0b130ca11ec8e
+  title: 'fix(ai-openrouter): allow partial tool_call deltas in streaming (closes #6128)'
+checks:
+- id: test_decodes_chunk_missing_type_and_arguments
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'A streaming chunk that lacks both `type` and `function.arguments` must
+
+    decode without error. This is the canonical first-delta shape.
+
+    '
+- id: test_decodes_chunk_missing_only_type
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'A streaming chunk that has `function.arguments` but omits `type` must
+
+    decode without error.
+
+    '
+- id: test_decodes_chunk_missing_only_arguments
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'A streaming chunk with `type: function` but no `function.arguments`
+
+    (continuation delta with only a name) must decode without error.
+
+    '
+- id: test_decodes_continuation_delta_with_only_arg_fragment
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'A mid-stream delta that carries only an arguments fragment under
+
+    `function` must decode without error.
+
+    '
+- id: test_decodes_full_streaming_sequence
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'A representative four-chunk OpenRouter streaming sequence (header
+
+    delta + three argument fragments) must decode end-to-end.
+
+    '
+- id: test_full_valid_tool_call_still_decodes
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'A fully-formed tool-call (the legacy non-streaming shape) still
+
+    decodes. Guards against an over-eager rewrite that drops required
+
+    handling.
+
+    '
+- id: test_invalid_type_literal_still_rejected
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'When `type` is present it must still be constrained to the literal
+
+    `"function"`. Any other string must continue to be rejected.
+
+    '
+- id: test_index_remains_required
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`index` is the only structurally required field; a delta missing
+
+    `index` must continue to be rejected.
+
+    '
+- id: test_index_must_be_number
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`index` must remain typed as a number; a string-shaped index must
+
+    continue to be rejected.
+
+    '
+- id: test_typescript_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'The package''s own TypeScript build (`pnpm exec tsc -b tsconfig.src.json`
+
+    inside packages/ai/openrouter) must continue to succeed.
+
+    '
+rubric:
+- id: agent_uses_optionalWith_nullable
+  source:
+    lines: 26-32
+    path: AGENTS.md
+    commit: aa473938a53d07837e84935329f4891a7d591c3b
+  weight: 0.3
+  rule: 'Edits should follow the project''s existing pattern of marking absent
+
+    fields with `Schema.optionalWith(<inner>, { nullable: true })`,
+
+    matching the surrounding fields in the same schema rather than
+
+    introducing an ad-hoc `Schema.Union(..., Schema.Undefined)` shape.
+
+    '
+- id: agent_runs_lint_fix
+  source:
+    lines: 19-19
+    path: AGENTS.md
+    commit: aa473938a53d07837e84935329f4891a7d591c3b
+  weight: 0.2
+  rule: 'AGENTS.md mandates running `pnpm lint-fix` after editing files; the
+
+    final diff should be lint-clean (no `pnpm lint` errors against the
+
+    changed file).
+
+    '
+- id: agent_keeps_changes_concise
+  source:
+    lines: 14-15
+    path: AGENTS.md
+    commit: aa473938a53d07837e84935329f4891a7d591c3b
+  weight: 0.2
+  rule: 'AGENTS.md asks for "Conciseness" and "Reduce comments"; the diff
+
+    should be minimal — only the schema fields that the bug requires —
+
+    with no new comments inside the schema class.
+
+    '
+- id: agent_adds_changeset
+  source:
+    lines: 39-42
+    path: AGENTS.md
+    commit: aa473938a53d07837e84935329f4891a7d591c3b
+  weight: 0.15
+  rule: 'AGENTS.md states all PRs must include a changeset under
+
+    `.changeset/`. A correct submission should add a patch-level
+
+    changeset for `@effect/ai-openrouter`.
+
+    '
+- id: agent_does_not_edit_generated_index
+  source:
+    lines: 34-37
+    path: AGENTS.md
+    commit: aa473938a53d07837e84935329f4891a7d591c3b
+  weight: 0.15
+  rule: 'AGENTS.md states `index.ts` files are auto-generated and must not be
+
+    edited manually. The submission should leave
+
+    `packages/ai/openrouter/src/index.ts` untouched.
+
+    '

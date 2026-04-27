@@ -1,0 +1,251 @@
+version: '2.0'
+task:
+  name: opencode-config-split-formatter-lsp
+  title: Split config formatter and lsp schemas into dedicated modules
+  kind: code_with_config
+source:
+  repo: anomalyco/opencode
+  pr: 22986
+  base_commit: 6405e3a7b12d49ade2f251360d221999836ccc02
+  merge_commit: 326471a25c50cb83d33e6b327bc88faf38a4db11
+  title: 'refactor: split config lsp and formatter schemas'
+checks:
+- id: test_formatter_module_schema_behavior
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Imports the new packages/opencode/src/config/formatter.ts module via bun
+
+    and exercises ConfigFormatter.Info.safeParse on representative inputs
+
+    (false, valid records, malformed command, malformed environment, true).
+
+    '
+- id: test_lsp_module_schema_behavior
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Imports the new packages/opencode/src/config/lsp.ts module via bun
+
+    (with `../lsp/server` stubbed) and exercises ConfigLSP.Info — including
+
+    the custom-server refinement (custom id without extensions must reject;
+
+    with extensions or `disabled: true` must pass; known LSP id passes
+
+    without extensions).
+
+    '
+- id: test_formatter_self_export_at_top
+  type: fail_to_pass
+  origin: agent_config
+  description: 'formatter.ts begins with `export * as ConfigFormatter from "./formatter"`,
+
+    matching the self-export convention codified in AGENTS.md.
+
+    '
+  source:
+    lines: '17'
+    commit: 326471a25c50cb83d33e6b327bc88faf38a4db11
+    path: AGENTS.md
+- id: test_lsp_self_export_at_top
+  type: fail_to_pass
+  origin: agent_config
+  description: 'lsp.ts begins with `export * as ConfigLSP from "./lsp"`, matching the
+
+    self-export convention codified in AGENTS.md.
+
+    '
+  source:
+    lines: '17'
+    commit: 326471a25c50cb83d33e6b327bc88faf38a4db11
+    path: AGENTS.md
+- id: test_index_reexports_new_modules
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'packages/opencode/src/config/index.ts re-exports both ConfigFormatter and
+
+    ConfigLSP namespaces.
+
+    '
+- id: test_config_ts_uses_imported_schemas
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'config.ts no longer inlines the schemas; it composes ConfigFormatter.Info
+
+    and ConfigLSP.Info under its top-level Info object.
+
+    '
+- id: test_config_ts_no_longer_has_inline_lsp_refine
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'config.ts no longer carries the inline lsp refinement (its custom-error
+
+    message and the direct LSPServer import are gone — both moved to lsp.ts).
+
+    '
+- id: test_root_agents_md_documents_self_export_pattern
+  type: fail_to_pass
+  origin: agent_config
+  description: 'Root AGENTS.md documents the src/config self-export convention.
+
+    '
+  source:
+    lines: '17'
+    commit: 326471a25c50cb83d33e6b327bc88faf38a4db11
+    path: AGENTS.md
+- id: test_pkg_agents_md_documents_self_export_pattern
+  type: fail_to_pass
+  origin: agent_config
+  description: 'packages/opencode/AGENTS.md documents the src/config self-export
+
+    convention under a Module conventions section.
+
+    '
+  source:
+    lines: 26-29
+    commit: 326471a25c50cb83d33e6b327bc88faf38a4db11
+    path: packages/opencode/AGENTS.md
+- id: test_other_config_modules_unchanged_self_export
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Sibling config modules (agent, command, error, parse, paths, permission,
+
+    managed, keybinds, variable) keep their self-export-first line. Guards
+
+    against an agent accidentally rewriting unrelated files while splitting.
+
+    '
+- id: test_bun_can_resolve_formatter_module
+  type: fail_to_pass
+  origin: pr_diff
+  description: '`bun build --target=node --external=''*''` succeeds on formatter.ts
+
+    (compiles cleanly with all transitive deps externalized). Fails at base
+
+    because the file does not exist.
+
+    '
+- id: test_bun_can_resolve_lsp_module
+  type: fail_to_pass
+  origin: pr_diff
+  description: '`bun build --target=node --external=''*''` succeeds on lsp.ts. Fails at
+
+    base because the file does not exist.
+
+    '
+config_edits:
+- path: AGENTS.md
+  tier: 1
+  gold_added: '- In `src/config`, follow the existing self-export pattern at the top of the file (for example `export * as ConfigAgent from "./agent"`) when adding a new config module.
+
+    '
+  gold_removed: ''
+- path: packages/opencode/AGENTS.md
+  tier: 1
+  gold_added: '## Module conventions
+
+
+    - In `src/config`, follow the existing self-export pattern at the top of the file (for example `export * as ConfigAgent from "./agent"`) when adding a new config module.
+
+    '
+  gold_removed: ''
+rubric:
+- rule: 'Avoid `try`/`catch` where possible in any new code added to
+
+    packages/opencode/src/config/.
+
+    '
+  source:
+    lines: 8-15
+    commit: 326471a25c50cb83d33e6b327bc88faf38a4db11
+    path: AGENTS.md
+  category: style
+  verification: llm_judge
+- rule: 'Avoid the `any` type in newly-introduced code. (The existing inline
+
+    schema''s `initialization: z.record(z.string(), z.any())` may be carried
+
+    across verbatim — that is the schema''s contract; the rule applies to
+
+    additional code.)
+
+    '
+  source:
+    lines: 8-15
+    commit: 326471a25c50cb83d33e6b327bc88faf38a4db11
+    path: AGENTS.md
+  category: style
+  verification: llm_judge
+- rule: 'Rely on type inference where possible; avoid explicit type annotations
+
+    or interfaces except where required for export. (The new modules already
+
+    need `export type Info = z.infer<typeof Info>` for downstream consumers
+
+    — that export is required and counts as "necessary for exports".)
+
+    '
+  source:
+    lines: 8-15
+    commit: 326471a25c50cb83d33e6b327bc88faf38a4db11
+    path: AGENTS.md
+  category: style
+  verification: llm_judge
+- rule: 'Prefer functional array methods (flatMap, filter, map) over for loops
+
+    in any newly-introduced code; use type guards on filter to maintain
+
+    type inference downstream. (The lsp refinement already uses
+
+    `Object.entries(data).every(...)` — keep functional style if you
+
+    restructure it.)
+
+    '
+  source:
+    lines: 8-15
+    commit: 326471a25c50cb83d33e6b327bc88faf38a4db11
+    path: AGENTS.md
+  category: style
+  verification: llm_judge
+- rule: 'Reduce total variable count by inlining when a value is only used once.
+
+    '
+  source:
+    lines: 17-26
+    commit: 326471a25c50cb83d33e6b327bc88faf38a4db11
+    path: AGENTS.md
+  category: style
+  verification: llm_judge
+- rule: 'Prefer `const` over `let`. Use ternaries or early returns instead of
+
+    reassignment in any new helper logic the agent introduces.
+
+    '
+  source:
+    lines: 39-50
+    commit: 326471a25c50cb83d33e6b327bc88faf38a4db11
+    path: AGENTS.md
+  category: style
+  verification: llm_judge
+- rule: 'Avoid `else` statements; prefer early returns. If the agent restructures
+
+    the lsp refinement, follow this rule.
+
+    '
+  source:
+    lines: 53-69
+    commit: 326471a25c50cb83d33e6b327bc88faf38a4db11
+    path: AGENTS.md
+  category: style
+  verification: llm_judge
+- rule: 'Avoid unnecessary destructuring; use dot notation to preserve context.
+
+    The existing schema bodies use property access — keep that style.
+
+    '
+  source:
+    lines: 29-37
+    commit: 326471a25c50cb83d33e6b327bc88faf38a4db11
+    path: AGENTS.md
+  category: style
+  verification: llm_judge

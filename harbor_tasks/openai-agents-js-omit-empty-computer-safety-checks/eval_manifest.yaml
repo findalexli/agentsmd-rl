@@ -1,0 +1,85 @@
+version: '2.0'
+source:
+  repo: openai/openai-agents-js
+  pr: 1129
+  base_commit: 36a368b7d477f5592aea21aab83b940533607939
+  merge_commit: 4e00b3ca2a54dd7842924d61d15f3898abf46d2f
+  title: 'fix(agents-openai): omit empty computer safety checks on replay'
+checks:
+- id: test_computer_call_omits_empty_pending_safety_checks
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Rebuilt computer_call input items must omit pending_safety_checks entirely when providerData.pending_safety_checks is an empty array.
+
+    '
+- id: test_computer_call_output_omits_empty_acknowledged_safety_checks
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Rebuilt computer_call_output input items must omit acknowledged_safety_checks entirely when providerData.acknowledged_safety_checks is an empty array.
+
+    '
+- id: test_computer_call_omits_when_provider_data_missing_field
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'When providerData has no safety-check fields at all, rebuilt items must not synthesise empty pending_safety_checks / acknowledged_safety_checks arrays.
+
+    '
+- id: test_non_empty_safety_checks_are_preserved
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Non-empty pending_safety_checks and acknowledged_safety_checks arrays must still pass through to the rebuilt input items.
+
+    '
+- id: test_helpers_vitest_suite_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'The package''s openaiResponsesModel.helpers.test.ts vitest suite passes (covers the broader getInputItems contract).
+
+    '
+- id: test_agents_openai_full_vitest_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'The full agents-openai vitest suite passes — broader regression net.
+
+    '
+- id: test_agents_openai_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`pnpm -F @openai/agents-openai build-check` (tsc --noEmit) passes.
+
+    '
+- id: test_agents_openai_eslint
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'ESLint over packages/agents-openai/{src,test} passes.
+
+    '
+rubric:
+- id: comments_end_with_period
+  source:
+    quote: Comments must end with a period.
+    path: AGENTS.md
+    commit: 36a368b7d477f5592aea21aab83b940533607939
+  rule: 'Any comment added or modified in TypeScript source must end with a period.
+
+    '
+- id: changeset_present_for_packages_change
+  source:
+    quote: 'When you change anything under `packages/` or touch `.changeset/`, use `$changeset-validation` to create and validate the changeset before you treat the code as final.
+
+      '
+    path: AGENTS.md
+    commit: 36a368b7d477f5592aea21aab83b940533607939
+  rule: 'Any change under packages/ must be accompanied by a Changeset entry under .changeset/ that names the affected package (@openai/agents-openai) at an appropriate semver bump (patch for a bug fix). The summary must read like a Conventional Commit subject (e.g. starting with `fix:` / `feat:`).
+
+    '
+- id: unit_tests_added_for_change
+  source:
+    quote: 'Add or update unit tests for any code change unless it is truly infeasible.
+
+      '
+    path: AGENTS.md
+    commit: 36a368b7d477f5592aea21aab83b940533607939
+  rule: 'The change must come with at least one new or updated unit test in packages/agents-openai/test/ that exercises the new behavior.
+
+    '

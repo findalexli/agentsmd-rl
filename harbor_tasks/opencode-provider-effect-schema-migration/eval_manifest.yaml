@@ -1,0 +1,92 @@
+version: '2.0'
+task:
+  name: opencode-provider-effect-schema-migration
+  kind: code_fix
+source:
+  owner: anomalyco
+  repo: opencode
+  pr_number: 24027
+  base_commit: 1e439b8226a66dcec0d65751f5cdb50a2b7bc979
+  merge_commit: 93940a1859530b8fe46df376e7d7ba74fcd3e0d1
+  pr_url: https://github.com/anomalyco/opencode/pull/24027
+  pr_title: 'refactor(provider): migrate provider domain to Effect Schema'
+  pr: 24027
+checks:
+- id: test_auth_no_zod_import
+  type: fail_to_pass
+  origin: pr_diff
+  description: auth.ts no longer has an `import ... from "zod"` line.
+- id: test_models_no_zod_import
+  type: fail_to_pass
+  origin: pr_diff
+  description: models.ts no longer has an `import ... from "zod"` line.
+- id: test_provider_no_zod_import
+  type: fail_to_pass
+  origin: pr_diff
+  description: provider.ts no longer has an `import ... from "zod"` line.
+- id: test_auth_uses_named_schema_error
+  type: fail_to_pass
+  origin: pr_diff
+  description: All four typed errors in auth.ts (OauthMissing, OauthCodeMissing, OauthCallbackFailed, ValidationFailed) use `namedSchemaError(...)` instead of `NamedError.create(...)`.
+- id: test_provider_uses_named_schema_error
+  type: fail_to_pass
+  origin: pr_diff
+  description: ModelNotFoundError and InitError in provider.ts use `namedSchemaError(...)` instead of `NamedError.create(...)`.
+- id: test_models_uses_effect_schema
+  type: fail_to_pass
+  origin: pr_diff
+  description: models.ts authors `Cost`, `Model`, `Provider` as Effect `Schema.Struct` and exports `Schema.Schema.Type<typeof Model | Provider>` for the inferred types.
+- id: test_schema_md_provider_section_done
+  type: fail_to_pass
+  origin: pr_diff
+  description: specs/effect/schema.md marks all three provider files as complete (`[x]`).
+  source:
+    lines: 275-279
+    commit: 1e439b8226a66dcec0d65751f5cdb50a2b7bc979
+    path: packages/opencode/specs/effect/schema.md
+- id: test_models_schema_decodes_valid_data
+  type: fail_to_pass
+  origin: pr_diff
+  description: After migration, the exported `Model` and `Provider` schemas decode a valid models.dev sample via `Schema.decodeUnknownSync` — only succeeds when they are real Effect Schemas (the same call throws on a zod schema).
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`bun typecheck` (i.e. `tsgo --noEmit`) from packages/opencode passes — guards that the migrated code still type-checks cleanly under the Effect Schema replacements.'
+rubric:
+- id: rubric_no_zod_in_migrated_files
+  source:
+    lines: 74-86
+    commit: 1e439b8226a66dcec0d65751f5cdb50a2b7bc979
+    path: packages/opencode/specs/effect/schema.md
+  rule: Migrated files contain no remaining `z.` calls or `import z from "zod"`. The package's `effect-zod` walker still re-exports a `zod()` helper, but the migrated file itself should not author zod schemas inline.
+- id: rubric_inferred_types_use_schema_schema_type
+  source:
+    lines: 118-126
+    commit: 1e439b8226a66dcec0d65751f5cdb50a2b7bc979
+    path: packages/opencode/specs/effect/schema.md
+  rule: Inferred TypeScript types are derived with `Schema.Schema.Type<typeof X>` (or equivalent) rather than `z.infer<typeof X>` or `Types.DeepMutable`. The recursive `JsonValue` schema must not introduce a new `Types.DeepMutable` usage that would trip TS2589.
+- id: rubric_no_try_catch
+  source:
+    lines: '12'
+    commit: 1e439b8226a66dcec0d65751f5cdb50a2b7bc979
+    path: AGENTS.md
+  rule: Migrated code avoids try/catch unless unavoidable, per the repo style guide.
+- id: rubric_no_any_type
+  source:
+    lines: '13'
+    commit: 1e439b8226a66dcec0d65751f5cdb50a2b7bc979
+    path: AGENTS.md
+  rule: Migrated code avoids the `any` type.
+- id: rubric_prefer_const_and_early_returns
+  source:
+    lines: 44-73
+    commit: 1e439b8226a66dcec0d65751f5cdb50a2b7bc979
+    path: AGENTS.md
+  rule: Code uses `const` over `let` and early returns instead of `else` branches, per the repo style guide.
+- id: rubric_callsite_env_spread
+  source:
+    lines: 118-126
+    commit: 1e439b8226a66dcec0d65751f5cdb50a2b7bc979
+    path: packages/opencode/specs/effect/schema.md
+  rule: If `Model.env` is now a readonly array, every call site that wants a mutable array should spread (`[...provider.env ?? []]`) at the boundary, not by widening the schema's type.
+config_edits: []

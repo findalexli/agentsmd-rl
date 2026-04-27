@@ -1,0 +1,259 @@
+version: '2.0'
+source:
+  type: github_pr
+  owner: anomalyco
+  repo: opencode
+  pr: 17267
+  url: https://github.com/anomalyco/opencode/pull/17267
+  base_commit: dcb17c6a678918ce0786640729fcc8cd8adb1746
+  merge_commit: 96b1d8f639991e896bc8d31afe64d6309bf3ccd2
+  title: 'fix(app): stabilize todo dock e2e with composer probe'
+task:
+  name: opencode-composer-e2e-probe
+  difficulty: medium
+  tags:
+  - typescript
+  - solidjs
+  - e2e
+  - playwright
+  - testing-infra
+checks:
+- id: test_module_file_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: New test-only module is at packages/app/src/testing/session-composer.ts.
+- id: test_composer_event_constant
+  type: fail_to_pass
+  origin: pr_diff
+  description: composerEvent constant is exactly the literal "opencode:e2e:composer".
+- id: test_enabled_returns_false_without_window
+  type: fail_to_pass
+  origin: pr_diff
+  description: composerEnabled() returns false when `window` is undefined (SSR / pre-mount).
+- id: test_enabled_returns_false_when_flag_missing
+  type: fail_to_pass
+  origin: pr_diff
+  description: composerEnabled() returns false when the namespace exists but enabled is missing.
+- id: test_enabled_returns_false_when_flag_falsy
+  type: fail_to_pass
+  origin: pr_diff
+  description: composerEnabled() requires strict-true; falsy / coercible values do not enable it.
+- id: test_enabled_returns_true_when_flag_true
+  type: fail_to_pass
+  origin: pr_diff
+  description: composerEnabled() returns true only when window.__opencode_e2e.composer.enabled === true.
+- id: test_driver_undefined_when_no_session_id
+  type: fail_to_pass
+  origin: pr_diff
+  description: composerDriver() with no sessionID returns undefined.
+- id: test_driver_undefined_when_disabled
+  type: fail_to_pass
+  origin: pr_diff
+  description: composerDriver(id) returns undefined when composerEnabled() is false.
+- id: test_driver_undefined_when_no_driver_set
+  type: fail_to_pass
+  origin: pr_diff
+  description: composerDriver(id) returns undefined when no driver has been written for that session.
+- id: test_driver_returns_clone_of_state
+  type: fail_to_pass
+  origin: pr_diff
+  description: composerDriver(id) returns a fresh outer object, fresh todos array, and fresh todo objects.
+- id: test_driver_clone_isolates_caller_mutation
+  type: fail_to_pass
+  origin: pr_diff
+  description: Mutating the value returned by composerDriver does not affect underlying state.
+- id: test_driver_handles_missing_todos_field
+  type: fail_to_pass
+  origin: pr_diff
+  description: composerDriver(id) returns cleanly when the driver's todos field is undefined.
+- id: test_probe_set_writes_state
+  type: fail_to_pass
+  origin: pr_diff
+  description: composerProbe(id).set(s) writes s under window.__opencode_e2e.composer.sessions[id].probe.
+- id: test_probe_set_clones_states_array
+  type: fail_to_pass
+  origin: pr_diff
+  description: composerProbe(id).set clones the states array; later mutations of the original do not leak in.
+- id: test_probe_set_preserves_existing_driver
+  type: fail_to_pass
+  origin: pr_diff
+  description: composerProbe(id).set must not erase a previously-set driver on the same session.
+- id: test_probe_set_no_op_without_session_id
+  type: fail_to_pass
+  origin: pr_diff
+  description: composerProbe() with no sessionID, set() is a safe no-op (no throw, no global write).
+- id: test_probe_set_no_op_when_disabled
+  type: fail_to_pass
+  origin: pr_diff
+  description: composerProbe(id).set is a no-op when composerEnabled() is false.
+- id: test_probe_drop_writes_unmounted_state
+  type: fail_to_pass
+  origin: pr_diff
+  description: composerProbe(id).drop() writes mounted=false, hidden=true, count=0, empty states.
+- id: test_state_file_imports_driver_and_event
+  type: fail_to_pass
+  origin: pr_diff
+  description: session-composer-state.ts imports composerDriver, composerEnabled, and composerEvent.
+- id: test_state_file_uses_event_listener
+  type: fail_to_pass
+  origin: pr_diff
+  description: state file subscribes to composerEvent on window and removes the listener on cleanup.
+- id: test_state_file_uses_create_store_for_driver_state
+  type: fail_to_pass
+  origin: agent_config
+  description: The driver overlay uses createStore (per the app's SolidJS guidance).
+  source:
+    lines: 13-14
+    commit: dcb17c6a678918ce0786640729fcc8cd8adb1746
+    path: packages/app/AGENTS.md
+- id: test_dock_file_imports_probe
+  type: fail_to_pass
+  origin: pr_diff
+  description: session-todo-dock.tsx imports composerEnabled and composerProbe.
+- id: test_dock_file_accepts_session_id_prop
+  type: fail_to_pass
+  origin: pr_diff
+  description: SessionTodoDock declares an optional sessionID prop typed as string.
+- id: test_region_passes_session_id_to_dock
+  type: fail_to_pass
+  origin: pr_diff
+  description: SessionComposerRegion threads route.params.id into <SessionTodoDock sessionID=...>.
+- id: test_spec_imports_composer_event
+  type: fail_to_pass
+  origin: pr_diff
+  description: The rewritten spec imports composerEvent from the new module.
+- id: test_spec_drops_seedSessionTodos_import
+  type: fail_to_pass
+  origin: pr_diff
+  description: The rewritten spec drops seedSessionTodos / sessionTodoDockSelector / sessionTodoListSelector imports.
+- id: test_spec_uses_probe_to_match_object
+  type: fail_to_pass
+  origin: pr_diff
+  description: The new spec asserts on probe state via expect.poll(...).toMatchObject({ mounted, ..., states }).
+- id: test_e2e_agents_doc_has_state_first_section
+  type: fail_to_pass
+  origin: pr_diff
+  description: AGENTS.md gains the "Wait on state", "Add hooks", and "Prefer helpers" subsections.
+- id: test_p2p_repo_root_package_json
+  type: pass_to_pass
+  origin: repo_tests
+  description: Sanity — bun monorepo root retains packageManager bun@*.
+- id: test_p2p_app_package_unit_test_script_present
+  type: pass_to_pass
+  origin: repo_tests
+  description: packages/app keeps its test:unit script.
+- id: test_p2p_bun_runtime_works
+  type: pass_to_pass
+  origin: pr_diff
+  description: bun is installed and functional in the test environment.
+- id: test_p2p_unrelated_app_module_parses
+  type: pass_to_pass
+  origin: pr_diff
+  description: An unrelated app source file parses cleanly via bun build (sanity check on the parser pipeline).
+rubric:
+- id: rubric_single_word_names
+  source:
+    lines: 20-31
+    commit: dcb17c6a678918ce0786640729fcc8cd8adb1746
+    path: AGENTS.md
+  rule: 'New locals, params, and helper functions in agent-written code use
+
+    single-word names by default; multi-word names only when a single
+
+    word would be unclear (per AGENTS.md "Naming Enforcement").
+
+    '
+- id: rubric_no_try_catch_unless_needed
+  source:
+    lines: 9-13
+    commit: dcb17c6a678918ce0786640729fcc8cd8adb1746
+    path: AGENTS.md
+  rule: 'Avoid try/catch where possible (per AGENTS.md "General Principles");
+
+    prefer early returns and direct error propagation.
+
+    '
+- id: rubric_no_any_type
+  source:
+    lines: 9-13
+    commit: dcb17c6a678918ce0786640729fcc8cd8adb1746
+    path: AGENTS.md
+  rule: 'Avoid the `any` type in agent-written code (per AGENTS.md "General
+
+    Principles"). Use precise types or generic inference.
+
+    '
+- id: rubric_avoid_else
+  source:
+    lines: 78-91
+    commit: dcb17c6a678918ce0786640729fcc8cd8adb1746
+    path: AGENTS.md
+  rule: 'Avoid `else` branches; prefer early returns (per AGENTS.md
+
+    "Control Flow").
+
+    '
+- id: rubric_avoid_destructuring
+  source:
+    lines: 57-66
+    commit: dcb17c6a678918ce0786640729fcc8cd8adb1746
+    path: AGENTS.md
+  rule: 'Avoid unnecessary `{ a, b } = obj` destructuring; prefer dot
+
+    notation to preserve context (per AGENTS.md "Destructuring"). The
+
+    region change in this PR (`const { sessionKey } = useSessionKey()`
+
+    → `const route = useSessionKey()`) follows this rule.
+
+    '
+- id: rubric_prefer_const
+  source:
+    lines: 68-77
+    commit: dcb17c6a678918ce0786640729fcc8cd8adb1746
+    path: AGENTS.md
+  rule: 'Prefer `const` over `let`; use ternaries or early returns instead of
+
+    reassignment (per AGENTS.md "Variables").
+
+    '
+- id: rubric_prefer_array_methods
+  source:
+    lines: 9-13
+    commit: dcb17c6a678918ce0786640729fcc8cd8adb1746
+    path: AGENTS.md
+  rule: 'Prefer functional array methods (flatMap / filter / map) over
+
+    imperative for loops (per AGENTS.md "General Principles"). The
+
+    `clearPermissionDock` rewrite — replacing the for-with-waitForTimeout
+
+    loop with a single visibility assertion + click — exemplifies this.
+
+    '
+- id: rubric_e2e_no_wall_clock
+  source:
+    lines: 179-184
+    commit: 96b1d8f639991e896bc8d31afe64d6309bf3ccd2
+    path: packages/app/e2e/AGENTS.md
+  rule: 'E2E tests must never use wall-clock waits like
+
+    `page.waitForTimeout(...)` to make a test pass; wait/poll on
+
+    observable state instead. (Per the new packages/app/e2e/AGENTS.md
+
+    "Wait on state" section the agent must add.)
+
+    '
+- id: rubric_e2e_hooks_inert_unless_enabled
+  source:
+    lines: 186-192
+    commit: 96b1d8f639991e896bc8d31afe64d6309bf3ccd2
+    path: packages/app/e2e/AGENTS.md
+  rule: 'Test-only hooks added in app code must be inert unless explicitly
+
+    enabled — no normal-runtime listeners, reactive subscriptions, or
+
+    per-update allocations for e2e ceremony.
+
+    '

@@ -1,0 +1,57 @@
+version: '2.0'
+source:
+  repo: pulumi/pulumi
+  pr: 22385
+  base_commit: d6f3e3a290907239b9ec6f94b4a05af33a70db17
+  merge_commit: 81f23d079f47915e2682cf11e5635e7fa0049100
+  url: https://github.com/pulumi/pulumi/pull/22385
+task:
+  name: pulumi-refresh-preview-only-skip-lock
+  title: Remove state lock for `pulumi refresh --preview-only` (diy backend)
+  language: go
+checks:
+- id: test_refresh_preview_only_skips_lock
+  type: fail_to_pass
+  origin: pr_diff
+  description: Refresh on the diy backend with PreviewOnly=true must not perform the state-lock check. With a foreign lock held, the call must not surface a "currently locked" error.
+- id: test_refresh_non_preview_still_locks
+  type: pass_to_pass
+  origin: pr_diff
+  description: Refresh without PreviewOnly continues to acquire the state lock — guards against an over-broad fix that disables locking for all refresh calls.
+- id: test_diy_backend_package_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Pre-existing pkg/backend/diy unit tests (TestCancel, TestRemoveMakesBackups, lock_test.go cases, etc.) still pass.
+- id: test_diy_backend_package_vets_clean
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`go vet ./backend/diy/...` reports no issues — keeps the diy package free of vet-detectable defects.'
+rubric:
+- id: copyright_header_current_year
+  source:
+    lines: '59'
+    path: AGENTS.md
+    commit: d6f3e3a290907239b9ec6f94b4a05af33a70db17
+  origin: agent_config
+  rule: 'AGENTS.md: "Copyright headers for new files should always be stamped with the current year." If the agent introduces new .go files (e.g., a new test file), the copyright header must be 2026.'
+- id: do_not_skip_linting
+  source:
+    lines: '63'
+    path: AGENTS.md
+    commit: d6f3e3a290907239b9ec6f94b4a05af33a70db17
+  origin: agent_config
+  rule: 'AGENTS.md: "Do not skip linting." After Go code changes, the agent should run `mise exec -- make lint` (or equivalent `go vet` / `gofumpt` / `golangci-lint` in this restricted environment) and confirm it is clean.'
+- id: no_unrelated_refactors
+  source:
+    lines: '67'
+    path: AGENTS.md
+    commit: d6f3e3a290907239b9ec6f94b4a05af33a70db17
+  origin: agent_config
+  rule: 'AGENTS.md: "Do not make sweeping changes, refactor unrelated code, or add unnecessary abstractions." The fix should touch only the Refresh function (and optionally a changelog entry); no opportunistic cleanups elsewhere.'
+- id: respect_format_after_go_changes
+  source:
+    lines: '78'
+    path: AGENTS.md
+    commit: d6f3e3a290907239b9ec6f94b4a05af33a70db17
+  origin: agent_config
+  rule: 'AGENTS.md: "Any `.go` file → `mise exec -- make format && mise exec -- make lint && mise exec -- make test_fast`." The diff must remain gofumpt-clean.'

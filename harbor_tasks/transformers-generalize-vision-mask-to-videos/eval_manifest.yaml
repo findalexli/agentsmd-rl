@@ -1,0 +1,95 @@
+version: '2.0'
+source:
+  repo: huggingface/transformers
+  pr: 45185
+  base_commit: 538368903c6ecdc5f489a8eed4ce809e58fdafb5
+  merge_commit: ade7a05a42bf53b183bb78c181743be063c5ff14
+task:
+  kind: code_fix
+checks:
+- id: test_signature_takes_single_arg
+  type: fail_to_pass
+  origin: pr_diff
+  description: '`token_type_ids_mask_function` (in gemma3, git, paligemma) must accept exactly one parameter — group_ids — instead of the old (token_type_ids, image_group_ids) pair.'
+- id: test_callable_with_one_positional_arg
+  type: fail_to_pass
+  origin: pr_diff
+  description: Calling the helper with a single tensor must succeed and return a callable inner mask.
+- id: test_inner_mask_behavior
+  type: fail_to_pass
+  origin: pr_diff
+  description: '`inner_mask` returns True iff the two positions belong to the same non-negative vision group; text↔text, text↔vision, and cross-group pairs return False. Parametrized across 15 (group_ids, q, kv) cases per model.'
+- id: test_inner_mask_handles_out_of_bounds_indices
+  type: fail_to_pass
+  origin: pr_diff
+  description: Indices that exceed seq_len (static-cache scenario) must produce False without raising indexing errors.
+- id: test_inner_mask_supports_batched_inputs
+  type: fail_to_pass
+  origin: pr_diff
+  description: Each batch row is independent — masks for row b consult only row b of group_ids, so identical (q,kv) pairs can give different results across rows.
+- id: test_modular_gemma3_call_site_updated
+  type: fail_to_pass
+  origin: agent_config
+  description: modular_gemma3.py — the source for modeling_gemma3.py — must call token_type_ids_mask_function with the new single-argument form so `make fix-repo` regenerates a consistent modeling_gemma3.py.
+  source:
+    path: AGENTS.md
+    lines: 62-67
+    commit: 538368903c6ecdc5f489a8eed4ce809e58fdafb5
+- id: test_git_signature_matches_gemma3
+  type: pass_to_pass
+  origin: agent_config
+  description: git/modeling_git.py's helper is annotated `# Copied from transformers.models.gemma3.modeling_gemma3.token_type_ids_mask_function`, so its signature must always match gemma3's after the refactor.
+  source:
+    path: AGENTS.md
+    lines: 62-67
+    commit: 538368903c6ecdc5f489a8eed4ce809e58fdafb5
+- id: test_paligemma_signature_matches_gemma3
+  type: pass_to_pass
+  origin: pr_diff
+  description: paligemma's helper must continue to share gemma3's signature.
+- id: test_repo_check_copies
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`python utils/checkers.py copies` (the repository''s check-copies utility) must keep passing — guards `# Copied from` blocks.'
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: ruff format --check must pass on every touched file.
+- id: test_repo_ruff_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: ruff check must pass on every touched file.
+rubric:
+- rule: When a `modular` file is present, generated files should not be edited, as changes will be overwritten by `make fix-repo`! Instead, edit the `modular` file. See [docs/source/en/modular_transformers.md](docs/source/en/modular_transformers.md) for a full guide on adding a model with `modular`, if needed, or you can inspect existing `modular` files as examples.
+  source:
+    path: AGENTS.md
+    lines: '67'
+    commit: 538368903c6ecdc5f489a8eed4ce809e58fdafb5
+  evidence: gold patch edits modular_gemma3.py call site to match modeling_gemma3.py, treating the modular file as source of truth
+  category: architecture
+  verification: llm_judge
+- rule: The older method is to mark classes or functions with `# Copied from ...`. Copies are kept in sync by `make fix-repo`. Do not edit a `# Copied from` block, as it will be reverted by `make fix-repo`. Ideally you should edit the code it's copying from and propagate the change, but you can break the `# Copied from` link if needed.
+  source:
+    path: AGENTS.md
+    lines: '66'
+    commit: 538368903c6ecdc5f489a8eed4ce809e58fdafb5
+  evidence: gold patch updates the Copied from block in git/modeling_git.py to match gemma3's refactored signature, and check-copies verifies consistency
+  category: architecture
+  verification: programmatic
+- rule: '`make style` or `make fix-repo` should be run as the final step before opening a PR.'
+  source:
+    path: AGENTS.md
+    lines: '8'
+    commit: 538368903c6ecdc5f489a8eed4ce809e58fdafb5
+  evidence: gold patch produces code that passes ruff format --check and ruff check on all touched files
+  category: style
+  verification: programmatic
+distractors:
+- rule: Do not edit a `# Copied from` block, as it will be reverted by `make fix-repo`. Ideally you should edit the code it's copying from and propagate the change, but you can break the `# Copied from` link if needed.
+  source:
+    path: AGENTS.md
+    lines: '66'
+    commit: 538368903c6ecdc5f489a8eed4ce809e58fdafb5
+  collision_type: rule_conflict
+  why_distracting: The Copied-from rule says edit the source gemma3 file; but gemma3 has a modular_gemma3.py, and the modular rule forbids editing the generated file. An agent torn between both may edit only modeling_gemma3.py and have its change reverted by make fix-repo.
+  severity: high

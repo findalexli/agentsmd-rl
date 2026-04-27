@@ -1,0 +1,246 @@
+version: '2.0'
+source:
+  repo: PRQL/prql
+  pr: 5474
+  base_commit: c3853a866993b199f92f6bd6bd0060a4f187e4e8
+  merge_commit: f136e3fa182c9ff48618cbed76d4328ba8652155
+task:
+  name: prql-test-suite-context-efficiency
+  kind: code_with_config
+  difficulty: easy
+  tags:
+  - taskfile
+  - cargo
+  - nextest
+  - claude-md
+  - markdown-authoring
+checks:
+- id: test_taskfile_is_valid_yaml
+  type: pass_to_pass
+  origin: static
+  description: Taskfile.yaml parses as YAML and has a `tasks` mapping.
+- id: test_task_binary_lists_tasks
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`task --list-all` runs against the Taskfile and lists key tasks.'
+- id: test_buildall_cargo_build_uses_quiet
+  type: fail_to_pass
+  origin: pr_diff
+  description: Every `cargo build` command in the build-all task includes --quiet.
+- id: test_buildall_cargo_doc_uses_quiet
+  type: fail_to_pass
+  origin: pr_diff
+  description: The `cargo doc` command in the build-all task includes --quiet.
+- id: test_buildeachcrate_template_uses_quiet
+  type: fail_to_pass
+  origin: pr_diff
+  description: build-each-crate's per-package cargo build template includes --quiet.
+- id: test_testrust_has_nextest_status_level_env
+  type: fail_to_pass
+  origin: pr_diff
+  description: test-rust task sets NEXTEST_STATUS_LEVEL=fail in its env block.
+- id: test_testrust_has_nextest_final_status_level_env
+  type: fail_to_pass
+  origin: pr_diff
+  description: test-rust task sets NEXTEST_FINAL_STATUS_LEVEL=slow in its env block.
+- id: test_claude_md_documents_inner_outer_loop
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLAUDE.md introduces the inner/outer loop testing workflow.
+- id: test_claude_md_documents_token_reduction_config
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLAUDE.md explains the test-suite token-usage configuration (nextest, --quiet).
+- id: test_claude_md_workflow_section_above_tests_section
+  type: fail_to_pass
+  origin: pr_diff
+  description: The new workflow content precedes the kept "## Tests" section in CLAUDE.md.
+config_edits:
+- path: CLAUDE.md
+  tier: 1
+  gold_added: '## Development Workflow
+
+
+    Use a tight inner loop for fast feedback, comprehensive outer loop before
+
+    returning to user:
+
+
+    **Inner loop** (fast, focused, <5s):
+
+
+    ```sh
+
+    # Run lints on changed files
+
+    task test-lint
+
+
+    # Run specific tests you''re working on
+
+    cargo insta test -p prqlc --test integration -- date
+
+
+    # Run unit tests for a specific module
+
+    cargo insta test -p prqlc --lib semantic::resolver
+
+    ```
+
+
+    **Outer loop** (comprehensive, ~1min, before returning to user):
+
+
+    ```sh
+
+    # Run everything - this is required before returning
+
+    task test-all
+
+    ```
+
+
+    The test suite is configured to minimize token usage:
+
+
+    - **Nextest** only shows failures and slow tests (not 600 PASS lines)
+
+    - **Cargo builds** use `--quiet` flag (no compilation spam)
+
+    - **Result**: ~52% reduction in output (1128 → 540 lines, ~4.5k tokens)
+
+
+    ## Tests
+
+
+    Prefer inline snapshots for almost all tests:
+
+
+    ```rust
+
+    insta::assert_snapshot!(result, @"expected output");
+
+    ```
+
+
+    Initialize tests with empty snapshots, then run with `--accept`:
+
+
+    ```rust
+
+    insta::assert_snapshot!(result, @"");
+
+    ```
+
+
+    The test commands above with `--accept` will fill in the result automatically.
+
+    '
+  gold_removed: '## Tests
+
+
+    Prefer `cargo insta` tests.
+
+
+    When running tests, prefer:
+
+
+    ```sh
+
+    # Run tests and automatically accept snapshot changes
+
+    cargo insta test --accept
+
+
+    # Run tests in a specific package
+
+    cargo insta test -p prqlc-parser --accept
+
+
+    # Run tests matching a specific pattern
+
+    cargo insta test -p prqlc --test integration -- date
+
+    ```
+
+
+    Prefer inline snapshots for almost all tests:
+
+
+    ```rust
+
+    insta::assert_snapshot!(result, @"expected output");
+
+    ```
+
+
+    Initializing the test with:
+
+
+    ```rust
+
+    insta::assert_snapshot!(result, @"");
+
+    ```
+
+
+    ...and then running the test commands above with `--accept` will then fill in
+
+    the result.
+
+
+    To run all tests, accepting snapshots, run
+
+
+    ```sh
+
+    task test-all
+
+    ```
+
+    '
+  diff_hunk: 'Replaced the single `## Tests` section at the top of CLAUDE.md with a
+
+    `## Development Workflow` section (covering inner/outer loop, with sample
+
+    commands for each) followed by a slimmed-down `## Tests` section. The
+
+    Development Workflow section also documents the nextest + --quiet
+
+    token-reduction configuration.
+
+    '
+rubric:
+- rule: Prefer inline snapshots (`insta::assert_snapshot!`) for almost all tests.
+  source:
+    path: CLAUDE.md
+    lines: 20-22
+    commit: c3853a866993b199f92f6bd6bd0060a4f187e4e8
+  evidence: Gold leaves the inline-snapshot guidance intact while reorganising the surrounding workflow text.
+  category: testing
+  verification: llm_judge
+- rule: Prefer `cargo insta` tests; sample commands should use `cargo insta test`.
+  source:
+    path: CLAUDE.md
+    lines: 5-15
+    commit: c3853a866993b199f92f6bd6bd0060a4f187e4e8
+  evidence: Gold's inner-loop and outer-loop examples both use `cargo insta test` (and `task test-all`, which calls cargo insta).
+  category: testing
+  verification: llm_judge
+- rule: When running all tests, the canonical command is `task test-all`.
+  source:
+    path: CLAUDE.md
+    lines: 37-41
+    commit: c3853a866993b199f92f6bd6bd0060a4f187e4e8
+  evidence: Gold's outer-loop block is exactly `task test-all`, preserving the canonical entry point.
+  category: testing
+  verification: llm_judge
+- rule: Document the test workflow in CLAUDE.md so an agent can pick the right command for an inner versus outer loop.
+  source:
+    path: CLAUDE.md
+    lines: 1-50
+    commit: c3853a866993b199f92f6bd6bd0060a4f187e4e8
+  evidence: Gold introduces an explicit Development Workflow section with the inner/outer loop pattern and time-budget cues.
+  category: documentation
+  verification: semantic_diff
+distractors: []

@@ -1,0 +1,71 @@
+version: '2.0'
+source:
+  repo: trpc/trpc
+  pr: 7286
+  base_commit: 59f2cdb3c58310733b06d3b2e16c94065fe0a9c3
+  merge_commit: 2b8a4f826d3b22829343cebd9b23e163dfeecd09
+task:
+  kind: code_fix
+checks:
+- id: test_streaming_onerror_unwraps_cause_regression
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Server-side onError for a streaming query that throws receives a TRPCError whose .message and .cause.message equal the original thrown error message. Mirrors the regression test added in PR #7286.'
+- id: test_resolveresponse_passes_cause_error_not_wrapper
+  type: pass_to_pass
+  origin: pr_diff
+  description: Smoke import of @trpc/server via tsx compiles and runs — guards against syntactic regressions in the modified file.
+- id: test_repo_errors_test_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: The existing repo test file packages/tests/server/errors.test.ts (13 tests at base) must keep passing. These tests do not exercise the bug path and so must remain green before and after the fix.
+- id: test_repo_TRPCError_test_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: The repo's TRPCError unit tests must continue to pass.
+- id: test_target_file_compiles_with_typescript
+  type: pass_to_pass
+  origin: pr_diff
+  description: Running `npx tsc --noEmit` inside packages/server (the standard repo typecheck) must succeed — the fix must keep public type signatures stable.
+rubric:
+- rule: '- **ALWAYS** use `import type` for type-only imports: `@typescript-eslint/consistent-type-imports`'
+  source:
+    path: .cursor/rules/coding-guidelines.mdc
+    lines: 23-35
+    commit: 59f2cdb3c58310733b06d3b2e16c94065fe0a9c3
+  evidence: The gold patch does not add or change any import lines, preserving existing import type conventions.
+  category: style
+  verification: llm_judge
+- rule: '- **AVOID** non-null assertions (`@typescript-eslint/no-non-null-assertion`). Use proper type guards and optional chaining.'
+  source:
+    path: .cursor/rules/coding-guidelines.mdc
+    lines: 180-191
+    commit: 59f2cdb3c58310733b06d3b2e16c94065fe0a9c3
+  evidence: The gold fix uses direct property access (cause.error) instead of a non-null assertion (cause!).
+  category: style
+  verification: llm_judge
+- rule: '- **NO** `console.log` in packages (`no-console: error` for packages)'
+  source:
+    path: .cursor/rules/coding-guidelines.mdc
+    lines: 193-197
+    commit: 59f2cdb3c58310733b06d3b2e16c94065fe0a9c3
+  evidence: The gold fix does not add any console.log or console calls in the server package source.
+  category: style
+  verification: llm_judge
+- rule: '- **NEVER** use destructuring in function parameter declarations'
+  source:
+    path: .cursor/rules/coding-guidelines.mdc
+    lines: 37-73
+    commit: 59f2cdb3c58310733b06d3b2e16c94065fe0a9c3
+  evidence: The gold fix preserves the non-destructured (cause) parameter in the streaming onError callback.
+  category: style
+  verification: llm_judge
+distractors:
+- rule: '- Use proper type guards and optional chaining'
+  source:
+    path: .cursor/rules/coding-guidelines.mdc
+    lines: 180-191
+    commit: 59f2cdb3c58310733b06d3b2e16c94065fe0a9c3
+  collision_type: scope_ambiguity
+  why_distracting: In the streaming onError callback, cause is always a defined object — adding optional chaining (cause?.error) or null guards is unnecessary defensive code that the rule's blanket scope could encourage.
+  severity: medium

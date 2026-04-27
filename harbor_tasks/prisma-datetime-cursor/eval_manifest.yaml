@@ -1,0 +1,108 @@
+version: '2.0'
+source:
+  owner: prisma
+  repo: prisma
+  pr_number: 29327
+  url: https://github.com/prisma/prisma/pull/29327
+  base_commit: f8e742a8de6878a206d8493b61d911dac97e11df
+  merge_commit: ea93809a44f89847699a3f72d7b289339f7a0bdc
+  title: 'fix: fix DATE cursor comparison'
+  pr: 29327
+task:
+  name: prisma-datetime-cursor
+  language: typescript
+  primary_file: packages/client-engine-runtime/src/interpreter/render-query.ts
+checks:
+- id: test_datetime_placeholder_string_resolves_to_date
+  type: fail_to_pass
+  origin: repo_tests
+  description: 'evaluateArg() must coerce a DateTime placeholder whose scope-bound value is a string into a JS Date object. The base implementation returned the string as-is, which broke cursor pagination against DATE-typed columns because the pagination layer compared the cursor value against a database-side Date using strict equality.
+
+    '
+- id: test_array_of_datetime_placeholders_resolves_elementwise
+  type: fail_to_pass
+  origin: repo_tests
+  description: 'When the argument to evaluateArg is an array of DateTime placeholders, each element must be resolved to a Date instance.
+
+    '
+- id: test_renderquery_binds_datetime_placeholder_as_date
+  type: fail_to_pass
+  origin: repo_tests
+  description: 'End-to-end through renderQuery, a DateTime placeholder bound to a string in scope yields a Date object in the rendered SQL args list.
+
+    '
+- id: test_datetime_placeholder_existing_date_passthrough
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Solution-uniqueness guard: a DateTime placeholder whose scope value is already a Date must continue to resolve to that Date unchanged.
+
+    '
+- id: test_non_datetime_placeholder_values_unchanged
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Solution-uniqueness guard: only DateTime triggers coercion. Strings, ints, and booleans bound by non-DateTime placeholders pass through unchanged. Catches over-eager fixes that convert every placeholder.
+
+    '
+- id: test_existing_render_query_tests_still_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing render-query.test.ts continues to pass.
+- id: test_full_client_engine_runtime_test_suite_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Full @prisma/client-engine-runtime vitest suite passes.
+- id: test_client_engine_runtime_builds
+  type: pass_to_pass
+  origin: repo_tests
+  description: client-engine-runtime builds cleanly via the package's `build` script.
+- id: test_render_query_no_what_inline_comments
+  type: pass_to_pass
+  origin: agent_config
+  description: 'Coding convention from AGENTS.md: avoid inline comments that describe WHAT the code does. Comments must answer WHY.
+
+    '
+  source:
+    lines: 109-119
+    commit: f8e742a8de6878a206d8493b61d911dac97e11df
+    path: AGENTS.md
+rubric:
+- id: kebab_case_filenames
+  source:
+    lines: '110'
+    commit: f8e742a8de6878a206d8493b61d911dac97e11df
+    path: AGENTS.md
+  rule: 'AGENTS.md "Coding conventions": use kebab-case for new file names (e.g., query-utils.ts). The fix should not introduce new files with camelCase or snake_case filenames.
+
+    '
+- id: no_barrel_files
+  source:
+    lines: '111'
+    commit: f8e742a8de6878a206d8493b61d911dac97e11df
+    path: AGENTS.md
+  rule: 'AGENTS.md: avoid creating new barrel files (`index.ts` that only re-exports). Imports should come directly from the source file.
+
+    '
+- id: comments_explain_why_not_what
+  source:
+    lines: 112-117
+    commit: f8e742a8de6878a206d8493b61d911dac97e11df
+    path: AGENTS.md
+  rule: 'AGENTS.md: inline comments must explain WHY (context, background, issue links) — never WHAT the code does. The DateTime branch added by the fix should carry a why-comment explaining the cursor-comparison rationale.
+
+    '
+- id: ascii_only_change
+  source:
+    lines: '123'
+    commit: f8e742a8de6878a206d8493b61d911dac97e11df
+    path: AGENTS.md
+  rule: 'AGENTS.md "Workflow reminders": keep changes ASCII unless the file already uses Unicode. The patch should not introduce non-ASCII characters into render-query.ts.
+
+    '
+- id: minimal_scope_change
+  source:
+    lines: '122'
+    commit: f8e742a8de6878a206d8493b61d911dac97e11df
+    path: AGENTS.md
+  rule: 'AGENTS.md: respect existing structure; modifications often require updating both the implementation and tests. The fix should be tightly scoped to evaluateArg''s placeholder branch and not refactor unrelated code.
+
+    '

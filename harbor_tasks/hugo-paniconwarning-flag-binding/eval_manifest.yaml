@@ -1,0 +1,126 @@
+version: '2.0'
+source:
+  repo: gohugoio/hugo
+  pr: 14525
+  pr_url: https://github.com/gohugoio/hugo/pull/14525
+  base_commit: ab62320d6bceece0faa7029f8bd79d546d0f64be
+  merge_commit: 3f9d0ad2b6045849cbafe133cb9fb82ed5f5ee06
+  title: 'commands: Fix --panicOnWarning flag having no effect with module version warnings'
+task:
+  name: hugo-paniconwarning-flag-binding
+  language: go
+  repo_path: /workspace/hugo
+checks:
+- id: test_panic_on_warning_module_min_max_equal_exits_nonzero
+  type: fail_to_pass
+  origin: pr_diff
+  description: hugo --panicOnWarning must exit non-zero when a module version warning is emitted (min=max=0.148.0).
+- id: test_panic_on_warning_stderr_contains_compatibility_message
+  type: pass_to_pass
+  origin: pr_diff
+  description: Stderr surfaces the 'is not compatible with this Hugo' message — the warning text is preserved (not rewritten or swallowed) regardless of fix state.
+- id: test_panic_on_warning_min_only_exits_nonzero
+  type: fail_to_pass
+  origin: pr_diff
+  description: Different hugoVersion window (9.99.0) also triggers the panic — guards against hardcoding a single version.
+- id: test_without_panic_on_warning_still_succeeds
+  type: pass_to_pass
+  origin: pr_diff
+  description: Without --panicOnWarning, a build that emits a warning must still succeed (warnings are not unconditionally fatal).
+- id: test_panic_on_warning_clean_site_succeeds
+  type: pass_to_pass
+  origin: pr_diff
+  description: Clean site with --panicOnWarning must still succeed — the flag is not unconditionally fatal.
+- id: test_repo_go_vet_commands
+  type: pass_to_pass
+  origin: repo_tests
+  description: go vet ./commands/... must remain clean.
+- id: test_repo_gofmt_commands_clean
+  type: pass_to_pass
+  origin: repo_tests
+  description: gofmt -l commands/ must report no diffs (matches repo's check.sh).
+- id: test_repo_loggers_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Pre-existing common/loggers package tests must still pass.
+- id: test_repo_commands_package_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: go build ./commands/... must succeed.
+rubric:
+- id: comments_explain_why_not_what
+  source:
+    lines: 1-4
+    commit: ab62320d6bceece0faa7029f8bd79d546d0f64be
+    path: AGENTS.md
+  rule: 'Per AGENTS.md: assume readers are Go experts; do not use comments to
+
+    explain the obvious. New comments added by the fix should justify
+
+    non-obvious decisions, not narrate code.
+
+    '
+- id: self_explanatory_names
+  source:
+    lines: 2-5
+    commit: ab62320d6bceece0faa7029f8bd79d546d0f64be
+    path: AGENTS.md
+  rule: 'Per AGENTS.md: use self-explanatory variable and function names; short
+
+    names are fine when context is clear. The fix should not introduce
+
+    cryptic identifiers or over-long stutter-y names.
+
+    '
+- id: no_unnecessary_exports
+  source:
+    lines: '5'
+    commit: ab62320d6bceece0faa7029f8bd79d546d0f64be
+    path: AGENTS.md
+  rule: 'Per AGENTS.md: never export symbols that are not needed outside of the
+
+    package. New helpers introduced by the fix in the `commands` package
+
+    should remain unexported unless cross-package access is required.
+
+    '
+- id: avoid_global_state
+  source:
+    lines: '6'
+    commit: ab62320d6bceece0faa7029f8bd79d546d0f64be
+    path: AGENTS.md
+  rule: 'Per AGENTS.md: avoid global state at (almost) all cost. The fix must
+
+    not introduce a package-level variable to thread the flag value;
+
+    configuration should travel through the existing struct
+
+    (`rootCommand` / `IntegrationTestConfig`).
+
+    '
+- id: prefer_existing_helpers
+  source:
+    lines: '7'
+    commit: ab62320d6bceece0faa7029f8bd79d546d0f64be
+    path: AGENTS.md
+  rule: 'Per AGENTS.md: assume a similar problem has been solved before — look
+
+    hard for helper functions before creating new ones. Reuse the existing
+
+    `loggers.PanicOnWarningHook` and `loggers.Options.HandlerPost` rather
+
+    than writing a new hook.
+
+    '
+- id: no_debug_prints_left_behind
+  source:
+    lines: '4'
+    commit: ab62320d6bceece0faa7029f8bd79d546d0f64be
+    path: AGENTS.md
+  rule: 'Per AGENTS.md: temporary debug printing should use `hdebug.Printf` and
+
+    not be left in committed code. Final source must be free of debug
+
+    `fmt.Println` / `log.Print` left over from iteration.
+
+    '

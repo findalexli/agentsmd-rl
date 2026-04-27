@@ -1,0 +1,117 @@
+version: '2.0'
+source:
+  repo: oven-sh/bun
+  pr_number: 28838
+  pr_url: https://github.com/oven-sh/bun/pull/28838
+  base_commit: 5b3ca83b84f90ccc9c71005db0ab9bd87850bc70
+  merge_commit: 196ed8a1bd4d5c9915e71816ce64a6a281eee23e
+  title: 'http: reject conflicting duplicate Content-Length headers'
+  pr: 28838
+task:
+  name: bun-reject-conflicting-content-length
+  language: cpp
+  modified_paths:
+  - packages/bun-uws/src/HttpParser.h
+checks:
+- id: test_compiles_against_modified_header
+  type: pass_to_pass
+  origin: static
+  description: Driver compiles against modified HttpParser.h
+- id: test_rejects_two_differing_content_length_headers
+  type: fail_to_pass
+  origin: pr_diff
+  description: Two Content-Length headers with different values produce a 400 + INVALID_CONTENT_LENGTH
+- id: test_rejects_two_differing_content_length_headers_reversed_order
+  type: fail_to_pass
+  origin: pr_diff
+  description: Conflicting CL ordering does not matter (5 then 6 also rejected)
+- id: test_rejects_three_content_length_headers_one_differs
+  type: fail_to_pass
+  origin: pr_diff
+  description: Three CL headers with one differing value are rejected
+- id: test_rejects_empty_first_content_length_followed_by_smuggled
+  type: fail_to_pass
+  origin: pr_diff
+  description: Empty-valued Content-Length followed by real CL is rejected (smuggling guard)
+- id: test_smuggled_request_is_not_processed_when_first_cl_is_empty
+  type: fail_to_pass
+  origin: pr_diff
+  description: Smuggled inner request is never surfaced to the application
+- id: test_accepts_single_content_length
+  type: pass_to_pass
+  origin: pr_diff
+  description: Single Content-Length header is accepted (common case)
+- id: test_accepts_no_content_length
+  type: pass_to_pass
+  origin: pr_diff
+  description: GET with no body and no Content-Length is accepted
+- id: test_accepts_two_matching_content_length_headers
+  type: pass_to_pass
+  origin: pr_diff
+  description: Duplicate CL with identical values is accepted (RFC 9112 §6.3)
+- id: test_accepts_three_matching_content_length_headers
+  type: pass_to_pass
+  origin: pr_diff
+  description: Three identical CL headers are accepted
+- id: test_accepts_chunked_transfer_encoding
+  type: pass_to_pass
+  origin: pr_diff
+  description: Chunked TE without CL is accepted
+- id: test_rejects_transfer_encoding_with_content_length
+  type: pass_to_pass
+  origin: pr_diff
+  description: Pre-existing TE+CL rejection still holds
+- id: test_header_compiles_with_strict_warnings
+  type: pass_to_pass
+  origin: repo_tests
+  description: Header compiles cleanly under -Wall
+rubric:
+- id: follow_surrounding_cpp_style
+  source:
+    lines: '245'
+    commit: 5b3ca83b84f90ccc9c71005db0ab9bd87850bc70
+    excerpt: Follow existing code style - check neighboring files for patterns
+    path: CLAUDE.md
+  rule: 'The patched code in HttpParser.h follows the surrounding C++ style of
+
+    the file: 4-space indentation, opening brace on the same line as
+
+    if/for, block comments that cite the relevant RFC section, and uses
+
+    the existing HttpParserResult::error(...) factory rather than
+
+    hand-constructing result structs. This mirrors the existing
+
+    "Transfer-Encoding + Content-Length" rejection block right below it.
+
+    '
+- id: change_localized_to_one_file
+  source:
+    lines: 240-256
+    commit: 5b3ca83b84f90ccc9c71005db0ab9bd87850bc70
+    excerpt: Important Development Notes
+    path: CLAUDE.md
+  rule: 'The fix is localized to packages/bun-uws/src/HttpParser.h and does not
+
+    sprawl into unrelated files (no edits to App.h, HttpContext.h, or any
+
+    Zig/JS code in src/). bun-uws is a vendored fork; cross-file edits
+
+    should be motivated by the parser change, not by drive-by cleanup.
+
+    '
+- id: honest_about_scope
+  source:
+    lines: '252'
+    commit: 5b3ca83b84f90ccc9c71005db0ab9bd87850bc70
+    excerpt: Be humble & honest - NEVER overstate what you got done
+    path: CLAUDE.md
+  rule: 'The patch description / commit message must accurately reflect what
+
+    was changed (a Content-Length validation tightening for request
+
+    smuggling defense) and must not overstate behavior the code does not
+
+    actually implement.
+
+    '

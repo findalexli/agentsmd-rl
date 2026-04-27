@@ -1,0 +1,89 @@
+version: '2.0'
+task:
+  name: airflow-tracking-issue-policy
+  kind: markdown_authoring
+  title: 'AGENTS: require tracking issue for PRs that apply a workaround'
+  description: Add a policy section to AGENTS.md (apache/airflow) requiring that every PR which applies a workaround/version cap/mitigation/partial fix opens a GitHub tracking issue first, links it in the PR body, and embeds the full tracking-issue URL as a code-level comment at the workaround site.
+source:
+  owner: apache
+  repo: airflow
+  pr: 65612
+  base_commit: 136d2ae31d2a6c36884d83d820ffcfc4e2b2abae
+  merge_commit: 098b9d4d1da0a70c39a1dd3d9c0d736b88603ea6
+  url: https://github.com/apache/airflow/pull/65612
+target_files:
+- AGENTS.md
+checks:
+- id: test_agents_md_preserved
+  type: pass_to_pass
+  origin: static
+  description: AGENTS.md still exists and retains its original `# AGENTS instructions` top-level heading after the agent's edits.
+- id: test_tracking_issue_section_heading
+  type: fail_to_pass
+  origin: agent_config
+  description: A new markdown heading mentioning "Tracking issues" is added to AGENTS.md.
+  source:
+    lines: '227'
+    path: AGENTS.md
+    commit: gold@098b9d4d1da0a70c39a1dd3d9c0d736b88603ea6
+- id: test_full_issue_url_example_present
+  type: fail_to_pass
+  origin: agent_config
+  description: The new section includes at least one full `https://github.com/apache/airflow/issues/<N>` URL as an example, not bare `#NNNNN` references.
+  source:
+    lines: 247-261
+    path: AGENTS.md
+    commit: gold@098b9d4d1da0a70c39a1dd3d9c0d736b88603ea6
+- id: test_forward_looking_phrase_called_out
+  type: fail_to_pass
+  origin: agent_config
+  description: The phrase "will open a tracking issue" appears in the new section, called out as language to avoid.
+  source:
+    lines: 264-266
+    path: AGENTS.md
+    commit: gold@098b9d4d1da0a70c39a1dd3d9c0d736b88603ea6
+- id: test_signals_appear_in_one_section
+  type: fail_to_pass
+  origin: static
+  description: Heading, full URL example, and the negative phrase all appear within one contiguous level-2 section (guards against keyword stuffing).
+config_edits:
+- path: AGENTS.md
+  gold_added: "### Tracking issues for deferred work\n\nWhen a PR applies a **workaround, version cap, mitigation, or partial fix**\nrather than solving the underlying problem (for example: upper-binding a\ndependency to avoid a breaking upstream release, disabling a feature\nbehind a flag, reverting a change that needs a better replacement, or\npapering over a bug so a release can ship), the deferred work must be\ncaptured in a GitHub tracking issue **and** the tracking issue URL must\nappear as a comment at the workaround site in the code.\n\n1. **Open the tracking issue first**, before finalising the PR body.\n2. **Reference it in the PR body by number** — e.g. \"full migration is\n   tracked in #65609\" — so anyone reviewing the PR can see what was\n   deferred and why.\n3. **Add a link to the tracking issue as a comment at the workaround\n   itself**, so the reference survives after the PR merges and anyone\n   reading the source later can click straight through to the follow-up\n   work. Use the **full issue URL**, not bare `#NNNNN` — bare references\n   do not auto-link outside GitHub's web UI (e.g. when grepping in an\n   editor, browsing a checkout, or reading the file in a terminal).\n   For example:\n\n   ```toml\n   # pyproject.toml\n   # Remove the <1.0 cap after migrating to httpx 1.x;\n   # tracked at https://github.com/apache/airflow/issues/65609\n   \"httpx>=0.27.0,<1.0\",\n   ```\n\n   ```python\n   # some_module.py\n   # Delete this fallback once the new client is on all workers;\n   # tracked at https://github.com/apache/airflow/issues/65609\n   if old_client:\n       ...\n   ```\n\n4. **Do not** write vague forward-looking phrases like \"will open a\n   tracking issue\" or \"to be filed later\" in the PR body or in code\n   comments. Open the issue, link it in both places, then submit the PR.\n5. The tracking issue should describe: what the workaround is, why it\n   was chosen, the concrete follow-up work needed, and any acceptance\n   criteria for removing the workaround.\n\nIf a PR you already opened has such forward-looking language, open the\ntracking issue, add a PR comment referencing the issue URL, and push a\nfollow-up commit that adds the tracking-issue URL as a comment at the\nworkaround site in the code.\n"
+  gold_removed: ''
+rubric:
+- id: pr_title_short_and_focused
+  source:
+    lines: '245'
+    path: AGENTS.md
+    commit: base@136d2ae31d2a6c36884d83d820ffcfc4e2b2abae
+  rule: AGENTS.md asks PR authors to keep titles short (under 70 chars) and focused on user impact. The new section should be presented in that same spirit — its heading and intro must be concise and reader-focused, not boilerplate.
+- id: deferred_followups_must_be_tracked
+  source:
+    lines: 227-272
+    path: AGENTS.md
+    commit: gold@098b9d4d1da0a70c39a1dd3d9c0d736b88603ea6
+  rule: 'The whole point of the new policy: deferred work must be captured in a tracking issue (opened first), linked in the PR body, and pinned at the workaround site by full URL — not by bare `#NNNNN`. The agent''s edit must encode all three rules, not just one or two.'
+- id: forward_looking_language_explicitly_forbidden
+  source:
+    lines: 264-266
+    path: AGENTS.md
+    commit: gold@098b9d4d1da0a70c39a1dd3d9c0d736b88603ea6
+  rule: The section must explicitly call out vague phrases like "will open a tracking issue" / "to be filed later" as language to avoid in both PR bodies and code comments — that was the concrete failure mode that motivated this PR.
+- id: example_uses_full_url_not_bare_issue_ref
+  source:
+    lines: 247-261
+    path: AGENTS.md
+    commit: gold@098b9d4d1da0a70c39a1dd3d9c0d736b88603ea6
+  rule: Code-comment examples must use the full `https://github.com/apache/airflow/issues/<N>` URL, with reasoning explaining why bare `#NNNNN` is insufficient (does not auto-link outside GitHub's web UI). Both a TOML/dependency-cap example and a Python/code-fallback example are expected.
+- id: tracking_issue_content_requirements
+  source:
+    lines: 267-269
+    path: AGENTS.md
+    commit: gold@098b9d4d1da0a70c39a1dd3d9c0d736b88603ea6
+  rule: 'The new section must spell out what a *good* tracking issue contains: the workaround itself, why it was chosen, the concrete follow-up work, and acceptance criteria for removing it. Without that, the policy is just "open an issue" with no quality bar.'
+- id: placement_within_existing_pr_workflow
+  source:
+    lines: 219-226
+    path: AGENTS.md
+    commit: base@136d2ae31d2a6c36884d83d820ffcfc4e2b2abae
+  rule: AGENTS.md already has a "Remind the user to:" PR-creation block followed by `## Boundaries`. The new section should live inside the PR-creation flow (i.e. as a `###` subsection under the same `##` heading), not be parachuted into an unrelated part of the file.

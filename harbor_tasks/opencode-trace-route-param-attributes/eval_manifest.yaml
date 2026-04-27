@@ -1,0 +1,180 @@
+version: '2.0'
+source:
+  owner: anomalyco
+  repo: opencode
+  pr_number: 23189
+  url: https://github.com/anomalyco/opencode/pull/23189
+  base_commit: cded68a2e2e233b8026c50408771b25d0f4e9682
+  merge_commit: 11c0ad24aa302400592a576dc4cc4647fd5937b5
+  title: 'feat(server): auto-tag route spans with route params (session.id, message.id, …)'
+  pr: 23189
+task:
+  name: opencode-trace-route-param-attributes
+  kind: code_fix
+  language: typescript
+  primary_files:
+  - packages/opencode/src/server/routes/instance/trace.ts
+  - packages/opencode/test/server/trace-attributes.test.ts
+checks:
+- id: test_method_and_path_basic
+  type: fail_to_pass
+  origin: pr_diff
+  description: requestAttributes returns http.method and http.path for a simple GET.
+- id: test_path_strips_query_string
+  type: fail_to_pass
+  origin: pr_diff
+  description: http.path is the URL pathname only — query string is dropped.
+- id: test_route_params_get_opencode_prefix
+  type: fail_to_pass
+  origin: pr_diff
+  description: Each matched route param k=v becomes attribute opencode.k=v with the exact key name.
+- id: test_multiple_nested_route_params
+  type: fail_to_pass
+  origin: pr_diff
+  description: Multiple route params (sessionID + messageID + partID) all surface as opencode.* attributes.
+- id: test_no_params_no_opencode_attrs
+  type: fail_to_pass
+  origin: pr_diff
+  description: A request whose route has no matched params produces no opencode.* keys.
+- id: test_non_id_param_name_is_preserved
+  type: fail_to_pass
+  origin: pr_diff
+  description: A non-ID param name (e.g. mcp's :name) is tagged verbatim as opencode.name.
+- id: test_method_value_is_request_method_not_constant
+  type: fail_to_pass
+  origin: pr_diff
+  description: http.method reflects the actual request method (GET / POST / PATCH / DELETE), not a hardcoded constant.
+- id: test_runRequest_delegates_to_requestAttributes
+  type: fail_to_pass
+  origin: pr_diff
+  description: runRequest delegates to requestAttributes(c) instead of building the attribute map inline — without this, real request spans never get tagged.
+- id: test_existing_cli_error_test_still_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: The existing packages/opencode/test/cli/error.test.ts continues to pass after the change.
+rubric:
+- id: avoid_any_type
+  source:
+    excerpt: Avoid using the `any` type
+    path: AGENTS.md
+    commit: cded68a2e2e233b8026c50408771b25d0f4e9682
+  rule: 'Per AGENTS.md style guide: "Avoid using the `any` type". The new
+
+    requestAttributes helper and any type aliases it introduces should
+
+    avoid `any`; rely on type inference or explicit narrow types
+
+    (e.g. a `RequestLike` interface).
+
+    '
+- id: prefer_const_no_let
+  source:
+    excerpt: Prefer `const` over `let`. Use ternaries or early returns instead of reassignment.
+    path: AGENTS.md
+    commit: cded68a2e2e233b8026c50408771b25d0f4e9682
+  rule: 'Per AGENTS.md style guide: "Prefer `const` over `let`. Use ternaries
+
+    or early returns instead of reassignment." The implementation should
+
+    not use `let` for values that are only assigned once.
+
+    '
+- id: avoid_try_catch
+  source:
+    excerpt: Avoid `try`/`catch` where possible
+    path: AGENTS.md
+    commit: cded68a2e2e233b8026c50408771b25d0f4e9682
+  rule: 'Per AGENTS.md style guide: "Avoid `try`/`catch` where possible".
+
+    The new helper has no failure modes that warrant try/catch and should
+
+    not introduce one.
+
+    '
+- id: avoid_unnecessary_destructuring
+  source:
+    excerpt: Avoid unnecessary destructuring. Use dot notation to preserve context.
+    path: AGENTS.md
+    commit: cded68a2e2e233b8026c50408771b25d0f4e9682
+  rule: 'Per AGENTS.md style guide: "Avoid unnecessary destructuring. Use dot
+
+    notation to preserve context." Reading `c.req.method`, `c.req.url`,
+
+    and the result of `c.req.param()` should be done with dot notation,
+
+    not destructured into intermediate variables, unless destructuring
+
+    improves readability for an iteration.
+
+    '
+- id: keep_things_in_one_function_unless_composable
+  source:
+    excerpt: Keep things in one function unless composable or reusable
+    path: AGENTS.md
+    commit: cded68a2e2e233b8026c50408771b25d0f4e9682
+  rule: 'Per AGENTS.md: "Keep things in one function unless composable or
+
+    reusable". Extracting `requestAttributes` is appropriate here BECAUSE
+
+    it is reused by `runRequest` and unit-tested. The implementation
+
+    should not over-decompose by splitting it into multiple internal
+
+    helpers that aren''t separately useful.
+
+    '
+- id: tests_avoid_mocks_and_test_real_implementation
+  source:
+    excerpt: '- Avoid mocks as much as possible
+
+      - Test actual implementation, do not duplicate logic into tests
+
+      '
+    path: AGENTS.md
+    commit: cded68a2e2e233b8026c50408771b25d0f4e9682
+  rule: 'Per AGENTS.md Testing section: "Avoid mocks as much as possible" and
+
+    "Test actual implementation, do not duplicate logic into tests".
+
+    The trace-attributes test should call `requestAttributes` directly
+
+    with a minimal hand-rolled context shape, not duplicate the
+
+    attribute-building logic into the test, and not import a mocking
+
+    library.
+
+    '
+- id: tests_run_from_package_dir
+  source:
+    excerpt: 'Tests cannot run from repo root (guard: `do-not-run-tests-from-root`); run from package dirs like `packages/opencode`.'
+    path: AGENTS.md
+    commit: cded68a2e2e233b8026c50408771b25d0f4e9682
+  rule: 'Per AGENTS.md: "Tests cannot run from repo root (guard:
+
+    `do-not-run-tests-from-root`); run from package dirs like
+
+    `packages/opencode`." Any test invocation in the change should
+
+    be runnable via `bun test` from `packages/opencode`, not from the
+
+    repo root.
+
+    '
+- id: prefer_inferred_types_over_explicit_annotations
+  source:
+    excerpt: Rely on type inference when possible; avoid explicit type annotations or interfaces unless necessary for exports or clarity
+    path: AGENTS.md
+    commit: cded68a2e2e233b8026c50408771b25d0f4e9682
+  rule: 'Per AGENTS.md: "Rely on type inference when possible; avoid explicit
+
+    type annotations or interfaces unless necessary for exports or
+
+    clarity." An exported `RequestLike` interface for the input shape
+
+    IS justified (it crosses the module boundary and documents the
+
+    contract); local intermediate variables should rely on inference.
+
+    '
+config_edits: []

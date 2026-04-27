@@ -1,0 +1,93 @@
+---
+source: crates/biome_formatter_test/src/snapshot_builder.rs
+info: css/fill-value/fill.css
+---
+
+# Input
+
+```css
+div {
+  border-left: 1px solid mix($warningBackgroundColors, $warningBorderColors, 50%);
+  $fontFamily: "Lato", -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+```
+
+
+# Prettier differences
+
+```diff
+--- Prettier
++++ Biome
+@@ -1,11 +1,4 @@
+ div {
+-  border-left: 1px solid
+-    mix($warningBackgroundColors, $warningBorderColors, 50%);
+-  $fontFamily:
+-    "Lato",
+-    -apple-system,
+-    "Helvetica Neue",
+-    Helvetica,
+-    Arial,
+-    sans-serif;
++  border-left: 1px solid mix($warningBackgroundColors, $warningBorderColors, 50%);
++  $fontFamily: "Lato", -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
+ }
+```
+
+# Output
+
+```css
+div {
+  border-left: 1px solid mix($warningBackgroundColors, $warningBorderColors, 50%);
+  $fontFamily: "Lato", -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+```
+
+# Errors
+```
+fill.css:2:30 parse ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × SCSS variables are an SCSS only feature. Convert your file to an SCSS file or remove the syntax.
+  
+    1 │ div {
+  > 2 │   border-left: 1px solid mix($warningBackgroundColors, $warningBorderColors, 50%);
+      │                              ^^^^^^^^^^^^^^^^^^^^^^^^
+    3 │   $fontFamily: "Lato", -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    4 │ }
+  
+  i SCSS only syntax
+  
+fill.css:2:56 parse ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × SCSS variables are an SCSS only feature. Convert your file to an SCSS file or remove the syntax.
+  
+    1 │ div {
+  > 2 │   border-left: 1px solid mix($warningBackgroundColors, $warningBorderColors, 50%);
+      │                                                        ^^^^^^^^^^^^^^^^^^^^
+    3 │   $fontFamily: "Lato", -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    4 │ }
+  
+  i SCSS only syntax
+  
+fill.css:3:3 parse ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × SCSS variable declarations are an SCSS only feature. Convert your file to an SCSS file or remove the syntax.
+  
+    1 │ div {
+    2 │   border-left: 1px solid mix($warningBackgroundColors, $warningBorderColors, 50%);
+  > 3 │   $fontFamily: "Lato", -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
+      │   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    4 │ }
+    5 │ 
+  
+  i SCSS only syntax
+  
+
+```
+
+# Lines exceeding max width of 80 characters
+```
+    2:   border-left: 1px solid mix($warningBackgroundColors, $warningBorderColors, 50%);
+    3:   $fontFamily: "Lato", -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
+```

@@ -1,0 +1,158 @@
+version: '2.0'
+task:
+  name: ant-design-changelog-skill-agents-md-refs
+  title: Fix broken AGENTS.md cross-references in changelog-collect skill
+  kind: markdown_authoring
+  difficulty: easy
+  tags:
+  - markdown
+  - documentation
+  - agent-instructions
+  - cross-references
+  estimated_time_minutes: 8
+source:
+  repo: ant-design/ant-design
+  pr: 57397
+  url: https://github.com/ant-design/ant-design/pull/57397
+  base_commit: 900d97f2035b301d6862d84b86fec57345ccfe30
+  merge_commit: 735cb51cfa549dd0fc10df2a3d761cf89b6276cb
+  primary_files:
+  - .agents/skills/changelog-collect/SKILL.md
+config_edits:
+- section: AGENTS.md 规范引用
+  rationale: 'The skill file lives at .agents/skills/changelog-collect/SKILL.md, three
+
+    directories deep. The original ''./AGENTS.md'' relative path resolved to a
+
+    non-existent file alongside the skill; the correct relative path to the
+
+    repository-root AGENTS.md is ''../../../AGENTS.md''. Three of the four
+
+    anchor names also no longer matched real headings in AGENTS.md (''格式与结构规范''
+
+    had been renamed to ''格式规范'', ''emoji-规范严格执行'' to ''emoji-规范'', and
+
+    ''输出示例参考'' to ''句式'').
+
+    '
+  path: .agents/skills/changelog-collect/SKILL.md
+  gold_added: '- [核心原则](../../../AGENTS.md#核心原则) - 有效性过滤规则
+
+    - [格式规范](../../../AGENTS.md#格式规范) - 分组、描述、Emoji 规范
+
+    - [Emoji 规范](../../../AGENTS.md#emoji-规范) - 根据 commit 类型自动标记
+
+    - [句式](../../../AGENTS.md#句式) - 中英文格式参考'
+  gold_removed: '- [核心原则](./AGENTS.md#核心原则) - 有效性过滤规则
+
+    - [格式与结构规范](./AGENTS.md#格式与结构规范) - 分组、描述、Emoji 规范
+
+    - [Emoji 规范](./AGENTS.md#emoji-规范严格执行) - 根据 commit 类型自动标记
+
+    - [输出示例参考](./AGENTS.md#输出示例参考) - 中英文格式参考'
+checks:
+- id: test_repo_is_at_base_commit
+  type: pass_to_pass
+  origin: static
+  description: Sanity — repo is a git work tree and the affected files exist.
+- id: test_skill_file_size_in_expected_range
+  type: pass_to_pass
+  origin: static
+  description: Sanity — SKILL.md size is in the expected range for a 4-line edit.
+- id: test_obsolete_anchors_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: The three obsolete anchor/label tokens are no longer in the references section.
+- id: test_obsolete_path_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: No link in the references section still uses the unresolvable './AGENTS.md' path.
+- id: test_link_paths_resolve_to_real_agents_md
+  type: fail_to_pass
+  origin: pr_diff
+  description: Every AGENTS.md link target resolves (relative to SKILL.md) to the real root AGENTS.md.
+- id: test_link_anchors_match_real_headings
+  type: fail_to_pass
+  origin: pr_diff
+  description: Every anchor used in a link corresponds to an actual heading in AGENTS.md.
+- id: test_link_labels_match_anchor_targets
+  type: fail_to_pass
+  origin: pr_diff
+  description: Each link's visible label matches (anchor-form-equivalent) its target heading text.
+- id: test_four_bulleted_links_remain
+  type: pass_to_pass
+  origin: pr_diff
+  description: The references section still contains exactly four AGENTS.md bullet links.
+- id: test_trailing_descriptions_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: Trailing description text after each bullet link is preserved verbatim.
+- id: test_no_other_files_modified
+  type: pass_to_pass
+  origin: static
+  description: Only SKILL.md is modified; no collateral edits to other files.
+rubric:
+- id: cross_reference_correctness
+  weight: 0.4
+  source:
+    ref: Documentation conventions implicit in the repository's AGENTS.md and CLAUDE.md
+    commit: 900d97f2035b301d6862d84b86fec57345ccfe30
+    path: AGENTS.md
+  rule: 'Markdown cross-references that include both a path and an anchor (e.g.,
+
+    `[label](path#anchor)`) must be valid: the path component must resolve
+
+    from the source file''s location, and the anchor must correspond to an
+
+    actual heading in the target file. Broken cross-references are an
+
+    immediate quality red flag in agent-facing instruction files because
+
+    agents may follow them and either fail or hallucinate content.
+
+    '
+- id: anchor_to_heading_label_consistency
+  weight: 0.3
+  source:
+    ref: 文档锚点 ID 规范
+    commit: 900d97f2035b301d6862d84b86fec57345ccfe30
+    path: AGENTS.md
+  rule: 'The visible label `[text]` of an in-document link should reflect the
+
+    heading text it points to. After fixing an anchor mismatch, the label
+
+    must be updated in lockstep so that readers see a coherent label that
+
+    matches the section title in the linked file.
+
+    '
+- id: minimal_scope_edit
+  weight: 0.2
+  source:
+    ref: PR 规范 — 标题与内容 (concise scope expectation)
+    commit: 900d97f2035b301d6862d84b86fec57345ccfe30
+    path: AGENTS.md
+  rule: 'The fix should touch only the four bullet lines in the
+
+    ''AGENTS.md 规范引用'' section of `.agents/skills/changelog-collect/SKILL.md`.
+
+    Trailing descriptions, surrounding paragraphs, and unrelated sections
+
+    must remain untouched. Drive-by edits in a documentation/path-fix change
+
+    pollute the diff and make review harder.
+
+    '
+- id: bilingual_terminology_preserved
+  weight: 0.1
+  source:
+    ref: 国际化规范 / bilingual document conventions
+    commit: 900d97f2035b301d6862d84b86fec57345ccfe30
+    path: AGENTS.md
+  rule: 'The references section uses Chinese label text (e.g. ''核心原则'', ''格式规范'').
+
+    The fix should keep the labels in Chinese to match surrounding prose;
+
+    do not silently translate them to English.
+
+    '

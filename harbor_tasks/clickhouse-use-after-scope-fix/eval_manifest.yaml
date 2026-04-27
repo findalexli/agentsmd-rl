@@ -1,88 +1,71 @@
-version: "2.0"
-
+version: '2.0'
 source:
   repo: ClickHouse/ClickHouse
   pr_number: 102073
   base_commit: cafce4334d43cfade5382a9bde6910e787d69437
   merge_commit: 0ac8d1fb82e45ca6c903f5549d564e867fb422dd
   target_file: src/DataTypes/Serializations/SerializationObject.cpp
-
-# Checks map 1:1 to test_outputs.py functions
+  pr: 102073
 checks:
-  # Fail-to-Pass Tests: These verify the bugfix is present
-  - id: test_has_exception_safe_cleanup
-    type: fail_to_pass
-    origin: pr_diff
-    description: "RAII cleanup mechanism (e.g. SCOPE_EXIT or try/catch drain) must be present to drain tasks on exception paths"
-
-  - id: test_cleanup_runs_before_task_loop
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Cleanup mechanism must be declared BEFORE the task scheduling loop to catch scheduling exceptions"
-
-  - id: test_comment_explains_fix
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Explanatory comment must describe why task draining is needed (dangling references, exception safety)"
-
-  - id: test_drain_pattern_functional
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Behavioral test: compile and run C++ program verifying SCOPE_EXIT drain pattern drains tasks on exception paths"
-
-  # Pass-to-Pass Tests: These verify code quality and conventions
-  - id: test_cleanup_invokes_task_methods
-    type: pass_to_pass
-    origin: pr_diff
-    description: "Function calls tryExecute()/wait() to drain scheduled tasks"
-
-  - id: test_repo_no_tabs_in_target
-    type: pass_to_pass
-    origin: repo_tests
-    description: "No tab characters in target file (ClickHouse style)"
-
-  - id: test_repo_no_trailing_whitespace
-    type: pass_to_pass
-    origin: repo_tests
-    description: "No trailing whitespace in target file (ClickHouse style)"
-
-  - id: test_no_sleep_for_race_conditions
-    type: pass_to_pass
-    origin: static
-    description: "No sleep calls used for synchronization (ClickHouse convention)"
-
-# Rubric items from agent config files - soft/subjective rules
+- id: test_has_exception_safe_cleanup
+  type: fail_to_pass
+  origin: pr_diff
+  description: RAII cleanup mechanism (e.g. SCOPE_EXIT or try/catch drain) must be present to drain tasks on exception paths
+- id: test_cleanup_runs_before_task_loop
+  type: fail_to_pass
+  origin: pr_diff
+  description: Cleanup mechanism must be declared BEFORE the task scheduling loop to catch scheduling exceptions
+- id: test_comment_explains_fix
+  type: fail_to_pass
+  origin: pr_diff
+  description: Explanatory comment must describe why task draining is needed (dangling references, exception safety)
+- id: test_drain_pattern_functional
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Behavioral test: compile and run C++ program verifying SCOPE_EXIT drain pattern drains tasks on exception paths'
+- id: test_cleanup_invokes_task_methods
+  type: pass_to_pass
+  origin: pr_diff
+  description: Function calls tryExecute()/wait() to drain scheduled tasks
+- id: test_repo_no_tabs_in_target
+  type: pass_to_pass
+  origin: repo_tests
+  description: No tab characters in target file (ClickHouse style)
+- id: test_repo_no_trailing_whitespace
+  type: pass_to_pass
+  origin: repo_tests
+  description: No trailing whitespace in target file (ClickHouse style)
+- id: test_no_sleep_for_race_conditions
+  type: pass_to_pass
+  origin: static
+  description: No sleep calls used for synchronization (ClickHouse convention)
 rubric:
-  - id: exception_safety_with_scope_exit
-    description: "Use SCOPE_EXIT for exception-safe cleanup of resources"
-    weight: high
-    source:
-      file: .github/copilot-instructions.md
-      section: "Memory & lifetime"
-
-  - id: drain_thread_pool_tasks
-    description: "Thread pool tasks must be properly drained/waited for on all exit paths"
-    weight: high
-    source:
-      file: .github/copilot-instructions.md
-      section: "Concurrency & threading"
-
-  - id: avoid_dangling_references
-    description: "Ensure no dangling references to stack locals when using thread pools"
-    weight: high
-    source:
-      file: .github/copilot-instructions.md
-      section: "Memory & lifetime"
-
-  - id: explain_safety_mechanisms
-    description: "Safety mechanisms like SCOPE_EXIT should have explanatory comments"
-    weight: medium
-    source:
-      file: .github/copilot-instructions.md
-      section: "Maintainability & simplicity"
-
-  - id: allman_brace_consistency
-    description: "Follow Allman brace style consistently"
-    weight: low
-    source:
-      file: .claude/CLAUDE.md
+- id: exception_safety_with_scope_exit
+  weight: high
+  source:
+    section: Memory & lifetime
+    path: .github/copilot-instructions.md
+  rule: Use SCOPE_EXIT for exception-safe cleanup of resources
+- id: drain_thread_pool_tasks
+  weight: high
+  source:
+    section: Concurrency & threading
+    path: .github/copilot-instructions.md
+  rule: Thread pool tasks must be properly drained/waited for on all exit paths
+- id: avoid_dangling_references
+  weight: high
+  source:
+    section: Memory & lifetime
+    path: .github/copilot-instructions.md
+  rule: Ensure no dangling references to stack locals when using thread pools
+- id: explain_safety_mechanisms
+  weight: medium
+  source:
+    section: Maintainability & simplicity
+    path: .github/copilot-instructions.md
+  rule: Safety mechanisms like SCOPE_EXIT should have explanatory comments
+- id: allman_brace_consistency
+  weight: low
+  source:
+    path: .claude/CLAUDE.md
+  rule: Follow Allman brace style consistently

@@ -72,8 +72,7 @@ checks:
 - id: explicit_type_hints_in_eval_sampler
   type: pass_to_pass
   origin: agent_config
-  description: EvalDistributedSampler.__init__ has explicit type annotations on all
-    parameters
+  description: EvalDistributedSampler.__init__ has explicit type annotations on all parameters
   source:
     path: AGENTS.md
     lines: 100-101
@@ -82,22 +81,21 @@ rubric:
 - rule: AGENTS.md was not modified - no unnecessary documentation changes
   source:
     path: AGENTS.md
-    lines: 1
+    lines: '1'
     commit: 0405b5c30c815044d858f15d04d2033c9a3d7760
   evidence: Gold solution only modifies dataloader.py, not AGENTS.md
   category: scope
 - rule: CLAUDE.md was not modified - no unnecessary documentation changes
   source:
     path: CLAUDE.md
-    lines: 1
+    lines: '1'
     commit: 0405b5c30c815044d858f15d04d2033c9a3d7760
   evidence: Gold solution only modifies dataloader.py, not CLAUDE.md
   category: scope
-- rule: cli_args.py was not modified - handled via isinstance check in dataloader
-    instead
+- rule: cli_args.py was not modified - handled via isinstance check in dataloader instead
   source:
     path: areal/api/cli_args.py
-    lines: 1
+    lines: '1'
     commit: 0405b5c30c815044d858f15d04d2033c9a3d7760
   evidence: Gold solution avoids modifying config structures per AGENTS.md guidance
   category: architecture
@@ -110,8 +108,7 @@ rubric:
     | ---------------- | ------------- | ----------------------------------- |
 
     | Config dataclass | `XxxConfig`   | `GRPOConfig`, `FSDPConfig`          |'
-  evidence: The diff imports and uses `ValidDatasetConfig`, which adheres to the `XxxConfig`
-    naming convention.
+  evidence: The diff imports and uses `ValidDatasetConfig`, which adheres to the `XxxConfig` naming convention.
   category: naming
   verification: llm_judge
 - rule: Do not use wildcard imports (`from x import *`).
@@ -119,8 +116,7 @@ rubric:
     path: AGENTS.md
     lines: 25-25
   source_text: '- No wildcard imports (`from x import *`).'
-  evidence: The diff explicitly imports `ValidDatasetConfig` and `_DatasetConfig`
-    from `areal.api.cli_args` rather than using a wildcard import.
+  evidence: The diff explicitly imports `ValidDatasetConfig` and `_DatasetConfig` from `areal.api.cli_args` rather than using a wildcard import.
   category: imports
   verification: llm_judge
 - rule: Keep inheritance shallow (≤2 levels when possible).
@@ -128,27 +124,20 @@ rubric:
     path: .claude/rules/code-style.md
     lines: 11-11
   source_text: '- Keep inheritance shallow (≤2 levels when possible)'
-  evidence: The newly created `EvalDistributedSampler` class inherits directly from
-    `DistributedSampler`, maintaining a shallow inheritance hierarchy of just one
-    level.
+  evidence: The newly created `EvalDistributedSampler` class inherits directly from `DistributedSampler`, maintaining a shallow inheritance hierarchy of just one level.
   category: architecture
   verification: llm_judge
 distractors:
 - rule: Composition over inheritance -- keep hierarchies <= 2 levels; prefer delegation.
   collision_type: architecture_boundary
-  why_distracting: The agent might try to use composition to wrap `DistributedSampler`
-    instead of inheriting from it. However, PyTorch's `DataLoader` expects a `Sampler`
-    object, and inheriting from `DistributedSampler` is the standard and much simpler
-    way to override the padding behavior.
+  why_distracting: The agent might try to use composition to wrap `DistributedSampler` instead of inheriting from it. However, PyTorch's `DataLoader` expects a `Sampler` object, and inheriting from `DistributedSampler` is the standard and much simpler way to override the padding behavior.
   severity: medium
   source:
     path: AGENTS.md
     lines: 66-66
 - rule: Add tests for new functionality.
   collision_type: scope_ambiguity
-  why_distracting: The agent might try to create a new test file or modify existing
-    tests to cover `EvalDistributedSampler`, which is out of scope for this specific
-    bug fix PR and not present in the gold solution.
+  why_distracting: The agent might try to create a new test file or modify existing tests to cover `EvalDistributedSampler`, which is out of scope for this specific bug fix PR and not present in the gold solution.
   severity: low
   source:
     path: AGENTS.md
@@ -166,30 +155,14 @@ distractors:
 
     - Use `dist.get_rank(group)` not `dist.get_rank()` when group matters'
   collision_type: scope_ambiguity
-  why_distracting: Because the code implements a custom `DistributedSampler` and handles
-    `rank` and `world_size`, an agent might try to apply these distributed rules by
-    requiring a `process_group` argument or replacing `rank` with `dist.get_rank(group)`.
-    However, this file is in `areal/utils/`, which is outside the rule's path scope
-    (`areal/engine/**`), and standard PyTorch samplers operate on `num_replicas` and
-    `rank` integers rather than process groups.
+  why_distracting: Because the code implements a custom `DistributedSampler` and handles `rank` and `world_size`, an agent might try to apply these distributed rules by requiring a `process_group` argument or replacing `rank` with `dist.get_rank(group)`. However, this file is in `areal/utils/`, which is outside the rule's path scope (`areal/engine/**`), and standard PyTorch samplers operate on `num_replicas` and `rank` integers rather than process groups.
   severity: medium
 - rule: Validation in __post_init__
   source:
     path: .claude/rules/api-config.md
     lines: 35-43
-  source_text: "## Validation\n\n- Use `__post_init__` for validation\n- Raise `ValueError`\
-    \ with clear message:\n  ```python\n  def __post_init__(self):\n      if self.batch_size\
-    \ <= 0:\n          raise ValueError(f\"batch_size must be positive, got {self.batch_size}\"\
-    )\n  ```"
+  source_text: "## Validation\n\n- Use `__post_init__` for validation\n- Raise `ValueError` with clear message:\n  ```python\n  def __post_init__(self):\n      if self.batch_size <= 0:\n          raise ValueError(f\"batch_size must be positive, got {self.batch_size}\")\n  ```"
   collision_type: architecture_boundary
-  why_distracting: The code validates `dataset_config.batch_size` against `world_size`
-    and raises a `ValueError`. An agent reading the API config rules might try to
-    move this validation into the `__post_init__` of `_DatasetConfig` or `ValidDatasetConfig`.
-    This would be an architectural error because `world_size` is a runtime environment
-    variable passed to the dataloader, not a property of the dataset configuration
-    itself.
+  why_distracting: The code validates `dataset_config.batch_size` against `world_size` and raises a `ValueError`. An agent reading the API config rules might try to move this validation into the `__post_init__` of `_DatasetConfig` or `ValidDatasetConfig`. This would be an architectural error because `world_size` is a runtime environment variable passed to the dataloader, not a property of the dataset configuration itself.
   severity: high
-hierarchy_analysis: AGENTS.md and CLAUDE.md provide overlapping rules at the root
-  level. The agent must synthesize the constraint against modifying `cli_args.py`
-  to arrive at the `isinstance` check in `dataloader.py`, while ignoring the 'composition
-  over inheritance' rule because it crosses the PyTorch architecture boundary.
+hierarchy_analysis: AGENTS.md and CLAUDE.md provide overlapping rules at the root level. The agent must synthesize the constraint against modifying `cli_args.py` to arrive at the `isinstance` check in `dataloader.py`, while ignoring the 'composition over inheritance' rule because it crosses the PyTorch architecture boundary.

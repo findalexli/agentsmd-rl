@@ -1,0 +1,71 @@
+version: '2.0'
+task:
+  name: effect-openrouter-streaming-tool-call-optional-name
+  title: Make `function.name` optional in OpenRouter streaming tool-call schema
+  kind: code_fix
+  difficulty: easy
+source:
+  repo: Effect-TS/effect
+  pr_number: 6071
+  base_commit: 4f2107548fa64c21a8643b7b0efcd556cd16d4b9
+  merge_commit: a91364d0ef48de0f66afe801c4da13bfe8a5aeed
+  primary_file: packages/ai/openrouter/src/OpenRouterClient.ts
+  pr: 6071
+checks:
+- id: test_streaming_tool_call_decodes_without_function_name
+  type: fail_to_pass
+  origin: pr_diff
+  description: A streaming tool-call chunk missing `function.name` (a delta after the first SSE chunk) must decode successfully.
+- id: test_streaming_tool_call_preserves_name_when_present
+  type: pass_to_pass
+  origin: pr_diff
+  description: Regression guard — when `function.name` is present (the first chunk of a tool call), the schema must still decode and the value must round-trip correctly.
+- id: test_streaming_tool_call_arguments_still_required
+  type: pass_to_pass
+  origin: pr_diff
+  description: Regression guard — only `name` was made optional. `function.arguments` must remain a required string; chunks missing it must still be rejected.
+- id: test_openrouter_typecheck_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`tsc -b tsconfig.json` of the openrouter package still succeeds.'
+- id: test_changeset_added_for_openrouter_fix
+  type: fail_to_pass
+  origin: agent_config
+  description: A changeset entry is added under `.changeset/` that bumps `@effect/ai-openrouter`.
+  source:
+    section: Changesets
+    commit: 4f2107548fa64c21a8643b7b0efcd556cd16d4b9
+    path: AGENTS.md
+rubric:
+- id: conciseness
+  source:
+    section: Core Principles
+    rule: Conciseness
+    commit: 4f2107548fa64c21a8643b7b0efcd556cd16d4b9
+    path: AGENTS.md
+  rule: The code change is concise and minimal — only the schema field shape is modified, no extraneous refactoring or unrelated edits.
+- id: reduce_comments
+  source:
+    section: Core Principles
+    rule: Reduce comments
+    commit: 4f2107548fa64c21a8643b7b0efcd556cd16d4b9
+    path: AGENTS.md
+  rule: No new comments were added explaining the change, except where genuinely necessary to explain unusual logic.
+- id: follow_established_patterns
+  source:
+    section: Code Style Guidelines
+    commit: 4f2107548fa64c21a8643b7b0efcd556cd16d4b9
+    path: AGENTS.md
+  rule: 'The optionality is declared using the same pattern already used for `id` on the same class — i.e. `Schema.optionalWith(Schema.String, { nullable: true })` — rather than introducing a different style (e.g. `Schema.UndefinedOr`, `Schema.optional` without `nullable`).'
+- id: no_barrel_edits
+  source:
+    section: Barrel files
+    commit: 4f2107548fa64c21a8643b7b0efcd556cd16d4b9
+    path: AGENTS.md
+  rule: No hand-edits were made to any `src/index.ts` (barrel) file. Barrels are auto-generated.
+- id: changeset_well_formed
+  source:
+    section: Changesets
+    commit: 4f2107548fa64c21a8643b7b0efcd556cd16d4b9
+    path: AGENTS.md
+  rule: 'The added changeset file has correctly-formed YAML frontmatter (`"@effect/ai-openrouter": patch`) and a brief, factual description of the fix.'

@@ -1,0 +1,69 @@
+diff --git a/hugolib/hugo_modules_test.go b/hugolib/hugo_modules_test.go
+index cc0bde639f4..450e4cbce88 100644
+--- a/hugolib/hugo_modules_test.go
++++ b/hugolib/hugo_modules_test.go
+@@ -267,6 +267,29 @@ Home: {{ .Title }}|{{ .Content }}|
+ 	b.AssertFileContent("public/index.html", "Home: |<h1 id=\"hello-world\">Hello World</h1>\n|")
+ }
+ 
++// https://github.com/gohugoio/hugo/issues/14543
++func TestModulePrivateRepo(t *testing.T) {
++	t.Parallel()
++
++	files := `
++-- hugo.toml --
++baseURL = "https://example.com/"
++[module]
++[[module.imports]]
++path = "github.com/bep/this-is-a-non-existing-repo"
++version = "main"
++[[module.imports.mounts]]
++source = "content"
++target = "content"
++-- layouts/all.html --
++Title: {{ .Title }}|
++List: {{ .Title }}
++`
++
++	b, err := TestE(t, files, TestOptOsFs())
++	b.Assert(err, qt.ErrorMatches, `(?s).*mod download.*invalid version.*repository.*`)
++}
++
+ // https://github.com/gohugoio/hugo/issues/6299
+ func TestSiteWithGoModButNoModules(t *testing.T) {
+ 	t.Parallel()
+diff --git a/modules/client.go b/modules/client.go
+index dbad4d35cb8..968d1050014 100644
+--- a/modules/client.go
++++ b/modules/client.go
+@@ -458,6 +458,11 @@ func (c *Client) downloadModuleVersion(path, version string) (*goModule, error)
+ 	b := &bytes.Buffer{}
+ 	err := c.runGo(context.Background(), b, args...)
+ 	if err != nil {
++		// The -json flag makes Go output error details as JSON to stdout
++		// even on failure. Try to extract the error message from the JSON output.
++		if jsonErr := extractGoModDownloadError(b.Bytes()); jsonErr != "" {
++			return nil, fmt.Errorf("failed to download module %s@%s: %s: %s", path, version, err, jsonErr)
++		}
+ 		return nil, fmt.Errorf("failed to download module %s@%s: %w", path, version, err)
+ 	}
+ 
+@@ -965,6 +970,18 @@ type goModuleError struct {
+ 	Err string // the error itself
+ }
+ 
++func extractGoModDownloadError(b []byte) string {
++	// go mod download -json outputs Error as a plain string,
++	// unlike go list -m -json which uses {"Err": "..."}.
++	var m struct {
++		Error string
++	}
++	if err := json.Unmarshal(b, &m); err == nil && m.Error != "" {
++		return m.Error
++	}
++	return ""
++}
++
+ type goModules []*goModule
+ 
+ type modSum struct {

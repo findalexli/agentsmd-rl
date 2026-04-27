@@ -1,0 +1,145 @@
+version: "2.0"
+
+source:
+  owner: gohugoio
+  repo: hugo
+  pr: 14685
+  base_commit: b55d452e46e81369a65978459a0683efa484c11b
+  merge_commit: df520e315087210e069050a873fb5e208659af91
+  title: "resources/page: Fix shared reader in Source.ValueAsOpenReadSeekCloser"
+
+checks:
+  - id: test_opener_returns_independent_readers
+    type: fail_to_pass
+    origin: behavior
+    description: |
+      The opener returned by Source.ValueAsOpenReadSeekCloser must yield
+      independent readers; partially consuming r1, then opening and fully
+      consuming r2, must leave r1's position unaffected.
+
+  - id: test_opener_repeated_full_reads_yield_full_value
+    type: fail_to_pass
+    origin: behavior
+    description: |
+      Three concurrently-held readers from the same opener must each see
+      the full content from the start; reading from one must not advance
+      the others.
+
+  - id: test_opener_with_non_string_value
+    type: fail_to_pass
+    origin: behavior
+    description: |
+      Independence must hold for non-string Source.Value (e.g. []byte cast
+      via ValueAsString).
+
+  - id: test_pagemeta_existing_tests_pass
+    type: pass_to_pass
+    origin: repo_tests
+    description: |
+      ``go test ./resources/page/pagemeta/`` continues to pass.
+
+  - id: test_pagemeta_gofmt
+    type: pass_to_pass
+    origin: repo_tests
+    description: |
+      ``gofmt -l resources/page/pagemeta/`` reports no unformatted files.
+      Hugo's ./check.sh enforces this.
+
+  - id: test_pagemeta_go_vet
+    type: pass_to_pass
+    origin: repo_tests
+    description: |
+      ``go vet ./resources/page/pagemeta/`` is clean.
+
+  - id: test_pagemeta_staticcheck
+    type: pass_to_pass
+    origin: repo_tests
+    description: |
+      ``staticcheck ./resources/page/pagemeta/`` is clean. Hugo's
+      ./check.sh enforces this.
+
+  - id: test_project_builds
+    type: pass_to_pass
+    origin: repo_tests
+    description: |
+      The hugo binary still builds with ``go build .``.
+
+  - id: test_no_new_exported_symbols_in_changed_file
+    type: pass_to_pass
+    origin: agent_config
+    source:
+      file: AGENTS.md
+      commit: b55d452e46e81369a65978459a0683efa484c11b
+      lines: "7"
+    description: |
+      Per AGENTS.md: "Never export symbols that's not needed outside of
+      the package." The fix changes only the body of an already-exported
+      method; no new top-level exported symbols should appear in
+      page_frontmatter.go.
+
+rubric:
+  - id: brevity_in_code_and_comments
+    source:
+      file: AGENTS.md
+      commit: b55d452e46e81369a65978459a0683efa484c11b
+      lines: "1, 12"
+    description: |
+      AGENTS.md: "Brevity is good. This applies to code, comments and
+      commit messages." The fix should be minimal — no expansion of the
+      method beyond what is required to capture the value and return a
+      fresh reader on each call.
+
+  - id: no_obvious_comments
+    source:
+      file: AGENTS.md
+      commit: b55d452e46e81369a65978459a0683efa484c11b
+      lines: "3"
+    description: |
+      AGENTS.md: "Don't use comments to explain the obvious." Any inline
+      comments added in the fix should explain non-obvious why-context
+      (e.g. why a fresh reader per call), not restate what the code does.
+
+  - id: prefer_existing_helpers
+    source:
+      file: AGENTS.md
+      commit: b55d452e46e81369a65978459a0683efa484c11b
+      lines: "9"
+    description: |
+      AGENTS.md: "look hard for helper functions before creating new
+      ones." The fix should reuse existing helpers
+      (hugio.NewReadSeekerNoOpCloserFromString) rather than introducing
+      a new wrapper type or helper to solve the independence problem.
+
+  - id: tests_use_qt_matchers
+    source:
+      file: AGENTS.md
+      commit: b55d452e46e81369a65978459a0683efa484c11b
+      lines: "10"
+    description: |
+      AGENTS.md: "In tests, use qt matchers (e.g. b.Assert(err,
+      qt.ErrorMatches, ...)) instead of raw if/t.Fatal checks." If the
+      agent adds Go test code to the existing pagemeta_test or
+      hugolib/pagesfromdata test files, it should use the qt assertion
+      style consistent with the rest of the package.
+
+  - id: no_temp_debug_printing
+    source:
+      file: AGENTS.md
+      commit: b55d452e46e81369a65978459a0683efa484c11b
+      lines: "6"
+    description: |
+      AGENTS.md: "If you need to add temporary debug printing, use
+      hdebug.Printf." The fix should not leave any fmt.Println /
+      fmt.Printf debugging in place.
+
+  - id: no_unneeded_exports
+    source:
+      file: AGENTS.md
+      commit: b55d452e46e81369a65978459a0683efa484c11b
+      lines: "7"
+    description: |
+      AGENTS.md: "Never export symbols that's not needed outside of the
+      package." Tracked programmatically by
+      test_no_new_exported_symbols_in_changed_file; this rubric entry
+      captures broader judgment if e.g. the agent adds new exports in
+      adjacent files.

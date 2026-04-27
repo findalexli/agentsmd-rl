@@ -1,0 +1,104 @@
+version: '2.0'
+source:
+  repo: appwrite/appwrite
+  pr_number: 11689
+  pr_url: https://github.com/appwrite/appwrite/pull/11689
+  base_commit: ea032c28046c9f6cb1c2801fa80a9111f7e5fcd1
+  merge_commit: ec20fb59e2883f47afce681614f40ad6d7a7d973
+  pr_title: Fix installer
+  pr: 11689
+task:
+  kind: code_with_config
+  primary_language: php
+  test_runner: pytest
+checks:
+- id: test_step5_upgrade_says_appwrite_not_your_app
+  type: fail_to_pass
+  origin: pr_diff
+  description: step-5.phtml in upgrade mode renders the new "Updating Appwrite…" copy and no longer leaks the old "Updating your app…" placeholder.
+- id: test_step5_install_says_appwrite_not_your_app
+  type: fail_to_pass
+  origin: pr_diff
+  description: step-5.phtml in fresh-install mode renders the new "Installing Appwrite…" copy.
+- id: test_step4_upgrade_hides_secret_api_key_row
+  type: fail_to_pass
+  origin: pr_diff
+  description: step-4.phtml does NOT render the "Secret API key" review row when $isUpgrade is true (an upgrade has no fresh secret to display).
+- id: test_step4_install_shows_secret_api_key_row
+  type: pass_to_pass
+  origin: pr_diff
+  description: step-4.phtml still renders the "Secret API key" review row when $isUpgrade is false (regression guard for the conditional wrapping).
+- id: test_installer_css_has_upgrade_step_height_rule
+  type: fail_to_pass
+  origin: pr_diff
+  description: installer styles.css has a CSS rule whose selector matches .installer-page[data-upgrade='true'] .installer-step and whose body sets min-height to 0 (upgrade pages must not enforce step height).
+- id: test_agents_md_rewritten_with_new_signal_lines
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'AGENTS.md is rewritten: new sections ("## Commands", "## Action pattern (HTTP endpoints)") and signal phrases ("Self-hosted Backend-as-a-Service platform", "PHPUnit 12, Pint (PSR-12), PHPStan level 3") replace the old "## Project Overview" / "## Code Style Guidelines" headings.'
+- id: test_install_php_files_are_syntactically_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: The three modified PHP source files (Tasks/Install.php, Installer/Http/Installer/Install.php, Installer/Server.php) all pass `php -l` (no syntax regressions from edits to function signatures or use-statements).
+- id: test_phtml_templates_are_syntactically_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: step-4.phtml and step-5.phtml render without PHP errors.
+config_edits:
+- change_type: rewrite
+  description: 'The agent-instruction file is restructured. The old narrative "Project Overview / Development Commands / Code Style Guidelines / Performance Patterns / Security Considerations" layout is replaced with: a tagline, a `## Commands` table, a `## Stack` bullet list, a `## Project layout` directory map, a `## Module structure` section with the canonical Module.php / Services / Http / Workers / Tasks breakdown and naming rules (Get/Create/Update/Delete/XList, property-update modeling for non-CRUD), an `## Action pattern` example, a `## Conventions` block (PSR-12 + plural resourceType + sparse-Document update guidance + utopia-php-only deps + no hardcoded credentials), and a `## Cross-repo context` note about appwrite/cloud and feat-dedicated-db.'
+  signal_phrases_added:
+  - Self-hosted Backend-as-a-Service platform
+  - '## Commands'
+  - '## Stack'
+  - '## Project layout'
+  - '## Module structure'
+  - '## Action pattern (HTTP endpoints)'
+  - '## Conventions'
+  - '## Cross-repo context'
+  - PHPUnit 12, Pint (PSR-12), PHPStan level 3
+  - Get.php`, `Create.php`, `Update.php`, `Delete.php`, or `XList.php
+  - appwrite/cloud
+  - feat-dedicated-db
+  signal_phrases_removed:
+  - '## Project Overview'
+  - '## Development Commands'
+  - '## Code Style Guidelines'
+  - '## Performance Patterns'
+  - '## Security Considerations'
+  - '## Pull Request Guidelines'
+  - '## Known Issues and Gotchas'
+  path: AGENTS.md
+  gold_added: ''
+  gold_removed: ''
+rubric:
+- id: psr12_formatting
+  source:
+    quote: Follow [PSR-12](https://www.php-fig.org/psr/psr-12/) coding standard
+    path: AGENTS.md
+    commit: ea032c28046c9f6cb1c2801fa80a9111f7e5fcd1
+  rule: All modified PHP files conform to PSR-12 formatting (the project's Pint config enforces this; reviewers should not introduce trailing whitespace, mismatched braces, or non-PSR-12 indentation in Tasks/Install.php, Installer/Http/Installer/Install.php, or Installer/Server.php).
+- id: strict_type_declarations
+  source:
+    quote: Strict type declarations where applicable
+    path: AGENTS.md
+    commit: ea032c28046c9f6cb1c2801fa80a9111f7e5fcd1
+  rule: 'New methods (e.g. hasExplicitCliParams) and the modified performInstallation signature use strict type declarations (`: bool`, `?callable`, etc.) consistent with the surrounding code.'
+- id: no_hardcoded_credentials
+  source:
+    quote: Never hardcode credentials - Use environment variables
+    path: AGENTS.md
+    commit: ea032c28046c9f6cb1c2801fa80a9111f7e5fcd1
+  rule: No hardcoded credentials, API keys, or secrets are added in the installer changes; the GROWTH_API_URL analytics call must continue to use the existing environment-driven configuration.
+- id: no_new_external_dependencies
+  source:
+    quote: Avoid introducing new dependencies other than utopia-php
+    path: AGENTS.md
+    commit: ea032c28046c9f6cb1c2801fa80a9111f7e5fcd1
+  rule: No new composer packages are added outside the utopia-php ecosystem. The fix should be implementable using only PHP stdlib (Swoole\\Coroutine, Swoole\\Runtime), classes already imported in these files, and existing utopia-php helpers.
+- id: docs_rewrite_keeps_actionable_rules
+  source:
+    quote: When a collection has a combination of resourceType ... MUST always be plural
+    path: AGENTS.md
+    commit: ea032c28046c9f6cb1c2801fa80a9111f7e5fcd1
+  rule: The AGENTS.md rewrite must preserve the actionable rules from the old version (resourceType plural rule, sparse-Document update pattern, no-hardcoded-credentials, utopia-php-only deps) — they may move to a `## Conventions` block but must not be deleted.

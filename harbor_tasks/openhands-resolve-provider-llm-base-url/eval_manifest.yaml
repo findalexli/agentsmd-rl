@@ -1,0 +1,120 @@
+version: '2.0'
+source:
+  owner: OpenHands
+  repo: OpenHands
+  pr_number: 13980
+  pr_url: https://github.com/OpenHands/OpenHands/pull/13980
+  base_commit: 385122e2602d04277f39e7816fa0b8889b593ba1
+  merge_commit: 2068694ea0fb353ef641121e390d18e573947e62
+  title: 'fix(enterprise): Apply deployment LLM proxy URL override in /api/v1/users/me'
+  pr: 13980
+task:
+  name: openhands-resolve-provider-llm-base-url
+  description: 'Add a deployment-aware helper resolve_provider_llm_base_url() to openhands.app_server.config and route the existing inline call site in live_status_app_conversation_service through it.
+
+    '
+checks:
+- id: test_function_exists_and_is_callable
+  type: fail_to_pass
+  origin: pr_diff
+  description: resolve_provider_llm_base_url exists and is callable.
+- id: test_sdk_default_constant_exposed
+  type: fail_to_pass
+  origin: pr_diff
+  description: _SDK_DEFAULT_PROXY equals the SDK default proxy URL.
+- id: test_openhands_prefix_replaces_sdk_default_with_provider
+  type: fail_to_pass
+  origin: pr_diff
+  description: openhands/ prefix + SDK default + provider URL → provider URL.
+- id: test_openhands_prefix_custom_url_preserved
+  type: fail_to_pass
+  origin: pr_diff
+  description: openhands/ prefix + custom URL is preserved verbatim.
+- id: test_openhands_prefix_no_provider_returns_sdk_default
+  type: fail_to_pass
+  origin: pr_diff
+  description: openhands/ prefix + SDK default + empty provider → SDK default.
+- id: test_openhands_prefix_trailing_slash_normalized
+  type: fail_to_pass
+  origin: pr_diff
+  description: SDK default with/without trailing slash both trigger replacement.
+- id: test_litellm_proxy_prefix_replaces_sdk_default
+  type: fail_to_pass
+  origin: pr_diff
+  description: litellm_proxy/ prefix behaves like openhands/ prefix.
+- id: test_litellm_proxy_prefix_custom_url_preserved
+  type: fail_to_pass
+  origin: pr_diff
+  description: litellm_proxy/ prefix preserves custom URLs.
+- id: test_plain_model_returns_base_url_unchanged
+  type: fail_to_pass
+  origin: pr_diff
+  description: Plain model (gpt-4) keeps its base_url.
+- id: test_anthropic_model_returns_base_url_unchanged
+  type: fail_to_pass
+  origin: pr_diff
+  description: anthropic/ prefix is out of scope; base_url preserved.
+- id: test_none_model_returns_base_url_unchanged
+  type: fail_to_pass
+  origin: pr_diff
+  description: None model returns base_url unchanged.
+- id: test_empty_model_returns_base_url_unchanged
+  type: fail_to_pass
+  origin: pr_diff
+  description: Empty-string model returns base_url unchanged.
+- id: test_none_base_url_with_openhands_prefix_uses_provider
+  type: fail_to_pass
+  origin: pr_diff
+  description: None base_url + provider URL → provider URL.
+- id: test_none_base_url_no_provider_returns_none
+  type: fail_to_pass
+  origin: pr_diff
+  description: None base_url + no provider URL + no env → None.
+- id: test_env_fallback_openhands_provider_base_url
+  type: fail_to_pass
+  origin: pr_diff
+  description: provider_base_url=None falls back to OPENHANDS_PROVIDER_BASE_URL env.
+- id: test_env_fallback_llm_base_url
+  type: fail_to_pass
+  origin: pr_diff
+  description: provider_base_url=None falls back to LLM_BASE_URL env.
+- id: test_live_status_service_imports_resolve_function
+  type: fail_to_pass
+  origin: pr_diff
+  description: live_status_app_conversation_service imports the new helper.
+- id: test_p2p_app_conversation_service_base
+  type: pass_to_pass
+  origin: repo_tests
+  description: Pre-existing app_conversation_service_base unit test still passes.
+- id: test_p2p_jwt_service
+  type: pass_to_pass
+  origin: repo_tests
+  description: Pre-existing JWT service unit test still passes.
+rubric:
+- id: code_style_pre_commit
+  severity: warn
+  source:
+    lines: 16-31
+    path: AGENTS.md
+    commit: 385122e2602d04277f39e7816fa0b8889b593ba1
+  rule: 'Edits should match the repo''s pre-commit configuration (ruff formatting / linting and mypy type checking) per AGENTS.md: "Before pushing any changes, you MUST ensure that any lint errors or simple test errors have been fixed."
+
+    '
+- id: tests_under_tests_unit
+  severity: warn
+  source:
+    lines: 115-117
+    path: AGENTS.md
+    commit: 385122e2602d04277f39e7816fa0b8889b593ba1
+  rule: 'AGENTS.md mandates: "All tests are in tests/unit/test_*.py" and "Write all tests with pytest". Any new test files added by the agent for this fix must live under tests/unit/.
+
+    '
+- id: relative_imports_in_enterprise
+  severity: warn
+  source:
+    lines: 238-241
+    path: AGENTS.md
+    commit: 385122e2602d04277f39e7816fa0b8889b593ba1
+  rule: 'AGENTS.md "Enterprise Testing Best Practices > Import Patterns": use relative imports without the `enterprise.` prefix in enterprise code. The edit to enterprise/server/routes/users_v1.py must keep the existing relative-import style.
+
+    '

@@ -1,0 +1,121 @@
+version: '2.0'
+task:
+  kind: markdown_authoring
+  name: antd-skill-changelog-collect
+  title: Add a Claude skill for collecting ant-design changelog entries
+  difficulty: medium
+  tags:
+  - markdown
+  - agent-instruction
+  - skill-authoring
+  - ant-design
+  estimated_minutes: 25
+source:
+  owner: ant-design
+  repo: ant-design
+  pr_number: 57227
+  pr_url: https://github.com/ant-design/ant-design/pull/57227
+  pr_title: 'docs: skill of diff change-log'
+  base_commit: 777b4affe8c0d6075ba418ecf6013b510b57d4e4
+  merge_commit: 7723b13c3beb8a35e00a0fe95beacd467e3966e5
+  pr: 57227
+checks:
+- id: test_skill_file_created_at_expected_path
+  type: fail_to_pass
+  origin: static
+  description: SKILL.md exists at .claude/skills/changelog-collect/
+- id: test_skill_file_is_substantial
+  type: fail_to_pass
+  origin: static
+  description: SKILL.md is non-trivial and has a leading Markdown heading
+- id: test_skill_documents_gh_pr_view_collection
+  type: fail_to_pass
+  origin: static
+  description: SKILL.md documents `gh pr view` for PR detail collection
+- id: test_skill_documents_git_log_between_versions
+  type: fail_to_pass
+  origin: static
+  description: SKILL.md documents `git log` for inter-version commit enumeration
+- id: test_skill_writes_to_both_changelog_files
+  type: fail_to_pass
+  origin: static
+  description: SKILL.md targets both CHANGELOG.zh-CN.md and CHANGELOG.en-US.md
+- id: test_agents_md_clarifies_backticked_attribute_examples
+  type: fail_to_pass
+  origin: agent_config
+  description: AGENTS.md backtick rule is clarified with `picture-card`/`defaultValue` examples
+  source:
+    lines: 840-842
+    commit: 7723b13c3beb8a35e00a0fe95beacd467e3966e5
+    path: AGENTS.md
+- id: test_existing_skills_preserved
+  type: pass_to_pass
+  origin: repo_tests
+  description: Pre-existing .claude/skills/{commit-msg,create-pr,issue-reply}/SKILL.md not removed
+- id: test_agents_md_still_well_formed
+  type: pass_to_pass
+  origin: repo_tests
+  description: AGENTS.md retains top-level heading and Changelog section
+- id: test_repo_git_clean_state
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo HEAD reachable, .git intact
+config_edits:
+- action: added
+  gold_content: "# Changelog 收集工具\n\n## 目标\n\n帮助开发者收集 Ant Design 两个版本之间的 Changelog，处理临时文件并更新到官方 CHANGELOG.zh-CN.md 和 CHANGELOG.en-US.md 文件中。\n\n## 触发方式\n\n当用户提到以下关键词时使用此 skill：\n\n- 收集 changelog\n- 生成 changelog\n- 更新 changelog\n- 版本对比\n- 处理 changelog\n\n## 核心流程\n\n### 阶段一：通过 gh CLI 收集 PR 信息\n\n使用 GitHub CLI 直接收集两个版本/分支之间的 PR 信息。\n\n#### 1.1 获取可用的 Tags\n\n执行 `git fetch --tags` 确保最新，然后获取所有 tags：\n\n```bash\ngit tag --list | grep -v -E '(experimental|alpha|resource)' | sort -V | tail -20\n```\n\n过滤规则：\n\n- 排除包含 `experimental`、`alpha`、`resource` 的 tag\n- 保留最近的 20 个有效版本 tag\n\n#### 1.2 选择起始版本和目标分支\n\n交互式询问用户：\n\n```\n\U0001F3F7 请选择起始版本（tag）：\n- [列表显示最近的 tag]\n- [自定义输入]\n\n\U0001F500 请选择目标分支：\n- master\n- feature\n- 自定义输入\n```\n\n#### 1.3 确定版本号\n\n**重要：在开始收集 PR 信息之前，必须先确定版本号并写入 `~changelog.md` 的头部。**\n\n根据起始版本自动计算新版本（默认按 minor 升级）：\n\n```\n当前选择: 6.3.1 → master\n\n请确认版本号：\n- [minor] 升级到 6.4.0（次版本号）\n- [patch] 升级到 6.3.2（修订版本号）\n- [自定义] 输入具体版本号\n```\n\n用户确认后，**立即初始化 `~changelog.md` 文件**，写入版本信息：\n\n```markdown\n# Changelog Temp File\n\n# Version: 6.4.0\n\n# Generated: 2026-03-09T...\n\n---\n```\n\n这样在后续收集 PR 信息时，每次追加写入都能保证 `~changelog.md` 是完整可用的。\n\n#### 1.4 获取 commit 列表\n\n```bash\ngit log <from-tag>..<to-branch> --oneline\n```\n\n解析每个 commit，提取 PR 编号（匹配 `#12345` 格式）。\n\n#### 1.5 获取每个 PR 的详情并实时写入\n\n对每个 PR 编号执行：\n\n```bash\ngh pr view <pr-number> --json title,body,author\n```\n\n返回字段：\n\n- `title`: PR 标题\n- `body`: PR 描述（包含中英文 changelog）\n- `author`: 提交者\n\n**每获取一个 PR 的详情后，立即追加写入 `~changelog.md`**（而不是等全部遍历完毕）。\n\n追加写入内容：\n\n```markdown\n## abc1234\n\n- PR: 56976\n- Committer: zombieJ\n- Commit: fix: Select height issue\n- Category: Select\n- English: Fix Select incorrect height when value is empty\n- Chinese: 修复 Select value 为空时高度不正确的问题\n```\n\n追加写入方式（Bash）：\n\n```bash\ncat >> ~changelog.md << 'EOF'\n\n## abc1234\n\n- PR: 56976\n- Committer: zombieJ\n- Commit: fix: Select height issue\n- Category: Select\n- English: Fix Select incorrect height when value is empty\n- Chinese: 修复 Select value 为空时高度不正确的问题\nEOF\n```\n\n或使用 Node.js：\n\n```javascript\nconst content = `\n## ${hash}\n\n- PR: ${prNumber}\n- Committer: ${committer}\n- Commit: ${commitMessage}\n- Category: ${category}\n- English: ${english}\n- Chinese: ${chinese}\n`;\n\nfs.appendFileSync('~changelog.md', content, 'utf8');\n```\n\n##### 从 PR body 提取中英文描述\n\nPR body 中提取 changelog 的模式：\n\n```\n\U0001F1FA\U0001F1F8 English\n- Fix Select incorrect height when value is empty\n\n\U0001F1E8\U0001F1F3 Chinese\n- 修复 Select value 为空时高度不正确的问题\n```\n\n或者：\n\n```\nEnglish:\n- Fix Select incorrect height when value is empty\n\nChinese:\n- 修复 Select value 为空时高度不正确的问题\n```\n\n提取规则：\n\n- 识别 `\U0001F1FA\U0001F1F8 English` 或 `English:` 标记后的 `- ` 行作为英文描述\n- 识别 `\U0001F1E8\U0001F1F3 Chinese` 或 `Chinese:` 标记后的 `- ` 行作为中文描述\n\n如果 PR body 中没有明确的中英文描述，则查询完整 commit 内容，自动生成。\n\n##### 识别组件 Category\n\n从 PR title 和 body 中识别组件名：\n\n```typescript\nconst componentNames = [\n  'Button',\n  'Checkbox',\n  'Radio',\n  'Switch',\n  'Input',\n  'Select',\n  'TreeSelect',\n  'Cascader',\n  'DatePicker',\n  'TimePicker',\n  'Calendar',\n  'Upload',\n  'Modal',\n  'Drawer',\n  'Message',\n  'Notification',\n  'Popconfirm',\n  'Tooltip',\n  'Popover',\n  'Table',\n  'List',\n  'Tree',\n  'Tabs',\n  'Steps',\n  'Progress',\n  'Spin',\n  'Avatar',\n  'Badge',\n  'Tag',\n  'Card',\n  'Collapse',\n  'Carousel',\n  'Breadcrumb',\n  'Pagination',\n  'Menu',\n  'Dropdown',\n  'Form',\n  'Descriptions',\n  'Skeleton',\n  'Empty',\n  'Result',\n  'Alert',\n  'Typography',\n  'Layout',\n  'Grid',\n  'Space',\n  'Flex',\n  'ConfigProvider',\n  'App',\n  'Watermark',\n  'ColorPicker',\n  'QRCode',\n  'Segmented',\n];\n```\n\n匹配规则：大小写不敏感，包含匹配。\n\n### 阶段二：处理临时文件\n\n读取 `~changelog.md` 后，按以下规范处理：\n\n**临时文件格式：**\n\n```markdown\n# Changelog Temp File\n\n# Version: 6.4.0\n\n# Generated: 2026-03-09T...\n\n---\n\n## abc1234\n\n- PR: 56976\n- Committer: zombieJ\n- Commit: fix: Select height issue\n- Category: Select\n- English: Fix Select incorrect height when value is empty\n- Chinese: 修复 Select value 为空时高度不正确的问题\n```\n\n**AGENTS.md 规范引用：**\n\n- [核心原则](./AGENTS.md#核心原则) - 有效性过滤规则\n- [格式与结构规范](./AGENTS.md#格式与结构规范) - 分组、描述、Emoji 规范\n- [Emoji 规范](./AGENTS.md#emoji-规范严格执行) - 根据 commit 类型自动标记\n- [输出示例参考](./AGENTS.md#输出示例参考) - 中英文格式参考\n\n根据 AGENTS.md 的规范，对 `~changelog.md` 中的条目进行过滤、分组、格式检查，并在必要时进行交互式确认和修改。\n\n### 阶段三：写入文件\n\n在 `---` front matter 之后、第一个版本标题之前插入新内容：\n\n1. 读取 CHANGELOG.zh-CN.md\n2. 找到 `---` 之后的位置\n3. 插入生成的中文 changelog\n4. 写入文件\n\n同样流程处理 CHANGELOG.en-US.md\n\n### 版本确认（可选）\n\n版本号已在阶段一确定。如需更新 package.json，在写入 changelog 前询问：\n\n```\n是否需要同步更新 package.json 中的版本号？\n\n当前版本: 6.3.1 → changelog 版本: 6.4.0\n选项:\n- [更新] 执行 npm version minor/patch\n- [跳过] 保持 package.json 不变\n```\n\n### 写入确认（交互式）\n\n**预览确认**：\n\n```\n请确认以下内容即将写入 CHANGELOG.zh-CN.md 和 CHANGELOG.en-US.md：\n\n版本: 6.4.0\n日期: 2026-03-09\n条目数: 12\n\n[预览完整内容] [直接写入] [取消]\n```\n\n## 完整交互流程\n\n```\n1. 获取可用 tags，选择起始版本\n   ↓\n2. 选择目标分支（master/feature/自定义）\n   ↓\n3. **立即确定版本号**（minor/patch/自定义）\n   ↓\n4. 初始化 ~changelog.md 头部（写入版本信息）\n   ↓\n5. git log 获取两个版本间的 commits\n   ↓\n6. 对每个 PR 执行 gh pr view 获取详情\n   ↓\n7. 从 PR body 提取中英文描述\n   ↓\n8. 识别组件 category\n   ↓\n9. **实时追加写入** ~changelog.md（每获取一个 PR 就写入）\n   ↓\n10. 过滤无效 commit（交互确认）\n     ↓\n11. 分组处理（按组件名）\n    ↓\n12. 检查描述规范性（交互确认）\n    ↓\n13. 重新生成不符合规范的描述（如需要）\n    ↓\n14. 预览确认（交互确认）\n    ↓\n15. 可选：更新 package.json 版本（npm version）\n    ↓\n16. 写入 CHANGELOG.zh-CN.md 和 CHANGELOG.en-US.md\n    ↓\n17. 清理临时文件 ~changelog.md\n```\n\n## 所需命令\n\n此 skill 需要以下命令可用：\n\n- `git tag --list` - 获取版本标签\n- `git log <from>..<to> --oneline` - 获取版本间 commits\n- `gh pr view <pr-number> --json title,body,author` - 获取 PR 详情\n- `git show <hash>` - 查看 commit 详情\n- `npm version minor` - 升级次版本号（6.3.1 → 6.4.0）\n- `npm version patch` - 升级修订版本号（6.3.1 → 6.3.2）\n- `cat >> ~changelog.md` 或 Node.js fs.appendFileSync - 实时追加写入\n\n## 注意事项\n\n- 需要 gh CLI 认证（运行 `gh auth login`）\n- 写入前必须预览确认\n- 保持中英文同步更新\n- 组件名在正文中要出现（如 `Select 修复...`，不是 `修复 Select...`）\n- PR body 中没有中英文描述时，使用 PR title 作为后备\n"
+  path: .claude/skills/changelog-collect/SKILL.md
+  gold_added: ''
+  gold_removed: ''
+- action: modified
+  gold_diff: "index cc3d0af69c7b..4ef22b15525c 100644\n--- a/AGENTS.md\n+++ b/AGENTS.md\n@@ -839,11 +839,11 @@ export default genStyleHooks(\n \n 2. **组件名要求**：\n    - **每条必含组件名**：每条 changelog 正文中都必须出现对应组件名（分组标题下的子条同样要在句中出现组件名）\n-   - **组件名不用反引号**：组件名（如 Modal、Drawer、Button、Upload.Dragger）不使用 `` ` `` 包裹；属性名、API、token 等仍用反引号\n+   - **组件名不用反引号**：组件名（如 Modal、Drawer、Button、Upload.Dragger）不使用 `` ` `` 包裹；属性名、API、token 等仍用反引号（如 `picture-card`、`defaultValue`）\n \n 3. **中英文条目句式**：\n    - **中文**：`Emoji 组件名 动词/描述 … [#PR](链接) [@贡献者]` 例：`\U0001F41E Button 修复暗色主题下 \\`color\\` 的 \\`hover\\` 与 \\`active\\` 状态颜色相反的问题。`\n-   - **英文**：`Emoji 动词 组件名 描述 … [#PR](链接) [@贡献者]`（动词在前，如 Fix / Add / Support / Remove / Disable / Refactor / Improve / Change）例：`\U0001F41E Fix Button reversed \\`hover\\` and \\`active\\` colors for \\`color\\` in dark theme.`\n+   - **英文**：`Emoji 动词 组件名 描述 … [#PR](链接) [@贡献者]`（动词在前，如 Fix / Add / Support / Remove / Disable / Refactor / Improve / Change）例：`\U0001F41E Fix Button reversed \\`hover\\` and \\`active\\` colors for \\`color\\` in dark theme.`；组件名在描述中应靠前出现，让用户快速知道变更的是哪个组件：`\U0001F41E Upload.Dragger add generic type support.`，避免 `\U0001F41E Add generic support for Upload.Dragger.`\n \n 4. **分组逻辑**：\n    - **多项改动**：同一组件有 2 条及以上改动时，使用 `- 组件名` 作为分类标题（不加粗），具体条目缩进排列，子条中仍须包含组件名\n"
+  path: AGENTS.md
+  gold_added: ''
+  gold_removed: ''
+rubric:
+- id: skill_documents_two_phase_workflow
+  source:
+    commit: 7723b13c3beb8a35e00a0fe95beacd467e3966e5
+    path: .claude/skills/changelog-collect/SKILL.md
+  weight: 1
+  rule: 'SKILL.md describes a multi-phase workflow: (1) collect PR info via gh CLI between two refs, (2) process a temporary changelog file, (3) write into the two CHANGELOG files.'
+- id: skill_uses_temp_file_for_intermediate_state
+  source:
+    commit: 7723b13c3beb8a35e00a0fe95beacd467e3966e5
+    path: .claude/skills/changelog-collect/SKILL.md
+  weight: 1
+  rule: SKILL.md instructs the agent to incrementally append PR details into a temporary file (e.g. ~changelog.md) rather than buffering all data in memory before processing.
+- id: skill_aligns_with_AGENTS_changelog_rules
+  source:
+    lines: 813-897
+    commit: 7723b13c3beb8a35e00a0fe95beacd467e3966e5
+    path: AGENTS.md
+  weight: 1
+  rule: SKILL.md respects the conventions already documented in AGENTS.md `Changelog 规范` (Chinese and English entries, Emoji prefix, no colon, component name appears in body, attribute names in backticks).
+- id: skill_dual_language_output
+  source:
+    lines: 830-831
+    commit: 7723b13c3beb8a35e00a0fe95beacd467e3966e5
+    path: AGENTS.md
+  weight: 1
+  rule: SKILL.md emphasizes that both Chinese and English changelog entries must be produced/maintained in sync, matching the AGENTS.md `双语输出` rule.
+- id: skill_filters_invalid_commits
+  source:
+    lines: '819'
+    commit: 7723b13c3beb8a35e00a0fe95beacd467e3966e5
+    path: AGENTS.md
+  weight: 1
+  rule: SKILL.md instructs filtering out commits that are user-invisible (test-only, doc-site, internal refactors) before producing the final changelog, matching AGENTS.md `有效性过滤` rule.
+- id: agents_md_attribute_backtick_examples_added
+  source:
+    lines: '842'
+    commit: 7723b13c3beb8a35e00a0fe95beacd467e3966e5
+    path: AGENTS.md
+  weight: 1
+  rule: AGENTS.md backtick rule (line 842) is augmented with concrete examples (`picture-card`, `defaultValue`) so contributors know which tokens stay backticked.
+- id: agents_md_english_component_position_example_added
+  source:
+    lines: '846'
+    commit: 7723b13c3beb8a35e00a0fe95beacd467e3966e5
+    path: AGENTS.md
+  weight: 1
+  rule: AGENTS.md English-form example (line 846) is extended with a positive example (`🐞 Upload.Dragger add generic type support.`) and a negative example showing component name should appear early.

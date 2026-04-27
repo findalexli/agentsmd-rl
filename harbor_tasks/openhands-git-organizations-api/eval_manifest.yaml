@@ -1,109 +1,143 @@
-version: "2.0"
-
+version: '2.0'
+source:
+  repo: OpenHands/OpenHands
+  pr: 13676
+  base_commit: dbd199e77cdf741f4b1707702255b0b42fc04ab5
+  merge_commit: ec66250e7457163d4781522094b6c5e9691ed0ef
+task:
+  kind: code_fix
 checks:
-  # Fail-to-pass tests - these test the new functionality
-  - id: test_gitlab_service_has_get_user_groups
-    type: fail_to_pass
-    origin: pr_diff
-    description: GitLabService has get_user_groups method
-
-  - id: test_gitlab_get_user_groups_returns_group_paths
-    type: fail_to_pass
-    origin: pr_diff
-    description: get_user_groups returns group paths extracted from API response
-
-  - id: test_gitlab_get_user_groups_returns_empty_on_error
-    type: fail_to_pass
-    origin: pr_diff
-    description: get_user_groups returns empty list on API error
-
-  - id: test_provider_handler_has_get_github_organizations
-    type: fail_to_pass
-    origin: pr_diff
-    description: ProviderHandler has get_github_organizations method
-
-  - id: test_provider_handler_has_get_gitlab_groups
-    type: fail_to_pass
-    origin: pr_diff
-    description: ProviderHandler has get_gitlab_groups method
-
-  - id: test_get_github_organizations_delegates_to_service
-    type: fail_to_pass
-    origin: pr_diff
-    description: get_github_organizations delegates to GitHub service method
-
-  - id: test_get_github_organizations_returns_empty_on_error
-    type: fail_to_pass
-    origin: pr_diff
-    description: get_github_organizations returns empty list on service error
-
-  - id: test_get_gitlab_groups_delegates_to_service
-    type: fail_to_pass
-    origin: pr_diff
-    description: get_gitlab_groups delegates to GitLab service get_user_groups
-
-  - id: test_enterprise_api_endpoint_exists
-    type: fail_to_pass
-    origin: pr_diff
-    description: Enterprise API has saas_get_user_git_organizations endpoint
-
-  - id: test_enterprise_api_unsupported_provider_returns_400
-    type: fail_to_pass
-    origin: pr_diff
-    description: API returns 400 for unsupported providers (Azure DevOps)
-
-  - id: test_api_returns_expected_structure_for_github
-    type: fail_to_pass
-    origin: pr_diff
-    description: API returns expected JSON structure for GitHub provider
-
-  - id: test_api_returns_expected_structure_for_gitlab
-    type: fail_to_pass
-    origin: pr_diff
-    description: API returns expected JSON structure for GitLab provider
-
-  - id: test_api_returns_expected_structure_for_bitbucket
-    type: fail_to_pass
-    origin: pr_diff
-    description: API returns expected JSON structure for Bitbucket provider
-
-  # Pass-to-pass tests - existing repo tests that should keep passing
-  - id: test_unit_tests_gitlab
-    type: pass_to_pass
-    origin: repo_tests
-    description: GitLab unit tests from repo continue to pass
-
-  - id: test_unit_tests_gitlab_branches
-    type: pass_to_pass
-    origin: repo_tests
-    description: GitLab branches unit tests from repo continue to pass
-
-  - id: test_unit_tests_github
-    type: pass_to_pass
-    origin: repo_tests
-    description: GitHub service unit tests from repo continue to pass
-
-  - id: test_unit_tests_provider
-    type: pass_to_pass
-    origin: repo_tests
-    description: Provider immutability tests from repo continue to pass
-
-  - id: test_unit_tests_provider_and_gitlab
-    type: pass_to_pass
-    origin: repo_tests
-    description: All provider and GitLab related unit tests from repo
-
-  - id: test_syntax_check
-    type: pass_to_pass
-    origin: static
-    description: Python syntax check on modified files
-
-  - id: test_ruff_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: Ruff linter passes on modified modules
-
-  - id: test_ruff_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: Ruff format check passes on modified modules
+- id: test_gitlab_service_has_get_user_groups
+  type: fail_to_pass
+  origin: pr_diff
+  description: GitLabService has get_user_groups method
+- id: test_gitlab_get_user_groups_returns_group_paths
+  type: fail_to_pass
+  origin: pr_diff
+  description: get_user_groups returns group paths extracted from API response
+- id: test_gitlab_get_user_groups_returns_empty_on_error
+  type: fail_to_pass
+  origin: pr_diff
+  description: get_user_groups returns empty list on API error
+- id: test_provider_handler_has_get_github_organizations
+  type: fail_to_pass
+  origin: pr_diff
+  description: ProviderHandler has get_github_organizations method
+- id: test_provider_handler_has_get_gitlab_groups
+  type: fail_to_pass
+  origin: pr_diff
+  description: ProviderHandler has get_gitlab_groups method
+- id: test_get_github_organizations_delegates_to_service
+  type: fail_to_pass
+  origin: pr_diff
+  description: get_github_organizations delegates to GitHub service method
+- id: test_get_github_organizations_returns_empty_on_error
+  type: fail_to_pass
+  origin: pr_diff
+  description: get_github_organizations returns empty list on service error
+- id: test_get_gitlab_groups_delegates_to_service
+  type: fail_to_pass
+  origin: pr_diff
+  description: get_gitlab_groups delegates to GitLab service get_user_groups
+- id: test_enterprise_api_endpoint_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: Enterprise API has saas_get_user_git_organizations endpoint
+- id: test_enterprise_api_unsupported_provider_returns_400
+  type: fail_to_pass
+  origin: pr_diff
+  description: API returns 400 for unsupported providers (Azure DevOps)
+- id: test_api_returns_expected_structure_for_github
+  type: fail_to_pass
+  origin: pr_diff
+  description: API returns expected JSON structure for GitHub provider
+- id: test_api_returns_expected_structure_for_gitlab
+  type: fail_to_pass
+  origin: pr_diff
+  description: API returns expected JSON structure for GitLab provider
+- id: test_api_returns_expected_structure_for_bitbucket
+  type: fail_to_pass
+  origin: pr_diff
+  description: API returns expected JSON structure for Bitbucket provider
+- id: test_unit_tests_gitlab
+  type: pass_to_pass
+  origin: repo_tests
+  description: GitLab unit tests from repo continue to pass
+- id: test_unit_tests_gitlab_branches
+  type: pass_to_pass
+  origin: repo_tests
+  description: GitLab branches unit tests from repo continue to pass
+- id: test_unit_tests_github
+  type: pass_to_pass
+  origin: repo_tests
+  description: GitHub service unit tests from repo continue to pass
+- id: test_unit_tests_provider
+  type: pass_to_pass
+  origin: repo_tests
+  description: Provider immutability tests from repo continue to pass
+- id: test_unit_tests_provider_and_gitlab
+  type: pass_to_pass
+  origin: repo_tests
+  description: All provider and GitLab related unit tests from repo
+- id: test_syntax_check
+  type: pass_to_pass
+  origin: static
+  description: Python syntax check on modified files
+- id: test_ruff_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff linter passes on modified modules
+- id: test_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff format check passes on modified modules
+rubric:
+- rule: The pre-commit hooks MUST pass successfully before pushing any changes to the repository. This is a mandatory requirement to maintain code quality and consistency.
+  source:
+    path: AGENTS.md
+    lines: '26'
+    commit: dbd199e77cdf741f4b1707702255b0b42fc04ab5
+  evidence: Gold patch applies cleanly and all modified Python files pass ruff check and ruff format as verified by pass_to_pass tests.
+  category: style
+  verification: programmatic
+- rule: Write all tests with pytest
+  source:
+    path: AGENTS.md
+    lines: '118'
+    commit: dbd199e77cdf741f4b1707702255b0b42fc04ab5
+  evidence: Gold adds pytest tests in test_gitlab.py, test_provider_immutability.py, and a new test_user_git_organizations.py.
+  category: testing
+  verification: programmatic
+- rule: Each integration follows a consistent pattern with service classes, storage models, and API endpoints.
+  source:
+    path: AGENTS.md
+    lines: '221'
+    commit: dbd199e77cdf741f4b1707702255b0b42fc04ab5
+  evidence: New methods get_github_organizations and get_gitlab_groups follow the same try/except/return [] pattern as existing get_bitbucket_workspaces and get_azure_devops_organizations.
+  category: architecture
+  verification: semantic_diff
+- rule: Mock external database connections in unit tests to avoid dependency on running services. Use AsyncMock for async operations and MagicMock for complex objects. Test both success and failure scenarios with proper error handling.
+  source:
+    path: AGENTS.md
+    lines: 250-253
+    commit: dbd199e77cdf741f4b1707702255b0b42fc04ab5
+  evidence: Gold tests use AsyncMock and patch for service mocking, and test both success (delegation returns orgs/groups) and error (empty list on exception) paths.
+  category: testing
+  verification: llm_judge
+distractors:
+- rule: See openhands/integrations/provider.py for get_azure_devops_organizations - returns installations from Azure DevOps service.
+  source:
+    path: AGENTS.md
+    lines: '221'
+    commit: dbd199e77cdf741f4b1707702255b0b42fc04ab5
+  collision_type: would_cause_bug
+  why_distracting: ProviderHandler already has a get_azure_devops_organizations method that fetches installations, but the API endpoint should return 400 for Azure DevOps since it is explicitly unsupported for git organizations.
+  severity: medium
+- rule: The existing saas_get_user_installations delegates to openhands.server.routes.git.get_user_installations, which takes a provider parameter and handles all providers uniformly.
+  source:
+    path: enterprise/server/routes/user.py
+    lines: 47-67
+    commit: dbd199e77cdf741f4b1707702255b0b42fc04ab5
+  collision_type: architecture_boundary
+  why_distracting: The git-organizations endpoint should instantiate ProviderHandler directly rather than delegating through openhands.server.routes.git. The gold pattern is inline provider routing via ProviderHandler, unlike the installations endpoint.
+  severity: high

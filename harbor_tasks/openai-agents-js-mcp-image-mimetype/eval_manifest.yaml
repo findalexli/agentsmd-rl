@@ -1,105 +1,87 @@
 source:
-  pr_url: "https://github.com/openai/openai-agents-js/pull/1071"
+  pr_url: https://github.com/openai/openai-agents-js/pull/1071
   owner: openai
   repo: openai-agents-js
   pr_number: 1071
-  merge_commit: "8a5135a43f7873284402e8948c0ee2274e207f6f"
-  base_commit: "6884301505b92105c50b7be203d4cf8193d86577"
-  title: "fix: #1070 preserve MCP image mimeType in tool outputs"
-
+  merge_commit: 8a5135a43f7873284402e8948c0ee2274e207f6f
+  base_commit: 6884301505b92105c50b7be203d4cf8193d86577
+  title: 'fix: #1070 preserve MCP image mimeType in tool outputs'
+  pr: 1071
 checks:
-  # fail-to-pass tests
-  - id: test_mcp_image_top_level_mimetype_jpeg
-    type: fail_to_pass
-    origin: custom_test
-    description: "MCP image with mimeType='image/jpeg' at top level produces data:image/jpeg;base64,... URL via getToolCallOutputItem"
-
-  - id: test_mcp_image_top_level_mimetype_png
-    type: fail_to_pass
-    origin: custom_test
-    description: "MCP image with mimeType='image/png' at top level produces data:image/png;base64,... URL"
-
-  - id: test_mcp_image_nested_mimetype_gif
-    type: fail_to_pass
-    origin: custom_test
-    description: "MCP image with mimeType inside nested image.data object produces data:image/gif;base64,... URL"
-
-  - id: test_openai_adapter_mimetype_nested_and_top_level
-    type: fail_to_pass
-    origin: custom_test
-    description: "OpenAI Responses adapter converts ToolOutputImage with mimeType into data URLs for nested and top-level cases"
-
-  - id: test_openai_adapter_top_level_mimetype_fallback
-    type: fail_to_pass
-    origin: custom_test
-    description: "Adapter falls back to top-level mimeType when nested image object has no mediaType/mimeType"
-
-  # pass-to-pass tests
-  - id: test_agents_core_test_suite
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Full agents-core test suite passes"
-
-  - id: test_agents_openai_test_suite
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Full agents-openai test suite passes"
-
-  - id: test_repo_build
-    type: pass_to_pass
-    origin: repo_tests
-    description: "pnpm build succeeds"
-
-  - id: test_repo_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "pnpm lint passes"
-
-  - id: test_repo_dist_check
-    type: pass_to_pass
-    origin: repo_tests
-    description: "CI dist:check — generated type declarations are up to date"
-
-  - id: test_repo_typecheck_agents_core
-    type: pass_to_pass
-    origin: repo_tests
-    description: "TypeScript type checking passes for agents-core package"
-
-  - id: test_repo_typecheck_agents_openai
-    type: pass_to_pass
-    origin: repo_tests
-    description: "TypeScript type checking passes for agents-openai package"
-
-  - id: test_repo_toolExecution_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Existing toolExecution test suite passes (92 tests)"
-
-  - id: test_repo_openaiResponsesModel_helpers_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Existing openaiResponsesModel helpers test suite passes (63 tests)"
-
-  - id: test_openai_adapter_no_double_wrap_data_url
-    type: pass_to_pass
-    origin: custom_test
-    description: "When image data is already a data URL, adapter does NOT double-wrap it"
-
+- id: test_mcp_image_top_level_mimetype_jpeg
+  type: fail_to_pass
+  origin: pr_diff
+  description: MCP image with mimeType='image/jpeg' at top level produces data:image/jpeg;base64,... URL via getToolCallOutputItem
+- id: test_mcp_image_top_level_mimetype_png
+  type: fail_to_pass
+  origin: pr_diff
+  description: MCP image with mimeType='image/png' at top level produces data:image/png;base64,... URL
+- id: test_mcp_image_nested_mimetype_gif
+  type: fail_to_pass
+  origin: pr_diff
+  description: MCP image with mimeType inside nested image.data object produces data:image/gif;base64,... URL
+- id: test_openai_adapter_mimetype_nested_and_top_level
+  type: fail_to_pass
+  origin: pr_diff
+  description: OpenAI Responses adapter converts ToolOutputImage with mimeType into data URLs for nested and top-level cases
+- id: test_openai_adapter_top_level_mimetype_fallback
+  type: fail_to_pass
+  origin: pr_diff
+  description: Adapter falls back to top-level mimeType when nested image object has no mediaType/mimeType
+- id: test_agents_core_test_suite
+  type: pass_to_pass
+  origin: repo_tests
+  description: Full agents-core test suite passes
+- id: test_agents_openai_test_suite
+  type: pass_to_pass
+  origin: repo_tests
+  description: Full agents-openai test suite passes
+- id: test_repo_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: pnpm build succeeds
+- id: test_repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: pnpm lint passes
+- id: test_repo_dist_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: CI dist:check — generated type declarations are up to date
+- id: test_repo_typecheck_agents_core
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript type checking passes for agents-core package
+- id: test_repo_typecheck_agents_openai
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript type checking passes for agents-openai package
+- id: test_repo_toolExecution_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing toolExecution test suite passes (92 tests)
+- id: test_repo_openaiResponsesModel_helpers_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing openaiResponsesModel helpers test suite passes (63 tests)
+- id: test_openai_adapter_no_double_wrap_data_url
+  type: pass_to_pass
+  origin: pr_diff
+  description: When image data is already a data URL, adapter does NOT double-wrap it
 rubric:
-  - rule: "When handling MCP tool image outputs, both mediaType and mimeType fields must be recognized for backward compatibility"
-    source:
-      path: "AGENTS.md"
-      type: agent_config
-    description: "The fix adds a getImageInlineMediaType helper that checks both mediaType and mimeType"
-
-  - rule: "Image data must be converted to proper data URLs before passing to the model"
-    source:
-      path: "AGENTS.md"
-      type: agent_config
-    description: "Raw base64 data is converted to data:<mime>;base64,... format via toInlineImageString/formatInlineData"
-
-  - rule: "Existing data URLs must not be double-wrapped when processing image outputs"
-    source:
-      path: "AGENTS.md"
-      type: agent_config
-    description: "formatInlineData includes a guard to avoid wrapping already-formatted data URLs"
+- rule: When handling MCP tool image outputs, both mediaType and mimeType fields must be recognized for backward compatibility
+  source:
+    path: AGENTS.md
+    type: agent_config
+  description: The fix adds a getImageInlineMediaType helper that checks both mediaType and mimeType
+- rule: Image data must be converted to proper data URLs before passing to the model
+  source:
+    path: AGENTS.md
+    type: agent_config
+  description: Raw base64 data is converted to data:<mime>;base64,... format via toInlineImageString/formatInlineData
+- rule: Existing data URLs must not be double-wrapped when processing image outputs
+  source:
+    path: AGENTS.md
+    type: agent_config
+  description: formatInlineData includes a guard to avoid wrapping already-formatted data URLs
+version: '2.0'

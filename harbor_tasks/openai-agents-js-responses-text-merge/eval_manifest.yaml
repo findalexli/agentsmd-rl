@@ -1,0 +1,90 @@
+version: '2.0'
+task:
+  name: openai-agents-js-responses-text-merge
+  kind: code_fix
+  title: OpenAI Responses model loses structured-output format when verbosity is set
+  description: 'Fix a bug in @openai/agents-openai where setting both an `outputType`
+
+    (structured output) and `modelSettings.providerData.text` (e.g. gpt-5
+
+    `verbosity`) on an Agent causes the structured-output `format` to be
+
+    dropped from the request sent to OpenAI''s Responses API.
+
+    '
+source:
+  repo: openai/openai-agents-js
+  pr: 362
+  base_commit: 2260e211926624c0bcd89497a8b180724b14d720
+  merge_commit: 47a28ad5544630a2bac664242e5bfde10d3fa72d
+target_files:
+- packages/agents-openai/src/openaiResponsesModel.ts
+checks:
+- id: test_responses_format_preserved_with_verbosity
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'With a structured `outputType` and `providerData.text.verbosity` set, the request''s `text.format` must equal the structured outputType and `text.verbosity` must be preserved.
+
+    '
+- id: test_responses_no_double_emit_text
+  type: fail_to_pass
+  origin: pr_diff
+  description: '`providerData.text` must merge into the response format slot, not overwrite it via the top-level providerData spread; sibling providerData entries (e.g. `reasoning`) stay at the top level.
+
+    '
+- id: test_responses_text_outputtype_keeps_verbosity
+  type: pass_to_pass
+  origin: pr_diff
+  description: 'Sanity: outputType=''text'' with providerData.text.verbosity still flows verbosity through to the request body.
+
+    '
+- id: test_responses_structured_no_provider_data
+  type: pass_to_pass
+  origin: pr_diff
+  description: 'Sanity: structured outputType with no providerData yields `text === { format: outputType }`.
+
+    '
+- id: test_existing_responses_model_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Existing OpenAIResponsesModel unit tests in packages/agents-openai/test/openaiResponsesModel.test.ts.
+
+    '
+- id: test_existing_responses_helpers_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Existing helper tests in packages/agents-openai/test/openaiResponsesModel.helpers.test.ts.
+
+    '
+- id: test_typecheck_agents_openai
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`pnpm -F @openai/agents-openai build-check` (tsc --noEmit) passes.
+
+    '
+rubric:
+- id: comments_end_with_period
+  source:
+    excerpt: Comments must end with a period.
+    path: AGENTS.md
+    commit: 2260e211926624c0bcd89497a8b180724b14d720
+  rule: 'AGENTS.md states "Comments must end with a period." Any new comments added to packages/agents-openai/src/openaiResponsesModel.ts must end with a period.
+
+    '
+- id: lint_clean
+  source:
+    excerpt: Run `pnpm lint` and fix all errors locally.
+    path: AGENTS.md
+    commit: 2260e211926624c0bcd89497a8b180724b14d720
+  rule: 'AGENTS.md mandates `pnpm lint` clean (ESLint, no unused imports, Prettier-formatted). The diff should not introduce ESLint errors.
+
+    '
+- id: scope_limited_to_target_package
+  source:
+    excerpt: 'packages/agents-openai: OpenAI-specific bindings and implementations.'
+    path: AGENTS.md
+    commit: 2260e211926624c0bcd89497a8b180724b14d720
+  rule: 'AGENTS.md guides changes to live in the relevant package. The fix should modify only files inside packages/agents-openai/ (and not touch agents-core, agents-realtime, agents-extensions, examples, docs, or unrelated parts of the repo).
+
+    '
+config_edits: []

@@ -1,0 +1,104 @@
+version: '2.0'
+source:
+  repo: Effect-TS/effect
+  pr: 6139
+  base_commit: d4ed885bb94b45e315bd275a44a9e472ef6074f4
+  merge_commit: f99048e9f4b89ce1afe31e1827dee5d751ddaa5b
+  pr_url: https://github.com/Effect-TS/effect/pull/6139
+task:
+  name: effect-batched-resolver-defect-hang
+  language: typescript
+  package_manager: pnpm@10.17.1
+  node_version: 22.11.0
+checks:
+- id: test_resolver_defect_does_not_hang_single_consumer
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'A single `Effect.request` consuming a `RequestResolver.makeBatched` whose work-effect dies with a defect must observe a `Failure` exit rather than hang forever on the request `Deferred`.
+
+    '
+- id: test_resolver_defect_does_not_hang_multiple_consumers
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Multiple concurrent batched requests sharing one defective resolver must all be released (poll yields Some(Failure)) instead of hanging.
+
+    '
+- id: test_repo_query_repro_still_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Existing repo test `packages/effect/test/Effect/query-repro.test.ts` must still pass — confirms the success-path of resolver cleanup is not regressed.
+
+    '
+- id: test_repo_query_test_still_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Existing repo test `packages/effect/test/Effect/query.test.ts` (the main batched-request suite) must still pass.
+
+    '
+- id: test_effect_package_typechecks
+  type: pass_to_pass
+  origin: pr_diff
+  description: '`pnpm check` (i.e. `tsc -b`) on the `effect` package must succeed — mirrors the repo''s CI Types job.
+
+    '
+rubric:
+- id: agent_config_uses_pnpm
+  type: agent_config
+  weight: 1
+  source:
+    lines: 5-6
+    path: AGENTS.md
+    commit: d4ed885bb94b45e315bd275a44a9e472ef6074f4
+  rule: 'Agent must use `pnpm` for any commands it runs (install, test, lint, check) — not npm, yarn, or bun.
+
+    '
+- id: agent_config_changeset_present
+  type: agent_config
+  weight: 1
+  source:
+    lines: 37-40
+    path: AGENTS.md
+    commit: d4ed885bb94b45e315bd275a44a9e472ef6074f4
+  rule: 'A new file under `.changeset/` describing the fix must be added. AGENTS.md states "All pull requests must include a changeset in the .changeset/ directory."
+
+    '
+- id: agent_config_minimal_comments
+  type: agent_config
+  weight: 1
+  source:
+    lines: 13-13
+    path: AGENTS.md
+    commit: d4ed885bb94b45e315bd275a44a9e472ef6074f4
+  rule: 'The fix should not introduce gratuitous comments. AGENTS.md says "Avoid comments unless absolutely required to explain unusual or complex logic." JSDoc-style comments are acceptable.
+
+    '
+- id: agent_config_no_index_edits
+  type: agent_config
+  weight: 1
+  source:
+    lines: 27-29
+    path: AGENTS.md
+    commit: d4ed885bb94b45e315bd275a44a9e472ef6074f4
+  rule: 'Manually editing `index.ts` barrel files is forbidden — they are auto-generated. AGENTS.md: "The `index.ts` files are automatically generated. Do not manually edit them."
+
+    '
+- id: agent_config_use_it_effect
+  type: agent_config
+  weight: 1
+  source:
+    lines: 63-66
+    path: AGENTS.md
+    commit: d4ed885bb94b45e315bd275a44a9e472ef6074f4
+  rule: 'If the agent adds tests, they must follow the `it.effect` / `@effect/vitest` pattern with `assert` (not vitest''s `expect`). AGENTS.md: "Use `it.effect` for all Effect-based tests" and "Never use `expect` from vitest in Effect tests - use `assert` methods instead."
+
+    '
+- id: agent_config_no_scratchpad_left
+  type: agent_config
+  weight: 1
+  source:
+    lines: 47-50
+    path: AGENTS.md
+    commit: d4ed885bb94b45e315bd275a44a9e472ef6074f4
+  rule: 'No leftover files in `scratchpad/` from debugging. AGENTS.md: "Make sure to delete the file after you are done testing."
+
+    '

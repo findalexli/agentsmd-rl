@@ -1,0 +1,126 @@
+version: '2.0'
+source:
+  repo: inclusionAI/AReaL
+  pr: 1008
+  base_commit: 4f5a2944f0acfebba378e5b88bf2ab940f84b943
+  merge_commit: b48b013945f505d9cabb8e19c84efed9fb4330cb
+task:
+  kind: code_fix
+checks:
+- id: test_api_type_enum_defined
+  type: fail_to_pass
+  origin: pr_diff
+  description: ApiType str-Enum is defined with COMPLETION/RESPONSE/NONE members.
+- id: test_input_name_enum_defined
+  type: fail_to_pass
+  origin: pr_diff
+  description: InputName str-Enum is defined with MESSAGES/INPUT_DATA/NONE members.
+- id: test_api_type_property_returns_enum_for_completion
+  type: fail_to_pass
+  origin: pr_diff
+  description: api_type returns ApiType.COMPLETION (enum) for a completion-style instance.
+- id: test_api_type_property_returns_enum_for_response
+  type: fail_to_pass
+  origin: pr_diff
+  description: api_type returns ApiType.RESPONSE for a response-style instance.
+- id: test_api_type_property_returns_enum_for_none
+  type: fail_to_pass
+  origin: pr_diff
+  description: api_type returns ApiType.NONE when neither completion nor response is set.
+- id: test_input_name_for_logging_returns_enum_completion
+  type: fail_to_pass
+  origin: pr_diff
+  description: input_name_for_logging returns InputName.MESSAGES for a completion instance.
+- id: test_input_name_for_logging_returns_enum_response
+  type: fail_to_pass
+  origin: pr_diff
+  description: input_name_for_logging returns InputName.INPUT_DATA for a response instance.
+- id: test_input_name_for_logging_returns_enum_none
+  type: fail_to_pass
+  origin: pr_diff
+  description: input_name_for_logging returns InputName.NONE when no completion/response is set.
+- id: test_to_tensor_dict_warning_has_space_after_properly
+  type: fail_to_pass
+  origin: pr_diff
+  description: Warning reads 'constructed properly. Ignoring' (with space), not 'properly.Ignoring'.
+- id: test_clevr_no_print_call
+  type: fail_to_pass
+  origin: pr_diff
+  description: clevr_count_70k_reward_fn does not call print() on a correct answer.
+- id: test_clevr_correct_answer_logs_via_logger
+  type: fail_to_pass
+  origin: pr_diff
+  description: On a correct answer, clevr_count_70k_reward_fn emits an INFO record on the CLEVR70KReward logger.
+- id: test_clevr_returns_float_type
+  type: fail_to_pass
+  origin: pr_diff
+  description: clevr_count_70k_reward_fn returns Python float in every branch.
+- id: test_clevr_none_answer_returns_zero_float
+  type: fail_to_pass
+  origin: pr_diff
+  description: clevr_count_70k_reward_fn returns float 0.0 when answer is None.
+- id: test_clevr_extract_answer_preserved
+  type: pass_to_pass
+  origin: repo_tests
+  description: extract_answer behaviour is unchanged by the refactor.
+- id: test_ruff_lint_changed_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository-pinned ruff (0.14.9) lint passes on the two PR-modified files.
+  source:
+    path: pyproject.toml
+    lines: ''
+    commit: 4f5a2944f0acfebba378e5b88bf2ab940f84b943
+- id: test_ruff_format_changed_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: ruff format --check passes on the two changed files.
+  source:
+    path: pyproject.toml
+    lines: ''
+    commit: 4f5a2944f0acfebba378e5b88bf2ab940f84b943
+- id: test_changed_files_compile
+  type: pass_to_pass
+  origin: repo_tests
+  description: Both modified files byte-compile without errors.
+rubric:
+- rule: '**Logging**: `areal.utils.logging.getLogger(name)` with **PascalCase** names -- never `print` or `logging.__name__`.'
+  source:
+    path: AGENTS.md
+    lines: 89-91
+    commit: 4f5a2944f0acfebba378e5b88bf2ab940f84b943
+  evidence: clevr_count_70k_reward_fn uses logger.info() instead of print(), with a module-level logger named CLEVR70KReward via areal.utils.logging.getLogger.
+  category: style
+  verification: programmatic
+- rule: '- No wildcard imports (`from x import *`).'
+  source:
+    path: AGENTS.md
+    lines: '30'
+    commit: 4f5a2944f0acfebba378e5b88bf2ab940f84b943
+  evidence: from enum import Enum is used, not from enum import *.
+  category: style
+  verification: programmatic
+- rule: '**Typing & imports**: explicit type hints; reuse `areal/api/cli_args.py` dataclasses; no wildcard imports; heavy optional deps inside functions.'
+  source:
+    path: AGENTS.md
+    lines: '99'
+    commit: 4f5a2944f0acfebba378e5b88bf2ab940f84b943
+  evidence: api_type returns ApiType, input_name_for_logging returns InputName, clevr_count_70k_reward_fn has -> float return annotation.
+  category: style
+  verification: programmatic
+- rule: '- Follow existing code patterns in the same module.'
+  source:
+    path: AGENTS.md
+    lines: '40'
+    commit: 4f5a2944f0acfebba378e5b88bf2ab940f84b943
+  evidence: clevr_count_70k.py mirrors gsm8k.py and geometry3k.py with module-level logger registration and consistent float returns.
+  category: architecture
+  verification: llm_judge
+- rule: Reward value (float), typically 0.0 or 1.0
+  source:
+    path: .claude/skills/add-reward/SKILL.md
+    lines: '51'
+    commit: 4f5a2944f0acfebba378e5b88bf2ab940f84b943
+  evidence: 'clevr_count_70k_reward_fn returns float in every branch: 0.0, 1.0, or float(is_correct), with -> float annotation.'
+  category: architecture
+  verification: programmatic

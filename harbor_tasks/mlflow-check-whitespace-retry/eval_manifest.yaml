@@ -1,0 +1,124 @@
+version: '2.0'
+source:
+  repo: mlflow/mlflow
+  pr: 22348
+  base_commit: b65032fbbcfb5097a5a4b297700e88c171c9b2ea
+  merge_commit: 85f8b82a63579eaa0fe880a1371a510af4df6006
+  title: Add retry logic with exponential backoff to `check_whitespace_only.py`
+checks:
+- id: test_get_pr_diff_retries_on_5xx_then_succeeds
+  type: fail_to_pass
+  origin: pr_diff
+  description: get_pr_diff retries after a 5xx and returns the eventual success body.
+- id: test_github_api_request_retries_on_5xx_then_succeeds
+  type: fail_to_pass
+  origin: pr_diff
+  description: github_api_request retries after a 5xx and returns the eventual success body.
+- id: test_get_pr_diff_does_not_retry_on_4xx
+  type: pass_to_pass
+  origin: pr_diff
+  description: 'A 4xx HTTPError from get_pr_diff propagates immediately with no retry.
+
+    Pass-to-pass because the original (no-retry) implementation also raises
+
+    on first 4xx; this guards against an over-eager retry classifier in the
+
+    new code.
+
+    '
+- id: test_github_api_request_does_not_retry_on_403
+  type: pass_to_pass
+  origin: pr_diff
+  description: 'A 403 HTTPError from github_api_request propagates immediately with no
+
+    retry. Pass-to-pass for the same reason as the 4xx test above.
+
+    '
+- id: test_retries_on_urlerror
+  type: fail_to_pass
+  origin: pr_diff
+  description: A non-HTTP URLError is retryable and retry succeeds on the next attempt.
+- id: test_max_three_attempts_then_raises
+  type: fail_to_pass
+  origin: pr_diff
+  description: After 3 consecutive 5xx failures the final HTTPError is raised; urlopen called 3 times, sleep called 2 times.
+- id: test_exponential_backoff_delays
+  type: fail_to_pass
+  origin: pr_diff
+  description: Backoff sleeps are [1, 2] seconds in that order between attempts.
+- id: test_non_retryable_exception_propagates_immediately
+  type: pass_to_pass
+  origin: pr_diff
+  description: 'An unrelated exception type (e.g. ValueError) is not retried. Pass-to-pass
+
+    because the original implementation also doesn''t retry; this guards
+
+    against the new code retrying on every Exception.
+
+    '
+- id: test_parse_diff_detects_whitespace_only_file
+  type: pass_to_pass
+  origin: repo_tests
+  description: parse_diff still flags whitespace-only diffs (unchanged behavior).
+- id: test_parse_diff_ignores_real_changes
+  type: pass_to_pass
+  origin: repo_tests
+  description: parse_diff still ignores diffs with real code changes (unchanged behavior).
+- id: test_cli_help_runs
+  type: pass_to_pass
+  origin: repo_tests
+  description: CLI --help interface remains intact.
+- id: test_ruff_check_passes_on_target_file
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository's ruff lint passes on the modified file.
+- id: test_ruff_format_check_passes_on_target_file
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repository's ruff format check passes on the modified file.
+rubric:
+- id: top_level_imports
+  weight: 1
+  source:
+    lines: 9-13
+    commit: b65032fbbcfb5097a5a4b297700e88c171c9b2ea
+    path: CLAUDE.md
+  rule: 'New modules (e.g. `time`, `urllib.error`) are imported at the top of
+
+    `dev/check_whitespace_only.py`, not lazily inside functions. This follows
+
+    the "Code Style Principles" rule in the repository''s CLAUDE.md, which
+
+    states that lazy imports should only be used when necessary.
+
+    '
+- id: comments_only_when_non_obvious
+  weight: 1
+  source:
+    lines: 9-13
+    commit: b65032fbbcfb5097a5a4b297700e88c171c9b2ea
+    path: CLAUDE.md
+  rule: 'The new helper code does not contain comments that merely restate what
+
+    the code does (e.g. "# retry the request"); any added comments must
+
+    explain non-obvious logic or provide context. This follows CLAUDE.md''s
+
+    "Only add comments that explain non-obvious logic or provide additional
+
+    context" rule.
+
+    '
+- id: cli_interface_unchanged
+  weight: 1
+  source:
+    lines: all
+    commit: b65032fbbcfb5097a5a4b297700e88c171c9b2ea
+    path: dev/check_whitespace_only.py
+  rule: 'The script''s CLI interface (--repo, --pr) and exit-code semantics are
+
+    unchanged, and `.github/workflows/lint.yml` is untouched. The PR
+
+    explicitly requires "No changes to the CLI interface or workflow file".
+
+    '

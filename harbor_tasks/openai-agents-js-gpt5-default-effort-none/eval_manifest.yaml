@@ -1,0 +1,99 @@
+version: '2.0'
+task:
+  name: openai-agents-js-gpt5-default-effort-none
+  kind: code_fix
+  title: Update gpt-5.1/5.2 default reasoning effort and extend ModelSettingsReasoningEffort
+source:
+  repo: openai/openai-agents-js
+  pr: 876
+  base_commit: 720a7071780b059f3f98b9cbd7be37cbda0a638a
+  merge_commit: 4feaaae2ce7e22d07628cad6c9f6da28f0618e87
+  url: https://github.com/openai/openai-agents-js/pull/876
+checks:
+- id: test_gpt51_default_effort_is_none
+  type: fail_to_pass
+  origin: pr_diff
+  description: getDefaultModelSettings('gpt-5.1') returns reasoning effort 'none' and verbosity 'low'.
+- id: test_gpt52_default_effort_is_none
+  type: fail_to_pass
+  origin: pr_diff
+  description: getDefaultModelSettings('gpt-5.2') returns reasoning effort 'none' and verbosity 'low'.
+- id: test_xhigh_is_assignable_to_reasoning_effort_type
+  type: fail_to_pass
+  origin: pr_diff
+  description: '''xhigh'' is a valid value of ModelSettingsReasoningEffort (tsc --noEmit accepts a literal-typed assignment).'
+- id: test_gpt52_codex_keeps_effort_low
+  type: pass_to_pass
+  origin: pr_diff
+  description: getDefaultModelSettings('gpt-5.2-codex') keeps reasoning effort 'low' (codex variant is not in the none-effort allowlist).
+- id: test_other_gpt5_models_keep_effort_low
+  type: pass_to_pass
+  origin: pr_diff
+  description: gpt-5, gpt-5-mini, gpt-5-nano default settings still use reasoning effort 'low'.
+- id: test_dotted_gpt5_detected_as_reasoning_required
+  type: pass_to_pass
+  origin: pr_diff
+  description: gpt5ReasoningSettingsRequired returns true for gpt-5.1, gpt-5.2, and gpt-5.2-codex.
+- id: test_non_gpt5_returns_empty_settings
+  type: pass_to_pass
+  origin: pr_diff
+  description: getDefaultModelSettings('gpt-4o') returns {} (non-regression).
+- id: test_repo_existing_default_model_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing packages/agents-core/test/defaultModel.test.ts vitest suite passes.
+- id: test_agents_core_build_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`pnpm -F @openai/agents-core build-check` (tsc --noEmit) passes on a clean tree.'
+rubric:
+- id: changeset_added_for_packages_change
+  source:
+    quote: When you change anything under packages/ or touch .changeset/, use $changeset-validation to create and validate the changeset
+    path: AGENTS.md
+    commit: 720a7071780b059f3f98b9cbd7be37cbda0a638a
+  rule: 'A `.changeset/*.md` file must be added covering the change to
+
+    `@openai/agents-core` with an appropriate bump level (minor for the
+
+    added type members + new default-effort behavior).
+
+    '
+- id: comments_end_with_period
+  source:
+    quote: Comments must end with a period.
+    path: AGENTS.md
+    commit: 720a7071780b059f3f98b9cbd7be37cbda0a638a
+  rule: 'Any new or modified TypeScript comments end with a period
+
+    (per the repo style rule in AGENTS.md).
+
+    '
+- id: unit_tests_added_or_updated
+  source:
+    quote: Add or update unit tests for any code change unless it is truly infeasible
+    path: AGENTS.md
+    commit: 720a7071780b059f3f98b9cbd7be37cbda0a638a
+  rule: 'Unit tests for the new default behavior of `getDefaultModelSettings`
+
+    and the type extension are added/updated under
+
+    `packages/agents-core/test/`. Skipping is only acceptable with an
+
+    explicit justification.
+
+    '
+- id: public_api_doc_comments_kept
+  source:
+    quote: Public APIs have doc comments.
+    path: AGENTS.md
+    commit: 720a7071780b059f3f98b9cbd7be37cbda0a638a
+  rule: 'Public exported types/functions changed by this PR retain their
+
+    JSDoc/TSDoc comments and stay in sync with the new accepted values
+
+    (e.g. the docstring on `ModelSettingsReasoningEffort` lists the
+
+    currently-supported values).
+
+    '

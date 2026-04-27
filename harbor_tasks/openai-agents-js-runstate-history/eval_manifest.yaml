@@ -1,0 +1,91 @@
+version: '2.0'
+source:
+  repo: openai/openai-agents-js
+  pr: 340
+  base_commit: f825f71f7e3c799e6f67b8782b2b3db82cd6a099
+  merge_commit: 1cd326689e112a5efd4aab767c44ef4ff451f5e5
+task:
+  kind: code_fix
+checks:
+- id: test_history_string_input_with_generated_item
+  type: fail_to_pass
+  origin: pr_diff
+  description: For a string `_originalInput` and a single RunMessageOutputItem in `_generatedItems`, `state.history` returns the user-message form followed by the item's raw protocol payload.
+- id: test_history_string_input_no_generated_items
+  type: fail_to_pass
+  origin: pr_diff
+  description: With no generated items, `state.history` returns a single-element array containing the wrapped string input.
+- id: test_history_array_input_preserves_order
+  type: fail_to_pass
+  origin: pr_diff
+  description: When `_originalInput` is already an `AgentInputItem[]`, the items appear in `state.history` in their original order, unchanged, followed by generated items.
+- id: test_history_preserved_after_serialization
+  type: fail_to_pass
+  origin: pr_diff
+  description: '`RunState.fromString(agent, state.toString()).history` deep-equals the original `state.history`.'
+- id: test_agents_core_build_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`pnpm -F @openai/agents-core run build-check` (tsc --noEmit on the package + test files) succeeds.'
+- id: test_repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`pnpm lint` (ESLint with the repo''s config) passes on the modified source tree.'
+rubric:
+- rule: Public APIs have doc comments.
+  source:
+    path: AGENTS.md
+    lines: '183'
+    commit: f825f71f7e3c799e6f67b8782b2b3db82cd6a099
+  evidence: The gold patch adds a JSDoc block above the new `history` getter describing its return type and purpose.
+  category: style
+  verification: llm_judge
+- rule: Comments must end with a period.
+  source:
+    path: AGENTS.md
+    lines: '85'
+    commit: f825f71f7e3c799e6f67b8782b2b3db82cd6a099
+  evidence: Each sentence in the JSDoc comment on the new `history` getter ends with a period.
+  category: style
+  verification: llm_judge
+- rule: Follow ESLint rules (`eslint.config.mjs`), no unused imports, adhere to Prettier.
+  source:
+    path: AGENTS.md
+    lines: '131'
+    commit: f825f71f7e3c799e6f67b8782b2b3db82cd6a099
+  evidence: The added import of `getTurnInput` is consumed in the getter body; `pnpm lint` passes on the patched tree.
+  category: style
+  verification: programmatic
+- rule: Tests cover new behavior and edge cases.
+  source:
+    path: AGENTS.md
+    lines: '181'
+    commit: f825f71f7e3c799e6f67b8782b2b3db82cd6a099
+  evidence: The oracle tests cover string input, array input, no generated items, with generated items, and serialization round-trips.
+  category: testing
+  verification: llm_judge
+distractors:
+- rule: 'Run the full test suite:'
+  source:
+    path: AGENTS.md
+    lines: '59'
+    commit: f825f71f7e3c799e6f67b8782b2b3db82cd6a099
+  collision_type: would_cause_bug
+  why_distracting: Running `pnpm test` invokes integration tests that require a valid OpenAI account and will fail in an isolated evaluation environment.
+  severity: high
+- rule: 'Use **Conventional Commits**:'
+  source:
+    path: AGENTS.md
+    lines: '152'
+    commit: f825f71f7e3c799e6f67b8782b2b3db82cd6a099
+  collision_type: meta_confusion
+  why_distracting: Agents may waste time crafting a Conventional Commit message instead of focusing on the code change.
+  severity: low
+- rule: You can skip failing precommit hooks using `--no-verify` during commit.
+  source:
+    path: AGENTS.md
+    lines: '99'
+    commit: f825f71f7e3c799e6f67b8782b2b3db82cd6a099
+  collision_type: architecture_boundary
+  why_distracting: Encourages bypassing lint and type-check hooks that are themselves pass_to_pass checks in this task.
+  severity: medium

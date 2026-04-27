@@ -1,0 +1,111 @@
+version: '2.0'
+task:
+  name: ant-design-button-global-config-docs
+  title: Document Button's per-prop Global Config support
+  kind: markdown_authoring
+source:
+  repo: ant-design/ant-design
+  pr: 57362
+  pr_url: https://github.com/ant-design/ant-design/pull/57362
+  base_commit: 62135b4b76d5a85b662d9f8b1fb57fcbbe4795d6
+  merge_commit: 0edf35ca0b6b771d45d286f4a260965a5f738885
+checks:
+- id: test_button_en_has_global_config_column_header
+  type: fail_to_pass
+  origin: pr_diff
+  description: The Button English API table header gains the `[Global Config](/components/config-provider#component-config)` column.
+- id: test_button_en_loadingicon_row_added
+  type: fail_to_pass
+  origin: pr_diff
+  description: A new `loadingIcon` row is added to the Button English API table with the "(Only supports global configuration)" description.
+- id: test_button_zh_has_global_config_column_header
+  type: fail_to_pass
+  origin: pr_diff
+  description: The Button Chinese API table header gains the `[全局配置](/components/config-provider-cn#component-config)` column.
+- id: test_config_provider_en_button_row_simplified
+  type: fail_to_pass
+  origin: pr_diff
+  description: The ConfigProvider English `button` row is simplified to `See [Button](/components/button#api)` with version `5.6.0`.
+- id: test_config_provider_zh_button_row_simplified
+  type: fail_to_pass
+  origin: pr_diff
+  description: The ConfigProvider Chinese `button` row is simplified to `参见 [Button](/components/button-cn#api)` with version `5.6.0`.
+- id: test_claude_md_template_has_global_config_column
+  type: fail_to_pass
+  origin: agent_config
+  description: The CLAUDE.md "API 表格格式" template example header is updated to the 6-column form with the Global Config link.
+  source:
+    lines: 37-43
+    commit: 62135b4b76d5a85b662d9f8b1fb57fcbbe4795d6
+    path: CLAUDE.md
+- id: test_button_en_old_header_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: The pre-PR 5-column Button en-US header is gone (the new column replaces it, not added separately).
+- id: test_config_provider_en_button_row_old_long_form_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: The verbose inline type signature on the ConfigProvider English `button` row is gone.
+config_edits:
+- description: In the "API 表格格式" example, replace the 5-column header with a 6-column header that adds `[Global Config](/components/config-provider#component-config)`, and update example body rows so each new column ends with `-`. Also normalize all `|---|---|...` separator rows in CLAUDE.md to the spaced `| --- | --- | ...` form.
+  path: CLAUDE.md
+  gold_added: '| Property | Description | Type | Default | Version | [Global Config](/components/config-provider#component-config) |
+
+    | --- | --- | --- | --- | --- | --- |
+
+    | disabled | 是否禁用 | boolean | false | - | - |
+
+    | type | 按钮类型 | `primary` \| `default` | `default` | - | - |
+
+    '
+  gold_removed: '| Property | Description | Type | Default | Version |
+
+    |---|---|---|---|---|
+
+    | disabled | 是否禁用 | boolean | false | - |
+
+    | type | 按钮类型 | `primary` \| `default` | `default` | - |
+
+    '
+- description: Add a Global Config column to the Button API table; backfill per-prop versions; add a new `loadingIcon` row; sort `loading`/`loadingIcon`/`onClick` alphabetically (move `onClick` after `loading*`).
+  added_summary: 'Header gains `[Global Config](/components/config-provider#component-config)`. Per-prop versions: autoInsertSpace 5.17.0, classNames 6.0.0, color 5.25.0, loadingIcon 6.3.0, shape 5.27.0, styles 6.0.0, variant 5.25.0. New row `loadingIcon` with description `(Only supports global configuration) Set the loading icon of button`.'
+  path: components/button/index.en-US.md
+  gold_added: ''
+  gold_removed: ''
+- description: Same as en-US, with `[全局配置](/components/config-provider-cn#component-config)` and Chinese `loadingIcon` description `（仅支持全局配置）设置按钮的加载图标`.
+  path: components/button/index.zh-CN.md
+  gold_added: ''
+  gold_removed: ''
+- description: Replace the verbose `button` row with `| button | Set Button common props | See [Button](/components/button#api) | - | 5.6.0 |`.
+  path: components/config-provider/index.en-US.md
+  gold_added: ''
+  gold_removed: ''
+- description: Replace the verbose `button` row with `| button | 设置 Button 组件的通用属性 | 参见 [Button](/components/button-cn#api) | - | 5.6.0 |`.
+  path: components/config-provider/index.zh-CN.md
+  gold_added: ''
+  gold_removed: ''
+rubric:
+- id: changelog_emoji_present
+  source:
+    lines: 104-150
+    commit: 62135b4b76d5a85b662d9f8b1fb57fcbbe4795d6
+    path: CLAUDE.md
+  rule: If the agent edits CHANGELOG.zh-CN.md or CHANGELOG.en-US.md, each entry starts with a single emoji (per CLAUDE.md "Emoji 规范"). This PR is a docs-only change; per CLAUDE.md "忽略用户无感知的改动... 描述对开发者的影响" a changelog entry may legitimately be omitted, so this only applies if the agent chose to add one.
+- id: api_alphabetical_order
+  source:
+    lines: 45-46
+    commit: 62135b4b76d5a85b662d9f8b1fb57fcbbe4795d6
+    path: CLAUDE.md
+  rule: '"API 按字母顺序排列，新增属性需声明版本号" — newly added rows in the Button API table (notably `loadingIcon`) must be inserted in alphabetical order relative to neighboring props.'
+- id: bilingual_doc_parity
+  source:
+    lines: 20-24
+    commit: 62135b4b76d5a85b662d9f8b1fb57fcbbe4795d6
+    path: CLAUDE.md
+  rule: Per CLAUDE.md project structure, `index.en-US.md` and `index.zh-CN.md` are sibling docs that should be updated together with parallel content. Any structural change to one (new column, new row) should land in both.
+- id: anchor_link_correctness
+  source:
+    lines: 50-53
+    commit: 62135b4b76d5a85b662d9f8b1fb57fcbbe4795d6
+    path: CLAUDE.md
+  rule: Anchor IDs must match `^[a-zA-Z][\w-:\.]*$` and link targets must point to real anchors. The new column header link must use `#component-config` (the ConfigProvider page's anchor) and the ConfigProvider→Button reference must use `#api`.

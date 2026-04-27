@@ -1,0 +1,337 @@
+version: '2.0'
+source:
+  repo: ant-design/ant-design
+  pr: 57421
+  base_commit: 90d22892c1f88b46d46593157321a1f05e5c1ed2
+  merge_commit: 6dde4bb8a2b5eb1dc2a10642e03fe69d42deca37
+task:
+  kind: markdown_authoring
+checks:
+- id: test_claude_md_documents_loadingicon_example
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLAUDE.md API-table example uses the (Only supports global configuration) annotation on a loadingIcon row.
+- id: test_claude_md_documents_global_config_column_zh
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLAUDE.md Chinese API-table example demonstrates the （仅支持全局配置）annotation.
+- id: test_alert_en_has_close_icon_row
+  type: fail_to_pass
+  origin: pr_diff
+  description: Alert English docs add the closeIcon row marked global-only.
+- id: test_alert_en_has_global_config_column_header
+  type: fail_to_pass
+  origin: pr_diff
+  description: Alert English props table gains the [Global Config] column header.
+- id: test_alert_zh_has_close_icon_row
+  type: fail_to_pass
+  origin: pr_diff
+  description: Alert Chinese docs add the closeIcon row marked （仅支持全局配置）.
+- id: test_alert_zh_has_global_config_column_header
+  type: fail_to_pass
+  origin: pr_diff
+  description: Alert Chinese props table gains the [全局配置] column header.
+- id: test_alert_en_lists_per_status_icons
+  type: fail_to_pass
+  origin: pr_diff
+  description: Alert English docs list successIcon / infoIcon / warningIcon / errorIcon as global-only icon props.
+- id: test_config_provider_en_alert_row_simplified
+  type: fail_to_pass
+  origin: pr_diff
+  description: ConfigProvider English alert row simplifies to "See [Alert](/components/alert#api)".
+- id: test_config_provider_zh_alert_row_simplified
+  type: fail_to_pass
+  origin: pr_diff
+  description: ConfigProvider Chinese alert row simplifies to "参见 [Alert](/components/alert-cn#api)".
+- id: test_alert_en_frontmatter_intact
+  type: pass_to_pass
+  origin: pr_diff
+  description: Alert en-US doc keeps its frontmatter (category Components, title Alert).
+- id: test_alert_zh_frontmatter_intact
+  type: pass_to_pass
+  origin: pr_diff
+  description: Alert zh-CN doc keeps its frontmatter (category Components, subtitle 警告提示).
+- id: test_config_provider_en_other_rows_intact
+  type: pass_to_pass
+  origin: pr_diff
+  description: ConfigProvider English table preserves the other rows (affix, anchor, ...).
+config_edits:
+- path: CLAUDE.md
+  tier: 1
+  gold_added: '英文版：
+
+
+    | Property | Description | Type | Default | Version | [Global Config](/components/config-provider#component-config) |
+
+    | --- | --- | --- | --- | --- | --- |
+
+    | disabled | Whether the component is disabled | boolean | false | - | × |
+
+    | loadingIcon | (Only supports global configuration) Custom loading icon | ReactNode | - | - | 6.2.0 |
+
+    | type | Button type | `primary` \| `default` | `default` | - | ✔ |
+
+
+    中文版：
+
+
+    | 参数 | 说明 | 类型 | 默认值 | 版本 | [全局配置](/components/config-provider-cn#component-config) |
+
+    | --- | --- | --- | --- | --- | --- |
+
+    | disabled | 是否禁用 | boolean | false | - | × |
+
+    | loadingIcon | (仅支持全局配置) 自定义加载图标 | ReactNode | - | × | 6.2.0 |
+
+    | type | 按钮类型 | `primary` \| `default` | `default` | - | ✔ |
+
+
+    - 参数：按字母顺序排列
+
+    - 说明：简洁描述参数作用，如果仅支持全局配置需在描述中用括号注明
+
+    - 类型：使用 TypeScript 定义的类型
+
+    - 默认值：字符串用反引号，布尔/数字直接写，无默认值用 `-`
+
+    - 版本：新增属性需声明引入的版本号；上个大版本已存在属性标注 `-`；仅支持全局配置的属性标注 `×`
+
+    - 全局配置：支持全局配置的属性需标注版本号；上个大版本已支持的标注 `✔`；不支持全局配置的属性标注 `×`
+
+    '
+  gold_removed: '| Property | Description | Type | Default | Version | [Global Config](/components/config-provider#component-config) |
+
+    | --- | --- | --- | --- | --- | --- |
+
+    | disabled | 是否禁用 | boolean | false | - | - |
+
+    | type | 按钮类型 | `primary` \| `default` | `default` | - | - |
+
+
+    - 字符串默认值用反引号，布尔/数字直接写，无默认值用 `-`
+
+    - API 按字母顺序排列，新增属性需声明版本号
+
+    '
+- path: components/alert/index.en-US.md
+  tier: 2
+  gold_added: '| Property | Description | Type | Default | Version | [Global Config](/components/config-provider#component-config) |
+
+    | --- | --- | --- | --- | --- | --- |
+
+    | action | The action of Alert | ReactNode | - |  | × |
+
+    | ~~afterClose~~ | Called when close animation is finished, please use `closable.afterClose` instead | () => void | - |  | × |
+
+    | banner | Whether to show as banner | boolean | false |  | × |
+
+    | classNames | Customize class for each semantic structure inside the component. Supports object or function | Record<[SemanticDOM](#semantic-dom), string> \| (info: { props }) => Record<[SemanticDOM](#semantic-dom), string> | - |  | 6.0.0 |
+
+    | closable | The config of closable | boolean \| [ClosableType](#closabletype) & React.AriaAttributes | `false` |  | ✔ |
+
+    | closeIcon | (Only supports global configuration) Custom close icon | ReactNode | - | × | 6.3.0 |
+
+    | description | Additional content of Alert | ReactNode | - |  | × |
+
+    | errorIcon | (Only supports global configuration) Custom error icon in Alert icon | ReactNode | - | × | 6.2.0 |
+
+    | icon | Custom icon, effective when `showIcon` is true | ReactNode | - |  | × |
+
+    | infoIcon | (Only supports global configuration) Custom info icon in Alert icon | ReactNode | - | × | 6.2.0 |
+
+    | ~~message~~ | Content of Alert, please use `title` instead | ReactNode | - |  | × |
+
+    | ~~onClose~~ | Callback when Alert is closed, please use `closable.onClose` instead | (e: MouseEvent) => void | - |  | × |
+
+    | showIcon | Whether to show icon | boolean | false, in `banner` mode default is true |  | × |
+
+    | styles | Customize inline style for each semantic structure inside the component. Supports object or function | Record<[SemanticDOM](#semantic-dom), CSSProperties> \| (info: { props }) => Record<[SemanticDOM](#semantic-dom), CSSProperties> | - |  | 6.0.0 |
+
+    | successIcon | (Only supports global configuration) Custom success icon in Alert icon | ReactNode | - | × | 6.2.0 |
+
+    | title | Content of Alert | ReactNode | - |  | × |
+
+    | type | Type of Alert styles, options: `success`, `info`, `warning`, `error` | string | `info`, in `banner` mode default is `warning` |  | × |
+
+    | warningIcon | (Only supports global configuration) Custom warning icon in Alert icon | ReactNode | - | × | 6.2.0 |
+
+    '
+  gold_removed: '| Property | Description | Type | Default | Version |
+
+    | --- | --- | --- | --- | --- |
+
+    | action | The action of Alert | ReactNode | - | 4.9.0 |
+
+    | ~~afterClose~~ | Called when close animation is finished, please use `closable.afterClose` instead | () => void | - |  |
+
+    | banner | Whether to show as banner | boolean | false |  |
+
+    | classNames | Customize class for each semantic structure inside the component. Supports object or function | Record<[SemanticDOM](#semantic-dom), string> \| (info: { props }) => Record<[SemanticDOM](#semantic-dom), string> | - |  |
+
+    | closable | The config of closable, >=5.15.0: support `aria-*` | boolean \| [ClosableType](#closabletype) & React.AriaAttributes | `false` |  |
+
+    | description | Additional content of Alert | ReactNode | - |  |
+
+    | icon | Custom icon, effective when `showIcon` is true | ReactNode | - |  |
+
+    | ~~message~~ | Content of Alert, please use `title` instead | ReactNode | - |  |
+
+    | title | Content of Alert | ReactNode | - |  |
+
+    | showIcon | Whether to show icon | boolean | false, in `banner` mode default is true |  |
+
+    | styles | Customize inline style for each semantic structure inside the component. Supports object or function | Record<[SemanticDOM](#semantic-dom), CSSProperties> \| (info: { props }) => Record<[SemanticDOM](#semantic-dom), CSSProperties> | - |  |
+
+    | type | Type of Alert styles, options: `success`, `info`, `warning`, `error` | string | `info`, in `banner` mode default is `warning` |  |
+
+    | ~~onClose~~ | Callback when Alert is closed, please use `closable.onClose` instead | (e: MouseEvent) => void | - |  |
+
+    '
+- path: components/alert/index.zh-CN.md
+  tier: 2
+  gold_added: '| 参数 | 说明 | 类型 | 默认值 | 版本 | [全局配置](/components/config-provider-cn#component-config) |
+
+    | --- | --- | --- | --- | --- | --- |
+
+    | action | 自定义操作项 | ReactNode | - |  | × |
+
+    | ~~afterClose~~ | 关闭动画结束后触发的回调函数，请使用 `closable.afterClose` 替换 | () => void | - |  | × |
+
+    | banner | 是否用作顶部公告 | boolean | false |  | × |
+
+    | classNames | 自定义组件内部各语义化结构的类名。支持对象或函数 | Record<[SemanticDOM](#semantic-dom), string> \| (info: { props }) => Record<[SemanticDOM](#semantic-dom), string> | - |  | 6.0.0 |
+
+    | closable | 可关闭配置 | boolean \| [ClosableType](#closabletype) & React.AriaAttributes | `false` |  | ✔ |
+
+    | closeIcon | （仅支持全局配置）自定义关闭图标 | ReactNode | - | × | 6.3.0 |
+
+    | description | 警告提示的辅助性文字介绍 | ReactNode | - |  | × |
+
+    | errorIcon | （仅支持全局配置）自定义错误图标 | ReactNode | - | × | 6.2.0 |
+
+    | icon | 自定义图标，`showIcon` 为 true 时有效 | ReactNode | - |  | × |
+
+    | infoIcon | （仅支持全局配置）自定义信息图标 | ReactNode | - | × | 6.2.0 |
+
+    | ~~message~~ | 警告提示内容，请使用 `title` 替换 | ReactNode | - |  | × |
+
+    | ~~onClose~~ | 关闭时触发的回调函数，请使用 `closable.onClose` 替换 | (e: MouseEvent) => void | - |  | × |
+
+    | showIcon | 是否显示辅助图标 | boolean | false，`banner` 模式下默认值为 true |  | × |
+
+    | styles | 自定义组件内部各语义化结构的内联样式。支持对象或函数 | Record<[SemanticDOM](#semantic-dom), CSSProperties> \| (info: { props }) => Record<[SemanticDOM](#semantic-dom), CSSProperties> | - |  | 6.0.0 |
+
+    | successIcon | （仅支持全局配置）自定义成功图标 | ReactNode | - | × | 6.2.0 |
+
+    | title | 警告提示内容 | ReactNode | - |  | × |
+
+    | type | 指定警告提示的样式，有四种选择 `success`、`info`、`warning`、`error` | string | `info`，`banner` 模式下默认值为 `warning` |  | × |
+
+    | warningIcon | （仅支持全局配置）自定义警告图标 | ReactNode | - | × | 6.2.0 |
+
+    '
+  gold_removed: '| 参数 | 说明 | 类型 | 默认值 | 版本 |
+
+    | --- | --- | --- | --- | --- |
+
+    | action | 自定义操作项 | ReactNode | - | 4.9.0 |
+
+    | ~~afterClose~~ | 关闭动画结束后触发的回调函数，请使用 `closable.afterClose` 替换 | () => void | - |  |
+
+    | banner | 是否用作顶部公告 | boolean | false |  |
+
+    | classNames | 自定义组件内部各语义化结构的类名。支持对象或函数 | Record<[SemanticDOM](#semantic-dom), string> \| (info: { props }) => Record<[SemanticDOM](#semantic-dom), string> | - |  |
+
+    | closable | 可关闭配置，>=5.15.0: 支持 `aria-*` | boolean \| [ClosableType](#closabletype) & React.AriaAttributes | `false` |  |
+
+    | description | 警告提示的辅助性文字介绍 | ReactNode | - |  |
+
+    | icon | 自定义图标，`showIcon` 为 true 时有效 | ReactNode | - |  |
+
+    | ~~message~~ | 警告提示内容，请使用 `title` 替换 | ReactNode | - |  |
+
+    | title | 警告提示内容 | ReactNode | - |  |
+
+    | showIcon | 是否显示辅助图标 | boolean | false，`banner` 模式下默认值为 true |  |
+
+    | styles | 自定义组件内部各语义化结构的内联样式。支持对象或函数 | Record<[SemanticDOM](#semantic-dom), CSSProperties> \| (info: { props }) => Record<[SemanticDOM](#semantic-dom), CSSProperties> | - |  |
+
+    | type | 指定警告提示的样式，有四种选择 `success`、`info`、`warning`、`error` | string | `info`，`banner` 模式下默认值为 `warning` |  |
+
+    | ~~onClose~~ | 关闭时触发的回调函数，请使用 `closable.onClose` 替换 | (e: MouseEvent) => void | - |  |
+
+    '
+- path: components/config-provider/index.en-US.md
+  tier: 2
+  gold_added: '| alert | Set Alert common props | See [Alert](/components/alert#api) | - | 5.7.0 |'
+  gold_removed: '| alert | Set Alert common props | { className?: string, style?: React.CSSProperties, closeIcon?: React.ReactNode, successIcon?: React.ReactNode, infoIcon?: React.ReactNode, warningIcon?: React.ReactNode, errorIcon?: React.ReactNode } | - | 5.7.0, `closeIcon`: 5.14.0, `successIcon`, `infoIcon`, `warningIcon` and `errorIcon`: 6.2.0 |'
+- path: components/config-provider/index.zh-CN.md
+  tier: 2
+  gold_added: '| alert | 设置 Alert 组件的通用属性 | 参见 [Alert](/components/alert-cn#api) | - | 5.7.0 |'
+  gold_removed: '| alert | 设置 Alert 组件的通用属性 | { className?: string, style?: React.CSSProperties, closeIcon?: React.ReactNode, successIcon?: React.ReactNode, infoIcon?: React.ReactNode, warningIcon?: React.ReactNode, errorIcon?: React.ReactNode } | - | 5.7.0, `closeIcon`: 5.14.0, `successIcon`, `infoIcon`, `warningIcon` 和 `errorIcon`: 6.2.0 |'
+rubric:
+- rule: API 按字母顺序排列，新增属性需声明版本号
+  source:
+    path: CLAUDE.md
+    lines: '46'
+    commit: 90d22892c1f88b46d46593157321a1f05e5c1ed2
+  evidence: Gold patch inserts closeIcon, errorIcon, infoIcon, successIcon, warningIcon at their correct alphabetical positions in both Alert API tables.
+  category: naming
+  verification: llm_judge
+- rule: 添加或修改本地化配置时，需同时修改所有语言文件
+  source:
+    path: CLAUDE.md
+    lines: '58'
+    commit: 90d22892c1f88b46d46593157321a1f05e5c1ed2
+  evidence: Gold patch applies identical structural changes to both index.en-US.md and index.zh-CN.md — same 6-column table, same set of icon rows, same global config annotations.
+  category: architecture
+  verification: llm_judge
+- rule: 字符串默认值用反引号，布尔/数字直接写，无默认值用 `-`
+  source:
+    path: CLAUDE.md
+    lines: '45'
+    commit: 90d22892c1f88b46d46593157321a1f05e5c1ed2
+  evidence: Gold patch uses backtick-quoted string defaults for closable (`false`) and type (`default`), literal booleans for banner/showIcon, and "-" for props without defaults.
+  category: style
+  verification: llm_judge
+- rule: Descriptions start with capital letter, no ending period
+  source:
+    path: .github/copilot-instructions.md
+    lines: '103'
+    commit: 90d22892c1f88b46d46593157321a1f05e5c1ed2
+  evidence: Gold patch descriptions start with capital letter, omit ending periods, and prefix global-only props with the parenthesized annotation.
+  category: style
+  verification: llm_judge
+- rule: 本文件为 AI 编程助手提供项目上下文和开发规范
+  source:
+    path: CLAUDE.md
+    lines: '3'
+    commit: 90d22892c1f88b46d46593157321a1f05e5c1ed2
+  evidence: Gold patch updates CLAUDE.md with the new 6-column API table format, bilingual examples, and per-column documentation rules before applying the convention to individual components.
+  category: architecture
+  verification: llm_judge
+distractors:
+- rule: Sort API properties alphabetically
+  source:
+    path: .github/copilot-instructions.md
+    lines: '104'
+    commit: 90d22892c1f88b46d46593157321a1f05e5c1ed2
+  collision_type: scope_ambiguity
+  why_distracting: This existing rule defines the API table format without the Global Config column, so agents following it alone may omit the new 6th column.
+  severity: medium
+- rule: API 按字母顺序排列，新增属性需声明版本号
+  source:
+    path: CLAUDE.md
+    lines: '46'
+    commit: 90d22892c1f88b46d46593157321a1f05e5c1ed2
+  collision_type: rule_conflict
+  why_distracting: This existing CLAUDE.md rule describes the old 5-column API table format without the Global Config column, conflicting with the new 6-column convention.
+  severity: high
+- rule: Descriptions start with capital letter, no ending period
+  source:
+    path: .github/copilot-instructions.md
+    lines: '103'
+    commit: 90d22892c1f88b46d46593157321a1f05e5c1ed2
+  collision_type: scope_ambiguity
+  why_distracting: This description rule does not mention the parenthesized '(Only supports global configuration)' annotation, so agents may omit it from global-only prop descriptions.
+  severity: low

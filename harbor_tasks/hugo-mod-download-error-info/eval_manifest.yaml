@@ -1,0 +1,84 @@
+version: '2.0'
+source:
+  repo: gohugoio/hugo
+  pr: 14544
+  url: https://github.com/gohugoio/hugo/pull/14544
+  base_commit: a18bec1123e582da818dc8a841285d1a8eb27de4
+  merge_commit: 3850881f2a9b718f049b8330a2b9e37119900499
+task:
+  name: hugo-mod-download-error-info
+  title: 'hugo: include JSON error info from go mod download in error messages'
+checks:
+- id: test_module_private_repo_error_matches_regex
+  type: fail_to_pass
+  origin: repo_tests
+  description: The wrapping error from Client.downloadModuleVersion must match the regex `(?s).*mod download.*invalid version.*repository.*` when `go mod download -json` fails for a non-existing module.
+  source:
+    path: hugolib/hugo_modules_test.go
+    commit: 3850881f2a9b718f049b8330a2b9e37119900499
+- id: test_module_private_repo_error_contains_json_payload
+  type: fail_to_pass
+  origin: repo_tests
+  description: The error message must literally contain the substrings 'mod download', 'invalid version', 'repository' and the requested module path — confirming Hugo is decoding and forwarding the JSON `Error` payload from `go mod download -json`.
+  source:
+    path: modules/client.go
+    commit: 3850881f2a9b718f049b8330a2b9e37119900499
+- id: test_modules_package_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Fast unit tests in the modules package keep passing.
+- id: test_go_vet_modules_and_hugolib
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`go vet ./modules/... ./hugolib` is clean.'
+- id: test_go_build_modules_and_hugolib
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`go build ./modules/... ./hugolib` succeeds.'
+- id: test_gofmt_clean_on_client_go
+  type: pass_to_pass
+  origin: agent_config
+  description: gofmt is clean on modules/client.go (per check.sh / AGENTS.md).
+  source:
+    lines: '13'
+    path: AGENTS.md
+    commit: a18bec1123e582da818dc8a841285d1a8eb27de4
+- id: test_no_hdebug_left_behind
+  type: pass_to_pass
+  origin: agent_config
+  description: No `hdebug.Printf` debug calls left in modules/client.go.
+  source:
+    lines: 5,15
+    path: AGENTS.md
+    commit: a18bec1123e582da818dc8a841285d1a8eb27de4
+rubric:
+- id: brevity
+  source:
+    lines: 1-4
+    path: AGENTS.md
+    commit: a18bec1123e582da818dc8a841285d1a8eb27de4
+  rule: Code is brief. Comments do not restate what self-explanatory variable and function names already convey.
+- id: no_unneeded_exports
+  source:
+    lines: '8'
+    path: AGENTS.md
+    commit: a18bec1123e582da818dc8a841285d1a8eb27de4
+  rule: Helper functions added to modules/client.go are unexported (lowercase) unless they are needed outside the modules package.
+- id: reuse_existing_helpers
+  source:
+    lines: '10'
+    path: AGENTS.md
+    commit: a18bec1123e582da818dc8a841285d1a8eb27de4
+  rule: Hugo has a long history; before adding new helpers, check whether the modules package already has a similar JSON-decoding helper.
+- id: no_global_state
+  source:
+    lines: '9'
+    path: AGENTS.md
+    commit: a18bec1123e582da818dc8a841285d1a8eb27de4
+  rule: No new package-level (global) variables are introduced for the fix.
+- id: short_clear_names
+  source:
+    lines: 3-6
+    path: AGENTS.md
+    commit: a18bec1123e582da818dc8a841285d1a8eb27de4
+  rule: Variable and function names are short where context is clear and self-explanatory where it is not.

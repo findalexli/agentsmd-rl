@@ -1,124 +1,97 @@
-version: "2.0"
-
+version: '2.0'
 source:
   repo: SeleniumHQ/selenium
   pr_number: 17183
   base_commit: cc496f59bd9807fb16e0c7f5b51b1d376e2fb874
   merge_commit: bd280c72b5468ce86294b1cc026974f8740a1525
-  title: "[java] make the signature change in `ExecuteMethod` backward compatible"
-
+  title: '[java] make the signature change in `ExecuteMethod` backward compatible'
+  pr: 17183
 checks:
-  # Fail-to-pass tests - should fail before fix, pass after
-  - id: test_interface_compiles_and_default_methods_work
-    type: fail_to_pass
-    origin: pr_diff
-    description: Behavioral test compiling and running ExecuteMethod interface to verify signatures and default method behavior
-
-  - id: test_execute_returns_object
-    type: fail_to_pass
-    origin: pr_diff
-    description: execute() method returns Object instead of generic <T> T for backward compatibility
-
-  - id: test_execute_required_removed
-    type: fail_to_pass
-    origin: pr_diff
-    description: executeRequired() method is removed (replaced by executeAs)
-
-  - id: test_require_non_null_else_imported
-    type: fail_to_pass
-    origin: pr_diff
-    description: requireNonNullElse import present for default value method
-
-  # Implementation-specific fail-to-pass tests
-  - id: test_local_execute_method_compiles
-    type: fail_to_pass
-    origin: pr_diff
-    description: LocalExecuteMethod implements updated interface with Object return
-
-  - id: test_remote_execute_method_compiles
-    type: fail_to_pass
-    origin: pr_diff
-    description: RemoteExecuteMethod implements updated interface with Object return
-
-  # Call site update tests (fail-to-pass)
-  - id: test_call_sites_updated_add_has_casting
-    type: fail_to_pass
-    origin: pr_diff
-    description: AddHasCasting uses execute with default value parameter
-
-  - id: test_call_sites_updated_add_has_cdp
-    type: fail_to_pass
-    origin: pr_diff
-    description: AddHasCdp uses executeAs() instead of executeRequired()
-
-  - id: test_call_sites_updated_firefox_extensions
-    type: fail_to_pass
-    origin: pr_diff
-    description: AddHasExtensions uses executeAs() instead of executeRequired()
-
-  # Code quality tests from agent configs
-  - id: test_javadoc_for_new_methods
-    type: fail_to_pass
-    origin: agent_config
-    description: New default methods have Javadoc documentation
-    source:
-      file: java/AGENTS.md
-      rule: "Use Javadoc for public APIs"
-
-  - id: test_suppress_warnings_for_casts
-    type: fail_to_pass
-    origin: pr_diff
-    description: Methods with unchecked casts have @SuppressWarnings annotation
-
-  # Pass-to-pass tests - should pass both before and after
-  - id: test_execute_method_is_interface
-    type: pass_to_pass
-    origin: static
-    description: ExecuteMethod remains a public interface
-
-  - id: test_null_marked_annotation
-    type: pass_to_pass
-    origin: static
-    description: ExecuteMethod has @NullMarked annotation
-
-  - id: test_require_non_null_imported
-    type: pass_to_pass
-    origin: static
-    description: requireNonNull import is present
-
-  # Static validation tests - code quality checks
-  - id: test_no_tabs_in_modified_files
-    type: pass_to_pass
-    origin: static
-    description: Modified Java files use spaces not tabs (google-java-format)
-
-  - id: test_no_merge_conflict_markers
-    type: pass_to_pass
-    origin: static
-    description: No merge conflict markers in modified files
-
-  - id: test_copyright_headers_present
-    type: pass_to_pass
-    origin: static
-    description: All Java files have Apache License copyright header
-
-  - id: test_package_declarations_match_paths
-    type: pass_to_pass
-    origin: static
-    description: Java package declarations match file paths
-
-  - id: test_no_trailing_whitespace
-    type: pass_to_pass
-    origin: static
-    description: No trailing whitespace in modified files
-
+- id: test_interface_compiles_and_default_methods_work
+  type: fail_to_pass
+  origin: pr_diff
+  description: Behavioral test compiling and running ExecuteMethod interface to verify signatures and default method behavior
+- id: test_execute_returns_object
+  type: fail_to_pass
+  origin: pr_diff
+  description: execute() method returns Object instead of generic <T> T for backward compatibility
+- id: test_execute_required_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: executeRequired() method is removed (replaced by executeAs)
+- id: test_require_non_null_else_imported
+  type: fail_to_pass
+  origin: pr_diff
+  description: requireNonNullElse import present for default value method
+- id: test_local_execute_method_compiles
+  type: fail_to_pass
+  origin: pr_diff
+  description: LocalExecuteMethod implements updated interface with Object return
+- id: test_remote_execute_method_compiles
+  type: fail_to_pass
+  origin: pr_diff
+  description: RemoteExecuteMethod implements updated interface with Object return
+- id: test_call_sites_updated_add_has_casting
+  type: fail_to_pass
+  origin: pr_diff
+  description: AddHasCasting uses execute with default value parameter
+- id: test_call_sites_updated_add_has_cdp
+  type: fail_to_pass
+  origin: pr_diff
+  description: AddHasCdp uses executeAs() instead of executeRequired()
+- id: test_call_sites_updated_firefox_extensions
+  type: fail_to_pass
+  origin: pr_diff
+  description: AddHasExtensions uses executeAs() instead of executeRequired()
+- id: test_javadoc_for_new_methods
+  type: fail_to_pass
+  origin: agent_config
+  description: New default methods have Javadoc documentation
+  source:
+    rule: Use Javadoc for public APIs
+    path: java/AGENTS.md
+- id: test_suppress_warnings_for_casts
+  type: fail_to_pass
+  origin: pr_diff
+  description: Methods with unchecked casts have @SuppressWarnings annotation
+- id: test_execute_method_is_interface
+  type: pass_to_pass
+  origin: static
+  description: ExecuteMethod remains a public interface
+- id: test_null_marked_annotation
+  type: pass_to_pass
+  origin: static
+  description: ExecuteMethod has @NullMarked annotation
+- id: test_require_non_null_imported
+  type: pass_to_pass
+  origin: static
+  description: requireNonNull import is present
+- id: test_no_tabs_in_modified_files
+  type: pass_to_pass
+  origin: static
+  description: Modified Java files use spaces not tabs (google-java-format)
+- id: test_no_merge_conflict_markers
+  type: pass_to_pass
+  origin: static
+  description: No merge conflict markers in modified files
+- id: test_copyright_headers_present
+  type: pass_to_pass
+  origin: static
+  description: All Java files have Apache License copyright header
+- id: test_package_declarations_match_paths
+  type: pass_to_pass
+  origin: static
+  description: Java package declarations match file paths
+- id: test_no_trailing_whitespace
+  type: pass_to_pass
+  origin: static
+  description: No trailing whitespace in modified files
 rubric:
-  - id: api_compatibility
-    rule: "Code change maintains backward compatibility with existing implementations"
-    weight: 1.0
-    reference: "Uses default interface methods (executeAs, execute with defaultValue) to add new functionality without breaking existing ExecuteMethod implementations"
-
-  - id: minimal_changes
-    rule: "Changes are focused and minimal - only modify what is necessary"
-    weight: 0.5
-    reference: "Only modifies ExecuteMethod interface and its direct implementations/call sites - no unrelated changes"
+- id: api_compatibility
+  rule: Code change maintains backward compatibility with existing implementations
+  weight: 1.0
+  reference: Uses default interface methods (executeAs, execute with defaultValue) to add new functionality without breaking existing ExecuteMethod implementations
+- id: minimal_changes
+  rule: Changes are focused and minimal - only modify what is necessary
+  weight: 0.5
+  reference: Only modifies ExecuteMethod interface and its direct implementations/call sites - no unrelated changes

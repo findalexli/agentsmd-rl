@@ -1,72 +1,57 @@
-version: "1.0"
-
-# Task: Demonstration matplotlib task with enriched pass-to-pass gates
-# The agent is asked to make a minor fix and update documentation.
-
-title: "Matplotlib demonstration task"
-description: "Demonstration task with enriched CI-based pass-to-pass gates"
-
+version: '2.0'
+source:
+  repo: matplotlib/matplotlib
+  pr: 31563
+  base_commit: ea362ab57e926a5c88a3b53636c1f8d669b2aa02
+  merge_commit: 4b4effa645f4721e6dc3872ca79e6506b3d07e46
+task:
+  kind: markdown_authoring
 checks:
-  # Pass-to-pass gates: CI tests that should pass on base commit
-  - id: test_repo_imports
-    type: pass_to_pass
-    origin: repo_tests
-    description: Matplotlib imports successfully
-
-  - id: test_repo_ruff
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo ruff linter passes on lib/matplotlib
-
-  - id: test_repo_unit_tests_basic
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo basic unit tests pass
-
-  - id: test_repo_pytest_cbook
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo cbook module tests pass
-
-  - id: test_repo_pytest_rcparams
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo rcParams tests pass
-
-  - id: test_repo_pytest_basic
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo basic sanity tests pass (test_basic.py + test_matplotlib.py)
-
-  - id: test_repo_pytest_artist
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo artist module tests pass
-
-  - id: test_repo_pytest_transforms
-    type: pass_to_pass
-    origin: repo_tests
-    description: Repo transforms module tests pass
-
-  # Fail-to-pass gate
-  - id: test_fix_claude_md_created
-    type: fail_to_pass
-    origin: agent_config
-    description: Placeholder for fix verification
-
-# Rubric for evaluating agent work (Track 3)
-rubric:
-  - rule: "Updated CLAUDE.md with task-specific guidance"
-    source:
-      path: "CLAUDE.md"
-    reference: |
-      # Task-specific guidance
-      When working on matplotlib fixes, prefer using Agg backend for tests.
-
-# Config edits to track (Track 2)
+- id: test_repo_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: Matplotlib imports successfully
+- id: test_repo_ruff
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo ruff linter passes on lib/matplotlib
+- id: test_repo_unit_tests_basic
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo basic unit tests pass
+- id: test_repo_pytest_cbook
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo cbook module tests pass
+- id: test_repo_pytest_rcparams
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo rcParams tests pass
+- id: test_repo_pytest_basic
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo basic sanity tests pass (test_basic.py + test_matplotlib.py)
+- id: test_repo_pytest_artist
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo artist module tests pass
+- id: test_repo_pytest_transforms
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo transforms module tests pass
+- id: test_fix_claude_md_created
+  type: fail_to_pass
+  origin: pr_diff
+  description: CLAUDE.md was created with task guidance
 config_edits:
-  - path: "CLAUDE.md"
-    tier: 1
-    gold_added: |
-      # Task-specific guidance
-      When working on matplotlib fixes, prefer using Agg backend for tests.
+- path: CLAUDE.md
+  tier: 1
+  gold_added: '# Task-specific guidance
+
+
+    When working on matplotlib fixes, prefer using Agg backend for tests.
+
+    '
+  gold_removed: ''
+rubric: []
+distractors: []

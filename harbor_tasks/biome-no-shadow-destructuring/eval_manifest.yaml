@@ -1,0 +1,90 @@
+version: '2.0'
+source:
+  repo: biomejs/biome
+  pr: 9344
+  pr_url: https://github.com/biomejs/biome/pull/9344
+  base_commit: 4509fc654f90cc007689c9e46bc3d172016ae039
+  merge_commit: cb4d7d7a2cc518e3e815405189c1bc596a249e6c
+  title: 'fix(noShadow): detect destructured patterns in sibling scopes'
+task:
+  name: biome-no-shadow-destructuring
+  difficulty: medium
+  language: rust
+  domain: linter
+checks:
+- id: test_invalid_destructuring_detected
+  type: pass_to_pass
+  origin: pr_diff
+  description: 'The new snapshot fixture `invalidDestructuring.js` covers the "outer regular const, inner destructured" case. On the base commit it accidentally produces the same diagnostics as the post-fix version (the false-positive default-true path emits a diagnostic that incidentally matches the snapshot). The fix keeps the same output but reaches it via the correct declaration-recognition path; this test guards against the fix accidentally dropping the diagnostics for this case.
+
+    '
+- id: test_valid_destructuring_not_flagged
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'The new snapshot fixture `validDestructuring.js` expects no diagnostics. On the base commit the rule emits false-positive shadow diagnostics for destructuring across sibling scopes. After the fix, the rule emits no diagnostics for sibling-scope destructuring, matching the snapshot.
+
+    '
+- id: test_existing_no_shadow_invalid_still_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'The pre-existing `invalid.js` fixture in the noShadow spec directory continues to detect the original (non-destructuring) shadow cases.
+
+    '
+- id: test_existing_no_shadow_valid_still_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'The pre-existing `valid.js` fixture in the noShadow spec directory continues to be quiet.
+
+    '
+- id: test_existing_no_shadow_valid_func_in_type_still_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'The pre-existing TypeScript `valid-func-in-type.ts` fixture continues to be quiet.
+
+    '
+rubric:
+- id: ai_assistance_disclosure_followed
+  severity: info
+  source:
+    lines: 432-444
+    commit: 4509fc654f90cc007689c9e46bc3d172016ae039
+    path: AGENTS.md
+  rule: 'Per AGENTS.md (root), AI-assisted contributions must disclose AI involvement. (Not enforced programmatically here — relevant when preparing the PR text.)
+
+    '
+- id: code_generation_after_lint_change
+  severity: info
+  source:
+    lines: 446-475
+    commit: 4509fc654f90cc007689c9e46bc3d172016ae039
+    path: AGENTS.md
+  rule: 'AGENTS.md states that changes to lint rules in `*_analyze` crates MUST be accompanied by `just gen-rules` and `just gen-configuration` before opening a PR. The agent should be aware of this even though this task evaluates the rule''s behaviour and not the codegen artefacts.
+
+    '
+- id: changeset_required_for_user_facing_fix
+  severity: warn
+  source:
+    lines: 360-431
+    commit: 4509fc654f90cc007689c9e46bc3d172016ae039
+    path: AGENTS.md
+  rule: 'AGENTS.md mandates a changeset under `.changeset/` for any user-facing bug fix, with a `"@biomejs/biome": patch` front matter and a `Fixed [#N](url): …` body. A bug-fix in `noShadow` is user-facing and qualifies.
+
+    '
+- id: top_level_diagnostics_comment_in_test_files
+  severity: warn
+  source:
+    lines: 182-208
+    commit: 4509fc654f90cc007689c9e46bc3d172016ae039
+    path: .claude/skills/testing-codegen/SKILL.md
+  rule: 'Per `.claude/skills/testing-codegen/SKILL.md`, every test spec file whose name contains "valid" (but not "invalid") MUST begin with the `should not generate diagnostics` comment, and "invalid" files should begin with `should generate diagnostics`. The pre-placed destructuring fixtures already follow this rule; if the agent modifies them, the comments must remain.
+
+    '
+- id: clippy_let_chains_preferred
+  severity: warn
+  source:
+    lines: 991-1016
+    commit: 4509fc654f90cc007689c9e46bc3d172016ae039
+    path: .claude/skills/biome-developer/SKILL.md
+  rule: '`.claude/skills/biome-developer/SKILL.md` instructs preferring `let` chains over nested `if let` (collapsible_if). New code should use `if let A = x && let B = y { … }` rather than nested `if let`s.
+
+    '

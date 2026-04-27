@@ -1,0 +1,109 @@
+version: '2.0'
+source:
+  repo: Effect-TS/effect
+  pr: 6065
+  pr_url: https://github.com/Effect-TS/effect/pull/6065
+  base_commit: 12b1f1eadf649e30dec581b7351ba3abb12f8004
+  merge_commit: 94b00c8e4c5c150f858c95262d0ff1433276ede5
+  pr_title: 'feat(rpc): add defect schema option to Rpc.make'
+task:
+  name: effect-rpc-custom-defect-schema
+  description: 'Add an optional ``defect`` parameter to ``Rpc.make`` in ``@effect/rpc`` that lets callers customise the schema used to (de)serialise defects for that RPC. Defaults to ``Schema.Defect``. The chosen schema must flow through ``Rpc.exitSchema`` and the per-RPC encoder cache used by ``RpcServer`` when sending Die responses.
+
+    '
+checks:
+- id: test_exitschema_preserves_defect_object_fields
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Round-tripping a plain object defect through ``Rpc.exitSchema`` with ``defect: Schema.Unknown`` returns the same object (fields such as ``code``/``kind`` survive).
+
+    '
+- id: test_exitschema_preserves_primitive_defect
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Primitive (number) defects survive a custom-schema round-trip.
+
+    '
+- id: test_exitschema_preserves_nested_defect
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Nested-object defects survive a custom-schema round-trip identically.
+
+    '
+- id: test_setsuccess_preserves_defect_schema
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Calling ``.setSuccess(...)`` on an Rpc preserves the custom defect schema (verifies the Proto-method threading).
+
+    '
+- id: test_seterror_preserves_defect_schema
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Calling ``.setError(...)`` on an Rpc preserves the custom defect schema.
+
+    '
+- id: test_rpcgroup_preserves_defect_schema
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'An Rpc with a custom defect schema retains it once added to an ``RpcGroup``.
+
+    '
+- id: test_existing_rpc_unit_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'The existing ``packages/rpc/test/Rpc.test.ts`` suite still passes.
+
+    '
+- id: test_existing_rpc_server_e2e_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'The existing ``packages/platform-node/test/RpcServer.test.ts`` end-to-end suite (100 tests) still passes — exercises ``sendRequestDefect`` / ``handleEncode`` server-encoding paths.
+
+    '
+- id: test_lint_passes_on_changed_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: '``pnpm exec eslint`` on the modified source files exits cleanly.
+
+    '
+rubric:
+- id: reduces_comments
+  source:
+    lines: 13-13
+    commit: 12b1f1eadf649e30dec581b7351ba3abb12f8004
+    path: AGENTS.md
+  rule: 'Per AGENTS.md "Reduce comments": new code should not introduce explanatory comments unless absolutely required to explain unusual logic. JSDoc on exported APIs is acceptable; line comments inside function bodies generally are not.
+
+    '
+- id: clarity_over_cleverness
+  source:
+    lines: 11-11
+    commit: 12b1f1eadf649e30dec581b7351ba3abb12f8004
+    path: AGENTS.md
+  rule: 'Per AGENTS.md "Clarity over Cleverness": choose clear, maintainable solutions. The implementation should not introduce unnecessarily clever generics or runtime tricks where a straightforward threading of the new option is sufficient.
+
+    '
+- id: includes_changeset
+  source:
+    lines: 44-46
+    commit: 12b1f1eadf649e30dec581b7351ba3abb12f8004
+    path: AGENTS.md
+  rule: 'Per AGENTS.md "Changesets": all PRs must include a file under ``.changeset/*.md`` describing the change. The agent should add one (the upstream PR added ``custom-defect-schema.md``).
+
+    '
+- id: barrel_files_not_hand_edited
+  source:
+    lines: 33-35
+    commit: 12b1f1eadf649e30dec581b7351ba3abb12f8004
+    path: AGENTS.md
+  rule: 'Per AGENTS.md, ``index.ts`` barrel files are auto-generated; if they need updating, run ``pnpm codegen`` rather than hand-editing.
+
+    '
+- id: zero_tolerance_for_errors
+  source:
+    lines: 10-10
+    commit: 12b1f1eadf649e30dec581b7351ba3abb12f8004
+    path: AGENTS.md
+  rule: 'Per AGENTS.md "Zero Tolerance for Errors": all automated checks should pass — type-check, lint, and existing tests must remain green after the change.
+
+    '

@@ -1,0 +1,80 @@
+version: '2.0'
+source:
+  owner: openai
+  repo: openai-agents-js
+  pr_number: 1064
+  base_commit: 82d9a3b6a62ba1c7739d9b1c5800edf91ce22a19
+  merge_commit: a5bce452cd0eab3a345ad3215192b1918604f0a2
+  pr_title: 'fix: preserve canonical chat completions providerData fields'
+  pr: 1064
+task:
+  name: openai-agents-js-providerdata-reserved-keys
+  primary_files:
+  - packages/agents-openai/src/openaiChatCompletionsConverter.ts
+  - packages/agents-openai/src/utils/providerData.ts
+checks:
+- id: test_provider_data_reserved_keys_filtered
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'providerData must not overwrite canonical role/content/tool_calls/ tool_call_id/type/text/url/data envelope fields, while extras keep flowing through. Exercises message/system/function_call/ function_call_result paths and content-part paths (input_text/input_image/audio/output_text).
+
+    '
+- id: test_repo_unit_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Existing vitest suite for @openai/agents-openai must keep passing.
+
+    '
+- id: test_repo_lint_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`pnpm lint` (ESLint) must pass — AGENTS.md mandates this before any change is considered complete.
+
+    '
+  source:
+    section: Linting & Formatting
+    commit: 82d9a3b6a62ba1c7739d9b1c5800edf91ce22a19
+    path: AGENTS.md
+- id: test_repo_build_check_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`pnpm -F @openai/agents-openai build-check` (tsc --noEmit on tsconfig.test.json) must pass; AGENTS.md mandates running it early.
+
+    '
+  source:
+    section: Build and Type Checking
+    commit: 82d9a3b6a62ba1c7739d9b1c5800edf91ce22a19
+    path: AGENTS.md
+rubric:
+- id: comments_end_with_period
+  source:
+    section: Linting & Formatting
+    commit: 82d9a3b6a62ba1c7739d9b1c5800edf91ce22a19
+    path: AGENTS.md
+  rule: 'Any new or modified inline comments must end with a period.
+
+    '
+- id: unit_tests_added_for_change
+  source:
+    section: Testing & Automated Checks
+    commit: 82d9a3b6a62ba1c7739d9b1c5800edf91ce22a19
+    path: AGENTS.md
+  rule: 'The fix must come with new or updated unit tests under packages/agents-openai/test/ unless infeasible. AGENTS.md: "Add or update unit tests for any code change unless it is truly infeasible".
+
+    '
+- id: changeset_present_for_packages_change
+  source:
+    section: Mandatory Skill Usage / $changeset-validation
+    commit: 82d9a3b6a62ba1c7739d9b1c5800edf91ce22a19
+    path: AGENTS.md
+  rule: 'Because this PR touches packages/, a `.changeset/*.md` file must exist describing the change with a Conventional-Commit-style summary at patch level for `@openai/agents-openai`.
+
+    '
+- id: behavior_aligned_with_streaming_loop
+  source:
+    section: Agents Core Runtime Guidelines
+    commit: 82d9a3b6a62ba1c7739d9b1c5800edf91ce22a19
+    path: AGENTS.md
+  rule: 'AGENTS.md: "Keep streaming and non-streaming loops behaviorally aligned; changes to one loop should be mirrored in the other." If changes affect a behavioural loop, the rubric checks the analogous counterpart was considered.
+
+    '

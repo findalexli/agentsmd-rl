@@ -1,0 +1,211 @@
+version: '2.0'
+source:
+  repo: anomalyco/opencode
+  pr: 23216
+  base_commit: 5181f9b4e141fc6c0c3c3d26169721af9e63ca51
+  merge_commit: 6d9ebfd79ede05a4b6d1397a50f465760b3d2460
+task:
+  kind: code_fix
+checks:
+- id: test_layout_module_imports
+  type: fail_to_pass
+  origin: pr_diff
+  description: New layout.ts module exists and is importable.
+- id: test_server_module_imports
+  type: fail_to_pass
+  origin: pr_diff
+  description: New server.ts module exists and is importable.
+- id: test_layout_namespace_export
+  type: fail_to_pass
+  origin: pr_diff
+  description: layout.ts self-exports the ConfigLayout namespace.
+- id: test_server_namespace_export
+  type: fail_to_pass
+  origin: pr_diff
+  description: server.ts self-exports the ConfigServer namespace.
+- id: test_layout_schema_present
+  type: fail_to_pass
+  origin: pr_diff
+  description: ConfigLayout.Layout exists and is a Schema value.
+- id: test_server_schema_present
+  type: fail_to_pass
+  origin: pr_diff
+  description: ConfigServer.Server exists and is a Schema value.
+- id: test_layout_zod_accessor
+  type: fail_to_pass
+  origin: pr_diff
+  description: ConfigLayout.Layout.zod returns a usable zod schema.
+- id: test_server_zod_accessor
+  type: fail_to_pass
+  origin: pr_diff
+  description: ConfigServer.Server.zod returns a usable zod schema.
+- id: test_layout_accepts_auto
+  type: fail_to_pass
+  origin: pr_diff
+  description: Layout schema parses the literal "auto".
+- id: test_layout_accepts_stretch
+  type: fail_to_pass
+  origin: pr_diff
+  description: Layout schema parses the literal "stretch".
+- id: test_layout_rejects_invalid_value
+  type: fail_to_pass
+  origin: pr_diff
+  description: Layout schema rejects strings outside its enum.
+- id: test_layout_rejects_empty_string
+  type: fail_to_pass
+  origin: pr_diff
+  description: Layout schema rejects the empty string.
+- id: test_server_accepts_empty_object
+  type: fail_to_pass
+  origin: pr_diff
+  description: Server schema accepts an empty object (all fields optional).
+- id: test_server_accepts_full_config
+  type: fail_to_pass
+  origin: pr_diff
+  description: Server schema accepts a fully-populated config object.
+- id: test_server_rejects_negative_port
+  type: fail_to_pass
+  origin: pr_diff
+  description: Server schema rejects a negative port.
+- id: test_server_rejects_zero_port
+  type: fail_to_pass
+  origin: pr_diff
+  description: Server schema rejects a port of zero (positive-integer constraint).
+- id: test_server_rejects_float_port
+  type: fail_to_pass
+  origin: pr_diff
+  description: Server schema rejects a non-integer port.
+- id: test_server_rejects_non_string_hostname
+  type: fail_to_pass
+  origin: pr_diff
+  description: Server schema rejects a hostname that is not a string.
+- id: test_server_rejects_non_array_cors
+  type: fail_to_pass
+  origin: pr_diff
+  description: Server schema rejects a cors value that is not an array.
+- id: test_config_imports_configserver
+  type: fail_to_pass
+  origin: pr_diff
+  description: config.ts imports ConfigServer from ./server.
+- id: test_config_imports_configlayout
+  type: fail_to_pass
+  origin: pr_diff
+  description: config.ts imports ConfigLayout from ./layout.
+- id: test_config_reexports_server_via_zod
+  type: fail_to_pass
+  origin: pr_diff
+  description: config.ts re-exports Server as ConfigServer.Server.zod.
+- id: test_config_reexports_layout_via_zod
+  type: fail_to_pass
+  origin: pr_diff
+  description: config.ts re-exports Layout as ConfigLayout.Layout.zod.
+- id: test_config_no_inline_layout_enum
+  type: fail_to_pass
+  origin: pr_diff
+  description: config.ts no longer carries the inline z.enum(["auto", "stretch"]) Layout definition.
+- id: test_provider_comment_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Stale "// Positive integer: emits JSON Schema..." comment is removed from provider.ts.'
+- id: test_repo_checkout_intact
+  type: pass_to_pass
+  origin: static
+  description: The cloned opencode repo's git history is reachable.
+- id: test_bun_runtime_available
+  type: pass_to_pass
+  origin: static
+  description: Bun runtime is installed in the test environment.
+- id: test_provider_module_still_imports
+  type: pass_to_pass
+  origin: repo_tests
+  description: provider.ts continues to load through bun's TypeScript loader after the PR's comment cleanup (regression guard on the file the PR also touches).
+rubric:
+- rule: In `src/config`, follow the existing self-export pattern at the top of the file (for example `export * as ConfigAgent from "./agent"`) when adding a new config module.
+  source:
+    path: AGENTS.md
+    lines: '17'
+    commit: 5181f9b4e141fc6c0c3c3d26169721af9e63ca51
+  evidence: layout.ts self-exports via `export * as ConfigLayout from "./layout"` and server.ts via `export * as ConfigServer from "./server"`
+  category: architecture
+  verification: llm_judge
+- rule: 'Do not use `export namespace Foo { ... }` for module organization. It is not standard ESM, it prevents tree-shaking, and it breaks Node''s native TypeScript runner. Use flat top-level exports combined with a self-reexport at the bottom of the file:'
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: 14-17
+    commit: 5181f9b4e141fc6c0c3c3d26169721af9e63ca51
+  evidence: layout.ts and server.ts use flat top-level exports with self-reexport instead of `export namespace`
+  category: architecture
+  verification: llm_judge
+- rule: Use `Schema.Class` for multi-field data.
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: '89'
+    commit: 5181f9b4e141fc6c0c3c3d26169721af9e63ca51
+  evidence: server.ts defines the multi-field Server config using Schema.Class, not Schema.Struct
+  category: architecture
+  verification: llm_judge
+- rule: Avoid using the `any` type
+  source:
+    path: AGENTS.md
+    lines: '13'
+    commit: 5181f9b4e141fc6c0c3c3d26169721af9e63ca51
+  evidence: layout.ts and server.ts rely on type inference throughout; no `any` annotations appear
+  category: style
+  verification: llm_judge
+- rule: Prefer `const` over `let`. Use ternaries or early returns instead of reassignment.
+  source:
+    path: AGENTS.md
+    lines: '45'
+    commit: 5181f9b4e141fc6c0c3c3d26169721af9e63ca51
+  evidence: layout.ts and server.ts use `const` declarations exclusively; no `let` reassignment patterns
+  category: style
+  verification: llm_judge
+- rule: Avoid `else` statements. Prefer early returns.
+  source:
+    path: AGENTS.md
+    lines: '59'
+    commit: 5181f9b4e141fc6c0c3c3d26169721af9e63ca51
+  evidence: neither layout.ts nor server.ts contains any else branch
+  category: style
+  verification: llm_judge
+- rule: Avoid unnecessary destructuring. Use dot notation to preserve context.
+  source:
+    path: AGENTS.md
+    lines: '32'
+    commit: 5181f9b4e141fc6c0c3c3d26169721af9e63ca51
+  evidence: server.ts uses dot notation throughout (Schema.Number.check, Schema.optional, .annotate) instead of destructuring
+  category: style
+  verification: llm_judge
+- rule: Reduce total variable count by inlining when a value is only used once.
+  source:
+    path: AGENTS.md
+    lines: '19'
+    commit: 5181f9b4e141fc6c0c3c3d26169721af9e63ca51
+  evidence: layout.ts inlines the Schema.Literals definition and pipe chain into a single const declaration
+  category: style
+  verification: llm_judge
+distractors:
+- rule: In `src/config`, follow the existing self-export pattern at the top of the file (for example `export * as ConfigAgent from "./agent"`) when adding a new config module.
+  source:
+    path: AGENTS.md
+    lines: '17'
+    commit: 5181f9b4e141fc6c0c3c3d26169721af9e63ca51
+  collision_type: rule_conflict
+  why_distracting: packages/opencode/AGENTS.md lines 14-17 instruct self-reexport at the bottom of the file, directly contradicting root AGENTS.md line 17 which says at the top
+  severity: medium
+- rule: Use branded schemas (`Schema.brand`) for single-value types.
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: '90'
+    commit: 5181f9b4e141fc6c0c3c3d26169721af9e63ca51
+  collision_type: architecture_boundary
+  why_distracting: Layout is a literal enum, not a branded single-value type — Schema.Literals is correct, Schema.brand would be wrong
+  severity: medium
+- rule: Use `Schema.Class` for multi-field data.
+  source:
+    path: packages/opencode/AGENTS.md
+    lines: '89'
+    commit: 5181f9b4e141fc6c0c3c3d26169721af9e63ca51
+  collision_type: scope_ambiguity
+  why_distracting: could mislead agent to use Schema.Class for the single-value Layout schema, but Schema.Literals is the correct construct for literal enums
+  severity: low

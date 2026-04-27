@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+# Oracle: applies the gold-PR patch to CLAUDE.md.
+#
+# The patch is embedded as base64 (rather than as a raw HEREDOC) so that
+# the leading space on context lines and the surrounding blank-context
+# lines required by `git apply` are preserved verbatim through any
+# editor / tooling that might otherwise strip trailing whitespace.
+set -euo pipefail
+
+cd /workspace/ant-design
+
+# Idempotency guard: a distinctive line introduced by the gold patch.
+if grep -qF '_semantic*.tsx` 属于语义文档专用 demo' CLAUDE.md; then
+    echo "Gold patch already applied; nothing to do."
+    exit 0
+fi
+
+PATCH_B64="ZGlmZiAtLWdpdCBhL0NMQVVERS5tZCBiL0NMQVVERS5tZAppbmRleCAwYmZlNThhOWM4ODQuLjQ0\
+ZjkyODJiNzMwYSAxMDA2NDQKLS0tIGEvQ0xBVURFLm1kCisrKyBiL0NMQVVERS5tZApAQCAtMzUs\
+MTEgKzM1LDEzIEBAIGFudC1kZXNpZ24vCiAKICMjIERlbW8g5a+85YWl6KeE6IyDCiAKLS0g5pys\
+6KeE6IyD5ZCM5pe26YCC55So5LqOIGBjb21wb25lbnRzLyoqL2RlbW8vYCDlkowgYC5kdW1pL2Ag\
+5LiL55qE56S65L6L44CB56uZ54K544CB5Li76aKY55u45YWz5paH5Lu244CC77yIYHNlbWFudGlj\
+LnRlc3QudHN4YCDmlofku7bpmaTlpJbvvIkKLS0g5Zyo6L+Z5Lqb55uu5b2V5LiL5byV5YWlIEFu\
+dCBEZXNpZ24g57uE5Lu244CB57uE5Lu25YaF6YOo5qih5Z2X44CB5bel5YW35pa55rOV44CB5Y+Y\
+6YeP44CB57G75Z6L5a6a5LmJ5pe277yM5LiA5b6L5L2/55So57ud5a+56Lev5b6E5a+85YWl77yM\
+5LiN5L2/55So55u45a+56Lev5b6E5a+85YWl44CCCi0tIOWFgeiuuOeahOWvvOWFpeW9ouW8j+W6\
+lOS8mOWFiOS9v+eUqOmhueebruWFrOW8gOWFpeWPo+aIluW3sumFjee9ruWIq+WQje+8jOS+i+Wm\
+gu+8mmBhbnRkYOOAgWBhbnRkL2VzLypg44CBYGFudGQvbGliLypg44CBYGFudGQvbG9jYWxlLypg\
+44CBYC5kdW1pLypg44CBYEBALypg44CCCi0tIOemgeatouS9v+eUqCBgLi5g44CBYC4uL3h4eGDj\
+gIFgLi4vLi4veHh4YOOAgWAuL3h4eGAg6L+Z57G755u45a+56Lev5b6E5Y675byV55So57uE5Lu2\
+5a6e546w44CB5YaF6YOo5qih5Z2X44CB5pa55rOV44CB5Y+Y6YeP44CB57G75Z6L77yM5YyF5ZCr\
+6LeoIGRlbW/jgIHot6jnm67lvZXlpI3nlKjnmoTlnLrmma/jgIIKLS0gZGVtbyDkuI4gYC5kdW1p\
+YCDmlofku7bkuYvpl7TkuI3opoHkupLnm7jnm7jlr7nlvJXnlKjvvJvlpoLmnpzpnIDopoHlpI3n\
+lKjlsJHph4/pgLvovpHvvIzkvJjlhYjlhoXogZTvvIzmiJbmj5Dlj5bliLDlj6/pgJrov4fnu53l\
+r7not6/lvoTorr/pl67nmoTlhazlhbHkvY3nva7jgIIKKy0g5bi46KeEIGBjb21wb25lbnRzLyoq\
+L2RlbW8vYCDmlofku7blnKjlvJXlhaUgQW50IERlc2lnbiDnu4Tku7bjgIHnu4Tku7blhoXpg6jm\
+qKHlnZfjgIHlt6Xlhbfmlrnms5XjgIHlj5jph4/jgIHnsbvlnovlrprkuYnml7bvvIzkuIDlvovk\
+vb/nlKjnu53lr7not6/lvoTlr7zlhaXvvIzkuI3kvb/nlKjnm7jlr7not6/lvoTlr7zlhaXjgIIK\
+Ky0gYGNvbXBvbmVudHMvKiovZGVtby9fc2VtYW50aWMqLnRzeGAg5bGe5LqO6K+t5LmJ5paH5qGj\
+5LiT55SoIGRlbW/vvIzmmK/kvovlpJblnLrmma/vvJrlhYHorrjpgJrov4fnm7jlr7not6/lvoTl\
+vJXnlKggYC5kdW1pL2hvb2tzL3VzZUxvY2FsZWDjgIFgLmR1bWkvdGhlbWUvY29tbW9uLypgIOet\
+ieermeeCueS+p+i+heWKqeaooeWdl+OAggorLSBgLmR1bWkvYCDnm67lvZXlhoXpg6jnmoTnq5nn\
+grnlrp7njrDmlofku7blj6/mjInnjrDmnInnm67lvZXnu5PmnoTkvb/nlKjnm7jlr7not6/lvoTl\
+vJXnlKjmnKznm67lvZXmqKHlnZfvvJvlvZPlvJXnlKjku5PlupPlhoUgQW50IERlc2lnbiDnu4Tk\
+u7blhaXlj6Pml7bvvIzkvJjlhYjkvb/nlKjpobnnm67lhazlvIDlhaXlj6PmiJblt7LphY3nva7l\
+iKvlkI3jgIIKKy0g5YWB6K6455qE5a+85YWl5b2i5byP5bqU5LyY5YWI5L2/55So6aG555uu5YWs\
+5byA5YWl5Y+j5oiW5bey6YWN572u5Yir5ZCN77yM5L6L5aaC77yaYGFudGRg44CBYGFudGQvZXMv\
+KmDjgIFgYW50ZC9saWIvKmDjgIFgYW50ZC9sb2NhbGUvKmDjgIFgQEAvKmDjgIIKKy0gYC5kdW1p\
+LypgIOS4jeaYr+S7k+W6k+mAmueUqOeahCBUUyDot6/lvoTliKvlkI3vvJvlpoLpnIDlvJXnlKgg\
+YC5kdW1pYCDlhoXpg6jmqKHlnZfvvIzor7fmjInmlofku7bkvY3nva7kvb/nlKjnm7jlr7not6/l\
+voTjgIIKKy0g5bi46KeEIGRlbW8g5paH5Lu25Lit77yM56aB5q2i5L2/55SoIGAuLmDjgIFgLi4v\
+eHh4YOOAgWAuLi8uLi94eHhg44CBYC4veHh4YCDov5nnsbvnm7jlr7not6/lvoTljrvlvJXnlKjn\
+u4Tku7blrp7njrDjgIHlhoXpg6jmqKHlnZfjgIHmlrnms5XjgIHlj5jph4/jgIHnsbvlnovvvIzl\
+jIXlkKvot6ggZGVtb+OAgei3qOebruW9leWkjeeUqOeahOWcuuaZr+OAggorLSDluLjop4QgZGVt\
+byDkuI4gYC5kdW1pYCDmlofku7bkuYvpl7TkuI3opoHkupLnm7jnm7jlr7nlvJXnlKjvvIhgX3Nl\
+bWFudGljKi50c3hgIOetieermeeCueivreS5iSBkZW1vIOWkjeeUqCBgLmR1bWlgIOi+heWKqeao\
+oeWdl+mZpOWklu+8ieOAguWmguaenOmcgOimgeWkjeeUqOWwkemHj+mAu+i+ke+8jOS8mOWFiOWG\
+heiBlO+8jOaIluaPkOWPluWIsOWPr+mAmui/h+e7neWvuei3r+W+hOiuv+mXrueahOWFrOWFseS9\
+jee9ruOAggogCiAjIyBUZXN0IOWvvOWFpeinhOiMgwogCg=="
+
+PATCH_TMP="$(mktemp /tmp/gold.XXXXXX.patch)"
+trap 'rm -f "$PATCH_TMP"' EXIT
+
+# Strip whitespace and decode in one shot.
+printf '%s' "$PATCH_B64" | tr -d ' \t\n\r\\' | base64 -d > "$PATCH_TMP"
+
+git apply --whitespace=nowarn "$PATCH_TMP"
+
+echo "Gold patch applied to CLAUDE.md."

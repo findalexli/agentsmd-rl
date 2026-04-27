@@ -1,0 +1,168 @@
+version: '2.0'
+source:
+  repo: docker/compose
+  pr: 13684
+  base_commit: c1aefc74c84c3d1afe83dfc95cf61c12844f45b9
+  merge_commit: 63601ebbb3a5ec4c9591f4ad63710f30508af5e5
+checks:
+- id: test_stat_permission_error_returned
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Sync() returns a non-nil error wrapping the original syscall error
+
+    when os.Stat fails with a non-ErrNotExist condition (e.g. EACCES on
+
+    a parent directory chmod 0o000); no copy/delete is queued. Buggy
+
+    base silently treats this as a copyable path.
+
+    '
+- id: test_sync_returns_error_via_runtime_check
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Independent in-package runtime test: invoking Sync() on a path whose
+
+    parent directory has been chmod 0o000 returns a non-nil error
+
+    containing "permission denied". Catches base''s silent error swallow.
+
+    '
+- id: test_existing_path_still_copied
+  type: pass_to_pass
+  origin: pr_diff
+  description: Regression — err == nil branch still adds the path to the copy list.
+- id: test_missing_path_still_deletes
+  type: pass_to_pass
+  origin: pr_diff
+  description: Regression — fs.ErrNotExist branch still emits an `rm -rf` delete.
+- id: test_mixed_paths_classified_correctly
+  type: pass_to_pass
+  origin: pr_diff
+  description: Regression — a single Sync() call handles existing+missing paths together.
+- id: test_sync_package_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`go build ./internal/sync/...` succeeds (compile gate).'
+- id: test_sync_package_vets
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`go vet ./internal/sync/...` reports no issues.'
+- id: test_sync_package_lints_clean
+  type: pass_to_pass
+  origin: agent_config
+  description: '`golangci-lint run ./internal/sync/...` passes. CLAUDE.md mandates
+
+    running the linter and fixing all issues before considering the
+
+    task complete; the .golangci.yml depguard / forbidigo rules are
+
+    enforced through this command.
+
+    '
+  source:
+    path: CLAUDE.md
+    lines: 10-13
+    commit: c1aefc74c84c3d1afe83dfc95cf61c12844f45b9
+- id: test_no_testify_imported_in_sync_tests
+  type: pass_to_pass
+  origin: agent_config
+  description: 'The test file does not import github.com/stretchr/testify;
+
+    gotest.tools/v3 is mandated. (.golangci.yml depguard rule;
+
+    CLAUDE.md banned-dependencies list.)
+
+    '
+  source:
+    path: .golangci.yml
+    lines: 27-35
+    commit: c1aefc74c84c3d1afe83dfc95cf61c12844f45b9
+- id: test_no_context_background_in_sync_tests
+  type: pass_to_pass
+  origin: agent_config
+  description: 'Tests use t.Context() instead of context.Background() / context.TODO()
+
+    (forbidigo rule; CLAUDE.md test convention).
+
+    '
+  source:
+    path: CLAUDE.md
+    lines: 20-21
+    commit: c1aefc74c84c3d1afe83dfc95cf61c12844f45b9
+rubric:
+- rule: 'After modifying any Go code, the linter must be run and all reported
+
+    issues must be fixed before the task is complete.
+
+    '
+  source:
+    path: CLAUDE.md
+    lines: 10-13
+    commit: c1aefc74c84c3d1afe83dfc95cf61c12844f45b9
+  evidence: 'The fix uses fmt.Errorf with %w wrapping (errorlint-clean) and the
+
+    existing import block already contains "fmt", "errors", "io/fs", so
+
+    the patch introduces no new lint findings.
+
+    '
+  category: lint
+  verification: programmatic
+  check_cmd: cd /workspace/compose && golangci-lint run --timeout=300s ./internal/sync/...
+- rule: 'Wrap underlying errors with fmt.Errorf("...: %w", err) (errorlint),
+
+    not "%v", to preserve the error chain.
+
+    '
+  source:
+    path: .golangci.yml
+    lines: 5-8
+    commit: c1aefc74c84c3d1afe83dfc95cf61c12844f45b9
+  evidence: 'The fix uses `fmt.Errorf("stat %q: %w", p.HostPath, err)` which
+
+    correctly preserves the original syscall error via %w so that
+
+    callers may still use errors.Is / errors.As against fs.ErrPermission.
+
+    '
+  category: error-handling
+  verification: llm_judge
+- rule: 'In tests, use t.Context() instead of context.Background() or
+
+    context.TODO() (forbidigo rule + CLAUDE.md test convention).
+
+    '
+  source:
+    path: CLAUDE.md
+    lines: 20-21
+    commit: c1aefc74c84c3d1afe83dfc95cf61c12844f45b9
+  evidence: 'Both new tests (TestSync_StatPermissionError, etc.) call
+
+    `tar.Sync(t.Context(), ...)`.
+
+    '
+  category: testing
+  verification: programmatic
+  check_cmd: '! grep -E "context\\.(Background|TODO)\\(\\)" /workspace/compose/internal/sync/tar_test.go
+
+    '
+- rule: 'Test assertions must come from gotest.tools/v3 (assert / cmp), not
+
+    github.com/stretchr/testify (depguard rule).
+
+    '
+  source:
+    path: .golangci.yml
+    lines: 27-35
+    commit: c1aefc74c84c3d1afe83dfc95cf61c12844f45b9
+  evidence: 'tar_test.go imports gotest.tools/v3/assert and gotest.tools/v3/assert/cmp;
+
+    no testify import is present.
+
+    '
+  category: testing
+  verification: programmatic
+  check_cmd: '! grep -q "stretchr/testify" /workspace/compose/internal/sync/tar_test.go
+
+    '
+distractors: []

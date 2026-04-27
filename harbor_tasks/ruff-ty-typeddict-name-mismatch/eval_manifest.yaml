@@ -1,0 +1,92 @@
+version: '2.0'
+source:
+  repo: astral-sh/ruff
+  pr: 24295
+  base_commit: ca3343e4cf25e8314c26cce2031abb67ed6a3b16
+  merge_commit: e765eb073a4d484ce2c9fdbe266e21fff49d4080
+task:
+  kind: code_fix
+checks:
+- id: test_mismatched_name_emits_diagnostic
+  type: fail_to_pass
+  origin: pr_diff
+  description: '`ty check` must report a diagnostic that mentions both the literal string typename and the assigned variable name when they differ in a `Var = TypedDict("Other", {...})` call.'
+- id: test_mismatched_name_diagnostic_phrasing
+  type: fail_to_pass
+  origin: pr_diff
+  description: The diagnostic uses the canonical phrase "must match the name of the variable it is assigned to".
+- id: test_mismatched_name_uses_invalid_argument_type_lint
+  type: fail_to_pass
+  origin: pr_diff
+  description: The diagnostic is reported under the existing `invalid-argument-type` lint code (not a brand new code).
+- id: test_mismatched_name_typing_extensions
+  type: fail_to_pass
+  origin: pr_diff
+  description: The check fires for `typing_extensions.TypedDict` as well as `typing.TypedDict`.
+- id: test_matching_name_no_mismatch_diagnostic
+  type: pass_to_pass
+  origin: pr_diff
+  description: '`Good = TypedDict("Good", ...)` (matching names) must NOT trigger the new diagnostic.'
+- id: test_non_string_name_still_flagged
+  type: pass_to_pass
+  origin: repo_tests
+  description: Pre-existing diagnostic for `TypedDict(123, ...)` (non-string typename) continues to fire after the change.
+- id: test_clean_module_no_typed_dict_diagnostics
+  type: pass_to_pass
+  origin: pr_diff
+  description: Files that use no TypedDict produce no TypedDict diagnostics (regression guard for over-firing).
+- id: test_ty_binary_runs
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`ty --version` exits 0 — verifies the recompiled binary is present and executable.'
+config_edits: []
+rubric:
+- rule: Try hard to avoid patterns that require `panic!`, `unreachable!`, or `.unwrap()`. Instead, try to encode those constraints in the type system. Don't be afraid to write code that's more verbose or requires largeish refactors if it enables you to avoid these unsafe calls.
+  source:
+    path: AGENTS.md
+    lines: '79'
+    commit: ca3343e4cf25e8314c26cce2031abb67ed6a3b16
+  evidence: The patch avoids .unwrap() by using if-let chains and let-chains to safely destructure Option values.
+  category: architecture
+  verification: llm_judge
+- rule: Prefer let chains (`if let` combined with `&&`) over nested `if let` statements to reduce indentation and improve readability.
+  source:
+    path: AGENTS.md
+    lines: '80'
+    commit: ca3343e4cf25e8314c26cce2031abb67ed6a3b16
+  evidence: The patch uses a single `if let ... && let ... && let Some(builder)` chain rather than nested `if let` blocks.
+  category: style
+  verification: llm_judge
+- rule: When adding new ty checks, it's important to make error messages concise. Think about how an error message would look on a narrow terminal screen.
+  source:
+    path: AGENTS.md
+    lines: '83'
+    commit: ca3343e4cf25e8314c26cce2031abb67ed6a3b16
+  evidence: The diagnostic is a single line that fits in a narrow terminal under --output-format=concise.
+  category: style
+  verification: llm_judge
+- rule: Rust imports should always go at the top of the file, never locally in functions.
+  source:
+    path: AGENTS.md
+    lines: '76'
+    commit: ca3343e4cf25e8314c26cce2031abb67ed6a3b16
+  evidence: The patch adds no new use statements; existing imports remain at file top.
+  category: style
+  verification: llm_judge
+- rule: Use comments purposefully. Don't use comments to narrate code, but do use them to explain invariants and why something unusual was done a particular way.
+  source:
+    path: AGENTS.md
+    lines: '82'
+    commit: ca3343e4cf25e8314c26cce2031abb67ed6a3b16
+  evidence: The patch adds no narrative comments; logic is self-documenting through clear variable names.
+  category: style
+  verification: llm_judge
+- rule: All changes must be tested. If you're not testing your changes, you're not done.
+  source:
+    path: AGENTS.md
+    lines: '72'
+    commit: ca3343e4cf25e8314c26cce2031abb67ed6a3b16
+  evidence: The patch adds a new mdtest line in typed_dict.md covering the name-mismatch diagnostic.
+  category: testing
+  verification: llm_judge
+distractors: []

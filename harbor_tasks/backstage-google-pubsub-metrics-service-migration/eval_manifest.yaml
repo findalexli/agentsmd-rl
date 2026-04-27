@@ -1,0 +1,82 @@
+version: '2.0'
+source:
+  owner: backstage
+  repo: backstage
+  pr_number: 33754
+  pr_title: Migrate to MetricsService
+  base_commit: 98d9a75dc2966be209bfea336a482a2266c3267d
+  merge_commit: 262bc296a4cbfa7ab5815320fc26309499431031
+  pr_url: https://github.com/backstage/backstage/pull/33754
+  pr: 33754
+checks:
+- id: test_consumer_uses_injected_metrics_service
+  type: fail_to_pass
+  origin: pr_diff
+  description: '`GooglePubSubConsumingEventPublisher` calls `options.metrics.createCounter` with name `events.google.pubsub.consumer.messages.total` and unit `{message}`.
+
+    '
+- id: test_publisher_uses_injected_metrics_service
+  type: fail_to_pass
+  origin: pr_diff
+  description: '`EventConsumingGooglePubSubPublisher` calls `options.metrics.createCounter` with name `events.google.pubsub.publisher.messages.total` and unit `{message}`.
+
+    '
+- id: test_opentelemetry_dependency_removed
+  type: fail_to_pass
+  origin: pr_diff
+  description: '`@opentelemetry/api` is removed from the plugin''s package.json dependencies and devDependencies.
+
+    '
+- id: test_existing_unit_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'The plugin''s existing jest test suites continue to pass after the migration (`backstage-cli package test`).
+
+    '
+- id: test_repo_lint_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'The plugin''s lint check (`backstage-cli package lint`) passes after the migration.
+
+    '
+rubric:
+- id: changeset_added
+  source:
+    quote: 'All changes that affect the published version of packages in the `/packages` and `/plugins` directories must be accompanied by a changeset.
+
+      '
+    path: AGENTS.md
+    commit: 98d9a75dc2966be209bfea336a482a2266c3267d
+  rule: 'A `.changeset/*.md` file targeting `@backstage/plugin-events-backend-module-google-pubsub` at `patch` level was added describing the migration.
+
+    '
+- id: matches_existing_package_style
+  source:
+    quote: 'When writing or generating code, always match the existing coding style of each individual package and file.
+
+      '
+    path: AGENTS.md
+    commit: 98d9a75dc2966be209bfea336a482a2266c3267d
+  rule: 'New/edited code matches the existing style of files in this plugin (license header, import ordering, 2-space indentation, `import type` for type-only imports).
+
+    '
+- id: no_eslint_prettier_tsconfig_changes
+  source:
+    quote: 'Never update ESLint, Prettier, or TypeScript configuration files unless specifically requested.
+
+      '
+    path: AGENTS.md
+    commit: 98d9a75dc2966be209bfea336a482a2266c3267d
+  rule: 'No changes were made to ESLint, Prettier, or TypeScript configuration files.
+
+    '
+- id: no_release_notes_changes
+  source:
+    quote: 'Never make changes to the release notes in `/docs/releases` unless explicitly asked.
+
+      '
+    path: AGENTS.md
+    commit: 98d9a75dc2966be209bfea336a482a2266c3267d
+  rule: 'No edits to `/docs/releases`.
+
+    '

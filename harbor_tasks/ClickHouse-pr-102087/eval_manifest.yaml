@@ -1,39 +1,35 @@
-version: "2.0"
-
-source_pr:
-  owner: ClickHouse
-  repo: ClickHouse
-  number: 102087
-  merge_commit: 76f219cd167ab3b9f50f93daf1c74d2f54345b2f
+version: '2.0'
+source:
+  repo: ClickHouse/ClickHouse
+  pr: 102087
   base_commit: 78c08e71c93e3bd0657b54402d083f96d90d76c8
-
+  merge_commit: 76f219cd167ab3b9f50f93daf1c74d2f54345b2f
+task:
+  kind: code_fix
 checks:
-  - id: test_pad_buffer_not_plain_string
-    type: fail_to_pass
-    origin: pr_diff
-    description: PaddingChars does not use plain String for pad data (lacks read padding)
-
-  - id: test_pad_buffer_has_read_padding
-    type: fail_to_pass
-    origin: pr_diff
-    description: Pad string buffer uses PaddedPODArray providing 15-byte read margin
-
-  - id: test_no_reinterpret_cast_in_append
-    type: fail_to_pass
-    origin: pr_diff
-    description: appendTo does not use reinterpret_cast (UInt8 container returns UInt8*)
-
-  - id: test_empty_pad_default_in_execute_path
-    type: fail_to_pass
-    origin: pr_diff
-    description: Empty pad string fallback is in executeImpl, not inside PaddingChars
-
-  - id: test_cpp_syntax_valid
-    type: fail_to_pass
-    origin: pr_diff
-    description: C++ code has valid syntax (clang check)
-
-  - id: test_repo_padstring_tests_exist
-    type: pass_to_pass
-    origin: repo_tests
-    description: SQL test files for padString functions exist and are non-empty
+- id: test_pad_buffer_not_plain_string
+  type: fail_to_pass
+  origin: pr_diff
+  description: PaddingChars does not use plain String for pad data (lacks read padding)
+- id: test_pad_buffer_has_read_padding
+  type: fail_to_pass
+  origin: pr_diff
+  description: Pad string buffer uses PaddedPODArray providing 15-byte read margin
+- id: test_no_reinterpret_cast_in_append
+  type: fail_to_pass
+  origin: pr_diff
+  description: appendTo does not use reinterpret_cast (UInt8 container returns UInt8*)
+- id: test_empty_pad_default_in_execute_path
+  type: fail_to_pass
+  origin: pr_diff
+  description: Empty pad string fallback is in executeImpl, not inside PaddingChars
+- id: test_cpp_syntax_valid
+  type: fail_to_pass
+  origin: pr_diff
+  description: C++ code has valid syntax (clang check)
+- id: test_repo_padstring_tests_exist
+  type: pass_to_pass
+  origin: repo_tests
+  description: SQL test files for padString functions exist and are non-empty
+rubric: []
+distractors: []

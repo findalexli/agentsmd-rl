@@ -1,0 +1,107 @@
+version: '2.0'
+source:
+  owner: openai
+  repo: openai-agents-js
+  pr_number: 863
+  base_commit: f0ad7065c8ec8c532bf702d1912b7d42ee17b141
+  merge_commit: fc276a76b266bdaca0269e7ad347c88e403fa908
+  url: https://github.com/openai/openai-agents-js/pull/863
+  pr: 863
+task:
+  name: openai-agents-js-changeset-milestone-patch-bump
+  title: Fix changeset milestone selection for patch bumps
+  kind: code_fix
+  primary_files:
+  - .codex/skills/changeset-validation/scripts/changeset-assign-milestone.mjs
+checks:
+- id: test_target_script_present
+  type: pass_to_pass
+  origin: static
+  description: Sanity — target script and runner files are present.
+- id: test_node_syntax_check
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`node --check` succeeds on the target script.'
+- id: test_patch_three_milestones_picks_lowest
+  type: fail_to_pass
+  origin: pr_diff
+  description: With three open X.Y.x milestones, a patch bump targets the oldest one.
+- id: test_patch_two_milestones_picks_older
+  type: fail_to_pass
+  origin: pr_diff
+  description: With two open milestones, a patch bump targets the older one.
+- id: test_patch_unsorted_input_still_picks_lowest
+  type: fail_to_pass
+  origin: pr_diff
+  description: Patch bump selection is independent of caller-provided order — script sorts internally.
+- id: test_patch_higher_major_picks_lowest_overall
+  type: fail_to_pass
+  origin: pr_diff
+  description: Across majors, the patch bump still selects the lowest (oldest) X.Y.x series.
+- id: test_minor_three_milestones_picks_second_newest
+  type: pass_to_pass
+  origin: pr_diff
+  description: Minor bump targets the second-most-recent milestone (unchanged).
+- id: test_minor_with_one_milestone_falls_back_to_only_one
+  type: pass_to_pass
+  origin: pr_diff
+  description: Minor bump falls back to the only milestone when no second one exists.
+- id: test_patch_with_one_milestone_uses_it
+  type: pass_to_pass
+  origin: pr_diff
+  description: Patch bump with a single milestone targets that milestone.
+- id: test_none_bump_skips_assignment
+  type: pass_to_pass
+  origin: pr_diff
+  description: required_bump='none' performs no API calls at all.
+- id: test_non_matching_titles_filtered_out
+  type: fail_to_pass
+  origin: pr_diff
+  description: With non-matching titles mixed in, the patch bump targets the lowest eligible X.Y.x milestone (filtering also applies, and the chosen entry is the lowest after filtering).
+rubric:
+- id: agents_md_conventional_commit_type
+  source:
+    path: AGENTS.md
+    commit: f0ad7065c8ec8c532bf702d1912b7d42ee17b141
+  weight: 1
+  rule: 'Commit messages follow Conventional Commits with the appropriate type
+
+    prefix (e.g., `fix:` or `ci:` for this kind of change). The agent
+
+    should not invent its own format.
+
+    '
+- id: agents_md_comments_end_with_period
+  source:
+    path: AGENTS.md
+    commit: f0ad7065c8ec8c532bf702d1912b7d42ee17b141
+  weight: 1
+  rule: 'Per AGENTS.md "Linting & Formatting": comments must end with a period.
+
+    Any new comments the agent adds in the script should follow this
+
+    style.
+
+    '
+- id: agents_md_eslint_clean
+  source:
+    path: AGENTS.md
+    commit: f0ad7065c8ec8c532bf702d1912b7d42ee17b141
+  weight: 1
+  rule: 'Per AGENTS.md, code follows ESLint rules and Prettier defaults; the
+
+    modified script should remain ESLint-clean (no unused imports, no
+
+    stylistic regressions).
+
+    '
+- id: minimal_diff_to_logic
+  weight: 1
+  rule: 'The fix should be a focused change to the milestone-selection logic
+
+    only. The agent should not rewrite unrelated portions of the script
+
+    or add unrelated features.
+
+    '
+config_edits: []

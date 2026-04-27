@@ -1,0 +1,144 @@
+version: '2.0'
+source:
+  repo: ant-design/ant-design
+  pr: 57228
+  base_commit: fc13ea35e8245637a071f525484c9ffdedcdd4b7
+  merge_commit: 777b4affe8c0d6075ba418ecf6013b510b57d4e4
+task:
+  kind: markdown_authoring
+checks:
+- id: test_skill_file_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md is created at .claude/skills/create-pr/SKILL.md.
+- id: test_skill_frontmatter_name_is_antd_create_pr
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'SKILL.md frontmatter declares name: antd-create-pr.'
+- id: test_skill_frontmatter_has_description
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md frontmatter contains a non-empty description field.
+- id: test_skill_mentions_both_pr_template_paths
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md references both .github/PULL_REQUEST_TEMPLATE_CN.md and .github/PULL_REQUEST_TEMPLATE.md.
+- id: test_skill_instructs_full_branch_diff
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md instructs the agent to inspect the base..HEAD (or base...HEAD) diff, not just the last commit.
+- id: test_skill_lists_standard_pr_title_types
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md enumerates the standard PR title type tokens (feat, fix, docs, refactor, chore) in backticks.
+- id: test_skill_states_pr_title_must_be_english
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md states that the PR title is always in English.
+- id: test_skill_points_to_reference_file
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md links to references/template-notes-and-examples.md.
+- id: test_reference_file_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: Companion file references/template-notes-and-examples.md exists alongside SKILL.md.
+- id: test_reference_file_lists_pr_title_types
+  type: fail_to_pass
+  origin: pr_diff
+  description: References file enumerates PR title types in backticks.
+- id: test_skill_files_tracked_by_git_diff
+  type: fail_to_pass
+  origin: pr_diff
+  description: New skill files appear as added/untracked in git status.
+- id: test_existing_commit_msg_skill_preserved
+  type: pass_to_pass
+  origin: repo_tests
+  description: Pre-existing .claude/skills/commit-msg/SKILL.md is preserved unchanged.
+- id: test_existing_issue_reply_skill_preserved
+  type: pass_to_pass
+  origin: repo_tests
+  description: Pre-existing .claude/skills/issue-reply/SKILL.md is preserved unchanged.
+- id: test_repo_at_base_commit
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo is checked out at the expected base commit.
+- id: test_repo_root_files_intact
+  type: pass_to_pass
+  origin: repo_tests
+  description: Top-level repo files (package.json, AGENTS.md, CLAUDE.md) are intact.
+config_edits:
+- path: .claude/skills/create-pr/SKILL.md
+  tier: 1
+  gold_added: 'Created SKILL.md with YAML frontmatter (name: antd-create-pr, description of when to use), PR creation rules covering template selection, branch-wide diff inspection, English-only PR title requirement, title format with type tokens, and a reference to the companion file.'
+  gold_removed: ''
+- path: .claude/skills/create-pr/references/template-notes-and-examples.md
+  tier: 2
+  gold_added: Created companion reference file with PR type checkbox mappings, Related Issues notation, Background and Solution examples in Chinese and English, Change Log table examples, and PR title examples.
+  gold_removed: ''
+rubric:
+- rule: 'PR 标题始终使用英文，格式：类型: 简短描述'
+  source:
+    path: CLAUDE.md
+    lines: '44'
+    commit: fc13ea35e8245637a071f525484c9ffdedcdd4b7
+  evidence: 'SKILL.md section on basic rules explicitly states PR titles are always English regardless of template language choice, and the title format section specifies the type: subject format.'
+  category: naming
+  verification: llm_judge
+- rule: 英文模板：.github/PULL_REQUEST_TEMPLATE.md / 中文模板：.github/PULL_REQUEST_TEMPLATE_CN.md
+  source:
+    path: CLAUDE.md
+    lines: 50-51
+    commit: fc13ea35e8245637a071f525484c9ffdedcdd4b7
+  evidence: SKILL.md section on basic rules requires using the official templates at the exact paths and forbids inventing custom PR sections.
+  category: style
+  verification: llm_judge
+- rule: 描述对开发者的影响，而非具体的实现细节
+  source:
+    path: CLAUDE.md
+    lines: '85'
+    commit: fc13ea35e8245637a071f525484c9ffdedcdd4b7
+  evidence: SKILL.md Change Log section instructs describing impact on developers/users rather than listing implementation details, matching the changelog rule.
+  category: style
+  verification: llm_judge
+- rule: 不要编造 message。
+  source:
+    path: .claude/skills/commit-msg/SKILL.md
+    lines: '67'
+    commit: fc13ea35e8245637a071f525484c9ffdedcdd4b7
+  evidence: SKILL.md forbidden section explicitly prohibits fabricating issue numbers, test results, or release impact, and the Related Issues guidance says to use None when no issue exists.
+  category: style
+  verification: llm_judge
+- rule: 'YAML frontmatter with name and description fields matching the pattern of existing skills (name: antd-issue-reply, description: Help maintainers reply to Ant Design GitHub issues).'
+  source:
+    path: .claude/skills/issue-reply/SKILL.md
+    lines: 1-3
+    commit: fc13ea35e8245637a071f525484c9ffdedcdd4b7
+  evidence: 'SKILL.md begins with YAML frontmatter delimited by --- containing name: antd-create-pr and a real, descriptive description field explaining when the skill should be used.'
+  category: style
+  verification: llm_judge
+distractors:
+- rule: PR 内容默认使用英文 / 可以视需要在英文描述后附上中文说明
+  source:
+    path: AGENTS.md
+    lines: 954-956
+    commit: fc13ea35e8245637a071f525484c9ffdedcdd4b7
+  collision_type: rule_conflict
+  why_distracting: AGENTS.md says PR content defaults to English but allows appending Chinese descriptions. An agent might infer the same flexibility applies to PR titles, conflicting with CLAUDE.md strict English-only title rule.
+  severity: medium
+- rule: PULL_REQUEST_TEMPLATE.md / PULL_REQUEST_TEMPLATE_CN.md
+  source:
+    path: AGENTS.md
+    lines: 962-963
+    commit: fc13ea35e8245637a071f525484c9ffdedcdd4b7
+  collision_type: scope_ambiguity
+  why_distracting: AGENTS.md lists PR template paths without the .github/ prefix, while CLAUDE.md uses the full paths. An agent reading AGENTS.md might look for templates at the wrong location.
+  severity: low
+- rule: 使用 gh pr create 创建 PR 时，必须手动填充模板内容
+  source:
+    path: CLAUDE.md
+    lines: '52'
+    commit: fc13ea35e8245637a071f525484c9ffdedcdd4b7
+  collision_type: architecture_boundary
+  why_distracting: CLAUDE.md says the human must manually fill in the PR template, but the create-pr skill is designed for Claude to auto-fill it. An agent might refuse to fill the template, believing only humans should do so.
+  severity: medium

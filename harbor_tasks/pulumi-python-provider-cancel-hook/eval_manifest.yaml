@@ -1,0 +1,92 @@
+version: '2.0'
+source:
+  repo: pulumi/pulumi
+  pr_number: 22516
+  base_commit: b4e628b5434052005d91f9f66fd3ae6dfdf065c5
+  merge_commit: 3809a4c60c9a423b1cd8edab4f2a7bdafcf71adf
+  pr_title: Add Cancel handler to Python & Node.js providers
+  pr_url: https://github.com/pulumi/pulumi/pull/22516
+  pr: 22516
+checks:
+- id: test_provider_base_cancel_returns_none
+  type: fail_to_pass
+  origin: pr_diff
+  description: Provider base class exposes a no-op cancel() that returns None.
+- id: test_experimental_provider_base_cancel_is_async_and_returns_none
+  type: fail_to_pass
+  origin: pr_diff
+  description: Experimental Provider exposes an async cancel coroutine returning None.
+- id: test_server_cancel_invokes_provider_cancel_and_returns_empty
+  type: fail_to_pass
+  origin: pr_diff
+  description: ProviderServicer.Cancel calls provider.cancel() and returns google.protobuf.Empty.
+- id: test_server_cancel_propagates_provider_exception
+  type: fail_to_pass
+  origin: pr_diff
+  description: ProviderServicer.Cancel propagates exceptions raised by provider.cancel().
+- id: test_experimental_server_cancel_invokes_async_provider_cancel
+  type: fail_to_pass
+  origin: pr_diff
+  description: Experimental ProviderServicer.Cancel awaits the async provider.cancel() and returns Empty.
+- id: test_experimental_server_cancel_propagates_provider_exception
+  type: fail_to_pass
+  origin: pr_diff
+  description: Experimental ProviderServicer.Cancel propagates exceptions from the async provider.cancel().
+- id: test_repo_provider_test_server_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: The pre-existing sdk/python/lib/test/provider/test_server.py suite still passes.
+- id: test_repo_experimental_provider_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: The pre-existing experimental provider test suite still passes.
+rubric:
+- id: no_generated_proto_edits
+  source:
+    commit: b4e628b5434052005d91f9f66fd3ae6dfdf065c5
+    quote: Do not edit generated proto files by hand
+    path: AGENTS.md
+  rule: 'Per the repo''s AGENTS.md, generated protobuf files must not be edited
+
+    by hand. The agent''s solution must not modify any *_pb2.py, *_pb2.pyi,
+
+    *_pb2_grpc.py, or *_pb2_grpc.pyi files anywhere in the repo.
+
+    '
+- id: no_external_runtime_dependencies
+  source:
+    commit: b4e628b5434052005d91f9f66fd3ae6dfdf065c5
+    quote: Do not add external runtime dependencies without discussion
+    path: AGENTS.md
+  rule: 'Per the repo''s AGENTS.md, new external runtime dependencies require
+
+    discussion. The agent''s solution must not add any new entry to the
+
+    `[project] dependencies` table in sdk/python/pyproject.toml.
+
+    '
+- id: no_sweeping_unrelated_changes
+  source:
+    commit: b4e628b5434052005d91f9f66fd3ae6dfdf065c5
+    quote: Do not make sweeping changes, refactor unrelated code, or add unnecessary abstractions
+    path: AGENTS.md
+  rule: 'Per the repo''s AGENTS.md, sweeping or unrelated refactors are
+
+    forbidden. The diff must stay scoped to the four files named in the
+
+    instruction (sdk/python/lib/pulumi/provider/provider.py, server.py,
+
+    experimental/provider.py, experimental/server.py) plus optionally a
+
+    changelog entry under `changelog/pending/`.
+
+    '
+- id: existing_test_suite_not_modified
+  source:
+    quote: Do not modify the existing test suite under sdk/python/lib/test/provider/
+    path: instruction.md
+  rule: 'The agent must not modify or delete the existing test files under
+
+    sdk/python/lib/test/provider/ to make tests pass.
+
+    '

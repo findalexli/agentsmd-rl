@@ -1,0 +1,87 @@
+version: '2.0'
+source:
+  repo: SeleniumHQ/selenium
+  pr: 17102
+  base_commit: d4b49f5a60c8f5704b2ddd525395a6f1e13f73b3
+  merge_commit: ab138ab0728231ab12c1a39bdaf5349d212c2bc4
+task:
+  kind: markdown_authoring
+checks:
+- id: test_target_file_exists_and_nonempty
+  type: pass_to_pass
+  origin: static
+  description: py/AGENTS.md exists and is non-empty after the edit.
+- id: test_python_310_requirement_stated
+  type: fail_to_pass
+  origin: pr_diff
+  description: py/AGENTS.md mentions Python 3.10 as the minimum version.
+- id: test_union_notation_rule_present
+  type: fail_to_pass
+  origin: pr_diff
+  description: py/AGENTS.md prefers union notation `|` over Optional, with `<type> | None` example.
+- id: test_local_python_version_check_guidance
+  type: fail_to_pass
+  origin: pr_diff
+  description: py/AGENTS.md includes the literal `python --version` command for local checks.
+- id: test_python_version_section_heading
+  type: fail_to_pass
+  origin: pr_diff
+  description: py/AGENTS.md has a heading containing 'Python version'.
+- id: test_repo_git_sanity
+  type: pass_to_pass
+  origin: static
+  description: Cloned repo's git state is intact.
+config_edits:
+- path: py/AGENTS.md
+  tier: 1
+  gold_added: "### Type hints (extension)\n\nUse union notation (`|`) instead of `Optional`:\n\n```python\n# Preferred\ndef method(param: str | None) -> int | None:\n    pass\n\n# Avoid\nfrom typing import Optional\ndef method(param: Optional[str]) -> Optional[int]:\n    pass\n```\n\n### Python version\n\nCode must work with Python 3.10 or later. Use modern syntax features available in 3.10+.\n\nSee the **Type hints** section for guidance on preferred type annotation syntax (including unions).\n\nFor testing: use `bazel test //py/...` which employs a hermetic Python 3.10+ toolchain (see `/AGENTS.md`).\n\nFor ad-hoc scripts, check your Python version locally before running:\n\n```bash\npython --version\n# Ensure you have 3.10+; on macOS/Linux use python3.10+ or on Windows py -3.10\n```\n\n### Testing (rewritten)\n\nRun tests via `bazel test //py:test-{browser}` or `bazel test //py:test-{browser}-bidi`, where `{browser}` is the target browser (e.g., `chrome`, `firefox`, `edge`). See `/AGENTS.md` for toolchain details.\n"
+  gold_removed: See `py/TESTING.md`
+rubric:
+- rule: Avoid repo-wide refactors/formatting; prefer small, reversible diffs
+  source:
+    path: AGENTS.md
+    lines: '13'
+    commit: d4b49f5a60c8f5704b2ddd525395a6f1e13f73b3
+  evidence: Edit is limited to py/AGENTS.md only with no other files touched.
+  category: style
+  verification: llm_judge
+- rule: Maintain API/ABI compatibility - users upgrade by changing only version number
+  source:
+    path: AGENTS.md
+    lines: '12'
+    commit: d4b49f5a60c8f5704b2ddd525395a6f1e13f73b3
+  evidence: Edit adds new guidance without silently removing or renaming existing rules.
+  category: architecture
+  verification: llm_judge
+- rule: PRs should focus on one thing; we squash PRs to default `trunk` branch
+  source:
+    path: AGENTS.md
+    lines: '71'
+    commit: d4b49f5a60c8f5704b2ddd525395a6f1e13f73b3
+  evidence: Edit focuses solely on Python 3.10+ and union-notation guidance with no unrelated changes.
+  category: style
+  verification: llm_judge
+- rule: When changing user-visible behavior, compare with at least one other binding
+  source:
+    path: AGENTS.md
+    lines: '45'
+    commit: d4b49f5a60c8f5704b2ddd525395a6f1e13f73b3
+  evidence: Edit is Python-binding-only documentation with no cross-binding claims added.
+  category: architecture
+  verification: llm_judge
+- rule: Type hints are used throughout; add type annotations to new code
+  source:
+    path: py/AGENTS.md
+    lines: '34'
+    commit: d4b49f5a60c8f5704b2ddd525395a6f1e13f73b3
+  evidence: New union-notation guidance extends the existing Type hints section without duplication or contradiction.
+  category: naming
+  verification: llm_judge
+- rule: Use Google-style docstrings
+  source:
+    path: py/AGENTS.md
+    lines: '37'
+    commit: d4b49f5a60c8f5704b2ddd525395a6f1e13f73b3
+  evidence: Google-style docstring guidance in py/AGENTS.md is left untouched by the edit.
+  category: style
+  verification: llm_judge

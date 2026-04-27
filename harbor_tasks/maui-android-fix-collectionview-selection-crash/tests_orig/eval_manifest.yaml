@@ -1,0 +1,116 @@
+version: '2.0'
+source:
+  repo: dotnet/maui
+  pr: 34275
+  base_commit: ecd6428d324e395ca07f8d375600c0fc93d0dd3c
+  merge_commit: 84e28fac0179cc829e166eb1f40d69a5cec4578b
+checks:
+- id: test_csharp_syntax_valid
+  type: pass_to_pass
+  origin: static
+  description: Modified C# files must have valid syntax
+- id: test_repo_adapter_file_exists
+  type: pass_to_pass
+  origin: static
+  description: Modified adapter file exists and is readable
+- id: test_repo_no_trailing_whitespace_in_adapter
+  type: pass_to_pass
+  origin: static
+  description: Modified adapter file has no trailing whitespace
+- id: test_repo_copilot_instructions_exists
+  type: pass_to_pass
+  origin: static
+  description: copilot-instructions.md exists and is valid
+- id: test_repo_dotnet_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo code passes dotnet format whitespace checks
+- id: test_repo_dotnet_style
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo code passes dotnet format style checks
+- id: test_header_footer_selection_guard_behavior
+  type: fail_to_pass
+  origin: pr_diff
+  description: SelectableItemsViewAdapter has a structural guard that prevents
+    header/footer positions from reaching selection-tracking code
+- id: test_guard_comment_explains_crash
+  type: fail_to_pass
+  origin: pr_diff
+  description: The guard includes explanatory comment about why header/footer ViewHolders
+    are excluded from selection tracking
+- id: test_adapter_compiles
+  type: pass_to_pass
+  origin: pr_diff
+  description: The Controls.Core project compiles successfully with the fix applied
+- id: test_not_stub
+  type: pass_to_pass
+  origin: static
+  description: Modified OnBindViewHolder method has real logic, not just pass/return
+- id: test_nullable_enable_documented
+  type: fail_to_pass
+  origin: agent_config
+  description: 'copilot-instructions.md documents the #nullable enable must be line
+    1 rule'
+  source:
+    path: .github/copilot-instructions.md
+    lines: 141-160
+    commit: ecd6428d324e395ca07f8d375600c0fc93d0dd3c
+- id: test_bash_script_provided
+  type: fail_to_pass
+  origin: agent_config
+  description: copilot-instructions.md includes the safe bash pattern for PublicAPI.Unshipped.txt
+    file handling
+  source:
+    path: .github/copilot-instructions.md
+    lines: 148-157
+    commit: ecd6428d324e395ca07f8d375600c0fc93d0dd3c
+rubric:
+- rule: The agent must add a rule specifying that `#nullable enable` must be on line
+    1 to `.github/copilot-instructions.md`
+  source:
+    path: .github/copilot-instructions.md
+    lines: 133-140
+    commit: ecd6428d324e395ca07f8d375600c0fc93d0dd3c
+- rule: Android specific code is inside folders labeled Android
+  source:
+    path: .github/copilot-instructions.md
+    lines: 45-46
+  evidence: The gold solution modifies `SelectableItemsViewAdapter.cs` which is correctly
+    located in the `Android` folder under `src/Controls/src/Core/Handlers/Items/Android/Adapters/`.
+  reference: "The gold solution correctly places Android-specific code in an Android-labeled folder: src/Controls/src/Core/Handlers/Items/Android/Adapters/SelectableItemsViewAdapter.cs"
+  category: architecture
+- rule: Android specific code is inside folders labeled `Android`
+  source:
+    path: .github/copilot-instructions.md
+    lines: 56-57
+  evidence: The modified file `SelectableItemsViewAdapter.cs` is located in `src/Controls/src/Core/Handlers/Items/Android/Adapters/`,
+    adhering to the rule that Android specific code is inside folders labeled `Android`.
+  reference: "The gold solution correctly places Android-specific code in an Android-labeled folder: src/Controls/src/Core/Handlers/Items/Android/Adapters/SelectableItemsViewAdapter.cs"
+  category: architecture
+distractors:
+- rule: 'Platform-specific files use naming conventions to control compilation: .android.cs
+    - Android TFM only'
+  collision_type: scope_ambiguity
+  why_distracting: The agent might try to rename `SelectableItemsViewAdapter.cs` to
+    `SelectableItemsViewAdapter.android.cs` to comply with the file extension pattern,
+    but the file is already scoped to Android via its folder path and renaming it
+    would cause issues.
+  severity: medium
+  source:
+    path: .github/copilot-instructions.md
+    lines: 64-65
+- rule: When performing a code review on PRs that change functional code, run the
+    pr-finalize skill
+  collision_type: meta_confusion
+  why_distracting: The agent might try to invoke the `pr-finalize` skill because it
+    is modifying functional code, but the task is to implement a fix and update instructions,
+    not to perform a code review.
+  severity: low
+  source:
+    path: .github/copilot-instructions.md
+    lines: 11-12
+hierarchy_analysis: The config hierarchy is flat, consisting of a single `.github/copilot-instructions.md`
+  file. The agent must navigate this file to understand project structure and naming
+  conventions, while simultaneously being tasked with modifying this very file to
+  add a new rule.

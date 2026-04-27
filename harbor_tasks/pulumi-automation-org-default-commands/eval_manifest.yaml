@@ -1,0 +1,103 @@
+version: '2.0'
+source:
+  repo: pulumi/pulumi
+  pr: 22436
+  base_commit: 40fd96368b6bab557b45747a4e4cb5a9082a7340
+  merge_commit: 4a1e067a15f35e64a220b2a49cb684f0df1b19fd
+task:
+  kind: code_fix
+checks:
+- id: test_python_workspace_has_abstract_org_get_default
+  type: fail_to_pass
+  origin: pr_diff
+  description: Python `Workspace` abstract base class declares an abstract `org_get_default` method.
+- id: test_python_workspace_has_abstract_org_set_default
+  type: fail_to_pass
+  origin: pr_diff
+  description: Python `Workspace` abstract base class declares an abstract `org_set_default` method.
+- id: test_python_local_workspace_org_get_default_calls_cli_and_strips
+  type: fail_to_pass
+  origin: pr_diff
+  description: '`LocalWorkspace.org_get_default()` shells out to `pulumi org get-default` and returns the stdout with surrounding whitespace stripped.'
+- id: test_python_local_workspace_org_set_default_passes_arg
+  type: fail_to_pass
+  origin: pr_diff
+  description: '`LocalWorkspace.org_set_default(name)` shells out to `pulumi org set-default <name>` and returns None.'
+- id: test_python_local_workspace_org_set_default_varied_names
+  type: fail_to_pass
+  origin: pr_diff
+  description: '`LocalWorkspace.org_set_default` accepts and forwards arbitrary org-name strings (not just a hardcoded value).'
+- id: test_go_org_get_set_default_behavior
+  type: fail_to_pass
+  origin: pr_diff
+  description: Go `LocalWorkspace.OrgGetDefault` returns trimmed stdout from `pulumi org get-default`, and `OrgSetDefault(name)` invokes `pulumi org set-default <name>`. Verified via `mockPulumiCommand`.
+- id: test_go_workspace_interface_compiles_with_new_methods
+  type: fail_to_pass
+  origin: pr_diff
+  description: The Go `Workspace` interface exposes `OrgGetDefault(ctx)` and `OrgSetDefault(ctx, name)` so consumer code can call them through the interface rather than through `*LocalWorkspace`.
+- id: test_p2p_go_sdk_builds
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's `go build ./...` succeeds in `sdk/go/` after the change (verifies the new interface methods are implemented by every Workspace implementation).
+- id: test_p2p_python_imports_pulumi_automation
+  type: pass_to_pass
+  origin: repo_tests
+  description: The `pulumi.automation` Python module imports cleanly after the change (verifies LocalWorkspace still satisfies the abstract Workspace base class — i.e. no new abstract method left unimplemented).
+rubric:
+- rule: Changelog entries are required for most PRs. Run `mise exec -- make changelog` to create one.
+  source:
+    path: AGENTS.md
+    lines: '54'
+    commit: 40fd96368b6bab557b45747a4e4cb5a9082a7340
+  evidence: Gold patch adds changelog entries for both auto/python and sdk/go scopes under changelog/pending/.
+  category: testing
+  verification: llm_judge
+- rule: Copyright headers for new files should always be stamped with the current year.
+  source:
+    path: AGENTS.md
+    lines: '57'
+    commit: 40fd96368b6bab557b45747a4e4cb5a9082a7340
+  evidence: Gold patch adds changelog YAML files; the rule applies only to new source files, not changelog metadata, so the gold is consistent with this rule.
+  category: style
+  verification: llm_judge
+- rule: Do not make sweeping changes, refactor unrelated code, or add unnecessary abstractions.
+  source:
+    path: AGENTS.md
+    lines: '67'
+    commit: 40fd96368b6bab557b45747a4e4cb5a9082a7340
+  evidence: Gold patch only modifies the four source files directly related to adding org methods plus two changelog entries — no unrelated refactoring or reformatting.
+  category: architecture
+  verification: llm_judge
+- rule: Existing abstract methods on `Workspace` carry docstrings describing the contract with one-line summary and `:param:`/`:returns:` lines. New abstract methods must follow the same pattern.
+  source:
+    path: sdk/python/lib/pulumi/automation/_workspace.py
+    lines: 388-393
+    commit: 40fd96368b6bab557b45747a4e4cb5a9082a7340
+  evidence: Gold patch adds `org_get_default` and `org_set_default` abstract methods with docstrings matching the surrounding `who_am_i` style — one-line summary plus `:param:`/`:returns:` lines.
+  category: style
+  verification: llm_judge
+- rule: The Go `Workspace` interface uses godoc comments (`// MethodName ...`) above every method. New interface methods must follow the same convention.
+  source:
+    path: sdk/go/auto/workspace.go
+    lines: 122-126
+    commit: 40fd96368b6bab557b45747a4e4cb5a9082a7340
+  evidence: Gold patch adds `OrgGetDefault` and `OrgSetDefault` to the Go interface with godoc comments matching the surrounding `WhoAmI`/`WhoAmIDetails` style.
+  category: style
+  verification: llm_judge
+distractors:
+- rule: Do not make sweeping changes, refactor unrelated code, or add unnecessary abstractions.
+  source:
+    path: AGENTS.md
+    lines: '67'
+    commit: 40fd96368b6bab557b45747a4e4cb5a9082a7340
+  collision_type: rule_conflict
+  why_distracting: An agent might interpret this as a reason to avoid adding new methods to the Workspace interface/abstract class and instead only implement them on the concrete LocalWorkspace type, which would break the interface contract.
+  severity: high
+- rule: Changelog entries are required for most PRs.
+  source:
+    path: AGENTS.md
+    lines: '54'
+    commit: 40fd96368b6bab557b45747a4e4cb5a9082a7340
+  collision_type: meta_confusion
+  why_distracting: An agent might argue that internal SDK plumbing does not qualify as a user-facing change and skip the changelog entry entirely, when the task explicitly requires it.
+  severity: medium

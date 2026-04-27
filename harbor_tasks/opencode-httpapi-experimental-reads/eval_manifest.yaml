@@ -1,0 +1,100 @@
+version: '2.0'
+task:
+  name: opencode-httpapi-experimental-reads
+  title: Bridge experimental read-only HttpApi endpoints
+  kind: code_fix
+  difficulty: hard
+  estimated_minutes: 90
+source:
+  type: github_pr
+  url: https://github.com/anomalyco/opencode/pull/24365
+  owner: anomalyco
+  repo: opencode
+  pr_number: 24365
+  base_commit: f5dce6d960ea44d3a77cfe868b8209b44a866edb
+  merge_commit: 95d4bb213018f9c184cc97c34000b3f5a99fae5a
+  pr: 24365
+checks:
+- id: test_httpapi_experimental_passes
+  type: fail_to_pass
+  origin: repo_tests
+  description: 'The PR''s own integration test (`test/server/httpapi-experimental.test.ts`) drives the four bridged routes against a tmp instance and asserts on the JSON bodies. Fails on base because the new HttpApi module does not exist.
+
+    '
+- id: test_experimental_paths_exported
+  type: fail_to_pass
+  origin: pr_diff
+  description: '`ExperimentalPaths` must be exported from the new HttpApi module with keys `console`, `consoleOrgs`, `toolIDs`, `resource` mapped to the literal route paths the bridge passes through.
+
+    '
+- id: test_mcp_resource_is_effect_schema
+  type: fail_to_pass
+  origin: pr_diff
+  description: '`MCP.Resource` must be migrated to an Effect Schema while still exposing a `.zod` accessor for the legacy Hono `experimental.ts` route that feeds the SDK/OpenAPI pipeline.
+
+    '
+- id: test_p2p_httpapi_bridge_still_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing `httpapi-bridge.test.ts` keeps passing.
+- id: test_p2p_httpapi_file_still_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Existing `httpapi-file.test.ts` keeps passing.
+rubric:
+- id: traced_effect_handlers
+  source:
+    anchor: Use `Effect.fn("Domain.method")` for named/traced effects
+    path: packages/opencode/AGENTS.md
+    commit: f5dce6d960ea44d3a77cfe868b8209b44a866edb
+  rule: 'HttpApi handlers should be wrapped with `Effect.fn("Domain.method")` so they show up correctly in tracing, per the package `AGENTS.md` Effect rules.
+
+    '
+- id: schema_struct_for_plain_objects
+  source:
+    anchor: Use `Schema.Class` for multi-field data
+    path: packages/opencode/AGENTS.md
+    commit: f5dce6d960ea44d3a77cfe868b8209b44a866edb
+  rule: 'Multi-field DTOs returned as plain objects should use `Schema.Struct`, not `Schema.Class`. The package `AGENTS.md` reserves `Schema.Class` for handlers that genuinely return class instances.
+
+    '
+- id: instance_state_not_als
+  source:
+    anchor: Use `InstanceState`
+    path: packages/opencode/AGENTS.md
+    commit: f5dce6d960ea44d3a77cfe868b8209b44a866edb
+  rule: 'Per-instance reads inside HttpApi handlers must go through `InstanceState.context`, not the `Instance.directory` / `Instance.worktree` ALS globals. The package `AGENTS.md` calls this out explicitly under "Runtime vs InstanceState".
+
+    '
+- id: avoid_else_and_destructuring
+  source:
+    anchor: Avoid `else` statements
+    path: AGENTS.md
+    commit: f5dce6d960ea44d3a77cfe868b8209b44a866edb
+  rule: 'Codebase style: prefer early returns over `else`, avoid unnecessary destructuring, prefer `const` and ternaries over `let`.
+
+    '
+- id: no_try_catch
+  source:
+    anchor: Avoid `try`/`catch` where possible
+    path: AGENTS.md
+    commit: f5dce6d960ea44d3a77cfe868b8209b44a866edb
+  rule: 'Avoid `try`/`catch` where possible (root-level style guide).
+
+    '
+- id: preserve_zod_compat_for_legacy_route
+  source:
+    anchor: Keep `.zod` only as compatibility
+    path: packages/opencode/specs/effect/http-api.md
+    commit: f5dce6d960ea44d3a77cfe868b8209b44a866edb
+  rule: 'Migrated schemas keep the legacy zod surface available so the existing Hono `describeRoute`/`resolver` SDK pipeline still generates correct OpenAPI/SDK output. The spec says "Keep `.zod` only as compatibility for remaining Hono/OpenAPI surfaces."
+
+    '
+- id: gate_behind_experimental_flag
+  source:
+    anchor: '`OPENCODE_EXPERIMENTAL_HTTPAPI` gates the bridge'
+    path: packages/opencode/specs/effect/http-api.md
+    commit: f5dce6d960ea44d3a77cfe868b8209b44a866edb
+  rule: 'The new HttpApi paths must only be reachable when `OPENCODE_EXPERIMENTAL_HTTPAPI` is on; existing Hono routes remain the default surface. The spec describes this gating in "Current State".
+
+    '

@@ -1,0 +1,92 @@
+version: '2.0'
+source:
+  repo: SeleniumHQ/selenium
+  pr: 17014
+  base_commit: 658c69f13ab531cfeb982471f25fd435777b91d9
+  merge_commit: 0f71ed6f8e980ddd8e62750666caa37c982bc18e
+task:
+  name: selenium-restore-bidi-default-ctor
+  kind: code_fix
+checks:
+- id: test_javac_compiles
+  type: pass_to_pass
+  origin: static
+  description: BiDi.java compiles cleanly against the stub classpath.
+- id: test_two_arg_constructor_still_works
+  type: pass_to_pass
+  origin: static
+  description: The original BiDi(Connection, Duration) constructor remains usable.
+- id: test_single_arg_constructor_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: A public BiDi(Connection) constructor must be defined.
+- id: test_single_arg_constructor_deprecated_for_removal
+  type: fail_to_pass
+  origin: agent_config
+  description: BiDi(Connection) must be annotated @Deprecated(forRemoval = true).
+  source:
+    path: java/AGENTS.md
+    lines: 26-30
+    commit: 658c69f13ab531cfeb982471f25fd435777b91d9
+- id: test_single_arg_default_timeout_30_seconds
+  type: fail_to_pass
+  origin: pr_diff
+  description: new BiDi(connection) must default to a 30-second timeout.
+rubric:
+- rule: Use Javadoc for public APIs
+  source:
+    path: java/AGENTS.md
+    lines: 33-42
+    commit: 658c69f13ab531cfeb982471f25fd435777b91d9
+  evidence: Gold adds a Javadoc comment with @deprecated tag on the new constructor
+  category: documentation
+  verification: llm_judge
+- rule: before removing public functionality, mark it as deprecated with a message pointing to the alternative
+  source:
+    path: AGENTS.md
+    lines: 66-67
+    commit: 658c69f13ab531cfeb982471f25fd435777b91d9
+  evidence: Gold's @deprecated Javadoc says 'Use constructor with timeout parameter' and links to BiDi(Connection, Duration)
+  category: deprecation
+  verification: llm_judge
+- rule: Maintain API/ABI compatibility - users upgrade by changing only version number
+  source:
+    path: AGENTS.md
+    lines: '12'
+    commit: 658c69f13ab531cfeb982471f25fd435777b91d9
+  evidence: Gold preserves the existing BiDi(Connection, Duration) constructor unchanged
+  category: architecture
+  verification: llm_judge
+- rule: Avoid repo-wide refactors/formatting; prefer small, reversible diffs
+  source:
+    path: AGENTS.md
+    lines: '13'
+    commit: 658c69f13ab531cfeb982471f25fd435777b91d9
+  evidence: Gold changes only BiDi.java, adding 8 lines with no formatting changes elsewhere
+  category: style
+  verification: llm_judge
+- rule: Comments should explain *why*, not *what*
+  source:
+    path: AGENTS.md
+    lines: '70'
+    commit: 658c69f13ab531cfeb982471f25fd435777b91d9
+  evidence: Gold's Javadoc explains *why* the constructor exists (backward compatibility / migration path) rather than restating what it does
+  category: documentation
+  verification: llm_judge
+distractors:
+- rule: When implementing solutions prefer writing a test for it first
+  source:
+    path: AGENTS.md
+    lines: '51'
+    commit: 658c69f13ab531cfeb982471f25fd435777b91d9
+  collision_type: scope_ambiguity
+  why_distracting: The task is a narrow constructor restoration; adding tests would modify files outside scope and is not required
+  severity: medium
+- rule: Add logging where users may need insight into what's happening
+  source:
+    path: AGENTS.md
+    lines: '62'
+    commit: 658c69f13ab531cfeb982471f25fd435777b91d9
+  collision_type: scope_ambiguity
+  why_distracting: A constructor delegation does not warrant logging; following this rule would introduce scope creep
+  severity: low

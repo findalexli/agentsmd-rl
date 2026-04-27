@@ -1,0 +1,113 @@
+version: '2.0'
+source:
+  repo: BerriAI/litellm
+  pr_number: 25027
+  pr_url: https://github.com/BerriAI/litellm/pull/25027
+  base_commit: eb780a85bb2d02a5c22780bc434a542f4fa1e1d0
+  merge_commit: 0331fb5a8f7a241fded08b729a0d9c9edb71a502
+  title: 'feat(teams): resolve access group resources in team endpoints'
+  pr: 25027
+checks:
+- id: test_batch_resolver_empty_list_returns_empty_dict
+  type: fail_to_pass
+  origin: pr_diff
+  description: Empty input list short-circuits to {} without DB call.
+- id: test_batch_resolver_single_group_returns_resources
+  type: fail_to_pass
+  origin: pr_diff
+  description: Single access group resolves to {models, mcp_server_ids, agent_ids}.
+- id: test_batch_resolver_multiple_groups_distinct
+  type: fail_to_pass
+  origin: pr_diff
+  description: Multiple distinct groups all surface in the result map.
+- id: test_batch_resolver_omits_missing_groups
+  type: fail_to_pass
+  origin: pr_diff
+  description: Missing access group IDs are silently omitted from the result.
+- id: test_batch_resolver_returns_empty_when_prisma_none
+  type: fail_to_pass
+  origin: pr_diff
+  description: prisma_client=None short-circuits to {}.
+- id: test_batch_resolver_deduplicates_input_ids
+  type: fail_to_pass
+  origin: pr_diff
+  description: Repeated input IDs collapse to a single deduplicated find_many call.
+- id: test_batch_resolver_handles_null_resource_columns
+  type: fail_to_pass
+  origin: pr_diff
+  description: NULL resource columns map to [] (not None) in the response.
+- id: test_batch_resolver_uses_single_db_call_for_many_ids
+  type: fail_to_pass
+  origin: pr_diff
+  description: N IDs are resolved with exactly one find_many call (no N+1).
+  source:
+    lines: 'Proxy database access — No N+1 queries. Batch-fetch with {"in": ids} and distribute in-memory.'
+    commit: eb780a85bb2d02a5c22780bc434a542f4fa1e1d0
+    path: CLAUDE.md
+- id: test_batch_resolver_is_async_coroutine
+  type: fail_to_pass
+  origin: pr_diff
+  description: Resolver helper is an async coroutine function.
+- id: test_team_info_response_object_has_access_group_fields
+  type: fail_to_pass
+  origin: pr_diff
+  description: TeamInfoResponseObjectTeamTable exposes the three access_group_* fields.
+- id: test_team_list_item_has_access_group_fields
+  type: fail_to_pass
+  origin: pr_diff
+  description: TeamListItem exposes the three access_group_* fields.
+- id: test_access_group_fields_default_to_none
+  type: fail_to_pass
+  origin: pr_diff
+  description: New access_group_* fields default to None.
+- id: test_p2p_validate_team_org_change
+  type: pass_to_pass
+  origin: repo_tests
+  description: Upstream validate_team_org_change tests still pass.
+- id: test_p2p_team_member_helpers
+  type: pass_to_pass
+  origin: repo_tests
+  description: Upstream team-member helper tests still pass.
+- id: test_p2p_team_models_helpers
+  type: pass_to_pass
+  origin: repo_tests
+  description: Upstream team-models helper tests still pass.
+rubric:
+- id: uses_prisma_methods_not_raw_sql
+  source:
+    lines: Proxy database access — Do not write raw SQL for proxy DB operations. Use Prisma model methods instead of execute_raw / query_raw.
+    commit: eb780a85bb2d02a5c22780bc434a542f4fa1e1d0
+    path: CLAUDE.md
+  rule: 'The new helper uses Prisma model methods on
+
+    `prisma_client.db.litellm_accessgrouptable` (e.g. `.find_many`) and
+
+    does NOT use `execute_raw` / `query_raw` / hand-rolled SQL strings.
+
+    '
+- id: type_hints_present
+  source:
+    lines: Code Style — Type hints required for all public APIs.
+    commit: eb780a85bb2d02a5c22780bc434a542f4fa1e1d0
+    path: CLAUDE.md
+  rule: 'New public-facing helper has explicit type hints on its argument and
+
+    return type (e.g. `List[str]` in, `Dict[str, Dict[str, List[str]]]`
+
+    out).
+
+    '
+- id: imports_at_module_top
+  source:
+    lines: Code Style — Avoid imports within methods. The only exception is avoiding circular imports where absolutely necessary.
+    commit: eb780a85bb2d02a5c22780bc434a542f4fa1e1d0
+    path: CLAUDE.md
+  rule: 'Imports added to support the helper live at the top of the file. The
+
+    one acceptable inline import is the `from
+
+    litellm.proxy.proxy_server import prisma_client` pull, which exists
+
+    to break a known circular import — that''s the documented exception.
+
+    '

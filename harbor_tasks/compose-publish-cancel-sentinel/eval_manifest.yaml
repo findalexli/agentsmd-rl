@@ -1,0 +1,82 @@
+version: '2.0'
+source:
+  repo: docker/compose
+  pr: 13674
+  url: https://github.com/docker/compose/pull/13674
+  base_commit: 3d2d03cd39145a8cb29ac3c5440172d994834111
+  merge_commit: 1e3f4d0f4a551cd8c872a20643e4d20bb2d99262
+  title: 'publish: return api.ErrCanceled when user declines interactive prompts'
+checks:
+- id: test_publish_bind_mount_decline_returns_err_canceled
+  type: fail_to_pass
+  origin: pr_diff
+  description: composeService.publish() must return api.ErrCanceled (matched by errors.Is) when the user answers "no" to the bind-mount confirmation prompt during preChecks. At base it returns nil, indistinguishable from success.
+- id: test_publish_sensitive_data_decline_returns_err_canceled
+  type: fail_to_pass
+  origin: pr_diff
+  description: composeService.publish() must return api.ErrCanceled when the user answers "no" to the sensitive-data (DefangLabs secret detector) confirmation prompt during preChecks.
+- id: test_publish_accept_does_not_return_err_canceled
+  type: pass_to_pass
+  origin: pr_diff
+  description: 'Negative control: publish() must NOT return api.ErrCanceled when the user accepts the prompt. Guards against an "always return ErrCanceled" false fix.'
+- id: test_existing_create_layers_test_still_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Pre-existing Test_createLayers in pkg/compose/publish_test.go must still pass — regression check on the same package.
+- id: test_compose_package_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`go build ./pkg/compose/...` must succeed. Catches syntax errors and missing imports introduced by the fix.'
+- id: test_repo_go_vet_passes
+  type: pass_to_pass
+  origin: agent_config
+  description: '`go vet ./pkg/compose/...` must pass. Maps to the project''s requirement that all Go changes pass static analysis (govet is one of the linters enabled in .golangci.yml).'
+  source:
+    commit: 3d2d03cd39145a8cb29ac3c5440172d994834111
+    lines: 13-15
+    path: CLAUDE.md
+- id: test_publish_go_imports_api_package
+  type: pass_to_pass
+  origin: pr_diff
+  description: publish.go must continue to import the api package, since the fix relies on the api.ErrCanceled sentinel.
+rubric:
+- id: golangci_lint_clean
+  type: soft
+  weight: 0.4
+  source:
+    commit: 3d2d03cd39145a8cb29ac3c5440172d994834111
+    lines: 9-21
+    path: CLAUDE.md
+  rule: The agent's change to pkg/compose/publish.go would pass `golangci-lint run --build-tags "e2e" ./...` with the project's .golangci.yml config (gofumpt formatting, gci import order, no banned packages, max line length 200, max cyclomatic complexity 16).
+- id: import_order_stdlib_third_party_local
+  type: soft
+  weight: 0.2
+  source:
+    commit: 3d2d03cd39145a8cb29ac3c5440172d994834111
+    lines: '20'
+    path: CLAUDE.md
+  rule: 'If the change adds or modifies imports, they follow the project''s gci-enforced order: stdlib block, then third-party, then local module (github.com/docker/compose/v5/...). For this task the fix can be a one-line return statement that reuses already-imported symbols; if so this rule is trivially satisfied.'
+- id: prefer_errdefs_from_containerd
+  type: soft
+  weight: 0.1
+  source:
+    commit: 3d2d03cd39145a8cb29ac3c5440172d994834111
+    lines: '23'
+    path: CLAUDE.md
+  rule: Per CLAUDE.md the project standardises on github.com/containerd/errdefs over github.com/docker/docker/errdefs. The agent must not introduce the latter import as a workaround.
+- id: no_banned_packages
+  type: soft
+  weight: 0.1
+  source:
+    commit: 3d2d03cd39145a8cb29ac3c5440172d994834111
+    lines: '22'
+    path: CLAUDE.md
+  rule: The agent must not introduce imports of `io/ioutil`, `github.com/pkg/errors`, `gopkg.in/yaml.v2`, `golang.org/x/exp/maps`, or `golang.org/x/exp/slices`.
+- id: tests_use_t_context
+  type: soft
+  weight: 0.1
+  source:
+    commit: 3d2d03cd39145a8cb29ac3c5440172d994834111
+    lines: '24'
+    path: CLAUDE.md
+  rule: If the agent adds Go tests, those tests use t.Context() rather than context.Background() / context.TODO(), per the project convention. Trivially satisfied if the agent adds no tests (tests are not required to pass this benchmark).

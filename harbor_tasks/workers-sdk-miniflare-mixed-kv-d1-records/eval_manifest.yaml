@@ -1,0 +1,143 @@
+version: '2.0'
+source:
+  repo: cloudflare/workers-sdk
+  pr: 12986
+  base_commit: 17a57e641798dca0b298bd91dcdcef6be30d38b6
+  merge_commit: 5aaaab2699db40619084a6adbddef07a96a86450
+task:
+  kind: code_fix
+checks:
+- id: test_kv_namespaces_mixed_string_and_object
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Constructing a Miniflare with `kvNamespaces: { LOCAL_NS: "local-ns", REMOTE_NS: { id: "remote-ns" } }` must not throw a Zod validation error.'
+- id: test_d1_databases_mixed_string_and_object
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Constructing a Miniflare with `d1Databases: { LOCAL_DB: "local-db", REMOTE_DB: { id: "remote-db" } }` must not throw a Zod validation error.'
+- id: test_kv_namespaces_object_first_then_string
+  type: fail_to_pass
+  origin: pr_diff
+  description: Mixed kvNamespaces record validates regardless of value-order (object key first, string key second).
+- id: test_d1_databases_three_way_mix
+  type: fail_to_pass
+  origin: pr_diff
+  description: A larger 5-entry mixed d1Databases record (3 strings + 2 objects) validates.
+- id: test_kv_namespaces_all_strings
+  type: pass_to_pass
+  origin: pr_diff
+  description: All-string kvNamespaces record continues to validate.
+- id: test_kv_namespaces_all_objects
+  type: pass_to_pass
+  origin: pr_diff
+  description: All-object kvNamespaces record continues to validate.
+- id: test_kv_namespaces_string_array
+  type: pass_to_pass
+  origin: pr_diff
+  description: String-array kvNamespaces form continues to validate.
+- id: test_d1_databases_all_strings
+  type: pass_to_pass
+  origin: pr_diff
+  description: All-string d1Databases record continues to validate.
+- id: test_d1_databases_string_array
+  type: pass_to_pass
+  origin: pr_diff
+  description: String-array d1Databases form continues to validate.
+- id: test_no_bindings_at_all
+  type: pass_to_pass
+  origin: pr_diff
+  description: Empty config (no kv/d1 bindings) still validates.
+- id: test_kv_namespaces_rejects_garbage_value
+  type: pass_to_pass
+  origin: repo_tests
+  description: Numeric value in kvNamespaces is still rejected.
+- id: test_d1_databases_rejects_object_without_id
+  type: pass_to_pass
+  origin: repo_tests
+  description: D1 object value missing `id` field is still rejected.
+- id: test_miniflare_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's own `pnpm --filter miniflare run check:type` (tsc) must continue to succeed after the patch.
+rubric:
+- rule: Use `pnpm` - never use npm or yarn
+  source:
+    path: AGENTS.md
+    lines: '13'
+    commit: 17a57e641798dca0b298bd91dcdcef6be30d38b6
+  evidence: solve.sh runs `pnpm --filter miniflare run build` for the rebuild step.
+  category: style
+  verification: programmatic
+- rule: Every change to package code requires a changeset
+  source:
+    path: AGENTS.md
+    lines: '161'
+    commit: 17a57e641798dca0b298bd91dcdcef6be30d38b6
+  evidence: solve.sh creates two changeset files under .changeset/.
+  category: testing
+  verification: programmatic
+- rule: No h1/h2/h3 headers in changeset descriptions
+  source:
+    path: AGENTS.md
+    lines: '172'
+    commit: 17a57e641798dca0b298bd91dcdcef6be30d38b6
+  evidence: Changeset content uses plain paragraphs without markdown headers.
+  category: style
+  verification: programmatic
+- rule: No `any` type and no non-null assertions (`!`) introduced
+  source:
+    path: AGENTS.md
+    lines: 92-93
+    commit: 17a57e641798dca0b298bd91dcdcef6be30d38b6
+  evidence: Patch uses z.union and z.object without any type or non-null assertions.
+  category: style
+  verification: programmatic
+- rule: Tabs (not spaces), double quotes, semicolons, trailing commas (es5)
+  source:
+    path: AGENTS.md
+    lines: '104'
+    commit: 17a57e641798dca0b298bd91dcdcef6be30d38b6
+  evidence: Patch diff shows tabs for indentation, double-quoted strings, and semicolons.
+  category: style
+  verification: programmatic
+- rule: Fix is localized to the Zod schemas in `packages/miniflare/src/plugins/kv/index.ts` and `packages/miniflare/src/plugins/d1/index.ts`. The runtime helper `namespaceEntries()` already handles mixed values correctly, so no runtime code should change.
+  source:
+    path: packages/miniflare/AGENTS.md
+    lines: ''
+    commit: 17a57e641798dca0b298bd91dcdcef6be30d38b6
+  evidence: Patch only modifies kv/index.ts and d1/index.ts schema definitions; no runtime helpers changed.
+  category: architecture
+  verification: semantic_diff
+distractors:
+- rule: Use `pnpm` - never use npm or yarn
+  source:
+    path: AGENTS.md
+    lines: '13'
+    commit: 17a57e641798dca0b298bd91dcdcef6be30d38b6
+  collision_type: rule_conflict
+  why_distracting: An agent accustomed to npm/yarn may default to `npm run build` instead of `pnpm --filter miniflare run build`, violating the repo's tooling mandate.
+  severity: high
+- rule: Every change to package code requires a changeset
+  source:
+    path: AGENTS.md
+    lines: '161'
+    commit: 17a57e641798dca0b298bd91dcdcef6be30d38b6
+  collision_type: rule_conflict
+  why_distracting: An agent fixing a two-line schema bug may skip the changeset step, not realizing the repo requires one for every package-code change.
+  severity: medium
+- rule: Look at the `r2Buckets` schema for the pattern that already works
+  source:
+    path: packages/miniflare/src/plugins/r2/index.ts
+    lines: ''
+    commit: 17a57e641798dca0b298bd91dcdcef6be30d38b6
+  collision_type: scope_ambiguity
+  why_distracting: An agent may copy-paste the r2Buckets schema verbatim into kv/d1 schemas instead of adapting the `z.union([z.string(), z.object({...})])` pattern to the correct field names.
+  severity: medium
+- rule: The runtime helper that reads these records already handles both value shapes correctly today — only the schema-level validation is too strict
+  source:
+    path: packages/miniflare/src/plugins/kv/index.ts
+    lines: ''
+    commit: 17a57e641798dca0b298bd91dcdcef6be30d38b6
+  collision_type: would_cause_bug
+  why_distracting: An agent may modify the runtime helper `namespaceEntries()` instead of the Zod schema, introducing unnecessary risk and not fixing the root cause (validation rejection at construction time).
+  severity: high

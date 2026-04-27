@@ -1,0 +1,88 @@
+version: '2.0'
+source:
+  repo: Effect-TS/effect
+  pr: 6065
+  base_commit: 12b1f1eadf649e30dec581b7351ba3abb12f8004
+  merge_commit: 94b00c8e4c5c150f858c95262d0ff1433276ede5
+task:
+  kind: code_fix
+checks:
+- id: test_defect_option_threads_to_defect_schema_property
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Rpc.make({ defect: customSchema }) must expose customSchema as the defectSchema property on the resulting Rpc instance. Fails at base because no such property exists; passes once the option is plumbed through Rpc.make and the Proto interface.'
+- id: test_default_rpc_has_default_defect_schema
+  type: fail_to_pass
+  origin: pr_diff
+  description: Rpc.make() without a defect option must still populate a defectSchema (defaulting to the existing Schema.Defect). Guards against an implementation that only adds the field when the option is provided.
+- id: test_exit_schema_uses_custom_defect_for_round_trip
+  type: fail_to_pass
+  origin: pr_diff
+  description: Rpc.exitSchema(rpc) must use rpc.defectSchema for the defect slot, so a Schema.Unknown defect schema lets a plain object round-trip identically through encode/decode. At base, exitSchema hard-codes Schema.Defect and stringifies non-Error defects.
+- id: test_repo_existing_rpc_tests_still_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: The repository's existing packages/rpc/test/Rpc.test.ts must still pass — guards against regressions in the existing single-handler test.
+- id: test_repo_typecheck_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: pnpm check (project-wide tsc -b) must pass after the change. Required by AGENTS.md.
+- id: test_repo_lint_passes
+  type: pass_to_pass
+  origin: agent_config
+  description: 'pnpm lint (eslint) must pass after the change. AGENTS.md mandates Zero Tolerance for Errors: All automated checks must pass.'
+  source:
+    path: AGENTS.md
+    lines: 11-13, 19
+    commit: 12b1f1eadf649e30dec581b7351ba3abb12f8004
+- id: test_changeset_added_for_rpc
+  type: pass_to_pass
+  origin: agent_config
+  description: AGENTS.md Changesets section requires every PR to add a changeset file under .changeset/, and the file must reference the package being modified (@effect/rpc).
+  source:
+    path: AGENTS.md
+    lines: '41'
+    commit: 12b1f1eadf649e30dec581b7351ba3abb12f8004
+config_edits: []
+rubric:
+- rule: '**Clarity over Cleverness**: Choose clear, maintainable solutions'
+  source:
+    path: AGENTS.md
+    lines: '13'
+    commit: 12b1f1eadf649e30dec581b7351ba3abb12f8004
+  evidence: The defect schema is plumbed through by mirroring existing patterns (successSchema/errorSchema threading through Proto, makeProto, Rpc.make, and exitSchema) rather than introducing a new abstraction.
+  category: architecture
+  verification: llm_judge
+- rule: '**Conciseness**: Keep code and any wording concise and to the point. Sacrifice grammar for the sake of concision.'
+  source:
+    path: AGENTS.md
+    lines: '14'
+    commit: 12b1f1eadf649e30dec581b7351ba3abb12f8004
+  evidence: The diff is concise and avoids inline comments unless absolutely required to explain unusual logic. JSDoc on exported APIs is acceptable.
+  category: style
+  verification: llm_judge
+- rule: '**Always** look at existing code in the repository to learn and follow established patterns before writing new code.'
+  source:
+    path: AGENTS.md
+    lines: 28-29
+    commit: 12b1f1eadf649e30dec581b7351ba3abb12f8004
+  evidence: The new defectSchema field is threaded through every Proto method that already threads other schema fields, and RpcServer.encodeDefect follows the same pattern as encodeExit/encodeChunk.
+  category: architecture
+  verification: llm_judge
+- rule: The `index.ts` files are automatically generated. Do not manually edit them.
+  source:
+    path: AGENTS.md
+    lines: '36'
+    commit: 12b1f1eadf649e30dec581b7351ba3abb12f8004
+  evidence: The gold patch does not edit any packages/*/src/index.ts files.
+  category: architecture
+  verification: semantic_diff
+- rule: Never use `expect` from vitest in Effect tests - use `assert` methods instead
+  source:
+    path: AGENTS.md
+    lines: '66'
+    commit: 12b1f1eadf649e30dec581b7351ba3abb12f8004
+  evidence: Any tests added use import { assert, describe, it } from @effect/vitest and assert.* methods rather than vitest's expect. Effect-based tests use it.effect pattern.
+  category: testing
+  verification: llm_judge
+distractors: []

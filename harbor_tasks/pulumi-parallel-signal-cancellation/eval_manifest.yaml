@@ -1,0 +1,86 @@
+version: '2.0'
+source:
+  repo: pulumi/pulumi
+  pr: 22431
+  base_commit: 7db0e0eb20cf0d3e861c14dcfd34ce71448b138d
+  merge_commit: 1eea1a95bbdd88a5dac38ba0b7b60b6d6272feaa
+task:
+  name: pulumi-parallel-signal-cancellation
+  kind: code_fix
+  difficulty: medium
+  tags:
+  - go
+  - concurrency
+  - pulumi
+  - engine
+checks:
+- id: test_signal_cancellation_resource_and_analyzer_concurrent
+  type: fail_to_pass
+  origin: pr_diff
+  description: Resource provider and analyzer cancellations must run concurrently in phase 1; barrier-style mocks deadlock when iteration is sequential.
+- id: test_signal_cancellation_language_runtimes_concurrent
+  type: fail_to_pass
+  origin: pr_diff
+  description: Language runtime cancellations must run concurrently with each other; barrier-style mocks deadlock when iteration is sequential.
+- id: test_signal_cancellation_passes_deadline_context
+  type: fail_to_pass
+  origin: pr_diff
+  description: Resource and analyzer plugins must receive a context that carries a deadline so well-behaved plugins return promptly.
+- id: test_existing_plugin_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Pre-existing host_test.go tests in the plugin package continue to pass.
+- id: test_plugin_package_builds
+  type: pass_to_pass
+  origin: repo_tests
+  description: The plugin package compiles cleanly (`go vet`) with the new test file installed.
+rubric:
+- rule: A changelog entry under `changelog/pending/` describing the engine fix must be added.
+  source:
+    path: CLAUDE.md
+    lines: '54'
+    commit: 7db0e0eb20cf0d3e861c14dcfd34ce71448b138d
+  evidence: Gold patch creates changelog/pending/20260401--engine--parallelize-plugin-cancellation-in-signalcancellation.yaml
+  category: documentation
+  verification: llm_judge
+- rule: Newly added files (e.g. the changelog entry) carry a 2026 copyright stamp where the repo convention requires one.
+  source:
+    path: CLAUDE.md
+    lines: '57'
+    commit: 7db0e0eb20cf0d3e861c14dcfd34ce71448b138d
+  evidence: Gold patch changelog filename embeds 20260401 date stamp consistent with repo convention
+  category: documentation
+  verification: llm_judge
+- rule: The change is scoped to making cancellation parallel; unrelated code was not refactored or stylistically rewritten.
+  source:
+    path: CLAUDE.md
+    lines: '67'
+    commit: 7db0e0eb20cf0d3e861c14dcfd34ce71448b138d
+  evidence: Gold patch modifies only the SignalCancellation method body in host.go and adds one changelog file
+  category: architecture
+  verification: llm_judge
+- rule: The changed Go file passes `make format`, `make lint`, and the package's fast tests, per the "If you change a .go file" rule.
+  source:
+    path: CLAUDE.md
+    lines: '81'
+    commit: 7db0e0eb20cf0d3e861c14dcfd34ce71448b138d
+  evidence: Gold patch adds only stdlib imports and follows gofumpt-compatible formatting
+  category: style
+  verification: llm_judge
+distractors:
+- rule: Do not add external runtime dependencies without discussion.
+  source:
+    path: CLAUDE.md
+    lines: '65'
+    commit: 7db0e0eb20cf0d3e861c14dcfd34ce71448b138d
+  collision_type: rule_conflict
+  why_distracting: Agent may reach for golang.org/x/sync/errgroup for structured concurrency; gold uses only stdlib sync.WaitGroup and manual error collection.
+  severity: medium
+- rule: A change touches the public SDK surface (exported types/functions in sdk/go/, sdk/nodejs/, sdk/python/). Escalate immediately.
+  source:
+    path: CLAUDE.md
+    lines: '71'
+    commit: 7db0e0eb20cf0d3e861c14dcfd34ce71448b138d
+  collision_type: scope_ambiguity
+  why_distracting: SignalCancellation is an unexported method on an unexported struct in internal plugin code; the sdk/ path prefix may wrongly trigger escalation despite no public API change.
+  severity: medium

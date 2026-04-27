@@ -1,0 +1,106 @@
+version: '2.0'
+source:
+  repo: vitessio/vitess
+  pr: 19725
+  base_commit: 9a3646f7f16d38cec2efabc13cef5da800a72280
+  merge_commit: 9e5141afd5c3488cb4a0aea8168b48bf198790db
+task:
+  kind: code_fix
+checks:
+- id: test_versioned_comment_no_space_before_close
+  type: pass_to_pass
+  origin: pr_diff
+  description: '`SELECT /*!80100 42*/ FROM dual` (no space before closing `*/`) parses to `select 42 from dual`. (Already works on base; behaviour must be preserved by the inline-scanning refactor.)'
+- id: test_versioned_comment_unclosed_emits_lex_error
+  type: fail_to_pass
+  origin: pr_diff
+  description: An unclosed versioned comment such as `SELECT /*!80100 1 + 2` produces `syntax error at position 22`.
+- id: test_versioned_comment_nested_regular_comment
+  type: fail_to_pass
+  origin: pr_diff
+  description: A regular `/* ... */` comment nested one level deep inside a versioned comment is consumed and the surrounding tokens parse normally.
+- id: test_versioned_comment_nested_versioned_in_skipped
+  type: fail_to_pass
+  origin: pr_diff
+  description: When a versioned comment is skipped (parser version below the comment's version), one level of inner `/*!N ... */` is treated as a nested regular comment so the outer block's `*/` is not consumed early.
+- id: test_versioned_comment_short_digits_are_content
+  type: fail_to_pass
+  origin: pr_diff
+  description: Fewer than 5 digits after `/*!` are treated as comment content, not as a version specifier.
+- id: test_versioned_comment_no_digits_treated_as_content
+  type: fail_to_pass
+  origin: pr_diff
+  description: '`select 1/*!2*/;` raises a syntax error because `2` becomes content adjacent to the preceding `1`.'
+- id: test_p2p_sqlparser_package_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Vitess sqlparser package unit tests pass.
+- id: test_p2p_go_vet_clean
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`go vet ./go/vt/sqlparser/...` succeeds.'
+rubric:
+- rule: Always run `gofumpt -w` on changed Go files before committing - this is mandatory
+  source:
+    path: CLAUDE.md
+    lines: '165'
+    commit: 9a3646f7f16d38cec2efabc13cef5da800a72280
+  evidence: Gold patch modifies token.go and comments.go; both pass gofumpt formatting checks.
+  category: style
+  verification: programmatic
+- rule: Always run `goimports -local "vitess.io/vitess" -w` on changed Go files before committing
+  source:
+    path: CLAUDE.md
+    lines: '166'
+    commit: 9a3646f7f16d38cec2efabc13cef5da800a72280
+  evidence: Gold patch imports in token.go and comments.go are properly organized with the vitess.io/vitess local prefix.
+  category: style
+  verification: programmatic
+- rule: No naked returns in non-trivial functions - For functions with named return values, avoid bare `return` and explicitly return all result values (very small helpers are the only exception). This does not prohibit plain `return` in `func f() { ... }` when used for early-exit /guard clauses.
+  source:
+    path: CLAUDE.md
+    lines: '162'
+    commit: 9a3646f7f16d38cec2efabc13cef5da800a72280
+  evidence: Gold patch refactors Scan() and scanMySQLSpecificComment() with explicit return values throughout.
+  category: style
+  verification: llm_judge
+- rule: Reduce nesting - Prefer early returns and guard clauses over deeply nested `if` conditions
+  source:
+    path: CLAUDE.md
+    lines: '163'
+    commit: 9a3646f7f16d38cec2efabc13cef5da800a72280
+  evidence: Gold patch restructures Scan() into a single for/switch loop with early EOF detection and guard clauses.
+  category: style
+  verification: llm_judge
+- rule: To make sure tests are easy to read, we use `github.com/stretchr/testify/assert` and `github.com/stretchr/testify/require` for assertions. Use `assert.Eventually` instead of manual `time.Sleep()` and timeouts. Use `t.Cleanup()` for test cleanup and `t.Context()` for the test's parent context.
+  source:
+    path: CLAUDE.md
+    lines: '70'
+    commit: 9a3646f7f16d38cec2efabc13cef5da800a72280
+  evidence: Gold patch adds TestVersionedCommentParsing using testify assert and require assertions.
+  category: testing
+  verification: llm_judge
+- rule: '### 1. Simple is Better Than Clever'
+  source:
+    path: CLAUDE.md
+    lines: 124-133
+    commit: 9a3646f7f16d38cec2efabc13cef5da800a72280
+  evidence: Gold patch uses a straightforward for/switch loop with guard clauses rather than clever compound expressions or nested control flow.
+  category: architecture
+  verification: llm_judge
+- rule: 'Never directly edit these generated files in `go/vt/sqlparser/`: `sql.go`, `ast_clone.go`, `ast_copy_on_rewrite.go`, `ast_equals.go`, `ast_format_fast.go`, `ast_path.go`, `ast_rewrite.go`, `ast_visit.go`, `cached_size.go`'
+  source:
+    path: CLAUDE.md
+    lines: '181'
+    commit: 9a3646f7f16d38cec2efabc13cef5da800a72280
+  evidence: Gold patch only modifies token.go, comments.go, and test files; none of the generated files are touched.
+  category: architecture
+  verification: programmatic
+- rule: Only do exactly what I ask for - nothing more, nothing less.
+  source:
+    path: CLAUDE.md
+    lines: 20-37
+    commit: 9a3646f7f16d38cec2efabc13cef5da800a72280
+  evidence: Gold patch is scoped exclusively to inline versioned comment scanning; no unrelated cleanup, drive-by improvements, or extra features.
+  category: architecture
+  verification: llm_judge

@@ -1,0 +1,177 @@
+version: '2.0'
+task:
+  name: ruff-ty-typed-dict-name-mismatch
+  kind: code_fix
+  difficulty: medium
+  tags:
+  - rust
+  - type-checker
+  - python-semantics
+  - diagnostic
+  - ruff
+  - ty
+  estimated_minutes: 25
+source:
+  repo: astral-sh/ruff
+  pr_number: 24295
+  pr_url: https://github.com/astral-sh/ruff/pull/24295
+  pr_title: '[ty] Reject functional TypedDict with mismatched name'
+  base_commit: 6728820252f31969cba8258c32b1fe7e7162d5d9
+  merge_commit: e765eb073a4d484ce2c9fdbe266e21fff49d4080
+  pr: 24295
+checks:
+- id: test_diagnostic_emitted_for_mismatched_name
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'ty must emit a diagnostic (non-zero exit) when a functional
+
+    `TypedDict("WrongName", {...})` call is assigned to a variable whose
+
+    identifier does not match `"WrongName"`. Base commit silently accepts
+
+    the mismatch.
+
+    '
+- id: test_diagnostic_mentions_both_names
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'The diagnostic message must include both the typename string literal
+
+    (`WrongName`) and the assigned-to variable identifier (`BadTypedDict3`)
+
+    so the user can identify what to change.
+
+    '
+- id: test_diagnostic_uses_invalid_argument_type_category
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'The diagnostic must be emitted under the `invalid-argument-type` rule,
+
+    consistent with sibling TypedDict argument validation errors.
+
+    '
+- id: test_diagnostic_emitted_for_alternative_mismatch
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'The check must apply to any mismatched (variable, typename) pair, not
+
+    just the literal pair from the PR''s test case. Vary inputs to detect
+
+    hard-coding.
+
+    '
+- id: test_no_false_positive_when_names_match
+  type: pass_to_pass
+  origin: pr_diff
+  description: 'A correctly-named functional TypedDict (typename string equal to the
+
+    variable identifier) must not produce the new diagnostic. Guards
+
+    against an over-broad fix.
+
+    '
+- id: test_pre_existing_invalid_typename_still_diagnosed
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Existing diagnostic for `TypedDict(123, ...)` (non-string typename)
+
+    must continue to fire under `invalid-argument-type`.
+
+    '
+- id: test_ty_accepts_clean_python_file
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Sanity: ty runs cleanly on trivial valid Python with no diagnostics.
+
+    '
+- id: test_ty_binary_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`cargo build --bin ty` succeeds; the agent''s edits must keep the ty
+
+    crate compiling.
+
+    '
+rubric:
+- id: agents_md_no_panic_unwrap
+  source:
+    path: AGENTS.md
+    commit: 6728820252f31969cba8258c32b1fe7e7162d5d9
+  rule: 'Per AGENTS.md "Development Guidelines": avoid `panic!`, `unreachable!`,
+
+    and `.unwrap()` in new code. Encode invariants in the type system or
+
+    handle the missing case explicitly. The added typed_dict.rs code must
+
+    not introduce any of these.
+
+    '
+- id: agents_md_let_chains
+  source:
+    path: AGENTS.md
+    commit: 6728820252f31969cba8258c32b1fe7e7162d5d9
+  rule: 'Per AGENTS.md "Development Guidelines": prefer let-chains
+
+    (`if let Some(x) = ... && cond && let Some(y) = ...`) over nested
+
+    `if let` statements. The mismatch check involves multiple optional
+
+    lookups (definition, assigned name, lint builder) — these should be
+
+    composed in a single let-chain.
+
+    '
+- id: agents_md_concise_diagnostic
+  source:
+    path: AGENTS.md
+    commit: 6728820252f31969cba8258c32b1fe7e7162d5d9
+  rule: 'Per AGENTS.md: "make error messages concise. Think about how an error
+
+    message would look on a narrow terminal screen." The diagnostic
+
+    message naming the mismatch must be a single, terse line; if extra
+
+    context is required it should go in subdiagnostics, not the primary
+
+    message.
+
+    '
+- id: agents_md_imports_at_top
+  source:
+    path: AGENTS.md
+    commit: 6728820252f31969cba8258c32b1fe7e7162d5d9
+  rule: 'Per AGENTS.md: "Rust imports should always go at the top of the file,
+
+    never locally in functions." Any new `use` statements added to support
+
+    the fix must be at the top of `typed_dict.rs`.
+
+    '
+- id: agents_md_existing_utilities
+  source:
+    path: AGENTS.md
+    commit: 6728820252f31969cba8258c32b1fe7e7162d5d9
+  rule: 'Per AGENTS.md: "Avoid writing significant amounts of new code. ... Look
+
+    for existing utilities first." The fix should reuse the existing
+
+    `INVALID_ARGUMENT_TYPE` lint and `report_lint`/`into_diagnostic`
+
+    mechanism already used by sibling argument checks in the same file,
+
+    not introduce a new diagnostic plumbing path.
+
+    '
+- id: agents_md_purposeful_comments
+  source:
+    path: AGENTS.md
+    commit: 6728820252f31969cba8258c32b1fe7e7162d5d9
+  rule: 'Per AGENTS.md: "Use comments purposefully. Don''t use comments to
+
+    narrate code." The fix should not add narrative comments describing
+
+    what the code does; the code should be self-explanatory or annotated
+
+    only for non-obvious invariants.
+
+    '

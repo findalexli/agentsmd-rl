@@ -1,0 +1,189 @@
+version: '2.0'
+task:
+  name: ruff-ty-starred-base-panic
+  kind: code_fix
+  title: ty panics on starred fixed-length-tuple class bases
+  description: 'The per-base lint loop in `check_static_class_definitions` panics with
+
+    `index out of bounds` whenever a starred class base unpacks a
+
+    fixed-length tuple with more than one element. The fix is to iterate
+
+    over `expanded_class_base_entries` (one entry per unpacked element,
+
+    each carrying its own source AST node) instead of indexing into
+
+    `class_node.bases()` by the enumerated position of the expanded list.
+
+    '
+source:
+  repo: astral-sh/ruff
+  pr: 24699
+  pr_url: https://github.com/astral-sh/ruff/pull/24699
+  base_commit: 65d768e4e2a7133b7bcddc4de3027259b4578d8a
+  merge_commit: 742aa29c919198ac133610c5aee97774bcf6dfcb
+checks:
+- id: test_starred_final_tuple_does_not_panic
+  type: fail_to_pass
+  origin: pr_diff
+  description: '`class X(*(int, bool)): ...` must not panic in the per-base lint loop.
+
+    On base ty exits 101 with `error[panic]`; after the fix it exits 1
+
+    with normal lint diagnostics.
+
+    '
+- id: test_starred_final_tuple_emits_subclass_of_final_class
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'With the expanded base list, the `subclass-of-final-class` lint must
+
+    fire on the unpacked `bool` element of `*(int, bool)`.
+
+    '
+- id: test_starred_named_tuple_inheritance_no_panic
+  type: fail_to_pass
+  origin: pr_diff
+  description: '`NamedTuple` class with starred bases must not panic and must report
+
+    `invalid-named-tuple` for each unpacked non-Generic base.
+
+    '
+- id: test_starred_protocol_inheritance_no_panic
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Protocol class with starred bases must not panic and must report
+
+    `invalid-protocol` for each unpacked non-protocol base.
+
+    '
+- id: test_starred_named_variable_no_panic
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Starred bases sourced from a named tuple variable (not an inline
+
+    tuple literal) must also be expanded and lint-checked without
+
+    panicking.
+
+    '
+- id: test_starred_bare_generic_emits_invalid_base
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Unpacked plain `Generic` must hit the per-base `invalid-base` arm.
+
+    '
+- id: test_plain_subclass_of_final_class_still_reported
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Non-starred direct inheritance from a `@final` class must still emit
+
+    `subclass-of-final-class` (guards against the fix dropping the
+
+    diagnostic for the simple case).
+
+    '
+- id: test_simple_module_typechecks_clean
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'A module without any class-definition issues must still type-check
+
+    cleanly (exit 0, no panic).
+
+    '
+- id: test_static_class_crate_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`cargo build --bin ty` from the repo root must succeed (catches
+
+    malformed fixes such as broken let-chains or missing imports).
+
+    '
+rubric:
+- id: tests_must_be_added
+  source:
+    path: AGENTS.md
+    commit: 65d768e4e2a7133b7bcddc4de3027259b4578d8a
+  rule: 'AGENTS.md states: "All changes must be tested. If you''re not testing
+
+    your changes, you''re not done." A correct fix should add at least one
+
+    test case (typically an `mdtest` entry under
+
+    `crates/ty_python_semantic/resources/mdtest/`) covering the
+
+    starred-tuple panic. Mark this rule satisfied if the agent''s diff
+
+    adds or updates an mdtest fixture exercising the new behaviour.
+
+    '
+- id: prefer_let_chains
+  source:
+    path: AGENTS.md
+    commit: 65d768e4e2a7133b7bcddc4de3027259b4578d8a
+  rule: 'AGENTS.md says: "Prefer let chains (`if let` combined with `&&`) over
+
+    nested `if let` statements". The new per-base lint arms touched by
+
+    this fix should keep using let chains rather than re-introducing
+
+    deeply nested `if let` blocks.
+
+    '
+- id: avoid_panics
+  source:
+    path: AGENTS.md
+    commit: 65d768e4e2a7133b7bcddc4de3027259b4578d8a
+  rule: 'AGENTS.md says: "Try hard to avoid patterns that require `panic!`,
+
+    `unreachable!`, or `.unwrap()`." Since the bug is itself an out-of-
+
+    bounds panic, the fix must not paper over the symptom with a
+
+    `.get(i).unwrap()` or `.unwrap_or_else(|| panic!())`; it should
+
+    structurally guarantee the index is valid (e.g. by iterating a
+
+    structure that already carries the source node).
+
+    '
+- id: imports_at_top
+  source:
+    path: AGENTS.md
+    commit: 65d768e4e2a7133b7bcddc4de3027259b4578d8a
+  rule: 'AGENTS.md says: "Rust imports should always go at the top of the
+
+    file, never locally in functions." If the fix needs new imports,
+
+    they belong at the top of `static_class.rs`.
+
+    '
+- id: comments_purposeful
+  source:
+    path: AGENTS.md
+    commit: 65d768e4e2a7133b7bcddc4de3027259b4578d8a
+  rule: 'AGENTS.md says comments should explain *why*, not narrate code. Any
+
+    comments added by the fix should explain the invariant (e.g. why the
+
+    expanded list and the AST list don''t have the same length) rather
+
+    than describing what the next line does.
+
+    '
+- id: avoid_significant_new_code
+  source:
+    path: AGENTS.md
+    commit: 65d768e4e2a7133b7bcddc4de3027259b4578d8a
+  rule: 'AGENTS.md says: "Avoid writing significant amounts of new code. This
+
+    is often a sign that we''re missing an existing method or mechanism
+
+    that could help solve the problem." A correct fix here reuses the
+
+    existing `expanded_class_base_entries` helper rather than inventing
+
+    a new way to walk the bases.
+
+    '
+config_edits: []

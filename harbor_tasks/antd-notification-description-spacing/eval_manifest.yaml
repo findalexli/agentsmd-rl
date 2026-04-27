@@ -1,112 +1,143 @@
-version: 1.0
-
+version: '2.0'
+source:
+  repo: ant-design/ant-design
+  pr: 57590
+  base_commit: 501436e5f45e533679f797ee0ee58e2a391e566d
+  merge_commit: 1d36dfec5be5174376fe54f34a7abd1a7a128e38
 task:
-  name: antd-notification-description-spacing
-  source_pr:
-    repo: ant-design/ant-design
-    number: 57590
-    title: "fix(Notification): reserve close button spacing for description-only notices"
-    base_commit: 501436e5f45e533679f797ee0ee58e2a391e566d
-    merge_commit: 1d36dfec5be5174376fe54f34a7abd1a7a128e38
-
+  kind: code_fix
 checks:
-  # Fail-to-pass tests - verify the fix works
-  - id: test_description_only_notification_behavior
-    type: fail_to_pass
-    origin: pr_diff
-    description: "Behavioral: description-only notification renders correctly (no title div, description is first child, inline-end spacing CSS generated)"
-
-  # Pass-to-pass tests - verify no regressions
-  - id: test_notification_unit_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Repo notification unit tests pass"
-
-  - id: test_lint_passes
-    type: pass_to_pass
-    origin: repo_tests
-    description: "ESLint passes on notification files"
-
-  - id: test_biome_lint_passes
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Biome lint passes on notification files"
-
-  - id: test_notification_hooks_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Notification hooks tests pass"
-
-  - id: test_notification_placement_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Notification placement tests pass"
-
-  - id: test_notification_config_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Notification config tests pass"
-
-# Agent config rules relevant to this PR
-# From CLAUDE.md, AGENTS.md, .github/copilot-instructions.md
+- id: test_description_only_notification_behavior
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Description-only notification renders correctly: no title div, description is first child, inline-end spacing CSS generated'
+- id: test_notification_unit_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo notification unit tests pass
+- id: test_lint_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint passes on notification files
+- id: test_biome_lint_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Biome lint passes on notification files
+- id: test_notification_hooks_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Notification hooks tests pass
+- id: test_notification_placement_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Notification placement tests pass
+- id: test_notification_config_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Notification config tests pass
 rubric:
-  # CSS-in-JS styling rules
-  - id: css_in_js_style
-    rule: "Use @ant-design/cssinjs for styling - never hardcode colors, sizes, spacing"
-    source: ".github/copilot-instructions.md"
-    relevant: true
-
-  - id: design_tokens
-    rule: "Use design tokens from Ant Design token system (e.g., token.marginSM)"
-    source: ".github/copilot-instructions.md"
-    relevant: true
-
-  - id: css_logical_props
-    rule: "Use CSS logical properties for RTL support (e.g., margin-inline-end instead of margin-right)"
-    source: ".github/copilot-instructions.md"
-    relevant: true
-
-  # React/TypeScript rules
-  - id: typescript_strict
-    rule: "Always use TypeScript with strict type checking - never use 'any' type"
-    source: ".github/copilot-instructions.md"
-    relevant: true
-
-  - id: functional_components
-    rule: "Use functional components with hooks exclusively (no class components)"
-    source: ".github/copilot-instructions.md"
-    relevant: true
-
-  - id: conditional_rendering
-    rule: "Use early returns and conditional rendering to improve readability"
-    source: ".github/copilot-instructions.md"
-    relevant: true
-
-  # Test rules
-  - id: test_coverage
-    rule: "Target 100% test coverage - write comprehensive tests using Jest and React Testing Library"
-    source: ".github/copilot-instructions.md"
-    relevant: true
-
-  - id: test_import_relative
-    rule: "In __tests__ directories, use relative paths (../index) to import component code, never absolute paths like 'antd'"
-    source: "CLAUDE.md"
-    relevant: true
-
-  # Demo rules (not relevant for this PR since no demo changes)
-  - id: demo_import_absolute
-    rule: "In demo/ directories, use absolute paths (antd, antd/es/*) to import components, never relative paths"
-    source: "CLAUDE.md"
-    relevant: false
-
-  # Documentation rules
-  - id: changelog_format
-    rule: "Changelog entries should use Emoji prefix, no colon after component name"
-    source: "CLAUDE.md"
-    relevant: false
-
-# Scoring weights
-scoring:
-  fail_to_pass_weight: 0.6
-  pass_to_pass_weight: 0.3
-  rubric_weight: 0.1
+- rule: Use `@ant-design/cssinjs` for all styling
+  source:
+    path: .github/copilot-instructions.md
+    lines: '62'
+    commit: 501436e5f45e533679f797ee0ee58e2a391e566d
+  evidence: Gold patch adds CSS-in-JS style rules in style/index.ts using @ant-design/cssinjs patterns
+  category: style
+  verification: llm_judge
+- rule: Use design tokens from the Ant Design token system
+  source:
+    path: .github/copilot-instructions.md
+    lines: '65'
+    commit: 501436e5f45e533679f797ee0ee58e2a391e566d
+  evidence: Gold patch references token.marginSM and token.marginXS instead of hardcoded pixel values
+  category: style
+  verification: llm_judge
+- rule: Use CSS logical properties for RTL support (e.g., `margin-inline-start` instead of `margin-left`)
+  source:
+    path: .github/copilot-instructions.md
+    lines: '68'
+    commit: 501436e5f45e533679f797ee0ee58e2a391e566d
+  evidence: Gold patch uses margin-inline-end (not margin-right) for RTL-compatible close-button spacing
+  category: style
+  verification: llm_judge
+- rule: Always use TypeScript with strict type checking
+  source:
+    path: .github/copilot-instructions.md
+    lines: '17'
+    commit: 501436e5f45e533679f797ee0ee58e2a391e566d
+  evidence: Gold patch edits .tsx and .ts files with correct TypeScript types, no 'any' usage
+  category: style
+  verification: llm_judge
+- rule: Use functional components with hooks exclusively (no class components)
+  source:
+    path: .github/copilot-instructions.md
+    lines: '27'
+    commit: 501436e5f45e533679f797ee0ee58e2a391e566d
+  evidence: Gold patch works within existing functional component PurePanel, no class components introduced
+  category: architecture
+  verification: llm_judge
+- rule: Use early returns to improve readability
+  source:
+    path: .github/copilot-instructions.md
+    lines: '28'
+    commit: 501436e5f45e533679f797ee0ee58e2a391e566d
+  evidence: Gold patch uses conditional rendering (title && <div>...</div>) to early-return the title element
+  category: style
+  verification: llm_judge
+- rule: Write comprehensive tests using Jest and React Testing Library
+  source:
+    path: .github/copilot-instructions.md
+    lines: '81'
+    commit: 501436e5f45e533679f797ee0ee58e2a391e566d
+  evidence: Gold fix passes all existing Jest and React Testing Library notification tests
+  category: testing
+  verification: programmatic
+- rule: 一律使用相对路径导入，不使用绝对路径导入。
+  source:
+    path: CLAUDE.md
+    lines: '47'
+    commit: 501436e5f45e533679f797ee0ee58e2a391e566d
+  evidence: Gold patch does not introduce absolute imports in test files
+  category: style
+  verification: llm_judge
+- rule: 一律使用绝对路径导入，不使用相对路径导入。
+  source:
+    path: CLAUDE.md
+    lines: '40'
+    commit: 501436e5f45e533679f797ee0ee58e2a391e566d
+  evidence: Gold patch does not modify demo files or introduce relative imports
+  category: style
+  verification: llm_judge
+- rule: '**不加冒号**：组件名后不使用英文冒号'
+  source:
+    path: CLAUDE.md
+    lines: '134'
+    commit: 501436e5f45e533679f797ee0ee58e2a391e566d
+  evidence: Gold patch does not modify changelog files
+  category: style
+  verification: llm_judge
+distractors:
+- rule: Maintain backward compatibility - avoid breaking changes
+  source:
+    path: .github/copilot-instructions.md
+    lines: '31'
+    commit: 501436e5f45e533679f797ee0ee58e2a391e566d
+  collision_type: meta_confusion
+  why_distracting: Could make the model hesitant to change the DOM structure or CSS output, preferring a less invasive fix that avoids structural changes
+  severity: medium
+- rule: Support both light and dark themes
+  source:
+    path: .github/copilot-instructions.md
+    lines: '67'
+    commit: 501436e5f45e533679f797ee0ee58e2a391e566d
+  collision_type: scope_ambiguity
+  why_distracting: Could make the model add unnecessary theme-aware color variables instead of the simpler margin-based fix
+  severity: low
+- rule: Never hardcode colors, sizes, or spacing values
+  source:
+    path: .github/copilot-instructions.md
+    lines: '66'
+    commit: 501436e5f45e533679f797ee0ee58e2a391e566d
+  collision_type: rule_conflict
+  why_distracting: 'Adding marginTop: 0 could be interpreted as hardcoding a spacing value, conflicting with the token-only styling rule'
+  severity: medium

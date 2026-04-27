@@ -1,106 +1,82 @@
-version: "2.0"
-
-# Evaluation manifest for apache/superset#39099
-# Check pre-existing foreign keys on create utility
-
+version: '2.0'
 source:
   repo: apache/superset
   pr_number: 39099
-  pr_title: "fix(migrations): check pre-existing foreign keys on create util"
+  pr_title: 'fix(migrations): check pre-existing foreign keys on create util'
   base_commit: a62be684a05278c026eccf5f2525f7ce605c9be8
   merge_commit: 7c79b9ab6184cf42571f316e81e52767e044fa8d
   primary_file: superset/migrations/shared/utils.py
-
+  pr: 39099
 checks:
-  # Fail-to-pass tests - must fail on base commit, pass after fix
-  - id: test_get_foreign_key_names_exists
-    type: fail_to_pass
-    origin: pr_diff
-    description: Verify get_foreign_key_names() helper function exists
-
-  - id: test_get_foreign_key_names_returns_set
-    type: fail_to_pass
-    origin: pr_diff
-    description: Verify get_foreign_key_names() returns a set of FK names
-
-  - id: test_get_foreign_key_names_empty_table
-    type: fail_to_pass
-    origin: pr_diff
-    description: Verify get_foreign_key_names() handles tables with no FKs
-
-  - id: test_get_foreign_key_names_multiple_tables
-    type: fail_to_pass
-    origin: pr_diff
-    description: Verify get_foreign_key_names() works with different table names
-
-  - id: test_create_fks_skips_existing_foreign_key
-    type: fail_to_pass
-    origin: pr_diff
-    description: Verify create_fks_for_table() skips creating FK if it already exists
-
-  - id: test_create_fks_skips_various_existing_fks
-    type: fail_to_pass
-    origin: pr_diff
-    description: Verify create_fks_for_table() skips for different FK names
-
-  - id: test_drop_fks_uses_helper_function
-    type: fail_to_pass
-    origin: pr_diff
-    description: Verify drop_fks_for_table() uses get_foreign_key_names helper
-
-  # Pass-to-pass tests - must pass on both versions
-  - id: test_syntax_valid
-    type: pass_to_pass
-    origin: static
-    description: Verify utils.py is syntactically valid Python
-
-  - id: test_module_loads
-    type: pass_to_pass
-    origin: static
-    description: Verify utils module can be loaded without errors
-
-  - id: test_has_table_function_exists
-    type: pass_to_pass
-    origin: static
-    description: Verify has_table helper function exists
-
-  - id: test_create_fks_for_table_exists
-    type: pass_to_pass
-    origin: static
-    description: Verify create_fks_for_table function exists
-
-  - id: test_drop_fks_for_table_exists
-    type: pass_to_pass
-    origin: static
-    description: Verify drop_fks_for_table function exists
-
-  - id: test_type_hints_present
-    type: pass_to_pass
-    origin: agent_config
-    description: Verify modified functions have type hints
-    source:
-      file: AGENTS.md
-      rule: "Add type hints - All new Python code needs proper typing"
-
-  - id: test_logging_imported
-    type: pass_to_pass
-    origin: static
-    description: Verify logging functionality is available
-
-  # Repo CI tests - actual subprocess commands
-  - id: test_repo_ruff_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: Ruff linter passes on the modified file
-
-  - id: test_repo_ruff_format
-    type: pass_to_pass
-    origin: repo_tests
-    description: Ruff format check passes on the modified file
-
-  - id: test_repo_imports_valid
-    type: pass_to_pass
-    origin: static
-    description: Verify import statements are valid AST
-
+- id: test_get_foreign_key_names_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: Verify get_foreign_key_names() helper function exists
+- id: test_get_foreign_key_names_returns_set
+  type: fail_to_pass
+  origin: pr_diff
+  description: Verify get_foreign_key_names() returns a set of FK names
+- id: test_get_foreign_key_names_empty_table
+  type: fail_to_pass
+  origin: pr_diff
+  description: Verify get_foreign_key_names() handles tables with no FKs
+- id: test_get_foreign_key_names_multiple_tables
+  type: fail_to_pass
+  origin: pr_diff
+  description: Verify get_foreign_key_names() works with different table names
+- id: test_create_fks_skips_existing_foreign_key
+  type: fail_to_pass
+  origin: pr_diff
+  description: Verify create_fks_for_table() skips creating FK if it already exists
+- id: test_create_fks_skips_various_existing_fks
+  type: fail_to_pass
+  origin: pr_diff
+  description: Verify create_fks_for_table() skips for different FK names
+- id: test_drop_fks_uses_helper_function
+  type: fail_to_pass
+  origin: pr_diff
+  description: Verify drop_fks_for_table() uses get_foreign_key_names helper
+- id: test_syntax_valid
+  type: pass_to_pass
+  origin: static
+  description: Verify utils.py is syntactically valid Python
+- id: test_module_loads
+  type: pass_to_pass
+  origin: static
+  description: Verify utils module can be loaded without errors
+- id: test_has_table_function_exists
+  type: pass_to_pass
+  origin: static
+  description: Verify has_table helper function exists
+- id: test_create_fks_for_table_exists
+  type: pass_to_pass
+  origin: static
+  description: Verify create_fks_for_table function exists
+- id: test_drop_fks_for_table_exists
+  type: pass_to_pass
+  origin: static
+  description: Verify drop_fks_for_table function exists
+- id: test_type_hints_present
+  type: pass_to_pass
+  origin: agent_config
+  description: Verify modified functions have type hints
+  source:
+    rule: Add type hints - All new Python code needs proper typing
+    path: AGENTS.md
+- id: test_logging_imported
+  type: pass_to_pass
+  origin: static
+  description: Verify logging functionality is available
+- id: test_repo_ruff_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff linter passes on the modified file
+- id: test_repo_ruff_format
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff format check passes on the modified file
+- id: test_repo_imports_valid
+  type: pass_to_pass
+  origin: static
+  description: Verify import statements are valid AST
 rubric: []

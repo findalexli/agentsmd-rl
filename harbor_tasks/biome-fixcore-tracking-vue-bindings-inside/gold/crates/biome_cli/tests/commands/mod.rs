@@ -1,0 +1,14 @@
+mod check;
+mod ci;
+mod explain;
+mod format;
+mod init;
+mod lint;
+mod lsp_proxy;
+mod migrate;
+mod migrate_eslint;
+mod migrate_prettier;
+mod rage;
+mod search;
+mod start;
+mod version;

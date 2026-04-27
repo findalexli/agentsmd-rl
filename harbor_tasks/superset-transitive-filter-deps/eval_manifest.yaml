@@ -1,0 +1,58 @@
+version: '2.0'
+task:
+  name: superset-transitive-filter-deps
+  kind: code_fix
+  title: Fix transitive ancestor filter chain in dashboard native filters
+source:
+  repo: apache/superset
+  pr_number: 39504
+  pr_url: https://github.com/apache/superset/pull/39504
+  base_commit: 73c4240ba4780c0adafa68ffbd2c12f4c1673854
+  merge_commit: 18d89f25ce4db6258a01d409dd516003b1df7f0c
+  pr: 39504
+checks:
+- id: test_full_transitive_chain_oracle
+  type: fail_to_pass
+  origin: pr_diff
+  description: A dependency chain A -> B -> C -> D where each level lists only its direct parent must propagate every ancestor's `extra_form_data` to D on the first Apply. The buggy implementation walks only direct `cascadeParentIds` and so omits transitive ancestors. Verified end-to-end via jest by calling `useFilterDependencies('D', ...)` and asserting the merged filter list contains every ancestor's clause.
+- id: test_filtercontrols_existing_jest_suite_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Upstream FilterControls.test.tsx must still pass — guards against regressions in adjacent native-filter code.
+rubric:
+- id: no_any_types
+  source:
+    excerpt: NO `any` types - Use proper TypeScript types
+    path: AGENTS.md
+    commit: 73c4240ba4780c0adafa68ffbd2c12f4c1673854
+  rule: AGENTS.md and .cursor/rules/dev-standard.mdc both prohibit `any` in new TypeScript code. The fix should not introduce `any` types in modified or new files.
+- id: jest_test_style_no_describe_nesting
+  source:
+    excerpt: Use `test()` instead of `describe()` - Follow avoid nesting when testing principles
+    path: AGENTS.md
+    commit: 73c4240ba4780c0adafa68ffbd2c12f4c1673854
+  rule: AGENTS.md instructs contributors to "Use `test()` instead of `describe()`" and to follow the "avoid nesting when testing" principle. Any new jest tests added by the fix should be flat `test()` calls rather than nested `describe()` blocks.
+- id: apache_license_headers_on_new_files
+  source:
+    excerpt: New files require ASF license headers
+    path: AGENTS.md
+    commit: 73c4240ba4780c0adafa68ffbd2c12f4c1673854
+  rule: AGENTS.md requires "New files require ASF license headers". Any newly created `.ts`/`.tsx` files in the fix must begin with the standard Apache Software Foundation license header.
+- id: timeless_code_comments
+  source:
+    excerpt: Avoid time-specific language - Don't use words like "now", "currently", "today" in code comments
+    path: AGENTS.md
+    commit: 73c4240ba4780c0adafa68ffbd2c12f4c1673854
+  rule: 'AGENTS.md''s Code Comments rule: avoid time-specific words like "now", "currently", "today" in code comments — they go stale.'
+- id: prefer_unit_tests
+  source:
+    excerpt: Prefer unit tests over integration tests
+    path: AGENTS.md
+    commit: 73c4240ba4780c0adafa68ffbd2c12f4c1673854
+  rule: 'AGENTS.md testing strategy: "Prefer unit tests over integration tests". The behavioral coverage for this fix should land as jest unit tests close to the code under change, not as Cypress/Playwright E2E additions.'
+- id: jest_react_testing_library_only
+  source:
+    excerpt: Use Jest + React Testing Library for component testing
+    path: AGENTS.md
+    commit: 73c4240ba4780c0adafa68ffbd2c12f4c1673854
+  rule: AGENTS.md and .cursor/rules/dev-standard.mdc both require Jest + React Testing Library for component/hook testing and explicitly prohibit Enzyme. The fix's test coverage must use jest + @testing-library, not Enzyme.

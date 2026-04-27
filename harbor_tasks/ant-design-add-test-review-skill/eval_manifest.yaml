@@ -1,0 +1,432 @@
+version: '2.0'
+source:
+  repo: ant-design/ant-design
+  pr: 57628
+  base_commit: 3db46e98f1743a2116ad90d30405136a5ff22ab5
+  merge_commit: 3921639a66437a380bc8517f425460ebc012b12d
+task:
+  kind: markdown_authoring
+  description: Add a new agent skill file at .agents/skills/test-review/SKILL.md that codifies how to triage Ant Design unit tests — distinguishing tests that guard independent contracts from tautological "用 A 证明 A" tests, implementation-detail assertions, and duplicate coverage. The skill must default to static review (not run tests) and prescribe a three-way verdict vocabulary.
+checks:
+- id: test_skill_file_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: The new SKILL.md exists at .agents/skills/test-review/SKILL.md (matches sibling-skill convention).
+- id: test_skill_frontmatter_name
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Frontmatter contains `name: antd-test-review` so the skill loader can resolve it by name.'
+- id: test_skill_frontmatter_description_field
+  type: fail_to_pass
+  origin: pr_diff
+  description: Frontmatter contains a substantive `description:` field (>=20 chars) so the skill is discoverable.
+- id: test_skill_description_mentions_review_intent
+  type: fail_to_pass
+  origin: pr_diff
+  description: Description signals review/audit intent (审查 / review) and references 测试 — required for keyword-matched skill triggering.
+- id: test_skill_anti_pattern_keyword_present
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Body articulates the central anti-pattern this skill catches: "用 A 证明 A" (the PR''s stated motivation).'
+- id: test_skill_default_no_run_tests
+  type: fail_to_pass
+  origin: pr_diff
+  description: Body encodes the rule that the skill defaults to 静态审查 and does not run tests by default.
+- id: test_skill_three_verdict_categories
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Body prescribes a fixed three-way verdict vocabulary: 此用例可保留 / 此用例需要改写 / 此用例无实际作用.'
+- id: test_skill_minimum_body_length
+  type: fail_to_pass
+  origin: pr_diff
+  description: Body is substantive (>=1500 chars) — guards against stub skills.
+- id: test_existing_sibling_skills_unchanged
+  type: pass_to_pass
+  origin: repo_tests
+  description: The 5 existing sibling skills under .agents/skills/ remain present (PR adds a new skill rather than replacing existing ones).
+- id: test_repo_root_configs_intact
+  type: pass_to_pass
+  origin: repo_tests
+  description: Root-level CLAUDE.md and AGENTS.md remain tracked.
+config_edits:
+- path: .agents/skills/test-review/SKILL.md
+  tier: 1
+  gold_added: '---
+
+    name: antd-test-review
+
+    description: 审查 ant-design 测试用例是否值得保留。在用户要求验证测试 case、review 测试质量、判断测试是否合理、是否"用 A 证明 A"、是否重复、是否锁定实现细节，或决定测试应删除、保留还是改写时使用。
+
+    ---
+
+
+    # Ant Design 测试用例审查
+
+
+    ## 目标
+
+
+    一、只判断测试用例是否合理，不负责创建或补充测试。
+
+
+    二、优先识别"用 a 证明 a"、实现细节自证、重复覆盖这类低价值测试。
+
+
+    三、验证场景默认只做静态审查，不默认运行测试。
+
+
+    四、输出先给结论，再给最关键原因。
+
+
+    ## 何时使用
+
+
+    当用户提到以下意图时使用此 skill：
+
+
+    - 验证测试 case
+
+    - review 测试是否合理
+
+    - 判断测试是否无意义
+
+    - 判断测试是否重复
+
+    - 判断测试是不是"用 a 证明 a"
+
+    - 决定测试应保留、改写还是删除
+
+
+    ## 不做的事
+
+
+    - 不主动新增测试
+
+    - 不主动补回归测试
+
+    - 不主动修改生产代码
+
+    - 不默认执行 `npm test`、`npm run test:update`
+
+
+    如果用户明确要求"顺手给改写建议"，可以在结论后补一句改写方向；但主任务仍然是审查，不是落地实现。
+
+
+    ## 核心判断
+
+
+    ### 一、先看契约是否独立
+
+
+    先用一句话描述这条测试声称在保护什么：
+
+
+    `当 <前置条件> 时，<组件/方法> 应该 <可观察结果>。`
+
+
+    如果这句话只能从当前实现反推出来，这条测试大概率不值得保留。
+
+
+    ### 二、expected 必须来自独立来源
+
+
+    高质量来源包括：
+
+
+    - issue / PR 里明确描述的回归现象
+
+    - 组件文档、API、demo、FAQ
+
+    - DOM / React / WAI-ARIA / 浏览器语义
+
+    - 用户可感知的文本、属性、交互、布局结果
+
+
+    低质量来源包括：
+
+
+    - 生产代码里的同一个 helper、token、常量、分支逻辑
+
+    - 在测试里复制一遍实现
+
+    - "因为实现可能要这样写，所以我断言它这样写了"
+
+
+    ### 三、优先审查外部行为，不审查实现细节
+
+
+    优先级：
+
+
+    1. DOM / 文本 / 属性 / role / aria
+
+    2. callback 的触发与参数
+
+    3. 用户或使用方能观察到的行为结果
+
+    4. 只有存在独立契约时，class / style 才能作为代理信号
+
+
+    如果断言锁定的是具体 CSS 属性、临时 class、内部状态或中间过程，默认先判低价值。
+
+
+    ### 四、默认拦截样式实现自证
+
+
+    以下写法默认按"无实际作用"或"需要改写"处理，除非能证明它对应公开契约：
+
+
+    - `toHaveStyle(...)`
+
+    - `toHaveClass(...)`
+
+    - 断言具体 CSS 属性、CSS 变量、临时 class 存在
+
+
+    典型反例：
+
+
+    - `expect(node).toHaveStyle({ whiteSpace: ''nowrap'' })`
+
+
+    如果它只是验证"实现里加了 `nowrap`"，而不是验证独立可感知行为，就属于"用 A 证明 A"。
+
+
+    ### 五、重复覆盖也应判低价值
+
+
+    以下情况优先判为重复或冗余：
+
+
+    - 已有 `mountTest`、`rtlTest` 或其他聚焦行为测试覆盖相同契约
+
+    - 同一组件已有相同 props 组合和同类断言
+
+    - 新 case 只是换文案、换变量名、换写法，没有新增行为分支
+
+
+    ## 输出要求
+
+
+    默认只输出最终结论，不写调研过程。
+
+
+    格式：
+
+
+    ```text
+
+    结论：此用例无实际作用 / 此用例可保留 / 此用例需要改写
+
+    原因：
+
+    - ...
+
+    - ...
+
+    ```
+
+
+    规则：
+
+
+    - 先下结论，再给原因
+
+    - 原因保留 2 到 4 条即可
+
+    - 不要先讲命令、搜索过程、推理链
+
+    - 除非用户追问，否则不要展开长篇建议
+
+
+    ## 执行流程
+
+
+    ### 1. 静态审查优先
+
+
+    当用户是在验证测试是否合理时：
+
+
+    - 默认只读代码、diff、文档、demo、已有测试
+
+    - 默认不运行测试
+
+    - 不把"能不能跑过"当成主要判断依据
+
+
+    只有用户明确要求"跑一下""验证 red/green"时，才执行测试命令。
+
+
+    ### 2. 提炼被保护的契约
+
+
+    先回答：
+
+
+    - 这条测试到底想保护什么公开行为？
+
+
+    如果回答不稳，优先判为：
+
+
+    `结论：此用例无实际作用。`
+
+
+    ### 3. 查独立依据
+
+
+    从以下位置找证据：
+
+
+    - 当前 PR / issue 描述
+
+    - 组件文档与 demo
+
+    - 现有测试
+
+    - 外部语义规范
+
+
+    如果找不到独立依据，而 expected 又来自实现本身，直接判低价值。
+
+
+    ### 4. 查是否重复
+
+
+    需要时搜索现有覆盖：
+
+
+    ```bash
+
+    rg -n "<关键字>|<issue号>|<行为描述>" components/<component> tests
+
+    ```
+
+
+    如果同一契约已经被保护，新 case 通常应判为冗余。
+
+
+    ### 5. 给出分类结论
+
+
+    分类标准：
+
+
+    - `此用例可保留` 条件：契约独立、断言面向外部行为、不是重复覆盖
+
+    - `此用例需要改写` 条件：测试意图可能对，但断言方式锁定实现或证据不足
+
+    - `此用例无实际作用` 条件：expected 同源、实现自证、重复覆盖、只测存在性、只测内部细节
+
+
+    ## Ant Design 约束
+
+
+    - `__tests__` 中引用仓库内代码时使用相对路径
+
+    - 优先沿用目标组件现有测试结构与 helper
+
+    - 对样式问题，先问"能否用更外层行为表达"，再接受 style/class 断言
+
+
+    ## 快速拦截
+
+
+    以下情况默认直接质疑：
+
+
+    - 输入 `a`，expected 也从同一路径算出 `a`
+
+    - 断言私有 helper / hook / 中间 state
+
+    - 断言 `className`、`whiteSpace`、`display`、`zIndex` 等具体实现
+
+    - 在已有 `mountTest`、`rtlTest` 旁边再补同类 case
+
+    - 只做 `toBeTruthy()` / `toBeDefined()` 这类存在性断言
+
+    '
+  gold_removed: ''
+rubric:
+- rule: The frontmatter is a valid YAML block (proper `---` delimiters, `name:` and `description:` fields parseable as YAML scalars).
+  source:
+    path: .agents/skills/changelog-collect/SKILL.md
+    lines: ''
+    commit: 3db46e98f1743a2116ad90d30405136a5ff22ab5
+  evidence: 'Gold SKILL.md frontmatter uses standard YAML --- delimiters with name: and description: scalars matching sibling skill convention.'
+  category: naming
+  verification: llm_judge
+- rule: The skill body is written primarily in Chinese (consistent with sibling skills like changelog-collect, create-pr, issue-reply, which are written in Chinese for the ant-design contributor base).
+  source:
+    path: .agents/skills/changelog-collect/SKILL.md
+    lines: ''
+    commit: 3db46e98f1743a2116ad90d30405136a5ff22ab5
+  evidence: Gold SKILL.md body uses Chinese headings and prose throughout, matching sibling skills like changelog-collect.
+  category: style
+  verification: llm_judge
+- rule: The skill explains the principle that a test's `expected` value must come from an independent source (issue/PR text, docs, DOM semantics, user-observable behavior) rather than from the same production helper, token, or branch logic the test is meant to guard.
+  source:
+    path: .agents/skills/test-review/SKILL.md
+    lines: ''
+    commit: 3921639a66437a380bc8517f425460ebc012b12d
+  evidence: Gold SKILL.md sections 一 and 二 explain contract independence and require expected values from external sources like issues, docs, or DOM semantics.
+  category: testing
+  verification: llm_judge
+- rule: The skill flags style/class-only assertions (e.g., toHaveStyle, toHaveClass, asserting whiteSpace / display / a transient className) as low-value when no independent contract justifies them.
+  source:
+    path: .agents/skills/test-review/SKILL.md
+    lines: ''
+    commit: 3921639a66437a380bc8517f425460ebc012b12d
+  evidence: 'Gold SKILL.md section 四 explicitly names toHaveStyle/toHaveClass and gives `expect(node).toHaveStyle({ whiteSpace: ''nowrap'' })` as the canonical anti-pattern.'
+  category: testing
+  verification: llm_judge
+- rule: The skill identifies duplicate coverage as a low-value pattern — e.g., adding a test next to an existing mountTest / rtlTest, or a test with the same props/assertion combination as an existing one, with no new behavioural branch.
+  source:
+    path: .agents/skills/test-review/SKILL.md
+    lines: ''
+    commit: 3921639a66437a380bc8517f425460ebc012b12d
+  evidence: Gold SKILL.md section 五 explicitly names mountTest/rtlTest as existing coverage and requires new behavioural branches to justify additional tests.
+  category: testing
+  verification: llm_judge
+- rule: 'The skill prescribes the output format: a single verdict line followed by a small bulleted list of reasons (2-4 items), conclusion-first, no long preamble.'
+  source:
+    path: .agents/skills/test-review/SKILL.md
+    lines: ''
+    commit: 3921639a66437a380bc8517f425460ebc012b12d
+  evidence: Gold SKILL.md 输出要求 section defines the 结论/原因 output shape with 2-4 bulleted reasons and conclusion-first ordering.
+  category: style
+  verification: llm_judge
+- rule: 'Any guidance the skill gives on test imports is consistent with the repo''s CLAUDE.md / AGENTS.md rule: tests under components/**/__tests__/ use relative imports for in-repo code, not absolute / antd / antd/es paths.'
+  source:
+    path: CLAUDE.md
+    lines: 44-51
+    commit: 3db46e98f1743a2116ad90d30405136a5ff22ab5
+  evidence: Gold SKILL.md Ant Design 约束 section mandates relative imports inside __tests__, matching CLAUDE.md Test 导入规范 at lines 44-51.
+  category: architecture
+  verification: llm_judge
+distractors:
+- rule: CLAUDE.md Demo 导入规范 requires absolute imports (antd, antd/es/*) for demo/ and .dumi/ files; an agent may misapply this demo rule to test files.
+  source:
+    path: CLAUDE.md
+    lines: 35-42
+    commit: 3db46e98f1743a2116ad90d30405136a5ff22ab5
+  collision_type: scope_ambiguity
+  why_distracting: 'The two adjacent import rules in CLAUDE.md (Demo: absolute, Test: relative) share the same file and similar structure; an agent could cross-wire them and enforce absolute imports in the skill''s test guidance.'
+  severity: medium
+- rule: AGENTS.md is a byte-for-byte copy of CLAUDE.md; an agent reading both may waste time comparing them or become uncertain which one is authoritative.
+  source:
+    path: AGENTS.md
+    lines: 1-5
+    commit: 3db46e98f1743a2116ad90d30405136a5ff22ab5
+  collision_type: meta_confusion
+  why_distracting: Two identical root-level config files create ambiguity about precedence and may cause the agent to double-check both unnecessarily.
+  severity: low
+- rule: CLAUDE.md 文档规范 section prescribes a fixed API table format (Property/Description/Type/Default/Version columns); an agent might constrain the SKILL.md body to this tabular format instead of free-form markdown.
+  source:
+    path: CLAUDE.md
+    lines: 57-61
+    commit: 3db46e98f1743a2116ad90d30405136a5ff22ab5
+  collision_type: scope_ambiguity
+  why_distracting: The API table format rule is scoped to component documentation but lives near other formatting rules; an agent could incorrectly apply it to the new skill file's body structure.
+  severity: low

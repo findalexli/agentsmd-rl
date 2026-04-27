@@ -1,0 +1,155 @@
+version: '2.0'
+source:
+  repo: ant-design/ant-design
+  pr: 57572
+  base_commit: 7be2b3111741ecfa4bc00d9047080ca14f4bea77
+  merge_commit: 50ec179b8dfb4b994a641839bd786fe11fc0194b
+task:
+  name: ant-design-changelog-collect-skill-frontmatter
+  kind: markdown_authoring
+  difficulty: easy
+  tags:
+  - markdown
+  - agent-instructions
+  - skill-loader
+  - yaml-frontmatter
+checks:
+- id: test_repo_present
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo clone is intact at the base commit
+- id: test_skill_file_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: The target SKILL.md file is still present
+- id: test_skill_md_has_yaml_frontmatter
+  type: fail_to_pass
+  origin: pr_diff
+  description: SKILL.md must begin with a YAML frontmatter block delimited by `---`
+- id: test_frontmatter_name_field_correct
+  type: fail_to_pass
+  origin: pr_diff
+  description: Frontmatter `name` field must equal `changelog-collect`
+- id: test_frontmatter_description_present_and_substantive
+  type: fail_to_pass
+  origin: pr_diff
+  description: Frontmatter `description` field must be present and substantive
+- id: test_skill_body_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: The original skill body content is preserved
+- id: test_sibling_skills_unchanged
+  type: pass_to_pass
+  origin: repo_tests
+  description: Sibling SKILL.md files remain valid and unchanged
+- id: test_git_diff_only_touches_target_skill
+  type: pass_to_pass
+  origin: pr_diff
+  description: Only the changelog-collect SKILL.md is modified
+config_edits:
+- path: .agents/skills/changelog-collect/SKILL.md
+  tier: 1
+  gold_added: '---
+
+    name: changelog-collect
+
+    description: 收集 ant-design 两个版本之间的 PR 信息并整理 changelog 草稿，更新到 CHANGELOG.zh-CN.md 和 CHANGELOG.en-US.md 时使用。适用于收集 changelog、生成 changelog、更新 changelog、版本对比等场景。
+
+    ---
+
+    '
+  gold_removed: ''
+  diff_hunk: "@@ -1,3 +1,8 @@\n+---\n+name: changelog-collect\n+description: 收集 ant-design 两个版本之间的 PR 信息并整理 changelog 草稿，更新到 CHANGELOG.zh-CN.md 和 CHANGELOG.en-US.md 时使用。适用于收集 changelog、生成 changelog、更新 changelog、版本对比等场景。\n+---\n+\n # Changelog 收集工具\n\n ## 目标\n"
+rubric:
+- rule: 'Each `.agents/skills/<name>/SKILL.md` must begin with YAML frontmatter
+
+    providing at minimum `name:` and `description:` fields, matching the
+
+    pattern used by the sibling skills (commit-msg, create-pr, issue-reply,
+
+    version-release). Skills without this header are skipped at load time.
+
+    '
+  source:
+    path: .agents/skills/commit-msg/SKILL.md
+    lines: 1-4
+    commit: 7be2b3111741ecfa4bc00d9047080ca14f4bea77
+  evidence: 'The gold patch adds a frontmatter block with `name: changelog-collect`
+
+    and a Chinese description naming the trigger phrases (收集 changelog,
+
+    生成 changelog, etc.) — mirroring the format of the four sibling
+
+    skills'' frontmatter.
+
+    '
+  category: agent-instructions
+  verification: semantic_diff
+- rule: 'The `name` value in a SKILL.md frontmatter must match the skill''s
+
+    directory name (e.g., the file under `.agents/skills/changelog-collect/`
+
+    must declare `name: changelog-collect`).
+
+    '
+  source:
+    path: .agents/skills/create-pr/SKILL.md
+    lines: '2'
+    commit: 7be2b3111741ecfa4bc00d9047080ca14f4bea77
+  evidence: 'All four sibling skills follow this convention; the gold patch does
+
+    the same for `changelog-collect`.
+
+    '
+  category: agent-instructions
+  verification: semantic_diff
+- rule: 'Skill descriptions must explain the skill''s purpose and the trigger
+
+    conditions/keywords (when the skill should be invoked) so the agent
+
+    harness can route requests to the correct skill — not a placeholder
+
+    one-liner.
+
+    '
+  source:
+    path: .agents/skills/issue-reply/SKILL.md
+    lines: 2-3
+    commit: 7be2b3111741ecfa4bc00d9047080ca14f4bea77
+  evidence: 'The gold description names the target files (CHANGELOG.zh-CN.md /
+
+    CHANGELOG.en-US.md) and lists trigger phrases (收集 changelog, 生成
+
+    changelog, 更新 changelog, 版本对比), following the same pattern as
+
+    sibling skills'' descriptions.
+
+    '
+  category: agent-instructions
+  verification: llm_judge
+- rule: 'When fixing an agent-instruction file, do not modify unrelated files
+
+    or alter the existing skill body content (workflow steps, command
+
+    examples, etc.).
+
+    '
+  source:
+    path: AGENTS.md
+    lines: 85-86
+    commit: 7be2b3111741ecfa4bc00d9047080ca14f4bea77
+  evidence: 'The gold patch only adds a 5-line frontmatter block to one file;
+
+    the existing 200+ lines of skill body remain byte-identical.
+
+    '
+  category: scope
+  verification: programmatic
+  check_cmd: 'cd /workspace/ant-design && \
+
+    test "$(git diff --name-only HEAD | wc -l)" = "1" && \
+
+    git diff --name-only HEAD | grep -q ''^.agents/skills/changelog-collect/SKILL.md$''
+
+    '
+distractors: []

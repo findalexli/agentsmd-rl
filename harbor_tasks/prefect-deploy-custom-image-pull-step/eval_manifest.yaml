@@ -1,0 +1,91 @@
+version: '2.0'
+task:
+  name: prefect-deploy-custom-image-pull-step
+  title: Fix `prefect deploy` pull step for custom Docker images without build step
+source:
+  type: github_pr
+  owner: PrefectHQ
+  repo: prefect
+  pr_number: 21356
+  pr_url: https://github.com/PrefectHQ/prefect/pull/21356
+  merge_commit: 5d6c8b414284806d14c9494c1a02da9b995f922b
+  base_commit: 2a145258b1e6ece42efa8fbbe8bc1a190b7cd1f0
+  pr: 21356
+checks:
+- id: test_non_interactive_custom_image_uses_container_path
+  type: fail_to_pass
+  origin: pr_diff
+  description: Non-interactive deploy with a custom job_variables.image returns a `/opt/prefect` pull step instead of the host cwd.
+- id: test_non_interactive_custom_image_prints_warning
+  type: fail_to_pass
+  origin: pr_diff
+  description: Non-interactive path emits a warning that mentions Warning, /opt/prefect, set_working_directory, and prefect.yaml.
+- id: test_interactive_custom_image_prompts_for_directory
+  type: fail_to_pass
+  origin: pr_diff
+  description: Interactive path calls prompt() once with a "working directory" question and default=/opt/prefect/<dirname>, and uses the prompt result.
+- id: test_interactive_default_varies_with_cwd
+  type: fail_to_pass
+  origin: pr_diff
+  description: Interactive prompt's default reflects the current basename(os.getcwd()), proving it is computed not hardcoded.
+- id: test_no_image_falls_back_to_local_cwd
+  type: pass_to_pass
+  origin: pr_diff
+  description: Missing image key still falls back to the local-cwd pull step (existing behavior preserved).
+- id: test_empty_image_string_falls_back_to_local_cwd
+  type: pass_to_pass
+  origin: pr_diff
+  description: Empty-string image is falsy and must NOT trigger the new container fallback (regression guard).
+- id: test_image_in_actions_build_step_not_treated_as_custom_image
+  type: pass_to_pass
+  origin: pr_diff
+  description: A build_docker_image step in `actions["build"]` keeps its existing precedence over the new code path (regression guard).
+- id: test_p2p_build_docker_step_auto_dockerfile_unchanged
+  type: pass_to_pass
+  origin: pr_diff
+  description: Existing build_docker_image (dockerfile=auto) flow is untouched.
+- id: test_p2p_module_imports_cleanly
+  type: pass_to_pass
+  origin: repo_tests
+  description: prefect.cli.deploy._actions imports without errors after edit.
+- id: test_p2p_ruff_check_actions_file
+  type: pass_to_pass
+  origin: agent_config
+  description: Repo's ruff lint passes on the edited file.
+  source:
+    lines: 'Lint: `uv run ruff check --fix .`'
+    commit: 2a145258b1e6ece42efa8fbbe8bc1a190b7cd1f0
+    path: AGENTS.md
+- id: test_p2p_ruff_format_actions_file
+  type: pass_to_pass
+  origin: agent_config
+  description: Repo's ruff format check passes on the edited file.
+  source:
+    lines: 'Format: `uv run ruff format .`'
+    commit: 2a145258b1e6ece42efa8fbbe8bc1a190b7cd1f0
+    path: AGENTS.md
+rubric:
+- id: rich_console_output
+  source:
+    lines: Use `rich` for all output. Console output via `rich.console`
+    commit: 2a145258b1e6ece42efa8fbbe8bc1a190b7cd1f0
+    path: src/prefect/cli/AGENTS.md
+  rule: All console output goes through `rich`-style `console.print(...)`. The fix must not introduce raw `print(...)`, `sys.stdout.write`, or logging calls for user-facing messages in the deploy pull-step path.
+- id: no_deferred_imports
+  source:
+    lines: Never use deferred imports (imports inside functions) unless required to break circular imports or for optional dependencies
+    commit: 2a145258b1e6ece42efa8fbbe8bc1a190b7cd1f0
+    path: AGENTS.md
+  rule: New imports needed by the fix should sit at module top of `_actions.py` (or be unnecessary because `os`, `prompt`, etc. are already imported). Do not add deferred (function-local) imports unless required to break a circular dependency.
+- id: private_helper_naming
+  source:
+    lines: 'Code Conventions: Private implementation details (`_private_method`)'
+    commit: 2a145258b1e6ece42efa8fbbe8bc1a190b7cd1f0
+    path: AGENTS.md
+  rule: Any new helper added during the fix must follow the `_private_method` underscore convention used for internal helpers in `prefect.cli.deploy._actions`.
+- id: minimal_public_api_change
+  source:
+    lines: No public API changes without approval
+    commit: 2a145258b1e6ece42efa8fbbe8bc1a190b7cd1f0
+    path: AGENTS.md
+  rule: Do not change the public API. The signature of `_generate_default_pull_action` (and any sibling helper) must stay the same; the fix is internal.

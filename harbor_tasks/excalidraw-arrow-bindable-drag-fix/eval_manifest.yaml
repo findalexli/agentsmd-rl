@@ -1,100 +1,52 @@
-source_pr:
-  owner: excalidraw
-  repo: excalidraw
-  pr_number: 10676
+version: '2.0'
+source:
+  repo: excalidraw/excalidraw
+  pr: 10676
   base_commit: 60ab14c2f633112613843eec3c049f6da0f566e8
   merge_commit: 9ba0f5dbc9d551aad9277341a82449e04043c5ae
-  title: "fix: Arrow drag start in bindable area jumps across bindable"
-
-target_files:
-  - packages/element/src/binding.ts
-
-patch_diff: |
-  diff --git a/packages/element/src/binding.ts b/packages/element/src/binding.ts
-  index 1a519b1c98db..c29c8702609b 100644
-  --- a/packages/element/src/binding.ts
-  +++ b/packages/element/src/binding.ts
-  @@ -15,6 +15,7 @@ import {
-     pointFrom,
-     pointFromVector,
-     pointRotateRads,
-  +  pointsEqual,
-     vectorFromPoint,
-     vectorNormalize,
-     vectorScale,
-  @@ -1602,7 +1603,12 @@ export const updateBoundPoint = (
-     if (
-       binding == null ||
-       // We only need to update the other end if this is a 2 point line element
-  -    (binding.elementId !== bindableElement.id && arrow.points.length > 2)
-  +    (binding.elementId !== bindableElement.id && arrow.points.length > 2) ||
-  +    // Initial arrow created on pointer down needs to not update the points
-  +    pointsEqual(
-  +      arrow.points[arrow.points.length - 1],
-  +      pointFrom<LocalPoint>(0, 0),
-  +    )
-     ) {
-       return null;
-     }
-
+task:
+  kind: code_fix
 checks:
-  # Fail-to-pass tests - these verify the fix works
-  - id: test_updateBoundPoint_initial_arrow_check_exists
-    type: fail_to_pass
-    origin: task_tests
-    description: "Verify the fix adds the initial arrow state check with pointsEqual"
-
-  - id: test_updateBoundPoint_returns_null_for_initial_arrow
-    type: fail_to_pass
-    origin: task_tests
-    description: "Verify the pointsEqual check causes early return null for initial arrows"
-
-  - id: test_pointsEqual_function_imported
-    type: fail_to_pass
-    origin: task_tests
-    description: "Verify pointsEqual is properly imported from the math module"
-
-  # Pass-to-pass tests - these verify nothing is broken
-  - id: test_repo_typecheck
-    type: pass_to_pass
-    origin: repo_tests
-    description: "TypeScript code compiles without errors (yarn test:typecheck)"
-
-  - id: test_repo_lint
-    type: pass_to_pass
-    origin: repo_tests
-    description: "ESLint passes without errors (yarn test:code)"
-
-  - id: test_repo_prettier
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Prettier formatting check passes (yarn test:other)"
-
-  - id: test_repo_dragcreate_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Drag creation tests pass including arrow creation tests"
-
-  - id: test_repo_flip_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Flip element tests pass including bound text and arrow tests"
-
-  - id: test_repo_regression_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Regression tests pass ensuring no old bugs are reintroduced"
-
-  - id: test_repo_clipboard_tests
-    type: pass_to_pass
-    origin: repo_tests
-    description: "Clipboard tests pass verifying serialization/deserialization works"
-
-# No agent config files were found in the excalidraw repo at base commit
+- id: test_updateBoundPoint_initial_arrow_check_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: Verify the fix adds the initial arrow state check with pointsEqual
+- id: test_updateBoundPoint_returns_null_for_initial_arrow
+  type: fail_to_pass
+  origin: pr_diff
+  description: Verify the pointsEqual check causes early return null for initial arrows
+- id: test_pointsEqual_function_imported
+  type: fail_to_pass
+  origin: pr_diff
+  description: Verify pointsEqual is properly imported from the math module
+- id: test_repo_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: TypeScript code compiles without errors (yarn test:typecheck)
+- id: test_repo_lint
+  type: pass_to_pass
+  origin: repo_tests
+  description: ESLint passes without errors (yarn test:code)
+- id: test_repo_prettier
+  type: pass_to_pass
+  origin: repo_tests
+  description: Prettier formatting check passes (yarn test:other)
+- id: test_repo_dragcreate_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Drag creation tests pass including arrow creation tests
+- id: test_repo_flip_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Flip element tests pass including bound text and arrow tests
+- id: test_repo_regression_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Regression tests pass ensuring no old bugs are reintroduced
+- id: test_repo_clipboard_tests
+  type: pass_to_pass
+  origin: repo_tests
+  description: Clipboard tests pass verifying serialization/deserialization works
+config_edits: []
 rubric: []
-
-scoring:
-  total_checks: 10
-  passing_threshold: 1.0  # All tests must pass
-  f2p_weight: 0.3
-  p2p_weight: 0.7
+distractors: []

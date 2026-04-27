@@ -1,0 +1,84 @@
+version: '2.0'
+task:
+  name: selenium-bazel-file-level-test-index
+  kind: code_fix
+  difficulty: medium
+  language: ruby
+source:
+  owner: SeleniumHQ
+  repo: selenium
+  pr_number: 17033
+  pr_url: https://github.com/SeleniumHQ/selenium/pull/17033
+  base_commit: 3334f0fd26025d51919292712bcda64a7edf5859
+  merge_commit: 36b25ca188b2547d319c0d80e561d36d0e96e7d2
+  pr: 17033
+checks:
+- id: test_high_impact_pattern_matches_required_dirs
+  type: fail_to_pass
+  origin: pr_diff
+  description: HIGH_IMPACT_PATTERN must match files under common/, rust/src/, javascript/atoms/, and javascript/webdriver/atoms/ at directory boundaries.
+- id: test_high_impact_pattern_excludes_unrelated_dirs
+  type: fail_to_pass
+  origin: pr_diff
+  description: HIGH_IMPACT_PATTERN must not match sibling-prefix paths (e.g. 'mycommon/...') or non-listed top-level dirs (e.g. 'java/...', 'rust/foo.rs' which is outside rust/src/).
+- id: test_high_impact_dirs_constant_value
+  type: fail_to_pass
+  origin: pr_diff
+  description: HIGH_IMPACT_DIRS must contain exactly the four documented entries ('common', 'rust/src', 'javascript/atoms', 'javascript/webdriver/atoms') and must not contain plain 'rust'.
+- id: test_index_lookup_uses_filepath_keys
+  type: fail_to_pass
+  origin: pr_diff
+  description: affected_targets_with_index must look up tests by full relative file path, returning the mapped tests directly when the index is keyed by file paths.
+- id: test_index_lookup_with_multiple_files
+  type: fail_to_pass
+  origin: pr_diff
+  description: Multiple changed files must union their mapped tests in the affected set (file-level lookup composes correctly).
+- id: test_build_test_index_emits_filepath_keys
+  type: fail_to_pass
+  origin: pr_diff
+  description: bazel:build_test_index must emit JSON keyed by relative source file paths (each key contains '/'), not by bare Bazel package names.
+- id: test_rake_file_ruby_syntax_valid
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`ruby -c rake_tasks/bazel.rake` succeeds — the rake file remains valid Ruby after the change.'
+- id: test_rake_file_loads_with_stubbed_bazel
+  type: pass_to_pass
+  origin: repo_tests
+  description: The rake file loads under the test driver with Bazel.execute stubbed (no missing constants, no unresolved requires).
+rubric:
+- id: api_abi_compat_preserved
+  source:
+    ref: Maintain API/ABI compatibility - users upgrade by changing only version number
+    commit: 3334f0fd26025d51919292712bcda64a7edf5859
+    path: AGENTS.md
+  rule: Public API/ABI of the rake tasks (their names, accepted arguments, and the JSON shape of the produced index) is preserved or extended compatibly. Selenium does not follow semver; users upgrade by changing only the version string, so renames or removals of argument names or output paths visible to callers are flagged.
+- id: small_reversible_diff
+  source:
+    ref: Avoid repo-wide refactors/formatting; prefer small, reversible diffs
+    commit: 3334f0fd26025d51919292712bcda64a7edf5859
+    path: AGENTS.md
+  rule: Changes stay within rake_tasks/bazel.rake (and, where strictly required, the .github/workflows/ files that reference the index artifact name). No incidental refactors of unrelated rake files, no formatting churn elsewhere in the repo.
+- id: comments_explain_why
+  source:
+    ref: Comments should explain *why*, not *what* - prefer well-named methods over comments
+    commit: 3334f0fd26025d51919292712bcda64a7edf5859
+    path: AGENTS.md
+  rule: Any comments added explain *why* a piece of logic exists (e.g. "dotnet tests depend on java server but no remote tests exist"), not *what* the next line literally does. Prefer descriptive method names over restating-the-code comments.
+- id: pr_focused_one_thing
+  source:
+    ref: PRs should focus on one thing; we squash PRs to default `trunk` branch
+    commit: 3334f0fd26025d51919292712bcda64a7edf5859
+    path: AGENTS.md
+  rule: The PR scope stays focused on file-level test-target indexing. Unrelated drive-by changes (touching python.rake, java.rake, Bazel build files, dependency bumps, etc.) are flagged.
+- id: prefer_copy_to_recreate
+  source:
+    ref: Prefer copying files to deleting and recreating to maintain git history
+    commit: 3334f0fd26025d51919292712bcda64a7edf5859
+    path: AGENTS.md
+  rule: If a helper is renamed (e.g. a fallback function), the change is done by editing the existing function in place rather than deleting and recreating, so git history is preserved.
+- id: high_risk_callout
+  source:
+    ref: rake_tasks/, .github/, Rakefile (tooling/build) — High risk changes (request verification before modifying unless explicitly instructed)
+    commit: 3334f0fd26025d51919292712bcda64a7edf5859
+    path: AGENTS.md
+  rule: '`rake_tasks/` is listed in AGENTS.md as a high-risk tooling area. The PR description, commit message, or code comments should call out that this is build/CI tooling and note any cross-binding impact (e.g. how Python coverage changes).'

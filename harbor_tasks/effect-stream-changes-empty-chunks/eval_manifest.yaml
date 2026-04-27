@@ -1,0 +1,86 @@
+version: '2.0'
+source:
+  repo: Effect-TS/effect
+  pr_number: 6062
+  pr_title: prevent Stream.changes from writing empty chunks
+  base_commit: ed4531817716dbf52e1d59ac4d3614ef5a1dae71
+  merge_commit: 12b1f1eadf649e30dec581b7351ba3abb12f8004
+  pr: 6062
+checks:
+- id: test_changes_empty_chunk_regression_passes
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'A regression vitest suite (constructed by the test harness) that pipes Stream.changes through Stream.chunks must observe no zero-length chunks. Fails on base because changesWith always writes the reduced chunk, even when empty.
+
+    '
+- id: test_no_empty_chunks_emitted_via_inline_script
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Independent tsx-runnable probe that constructs a fromChunks stream where every input chunk is duplicates and asserts via process.exit() that no empty chunk is emitted downstream.
+
+    '
+- id: test_existing_changing_test_still_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'The repo''s existing packages/effect/test/Stream/changing.test.ts must still pass — verifies the fix does not regress the public output.
+
+    '
+- id: test_typecheck_target_file
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`pnpm check` (tsc -b tsconfig.json) on packages/effect must succeed. Mirrors the repo''s CI typecheck job.
+
+    '
+- id: test_no_index_ts_modified
+  type: pass_to_pass
+  origin: agent_config
+  description: 'AGENTS.md states barrel index.ts files are codegen-only; verify the submitted diff does not hand-edit any packages/effect/src/.../index.ts.
+
+    '
+  source:
+    lines: 30-32
+    commit: ed4531817716dbf52e1d59ac4d3614ef5a1dae71
+    path: AGENTS.md
+- id: test_changeset_added
+  type: fail_to_pass
+  origin: agent_config
+  description: 'AGENTS.md mandates that every PR include a changeset under .changeset/. Fails on base (no changeset present) and passes on gold (changeset added by the patch).
+
+    '
+  source:
+    lines: 37-40
+    commit: ed4531817716dbf52e1d59ac4d3614ef5a1dae71
+    path: AGENTS.md
+rubric:
+- id: clarity_over_cleverness
+  source:
+    lines: '13'
+    commit: ed4531817716dbf52e1d59ac4d3614ef5a1dae71
+    path: AGENTS.md
+  rule: 'AGENTS.md: "Clarity over Cleverness — Choose clear, maintainable solutions". The fix should be a clear, minimal guard against empty chunks, not an elaborate restructuring of changesWith.
+
+    '
+- id: conciseness
+  source:
+    lines: '14'
+    commit: ed4531817716dbf52e1d59ac4d3614ef5a1dae71
+    path: AGENTS.md
+  rule: 'AGENTS.md: "Conciseness — Keep code and any wording concise and to the point." Patch must be minimal — no unrelated refactors.
+
+    '
+- id: reduce_comments
+  source:
+    lines: '15'
+    commit: ed4531817716dbf52e1d59ac4d3614ef5a1dae71
+    path: AGENTS.md
+  rule: 'AGENTS.md: "Reduce comments — Avoid comments unless absolutely required to explain unusual or complex logic. Comments in jsdocs are acceptable." The patch should not add inline narrative comments.
+
+    '
+- id: follow_existing_patterns
+  source:
+    lines: 26-27
+    commit: ed4531817716dbf52e1d59ac4d3614ef5a1dae71
+    path: AGENTS.md
+  rule: 'AGENTS.md: "Always look at existing code in the repository to learn and follow established patterns before writing new code." The fix should use the same Chunk / Option / core.flatMap idioms already used in changesWith.
+
+    '

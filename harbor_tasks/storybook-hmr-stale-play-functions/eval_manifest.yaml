@@ -1,0 +1,113 @@
+version: '2.0'
+source:
+  repo: storybookjs/storybook
+  pr: 33930
+  base_commit: 5a9c6ecd7559ee8c7adbe30fb4b0894e369d144b
+  merge_commit: 2b6c4da20192051b2d0f1c719a1eda841d2fd306
+task:
+  kind: code_fix
+checks:
+- id: test_iframe_codegen_snapshots_match
+  type: fail_to_pass
+  origin: repo_tests
+  description: 'The Vite iframe codegen must produce HMR code that emits STORY_HOT_UPDATED from inside import.meta.hot.accept (not from a separate vite:afterUpdate listener). Validated via the upstream snapshot tests.
+
+    '
+- id: test_index_json_emits_once_for_two_paths_in_batch
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'STORY_INDEX_INVALIDATED must fire only once even when the watch batch processes two distinct paths (which produces two maybeInvalidate calls back-to-back). With a leading+trailing debounce that yields two emits (leading from call-1 + trailing from call-2). With trailing-only it yields exactly one emit. The upstream "only emits once per file change" test (single onChange) does NOT distinguish the two configs because es-toolkit''s debounce only fires the trailing edge if pendingArgs are still set — leading clears them — so this scaffold test exercises the multi-call case explicitly.
+
+    '
+- id: test_project_annotations_codegen_structure
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'The Vite project-annotations codegen must emit STORY_HOT_UPDATED inside each import.meta.hot.accept callback BEFORE invoking onGetProjectAnnotationsChanged, in both CSF4 and non-CSF4 branches.
+
+    '
+- id: test_webpack5_template_emits_in_accept
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'The webpack5 modern-entry template must emit STORY_HOT_UPDATED at the top of each webpackHot.accept callback (before onStoriesChanged / onGetProjectAnnotationsChanged) and must NOT use addStatusHandler(''idle'').
+
+    '
+- id: test_index_json_debounces_invalidation_events
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Existing upstream test ''debounces invalidation events'' that exercises the registered route through the Watchpack mock — passes on both base and gold (the assertion logic is compatible with both edge configs).
+
+    '
+rubric:
+- rule: 'Any newly added logging in source files must use `logger` from `storybook/internal/node-logger` (server-side) or `storybook/internal/client-logger` (browser-side), not `console.log`, `console.warn`, or `console.error`.
+
+    '
+  source:
+    path: .github/copilot-instructions.md
+    lines: 375-399
+    commit: 5a9c6ecd7559ee8c7adbe30fb4b0894e369d144b
+  evidence: 'The gold patch does not introduce any new console.log/warn/error calls; all changed files already import the appropriate logger or do not add logging.
+
+    '
+  category: style
+  verification: llm_judge
+- rule: 'All modified `.ts`, `.tsx`, `.js`, `.jsx`, `.mjs`, `.json`, `.html` files must pass ESLint with the repo''s lint config (the lint-staged pre-commit hook runs `yarn lint:js:cmd --fix`).
+
+    '
+  source:
+    path: code/package.json
+    lines: 51-53
+    commit: 5a9c6ecd7559ee8c7adbe30fb4b0894e369d144b
+  evidence: 'The gold patch modifies .ts and .js files that pass ESLint; the solve.sh does not add any lint-disabling comments.
+
+    '
+  category: style
+  verification: llm_judge
+- rule: 'If new `vi.mock()` calls are added to test files, they must use the `spy: true` option, be placed at the top of the file before any test cases, use `vi.mocked()` to access mocked functions, and configure mock behaviors inside `beforeEach`.
+
+    '
+  source:
+    path: .cursor/rules/spy-mocking.mdc
+    lines: 13-17
+    commit: 5a9c6ecd7559ee8c7adbe30fb4b0894e369d144b
+  evidence: 'The scaffold test files use vi.mock() with spy: true, place mocks at file top, use vi.mocked() in beforeEach, matching the spy-mocking convention.
+
+    '
+  category: testing
+  verification: programmatic
+distractors:
+- rule: 'After making file changes, always run both formatting and linting checks: Prettier format first with `yarn prettier --write <file>`, then check linting with `yarn lint:js:cmd <file>`.
+
+    '
+  source:
+    path: .github/copilot-instructions.md
+    lines: 351-354
+    commit: 5a9c6ecd7559ee8c7adbe30fb4b0894e369d144b
+  collision_type: rule_conflict
+  why_distracting: 'The lint-staged pre-commit hook only runs ESLint (not Prettier) on staged files. Requiring Prettier before ESLint contradicts the automated enforcement and may cause confusion about which formatting step is actually gating.
+
+    '
+  severity: medium
+- rule: 'DO NOT use `console.log`, `console.warn`, or `console.error` directly unless in isolated files where importing loggers would significantly increase bundle size.
+
+    '
+  source:
+    path: .github/copilot-instructions.md
+    lines: '399'
+    commit: 5a9c6ecd7559ee8c7adbe30fb4b0894e369d144b
+  collision_type: scope_ambiguity
+  why_distracting: 'The ''isolated files'' exception is vague — it is not defined what constitutes a ''significant'' bundle size increase. This ambiguity may cause hesitation about when console.* is acceptable in utility files like index-json.ts versus codegen files.
+
+    '
+  severity: low
+- rule: 'Mock at the highest level of abstraction needed.
+
+    '
+  source:
+    path: .cursor/rules/spy-mocking.mdc
+    lines: '39'
+    commit: 5a9c6ecd7559ee8c7adbe30fb4b0894e369d144b
+  collision_type: scope_ambiguity
+  why_distracting: '''Highest level of abstraction'' is subjective — for the index-json test one could mock at the Watchpack level, the debounce level, or the channel level. The scaffold test mocks at multiple levels (Watchpack, es-toolkit, logger, constants) which may seem to violate this guideline.
+
+    '
+  severity: low

@@ -1,0 +1,152 @@
+version: '2.0'
+source:
+  repo: gohugoio/hugo
+  pr: 14727
+  issue: 14681
+  base_commit: 0755872424182a99520ab27f54df29ba2bcccddc
+  merge_commit: 58927aa14ae7e6679ca4533a15362fa99c61247a
+  fix_commit: 6c1dc1c2918d
+task:
+  name: hugo-multilingual-section-autocreate
+  title: Fix auto-creation of root sections in multilingual Hugo sites
+checks:
+- id: test_hugolib_compiles
+  type: pass_to_pass
+  origin: pr_diff
+  description: 'hugolib package compiles cleanly. Sanity check before running
+
+    behavioral tests; any syntax / import error here will dominate
+
+    the diagnostic output of the f2p test.
+
+    '
+- id: test_multilingual_section_autocreate
+  type: fail_to_pass
+  origin: repo_tests
+  description: 'With a multilingual site that has content under content/<lang>/s1/
+
+    in three languages and no _index.md for the section, building the
+
+    site must produce public/<lang>/s1/index.html for all three
+
+    languages (de, en, fr). On the base commit, only one of the three
+
+    pages is emitted.
+
+    '
+  source:
+    repo: gohugoio/hugo
+    pr: 14727
+    test: TestPublishMultilingualSectionCreation
+    path: hugolib/language_content_dir_test.go
+- id: test_existing_language_content_root_still_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'The existing TestLanguageContentRoot test in hugolib must continue
+
+    to pass — guards against regressions in the per-language
+
+    contentDir resolution that the fix touches.
+
+    '
+- id: test_existing_smoke_tests_still_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'A small set of Hugo smoke tests (TestHello, TestContentMountMerge,
+
+    TestIssue13993) must continue to pass — these are the cheapest
+
+    hugolib tests that cover the broader build pipeline.
+
+    '
+- id: test_repo_gofmt_clean
+  type: pass_to_pass
+  origin: agent_config
+  description: 'All Go files under hugolib/ are gofmt-clean. Hugo''s check.sh
+
+    enforces this in CI and in AGENTS.md the project insists on
+
+    cleanliness via ./check.sh.
+
+    '
+  source:
+    lines: 13-14
+    commit: 0755872424182a99520ab27f54df29ba2bcccddc
+    path: AGENTS.md
+- id: test_no_hdebug_printf_left_behind
+  type: pass_to_pass
+  origin: agent_config
+  description: 'No leftover hdebug.Printf calls remain in
+
+    hugolib/content_map_page_assembler.go. AGENTS.md explicitly warns
+
+    that CI builds fail if debug printing is forgotten in merged code.
+
+    '
+  source:
+    lines: '5'
+    commit: 0755872424182a99520ab27f54df29ba2bcccddc
+    path: AGENTS.md
+rubric:
+- id: brevity_in_code_and_comments
+  source:
+    lines: 1, 12
+    commit: 0755872424182a99520ab27f54df29ba2bcccddc
+    path: AGENTS.md
+  rule: 'Code, comments, and commit messages should be brief. No
+
+    multi-paragraph block comments restating what the code already
+
+    says, no novel-length explanations.
+
+    '
+- id: prefer_existing_helpers
+  source:
+    lines: '8'
+    commit: 0755872424182a99520ab27f54df29ba2bcccddc
+    path: AGENTS.md
+  rule: 'The Hugo codebase has a long history; before introducing a new
+
+    helper or mechanism, the contributor should look hard for an
+
+    existing one. The fix should reuse existing primitives in
+
+    hugolib (path parsing, content-tree walking, language vectors,
+
+    post-walk hooks) rather than re-implementing them.
+
+    '
+- id: no_unnecessary_exports
+  source:
+    lines: '6'
+    commit: 0755872424182a99520ab27f54df29ba2bcccddc
+    path: AGENTS.md
+  rule: 'The fix must not export symbols that are not needed outside the
+
+    hugolib package. New helpers should remain unexported (lowercase)
+
+    unless an external package needs them.
+
+    '
+- id: avoid_global_state
+  source:
+    lines: '7'
+    commit: 0755872424182a99520ab27f54df29ba2bcccddc
+    path: AGENTS.md
+  rule: 'The fix must not introduce package-level mutable state. Per-build
+
+    state belongs on the assembler / walker context, not on globals.
+
+    '
+- id: self_explanatory_names
+  source:
+    lines: 2-4
+    commit: 0755872424182a99520ab27f54df29ba2bcccddc
+    path: AGENTS.md
+  rule: 'Variable and function names should be self-explanatory; the
+
+    project uses short names where context is clear and avoids
+
+    restating obvious behavior in comments.
+
+    '

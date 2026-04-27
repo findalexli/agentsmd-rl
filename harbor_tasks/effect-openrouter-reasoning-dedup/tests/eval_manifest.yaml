@@ -1,0 +1,132 @@
+version: "2.0"
+
+source:
+  repo: Effect-TS/effect
+  pr_number: 6060
+  pr_url: https://github.com/Effect-TS/effect/pull/6060
+  pr_title: "fix(ai-openrouter): deduplicate reasoning parts when streaming"
+  base_commit: 52cd53115fe14e2b9c36dd0d51eb490aead74ee6
+  merge_commit: c3e706ff4d01c70ae1754b13c9cbc1f001c09068
+
+task:
+  name: effect-openrouter-reasoning-dedup
+  title: Deduplicate reasoning stream parts in @effect/ai-openrouter
+  primary_files:
+    - packages/ai/openrouter/src/OpenRouterLanguageModel.ts
+
+checks:
+  - id: test_no_duplicate_reasoning_when_both_present
+    type: fail_to_pass
+    origin: behavior
+    description: >-
+      A delta with both `reasoning` and `reasoning_details` produces exactly
+      one `reasoning-delta` part, not two. Reproduces the original bug.
+
+  - id: test_uses_reasoning_details_when_both_present
+    type: fail_to_pass
+    origin: behavior
+    description: >-
+      When both fields are present with different content, only the value
+      from `reasoning_details` is emitted (the plain `reasoning` field is
+      suppressed in that case).
+
+  - id: test_dedup_across_multiple_chunks
+    type: fail_to_pass
+    origin: behavior
+    description: >-
+      Dedup holds across a multi-chunk stream: N input chunks each carrying
+      both fields produce exactly N reasoning-delta parts, not 2N.
+
+  - id: test_fallback_to_reasoning_when_details_absent
+    type: pass_to_pass
+    origin: behavior
+    description: >-
+      When `reasoning_details` is absent, the plain `reasoning` field is
+      still emitted as the sole reasoning-delta.
+
+  - id: test_fallback_to_reasoning_when_details_empty
+    type: pass_to_pass
+    origin: behavior
+    description: >-
+      When `reasoning_details` is an empty array, the plain `reasoning` field
+      is still emitted as the sole reasoning-delta (empty array must be
+      treated like absent).
+
+  - id: test_no_reasoning_emitted_when_neither_present
+    type: pass_to_pass
+    origin: behavior
+    description: >-
+      When neither `reasoning` nor `reasoning_details` is present, no
+      reasoning parts are emitted for that delta.
+
+  - id: test_repo_typecheck_openrouter
+    type: pass_to_pass
+    origin: repo_tests
+    description: >-
+      `pnpm check` (i.e. `tsc -b tsconfig.json`) succeeds in
+      `packages/ai/openrouter`.
+
+  - id: test_repo_lint_openrouter
+    type: pass_to_pass
+    origin: repo_tests
+    description: >-
+      `pnpm lint packages/ai/openrouter` (ESLint + dprint) passes.
+
+  - id: test_changeset_added
+    type: fail_to_pass
+    origin: agent_config
+    description: >-
+      A new file under `.changeset/` declares a patch bump for
+      `@effect/ai-openrouter`. Required by AGENTS.md.
+    source:
+      file: AGENTS.md
+      commit: 52cd53115fe14e2b9c36dd0d51eb490aead74ee6
+      lines: "39-42"
+
+rubric:
+  - id: minimal_comments
+    description: >-
+      AGENTS.md "Reduce comments": the agent should not introduce new
+      explanatory comments inside `OpenRouterLanguageModel.ts` that describe
+      *what* the code is doing (JSDoc on exported APIs is fine). The fix is
+      a small structural change and does not need a comment to explain it.
+    source:
+      file: AGENTS.md
+      commit: 52cd53115fe14e2b9c36dd0d51eb490aead74ee6
+      lines: "15"
+
+  - id: no_unrelated_refactors
+    description: >-
+      AGENTS.md "Conciseness" + "Clarity over Cleverness": the diff should
+      be confined to the streaming decoder fix and the changeset file. The
+      agent should not refactor unrelated functions, rename identifiers,
+      reorder imports, or rewrite surrounding logic.
+    source:
+      file: AGENTS.md
+      commit: 52cd53115fe14e2b9c36dd0d51eb490aead74ee6
+      lines: "13-14"
+
+  - id: changeset_describes_user_visible_change
+    description: >-
+      The new `.changeset/*.md` body should briefly describe the
+      user-visible behaviour change (duplicate reasoning parts being
+      eliminated when both `reasoning` and `reasoning_details` are present)
+      rather than restating the implementation detail (e.g. "use else if").
+      AGENTS.md mandates a changeset and the project uses changesets to
+      drive its CHANGELOG.
+    source:
+      file: AGENTS.md
+      commit: 52cd53115fe14e2b9c36dd0d51eb490aead74ee6
+      lines: "39-42"
+
+  - id: prefers_existing_patterns
+    description: >-
+      AGENTS.md "Always look at existing code in the repository to learn
+      and follow established patterns before writing new code." The fix
+      should use the same `Predicate.isNotNullable` and `length > 0` style
+      already present in the surrounding emission blocks rather than
+      introducing new helpers.
+    source:
+      file: AGENTS.md
+      commit: 52cd53115fe14e2b9c36dd0d51eb490aead74ee6
+      lines: "28-29"

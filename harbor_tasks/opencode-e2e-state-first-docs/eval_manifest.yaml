@@ -1,0 +1,110 @@
+version: '2.0'
+source:
+  repo: anomalyco/opencode
+  pr: 17267
+  base_commit: dcb17c6a678918ce0786640729fcc8cd8adb1746
+  merge_commit: 96b1d8f639991e896bc8d31afe64d6309bf3ccd2
+task:
+  name: opencode-e2e-state-first-docs
+  kind: markdown_authoring
+  difficulty: easy
+  tags:
+  - docs
+  - agents-md
+  - e2e
+  - playwright
+checks:
+- id: test_guide_file_present
+  type: pass_to_pass
+  origin: repo_tests
+  description: The e2e testing guide exists at packages/app/e2e/AGENTS.md.
+- id: test_section_wait_on_state
+  type: fail_to_pass
+  origin: pr_diff
+  description: An H3 section titled 'Wait on state' was added.
+- id: test_section_add_hooks
+  type: fail_to_pass
+  origin: pr_diff
+  description: An H3 section titled 'Add hooks' was added.
+- id: test_section_prefer_helpers
+  type: fail_to_pass
+  origin: pr_diff
+  description: An H3 section titled 'Prefer helpers' was added.
+- id: test_wait_on_state_mentions_waitForTimeout
+  type: fail_to_pass
+  origin: pr_diff
+  description: The 'Wait on state' section names `page.waitForTimeout` as the wall-clock anti-pattern.
+- id: test_add_hooks_references_terminal_driver_style
+  type: fail_to_pass
+  origin: pr_diff
+  description: The 'Add hooks' section cites `packages/app/src/testing/terminal.ts` as the style template.
+config_edits:
+- path: packages/app/e2e/AGENTS.md
+  tier: 1
+  gold_added: '### Wait on state
+
+
+    - Never use wall-clock waits like `page.waitForTimeout(...)` to make a test pass
+
+    - Avoid race-prone flows that assume work is finished after an action
+
+    - Wait or poll on observable state with `expect(...)`, `expect.poll(...)`, or existing helpers
+
+    - Prefer locator assertions like `toBeVisible()`, `toHaveCount(0)`, and `toHaveAttribute(...)` for normal UI state, and reserve `expect.poll(...)` for probe, mock, or backend state
+
+
+    ### Add hooks
+
+
+    - If required state is not observable from the UI, add a small test-only driver or probe in app code instead of sleeps or fragile DOM checks
+
+    - Keep these hooks minimal and purpose-built, following the style of `packages/app/src/testing/terminal.ts`
+
+    - Test-only hooks must be inert unless explicitly enabled; do not add normal-runtime listeners, reactive subscriptions, or per-update allocations for e2e ceremony
+
+    - When mocking routes or APIs, expose explicit mock state and wait on that before asserting post-action UI
+
+
+    ### Prefer helpers
+
+
+    - Prefer fluent helpers and drivers when they make intent obvious and reduce locator-heavy noise
+
+    - Use direct locators when the interaction is simple and a helper would not add clarity
+
+    '
+  gold_removed: ''
+  diff_hunk: "@@ -176,6 +176,25 @@ await page.keyboard.press(`${modKey}+Comma`) // Open settings\n  - These helpers use the fixture-enabled test-only terminal driver and wait for output after the terminal writer settles.\n  - Avoid `waitForTimeout` and custom DOM or `data-*` readiness checks.\n\n +### Wait on state\n +\n +- Never use wall-clock waits like `page.waitForTimeout(...)` to make a test pass\n +- Avoid race-prone flows that assume work is finished after an action\n +- Wait or poll on observable state with `expect(...)`, `expect.poll(...)`, or existing helpers\n +- Prefer locator assertions like `toBeVisible()`, `toHaveCount(0)`, and `toHaveAttribute(...)` for normal UI state, and reserve `expect.poll(...)` for probe, mock, or backend state\n +\n +### Add hooks\n +\n +- If required state is not observable from the UI, add a small test-only driver or probe in app code instead of sleeps or fragile DOM checks\n +- Keep these hooks minimal and purpose-built, following the style of `packages/app/src/testing/terminal.ts`\n +- Test-only hooks must be inert unless explicitly enabled; do not add normal-runtime listeners, reactive subscriptions, or per-update allocations for e2e ceremony\n +- When mocking routes or APIs, expose explicit mock state and wait on that before asserting post-action UI\n +\n +### Prefer helpers\n +\n +- Prefer fluent helpers and drivers when they make intent obvious and reduce locator-heavy noise\n +- Use direct locators when the interaction is simple and a helper would not add clarity\n +\n  ## Writing New Tests\n"
+rubric:
+- rule: New rules must extend, not contradict, the existing terminal-tests guidance — namely 'Avoid `waitForTimeout` and custom DOM or `data-*` readiness checks'.
+  source:
+    path: packages/app/e2e/AGENTS.md
+    lines: '177'
+    commit: dcb17c6a678918ce0786640729fcc8cd8adb1746
+  evidence: The new 'Wait on state' bullets generalise the existing terminal-only anti-`waitForTimeout` rule into a global e2e principle and the new 'Add hooks' section explicitly models its example after `packages/app/src/testing/terminal.ts` — the same driver referenced by the existing terminal-tests bullets.
+  category: testing
+  verification: llm_judge
+- rule: Selectors and observable assertions in e2e tests should hang off `data-component`, `data-action`, semantic roles, or locator-based predicates — not CSS classes or ad-hoc DOM heuristics.
+  source:
+    path: packages/app/e2e/AGENTS.md
+    lines: 147-159
+    commit: dcb17c6a678918ce0786640729fcc8cd8adb1746
+  evidence: The 'Wait on state' bullets stay inside Playwright's locator vocabulary (`toBeVisible()`, `toHaveCount(0)`, `toHaveAttribute(...)`, `expect.poll(...)`) instead of recommending raw DOM probes or class-based selectors.
+  category: testing
+  verification: semantic_diff
+- rule: Test infrastructure (helpers, drivers, probes) should be the first-line answer to flakiness — prefer fixture-managed cleanup and helpers over inline locator-heavy code or `sdk.session.delete(...)`.
+  source:
+    path: packages/app/e2e/AGENTS.md
+    lines: 118-134
+    commit: dcb17c6a678918ce0786640729fcc8cd8adb1746
+  evidence: The 'Add hooks' and 'Prefer helpers' sections push agents toward small purpose-built test-only drivers (modelled on `packages/app/src/testing/terminal.ts`) and fluent helpers — same philosophy as the existing 'Error Handling' guidance about fixtures and `withSession(...)`.
+  category: testing
+  verification: llm_judge
+- rule: Avoid sleep / wall-clock based synchronization in e2e tests. State to be asserted on must be observable through the test fixture or an explicit probe; otherwise, add a hook in app code instead of waiting longer.
+  source:
+    path: packages/app/e2e/AGENTS.md
+    lines: 172-177
+    commit: dcb17c6a678918ce0786640729fcc8cd8adb1746
+  evidence: The 'Wait on state' bullets explicitly forbid `page.waitForTimeout(...)`; the 'Add hooks' bullets explain what to do when required state isn't UI-observable (a minimal probe, inert by default).
+  category: testing
+  verification: semantic_diff

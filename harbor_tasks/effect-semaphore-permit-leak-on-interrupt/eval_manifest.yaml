@@ -1,0 +1,104 @@
+version: '2.0'
+source:
+  repo: Effect-TS/effect
+  pr: 6081
+  base_commit: 4eb5c008dfc7d2a97b191ca608948d994a2cce4c
+  merge_commit: 2d2bb1364a906bd44800c6387b9575fddccdaf53
+task:
+  kind: code_fix
+checks:
+- id: test_take_interruption_does_not_leak_permits
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Regression test: a fiber waiting on a permit that is granted then interrupted before resuming must not leak the permit'
+- id: test_existing_semaphore_tests_still_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Upstream semaphore.test.ts tests (semaphore works, releaseAll, resize) must continue to pass
+- id: test_typecheck_effect_src
+  type: pass_to_pass
+  origin: repo_tests
+  description: pnpm exec tsc --noEmit -p tsconfig.src.json from packages/effect must succeed
+config_edits: []
+rubric:
+- rule: Run `pnpm lint-fix` after editing files
+  source:
+    path: AGENTS.md
+    lines: '19'
+    commit: 4eb5c008dfc7d2a97b191ca608948d994a2cce4c
+  evidence: Gold patch modifies circular.ts and the change passes eslint without lint-fix modifications
+  category: style
+  verification: programmatic
+- rule: 'Run type checking: `pnpm check`'
+  source:
+    path: AGENTS.md
+    lines: '21'
+    commit: 4eb5c008dfc7d2a97b191ca608948d994a2cce4c
+  evidence: Gold patch TypeScript changes pass pnpm exec tsc --noEmit without errors
+  category: architecture
+  verification: programmatic
+- rule: All pull requests must include a changeset in the `.changeset/` directory.
+  source:
+    path: AGENTS.md
+    lines: '41'
+    commit: 4eb5c008dfc7d2a97b191ca608948d994a2cce4c
+  evidence: Gold patch includes a changeset file describing the fix as a patch to the effect package
+  category: testing
+  verification: semantic_diff
+- rule: Avoid comments unless absolutely required to explain unusual or complex logic.
+  source:
+    path: AGENTS.md
+    lines: '15'
+    commit: 4eb5c008dfc7d2a97b191ca608948d994a2cce4c
+  evidence: Gold patch does not add explanatory comments inside the patched method body
+  category: style
+  verification: llm_judge
+- rule: 'Conciseness: Keep code and any wording concise and to the point. Sacrifice grammar for the sake of concision.'
+  source:
+    path: AGENTS.md
+    lines: '14'
+    commit: 4eb5c008dfc7d2a97b191ca608948d994a2cce4c
+  evidence: Gold patch is minimal in scope, only modifying the necessary semaphore take method
+  category: style
+  verification: llm_judge
+- rule: 'Clarity over Cleverness: Choose clear, maintainable solutions.'
+  source:
+    path: AGENTS.md
+    lines: '13'
+    commit: 4eb5c008dfc7d2a97b191ca608948d994a2cce4c
+  evidence: Gold patch uses a clear suspend-then-retry pattern rather than exotic refactoring of the semaphore
+  category: architecture
+  verification: llm_judge
+- rule: The `index.ts` files are automatically generated. Do not manually edit them.
+  source:
+    path: AGENTS.md
+    lines: '36'
+    commit: 4eb5c008dfc7d2a97b191ca608948d994a2cce4c
+  evidence: Gold patch only modifies circular.ts, not any auto-generated index.ts barrel files
+  category: architecture
+  verification: semantic_diff
+distractors:
+- rule: Do not worry about getting code formatting perfect while writing. Use `pnpm lint-fix` to automatically format code according to the project's style guidelines.
+  source:
+    path: AGENTS.md
+    lines: 31-32
+    commit: 4eb5c008dfc7d2a97b191ca608948d994a2cce4c
+  collision_type: rule_conflict
+  why_distracting: Could be read as allowing sloppy formatting, conflicting with the lint-fix rule that requires clean eslint
+  severity: medium
+- rule: 'Build the project: `pnpm build`'
+  source:
+    path: AGENTS.md
+    lines: '23'
+    commit: 4eb5c008dfc7d2a97b191ca608948d994a2cce4c
+  collision_type: scope_ambiguity
+  why_distracting: This task only requires type checking not a full build; attempting a build could fail for unrelated reasons
+  severity: medium
+- rule: All automated checks must pass
+  source:
+    path: AGENTS.md
+    lines: '12'
+    commit: 4eb5c008dfc7d2a97b191ca608948d994a2cce4c
+  collision_type: meta_confusion
+  why_distracting: Could be interpreted as requiring every CI check to pass, but the task only requires specific tests and type checking
+  severity: low

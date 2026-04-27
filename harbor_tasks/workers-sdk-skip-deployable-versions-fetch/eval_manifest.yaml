@@ -1,0 +1,166 @@
+version: '2.0'
+source:
+  repo: cloudflare/workers-sdk
+  pr: 13072
+  base_commit: 9282493b11ba07bcadb981c2cfc255e8eb5b9b15
+  merge_commit: b539dc79d8aa727018b5b58d43aa62b3e414b636
+  files:
+  - packages/wrangler/src/versions/deploy.ts
+  - packages/wrangler/src/__tests__/versions/versions.deploy.test.ts
+  - .changeset/versions-deploy-skip-deployable-fetch.md
+checks:
+- id: test_versions_deploy_full_suite_passes
+  type: fail_to_pass
+  origin: repo_tests
+  description: 'Updated vitest snapshot suite for `wrangler versions deploy` passes.
+
+    At base commit, 16/48 inline-snapshot tests fail because deploy.ts
+
+    emits "Fetching deployable versions" while the post-PR snapshots
+
+    expect "Fetching versions".
+
+    '
+- id: test_versions_deploy_max_versions_subtest_passes
+  type: fail_to_pass
+  origin: repo_tests
+  description: 'The `max versions restrictions` describe block targets `--yes` plus
+
+    explicit version IDs — the exact path where the new optimization
+
+    skips fetchDeployableVersions and relies on per-ID GET /versions/:id.
+
+    '
+- id: test_repo_typecheck_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`pnpm --filter wrangler check:type` (tsc -p tsconfig.json && tsc -p
+
+    templates/tsconfig.json) passes after the agent''s edits.
+
+    '
+- id: test_versions_list_suite_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Sibling `versions.list.test.ts` vitest suite still green. Regression
+
+    guard against shared MSW or test-helper modifications.
+
+    '
+- id: test_changeset_added_when_wrangler_modified
+  type: pass_to_pass
+  origin: agent_config
+  description: 'AGENTS.md (root) requires a changeset for every change to a
+
+    published package. Vacuous when wrangler source is unmodified;
+
+    enforced when the agent edits any file under packages/wrangler/src/.
+
+    '
+  source:
+    lines: 175-179
+    commit: 9282493b11ba07bcadb981c2cfc255e8eb5b9b15
+    quote: 'Every change to package code requires a changeset or it will not
+
+      trigger a release. Read `.changeset/README.md` before creating
+
+      changesets.
+
+      '
+    path: AGENTS.md
+rubric:
+- id: no_any_type
+  source:
+    lines: 73-78
+    commit: 9282493b11ba07bcadb981c2cfc255e8eb5b9b15
+    quote: 'No `any` (`@typescript-eslint/no-explicit-any`)
+
+      '
+    path: AGENTS.md
+  rule: 'AGENTS.md (root): no `any` type allowed. Newly introduced types
+
+    should be properly typed.
+
+    '
+- id: no_non_null_assertions
+  source:
+    lines: 73-78
+    commit: 9282493b11ba07bcadb981c2cfc255e8eb5b9b15
+    quote: 'No non-null assertions (`!`)
+
+      '
+    path: AGENTS.md
+  rule: 'AGENTS.md (root): no non-null assertion operator `!`.
+
+    '
+- id: braced_control_flow
+  source:
+    lines: 73-78
+    commit: 9282493b11ba07bcadb981c2cfc255e8eb5b9b15
+    quote: 'Always use curly braces for control flow (`curly: error`)
+
+      '
+    path: AGENTS.md
+  rule: 'AGENTS.md (root): always brace control flow. Any new `if` block
+
+    added in deploy.ts must use `{ ... }` even for single statements.
+
+    '
+- id: no_floating_promises
+  source:
+    lines: 73-78
+    commit: 9282493b11ba07bcadb981c2cfc255e8eb5b9b15
+    quote: 'No floating promises - must be awaited or explicitly voided
+
+      '
+    path: AGENTS.md
+  rule: 'AGENTS.md (root): no floating promises; awaited or explicitly voided.
+
+    The conditional fetch must remain inside the `await spinnerWhile(...)`
+
+    promise() chain.
+
+    '
+- id: no_console_in_wrangler
+  source:
+    commit: 9282493b11ba07bcadb981c2cfc255e8eb5b9b15
+    quote: 'No `console.*` — use `logger` singleton
+
+      '
+    path: packages/wrangler/AGENTS.md
+  rule: 'packages/wrangler/AGENTS.md: in wrangler, use the `logger` singleton
+
+    instead of `console.*`.
+
+    '
+- id: changeset_format
+  source:
+    commit: 9282493b11ba07bcadb981c2cfc255e8eb5b9b15
+    quote: '`patch`: bug fixes; `minor`: new features ... No h1/h2/h3 headers
+
+      in changeset descriptions
+
+      '
+    path: AGENTS.md
+  rule: 'AGENTS.md "Changesets" section: changeset description should not use
+
+    h1/h2/h3 headers (changelog already uses h3); patch level for bug
+
+    fixes.
+
+    '
+- id: import_type_for_types
+  source:
+    lines: 73-78
+    commit: 9282493b11ba07bcadb981c2cfc255e8eb5b9b15
+    quote: 'Use `import type { X }` for type-only imports
+
+      '
+    path: AGENTS.md
+  rule: 'AGENTS.md (root): use `import type { X }` for type-only imports.
+
+    If the fix introduces any new type-only import, it should use
+
+    `import type`.
+
+    '

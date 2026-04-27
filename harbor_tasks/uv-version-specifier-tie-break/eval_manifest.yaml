@@ -1,0 +1,103 @@
+version: '2.0'
+source:
+  repo: astral-sh/uv
+  pr: 18850
+  base_commit: 796ceb2790a394ab1d238b8d57965a99e5e10a05
+  merge_commit: 7f7c36a3bce23eba6c169d68fbcc70b4f41ad6cc
+task:
+  kind: code_fix
+checks:
+- id: test_singular_interval_orderings_are_equal
+  type: fail_to_pass
+  origin: pr_diff
+  description: '`VersionSpecifiers::from_str(">=X,<=X")` and `VersionSpecifiers::from_str("<=X,>=X")` must parse to equal values.'
+- id: test_singular_interval_normalizes_to_canonical_string
+  type: fail_to_pass
+  origin: pr_diff
+  description: The `Display` round-trip of either ordering produces the canonical "<=X, >=X" form (operator-tie-break sort).
+- id: test_non_singular_specifiers_unchanged
+  type: pass_to_pass
+  origin: pr_diff
+  description: Distinct-version specifier orderings still sort primary-by-version ascending; no regression on `>=1.0, <2.0` shape.
+- id: test_uv_pep440_unit_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's own `cargo test -p uv-pep440 --lib` keeps passing.
+- id: test_uv_pep440_compiles_clean
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's own `cargo check -p uv-pep440 --all-targets` succeeds.
+rubric:
+- rule: '- AVOID using `panic!`, `unreachable!`, `.unwrap()`, unsafe code, and clippy rule ignores'
+  source:
+    path: CLAUDE.md
+    lines: '7'
+    commit: 796ceb2790a394ab1d238b8d57965a99e5e10a05
+  evidence: Gold patch uses `.then_with(|| ...)` for comparator chaining and introduces no panic, unreachable, unwrap, or unsafe calls.
+  category: safety
+  verification: llm_judge
+- rule: '- PREFER patterns like `if let` to handle fallibility'
+  source:
+    path: CLAUDE.md
+    lines: '8'
+    commit: 796ceb2790a394ab1d238b8d57965a99e5e10a05
+  evidence: Gold patch uses method chaining (`.then_with`) instead of nested fallibility patterns, and avoids unwrap in production code.
+  category: safety
+  verification: llm_judge
+- rule: '- AVOID shortening variable names, e.g., use `version` instead of `ver`, and `requires_python` instead of `rp`'
+  source:
+    path: CLAUDE.md
+    lines: '17'
+    commit: 796ceb2790a394ab1d238b8d57965a99e5e10a05
+  evidence: Gold patch uses full descriptive names and does not introduce shortened identifiers like `ver`, `op`, or `rp`.
+  category: naming
+  verification: llm_judge
+- rule: '- PREFER top-level imports over local imports or fully qualified names'
+  source:
+    path: CLAUDE.md
+    lines: '16'
+    commit: 796ceb2790a394ab1d238b8d57965a99e5e10a05
+  evidence: Gold patch does not add local `use` statements or fully-qualified paths; all types are already in scope via existing top-level imports.
+  category: style
+  verification: llm_judge
+- rule: '- ALWAYS attempt to add a test case for changed behavior'
+  source:
+    path: CLAUDE.md
+    lines: '2'
+    commit: 796ceb2790a394ab1d238b8d57965a99e5e10a05
+  evidence: Gold solution is expected to include a new test exercising the tie-break ordering in the existing test module.
+  category: testing
+  verification: llm_judge
+- rule: '- PREFER `#[expect()]` over `[allow()]` if clippy must be disabled'
+  source:
+    path: CLAUDE.md
+    lines: '10'
+    commit: 796ceb2790a394ab1d238b8d57965a99e5e10a05
+  evidence: Gold patch introduces no `#[allow(...)]` or clippy suppression attributes.
+  category: style
+  verification: llm_judge
+distractors:
+- rule: '- ALWAYS attempt to add a test case for changed behavior'
+  source:
+    path: CLAUDE.md
+    lines: '2'
+    commit: 796ceb2790a394ab1d238b8d57965a99e5e10a05
+  collision_type: rule_conflict
+  why_distracting: This rule mandates adding a test, but the adjacent rule (line 3) prefers integration tests over unit tests. The changed behavior is unit-internal sort logic making integration tests overkill, creating a conflict about where the test should live.
+  severity: high
+- rule: '- ALWAYS read and copy the style of similar tests when adding new cases'
+  source:
+    path: CLAUDE.md
+    lines: '15'
+    commit: 796ceb2790a394ab1d238b8d57965a99e5e10a05
+  collision_type: scope_ambiguity
+  why_distracting: '''Similar tests'' is underspecified — the crate has both inline `#[test]` unit tests and separate integration test files; an agent could copy the wrong style (e.g., integration test boilerplate for a unit-level change).'
+  severity: medium
+- rule: '- NEVER assume clippy warnings are pre-existing, it is very rare that `main` has warnings'
+  source:
+    path: CLAUDE.md
+    lines: '14'
+    commit: 796ceb2790a394ab1d238b8d57965a99e5e10a05
+  collision_type: meta_confusion
+  why_distracting: The patch touches only `version_specifier.rs` but clippy may report warnings in unrelated files; the agent could waste time fixing pre-existing issues not introduced by the change.
+  severity: low

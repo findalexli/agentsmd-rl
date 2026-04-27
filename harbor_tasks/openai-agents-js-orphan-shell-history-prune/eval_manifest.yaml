@@ -1,0 +1,84 @@
+version: '2.0'
+source:
+  repo: openai/openai-agents-js
+  pr_number: 1102
+  pr_url: https://github.com/openai/openai-agents-js/pull/1102
+  base_commit: 5f8646167f0ef281fe4f7fa691c8623b5db3db72
+  merge_commit: dc9791918461e632dbdd553051bb7a2176f66c7e
+  pr_title: 'fix(agents-core): prune orphan hosted shell calls from public history'
+  pr: 1102
+task:
+  name: openai-agents-js-orphan-shell-history-prune
+  title: Prune orphan hosted shell calls from public history
+checks:
+- id: test_get_turn_input_drops_orphan_shell_call
+  type: fail_to_pass
+  origin: repo_tests
+  description: 'getTurnInput must drop a generated orphan hosted shell call so the returned array only contains the original input message.
+
+    '
+- id: test_run_state_history_drops_orphan_shell_call
+  type: fail_to_pass
+  origin: repo_tests
+  description: 'RunState.history must filter out orphan hosted shell calls from _generatedItems.
+
+    '
+- id: test_continuation_does_not_reintroduce_orphan_shell_call
+  type: fail_to_pass
+  origin: repo_tests
+  description: 'Continuing a run from RunResult.history or RunState.history must not re-send the orphan shell_call to the model; the input array sent to the model must equal the history array.
+
+    '
+- id: test_existing_run_utils_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Pre-existing getTurnInput unit tests still pass.
+- id: test_existing_run_state_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: Pre-existing RunState test suite still passes.
+- id: test_agents_core_typecheck
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`pnpm -F @openai/agents-core build-check` (TypeScript --noEmit) passes — required by the AGENTS.md verification stack.
+
+    '
+- id: test_agents_core_lint_clean
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`pnpm lint packages/agents-core/src/runner/items.ts` passes — AGENTS.md mandates lint as part of the verification stack.
+
+    '
+rubric:
+- id: changeset_present
+  source:
+    lines: 30,176
+    commit: 5f8646167f0ef281fe4f7fa691c8623b5db3db72
+    path: AGENTS.md
+  rule: 'A changeset file under `.changeset/` exists that covers the `@openai/agents-core` package with a `patch` semver bump and a Conventional-Commit-style summary line (for example, starting with `fix:` or `feat:`).
+
+    '
+- id: comments_end_with_period
+  source:
+    lines: '166'
+    commit: 5f8646167f0ef281fe4f7fa691c8623b5db3db72
+    path: AGENTS.md
+  rule: 'Any new comments introduced by the change end with a period, as required by the contributor guide.
+
+    '
+- id: runtime_logic_in_runner_subdir
+  source:
+    lines: 78,79,80,81,82
+    commit: 5f8646167f0ef281fe4f7fa691c8623b5db3db72
+    path: AGENTS.md
+  rule: 'New runtime helper functions for agents-core live under `packages/agents-core/src/runner/` (the change should not bloat `packages/agents-core/src/run.ts` or `agent.ts`).
+
+    '
+- id: streaming_and_nonstreaming_alignment
+  source:
+    lines: '83'
+    commit: 5f8646167f0ef281fe4f7fa691c8623b5db3db72
+    path: AGENTS.md
+  rule: 'The fix preserves behavioral alignment between the streaming and non-streaming run loops — the orphan-pruning behavior must apply identically to both paths.
+
+    '

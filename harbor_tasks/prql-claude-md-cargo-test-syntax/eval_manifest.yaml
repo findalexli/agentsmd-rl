@@ -1,0 +1,216 @@
+version: '2.0'
+source:
+  repo: PRQL/prql
+  pr: 5484
+  base_commit: 541974b371bac89e3c7e758106ecde97df307f4c
+  merge_commit: 7fcf44783eddcf9328842691cf2a0a181e1e90dd
+task:
+  kind: markdown_authoring
+  name: prql-claude-md-cargo-test-syntax
+  difficulty: easy
+checks:
+- id: test_unit_test_example_uses_dashdash_separator
+  type: fail_to_pass
+  origin: agent_config
+  description: Unit-test example uses `cargo insta test -p prqlc --lib -- resolver` (the `--` filter form).
+  source:
+    path: CLAUDE.md
+    lines: 14-18
+    commit: 541974b371bac89e3c7e758106ecde97df307f4c
+- id: test_unit_tests_comment_present
+  type: fail_to_pass
+  origin: agent_config
+  description: New comment `# Unit tests filtered by test name` is present.
+  source:
+    path: CLAUDE.md
+    lines: '14'
+    commit: 7fcf44783eddcf9328842691cf2a0a181e1e90dd
+- id: test_integration_tests_comment_present
+  type: fail_to_pass
+  origin: agent_config
+  description: New comment `# Integration tests filtered by test name` is present.
+  source:
+    path: CLAUDE.md
+    lines: '17'
+    commit: 7fcf44783eddcf9328842691cf2a0a181e1e90dd
+- id: test_old_module_path_form_removed
+  type: fail_to_pass
+  origin: agent_config
+  description: Old misleading example `cargo insta test -p prqlc --lib semantic::resolver` is removed.
+  source:
+    path: CLAUDE.md
+    lines: '18'
+    commit: 541974b371bac89e3c7e758106ecde97df307f4c
+- id: test_old_run_specific_tests_comment_removed
+  type: fail_to_pass
+  origin: agent_config
+  description: Vague comment `# Or run specific tests you're working on` is removed.
+  source:
+    path: CLAUDE.md
+    lines: '14'
+    commit: 541974b371bac89e3c7e758106ecde97df307f4c
+- id: test_unit_example_appears_before_integration_example
+  type: fail_to_pass
+  origin: agent_config
+  description: Unit-test example is ordered before the integration-test example (faster inner loop first).
+  source:
+    path: CLAUDE.md
+    lines: 14-18
+    commit: 7fcf44783eddcf9328842691cf2a0a181e1e90dd
+- id: test_claude_md_exists
+  type: pass_to_pass
+  origin: static
+  description: CLAUDE.md exists at repo root.
+- id: test_inner_loop_section_preserved
+  type: pass_to_pass
+  origin: static
+  description: The 'Inner loop' framing is preserved.
+- id: test_outer_loop_section_preserved
+  type: pass_to_pass
+  origin: static
+  description: The 'Outer loop' framing is preserved.
+- id: test_task_prqlc_test_command_preserved
+  type: pass_to_pass
+  origin: static
+  description: Unchanged `task prqlc:test` example remains.
+- id: test_task_test_all_command_preserved
+  type: pass_to_pass
+  origin: static
+  description: Unchanged `task test-all` outer-loop example remains.
+- id: test_markdown_codefence_balanced
+  type: pass_to_pass
+  origin: static
+  description: Markdown ``` code fences remain balanced (no broken code blocks).
+- id: test_git_repo_clean_outside_claude_md
+  type: pass_to_pass
+  origin: static
+  description: No tracked file outside CLAUDE.md was modified.
+config_edits:
+- path: CLAUDE.md
+  tier: 1
+  gold_added: '# Unit tests filtered by test name
+
+    cargo insta test -p prqlc --lib -- resolver
+
+
+    # Integration tests filtered by test name
+
+    cargo insta test -p prqlc --test integration -- date
+
+    '
+  gold_removed: '# Or run specific tests you''re working on
+
+    cargo insta test -p prqlc --test integration -- date
+
+
+    # Run unit tests for a specific module
+
+    cargo insta test -p prqlc --lib semantic::resolver
+
+    '
+rubric:
+- rule: 'The cargo test examples must use the `-- <filter>` separator form for
+
+    filtering by test name. A bare module-path positional argument
+
+    (e.g. `--lib some::module::path`) must not be shown as the way to
+
+    filter by test name.
+
+    '
+  source:
+    path: CLAUDE.md
+    lines: 14-18
+    commit: 7fcf44783eddcf9328842691cf2a0a181e1e90dd
+  evidence: The gold diff removes `cargo insta test -p prqlc --lib semantic::resolver` (module-path form) and adds `cargo insta test -p prqlc --lib -- resolver` (filter form with `--` separator), making the correct syntax pattern self-evident.
+  category: syntax
+  verification: programmatic
+- rule: 'The unit-test example must appear before the integration-test
+
+    example, because the inner loop prioritizes faster feedback.
+
+    '
+  source:
+    path: CLAUDE.md
+    lines: 5-21
+    commit: 7fcf44783eddcf9328842691cf2a0a181e1e90dd
+  evidence: The gold diff reorders examples so `cargo insta test -p prqlc --lib -- resolver` (unit, faster) appears before `cargo insta test -p prqlc --test integration -- date` (integration, slower).
+  category: ordering
+  verification: programmatic
+- rule: 'Each filtered-test example must have a comment that describes what
+
+    the example demonstrates by filter behavior (unit vs integration,
+
+    filtered by test name), not vague phrasing such as "Or run specific
+
+    tests you''re working on" or "Run unit tests for a specific module".
+
+    '
+  source:
+    path: CLAUDE.md
+    lines: 14-18
+    commit: 7fcf44783eddcf9328842691cf2a0a181e1e90dd
+  evidence: The gold diff replaces vague comments (`# Or run specific tests you're working on`, `# Run unit tests for a specific module`) with precise labels (`# Unit tests filtered by test name`, `# Integration tests filtered by test name`).
+  category: naming
+  verification: programmatic
+- rule: 'The edit must be scoped to the Inner loop fenced code block. Other
+
+    sections of CLAUDE.md (Tests, Running the CLI, Linting,
+
+    Documentation, Outer loop framing) must not be rewritten.
+
+    '
+  source:
+    path: CLAUDE.md
+    lines: 1-91
+    commit: 7fcf44783eddcf9328842691cf2a0a181e1e90dd
+  evidence: The gold diff only touches lines inside the Inner loop code block (lines 14-18). No other section is modified.
+  category: scope
+  verification: programmatic
+- rule: 'The inner-loop block must remain a terse list of commented shell
+
+    commands. Do not introduce prose paragraphs, sub-headings, or
+
+    "don''t do this" anti-example sections inside the code block.
+
+    '
+  source:
+    path: CLAUDE.md
+    lines: 10-19
+    commit: 7fcf44783eddcf9328842691cf2a0a181e1e90dd
+  evidence: The gold diff is a clean line-for-line replacement within the fenced code block, preserving the terse command-oriented style without adding prose or anti-examples.
+  category: style
+  verification: semantic_diff
+distractors:
+- rule: '# Or run specific tests you''re working on'
+  source:
+    path: CLAUDE.md
+    lines: '14'
+    commit: 541974b371bac89e3c7e758106ecde97df307f4c
+  collision_type: rule_conflict
+  why_distracting: This comment is vague and does not specify WHAT the example demonstrates by filter behavior. Keeping it conflicts with the requirement for precise, filter-specific labels.
+  severity: medium
+- rule: cargo insta test -p prqlc --lib semantic::resolver
+  source:
+    path: CLAUDE.md
+    lines: '18'
+    commit: 541974b371bac89e3c7e758106ecde97df307f4c
+  collision_type: would_cause_bug
+  why_distracting: The bare module-path positional form (`--lib semantic::resolver`) does not filter by test name — cargo treats positional args as module paths, not test name filters. Following this pattern would silently fail to run the intended tests.
+  severity: high
+- rule: '# Run fast tests on core packages (from project root)'
+  source:
+    path: CLAUDE.md
+    lines: '11'
+    commit: 541974b371bac89e3c7e758106ecde97df307f4c
+  collision_type: scope_ambiguity
+  why_distracting: An agent might interpret the edit scope to include this adjacent comment line, even though only the filtered-test examples need updating.
+  severity: low
+- rule: 'Use a tight inner loop for fast feedback, comprehensive outer loop before returning to user:'
+  source:
+    path: CLAUDE.md
+    lines: '5'
+    commit: 541974b371bac89e3c7e758106ecde97df307f4c
+  collision_type: meta_confusion
+  why_distracting: This prose framing text could tempt an agent to add lengthy explanations or rewrite the workflow description, when the task only requires editing the code-block examples.
+  severity: medium

@@ -1,0 +1,82 @@
+version: '2.0'
+source:
+  repo: ant-design/ant-design
+  pr: 57256
+  base_commit: e703cb131eb208a7cd697eb5503955a5e4314e29
+  merge_commit: c12f25f36fbaae60fe34677436e42695b3e6820e
+task:
+  kind: code_fix
+checks:
+- id: test_search_icon_prop_renders_in_button
+  type: fail_to_pass
+  origin: pr_diff
+  description: <Search searchIcon={node} /> must render `node` inside the `.ant-input-search-btn` element when no enterButton is supplied.
+- id: test_search_icon_via_config_provider
+  type: fail_to_pass
+  origin: pr_diff
+  description: ConfigProvider's `inputSearch={{ searchIcon }}` must propagate down to the Search component and render in the button.
+- id: test_search_icon_prop_overrides_config_provider
+  type: fail_to_pass
+  origin: pr_diff
+  description: When both ConfigProvider supplies a searchIcon and the Search receives a `searchIcon` prop, the prop must take precedence.
+- id: test_existing_search_suite_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: All of components/input/__tests__/Search.test.tsx must continue to pass (regression gate).
+- id: test_search_icon_documented_english
+  type: fail_to_pass
+  origin: agent_config
+  description: Per AGENTS.md — the new `searchIcon` API entry must appear in components/input/index.en-US.md.
+  source:
+    path: AGENTS.md
+    lines: 38-46
+    commit: e703cb131eb208a7cd697eb5503955a5e4314e29
+- id: test_search_icon_documented_chinese
+  type: fail_to_pass
+  origin: agent_config
+  description: Per CLAUDE.md — the new `searchIcon` API entry must also appear in components/input/index.zh-CN.md.
+  source:
+    path: CLAUDE.md
+    lines: 38-46
+    commit: e703cb131eb208a7cd697eb5503955a5e4314e29
+- id: test_search_icon_has_version_annotation
+  type: fail_to_pass
+  origin: agent_config
+  description: Per CLAUDE.md — the new `searchIcon` row in the English API table must include a SemVer version (e.g. 6.x.x).
+  source:
+    path: CLAUDE.md
+    lines: '46'
+    commit: e703cb131eb208a7cd697eb5503955a5e4314e29
+rubric:
+- rule: Never use `any` type - define precise types instead
+  source:
+    path: .github/copilot-instructions.md
+    lines: '18'
+    commit: e703cb131eb208a7cd697eb5503955a5e4314e29
+  evidence: Solution types searchIcon as React.ReactNode rather than any.
+  category: naming
+  verification: llm_judge
+- rule: Maintain backward compatibility - avoid breaking changes
+  source:
+    path: .github/copilot-instructions.md
+    lines: '31'
+    commit: e703cb131eb208a7cd697eb5503955a5e4314e29
+  evidence: Solution falls back to SearchOutlined when neither prop nor context supplies a searchIcon.
+  category: architecture
+  verification: llm_judge
+- rule: 'When documenting component APIs, use this table structure:'
+  source:
+    path: .github/copilot-instructions.md
+    lines: 95-104
+    commit: e703cb131eb208a7cd697eb5503955a5e4314e29
+  evidence: Solution adds API table rows matching the Property|Description|Type|Default|Version format with - for no default.
+  category: style
+  verification: llm_judge
+- rule: Avoid introducing new dependencies
+  source:
+    path: .github/copilot-instructions.md
+    lines: '73'
+    commit: e703cb131eb208a7cd697eb5503955a5e4314e29
+  evidence: Solution reuses existing _util/fallbackProp helper instead of adding any new package.
+  category: architecture
+  verification: llm_judge

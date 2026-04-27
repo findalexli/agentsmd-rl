@@ -1,0 +1,130 @@
+version: '2.0'
+source:
+  repo: Effect-TS/effect
+  pr_number: 6071
+  pr_url: https://github.com/Effect-TS/effect/pull/6071
+  base_commit: 4f2107548fa64c21a8643b7b0efcd556cd16d4b9
+  merge_commit: a91364d0ef48de0f66afe801c4da13bfe8a5aeed
+  title: 'fix(ai-openrouter): optional name in streaming tool calls'
+  pr: 6071
+task:
+  name: effect-openrouter-streaming-tool-name-optional
+  language: typescript
+  package_manager: pnpm
+checks:
+- id: test_decodes_chunk_without_function_name
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'A streaming tool-call chunk with no `function.name` must decode through
+
+    `ChatStreamingMessageToolCall` (the bug fix this PR introduces).
+
+    '
+- id: test_decodes_continuation_chunk_with_only_arguments
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Continuation chunks carrying only `function.arguments` must decode.
+
+    '
+- id: test_decodes_chunk_with_null_name
+  type: fail_to_pass
+  origin: pr_diff
+  description: '`function.name` set to `null` must decode (nullable: true semantics,
+
+    matching the existing treatment of `id`).
+
+    '
+- id: test_decodes_initial_chunk_with_id_and_name
+  type: pass_to_pass
+  origin: pr_diff
+  description: 'Initial chunks with `id` and `function.name` populated must still
+
+    decode (no regression).
+
+    '
+- id: test_rejects_chunk_missing_arguments
+  type: pass_to_pass
+  origin: pr_diff
+  description: '`function.arguments` must remain required — a chunk missing it must
+
+    still be rejected (guards against over-loosening the schema).
+
+    '
+- id: test_pnpm_check_openrouter
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`pnpm check` (tsc -b) on the openrouter package succeeds.
+
+    '
+- id: test_eslint_openrouter_src
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`pnpm exec eslint packages/ai/openrouter/src` passes with no errors.
+
+    '
+rubric:
+- id: changeset_added
+  origin: agent_config
+  source:
+    lines: 47-50
+    path: AGENTS.md
+    commit: 4f2107548fa64c21a8643b7b0efcd556cd16d4b9
+  rule: 'A changeset file is added under `.changeset/` describing this fix as a
+
+    `patch` for `@effect/ai-openrouter`. (AGENTS.md: "All pull requests
+
+    must include a changeset in the `.changeset/` directory.")
+
+    '
+- id: barrel_files_untouched
+  origin: agent_config
+  source:
+    lines: 37-39
+    path: AGENTS.md
+    commit: 4f2107548fa64c21a8643b7b0efcd556cd16d4b9
+  rule: '`packages/ai/openrouter/src/index.ts` is not edited (auto-generated
+
+    barrel file per AGENTS.md: "The `index.ts` files are automatically
+
+    generated. Do not manually edit them.").
+
+    '
+- id: minimal_change_no_extra_comments
+  origin: agent_config
+  source:
+    lines: 13-14
+    path: AGENTS.md
+    commit: 4f2107548fa64c21a8643b7b0efcd556cd16d4b9
+  rule: 'The fix does not add explanatory inline comments inside the schema
+
+    definition. Per AGENTS.md "Reduce comments — Avoid comments unless
+
+    absolutely required to explain unusual or complex logic."
+
+    '
+- id: matches_existing_schema_style
+  origin: agent_config
+  source:
+    lines: 26-28
+    path: AGENTS.md
+    commit: 4f2107548fa64c21a8643b7b0efcd556cd16d4b9
+  rule: 'The new declaration for `function.name` follows the same
+
+    `Schema.optionalWith(Schema.String, { nullable: true })` shape already
+
+    used by the sibling `id` field in the same class. AGENTS.md: "Always
+
+    look at existing code in the repository to learn and follow established
+
+    patterns before writing new code."
+
+    '
+- id: scope_limited_to_openrouter
+  origin: pr_scope
+  rule: 'Only `packages/ai/openrouter/` source is touched by the behavioral fix
+
+    (plus the changeset under `.changeset/`). The bug is openrouter-local;
+
+    no other package needs editing.
+
+    '

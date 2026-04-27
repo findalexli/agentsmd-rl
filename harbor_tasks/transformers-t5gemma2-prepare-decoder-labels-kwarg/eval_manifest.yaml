@@ -1,0 +1,97 @@
+version: '2.0'
+task:
+  name: transformers-t5gemma2-prepare-decoder-labels-kwarg
+  kind: code_fix
+  title: 'T5Gemma2: fix prepare_decoder_input_ids_from_labels kwarg'
+source:
+  repo: huggingface/transformers
+  pr_number: 45516
+  pr_url: https://github.com/huggingface/transformers/pull/45516
+  base_commit: 26bb358ea971aebe30729f8a7ae4f3f0fedb1d5a
+  merge_commit: fcc22811f5a7145a7454e1ba343eadc674f665cc
+  pr: 45516
+checks:
+- id: test_method_accepts_labels_kwarg_in_modeling_file
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Method must accept labels= kwarg (the call shape used by DataCollatorForSeq2Seq).
+
+    '
+- id: test_method_accepts_labels_kwarg_in_modular_file
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'The modular_t5gemma2.py source file must also use ''labels'' as the first parameter so it stays in sync with the generated modeling file.
+
+    '
+- id: test_signature_uses_labels_parameter
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'inspect.signature confirms parameter name is ''labels'' (matches the convention of other seq2seq models).
+
+    '
+- id: test_shift_correctness_across_inputs
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Shift behavior is preserved across multiple bos/pad/input combinations, including -100 -> pad_token_id replacement.
+
+    '
+- id: test_modeling_file_uses_labels_parameter_name_in_body
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Function body must reference the renamed parameter (''labels''), catching a stub fix that only updates the signature.
+
+    '
+- id: test_repo_imports_clean
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'The transformers package still imports cleanly after the change.
+
+    '
+- id: test_data_collator_passes_labels_kwarg
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Sanity gate: DataCollatorForSeq2Seq still calls the method with labels=... (an unrelated change to the collator would invalidate the premise of this fix).
+
+    '
+config_edits: []
+rubric:
+- id: edit_modular_not_only_modeling
+  source:
+    lines: 62-67
+    path: .ai/AGENTS.md
+    commit: 26bb358ea971aebe30729f8a7ae4f3f0fedb1d5a
+  rule: 'When a modular_<name>.py file exists, edits must be made in the modular file and propagated to the generated modeling file, not just directly applied to the generated modeling file.
+
+    '
+- id: keep_modeling_and_modular_in_sync
+  source:
+    lines: 27-29
+    path: .github/copilot-instructions.md
+    commit: 26bb358ea971aebe30729f8a7ae4f3f0fedb1d5a
+  rule: 'The generated modeling_t5gemma2.py and modular_t5gemma2.py must be kept consistent (the repo''s `make fix-repo` / `make fixup` step is responsible for this).
+
+    '
+- id: minimal_diff
+  source:
+    lines: 15-16
+    path: .github/copilot-instructions.md
+    commit: 26bb358ea971aebe30729f8a7ae4f3f0fedb1d5a
+  rule: 'Bug-fix PRs should be as brief as possible — minimize the size of the diff and avoid adding unrelated comments, docstrings, helpers, or refactoring.
+
+    '
+- id: code_style_passes
+  source:
+    lines: '17'
+    path: .github/copilot-instructions.md
+    commit: 26bb358ea971aebe30729f8a7ae4f3f0fedb1d5a
+  rule: 'Code style must remain consistent with the repo''s `make style` / ruff checks (style is enforced in CI).
+
+    '
+- id: scope_limited_to_t5gemma2
+  source:
+    lines: ''
+    path: pr_description
+    commit: huggingface/transformers#45516
+  rule: 'The fix must be limited to T5Gemma2 — DataCollatorForSeq2Seq and other models'' prepare_decoder_input_ids_from_labels methods must not be changed.
+
+    '

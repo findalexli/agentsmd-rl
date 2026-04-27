@@ -1,0 +1,376 @@
+---
+source: crates/biome_formatter_test/src/snapshot_builder.rs
+info: css/atrule/extend.css
+---
+
+# Input
+
+```css
+.master {
+    color:  black;
+    font-size: 12px;
+}
+.emphasis {
+    @extend .master;
+    font-weight: bold;
+}
+.emphasis {
+@extend .master;
+font-weight: bold;
+}
+.emphasis {
+    @extend  .master ;
+    font-weight: bold;
+}
+.emphasis {
+    @extend   .master  ;
+    font-weight: bold;
+}
+.emphasis
+{
+@extend
+.master
+;
+font-weight
+:
+bold
+;
+}
+.emphasis
+
+{
+
+@extend
+
+.master
+
+;
+
+font-weight
+
+:
+
+bold
+
+;
+
+}
+%message-shared {
+    border: 1px solid #ccc;
+    padding: 10px;
+    color: #333;
+}
+.message {
+    @extend %message-shared;
+}
+.message {
+@extend %message-shared;
+}
+.message {
+    @extend  %message-shared ;
+}
+.message {
+    @extend   %message-shared  ;
+}
+.message {
+@extend
+%message-shared;
+}
+.message {
+
+@extend
+
+%message-shared;
+
+}
+a.important {
+    @extend .notice !optional;
+}
+a.important {
+@extend .notice !optional;
+}
+a.important {
+    @extend  .notice !optional ;
+}
+a.important {
+    @extend  .notice  !optional  ;
+}
+a.important
+{
+@extend
+.notice
+!optional
+;
+}
+a.important
+
+{
+
+@extend
+
+.notice
+
+!optional
+
+;
+
+}
+.message-error {
+    @extend .message, .important;
+}
+.message-error {
+    @extend .message , .important ;
+}
+.message-error {
+    @extend   .message  ,  .important  ;
+}
+.message-error {
+    @extend .message,
+        .important;
+}
+.message-error {
+    @extend
+        .message,
+        .important;
+}
+.message-error
+{
+@extend
+.message
+,
+.important
+;
+}
+.message-error
+
+{
+
+@extend
+
+.message
+
+,
+
+.important;
+
+}
+.message-error {
+    @extend .very-very-very-very-very-very-very-very-very-very-very-very-very-long-selector, .very-very-very-very-very-very-very-very-very-very-very-very-very-long-selector;
+}
+
+```
+
+
+# Prettier differences
+
+```diff
+--- Prettier
++++ Biome
+@@ -27,7 +27,8 @@
+ 
+   font-weight: bold;
+ }
+-%message-shared {
++%
++message-shared {
+   border: 1px solid #ccc;
+   padding: 10px;
+   color: #333;
+@@ -60,36 +61,46 @@
+   @extend .notice !optional;
+ }
+ a.important {
+-  @extend .notice !optional;
++  @extend .notice  !optional;
+ }
+ a.important {
+-  @extend .notice !optional;
++  @extend .notice
++!optional;
+ }
+ a.important {
+-  @extend .notice !optional;
++  @extend .notice
++
++!optional;
+ }
+ .message-error {
+   @extend .message, .important;
+ }
+ .message-error {
+-  @extend .message, .important;
++  @extend .message , .important;
+ }
+ .message-error {
+-  @extend .message, .important;
++  @extend .message  ,  .important;
+ }
+ .message-error {
+-  @extend .message, .important;
++  @extend .message,
++        .important;
+ }
+ .message-error {
+-  @extend .message, .important;
++  @extend .message,
++        .important;
+ }
+ .message-error {
+-  @extend .message, .important;
++  @extend .message
++,
++.important;
+ }
+ .message-error {
+-  @extend .message, .important;
++  @extend .message
++
++,
++
++.important;
+ }
+ .message-error {
+-  @extend .very-very-very-very-very-very-very-very-very-very-very-very-very-long-selector,
+-    .very-very-very-very-very-very-very-very-very-very-very-very-very-long-selector;
++  @extend .very-very-very-very-very-very-very-very-very-very-very-very-very-long-selector, .very-very-very-very-very-very-very-very-very-very-very-very-very-long-selector;
+ }
+```
+
+# Output
+
+```css
+.master {
+  color: black;
+  font-size: 12px;
+}
+.emphasis {
+  @extend .master;
+  font-weight: bold;
+}
+.emphasis {
+  @extend .master;
+  font-weight: bold;
+}
+.emphasis {
+  @extend .master;
+  font-weight: bold;
+}
+.emphasis {
+  @extend .master;
+  font-weight: bold;
+}
+.emphasis {
+  @extend .master;
+  font-weight: bold;
+}
+.emphasis {
+  @extend .master;
+
+  font-weight: bold;
+}
+%
+message-shared {
+  border: 1px solid #ccc;
+  padding: 10px;
+  color: #333;
+}
+.message {
+  @extend %message-shared;
+}
+.message {
+  @extend %message-shared;
+}
+.message {
+  @extend %message-shared;
+}
+.message {
+  @extend %message-shared;
+}
+.message {
+  @extend %message-shared;
+}
+.message {
+  @extend %message-shared;
+}
+a.important {
+  @extend .notice !optional;
+}
+a.important {
+  @extend .notice !optional;
+}
+a.important {
+  @extend .notice !optional;
+}
+a.important {
+  @extend .notice  !optional;
+}
+a.important {
+  @extend .notice
+!optional;
+}
+a.important {
+  @extend .notice
+
+!optional;
+}
+.message-error {
+  @extend .message, .important;
+}
+.message-error {
+  @extend .message , .important;
+}
+.message-error {
+  @extend .message  ,  .important;
+}
+.message-error {
+  @extend .message,
+        .important;
+}
+.message-error {
+  @extend .message,
+        .important;
+}
+.message-error {
+  @extend .message
+,
+.important;
+}
+.message-error {
+  @extend .message
+
+,
+
+.important;
+}
+.message-error {
+  @extend .very-very-very-very-very-very-very-very-very-very-very-very-very-long-selector, .very-very-very-very-very-very-very-very-very-very-very-very-very-long-selector;
+}
+```
+
+# Errors
+```
+extend.css:50:1 parse ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Expected a qualified rule, or an at rule but instead found '%'.
+  
+    49 │ }
+  > 50 │ %message-shared {
+       │ ^
+    51 │     border: 1px solid #ccc;
+    52 │     padding: 10px;
+  
+  i Expected a qualified rule, or an at rule here.
+  
+    49 │ }
+  > 50 │ %message-shared {
+       │ ^
+    51 │     border: 1px solid #ccc;
+    52 │     padding: 10px;
+  
+
+```
+
+# Lines exceeding max width of 80 characters
+```
+  105:   @extend .very-very-very-very-very-very-very-very-very-very-very-very-very-long-selector, .very-very-very-very-very-very-very-very-very-very-very-very-very-long-selector;
+```

@@ -1,0 +1,91 @@
+version: '2.0'
+source:
+  repo: pulumi/pulumi
+  pr: 22433
+  base_commit: 0a0aff442aaed8995df679b11214c414799fba31
+  merge_commit: dea48c63e95113465ad1756e5b444e20d23ce4b4
+task:
+  kind: code_fix
+checks:
+- id: test_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: pkg/backend/display compiles after the agent's edits.
+- id: test_system_event_does_not_deadlock_messagerenderer
+  type: fail_to_pass
+  origin: repo_tests
+  description: Sending a SystemEvent (Ctrl+C cancellation) into ShowProgressEvents with a non-raw mock terminal — i.e. the messageRenderer path — completes without deadlocking.
+- id: test_existing_progress_tests_still_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: A representative set of existing pkg/backend/display tests (TestProgressEvents, TestSimpleProgressEvents, TestRowsTreeNode, TestDiff) must keep passing.
+- id: test_handle_system_event_releases_lock_before_renderer
+  type: fail_to_pass
+  origin: static
+  description: 'Source-level guard against re-introducing the buggy shape: any fix that releases the write lock before the renderer call satisfies this check.'
+rubric:
+- rule: Any `.go` file → `mise exec -- make format && mise exec -- make lint && mise exec -- make test_fast`
+  source:
+    path: AGENTS.md
+    lines: '81'
+    commit: 0a0aff442aaed8995df679b11214c414799fba31
+  evidence: Gold patch only modifies progress.go; the change is minimal and passes gofumpt and go vet.
+  category: style
+  verification: llm_judge
+- rule: Changelog entries are required for most PRs.
+  source:
+    path: AGENTS.md
+    lines: '54'
+    commit: 0a0aff442aaed8995df679b11214c414799fba31
+  evidence: Gold patch creates a new changelog YAML file under changelog/pending/.
+  category: architecture
+  verification: llm_judge
+- rule: Anything in `pkg/backend/display/` → add a test using pre-constructed, JSON-serialized engine events (ref. `testProgressEvents`)
+  source:
+    path: pkg/AGENTS.md
+    lines: '13'
+    commit: 0a0aff442aaed8995df679b11214c414799fba31
+  evidence: Gold patch adds a regression test that injects engine events to verify the fix.
+  category: testing
+  verification: llm_judge
+- rule: Copyright headers for new files should always be stamped with the current year.
+  source:
+    path: AGENTS.md
+    lines: '57'
+    commit: 0a0aff442aaed8995df679b11214c414799fba31
+  evidence: Gold patch creates only a YAML changelog file, not a new Go file; no copyright header needed.
+  category: style
+  verification: llm_judge
+- rule: Do not make sweeping changes, refactor unrelated code, or add unnecessary abstractions.
+  source:
+    path: AGENTS.md
+    lines: '67'
+    commit: 0a0aff442aaed8995df679b11214c414799fba31
+  evidence: Gold patch changes exactly 4 lines in progress.go, touching only the deadlock fix.
+  category: architecture
+  verification: llm_judge
+distractors:
+- rule: A change affects the events emitted by the engine.
+  source:
+    path: AGENTS.md
+    lines: '76'
+    commit: 0a0aff442aaed8995df679b11214c414799fba31
+  collision_type: meta_confusion
+  why_distracting: The task touches system event handling; an agent following this escalation rule might escalate instead of implementing the fix.
+  severity: medium
+- rule: Any `.go` file → `mise exec -- make format && mise exec -- make lint && mise exec -- make test_fast`
+  source:
+    path: AGENTS.md
+    lines: '81'
+    commit: 0a0aff442aaed8995df679b11214c414799fba31
+  collision_type: rule_conflict
+  why_distracting: Could be interpreted as requiring the full test suite, conflicting with the minimal-scope constraint.
+  severity: low
+- rule: A change affects the deployment engine's state serialization or resource lifecycle
+  source:
+    path: AGENTS.md
+    lines: '75'
+    commit: 0a0aff442aaed8995df679b11214c414799fba31
+  collision_type: architecture_boundary
+  why_distracting: Could mislead the agent into thinking the display fix requires broader engine-level restructuring.
+  severity: medium

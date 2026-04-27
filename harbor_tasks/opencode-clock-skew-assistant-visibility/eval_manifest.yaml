@@ -1,0 +1,107 @@
+version: '2.0'
+source:
+  repo: anomalyco/opencode
+  pr: 23093
+  base_commit: 7c6948cf6f90b52a74ad56ac7a7eb16863e65f19
+  merge_commit: 91468fe4556eeb891f586126243272cf217915f5
+task:
+  name: opencode-clock-skew-assistant-visibility
+  kind: code_fix
+  difficulty: medium
+  tags:
+  - typescript
+  - solidjs
+  - bug-fix
+  - ui
+  - ordering
+checks:
+- id: test_clock_skew_assistant_visible
+  type: fail_to_pass
+  origin: pr_diff
+  description: An assistant whose array index lands BEFORE the user (clock skew) is still returned for that user.
+- id: test_skewed_assistant_with_other_users_present
+  type: fail_to_pass
+  origin: pr_diff
+  description: With a prior turn present, the skewed assistant for the current user is included and prior-turn assistants are excluded.
+- id: test_no_user_break_short_circuit
+  type: fail_to_pass
+  origin: pr_diff
+  description: A different user message between the queried user and its own assistants does not short-circuit the lookup.
+- id: test_no_skew_normal_order
+  type: pass_to_pass
+  origin: pr_diff
+  description: Regression — the normal case (user first, then its assistants) still returns those assistants.
+- id: test_assistants_filtered_by_parentid
+  type: pass_to_pass
+  origin: pr_diff
+  description: Only assistants whose parentID matches the queried user are returned; other users' assistants are excluded.
+- id: test_negative_index_returns_empty
+  type: pass_to_pass
+  origin: pr_diff
+  description: When messageIndex() < 0 the lookup returns an empty array.
+rubric:
+- rule: Prefer functional array methods (flatMap, filter, map) over for loops; use type guards on filter to maintain type inference downstream
+  source:
+    path: AGENTS.md
+    lines: '16'
+    commit: 7c6948cf6f90b52a74ad56ac7a7eb16863e65f19
+  evidence: The gold patch transforms the scan from index-based to full-array parentID matching — behaviorally equivalent to messages.filter(). A .filter() replacement would pass all tests.
+  category: style
+  verification: llm_judge
+- rule: Prefer `const` over `let`. Use ternaries or early returns instead of reassignment.
+  source:
+    path: AGENTS.md
+    lines: '45'
+    commit: 7c6948cf6f90b52a74ad56ac7a7eb16863e65f19
+  evidence: The gold patch inlines the `index` variable into `messageIndex() < 0`, eliminating the `let`-style reassignable binding and keeping only `const` declarations.
+  category: style
+  verification: llm_judge
+- rule: Reduce total variable count by inlining when a value is only used once.
+  source:
+    path: AGENTS.md
+    lines: '19'
+    commit: 7c6948cf6f90b52a74ad56ac7a7eb16863e65f19
+  evidence: The gold patch inlines `index` directly into the `messageIndex() < 0` guard — the variable was used exactly once, so no binding is needed.
+  category: style
+  verification: llm_judge
+- rule: Avoid `else` statements. Prefer early returns.
+  source:
+    path: AGENTS.md
+    lines: '59'
+    commit: 7c6948cf6f90b52a74ad56ac7a7eb16863e65f19
+  evidence: The gold patch removes the `item.role === 'user'` break which acted as an implicit else-branch; the remaining logic uses early-continue and a single conditional.
+  category: style
+  verification: llm_judge
+- rule: Avoid using the `any` type
+  source:
+    path: AGENTS.md
+    lines: '13'
+    commit: 7c6948cf6f90b52a74ad56ac7a7eb16863e65f19
+  evidence: The gold patch retains `as AssistantMessage` type narrowing and relies on existing type inference without introducing `any`.
+  category: style
+  verification: llm_judge
+distractors:
+- rule: Prefer functional array methods (flatMap, filter, map) over for loops; use type guards on filter to maintain type inference downstream
+  source:
+    path: AGENTS.md
+    lines: '16'
+    commit: 7c6948cf6f90b52a74ad56ac7a7eb16863e65f19
+  collision_type: rule_conflict
+  why_distracting: The gold fix keeps the imperative for-loop; replacing it with .filter() may break the `as AssistantMessage` type narrowing or require a .map() step that over-complicates a 2-line loop body.
+  severity: medium
+- rule: Prefer `const` over `let`. Use ternaries or early returns instead of reassignment.
+  source:
+    path: AGENTS.md
+    lines: '45'
+    commit: 7c6948cf6f90b52a74ad56ac7a7eb16863e65f19
+  collision_type: rule_conflict
+  why_distracting: Applying this rule dogmatically may lead to replacing the for-loop's `let i` with .forEach() or .reduce(), adding complexity without improving correctness.
+  severity: medium
+- rule: Avoid `else` statements. Prefer early returns.
+  source:
+    path: AGENTS.md
+    lines: '59'
+    commit: 7c6948cf6f90b52a74ad56ac7a7eb16863e65f19
+  collision_type: would_cause_bug
+  why_distracting: The existing code already uses early returns; a submitter may restructure the loop body to add unconditional returns, breaking the accumulation logic.
+  severity: high

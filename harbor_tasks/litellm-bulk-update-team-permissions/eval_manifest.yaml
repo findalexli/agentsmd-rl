@@ -1,0 +1,143 @@
+version: '2.0'
+source:
+  repo: BerriAI/litellm
+  pr: 25239
+  base_commit: d132b1bf51cb7c3e6932bae9984216d4f622f945
+  merge_commit: 3ac61a519b8ed80eb13003205972c6b63236e91e
+task:
+  kind: code_fix
+checks:
+- id: test_request_model_has_required_fields
+  type: fail_to_pass
+  origin: pr_diff
+  description: BulkUpdateTeamMemberPermissionsRequest exposes permissions, team_ids, apply_to_all_teams with the documented defaults.
+- id: test_response_model_has_required_fields
+  type: fail_to_pass
+  origin: pr_diff
+  description: BulkUpdateTeamMemberPermissionsResponse exposes message and teams_updated.
+- id: test_endpoint_function_importable
+  type: fail_to_pass
+  origin: pr_diff
+  description: The bulk_update_team_member_permissions handler is exported.
+- id: test_invalid_permission_rejected_by_pydantic
+  type: fail_to_pass
+  origin: pr_diff
+  description: permissions field is typed against KeyManagementRoutes, so unknown strings raise ValidationError.
+- id: test_all_teams_appends_preserving_existing
+  type: fail_to_pass
+  origin: pr_diff
+  description: apply_to_all_teams merges new permissions into each team without overwriting existing ones.
+- id: test_all_teams_skips_teams_already_having_permission
+  type: fail_to_pass
+  origin: pr_diff
+  description: Teams whose existing permissions already cover the request are not rewritten.
+- id: test_pagination_processes_multiple_pages
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Cursor-based pagination — second find_many uses cursor={"team_id": <last-id-of-page1>}.'
+- id: test_team_ids_uses_in_filter
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Targeted mode performs a single find_many with where={"team_id": {"in": [...]}} (no N+1).'
+- id: test_team_ids_returns_404_for_missing
+  type: fail_to_pass
+  origin: pr_diff
+  description: When any requested team_id is absent, the handler raises HTTPException(404).
+- id: test_400_when_neither_team_ids_nor_apply_all
+  type: fail_to_pass
+  origin: pr_diff
+  description: Caller must specify either team_ids or apply_to_all_teams=True; otherwise 400.
+- id: test_400_when_both_team_ids_and_apply_all
+  type: fail_to_pass
+  origin: pr_diff
+  description: team_ids and apply_to_all_teams=True are mutually exclusive; both → 400.
+- id: test_empty_permissions_is_noop
+  type: fail_to_pass
+  origin: pr_diff
+  description: Empty permissions list returns immediately (teams_updated=0) without touching the DB.
+- id: test_non_admin_gets_403
+  type: fail_to_pass
+  origin: pr_diff
+  description: Non-admin callers receive HTTPException(403).
+- id: test_uses_batch_writer_not_individual_updates
+  type: fail_to_pass
+  origin: agent_config
+  source:
+    path: CLAUDE.md
+    lines: '137'
+    commit: d132b1bf51cb7c3e6932bae9984216d4f622f945
+  description: 'Per CLAUDE.md ''Batch writes'' rule: multiple writes to the same table go through prisma_client.db.batch_().'
+- id: test_existing_team_default_params_tests_pass
+  type: pass_to_pass
+  origin: repo_tests
+  description: The existing tests in test_team_default_params.py still pass.
+- id: test_ruff_check_doesnt_regress_changed_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Ruff error count on the two changed files does not exceed the base-commit baseline of 2.
+rubric:
+- rule: 'Do not write raw SQL for proxy DB operations. Use Prisma model methods instead of `execute_raw` / `query_raw`. Use the generated client: `prisma_client.db.<model>` with `.upsert()`, `.find_many()`, `.find_unique()`, `.update()`, `.update_many()` as appropriate. This avoids schema/client drift, keeps code testable with simple mocks, and matches patterns used in spend logs and other proxy code.'
+  source:
+    path: CLAUDE.md
+    lines: 134-135
+    commit: d132b1bf51cb7c3e6932bae9984216d4f622f945
+  evidence: Gold patch uses prisma_client.db.litellm_teamtable.find_many() and prisma_client.db.batch_() exclusively, with no execute_raw or query_raw calls.
+  category: architecture
+  verification: llm_judge
+- rule: 'No N+1 queries. Never query the DB inside a loop. Batch-fetch with {"in": ids} and distribute in-memory.'
+  source:
+    path: CLAUDE.md
+    lines: '136'
+    commit: d132b1bf51cb7c3e6932bae9984216d4f622f945
+  evidence: 'Gold patch calls find_many with where={''team_id'': {''in'': team_ids}} for targeted mode, a single query regardless of the number of team_ids.'
+  category: architecture
+  verification: llm_judge
+- rule: Bound large result sets. Prisma materializes full results in memory. For results over ~10 MB, paginate with `take`/`skip` or `cursor`/`take`, always with an explicit `order`. Prefer cursor-based pagination (`skip` is O(n)). Don't paginate naturally small result sets.
+  source:
+    path: CLAUDE.md
+    lines: '139'
+    commit: d132b1bf51cb7c3e6932bae9984216d4f622f945
+  evidence: 'Gold patch paginates the all-teams scan with take=500, cursor={''team_id'': cursor}, order={''team_id'': ''asc''}, and skip=1 after the first page.'
+  category: architecture
+  verification: llm_judge
+- rule: Avoid imports within methods — place all imports at the top of the file (module-level). Inline imports inside functions/methods make dependencies harder to trace and hurt readability. The only exception is avoiding circular imports where absolutely necessary.
+  source:
+    path: CLAUDE.md
+    lines: '94'
+    commit: d132b1bf51cb7c3e6932bae9984216d4f622f945
+  evidence: Gold patch adds BulkUpdateTeamMemberPermissionsRequest and BulkUpdateTeamMemberPermissionsResponse imports at the top of team_endpoints.py, not inline in the handler body.
+  category: style
+  verification: llm_judge
+- rule: Add tests in appropriate `tests/` subdirectories. Include both unit tests and integration tests. Test provider-specific functionality thoroughly. Consider adding load tests for performance-critical changes.
+  source:
+    path: AGENTS.md
+    lines: 46-50
+    commit: d132b1bf51cb7c3e6932bae9984216d4f622f945
+  evidence: Gold PR includes comprehensive tests covering merge semantics, skip logic, pagination, validation, authorization, and edge cases for the new endpoint.
+  category: testing
+  verification: llm_judge
+distractors:
+- rule: Use `create_many`/`update_many`/`delete_many` instead of individual calls (these return counts only; `update_many`/`delete_many` no-op silently on missing rows).
+  source:
+    path: CLAUDE.md
+    lines: '137'
+    commit: d132b1bf51cb7c3e6932bae9984216d4f622f945
+  collision_type: rule_conflict
+  why_distracting: update_many applies the same data to all matched rows, which would overwrite each team's unique existing permissions rather than merging them per-team.
+  severity: high
+- rule: Don't paginate naturally small result sets.
+  source:
+    path: CLAUDE.md
+    lines: '139'
+    commit: d132b1bf51cb7c3e6932bae9984216d4f622f945
+  collision_type: scope_ambiguity
+  why_distracting: Agent might classify the teams table as 'naturally small' and skip pagination, but the table can grow to tens of thousands of rows at scale.
+  severity: medium
+- rule: Avoid imports within methods — place all imports at the top of the file (module-level). Inline imports inside functions/methods make dependencies harder to trace and hurt readability. The only exception is avoiding circular imports where absolutely necessary.
+  source:
+    path: CLAUDE.md
+    lines: '94'
+    commit: d132b1bf51cb7c3e6932bae9984216d4f622f945
+  collision_type: meta_confusion
+  why_distracting: Agent could over-apply the circular-import exception and inline the prisma_client import unnecessarily, when a top-level import works fine in this case.
+  severity: low

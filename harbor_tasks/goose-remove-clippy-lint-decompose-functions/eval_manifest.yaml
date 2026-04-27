@@ -4,12 +4,13 @@ source:
   pr: 7064
   base_commit: 948cb91d5402b6175d4ff6386e8e02beea6b86cd
   merge_commit: b18120bec310365d96cafcc34ea63d8534e3ee57
+task:
+  kind: code_with_config
 checks:
 - id: build_session_decomposed
   type: fail_to_pass
   origin: pr_diff
-  description: build_session refactored: body shrinks below the too-many-lines threshold
-    and delegates to several helper functions (helper names not checked)
+  description: 'build_session refactored: body shrinks below the too-many-lines threshold and delegates to several helper functions (helper names not checked)'
 - id: clippy_toml_created
   type: fail_to_pass
   origin: pr_diff
@@ -17,15 +18,14 @@ checks:
 - id: old_infrastructure_removed
   type: fail_to_pass
   origin: pr_diff
-  description: Old custom clippy scripts (clippy-lint.sh, clippy-baseline.sh) and
-    baseline file removed
+  description: Old custom clippy scripts (clippy-lint.sh, clippy-baseline.sh) and baseline file removed
 - id: agents_md_standard_clippy
   type: fail_to_pass
   origin: agent_config
   description: AGENTS.md updated to use standard cargo clippy command instead of ./scripts/clippy-lint.sh
   source:
     path: AGENTS.md
-    lines: 30-31
+    lines: '31'
     commit: 948cb91d5402b6175d4ff6386e8e02beea6b86cd
 - id: copilot_instructions_updated
   type: fail_to_pass
@@ -34,13 +34,11 @@ checks:
 - id: doc_files_consistent
   type: fail_to_pass
   origin: pr_diff
-  description: HOWTOAI.md, CONTRIBUTING.md, and Justfile all reference standard clippy
-    command
+  description: HOWTOAI.md, CONTRIBUTING.md, and Justfile all reference standard clippy command
 - id: rust_syntax_valid
   type: pass_to_pass
   origin: static
-  description: builder.rs has valid Rust syntax (balanced braces, sufficient function
-    declarations)
+  description: builder.rs has valid Rust syntax (balanced braces, sufficient function declarations)
 - id: repo_cargo_fmt
   type: pass_to_pass
   origin: repo_tests
@@ -49,89 +47,81 @@ checks:
   type: pass_to_pass
   origin: repo_tests
   description: Repo's goose-cli crate compiles with cargo check
-- id: test_repo_cargo_clippy_goose
+- id: repo_cargo_clippy_goose
   type: pass_to_pass
   origin: repo_tests
   description: Repo's goose crate passes cargo clippy linting
-- id: test_repo_cargo_clippy_goose_cli
+- id: repo_cargo_clippy_goose_cli
   type: pass_to_pass
   origin: repo_tests
   description: Repo's goose-cli crate passes cargo clippy linting
-- id: test_repo_cargo_check_workspace_lib
+- id: repo_cargo_check_workspace_lib
   type: pass_to_pass
   origin: repo_tests
   description: Repo's workspace library code compiles with cargo check
-- id: test_repo_cargo_clippy_all_targets
+- id: repo_cargo_clippy_all_targets
   type: pass_to_pass
   origin: repo_tests
   description: Repo must pass clippy on all targets
-rubric:
-- rule: 'Never: Merge without ./scripts/clippy-lint.sh'
-  source:
-    path: AGENTS.md
-    lines: 95-95
-  reference: 'Never: Merge without running clippy'
-  evidence: 'Instead of simply deleting the obsolete rule, the gold solution updates
-    it to `Never: Merge without running clippy`, preserving the strict linting requirement
-    while adapting to the new tooling.'
-  category: testing
-- rule: Update all documentation and configuration files that reference the old clippy
-    scripts to use the new standard approach
-  source:
-    path: AGENTS.md
-    lines: 29-32
-  evidence: The gold solution replaces `./scripts/clippy-lint.sh` with `cargo clippy
-    --all-targets -- -D warnings` in the Lint/Format section.
-  category: tooling
 config_edits:
 - path: .github/copilot-instructions.md
   tier: 1
-  gold_added: '- `cargo clippy --all-targets -- -D warnings` - Linting (clippy)
-
-    - **Clippy warnings** - CI handles this (clippy)'
-  gold_removed: '- `./scripts/clippy-lint.sh` - Linting (clippy)
-
-    - **Clippy warnings** - CI handles this (clippy-lint.sh)'
+  gold_added: "- `cargo clippy --all-targets -- -D warnings` - Linting (clippy)\n\n  - **Clippy warnings** - CI handles this (clippy)"
+  gold_removed: "- `./scripts/clippy-lint.sh` - Linting (clippy)\n\n  - **Clippy warnings** - CI handles this (clippy-lint.sh)"
 - path: AGENTS.md
   tier: 1
   gold_added: 'cargo clippy --all-targets -- -D warnings
 
+
     # 6. cargo clippy --all-targets -- -D warnings
+
 
     Never: Merge without running clippy'
   gold_removed: './scripts/clippy-lint.sh
 
+
     cargo clippy --fix
 
+
     # 6. ./scripts/clippy-lint.sh
+
 
     Never: Merge without ./scripts/clippy-lint.sh'
 - path: CONTRIBUTING.md
   tier: 2
   gold_added: 'cargo clippy --all-targets -- -D warnings # run the linter'
   gold_removed: './scripts/clippy-lint.sh # run the linter'
-distractors:
+rubric:
 - rule: 'Never: Merge without ./scripts/clippy-lint.sh'
-  collision_type: meta_confusion
-  why_distracting: 'The config explicitly states ''Never: Merge without ./scripts/clippy-lint.sh''.
-    An agent might hesitate to delete the script or might try to keep a wrapper script
-    to satisfy this ''Never'' rule, but the instruction explicitly demands removing
-    the custom infrastructure entirely.'
-  severity: high
   source:
     path: AGENTS.md
-    lines: 94-95
-- rule: 'Do not comment on: Clippy warnings - CI handles this (clippy-lint.sh)'
+    lines: '95'
+    commit: 948cb91d5402b6175d4ff6386e8e02beea6b86cd
+  evidence: 'Instead of simply deleting the obsolete rule, the gold solution updates it to `Never: Merge without running clippy`, preserving the strict linting requirement while adapting to the new tooling.'
+  category: testing
+  verification: llm_judge
+- rule: Update all documentation and configuration files that reference the old clippy scripts to use the new standard approach
+  source:
+    path: AGENTS.md
+    lines: 29-32
+    commit: 948cb91d5402b6175d4ff6386e8e02beea6b86cd
+  evidence: The gold solution replaces `./scripts/clippy-lint.sh` with `cargo clippy --all-targets -- -D warnings` in the Lint/Format section.
+  category: tooling
+  verification: llm_judge
+distractors:
+- rule: 'Never: Merge without ./scripts/clippy-lint.sh'
+  source:
+    path: AGENTS.md
+    lines: '95'
+    commit: 948cb91d5402b6175d4ff6386e8e02beea6b86cd
   collision_type: meta_confusion
-  why_distracting: The file instructs Copilot not to comment on 'Clippy warnings -
-    CI handles this (clippy-lint.sh)'. The agent must realize it needs to edit this
-    very instruction file to update the reference, which requires modifying its own
-    meta-instructions.
+  why_distracting: 'The config explicitly states ''Never: Merge without ./scripts/clippy-lint.sh''. An agent might hesitate to delete the script or might try to keep a wrapper script to satisfy this ''Never'' rule, but the instruction explicitly demands removing the custom infrastructure entirely.'
   severity: high
+- rule: 'Do not comment on: Clippy warnings - CI handles this (clippy-lint.sh)'
   source:
     path: .github/copilot-instructions.md
-    lines: 78-79
-hierarchy_analysis: This task is highly meta-referential. The agent must edit the
-  very files that provide its instructions (`AGENTS.md`, `.github/copilot-instructions.md`).
-  It must override explicit 'Never' rules in the config files because the primary
-  instruction dictates a paradigm shift in how linting is handled.
+    lines: '79'
+    commit: 948cb91d5402b6175d4ff6386e8e02beea6b86cd
+  collision_type: meta_confusion
+  why_distracting: The file instructs Copilot not to comment on 'Clippy warnings - CI handles this (clippy-lint.sh)'. The agent must realize it needs to edit this very instruction file to update the reference, which requires modifying its own meta-instructions.
+  severity: high

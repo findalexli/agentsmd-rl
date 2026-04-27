@@ -1,0 +1,209 @@
+version: '2.0'
+source:
+  repo: apache/superset
+  pr: 39333
+  base_commit: 1462ac92823bfb53d48b67604d8ba813f69738e0
+  merge_commit: 0f417f004088a4a2a86e1b67ae1906d356698aa0
+task:
+  name: superset-aggrid-reconcile-column-state
+  kind: code_fix
+  difficulty: medium
+  tags:
+  - frontend
+  - typescript
+  - react
+  - ag-grid
+  - superset
+  - bug-fix
+checks:
+- id: test_utility_source_file_exists
+  type: fail_to_pass
+  origin: pr_diff
+  description: New helper module must ship at the expected path
+- id: test_harness_imports_and_runs
+  type: fail_to_pass
+  origin: pr_diff
+  description: Helper module imports cleanly and exposes named/default exports
+- id: test_get_leaf_column_ids_flattens_groups_in_visual_order
+  type: fail_to_pass
+  origin: pr_diff
+  description: getLeafColumnIds inlines child columns left-to-right
+- id: test_get_leaf_column_ids_flattens_nested_groups
+  type: fail_to_pass
+  origin: pr_diff
+  description: getLeafColumnIds recurses through nested column groups
+- id: test_get_leaf_column_ids_skips_invalid_entries
+  type: fail_to_pass
+  origin: pr_diff
+  description: getLeafColumnIds drops empty groups and non-string fields
+- id: test_reconcile_returns_null_for_undefined_saved_state
+  type: fail_to_pass
+  origin: pr_diff
+  description: reconcileColumnState bails out when saved state is missing
+- id: test_reconcile_returns_null_for_empty_saved_state
+  type: fail_to_pass
+  origin: pr_diff
+  description: reconcileColumnState bails out when saved state is empty
+- id: test_reconcile_keeps_saved_order_when_set_unchanged
+  type: fail_to_pass
+  origin: pr_diff
+  description: Same column set → applyOrder true and saved order survives
+- id: test_reconcile_drops_stale_dim_and_disables_applyorder
+  type: fail_to_pass
+  origin: pr_diff
+  description: Dynamic group-by swap drops stale colId and disables applyOrder
+- id: test_reconcile_returns_null_when_all_saved_stale
+  type: fail_to_pass
+  origin: pr_diff
+  description: All saved colIds stale → reconcile returns null
+- id: test_reconcile_disables_applyorder_when_column_added
+  type: fail_to_pass
+  origin: pr_diff
+  description: New column in current colDefs → applyOrder false
+- id: test_reconcile_preserves_extra_columnstate_fields
+  type: fail_to_pass
+  origin: pr_diff
+  description: Width, sort, etc. on saved entries round-trip unchanged
+- id: test_reconcile_handles_grouped_column_defs
+  type: fail_to_pass
+  origin: pr_diff
+  description: Grouped colDefs are flattened before set comparison
+- id: test_aggridtable_routes_through_reconcile
+  type: fail_to_pass
+  origin: pr_diff
+  description: AgGridTable.onGridReady applies column state via the new helper
+- id: test_no_any_types_in_new_utility
+  type: fail_to_pass
+  origin: agent_config
+  description: New utility introduces no `any` typings
+  source:
+    path: AGENTS.md
+    lines: '31'
+    commit: 1462ac92823bfb53d48b67604d8ba813f69738e0
+- id: test_new_utility_has_apache_license_header
+  type: fail_to_pass
+  origin: agent_config
+  description: New .ts file carries the ASF license header
+  source:
+    path: AGENTS.md
+    lines: 90-92
+    commit: 1462ac92823bfb53d48b67604d8ba813f69738e0
+- id: test_test_file_has_apache_license_header
+  type: fail_to_pass
+  origin: agent_config
+  description: New .test.ts file carries the ASF license header
+  source:
+    path: AGENTS.md
+    lines: 90-92
+    commit: 1462ac92823bfb53d48b67604d8ba813f69738e0
+- id: test_test_file_uses_test_not_describe
+  type: fail_to_pass
+  origin: agent_config
+  description: Use test() not describe() in the new test file
+  source:
+    path: AGENTS.md
+    lines: '43'
+    commit: 1462ac92823bfb53d48b67604d8ba813f69738e0
+- id: test_no_time_specific_words_in_new_code_comments
+  type: fail_to_pass
+  origin: agent_config
+  description: No "now"/"currently"/"today" in new comments
+  source:
+    path: AGENTS.md
+    lines: 94-96
+    commit: 1462ac92823bfb53d48b67604d8ba813f69738e0
+- id: test_node_and_tsx_available
+  type: pass_to_pass
+  origin: repo_tests
+  description: Tooling sanity — tsx is on PATH
+- id: test_repo_layout_intact
+  type: pass_to_pass
+  origin: repo_tests
+  description: Plugin directory and AgGridTable/index.tsx still present
+config_edits: []
+rubric:
+- rule: '- **NO `any` types** - Use proper TypeScript types
+
+    - **Avoid `any` types** - Use proper TypeScript, reuse existing types'
+  source:
+    path: AGENTS.md
+    lines: 31, 78
+    commit: 1462ac92823bfb53d48b67604d8ba813f69738e0
+  evidence: New utility defines typed interfaces (ColumnDefLike, ColumnGroupDef) and uses ColDef/ColumnState from @superset-ui/core with zero any escapes.
+  category: style
+  verification: programmatic
+- rule: '- **Functional components** with hooks'
+  source:
+    path: AGENTS.md
+    lines: '79'
+    commit: 1462ac92823bfb53d48b67604d8ba813f69738e0
+  evidence: AgGridTable already uses FunctionComponent with hooks; reconcileColumnState is a plain function, not a class component.
+  category: architecture
+  verification: llm_judge
+- rule: '- **Use Jest + React Testing Library** for component testing
+
+    - **Use `test()` instead of `describe()`** - Follow [avoid nesting when testing](https://kentcdodds.com/blog/avoid-nesting-when-youre-testing) principles
+
+    - **Jest** for testing (NO Enzyme)'
+  source:
+    path: AGENTS.md
+    lines: 42-43, 81
+    commit: 1462ac92823bfb53d48b67604d8ba813f69738e0
+  evidence: New test file uses test() blocks exclusively with no describe() nesting and no Enzyme imports.
+  category: testing
+  verification: programmatic
+- rule: '- **Avoid time-specific language** - Don''t use words like "now", "currently", "today" in code comments as they become outdated
+
+    - **Write timeless comments** - Comments should remain accurate regardless of when they''re read'
+  source:
+    path: AGENTS.md
+    lines: 94-96
+    commit: 1462ac92823bfb53d48b67604d8ba813f69738e0
+  evidence: Comments in reconcileColumnState.ts describe behavior without time-specific words like now, currently, or today.
+  category: style
+  verification: programmatic
+- rule: '- **New files require ASF license headers** - When creating new code files, include the standard Apache Software Foundation license header
+
+    - **LLM instruction files are excluded** - Files like AGENTS.md, CLAUDE.md, etc. are in `.rat-excludes` to avoid header token overhead'
+  source:
+    path: AGENTS.md
+    lines: 90-92
+    commit: 1462ac92823bfb53d48b67604d8ba813f69738e0
+  evidence: Both reconcileColumnState.ts and reconcileColumnState.test.ts include the standard ASF license header matching the format used by other plugin files.
+  category: style
+  verification: programmatic
+- rule: '- **Use @superset-ui/core** - Don''t import Ant Design directly, prefer Ant Design component wrappers from @superset-ui/core/components
+
+    - **@superset-ui/core** for UI components (not direct antd)'
+  source:
+    path: AGENTS.md
+    lines: 33, 80
+    commit: 1462ac92823bfb53d48b67604d8ba813f69738e0
+  evidence: Type-only imports for ColDef and ColumnState come from @superset-ui/core/components/ThemedAgGridReact, not from ag-grid-community or ag-grid-react directly.
+  category: architecture
+  verification: llm_judge
+distractors:
+- rule: '- **Prefer unit tests** over integration tests'
+  source:
+    path: AGENTS.md
+    lines: '38'
+    commit: 1462ac92823bfb53d48b67604d8ba813f69738e0
+  collision_type: scope_ambiguity
+  why_distracting: Exercising the real module via tsx is integration-level; a strict unit-test-only approach with mocks would miss runtime import and behavioral regressions.
+  severity: medium
+- rule: '- **Avoid custom css and styles** - Follow antd best practices and avoid styling and custom CSS whenever possible'
+  source:
+    path: AGENTS.md
+    lines: '35'
+    commit: 1462ac92823bfb53d48b67604d8ba813f69738e0
+  collision_type: meta_confusion
+  why_distracting: This PR is about column-state reconciliation logic, not styling; following this rule would waste effort on unrelated CSS cleanup.
+  severity: low
+- rule: '- **Cypress is deprecated** - Will be removed once migration is completed'
+  source:
+    path: AGENTS.md
+    lines: '41'
+    commit: 1462ac92823bfb53d48b67604d8ba813f69738e0
+  collision_type: meta_confusion
+  why_distracting: Cypress deprecation is irrelevant to this Jest-based test task; could mislead the agent into worrying about E2E migration instead of writing the required unit tests.
+  severity: low

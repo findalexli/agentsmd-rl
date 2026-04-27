@@ -1,0 +1,65 @@
+version: '2.0'
+source:
+  repo: effect-ts/effect
+  pr: 6044
+  base_commit: 8e2286271a982b1cc34c78fca8b9f59de71fc790
+  merge_commit: 708b8ba2dc4557767f9008e0dcd58f93721a065e
+  title: sqlite-bun query prep fail in Effect, not defect
+checks:
+- id: test_prepare_error_surfaces_as_typed_failure
+  type: fail_to_pass
+  origin: pr_diff
+  description: Querying a non-existent table must produce a Cause.Fail (typed, catchable) rather than only a defect. Primary behavioral check for the bug fix.
+- id: test_prepare_error_is_not_a_defect
+  type: fail_to_pass
+  origin: pr_diff
+  description: The Cause from a prepare error must not contain a Cause.Die — defects are uncatchable by Effect.catchAll.
+- id: test_prepare_error_is_sql_error
+  type: fail_to_pass
+  origin: pr_diff
+  description: The typed failure surfaced from a prepare error must be a SqlError (the package's documented error type), not a raw thrown Error.
+- id: test_syntax_error_also_catchable
+  type: fail_to_pass
+  origin: pr_diff
+  description: A SQL syntax error also goes through db.query() prepare; it must surface as a typed failure too, demonstrating the fix is at the prepare-call boundary rather than table-existence-specific.
+- id: test_subsequent_query_after_prepare_failure_works
+  type: fail_to_pass
+  origin: pr_diff
+  description: After Effect.catchAll handles a prepare error, the same SqliteClient must remain usable for subsequent valid queries. Before the fix, the defect would tear down the fiber and prevent recovery.
+- id: test_typescript_typecheck_sqlite_bun
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`tsc -b` (the same typechecker the repo''s CI runs as `pnpm check`) must continue to succeed on the sql-sqlite-bun package.'
+- id: test_repo_existing_vitest_runs
+  type: pass_to_pass
+  origin: repo_tests
+  description: The repo's existing vitest suite for sql-sqlite-bun must continue to pass.
+rubric:
+- id: agent_config_changeset_present
+  severity: medium
+  source:
+    lines: 44-47
+    commit: 8e2286271a982b1cc34c78fca8b9f59de71fc790
+    path: AGENTS.md
+  rule: 'AGENTS.md says: "All pull requests must include a changeset in the .changeset/ directory." Since this fix targets a published package (`@effect/sql-sqlite-bun`), the agent should add a changeset entry.'
+- id: agent_config_concise_no_unnecessary_comments
+  severity: low
+  source:
+    lines: 9-11
+    commit: 8e2286271a982b1cc34c78fca8b9f59de71fc790
+    path: AGENTS.md
+  rule: 'AGENTS.md says: "Reduce comments: Avoid comments unless absolutely required to explain unusual or complex logic." Also: "Conciseness: Keep code and any wording concise and to the point." The agent should not add explanatory comments inside the fixed try block.'
+- id: agent_config_clarity_over_cleverness
+  severity: low
+  source:
+    lines: '8'
+    commit: 8e2286271a982b1cc34c78fca8b9f59de71fc790
+    path: AGENTS.md
+  rule: 'AGENTS.md says: "Clarity over Cleverness — Choose clear, maintainable solutions." The fix should be a straightforward restructuring of the prepare call into the existing try/catch, not a clever rewrite or abstraction.'
+- id: agent_config_existing_patterns
+  severity: low
+  source:
+    lines: 13-15
+    commit: 8e2286271a982b1cc34c78fca8b9f59de71fc790
+    path: AGENTS.md
+  rule: 'AGENTS.md says: "Always look at existing code in the repository to learn and follow established patterns before writing new code." The sibling sql-sqlite-* packages (sqlite-node, sqlite-react-native) wrap the prepare call in their try blocks; the fix should follow that established pattern.'

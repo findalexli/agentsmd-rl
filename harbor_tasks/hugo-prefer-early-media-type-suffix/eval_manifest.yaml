@@ -1,0 +1,95 @@
+version: '2.0'
+source:
+  repo: gohugoio/hugo
+  pr: 14602
+  base_commit: 13a95b9c0167c832fe2babf961ac5cad22e3a1e4
+  merge_commit: 4eafd9eb7b53ba76a15799ad8ab47f6739636cff
+task:
+  kind: code_fix
+checks:
+- id: test_first_suffix_b_wins
+  type: fail_to_pass
+  origin: pr_diff
+  description: With suffixes=['b','a','d','c'] and four layouts page.html.{a,b,c,d}, Hugo must render via page.html.b → public/p1/index.b.
+- id: test_first_suffix_c_among_four
+  type: fail_to_pass
+  origin: pr_diff
+  description: With suffixes=['c','d','a','b'] and layouts page.html.{a,b,c,d}, the output must come from page.html.c — the first declared suffix wins, not the alphabetically-last template.
+- id: test_middle_declared_suffix_wins
+  type: fail_to_pass
+  origin: pr_diff
+  description: With suffixes=['m','a','z'], the layout with extension 'm' wins because it is declared first. Guards against lexicographic shortcuts.
+- id: test_tplimpl_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`go build ./tpl/tplimpl/...` succeeds (CI parity).'
+- id: test_hugolib_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`go build ./hugolib/...` succeeds (CI parity).'
+- id: test_go_vet_tplimpl
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`go vet ./tpl/tplimpl/...` reports no issues (CI parity).'
+- id: test_gofmt_clean_on_touched_file
+  type: pass_to_pass
+  origin: agent_config
+  description: '`gofmt -l tpl/tplimpl/templatestore.go` reports nothing — the repo''s CI runs gofmt and rejects unformatted files.'
+  source:
+    path: AGENTS.md
+    lines: 13-14
+    commit: 13a95b9c0167c832fe2babf961ac5cad22e3a1e4
+- id: test_unrelated_template_test_still_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`TestOverrideInternalTemplate` in hugolib/template_test.go must still pass — guards against regressions in unrelated template-resolution paths.'
+rubric:
+- rule: If you need to add temporary debug printing, use `hdebug.Printf`.
+  source:
+    path: AGENTS.md
+    lines: '6'
+    commit: 13a95b9c0167c832fe2babf961ac5cad22e3a1e4
+  evidence: The patch introduces no fmt.Print* calls; all output uses existing logging or test assertion paths.
+  category: style
+  verification: programmatic
+- rule: Never export symbols that's not needed outside of the package.
+  source:
+    path: AGENTS.md
+    lines: '7'
+    commit: 13a95b9c0167c832fe2babf961ac5cad22e3a1e4
+  evidence: No new exported symbols are introduced; the fix is scoped entirely within the existing unexported insertTemplate2 method.
+  category: naming
+  verification: llm_judge
+- rule: This is a project with a long history; assume that a similiar problem has been solved before, look hard for helper functions before creating new ones.
+  source:
+    path: AGENTS.md
+    lines: '9'
+    commit: 13a95b9c0167c832fe2babf961ac5cad22e3a1e4
+  evidence: The patch reuses slices.Index, MediaTypes.GetByType, pi.Ext(), and nkExisting.PathInfo.Ext() instead of reimplementing media-type or extension-comparison logic.
+  category: architecture
+  verification: llm_judge
+- rule: Don't use comments to explain the obvious.
+  source:
+    path: AGENTS.md
+    lines: '3'
+    commit: 13a95b9c0167c832fe2babf961ac5cad22e3a1e4
+  evidence: 'The patch adds only a concise ''Issue #13877'' reference comment; it does not narrate what slices.Index or the suffix comparison does.'
+  category: style
+  verification: llm_judge
+distractors:
+- rule: Brevity is good.
+  source:
+    path: AGENTS.md
+    lines: '1'
+    commit: 13a95b9c0167c832fe2babf961ac5cad22e3a1e4
+  collision_type: rule_conflict
+  why_distracting: An agent might interpret brevity as a reason to write the shortest possible diff — e.g. always picking the lexicographically first suffix — skipping the proper MediaTypes lookup and declared-order comparison.
+  severity: medium
+- rule: Never export symbols that's not needed outside of the package.
+  source:
+    path: AGENTS.md
+    lines: '7'
+    commit: 13a95b9c0167c832fe2babf961ac5cad22e3a1e4
+  collision_type: architecture_boundary
+  why_distracting: An agent might incorrectly try to refactor insertTemplate2's signature or visibility instead of fixing the collision logic inside the method.
+  severity: low

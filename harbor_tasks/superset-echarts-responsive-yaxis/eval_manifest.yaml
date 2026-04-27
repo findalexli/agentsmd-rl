@@ -1,0 +1,123 @@
+version: '2.0'
+task:
+  name: superset-echarts-responsive-yaxis
+  kind: code_fix
+  repo: apache/superset
+  pr_number: 38673
+  pr_url: https://github.com/apache/superset/pull/38673
+  base_commit: e6f1209318b8def92c27c09fed87b3538a10a36c
+  merge_commit: f0b20dc44593c43fbad03fbeba132b0524dd067b
+source:
+  repo: apache/superset
+  pr: 38673
+  base_commit: e6f1209318b8def92c27c09fed87b3538a10a36c
+  merge_commit: f0b20dc44593c43fbad03fbeba132b0524dd067b
+checks:
+- id: test_legend_visible_on_tall_charts
+  type: pass_to_pass
+  origin: repo_tests
+  description: Tall charts (>=100px) keep the user-enabled legend visible (sanity for tall-tier behavior).
+- id: test_legend_hidden_on_small_charts
+  type: fail_to_pass
+  origin: repo_tests
+  description: Compact charts (60-99px) suppress the legend even when the user enabled it.
+- id: test_yaxis_labels_visible_on_small_charts
+  type: fail_to_pass
+  origin: repo_tests
+  description: Compact charts keep y-axis min/max labels for scale reference.
+- id: test_yaxis_labels_hidden_on_micro_charts
+  type: fail_to_pass
+  origin: repo_tests
+  description: Micro charts (<60px) hide y-axis labels for a sparkline view.
+- id: test_yaxis_tick_count_scales_with_height
+  type: fail_to_pass
+  origin: repo_tests
+  description: A taller chart yields more y-axis ticks than a shorter chart.
+- id: test_small_chart_uses_splitnumber_one
+  type: fail_to_pass
+  origin: repo_tests
+  description: Compact charts use splitNumber=1 so only boundary labels render.
+- id: test_zoomable_small_chart_preserves_bottom_padding
+  type: pass_to_pass
+  origin: repo_tests
+  description: Zoomable compact charts must keep enough bottom padding for the dataZoom slider (regression guard for the compact-tier padding logic).
+- id: test_boundary_100px_full_axis
+  type: fail_to_pass
+  origin: repo_tests
+  description: At exactly 100px, full-axis behavior applies.
+- id: test_boundary_99px_small_chart
+  type: fail_to_pass
+  origin: repo_tests
+  description: At 99px, compact-chart behavior applies.
+- id: test_boundary_60px_compact_axis_with_labels
+  type: fail_to_pass
+  origin: repo_tests
+  description: At exactly 60px, axis labels remain visible but axis is compact.
+- id: test_boundary_59px_micro_chart
+  type: fail_to_pass
+  origin: repo_tests
+  description: At 59px, micro-chart behavior applies (axis labels hidden).
+- id: test_existing_transformprops_baseline
+  type: pass_to_pass
+  origin: repo_tests
+  description: The transformProps oracle baseline test passes (sanity).
+- id: test_repo_existing_transformprops_suite_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: The existing transformProps.test.ts jest suite still passes after the change.
+rubric:
+- id: avoid_time_specific_comments
+  source:
+    lines: 97-98
+    path: AGENTS.md
+    commit: e6f1209318b8def92c27c09fed87b3538a10a36c
+  rule: 'Code comments must not use time-specific language ("now", "currently",
+
+    "today", "recently") because they go stale. Comments should remain
+
+    accurate regardless of when they''re read.
+
+    '
+- id: no_any_types
+  source:
+    lines: 32-32
+    path: AGENTS.md
+    commit: e6f1209318b8def92c27c09fed87b3538a10a36c
+  rule: 'TypeScript code must avoid `any` types and use proper typings.
+
+    Test files may use `as any` where the ECharts option type is intentionally loose,
+
+    but production source under `src/` should not introduce new `any` types.
+
+    '
+- id: prefer_test_over_describe
+  source:
+    lines: 44-44
+    path: AGENTS.md
+    commit: e6f1209318b8def92c27c09fed87b3538a10a36c
+  rule: 'New tests should use `test()` rather than nested `describe()` blocks.
+
+    (See "avoid nesting when testing" guidance.)
+
+    '
+- id: jest_react_testing_library_only
+  source:
+    lines: 43-43
+    path: AGENTS.md
+    commit: e6f1209318b8def92c27c09fed87b3538a10a36c
+  rule: 'Use Jest (and React Testing Library where applicable) for new tests;
+
+    Enzyme is removed. New tests for transformProps belong in the existing
+
+    jest test file.
+
+    '
+- id: no_new_javascript_files
+  source:
+    lines: 33-33
+    path: AGENTS.md
+    commit: e6f1209318b8def92c27c09fed87b3538a10a36c
+  rule: 'Convert/keep code in TypeScript (.ts/.tsx) — do not introduce new .js/.jsx files.
+
+    '
+config_edits: []

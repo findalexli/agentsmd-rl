@@ -1,0 +1,91 @@
+version: '2.0'
+source:
+  repo: gohugoio/hugo
+  pr: 14575
+  base_commit: e8577771c3275d16b7d1b31cca5e9fd3ea517416
+  merge_commit: f797f84902297b7dd37c3f39ce057789a4d8e950
+task:
+  kind: code_fix
+checks:
+- id: test_rebuild_no_panic_two_dirs
+  type: fail_to_pass
+  origin: pr_diff
+  description: 'Rebuild must not panic with index-out-of-range when pathChanges contain two new dirs alongside a file change nested under a third dir. Regression test for PR #14575.'
+- id: test_rebuild_no_panic_four_dirs
+  type: fail_to_pass
+  origin: pr_diff
+  description: Variant of the regression test with four new dirs — guards against a fix that only happens to work for n=2.
+- id: test_repo_compiles_go_build
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`go build ./...` must succeed at HEAD. This is what hugo''s check.sh gates on indirectly via `go test`.'
+- id: test_repo_go_vet_hugolib
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`go vet ./hugolib/` must be clean — `go test` runs vet by default so this must also stay green.'
+- id: test_gofmt_clean_site_go
+  type: pass_to_pass
+  origin: agent_config
+  description: site.go must remain gofmt-clean. AGENTS.md mandates running `./check.sh` whose first step runs gofmt.
+  source:
+    path: AGENTS.md
+    lines: 13-14
+    commit: e8577771c3275d16b7d1b31cca5e9fd3ea517416
+- id: test_no_hdebug_printf_in_site_go
+  type: pass_to_pass
+  origin: agent_config
+  description: Temporary debug prints (`hdebug.Printf`) must NOT remain in committed code; AGENTS.md notes that CI fails if they are forgotten.
+  source:
+    path: AGENTS.md
+    lines: '6'
+    commit: e8577771c3275d16b7d1b31cca5e9fd3ea517416
+- id: test_fileEventsContentPaths_signature_unchanged
+  type: pass_to_pass
+  origin: agent_config
+  description: 'The fix is internal logic only; the unexported function''s signature must not change. AGENTS.md: never export symbols not needed outside the package.'
+  source:
+    path: AGENTS.md
+    lines: '7'
+    commit: e8577771c3275d16b7d1b31cca5e9fd3ea517416
+rubric:
+- rule: Brevity is good. Don't use comments to explain the obvious. Use self-explanatory variable and function names. Use short variable names when the context is clear.
+  source:
+    path: AGENTS.md
+    lines: 1-5
+    commit: e8577771c3275d16b7d1b31cca5e9fd3ea517416
+  evidence: The fix is a compact loop rewrite with no comments; variable names like 'keep', 'o', 'd' are self-explanatory in context.
+  category: style
+  verification: llm_judge
+- rule: This is a project with a long history; assume that a similiar problem has been solved before, look hard for helper functions before creating new ones.
+  source:
+    path: AGENTS.md
+    lines: '9'
+    commit: e8577771c3275d16b7d1b31cca5e9fd3ea517416
+  evidence: The fix uses only strings.HasPrefix, an existing standard-library helper, with no new functions introduced.
+  category: architecture
+  verification: llm_judge
+- rule: Never export symbols that's not needed outside of the package.
+  source:
+    path: AGENTS.md
+    lines: '7'
+    commit: e8577771c3275d16b7d1b31cca5e9fd3ea517416
+  evidence: The diff does not introduce any new exported functions, types, or variables.
+  category: architecture
+  verification: programmatic
+distractors:
+- rule: If you need to add temporary debug printing, use `hdebug.Printf`.
+  source:
+    path: AGENTS.md
+    lines: '6'
+    commit: e8577771c3275d16b7d1b31cca5e9fd3ea517416
+  collision_type: scope_ambiguity
+  why_distracting: The main rule text could be read as endorsing hdebug.Printf, but the footnote on line 17 says CI fails if debug prints are left in committed code.
+  severity: high
+- rule: This is a project with a long history; assume that a similiar problem has been solved before, look hard for helper functions before creating new ones.
+  source:
+    path: AGENTS.md
+    lines: '9'
+    commit: e8577771c3275d16b7d1b31cca5e9fd3ea517416
+  collision_type: architecture_boundary
+  why_distracting: An agent could misinterpret this as a mandate to create a reusable helper, when the fix is a minimal 6-line loop rewrite that does not warrant one.
+  severity: medium

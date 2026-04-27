@@ -46,66 +46,39 @@ checks:
   origin: repo_tests
   description: JSG module source files exist in expected locations
 rubric:
-- rule: Add documentation alongside code changes, including clear usage examples for
-    new APIs.
+- rule: Add documentation alongside code changes, including clear usage examples for new APIs.
   source:
     path: src/workerd/jsg/README.md
     lines: 2552-2580
     commit: bca5351754a7d3ee0568971d57435859bc3a71e6
-- rule: Require access to the JavaScript isolate and context. By convention, this
-    argument is always named `js`.
+- rule: Require access to the JavaScript isolate and context. By convention, this argument is always named `js`.
   source:
     path: src/workerd/jsg/README.md
     lines: 38-41
-  evidence: The gold solution passes the `js` argument to the new `JSG_TRY(js)` macro,
-    adhering to the convention that the JavaScript isolate/context lock is named `js`.
+  evidence: The gold solution passes the `js` argument to the new `JSG_TRY(js)` macro, adhering to the convention that the JavaScript isolate/context lock is named `js`.
   category: naming
 - rule: When C++ code needs to throw a JavaScript exception, throw using `js.throwException()`.
   source:
     path: src/workerd/jsg/README.md
     lines: 2555-2559
-  evidence: In `src/workerd/api/crypto/crypto.c++`, the gold solution uses `js.throwException(kj::mv(exception));`
-    inside the `JSG_CATCH` block to rethrow the caught exception.
+  evidence: In `src/workerd/api/crypto/crypto.c++`, the gold solution uses `js.throwException(kj::mv(exception));` inside the `JSG_CATCH` block to rethrow the caught exception.
   category: style
-- rule: 'Cap''n Proto source code available in external/capnp-cpp - contains KJ C++
-    base library... Consult it for all questions about kj/ ... and kj:: namespaces.'
+- rule: 'Cap''n Proto source code available in external/capnp-cpp - contains KJ C++ base library... Consult it for all questions about kj/ ... and kj:: namespaces.'
   source:
     path: src/workerd/api/crypto/crypto.c++
-    lines: 30
-  evidence: The gold solution uses `kj::mv(exception)` and `kj::Exception` when handling
-    exceptions in the `JSG_CATCH` blocks, adhering to the KJ C++ base library conventions.
+    lines: '30'
+  evidence: The gold solution uses `kj::mv(exception)` and `kj::Exception` when handling exceptions in the `JSG_CATCH` blocks, adhering to the KJ C++ base library conventions.
   category: architecture
 - rule: Check README.md files for package/directory level information
   source:
     path: src/workerd/jsg/README.md
     lines: 2552-2580
-  evidence: The gold solution updates `src/workerd/jsg/README.md` to document the
-    new `JSG_TRY` and `JSG_CATCH` macros, keeping the directory-level documentation
-    up to date.
+  evidence: The gold solution updates `src/workerd/jsg/README.md` to document the new `JSG_TRY` and `JSG_CATCH` macros, keeping the directory-level documentation up to date.
   category: documentation
 config_edits:
 - path: src/workerd/jsg/README.md
   tier: 2
-  gold_added: "require access to the JavaScript isolate and context. By convention,\
-    \ this argument is always named\n`js`.\n#### `js.error()`, `js.throwException()`,\
-    \ and `JsExceptionThrown`\nWhen C++ code needs to throw a JavaScript exception:\n\
-    1. Create the error object with `js.error(\"Error reason\")`\n2. Throw using `js.throwException()`\n\
-    Under the hood, `js.throwException()` uses V8's lower level API, `isolate->ThrowException()`,\
-    \ to\nthrow the exception in the V8 engine. It then throws a special C++ object\
-    \ of type\n`JsExceptionThrown`, whose purpose is to unwind the C++ stack back\
-    \ to the point where JavaScript\ncalled into C++. This C++ exception is caught\
-    \ by JSG's callback glue before returning to V8. This\napproach is more ergonomic\
-    \ than V8's convention of returning `v8::Maybe` values.\n\n#### `JSG_TRY` and\
-    \ `JSG_CATCH`\n\nJSG provides `JSG_TRY` and `JSG_CATCH` macros which replace the\
-    \ normal `try` and `catch` keywords\nwhen you need to catch exceptions as JavaScript\
-    \ exceptions. Each take one argument: `JSG_TRY` takes\nthe `jsg::Lock&` reference,\
-    \ and `JSG_CATCH` takes your desired variable name for the caught\nexception.\n\
-    \n```cpp\nvoid someMethod(jsg::Lock& js) {\n  JSG_TRY(js) {\n    someThrowyCode();\n\
-    \  }\n  JSG_CATCH(e) {\n    // Just rethrow.\n    js.throwException(kj::mv(e));\n\
-    \  }\n}\n```\n\nThe example above actually illustrates a common, useful scenario\
-    \ of coercing any exception thrown\ninto a JavaScript Error object. That is, if\
-    \ `someThrowyCode()` in the example above throws a KJ C++\nexception, `JSG_CATCH(e)`\
-    \ will catch it and convert it to a JavaScript error by calling\n`js.exceptionToJs()`."
+  gold_added: "require access to the JavaScript isolate and context. By convention, this argument is always named\n`js`.\n#### `js.error()`, `js.throwException()`, and `JsExceptionThrown`\nWhen C++ code needs to throw a JavaScript exception:\n1. Create the error object with `js.error(\"Error reason\")`\n2. Throw using `js.throwException()`\nUnder the hood, `js.throwException()` uses V8's lower level API, `isolate->ThrowException()`, to\nthrow the exception in the V8 engine. It then throws a special C++ object of type\n`JsExceptionThrown`, whose purpose is to unwind the C++ stack back to the point where JavaScript\ncalled into C++. This C++ exception is caught by JSG's callback glue before returning to V8. This\napproach is more ergonomic than V8's convention of returning `v8::Maybe` values.\n\n#### `JSG_TRY` and `JSG_CATCH`\n\nJSG provides `JSG_TRY` and `JSG_CATCH` macros which replace the normal `try` and `catch` keywords\nwhen you need to catch exceptions as JavaScript exceptions. Each take one argument: `JSG_TRY` takes\nthe `jsg::Lock&` reference, and `JSG_CATCH` takes your desired variable name for the caught\nexception.\n\n```cpp\nvoid someMethod(jsg::Lock& js) {\n  JSG_TRY(js) {\n    someThrowyCode();\n  }\n  JSG_CATCH(e) {\n    // Just rethrow.\n    js.throwException(kj::mv(e));\n  }\n}\n```\n\nThe example above actually illustrates a common, useful scenario of coercing any exception thrown\ninto a JavaScript Error object. That is, if `someThrowyCode()` in the example above throws a KJ C++\nexception, `JSG_CATCH(e)` will catch it and convert it to a JavaScript error by calling\n`js.exceptionToJs()`."
   gold_removed: 'require access to the JavaScript isolate and context.
 
     #### `JsExceptionThrown`
@@ -117,20 +90,15 @@ config_edits:
     2. Throw `JsExceptionThrown()` as a C++ exception
 
 
-    This C++ exception is caught by JSG''s callback glue before returning to V8. This
-    approach is
+    This C++ exception is caught by JSG''s callback glue before returning to V8. This approach is
 
     more ergonomic than V8''s convention of returning `v8::Maybe` values.'
 distractors:
 - rule: Suggest updates to CLAUDE.md when you find new high-level information
   collision_type: meta_confusion
-  why_distracting: The agent might try to document the new `JSG_TRY`/`JSG_CATCH` macros
-    in `CLAUDE.md` because it's a new high-level pattern, but the gold solution documents
-    them in `src/workerd/jsg/README.md` instead.
+  why_distracting: The agent might try to document the new `JSG_TRY`/`JSG_CATCH` macros in `CLAUDE.md` because it's a new high-level pattern, but the gold solution documents them in `src/workerd/jsg/README.md` instead.
   severity: medium
   source:
     path: CLAUDE.md
     lines: 11-11
-hierarchy_analysis: The config hierarchy is flat with only `CLAUDE.md` at the root.
-  The agent must distinguish between updating the global `CLAUDE.md` file and the
-  directory-specific `README.md` file for documenting the new macros.
+hierarchy_analysis: The config hierarchy is flat with only `CLAUDE.md` at the root. The agent must distinguish between updating the global `CLAUDE.md` file and the directory-specific `README.md` file for documenting the new macros.

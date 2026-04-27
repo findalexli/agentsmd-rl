@@ -1,0 +1,104 @@
+version: '2.0'
+source:
+  repo: apache/airflow
+  pr: 65334
+  base_commit: 5560e7cf433d2a1a6b37865ad511301f76fb420e
+  merge_commit: f0d96ece9beb4116c31bf352575c08e8d2d6fc02
+task:
+  kind: code_with_config
+checks:
+- id: test_uv_sync_runs_before_mypy
+  type: fail_to_pass
+  origin: pr_diff
+  description: Local branch of mypy_local_folder.py invokes `uv sync --frozen --project <P>` before invoking `uv run --frozen --project <P> ... mypy ...`.
+- id: test_uv_sync_uses_project_matching_input_folder
+  type: fail_to_pass
+  origin: pr_diff
+  description: The `--project` passed to `uv sync` matches the existing folder→project mapping (and equals the `--project` passed to `uv run`) for multiple input folders (airflow-core, task-sdk, dev).
+- id: test_sync_failure_aborts_before_mypy
+  type: fail_to_pass
+  origin: pr_diff
+  description: When `uv sync` exits non-zero, the script exits non-zero and does NOT invoke `uv run … mypy`.
+- id: test_update_uv_lock_hook_is_frozen
+  type: fail_to_pass
+  origin: pr_diff
+  description: The `update-uv-lock` prek hook entry is `uv lock --frozen` (verifies the lock against pyproject.toml instead of silently rewriting it).
+- id: test_mypy_script_compiles
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`python -m py_compile scripts/ci/prek/mypy_local_folder.py` succeeds (script remains syntactically valid).'
+- id: test_pre_commit_yaml_parses
+  type: pass_to_pass
+  origin: repo_tests
+  description: '`.pre-commit-config.yaml` remains valid YAML and still contains the update-uv-lock hook.'
+- id: test_ci_branch_unchanged
+  type: pass_to_pass
+  origin: repo_tests
+  description: The CI/breeze dispatch branch is preserved — `run_command_via_breeze_shell` is still referenced and the `if CI:` gate still exists.
+config_edits:
+- path: AGENTS.md
+  tier: 1
+  gold_added: '- **Type-check (non-providers):** first run `uv sync --frozen --project <PROJECT>` to align the local virtualenv with `uv.lock` (the dependency set CI uses), then `uv run --frozen --project <PROJECT> --with "apache-airflow-devel-common[mypy]" mypy path/to/code`'
+  gold_removed: '- **Type-check (non-providers):** `uv run --project <PROJECT> --with "apache-airflow-devel-common[mypy]" mypy path/to/code`'
+- path: contributing-docs/08_static_code_checks.rst
+  tier: 2
+  gold_added: "Before running mypy directly (or via the ``mypy-*`` prek hooks), synchronize your local virtualenv\nwith ``uv.lock`` so it matches the dependency set CI uses — otherwise mypy may pick up a different\nset of installed packages than CI and produce results that diverge from CI:\n\n.. code-block:: bash\n\n  uv sync --frozen --project <PROJECT>\n\nThen run mypy directly. Use ``--frozen`` so ``uv`` does not update ``uv.lock``:"
+  gold_removed: 'You can also run mypy directly. Use ``--frozen`` to avoid updating ``uv.lock``:'
+rubric:
+- rule: Python files modified in this PR (specifically `scripts/ci/prek/mypy_local_folder.py`) should be ruff-formatted and pass `ruff check`.
+  source:
+    path: AGENTS.md
+    lines: '113'
+    commit: 5560e7cf433d2a1a6b37865ad511301f76fb420e
+  evidence: The gold patch modifies `scripts/ci/prek/mypy_local_folder.py` and the diff shows consistent formatting — no ruff violations remain.
+  category: style
+  verification: llm_judge
+- rule: The new sync call uses `subprocess.run(...)` (or an equivalent that surfaces the return code), matching the surrounding pattern used for the existing `uv run … mypy …` invocation, rather than introducing `os.system` / `subprocess.call` style helpers.
+  source:
+    path: AGENTS.md
+    lines: 111-120
+    commit: 5560e7cf433d2a1a6b37865ad511301f76fb420e
+  evidence: The gold patch uses `subprocess.run(...)` for the new sync call, matching the pattern used for the existing mypy invocation.
+  category: architecture
+  verification: programmatic
+- rule: The fix should not bypass the script's existing helpers — `console` output (when available) and the `AIRFLOW_ROOT_PATH` cwd should be reused for the new sync call, matching the prek/AGENTS guideline that shared utilities live in `common_prek_utils.py`.
+  source:
+    path: scripts/ci/prek/AGENTS.md
+    lines: 8-10
+    commit: 5560e7cf433d2a1a6b37865ad511301f76fb420e
+  evidence: The gold patch reuses `console` output (when available) and `AIRFLOW_ROOT_PATH` for the sync call's working directory, following the prek/AGENTS guideline.
+  category: architecture
+  verification: programmatic
+- rule: The CI branch (`if CI:` block) must not be modified — only the local `else:` branch should change. The PR's stated motivation is that local runs drift from CI; CI itself already uses uv.lock via breeze.
+  source:
+    path: AGENTS.md
+    lines: 62-64
+    commit: 5560e7cf433d2a1a6b37865ad511301f76fb420e
+  evidence: The gold patch only modifies the `else:` branch; the `if CI:` block with `run_command_via_breeze_shell` is untouched.
+  category: architecture
+  verification: programmatic
+- rule: The triple-line comment immediately above the `update-uv-lock` hook must be updated to describe the new --frozen behavior (lock is only verified, never silently rewritten; contributor must run uv lock explicitly when the lock is stale). Stale comments are misleading.
+  source:
+    path: AGENTS.md
+    lines: '111'
+    commit: 5560e7cf433d2a1a6b37865ad511301f76fb420e
+  evidence: The gold patch updates the triple-line comment above `update-uv-lock` to describe the new --frozen verification behavior.
+  category: style
+  verification: llm_judge
+distractors:
+- rule: '- **Type-check (non-providers):** `uv run --project <PROJECT> --with "apache-airflow-devel-common[mypy]" mypy path/to/code`'
+  source:
+    path: AGENTS.md
+    lines: '33'
+    commit: 5560e7cf433d2a1a6b37865ad511301f76fb420e
+  collision_type: rule_conflict
+  why_distracting: The existing AGENTS.md command instructs running mypy directly without a prior `uv sync` step, conflicting with the required two-step flow.
+  severity: high
+- rule: '# It runs locally and usually will not result in modifying the lock unnecessarily'
+  source:
+    path: .pre-commit-config.yaml
+    lines: '1010'
+    commit: 5560e7cf433d2a1a6b37865ad511301f76fb420e
+  collision_type: rule_conflict
+  why_distracting: The existing comment suggests lock modification during commit is acceptable, contradicting the new --frozen verification-only behavior.
+  severity: medium

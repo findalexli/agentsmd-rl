@@ -1,0 +1,71 @@
+version: '2.0'
+source:
+  repo: facebook/react
+  pr: 36055
+  base_commit: c80a07509582daadf275f36ffe7a88c3b12e9db4
+  merge_commit: 12ba7d81297abac61012a36f20d4a9d22b9210d9
+task:
+  kind: code_fix
+checks:
+- id: test_blob_string_reference_rejected
+  type: fail_to_pass
+  origin: pr_diff
+  description: decodeReply must throw when a $B reference resolves to a string backing entry instead of a Blob.
+- id: test_existing_reply_suite_still_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: The full ReactFlightDOMReply-test Jest suite must continue to pass (regression guard on valid Reply decoding).
+- id: test_repo_lint_changed_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: yarn linc (React's lint-changed-files command) passes on the files modified by the agent.
+rubric:
+- rule: Per `.claude/skills/fix/SKILL.md` and `.claude/skills/verify/SKILL.md`, changed files must pass `yarn linc` (and ideally `yarn prettier`). Lint failures block CI in the React repo.
+  source:
+    path: .claude/skills/fix/SKILL.md
+    lines: 10-11
+    commit: c80a07509582daadf275f36ffe7a88c3b12e9db4
+  evidence: Gold patch passes yarn linc on the changed source files.
+  category: testing
+  verification: programmatic
+- rule: Per `.claude/skills/extract-errors/SKILL.md`, every new user-visible `new Error('...')` message in production code must be registered in `scripts/error-codes/codes.json` with a fresh numeric id, so that production builds can minify the message while preserving the lookup. Run `yarn extract-errors` and ensure no "unknown error code" warnings remain.
+  source:
+    path: .claude/skills/extract-errors/SKILL.md
+    lines: 10-12
+    commit: c80a07509582daadf275f36ffe7a88c3b12e9db4
+  evidence: Gold patch registers error code 582 in scripts/error-codes/codes.json.
+  category: style
+  verification: programmatic
+- rule: The fix should be a focused validation in the 'B' branch of the Flight Reply decoder and must not weaken or alter unrelated decoding paths (string, BigInt, ReadableStream, etc.). The React repo's culture (root CLAUDE.md, CONTRIBUTING.md) favours tightly-scoped, behaviour-preserving changes.
+  source:
+    path: CLAUDE.md
+    lines: 1-8
+    commit: c80a07509582daadf275f36ffe7a88c3b12e9db4
+  evidence: Gold patch adds only a Blob type check in the B branch of parseModelString, plus the required error code registration.
+  category: architecture
+  verification: llm_judge
+distractors:
+- rule: Running prettier on wrong files - `yarn prettier` only formats changed files
+  source:
+    path: .claude/skills/fix/SKILL.md
+    lines: '17'
+    commit: c80a07509582daadf275f36ffe7a88c3b12e9db4
+  collision_type: meta_confusion
+  why_distracting: Could lead agent to focus on formatting scope instead of the security validation fix.
+  severity: low
+- rule: Use `/test` to test changes in source (stop if fails)
+  source:
+    path: .claude/skills/verify/SKILL.md
+    lines: '22'
+    commit: c80a07509582daadf275f36ffe7a88c3b12e9db4
+  collision_type: meta_confusion
+  why_distracting: Could lead agent to run broad test suites rather than narrowing the fix to the specific Blob validation path.
+  severity: medium
+- rule: 'React Compiler: `/compiler/` directory (has its own instructions)'
+  source:
+    path: CLAUDE.md
+    lines: 7-8
+    commit: c80a07509582daadf275f36ffe7a88c3b12e9db4
+  collision_type: scope_ambiguity
+  why_distracting: Could lead agent to investigate the compiler directory instead of the react-server package where the fix belongs.
+  severity: medium

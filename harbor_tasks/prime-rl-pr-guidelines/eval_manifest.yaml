@@ -1,0 +1,125 @@
+version: '2.0'
+source:
+  repo: PrimeIntellect-ai/prime-rl
+  pr: 2151
+  base_commit: 377b15a931bd9d19929f40e8929f84f4d27cf4fc
+  merge_commit: 1f3e539b575711d9f8a7961549c4249fa3a7fdfd
+task:
+  name: prime-rl-pr-guidelines
+  kind: markdown_authoring
+  difficulty: easy
+  tags:
+  - markdown_authoring
+  - agent_config
+  - documentation
+checks:
+- id: test_github_section_added
+  type: fail_to_pass
+  origin: pr_diff
+  description: A new '## GitHub' section heading is added to AGENTS.md
+- id: test_draft_pr_command_documented
+  type: fail_to_pass
+  origin: pr_diff
+  description: The exact 'gh pr create --draft' command appears in AGENTS.md
+- id: test_test_plan_rule_documented
+  type: fail_to_pass
+  origin: pr_diff
+  description: A rule referencing 'test plan' is added to AGENTS.md
+- id: test_github_section_below_git_section
+  type: fail_to_pass
+  origin: pr_diff
+  description: New GitHub section is placed after the existing Git section
+- id: test_repo_still_clones_cleanly
+  type: pass_to_pass
+  origin: static
+  description: AGENTS.md remains a coherent document with its top-level title and Git section intact
+- id: test_existing_branch_prefixes_preserved
+  type: pass_to_pass
+  origin: static
+  description: Existing feat/, fix/, chore/ branch prefixes are still documented
+config_edits:
+- path: AGENTS.md
+  tier: 1
+  gold_added: '- **Branch prefixes**: use the following prefixes for branches: `feat/`, `fix/`, `chore/`
+
+
+    ## GitHub
+
+
+    - **Draft PRs**: always create PRs as drafts (`gh pr create --draft`) to avoid triggering CI unnecessarily.
+
+    - **Pull requests**: do not include a "test plan" section in PR descriptions unless you actually ran tests to verify the changes or the user explicitly asked for one.
+
+    '
+  gold_removed: 'Branch prefixes: `feat/`, `fix/`, `chore/`
+
+    '
+  diff_hunk: "@@ -44,5 +44,10 @@ Write tests as plain functions with pytest fixtures. Don't use class-based tests\n\n ## Git\n\n-Branch prefixes: `feat/`, `fix/`, `chore/`\n+- **Branch prefixes**: use the following prefixes for branches: `feat/`, `fix/`, `chore/`\n+\n+## GitHub\n+\n+- **Draft PRs**: always create PRs as drafts (`gh pr create --draft`) to avoid triggering CI unnecessarily.\n+- **Pull requests**: do not include a \"test plan\" section in PR descriptions unless you actually ran tests to verify the changes or the user explicitly asked for one.\n"
+rubric:
+- rule: 'Use bullet/bold formatting consistent with the rest of AGENTS.md
+
+    (lines beginning with `- **Topic**:` followed by the rule body),
+
+    rather than plain prose lines, when adding or rewriting rules.
+
+    '
+  source:
+    path: AGENTS.md
+    lines: 5-21
+    commit: 377b15a931bd9d19929f40e8929f84f4d27cf4fc
+  evidence: 'The gold edit reformats the existing ''Branch prefixes:'' line into
+
+    ''- **Branch prefixes**: ...'' and writes the two new GitHub rules as
+
+    ''- **Draft PRs**: ...'' and ''- **Pull requests**: ...'', matching the
+
+    bullet/bold pattern used by the existing ''Always use uv'', ''Adding
+
+    dependencies'', ''Minimal try/except'' rules.
+
+    '
+  category: style
+  verification: llm_judge
+- rule: 'Skills documentation in skills/ must stay in sync with code changes;
+
+    when changing how agents work in this repo (including the agent
+
+    instruction files themselves), check whether any related SKILL.md
+
+    under skills/ also needs to be updated.
+
+    '
+  source:
+    path: AGENTS.md
+    lines: 37-39
+    commit: 377b15a931bd9d19929f40e8929f84f4d27cf4fc
+  evidence: 'The PR''s diff is scoped to AGENTS.md only; no skill describes PR
+
+    submission workflow, so no skill needed updating. The agent''s edit
+
+    should likewise be scoped to AGENTS.md and should not invent new
+
+    skill files.
+
+    '
+  category: scope
+  verification: llm_judge
+- rule: 'Do not add commentary explaining the editing process or referencing
+
+    the prior version of the file; targeted comments are reserved for
+
+    clarifying ambiguous logic, not for narrating the change.
+
+    '
+  source:
+    path: AGENTS.md
+    lines: '6'
+    commit: 377b15a931bd9d19929f40e8929f84f4d27cf4fc
+  evidence: 'The gold AGENTS.md does not contain any ''previously...'', ''old:'',
+
+    ''before:'', or change-narration comments — only the new rules.
+
+    '
+  category: style
+  verification: llm_judge
+distractors: []

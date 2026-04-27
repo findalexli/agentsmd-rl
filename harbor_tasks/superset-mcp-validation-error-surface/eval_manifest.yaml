@@ -1,0 +1,87 @@
+version: '2.0'
+source:
+  repo: apache/superset
+  pr: 39522
+  base_commit: 362e5bf45e9622abedea4550411c81396659d7dc
+  merge_commit: dae79a6cba1d5c11f9229be54c38bd21770e99e1
+task:
+  kind: code_fix
+checks:
+- id: test_validation_error_template_registered
+  type: fail_to_pass
+  origin: repo_tests
+  description: ChartErrorBuilder.TEMPLATES must contain a 'validation_error' entry whose message/details reference {reason} and whose suggestions list is non-empty.
+- id: test_validation_error_template_is_chart_type_agnostic
+  type: fail_to_pass
+  origin: repo_tests
+  description: The validation_error suggestions must not bake in chart-type-specific field names (mixed_timeseries / primary_kind / secondary_kind) since it fires for every chart type.
+- id: test_build_error_with_validation_error_template_surfaces_reason
+  type: fail_to_pass
+  origin: repo_tests
+  description: ChartErrorBuilder.build_error(template_key='validation_error', ...) must surface the {reason} variable in both message and details and must not fall back to 'An error occurred'.
+- id: test_mixed_timeseries_kind_returns_actionable_error
+  type: fail_to_pass
+  origin: repo_tests
+  description: 'End-to-end pipeline run with mixed_timeseries + invalid kind/kind_secondary fields must return an actionable error: message and details mention the bad field, no tagged-union prefix leaks, suggestions list is non-empty.'
+- id: test_pie_chart_invalid_aggregate_surfaces_input_should_be
+  type: fail_to_pass
+  origin: repo_tests
+  description: Pydantic literal_error bodies ('Input should be ...') must survive the 200-char truncation — verifies the tagged-union prefix stripper handles non-ValueError bodies.
+- id: test_valid_mixed_timeseries_config_still_passes
+  type: pass_to_pass
+  origin: repo_tests
+  description: 'Sanity check: the correct field names (primary_kind / secondary_kind) still validate successfully — happy path is not regressed.'
+- id: test_existing_error_templates_preserved
+  type: pass_to_pass
+  origin: pr_diff
+  description: The fix must add 'validation_error' without removing any of the existing template keys.
+- id: test_repo_ruff_check_passes_on_modified_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's linter (ruff check) reports clean on the files modified by the fix. Required by pre-commit policy in the repo's CLAUDE.md.
+- id: test_repo_ruff_format_passes_on_modified_files
+  type: pass_to_pass
+  origin: repo_tests
+  description: Repo's formatter (ruff format --check) reports clean on the files modified by the fix. Required by pre-commit policy.
+rubric:
+- rule: Every modified Python file in superset/mcp_service/ must keep its Apache Software Foundation license header at the top of the file.
+  source:
+    path: superset/mcp_service/CLAUDE.md
+    lines: 5-32
+    commit: 362e5bf45e9622abedea4550411c81396659d7dc
+  evidence: Gold patch adds the validation_error template entry after existing ones and the tagged-union stripping after the existing docstring; both modified files retain their ASF license headers unmodified.
+  category: style
+  verification: programmatic
+- rule: Any new function/method introduced by the fix must have proper Python type annotations on parameters and return value.
+  source:
+    path: CLAUDE.md
+    lines: 82-86
+    commit: 362e5bf45e9622abedea4550411c81396659d7dc
+  evidence: Gold patch adds import re alongside existing typing imports; new logic in _sanitize_validation_error lives inside an existing type-annotated function and does not introduce new functions.
+  category: style
+  verification: programmatic
+- rule: Use Python 3.10+ union syntax — X | None and list[str], not Optional[X] or List[str]. Old-style Optional/List/Dict from typing is forbidden in new code.
+  source:
+    path: superset/mcp_service/CLAUDE.md
+    lines: 294-318
+    commit: 362e5bf45e9622abedea4550411c81396659d7dc
+  evidence: Gold patch uses 'from typing import Any, Dict, List, Tuple' (pre-existing import, not new) and introduces no new Optional/List/Dict usage.
+  category: style
+  verification: programmatic
+- rule: Comments must not use time-specific language ('now', 'currently', 'today') — comments should remain accurate regardless of when they are read.
+  source:
+    path: CLAUDE.md
+    lines: 94-96
+    commit: 362e5bf45e9622abedea4550411c81396659d7dc
+  evidence: Gold patch comments ('The body always lives on a line indented by exactly two spaces') use timeless, descriptive language with no time-specific wording.
+  category: style
+  verification: llm_judge
+- rule: The change must pass the repo's pre-commit checks — ruff check, ruff format, and mypy. The repo's CLAUDE.md flags this as non-negotiable.
+  source:
+    path: CLAUDE.md
+    lines: 5-21
+    commit: 362e5bf45e9622abedea4550411c81396659d7dc
+  evidence: Gold patch is a clean, minimal diff; ruff check and ruff format pass on both modified files (pipeline.py and error_builder.py).
+  category: testing
+  verification: programmatic
+distractors: []

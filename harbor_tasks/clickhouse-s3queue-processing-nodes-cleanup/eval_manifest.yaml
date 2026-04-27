@@ -1,77 +1,107 @@
-task_id: clickhouse-s3queue-processing-nodes-cleanup
-name: ClickHouse S3Queue Processing Nodes Cleanup Fix
-source_pr: https://github.com/ClickHouse/ClickHouse/pull/101930
-base_commit: c71831a6b0df9e6b69eaba0e4cf83801c1fb3832
-merge_commit: dae8318c5ed52baecd784a85a67c45d985b20d6a
-
-# Scoring weights
-weights:
-  correctness: 1.0
-
-# List of checks to verify the fix
+version: '2.0'
+source:
+  repo: ClickHouse/ClickHouse
+  pr: 101930
+  base_commit: c71831a6b0df9e6b69eaba0e4cf83801c1fb3832
+  merge_commit: dae8318c5ed52baecd784a85a67c45d985b20d6a
+task:
+  kind: code_fix
 checks:
-  # Fail-to-pass tests (verify the fix works)
-  - id: test_version_in_nodes_to_remove
-    type: fail_to_pass
-    origin: behavioral
-    description: Verify nodes_to_remove stores version information
-
-  - id: test_tryremove_with_version
-    type: fail_to_pass
-    origin: behavioral
-    description: Verify tryRemove uses version for optimistic concurrency
-
-  - id: test_zbadversion_handling
-    type: fail_to_pass
-    origin: behavioral
-    description: Verify ZBADVERSION error is handled gracefully
-
-  - id: test_removal_tracking
-    type: fail_to_pass
-    origin: behavioral
-    description: Verify accurate tracking of removed vs skipped nodes
-
-  # Pass-to-pass tests (verify existing functionality still works)
-  - id: test_compilation_syntax
-    type: pass_to_pass
-    origin: static
-    description: Basic syntax check - balanced braces in target file
-
-  - id: test_git_file_exists
-    type: pass_to_pass
-    origin: repo_tests
-    description: Verify target file exists in the repo
-
-  - id: test_cpp_syntax_balanced
-    type: pass_to_pass
-    origin: repo_tests
-    description: Verify C++ syntax - balanced braces and parentheses
-
-  - id: test_no_trailing_whitespace
-    type: pass_to_pass
-    origin: repo_tests
-    description: Verify no trailing whitespace in target file
-
-  - id: test_function_signature_exists
-    type: pass_to_pass
-    origin: repo_tests
-    description: Verify cleanupPersistentProcessingNodes function exists
-
-  - id: test_zookeeper_includes
-    type: pass_to_pass
-    origin: repo_tests
-    description: Verify ZooKeeper-related code is present
-
-# Rubric for subjective rules from agent configs
+- id: test_version_in_nodes_to_remove
+  type: fail_to_pass
+  origin: pr_diff
+  description: Verify nodes_to_remove stores version information
+- id: test_tryremove_with_version
+  type: fail_to_pass
+  origin: pr_diff
+  description: Verify tryRemove uses version for optimistic concurrency
+- id: test_zbadversion_handling
+  type: fail_to_pass
+  origin: pr_diff
+  description: Verify ZBADVERSION error is handled gracefully
+- id: test_removal_tracking
+  type: fail_to_pass
+  origin: pr_diff
+  description: Verify accurate tracking of removed vs skipped nodes
+- id: test_node_and_version_extraction
+  type: fail_to_pass
+  origin: pr_diff
+  description: Verify node path and version are extracted from pairs
+- id: test_log_trace_for_removal
+  type: fail_to_pass
+  origin: pr_diff
+  description: Verify LOG_TRACE before node removal attempts
+- id: test_log_trace_for_skip
+  type: fail_to_pass
+  origin: pr_diff
+  description: Verify LOG_TRACE when skipping already-removed nodes
+- id: test_compilation_syntax
+  type: pass_to_pass
+  origin: static
+  description: Basic syntax check - balanced braces in target file
+- id: test_git_file_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: Verify target file exists in the repo
+- id: test_cpp_syntax_balanced
+  type: pass_to_pass
+  origin: repo_tests
+  description: Verify C++ syntax - balanced braces and parentheses
+- id: test_no_trailing_whitespace
+  type: pass_to_pass
+  origin: repo_tests
+  description: Verify no trailing whitespace in target file
+- id: test_function_signature_exists
+  type: pass_to_pass
+  origin: repo_tests
+  description: Verify cleanupPersistentProcessingNodes function exists
+- id: test_zookeeper_includes
+  type: pass_to_pass
+  origin: repo_tests
+  description: Verify ZooKeeper-related code is present
+- id: test_no_simple_strings_vector
+  type: fail_to_pass
+  origin: pr_diff
+  description: Verify old buggy Strings pattern is removed
 rubric:
-  - rule: "All ZooKeeper/Keeper data deletion events must be logged at appropriate level"
-    source: "copilot-instructions.md: Deletion logging requirement"
-    description: "The fix adds LOG_TRACE for node removal attempts and results"
-
-  - rule: "Handle concurrency issues with proper error codes (ZNONODE, ZBADVERSION)"
-    source: "copilot-instructions.md: Concurrency & robustness"
-    description: "The fix handles ZBADVERSION in addition to ZNONODE for race conditions"
-
-  - rule: "When writing log messages, wrap literal names from code in backticks"
-    source: "CLAUDE.md: Code formatting in documentation"
-    description: "Check log messages follow ClickHouse conventions"
+- rule: All data deletion events (files, parts, metadata, ZooKeeper/Keeper entries, etc.) must be logged at an appropriate level.
+  source:
+    path: .github/copilot-instructions.md
+    lines: '114'
+    commit: c71831a6b0df9e6b69eaba0e4cf83801c1fb3832
+  evidence: The fix adds LOG_TRACE calls for node removal attempts and skips, plus a LOG_DEBUG summary showing removed/total counts
+  category: architecture
+  verification: llm_judge
+- rule: Data races, deadlocks, ABA, misuse of atomics/locks, unsafe shared state.
+  source:
+    path: .github/copilot-instructions.md
+    lines: '27'
+    commit: c71831a6b0df9e6b69eaba0e4cf83801c1fb3832
+  evidence: The fix implements optimistic concurrency control via ZooKeeper version checking (tryRemove with version), handling ZBADVERSION as a non-fatal race condition
+  category: architecture
+  verification: llm_judge
+- rule: 'When writing text such as documentation, comments, or commit messages, wrap literal names from ClickHouse SQL language, classes and functions, or literal excerpts from log messages inside inline code blocks, such as: `MergeTree`.'
+  source:
+    path: .claude/CLAUDE.md
+    lines: '3'
+    commit: c71831a6b0df9e6b69eaba0e4cf83801c1fb3832
+  evidence: Log messages use consistent formatting with node path references
+  category: style
+  verification: llm_judge
+distractors:
+- rule: 'Prefer **high precision**: if you are not reasonably confident that something is a real problem or a serious risk, do **not** flag it.'
+  source:
+    path: .github/copilot-instructions.md
+    lines: '37'
+    commit: c71831a6b0df9e6b69eaba0e4cf83801c1fb3832
+  collision_type: meta_confusion
+  why_distracting: High-precision preference could cause agent to underweight the ZBADVERSION race condition as a marginal risk rather than a concrete correctness bug
+  severity: medium
+- rule: Hot-path regressions, pathological complexity, unbounded allocations, unnecessary disk/network roundtrips.
+  source:
+    path: .github/copilot-instructions.md
+    lines: '29'
+    commit: c71831a6b0df9e6b69eaba0e4cf83801c1fb3832
+  collision_type: scope_ambiguity
+  why_distracting: Performance rule could steer agent toward optimizing the cleanup loop instead of fixing the version-checking correctness gap
+  severity: low

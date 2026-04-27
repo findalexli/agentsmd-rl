@@ -1,0 +1,56 @@
+{
+  "model": "claude-opus-4-7",
+  "rubric_verdicts": {
+    "behavior_in_task_description": {
+      "outcome": "pass",
+      "reason": "All required file paths, skill names, parameter names, literal strings like 'ALWAYS use this skill', category names, and structural elements (YAML frontmatter, ValidateSet, CmdletBinding) are explicitly named in instruction.md."
+    },
+    "no_solution_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction describes what to create and required properties but doesn't provide exact code/line replacements; agent must still construct the content."
+    },
+    "solution_uniqueness_guard": {
+      "outcome": "pass",
+      "reason": "Tests check for structural features (ValidateSet presence, param block, specific strings like 'ALWAYS') rather than gold-specific variable names or line positions, allowing alternative correct implementations."
+    },
+    "tests_verify_behavior_not_text": {
+      "outcome": "fail",
+      "reason": "The visible tests are almost entirely file reads + substring/regex checks (e.g., 'param(' in content, 'ValidateSet' in content, 'ALWAYS' in text); no tests execute the PowerShell script or the C# test setup logic."
+    },
+    "test_not_tautological": {
+      "outcome": "pass",
+      "reason": "Tests require specific content (e.g., File.WriteAllText calls count >=3, ValidateSet presence, YAML frontmatter) that a stub couldn't trivially satisfy without implementing the required changes."
+    },
+    "behavior_in_tests": {
+      "outcome": "pass",
+      "reason": "Required behaviors (SKILL.md frontmatter, PS1 param block with ValidateSet, copilot-instructions skill reference, integration-tests instructions) are each covered by tests."
+    },
+    "informative_test_structure": {
+      "outcome": "pass",
+      "reason": "Tests are grouped with section headers like '# Gates (pass_to_pass, static)' and '# Gates (pass_to_pass, repo_tests)' with descriptive docstrings."
+    },
+    "structured_data_schema": {
+      "outcome": "not_applicable",
+      "reason": "Task produces markdown/PowerShell/C# files, not a structured data API/JSON/CSV output."
+    },
+    "no_typos": {
+      "outcome": "pass",
+      "reason": "Paths like .github/skills/run-integration-tests/SKILL.md and scripts/Run-IntegrationTests.ps1 are consistent across instruction and tests."
+    },
+    "instruction_no_hint_leakage": {
+      "outcome": "pass",
+      "reason": "Instruction names files to modify (BaseBuildTest.cs, copilot-instructions.md) but this is expected since creating/updating those files is the task itself, not localization of a hidden bug."
+    },
+    "config_edit_scope_bounded": {
+      "outcome": "not_applicable",
+      "reason": "This is a code/doc creation task, not an agent.md config edit task."
+    }
+  },
+  "tier_a_fails": [
+    "tests_verify_behavior_not_text"
+  ],
+  "tier_b_fails": [],
+  "tier_c_fails": [],
+  "pass_count": 8,
+  "fail_count": 1
+}
