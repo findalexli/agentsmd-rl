@@ -77,7 +77,7 @@ The 14,549 → 13,046 transition in the code pipeline is a slug-deduplication ag
 
 ## 4. Pipeline A — Code-fix tasks
 
-The expensive pipeline. Each surviving PR receives a Gemini 3.1 Pro causality classification, then (for class A or B) a single Claude Opus 4.7 call inside an isolated sandbox produces the runnable task. Numbers below are for the **2026-04-26 scout pass**; the cumulative `harbor_tasks/` corpus is the result of multiple such passes accumulated over weeks.
+Each surviving PR receives a Gemini 3.1 Pro causality classification, then (for class A or B) a single Claude Opus 4.7 call inside an isolated sandbox produces the runnable task. Numbers below are for the **2026-04-26 scout pass**; the cumulative `harbor_tasks/` corpus is the result of multiple such passes accumulated over weeks.
 
 | Stage | Mechanism | Input | Drop | Output |
 |---|---|---|---|---|
@@ -93,13 +93,11 @@ The expensive pipeline. Each surviving PR receives a Gemini 3.1 Pro causality cl
 
 The dominant filter is the **causality judge** (stage 4.3): without it, ≈94% of admitted PRs are class C (decorative) — a benchmark constructed from those would be silent on whether the agent attended to the rule files, which is the failure mode the inclusion criterion is designed to prevent.
 
-Aggregate Anthropic API spend across multiple scout-and-scaffold cycles producing the 585-task corpus is on the order of **$1,500-$3,750**, dominated by stage 4.4 at $2-5 per scaffold attempt.
-
 ---
 
 ## 5. Pipeline B — Markdown-authoring tasks
 
-The cheap pipeline. A regex pre-filter routes only PRs whose every changed file is a tier-1 instruction file; those go through a two-stage Gemini quality gate around a deterministic scaffolder (no LLM in the scaffold step). All numbers below are for the **2026-04-27 batch** in isolation.
+A regex pre-filter routes only PRs whose every changed file is a tier-1 instruction file; those go through a two-stage Gemini quality gate around a deterministic scaffolder (no LLM in the scaffold step). All numbers below are for the **2026-04-27 batch** in isolation.
 
 | Stage | Mechanism | Input | Drop | Output |
 |---|---|---|---|---|
@@ -112,8 +110,6 @@ The cheap pipeline. A regex pre-filter routes only PRs whose every changed file 
 **End-to-end yield (single batch)**: 214 new tasks scaffolded / 9,629 candidates ≈ 2.2%; counting all post-judge survivors (including the 504 pre-existing tasks the judge re-validated as HIGH/MEDIUM): 718 / 9,629 ≈ 7.5%.
 
 The dominant filter is the **path regex** (stage 5.1) at 96.7% drop. The two LLM judges combined contribute another ≈12.4% relative reduction, almost entirely from the **post-judge** — the pre-judge by construction sees no patch content and is limited to title-level signals.
-
-Aggregate Gemini API spend for the 2026-04-27 batch is approximately **$10-20** (≈1,700 calls × ≈$0.005-0.01 per call at Standard tier with structured-output thinking budget).
 
 ---
 
@@ -130,13 +126,13 @@ The post-judge prompt instantiates the inclusion criterion as four operational d
   - LOW: `7 ≤ slop_score ≤ 8`,
   - DELETE: `slop_score ≥ 9` or either flag false.
 
-The judge is instructed to reject by default when in doubt. Cost asymmetry justifies this: a false positive (decorative task in the corpus) silently weakens the benchmark; a false negative (real task quarantined) just means we lose one task out of hundreds.
+The judge is instructed to reject by default when in doubt. The asymmetry justifies this: a false positive (decorative task in the corpus) silently weakens the benchmark; a false negative (real task quarantined) just means we lose one task out of hundreds.
 
 ---
 
 ## 7. Why two pipelines
 
-Markdown-only PRs do not require an agent to design tests, choose files, or run Docker; the transformation from PR-diff to scaffolded task is mechanical (extract distinctive added lines, grep for them in the agent's output). Routing them through the Opus + sandbox pipeline produced lower-quality tasks — the LLM occasionally invented additional files or paraphrased the diff, breaking the verbatim grep. Pipeline B is roughly **100-200× cheaper per task** than Pipeline A and produces tighter behavioral tests, in exchange for one strict asymmetry: the test is verbatim, so a competent agent that paraphrases the gold answer fails. The post-judge rejects PRs where this asymmetry is severe.
+Markdown-only PRs do not require an agent to design tests, choose files, or run Docker; the transformation from PR-diff to scaffolded task is mechanical (extract distinctive added lines, grep for them in the agent's output). Routing them through the Opus + sandbox pipeline produced lower-quality tasks — the LLM occasionally invented additional files or paraphrased the diff, breaking the verbatim grep. Pipeline B produces tighter behavioral tests at much lower marginal effort per task, in exchange for one strict asymmetry: the test is verbatim, so a competent agent that paraphrases the gold answer fails. The post-judge rejects PRs where this asymmetry is severe.
 
 For Pipeline A the same logic does not apply: deciding which test to write, where to write it, and how to phrase the instruction so that the agent's path to a fix is non-trivial all require a model strong enough to read the repository structure. We retain Opus there.
 
@@ -155,12 +151,12 @@ Identified during the 2026-04-27 batch. Each is documented for reproducibility a
 
 ## 9. Yield comparison
 
-| Pipeline | Source PRs | Final corpus | Per-PR yield | Per-task LLM cost |
-|---|---|---|---|---|
-| A — Code-fix (single 2026-04-26 pass) | 19,417 | ≈540 (this pass; cumulative `harbor_tasks/` is 585) | ≈2.8% | $2-5 |
-| B — Markdown-authoring (single 2026-04-27 batch) | 9,629 | 214 new (cumulative `harbor_tasks_md_authoring/` is 718) | ≈2.2% (new) / 7.5% (with re-validated pre-existing) | < $0.01 |
+| Pipeline | Source PRs | Final corpus | Per-PR yield |
+|---|---|---|---|
+| A — Code-fix (single 2026-04-26 pass) | 19,417 | ≈540 (this pass; cumulative `harbor_tasks/` is 585) | ≈2.8% |
+| B — Markdown-authoring (single 2026-04-27 batch) | 9,629 | 214 new (cumulative `harbor_tasks_md_authoring/` is 718) | ≈2.2% (new) / 7.5% (with re-validated pre-existing) |
 
-Pipeline B's path-regex pre-filter extracts a much narrower starting population, so its absolute count of new tasks is lower per pass; in cost-per-task terms it is two orders of magnitude cheaper.
+Pipeline B's path-regex pre-filter extracts a much narrower starting population, so its absolute count of new tasks is lower per pass; the pre-filter does most of the selection work before any LLM is invoked.
 
 ---
 
@@ -180,5 +176,5 @@ All Gemini calls use temperature 0.1, structured output via `responseMimeType: "
 - **Verbatim-grep tests** in Pipeline B reward agents that produce exactly the gold prose. A competent agent that produces semantically equivalent but textually different content fails. Mitigated by the post-judge, not eliminated.
 - **Single-classifier post-judge** in Pipeline B. We do not currently run a second-classifier cross-check, in contrast to Pipeline A which historically used a Kimi → Gemini → Kimi cross-validation loop.
 - **Recency window asymmetry**. Pipeline A uses 12 months, Pipeline B uses 24. Comparisons of yield rates across the two pipelines are not strictly apples-to-apples.
-- **Auto-fallback path** during Gemini 3.1 Pro Flex tier outages. The Flex tier (50% off Standard) returned 503 UNAVAILABLE for sustained periods on 2026-04-27; the pipeline's auto-fallback to Standard tier restored throughput at full price, but cost figures cited above assume Standard tier throughout for safety.
+- **Auto-fallback path** during Gemini 3.1 Pro Flex tier outages. The Flex tier returned 503 UNAVAILABLE for sustained periods on 2026-04-27; the pipeline's auto-fallback to Standard tier restored throughput.
 - **Tier-1 file definition is closed**. Any new agent-instruction file format (e.g., a future `.codex/agents/*.md` convention) must be added to the regex by hand before it is recognized.
